@@ -1,3 +1,14 @@
+export interface Review {
+  id: string;
+  author: string;
+  initials: string;
+  color: string;
+  rating: number;
+  text: string;
+  timeAgo: string;
+  wouldReturnAlone?: boolean;
+}
+
 export interface Business {
   id: string;
   name: string;
@@ -18,6 +29,12 @@ export interface Business {
   website?: string;
   hours?: string;
   priceRange?: string;
+  confidenceScore: number;
+  blackOwned: boolean;
+  safetyRating?: number;
+  wouldReturnAlone?: number;
+  recommendationRate?: number;
+  reviews?: Review[];
 }
 
 export interface Event {
