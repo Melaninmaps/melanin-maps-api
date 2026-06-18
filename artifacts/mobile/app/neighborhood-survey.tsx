@@ -15,41 +15,91 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
 const CITIES = [
-  "Atlanta", "Houston", "Chicago", "Los Angeles", "New York",
-  "Washington DC", "Detroit", "New Orleans", "Baltimore", "Philadelphia",
-  "Miami", "Charlotte", "Dallas", "Memphis", "Oakland",
+  "Atlanta", "Houston", "Chicago", "Washington DC", "New York",
+  "New Orleans", "Los Angeles", "Miami", "Dallas", "Philadelphia",
+  "Detroit", "Baltimore", "Memphis", "Charlotte", "Other",
 ];
-
-const DIMENSIONS = [
-  { id: "safety_day", label: "Daytime Safety", icon: "sun" as const },
-  { id: "safety_night", label: "Nighttime Safety", icon: "moon" as const },
-  { id: "diversity", label: "Diversity & Inclusion", icon: "users" as const },
-  { id: "schools", label: "Schools & Education", icon: "book" as const },
-  { id: "cost", label: "Cost of Living", icon: "dollar-sign" as const },
-  { id: "walkability", label: "Walkability", icon: "map-pin" as const },
-  { id: "community", label: "Community Feel", icon: "heart" as const },
-  { id: "blackowned", label: "Black-Owned Businesses", icon: "shopping-bag" as const },
+const VISIT_PURPOSES = [
+  "Dining out", "Shopping", "Nightlife", "Sightseeing",
+  "Staying nearby", "Commuting", "Just passing through",
 ];
-
-const SENTIMENTS = [
-  { id: "positive", label: "Helpful & Respectful", emoji: "👍" },
-  { id: "neutral", label: "Mixed / Neutral", emoji: "🤷" },
-  { id: "negative", label: "Harmful / Unsafe", emoji: "⚠️" },
-  { id: "none", label: "No Experience", emoji: "🚫" },
+const VISIT_FREQ = ["First time", "Occasionally", "Regularly", "I live here"];
+const ATMOSPHERES = [
+  { id: "very_welcoming", label: "Very welcoming", score: 5 },
+  { id: "mostly_welcoming", label: "Mostly welcoming", score: 4 },
+  { id: "neutral", label: "Neutral", score: 3 },
+  { id: "slightly_unwelcoming", label: "Slightly unwelcoming", score: 2 },
+  { id: "hostile", label: "Hostile or uncomfortable", score: 1 },
+];
+const POLICE_OPTIONS = [
+  "Protective", "Neutral", "Intimidating", "Absent", "Over-policed", "Didn't notice any",
+];
+const ACCESSIBILITY_FEATURES = [
+  "Wheelchair accessible sidewalks", "Good street lighting", "Accessible public transit",
+  "Gender-neutral restrooms nearby", "Family-friendly spaces", "LGBTQ+ friendly businesses", "None noticed",
+];
+const VISITOR_TIPS = [
+  "Great for solo travelers", "Better with a group at night", "Keep valuables hidden",
+  "Use rideshare after dark", "Parking can be tricky", "Very family friendly",
+  "Active street life", "Quiet and residential",
 ];
 
 const TOTAL_STEPS = 4;
 
-function StarRating({ value, onChange, color }: { value: number; onChange: (v: number) => void; color: string }) {
+function ScaleRating({ value, onChange, color, lowLabel, highLabel }: {
+  value: number; onChange: (v: number) => void; color: string; lowLabel: string; highLabel: string;
+}) {
   return (
-    <View style={{ flexDirection: "row", gap: 6 }}>
-      {[1, 2, 3, 4, 5].map((n) => (
-        <TouchableOpacity key={n} onPress={() => onChange(n)} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
-          <Feather name={n <= value ? "star" : "star"} size={28} color={n <= value ? color : "#D4D0C8"} />
-        </TouchableOpacity>
-      ))}
+    <View style={{ gap: 10 }}>
+      <View style={{ flexDirection: "row", gap: 8 }}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <TouchableOpacity
+            key={n}
+            style={[
+              styles.scaleBtn,
+              { backgroundColor: n <= value ? color : "transparent", borderColor: n <= value ? color : "#D4D0C8" },
+            ]}
+            onPress={() => { onChange(n); if (Platform.OS !== "web") Haptics.selectionAsync(); }}
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+          >
+            <Text style={[styles.scaleBtnTxt, { color: n <= value ? "#FFF" : "#888" }]}>{n}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <View style={styles.scaleLabels}>
+        <Text style={styles.scaleLow}>{lowLabel}</Text>
+        <Text style={styles.scaleHigh}>{highLabel}</Text>
+      </View>
     </View>
   );
+}
+
+function Chip({ label, selected, onPress, multi = false, color, primaryForeground, secondary, border, foreground }: {
+  label: string; selected: boolean; onPress: () => void; multi?: boolean;
+  color: string; primaryForeground: string; secondary: string; border: string; foreground: string;
+}) {
+  return (
+    <TouchableOpacity
+      style={[styles.chip, { backgroundColor: selected ? color : secondary, borderColor: selected ? color : border }]}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      {multi && selected && <Feather name="check" size={11} color={primaryForeground} style={{ marginRight: 2 }} />}
+      <Text style={[styles.chipTxt, { color: selected ? primaryForeground : foreground }]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function computeScores(daytime: number, nighttime: number, walkability: number, transit: number, atmosphereScore: number) {
+  const s = (v: number) => v / 5 * 100;
+  const safety = daytime && nighttime
+    ? Math.round(s(daytime) * 0.30 + s(nighttime) * 0.40 + s(walkability || 0) * 0.20 + s(transit || 0) * 0.10)
+    : 0;
+  const community = atmosphereScore ? Math.round(s(atmosphereScore)) : 0;
+  const walk = walkability
+    ? Math.round(s(walkability) * 0.70 + s(transit || 0) * 0.30)
+    : 0;
+  return { safety, community, walk };
 }
 
 export default function NeighborhoodSurveyScreen() {
@@ -63,27 +113,37 @@ export default function NeighborhoodSurveyScreen() {
   const [step, setStep] = useState(1);
   const [city, setCity] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
-  const [ratings, setRatings] = useState<Record<string, number>>({});
-  const [sentiment, setSentiment] = useState("");
+  const [visitPurpose, setVisitPurpose] = useState("");
+  const [visitFreq, setVisitFreq] = useState("");
+  const [daytimeSafety, setDaytimeSafety] = useState(0);
+  const [nighttimeSafety, setNighttimeSafety] = useState(0);
+  const [walkability, setWalkability] = useState(0);
+  const [transitSafety, setTransitSafety] = useState(0);
+  const [atmosphere, setAtmosphere] = useState("");
+  const [policeSentiment, setPoliceSentiment] = useState("");
+  const [accessibility, setAccessibility] = useState<string[]>([]);
+  const [tips, setTips] = useState<string[]>([]);
   const [comments, setComments] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  const setRating = (id: string, v: number) => {
-    setRatings((r) => ({ ...r, [id]: v }));
-    if (Platform.OS !== "web") Haptics.selectionAsync();
-  };
+  const atmosphereObj = ATMOSPHERES.find((a) => a.id === atmosphere);
+  const scores = computeScores(daytimeSafety, nighttimeSafety, walkability, transitSafety, atmosphereObj?.score ?? 0);
 
-  const canNext1 = city.trim().length > 0 && neighborhood.trim().length > 0;
-  const canNext2 = Object.keys(ratings).length >= 4;
-  const canSubmit = sentiment.length > 0;
+  const canNext1 = city.length > 0 && visitPurpose.length > 0;
+  const canNext2 = daytimeSafety > 0 && nighttimeSafety > 0;
+  const canNext3 = atmosphere.length > 0 && policeSentiment.length > 0;
+  const canGoNext = step === 1 ? canNext1 : step === 2 ? canNext2 : step === 3 ? canNext3 : true;
 
-  const next = () => {
-    if (step < TOTAL_STEPS) setStep((s) => s + 1);
-  };
+  const next = () => setStep((s) => s + 1);
 
   const handleSubmit = () => {
     setSubmitted(true);
     if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
+  const toggleMulti = (arr: string[], setArr: (v: string[]) => void, val: string) => {
+    setArr(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
+    if (Platform.OS !== "web") Haptics.selectionAsync();
   };
 
   if (submitted) {
@@ -97,6 +157,18 @@ export default function NeighborhoodSurveyScreen() {
           <Text style={[styles.doneSub, { color: colors.mutedForeground }]}>
             Thank you for helping your community make safer, more informed decisions.
           </Text>
+          <View style={[styles.scoresRow]}>
+            {[
+              { label: "Safety", val: scores.safety },
+              { label: "Community", val: scores.community },
+              { label: "Walkability", val: scores.walk },
+            ].map((s) => (
+              <View key={s.label} style={[styles.scoreCard, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "25" }]}>
+                <Text style={[styles.scoreNum, { color: colors.primary }]}>{s.val || "—"}</Text>
+                <Text style={[styles.scoreLabel, { color: colors.mutedForeground }]}>{s.label}</Text>
+              </View>
+            ))}
+          </View>
           <View style={[styles.doneStat, { backgroundColor: colors.secondary }]}>
             <Text style={[styles.doneStatNum, { color: colors.primary }]}>+25</Text>
             <Text style={[styles.doneStatLabel, { color: colors.mutedForeground }]}>Community Points earned</Text>
@@ -114,24 +186,20 @@ export default function NeighborhoodSurveyScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           style={styles.back}
-          onPress={() => (step > 1 ? setStep((s) => s - 1) : router.canGoBack() ? router.back() : router.replace("/(tabs)"))}
+          onPress={() => step > 1 ? setStep((s) => s - 1) : router.canGoBack() ? router.back() : router.replace("/(tabs)")}
         >
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Neighborhood Survey</Text>
-          <Text style={[styles.headerStep, { color: colors.mutedForeground }]}>
-            Step {step} of {TOTAL_STEPS}
-          </Text>
+          <Text style={[styles.headerStep, { color: colors.mutedForeground }]}>Step {step} of {TOTAL_STEPS}</Text>
         </View>
         <View style={{ width: 40 }} />
       </View>
 
-      {/* Progress */}
       <View style={[styles.progressTrack, { backgroundColor: colors.secondary }]}>
         <View style={[styles.progressFill, { backgroundColor: colors.primary, width: `${(step / TOTAL_STEPS) * 100}%` as any }]} />
       </View>
@@ -141,24 +209,21 @@ export default function NeighborhoodSurveyScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Step 1: Location */}
+        {/* Step 1 — Location */}
         {step === 1 && (
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: colors.foreground }]}>📍 Where are you rating?</Text>
+            <Text style={[styles.stepTitle, { color: colors.foreground }]}>📍 Location</Text>
             <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-              Your specific neighborhood helps others in the community
+              City and visit type are required — neighborhood is optional
             </Text>
 
-            <View style={{ gap: 8, marginTop: 8 }}>
-              <Text style={[styles.label, { color: colors.foreground }]}>City</Text>
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>City</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }} contentContainerStyle={{ paddingHorizontal: 4, gap: 8 }}>
                 {CITIES.map((c) => (
                   <TouchableOpacity
                     key={c}
-                    style={[
-                      styles.cityChip,
-                      { backgroundColor: city === c ? colors.primary : colors.secondary, borderColor: city === c ? colors.primary : colors.border },
-                    ]}
+                    style={[styles.cityChip, { backgroundColor: city === c ? colors.primary : colors.secondary, borderColor: city === c ? colors.primary : colors.border }]}
                     onPress={() => setCity(c)}
                   >
                     <Text style={[styles.cityChipTxt, { color: city === c ? colors.primaryForeground : colors.foreground }]}>{c}</Text>
@@ -167,8 +232,8 @@ export default function NeighborhoodSurveyScreen() {
               </ScrollView>
             </View>
 
-            <View style={{ gap: 8, marginTop: 16 }}>
-              <Text style={[styles.label, { color: colors.foreground }]}>Neighborhood / Area</Text>
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>Neighborhood / Area <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text></Text>
               <TextInput
                 style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
                 placeholder="e.g. Old Fourth Ward, Harlem, Hyde Park…"
@@ -177,87 +242,157 @@ export default function NeighborhoodSurveyScreen() {
                 onChangeText={setNeighborhood}
               />
             </View>
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>What were you doing in this area?</Text>
+              <View style={styles.chips}>
+                {VISIT_PURPOSES.map((p) => (
+                  <Chip key={p} label={p} selected={visitPurpose === p} onPress={() => setVisitPurpose(p)}
+                    color={colors.primary} primaryForeground={colors.primaryForeground}
+                    secondary={colors.secondary} border={colors.border} foreground={colors.foreground} />
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>How often do you visit this area? <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text></Text>
+              <View style={styles.chips}>
+                {VISIT_FREQ.map((f) => (
+                  <Chip key={f} label={f} selected={visitFreq === f} onPress={() => setVisitFreq(f)}
+                    color={colors.primary} primaryForeground={colors.primaryForeground}
+                    secondary={colors.secondary} border={colors.border} foreground={colors.foreground} />
+                ))}
+              </View>
+            </View>
           </View>
         )}
 
-        {/* Step 2: Ratings */}
+        {/* Step 2 — Safety Ratings */}
         {step === 2 && (
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: colors.foreground }]}>⭐ Rate the Neighborhood</Text>
+            <Text style={[styles.stepTitle, { color: colors.foreground }]}>⭐ Safety Ratings</Text>
             <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-              {neighborhood}, {city} — rate at least 4 categories
+              {neighborhood ? `${neighborhood}, ${city}` : city} — daytime and nighttime are required
             </Text>
-            <View style={{ gap: 20, marginTop: 8 }}>
-              {DIMENSIONS.map((d) => (
-                <View key={d.id} style={[styles.ratingRow, { borderBottomColor: colors.border }]}>
-                  <View style={styles.ratingLabel}>
-                    <View style={[styles.ratingIconBox, { backgroundColor: colors.secondary }]}>
-                      <Feather name={d.icon} size={16} color={colors.primary} />
-                    </View>
-                    <Text style={[styles.ratingLabelTxt, { color: colors.foreground }]}>{d.label}</Text>
-                  </View>
-                  <StarRating
-                    value={ratings[d.id] ?? 0}
-                    onChange={(v) => setRating(d.id, v)}
-                    color={colors.primary}
-                  />
+
+            {[
+              { id: "day", label: "Daytime safety", val: daytimeSafety, set: setDaytimeSafety, weight: "30% of Safety Score", color: colors.accent },
+              { id: "night", label: "Nighttime safety", val: nighttimeSafety, set: setNighttimeSafety, weight: "40% of Safety Score", color: colors.primary },
+              { id: "walk", label: "Walkability", val: walkability, set: setWalkability, weight: "20% Safety · 70% Walkability", color: colors.primary, optional: true },
+              { id: "transit", label: "Public transit safety", val: transitSafety, set: setTransitSafety, weight: "10% Safety · 30% Walkability", color: colors.accent, optional: true },
+            ].map((item) => (
+              <View key={item.id} style={[styles.ratingBlock, { borderColor: colors.border }]}>
+                <View style={styles.ratingBlockHeader}>
+                  <Text style={[styles.ratingBlockTitle, { color: colors.foreground }]}>
+                    {item.label}{item.optional && <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}> (optional)</Text>}
+                  </Text>
+                  <Text style={[styles.ratingWeight, { color: colors.mutedForeground }]}>{item.weight}</Text>
                 </View>
-              ))}
-            </View>
+                <ScaleRating value={item.val} onChange={item.set} color={item.color} lowLabel="Unsafe" highLabel="Very Safe" />
+              </View>
+            ))}
+
+            {canNext2 && (
+              <View style={[styles.liveScoreRow, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "25" }]}>
+                <Text style={[styles.liveScoreLabel, { color: colors.mutedForeground }]}>Safety Score Preview</Text>
+                <Text style={[styles.liveScoreNum, { color: colors.primary }]}>{scores.safety}<Text style={[styles.liveScoreOf, { color: colors.mutedForeground }]}>/100</Text></Text>
+              </View>
+            )}
           </View>
         )}
 
-        {/* Step 3: Police sentiment */}
+        {/* Step 3 — Community Experience */}
         {step === 3 && (
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: colors.foreground }]}>🚔 Police Sentiment</Text>
+            <Text style={[styles.stepTitle, { color: colors.foreground }]}>🏘️ Community Experience</Text>
             <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-              How would you describe your experience with local police in this area?
+              Atmosphere and police sentiment are required
             </Text>
-            <View style={{ gap: 12, marginTop: 12 }}>
-              {SENTIMENTS.map((s) => (
-                <TouchableOpacity
-                  key={s.id}
-                  style={[
-                    styles.sentimentCard,
-                    {
-                      backgroundColor: sentiment === s.id ? colors.primary + "15" : colors.card,
-                      borderColor: sentiment === s.id ? colors.primary : colors.border,
-                    },
-                  ]}
-                  onPress={() => {
-                    setSentiment(s.id);
-                    if (Platform.OS !== "web") Haptics.selectionAsync();
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={{ fontSize: 26 }}>{s.emoji}</Text>
-                  <Text style={[styles.sentimentTxt, { color: colors.foreground }]}>{s.label}</Text>
-                  {sentiment === s.id && <Feather name="check-circle" size={20} color={colors.primary} />}
-                </TouchableOpacity>
-              ))}
+
+            <View style={styles.qBlock}>
+              <View style={styles.qLabelRow}>
+                <Text style={[styles.qLabel, { color: colors.foreground }]}>Overall atmosphere</Text>
+                <Text style={[styles.qWeight, { color: colors.mutedForeground }]}>50% of Community Score</Text>
+              </View>
+              <View style={{ gap: 10 }}>
+                {ATMOSPHERES.map((a) => (
+                  <TouchableOpacity
+                    key={a.id}
+                    style={[
+                      styles.atmosphereCard,
+                      { backgroundColor: atmosphere === a.id ? colors.primary + "12" : colors.card, borderColor: atmosphere === a.id ? colors.primary : colors.border },
+                    ]}
+                    onPress={() => { setAtmosphere(a.id); if (Platform.OS !== "web") Haptics.selectionAsync(); }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.atmosphereTxt, { color: colors.foreground }]}>{a.label}</Text>
+                    {atmosphere === a.id && <Feather name="check-circle" size={18} color={colors.primary} />}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>How did police presence feel?</Text>
+              <View style={styles.chips}>
+                {POLICE_OPTIONS.map((p) => (
+                  <Chip key={p} label={p} selected={policeSentiment === p} onPress={() => setPoliceSentiment(p)}
+                    color={colors.primary} primaryForeground={colors.primaryForeground}
+                    secondary={colors.secondary} border={colors.border} foreground={colors.foreground} />
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>Accessibility features noticed <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text></Text>
+              <View style={styles.chips}>
+                {ACCESSIBILITY_FEATURES.map((f) => (
+                  <Chip key={f} label={f} selected={accessibility.includes(f)} multi
+                    onPress={() => toggleMulti(accessibility, setAccessibility, f)}
+                    color={colors.primary} primaryForeground={colors.primaryForeground}
+                    secondary={colors.secondary} border={colors.border} foreground={colors.foreground} />
+                ))}
+              </View>
             </View>
           </View>
         )}
 
-        {/* Step 4: Comments */}
+        {/* Step 4 — Tips + Comments */}
         {step === 4 && (
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: colors.foreground }]}>💬 Anything to Add?</Text>
+            <Text style={[styles.stepTitle, { color: colors.foreground }]}>💬 Tips & Comments</Text>
             <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-              Tips, warnings, or highlights for the community (optional)
+              Completely optional — help other visitors know what to expect
             </Text>
-            <TextInput
-              style={[styles.textarea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-              placeholder="Share what visitors should know about this neighborhood…"
-              placeholderTextColor={colors.mutedForeground}
-              value={comments}
-              onChangeText={setComments}
-              multiline
-              textAlignVertical="top"
-            />
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>Quick tips for visitors</Text>
+              <View style={styles.chips}>
+                {VISITOR_TIPS.map((t) => (
+                  <Chip key={t} label={t} selected={tips.includes(t)} multi
+                    onPress={() => toggleMulti(tips, setTips, t)}
+                    color={colors.primary} primaryForeground={colors.primaryForeground}
+                    secondary={colors.secondary} border={colors.border} foreground={colors.foreground} />
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>Anything else the community should know?</Text>
+              <TextInput
+                style={[styles.textarea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                placeholder="Share what visitors should know about this neighborhood…"
+                placeholderTextColor={colors.mutedForeground}
+                value={comments}
+                onChangeText={(t) => t.length <= 500 && setComments(t)}
+                multiline
+                textAlignVertical="top"
+              />
+              <Text style={[styles.charCount, { color: colors.mutedForeground }]}>{comments.length}/500</Text>
+            </View>
+
             <View style={[styles.anonRow, { backgroundColor: colors.secondary }]}>
-              <Feather name="eye-off" size={18} color={colors.mutedForeground} />
+              <Feather name="eye-off" size={16} color={colors.mutedForeground} />
               <Text style={[styles.anonTxt, { color: colors.mutedForeground }]}>
                 Surveys are always shared anonymously with the community
               </Text>
@@ -266,29 +401,23 @@ export default function NeighborhoodSurveyScreen() {
         )}
       </ScrollView>
 
-      {/* Footer CTA */}
       <View style={[styles.footer, { paddingBottom: bottomPad + 16, backgroundColor: colors.background, borderTopColor: colors.border }]}>
         {step < TOTAL_STEPS ? (
           <TouchableOpacity
-            style={[styles.nextBtn, { backgroundColor: (step === 1 ? canNext1 : canNext2) ? colors.primary : colors.muted }]}
+            style={[styles.nextBtn, { backgroundColor: canGoNext ? colors.primary : colors.muted }]}
             onPress={next}
-            disabled={step === 1 ? !canNext1 : !canNext2}
+            disabled={!canGoNext}
           >
-            <Text style={[styles.nextTxt, { color: (step === 1 ? canNext1 : canNext2) ? colors.primaryForeground : colors.mutedForeground }]}>
-              Continue
-            </Text>
-            <Feather name="arrow-right" size={18} color={(step === 1 ? canNext1 : canNext2) ? colors.primaryForeground : colors.mutedForeground} />
+            <Text style={[styles.nextTxt, { color: canGoNext ? colors.primaryForeground : colors.mutedForeground }]}>Continue</Text>
+            <Feather name="arrow-right" size={18} color={canGoNext ? colors.primaryForeground : colors.mutedForeground} />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            style={[styles.nextBtn, { backgroundColor: canSubmit ? colors.primary : colors.muted }]}
+            style={[styles.nextBtn, { backgroundColor: colors.primary }]}
             onPress={handleSubmit}
-            disabled={!canSubmit}
           >
-            <Feather name="send" size={18} color={canSubmit ? colors.primaryForeground : colors.mutedForeground} />
-            <Text style={[styles.nextTxt, { color: canSubmit ? colors.primaryForeground : colors.mutedForeground }]}>
-              Submit Survey
-            </Text>
+            <Feather name="send" size={18} color={colors.primaryForeground} />
+            <Text style={[styles.nextTxt, { color: colors.primaryForeground }]}>Submit Survey</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -298,10 +427,7 @@ export default function NeighborhoodSurveyScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: {
-    flexDirection: "row", alignItems: "center",
-    paddingHorizontal: 20, paddingBottom: 14, borderBottomWidth: 1,
-  },
+  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingBottom: 14, borderBottomWidth: 1 },
   back: { width: 40, height: 40, alignItems: "flex-start", justifyContent: "center" },
   headerCenter: { flex: 1, alignItems: "center" },
   headerTitle: { fontSize: 17, fontFamily: "Inter_700Bold" },
@@ -309,58 +435,50 @@ const styles = StyleSheet.create({
   progressTrack: { height: 3 },
   progressFill: { height: 3 },
   scroll: { padding: 20 },
-  stepContent: { gap: 16 },
+  stepContent: { gap: 20 },
   stepTitle: { fontSize: 22, fontFamily: "Inter_700Bold", lineHeight: 30 },
-  stepSub: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 },
-  label: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  input: {
-    borderWidth: 1, borderRadius: 12, padding: 14,
-    fontSize: 15, fontFamily: "Inter_400Regular",
-  },
-  cityChip: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1,
-  },
+  stepSub: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21, marginTop: -8 },
+  qBlock: { gap: 10 },
+  qLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold", lineHeight: 20 },
+  qLabelRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  qWeight: { fontSize: 11, fontFamily: "Inter_500Medium" },
+  cityChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
   cityChipTxt: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  ratingRow: {
-    gap: 10, paddingBottom: 16, borderBottomWidth: 1,
-  },
-  ratingLabel: { flexDirection: "row", alignItems: "center", gap: 10 },
-  ratingIconBox: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  ratingLabelTxt: { fontSize: 15, fontFamily: "Inter_500Medium" },
-  sentimentCard: {
-    flexDirection: "row", alignItems: "center", gap: 14,
-    padding: 16, borderRadius: 14, borderWidth: 1.5,
-  },
-  sentimentTxt: { flex: 1, fontSize: 15, fontFamily: "Inter_500Medium" },
-  textarea: {
-    borderWidth: 1, borderRadius: 14, padding: 14,
-    fontSize: 15, fontFamily: "Inter_400Regular",
-    minHeight: 140,
-  },
-  anonRow: {
-    flexDirection: "row", alignItems: "flex-start", gap: 10,
-    padding: 14, borderRadius: 12,
-  },
+  input: { borderWidth: 1, borderRadius: 12, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular" },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  chip: { flexDirection: "row", alignItems: "center", paddingHorizontal: 13, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
+  chipTxt: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  ratingBlock: { borderWidth: 1, borderRadius: 14, padding: 16, gap: 14 },
+  ratingBlockHeader: { gap: 2 },
+  ratingBlockTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  ratingWeight: { fontSize: 11, fontFamily: "Inter_500Medium" },
+  scaleBtn: { width: 46, height: 46, borderRadius: 12, borderWidth: 1.5, alignItems: "center", justifyContent: "center" },
+  scaleBtnTxt: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  scaleLabels: { flexDirection: "row", justifyContent: "space-between" },
+  scaleLow: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#999" },
+  scaleHigh: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#999" },
+  liveScoreRow: { borderWidth: 1, borderRadius: 14, padding: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  liveScoreLabel: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  liveScoreNum: { fontSize: 28, fontFamily: "Inter_700Bold" },
+  liveScoreOf: { fontSize: 14, fontFamily: "Inter_400Regular" },
+  atmosphereCard: { flexDirection: "row", alignItems: "center", padding: 14, borderRadius: 12, borderWidth: 1.5 },
+  atmosphereTxt: { flex: 1, fontSize: 15, fontFamily: "Inter_500Medium" },
+  textarea: { borderWidth: 1, borderRadius: 14, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular", minHeight: 130 },
+  charCount: { fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "right" },
+  anonRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 12 },
   anonTxt: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
-  footer: {
-    paddingHorizontal: 20, paddingTop: 14, borderTopWidth: 1,
-  },
-  nextBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 8, paddingVertical: 17, borderRadius: 16,
-  },
+  footer: { paddingHorizontal: 20, paddingTop: 14, borderTopWidth: 1 },
+  nextBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 17, borderRadius: 16 },
   nextTxt: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
-  doneWrap: {
-    flex: 1, alignItems: "center", justifyContent: "center",
-    paddingHorizontal: 32, gap: 20,
-  },
+  doneWrap: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32, gap: 18 },
   doneCircle: { width: 110, height: 110, borderRadius: 55, alignItems: "center", justifyContent: "center" },
   doneTitle: { fontSize: 28, fontFamily: "Inter_700Bold", textAlign: "center" },
   doneSub: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 23 },
-  doneStat: {
-    flexDirection: "row", alignItems: "center", gap: 10,
-    paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14,
-  },
+  scoresRow: { flexDirection: "row", gap: 10 },
+  scoreCard: { flex: 1, borderWidth: 1, borderRadius: 14, paddingVertical: 14, alignItems: "center", gap: 4 },
+  scoreNum: { fontSize: 26, fontFamily: "Inter_700Bold" },
+  scoreLabel: { fontSize: 11, fontFamily: "Inter_500Medium" },
+  doneStat: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14 },
   doneStatNum: { fontSize: 24, fontFamily: "Inter_700Bold" },
   doneStatLabel: { fontSize: 14, fontFamily: "Inter_400Regular" },
   doneBtn: { alignItems: "center", paddingVertical: 17, paddingHorizontal: 40, borderRadius: 16 },

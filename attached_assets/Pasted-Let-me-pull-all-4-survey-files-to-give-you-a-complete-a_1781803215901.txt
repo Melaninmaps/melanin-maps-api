@@ -1,0 +1,175 @@
+Let me pull all 4 survey files to give you a complete, accurate reference.
+
+Here is the complete question reference for all 4 surveys, exactly as they appear in the code, screen by screen.
+
+---
+
+# Melanin Maps™ — Complete Survey Question Reference
+
+---
+
+## 1. Business Safety Experience Survey
+*Triggered via "Rate Safety" button on each business card*
+*Scoring: Safety 40% · Return Alone 35% · Recommend 25%*
+
+---
+
+### Screen 1 — Safety Ratings *(required to advance)*
+| # | Question | Type | Weight |
+|---|---|---|---|
+| 1 | Overall safety rating | ★ 1–5 | **40%** |
+| 2 | Would you return alone? | ★ 1–5 (Definitely not → Definitely yes) | **35%** |
+| 3 | Would you recommend to the community? | ★ 1–5 (Not at all → Absolutely) | **25%** |
+
+---
+
+### Screen 2 — Visit Context *(time + group required to advance)*
+| # | Question | Type |
+|---|---|---|
+| 4 | When did you visit? | Single chip: Morning · Afternoon · Evening · Late Night |
+| 5 | Who were you with? | Single chip: Solo · Partner · Friends · Family · Work Colleagues |
+| 6 | How large was your group? | Single chip: Just me · 2 people · 3–5 people · 6+ people |
+| 7 | How often do you visit this business? | Single chip: First time · Occasionally · Regularly · Very frequently |
+
+---
+
+### Screen 3 — Incident Reporting *(required to advance)*
+| # | Question | Type |
+|---|---|---|
+| 8 | Did any safety incident occur? | Binary: No, all good · Yes, something happened |
+| 9 *(conditional — only if Yes)* | What type of incident occurred? | Multi-chip: Racial profiling · Verbal harassment · Physical altercation · Discrimination by staff · Followed or surveilled · Unwanted contact · Property damage or theft · Police involvement · Other |
+| 10 *(conditional — only if Yes)* | Was the incident reported? | Single chip: Reported to staff · Reported to police · Reported online · Not reported · Unsure |
+
+---
+
+### Screen 4 — Tips + Comments *(optional, always valid)*
+| # | Question | Type |
+|---|---|---|
+| 11 | Quick safety tips for visitors | Multi-chip: Great for solo travelers · Better with a group · Avoid late at night · Staff were welcoming · Staff were unwelcoming · Very inclusive atmosphere · Keep valuables secure · Well-lit and visible |
+| 12 | Anything else to share? | Open text (500 chars) |
+
+---
+---
+
+## 2. Neighborhood Safety Survey
+*Triggered via "Rate a Neighborhood" button in the directory header*
+*Scoring: Safety Score · Community Score · Walkability Score → Overall*
+
+---
+
+### Screen 1 — Location *(city + visit type required to advance)*
+| # | Question | Type |
+|---|---|---|
+| 1 | City | Single chip: 15 cities + Other |
+| 2 | Neighborhood | Open text (optional) |
+| 3 | What were you doing in this area? | Single chip: Dining out · Shopping · Nightlife · Sightseeing · Staying nearby · Commuting · Just passing through |
+| 4 | How often do you visit this area? | Single chip: First time · Occasionally · Regularly · I live here |
+
+---
+
+### Screen 2 — Safety Ratings *(daytime + nighttime required to advance)*
+| # | Question | Type | Weight |
+|---|---|---|---|
+| 5 | Daytime safety | Scale 1–5 (Unsafe → Very Safe) | 30% of Safety Score |
+| 6 | Nighttime safety | Scale 1–5 (Unsafe → Very Safe) | **40% of Safety Score** |
+| 7 | Walkability | Scale 1–5 (Not walkable → Very walkable) | 20% of Safety Score · 70% of Walkability Score |
+| 8 | Public transit safety | Scale 1–5 (Unsafe → Very Safe) | 10% of Safety Score · 30% of Walkability Score |
+
+---
+
+### Screen 3 — Community Experience *(atmosphere + police sentiment required to advance)*
+| # | Question | Type | Weight |
+|---|---|---|---|
+| 9 | How would you describe the overall atmosphere? | Single chip: Very welcoming · Mostly welcoming · Neutral · Slightly unwelcoming · Hostile or uncomfortable | **50% of Community Score** |
+| 10 | How did police presence feel in this area? | Single chip: Protective · Neutral · Intimidating · Absent · Over-policed · Didn't notice any | Qualitative |
+| 11 | What accessibility features did you notice? | Multi-chip: Wheelchair accessible sidewalks · Good street lighting · Accessible public transit · Gender-neutral restrooms nearby · Family-friendly spaces · LGBTQ+ friendly businesses · None noticed | Qualitative |
+
+---
+
+### Screen 4 — Tips + Comments *(optional, always valid)*
+| # | Question | Type |
+|---|---|---|
+| 12 | Quick tips for visitors | Multi-chip: Great for solo travelers · Better with a group at night · Keep valuables hidden · Use rideshare after dark · Parking can be tricky · Very family friendly · Active street life · Quiet and residential |
+| 13 | Anything else the community should know? | Open text (500 chars) |
+
+---
+---
+
+## 3. Onboarding Preference Survey
+*Triggered via "Update preferences" in /for-you header*
+*No score — builds a weighted user profile for the personalization engine*
+
+---
+
+### Screen 1 — Travel Style *(required to advance)*
+| # | Question | Type |
+|---|---|---|
+| 1 | How do you like to travel? | Single chip: Explorer · Foodie · Culture Seeker · Nightlife · Wellness · Shopper · History Buff · Business Traveler · Adventure Seeker · Relaxation |
+
+---
+
+### Screen 2 — Cities of Interest *(at least 1 required to advance)*
+| # | Question | Type |
+|---|---|---|
+| 2 | Which cities interest you? | Multi-chip: Atlanta · Houston · Chicago · Washington DC · New York · New Orleans · Los Angeles · Miami · Dallas · Philadelphia · Detroit · Baltimore · Memphis · Charlotte |
+
+---
+
+### Screen 3 — Travel Companions + Context *(group type + budget required to advance)*
+| # | Question | Type |
+|---|---|---|
+| 3 | Travel companions | Single chip: Solo · Partner · Friends · Family · Work Colleagues |
+| 4 | Budget range | Single chip: Budget · Mid-range · Luxury |
+| 5 | Typical trip length | Single chip: Day trip · Weekend getaway · 3–5 days · A week or more |
+
+---
+
+### Screen 4 — Interests + Safety Priority *(interests + safety priority required to advance)*
+| # | Question | Type | Derived Output |
+|---|---|---|---|
+| 6 | What are you most interested in? | Multi-chip: Restaurants · Bars & Nightlife · Salons & Spas · Shopping · Hotels · Entertainment · Fitness · Coffee Shops · Art & Culture · Outdoor Activities · Black-Owned Only | `blackOwnedWeight` = 1.0 if selected |
+| 7 | How important is safety scoring to you? | Single chip: 5 options from "Top priority" → "Show me everything" | `safetyWeight` = 0.20–1.0 |
+| 8 | Any accessibility needs? | Multi-chip: Wheelchair accessible · Quiet spaces · Sensory-friendly · Gender-neutral restrooms · Service animal friendly *(optional)* | Profile tag |
+
+---
+---
+
+## 4. AI Itinerary Feedback Survey
+*Triggered via "Rate this itinerary" button on /for-you*
+*Scoring: Overall 40% · Accuracy 35% · Usefulness 25% → 0–100*
+
+---
+
+### Screen 1 — Star Ratings *(overall required to advance)*
+| # | Question | Type | Weight |
+|---|---|---|---|
+| 1 | Overall quality | ★ 1–5 (Poor → Excellent) | **40%** |
+| 2 | Accuracy of recommendations | ★ 1–5 (Very inaccurate → Spot on) | **35%** |
+| 3 | How useful was it for planning? | ★ 1–5 (Not useful → Extremely useful) | **25%** |
+| — | *Live score preview* | Appears once all 3 are filled: `X/100` | Computed |
+
+---
+
+### Screen 2 — Would Use Again *(required to advance)*
+| # | Question | Type |
+|---|---|---|
+| 4 | Would you use AI itineraries again? | 5-option sentiment scale: Absolutely — already planning my next one · Yes, I would use it again · Maybe, with some improvements · Probably not · No — it missed the mark |
+
+---
+
+### Screen 3 — What Worked + What to Improve *(optional, always valid)*
+| # | Question | Type |
+|---|---|---|
+| 5 | What worked well? | Multi-chip: Great restaurant picks · Good safety scores · Realistic timing · Matched my budget · Black-owned focus · Good neighborhood variety · Accurate descriptions · Easy to follow · Discovered new places · Felt culturally relevant |
+| 6 | What needs improvement? | Multi-chip: More diverse categories · Better safety context · More budget options · Longer itineraries · Better time estimates · More local gems · Clearer directions · More nightlife options · More family-friendly options · Better Black-owned coverage |
+
+---
+
+### Screen 4 — Open Comments *(optional, always valid)*
+| # | Question | Type |
+|---|---|---|
+| 7 | Any other feedback? | Open text (500 chars) |
+
+---
+
+**Total questions across all 4 surveys: 47** (50 including the 3 conditional incident questions on Survey 1). Every scored question has its weight documented above. The onboarding survey produces no score — only a `safetyWeight` (0.20–1.0) and `blackOwnedWeight` (0 or 1.0) that feed directly into the personalization engine.

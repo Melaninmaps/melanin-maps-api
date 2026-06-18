@@ -3,7 +3,6 @@ import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
@@ -15,44 +14,64 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
-const CATEGORIES = [
-  { id: "service", label: "Service" },
-  { id: "quality", label: "Quality" },
-  { id: "atmosphere", label: "Atmosphere" },
-  { id: "value", label: "Value" },
+const VISIT_TIMES = ["Morning", "Afternoon", "Evening", "Late Night"];
+const GROUP_TYPES = ["Solo", "Partner", "Friends", "Family", "Work Colleagues"];
+const GROUP_SIZES = ["Just me", "2 people", "3–5 people", "6+ people"];
+const VISIT_FREQ = ["First time", "Occasionally", "Regularly", "Very frequently"];
+const INCIDENT_TYPES = [
+  "Racial profiling", "Verbal harassment", "Physical altercation",
+  "Discrimination by staff", "Followed or surveilled", "Unwanted contact",
+  "Property damage or theft", "Police involvement", "Other",
+];
+const INCIDENT_REPORTED = [
+  "Reported to staff", "Reported to police", "Reported online", "Not reported", "Unsure",
+];
+const SAFETY_TIPS = [
+  "Great for solo travelers", "Better with a group", "Avoid late at night",
+  "Staff were welcoming", "Staff were unwelcoming", "Very inclusive atmosphere",
+  "Keep valuables secure", "Well-lit and visible",
 ];
 
+const TOTAL_STEPS = 4;
+
+const RETURN_LABELS = ["", "Definitely not", "Probably not", "Maybe", "Probably yes", "Definitely yes"];
+const RECOMMEND_LABELS = ["", "Not at all", "Unlikely", "Possibly", "Likely", "Absolutely"];
+
 function StarRow({
-  rating,
-  onChange,
-  size = 28,
-  color,
+  value, onChange, size = 28, color, emptyColor = "#D4D0C8",
 }: {
-  rating: number;
-  onChange: (r: number) => void;
-  size?: number;
-  color: string;
+  value: number; onChange: (v: number) => void; size?: number; color: string; emptyColor?: string;
 }) {
   return (
     <View style={{ flexDirection: "row", gap: 6 }}>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <TouchableOpacity
-          key={i}
-          onPress={() => {
-            onChange(i);
-            if (Platform.OS !== "web") Haptics.selectionAsync();
-          }}
-          hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-        >
-          <Feather
-            name={i <= rating ? "star" : "star"}
-            size={size}
-            color={i <= rating ? color : "#E8DDD0"}
-          />
+      {[1, 2, 3, 4, 5].map((n) => (
+        <TouchableOpacity key={n} onPress={() => onChange(n)} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+          <Feather name="star" size={size} color={n <= value ? color : emptyColor} />
         </TouchableOpacity>
       ))}
     </View>
   );
+}
+
+function Chip({ label, selected, onPress, multi = false, color, primaryForeground, secondary, border, foreground }: {
+  label: string; selected: boolean; onPress: () => void; multi?: boolean;
+  color: string; primaryForeground: string; secondary: string; border: string; foreground: string;
+}) {
+  return (
+    <TouchableOpacity
+      style={[styles.chip, { backgroundColor: selected ? color : secondary, borderColor: selected ? color : border }]}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      {multi && selected && <Feather name="check" size={11} color={primaryForeground} style={{ marginRight: 2 }} />}
+      <Text style={[styles.chipTxt, { color: selected ? primaryForeground : foreground }]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function computeScore(safety: number, returnAlone: number, recommend: number): number {
+  if (!safety || !returnAlone || !recommend) return 0;
+  return Math.round((safety * 0.4 + returnAlone * 0.35 + recommend * 0.25) / 5 * 100);
 }
 
 export default function WriteReviewScreen() {
@@ -62,58 +81,94 @@ export default function WriteReviewScreen() {
   const params = useLocalSearchParams<{ businessId?: string; businessName?: string }>();
 
   const businessName = params.businessName ?? "Sweet Auburn BBQ";
-
-  const [overall, setOverall] = useState(0);
-  const [catRatings, setCatRatings] = useState<Record<string, number>>({
-    service: 0, quality: 0, atmosphere: 0, value: 0,
-  });
-  const [reviewText, setReviewText] = useState("");
-  const [feltSafe, setFeltSafe] = useState<boolean | null>(null);
-  const [isAnonymous, setIsAnonymous] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  const canSubmit = overall > 0 && reviewText.trim().length >= 10 && feltSafe !== null;
+  const [step, setStep] = useState(1);
+  const [safetyRating, setSafetyRating] = useState(0);
+  const [returnAloneRating, setReturnAloneRating] = useState(0);
+  const [recommendRating, setRecommendRating] = useState(0);
+  const [visitTime, setVisitTime] = useState("");
+  const [groupType, setGroupType] = useState("");
+  const [groupSize, setGroupSize] = useState("");
+  const [visitFreq, setVisitFreq] = useState("");
+  const [incidentOccurred, setIncidentOccurred] = useState<boolean | null>(null);
+  const [incidentTypes, setIncidentTypes] = useState<string[]>([]);
+  const [incidentReported, setIncidentReported] = useState("");
+  const [tips, setTips] = useState<string[]>([]);
+  const [comments, setComments] = useState("");
+  const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = async () => {
-    if (!canSubmit) return;
-    if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
+  const score = computeScore(safetyRating, returnAloneRating, recommendRating);
+
+  const canNext1 = safetyRating > 0 && returnAloneRating > 0 && recommendRating > 0;
+  const canNext2 = visitTime.length > 0 && groupType.length > 0;
+  const canNext3 = incidentOccurred !== null;
+
+  const canGoNext = step === 1 ? canNext1 : step === 2 ? canNext2 : step === 3 ? canNext3 : true;
+
+  const next = () => {
+    if (step < TOTAL_STEPS) setStep((s) => s + 1);
+  };
+
+  const handleSubmit = () => {
     setSubmitted(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    router.canGoBack() ? router.back() : router.replace("/(tabs)");
+    if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
+  const toggleMulti = (arr: string[], setArr: (v: string[]) => void, val: string) => {
+    setArr(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
+    if (Platform.OS !== "web") Haptics.selectionAsync();
   };
 
   if (submitted) {
     return (
-      <View style={[styles.root, styles.successRoot, { backgroundColor: colors.background }]}>
-        <View style={[styles.successIcon, { backgroundColor: colors.success + "18" }]}>
-          <Feather name="check-circle" size={52} color={colors.success} />
+      <View style={[styles.root, { backgroundColor: colors.background }]}>
+        <View style={[styles.doneWrap, { paddingTop: topPad }]}>
+          <View style={[styles.doneCircle, { backgroundColor: colors.success + "20" }]}>
+            <Feather name="check-circle" size={56} color={colors.success} />
+          </View>
+          <Text style={[styles.doneTitle, { color: colors.foreground }]}>Survey Submitted!</Text>
+          <Text style={[styles.doneSub, { color: colors.mutedForeground }]}>
+            Your safety report helps the community make informed decisions.
+          </Text>
+          <View style={[styles.scoreCard, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
+            <Text style={[styles.scoreNum, { color: colors.primary }]}>{score}</Text>
+            <Text style={[styles.scoreLabel, { color: colors.mutedForeground }]}>Safety Score / 100</Text>
+          </View>
+          <View style={[styles.doneStat, { backgroundColor: colors.secondary }]}>
+            <Text style={[styles.doneStatNum, { color: colors.primary }]}>+20</Text>
+            <Text style={[styles.doneStatLabel, { color: colors.mutedForeground }]}>Community Points earned</Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.doneBtn, { backgroundColor: colors.primary }]}
+            onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}
+          >
+            <Text style={[styles.doneBtnTxt, { color: colors.primaryForeground }]}>Back to Dashboard</Text>
+          </TouchableOpacity>
         </View>
-        <Text style={[styles.successTitle, { color: colors.foreground }]}>Review Posted!</Text>
-        <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
-          Thank you for helping the community
-        </Text>
       </View>
     );
   }
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.root, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
-          <Feather name="x" size={22} color={colors.foreground} />
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
+        <TouchableOpacity
+          style={styles.back}
+          onPress={() => step > 1 ? setStep((s) => s - 1) : router.canGoBack() ? router.back() : router.replace("/(tabs)")}
+        >
+          <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Write a Review</Text>
+        <View style={styles.headerCenter}>
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Business Safety Survey</Text>
+          <Text style={[styles.headerStep, { color: colors.mutedForeground }]}>Step {step} of {TOTAL_STEPS}</Text>
+        </View>
         <View style={{ width: 40 }} />
+      </View>
+
+      <View style={[styles.progressTrack, { backgroundColor: colors.secondary }]}>
+        <View style={[styles.progressFill, { backgroundColor: colors.primary, width: `${(step / TOTAL_STEPS) * 100}%` as any }]} />
       </View>
 
       <ScrollView
@@ -121,190 +176,300 @@ export default function WriteReviewScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.businessChip, { backgroundColor: colors.secondary }]}>
-          <Feather name="map-pin" size={14} color={colors.primary} />
-          <Text style={[styles.businessChipTxt, { color: colors.foreground }]}>{businessName}</Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Overall Rating</Text>
-          <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>How was your overall experience?</Text>
-          <StarRow rating={overall} onChange={setOverall} size={40} color={colors.primary} />
-          {overall > 0 && (
-            <Text style={[styles.ratingLabel, { color: colors.primary }]}>
-              {["", "Poor", "Fair", "Good", "Great", "Excellent!"][overall]}
+        {/* Step 1 — Safety Ratings */}
+        {step === 1 && (
+          <View style={styles.stepContent}>
+            <View style={[styles.bizChip, { backgroundColor: colors.secondary }]}>
+              <Feather name="map-pin" size={13} color={colors.primary} />
+              <Text style={[styles.bizChipTxt, { color: colors.foreground }]}>{businessName}</Text>
+            </View>
+            <Text style={[styles.stepTitle, { color: colors.foreground }]}>🛡️ Safety Ratings</Text>
+            <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
+              All three ratings are required — these form the safety score
             </Text>
-          )}
-        </View>
 
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Rate by Category</Text>
-          {CATEGORIES.map((cat) => (
-            <View key={cat.id} style={styles.catRow}>
-              <Text style={[styles.catLabel, { color: colors.foreground }]}>{cat.label}</Text>
-              <StarRow
-                rating={catRatings[cat.id]}
-                onChange={(r) => setCatRatings((prev) => ({ ...prev, [cat.id]: r }))}
-                size={22}
-                color={colors.accent}
-              />
-            </View>
-          ))}
-        </View>
-
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Your Review</Text>
-          <TextInput
-            style={[
-              styles.textArea,
-              { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground },
-            ]}
-            placeholder="Share your experience to help the community…"
-            placeholderTextColor={colors.mutedForeground}
-            value={reviewText}
-            onChangeText={setReviewText}
-            multiline
-            numberOfLines={5}
-            textAlignVertical="top"
-          />
-          <Text style={[styles.charCount, { color: reviewText.length < 10 && reviewText.length > 0 ? colors.destructive : colors.mutedForeground }]}>
-            {reviewText.length} characters {reviewText.length < 10 && reviewText.length > 0 ? "(min 10)" : ""}
-          </Text>
-        </View>
-
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Safety Experience</Text>
-          <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>
-            Did you feel welcomed and safe here?
-          </Text>
-          <View style={styles.safetyRow}>
-            {[true, false].map((val) => (
-              <TouchableOpacity
-                key={String(val)}
-                style={[
-                  styles.safetyBtn,
-                  {
-                    backgroundColor: feltSafe === val ? (val ? colors.success : colors.destructive) : colors.card,
-                    borderColor: feltSafe === val ? (val ? colors.success : colors.destructive) : colors.border,
-                  },
-                ]}
-                onPress={() => {
-                  setFeltSafe(val);
-                  if (Platform.OS !== "web") Haptics.selectionAsync();
-                }}
-                activeOpacity={0.8}
-              >
-                <Feather
-                  name={val ? "check-circle" : "alert-circle"}
-                  size={18}
-                  color={feltSafe === val ? "#FFF" : colors.mutedForeground}
-                />
-                <Text style={[styles.safetyBtnTxt, { color: feltSafe === val ? "#FFF" : colors.foreground }]}>
-                  {val ? "Yes, felt safe" : "No, concerns"}
+            <View style={[styles.ratingBlock, { borderColor: colors.border }]}>
+              <View style={styles.ratingBlockHeader}>
+                <Text style={[styles.ratingBlockTitle, { color: colors.foreground }]}>Overall safety rating</Text>
+                <Text style={[styles.ratingWeight, { color: colors.mutedForeground }]}>40%</Text>
+              </View>
+              <StarRow value={safetyRating} onChange={(v) => { setSafetyRating(v); if (Platform.OS !== "web") Haptics.selectionAsync(); }} size={32} color={colors.primary} />
+              {safetyRating > 0 && (
+                <Text style={[styles.ratingHint, { color: colors.primary }]}>
+                  {["", "Very unsafe", "Unsafe", "Neutral", "Safe", "Very safe"][safetyRating]}
                 </Text>
-              </TouchableOpacity>
-            ))}
+              )}
+            </View>
+
+            <View style={[styles.ratingBlock, { borderColor: colors.border }]}>
+              <View style={styles.ratingBlockHeader}>
+                <Text style={[styles.ratingBlockTitle, { color: colors.foreground }]}>Would you return alone?</Text>
+                <Text style={[styles.ratingWeight, { color: colors.mutedForeground }]}>35%</Text>
+              </View>
+              <StarRow value={returnAloneRating} onChange={(v) => { setReturnAloneRating(v); if (Platform.OS !== "web") Haptics.selectionAsync(); }} size={32} color={colors.accent} />
+              {returnAloneRating > 0 && (
+                <Text style={[styles.ratingHint, { color: colors.accent }]}>{RETURN_LABELS[returnAloneRating]}</Text>
+              )}
+            </View>
+
+            <View style={[styles.ratingBlock, { borderColor: colors.border }]}>
+              <View style={styles.ratingBlockHeader}>
+                <Text style={[styles.ratingBlockTitle, { color: colors.foreground }]}>Recommend to the community?</Text>
+                <Text style={[styles.ratingWeight, { color: colors.mutedForeground }]}>25%</Text>
+              </View>
+              <StarRow value={recommendRating} onChange={(v) => { setRecommendRating(v); if (Platform.OS !== "web") Haptics.selectionAsync(); }} size={32} color={colors.primary} />
+              {recommendRating > 0 && (
+                <Text style={[styles.ratingHint, { color: colors.primary }]}>{RECOMMEND_LABELS[recommendRating]}</Text>
+              )}
+            </View>
+
+            {canNext1 && (
+              <View style={[styles.liveScore, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
+                <Text style={[styles.liveScoreLabel, { color: colors.mutedForeground }]}>Safety Score Preview</Text>
+                <Text style={[styles.liveScoreNum, { color: colors.primary }]}>{score}<Text style={[styles.liveScoreOf, { color: colors.mutedForeground }]}>/100</Text></Text>
+              </View>
+            )}
           </View>
-        </View>
+        )}
 
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        {/* Step 2 — Visit Context */}
+        {step === 2 && (
+          <View style={styles.stepContent}>
+            <Text style={[styles.stepTitle, { color: colors.foreground }]}>🕐 Visit Context</Text>
+            <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
+              Tell us about when and how you visited — time and group type are required
+            </Text>
 
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={styles.toggleRow}
-            onPress={() => setIsAnonymous(!isAnonymous)}
-            activeOpacity={0.75}
-          >
-            <View>
-              <Text style={[styles.toggleLabel, { color: colors.foreground }]}>Post Anonymously</Text>
-              <Text style={[styles.toggleSub, { color: colors.mutedForeground }]}>Your name won't be shown</Text>
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>When did you visit?</Text>
+              <View style={styles.chips}>
+                {VISIT_TIMES.map((t) => (
+                  <Chip key={t} label={t} selected={visitTime === t} onPress={() => setVisitTime(t)}
+                    color={colors.primary} primaryForeground={colors.primaryForeground}
+                    secondary={colors.secondary} border={colors.border} foreground={colors.foreground} />
+                ))}
+              </View>
             </View>
-            <View
-              style={[
-                styles.toggleSwitch,
-                { backgroundColor: isAnonymous ? colors.primary : colors.border },
-              ]}
-            >
-              <View style={[styles.toggleThumb, { transform: [{ translateX: isAnonymous ? 20 : 2 }] }]} />
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>Who were you with?</Text>
+              <View style={styles.chips}>
+                {GROUP_TYPES.map((t) => (
+                  <Chip key={t} label={t} selected={groupType === t} onPress={() => setGroupType(t)}
+                    color={colors.primary} primaryForeground={colors.primaryForeground}
+                    secondary={colors.secondary} border={colors.border} foreground={colors.foreground} />
+                ))}
+              </View>
             </View>
-          </TouchableOpacity>
-        </View>
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>How large was your group? <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text></Text>
+              <View style={styles.chips}>
+                {GROUP_SIZES.map((t) => (
+                  <Chip key={t} label={t} selected={groupSize === t} onPress={() => setGroupSize(t)}
+                    color={colors.primary} primaryForeground={colors.primaryForeground}
+                    secondary={colors.secondary} border={colors.border} foreground={colors.foreground} />
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>How often do you visit? <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text></Text>
+              <View style={styles.chips}>
+                {VISIT_FREQ.map((t) => (
+                  <Chip key={t} label={t} selected={visitFreq === t} onPress={() => setVisitFreq(t)}
+                    color={colors.primary} primaryForeground={colors.primaryForeground}
+                    secondary={colors.secondary} border={colors.border} foreground={colors.foreground} />
+                ))}
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Step 3 — Incident Reporting */}
+        {step === 3 && (
+          <View style={styles.stepContent}>
+            <Text style={[styles.stepTitle, { color: colors.foreground }]}>⚠️ Incident Reporting</Text>
+            <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
+              Your safety report is always anonymous and helps protect others
+            </Text>
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>Did any safety incident occur?</Text>
+              <View style={{ gap: 10 }}>
+                {[
+                  { val: false, label: "No, all good", icon: "check-circle" as const, col: colors.success },
+                  { val: true, label: "Yes, something happened", icon: "alert-circle" as const, col: colors.destructive },
+                ].map((opt) => (
+                  <TouchableOpacity
+                    key={String(opt.val)}
+                    style={[
+                      styles.incidentOption,
+                      {
+                        backgroundColor: incidentOccurred === opt.val ? opt.col + "12" : colors.card,
+                        borderColor: incidentOccurred === opt.val ? opt.col : colors.border,
+                      },
+                    ]}
+                    onPress={() => {
+                      setIncidentOccurred(opt.val);
+                      if (!opt.val) { setIncidentTypes([]); setIncidentReported(""); }
+                      if (Platform.OS !== "web") Haptics.selectionAsync();
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Feather name={opt.icon} size={20} color={incidentOccurred === opt.val ? opt.col : colors.mutedForeground} />
+                    <Text style={[styles.incidentOptionTxt, { color: colors.foreground }]}>{opt.label}</Text>
+                    {incidentOccurred === opt.val && <Feather name="check-circle" size={18} color={opt.col} />}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {incidentOccurred === true && (
+              <>
+                <View style={styles.qBlock}>
+                  <Text style={[styles.qLabel, { color: colors.foreground }]}>What type of incident occurred? <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(select all that apply)</Text></Text>
+                  <View style={styles.chips}>
+                    {INCIDENT_TYPES.map((t) => (
+                      <Chip key={t} label={t} selected={incidentTypes.includes(t)} multi
+                        onPress={() => toggleMulti(incidentTypes, setIncidentTypes, t)}
+                        color={colors.destructive} primaryForeground="#FFF"
+                        secondary={colors.secondary} border={colors.border} foreground={colors.foreground} />
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.qBlock}>
+                  <Text style={[styles.qLabel, { color: colors.foreground }]}>Was the incident reported? <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text></Text>
+                  <View style={styles.chips}>
+                    {INCIDENT_REPORTED.map((t) => (
+                      <Chip key={t} label={t} selected={incidentReported === t} onPress={() => setIncidentReported(t)}
+                        color={colors.primary} primaryForeground={colors.primaryForeground}
+                        secondary={colors.secondary} border={colors.border} foreground={colors.foreground} />
+                    ))}
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
+        )}
+
+        {/* Step 4 — Tips + Comments */}
+        {step === 4 && (
+          <View style={styles.stepContent}>
+            <Text style={[styles.stepTitle, { color: colors.foreground }]}>💡 Tips & Comments</Text>
+            <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
+              Completely optional — share what visitors should know
+            </Text>
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>Quick safety tips for visitors</Text>
+              <View style={styles.chips}>
+                {SAFETY_TIPS.map((t) => (
+                  <Chip key={t} label={t} selected={tips.includes(t)} multi
+                    onPress={() => toggleMulti(tips, setTips, t)}
+                    color={colors.primary} primaryForeground={colors.primaryForeground}
+                    secondary={colors.secondary} border={colors.border} foreground={colors.foreground} />
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>Anything else to share?</Text>
+              <TextInput
+                style={[styles.textarea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                placeholder="Share any additional context for the community…"
+                placeholderTextColor={colors.mutedForeground}
+                value={comments}
+                onChangeText={(t) => t.length <= 500 && setComments(t)}
+                multiline
+                textAlignVertical="top"
+              />
+              <Text style={[styles.charCount, { color: colors.mutedForeground }]}>{comments.length}/500</Text>
+            </View>
+
+            <View style={[styles.anonRow, { backgroundColor: colors.secondary }]}>
+              <Feather name="eye-off" size={16} color={colors.mutedForeground} />
+              <Text style={[styles.anonTxt, { color: colors.mutedForeground }]}>
+                Surveys are always shared anonymously with the community
+              </Text>
+            </View>
+          </View>
+        )}
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: bottomPad + 16 }]}>
-        <TouchableOpacity
-          style={[styles.submitBtn, { backgroundColor: canSubmit ? colors.primary : colors.muted }]}
-          onPress={handleSubmit}
-          disabled={!canSubmit || loading}
-          activeOpacity={0.85}
-        >
-          <Feather name="send" size={16} color={canSubmit ? colors.primaryForeground : colors.mutedForeground} />
-          <Text style={[styles.submitTxt, { color: canSubmit ? colors.primaryForeground : colors.mutedForeground }]}>
-            {loading ? "Posting…" : "Post Review"}
-          </Text>
-        </TouchableOpacity>
+      <View style={[styles.footer, { paddingBottom: bottomPad + 16, backgroundColor: colors.background, borderTopColor: colors.border }]}>
+        {step < TOTAL_STEPS ? (
+          <TouchableOpacity
+            style={[styles.nextBtn, { backgroundColor: canGoNext ? colors.primary : colors.muted }]}
+            onPress={next}
+            disabled={!canGoNext}
+          >
+            <Text style={[styles.nextTxt, { color: canGoNext ? colors.primaryForeground : colors.mutedForeground }]}>Continue</Text>
+            <Feather name="arrow-right" size={18} color={canGoNext ? colors.primaryForeground : colors.mutedForeground} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[styles.nextBtn, { backgroundColor: colors.primary }]}
+            onPress={handleSubmit}
+          >
+            <Feather name="send" size={18} color={colors.primaryForeground} />
+            <Text style={[styles.nextTxt, { color: colors.primaryForeground }]}>Submit Survey</Text>
+          </TouchableOpacity>
+        )}
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  successRoot: { alignItems: "center", justifyContent: "center", gap: 16 },
-  successIcon: { width: 100, height: 100, borderRadius: 50, alignItems: "center", justifyContent: "center" },
-  successTitle: { fontSize: 26, fontFamily: "Inter_700Bold" },
-  successSub: { fontSize: 15, fontFamily: "Inter_400Regular" },
-  header: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 20, paddingBottom: 12,
-  },
-  backBtn: { width: 40, height: 40, alignItems: "flex-start", justifyContent: "center" },
+  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingBottom: 14, borderBottomWidth: 1 },
+  back: { width: 40, height: 40, alignItems: "flex-start", justifyContent: "center" },
+  headerCenter: { flex: 1, alignItems: "center" },
   headerTitle: { fontSize: 17, fontFamily: "Inter_700Bold" },
-  scroll: { paddingHorizontal: 20 },
-  businessChip: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 7,
-    borderRadius: 20, marginBottom: 20,
-  },
-  businessChipTxt: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  section: { paddingVertical: 20, gap: 14 },
-  sectionTitle: { fontSize: 17, fontFamily: "Inter_700Bold" },
-  sectionSub: { fontSize: 14, fontFamily: "Inter_400Regular" },
-  ratingLabel: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
-  divider: { height: 1 },
-  catRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  catLabel: { fontSize: 15, fontFamily: "Inter_400Regular", width: 90 },
-  textArea: {
-    borderWidth: 1, borderRadius: 14, padding: 14,
-    fontSize: 15, fontFamily: "Inter_400Regular", minHeight: 120,
-  },
+  headerStep: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
+  progressTrack: { height: 3 },
+  progressFill: { height: 3 },
+  scroll: { padding: 20 },
+  stepContent: { gap: 20 },
+  bizChip: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+  bizChipTxt: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  stepTitle: { fontSize: 22, fontFamily: "Inter_700Bold", lineHeight: 30 },
+  stepSub: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21, marginTop: -8 },
+  ratingBlock: { borderWidth: 1, borderRadius: 14, padding: 16, gap: 12 },
+  ratingBlockHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  ratingBlockTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", flex: 1 },
+  ratingWeight: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  ratingHint: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  liveScore: { borderWidth: 1, borderRadius: 14, padding: 16, alignItems: "center", gap: 4 },
+  liveScoreLabel: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  liveScoreNum: { fontSize: 36, fontFamily: "Inter_700Bold" },
+  liveScoreOf: { fontSize: 16, fontFamily: "Inter_400Regular" },
+  qBlock: { gap: 10 },
+  qLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold", lineHeight: 20 },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  chip: { flexDirection: "row", alignItems: "center", paddingHorizontal: 13, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
+  chipTxt: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  incidentOption: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16, borderRadius: 14, borderWidth: 1.5 },
+  incidentOptionTxt: { flex: 1, fontSize: 15, fontFamily: "Inter_500Medium" },
+  textarea: { borderWidth: 1, borderRadius: 14, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular", minHeight: 130 },
   charCount: { fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "right" },
-  safetyRow: { flexDirection: "row", gap: 12 },
-  safetyBtn: {
-    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 8, paddingVertical: 14, borderRadius: 12, borderWidth: 1.5,
-  },
-  safetyBtnTxt: { fontSize: 14, fontFamily: "Inter_500Medium" },
-  toggleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  toggleLabel: { fontSize: 15, fontFamily: "Inter_500Medium" },
-  toggleSub: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 2 },
-  toggleSwitch: {
-    width: 46, height: 26, borderRadius: 13, justifyContent: "center",
-  },
-  toggleThumb: {
-    width: 22, height: 22, borderRadius: 11, backgroundColor: "#FFF",
-    shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 },
-  },
-  footer: { paddingHorizontal: 20, paddingTop: 12 },
-  submitBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 8, paddingVertical: 17, borderRadius: 14,
-  },
-  submitTxt: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
+  anonRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 12 },
+  anonTxt: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
+  footer: { paddingHorizontal: 20, paddingTop: 14, borderTopWidth: 1 },
+  nextBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 17, borderRadius: 16 },
+  nextTxt: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
+  doneWrap: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32, gap: 18 },
+  doneCircle: { width: 110, height: 110, borderRadius: 55, alignItems: "center", justifyContent: "center" },
+  doneTitle: { fontSize: 28, fontFamily: "Inter_700Bold", textAlign: "center" },
+  doneSub: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 23 },
+  scoreCard: { borderWidth: 1, borderRadius: 16, paddingVertical: 20, paddingHorizontal: 40, alignItems: "center", gap: 4 },
+  scoreNum: { fontSize: 48, fontFamily: "Inter_700Bold" },
+  scoreLabel: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  doneStat: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14 },
+  doneStatNum: { fontSize: 24, fontFamily: "Inter_700Bold" },
+  doneStatLabel: { fontSize: 14, fontFamily: "Inter_400Regular" },
+  doneBtn: { alignItems: "center", paddingVertical: 17, paddingHorizontal: 40, borderRadius: 16 },
+  doneBtnTxt: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
 });
