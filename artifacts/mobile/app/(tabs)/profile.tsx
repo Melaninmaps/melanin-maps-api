@@ -19,12 +19,12 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useAuth } from "@/lib/auth";
 
 const SETTINGS = [
-  { icon: "bell" as const, label: "Notifications", sub: "Manage alerts and updates" },
-  { icon: "shield" as const, label: "Privacy & Safety", sub: "Control your data and visibility" },
-  { icon: "star" as const, label: "My Reviews", sub: "View and manage your reviews" },
-  { icon: "share-2" as const, label: "Referral Program", sub: "Invite friends, earn rewards" },
-  { icon: "help-circle" as const, label: "Help & Support", sub: "Get help from our team" },
-  { icon: "info" as const, label: "About Mapping with Melanin", sub: "Version 1.0.0" },
+  { icon: "bell" as const, label: "Notifications", sub: "Manage alerts and updates", route: null },
+  { icon: "shield" as const, label: "Privacy & Safety", sub: "Control your data and visibility", route: null },
+  { icon: "star" as const, label: "My Reviews", sub: "View and manage your reviews", route: null },
+  { icon: "share-2" as const, label: "Referral Program", sub: "Invite friends, earn rewards", route: "/referral" as const },
+  { icon: "help-circle" as const, label: "Help & Support", sub: "Get help from our team", route: null },
+  { icon: "info" as const, label: "About Mapping with Melanin", sub: "Version 1.0.0", route: null },
 ];
 
 function getInitials(firstName?: string | null, lastName?: string | null): string {
@@ -195,6 +195,25 @@ export default function ProfileScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* Messages shortcut */}
+      <TouchableOpacity
+        style={[styles.messagesBanner, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.foreground }]}
+        onPress={() => router.push("/messages")}
+        activeOpacity={0.85}
+      >
+        <View style={[styles.messagesBannerIcon, { backgroundColor: colors.primary + "18" }]}>
+          <Feather name="message-circle" size={22} color={colors.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.messagesBannerTitle, { color: colors.foreground }]}>Messages</Text>
+          <Text style={[styles.messagesBannerSub, { color: colors.mutedForeground }]}>3 unread conversations</Text>
+        </View>
+        <View style={[styles.unreadPill, { backgroundColor: colors.primary }]}>
+          <Text style={styles.unreadPillText}>3</Text>
+        </View>
+        <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+      </TouchableOpacity>
+
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Settings</Text>
         <View style={[styles.settingsList, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
@@ -205,6 +224,7 @@ export default function ProfileScreen() {
                 styles.settingItem,
                 idx < SETTINGS.length - 1 && { borderBottomColor: colors.border, borderBottomWidth: 1 },
               ]}
+              onPress={() => item.route && router.push(item.route as any)}
               activeOpacity={0.7}
             >
               <View style={[styles.settingIcon, { backgroundColor: colors.primary + "15" }]}>
@@ -219,6 +239,27 @@ export default function ProfileScreen() {
           ))}
         </View>
       </View>
+
+      {/* Admin Panel access */}
+      <TouchableOpacity
+        style={[styles.adminBanner, { backgroundColor: "#1A1A2E", borderColor: "#DC262630" }]}
+        onPress={() => router.push("/admin")}
+        activeOpacity={0.88}
+      >
+        <View style={styles.adminBannerLeft}>
+          <View style={[styles.adminIcon, { backgroundColor: "#DC262620" }]}>
+            <Feather name="shield" size={20} color="#DC2626" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.adminBannerTitle}>Admin Panel</Text>
+            <Text style={styles.adminBannerSub}>Manage businesses, users, reports & analytics</Text>
+          </View>
+        </View>
+        <View style={[styles.adminCta, { backgroundColor: "#DC262618", borderColor: "#DC262640" }]}>
+          <Text style={styles.adminCtaText}>Open</Text>
+          <Feather name="arrow-right" size={13} color="#DC2626" />
+        </View>
+      </TouchableOpacity>
 
       {isAuthenticated && (
         <TouchableOpacity
@@ -462,6 +503,96 @@ const styles = StyleSheet.create({
   settingSub: {
     fontFamily: "Inter_400Regular",
     fontSize: 12,
+  },
+  messagesBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginHorizontal: 20,
+    marginBottom: 24,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  messagesBannerIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  messagesBannerTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  messagesBannerSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+  },
+  unreadPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    minWidth: 22,
+    alignItems: "center",
+  },
+  unreadPillText: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 11,
+    color: "#FFFFFF",
+  },
+  adminBanner: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    borderRadius: 18,
+    padding: 18,
+    gap: 12,
+    borderWidth: 1,
+  },
+  adminBannerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  adminIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  adminBannerTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 16,
+    color: "#FFFFFF",
+    marginBottom: 3,
+  },
+  adminBannerSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: "rgba(255,255,255,0.7)",
+    lineHeight: 18,
+  },
+  adminCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    alignSelf: "flex-start",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  adminCtaText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    color: "#DC2626",
   },
   signOutBtn: {
     flexDirection: "row",

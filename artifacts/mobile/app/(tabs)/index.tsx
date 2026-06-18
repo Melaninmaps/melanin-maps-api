@@ -89,7 +89,7 @@ export default function DiscoverScreen() {
             />
             <Text style={styles.greeting}>Good morning 👋</Text>
           </View>
-          <TouchableOpacity style={styles.notifBtn} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.notifBtn} activeOpacity={0.8} onPress={() => router.push("/messages")}>
             <Feather name="bell" size={20} color="#FFFFFF" />
             <View style={styles.notifDot} />
           </TouchableOpacity>
