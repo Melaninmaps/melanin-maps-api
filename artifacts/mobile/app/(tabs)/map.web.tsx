@@ -29,14 +29,9 @@ export default function MapScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
-  const { businesses } = useBusinesses();
-  const filtered = businesses.filter((b) => {
-    const matchesSearch =
-      search.length === 0 ||
-      b.name.toLowerCase().includes(search.toLowerCase()) ||
-      b.city.toLowerCase().includes(search.toLowerCase());
-    const matchesCat = activeCategory === "All" || b.category === activeCategory;
-    return matchesSearch && matchesCat;
+  const { businesses } = useBusinesses({ search, category: activeCategory });
+  const filtered = businesses.filter((_b) => {
+    return true;
   });
 
   return (

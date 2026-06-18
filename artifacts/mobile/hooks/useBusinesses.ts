@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import type { Business } from "@/constants/types";
 import { BUSINESSES } from "@/constants/data";
 
+interface UseBusinessesOptions {
+  search?: string;
+  category?: string;
+}
+
 interface UseBusinessesResult {
   businesses: Business[];
   isLoading: boolean;
@@ -48,7 +53,8 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
   };
 }
 
-export function useBusinesses(): UseBusinessesResult {
+export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinessesResult {
+  const { search = "", category = "All" } = options;
   const [businesses, setBusinesses] = useState<Business[]>(BUSINESSES);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,10 +71,15 @@ export function useBusinesses(): UseBusinessesResult {
         return;
       }
 
+      const params = new URLSearchParams();
+      if (search.length > 0) params.set("search", search);
+      if (category && category !== "All") params.set("category", category);
+      const qs = params.toString();
+
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
 
-      const res = await fetch(`${apiBase}/api/businesses`, {
+      const res = await fetch(`${apiBase}/api/businesses${qs ? `?${qs}` : ""}`, {
         signal: controller.signal,
       });
       clearTimeout(timeout);
@@ -84,7 +95,7 @@ export function useBusinesses(): UseBusinessesResult {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [search, category]);
 
   useEffect(() => {
     fetchBusinesses();
