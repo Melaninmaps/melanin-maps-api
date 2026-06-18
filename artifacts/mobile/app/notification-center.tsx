@@ -1,0 +1,268 @@
+import { Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useColors } from "@/hooks/useColors";
+
+type NotifType = "all" | "safety" | "events" | "business" | "community";
+
+interface Notif {
+  id: string;
+  type: Exclude<NotifType, "all">;
+  icon: "shield" | "calendar" | "shopping-bag" | "message-circle" | "star" | "gift" | "bell" | "users";
+  color: string;
+  title: string;
+  body: string;
+  time: string;
+  read: boolean;
+  group: "Today" | "This Week" | "Earlier";
+}
+
+const NOTIFS: Notif[] = [
+  {
+    id: "n1", type: "safety", icon: "shield", color: "#C4622D",
+    title: "Safety Alert — Atlanta, GA",
+    body: "Community report: increased incidents near Ponce City Market. Stay aware this evening.",
+    time: "10 min ago", read: false, group: "Today",
+  },
+  {
+    id: "n2", type: "events", icon: "calendar", color: "#2D7A4F",
+    title: "Event Tomorrow: Black Business Expo",
+    body: "Don't forget — Black Business Expo starts at 10am at the Georgia World Congress Center.",
+    time: "1h ago", read: false, group: "Today",
+  },
+  {
+    id: "n3", type: "business", icon: "shopping-bag", color: "#D4873A",
+    title: "Sweet Auburn BBQ replied to your review",
+    body: "\"Thank you for the kind words! Come back and try our new weekend specials 🙌\"",
+    time: "3h ago", read: false, group: "Today",
+  },
+  {
+    id: "n4", type: "community", icon: "message-circle", color: "#7B4F2E",
+    title: "Your post is trending",
+    body: "\"Best spots for brunch in ATL\" got 47 upvotes and 12 comments in the community feed.",
+    time: "5h ago", read: true, group: "Today",
+  },
+  {
+    id: "n5", type: "community", icon: "star", color: "#D4873A",
+    title: "New review on a business you follow",
+    body: "Trap Kitchen received a 5-star review: \"Best food truck in the city, hands down.\"",
+    time: "Yesterday", read: true, group: "This Week",
+  },
+  {
+    id: "n6", type: "events", icon: "calendar", color: "#2D7A4F",
+    title: "New event near you: Juneteenth Block Party",
+    body: "Houston, TX · June 19 · Free admission · Black-owned food vendors + live music",
+    time: "2 days ago", read: true, group: "This Week",
+  },
+  {
+    id: "n7", type: "business", icon: "shopping-bag", color: "#D4873A",
+    title: "Business hours update: Busboys & Poets",
+    body: "Updated hours for the summer — now open until 11pm on Fridays and Saturdays.",
+    time: "3 days ago", read: true, group: "This Week",
+  },
+  {
+    id: "n8", type: "community", icon: "gift", color: "#C4622D",
+    title: "Referral milestone reached 🎉",
+    body: "You've referred 2 friends! You're halfway to earning your $10 credit. Keep it up!",
+    time: "5 days ago", read: true, group: "This Week",
+  },
+  {
+    id: "n9", type: "safety", icon: "shield", color: "#C4622D",
+    title: "Monthly Safety Digest",
+    body: "See the community safety report for cities you follow: Atlanta, Houston, Chicago.",
+    time: "1 week ago", read: true, group: "Earlier",
+  },
+  {
+    id: "n10", type: "community", icon: "users", color: "#7B4F2E",
+    title: "New community member joined via your link",
+    body: "Someone you referred just signed up and set up their profile. Welcome them!",
+    time: "2 weeks ago", read: true, group: "Earlier",
+  },
+];
+
+const TABS: { id: NotifType; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "safety", label: "Safety" },
+  { id: "events", label: "Events" },
+  { id: "business", label: "Business" },
+  { id: "community", label: "Community" },
+];
+
+export default function NotificationCenterScreen() {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+
+  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  const [activeTab, setActiveTab] = useState<NotifType>("all");
+  const [notifs, setNotifs] = useState<Notif[]>(NOTIFS);
+
+  const filtered = activeTab === "all" ? notifs : notifs.filter((n) => n.type === activeTab);
+  const unreadCount = notifs.filter((n) => !n.read).length;
+
+  const groups = ["Today", "This Week", "Earlier"] as const;
+
+  const markAllRead = () => setNotifs((ns) => ns.map((n) => ({ ...n, read: true })));
+  const markRead = (id: string) => setNotifs((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
+
+  return (
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
+        <TouchableOpacity
+          style={styles.back}
+          onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile")}
+        >
+          <Feather name="arrow-left" size={22} color={colors.foreground} />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Notifications</Text>
+          {unreadCount > 0 && (
+            <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>
+              {unreadCount} unread
+            </Text>
+          )}
+        </View>
+        {unreadCount > 0 && (
+          <TouchableOpacity onPress={markAllRead}>
+            <Text style={[styles.markAll, { color: colors.primary }]}>Mark all read</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          style={[styles.settingsBtn, { backgroundColor: colors.secondary }]}
+          onPress={() => router.push("/notifications-settings")}
+        >
+          <Feather name="settings" size={17} color={colors.foreground} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Filter tabs */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={[styles.tabsScroll, { borderBottomColor: colors.border }]}
+        contentContainerStyle={styles.tabsContent}
+      >
+        {TABS.map((t) => {
+          const count = t.id === "all" ? unreadCount : notifs.filter((n) => n.type === t.id && !n.read).length;
+          const active = activeTab === t.id;
+          return (
+            <TouchableOpacity
+              key={t.id}
+              style={[styles.tab, active && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
+              onPress={() => setActiveTab(t.id)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.tabTxt, { color: active ? colors.primary : colors.mutedForeground }]}>
+                {t.label}
+              </Text>
+              {count > 0 && (
+                <View style={[styles.tabBadge, { backgroundColor: colors.primary }]}>
+                  <Text style={styles.tabBadgeTxt}>{count}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* Notification list */}
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 32 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {filtered.length === 0 ? (
+          <View style={styles.empty}>
+            <Feather name="bell-off" size={40} color={colors.mutedForeground} />
+            <Text style={[styles.emptyTxt, { color: colors.mutedForeground }]}>No notifications here yet</Text>
+          </View>
+        ) : (
+          groups.map((group) => {
+            const items = filtered.filter((n) => n.group === group);
+            if (items.length === 0) return null;
+            return (
+              <View key={group}>
+                <Text style={[styles.groupLabel, { color: colors.mutedForeground }]}>{group}</Text>
+                <View style={[styles.group, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  {items.map((notif, i) => (
+                    <TouchableOpacity
+                      key={notif.id}
+                      style={[
+                        styles.notifRow,
+                        !notif.read && { backgroundColor: colors.primary + "08" },
+                        i < items.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },
+                      ]}
+                      onPress={() => markRead(notif.id)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.iconBox, { backgroundColor: notif.color + "18" }]}>
+                        <Feather name={notif.icon} size={18} color={notif.color} />
+                      </View>
+                      <View style={styles.notifBody}>
+                        <View style={styles.notifTopRow}>
+                          <Text style={[styles.notifTitle, { color: colors.foreground }]} numberOfLines={1}>
+                            {notif.title}
+                          </Text>
+                          {!notif.read && (
+                            <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />
+                          )}
+                        </View>
+                        <Text style={[styles.notifText, { color: colors.mutedForeground }]} numberOfLines={2}>
+                          {notif.body}
+                        </Text>
+                        <Text style={[styles.notifTime, { color: colors.mutedForeground }]}>{notif.time}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            );
+          })
+        )}
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  header: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingHorizontal: 20, paddingBottom: 14, borderBottomWidth: 1,
+  },
+  back: { width: 36, height: 36, alignItems: "flex-start", justifyContent: "center" },
+  headerTitle: { fontSize: 20, fontFamily: "Inter_700Bold" },
+  headerSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
+  markAll: { fontSize: 13, fontFamily: "Inter_500Medium", marginRight: 4 },
+  settingsBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  tabsScroll: { borderBottomWidth: 1, flexGrow: 0 },
+  tabsContent: { paddingHorizontal: 20, gap: 4 },
+  tab: { paddingHorizontal: 4, paddingVertical: 12, marginHorizontal: 8, flexDirection: "row", alignItems: "center", gap: 6 },
+  tabTxt: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  tabBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 },
+  tabBadgeTxt: { fontSize: 11, fontFamily: "Inter_700Bold", color: "#FFF" },
+  scroll: { padding: 16, gap: 8 },
+  groupLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", letterSpacing: 0.6, textTransform: "uppercase", marginBottom: 6, paddingLeft: 4 },
+  group: { borderRadius: 16, borderWidth: 1, overflow: "hidden", marginBottom: 16 },
+  notifRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 14 },
+  iconBox: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  notifBody: { flex: 1, gap: 3 },
+  notifTopRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  notifTitle: { flex: 1, fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
+  notifText: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
+  notifTime: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  empty: { alignItems: "center", gap: 12, paddingTop: 60 },
+  emptyTxt: { fontSize: 15, fontFamily: "Inter_400Regular" },
+});

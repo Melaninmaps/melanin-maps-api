@@ -19,6 +19,7 @@ import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
 
 const SETTINGS = [
+  { icon: "grid" as const, label: "My Dashboard", sub: "Saved places, activity & stats", route: "/dashboard" as const },
   { icon: "settings" as const, label: "Settings", sub: "Account, notifications, privacy", route: "/settings" as const },
   { icon: "bell" as const, label: "Notifications", sub: "Manage alerts and updates", route: "/notifications-settings" as const },
   { icon: "shield" as const, label: "Privacy & Safety", sub: "Control your data and visibility", route: "/privacy" as const },
