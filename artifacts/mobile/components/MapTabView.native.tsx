@@ -14,10 +14,11 @@ import { CategoryPill } from "@/components/CategoryPill";
 import { RatingStars } from "@/components/RatingStars";
 import { SearchBar } from "@/components/SearchBar";
 import { VerificationBadge } from "@/components/VerificationBadge";
-import { BUSINESSES, CATEGORIES } from "@/constants/data";
+import { CATEGORIES } from "@/constants/data";
 import type { Business } from "@/constants/types";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useBusinesses } from "@/hooks/useBusinesses";
 
 const INITIAL_REGION = {
   latitude: 33.7,
@@ -37,7 +38,8 @@ export function MapTabView() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [selected, setSelected] = useState<Business | null>(null);
 
-  const filtered = BUSINESSES.filter((b) => {
+  const { businesses } = useBusinesses();
+  const filtered = businesses.filter((b) => {
     const matchesSearch =
       search.length === 0 ||
       b.name.toLowerCase().includes(search.toLowerCase()) ||

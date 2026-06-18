@@ -412,3 +412,5 @@ export const ALERTS: AlertItem[] = [
 ];
 
 export const CATEGORIES = ["All", "Food", "Beauty", "Retail", "Tech", "Health", "Legal", "Finance"];
+
+export const EVENT_CATEGORIES = ["All", "Cultural", "Business", "Beauty", "Finance", "Music", "Food", "Wellness"];

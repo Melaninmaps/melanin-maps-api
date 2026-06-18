@@ -22,9 +22,10 @@ import { OnboardingPreferenceSurvey } from "@/components/OnboardingPreferenceSur
 import { ScoreFilterPanel } from "@/components/ScoreFilterPanel";
 import { SearchBar } from "@/components/SearchBar";
 import { SectionHeader } from "@/components/SectionHeader";
-import { ALERTS, BUSINESSES, CATEGORIES } from "@/constants/data";
+import { ALERTS, CATEGORIES } from "@/constants/data";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useBusinesses } from "@/hooks/useBusinesses";
 
 interface FilterState {
   minScore: number;
@@ -53,7 +54,9 @@ export default function DiscoverScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
-  const filtered = BUSINESSES.filter((b) => {
+  const { businesses, refetch: refetchBusinesses } = useBusinesses();
+
+  const filtered = businesses.filter((b) => {
     const matchesSearch =
       search.length === 0 ||
       b.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -68,9 +71,10 @@ export default function DiscoverScreen() {
   const featured = filtered.filter((b) => b.featured);
   const nearby = filtered.filter((b) => !b.featured);
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    await refetchBusinesses();
+    setRefreshing(false);
   };
 
   const activeFilterCount =
@@ -199,7 +203,7 @@ export default function DiscoverScreen() {
           <TouchableOpacity
             activeOpacity={0.88}
             onPress={() => router.push("/travel")}
-            style={[styles.travelBanner, { backgroundColor: colors.terracotta }]}
+            style={[styles.travelBanner, { backgroundColor: colors.primary }]}
           >
             <View style={styles.travelBannerLeft}>
               <Text style={styles.travelBannerEyebrow}>✨ AI-POWERED</Text>
@@ -210,7 +214,7 @@ export default function DiscoverScreen() {
             </View>
             <View style={styles.travelBannerRight}>
               <View style={styles.travelBannerArrow}>
-                <Ionicons name="airplane" size={22} color={colors.terracotta} />
+                <Ionicons name="airplane" size={22} color={colors.primary} />
               </View>
             </View>
           </TouchableOpacity>

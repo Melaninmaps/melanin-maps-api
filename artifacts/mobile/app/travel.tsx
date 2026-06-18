@@ -137,7 +137,7 @@ export default function TravelScreen() {
           styles.header,
           {
             paddingTop: topPad + 12,
-            backgroundColor: colors.terracotta,
+            backgroundColor: colors.primary,
           },
         ]}
       >
@@ -184,12 +184,12 @@ export default function TravelScreen() {
             <Ionicons
               name="location-outline"
               size={18}
-              color={colors.terracotta}
+              color={colors.primary}
             />
             <TextInput
               style={[styles.input, { color: colors.text }]}
               placeholder="City, state or country..."
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={colors.mutedForeground}
               value={destination}
               onChangeText={setDestination}
               returnKeyType="search"
@@ -197,14 +197,14 @@ export default function TravelScreen() {
             />
             {destination.length > 0 && (
               <TouchableOpacity onPress={() => setDestination("")}>
-                <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+                <Ionicons name="close-circle" size={18} color={colors.mutedForeground} />
               </TouchableOpacity>
             )}
           </View>
 
           <Text style={[styles.vibeLabel, { color: colors.text }]}>
             Your vibe{" "}
-            <Text style={[styles.vibeOptional, { color: colors.textSecondary }]}>
+            <Text style={[styles.vibeOptional, { color: colors.mutedForeground }]}>
               (optional)
             </Text>
           </Text>
@@ -218,10 +218,10 @@ export default function TravelScreen() {
                     styles.vibeChip,
                     {
                       backgroundColor: selected
-                        ? colors.terracotta
+                        ? colors.primary
                         : colors.background,
                       borderColor: selected
-                        ? colors.terracotta
+                        ? colors.primary
                         : colors.border,
                     },
                   ]}
@@ -230,7 +230,7 @@ export default function TravelScreen() {
                   <Ionicons
                     name={vibe.icon as any}
                     size={13}
-                    color={selected ? "#FBF7F0" : colors.textSecondary}
+                    color={selected ? "#FBF7F0" : colors.mutedForeground}
                   />
                   <Text
                     style={[
@@ -252,7 +252,7 @@ export default function TravelScreen() {
               styles.searchBtn,
               {
                 backgroundColor:
-                  destination.trim() ? colors.terracotta : colors.border,
+                  destination.trim() ? colors.primary : colors.border,
                 opacity: loading ? 0.7 : 1,
               },
             ]}
@@ -272,8 +272,8 @@ export default function TravelScreen() {
 
         {loading && (
           <View style={styles.loadingState}>
-            <ActivityIndicator size="large" color={colors.terracotta} />
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
               Finding Black-owned gems in {destination}...
             </Text>
           </View>
@@ -296,16 +296,16 @@ export default function TravelScreen() {
             <View
               style={[
                 styles.resultHeader,
-                { backgroundColor: colors.amber + "22", borderColor: colors.amber + "44" },
+                { backgroundColor: "#D4873A" + "22", borderColor: "#D4873A" + "44" },
               ]}
             >
-              <Ionicons name="sparkles" size={20} color={colors.amber} />
+              <Ionicons name="sparkles" size={20} color={"#D4873A"} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.resultCity, { color: colors.text }]}>
                   {results.destination}
                 </Text>
                 <Text
-                  style={[styles.resultSummary, { color: colors.textSecondary }]}
+                  style={[styles.resultSummary, { color: colors.mutedForeground }]}
                 >
                   {results.summary}
                 </Text>
@@ -326,7 +326,7 @@ export default function TravelScreen() {
                     style={[
                       styles.tab,
                       active && {
-                        borderBottomColor: colors.terracotta,
+                        borderBottomColor: colors.primary,
                         borderBottomWidth: 2,
                       },
                     ]}
@@ -335,13 +335,13 @@ export default function TravelScreen() {
                     <Ionicons
                       name={tab.icon as any}
                       size={16}
-                      color={active ? colors.terracotta : colors.textSecondary}
+                      color={active ? colors.primary : colors.mutedForeground}
                     />
                     <Text
                       style={[
                         styles.tabText,
                         {
-                          color: active ? colors.terracotta : colors.textSecondary,
+                          color: active ? colors.primary : colors.mutedForeground,
                           fontFamily: active
                             ? "Inter_600SemiBold"
                             : "Inter_400Regular",
@@ -368,20 +368,20 @@ export default function TravelScreen() {
                     <View
                       style={[
                         styles.categoryBadge,
-                        { backgroundColor: colors.terracotta + "18" },
+                        { backgroundColor: colors.primary + "18" },
                       ]}
                     >
                       <Text
                         style={[
                           styles.categoryText,
-                          { color: colors.terracotta },
+                          { color: colors.primary },
                         ]}
                       >
                         {biz.category}
                       </Text>
                     </View>
                     <Text
-                      style={[styles.neighborhoodTag, { color: colors.textSecondary }]}
+                      style={[styles.neighborhoodTag, { color: colors.mutedForeground }]}
                     >
                       <Ionicons name="location-outline" size={12} /> {biz.neighborhood}
                     </Text>
@@ -390,17 +390,17 @@ export default function TravelScreen() {
                     {biz.name}
                   </Text>
                   <Text
-                    style={[styles.cardDesc, { color: colors.textSecondary }]}
+                    style={[styles.cardDesc, { color: colors.mutedForeground }]}
                   >
                     {biz.description}
                   </Text>
                   <View
                     style={[
                       styles.mustTryRow,
-                      { backgroundColor: colors.amber + "18", borderColor: colors.amber + "33" },
+                      { backgroundColor: "#D4873A" + "18", borderColor: "#D4873A" + "33" },
                     ]}
                   >
-                    <Ionicons name="star" size={13} color={colors.amber} />
+                    <Ionicons name="star" size={13} color={"#D4873A"} />
                     <Text style={[styles.mustTryText, { color: colors.text }]}>
                       <Text style={{ fontFamily: "Inter_600SemiBold" }}>
                         Must try:{" "}
@@ -426,7 +426,7 @@ export default function TravelScreen() {
                   <Text
                     style={[
                       styles.vibePill,
-                      { color: colors.amber, fontFamily: "Inter_600SemiBold" },
+                      { color: "#D4873A", fontFamily: "Inter_600SemiBold" },
                     ]}
                   >
                     {n.vibe}
@@ -437,13 +437,13 @@ export default function TravelScreen() {
                         <View
                           style={[
                             styles.dot,
-                            { backgroundColor: colors.terracotta },
+                            { backgroundColor: colors.primary },
                           ]}
                         />
                         <Text
                           style={[
                             styles.highlightText,
-                            { color: colors.textSecondary },
+                            { color: colors.mutedForeground },
                           ]}
                         >
                           {h}
@@ -487,11 +487,11 @@ export default function TravelScreen() {
                     <View
                       style={[
                         styles.categoryBadge,
-                        { backgroundColor: colors.amber + "22" },
+                        { backgroundColor: "#D4873A22" },
                       ]}
                     >
                       <Text
-                        style={[styles.categoryText, { color: colors.amber }]}
+                        style={[styles.categoryText, { color: "#D4873A" }]}
                       >
                         {ev.type}
                       </Text>
@@ -499,7 +499,7 @@ export default function TravelScreen() {
                     <Text
                       style={[
                         styles.timingText,
-                        { color: colors.textSecondary },
+                        { color: colors.mutedForeground },
                       ]}
                     >
                       <Ionicons name="time-outline" size={12} /> {ev.timing}
@@ -509,7 +509,7 @@ export default function TravelScreen() {
                     {ev.name}
                   </Text>
                   <Text
-                    style={[styles.cardDesc, { color: colors.textSecondary }]}
+                    style={[styles.cardDesc, { color: colors.mutedForeground }]}
                   >
                     {ev.description}
                   </Text>
@@ -537,13 +537,13 @@ export default function TravelScreen() {
                     <View
                       style={[
                         styles.listNum,
-                        { backgroundColor: colors.terracotta },
+                        { backgroundColor: colors.primary },
                       ]}
                     >
                       <Text style={styles.listNumText}>{i + 1}</Text>
                     </View>
                     <Text
-                      style={[styles.listText, { color: colors.textSecondary }]}
+                      style={[styles.listText, { color: colors.mutedForeground }]}
                     >
                       {tip}
                     </Text>
@@ -572,11 +572,11 @@ export default function TravelScreen() {
                     <Ionicons
                       name="bulb-outline"
                       size={16}
-                      color={colors.amber}
+                      color="#D4873A"
                       style={{ marginTop: 2 }}
                     />
                     <Text
-                      style={[styles.listText, { color: colors.textSecondary }]}
+                      style={[styles.listText, { color: colors.mutedForeground }]}
                     >
                       {insight}
                     </Text>
@@ -598,9 +598,9 @@ export default function TravelScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rateItinTitle, { color: colors.text }]}>Rate this Itinerary</Text>
-                <Text style={[styles.rateItinSub, { color: colors.textSecondary }]}>Help us improve AI trip planning</Text>
+                <Text style={[styles.rateItinSub, { color: colors.mutedForeground }]}>Help us improve AI trip planning</Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+              <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
             </TouchableOpacity>
 
             <View style={{ height: 32 }} />
@@ -614,7 +614,7 @@ export default function TravelScreen() {
               Plan Your Next Trip
             </Text>
             <Text
-              style={[styles.emptySubtitle, { color: colors.textSecondary }]}
+              style={[styles.emptySubtitle, { color: colors.mutedForeground }]}
             >
               Enter a destination and let AI surface the best Black-owned
               businesses, safe neighborhoods, and community events.

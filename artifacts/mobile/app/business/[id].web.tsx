@@ -16,9 +16,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RatingStars } from "@/components/RatingStars";
 import { VerificationBadge } from "@/components/VerificationBadge";
-import { BUSINESSES } from "@/constants/data";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useBusinessById } from "@/hooks/useBusinesses";
 
 const CATEGORY_IMAGES: Record<string, any> = {
   Food: require("@/assets/images/bento-businesses.jpg"),
@@ -43,7 +43,7 @@ export default function BusinessDetailScreen() {
   const router = useRouter();
   const { isSaved, toggleSave } = useFavorites();
 
-  const business = BUSINESSES.find((b) => b.id === id);
+  const { business } = useBusinessById(id ?? "");
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   if (!business) {

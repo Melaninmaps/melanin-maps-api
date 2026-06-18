@@ -21,10 +21,10 @@ import { RatingStars } from "@/components/RatingStars";
 import { ReportContentModal } from "@/components/ReportContentModal";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { WriteReviewModal } from "@/components/WriteReviewModal";
-import { BUSINESSES } from "@/constants/data";
 import type { Review } from "@/constants/types";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useBusinessById } from "@/hooks/useBusinesses";
 
 const CATEGORY_IMAGES: Record<string, any> = {
   Food: require("@/assets/images/bento-businesses.jpg"),
@@ -49,7 +49,7 @@ export default function BusinessDetailScreen() {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [localReviews, setLocalReviews] = useState<Review[]>([]);
 
-  const business = BUSINESSES.find((b) => b.id === id);
+  const { business } = useBusinessById(id ?? "");
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   if (!business) {

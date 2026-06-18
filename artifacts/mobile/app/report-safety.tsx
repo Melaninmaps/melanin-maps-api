@@ -462,7 +462,7 @@ export default function ReportSafetyScreen() {
             activeOpacity={0.85}
             disabled={!(step === 1 ? canProceed1 : canProceed2)}
           >
-            {step === 2 && <Feather name="send" size={16} color={(step === 1 ? canProceed1 : canProceed2) ? colors.primaryForeground : colors.mutedForeground} />}
+            {step === 2 && <Feather name="send" size={16} color={canProceed2 ? colors.primaryForeground : colors.mutedForeground} />}
             <Text style={[styles.nextBtnText, { color: (step === 1 ? canProceed1 : canProceed2) ? colors.primaryForeground : colors.mutedForeground }]}>
               {step === 2 ? "Submit Report" : "Continue"}
             </Text>

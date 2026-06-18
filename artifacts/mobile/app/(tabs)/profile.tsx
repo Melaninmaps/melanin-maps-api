@@ -13,9 +13,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BusinessCard } from "@/components/BusinessCard";
-import { BUSINESSES } from "@/constants/data";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
 
 const SETTINGS = [
@@ -43,7 +43,8 @@ export default function ProfileScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
-  const savedBusinesses = BUSINESSES.filter((b) => savedIds.includes(b.id));
+  const { businesses } = useBusinesses();
+  const savedBusinesses = businesses.filter((b) => savedIds.includes(b.id));
 
   return (
     <ScrollView

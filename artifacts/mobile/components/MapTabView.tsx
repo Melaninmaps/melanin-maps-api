@@ -13,9 +13,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BusinessCard } from "@/components/BusinessCard";
 import { CategoryPill } from "@/components/CategoryPill";
 import { SearchBar } from "@/components/SearchBar";
-import { BUSINESSES, CATEGORIES } from "@/constants/data";
+import { CATEGORIES } from "@/constants/data";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useBusinesses } from "@/hooks/useBusinesses";
 
 export function MapTabView() {
   const colors = useColors();
@@ -28,7 +29,8 @@ export function MapTabView() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
-  const filtered = BUSINESSES.filter((b) => {
+  const { businesses } = useBusinesses();
+  const filtered = businesses.filter((b) => {
     const matchesSearch =
       search.length === 0 ||
       b.name.toLowerCase().includes(search.toLowerCase()) ||
