@@ -2,21 +2,27 @@ import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   Linking,
   Platform,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BlackOwnedBadge } from "@/components/BlackOwnedBadge";
 import { BusinessMapView } from "@/components/BusinessMapView";
+import { ConfidenceScoreBadge } from "@/components/ConfidenceScoreBadge";
 import { RatingStars } from "@/components/RatingStars";
+import { ReportContentModal } from "@/components/ReportContentModal";
 import { VerificationBadge } from "@/components/VerificationBadge";
+import { WriteReviewModal } from "@/components/WriteReviewModal";
 import { BUSINESSES } from "@/constants/data";
+import type { Review } from "@/constants/types";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 
@@ -30,11 +36,7 @@ const CATEGORY_IMAGES: Record<string, any> = {
   Finance: require("@/assets/images/bento-businesses.jpg"),
 };
 
-const MOCK_REVIEWS = [
-  { id: "r1", author: "Simone W.", rating: 5, text: "Absolutely amazing! The quality and service exceeded all expectations. Will definitely be back.", timeAgo: "3 days ago", initials: "SW", color: "#C4622D" },
-  { id: "r2", author: "Marcus T.", rating: 4, text: "Great experience overall. The staff was incredibly welcoming and knowledgeable. Highly recommend to anyone in the community.", timeAgo: "1 week ago", initials: "MT", color: "#D4873A" },
-  { id: "r3", author: "Aisha B.", rating: 5, text: "This place is a gem. So proud to support Black-owned businesses like this one. They really care about their customers.", timeAgo: "2 weeks ago", initials: "AB", color: "#2D7A4F" },
-];
+const AVATAR_COLORS = ["#C4622D", "#D4873A", "#2D7A4F", "#7B3F00", "#1D4ED8"];
 
 export default function BusinessDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -42,6 +44,10 @@ export default function BusinessDetailScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { isSaved, toggleSave } = useFavorites();
+
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [localReviews, setLocalReviews] = useState<Review[]>([]);
 
   const business = BUSINESSES.find((b) => b.id === id);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -59,6 +65,7 @@ export default function BusinessDetailScreen() {
 
   const img = CATEGORY_IMAGES[business.category] ?? CATEGORY_IMAGES["Food"];
   const saved = isSaved(business.id);
+  const allReviews = [...(business.reviews ?? []), ...localReviews];
 
   const handleCall = () => {
     if (business.phone) Linking.openURL(`tel:${business.phone}`);
@@ -66,6 +73,30 @@ export default function BusinessDetailScreen() {
 
   const handleWebsite = () => {
     if (business.website) Linking.openURL(`https://${business.website}`);
+  };
+
+  const handleShare = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await Share.share({
+        message: `Check out ${business.name} on Mapping with Melanin! ${business.city}, ${business.state} — ${business.category}`,
+        title: business.name,
+      });
+    } catch {}
+  };
+
+  const handleReviewSubmit = (rating: number, text: string, wouldReturn: boolean) => {
+    const newReview: Review = {
+      id: `local-${Date.now()}`,
+      author: "You",
+      initials: "ME",
+      color: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)],
+      rating,
+      text: text || "Great experience!",
+      timeAgo: "Just now",
+      wouldReturnAlone: wouldReturn,
+    };
+    setLocalReviews((prev) => [newReview, ...prev]);
   };
 
   return (
@@ -77,22 +108,31 @@ export default function BusinessDetailScreen() {
         >
           <Feather name="arrow-left" size={20} color="#FFFFFF" />
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            toggleSave(business.id);
-          }}
-          style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
-        >
-          <Feather name="bookmark" size={20} color={saved ? "#D4873A" : "#FFFFFF"} />
-        </TouchableOpacity>
+        <View style={styles.backBtnRight}>
+          <TouchableOpacity
+            onPress={handleShare}
+            style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
+          >
+            <Feather name="share-2" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              toggleSave(business.id);
+            }}
+            style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
+          >
+            <Feather name="bookmark" size={20} color={saved ? "#D4873A" : "#FFFFFF"} />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 30 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 100 }}>
         <Image source={img} style={styles.hero} contentFit="cover" />
 
         <View style={styles.body}>
-          <View style={styles.titleRow}>
+          {/* Title row + badges */}
+          <View style={styles.titleSection}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.name, { color: colors.foreground }]}>{business.name}</Text>
               <View style={styles.metaRow}>
@@ -102,11 +142,46 @@ export default function BusinessDetailScreen() {
                   <Text style={[styles.price, { color: colors.mutedForeground }]}>{business.priceRange}</Text>
                 )}
               </View>
+              <View style={styles.badgeRow}>
+                {business.blackOwned && <BlackOwnedBadge size="md" />}
+              </View>
             </View>
+            <ConfidenceScoreBadge score={business.confidenceScore} size="lg" showLabel />
           </View>
 
           <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={14} />
 
+          {/* Safety stats */}
+          {(business.wouldReturnAlone != null || business.safetyRating != null) && (
+            <View style={[styles.safetyCard, { backgroundColor: "#2D7A4F10", borderColor: "#2D7A4F30" }]}>
+              <View style={styles.safetyHeader}>
+                <Feather name="shield" size={15} color="#2D7A4F" />
+                <Text style={[styles.safetyTitle, { color: "#2D7A4F" }]}>Community Safety Stats</Text>
+              </View>
+              <View style={styles.safetyStats}>
+                {business.wouldReturnAlone != null && (
+                  <View style={styles.statItem}>
+                    <Text style={styles.statValue}>{business.wouldReturnAlone}%</Text>
+                    <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Would Return Alone</Text>
+                  </View>
+                )}
+                {business.safetyRating != null && (
+                  <View style={[styles.statItem, styles.statBorder, { borderColor: "#2D7A4F20" }]}>
+                    <Text style={styles.statValue}>{business.safetyRating.toFixed(1)}</Text>
+                    <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Safety Rating</Text>
+                  </View>
+                )}
+                {business.recommendationRate != null && (
+                  <View style={styles.statItem}>
+                    <Text style={styles.statValue}>{business.recommendationRate}%</Text>
+                    <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Recommend</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* Info card */}
           <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
             {business.hours && (
               <View style={styles.infoRow}>
@@ -156,22 +231,60 @@ export default function BusinessDetailScreen() {
             />
           </View>
 
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Reviews</Text>
-          {MOCK_REVIEWS.map((rev) => (
-            <View key={rev.id} style={[styles.reviewCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
-              <View style={styles.reviewHeader}>
-                <View style={[styles.reviewAvatar, { backgroundColor: rev.color }]}>
-                  <Text style={styles.reviewInitials}>{rev.initials}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.reviewAuthor, { color: colors.foreground }]}>{rev.author}</Text>
-                  <Text style={[styles.reviewTime, { color: colors.mutedForeground }]}>{rev.timeAgo}</Text>
-                </View>
-                <RatingStars rating={rev.rating} showCount={false} size={12} />
-              </View>
-              <Text style={[styles.reviewText, { color: colors.foreground }]}>{rev.text}</Text>
+          {/* Reviews */}
+          <View style={styles.reviewsHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+              Reviews ({allReviews.length})
+            </Text>
+            <TouchableOpacity
+              style={[styles.reportBtn, { borderColor: colors.border }]}
+              onPress={() => setReportModalOpen(true)}
+            >
+              <Feather name="flag" size={13} color={colors.mutedForeground} />
+              <Text style={[styles.reportBtnText, { color: colors.mutedForeground }]}>Report</Text>
+            </TouchableOpacity>
+          </View>
+
+          {allReviews.length === 0 ? (
+            <View style={[styles.emptyReviews, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="star" size={24} color={colors.muted} />
+              <Text style={[styles.emptyReviewText, { color: colors.mutedForeground }]}>
+                Be the first to leave a review
+              </Text>
             </View>
-          ))}
+          ) : (
+            allReviews.map((rev) => (
+              <View key={rev.id} style={[styles.reviewCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
+                <View style={styles.reviewHeader}>
+                  <View style={[styles.reviewAvatar, { backgroundColor: rev.color }]}>
+                    <Text style={styles.reviewInitials}>{rev.initials}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.reviewAuthor, { color: colors.foreground }]}>{rev.author}</Text>
+                    <Text style={[styles.reviewTime, { color: colors.mutedForeground }]}>{rev.timeAgo}</Text>
+                  </View>
+                  <View style={styles.reviewRight}>
+                    <RatingStars rating={rev.rating} showCount={false} size={12} />
+                    {rev.wouldReturnAlone != null && (
+                      <View style={styles.returnAlone}>
+                        <Feather
+                          name={rev.wouldReturnAlone ? "thumbs-up" : "thumbs-down"}
+                          size={11}
+                          color={rev.wouldReturnAlone ? "#2D7A4F" : "#DC2626"}
+                        />
+                        <Text style={[styles.returnAloneText, { color: rev.wouldReturnAlone ? "#2D7A4F" : "#DC2626" }]}>
+                          {rev.wouldReturnAlone ? "Would return" : "Wouldn't return"}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+                {rev.text ? (
+                  <Text style={[styles.reviewText, { color: colors.foreground }]}>{rev.text}</Text>
+                ) : null}
+              </View>
+            ))
+          )}
         </View>
       </ScrollView>
 
@@ -187,11 +300,27 @@ export default function BusinessDetailScreen() {
         <TouchableOpacity
           style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
           activeOpacity={0.85}
-          onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setReviewModalOpen(true);
+          }}
         >
-          <Text style={[styles.primaryBtnText, { color: colors.primaryForeground }]}>Write a Review</Text>
+          <Feather name="star" size={18} color="#FBF7F0" />
+          <Text style={[styles.primaryBtnText, { color: "#FBF7F0" }]}>Write a Review</Text>
         </TouchableOpacity>
       </View>
+
+      <WriteReviewModal
+        visible={reviewModalOpen}
+        businessName={business.name}
+        onClose={() => setReviewModalOpen(false)}
+        onSubmit={handleReviewSubmit}
+      />
+      <ReportContentModal
+        visible={reportModalOpen}
+        businessName={business.name}
+        onClose={() => setReportModalOpen(false)}
+      />
     </View>
   );
 }
@@ -209,6 +338,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     zIndex: 10,
   },
+  backBtnRight: {
+    flexDirection: "row",
+    gap: 8,
+  },
   iconBtn: {
     width: 38,
     height: 38,
@@ -218,11 +351,53 @@ const styles = StyleSheet.create({
   },
   hero: { width: "100%", height: 260 },
   body: { padding: 20, gap: 16 },
-  titleRow: { flexDirection: "row", alignItems: "flex-start" },
+  titleSection: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
   name: { fontFamily: "Inter_700Bold", fontSize: 22 },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" },
+  badgeRow: { flexDirection: "row", gap: 6, marginTop: 8, flexWrap: "wrap" },
   category: { fontFamily: "Inter_500Medium", fontSize: 13 },
   price: { fontFamily: "Inter_400Regular", fontSize: 13 },
+  safetyCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 14,
+    gap: 10,
+  },
+  safetyHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  safetyTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+  },
+  safetyStats: {
+    flexDirection: "row",
+  },
+  statItem: {
+    flex: 1,
+    alignItems: "center",
+    gap: 2,
+  },
+  statBorder: {
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+  },
+  statValue: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 18,
+    color: "#2D7A4F",
+  },
+  statLabel: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 10,
+    textAlign: "center",
+  },
   card: {
     borderRadius: 14,
     padding: 14,
@@ -240,6 +415,36 @@ const styles = StyleSheet.create({
   tag: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
   tagText: { fontFamily: "Inter_500Medium", fontSize: 12 },
   mapWrap: { borderRadius: 14, overflow: "hidden", borderWidth: 1 },
+  reviewsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  reportBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  reportBtnText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+  },
+  emptyReviews: {
+    alignItems: "center",
+    paddingVertical: 28,
+    gap: 8,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderStyle: "dashed",
+  },
+  emptyReviewText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+  },
   reviewCard: {
     borderRadius: 14,
     padding: 14,
@@ -249,11 +454,14 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
-  reviewHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
+  reviewHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   reviewAvatar: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
   reviewInitials: { fontFamily: "Inter_700Bold", fontSize: 13, color: "#FFFFFF" },
   reviewAuthor: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   reviewTime: { fontFamily: "Inter_400Regular", fontSize: 11 },
+  reviewRight: { alignItems: "flex-end", gap: 4 },
+  returnAlone: { flexDirection: "row", alignItems: "center", gap: 4 },
+  returnAloneText: { fontFamily: "Inter_500Medium", fontSize: 10 },
   reviewText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20 },
   footer: {
     flexDirection: "row",
@@ -274,8 +482,10 @@ const styles = StyleSheet.create({
   contactBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   primaryBtn: {
     flex: 1,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
     height: 50,
     borderRadius: 12,
   },

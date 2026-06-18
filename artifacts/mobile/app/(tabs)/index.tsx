@@ -17,11 +17,18 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AlertBanner } from "@/components/AlertBanner";
 import { BusinessCard } from "@/components/BusinessCard";
 import { CategoryPill } from "@/components/CategoryPill";
+import { ScoreFilterPanel } from "@/components/ScoreFilterPanel";
 import { SearchBar } from "@/components/SearchBar";
 import { SectionHeader } from "@/components/SectionHeader";
 import { ALERTS, BUSINESSES, CATEGORIES } from "@/constants/data";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
+
+interface FilterState {
+  minScore: number;
+  verifiedOnly: boolean;
+  blackOwnedOnly: boolean;
+}
 
 export default function DiscoverScreen() {
   const colors = useColors();
@@ -33,6 +40,11 @@ export default function DiscoverScreen() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [refreshing, setRefreshing] = useState(false);
   const [alerts, setAlerts] = useState(ALERTS);
+  const [filters, setFilters] = useState<FilterState>({
+    minScore: 0,
+    verifiedOnly: false,
+    blackOwnedOnly: false,
+  });
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -43,7 +55,10 @@ export default function DiscoverScreen() {
       b.name.toLowerCase().includes(search.toLowerCase()) ||
       b.city.toLowerCase().includes(search.toLowerCase());
     const matchesCat = activeCategory === "All" || b.category === activeCategory;
-    return matchesSearch && matchesCat;
+    const matchesScore = b.confidenceScore >= filters.minScore;
+    const matchesVerified = !filters.verifiedOnly || b.verified;
+    const matchesBlackOwned = !filters.blackOwnedOnly || b.blackOwned;
+    return matchesSearch && matchesCat && matchesScore && matchesVerified && matchesBlackOwned;
   });
 
   const featured = filtered.filter((b) => b.featured);
@@ -53,6 +68,11 @@ export default function DiscoverScreen() {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
   };
+
+  const activeFilterCount =
+    (filters.minScore > 0 ? 1 : 0) +
+    (filters.verifiedOnly ? 1 : 0) +
+    (filters.blackOwnedOnly ? 1 : 0);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -101,6 +121,7 @@ export default function DiscoverScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
+        {/* Safety alerts */}
         <View style={styles.section}>
           <View style={styles.safetyHeader}>
             <View style={styles.safetyTitleRow}>
@@ -137,6 +158,7 @@ export default function DiscoverScreen() {
           )}
         </View>
 
+        {/* Hero banner */}
         <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 24 }]}>
           <View style={[styles.heroBanner, { overflow: "hidden" }]}>
             <Image
@@ -158,20 +180,16 @@ export default function DiscoverScreen() {
           </View>
         </View>
 
+        {/* AI Travel banner */}
         <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 24 }]}>
           <TouchableOpacity
             activeOpacity={0.88}
             onPress={() => router.push("/travel")}
-            style={[
-              styles.travelBanner,
-              { backgroundColor: colors.terracotta },
-            ]}
+            style={[styles.travelBanner, { backgroundColor: colors.terracotta }]}
           >
             <View style={styles.travelBannerLeft}>
               <Text style={styles.travelBannerEyebrow}>✨ AI-POWERED</Text>
-              <Text style={styles.travelBannerTitle}>
-                Plan Your Next Trip
-              </Text>
+              <Text style={styles.travelBannerTitle}>Plan Your Next Trip</Text>
               <Text style={styles.travelBannerSub}>
                 Black-owned spots, safe neighborhoods & events
               </Text>
@@ -184,6 +202,22 @@ export default function DiscoverScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Filter panel */}
+        <View style={{ paddingHorizontal: 20 }}>
+          <ScoreFilterPanel filters={filters} onChange={setFilters} />
+        </View>
+
+        {/* Active filter summary */}
+        {activeFilterCount > 0 && (
+          <View style={[styles.filterSummary, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}>
+            <Feather name="filter" size={13} color={colors.primary} />
+            <Text style={[styles.filterSummaryText, { color: colors.primary }]}>
+              {filtered.length} result{filtered.length !== 1 ? "s" : ""} · {activeFilterCount} filter{activeFilterCount !== 1 ? "s" : ""} active
+            </Text>
+          </View>
+        )}
+
+        {/* Featured businesses */}
         {featured.length > 0 && (
           <View style={styles.section}>
             <SectionHeader title="Featured Businesses" />
@@ -206,6 +240,7 @@ export default function DiscoverScreen() {
           </View>
         )}
 
+        {/* Nearby businesses */}
         {nearby.length > 0 && (
           <View style={styles.section}>
             <SectionHeader title="Near You" />
@@ -226,7 +261,7 @@ export default function DiscoverScreen() {
             <Feather name="search" size={40} color={colors.muted} />
             <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No results found</Text>
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-              Try adjusting your search or category filter.
+              Try adjusting your search, category, or filters.
             </Text>
           </View>
         )}
@@ -237,9 +272,7 @@ export default function DiscoverScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    paddingBottom: 16,
-  },
+  header: { paddingBottom: 16 },
   headerTop: {
     flexDirection: "row",
     alignItems: "center",
@@ -247,14 +280,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 14,
   },
-  headerBrand: {
-    flex: 1,
-    gap: 2,
-  },
-  logoImg: {
-    width: 120,
-    height: 80,
-  },
+  headerBrand: { flex: 1, gap: 2 },
+  logoImg: { width: 120, height: 80 },
   greeting: {
     fontFamily: "Inter_400Regular",
     fontSize: 12,
@@ -280,28 +307,12 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#C4622D",
   },
-  searchWrap: {
-    paddingHorizontal: 20,
-    marginBottom: 12,
-  },
-  categoryScroll: {
-    paddingHorizontal: 20,
-    gap: 8,
-  },
+  searchWrap: { paddingHorizontal: 20, marginBottom: 12 },
+  categoryScroll: { paddingHorizontal: 20, gap: 8 },
   scroll: { flex: 1 },
-  scrollContent: {
-    paddingTop: 20,
-  },
-  heroBanner: {
-    borderRadius: 18,
-    height: 200,
-    position: "relative",
-  },
-  heroImage: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 18,
-  },
+  scrollContent: { paddingTop: 20 },
+  heroBanner: { borderRadius: 18, height: 200 },
+  heroImage: { width: "100%", height: "100%", borderRadius: 18 },
   heroOverlay: {
     position: "absolute",
     bottom: 0,
@@ -340,10 +351,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#C4622D",
   },
-  section: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
+  section: { paddingHorizontal: 20, marginBottom: 24 },
   travelBanner: {
     borderRadius: 16,
     padding: 16,
@@ -351,10 +359,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  travelBannerLeft: {
-    flex: 1,
-    gap: 4,
-  },
+  travelBannerLeft: { flex: 1, gap: 4 },
   travelBannerEyebrow: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 10,
@@ -372,9 +377,7 @@ const styles = StyleSheet.create({
     color: "rgba(251,247,240,0.85)",
     lineHeight: 18,
   },
-  travelBannerRight: {
-    marginLeft: 12,
-  },
+  travelBannerRight: { marginLeft: 12 },
   travelBannerArrow: {
     width: 44,
     height: 44,
@@ -383,21 +386,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  filterSummary: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  filterSummaryText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 13,
+  },
   safetyHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 12,
   },
-  safetyTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-  },
-  safetyTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 16,
-  },
+  safetyTitleRow: { flexDirection: "row", alignItems: "center", gap: 7 },
+  safetyTitle: { fontFamily: "Inter_700Bold", fontSize: 16 },
   alertCount: {
     width: 20,
     height: 20,
@@ -405,11 +416,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  alertCountText: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 11,
-    color: "#DC2626",
-  },
+  alertCountText: { fontFamily: "Inter_700Bold", fontSize: 11, color: "#DC2626" },
   reportBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -419,10 +426,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
   },
-  reportBtnText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 12,
-  },
+  reportBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   noAlerts: {
     flexDirection: "row",
     alignItems: "center",
@@ -431,10 +435,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
-  noAlertsText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 13,
-  },
+  noAlertsText: { fontFamily: "Inter_400Regular", fontSize: 13 },
   empty: {
     alignItems: "center",
     justifyContent: "center",
@@ -442,13 +443,6 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 40,
   },
-  emptyTitle: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 16,
-  },
-  emptyText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    textAlign: "center",
-  },
+  emptyTitle: { fontFamily: "Inter_600SemiBold", fontSize: 16 },
+  emptyText: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center" },
 });

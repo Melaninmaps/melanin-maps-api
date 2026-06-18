@@ -5,6 +5,8 @@ import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 import type { Business } from "@/constants/types";
+import { BlackOwnedBadge } from "./BlackOwnedBadge";
+import { ConfidenceScoreBadge } from "./ConfidenceScoreBadge";
 import { RatingStars } from "./RatingStars";
 import { VerificationBadge } from "./VerificationBadge";
 
@@ -43,6 +45,11 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
         style={[styles.hCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}
       >
         <Image source={img} style={styles.hImage} contentFit="cover" />
+        {business.blackOwned && (
+          <View style={styles.hBadgeOverlay}>
+            <BlackOwnedBadge size="sm" />
+          </View>
+        )}
         <View style={styles.hContent}>
           <View style={styles.hTop}>
             <View style={styles.hTitleRow}>
@@ -53,7 +60,7 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
             </View>
             <TouchableOpacity onPress={handleSave} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Feather
-                name={isSaved ? "bookmark" : "bookmark"}
+                name="bookmark"
                 size={16}
                 color={isSaved ? colors.primary : colors.mutedForeground}
               />
@@ -61,10 +68,13 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
           </View>
           <Text style={[styles.hCategory, { color: colors.primary }]}>{business.category}</Text>
           <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={11} />
-          <Text style={[styles.hLocation, { color: colors.mutedForeground }]} numberOfLines={1}>
-            {business.city}, {business.state}
-            {business.priceRange ? ` · ${business.priceRange}` : ""}
-          </Text>
+          <View style={styles.hBottom}>
+            <Text style={[styles.hLocation, { color: colors.mutedForeground }]} numberOfLines={1}>
+              {business.city}, {business.state}
+              {business.priceRange ? ` · ${business.priceRange}` : ""}
+            </Text>
+            <ConfidenceScoreBadge score={business.confidenceScore} size="sm" />
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -76,7 +86,14 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
       activeOpacity={0.92}
       style={[styles.vCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}
     >
-      <Image source={img} style={styles.vImage} contentFit="cover" />
+      <View style={styles.vImageWrap}>
+        <Image source={img} style={styles.vImage} contentFit="cover" />
+        {business.blackOwned && (
+          <View style={styles.vBadgeOverlay}>
+            <BlackOwnedBadge size="sm" />
+          </View>
+        )}
+      </View>
       <View style={styles.vContent}>
         <View style={styles.vTitleRow}>
           <Text style={[styles.vName, { color: colors.foreground }]} numberOfLines={1}>
@@ -93,6 +110,7 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
         <View style={styles.vMeta}>
           <Text style={[styles.vCategory, { color: colors.primary }]}>{business.category}</Text>
           {business.verified && <VerificationBadge />}
+          <ConfidenceScoreBadge score={business.confidenceScore} size="sm" />
         </View>
         <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={12} />
         <Text style={[styles.vLocation, { color: colors.mutedForeground }]} numberOfLines={1}>
@@ -117,6 +135,11 @@ const styles = StyleSheet.create({
   hImage: {
     width: "100%",
     height: 130,
+  },
+  hBadgeOverlay: {
+    position: "absolute",
+    top: 8,
+    left: 8,
   },
   hContent: {
     padding: 12,
@@ -144,9 +167,16 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
     fontSize: 11,
   },
+  hBottom: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 2,
+  },
   hLocation: {
     fontFamily: "Inter_400Regular",
     fontSize: 11,
+    flex: 1,
   },
   vCard: {
     flexDirection: "row",
@@ -158,9 +188,19 @@ const styles = StyleSheet.create({
     elevation: 2,
     marginBottom: 12,
   },
+  vImageWrap: {
+    width: 90,
+    height: 100,
+    position: "relative",
+  },
   vImage: {
     width: 90,
-    height: 90,
+    height: 100,
+  },
+  vBadgeOverlay: {
+    position: "absolute",
+    bottom: 6,
+    left: 4,
   },
   vContent: {
     flex: 1,
@@ -183,6 +223,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+    flexWrap: "wrap",
   },
   vCategory: {
     fontFamily: "Inter_500Medium",
