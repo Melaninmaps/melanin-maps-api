@@ -125,6 +125,44 @@ async function fetchFemaAlerts(): Promise<AlertItem[]> {
     }));
 }
 
+interface WmataAlert {
+  IncidentID: string;
+  Description: string;
+  LinesAffected: string;
+  IncidentType: string;
+  DateUpdated: string;
+}
+
+async function fetchWmataAlerts(): Promise<AlertItem[]> {
+  const apiKey = process.env.WMATA_API_KEY;
+  if (!apiKey) return [];
+
+  const url = "https://api.wmata.com/Incidents.svc/json/Incidents";
+  const res = await fetch(url, {
+    headers: { api_key: apiKey, Accept: "application/json" },
+    signal: AbortSignal.timeout(8000),
+  });
+
+  if (!res.ok) return [];
+
+  const json = (await res.json()) as { Incidents?: WmataAlert[] };
+  const incidents = json.Incidents ?? [];
+
+  return incidents.slice(0, 5).map((i) => {
+    const lines = i.LinesAffected.replace(/;/g, ",").replace(/,\s*$/, "").trim();
+    return {
+      id: `wmata-${i.IncidentID}`,
+      type: "travel" as const,
+      title: `DC Metro ${i.IncidentType}${lines ? ` — ${lines}` : ""}`,
+      message: i.Description.trim().slice(0, 140),
+      location: "Washington, DC",
+      timeAgo: i.DateUpdated ? timeAgo(i.DateUpdated) : "recently",
+      severity: i.IncidentType === "Alert" ? ("high" as const) : ("medium" as const),
+      source: "community" as const,
+    };
+  });
+}
+
 interface SeptaRouteAlert {
   route_id: string;
   route_name: string;
@@ -169,6 +207,7 @@ router.get("/alerts", async (req: Request, res: Response) => {
     const state = typeof req.query.state === "string" ? req.query.state.toUpperCase() : "";
     const cacheKey = state || "national";
     const isPA = state === "PA";
+    const isDC = state === "DC" || state === "MD" || state === "VA";
 
     const cached = alertCache.get(cacheKey);
     if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
@@ -183,6 +222,10 @@ router.get("/alerts", async (req: Request, res: Response) => {
 
     if (isPA) {
       fetches.push(fetchSeptaAlerts());
+    }
+
+    if (isDC) {
+      fetches.push(fetchWmataAlerts());
     }
 
     const results = await Promise.allSettled(fetches);
