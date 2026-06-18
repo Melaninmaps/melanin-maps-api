@@ -28,17 +28,32 @@ export interface NeighborhoodSurveyData {
   nighttime: number;
   walkability: number;
   transit: number;
-  policeSentiment: string;
+  atmosphere: string;
+  policeVisibility: string;
+  policeSafetyImpact: string;
   safetyTips: string[];
   comments: string;
 }
 
 const CITIES = ["Atlanta", "Houston", "Chicago", "Los Angeles", "New York", "DC", "Detroit", "New Orleans", "Baltimore", "Philadelphia"];
-const SENTIMENTS = [
-  { id: "positive", label: "Helpful & Respectful", icon: "👍" },
-  { id: "neutral", label: "Mixed / Neutral", icon: "🤷" },
-  { id: "negative", label: "Harmful / Unsafe", icon: "⚠️" },
-  { id: "absent", label: "Rarely Present", icon: "🚫" },
+const ATMOSPHERE_OPTIONS = [
+  { id: "welcoming", label: "Welcoming" },
+  { id: "neutral", label: "Neutral" },
+  { id: "uncomfortable", label: "Uncomfortable" },
+  { id: "mixed", label: "Mixed" },
+];
+const POLICE_VISIBILITY_OPTIONS = [
+  { id: "very_visible", label: "Very visible" },
+  { id: "moderately_visible", label: "Moderately visible" },
+  { id: "occasionally_visible", label: "Occasionally visible" },
+  { id: "rarely_visible", label: "Rarely visible" },
+  { id: "not_observed", label: "Not observed" },
+];
+const POLICE_IMPACT_OPTIONS = [
+  { id: "increased", label: "Increased my sense of safety" },
+  { id: "no_impact", label: "Had no impact" },
+  { id: "decreased", label: "Decreased my sense of safety" },
+  { id: "unsure", label: "Unsure" },
 ];
 const SAFETY_TIPS_OPTIONS = [
   "Well-lit streets at night",
@@ -88,7 +103,9 @@ export function NeighborhoodSafetySurvey({ visible, onClose, onSubmit }: Props) 
     nighttime: 0,
     walkability: 0,
     transit: 0,
-    policeSentiment: "",
+    atmosphere: "",
+    policeVisibility: "",
+    policeSafetyImpact: "",
     safetyTips: [],
     comments: "",
   });
@@ -96,7 +113,7 @@ export function NeighborhoodSafetySurvey({ visible, onClose, onSubmit }: Props) 
 
   const reset = () => {
     setStep(0);
-    setData({ city: "", neighborhood: "", daytime: 0, nighttime: 0, walkability: 0, transit: 0, policeSentiment: "", safetyTips: [], comments: "" });
+    setData({ city: "", neighborhood: "", daytime: 0, nighttime: 0, walkability: 0, transit: 0, atmosphere: "", policeVisibility: "", policeSafetyImpact: "", safetyTips: [], comments: "" });
     setSubmitted(false);
   };
 
@@ -113,6 +130,7 @@ export function NeighborhoodSafetySurvey({ visible, onClose, onSubmit }: Props) 
   const canNext = () => {
     if (step === 0) return data.city !== "" && data.neighborhood.trim() !== "";
     if (step === 1) return data.daytime > 0 && data.nighttime > 0 && data.walkability > 0 && data.transit > 0;
+    if (step === 2) return data.atmosphere !== "" && data.policeVisibility !== "" && data.policeSafetyImpact !== "";
     return true;
   };
 
@@ -214,24 +232,67 @@ export function NeighborhoodSafetySurvey({ visible, onClose, onSubmit }: Props) 
             ) : (
               <View style={styles.stepContent}>
                 <Text style={[styles.stepTitle, { color: colors.foreground }]}>Community Insights</Text>
-                <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>Share safety tips and your police experience</Text>
-                <Text style={[styles.groupLabel, { color: colors.foreground }]}>Police interactions here are typically…</Text>
-                <View style={{ gap: 8 }}>
-                  {SENTIMENTS.map((s) => (
+                <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>Share your experience of this neighborhood's atmosphere and police presence</Text>
+
+                <Text style={[styles.groupLabel, { color: colors.foreground }]}>
+                  How would you describe the community atmosphere?
+                  <Text style={{ color: "#DC2626" }}> *</Text>
+                </Text>
+                <View style={styles.chipGrid}>
+                  {ATMOSPHERE_OPTIONS.map((opt) => (
                     <TouchableOpacity
-                      key={s.id}
-                      style={[styles.sentimentRow, {
-                        backgroundColor: data.policeSentiment === s.id ? "#C4622D10" : colors.card,
-                        borderColor: data.policeSentiment === s.id ? "#C4622D" : colors.border,
+                      key={opt.id}
+                      style={[styles.chip, {
+                        backgroundColor: data.atmosphere === opt.id ? "#C4622D" : colors.card,
+                        borderColor: data.atmosphere === opt.id ? "#C4622D" : colors.border,
                       }]}
-                      onPress={() => { Haptics.selectionAsync(); setData({ ...data, policeSentiment: s.id }); }}
+                      onPress={() => { Haptics.selectionAsync(); setData({ ...data, atmosphere: opt.id }); }}
                     >
-                      <Text style={{ fontSize: 20 }}>{s.icon}</Text>
-                      <Text style={[styles.sentimentText, { color: colors.foreground }]}>{s.label}</Text>
-                      {data.policeSentiment === s.id && <Feather name="check-circle" size={18} color="#C4622D" />}
+                      <Text style={[styles.chipText, { color: data.atmosphere === opt.id ? "#FBF7F0" : colors.foreground }]}>{opt.label}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
+
+                <Text style={[styles.groupLabel, { color: colors.foreground, marginTop: 16 }]}>
+                  How would you describe the level of police presence in this area?
+                  <Text style={{ color: "#DC2626" }}> *</Text>
+                </Text>
+                <View style={{ gap: 8 }}>
+                  {POLICE_VISIBILITY_OPTIONS.map((opt) => (
+                    <TouchableOpacity
+                      key={opt.id}
+                      style={[styles.sentimentRow, {
+                        backgroundColor: data.policeVisibility === opt.id ? "#C4622D10" : colors.card,
+                        borderColor: data.policeVisibility === opt.id ? "#C4622D" : colors.border,
+                      }]}
+                      onPress={() => { Haptics.selectionAsync(); setData({ ...data, policeVisibility: opt.id }); }}
+                    >
+                      <Text style={[styles.sentimentText, { color: colors.foreground }]}>{opt.label}</Text>
+                      {data.policeVisibility === opt.id && <Feather name="check-circle" size={18} color="#C4622D" />}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Text style={[styles.groupLabel, { color: colors.foreground, marginTop: 16 }]}>
+                  How did the level of police presence affect your sense of safety?
+                  <Text style={{ color: "#DC2626" }}> *</Text>
+                </Text>
+                <View style={{ gap: 8 }}>
+                  {POLICE_IMPACT_OPTIONS.map((opt) => (
+                    <TouchableOpacity
+                      key={opt.id}
+                      style={[styles.sentimentRow, {
+                        backgroundColor: data.policeSafetyImpact === opt.id ? "#C4622D10" : colors.card,
+                        borderColor: data.policeSafetyImpact === opt.id ? "#C4622D" : colors.border,
+                      }]}
+                      onPress={() => { Haptics.selectionAsync(); setData({ ...data, policeSafetyImpact: opt.id }); }}
+                    >
+                      <Text style={[styles.sentimentText, { color: colors.foreground }]}>{opt.label}</Text>
+                      {data.policeSafetyImpact === opt.id && <Feather name="check-circle" size={18} color="#C4622D" />}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
                 <Text style={[styles.groupLabel, { color: colors.foreground, marginTop: 16 }]}>Safety tips to share (select all that apply)</Text>
                 <View style={styles.chipGrid}>
                   {SAFETY_TIPS_OPTIONS.map((tip) => (
