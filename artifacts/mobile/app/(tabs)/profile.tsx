@@ -82,7 +82,7 @@ export default function ProfileScreen() {
             onPress={login}
             activeOpacity={0.85}
           >
-            <Feather name="log-in" size={18} color="#FBF7F0" />
+            <Feather name="log-in" size={18} color="#FFFFFF" />
             <Text style={styles.signInBtnText}>Sign In</Text>
           </TouchableOpacity>
           <View style={styles.benefitsGrid}>
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
   signInBtnText: {
     fontFamily: "Inter_700Bold",
     fontSize: 16,
-    color: "#FBF7F0",
+    color: "#FFFFFF",
   },
   benefitsGrid: {
     flexDirection: "row",

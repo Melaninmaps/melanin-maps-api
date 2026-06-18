@@ -72,7 +72,7 @@ export default function MessagesScreen() {
           style={[styles.composeBtn, { backgroundColor: colors.primary }]}
           onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
         >
-          <Feather name="edit-2" size={15} color="#FBF7F0" />
+          <Feather name="edit-2" size={15} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
@@ -105,7 +105,7 @@ export default function MessagesScreen() {
                 setFilter(f);
               }}
             >
-              <Text style={[styles.filterChipText, { color: filter === f ? "#FBF7F0" : colors.foreground }]}>
+              <Text style={[styles.filterChipText, { color: filter === f ? "#FFFFFF" : colors.foreground }]}>
                 {f === "all" ? "All" : f === "business" ? "Businesses" : "People"}
               </Text>
             </TouchableOpacity>

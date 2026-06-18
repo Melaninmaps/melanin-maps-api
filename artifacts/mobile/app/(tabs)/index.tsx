@@ -85,7 +85,7 @@ export default function DiscoverScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={["#C4622D", "#D4873A"]}
+        colors={["#3B1F0E", "#5C3018"]}
         style={[styles.header, { paddingTop: topPad + 12 }]}
       >
         <View style={styles.headerTop}>
@@ -192,7 +192,7 @@ export default function DiscoverScreen() {
               <Text style={styles.heroTitle}>Map Your Life.{"\n"}Connect Deeper.</Text>
               <TouchableOpacity style={styles.heroCta} activeOpacity={0.85}>
                 <Text style={styles.heroCtaText}>Explore Near You</Text>
-                <Feather name="arrow-right" size={14} color="#C4622D" />
+                <Feather name="arrow-right" size={14} color="#3B1F0E" />
               </TouchableOpacity>
             </LinearGradient>
           </View>
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: "#FACC15",
     borderWidth: 1.5,
-    borderColor: "#C4622D",
+    borderColor: "#3B1F0E",
   },
   searchWrap: { paddingHorizontal: 20, marginBottom: 12 },
   categoryScroll: { paddingHorizontal: 20, gap: 8 },
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
   heroCtaText: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 12,
-    color: "#C4622D",
+    color: "#3B1F0E",
   },
   section: { paddingHorizontal: 20, marginBottom: 24 },
   travelBanner: {
@@ -406,13 +406,13 @@ const styles = StyleSheet.create({
   travelBannerEyebrow: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 10,
-    color: "rgba(251,247,240,0.75)",
+    color: "rgba(250,241,228,0.75)",
     letterSpacing: 1,
   },
   travelBannerTitle: {
     fontFamily: "Inter_700Bold",
     fontSize: 18,
-    color: "#FBF7F0",
+    color: "#FAF1E4",
   },
   travelBannerSub: {
     fontFamily: "Inter_400Regular",

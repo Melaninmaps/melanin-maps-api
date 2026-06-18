@@ -36,7 +36,7 @@ const CATEGORY_IMAGES: Record<string, any> = {
   Finance: require("@/assets/images/bento-businesses.jpg"),
 };
 
-const AVATAR_COLORS = ["#C4622D", "#D4873A", "#2D7A4F", "#7B3F00", "#1D4ED8"];
+const AVATAR_COLORS = ["#3B1F0E", "#C9922B", "#2D7A4F", "#7B3F00", "#1D4ED8"];
 
 export default function BusinessDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -143,7 +143,7 @@ export default function BusinessDetailScreen() {
             }}
             style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
           >
-            <Feather name="bookmark" size={20} color={saved ? "#D4873A" : "#FFFFFF"} />
+            <Feather name="bookmark" size={20} color={saved ? "#C9922B" : "#FFFFFF"} />
           </TouchableOpacity>
         </View>
       </View>
