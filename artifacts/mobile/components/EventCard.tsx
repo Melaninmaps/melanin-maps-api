@@ -20,7 +20,7 @@ export function EventCard({ event, onPress }: Props) {
       style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.foreground }]}
     >
       <Image
-        source={require("@/assets/images/event_festival.png")}
+        source={require("@/assets/images/bento-nightlife.jpg")}
         style={styles.image}
         contentFit="cover"
       />

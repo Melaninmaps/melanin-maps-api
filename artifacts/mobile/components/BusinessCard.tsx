@@ -9,13 +9,13 @@ import { RatingStars } from "./RatingStars";
 import { VerificationBadge } from "./VerificationBadge";
 
 const CATEGORY_IMAGES: Record<string, any> = {
-  Food: require("@/assets/images/biz_restaurant.png"),
-  Beauty: require("@/assets/images/biz_boutique.png"),
-  Retail: require("@/assets/images/biz_boutique.png"),
-  Tech: require("@/assets/images/biz_restaurant.png"),
-  Health: require("@/assets/images/biz_boutique.png"),
-  Legal: require("@/assets/images/biz_restaurant.png"),
-  Finance: require("@/assets/images/biz_restaurant.png"),
+  Food: require("@/assets/images/bento-businesses.jpg"),
+  Beauty: require("@/assets/images/bento-nightlife.jpg"),
+  Retail: require("@/assets/images/bento-nightlife.jpg"),
+  Tech: require("@/assets/images/bento-businesses.jpg"),
+  Health: require("@/assets/images/bento-culture.jpg"),
+  Legal: require("@/assets/images/bento-businesses.jpg"),
+  Finance: require("@/assets/images/bento-businesses.jpg"),
 };
 
 interface Props {

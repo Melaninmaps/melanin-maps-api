@@ -59,7 +59,7 @@ export default function EventDetailScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 100 }}>
         <Image
-          source={require("@/assets/images/event_festival.png")}
+          source={require("@/assets/images/bento-nightlife.jpg")}
           style={styles.hero}
           contentFit="cover"
         />

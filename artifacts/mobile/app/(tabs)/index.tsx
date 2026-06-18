@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -108,6 +109,27 @@ export default function DiscoverScreen() {
           </View>
         )}
 
+        <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 24 }]}>
+          <View style={[styles.heroBanner, { overflow: "hidden" }]}>
+            <Image
+              source={require("@/assets/images/hero.jpg")}
+              style={styles.heroImage}
+              contentFit="cover"
+            />
+            <LinearGradient
+              colors={["transparent", "rgba(0,0,0,0.65)"]}
+              style={styles.heroOverlay}
+            >
+              <Text style={styles.heroLabel}>COMMUNITY DISCOVERY</Text>
+              <Text style={styles.heroTitle}>Map Your Life.{"\n"}Connect Deeper.</Text>
+              <TouchableOpacity style={styles.heroCta} activeOpacity={0.85}>
+                <Text style={styles.heroCtaText}>Explore Near You</Text>
+                <Feather name="arrow-right" size={14} color="#C4622D" />
+              </TouchableOpacity>
+            </LinearGradient>
+          </View>
+        </View>
+
         {featured.length > 0 && (
           <View style={styles.section}>
             <SectionHeader title="Featured Businesses" />
@@ -212,6 +234,54 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: {
     paddingTop: 20,
+  },
+  heroBanner: {
+    borderRadius: 18,
+    height: 200,
+    position: "relative",
+  },
+  heroImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 18,
+  },
+  heroOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 18,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
+    gap: 4,
+  },
+  heroLabel: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 10,
+    color: "rgba(255,255,255,0.7)",
+    letterSpacing: 1.2,
+  },
+  heroTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 20,
+    color: "#FFFFFF",
+    lineHeight: 26,
+  },
+  heroCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 6,
+    backgroundColor: "#FFFFFF",
+    alignSelf: "flex-start",
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  heroCtaText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
+    color: "#C4622D",
   },
   section: {
     paddingHorizontal: 20,
