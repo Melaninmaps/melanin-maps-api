@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   FlatList,
+  Linking,
   Platform,
   StyleSheet,
   Text,
@@ -79,6 +80,19 @@ export function MapTabView() {
           />
         )}
       />
+
+      <TouchableOpacity
+        style={styles.sosBtn}
+        activeOpacity={0.85}
+        onPress={() => {
+          if (Platform.OS !== "web") {
+            Linking.openURL("tel:911");
+          }
+        }}
+      >
+        <Feather name="phone-call" size={18} color="#FFFFFF" />
+        <Text style={styles.sosBtnText}>SOS</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -106,4 +120,22 @@ const styles = StyleSheet.create({
   catRow: { flexShrink: 0 },
   catList: { paddingHorizontal: 16, gap: 8, paddingBottom: 10 },
   list: { paddingHorizontal: 16, paddingTop: 12 },
+  sosBtn: {
+    position: "absolute",
+    bottom: 100,
+    right: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    backgroundColor: "#DC2626",
+    paddingHorizontal: 18,
+    paddingVertical: 13,
+    borderRadius: 30,
+    shadowColor: "#DC2626",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  sosBtnText: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF", letterSpacing: 1 },
 });

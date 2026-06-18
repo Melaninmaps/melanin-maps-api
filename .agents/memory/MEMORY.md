@@ -1,1 +1,4 @@
 - [Mapping with Melanin — project overview](mapping-with-melanin.md) — Expo mobile app with Express API, auth, AI travel, safety reporting, and business discovery.
+- [DB Review type conflict](db-review-type.md) — businesses.ts exports `Review` interface (JSON column type); reviews.ts must export `ReviewRow` to avoid re-export ambiguity in schema/index.ts.
+- [Dark mode pattern](dark-mode-pattern.md) — ThemeProvider wraps SafeAreaProvider in _layout.tsx; useTheme() from contexts/ThemeContext.tsx; AsyncStorage key `@melanin_maps_theme`.
+- [Points toast pattern](points-toast-pattern.md) — Animated opacity sequence used for in-app points feedback; useNativeDriver:true required for mobile perf.

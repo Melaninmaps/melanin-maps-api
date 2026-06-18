@@ -9,6 +9,11 @@ import alertsRouter from "./alerts";
 import moderationRouter from "./moderation";
 import safetyContextRouter from "./safety-context";
 import stripeRouter from "./stripe";
+import reviewsRouter from "./reviews";
+import checkinsRouter from "./checkins";
+import pointsRouter from "./points";
+import eventRsvpsRouter from "./event-rsvps";
+import pushTokenRouter from "./push-token";
 
 const router: IRouter = Router();
 
@@ -22,5 +27,10 @@ router.use(alertsRouter);
 router.use(moderationRouter);
 router.use(safetyContextRouter);
 router.use(stripeRouter);
+router.use(reviewsRouter);
+router.use(checkinsRouter);
+router.use(pointsRouter);
+router.use(eventRsvpsRouter);
+router.use(pushTokenRouter);
 
 export default router;

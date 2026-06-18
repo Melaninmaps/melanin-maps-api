@@ -20,6 +20,7 @@ import { AIChatWidget } from "@/components/AIChatWidget";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/lib/auth";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 function BrandedLoader() {
   const pulse = useRef(new Animated.Value(1)).current;
@@ -358,6 +359,7 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return <BrandedLoader />;
 
   return (
+    <ThemeProvider>
     <SafeAreaProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
@@ -376,5 +378,6 @@ export default function RootLayout() {
         </QueryClientProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
+    </ThemeProvider>
   );
 }

@@ -16,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useColors } from "@/hooks/useColors";
 import { PostItineraryFeedbackSurvey } from "@/components/PostItineraryFeedbackSurvey";
+import { useItineraries } from "@/hooks/useItineraries";
 
 const VIBES = [
   { id: "foodie", label: "Foodie", icon: "restaurant" },
@@ -78,6 +79,8 @@ export default function TravelScreen() {
     "businesses" | "neighborhoods" | "events" | "safety"
   >("businesses");
   const [showFeedbackSurvey, setShowFeedbackSurvey] = useState(false);
+  const [tripSaved, setTripSaved] = useState(false);
+  const { createItinerary } = useItineraries();
 
   const fadeAnim = useState(new Animated.Value(0))[0];
 
@@ -154,7 +157,14 @@ export default function TravelScreen() {
             Black-owned spots & community intel
           </Text>
         </View>
-        <View style={{ width: 36 }} />
+        <TouchableOpacity
+          style={styles.myTripsBtn}
+          onPress={() => router.push("/my-trips" as any)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="bookmark" size={16} color="#FFFFFF" />
+          <Text style={styles.myTripsBtnText}>Saved</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -585,7 +595,35 @@ export default function TravelScreen() {
               </View>
             )}
 
-            <View style={{ height: 24 }} />
+            <View style={{ height: 16 }} />
+
+            <TouchableOpacity
+              style={[
+                styles.saveTripBtn,
+                { backgroundColor: tripSaved ? "#16A34A" : colors.primary },
+              ]}
+              disabled={tripSaved}
+              activeOpacity={0.85}
+              onPress={async () => {
+                if (!results) return;
+                await createItinerary(
+                  `${results.destination} Trip`,
+                  results.summary,
+                );
+                setTripSaved(true);
+              }}
+            >
+              <Ionicons
+                name={tripSaved ? "checkmark-circle" : "bookmark-outline"}
+                size={18}
+                color="#FFFFFF"
+              />
+              <Text style={styles.saveTripBtnText}>
+                {tripSaved ? "Trip Saved!" : "Save This Trip"}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={{ height: 16 }} />
 
             {/* Rate this itinerary */}
             <TouchableOpacity
@@ -649,6 +687,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  myTripsBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  myTripsBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#FFFFFF" },
+  saveTripBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginHorizontal: 2,
+  },
+  saveTripBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 15, color: "#FFFFFF" },
   headerCenter: { flex: 1, alignItems: "center" },
   headerTitle: {
     fontFamily: "Inter_700Bold",

@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type Row = {
   id: string;
@@ -36,7 +37,7 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, logout, isAuthenticated } = useAuth();
-  const [darkMode, setDarkMode] = useState(false);
+  const { isDark, toggle: toggleDark } = useTheme();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -56,7 +57,7 @@ export default function SettingsScreen() {
       rows: [
         { id: "notifications", icon: "bell", label: "Notifications", sub: "Alerts and reminders", route: "/notifications-settings" },
         { id: "privacy", icon: "shield", label: "Privacy & Safety", sub: "Visibility and data", route: "/privacy" },
-        { id: "appearance", icon: "moon", label: "Dark Mode", value: darkMode ? "On" : "Off", route: null },
+        { id: "appearance", icon: "moon", label: "Dark Mode", value: isDark ? "On" : "Off", route: null },
       ],
     },
     {
@@ -106,7 +107,7 @@ export default function SettingsScreen() {
 
   const handleRow = (row: Row) => {
     if (Platform.OS !== "web") Haptics.selectionAsync();
-    if (row.id === "appearance") { setDarkMode((d) => !d); return; }
+    if (row.id === "appearance") { toggleDark(); return; }
     if (row.id === "signout") {
       logout();
       router.replace("/login");

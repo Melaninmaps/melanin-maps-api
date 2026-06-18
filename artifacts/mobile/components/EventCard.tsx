@@ -1,8 +1,10 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import * as Haptics from "expo-haptics";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
+import { useEventRsvp } from "@/hooks/useEventRsvp";
 import type { Event } from "@/constants/types";
 
 interface Props {
@@ -12,6 +14,15 @@ interface Props {
 
 export function EventCard({ event, onPress }: Props) {
   const colors = useColors();
+  const { isRsvped, rsvpCount, isLoading, toggle } = useEventRsvp(event.id);
+
+  const handleRsvp = (e: { stopPropagation?: () => void }) => {
+    if (e.stopPropagation) e.stopPropagation();
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    toggle();
+  };
+
+  const attendeeCount = rsvpCount > 0 ? rsvpCount : event.attendees;
 
   return (
     <TouchableOpacity
@@ -54,9 +65,37 @@ export function EventCard({ event, onPress }: Props) {
                 {event.price}
               </Text>
             </View>
-            <View style={styles.attendees}>
-              <Feather name="users" size={12} color={colors.mutedForeground} />
-              <Text style={[styles.metaText, { color: colors.mutedForeground }]}>{event.attendees.toLocaleString()}</Text>
+            <View style={styles.footerRight}>
+              <View style={styles.attendees}>
+                <Feather name="users" size={12} color={colors.mutedForeground} />
+                <Text style={[styles.metaText, { color: colors.mutedForeground }]}>{attendeeCount.toLocaleString()}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={handleRsvp}
+                disabled={isLoading}
+                activeOpacity={0.8}
+                style={[
+                  styles.rsvpBtn,
+                  {
+                    backgroundColor: isRsvped ? colors.primary : "transparent",
+                    borderColor: isRsvped ? colors.primary : colors.border,
+                  },
+                ]}
+              >
+                <Feather
+                  name={isRsvped ? "check" : "plus"}
+                  size={11}
+                  color={isRsvped ? colors.primaryForeground : colors.mutedForeground}
+                />
+                <Text
+                  style={[
+                    styles.rsvpText,
+                    { color: isRsvped ? colors.primaryForeground : colors.mutedForeground },
+                  ]}
+                >
+                  {isRsvped ? "Going" : "RSVP"}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -75,10 +114,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
   },
-  image: {
-    width: "100%",
-    height: 160,
-  },
+  image: { width: "100%", height: 160 },
   featuredBadge: {
     position: "absolute",
     top: 12,
@@ -87,10 +123,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 20,
   },
-  featuredText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 11,
-  },
+  featuredText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   content: {
     flexDirection: "row",
     padding: 14,
@@ -105,53 +138,30 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexShrink: 0,
   },
-  dateShort: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 10,
-    textTransform: "uppercase",
-  },
-  dateNum: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 18,
-    lineHeight: 20,
-  },
-  info: {
-    flex: 1,
-    gap: 4,
-  },
-  title: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 15,
-    marginBottom: 2,
-  },
-  meta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  metaText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    flex: 1,
-  },
+  dateShort: { fontFamily: "Inter_700Bold", fontSize: 10, textTransform: "uppercase" },
+  dateNum: { fontFamily: "Inter_700Bold", fontSize: 18, lineHeight: 20 },
+  info: { flex: 1, gap: 4 },
+  title: { fontFamily: "Inter_600SemiBold", fontSize: 15, marginBottom: 2 },
+  meta: { flexDirection: "row", alignItems: "center", gap: 5 },
+  metaText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
   footer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginTop: 4,
   },
-  priceTag: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  price: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 12,
-  },
-  attendees: {
+  footerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
+  priceTag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  price: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  attendees: { flexDirection: "row", alignItems: "center", gap: 4 },
+  rsvpBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1.5,
   },
+  rsvpText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
 });

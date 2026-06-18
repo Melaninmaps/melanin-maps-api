@@ -2,8 +2,9 @@ import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   Linking,
   Platform,
   ScrollView,
@@ -21,10 +22,12 @@ import { RatingStars } from "@/components/RatingStars";
 import { ReportContentModal } from "@/components/ReportContentModal";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { WriteReviewModal } from "@/components/WriteReviewModal";
-import type { Review } from "@/constants/types";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinessById } from "@/hooks/useBusinesses";
+import { useReviews } from "@/hooks/useReviews";
+import { useCheckins } from "@/hooks/useCheckins";
+import { usePoints } from "@/hooks/usePoints";
 
 const CATEGORY_IMAGES: Record<string, any> = {
   Food: require("@/assets/images/bento-businesses.jpg"),
@@ -47,7 +50,13 @@ export default function BusinessDetailScreen() {
 
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
-  const [localReviews, setLocalReviews] = useState<Review[]>([]);
+  const [checkInDone, setCheckInDone] = useState(false);
+  const [pointsToast, setPointsToast] = useState<string | null>(null);
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+
+  const { reviews: apiReviews, submitReview } = useReviews(id ?? "");
+  const { hasCheckedIn, checkIn } = useCheckins();
+  const { addLocal } = usePoints();
 
   const { business, isLoading } = useBusinessById(id ?? "");
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -86,7 +95,33 @@ export default function BusinessDetailScreen() {
 
   const img = CATEGORY_IMAGES[business.category] ?? CATEGORY_IMAGES["Food"];
   const saved = isSaved(business.id);
-  const allReviews = [...(business.reviews ?? []), ...localReviews];
+  const alreadyCheckedIn = hasCheckedIn(business.id) || checkInDone;
+
+  const allReviews: Array<{
+    id: string; author: string; initials: string; color: string;
+    rating: number; text: string; timeAgo: string; wouldReturnAlone?: boolean;
+  }> = [
+    ...apiReviews.map((r) => ({
+      id: r.id,
+      author: r.authorName,
+      initials: r.authorName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??",
+      color: AVATAR_COLORS[r.authorName.charCodeAt(0) % AVATAR_COLORS.length],
+      rating: r.rating,
+      text: r.text ?? "",
+      timeAgo: new Date(r.createdAt).toLocaleDateString(),
+      wouldReturnAlone: r.wouldReturnAlone ?? undefined,
+    })),
+    ...(business.reviews ?? []),
+  ];
+
+  const showPointsToast = (msg: string) => {
+    setPointsToast(msg);
+    Animated.sequence([
+      Animated.timing(toastOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+      Animated.delay(2000),
+      Animated.timing(toastOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+    ]).start(() => setPointsToast(null));
+  };
 
   const handleCall = () => {
     if (business.phone) Linking.openURL(`tel:${business.phone}`);
@@ -106,18 +141,23 @@ export default function BusinessDetailScreen() {
     } catch {}
   };
 
-  const handleReviewSubmit = (rating: number, text: string, wouldReturn: boolean) => {
-    const newReview: Review = {
-      id: `local-${Date.now()}`,
-      author: "You",
-      initials: "ME",
-      color: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)],
-      rating,
-      text: text || "Great experience!",
-      timeAgo: "Just now",
-      wouldReturnAlone: wouldReturn,
-    };
-    setLocalReviews((prev) => [newReview, ...prev]);
+  const handleReviewSubmit = async (rating: number, text: string, wouldReturn: boolean) => {
+    const pts = await submitReview(rating, text, wouldReturn);
+    if (pts != null) {
+      addLocal(pts);
+      showPointsToast(`+${pts} pts — thanks for your review!`);
+    }
+  };
+
+  const handleCheckIn = async () => {
+    if (alreadyCheckedIn) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    const pts = await checkIn(business.id);
+    setCheckInDone(true);
+    if (pts != null) {
+      addLocal(pts);
+      showPointsToast(`+${pts} pts — checked in!`);
+    }
   };
 
   return (
@@ -309,6 +349,12 @@ export default function BusinessDetailScreen() {
         </View>
       </ScrollView>
 
+      {pointsToast ? (
+        <Animated.View style={[styles.pointsToast, { opacity: toastOpacity }]}>
+          <Text style={styles.pointsToastText}>{pointsToast}</Text>
+        </Animated.View>
+      ) : null}
+
       <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: bottomPad + 16 }]}>
         <TouchableOpacity
           style={[styles.contactBtn, { backgroundColor: colors.secondary }]}
@@ -319,6 +365,21 @@ export default function BusinessDetailScreen() {
           <Text style={[styles.contactBtnText, { color: colors.primary }]}>Call</Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.checkInBtn, {
+            backgroundColor: alreadyCheckedIn ? colors.success + "22" : colors.success,
+            borderWidth: alreadyCheckedIn ? 1.5 : 0,
+            borderColor: colors.success,
+          }]}
+          onPress={handleCheckIn}
+          activeOpacity={0.85}
+          disabled={alreadyCheckedIn}
+        >
+          <Feather name="check-circle" size={18} color={alreadyCheckedIn ? colors.success : "#FFFFFF"} />
+          <Text style={[styles.checkInBtnText, { color: alreadyCheckedIn ? colors.success : "#FFFFFF" }]}>
+            {alreadyCheckedIn ? "Checked In" : "Check In"}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
           activeOpacity={0.85}
           onPress={() => {
@@ -327,7 +388,7 @@ export default function BusinessDetailScreen() {
           }}
         >
           <Feather name="star" size={18} color="#FFFFFF" />
-          <Text style={[styles.primaryBtnText, { color: "#FFFFFF" }]}>Write a Review</Text>
+          <Text style={[styles.primaryBtnText, { color: "#FFFFFF" }]}>Review</Text>
         </TouchableOpacity>
       </View>
 
@@ -510,5 +571,35 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 12,
   },
-  primaryBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
+  primaryBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  checkInBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    height: 50,
+    borderRadius: 12,
+  },
+  checkInBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  pointsToast: {
+    position: "absolute",
+    bottom: 90,
+    alignSelf: "center",
+    backgroundColor: "#2D7A4F",
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 24,
+    zIndex: 99,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  pointsToastText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    color: "#FFFFFF",
+  },
 });

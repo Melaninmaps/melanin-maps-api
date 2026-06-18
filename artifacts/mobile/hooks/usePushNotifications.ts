@@ -1,0 +1,49 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
+
+const PUSH_TOKEN_KEY = "@melanin_maps_push_token";
+const AUTH_TOKEN_KEY = "auth_session_token";
+
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
+
+export async function registerPushToken(): Promise<void> {
+  if (Platform.OS === "web") return;
+
+  try {
+    const Notifications = await import("expo-notifications");
+
+    const { status: existing } = await Notifications.getPermissionsAsync();
+    const finalStatus =
+      existing === "granted"
+        ? existing
+        : (await Notifications.requestPermissionsAsync()).status;
+
+    if (finalStatus !== "granted") return;
+
+    const tokenData = await Notifications.getExpoPushTokenAsync();
+    const pushToken = tokenData.data;
+
+    const cached = await AsyncStorage.getItem(PUSH_TOKEN_KEY);
+    if (cached === pushToken) return;
+
+    await AsyncStorage.setItem(PUSH_TOKEN_KEY, pushToken);
+
+    const authToken = await SecureStore.getItemAsync(AUTH_TOKEN_KEY).catch(() => null);
+    const apiBase = getApiBase();
+    if (authToken && apiBase) {
+      await fetch(`${apiBase}/api/push-token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ token: pushToken }),
+      });
+    }
+  } catch {
+  }
+}

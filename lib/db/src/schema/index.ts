@@ -4,3 +4,7 @@ export * from "./conversations";
 export * from "./messages";
 export * from "./surveys";
 export * from "./saved-places";
+export * from "./reviews";
+export * from "./check-ins";
+export * from "./points";
+export * from "./event-rsvps";
