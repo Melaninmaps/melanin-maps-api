@@ -15,14 +15,15 @@ import { useColors } from "@/hooks/useColors";
 
 const ADMIN_TABS = [
   { id: "overview", label: "Overview", icon: "grid" as const },
-  { id: "businesses", label: "Businesses", icon: "briefcase" as const },
-  { id: "events", label: "Events", icon: "calendar" as const },
-  { id: "users", label: "Users", icon: "users" as const },
-  { id: "reports", label: "Reports", icon: "flag" as const },
+  { id: "reports", label: "Safety Reports", icon: "flag" as const },
   { id: "reviews", label: "Reviews", icon: "star" as const },
+  { id: "claims", label: "Claims", icon: "check-square" as const },
+  { id: "submissions", label: "Submissions", icon: "send" as const },
+  { id: "referrals", label: "Referrals", icon: "share-2" as const },
   { id: "analytics", label: "Analytics", icon: "bar-chart-2" as const },
+  { id: "email", label: "Email", icon: "mail" as const },
   { id: "surveys", label: "Surveys", icon: "clipboard" as const },
-  { id: "content", label: "Content", icon: "layers" as const },
+  { id: "users", label: "Users", icon: "users" as const },
   { id: "settings", label: "Settings", icon: "settings" as const },
 ];
 
@@ -465,16 +466,244 @@ function SurveysTab() {
   );
 }
 
+function ClaimsTab() {
+  const colors = useColors();
+  const [filter, setFilter] = useState("All");
+  const STATUSES = ["All", "Pending", "Approved", "Rejected"];
+  const claims = [
+    { business: "Kingdom Cuts Barbershop", city: "Atlanta, GA", claimant: "Marcus T.", method: "Email", status: "pending", submitted: "Jun 15" },
+    { business: "Essence Beauty Lounge", city: "Houston, TX", claimant: "Aisha B.", method: "Document", status: "approved", submitted: "Jun 10" },
+    { business: "Carter & Associates Law", city: "Los Angeles, CA", claimant: "Darius K.", method: "Phone", status: "approved", submitted: "Jun 8" },
+    { business: "New Listing Co.", city: "Chicago, IL", claimant: "Unknown User", method: "Email", status: "rejected", submitted: "Jun 5" },
+    { business: "Urban Roots Cafe", city: "Oakland, CA", claimant: "Zara M.", method: "Document", status: "pending", submitted: "Jun 16" },
+  ];
+  const statusColor = (s: string) => s === "approved" ? "#2D7A4F" : s === "rejected" ? "#DC2626" : "#D4873A";
+  const filtered = filter === "All" ? claims : claims.filter((c) => c.status === filter.toLowerCase());
+  const pending = claims.filter((c) => c.status === "pending").length;
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+      {pending > 0 && (
+        <View style={[adminStyles.alertBanner, { backgroundColor: "#D4873A12", borderColor: "#D4873A30" }]}>
+          <Feather name="check-square" size={15} color="#D4873A" />
+          <Text style={[adminStyles.alertText, { color: "#D4873A" }]}>{pending} claim{pending !== 1 ? "s" : ""} awaiting review</Text>
+        </View>
+      )}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          {STATUSES.map((s) => (
+            <TouchableOpacity key={s} style={[adminStyles.filterChip, { backgroundColor: filter === s ? colors.primary : colors.secondary, borderColor: filter === s ? colors.primary : colors.border }]} onPress={() => setFilter(s)}>
+              <Text style={[adminStyles.filterChipText, { color: filter === s ? "#FBF7F0" : colors.foreground }]}>{s}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+      {filtered.map((c, i) => (
+        <View key={i} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+            <View style={[adminStyles.statusBadge, { backgroundColor: statusColor(c.status) + "18" }]}>
+              <Text style={[adminStyles.statusBadgeText, { color: statusColor(c.status) }]}>{c.status}</Text>
+            </View>
+            <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>Submitted {c.submitted}</Text>
+          </View>
+          <Text style={[adminStyles.bizName, { color: colors.foreground, marginBottom: 2 }]}>{c.business}</Text>
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{c.city}</Text>
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>Claimant: {c.claimant} · Method: {c.method}</Text>
+          {c.status === "pending" && (
+            <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+              <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30" }]}>
+                <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>Approve</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}>
+                <Text style={[adminStyles.smallBtnText, { color: "#DC2626" }]}>Reject</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+                <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Request Docs</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      ))}
+    </ScrollView>
+  );
+}
+
+function SubmissionsTab() {
+  const colors = useColors();
+  const [filter, setFilter] = useState("All");
+  const STATUSES = ["All", "Pending", "Approved", "Rejected"];
+  const submissions = [
+    { name: "Kingdom Cuts Barbershop", category: "Beauty", city: "Atlanta, GA", submittedBy: "Marcus T.", blackOwned: true, status: "pending", submitted: "Jun 16" },
+    { name: "Urban Roots Cafe", category: "Restaurant", city: "Oakland, CA", submittedBy: "Zara M.", blackOwned: true, status: "pending", submitted: "Jun 15" },
+    { name: "Harambee Tech Hub", category: "Coworking", city: "Houston, TX", submittedBy: "Kwame A.", blackOwned: true, status: "approved", submitted: "Jun 10" },
+    { name: "New Listing Co.", category: "Retail", city: "Chicago, IL", submittedBy: "Anonymous", blackOwned: false, status: "rejected", submitted: "Jun 5" },
+    { name: "Cleo's Bistro", category: "Restaurant", city: "Washington, DC", submittedBy: "Simone W.", blackOwned: true, status: "pending", submitted: "Jun 17" },
+  ];
+  const statusColor = (s: string) => s === "approved" ? "#2D7A4F" : s === "rejected" ? "#DC2626" : "#D4873A";
+  const filtered = filter === "All" ? submissions : submissions.filter((s) => s.status === filter.toLowerCase());
+  const pending = submissions.filter((s) => s.status === "pending").length;
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+      {pending > 0 && (
+        <View style={[adminStyles.alertBanner, { backgroundColor: "#C4622D12", borderColor: "#C4622D30" }]}>
+          <Feather name="send" size={15} color="#C4622D" />
+          <Text style={[adminStyles.alertText, { color: "#C4622D" }]}>{pending} submission{pending !== 1 ? "s" : ""} awaiting review</Text>
+        </View>
+      )}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          {STATUSES.map((s) => (
+            <TouchableOpacity key={s} style={[adminStyles.filterChip, { backgroundColor: filter === s ? colors.primary : colors.secondary, borderColor: filter === s ? colors.primary : colors.border }]} onPress={() => setFilter(s)}>
+              <Text style={[adminStyles.filterChipText, { color: filter === s ? "#FBF7F0" : colors.foreground }]}>{s}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+      {filtered.map((s, i) => (
+        <View key={i} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+            <View style={[adminStyles.statusBadge, { backgroundColor: statusColor(s.status) + "18" }]}>
+              <Text style={[adminStyles.statusBadgeText, { color: statusColor(s.status) }]}>{s.status}</Text>
+            </View>
+            <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>{s.submitted}</Text>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
+            <Text style={[adminStyles.bizName, { color: colors.foreground }]}>{s.name}</Text>
+            {s.blackOwned && <Text style={{ fontSize: 12 }}>✊🏾</Text>}
+          </View>
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{s.category} · {s.city}</Text>
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>Submitted by: {s.submittedBy}</Text>
+          {s.status === "pending" && (
+            <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+              <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30" }]}>
+                <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>Approve</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}>
+                <Text style={[adminStyles.smallBtnText, { color: "#DC2626" }]}>Reject</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+                <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Edit</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      ))}
+    </ScrollView>
+  );
+}
+
+function ReferralsTab() {
+  const colors = useColors();
+  const KPI = [
+    { label: "Total Referrals", value: "824", sub: "+47 this week", color: "#C4622D", icon: "share-2" as const },
+    { label: "Conversions", value: "312", sub: "38% conv. rate", color: "#2D7A4F", icon: "user-check" as const },
+    { label: "Ambassadors", value: "18", sub: "25+ referrals", color: "#D4873A", icon: "award" as const },
+    { label: "Credits Issued", value: "$840", sub: "All time", color: "#1D4ED8", icon: "dollar-sign" as const },
+  ];
+  const topReferrers = [
+    { name: "Simone W.", referrals: 38, tier: "Legend", earned: "$100", color: "#C4622D" },
+    { name: "Marcus T.", referrals: 29, tier: "Legend", earned: "$100", color: "#2D7A4F" },
+    { name: "Aisha B.", referrals: 17, tier: "Ambassador", earned: "$25", color: "#D4873A" },
+    { name: "Kwame A.", referrals: 12, tier: "Ambassador", earned: "$25", color: "#1D4ED8" },
+    { name: "Zara M.", referrals: 6, tier: "Connector", earned: "$5", color: "#7B2D8B" },
+  ];
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+      <View style={adminStyles.statsGrid}>
+        {KPI.map((k) => (
+          <StatCard key={k.label} label={k.label} value={k.value} sub={k.sub} color={k.color} icon={k.icon} />
+        ))}
+      </View>
+      <SectionLabel title="Top Referrers" />
+      {topReferrers.map((r, i) => (
+        <View key={i} style={[adminStyles.bizRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[adminStyles.bizAvatar, { backgroundColor: r.color }]}>
+            <Text style={adminStyles.bizAvatarText}>{r.name.split(" ").map((w) => w[0]).join("")}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[adminStyles.bizName, { color: colors.foreground }]}>{r.name}</Text>
+            <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{r.referrals} referrals · {r.earned} earned</Text>
+          </View>
+          <View style={[adminStyles.statusBadge, { backgroundColor: r.color + "18" }]}>
+            <Text style={[adminStyles.statusBadgeText, { color: r.color }]}>{r.tier}</Text>
+          </View>
+        </View>
+      ))}
+      <SectionLabel title="Program Settings" />
+      <ActionRow icon="gift" label="Reward Tiers" sub="Configure tier thresholds and rewards" color="#C4622D" />
+      <ActionRow icon="link" label="Referral Links" sub="View and manage all referral links" color="#D4873A" />
+      <ActionRow icon="download" label="Export Data" sub="Download full referral report CSV" color="#2D7A4F" />
+    </ScrollView>
+  );
+}
+
+function EmailTab() {
+  const colors = useColors();
+  const KPI = [
+    { label: "Subscribers", value: "2,841", sub: "+184 this week", color: "#C4622D", icon: "mail" as const },
+    { label: "Open Rate", value: "46%", sub: "+3% vs avg", color: "#2D7A4F", icon: "eye" as const },
+    { label: "Click Rate", value: "18%", sub: "Industry: 11%", color: "#D4873A", icon: "mouse-pointer" as const },
+    { label: "Unsubscribes", value: "12", sub: "0.4% rate", color: "#1D4ED8", icon: "user-x" as const },
+  ];
+  const drip = [
+    { day: "Day 0", subject: "Welcome to Mapping With Melanin™", sent: 2841, opened: 1847, clicked: 612, status: "active" },
+    { day: "Day 2", subject: "Discover Black-owned businesses near you", sent: 2614, opened: 1180, clicked: 447, status: "active" },
+    { day: "Day 5", subject: "Rate your first neighborhood", sent: 1823, opened: 910, clicked: 302, status: "active" },
+    { day: "Day 10", subject: "Your safety impact so far", sent: 1240, opened: 694, clicked: 208, status: "active" },
+    { day: "Day 30", subject: "You've been with us a month 🙌", sent: 412, opened: 267, clicked: 89, status: "active" },
+  ];
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+      <View style={adminStyles.statsGrid}>
+        {KPI.map((k) => (
+          <StatCard key={k.label} label={k.label} value={k.value} sub={k.sub} color={k.color} icon={k.icon} />
+        ))}
+      </View>
+      <SectionLabel title="Onboarding Drip Sequence" />
+      {drip.map((d, i) => (
+        <View key={i} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+            <View style={[adminStyles.statusBadge, { backgroundColor: "#2D7A4F18" }]}>
+              <Text style={[adminStyles.statusBadgeText, { color: "#2D7A4F" }]}>{d.day}</Text>
+            </View>
+            <View style={[adminStyles.statusBadge, { backgroundColor: "#2D7A4F10" }]}>
+              <Text style={[adminStyles.statusBadgeText, { color: "#2D7A4F" }]}>Active</Text>
+            </View>
+          </View>
+          <Text style={[adminStyles.bizName, { color: colors.foreground, marginBottom: 6 }]}>{d.subject}</Text>
+          <View style={{ flexDirection: "row", gap: 16 }}>
+            <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>Sent: {d.sent.toLocaleString()}</Text>
+            <Text style={[adminStyles.bizCity, { color: "#2D7A4F" }]}>Open: {Math.round(d.opened / d.sent * 100)}%</Text>
+            <Text style={[adminStyles.bizCity, { color: "#D4873A" }]}>Click: {Math.round(d.clicked / d.sent * 100)}%</Text>
+          </View>
+          <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+            <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#C4622D18", borderColor: "#C4622D30" }]}>
+              <Text style={[adminStyles.smallBtnText, { color: "#C4622D" }]}>Trigger</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+              <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Edit</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
+      <SectionLabel title="Actions" />
+      <ActionRow icon="users" label="Subscriber List" sub="Browse and search all email subscribers" color="#C4622D" />
+      <ActionRow icon="user-minus" label="Unsubscribe Management" sub="Handle unsubscribe requests" color="#DC2626" />
+      <ActionRow icon="send" label="Send Announcement" sub="One-off email to all subscribers" color="#D4873A" />
+    </ScrollView>
+  );
+}
+
 const TAB_COMPONENTS: Record<string, React.FC> = {
   overview: OverviewTab,
-  businesses: BusinessesTab,
-  events: EventsTab,
-  users: UsersTab,
   reports: ReportsTab,
   reviews: ReviewsTab,
+  claims: ClaimsTab,
+  submissions: SubmissionsTab,
+  referrals: ReferralsTab,
   analytics: AnalyticsTab,
+  email: EmailTab,
   surveys: SurveysTab,
-  content: ContentTab,
+  users: UsersTab,
   settings: SettingsTab,
 };
 

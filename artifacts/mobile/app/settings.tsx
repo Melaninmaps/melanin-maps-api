@@ -79,9 +79,9 @@ export default function SettingsScreen() {
     {
       title: "Support",
       rows: [
-        { id: "help", icon: "help-circle", label: "Help Center", route: null },
-        { id: "bug", icon: "alert-circle", label: "Report a Bug", route: null },
-        { id: "rate", icon: "thumbs-up", label: "Rate the App", route: null },
+        { id: "contact", icon: "mail", label: "Contact Us", sub: "Questions, bugs, partnerships", route: "/contact" },
+        { id: "roadmap", icon: "map", label: "Product Roadmap", sub: "See what we're building", route: "/roadmap" },
+        { id: "waitlist", icon: "zap", label: "Early Access Waitlist", sub: "Skip the line", route: "/waitlist" },
         { id: "referral", icon: "share-2", label: "Referral Program", sub: "Earn rewards", route: "/referral" },
       ],
     },
@@ -89,7 +89,10 @@ export default function SettingsScreen() {
       title: "Legal",
       rows: [
         { id: "terms", icon: "file-text", label: "Terms of Service", route: null },
-        { id: "privacypolicy", icon: "file", label: "Privacy Policy", route: null },
+        { id: "privacypolicy", icon: "file", label: "Privacy Policy", route: "/privacy" },
+        { id: "guidelines", icon: "users", label: "Community Guidelines", route: "/community-guidelines" },
+        { id: "standards", icon: "book-open", label: "Community Standards", route: "/community-standards" },
+        { id: "safetyinfo", icon: "shield", label: "Our Safety Philosophy", route: "/safety-info" },
         { id: "licenses", icon: "code", label: "Open Source Licenses", route: null },
         { id: "version", icon: "info", label: "Version", value: "1.0.0", route: null },
       ],
