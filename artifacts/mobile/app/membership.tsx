@@ -1,8 +1,10 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
+  ActivityIndicator,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -12,6 +14,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useMembership } from "@/hooks/useMembership";
 
 type Billing = "monthly" | "annual";
 type Audience = "consumer" | "business";
@@ -174,9 +177,25 @@ export default function MembershipScreen() {
   const router = useRouter();
   const [billing, setBilling] = useState<Billing>("monthly");
   const [audience, setAudience] = useState<Audience>("consumer");
+  const { initiateCheckout, checkoutLoading, checkoutPlanId } = useMembership();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  const handleCta = useCallback(async (plan: Plan) => {
+    if (!plan.ctaActive) return;
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (plan.id === "free") return;
+    if (plan.id === "biz_free") { router.push("/list-business"); return; }
+    if (plan.name === "Enterprise") {
+      await Linking.openURL("mailto:sales@melaninmaps.app?subject=Enterprise%20Plan%20Inquiry%20%E2%80%94%20Mapping%20with%20Melanin");
+      return;
+    }
+    const result = await initiateCheckout(plan.name, billing);
+    if (result === "no_auth") {
+      router.push("/login");
+    }
+  }, [billing, initiateCheckout, router]);
 
   const plans = audience === "consumer" ? CONSUMER_PLANS : BUSINESS_PLANS;
 
@@ -314,21 +333,20 @@ export default function MembershipScreen() {
                     backgroundColor: isHighlight ? "rgba(255,255,255,0.2)" : colors.muted,
                     borderWidth: isHighlight ? 1.5 : 0,
                     borderColor: isHighlight ? "rgba(255,255,255,0.4)" : "transparent",
+                    opacity: (checkoutLoading && checkoutPlanId !== plan.name) ? 0.5 : 1,
                   },
                 ]}
-                onPress={() => {
-                  if (plan.ctaActive) {
-                    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    if (plan.id === "biz_free") router.push("/list-business");
-                    else router.push("/signup");
-                  }
-                }}
-                disabled={plan.id === "free"}
+                onPress={() => { void handleCta(plan); }}
+                disabled={plan.id === "free" || checkoutLoading}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.ctaTxt, { color: isHighlight ? "#FFF" : colors.mutedForeground }]}>
-                  {plan.cta}
-                </Text>
+                {checkoutLoading && checkoutPlanId === plan.name ? (
+                  <ActivityIndicator size="small" color={isHighlight ? "#FFF" : colors.mutedForeground} />
+                ) : (
+                  <Text style={[styles.ctaTxt, { color: isHighlight ? "#FFF" : colors.mutedForeground }]}>
+                    {plan.cta}
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           );

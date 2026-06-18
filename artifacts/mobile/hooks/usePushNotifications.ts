@@ -10,17 +10,21 @@ function getApiBase(): string {
   return "";
 }
 
+interface PermissionResult {
+  status: string;
+}
+
 export async function registerPushToken(): Promise<void> {
   if (Platform.OS === "web") return;
 
   try {
     const Notifications = await import("expo-notifications");
 
-    const { status: existing } = await Notifications.getPermissionsAsync();
+    const existing = (await Notifications.getPermissionsAsync()) as PermissionResult;
     const finalStatus =
-      existing === "granted"
-        ? existing
-        : (await Notifications.requestPermissionsAsync()).status;
+      existing.status === "granted"
+        ? "granted"
+        : ((await Notifications.requestPermissionsAsync()) as PermissionResult).status;
 
     if (finalStatus !== "granted") return;
 
