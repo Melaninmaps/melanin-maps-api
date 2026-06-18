@@ -22,10 +22,11 @@ import { OnboardingPreferenceSurvey } from "@/components/OnboardingPreferenceSur
 import { ScoreFilterPanel } from "@/components/ScoreFilterPanel";
 import { SearchBar } from "@/components/SearchBar";
 import { SectionHeader } from "@/components/SectionHeader";
-import { ALERTS, CATEGORIES } from "@/constants/data";
+import { CATEGORIES } from "@/constants/data";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
+import { useAlerts } from "@/hooks/useAlerts";
 
 interface FilterState {
   minScore: number;
@@ -42,7 +43,9 @@ export default function DiscoverScreen() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [refreshing, setRefreshing] = useState(false);
-  const [alerts, setAlerts] = useState(ALERTS);
+  const { alerts: liveAlerts, isLive, refetch: refetchAlerts } = useAlerts("GA");
+  const [alerts, setAlerts] = useState(liveAlerts);
+  React.useEffect(() => { setAlerts(liveAlerts); }, [liveAlerts]);
   const [filters, setFilters] = useState<FilterState>({
     minScore: 0,
     verifiedOnly: false,
@@ -71,7 +74,7 @@ export default function DiscoverScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await refetchBusinesses();
+    await Promise.all([refetchBusinesses(), refetchAlerts()]);
     setRefreshing(false);
   };
 
@@ -133,6 +136,11 @@ export default function DiscoverScreen() {
             <View style={styles.safetyTitleRow}>
               <Feather name="shield" size={16} color="#DC2626" />
               <Text style={[styles.safetyTitle, { color: colors.foreground }]}>Community Safety</Text>
+              {isLive && (
+                <View style={[styles.alertCount, { backgroundColor: "#DC262618" }]}>
+                  <Text style={styles.alertCountText}>LIVE</Text>
+                </View>
+              )}
               {alerts.length > 0 && (
                 <View style={[styles.alertCount, { backgroundColor: "#DC262618" }]}>
                   <Text style={styles.alertCountText}>{alerts.length}</Text>

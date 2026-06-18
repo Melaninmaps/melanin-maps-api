@@ -74,10 +74,12 @@ export interface CommunityPost {
 
 export interface AlertItem {
   id: string;
-  type: "safety" | "community" | "business";
+  type: "safety" | "community" | "business" | "weather" | "travel";
   title: string;
   message: string;
   location: string;
   timeAgo: string;
   severity: "low" | "medium" | "high";
+  source?: "nws" | "fema" | "community";
+  expires?: string;
 }

@@ -5,6 +5,7 @@ import businessesRouter from "./businesses";
 import travelRouter from "./travel";
 import surveysRouter from "./surveys";
 import savedPlacesRouter from "./saved-places";
+import alertsRouter from "./alerts";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(businessesRouter);
 router.use(travelRouter);
 router.use(surveysRouter);
 router.use(savedPlacesRouter);
+router.use(alertsRouter);
 
 export default router;
