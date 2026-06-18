@@ -89,7 +89,7 @@ function OnboardingChecker() {
 
   useEffect(() => {
     let active = true;
-    AsyncStorage.getItem("@melanin_maps_onboarding_complete")
+    AsyncStorage.getItem("@mapping_with_melanin_onboarding_complete")
       .then((val) => {
         if (active && !val) router.replace("/onboarding");
       })

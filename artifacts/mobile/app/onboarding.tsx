@@ -66,7 +66,7 @@ export default function OnboardingScreen() {
   const slide = SLIDES[idx];
 
   const markComplete = () =>
-    AsyncStorage.setItem("@melanin_maps_onboarding_complete", "true").catch(() => {});
+    AsyncStorage.setItem("@mapping_with_melanin_onboarding_complete", "true").catch(() => {});
 
   const goTo = (i: number) => {
     scrollRef.current?.scrollTo({ x: i * W, animated: true });

@@ -23,7 +23,7 @@ interface Message {
   ts: number;
 }
 
-const GREETING = "Hi! I'm your Melanin Maps AI guide. Ask me anything about Black-owned spots, safe neighborhoods, itinerary ideas, or travel tips in any city.";
+const GREETING = "Hi! I'm your Mapping with Melanin AI guide. Ask me anything about Black-owned spots, safe neighborhoods, itinerary ideas, or travel tips in any city.";
 
 const CANNED: { pattern: RegExp; replies: string[] }[] = [
   {
@@ -42,14 +42,14 @@ const CANNED: { pattern: RegExp; replies: string[] }[] = [
   {
     pattern: /safe|safety|unsafe/i,
     replies: [
-      "Safety scores on Melanin Maps are community-powered — collected from real visitor surveys weighting daytime safety (30%), nighttime safety (40%), walkability (20%), and transit (10%). A score above 75 is considered high confidence.",
+      "Safety scores on Mapping with Melanin are community-powered — collected from real visitor surveys weighting daytime safety (30%), nighttime safety (40%), walkability (20%), and transit (10%). A score above 75 is considered high confidence.",
       "For the best safety context, look at both the business safety score and the neighborhood rating. Users can also file incident reports anonymously through any business page.",
     ],
   },
   {
     pattern: /black.?owned/i,
     replies: [
-      "Every business on Melanin Maps is community-verified for Black ownership. You can filter by Black-Owned Only on the Discover tab or use the map filter. Black-owned businesses are promoted within their category tier.",
+      "Every business on Mapping with Melanin is community-verified for Black ownership. You can filter by Black-Owned Only on the Discover tab or use the map filter. Black-owned businesses are promoted within their category tier.",
     ],
   },
   {
@@ -73,7 +73,7 @@ const CANNED: { pattern: RegExp; replies: string[] }[] = [
   {
     pattern: /new orleans/i,
     replies: [
-      "New Orleans is one of the top cities on Melanin Maps! Tremé is the oldest African-American neighborhood in the country. I recommend hitting the Seventh Ward for local food, Esplanade Ave for culture, and the Treme neighborhood for history and live jazz.",
+      "New Orleans is one of the top cities on Mapping with Melanin! Tremé is the oldest African-American neighborhood in the country. I recommend hitting the Seventh Ward for local food, Esplanade Ave for culture, and the Treme neighborhood for history and live jazz.",
     ],
   },
   {
@@ -164,7 +164,7 @@ export function AIChatWidget() {
                 <Text style={styles.avatarTxt}>AI</Text>
               </View>
               <View>
-                <Text style={[styles.modalTitle, { color: colors.foreground }]}>Melanin Maps AI</Text>
+                <Text style={[styles.modalTitle, { color: colors.foreground }]}>Mapping with Melanin AI</Text>
                 <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>Powered by Gemini · Always here to help</Text>
               </View>
             </View>

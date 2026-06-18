@@ -71,7 +71,7 @@ export default function WaitlistScreen() {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Join me on Melanin Maps — the community-powered travel guide for Black explorers. Use my link to skip the line: ${referralLink}`,
+        message: `Join me on Mapping with Melanin — the community-powered travel guide for Black explorers. Use my link to skip the line: ${referralLink}`,
         url: referralLink,
       });
     } catch {}

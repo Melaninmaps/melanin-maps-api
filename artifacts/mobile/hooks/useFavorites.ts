@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useState } from "react";
 
-const STORAGE_KEY = "@melanin_maps_favorites";
+const STORAGE_KEY = "@mapping_with_melanin_favorites";
 const AUTH_TOKEN_KEY = "auth_session_token";
 
 function getApiBase(): string {

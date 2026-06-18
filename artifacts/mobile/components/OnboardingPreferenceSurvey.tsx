@@ -64,7 +64,7 @@ const ACCESSIBILITY = [
   "Large Print Available", "Sign Language", "Gender-Neutral Restrooms", "None needed",
 ];
 
-const STORAGE_KEY = "melanin_maps_preferences";
+const STORAGE_KEY = "mapping_with_melanin_preferences";
 
 export function OnboardingPreferenceSurvey({ visible, onClose, onSubmit }: Props) {
   const colors = useColors();

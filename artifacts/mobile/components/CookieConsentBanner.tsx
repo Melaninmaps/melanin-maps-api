@@ -6,7 +6,7 @@ import { Animated, Platform, StyleSheet, Text, TouchableOpacity, View } from "re
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
-const STORAGE_KEY = "@melanin_maps_cookie_consent";
+const STORAGE_KEY = "@mapping_with_melanin_cookie_consent";
 
 export function CookieConsentBanner() {
   const colors = useColors();

@@ -113,7 +113,7 @@ export default function RoadmapScreen() {
         <View style={styles.heroSection}>
           <Text style={[styles.heroTitle, { color: colors.foreground }]}>What We're Building</Text>
           <Text style={[styles.heroSub, { color: colors.mutedForeground }]}>
-            Vote on features you want most. Your input shapes the Melanin Maps roadmap.
+            Vote on features you want most. Your input shapes the Mapping with Melanin roadmap.
           </Text>
           <View style={styles.statsRow}>
             {[

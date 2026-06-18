@@ -9,7 +9,7 @@ const PRINCIPLES = [
   {
     icon: "users" as const,
     title: "Community-Powered, Not Algorithm-Driven",
-    body: "Every safety score on Melanin Maps comes from real people who visited real places. We don't infer safety from crime statistics, census data, or third-party databases — all of which carry systemic bias. Safety here means how it actually felt to be there, as a Black person, in that space.",
+    body: "Every safety score on Mapping with Melanin comes from real people who visited real places. We don't infer safety from crime statistics, census data, or third-party databases — all of which carry systemic bias. Safety here means how it actually felt to be there, as a Black person, in that space.",
     color: "#3B1F0E",
   },
   {
@@ -33,7 +33,7 @@ const PRINCIPLES = [
   {
     icon: "lock" as const,
     title: "No Surveillance, No Profiling",
-    body: "We will never use Melanin Maps data to profile communities, share location data with law enforcement, or allow businesses to identify individual reviewers. Our data is for the community — not about it.",
+    body: "We will never use Mapping with Melanin data to profile communities, share location data with law enforcement, or allow businesses to identify individual reviewers. Our data is for the community — not about it.",
     color: "#3B1F0E",
   },
   {
@@ -73,7 +73,7 @@ export default function SafetyInfoScreen() {
           <Feather name="shield" size={36} color="rgba(255,255,255,0.9)" />
           <Text style={styles.heroTitle}>Safety Built for Us</Text>
           <Text style={styles.heroSub}>
-            Traditional safety scores weren't built with Black travelers in mind. Melanin Maps is different — built by the community, for the community.
+            Traditional safety scores weren't built with Black travelers in mind. Mapping with Melanin is different — built by the community, for the community.
           </Text>
         </View>
 
