@@ -51,6 +51,13 @@ function RootLayoutNav() {
           presentation: "modal",
         }}
       />
+      <Stack.Screen
+        name="travel"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
     </Stack>
   );
 }

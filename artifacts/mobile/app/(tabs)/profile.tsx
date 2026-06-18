@@ -21,7 +21,7 @@ const SETTINGS = [
   { icon: "star" as const, label: "My Reviews", sub: "View and manage your reviews" },
   { icon: "share-2" as const, label: "Referral Program", sub: "Invite friends, earn rewards" },
   { icon: "help-circle" as const, label: "Help & Support", sub: "Get help from our team" },
-  { icon: "info" as const, label: "About Melanin Maps", sub: "Version 1.0.0" },
+  { icon: "info" as const, label: "About Mapping with Melanin", sub: "Version 1.0.0" },
 ];
 
 export default function ProfileScreen() {
@@ -124,7 +124,7 @@ export default function ProfileScreen() {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.listBizTitle}>Own a Business?</Text>
-            <Text style={styles.listBizSub}>Get listed on the Melanin Maps directory and reach thousands of community members.</Text>
+            <Text style={styles.listBizSub}>Get listed on the Mapping with Melanin directory and reach thousands of community members.</Text>
           </View>
         </View>
         <View style={[styles.listBizCta, { backgroundColor: "rgba(255,255,255,0.2)" }]}>

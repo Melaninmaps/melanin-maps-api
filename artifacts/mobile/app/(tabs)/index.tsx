@@ -1,4 +1,4 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -61,9 +61,13 @@ export default function DiscoverScreen() {
         style={[styles.header, { paddingTop: topPad + 12 }]}
       >
         <View style={styles.headerTop}>
-          <View>
+          <View style={styles.headerBrand}>
+            <Image
+              source={require("@/assets/images/logo-transparent.png")}
+              style={styles.logoImg}
+              contentFit="contain"
+            />
             <Text style={styles.greeting}>Good morning 👋</Text>
-            <Text style={styles.tagline}>Melanin Maps™</Text>
           </View>
           <TouchableOpacity style={styles.notifBtn} activeOpacity={0.8}>
             <Feather name="bell" size={20} color="#FFFFFF" />
@@ -154,6 +158,32 @@ export default function DiscoverScreen() {
           </View>
         </View>
 
+        <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 24 }]}>
+          <TouchableOpacity
+            activeOpacity={0.88}
+            onPress={() => router.push("/travel")}
+            style={[
+              styles.travelBanner,
+              { backgroundColor: colors.terracotta },
+            ]}
+          >
+            <View style={styles.travelBannerLeft}>
+              <Text style={styles.travelBannerEyebrow}>✨ AI-POWERED</Text>
+              <Text style={styles.travelBannerTitle}>
+                Plan Your Next Trip
+              </Text>
+              <Text style={styles.travelBannerSub}>
+                Black-owned spots, safe neighborhoods & events
+              </Text>
+            </View>
+            <View style={styles.travelBannerRight}>
+              <View style={styles.travelBannerArrow}>
+                <Ionicons name="airplane" size={22} color={colors.terracotta} />
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+
         {featured.length > 0 && (
           <View style={styles.section}>
             <SectionHeader title="Featured Businesses" />
@@ -217,16 +247,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 14,
   },
+  headerBrand: {
+    flex: 1,
+    gap: 2,
+  },
+  logoImg: {
+    width: 120,
+    height: 80,
+  },
   greeting: {
     fontFamily: "Inter_400Regular",
-    fontSize: 13,
-    color: "rgba(255,255,255,0.8)",
-  },
-  tagline: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 22,
-    color: "#FFFFFF",
-    letterSpacing: -0.3,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.85)",
+    marginTop: 2,
   },
   notifBtn: {
     width: 40,
@@ -310,6 +343,45 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: 20,
     marginBottom: 24,
+  },
+  travelBanner: {
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  travelBannerLeft: {
+    flex: 1,
+    gap: 4,
+  },
+  travelBannerEyebrow: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 10,
+    color: "rgba(251,247,240,0.75)",
+    letterSpacing: 1,
+  },
+  travelBannerTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 18,
+    color: "#FBF7F0",
+  },
+  travelBannerSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: "rgba(251,247,240,0.85)",
+    lineHeight: 18,
+  },
+  travelBannerRight: {
+    marginLeft: 12,
+  },
+  travelBannerArrow: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.95)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   safetyHeader: {
     flexDirection: "row",

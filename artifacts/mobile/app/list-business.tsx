@@ -495,7 +495,7 @@ export default function ListBusinessScreen() {
                   <View style={[styles.mapHint, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                     <Feather name="map-pin" size={16} color={colors.primary} />
                     <Text style={[styles.mapHintText, { color: colors.foreground }]}>
-                      Your address will be used to place a pin on the Melanin Maps community map.
+                      Your address will be used to place a pin on the Mapping with Melanin community map.
                     </Text>
                   </View>
                 </View>
