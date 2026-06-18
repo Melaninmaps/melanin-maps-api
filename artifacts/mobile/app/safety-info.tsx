@@ -10,7 +10,7 @@ const PRINCIPLES = [
     icon: "users" as const,
     title: "Community-Powered, Not Algorithm-Driven",
     body: "Every safety score on Melanin Maps comes from real people who visited real places. We don't infer safety from crime statistics, census data, or third-party databases — all of which carry systemic bias. Safety here means how it actually felt to be there, as a Black person, in that space.",
-    color: "#C4622D",
+    color: "#3B1F0E",
   },
   {
     icon: "eye-off" as const,
@@ -22,7 +22,7 @@ const PRINCIPLES = [
     icon: "trending-up" as const,
     title: "Weighted, Not Simple",
     body: "Safety scores aren't simple averages. Nighttime safety is weighted more heavily than daytime (40% vs 30%) because after-dark experiences carry disproportionate risk. Return-alone intent accounts for 35% of a business safety score because that single question captures a lot.",
-    color: "#D4873A",
+    color: "#C9922B",
   },
   {
     icon: "alert-triangle" as const,
@@ -34,7 +34,7 @@ const PRINCIPLES = [
     icon: "lock" as const,
     title: "No Surveillance, No Profiling",
     body: "We will never use Melanin Maps data to profile communities, share location data with law enforcement, or allow businesses to identify individual reviewers. Our data is for the community — not about it.",
-    color: "#C4622D",
+    color: "#3B1F0E",
   },
   {
     icon: "bar-chart-2" as const,

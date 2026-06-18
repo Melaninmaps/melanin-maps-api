@@ -326,8 +326,8 @@ export default function BusinessDetailScreen() {
             setReviewModalOpen(true);
           }}
         >
-          <Feather name="star" size={18} color="#FBF7F0" />
-          <Text style={[styles.primaryBtnText, { color: "#FBF7F0" }]}>Write a Review</Text>
+          <Feather name="star" size={18} color="#FFFFFF" />
+          <Text style={[styles.primaryBtnText, { color: "#FFFFFF" }]}>Write a Review</Text>
         </TouchableOpacity>
       </View>
 

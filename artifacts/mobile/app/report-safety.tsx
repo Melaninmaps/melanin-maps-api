@@ -38,14 +38,14 @@ const REPORT_TYPES = [
     icon: "flag" as const,
     label: "Discrimination",
     desc: "Racial profiling, bias, or hostile treatment",
-    color: "#C4622D",
+    color: "#3B1F0E",
   },
   {
     id: "business",
     icon: "briefcase" as const,
     label: "Business Update",
     desc: "Closed, moved, changed ownership",
-    color: "#D4873A",
+    color: "#C9922B",
   },
   {
     id: "resource",
@@ -65,7 +65,7 @@ const REPORT_TYPES = [
 
 const SEVERITY_OPTIONS = [
   { id: "low", label: "Low", sub: "Minor concern", color: "#2D7A4F", bg: "#2D7A4F15" },
-  { id: "medium", label: "Medium", sub: "Use caution", color: "#D4873A", bg: "#D4873A15" },
+  { id: "medium", label: "Medium", sub: "Use caution", color: "#C9922B", bg: "#C9922B15" },
   { id: "high", label: "High", sub: "Avoid area", color: "#DC2626", bg: "#DC262615" },
   { id: "critical", label: "Critical", sub: "Immediate danger", color: "#7C2D12", bg: "#7C2D1215" },
 ];

@@ -23,7 +23,7 @@ const SHARE_PLATFORMS = [
   { id: "twitter", label: "X / Twitter", icon: "twitter" as const, color: "#000" },
   { id: "facebook", label: "Facebook", icon: "facebook" as const, color: "#1877F2" },
   { id: "link", label: "Copy Link", icon: "link" as const, color: "#6B7280" },
-  { id: "share", label: "Share", icon: "share-2" as const, color: "#C4622D" },
+  { id: "share", label: "Share", icon: "share-2" as const, color: "#3B1F0E" },
 ];
 
 const BENEFITS = [

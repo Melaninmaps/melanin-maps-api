@@ -14,18 +14,18 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
 const STATS = [
-  { label: "Profile Views", value: "1,284", change: "+18%", icon: "eye" as const, color: "#C4622D" },
-  { label: "Saved", value: "47", change: "+5", icon: "bookmark" as const, color: "#D4873A" },
+  { label: "Profile Views", value: "1,284", change: "+18%", icon: "eye" as const, color: "#3B1F0E" },
+  { label: "Saved", value: "47", change: "+5", icon: "bookmark" as const, color: "#C9922B" },
   { label: "Rating", value: "4.8★", change: "312 reviews", icon: "star" as const, color: "#2D7A4F" },
   { label: "Messages", value: "3", change: "unread", icon: "message-circle" as const, color: "#7B4F2E" },
 ];
 
 const ACTIONS = [
-  { id: "edit", icon: "edit-2" as const, label: "Edit Listing", color: "#C4622D", route: "/list-business" },
-  { id: "hours", icon: "clock" as const, label: "Manage Hours", color: "#D4873A", route: null },
+  { id: "edit", icon: "edit-2" as const, label: "Edit Listing", color: "#3B1F0E", route: "/list-business" },
+  { id: "hours", icon: "clock" as const, label: "Manage Hours", color: "#C9922B", route: null },
   { id: "reviews", icon: "star" as const, label: "All Reviews", color: "#2D7A4F", route: null },
   { id: "messages", icon: "message-circle" as const, label: "Messages", color: "#7B4F2E", route: "/messages" },
-  { id: "verify", icon: "shield" as const, label: "Get Verified", color: "#C4622D", route: "/business-verify" },
+  { id: "verify", icon: "shield" as const, label: "Get Verified", color: "#3B1F0E", route: "/business-verify" },
   { id: "analytics", icon: "bar-chart-2" as const, label: "Analytics", color: "#1A0A00", route: null },
 ];
 

@@ -35,7 +35,7 @@ export default function SignupScreen() {
   const pwLen = password.length;
   const strength = pwLen === 0 ? 0 : pwLen < 6 ? 1 : pwLen < 10 ? 2 : 3;
   const strengthLabel = ["", "Weak", "Fair", "Strong"][strength];
-  const strengthColor = ["", colors.destructive, "#D4873A", colors.success][strength];
+  const strengthColor = ["", colors.destructive, "#C9922B", colors.success][strength];
 
   const valid =
     firstName.trim().length > 0 &&

@@ -52,7 +52,7 @@ const FEATURES: Feature[] = [
 
 const STATUS_CONFIG: Record<Status, { label: string; color: string; bg: string; icon: string }> = {
   shipped: { label: "Shipped", color: "#2D7A4F", bg: "#2D7A4F18", icon: "check-circle" },
-  in_progress: { label: "In Progress", color: "#D4873A", bg: "#D4873A18", icon: "loader" },
+  in_progress: { label: "In Progress", color: "#C9922B", bg: "#C9922B18", icon: "loader" },
   planned: { label: "Planned", color: "#6B7280", bg: "#6B728018", icon: "clock" },
 };
 
@@ -118,7 +118,7 @@ export default function RoadmapScreen() {
           <View style={styles.statsRow}>
             {[
               { label: "Shipped", val: counts.shipped, color: "#2D7A4F" },
-              { label: "In Progress", val: counts.in_progress, color: "#D4873A" },
+              { label: "In Progress", val: counts.in_progress, color: "#C9922B" },
               { label: "Planned", val: counts.planned, color: "#6B7280" },
             ].map((s) => (
               <View key={s.label} style={[styles.statCard, { backgroundColor: s.color + "12", borderColor: s.color + "25" }]}>

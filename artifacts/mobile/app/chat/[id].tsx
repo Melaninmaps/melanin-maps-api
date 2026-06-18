@@ -137,7 +137,7 @@ export default function ChatScreen() {
                     ? { backgroundColor: colors.primary, borderBottomRightRadius: 4 }
                     : { backgroundColor: colors.card, borderBottomLeftRadius: 4, borderColor: colors.border, borderWidth: 1 },
                 ]}>
-                  <Text style={[styles.bubbleText, { color: item.fromMe ? "#FBF7F0" : colors.foreground }]}>
+                  <Text style={[styles.bubbleText, { color: item.fromMe ? "#FFFFFF" : colors.foreground }]}>
                     {item.text}
                   </Text>
                 </View>

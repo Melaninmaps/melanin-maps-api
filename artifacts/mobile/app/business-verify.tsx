@@ -21,7 +21,7 @@ const METHODS = [
     icon: "file-text" as const,
     label: "EIN / Tax Documents",
     desc: "Upload your EIN letter or business registration",
-    color: "#C4622D",
+    color: "#3B1F0E",
   },
   {
     id: "phone",
@@ -35,7 +35,7 @@ const METHODS = [
     icon: "globe" as const,
     label: "Website Verification",
     desc: "Add a verification meta tag to your site",
-    color: "#D4873A",
+    color: "#C9922B",
   },
   {
     id: "social",
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
   infoSub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
   codeBlock: { gap: 12 },
   codeBox: { borderRadius: 12, padding: 16 },
-  codeText: { fontFamily: "Inter_400Regular", fontSize: 13, color: "#D4873A" },
+  codeText: { fontFamily: "Inter_400Regular", fontSize: 13, color: "#C9922B" },
   copyBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 10, borderRadius: 10 },
   copyTxt: { fontSize: 14, fontFamily: "Inter_500Medium" },
   socialBtns: { gap: 10 },

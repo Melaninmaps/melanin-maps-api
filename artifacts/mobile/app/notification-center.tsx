@@ -28,7 +28,7 @@ interface Notif {
 
 const NOTIFS: Notif[] = [
   {
-    id: "n1", type: "safety", icon: "shield", color: "#C4622D",
+    id: "n1", type: "safety", icon: "shield", color: "#3B1F0E",
     title: "Safety Alert — Atlanta, GA",
     body: "Community report: increased incidents near Ponce City Market. Stay aware this evening.",
     time: "10 min ago", read: false, group: "Today",
@@ -40,7 +40,7 @@ const NOTIFS: Notif[] = [
     time: "1h ago", read: false, group: "Today",
   },
   {
-    id: "n3", type: "business", icon: "shopping-bag", color: "#D4873A",
+    id: "n3", type: "business", icon: "shopping-bag", color: "#C9922B",
     title: "Sweet Auburn BBQ replied to your review",
     body: "\"Thank you for the kind words! Come back and try our new weekend specials 🙌\"",
     time: "3h ago", read: false, group: "Today",
@@ -52,7 +52,7 @@ const NOTIFS: Notif[] = [
     time: "5h ago", read: true, group: "Today",
   },
   {
-    id: "n5", type: "community", icon: "star", color: "#D4873A",
+    id: "n5", type: "community", icon: "star", color: "#C9922B",
     title: "New review on a business you follow",
     body: "Trap Kitchen received a 5-star review: \"Best food truck in the city, hands down.\"",
     time: "Yesterday", read: true, group: "This Week",
@@ -64,19 +64,19 @@ const NOTIFS: Notif[] = [
     time: "2 days ago", read: true, group: "This Week",
   },
   {
-    id: "n7", type: "business", icon: "shopping-bag", color: "#D4873A",
+    id: "n7", type: "business", icon: "shopping-bag", color: "#C9922B",
     title: "Business hours update: Busboys & Poets",
     body: "Updated hours for the summer — now open until 11pm on Fridays and Saturdays.",
     time: "3 days ago", read: true, group: "This Week",
   },
   {
-    id: "n8", type: "community", icon: "gift", color: "#C4622D",
+    id: "n8", type: "community", icon: "gift", color: "#3B1F0E",
     title: "Referral milestone reached 🎉",
     body: "You've referred 2 friends! You're halfway to earning your $10 credit. Keep it up!",
     time: "5 days ago", read: true, group: "This Week",
   },
   {
-    id: "n9", type: "safety", icon: "shield", color: "#C4622D",
+    id: "n9", type: "safety", icon: "shield", color: "#3B1F0E",
     title: "Monthly Safety Digest",
     body: "See the community safety report for cities you follow: Atlanta, Houston, Chicago.",
     time: "1 week ago", read: true, group: "Earlier",

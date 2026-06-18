@@ -54,8 +54,8 @@ const CONSUMER_PLANS: Plan[] = [
     badge: "Most Popular",
     monthlyPrice: 9.99,
     annualPrice: 7.99,
-    color: "#C4622D",
-    bg: "#C4622D",
+    color: "#3B1F0E",
+    bg: "#3B1F0E",
     features: [
       "Everything in Explore",
       "Unlimited saved businesses",
@@ -114,8 +114,8 @@ const BUSINESS_PLANS: Plan[] = [
     badge: "Popular",
     monthlyPrice: 29.99,
     annualPrice: 23.99,
-    color: "#C4622D",
-    bg: "#C4622D",
+    color: "#3B1F0E",
+    bg: "#3B1F0E",
     features: [
       "Everything in Free",
       "Business dashboard & analytics",

@@ -10,7 +10,7 @@ const STANDARDS = [
     id: "reviews",
     icon: "star" as const,
     title: "Review Standards",
-    color: "#C4622D",
+    color: "#3B1F0E",
     items: [
       { label: "Authenticity", body: "Reviews must reflect genuine firsthand experiences. Third-party accounts, secondhand reports, or hypothetical reviews are not permitted." },
       { label: "Specificity", body: "Effective reviews include specific details: what you ordered, when you visited, what made the experience notable. Vague one-liners help no one." },
@@ -34,7 +34,7 @@ const STANDARDS = [
     id: "moderation",
     icon: "eye" as const,
     title: "Moderation Framework",
-    color: "#D4873A",
+    color: "#C9922B",
     items: [
       { label: "Tiered enforcement", body: "First violations result in a warning and content removal. Repeated violations lead to posting restrictions. Severe violations — harassment, threats, fraud — result in immediate suspension." },
       { label: "Business owner rights", body: "Business owners may respond to reviews but may not request removal of negative reviews unless they contain factual falsehoods or policy violations." },
@@ -46,7 +46,7 @@ const STANDARDS = [
     id: "data",
     icon: "database" as const,
     title: "Data & Privacy Standards",
-    color: "#C4622D",
+    color: "#3B1F0E",
     items: [
       { label: "Minimal collection", body: "We collect only what's necessary to provide the service: email, profile info, reviews, and survey responses. We don't sell personal data to third parties." },
       { label: "Survey anonymity", body: "All four community surveys are submitted and stored anonymously. Survey responses are aggregated before being displayed — no individual response is ever publicly attributed." },

@@ -76,8 +76,8 @@ function OverviewTab() {
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={adminStyles.statsGrid}>
-        <StatCard label="Total Users" value="3,284" sub="+12% this week" color="#C4622D" icon="users" />
-        <StatCard label="Businesses" value="148" sub="+5 pending" color="#D4873A" icon="briefcase" />
+        <StatCard label="Total Users" value="3,284" sub="+12% this week" color="#3B1F0E" icon="users" />
+        <StatCard label="Businesses" value="148" sub="+5 pending" color="#C9922B" icon="briefcase" />
         <StatCard label="Reviews" value="1,902" sub="+24 today" color="#2D7A4F" icon="star" />
         <StatCard label="Events" value="37" sub="8 this month" color="#1D4ED8" icon="calendar" />
       </View>
@@ -85,9 +85,9 @@ function OverviewTab() {
       <SectionLabel title="Recent Activity" />
       {[
         { icon: "user-plus" as const, text: "New user registered: Simone W.", time: "2 min ago", color: "#2D7A4F" },
-        { icon: "briefcase" as const, text: "Business listing submitted: Kingdom Cuts", time: "15 min ago", color: "#D4873A" },
+        { icon: "briefcase" as const, text: "Business listing submitted: Kingdom Cuts", time: "15 min ago", color: "#C9922B" },
         { icon: "flag" as const, text: "New report: inaccurate info on Listing #23", time: "34 min ago", color: "#DC2626" },
-        { icon: "star" as const, text: "New review posted for Sweet Auburn BBQ", time: "1h ago", color: "#C4622D" },
+        { icon: "star" as const, text: "New review posted for Sweet Auburn BBQ", time: "1h ago", color: "#3B1F0E" },
         { icon: "calendar" as const, text: "New event submitted: Houston Jazz Night", time: "2h ago", color: "#1D4ED8" },
       ].map((a, i) => (
         <View key={i} style={[adminStyles.activityRow, { borderBottomColor: colors.border }]}>
@@ -104,7 +104,7 @@ function OverviewTab() {
       <SectionLabel title="Quick Actions" />
       <ActionRow icon="check-circle" label="Approve Pending Businesses" sub="5 listings awaiting review" color="#2D7A4F" badge={5} />
       <ActionRow icon="flag" label="Review Reports Queue" sub="8 reports need attention" color="#DC2626" badge={8} />
-      <ActionRow icon="star" label="Moderate Reviews" sub="3 flagged reviews" color="#D4873A" badge={3} />
+      <ActionRow icon="star" label="Moderate Reviews" sub="3 flagged reviews" color="#C9922B" badge={3} />
     </ScrollView>
   );
 }
@@ -135,7 +135,7 @@ function BusinessesTab() {
               style={[adminStyles.filterChip, { backgroundColor: statusFilter === s.label ? colors.primary : colors.secondary, borderColor: statusFilter === s.label ? colors.primary : colors.border }]}
               onPress={() => setStatusFilter(s.label)}
             >
-              <Text style={[adminStyles.filterChipText, { color: statusFilter === s.label ? "#FBF7F0" : colors.foreground }]}>{s.label} ({s.count})</Text>
+              <Text style={[adminStyles.filterChipText, { color: statusFilter === s.label ? "#FFFFFF" : colors.foreground }]}>{s.label} ({s.count})</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -153,8 +153,8 @@ function BusinessesTab() {
             <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{b.city}</Text>
           </View>
           <View style={{ alignItems: "flex-end", gap: 5 }}>
-            <View style={[adminStyles.statusBadge, { backgroundColor: b.status === "active" ? "#2D7A4F18" : "#D4873A18" }]}>
-              <Text style={[adminStyles.statusBadgeText, { color: b.status === "active" ? "#2D7A4F" : "#D4873A" }]}>
+            <View style={[adminStyles.statusBadge, { backgroundColor: b.status === "active" ? "#2D7A4F18" : "#C9922B18" }]}>
+              <Text style={[adminStyles.statusBadgeText, { color: b.status === "active" ? "#2D7A4F" : "#C9922B" }]}>
                 {b.status === "active" ? "Active" : "Pending"}
               </Text>
             </View>
@@ -169,13 +169,13 @@ function BusinessesTab() {
 function UsersTab() {
   const colors = useColors();
   const users = [
-    { name: "Simone W.", email: "simone@email.com", role: "user", joined: "Jun 16", color: "#C4622D" },
+    { name: "Simone W.", email: "simone@email.com", role: "user", joined: "Jun 16", color: "#3B1F0E" },
     { name: "Marcus T.", email: "marcus@email.com", role: "moderator", joined: "May 3", color: "#2D7A4F" },
-    { name: "Aisha B.", email: "aisha@email.com", role: "user", joined: "Apr 22", color: "#D4873A" },
+    { name: "Aisha B.", email: "aisha@email.com", role: "user", joined: "Apr 22", color: "#C9922B" },
     { name: "Darius K.", email: "darius@email.com", role: "admin", joined: "Mar 10", color: "#1D4ED8" },
     { name: "Zara M.", email: "zara@email.com", role: "user", joined: "Jun 1", color: "#7B2D8B" },
   ];
-  const roleColor = (r: string) => r === "admin" ? "#DC2626" : r === "moderator" ? "#D4873A" : "#2D7A4F";
+  const roleColor = (r: string) => r === "admin" ? "#DC2626" : r === "moderator" ? "#C9922B" : "#2D7A4F";
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={[adminStyles.searchBarInline, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
@@ -212,7 +212,7 @@ function ReportsTab() {
     { cat: "Safety Concern", target: "West End area", reporter: "Kwame A.", time: "1d ago", severity: "medium" as const },
     { cat: "Spam", target: "Fake Listing #99", reporter: "System", time: "2d ago", severity: "low" as const },
   ];
-  const sevColor = (s: string) => s === "high" ? "#DC2626" : s === "medium" ? "#D4873A" : "#2D7A4F";
+  const sevColor = (s: string) => s === "high" ? "#DC2626" : s === "medium" ? "#C9922B" : "#2D7A4F";
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={[adminStyles.alertBanner, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}>
@@ -306,12 +306,12 @@ function AnalyticsTab() {
         </View>
       </View>
       {[
-        { label: "Top Category", value: "Beauty (34%)", icon: "scissors" as const, color: "#D4873A" },
-        { label: "Top City", value: "Atlanta, GA", icon: "map-pin" as const, color: "#C4622D" },
+        { label: "Top Category", value: "Beauty (34%)", icon: "scissors" as const, color: "#C9922B" },
+        { label: "Top City", value: "Atlanta, GA", icon: "map-pin" as const, color: "#3B1F0E" },
         { label: "Avg Session", value: "4m 32s", icon: "clock" as const, color: "#2D7A4F" },
         { label: "Retention Rate", value: "68%", icon: "repeat" as const, color: "#1D4ED8" },
         { label: "DAU/MAU", value: "0.42", icon: "activity" as const, color: "#7B2D8B" },
-        { label: "Referral Conv.", value: "24%", icon: "share-2" as const, color: "#D4873A" },
+        { label: "Referral Conv.", value: "24%", icon: "share-2" as const, color: "#C9922B" },
       ].map((m, i) => (
         <View key={i} style={[adminStyles.metricRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[adminStyles.metricIcon, { backgroundColor: m.color + "18" }]}>
@@ -335,7 +335,7 @@ function EventsTab() {
   ];
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
-      <ActionRow icon="plus-circle" label="Create New Event" sub="Add an event to the platform" color="#C4622D" />
+      <ActionRow icon="plus-circle" label="Create New Event" sub="Add an event to the platform" color="#3B1F0E" />
       {events.map((e, i) => (
         <View key={i} style={[adminStyles.bizRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[adminStyles.bizAvatar, { backgroundColor: "#1D4ED820" }]}>
@@ -346,8 +346,8 @@ function EventsTab() {
             <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{e.date} · {e.city}</Text>
           </View>
           <View style={{ alignItems: "flex-end", gap: 5 }}>
-            <View style={[adminStyles.statusBadge, { backgroundColor: e.status === "active" ? "#2D7A4F18" : "#D4873A18" }]}>
-              <Text style={[adminStyles.statusBadgeText, { color: e.status === "active" ? "#2D7A4F" : "#D4873A" }]}>{e.status}</Text>
+            <View style={[adminStyles.statusBadge, { backgroundColor: e.status === "active" ? "#2D7A4F18" : "#C9922B18" }]}>
+              <Text style={[adminStyles.statusBadgeText, { color: e.status === "active" ? "#2D7A4F" : "#C9922B" }]}>{e.status}</Text>
             </View>
             {e.attendees > 0 && <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>{e.attendees} RSVP</Text>}
           </View>
@@ -362,9 +362,9 @@ function ContentTab() {
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <SectionLabel title="Featured Content" />
-      <ActionRow icon="star" label="Featured Businesses" sub="Manage which businesses appear featured" color="#D4873A" />
+      <ActionRow icon="star" label="Featured Businesses" sub="Manage which businesses appear featured" color="#C9922B" />
       <ActionRow icon="calendar" label="Featured Events" sub="Control homepage event highlights" color="#1D4ED8" />
-      <ActionRow icon="image" label="Hero Banners" sub="Edit homepage discovery banners" color="#C4622D" />
+      <ActionRow icon="image" label="Hero Banners" sub="Edit homepage discovery banners" color="#3B1F0E" />
 
       <SectionLabel title="Community Content" />
       <ActionRow icon="message-circle" label="Community Posts" sub="Moderate community discussions" color="#2D7A4F" badge={3} />
@@ -372,7 +372,7 @@ function ContentTab() {
       <ActionRow icon="book-open" label="Resource Hub" sub="Curate community resources & guides" color="#7B2D8B" />
 
       <SectionLabel title="Platform Notices" />
-      <ActionRow icon="send" label="Push Notifications" sub="Send announcements to all users" color="#C4622D" />
+      <ActionRow icon="send" label="Push Notifications" sub="Send announcements to all users" color="#3B1F0E" />
       <ActionRow icon="mail" label="Email Campaigns" sub="Community newsletters and updates" color="#1D4ED8" />
     </ScrollView>
   );
@@ -383,9 +383,9 @@ function SettingsTab() {
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <SectionLabel title="App Configuration" />
-      <ActionRow icon="sliders" label="Confidence Score Weights" sub="Adjust how scores are calculated" color="#C4622D" />
+      <ActionRow icon="sliders" label="Confidence Score Weights" sub="Adjust how scores are calculated" color="#3B1F0E" />
       <ActionRow icon="shield" label="Trust & Safety Rules" sub="Content moderation thresholds" color="#DC2626" />
-      <ActionRow icon="award" label="Verification Criteria" sub="Set requirements for verified badge" color="#D4873A" />
+      <ActionRow icon="award" label="Verification Criteria" sub="Set requirements for verified badge" color="#C9922B" />
       <ActionRow icon="gift" label="Referral Rewards" sub="Configure referral tiers and rewards" color="#2D7A4F" />
 
       <SectionLabel title="Access Control" />
@@ -393,7 +393,7 @@ function SettingsTab() {
       <ActionRow icon="key" label="API Keys" sub="Manage third-party integrations" color="#1D4ED8" />
 
       <SectionLabel title="Data & Privacy" />
-      <ActionRow icon="database" label="Data Export" sub="Export platform data and analytics" color="#D4873A" />
+      <ActionRow icon="database" label="Data Export" sub="Export platform data and analytics" color="#C9922B" />
       <ActionRow icon="trash-2" label="Data Retention" sub="Configure data retention policies" color="#DC2626" />
     </ScrollView>
   );
@@ -406,7 +406,7 @@ function SurveysTab() {
   const KPI = [
     { label: "Safety Surveys", value: "284", sub: "+18 today", color: "#DC2626", icon: "shield" as const },
     { label: "Neighborhood Ratings", value: "136", sub: "+7 today", color: "#2D7A4F", icon: "map-pin" as const },
-    { label: "Itinerary Feedback", value: "97", sub: "+12 today", color: "#D4873A", icon: "map" as const },
+    { label: "Itinerary Feedback", value: "97", sub: "+12 today", color: "#C9922B", icon: "map" as const },
     { label: "Preference Surveys", value: "412", sub: "+31 today", color: "#1D4ED8", icon: "sliders" as const },
   ];
   const RESPONSES = [
@@ -419,7 +419,7 @@ function SurveysTab() {
     { type: "Neighborhood", business: "Bronzeville, Chicago", city: "Chicago, IL", rating: 4, time: "5h ago", summary: "Great daytime safety, mixed nighttime. Police somewhat helpful." },
     { type: "Safety", business: "Harambee Tech Hub", city: "Houston, TX", rating: 5, time: "6h ago", summary: "Excellent safety experience. Solo-friendly space." },
   ];
-  const COLORS: Record<string, string> = { Safety: "#DC2626", Neighborhood: "#2D7A4F", Itinerary: "#D4873A", Preferences: "#1D4ED8" };
+  const COLORS: Record<string, string> = { Safety: "#DC2626", Neighborhood: "#2D7A4F", Itinerary: "#C9922B", Preferences: "#1D4ED8" };
   const filtered = typeFilter === "All" ? RESPONSES : RESPONSES.filter((r) => r.type === typeFilter);
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
@@ -437,7 +437,7 @@ function SurveysTab() {
               style={[adminStyles.filterChip, { backgroundColor: typeFilter === t ? colors.primary : colors.secondary, borderColor: typeFilter === t ? colors.primary : colors.border }]}
               onPress={() => setTypeFilter(t)}
             >
-              <Text style={[adminStyles.filterChipText, { color: typeFilter === t ? "#FBF7F0" : colors.foreground }]}>{t}</Text>
+              <Text style={[adminStyles.filterChipText, { color: typeFilter === t ? "#FFFFFF" : colors.foreground }]}>{t}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -455,7 +455,7 @@ function SurveysTab() {
           {r.rating > 0 && (
             <View style={adminStyles.surveyStars}>
               {[1,2,3,4,5].map((n) => (
-                <Feather key={n} name="star" size={12} color={n <= r.rating ? "#D4873A" : colors.border} />
+                <Feather key={n} name="star" size={12} color={n <= r.rating ? "#C9922B" : colors.border} />
               ))}
             </View>
           )}
@@ -477,22 +477,22 @@ function ClaimsTab() {
     { business: "New Listing Co.", city: "Chicago, IL", claimant: "Unknown User", method: "Email", status: "rejected", submitted: "Jun 5" },
     { business: "Urban Roots Cafe", city: "Oakland, CA", claimant: "Zara M.", method: "Document", status: "pending", submitted: "Jun 16" },
   ];
-  const statusColor = (s: string) => s === "approved" ? "#2D7A4F" : s === "rejected" ? "#DC2626" : "#D4873A";
+  const statusColor = (s: string) => s === "approved" ? "#2D7A4F" : s === "rejected" ? "#DC2626" : "#C9922B";
   const filtered = filter === "All" ? claims : claims.filter((c) => c.status === filter.toLowerCase());
   const pending = claims.filter((c) => c.status === "pending").length;
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       {pending > 0 && (
-        <View style={[adminStyles.alertBanner, { backgroundColor: "#D4873A12", borderColor: "#D4873A30" }]}>
-          <Feather name="check-square" size={15} color="#D4873A" />
-          <Text style={[adminStyles.alertText, { color: "#D4873A" }]}>{pending} claim{pending !== 1 ? "s" : ""} awaiting review</Text>
+        <View style={[adminStyles.alertBanner, { backgroundColor: "#C9922B12", borderColor: "#C9922B30" }]}>
+          <Feather name="check-square" size={15} color="#C9922B" />
+          <Text style={[adminStyles.alertText, { color: "#C9922B" }]}>{pending} claim{pending !== 1 ? "s" : ""} awaiting review</Text>
         </View>
       )}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
         <View style={{ flexDirection: "row", gap: 8 }}>
           {STATUSES.map((s) => (
             <TouchableOpacity key={s} style={[adminStyles.filterChip, { backgroundColor: filter === s ? colors.primary : colors.secondary, borderColor: filter === s ? colors.primary : colors.border }]} onPress={() => setFilter(s)}>
-              <Text style={[adminStyles.filterChipText, { color: filter === s ? "#FBF7F0" : colors.foreground }]}>{s}</Text>
+              <Text style={[adminStyles.filterChipText, { color: filter === s ? "#FFFFFF" : colors.foreground }]}>{s}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -538,22 +538,22 @@ function SubmissionsTab() {
     { name: "New Listing Co.", category: "Retail", city: "Chicago, IL", submittedBy: "Anonymous", blackOwned: false, status: "rejected", submitted: "Jun 5" },
     { name: "Cleo's Bistro", category: "Restaurant", city: "Washington, DC", submittedBy: "Simone W.", blackOwned: true, status: "pending", submitted: "Jun 17" },
   ];
-  const statusColor = (s: string) => s === "approved" ? "#2D7A4F" : s === "rejected" ? "#DC2626" : "#D4873A";
+  const statusColor = (s: string) => s === "approved" ? "#2D7A4F" : s === "rejected" ? "#DC2626" : "#C9922B";
   const filtered = filter === "All" ? submissions : submissions.filter((s) => s.status === filter.toLowerCase());
   const pending = submissions.filter((s) => s.status === "pending").length;
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       {pending > 0 && (
-        <View style={[adminStyles.alertBanner, { backgroundColor: "#C4622D12", borderColor: "#C4622D30" }]}>
-          <Feather name="send" size={15} color="#C4622D" />
-          <Text style={[adminStyles.alertText, { color: "#C4622D" }]}>{pending} submission{pending !== 1 ? "s" : ""} awaiting review</Text>
+        <View style={[adminStyles.alertBanner, { backgroundColor: "#3B1F0E12", borderColor: "#3B1F0E30" }]}>
+          <Feather name="send" size={15} color="#3B1F0E" />
+          <Text style={[adminStyles.alertText, { color: "#3B1F0E" }]}>{pending} submission{pending !== 1 ? "s" : ""} awaiting review</Text>
         </View>
       )}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
         <View style={{ flexDirection: "row", gap: 8 }}>
           {STATUSES.map((s) => (
             <TouchableOpacity key={s} style={[adminStyles.filterChip, { backgroundColor: filter === s ? colors.primary : colors.secondary, borderColor: filter === s ? colors.primary : colors.border }]} onPress={() => setFilter(s)}>
-              <Text style={[adminStyles.filterChipText, { color: filter === s ? "#FBF7F0" : colors.foreground }]}>{s}</Text>
+              <Text style={[adminStyles.filterChipText, { color: filter === s ? "#FFFFFF" : colors.foreground }]}>{s}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -594,15 +594,15 @@ function SubmissionsTab() {
 function ReferralsTab() {
   const colors = useColors();
   const KPI = [
-    { label: "Total Referrals", value: "824", sub: "+47 this week", color: "#C4622D", icon: "share-2" as const },
+    { label: "Total Referrals", value: "824", sub: "+47 this week", color: "#3B1F0E", icon: "share-2" as const },
     { label: "Conversions", value: "312", sub: "38% conv. rate", color: "#2D7A4F", icon: "user-check" as const },
-    { label: "Ambassadors", value: "18", sub: "25+ referrals", color: "#D4873A", icon: "award" as const },
+    { label: "Ambassadors", value: "18", sub: "25+ referrals", color: "#C9922B", icon: "award" as const },
     { label: "Credits Issued", value: "$840", sub: "All time", color: "#1D4ED8", icon: "dollar-sign" as const },
   ];
   const topReferrers = [
-    { name: "Simone W.", referrals: 38, tier: "Legend", earned: "$100", color: "#C4622D" },
+    { name: "Simone W.", referrals: 38, tier: "Legend", earned: "$100", color: "#3B1F0E" },
     { name: "Marcus T.", referrals: 29, tier: "Legend", earned: "$100", color: "#2D7A4F" },
-    { name: "Aisha B.", referrals: 17, tier: "Ambassador", earned: "$25", color: "#D4873A" },
+    { name: "Aisha B.", referrals: 17, tier: "Ambassador", earned: "$25", color: "#C9922B" },
     { name: "Kwame A.", referrals: 12, tier: "Ambassador", earned: "$25", color: "#1D4ED8" },
     { name: "Zara M.", referrals: 6, tier: "Connector", earned: "$5", color: "#7B2D8B" },
   ];
@@ -629,8 +629,8 @@ function ReferralsTab() {
         </View>
       ))}
       <SectionLabel title="Program Settings" />
-      <ActionRow icon="gift" label="Reward Tiers" sub="Configure tier thresholds and rewards" color="#C4622D" />
-      <ActionRow icon="link" label="Referral Links" sub="View and manage all referral links" color="#D4873A" />
+      <ActionRow icon="gift" label="Reward Tiers" sub="Configure tier thresholds and rewards" color="#3B1F0E" />
+      <ActionRow icon="link" label="Referral Links" sub="View and manage all referral links" color="#C9922B" />
       <ActionRow icon="download" label="Export Data" sub="Download full referral report CSV" color="#2D7A4F" />
     </ScrollView>
   );
@@ -639,9 +639,9 @@ function ReferralsTab() {
 function EmailTab() {
   const colors = useColors();
   const KPI = [
-    { label: "Subscribers", value: "2,841", sub: "+184 this week", color: "#C4622D", icon: "mail" as const },
+    { label: "Subscribers", value: "2,841", sub: "+184 this week", color: "#3B1F0E", icon: "mail" as const },
     { label: "Open Rate", value: "46%", sub: "+3% vs avg", color: "#2D7A4F", icon: "eye" as const },
-    { label: "Click Rate", value: "18%", sub: "Industry: 11%", color: "#D4873A", icon: "mouse-pointer" as const },
+    { label: "Click Rate", value: "18%", sub: "Industry: 11%", color: "#C9922B", icon: "mouse-pointer" as const },
     { label: "Unsubscribes", value: "12", sub: "0.4% rate", color: "#1D4ED8", icon: "user-x" as const },
   ];
   const drip = [
@@ -673,11 +673,11 @@ function EmailTab() {
           <View style={{ flexDirection: "row", gap: 16 }}>
             <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>Sent: {d.sent.toLocaleString()}</Text>
             <Text style={[adminStyles.bizCity, { color: "#2D7A4F" }]}>Open: {Math.round(d.opened / d.sent * 100)}%</Text>
-            <Text style={[adminStyles.bizCity, { color: "#D4873A" }]}>Click: {Math.round(d.clicked / d.sent * 100)}%</Text>
+            <Text style={[adminStyles.bizCity, { color: "#C9922B" }]}>Click: {Math.round(d.clicked / d.sent * 100)}%</Text>
           </View>
           <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-            <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#C4622D18", borderColor: "#C4622D30" }]}>
-              <Text style={[adminStyles.smallBtnText, { color: "#C4622D" }]}>Trigger</Text>
+            <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#3B1F0E18", borderColor: "#3B1F0E30" }]}>
+              <Text style={[adminStyles.smallBtnText, { color: "#3B1F0E" }]}>Trigger</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
               <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Edit</Text>
@@ -686,9 +686,9 @@ function EmailTab() {
         </View>
       ))}
       <SectionLabel title="Actions" />
-      <ActionRow icon="users" label="Subscriber List" sub="Browse and search all email subscribers" color="#C4622D" />
+      <ActionRow icon="users" label="Subscriber List" sub="Browse and search all email subscribers" color="#3B1F0E" />
       <ActionRow icon="user-minus" label="Unsubscribe Management" sub="Handle unsubscribe requests" color="#DC2626" />
-      <ActionRow icon="send" label="Send Announcement" sub="One-off email to all subscribers" color="#D4873A" />
+      <ActionRow icon="send" label="Send Announcement" sub="One-off email to all subscribers" color="#C9922B" />
     </ScrollView>
   );
 }
@@ -760,8 +760,8 @@ export default function AdminScreen() {
               }}
               activeOpacity={0.8}
             >
-              <Feather name={tab.icon} size={13} color={active ? "#FBF7F0" : colors.mutedForeground} />
-              <Text style={[styles.tabLabel, { color: active ? "#FBF7F0" : colors.mutedForeground }]}>
+              <Feather name={tab.icon} size={13} color={active ? "#FFFFFF" : colors.mutedForeground} />
+              <Text style={[styles.tabLabel, { color: active ? "#FFFFFF" : colors.mutedForeground }]}>
                 {tab.label}
               </Text>
             </TouchableOpacity>

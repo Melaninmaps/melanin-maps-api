@@ -25,9 +25,9 @@ const UPCOMING_EVENTS = [
 ];
 
 const RECENT_ACTIVITY = [
-  { id: "a1", icon: "star" as const, color: "#D4873A", text: "You reviewed Sweet Auburn BBQ", time: "2h ago" },
+  { id: "a1", icon: "star" as const, color: "#C9922B", text: "You reviewed Sweet Auburn BBQ", time: "2h ago" },
   { id: "a2", icon: "shield" as const, color: "#2D7A4F", text: "Safety report submitted in Atlanta, GA", time: "1d ago" },
-  { id: "a3", icon: "bookmark" as const, color: "#C4622D", text: "Saved Trap Kitchen to favorites", time: "2d ago" },
+  { id: "a3", icon: "bookmark" as const, color: "#3B1F0E", text: "Saved Trap Kitchen to favorites", time: "2d ago" },
   { id: "a4", icon: "message-circle" as const, color: "#7B4F2E", text: "Your community post got 12 upvotes", time: "3d ago" },
 ];
 
@@ -126,7 +126,7 @@ export default function DashboardScreen() {
                 <Text style={[styles.bizName, { color: colors.foreground }]}>{b.name}</Text>
                 <Text style={[styles.bizCat, { color: colors.mutedForeground }]}>{b.category}</Text>
                 <View style={styles.bizMeta}>
-                  <Feather name="star" size={12} color="#D4873A" />
+                  <Feather name="star" size={12} color="#C9922B" />
                   <Text style={[styles.bizRating, { color: colors.foreground }]}>{b.rating}</Text>
                   <Text style={[styles.bizCity, { color: colors.mutedForeground }]}>· {b.city}</Text>
                 </View>
@@ -201,7 +201,7 @@ export default function DashboardScreen() {
             <Text style={styles.travelTitle}>Plan Your Next Trip</Text>
             <Text style={styles.travelSub}>AI-powered itineraries for Black travelers</Text>
           </View>
-          <Feather name="arrow-right" size={20} color="#D4873A" />
+          <Feather name="arrow-right" size={20} color="#C9922B" />
         </TouchableOpacity>
 
         {/* Community surveys */}
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 20, fontFamily: "Inter_700Bold" },
   statLabel: { fontSize: 11, fontFamily: "Inter_500Medium" },
   memberCard: {
-    backgroundColor: "#C4622D", borderRadius: 20, padding: 20,
+    backgroundColor: "#3B1F0E", borderRadius: 20, padding: 20,
     flexDirection: "row", alignItems: "center", gap: 16,
   },
   memberBadge: {
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 14,
   },
   travelEmoji: { fontSize: 32 },
-  travelTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#FBF7F0" },
+  travelTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#FFFFFF" },
   travelSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: "rgba(251,247,240,0.7)", marginTop: 3 },
   surveyRow: {
     flexDirection: "row", alignItems: "center", gap: 12,

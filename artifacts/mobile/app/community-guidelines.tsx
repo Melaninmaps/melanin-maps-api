@@ -9,7 +9,7 @@ const SECTIONS = [
   {
     icon: "heart" as const,
     title: "Be Respectful",
-    color: "#C4622D",
+    color: "#3B1F0E",
     rules: [
       "Treat every community member with dignity, regardless of background, belief, or identity.",
       "Disagree respectfully — challenge ideas, never attack people.",
@@ -31,7 +31,7 @@ const SECTIONS = [
   {
     icon: "shield" as const,
     title: "Protect the Community",
-    color: "#D4873A",
+    color: "#C9922B",
     rules: [
       "Report safety concerns accurately — this data shapes real decisions for real people.",
       "Do not share private information about other users without consent.",
@@ -42,7 +42,7 @@ const SECTIONS = [
   {
     icon: "star" as const,
     title: "Keep It Constructive",
-    color: "#C4622D",
+    color: "#3B1F0E",
     rules: [
       "Write reviews that help people make informed decisions — specific details are more helpful than vague ratings.",
       "Focus on the experience, not on personal grievances unrelated to the visit.",

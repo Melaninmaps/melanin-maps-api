@@ -27,9 +27,9 @@ export interface Conversation {
 }
 
 export const CONVERSATIONS: Conversation[] = [
-  { id: "c1", name: "Essence Beauty Lounge", initials: "EB", color: "#C4622D", lastMessage: "Thank you for your review! We hope to see you again soon 💛", timeAgo: "2m", unread: 1, type: "business", online: true },
+  { id: "c1", name: "Essence Beauty Lounge", initials: "EB", color: "#3B1F0E", lastMessage: "Thank you for your review! We hope to see you again soon 💛", timeAgo: "2m", unread: 1, type: "business", online: true },
   { id: "c2", name: "Zara M.", initials: "ZM", color: "#2D7A4F", lastMessage: "Did you check out that new bookstore I mentioned?", timeAgo: "14m", unread: 2, type: "user" },
-  { id: "c3", name: "Sweet Auburn BBQ", initials: "SA", color: "#D4873A", lastMessage: "We're running a special this weekend — 20% off for community members!", timeAgo: "1h", unread: 0, type: "business" },
+  { id: "c3", name: "Sweet Auburn BBQ", initials: "SA", color: "#C9922B", lastMessage: "We're running a special this weekend — 20% off for community members!", timeAgo: "1h", unread: 0, type: "business" },
   { id: "c4", name: "Kwame A.", initials: "KA", color: "#7B3F00", lastMessage: "The Juneteenth event was amazing! Are you going next year?", timeAgo: "3h", unread: 0, type: "user" },
   { id: "c5", name: "Harambee Tech Hub", initials: "HT", color: "#1D4ED8", lastMessage: "Our next coding bootcamp starts July 15th. Spots are limited!", timeAgo: "1d", unread: 0, type: "business" },
   { id: "c6", name: "Imani T.", initials: "IT", color: "#7B2D8B", lastMessage: "Just booked my appointment at Ujima Wellness 🙌🏾", timeAgo: "2d", unread: 0, type: "user" },

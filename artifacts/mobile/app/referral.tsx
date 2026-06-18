@@ -20,15 +20,15 @@ const REFERRAL_URL = "https://melaninmaps.app/join?ref=MELANIN-MAP42";
 
 const TIERS = [
   { label: "Pioneer", min: 0, max: 2, icon: "🌱", color: "#7B4F2E", bg: "#7B4F2E18", reward: "Community badge + early access" },
-  { label: "Connector", min: 3, max: 9, icon: "🔗", color: "#D4873A", bg: "#D4873A18", reward: "$5 credit + featured profile" },
-  { label: "Ambassador", min: 10, max: 24, icon: "✨", color: "#C4622D", bg: "#C4622D18", reward: "$25 credit + Ambassador badge" },
+  { label: "Connector", min: 3, max: 9, icon: "🔗", color: "#C9922B", bg: "#C9922B18", reward: "$5 credit + featured profile" },
+  { label: "Ambassador", min: 10, max: 24, icon: "✨", color: "#3B1F0E", bg: "#3B1F0E18", reward: "$25 credit + Ambassador badge" },
   { label: "Legend", min: 25, max: Infinity, icon: "👑", color: "#2D7A4F", bg: "#2D7A4F18", reward: "$100 credit + lifetime perks" },
 ];
 
 const INVITES = [
-  { name: "Zara M.", status: "joined", timeAgo: "2 days ago", color: "#C4622D" },
+  { name: "Zara M.", status: "joined", timeAgo: "2 days ago", color: "#3B1F0E" },
   { name: "Kwame A.", status: "joined", timeAgo: "1 week ago", color: "#2D7A4F" },
-  { name: "Imani T.", status: "pending", timeAgo: "Invited 3 days ago", color: "#D4873A" },
+  { name: "Imani T.", status: "pending", timeAgo: "Invited 3 days ago", color: "#C9922B" },
 ];
 
 const referralCount = 2;
@@ -113,7 +113,7 @@ export default function ReferralScreen() {
             onPress={handleShare}
             activeOpacity={0.85}
           >
-            <Feather name="share-2" size={18} color="#FBF7F0" />
+            <Feather name="share-2" size={18} color="#FFFFFF" />
             <Text style={styles.shareBtnText}>Share Invite Link</Text>
           </TouchableOpacity>
         </View>
@@ -203,10 +203,10 @@ export default function ReferralScreen() {
             </View>
             <View style={[
               styles.inviteStatus,
-              { backgroundColor: invite.status === "joined" ? "#2D7A4F18" : "#D4873A18" }
+              { backgroundColor: invite.status === "joined" ? "#2D7A4F18" : "#C9922B18" }
             ]}>
-              <View style={[styles.statusDot, { backgroundColor: invite.status === "joined" ? "#2D7A4F" : "#D4873A" }]} />
-              <Text style={[styles.statusText, { color: invite.status === "joined" ? "#2D7A4F" : "#D4873A" }]}>
+              <View style={[styles.statusDot, { backgroundColor: invite.status === "joined" ? "#2D7A4F" : "#C9922B" }]} />
+              <Text style={[styles.statusText, { color: invite.status === "joined" ? "#2D7A4F" : "#C9922B" }]}>
                 {invite.status === "joined" ? "Joined" : "Pending"}
               </Text>
             </View>
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   heroEmoji: { fontSize: 36 },
-  heroTitle: { fontFamily: "Inter_700Bold", fontSize: 22, color: "#FBF7F0", textAlign: "center" },
+  heroTitle: { fontFamily: "Inter_700Bold", fontSize: 22, color: "#FFFFFF", textAlign: "center" },
   heroSub: { fontFamily: "Inter_400Regular", fontSize: 14, color: "rgba(251,247,240,0.85)", textAlign: "center", lineHeight: 21 },
   codeCard: {
     borderRadius: 18,
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginTop: 4,
   },
-  shareBtnText: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#FBF7F0" },
+  shareBtnText: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF" },
   progressCard: {
     borderRadius: 18,
     padding: 18,

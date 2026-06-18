@@ -146,7 +146,7 @@ export default function TravelScreen() {
           onPress={() => router.back()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="arrow-back" size={22} color="#FBF7F0" />
+          <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>AI Travel Guide</Text>
@@ -230,13 +230,13 @@ export default function TravelScreen() {
                   <Ionicons
                     name={vibe.icon as any}
                     size={13}
-                    color={selected ? "#FBF7F0" : colors.mutedForeground}
+                    color={selected ? "#FFFFFF" : colors.mutedForeground}
                   />
                   <Text
                     style={[
                       styles.vibeChipText,
                       {
-                        color: selected ? "#FBF7F0" : colors.text,
+                        color: selected ? "#FFFFFF" : colors.text,
                       },
                     ]}
                   >
@@ -260,10 +260,10 @@ export default function TravelScreen() {
             disabled={!destination.trim() || loading}
           >
             {loading ? (
-              <ActivityIndicator size="small" color="#FBF7F0" />
+              <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
               <>
-                <Ionicons name="sparkles" size={16} color="#FBF7F0" />
+                <Ionicons name="sparkles" size={16} color="#FFFFFF" />
                 <Text style={styles.searchBtnText}>Get AI Recommendations</Text>
               </>
             )}
@@ -296,10 +296,10 @@ export default function TravelScreen() {
             <View
               style={[
                 styles.resultHeader,
-                { backgroundColor: "#D4873A" + "22", borderColor: "#D4873A" + "44" },
+                { backgroundColor: "#C9922B" + "22", borderColor: "#C9922B" + "44" },
               ]}
             >
-              <Ionicons name="sparkles" size={20} color={"#D4873A"} />
+              <Ionicons name="sparkles" size={20} color={"#C9922B"} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.resultCity, { color: colors.text }]}>
                   {results.destination}
@@ -397,10 +397,10 @@ export default function TravelScreen() {
                   <View
                     style={[
                       styles.mustTryRow,
-                      { backgroundColor: "#D4873A" + "18", borderColor: "#D4873A" + "33" },
+                      { backgroundColor: "#C9922B" + "18", borderColor: "#C9922B" + "33" },
                     ]}
                   >
-                    <Ionicons name="star" size={13} color={"#D4873A"} />
+                    <Ionicons name="star" size={13} color={"#C9922B"} />
                     <Text style={[styles.mustTryText, { color: colors.text }]}>
                       <Text style={{ fontFamily: "Inter_600SemiBold" }}>
                         Must try:{" "}
@@ -426,7 +426,7 @@ export default function TravelScreen() {
                   <Text
                     style={[
                       styles.vibePill,
-                      { color: "#D4873A", fontFamily: "Inter_600SemiBold" },
+                      { color: "#C9922B", fontFamily: "Inter_600SemiBold" },
                     ]}
                   >
                     {n.vibe}
@@ -487,11 +487,11 @@ export default function TravelScreen() {
                     <View
                       style={[
                         styles.categoryBadge,
-                        { backgroundColor: "#D4873A22" },
+                        { backgroundColor: "#C9922B22" },
                       ]}
                     >
                       <Text
-                        style={[styles.categoryText, { color: "#D4873A" }]}
+                        style={[styles.categoryText, { color: "#C9922B" }]}
                       >
                         {ev.type}
                       </Text>
@@ -572,7 +572,7 @@ export default function TravelScreen() {
                     <Ionicons
                       name="bulb-outline"
                       size={16}
-                      color="#D4873A"
+                      color="#C9922B"
                       style={{ marginTop: 2 }}
                     />
                     <Text
@@ -589,12 +589,12 @@ export default function TravelScreen() {
 
             {/* Rate this itinerary */}
             <TouchableOpacity
-              style={[styles.rateItinBtn, { backgroundColor: colors.card, borderColor: "#D4873A40" }]}
+              style={[styles.rateItinBtn, { backgroundColor: colors.card, borderColor: "#C9922B40" }]}
               onPress={() => setShowFeedbackSurvey(true)}
               activeOpacity={0.85}
             >
-              <View style={[styles.rateItinIcon, { backgroundColor: "#D4873A18" }]}>
-                <Ionicons name="star" size={18} color="#D4873A" />
+              <View style={[styles.rateItinIcon, { backgroundColor: "#C9922B18" }]}>
+                <Ionicons name="star" size={18} color="#C9922B" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rateItinTitle, { color: colors.text }]}>Rate this Itinerary</Text>
@@ -653,7 +653,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: "Inter_700Bold",
     fontSize: 17,
-    color: "#FBF7F0",
+    color: "#FFFFFF",
   },
   headerSub: {
     fontFamily: "Inter_400Regular",
@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
   searchBtnText: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 15,
-    color: "#FBF7F0",
+    color: "#FFFFFF",
   },
   loadingState: {
     alignItems: "center",
@@ -904,7 +904,7 @@ const styles = StyleSheet.create({
   listNumText: {
     fontFamily: "Inter_700Bold",
     fontSize: 11,
-    color: "#FBF7F0",
+    color: "#FFFFFF",
   },
   listText: {
     fontFamily: "Inter_400Regular",

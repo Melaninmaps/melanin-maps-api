@@ -31,8 +31,8 @@ const CATEGORY_IMAGES: Record<string, any> = {
 };
 
 const MOCK_REVIEWS = [
-  { id: "r1", author: "Simone W.", rating: 5, text: "Absolutely amazing! The quality and service exceeded all expectations. Will definitely be back.", timeAgo: "3 days ago", initials: "SW", color: "#C4622D" },
-  { id: "r2", author: "Marcus T.", rating: 4, text: "Great experience overall. The staff was incredibly welcoming and knowledgeable. Highly recommend to anyone in the community.", timeAgo: "1 week ago", initials: "MT", color: "#D4873A" },
+  { id: "r1", author: "Simone W.", rating: 5, text: "Absolutely amazing! The quality and service exceeded all expectations. Will definitely be back.", timeAgo: "3 days ago", initials: "SW", color: "#3B1F0E" },
+  { id: "r2", author: "Marcus T.", rating: 4, text: "Great experience overall. The staff was incredibly welcoming and knowledgeable. Highly recommend to anyone in the community.", timeAgo: "1 week ago", initials: "MT", color: "#C9922B" },
   { id: "r3", author: "Aisha B.", rating: 5, text: "This place is a gem. So proud to support Black-owned businesses like this one. They really care about their customers.", timeAgo: "2 weeks ago", initials: "AB", color: "#2D7A4F" },
 ];
 
@@ -84,7 +84,7 @@ export default function BusinessDetailScreen() {
           }}
           style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
         >
-          <Feather name="bookmark" size={20} color={saved ? "#D4873A" : "#FFFFFF"} />
+          <Feather name="bookmark" size={20} color={saved ? "#C9922B" : "#FFFFFF"} />
         </TouchableOpacity>
       </View>
 
