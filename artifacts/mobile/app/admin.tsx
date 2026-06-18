@@ -21,6 +21,7 @@ const ADMIN_TABS = [
   { id: "reports", label: "Reports", icon: "flag" as const },
   { id: "reviews", label: "Reviews", icon: "star" as const },
   { id: "analytics", label: "Analytics", icon: "bar-chart-2" as const },
+  { id: "surveys", label: "Surveys", icon: "clipboard" as const },
   { id: "content", label: "Content", icon: "layers" as const },
   { id: "settings", label: "Settings", icon: "settings" as const },
 ];
@@ -397,6 +398,73 @@ function SettingsTab() {
   );
 }
 
+function SurveysTab() {
+  const colors = useColors();
+  const [typeFilter, setTypeFilter] = useState("All");
+  const SURVEY_TYPES = ["All", "Safety", "Neighborhood", "Itinerary", "Preferences"];
+  const KPI = [
+    { label: "Safety Surveys", value: "284", sub: "+18 today", color: "#DC2626", icon: "shield" as const },
+    { label: "Neighborhood Ratings", value: "136", sub: "+7 today", color: "#2D7A4F", icon: "map-pin" as const },
+    { label: "Itinerary Feedback", value: "97", sub: "+12 today", color: "#D4873A", icon: "map" as const },
+    { label: "Preference Surveys", value: "412", sub: "+31 today", color: "#1D4ED8", icon: "sliders" as const },
+  ];
+  const RESPONSES = [
+    { type: "Safety", business: "Essence Beauty Lounge", city: "Houston, TX", rating: 4, time: "3 min ago", summary: "Felt very safe during evening visit. Good lighting." },
+    { type: "Neighborhood", business: "Sweet Auburn, Atlanta", city: "Atlanta, GA", rating: 5, time: "12 min ago", summary: "Well-lit streets, active foot traffic, community watch." },
+    { type: "Itinerary", business: "Atlanta Weekend Trip", city: "Atlanta, GA", rating: 5, time: "28 min ago", summary: "Loved it! Great neighborhood picks and safety tips." },
+    { type: "Safety", business: "Kingdom Cuts Barbershop", city: "Atlanta, GA", rating: 3, time: "1h ago", summary: "Average experience. Could use better exterior lighting." },
+    { type: "Preferences", business: "User: Simone W.", city: "Atlanta, GA", rating: 0, time: "2h ago", summary: "Foodie + Cultural, Atlanta & Houston, Solo travel." },
+    { type: "Itinerary", business: "New Orleans Trip", city: "New Orleans, LA", rating: 4, time: "3h ago", summary: "Good recommendations but needed more budget options." },
+    { type: "Neighborhood", business: "Bronzeville, Chicago", city: "Chicago, IL", rating: 4, time: "5h ago", summary: "Great daytime safety, mixed nighttime. Police somewhat helpful." },
+    { type: "Safety", business: "Harambee Tech Hub", city: "Houston, TX", rating: 5, time: "6h ago", summary: "Excellent safety experience. Solo-friendly space." },
+  ];
+  const COLORS: Record<string, string> = { Safety: "#DC2626", Neighborhood: "#2D7A4F", Itinerary: "#D4873A", Preferences: "#1D4ED8" };
+  const filtered = typeFilter === "All" ? RESPONSES : RESPONSES.filter((r) => r.type === typeFilter);
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+      <View style={adminStyles.statsGrid}>
+        {KPI.map((k) => (
+          <StatCard key={k.label} label={k.label} value={k.value} sub={k.sub} color={k.color} icon={k.icon} />
+        ))}
+      </View>
+      <SectionLabel title="Response Viewer" />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          {SURVEY_TYPES.map((t) => (
+            <TouchableOpacity
+              key={t}
+              style={[adminStyles.filterChip, { backgroundColor: typeFilter === t ? colors.primary : colors.secondary, borderColor: typeFilter === t ? colors.primary : colors.border }]}
+              onPress={() => setTypeFilter(t)}
+            >
+              <Text style={[adminStyles.filterChipText, { color: typeFilter === t ? "#FBF7F0" : colors.foreground }]}>{t}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+      {filtered.map((r, i) => (
+        <View key={i} style={[adminStyles.surveyCard, { backgroundColor: colors.card, borderColor: colors.border, borderLeftColor: COLORS[r.type] ?? colors.border }]}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <View style={[adminStyles.surveyTypeBadge, { backgroundColor: (COLORS[r.type] ?? "#999") + "18" }]}>
+              <Text style={[adminStyles.surveyTypeBadgeText, { color: COLORS[r.type] ?? "#999" }]}>{r.type}</Text>
+            </View>
+            <Text style={[adminStyles.surveyBiz, { color: colors.foreground }]} numberOfLines={1}>{r.business}</Text>
+            <Text style={[adminStyles.surveyTime, { color: colors.mutedForeground }]}>{r.time}</Text>
+          </View>
+          <Text style={[adminStyles.surveyCity, { color: colors.mutedForeground }]}>{r.city}</Text>
+          {r.rating > 0 && (
+            <View style={adminStyles.surveyStars}>
+              {[1,2,3,4,5].map((n) => (
+                <Feather key={n} name="star" size={12} color={n <= r.rating ? "#D4873A" : colors.border} />
+              ))}
+            </View>
+          )}
+          <Text style={[adminStyles.surveySummary, { color: colors.mutedForeground }]}>{r.summary}</Text>
+        </View>
+      ))}
+    </ScrollView>
+  );
+}
+
 const TAB_COMPONENTS: Record<string, React.FC> = {
   overview: OverviewTab,
   businesses: BusinessesTab,
@@ -405,6 +473,7 @@ const TAB_COMPONENTS: Record<string, React.FC> = {
   reports: ReportsTab,
   reviews: ReviewsTab,
   analytics: AnalyticsTab,
+  surveys: SurveysTab,
   content: ContentTab,
   settings: SettingsTab,
 };
@@ -556,4 +625,18 @@ const adminStyles = StyleSheet.create({
   metricIcon: { width: 32, height: 32, borderRadius: 8, alignItems: "center", justifyContent: "center" },
   metricLabel: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 13 },
   metricValue: { fontFamily: "Inter_700Bold", fontSize: 15 },
+  surveyCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderLeftWidth: 4,
+    padding: 14,
+    gap: 4,
+  },
+  surveyTypeBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+  surveyTypeBadgeText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  surveyBiz: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  surveyCity: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  surveyTime: { fontFamily: "Inter_400Regular", fontSize: 11 },
+  surveyStars: { flexDirection: "row", gap: 2, marginVertical: 2 },
+  surveySummary: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18 },
 });

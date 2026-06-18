@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 import type { Business } from "@/constants/types";
@@ -9,6 +9,7 @@ import { BlackOwnedBadge } from "./BlackOwnedBadge";
 import { ConfidenceScoreBadge } from "./ConfidenceScoreBadge";
 import { RatingStars } from "./RatingStars";
 import { VerificationBadge } from "./VerificationBadge";
+import { SafetyExperienceSurvey } from "./SafetyExperienceSurvey";
 
 const CATEGORY_IMAGES: Record<string, any> = {
   Food: require("@/assets/images/bento-businesses.jpg"),
@@ -31,94 +32,130 @@ interface Props {
 export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizontal = false }: Props) {
   const colors = useColors();
   const img = CATEGORY_IMAGES[business.category] ?? CATEGORY_IMAGES["Food"];
+  const [showSafetySurvey, setShowSafetySurvey] = useState(false);
 
   const handleSave = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onToggleSave();
   };
 
+  const handleRateSafety = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setShowSafetySurvey(true);
+  };
+
   if (horizontal) {
     return (
-      <TouchableOpacity
-        onPress={onPress}
-        activeOpacity={0.92}
-        style={[styles.hCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}
-      >
-        <Image source={img} style={styles.hImage} contentFit="cover" />
-        {business.blackOwned && (
-          <View style={styles.hBadgeOverlay}>
-            <BlackOwnedBadge size="sm" />
-          </View>
-        )}
-        <View style={styles.hContent}>
-          <View style={styles.hTop}>
-            <View style={styles.hTitleRow}>
-              <Text style={[styles.hName, { color: colors.foreground }]} numberOfLines={1}>
-                {business.name}
-              </Text>
-              {business.verified && <VerificationBadge />}
+      <>
+        <TouchableOpacity
+          onPress={onPress}
+          activeOpacity={0.92}
+          style={[styles.hCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}
+        >
+          <Image source={img} style={styles.hImage} contentFit="cover" />
+          {business.blackOwned && (
+            <View style={styles.hBadgeOverlay}>
+              <BlackOwnedBadge size="sm" />
             </View>
-            <TouchableOpacity onPress={handleSave} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Feather
-                name="bookmark"
-                size={16}
-                color={isSaved ? colors.primary : colors.mutedForeground}
-              />
+          )}
+          <View style={styles.hContent}>
+            <View style={styles.hTop}>
+              <View style={styles.hTitleRow}>
+                <Text style={[styles.hName, { color: colors.foreground }]} numberOfLines={1}>
+                  {business.name}
+                </Text>
+                {business.verified && <VerificationBadge />}
+              </View>
+              <TouchableOpacity onPress={handleSave} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Feather
+                  name="bookmark"
+                  size={16}
+                  color={isSaved ? colors.primary : colors.mutedForeground}
+                />
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.hCategory, { color: colors.primary }]}>{business.category}</Text>
+            <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={11} />
+            <View style={styles.hBottom}>
+              <Text style={[styles.hLocation, { color: colors.mutedForeground }]} numberOfLines={1}>
+                {business.city}, {business.state}
+                {business.priceRange ? ` · ${business.priceRange}` : ""}
+              </Text>
+              <ConfidenceScoreBadge score={business.confidenceScore} size="sm" />
+            </View>
+            <TouchableOpacity
+              style={[styles.rateSafetyBtn, { backgroundColor: "#DC262608", borderColor: "#DC262630" }]}
+              onPress={handleRateSafety}
+              hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+            >
+              <Feather name="shield" size={11} color="#DC2626" />
+              <Text style={[styles.rateSafetyText, { color: "#DC2626" }]}>Rate Safety</Text>
             </TouchableOpacity>
           </View>
-          <Text style={[styles.hCategory, { color: colors.primary }]}>{business.category}</Text>
-          <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={11} />
-          <View style={styles.hBottom}>
-            <Text style={[styles.hLocation, { color: colors.mutedForeground }]} numberOfLines={1}>
-              {business.city}, {business.state}
-              {business.priceRange ? ` · ${business.priceRange}` : ""}
-            </Text>
-            <ConfidenceScoreBadge score={business.confidenceScore} size="sm" />
-          </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+        <SafetyExperienceSurvey
+          visible={showSafetySurvey}
+          businessName={business.name}
+          onClose={() => setShowSafetySurvey(false)}
+        />
+      </>
     );
   }
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.92}
-      style={[styles.vCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}
-    >
-      <View style={styles.vImageWrap}>
-        <Image source={img} style={styles.vImage} contentFit="cover" />
-        {business.blackOwned && (
-          <View style={styles.vBadgeOverlay}>
-            <BlackOwnedBadge size="sm" />
+    <>
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.92}
+        style={[styles.vCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}
+      >
+        <View style={styles.vImageWrap}>
+          <Image source={img} style={styles.vImage} contentFit="cover" />
+          {business.blackOwned && (
+            <View style={styles.vBadgeOverlay}>
+              <BlackOwnedBadge size="sm" />
+            </View>
+          )}
+        </View>
+        <View style={styles.vContent}>
+          <View style={styles.vTitleRow}>
+            <Text style={[styles.vName, { color: colors.foreground }]} numberOfLines={1}>
+              {business.name}
+            </Text>
+            <TouchableOpacity onPress={handleSave} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Feather
+                name="bookmark"
+                size={18}
+                color={isSaved ? colors.primary : colors.mutedForeground}
+              />
+            </TouchableOpacity>
           </View>
-        )}
-      </View>
-      <View style={styles.vContent}>
-        <View style={styles.vTitleRow}>
-          <Text style={[styles.vName, { color: colors.foreground }]} numberOfLines={1}>
-            {business.name}
+          <View style={styles.vMeta}>
+            <Text style={[styles.vCategory, { color: colors.primary }]}>{business.category}</Text>
+            {business.verified && <VerificationBadge />}
+            <ConfidenceScoreBadge score={business.confidenceScore} size="sm" />
+          </View>
+          <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={12} />
+          <Text style={[styles.vLocation, { color: colors.mutedForeground }]} numberOfLines={1}>
+            {business.address}, {business.city}
+            {business.priceRange ? ` · ${business.priceRange}` : ""}
           </Text>
-          <TouchableOpacity onPress={handleSave} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Feather
-              name="bookmark"
-              size={18}
-              color={isSaved ? colors.primary : colors.mutedForeground}
-            />
+          <TouchableOpacity
+            style={[styles.rateSafetyBtn, { backgroundColor: "#DC262608", borderColor: "#DC262630" }]}
+            onPress={handleRateSafety}
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+          >
+            <Feather name="shield" size={11} color="#DC2626" />
+            <Text style={[styles.rateSafetyText, { color: "#DC2626" }]}>Rate Safety Experience</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.vMeta}>
-          <Text style={[styles.vCategory, { color: colors.primary }]}>{business.category}</Text>
-          {business.verified && <VerificationBadge />}
-          <ConfidenceScoreBadge score={business.confidenceScore} size="sm" />
-        </View>
-        <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={12} />
-        <Text style={[styles.vLocation, { color: colors.mutedForeground }]} numberOfLines={1}>
-          {business.address}, {business.city}
-          {business.priceRange ? ` · ${business.priceRange}` : ""}
-        </Text>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+      <SafetyExperienceSurvey
+        visible={showSafetySurvey}
+        businessName={business.name}
+        onClose={() => setShowSafetySurvey(false)}
+      />
+    </>
   );
 }
 
@@ -232,5 +269,20 @@ const styles = StyleSheet.create({
   vLocation: {
     fontFamily: "Inter_400Regular",
     fontSize: 12,
+  },
+  rateSafetyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 4,
+  },
+  rateSafetyText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 11,
   },
 });

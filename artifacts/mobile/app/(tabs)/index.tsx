@@ -17,6 +17,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AlertBanner } from "@/components/AlertBanner";
 import { BusinessCard } from "@/components/BusinessCard";
 import { CategoryPill } from "@/components/CategoryPill";
+import { NeighborhoodSafetySurvey } from "@/components/NeighborhoodSafetySurvey";
+import { OnboardingPreferenceSurvey } from "@/components/OnboardingPreferenceSurvey";
 import { ScoreFilterPanel } from "@/components/ScoreFilterPanel";
 import { SearchBar } from "@/components/SearchBar";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -45,6 +47,8 @@ export default function DiscoverScreen() {
     verifiedOnly: false,
     blackOwnedOnly: false,
   });
+  const [showNeighborhoodSurvey, setShowNeighborhoodSurvey] = useState(false);
+  const [showPrefsSurvey, setShowPrefsSurvey] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -133,14 +137,24 @@ export default function DiscoverScreen() {
                 </View>
               )}
             </View>
-            <TouchableOpacity
-              style={[styles.reportBtn, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}
-              onPress={() => router.push("/report-safety")}
-              activeOpacity={0.8}
-            >
-              <Feather name="plus" size={13} color="#DC2626" />
-              <Text style={[styles.reportBtnText, { color: "#DC2626" }]}>Report</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <TouchableOpacity
+                style={[styles.reportBtn, { backgroundColor: "#2D7A4F12", borderColor: "#2D7A4F30" }]}
+                onPress={() => setShowNeighborhoodSurvey(true)}
+                activeOpacity={0.8}
+              >
+                <Feather name="map-pin" size={13} color="#2D7A4F" />
+                <Text style={[styles.reportBtnText, { color: "#2D7A4F" }]}>Rate Neighborhood</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.reportBtn, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}
+                onPress={() => router.push("/report-safety")}
+                activeOpacity={0.8}
+              >
+                <Feather name="plus" size={13} color="#DC2626" />
+                <Text style={[styles.reportBtnText, { color: "#DC2626" }]}>Report</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           {alerts.length > 0 ? (
             alerts.map((a) => (
@@ -265,7 +279,32 @@ export default function DiscoverScreen() {
             </Text>
           </View>
         )}
+
+        {/* Preferences shortcut */}
+        <TouchableOpacity
+          style={[styles.prefsRow, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => setShowPrefsSurvey(true)}
+          activeOpacity={0.85}
+        >
+          <View style={[styles.prefsIcon, { backgroundColor: colors.primary + "15" }]}>
+            <Feather name="sliders" size={16} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.prefsTitle, { color: colors.foreground }]}>Update Preferences</Text>
+            <Text style={[styles.prefsSub, { color: colors.mutedForeground }]}>Personalize your discovery feed</Text>
+          </View>
+          <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+        </TouchableOpacity>
       </ScrollView>
+
+      <NeighborhoodSafetySurvey
+        visible={showNeighborhoodSurvey}
+        onClose={() => setShowNeighborhoodSurvey(false)}
+      />
+      <OnboardingPreferenceSurvey
+        visible={showPrefsSurvey}
+        onClose={() => setShowPrefsSurvey(false)}
+      />
     </View>
   );
 }
@@ -436,6 +475,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   noAlertsText: { fontFamily: "Inter_400Regular", fontSize: 13 },
+  prefsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 20,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  prefsIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  prefsTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14, marginBottom: 2 },
+  prefsSub: { fontFamily: "Inter_400Regular", fontSize: 12 },
   empty: {
     alignItems: "center",
     justifyContent: "center",

@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useColors } from "@/hooks/useColors";
+import { PostItineraryFeedbackSurvey } from "@/components/PostItineraryFeedbackSurvey";
 
 const VIBES = [
   { id: "foodie", label: "Foodie", icon: "restaurant" },
@@ -76,6 +77,7 @@ export default function TravelScreen() {
   const [activeTab, setActiveTab] = useState<
     "businesses" | "neighborhoods" | "events" | "safety"
   >("businesses");
+  const [showFeedbackSurvey, setShowFeedbackSurvey] = useState(false);
 
   const fadeAnim = useState(new Animated.Value(0))[0];
 
@@ -583,6 +585,24 @@ export default function TravelScreen() {
               </View>
             )}
 
+            <View style={{ height: 24 }} />
+
+            {/* Rate this itinerary */}
+            <TouchableOpacity
+              style={[styles.rateItinBtn, { backgroundColor: colors.card, borderColor: "#D4873A40" }]}
+              onPress={() => setShowFeedbackSurvey(true)}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.rateItinIcon, { backgroundColor: "#D4873A18" }]}>
+                <Ionicons name="star" size={18} color="#D4873A" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.rateItinTitle, { color: colors.text }]}>Rate this Itinerary</Text>
+                <Text style={[styles.rateItinSub, { color: colors.textSecondary }]}>Help us improve AI trip planning</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+
             <View style={{ height: 32 }} />
           </Animated.View>
         )}
@@ -602,6 +622,12 @@ export default function TravelScreen() {
           </View>
         )}
       </ScrollView>
+
+      <PostItineraryFeedbackSurvey
+        visible={showFeedbackSurvey}
+        destination={results?.destination ?? destination}
+        onClose={() => setShowFeedbackSurvey(false)}
+      />
     </View>
   );
 }
@@ -886,6 +912,23 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     flex: 1,
   },
+  rateItinBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  rateItinIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  rateItinTitle: { fontFamily: "Inter_600SemiBold", fontSize: 15, marginBottom: 2 },
+  rateItinSub: { fontFamily: "Inter_400Regular", fontSize: 12 },
   emptyState: {
     alignItems: "center",
     paddingTop: 40,
