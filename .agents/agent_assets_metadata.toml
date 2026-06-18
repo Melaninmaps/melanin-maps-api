@@ -1,0 +1,32 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "YDHP1veiKU51dbaq2Dj7u"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "omrgHWskKGvSJ1-VkTJ_R"
+uri = "file://artifacts/mobile/assets/images/splash.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "H4FK7VTX2fb7VY5Uuqi46"
+uri = "file://artifacts/mobile/assets/images/biz_restaurant.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "nYnWz8AczSn3y0bw4fwYn"
+uri = "file://artifacts/mobile/assets/images/biz_boutique.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "KDDvFDVbtLVokQWsQpctj"
+uri = "file://artifacts/mobile/assets/images/event_festival.png"
+type = "image"
+title = "generated_image"
