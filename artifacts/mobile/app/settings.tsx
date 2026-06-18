@@ -89,8 +89,8 @@ export default function SettingsScreen() {
     {
       title: "Legal",
       rows: [
-        { id: "terms", icon: "file-text", label: "Terms of Service", route: null },
-        { id: "privacypolicy", icon: "file", label: "Privacy Policy", route: "/privacy" },
+        { id: "terms", icon: "file-text", label: "Terms of Service", route: "/terms" },
+        { id: "privacypolicy", icon: "file", label: "Privacy Policy", route: "/privacy-policy" },
         { id: "guidelines", icon: "users", label: "Community Guidelines", route: "/community-guidelines" },
         { id: "standards", icon: "book-open", label: "Community Standards", route: "/community-standards" },
         { id: "safetyinfo", icon: "shield", label: "Our Safety Philosophy", route: "/safety-info" },
