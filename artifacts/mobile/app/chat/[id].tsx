@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as SecureStore from "expo-secure-store";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -43,6 +44,16 @@ const DEFAULT_MSGS: Message[] = [
   { id: "dm1", text: "Hey there! How can I help you today?", fromMe: false, timeAgo: "Just now" },
 ];
 
+function formatTimeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "Just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
@@ -51,25 +62,71 @@ export default function ChatScreen() {
   const flatListRef = useRef<FlatList>(null);
 
   const conv = CONVERSATIONS.find((c) => c.id === id);
+  const isRealConv = id != null && /^\d+$/.test(id);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES[id ?? ""] ?? DEFAULT_MSGS);
   const [text, setText] = useState("");
+
+  const loadMessages = useCallback(async () => {
+    if (!isRealConv || !id) return;
+    try {
+      const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${apiBase}/api/conversations/${id}/messages`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        const data = await res.json() as { messages: { id: number; content: string; senderId: string | null; createdAt: string }[] };
+        const userId = token ? "me" : null;
+        setMessages(
+          data.messages.map((m) => ({
+            id: String(m.id),
+            text: m.content,
+            fromMe: m.senderId != null && m.senderId === userId,
+            timeAgo: formatTimeAgo(m.createdAt),
+          }))
+        );
+      }
+    } catch {
+      // keep local messages on error
+    }
+  }, [id, isRealConv]);
+
+  useEffect(() => { void loadMessages(); }, [loadMessages]);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!text.trim()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const newMsg: Message = {
+    const optimistic: Message = {
       id: `m${Date.now()}`,
       text: text.trim(),
       fromMe: true,
       timeAgo: "Just now",
       status: "sent",
     };
-    setMessages((prev) => [...prev, newMsg]);
+    setMessages((prev) => [...prev, optimistic]);
+    const sent = text.trim();
     setText("");
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+
+    if (isRealConv && id) {
+      try {
+        const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        await fetch(`${apiBase}/api/conversations/${id}/messages`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ content: sent }),
+        });
+      } catch {
+        // message already shown optimistically
+      }
+    }
   };
 
   if (!conv) {
@@ -177,7 +234,7 @@ export default function ChatScreen() {
         </View>
         <TouchableOpacity
           style={[styles.sendBtn, { backgroundColor: text.trim() ? colors.primary : colors.muted }]}
-          onPress={sendMessage}
+          onPress={() => { void sendMessage(); }}
           disabled={!text.trim()}
           activeOpacity={0.85}
         >

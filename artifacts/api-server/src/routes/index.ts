@@ -14,6 +14,8 @@ import checkinsRouter from "./checkins";
 import pointsRouter from "./points";
 import eventRsvpsRouter from "./event-rsvps";
 import pushTokenRouter from "./push-token";
+import communityRouter from "./community";
+import conversationsRouter from "./conversations";
 
 const router: IRouter = Router();
 
@@ -32,5 +34,7 @@ router.use(checkinsRouter);
 router.use(pointsRouter);
 router.use(eventRsvpsRouter);
 router.use(pushTokenRouter);
+router.use(communityRouter);
+router.use(conversationsRouter);
 
 export default router;

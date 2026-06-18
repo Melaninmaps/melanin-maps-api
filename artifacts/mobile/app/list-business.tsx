@@ -1,9 +1,11 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
+import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   KeyboardAvoidingView,
   Platform,
@@ -269,6 +271,7 @@ export default function ListBusinessScreen() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
+  const [submitting, setSubmitting] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -304,9 +307,46 @@ export default function ListBusinessScreen() {
     else router.back();
   };
 
-  const handleSubmit = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    animateToStep(TOTAL_STEPS);
+  const handleSubmit = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${apiBase}/api/businesses`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          name: form.name,
+          category: form.category,
+          description: form.description,
+          address: form.address,
+          city: form.city,
+          state: form.state,
+          zip: form.zip,
+          phone: form.phone,
+          website: form.website,
+          priceRange: form.priceRange,
+          hours: form.hours,
+          customHours: form.customHours,
+          tags: form.tags,
+          isBlackOwned: form.isBlackOwned,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(err.error ?? "Submission failed");
+      }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      animateToStep(TOTAL_STEPS);
+    } catch (err) {
+      Alert.alert("Submission Error", err instanceof Error ? err.message : "Could not submit. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const canProceed = () => {
@@ -587,7 +627,7 @@ export default function ListBusinessScreen() {
               { backgroundColor: canProceed() ? colors.primary : colors.muted },
               step === 1 && { marginLeft: 0 },
             ]}
-            onPress={isLastForm ? handleSubmit : goNext}
+            onPress={isLastForm ? () => { void handleSubmit(); } : goNext}
             activeOpacity={0.85}
             disabled={!canProceed()}
           >

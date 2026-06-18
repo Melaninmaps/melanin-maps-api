@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, businessesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -53,6 +53,50 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch business");
     res.status(500).json({ error: "Failed to fetch business" });
+  }
+});
+
+router.post("/businesses", async (req: Request, res: Response) => {
+  try {
+    const { name, category, description, address, city, state, zip, phone, website, priceRange, hours, customHours, tags, isBlackOwned } = req.body as Record<string, unknown>;
+
+    if (!name || !category || !address || !city || !state) {
+      res.status(400).json({ error: "name, category, address, city, and state are required" });
+      return;
+    }
+
+    const finalHours = hours === "Custom" ? (customHours as string | undefined) ?? null : (hours as string | undefined) ?? null;
+    const tagArray = tags && typeof tags === "string" ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [];
+    const id = `sub_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+
+    const [business] = await db
+      .insert(businessesTable)
+      .values({
+        id,
+        name: name as string,
+        category: category as string,
+        subcategory: category as string,
+        description: (description as string | undefined) ?? "",
+        address: address as string,
+        city: city as string,
+        state: state as string,
+        latitude: "0",
+        longitude: "0",
+        tags: tagArray,
+        phone: (phone as string | undefined) ?? null,
+        website: (website as string | undefined) ?? null,
+        hours: finalHours,
+        priceRange: (priceRange as string | undefined) ?? null,
+        blackOwned: isBlackOwned === true || isBlackOwned === "true",
+        status: "pending",
+        submittedById: req.user?.id ?? null,
+      })
+      .returning();
+
+    res.status(201).json({ business });
+  } catch (err) {
+    req.log.error({ err }, "Failed to submit business listing");
+    res.status(500).json({ error: "Failed to submit listing" });
   }
 });
 

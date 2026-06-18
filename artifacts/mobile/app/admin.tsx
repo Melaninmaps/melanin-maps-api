@@ -74,13 +74,15 @@ function ActionRow({ icon, label, sub, color, badge, onPress }: { icon: any; lab
 
 function OverviewTab() {
   const colors = useColors();
+  const { items, pendingCount, highCount } = useReports("pending");
+  const pendingBizCount = items.filter((i) => i.kind === "survey").length;
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={adminStyles.statsGrid}>
         <StatCard label="Total Users" value="3,284" sub="+12% this week" color="#3B1F0E" icon="users" />
-        <StatCard label="Businesses" value="148" sub="+5 pending" color="#C9922B" icon="briefcase" />
+        <StatCard label="Businesses" value="35+" sub={pendingBizCount > 0 ? `${pendingBizCount} pending` : "Verified listings"} color="#C9922B" icon="briefcase" />
         <StatCard label="Reviews" value="1,902" sub="+24 today" color="#2D7A4F" icon="star" />
-        <StatCard label="Events" value="37" sub="8 this month" color="#1D4ED8" icon="calendar" />
+        <StatCard label="Reports" value={String(pendingCount)} sub={highCount > 0 ? `${highCount} high severity` : "All clear"} color="#DC2626" icon="flag" />
       </View>
 
       <SectionLabel title="Recent Activity" />
@@ -103,8 +105,8 @@ function OverviewTab() {
       ))}
 
       <SectionLabel title="Quick Actions" />
-      <ActionRow icon="check-circle" label="Approve Pending Businesses" sub="5 listings awaiting review" color="#2D7A4F" badge={5} />
-      <ActionRow icon="flag" label="Review Reports Queue" sub="8 reports need attention" color="#DC2626" badge={8} />
+      <ActionRow icon="check-circle" label="Approve Pending Businesses" sub={pendingBizCount > 0 ? `${pendingBizCount} submissions awaiting review` : "No pending submissions"} color="#2D7A4F" badge={pendingBizCount} />
+      <ActionRow icon="flag" label="Review Reports Queue" sub={pendingCount > 0 ? `${pendingCount} report${pendingCount !== 1 ? "s" : ""} need attention` : "All clear"} color="#DC2626" badge={pendingCount} />
       <ActionRow icon="star" label="Moderate Reviews" sub="3 flagged reviews" color="#C9922B" badge={3} />
     </ScrollView>
   );
