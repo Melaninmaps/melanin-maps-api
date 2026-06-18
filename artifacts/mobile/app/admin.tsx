@@ -498,7 +498,7 @@ export default function AdminScreen() {
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Admin Panel</Text>
-          <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>Mapping with Melanin™</Text>
+          <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>Mapping With Melanin™</Text>
         </View>
         <View style={[styles.adminBadge, { backgroundColor: "#DC262618", borderColor: "#DC262640" }]}>
           <Feather name="shield" size={13} color="#DC2626" />

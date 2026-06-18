@@ -59,8 +59,8 @@ export default function ReferralScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       await Share.share({
-        message: `Join me on Mapping with Melanin — the community discovery app for us, by us! 🗺️✊🏾\n\nUse my referral code: ${REFERRAL_CODE}\n${REFERRAL_URL}`,
-        title: "Join Mapping with Melanin",
+        message: `Join me on Mapping With Melanin — the community discovery app for us, by us! 🗺️✊🏾\n\nUse my referral code: ${REFERRAL_CODE}\n${REFERRAL_URL}`,
+        title: "Join Mapping With Melanin",
         url: REFERRAL_URL,
       });
     } catch {}
@@ -85,7 +85,7 @@ export default function ReferralScreen() {
           <Text style={styles.heroEmoji}>🗺️✊🏾</Text>
           <Text style={styles.heroTitle}>Grow Our Community</Text>
           <Text style={styles.heroSub}>
-            Invite friends to join Mapping with Melanin and earn rewards for every person who signs up.
+            Invite friends to join Mapping With Melanin and earn rewards for every person who signs up.
           </Text>
         </View>
 

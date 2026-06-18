@@ -24,7 +24,7 @@ const SETTINGS = [
   { icon: "star" as const, label: "My Reviews", sub: "View and manage your reviews", route: null },
   { icon: "share-2" as const, label: "Referral Program", sub: "Invite friends, earn rewards", route: "/referral" as const },
   { icon: "help-circle" as const, label: "Help & Support", sub: "Get help from our team", route: null },
-  { icon: "info" as const, label: "About Mapping with Melanin", sub: "Version 1.0.0", route: null },
+  { icon: "info" as const, label: "About Mapping With Melanin", sub: "Version 1.0.0", route: null },
 ];
 
 function getInitials(firstName?: string | null, lastName?: string | null): string {
@@ -186,7 +186,7 @@ export default function ProfileScreen() {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.listBizTitle}>Own a Business?</Text>
-            <Text style={styles.listBizSub}>Get listed on the Mapping with Melanin directory and reach thousands of community members.</Text>
+            <Text style={styles.listBizSub}>Get listed on the Mapping With Melanin directory and reach thousands of community members.</Text>
           </View>
         </View>
         <View style={[styles.listBizCta, { backgroundColor: "rgba(255,255,255,0.2)" }]}>

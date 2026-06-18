@@ -79,7 +79,7 @@ export default function BusinessDetailScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       await Share.share({
-        message: `Check out ${business.name} on Mapping with Melanin! ${business.city}, ${business.state} — ${business.category}`,
+        message: `Check out ${business.name} on Mapping With Melanin! ${business.city}, ${business.state} — ${business.category}`,
         title: business.name,
       });
     } catch {}
