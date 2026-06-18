@@ -113,6 +113,26 @@ export default function ProfileScreen() {
         )}
       </View>
 
+      <TouchableOpacity
+        style={[styles.listBizBanner, { backgroundColor: colors.primary }]}
+        onPress={() => router.push("/list-business")}
+        activeOpacity={0.88}
+      >
+        <View style={styles.listBizLeft}>
+          <View style={[styles.listBizIconWrap, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+            <Feather name="briefcase" size={22} color="#FFFFFF" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.listBizTitle}>Own a Business?</Text>
+            <Text style={styles.listBizSub}>Get listed on the Melanin Maps directory and reach thousands of community members.</Text>
+          </View>
+        </View>
+        <View style={[styles.listBizCta, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+          <Text style={styles.listBizCtaText}>List Free</Text>
+          <Feather name="arrow-right" size={14} color="#FFFFFF" />
+        </View>
+      </TouchableOpacity>
+
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Settings</Text>
         <View style={[styles.settingsList, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
@@ -326,5 +346,51 @@ const styles = StyleSheet.create({
   signOutText: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 14,
+  },
+  listBizBanner: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    borderRadius: 18,
+    padding: 18,
+    gap: 14,
+  },
+  listBizLeft: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 14,
+  },
+  listBizIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  listBizTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 16,
+    color: "#FFFFFF",
+    marginBottom: 4,
+  },
+  listBizSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    color: "rgba(255,255,255,0.85)",
+    lineHeight: 19,
+  },
+  listBizCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    alignSelf: "flex-start",
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 20,
+  },
+  listBizCtaText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    color: "#FFFFFF",
   },
 });
