@@ -1,7 +1,9 @@
 import { Feather } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
+  ActivityIndicator,
   Platform,
   ScrollView,
   StyleSheet,
@@ -14,6 +16,7 @@ import { BusinessCard } from "@/components/BusinessCard";
 import { BUSINESSES } from "@/constants/data";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useAuth } from "@/lib/auth";
 
 const SETTINGS = [
   { icon: "bell" as const, label: "Notifications", sub: "Manage alerts and updates" },
@@ -24,11 +27,18 @@ const SETTINGS = [
   { icon: "info" as const, label: "About Mapping with Melanin", sub: "Version 1.0.0" },
 ];
 
+function getInitials(firstName?: string | null, lastName?: string | null): string {
+  const f = firstName?.[0] ?? "";
+  const l = lastName?.[0] ?? "";
+  return (f + l).toUpperCase() || "?";
+}
+
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { savedIds, isSaved, toggleSave } = useFavorites();
+  const { user, isLoading, isAuthenticated, login, logout } = useAuth();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -48,45 +58,97 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={[styles.profileCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
-        <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-          <Text style={styles.avatarInitials}>JD</Text>
+      {isLoading ? (
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
-        <View style={styles.profileInfo}>
-          <Text style={[styles.name, { color: colors.foreground }]}>Jordan Davis</Text>
-          <View style={styles.locationRow}>
-            <Feather name="map-pin" size={13} color={colors.primary} />
-            <Text style={[styles.location, { color: colors.mutedForeground }]}>Atlanta, GA</Text>
-          </View>
-          <Text style={[styles.since, { color: colors.mutedForeground }]}>Member since 2024</Text>
-        </View>
-        <TouchableOpacity style={[styles.editBtn, { borderColor: colors.border }]}>
-          <Feather name="edit-2" size={15} color={colors.primary} />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.statsRow}>
-        {[
-          { label: "Reviews", value: "12" },
-          { label: "Saved", value: String(savedIds.length) },
-          { label: "Following", value: "28" },
-        ].map((stat, i) => (
-          <View
-            key={stat.label}
-            style={[
-              styles.statBox,
-              {
-                backgroundColor: colors.card,
-                shadowColor: colors.foreground,
-                borderRightColor: i < 2 ? colors.border : "transparent",
-              },
-            ]}
+      ) : !isAuthenticated ? (
+        <View style={[styles.signInCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Image
+            source={require("@/assets/images/logo-transparent.png")}
+            style={styles.signInLogo}
+            contentFit="contain"
+          />
+          <Text style={[styles.signInTitle, { color: colors.foreground }]}>
+            Join the Community
+          </Text>
+          <Text style={[styles.signInSub, { color: colors.mutedForeground }]}>
+            Sign in to save your favorite businesses, leave reviews, RSVP to events, and connect with the community.
+          </Text>
+          <TouchableOpacity
+            style={[styles.signInBtn, { backgroundColor: colors.primary }]}
+            onPress={login}
+            activeOpacity={0.85}
           >
-            <Text style={[styles.statValue, { color: colors.primary }]}>{stat.value}</Text>
-            <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{stat.label}</Text>
+            <Feather name="log-in" size={18} color="#FBF7F0" />
+            <Text style={styles.signInBtnText}>Sign In</Text>
+          </TouchableOpacity>
+          <View style={styles.benefitsGrid}>
+            {[
+              { icon: "bookmark", label: "Save Favorites" },
+              { icon: "star", label: "Leave Reviews" },
+              { icon: "calendar", label: "RSVP Events" },
+              { icon: "users", label: "Join Community" },
+            ].map((b) => (
+              <View key={b.label} style={[styles.benefitItem, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                <Feather name={b.icon as any} size={18} color={colors.primary} />
+                <Text style={[styles.benefitLabel, { color: colors.foreground }]}>{b.label}</Text>
+              </View>
+            ))}
           </View>
-        ))}
-      </View>
+        </View>
+      ) : (
+        <>
+          <View style={[styles.profileCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
+            {user?.profileImageUrl ? (
+              <Image
+                source={{ uri: user.profileImageUrl }}
+                style={styles.avatarImg}
+                contentFit="cover"
+              />
+            ) : (
+              <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+                <Text style={styles.avatarInitials}>{getInitials(user?.firstName, user?.lastName)}</Text>
+              </View>
+            )}
+            <View style={styles.profileInfo}>
+              <Text style={[styles.name, { color: colors.foreground }]}>
+                {[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Community Member"}
+              </Text>
+              {user?.email ? (
+                <Text style={[styles.email, { color: colors.mutedForeground }]}>{user.email}</Text>
+              ) : null}
+              <Text style={[styles.since, { color: colors.mutedForeground }]}>Member since 2024</Text>
+            </View>
+            <TouchableOpacity style={[styles.editBtn, { borderColor: colors.border }]}>
+              <Feather name="edit-2" size={15} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.statsRow}>
+            {[
+              { label: "Reviews", value: "12" },
+              { label: "Saved", value: String(savedIds.length) },
+              { label: "Following", value: "28" },
+            ].map((stat, i) => (
+              <View
+                key={stat.label}
+                style={[
+                  styles.statBox,
+                  {
+                    backgroundColor: colors.card,
+                    shadowColor: colors.foreground,
+                    borderRightColor: i < 2 ? colors.border : "transparent",
+                  },
+                ]}
+              >
+                <Text style={[styles.statValue, { color: colors.primary }]}>{stat.value}</Text>
+                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{stat.label}</Text>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -158,10 +220,15 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <TouchableOpacity style={[styles.signOutBtn, { borderColor: colors.destructive + "40" }]}>
-        <Feather name="log-out" size={16} color={colors.destructive} />
-        <Text style={[styles.signOutText, { color: colors.destructive }]}>Sign Out</Text>
-      </TouchableOpacity>
+      {isAuthenticated && (
+        <TouchableOpacity
+          style={[styles.signOutBtn, { borderColor: colors.destructive + "40" }]}
+          onPress={logout}
+        >
+          <Feather name="log-out" size={16} color={colors.destructive} />
+          <Text style={[styles.signOutText, { color: colors.destructive }]}>Sign Out</Text>
+        </TouchableOpacity>
+      )}
     </ScrollView>
   );
 }
@@ -189,6 +256,70 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  loadingWrap: {
+    alignItems: "center",
+    paddingVertical: 60,
+  },
+  signInCard: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 28,
+    alignItems: "center",
+    gap: 12,
+  },
+  signInLogo: {
+    width: 100,
+    height: 100,
+    marginBottom: 4,
+  },
+  signInTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 22,
+    textAlign: "center",
+  },
+  signInSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  signInBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginTop: 4,
+  },
+  signInBtnText: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 16,
+    color: "#FBF7F0",
+  },
+  benefitsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 8,
+    justifyContent: "center",
+  },
+  benefitItem: {
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    width: "45%",
+  },
+  benefitLabel: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    textAlign: "center",
+  },
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -209,6 +340,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  avatarImg: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
   avatarInitials: {
     fontFamily: "Inter_700Bold",
     fontSize: 22,
@@ -222,12 +358,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
     fontSize: 18,
   },
-  locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  location: {
+  email: {
     fontFamily: "Inter_400Regular",
     fontSize: 13,
   },
