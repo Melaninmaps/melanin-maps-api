@@ -19,12 +19,12 @@ import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
 
 const SETTINGS = [
-  { icon: "bell" as const, label: "Notifications", sub: "Manage alerts and updates", route: null },
-  { icon: "shield" as const, label: "Privacy & Safety", sub: "Control your data and visibility", route: null },
-  { icon: "star" as const, label: "My Reviews", sub: "View and manage your reviews", route: null },
+  { icon: "settings" as const, label: "Settings", sub: "Account, notifications, privacy", route: "/settings" as const },
+  { icon: "bell" as const, label: "Notifications", sub: "Manage alerts and updates", route: "/notifications-settings" as const },
+  { icon: "shield" as const, label: "Privacy & Safety", sub: "Control your data and visibility", route: "/privacy" as const },
+  { icon: "award" as const, label: "Membership", sub: "Explore (Free) — upgrade anytime", route: "/membership" as const },
+  { icon: "bar-chart-2" as const, label: "Business Dashboard", sub: "Manage your listing", route: "/business-dashboard" as const },
   { icon: "share-2" as const, label: "Referral Program", sub: "Invite friends, earn rewards", route: "/referral" as const },
-  { icon: "help-circle" as const, label: "Help & Support", sub: "Get help from our team", route: null },
-  { icon: "info" as const, label: "About Mapping With Melanin", sub: "Version 1.0.0", route: null },
 ];
 
 function getInitials(firstName?: string | null, lastName?: string | null): string {
@@ -54,7 +54,7 @@ export default function ProfileScreen() {
     >
       <View style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.foreground }]}>Profile</Text>
-        <TouchableOpacity style={[styles.settingsBtn, { backgroundColor: colors.secondary }]}>
+        <TouchableOpacity style={[styles.settingsBtn, { backgroundColor: colors.secondary }]} onPress={() => router.push("/settings")}>
           <Feather name="settings" size={18} color={colors.foreground} />
         </TouchableOpacity>
       </View>
