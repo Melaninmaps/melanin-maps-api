@@ -5,8 +5,32 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { authMiddleware } from "./middlewares/authMiddleware";
+import { WebhookHandlers } from "./webhookHandlers";
 
 const app: Express = express();
+
+// Stripe webhook MUST be registered before express.json() so it receives raw Buffer
+app.post(
+  "/api/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    const sig = req.headers["stripe-signature"];
+    if (!sig) {
+      res.status(400).json({ error: "Missing stripe-signature" });
+      return;
+    }
+    try {
+      await WebhookHandlers.processWebhook(
+        req.body as Buffer,
+        Array.isArray(sig) ? sig[0] : sig,
+      );
+      res.status(200).json({ received: true });
+    } catch (err) {
+      logger.error({ err }, "Stripe webhook error");
+      res.status(400).json({ error: "Webhook processing error" });
+    }
+  },
+);
 
 app.use(
   pinoHttp({

@@ -8,6 +8,7 @@ import savedPlacesRouter from "./saved-places";
 import alertsRouter from "./alerts";
 import moderationRouter from "./moderation";
 import safetyContextRouter from "./safety-context";
+import stripeRouter from "./stripe";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(savedPlacesRouter);
 router.use(alertsRouter);
 router.use(moderationRouter);
 router.use(safetyContextRouter);
+router.use(stripeRouter);
 
 export default router;
