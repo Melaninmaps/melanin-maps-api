@@ -10,7 +10,7 @@ interface AlertItem {
   location: string;
   timeAgo: string;
   severity: "low" | "medium" | "high";
-  source: "nws" | "fema" | "community";
+  source: "nws" | "fema" | "septa" | "community";
   expires?: string;
   url?: string;
 }
@@ -125,10 +125,50 @@ async function fetchFemaAlerts(): Promise<AlertItem[]> {
     }));
 }
 
+interface SeptaRouteAlert {
+  route_id: string;
+  route_name: string;
+  alert_text: string;
+  detour_text: string | null;
+  isSnow: string;
+  last_updated: string;
+}
+
+async function fetchSeptaAlerts(): Promise<AlertItem[]> {
+  const url = "https://www3.septa.org/api/Alerts/get_alert_data.php?route_id=all";
+  const res = await fetch(url, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(8000),
+  });
+
+  if (!res.ok) return [];
+
+  const json = (await res.json()) as { routes?: SeptaRouteAlert[] } | SeptaRouteAlert[];
+
+  const routes: SeptaRouteAlert[] = Array.isArray(json)
+    ? json
+    : (json as { routes?: SeptaRouteAlert[] }).routes ?? [];
+
+  return routes
+    .filter((r) => r.alert_text && r.alert_text.trim().length > 0)
+    .slice(0, 5)
+    .map((r) => ({
+      id: `septa-${r.route_id}`,
+      type: "travel" as const,
+      title: `SEPTA ${r.route_name} Alert`,
+      message: r.alert_text.trim().slice(0, 140),
+      location: "Philadelphia, PA",
+      timeAgo: r.last_updated ? timeAgo(r.last_updated) : "recently",
+      severity: r.isSnow === "1" ? ("high" as const) : ("medium" as const),
+      source: "septa" as const,
+    }));
+}
+
 router.get("/alerts", async (req: Request, res: Response) => {
   try {
     const state = typeof req.query.state === "string" ? req.query.state.toUpperCase() : "";
     const cacheKey = state || "national";
+    const isPA = state === "PA";
 
     const cached = alertCache.get(cacheKey);
     if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
@@ -136,15 +176,20 @@ router.get("/alerts", async (req: Request, res: Response) => {
       return;
     }
 
-    const [nwsAlerts, femaAlerts] = await Promise.allSettled([
+    const fetches: Promise<AlertItem[]>[] = [
       state ? fetchNwsAlerts(state) : Promise.resolve([] as AlertItem[]),
       fetchFemaAlerts(),
-    ]);
-
-    const allAlerts: AlertItem[] = [
-      ...(nwsAlerts.status === "fulfilled" ? nwsAlerts.value : []),
-      ...(femaAlerts.status === "fulfilled" ? femaAlerts.value : []),
     ];
+
+    if (isPA) {
+      fetches.push(fetchSeptaAlerts());
+    }
+
+    const results = await Promise.allSettled(fetches);
+
+    const allAlerts: AlertItem[] = results.flatMap((r) =>
+      r.status === "fulfilled" ? r.value : [],
+    );
 
     allAlerts.sort((a, b) => {
       const order = { high: 0, medium: 1, low: 2 };

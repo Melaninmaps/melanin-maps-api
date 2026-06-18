@@ -6,6 +6,8 @@ import travelRouter from "./travel";
 import surveysRouter from "./surveys";
 import savedPlacesRouter from "./saved-places";
 import alertsRouter from "./alerts";
+import moderationRouter from "./moderation";
+import safetyContextRouter from "./safety-context";
 
 const router: IRouter = Router();
 
@@ -16,5 +18,7 @@ router.use(travelRouter);
 router.use(surveysRouter);
 router.use(savedPlacesRouter);
 router.use(alertsRouter);
+router.use(moderationRouter);
+router.use(safetyContextRouter);
 
 export default router;

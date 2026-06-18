@@ -23,15 +23,53 @@ export const neighborhoodSurveysTable = pgTable("neighborhood_surveys", {
   safetyScore: integer("safety_score").notNull().default(0),
   communityScore: integer("community_score").notNull().default(0),
   walkabilityScore: integer("walkability_score").notNull().default(0),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  moderatorNotes: text("moderator_notes"),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  reviewedBy: varchar("reviewed_by"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const safetyReportsTable = pgTable("safety_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reporterId: varchar("reporter_id"),
+  reporterName: varchar("reporter_name", { length: 255 }).notNull().default("Anonymous"),
+  category: varchar("category", { length: 100 }).notNull(),
+  targetType: varchar("target_type", { length: 50 }).notNull().default("business"),
+  targetId: varchar("target_id"),
+  targetName: varchar("target_name", { length: 255 }).notNull(),
+  description: text("description"),
+  severity: varchar("severity", { length: 20 }).notNull().default("medium"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  moderatorNotes: text("moderator_notes"),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  reviewedBy: varchar("reviewed_by"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const insertSurveySchema = createInsertSchema(neighborhoodSurveysTable).omit({
   id: true,
   createdAt: true,
+  status: true,
+  moderatorNotes: true,
+  reviewedAt: true,
+  reviewedBy: true,
 });
 
 export const selectSurveySchema = createSelectSchema(neighborhoodSurveysTable);
 
+export const insertSafetyReportSchema = createInsertSchema(safetyReportsTable).omit({
+  id: true,
+  createdAt: true,
+  status: true,
+  moderatorNotes: true,
+  reviewedAt: true,
+  reviewedBy: true,
+});
+
+export const selectSafetyReportSchema = createSelectSchema(safetyReportsTable);
+
 export type NeighborhoodSurvey = typeof neighborhoodSurveysTable.$inferSelect;
 export type InsertNeighborhoodSurvey = z.infer<typeof insertSurveySchema>;
+export type SafetyReport = typeof safetyReportsTable.$inferSelect;
+export type InsertSafetyReport = z.infer<typeof insertSafetyReportSchema>;

@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useReports } from "@/hooks/useReports";
 
 const ADMIN_TABS = [
   { id: "overview", label: "Overview", icon: "grid" as const },
@@ -205,40 +206,69 @@ function UsersTab() {
 
 function ReportsTab() {
   const colors = useColors();
-  const reports = [
-    { cat: "Inaccurate Info", target: "Kingdom Cuts Barbershop", reporter: "Anonymous", time: "1h ago", severity: "medium" as const },
-    { cat: "Not Black-Owned", target: "New Listing Co.", reporter: "Zara M.", time: "3h ago", severity: "high" as const },
-    { cat: "Discrimination", target: "Downtown Cafe", reporter: "Anonymous", time: "5h ago", severity: "high" as const },
-    { cat: "Safety Concern", target: "West End area", reporter: "Kwame A.", time: "1d ago", severity: "medium" as const },
-    { cat: "Spam", target: "Fake Listing #99", reporter: "System", time: "2d ago", severity: "low" as const },
-  ];
+  const { items, pendingCount, highCount, isLoading, moderate } = useReports("pending");
   const sevColor = (s: string) => s === "high" ? "#DC2626" : s === "medium" ? "#C9922B" : "#2D7A4F";
+
+  function timeAgo(iso: string) {
+    const diff = Date.now() - new Date(iso).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+  }
+
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
-      <View style={[adminStyles.alertBanner, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}>
-        <Feather name="alert-triangle" size={15} color="#DC2626" />
-        <Text style={[adminStyles.alertText, { color: "#DC2626" }]}>8 reports require action · 2 high severity</Text>
-      </View>
-      {reports.map((r, i) => (
-        <View key={i} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      {pendingCount > 0 && (
+        <View style={[adminStyles.alertBanner, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}>
+          <Feather name="alert-triangle" size={15} color="#DC2626" />
+          <Text style={[adminStyles.alertText, { color: "#DC2626" }]}>
+            {pendingCount} report{pendingCount !== 1 ? "s" : ""} require action
+            {highCount > 0 ? ` · ${highCount} high severity` : ""}
+          </Text>
+        </View>
+      )}
+      {isLoading && (
+        <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, textAlign: "center", marginTop: 32 }]}>
+          Loading reports…
+        </Text>
+      )}
+      {!isLoading && items.length === 0 && (
+        <View style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border, alignItems: "center", paddingVertical: 32 }]}>
+          <Feather name="check-circle" size={28} color="#2D7A4F" style={{ marginBottom: 8 }} />
+          <Text style={[adminStyles.bizName, { color: colors.foreground }]}>All clear</Text>
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>No pending reports</Text>
+        </View>
+      )}
+      {items.map((r) => (
+        <View key={r.id} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
             <View style={[adminStyles.statusBadge, { backgroundColor: sevColor(r.severity) + "18" }]}>
               <Text style={[adminStyles.statusBadgeText, { color: sevColor(r.severity) }]}>{r.severity}</Text>
             </View>
-            <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>{r.time}</Text>
+            <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>{timeAgo(r.createdAt)}</Text>
           </View>
-          <Text style={[adminStyles.bizName, { color: colors.foreground, marginBottom: 2 }]}>{r.cat}</Text>
-          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>Target: {r.target}</Text>
-          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>Reported by: {r.reporter}</Text>
+          <Text style={[adminStyles.bizName, { color: colors.foreground, marginBottom: 2 }]}>{r.category}</Text>
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>Target: {r.targetName}</Text>
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>Reported by: {r.reporterName}</Text>
+          {r.description ? (
+            <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginTop: 4, fontStyle: "italic" }]} numberOfLines={2}>
+              "{r.description}"
+            </Text>
+          ) : null}
           <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-            <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30" }]}>
+            <TouchableOpacity
+              onPress={() => void moderate(r.id, r.kind, "approved")}
+              style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30" }]}
+            >
               <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>Resolve</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}>
+            <TouchableOpacity
+              onPress={() => void moderate(r.id, r.kind, "rejected")}
+              style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}
+            >
               <Text style={[adminStyles.smallBtnText, { color: "#DC2626" }]}>Remove</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
-              <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Investigate</Text>
             </TouchableOpacity>
           </View>
         </View>
