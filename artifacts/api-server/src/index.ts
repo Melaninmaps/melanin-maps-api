@@ -10,7 +10,7 @@ async function initStripe() {
     return;
   }
   try {
-    await runMigrations({ databaseUrl, schema: "stripe" });
+    await runMigrations({ databaseUrl });
     const stripeSync = await getStripeSync();
     const domain = process.env.REPLIT_DOMAINS?.split(",")[0] ?? "";
     if (domain) {

@@ -28,17 +28,17 @@ async function getStripeCredentials(): Promise<{ secretKey: string; webhookSecre
     throw new Error(`Failed to fetch Stripe credentials: ${resp.status} ${resp.statusText}`);
   }
 
-  const data = (await resp.json()) as { items?: Array<{ settings?: { secret_key?: string; webhook_secret?: string } }> };
+  const data = (await resp.json()) as { items?: Array<{ settings?: { secret?: string; publishable?: string; webhook_secret?: string } }> };
   const settings = data.items?.[0]?.settings;
 
-  if (!settings?.secret_key) {
+  if (!settings?.secret) {
     throw new Error(
       "Stripe integration not connected or missing secret key. " +
       "Connect Stripe via the Integrations tab first.",
     );
   }
 
-  return { secretKey: settings.secret_key, webhookSecret: settings.webhook_secret };
+  return { secretKey: settings.secret, webhookSecret: settings.webhook_secret };
 }
 
 export async function getUncachableStripeClient(): Promise<Stripe> {
