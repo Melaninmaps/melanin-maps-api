@@ -6,15 +6,76 @@ import {
   useFonts,
 } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Image } from "expo-image";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
+import { Animated, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/lib/auth";
+
+function BrandedLoader() {
+  const pulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1.08, duration: 900, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 900, useNativeDriver: true }),
+      ])
+    ).start();
+  }, [pulse]);
+
+  return (
+    <View style={loader.root}>
+      <Animated.View style={{ transform: [{ scale: pulse }] }}>
+        <Image
+          source={require("../assets/images/logo.png")}
+          style={loader.logo}
+          contentFit="contain"
+        />
+      </Animated.View>
+      <View style={loader.dotsRow}>
+        {[0, 1, 2].map((i) => (
+          <Dot key={i} delay={i * 220} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function Dot({ delay }: { delay: number }) {
+  const op = useRef(new Animated.Value(0.25)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.timing(op, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.timing(op, { toValue: 0.25, duration: 400, useNativeDriver: true }),
+      ])
+    ).start();
+  }, [op, delay]);
+
+  return <Animated.View style={[loader.dot, { opacity: op }]} />;
+}
+
+const loader = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: "#C4622D",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 48,
+  },
+  logo: { width: 160, height: 160 },
+  dotsRow: { flexDirection: "row", gap: 10 },
+  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: "rgba(251,247,240,0.9)" },
+});
 
 SplashScreen.preventAutoHideAsync();
 
@@ -224,7 +285,7 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded && !fontError) return null;
+  if (!fontsLoaded && !fontError) return <BrandedLoader />;
 
   return (
     <SafeAreaProvider>
