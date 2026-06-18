@@ -142,15 +142,18 @@ export function AIChatWidget() {
     <>
       <Animated.View style={[styles.fab, { bottom: bottomPad + 96, transform: [{ scale: pulse }] }]}>
         <TouchableOpacity
-          style={[styles.fabBtn, { backgroundColor: colors.primary }]}
+          style={styles.fabPill}
           onPress={() => { setOpen(true); pulse.stopAnimation(); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }}
-          activeOpacity={0.85}
+          activeOpacity={0.88}
         >
-          <Feather name="message-circle" size={24} color="#FFF" />
+          <View style={[styles.fabIconWrap, { backgroundColor: colors.primary }]}>
+            <Text style={styles.fabIconTxt}>✦</Text>
+          </View>
+          <View style={styles.fabTextWrap}>
+            <Text style={styles.fabTitle}>Melanin Concierge™</Text>
+            <Text style={styles.fabSub}>Ask me anything ✨</Text>
+          </View>
         </TouchableOpacity>
-        <View style={[styles.fabBadge, { backgroundColor: colors.accent }]}>
-          <Text style={styles.fabBadgeTxt}>MC</Text>
-        </View>
       </Animated.View>
 
       <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
@@ -238,18 +241,24 @@ export function AIChatWidget() {
 }
 
 const styles = StyleSheet.create({
-  fab: { position: "absolute", right: 20, zIndex: 999 },
-  fabBtn: {
-    width: 56, height: 56, borderRadius: 28,
+  fab: { position: "absolute", right: 16, zIndex: 999 },
+  fabPill: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    backgroundColor: "#FAF1E4",
+    borderRadius: 50,
+    paddingVertical: 10, paddingHorizontal: 14,
+    shadowColor: "#3B1F0E", shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18, shadowRadius: 12, elevation: 8,
+    borderWidth: 1, borderColor: "#E8D9C4",
+  },
+  fabIconWrap: {
+    width: 34, height: 34, borderRadius: 17,
     alignItems: "center", justifyContent: "center",
-    shadowColor: "#C4622D", shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35, shadowRadius: 10, elevation: 10,
   },
-  fabBadge: {
-    position: "absolute", top: -4, right: -4,
-    paddingHorizontal: 5, paddingVertical: 2, borderRadius: 8,
-  },
-  fabBadgeTxt: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#FFF" },
+  fabIconTxt: { fontSize: 15, color: "#FAF1E4" },
+  fabTextWrap: { gap: 1 },
+  fabTitle: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#3B1F0E" },
+  fabSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#8B6F4E" },
   modal: { flex: 1 },
   modalHeader: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
