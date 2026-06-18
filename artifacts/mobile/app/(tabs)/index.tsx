@@ -97,17 +97,41 @@ export default function DiscoverScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
-        {alerts.length > 0 && (
-          <View style={styles.section}>
-            {alerts.map((a) => (
+        <View style={styles.section}>
+          <View style={styles.safetyHeader}>
+            <View style={styles.safetyTitleRow}>
+              <Feather name="shield" size={16} color="#DC2626" />
+              <Text style={[styles.safetyTitle, { color: colors.foreground }]}>Community Safety</Text>
+              {alerts.length > 0 && (
+                <View style={[styles.alertCount, { backgroundColor: "#DC262618" }]}>
+                  <Text style={styles.alertCountText}>{alerts.length}</Text>
+                </View>
+              )}
+            </View>
+            <TouchableOpacity
+              style={[styles.reportBtn, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}
+              onPress={() => router.push("/report-safety")}
+              activeOpacity={0.8}
+            >
+              <Feather name="plus" size={13} color="#DC2626" />
+              <Text style={[styles.reportBtnText, { color: "#DC2626" }]}>Report</Text>
+            </TouchableOpacity>
+          </View>
+          {alerts.length > 0 ? (
+            alerts.map((a) => (
               <AlertBanner
                 key={a.id}
                 alert={a}
                 onDismiss={() => setAlerts((prev) => prev.filter((x) => x.id !== a.id))}
               />
-            ))}
-          </View>
-        )}
+            ))
+          ) : (
+            <View style={[styles.noAlerts, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="check-circle" size={20} color="#2D7A4F" />
+              <Text style={[styles.noAlertsText, { color: colors.mutedForeground }]}>No active alerts in your area</Text>
+            </View>
+          )}
+        </View>
 
         <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 24 }]}>
           <View style={[styles.heroBanner, { overflow: "hidden" }]}>
@@ -286,6 +310,58 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: 20,
     marginBottom: 24,
+  },
+  safetyHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  safetyTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  safetyTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 16,
+  },
+  alertCount: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  alertCountText: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 11,
+    color: "#DC2626",
+  },
+  reportBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  reportBtnText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
+  },
+  noAlerts: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  noAlertsText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
   },
   empty: {
     alignItems: "center",
