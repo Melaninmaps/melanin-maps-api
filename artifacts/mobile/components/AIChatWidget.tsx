@@ -23,7 +23,7 @@ interface Message {
   ts: number;
 }
 
-const GREETING = "Hi! I'm your Melanin Concierge™. Ask me anything about Black-owned spots, safe neighborhoods, itinerary ideas, or travel tips in any city.";
+const GREETING = "Hi! I'm your Culture Compass™. Ask me anything about Black-owned spots, safe neighborhoods, itinerary ideas, or travel tips in any city.";
 
 const CANNED: { pattern: RegExp; replies: string[] }[] = [
   {
@@ -150,7 +150,7 @@ export function AIChatWidget() {
             <Text style={styles.fabIconTxt}>✦</Text>
           </View>
           <View style={styles.fabTextWrap}>
-            <Text style={styles.fabTitle}>Melanin Concierge™</Text>
+            <Text style={styles.fabTitle}>Culture Compass™</Text>
             <Text style={styles.fabSub}>Ask me anything ✨</Text>
           </View>
         </TouchableOpacity>
@@ -164,10 +164,10 @@ export function AIChatWidget() {
           <View style={[styles.modalHeader, { paddingTop: Platform.OS === "web" ? 24 : insets.top + 12, borderBottomColor: colors.border }]}>
             <View style={styles.modalHeaderLeft}>
               <View style={[styles.avatarDot, { backgroundColor: colors.primary }]}>
-                <Text style={styles.avatarTxt}>MC</Text>
+                <Text style={styles.avatarTxt}>CC</Text>
               </View>
               <View>
-                <Text style={[styles.modalTitle, { color: colors.foreground }]}>Melanin Concierge™</Text>
+                <Text style={[styles.modalTitle, { color: colors.foreground }]}>Culture Compass™</Text>
                 <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>Powered by Gemini · Always here to help</Text>
               </View>
             </View>
@@ -187,7 +187,7 @@ export function AIChatWidget() {
               <View style={[styles.msgRow, item.fromUser && styles.msgRowUser]}>
                 {!item.fromUser && (
                   <View style={[styles.msgAvatar, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.msgAvatarTxt}>MC</Text>
+                    <Text style={styles.msgAvatarTxt}>CC</Text>
                   </View>
                 )}
                 <View style={[
@@ -205,7 +205,7 @@ export function AIChatWidget() {
             ListFooterComponent={typing ? (
               <View style={[styles.msgRow]}>
                 <View style={[styles.msgAvatar, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.msgAvatarTxt}>MC</Text>
+                  <Text style={styles.msgAvatarTxt}>CC</Text>
                 </View>
                 <View style={[styles.bubble, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderBottomLeftRadius: 4 }]}>
                   <Text style={[styles.typingDots, { color: colors.mutedForeground }]}>●  ●  ●</Text>
