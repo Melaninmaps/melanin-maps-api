@@ -1,17 +1,51 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useState } from "react";
 
 const STORAGE_KEY = "@melanin_maps_favorites";
+const AUTH_TOKEN_KEY = "auth_session_token";
+
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) {
+    return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  }
+  return "";
+}
+
+async function getToken(): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
 
 export function useFavorites() {
   const [savedIds, setSavedIds] = useState<string[]>([]);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((data) => {
-        if (data) setSavedIds(JSON.parse(data) as string[]);
-      })
-      .catch(() => {});
+    async function load() {
+      try {
+        const local = await AsyncStorage.getItem(STORAGE_KEY);
+        if (local) setSavedIds(JSON.parse(local) as string[]);
+      } catch {}
+
+      const token = await getToken();
+      const apiBase = getApiBase();
+      if (!token || !apiBase) return;
+
+      try {
+        const res = await fetch(`${apiBase}/api/saved-places`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { savedBusinessIds: string[] };
+          setSavedIds(data.savedBusinessIds);
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data.savedBusinessIds));
+        }
+      } catch {}
+    }
+    load();
   }, []);
 
   const persist = useCallback((ids: string[]) => {
@@ -19,14 +53,38 @@ export function useFavorites() {
   }, []);
 
   const toggleSave = useCallback(
-    (id: string) => {
+    async (id: string) => {
+      let wasSaved = false;
       setSavedIds((prev) => {
-        const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+        wasSaved = prev.includes(id);
+        const next = wasSaved ? prev.filter((x) => x !== id) : [...prev, id];
         persist(next);
         return next;
       });
+
+      const token = await getToken();
+      const apiBase = getApiBase();
+      if (!token || !apiBase) return;
+
+      try {
+        if (wasSaved) {
+          await fetch(`${apiBase}/api/saved-places/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        } else {
+          await fetch(`${apiBase}/api/saved-places`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ businessId: id }),
+          });
+        }
+      } catch {}
     },
-    [persist]
+    [persist],
   );
 
   const isSaved = useCallback((id: string) => savedIds.includes(id), [savedIds]);

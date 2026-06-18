@@ -7,7 +7,8 @@ import {
 } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Image } from "expo-image";
-import { Stack } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useRef } from "react";
 import { Animated, StyleSheet, View } from "react-native";
@@ -82,6 +83,24 @@ const loader = StyleSheet.create({
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+
+function OnboardingChecker() {
+  const router = useRouter();
+
+  useEffect(() => {
+    let active = true;
+    AsyncStorage.getItem("@melanin_maps_onboarding_complete")
+      .then((val) => {
+        if (active && !val) router.replace("/onboarding");
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [router]);
+
+  return null;
+}
 
 function RootLayoutNav() {
   return (
@@ -346,6 +365,7 @@ export default function RootLayout() {
             <GestureHandlerRootView style={{ flex: 1 }}>
               <KeyboardProvider>
                 <View style={{ flex: 1 }}>
+                  <OnboardingChecker />
                   <RootLayoutNav />
                   <AIChatWidget />
                   <CookieConsentBanner />

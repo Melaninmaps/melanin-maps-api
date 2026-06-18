@@ -29,10 +29,20 @@ const ATMOSPHERES = [
   { id: "mostly_welcoming", label: "Mostly welcoming", score: 4 },
   { id: "neutral", label: "Neutral", score: 3 },
   { id: "slightly_unwelcoming", label: "Slightly unwelcoming", score: 2 },
-  { id: "hostile", label: "Hostile or uncomfortable", score: 1 },
+  { id: "uncomfortable", label: "Uncomfortable", score: 1 },
 ];
-const POLICE_OPTIONS = [
-  "Protective", "Neutral", "Intimidating", "Absent", "Over-policed", "Didn't notice any",
+const POLICE_VISIBILITY_OPTIONS = [
+  { id: "very_visible", label: "Very visible" },
+  { id: "moderately_visible", label: "Moderately visible" },
+  { id: "occasionally_visible", label: "Occasionally visible" },
+  { id: "rarely_visible", label: "Rarely visible" },
+  { id: "not_observed", label: "Not observed" },
+];
+const POLICE_IMPACT_OPTIONS = [
+  { id: "increased", label: "Increased my sense of safety" },
+  { id: "no_impact", label: "Had no impact" },
+  { id: "decreased", label: "Decreased my sense of safety" },
+  { id: "unsure", label: "Unsure" },
 ];
 const ACCESSIBILITY_FEATURES = [
   "Wheelchair accessible sidewalks", "Good street lighting", "Accessible public transit",
@@ -120,7 +130,8 @@ export default function NeighborhoodSurveyScreen() {
   const [walkability, setWalkability] = useState(0);
   const [transitSafety, setTransitSafety] = useState(0);
   const [atmosphere, setAtmosphere] = useState("");
-  const [policeSentiment, setPoliceSentiment] = useState("");
+  const [policeVisibility, setPoliceVisibility] = useState("");
+  const [policeImpact, setPoliceImpact] = useState("");
   const [accessibility, setAccessibility] = useState<string[]>([]);
   const [tips, setTips] = useState<string[]>([]);
   const [comments, setComments] = useState("");
@@ -131,14 +142,41 @@ export default function NeighborhoodSurveyScreen() {
 
   const canNext1 = city.length > 0 && visitPurpose.length > 0;
   const canNext2 = daytimeSafety > 0 && nighttimeSafety > 0;
-  const canNext3 = atmosphere.length > 0 && policeSentiment.length > 0;
+  const canNext3 = atmosphere.length > 0 && policeVisibility.length > 0 && policeImpact.length > 0;
   const canGoNext = step === 1 ? canNext1 : step === 2 ? canNext2 : step === 3 ? canNext3 : true;
 
   const next = () => setStep((s) => s + 1);
 
-  const handleSubmit = () => {
-    setSubmitted(true);
+  const handleSubmit = async () => {
     if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setSubmitted(true);
+
+    const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+    if (!apiBase) return;
+
+    try {
+      await fetch(`${apiBase}/api/surveys`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          city,
+          neighborhood: neighborhood || undefined,
+          visitPurpose,
+          visitFreq: visitFreq || undefined,
+          daytimeSafety,
+          nighttimeSafety,
+          walkability: walkability || undefined,
+          transitSafety: transitSafety || undefined,
+          atmosphere,
+          policeVisibility,
+          policeImpact,
+          accessibility,
+          tips,
+          comments: comments || undefined,
+        }),
+      });
+    } catch {
+    }
   };
 
   const toggleMulti = (arr: string[], setArr: (v: string[]) => void, val: string) => {
@@ -306,7 +344,7 @@ export default function NeighborhoodSurveyScreen() {
           <View style={styles.stepContent}>
             <Text style={[styles.stepTitle, { color: colors.foreground }]}>🏘️ Community Experience</Text>
             <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-              Atmosphere and police sentiment are required
+              Atmosphere and both police questions are required
             </Text>
 
             <View style={styles.qBlock}>
@@ -333,12 +371,41 @@ export default function NeighborhoodSurveyScreen() {
             </View>
 
             <View style={styles.qBlock}>
-              <Text style={[styles.qLabel, { color: colors.foreground }]}>How did police presence feel?</Text>
-              <View style={styles.chips}>
-                {POLICE_OPTIONS.map((p) => (
-                  <Chip key={p} label={p} selected={policeSentiment === p} onPress={() => setPoliceSentiment(p)}
-                    color={colors.primary} primaryForeground={colors.primaryForeground}
-                    secondary={colors.secondary} border={colors.border} foreground={colors.foreground} />
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>How would you describe the level of police presence?</Text>
+              <View style={{ gap: 10 }}>
+                {POLICE_VISIBILITY_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.id}
+                    style={[
+                      styles.atmosphereCard,
+                      { backgroundColor: policeVisibility === opt.id ? colors.primary + "12" : colors.card, borderColor: policeVisibility === opt.id ? colors.primary : colors.border },
+                    ]}
+                    onPress={() => { setPoliceVisibility(opt.id); if (Platform.OS !== "web") Haptics.selectionAsync(); }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.atmosphereTxt, { color: colors.foreground }]}>{opt.label}</Text>
+                    {policeVisibility === opt.id && <Feather name="check-circle" size={18} color={colors.primary} />}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>How did the level of police presence affect your sense of safety?</Text>
+              <View style={{ gap: 10 }}>
+                {POLICE_IMPACT_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.id}
+                    style={[
+                      styles.atmosphereCard,
+                      { backgroundColor: policeImpact === opt.id ? colors.primary + "12" : colors.card, borderColor: policeImpact === opt.id ? colors.primary : colors.border },
+                    ]}
+                    onPress={() => { setPoliceImpact(opt.id); if (Platform.OS !== "web") Haptics.selectionAsync(); }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.atmosphereTxt, { color: colors.foreground }]}>{opt.label}</Text>
+                    {policeImpact === opt.id && <Feather name="check-circle" size={18} color={colors.primary} />}
+                  </TouchableOpacity>
                 ))}
               </View>
             </View>

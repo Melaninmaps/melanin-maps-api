@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
@@ -64,6 +65,9 @@ export default function OnboardingScreen() {
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
   const slide = SLIDES[idx];
 
+  const markComplete = () =>
+    AsyncStorage.setItem("@melanin_maps_onboarding_complete", "true").catch(() => {});
+
   const goTo = (i: number) => {
     scrollRef.current?.scrollTo({ x: i * W, animated: true });
     setIdx(i);
@@ -78,7 +82,10 @@ export default function OnboardingScreen() {
   return (
     <View style={[styles.root, { backgroundColor: slide.bg }]}>
       <View style={[styles.topBar, { paddingTop: topPad + 8 }]}>
-        <TouchableOpacity onPress={() => router.replace("/(tabs)")} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+        <TouchableOpacity
+          onPress={() => { markComplete(); router.replace("/(tabs)"); }}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
           <Text style={[styles.skipText, { color: slide.dimAccent }]}>Skip</Text>
         </TouchableOpacity>
         <View style={styles.dots}>
@@ -134,19 +141,19 @@ export default function OnboardingScreen() {
           <View style={styles.finalBtns}>
             <TouchableOpacity
               style={[styles.primaryFinalBtn, { backgroundColor: slide.accent }]}
-              onPress={() => router.replace("/signup")}
+              onPress={() => { markComplete(); router.replace("/signup"); }}
               activeOpacity={0.85}
             >
               <Text style={[styles.primaryFinalTxt, { color: slide.bg }]}>Create Account</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.ghostBtn, { borderColor: slide.accent + "55" }]}
-              onPress={() => router.replace("/login")}
+              onPress={() => { markComplete(); router.replace("/login"); }}
               activeOpacity={0.8}
             >
               <Text style={[styles.ghostTxt, { color: slide.accent }]}>I already have an account</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.replace("/(tabs)")}>
+            <TouchableOpacity onPress={() => { markComplete(); router.replace("/(tabs)"); }}>
               <Text style={[styles.skipLink, { color: slide.dimAccent }]}>Explore without account</Text>
             </TouchableOpacity>
           </View>

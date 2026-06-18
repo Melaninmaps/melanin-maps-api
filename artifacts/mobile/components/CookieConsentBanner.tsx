@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { usePathname } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Animated, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -10,24 +11,29 @@ const STORAGE_KEY = "@melanin_maps_cookie_consent";
 export function CookieConsentBanner() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const slideAnim = React.useRef(new Animated.Value(120)).current;
 
+  const suppressedRoutes = ["/onboarding", "/login", "/signup"];
+  const suppressed = suppressedRoutes.some((r) => pathname?.startsWith(r));
+
   useEffect(() => {
+    if (suppressed) return;
     AsyncStorage.getItem(STORAGE_KEY).then((val) => {
       if (!val) {
         setVisible(true);
         Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 60, friction: 10 }).start();
       }
     });
-  }, []);
+  }, [suppressed]);
 
   const dismiss = (accepted: boolean) => {
     AsyncStorage.setItem(STORAGE_KEY, accepted ? "accepted" : "declined");
     Animated.timing(slideAnim, { toValue: 180, duration: 300, useNativeDriver: true }).start(() => setVisible(false));
   };
 
-  if (!visible) return null;
+  if (!visible || suppressed) return null;
 
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 

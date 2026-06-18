@@ -49,8 +49,29 @@ export default function BusinessDetailScreen() {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [localReviews, setLocalReviews] = useState<Review[]>([]);
 
-  const { business } = useBusinessById(id ?? "");
+  const { business, isLoading } = useBusinessById(id ?? "");
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  if (isLoading && !business) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.backBtn, { top: Platform.OS === "web" ? 77 : insets.top + 10 }]}>
+          <TouchableOpacity onPress={() => router.back()} style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}>
+            <Feather name="arrow-left" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+        <View style={[styles.hero, { backgroundColor: colors.muted }]} />
+        <View style={[styles.body, { gap: 18 }]}>
+          <View style={{ height: 26, width: "65%", backgroundColor: colors.muted, borderRadius: 8 }} />
+          <View style={{ height: 16, width: "45%", backgroundColor: colors.muted, borderRadius: 8 }} />
+          <View style={{ height: 90, width: "100%", backgroundColor: colors.muted, borderRadius: 14 }} />
+          <View style={{ height: 16, width: "80%", backgroundColor: colors.muted, borderRadius: 8 }} />
+          <View style={{ height: 16, width: "60%", backgroundColor: colors.muted, borderRadius: 8 }} />
+          <View style={{ height: 16, width: "70%", backgroundColor: colors.muted, borderRadius: 8 }} />
+        </View>
+      </View>
+    );
+  }
 
   if (!business) {
     return (
