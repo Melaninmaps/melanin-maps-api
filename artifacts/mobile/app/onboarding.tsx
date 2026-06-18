@@ -51,7 +51,7 @@ const SLIDES = [
     accent: "#1A0A00",
     dimAccent: "#1A0A00AA",
     title: "Join the\nMovement",
-    subtitle: "Over 3,000 community members mapping culture, safety, and Black excellence nationwide.",
+    subtitle: "10K+ community members mapping culture, safety, and Black excellence nationwide.",
   },
 ];
 

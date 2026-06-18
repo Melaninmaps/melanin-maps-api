@@ -194,8 +194,8 @@ export default function DiscoverScreen() {
               colors={["transparent", "rgba(0,0,0,0.65)"]}
               style={styles.heroOverlay}
             >
-              <Text style={styles.heroLabel}>COMMUNITY DISCOVERY</Text>
-              <Text style={styles.heroTitle}>Map Your Life.{"\n"}Connect Deeper.</Text>
+              <Text style={styles.heroLabel}>SAFETY-FIRST COMMUNITY INTELLIGENCE</Text>
+              <Text style={styles.heroTitle}>Map Your Life.{"\n"}Connect Deeper.{"\n"}Live With Purpose.</Text>
               <TouchableOpacity style={styles.heroCta} activeOpacity={0.85}>
                 <Text style={styles.heroCtaText}>Explore Near You</Text>
                 <Feather name="arrow-right" size={14} color="#3B1F0E" />
