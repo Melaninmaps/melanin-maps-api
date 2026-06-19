@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "YDHP1veiKU51dbaq2Dj7u"
@@ -30,3 +29,9 @@ id = "KDDvFDVbtLVokQWsQpctj"
 uri = "file://artifacts/mobile/assets/images/event_festival.png"
 type = "image"
 title = "generated_image"
+
+[[outputs]]
+id = "kU1-MXMYrBRo-HYqMfRHN"
+uri = "file://.local/outputs/Melanin-Discovery-Hub.pptx"
+type = "slides"
+title = "Melanin Discovery Hub.pptx"
