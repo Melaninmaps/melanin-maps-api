@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlackOwnedBadge } from "@/components/BlackOwnedBadge";
-import { MinorityOwnedBadge } from "@/components/MinorityOwnedBadge";
+import { OwnershipBadges } from "@/components/OwnershipBadges";
 import { BusinessMapView } from "@/components/BusinessMapView";
 import { ConfidenceScoreBadge } from "@/components/ConfidenceScoreBadge";
 import { RatingStars } from "@/components/RatingStars";
@@ -202,16 +202,15 @@ export default function BusinessDetailScreen() {
               </View>
               <View style={styles.badgeRow}>
                 {business.blackOwned && <BlackOwnedBadge size="md" />}
-                {business.minorityOwned && (
-                  <MinorityOwnedBadge size="md" verified={business.minorityOwnerVerified} />
-                )}
+                <OwnershipBadges
+                  designations={business.ownershipDesignations}
+                  verifiedDesignations={business.verifiedDesignations}
+                  size="md"
+                />
               </View>
-              {business.minorityOwned && (
+              {business.ownershipDesignations?.length > 0 && (
                 <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>
-                  * Minority Owned businesses are owned and operated 51% or more by a minority.
-                  {business.minorityOwnerVerified
-                    ? " This business has provided documentation and is VERIFIED."
-                    : " This business has self-identified as minority owned."}
+                  * Ownership designations indicate the business is owned and operated 51% or more by the identified group. Businesses may self-identify or submit documentation for VERIFIED status.
                 </Text>
               )}
             </View>

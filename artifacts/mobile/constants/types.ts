@@ -31,8 +31,8 @@ export interface Business {
   priceRange?: string;
   confidenceScore: number;
   blackOwned: boolean;
-  minorityOwned: boolean;
-  minorityOwnerVerified: boolean;
+  ownershipDesignations: string[];
+  verifiedDesignations: string[];
   safetyRating?: number;
   wouldReturnAlone?: number;
   recommendationRate?: number;
