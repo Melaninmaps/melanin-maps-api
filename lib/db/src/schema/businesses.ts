@@ -15,6 +15,8 @@ export const businessesTable = pgTable("businesses", {
   verified: boolean("verified").notNull().default(false),
   featured: boolean("featured").notNull().default(false),
   blackOwned: boolean("black_owned").notNull().default(false),
+  minorityOwned: boolean("minority_owned").notNull().default(false),
+  minorityOwnerVerified: boolean("minority_owner_verified").notNull().default(false),
   confidenceScore: integer("confidence_score").notNull().default(0),
   safetyRating: numeric("safety_rating", { precision: 3, scale: 1 }),
   wouldReturnAlone: integer("would_return_alone"),

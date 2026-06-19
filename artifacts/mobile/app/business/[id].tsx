@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlackOwnedBadge } from "@/components/BlackOwnedBadge";
+import { MinorityOwnedBadge } from "@/components/MinorityOwnedBadge";
 import { BusinessMapView } from "@/components/BusinessMapView";
 import { ConfidenceScoreBadge } from "@/components/ConfidenceScoreBadge";
 import { RatingStars } from "@/components/RatingStars";
@@ -201,7 +202,18 @@ export default function BusinessDetailScreen() {
               </View>
               <View style={styles.badgeRow}>
                 {business.blackOwned && <BlackOwnedBadge size="md" />}
+                {business.minorityOwned && (
+                  <MinorityOwnedBadge size="md" verified={business.minorityOwnerVerified} />
+                )}
               </View>
+              {business.minorityOwned && (
+                <Text style={[styles.minorityDisclaimer, { color: colors.mutedForeground }]}>
+                  * Minority Owned businesses are owned and operated 51% or more by a minority.
+                  {business.minorityOwnerVerified
+                    ? " This business has provided documentation and is VERIFIED."
+                    : " This business has self-identified as minority owned."}
+                </Text>
+              )}
             </View>
             <ConfidenceScoreBadge score={business.confidenceScore} size="lg" showLabel />
           </View>
@@ -445,6 +457,7 @@ const styles = StyleSheet.create({
   name: { fontFamily: "Inter_700Bold", fontSize: 22 },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" },
   badgeRow: { flexDirection: "row", gap: 6, marginTop: 8, flexWrap: "wrap" },
+  minorityDisclaimer: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, marginTop: 4, fontStyle: "italic" },
   category: { fontFamily: "Inter_500Medium", fontSize: 13 },
   price: { fontFamily: "Inter_400Regular", fontSize: 13 },
   safetyCard: {

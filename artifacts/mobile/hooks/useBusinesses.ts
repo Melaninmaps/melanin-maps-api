@@ -35,6 +35,8 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
     verified: b.verified as boolean,
     featured: b.featured as boolean,
     blackOwned: b.blackOwned as boolean,
+    minorityOwned: (b.minorityOwned as boolean) ?? false,
+    minorityOwnerVerified: (b.minorityOwnerVerified as boolean) ?? false,
     confidenceScore: b.confidenceScore as number,
     safetyRating: b.safetyRating != null
       ? (typeof b.safetyRating === "string" ? parseFloat(b.safetyRating) : (b.safetyRating as number))
