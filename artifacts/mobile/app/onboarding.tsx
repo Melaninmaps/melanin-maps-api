@@ -141,7 +141,7 @@ export default function OnboardingScreen() {
           <View style={styles.finalBtns}>
             <TouchableOpacity
               style={[styles.primaryFinalBtn, { backgroundColor: slide.accent }]}
-              onPress={() => { markComplete(); router.replace("/signup"); }}
+              onPress={() => { markComplete(); router.replace("/waitlist"); }}
               activeOpacity={0.85}
             >
               <Text style={[styles.primaryFinalTxt, { color: slide.bg }]}>Create Account</Text>

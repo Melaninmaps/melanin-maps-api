@@ -159,8 +159,8 @@ export default function LoginScreen() {
 
         <View style={styles.signupRow}>
           <Text style={[styles.signupTxt, { color: colors.mutedForeground }]}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => router.replace("/signup")}>
-            <Text style={[styles.signupLink, { color: colors.primary }]}>Create one</Text>
+          <TouchableOpacity onPress={() => router.replace("/waitlist")}>
+            <Text style={[styles.signupLink, { color: colors.primary }]}>Join waitlist</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
