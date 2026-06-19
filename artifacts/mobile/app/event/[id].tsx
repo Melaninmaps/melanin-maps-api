@@ -2,8 +2,9 @@ import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import {
+  ActivityIndicator,
   Platform,
   ScrollView,
   StyleSheet,
@@ -12,7 +13,8 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { EVENTS } from "@/constants/data";
+import { useEventById } from "@/hooks/useEvents";
+import { useEventRsvp } from "@/hooks/useEventRsvp";
 import { useColors } from "@/hooks/useColors";
 
 export default function EventDetailScreen() {
@@ -20,10 +22,18 @@ export default function EventDetailScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [rsvpd, setRsvpd] = useState(false);
+  const { event, isLoading } = useEventById(id ?? "");
+  const { isRsvped, rsvpCount, toggle } = useEventRsvp(id ?? "");
 
-  const event = EVENTS.find((e) => e.id === id);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  if (isLoading) {
+    return (
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   if (!event) {
     return (
@@ -36,9 +46,11 @@ export default function EventDetailScreen() {
     );
   }
 
+  const attendeeCount = rsvpCount > 0 ? rsvpCount : event.attendees;
+
   const handleRsvp = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setRsvpd((r) => !r);
+    void toggle();
   };
 
   return (
@@ -119,7 +131,7 @@ export default function EventDetailScreen() {
               <View>
                 <Text style={[styles.infoLabel, { color: colors.mutedForeground }]}>Attendees</Text>
                 <Text style={[styles.infoValue, { color: colors.foreground }]}>
-                  {event.attendees.toLocaleString()} attending
+                  {attendeeCount.toLocaleString()} attending
                 </Text>
               </View>
             </View>
@@ -146,12 +158,12 @@ export default function EventDetailScreen() {
           onPress={handleRsvp}
           style={[
             styles.rsvpBtn,
-            { backgroundColor: rsvpd ? colors.success : colors.primary },
+            { backgroundColor: isRsvped ? colors.success : colors.primary },
           ]}
           activeOpacity={0.85}
         >
-          <Feather name={rsvpd ? "check" : "calendar"} size={18} color="#FFFFFF" />
-          <Text style={styles.rsvpText}>{rsvpd ? "RSVP'd!" : "RSVP Now"}</Text>
+          <Feather name={isRsvped ? "check" : "calendar"} size={18} color="#FFFFFF" />
+          <Text style={styles.rsvpText}>{isRsvped ? "RSVP'd!" : "RSVP Now"}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -160,6 +172,7 @@ export default function EventDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center" },
   notFound: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   notFoundText: { fontFamily: "Inter_400Regular", fontSize: 16 },
   backLink: { fontFamily: "Inter_500Medium", fontSize: 14 },

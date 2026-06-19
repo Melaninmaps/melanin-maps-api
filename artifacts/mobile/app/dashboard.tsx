@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
+  ActivityIndicator,
   Platform,
   ScrollView,
   StyleSheet,
@@ -12,33 +13,18 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
-
-const SAVED_BUSINESSES = [
-  { id: "1", name: "Sweet Auburn BBQ", category: "Restaurant", rating: 4.8, city: "Atlanta" },
-  { id: "2", name: "Trap Kitchen", category: "Food Truck", rating: 4.6, city: "LA" },
-  { id: "3", name: "Busboys & Poets", category: "Café", rating: 4.7, city: "DC" },
-];
-
-const UPCOMING_EVENTS = [
-  { id: "e1", emoji: "🏪", title: "Black Business Expo", date: "Jun 22", location: "Atlanta, GA" },
-  { id: "e2", emoji: "✊🏿", title: "Juneteenth Celebration", date: "Jun 19", location: "Houston, TX" },
-];
+import { useFavorites } from "@/hooks/useFavorites";
+import { useBusinesses } from "@/hooks/useBusinesses";
+import { useEvents } from "@/hooks/useEvents";
+import { usePoints } from "@/hooks/usePoints";
 
 const RECENT_ACTIVITY = [
-  { id: "a1", icon: "star" as const, color: "#C9922B", text: "You reviewed Sweet Auburn BBQ", time: "2h ago" },
-  { id: "a2", icon: "shield" as const, color: "#2D7A4F", text: "Safety report submitted in Atlanta, GA", time: "1d ago" },
-  { id: "a3", icon: "bookmark" as const, color: "#3B1F0E", text: "Saved Trap Kitchen to favorites", time: "2d ago" },
-  { id: "a4", icon: "message-circle" as const, color: "#7B4F2E", text: "Your community post got 12 upvotes", time: "3d ago" },
+  { id: "a1", icon: "star" as const, color: "#C9922B", text: "Leave a review to earn points", time: "" },
+  { id: "a2", icon: "shield" as const, color: "#2D7A4F", text: "Submit a safety report for your neighborhood", time: "" },
+  { id: "a3", icon: "calendar" as const, color: "#3B1F0E", text: "RSVP to an upcoming event", time: "" },
+  { id: "a4", icon: "message-circle" as const, color: "#7B4F2E", text: "Share something in the community feed", time: "" },
 ];
 
-const STATS = [
-  { label: "Reviews", value: "3", icon: "star" as const },
-  { label: "Saved", value: "12", icon: "bookmark" as const },
-  { label: "Events", value: "5", icon: "calendar" as const },
-  { label: "Referrals", value: "2", icon: "users" as const },
-];
-
-const REFERRAL_PTS = 240;
 const REFERRAL_GOAL = 500;
 
 export default function DashboardScreen() {
@@ -46,11 +32,28 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
+  const { savedIds } = useFavorites();
+  const { businesses } = useBusinesses();
+  const { events, isLoading: eventsLoading } = useEvents();
+  const { total: pointsTotal, ledger } = usePoints();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
-  const firstName = (user as any)?.firstName ?? "Explorer";
-  const pct = REFERRAL_PTS / REFERRAL_GOAL;
+  const firstName = user?.firstName ?? "Explorer";
+
+  const savedBusinesses = businesses.filter((b) => savedIds.includes(b.id)).slice(0, 5);
+  const upcomingEvents = events.slice(0, 3);
+  const reviewCount = ledger.filter((e) => e.action === "review").length;
+  const rsvpCount = ledger.filter((e) => e.action === "rsvp").length;
+
+  const pct = Math.min(pointsTotal / REFERRAL_GOAL, 1);
+
+  const STATS = [
+    { label: "Reviews", value: String(reviewCount), icon: "star" as const },
+    { label: "Saved", value: String(savedIds.length), icon: "bookmark" as const },
+    { label: "Events", value: String(rsvpCount), icon: "calendar" as const },
+    { label: "Points", value: String(pointsTotal), icon: "award" as const },
+  ];
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -72,7 +75,6 @@ export default function DashboardScreen() {
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Stats row */}
         <View style={styles.statsRow}>
           {STATS.map((s) => (
             <View key={s.label} style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -83,7 +85,6 @@ export default function DashboardScreen() {
           ))}
         </View>
 
-        {/* Membership upgrade banner */}
         <TouchableOpacity
           style={styles.memberCard}
           onPress={() => router.push("/membership")}
@@ -107,32 +108,41 @@ export default function DashboardScreen() {
               <Text style={[styles.seeAll, { color: colors.primary }]}>See all</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{ marginHorizontal: -20 }}
-            contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
-          >
-            {SAVED_BUSINESSES.map((b) => (
-              <TouchableOpacity
-                key={b.id}
-                style={[styles.bizCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                onPress={() => router.push(`/business/${b.id}` as any)}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.bizIcon, { backgroundColor: colors.secondary }]}>
-                  <Feather name="shopping-bag" size={20} color={colors.primary} />
-                </View>
-                <Text style={[styles.bizName, { color: colors.foreground }]}>{b.name}</Text>
-                <Text style={[styles.bizCat, { color: colors.mutedForeground }]}>{b.category}</Text>
-                <View style={styles.bizMeta}>
-                  <Feather name="star" size={12} color="#C9922B" />
-                  <Text style={[styles.bizRating, { color: colors.foreground }]}>{b.rating}</Text>
-                  <Text style={[styles.bizCity, { color: colors.mutedForeground }]}>· {b.city}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          {savedBusinesses.length === 0 ? (
+            <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="bookmark" size={22} color={colors.muted} />
+              <Text style={[styles.emptyCardText, { color: colors.mutedForeground }]}>
+                No saved businesses yet — tap ♥ on any listing
+              </Text>
+            </View>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginHorizontal: -20 }}
+              contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
+            >
+              {savedBusinesses.map((b) => (
+                <TouchableOpacity
+                  key={b.id}
+                  style={[styles.bizCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => router.push(`/business/${b.id}` as any)}
+                  activeOpacity={0.8}
+                >
+                  <View style={[styles.bizIcon, { backgroundColor: colors.secondary }]}>
+                    <Feather name="shopping-bag" size={20} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.bizName, { color: colors.foreground }]} numberOfLines={2}>{b.name}</Text>
+                  <Text style={[styles.bizCat, { color: colors.mutedForeground }]}>{b.category}</Text>
+                  <View style={styles.bizMeta}>
+                    <Feather name="star" size={12} color="#C9922B" />
+                    <Text style={[styles.bizRating, { color: colors.foreground }]}>{b.rating}</Text>
+                    <Text style={[styles.bizCity, { color: colors.mutedForeground }]}>· {b.city}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
         </View>
 
         {/* Upcoming events */}
@@ -143,29 +153,36 @@ export default function DashboardScreen() {
               <Text style={[styles.seeAll, { color: colors.primary }]}>See all</Text>
             </TouchableOpacity>
           </View>
-          <View style={{ gap: 10 }}>
-            {UPCOMING_EVENTS.map((ev) => (
-              <TouchableOpacity
-                key={ev.id}
-                style={[styles.eventRow, { backgroundColor: colors.card, borderColor: colors.border }]}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.eventEmoji, { backgroundColor: colors.secondary }]}>
-                  <Text style={{ fontSize: 22 }}>{ev.emoji}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.eventTitle, { color: colors.foreground }]}>{ev.title}</Text>
-                  <Text style={[styles.eventMeta, { color: colors.mutedForeground }]}>
-                    {ev.date} · {ev.location}
-                  </Text>
-                </View>
-                <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
-              </TouchableOpacity>
-            ))}
-          </View>
+          {eventsLoading ? (
+            <ActivityIndicator color={colors.primary} />
+          ) : (
+            <View style={{ gap: 10 }}>
+              {upcomingEvents.map((ev) => (
+                <TouchableOpacity
+                  key={ev.id}
+                  style={[styles.eventRow, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => router.push({ pathname: "/event/[id]", params: { id: ev.id } })}
+                  activeOpacity={0.8}
+                >
+                  <View style={[styles.eventEmoji, { backgroundColor: colors.secondary }]}>
+                    <Feather name="calendar" size={20} color={colors.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.eventTitle, { color: colors.foreground }]} numberOfLines={1}>
+                      {ev.title}
+                    </Text>
+                    <Text style={[styles.eventMeta, { color: colors.mutedForeground }]}>
+                      {ev.dateShort} · {ev.city}, {ev.state}
+                    </Text>
+                  </View>
+                  <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
 
-        {/* Referral progress */}
+        {/* Points / referral progress */}
         <TouchableOpacity
           style={[styles.referralCard, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={() => router.push("/referral")}
@@ -173,9 +190,9 @@ export default function DashboardScreen() {
         >
           <View style={styles.referralTop}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.referralTitle, { color: colors.foreground }]}>🎁 Referral Progress</Text>
+              <Text style={[styles.referralTitle, { color: colors.foreground }]}>🎁 Points Progress</Text>
               <Text style={[styles.referralSub, { color: colors.mutedForeground }]}>
-                {REFERRAL_PTS} / {REFERRAL_GOAL} pts to next reward
+                {pointsTotal} / {REFERRAL_GOAL} pts to next reward
               </Text>
             </View>
             <Text style={[styles.referralPct, { color: colors.primary }]}>
@@ -186,7 +203,7 @@ export default function DashboardScreen() {
             <View style={[styles.progressFill, { backgroundColor: colors.primary, width: `${pct * 100}%` as any }]} />
           </View>
           <Text style={[styles.referralCta, { color: colors.primary }]}>
-            Invite friends → earn $10 credit
+            Review businesses & attend events to earn points →
           </Text>
         </TouchableOpacity>
 
@@ -229,9 +246,9 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* Recent activity */}
+        {/* Quick actions */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Recent Activity</Text>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Get Started</Text>
           <View style={[styles.activityList, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {RECENT_ACTIVITY.map((a, i) => (
               <View key={a.id}>
@@ -241,8 +258,8 @@ export default function DashboardScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.activityText, { color: colors.foreground }]}>{a.text}</Text>
-                    <Text style={[styles.activityTime, { color: colors.mutedForeground }]}>{a.time}</Text>
                   </View>
+                  <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
                 </View>
                 {i < RECENT_ACTIVITY.length - 1 && (
                   <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -265,10 +282,7 @@ const styles = StyleSheet.create({
   greeting: { fontSize: 13, fontFamily: "Inter_400Regular" },
   name: { fontSize: 24, fontFamily: "Inter_700Bold", marginTop: 2 },
   notifBtn: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
-  notifDot: {
-    width: 8, height: 8, borderRadius: 4,
-    position: "absolute", top: 9, right: 9,
-  },
+  notifDot: { width: 8, height: 8, borderRadius: 4, position: "absolute", top: 9, right: 9 },
   scroll: { paddingHorizontal: 20, paddingTop: 20, gap: 24 },
   statsRow: { flexDirection: "row", gap: 10 },
   statCard: {
@@ -281,10 +295,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#3B1F0E", borderRadius: 20, padding: 20,
     flexDirection: "row", alignItems: "center", gap: 16,
   },
-  memberBadge: {
-    fontSize: 11, fontFamily: "Inter_600SemiBold",
-    color: "rgba(255,255,255,0.65)", letterSpacing: 0.8,
-  },
+  memberBadge: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: "rgba(255,255,255,0.65)", letterSpacing: 0.8 },
   memberTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#FFF" },
   memberSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.75)" },
   memberArrow: {
@@ -296,6 +307,11 @@ const styles = StyleSheet.create({
   sectionHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   sectionTitle: { fontSize: 17, fontFamily: "Inter_700Bold" },
   seeAll: { fontSize: 14, fontFamily: "Inter_500Medium" },
+  emptyCard: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    padding: 16, borderRadius: 14, borderWidth: 1, borderStyle: "dashed",
+  },
+  emptyCardText: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
   bizCard: { width: 160, borderRadius: 16, padding: 14, gap: 8, borderWidth: 1 },
   bizIcon: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   bizName: { fontSize: 14, fontFamily: "Inter_600SemiBold", lineHeight: 19 },
@@ -332,9 +348,8 @@ const styles = StyleSheet.create({
   surveyTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   surveySub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
   activityList: { borderRadius: 16, borderWidth: 1, overflow: "hidden" },
-  activityRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 14 },
+  activityRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14 },
   activityIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   activityText: { fontSize: 13, fontFamily: "Inter_500Medium", lineHeight: 18 },
-  activityTime: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
   divider: { height: 1, marginLeft: 62 },
 });

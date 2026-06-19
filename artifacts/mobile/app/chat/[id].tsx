@@ -14,8 +14,9 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CONVERSATIONS } from "../messages";
 import { useColors } from "@/hooks/useColors";
+
+const AUTH_TOKEN_KEY = "auth_session_token";
 
 interface Message {
   id: string;
@@ -25,24 +26,21 @@ interface Message {
   status?: "sent" | "delivered" | "read";
 }
 
-const INITIAL_MESSAGES: Record<string, Message[]> = {
-  c1: [
-    { id: "m1", text: "Hi! I'd love to book a natural hair appointment. Do you have availability this week?", fromMe: true, timeAgo: "Yesterday 3:12 PM", status: "read" },
-    { id: "m2", text: "Hello! Yes, we have openings on Thursday at 2pm and Friday at 10am. Which works best for you?", fromMe: false, timeAgo: "Yesterday 3:45 PM" },
-    { id: "m3", text: "Thursday at 2pm works perfectly! How long does a loc appointment usually take?", fromMe: true, timeAgo: "Yesterday 4:00 PM", status: "read" },
-    { id: "m4", text: "For a full loc retwist it's about 2–3 hours depending on length and thickness. We'll confirm the exact time when you arrive 🙏🏾", fromMe: false, timeAgo: "Yesterday 4:15 PM" },
-    { id: "m5", text: "Thank you for your review! We hope to see you again soon 💛", fromMe: false, timeAgo: "2 minutes ago" },
-  ],
-  c2: [
-    { id: "m1", text: "Hey! Did you go to that event in DC last weekend?", fromMe: false, timeAgo: "Monday 6:00 PM" },
-    { id: "m2", text: "Yes! It was incredible. The panel on community wealth building was so good.", fromMe: true, timeAgo: "Monday 6:14 PM", status: "read" },
-    { id: "m3", text: "Did you check out that new bookstore I mentioned?", fromMe: false, timeAgo: "14 minutes ago" },
-  ],
-};
+interface ConvMeta {
+  id: number;
+  title: string;
+  participantIds: string[];
+}
 
-const DEFAULT_MSGS: Message[] = [
-  { id: "dm1", text: "Hey there! How can I help you today?", fromMe: false, timeAgo: "Just now" },
-];
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
+
+async function getToken(): Promise<string | null> {
+  try { return await SecureStore.getItemAsync(AUTH_TOKEN_KEY); }
+  catch { return null; }
+}
 
 function formatTimeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -54,6 +52,16 @@ function formatTimeAgo(iso: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+const COLORS = ["#3B1F0E", "#2D7A4F", "#C9922B", "#7B4F2E", "#1D4ED8", "#7B2D8B"];
+
+function colorForId(id: number): string {
+  return COLORS[id % COLORS.length] ?? COLORS[0];
+}
+
+function getInitials(title: string): string {
+  return title.split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
+}
+
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
@@ -61,37 +69,55 @@ export default function ChatScreen() {
   const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
 
-  const conv = CONVERSATIONS.find((c) => c.id === id);
-  const isRealConv = id != null && /^\d+$/.test(id);
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES[id ?? ""] ?? DEFAULT_MSGS);
-  const [text, setText] = useState("");
+  const numericId = id ? parseInt(id, 10) : NaN;
+  const isRealConv = !isNaN(numericId);
 
-  const loadMessages = useCallback(async () => {
+  const [conv, setConv] = useState<ConvMeta | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [text, setText] = useState("");
+  const [myUserId, setMyUserId] = useState<string | null>(null);
+
+  const loadConv = useCallback(async () => {
     if (!isRealConv || !id) return;
     try {
-      const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-      const token = await SecureStore.getItemAsync("auth_session_token");
-      const res = await fetch(`${apiBase}/api/conversations/${id}/messages`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (res.ok) {
-        const data = await res.json() as { messages: { id: number; content: string; senderId: string | null; createdAt: string }[] };
-        const userId = token ? "me" : null;
+      const apiBase = getApiBase();
+      const token = await getToken();
+      if (!apiBase || !token) return;
+
+      const [convRes, msgsRes] = await Promise.all([
+        fetch(`${apiBase}/api/conversations`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${apiBase}/api/conversations/${id}/messages`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+
+      if (convRes.ok) {
+        const data = await convRes.json() as { conversations: ConvMeta[] };
+        const found = data.conversations.find((c) => c.id === numericId);
+        if (found) setConv(found);
+      }
+
+      const meRes = await fetch(`${apiBase}/api/auth/user`, { headers: { Authorization: `Bearer ${token}` } });
+      if (meRes.ok) {
+        const meData = await meRes.json() as { user: { id: string } | null };
+        if (meData.user) setMyUserId(meData.user.id);
+      }
+
+      if (msgsRes.ok) {
+        const data = await msgsRes.json() as { messages: { id: number; content: string; senderId: string | null; createdAt: string }[] };
         setMessages(
           data.messages.map((m) => ({
             id: String(m.id),
             text: m.content,
-            fromMe: m.senderId != null && m.senderId === userId,
+            fromMe: m.senderId != null && m.senderId === myUserId,
             timeAgo: formatTimeAgo(m.createdAt),
-          }))
+          })),
         );
       }
     } catch {
-      // keep local messages on error
+      // keep empty state
     }
-  }, [id, isRealConv]);
+  }, [id, isRealConv, numericId, myUserId]);
 
-  useEffect(() => { void loadMessages(); }, [loadMessages]);
+  useEffect(() => { void loadConv(); }, [loadConv]);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -113,8 +139,8 @@ export default function ChatScreen() {
 
     if (isRealConv && id) {
       try {
-        const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-        const token = await SecureStore.getItemAsync("auth_session_token");
+        const apiBase = getApiBase();
+        const token = await getToken();
         await fetch(`${apiBase}/api/conversations/${id}/messages`, {
           method: "POST",
           headers: {
@@ -129,12 +155,19 @@ export default function ChatScreen() {
     }
   };
 
-  if (!conv) {
+  const convTitle = conv?.title ?? `Conversation ${id}`;
+  const convColor = isRealConv ? colorForId(numericId) : COLORS[0];
+  const convInitials = getInitials(convTitle);
+
+  if (!isRealConv) {
     return (
       <View style={[styles.notFound, { backgroundColor: colors.background }]}>
-        <Text style={{ color: colors.mutedForeground }}>Conversation not found</Text>
+        <Feather name="message-circle" size={36} color={colors.muted} />
+        <Text style={[{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 15 }]}>
+          Conversation not found
+        </Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={{ color: colors.primary }}>Go back</Text>
+          <Text style={{ color: colors.primary, fontFamily: "Inter_500Medium" }}>Go back</Text>
         </TouchableOpacity>
       </View>
     );
@@ -150,14 +183,13 @@ export default function ChatScreen() {
         <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
-        <View style={[styles.headerAvatar, { backgroundColor: conv.color }]}>
-          <Text style={styles.headerAvatarText}>{conv.initials}</Text>
-          {conv.online && <View style={[styles.onlineDot, { borderColor: colors.background }]} />}
+        <View style={[styles.headerAvatar, { backgroundColor: convColor }]}>
+          <Text style={styles.headerAvatarText}>{convInitials}</Text>
         </View>
         <View style={styles.headerInfo}>
-          <Text style={[styles.headerName, { color: colors.foreground }]}>{conv.name}</Text>
-          <Text style={[styles.headerStatus, { color: "#2D7A4F" }]}>
-            {conv.online ? "Online" : "Last seen recently"}
+          <Text style={[styles.headerName, { color: colors.foreground }]}>{convTitle}</Text>
+          <Text style={[styles.headerStatus, { color: colors.mutedForeground }]}>
+            {messages.length} messages
           </Text>
         </View>
         <View style={styles.headerActions}>
@@ -177,16 +209,24 @@ export default function ChatScreen() {
         contentContainerStyle={[styles.messageList, { paddingBottom: 16 }]}
         showsVerticalScrollIndicator={false}
         onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
+        ListEmptyComponent={
+          <View style={styles.emptyChat}>
+            <Feather name="message-circle" size={32} color={colors.muted} />
+            <Text style={[{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center" }]}>
+              No messages yet. Say hello!
+            </Text>
+          </View>
+        }
         renderItem={({ item, index }) => {
-          const showTime = index === 0 || messages[index - 1]?.fromMe !== item.fromMe;
+          const showAvatar = !item.fromMe && (index === 0 || messages[index - 1]?.fromMe !== item.fromMe);
           return (
             <View style={[styles.msgWrap, item.fromMe ? styles.msgWrapMe : styles.msgWrapThem]}>
-              {!item.fromMe && showTime && (
-                <View style={[styles.themAvatar, { backgroundColor: conv.color }]}>
-                  <Text style={styles.themAvatarText}>{conv.initials[0]}</Text>
+              {!item.fromMe && showAvatar && (
+                <View style={[styles.themAvatar, { backgroundColor: convColor }]}>
+                  <Text style={styles.themAvatarText}>{convInitials[0]}</Text>
                 </View>
               )}
-              {!item.fromMe && !showTime && <View style={{ width: 28 }} />}
+              {!item.fromMe && !showAvatar && <View style={{ width: 28 }} />}
               <View style={styles.bubbleCol}>
                 <View style={[
                   styles.bubble,
@@ -256,15 +296,15 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: 1,
   },
-  headerAvatar: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", position: "relative" },
+  headerAvatar: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
   headerAvatarText: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#FFFFFF" },
-  onlineDot: { position: "absolute", bottom: 0, right: 0, width: 11, height: 11, borderRadius: 6, backgroundColor: "#2D7A4F", borderWidth: 2 },
   headerInfo: { flex: 1, gap: 1 },
   headerName: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
   headerStatus: { fontFamily: "Inter_400Regular", fontSize: 11 },
   headerActions: { flexDirection: "row", gap: 8 },
   headerBtn: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   messageList: { paddingTop: 16, paddingHorizontal: 12, gap: 4 },
+  emptyChat: { alignItems: "center", paddingVertical: 60, gap: 12, paddingHorizontal: 40 },
   msgWrap: { flexDirection: "row", alignItems: "flex-end", gap: 6, marginBottom: 4 },
   msgWrapMe: { justifyContent: "flex-end" },
   msgWrapThem: { justifyContent: "flex-start" },
