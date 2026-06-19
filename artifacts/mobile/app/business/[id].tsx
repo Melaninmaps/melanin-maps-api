@@ -8,7 +8,6 @@ import {
   Linking,
   Platform,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -21,6 +20,7 @@ import { ConfidenceScoreBadge } from "@/components/ConfidenceScoreBadge";
 import { RatingStars } from "@/components/RatingStars";
 import { ReportContentModal } from "@/components/ReportContentModal";
 import { VerificationBadge } from "@/components/VerificationBadge";
+import { ShareModal } from "@/components/ShareModal";
 import { WriteReviewModal } from "@/components/WriteReviewModal";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -50,6 +50,7 @@ export default function BusinessDetailScreen() {
 
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const [checkInDone, setCheckInDone] = useState(false);
   const [pointsToast, setPointsToast] = useState<string | null>(null);
   const toastOpacity = useRef(new Animated.Value(0)).current;
@@ -131,14 +132,9 @@ export default function BusinessDetailScreen() {
     if (business.website) Linking.openURL(`https://${business.website}`);
   };
 
-  const handleShare = async () => {
+  const handleShare = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    try {
-      await Share.share({
-        message: `Check out ${business.name} on Mapping With Melanin! ${business.city}, ${business.state} — ${business.category}`,
-        title: business.name,
-      });
-    } catch {}
+    setShareModalOpen(true);
   };
 
   const handleReviewSubmit = async (rating: number, text: string, wouldReturn: boolean) => {
@@ -402,6 +398,14 @@ export default function BusinessDetailScreen() {
         visible={reportModalOpen}
         businessName={business.name}
         onClose={() => setReportModalOpen(false)}
+      />
+      <ShareModal
+        visible={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        businessName={business.name}
+        city={business.city}
+        state={business.state}
+        category={business.category}
       />
     </View>
   );
