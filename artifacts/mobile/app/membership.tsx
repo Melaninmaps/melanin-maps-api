@@ -3,7 +3,7 @@ import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
+  Alert,
   Linking,
   Platform,
   ScrollView,
@@ -14,7 +14,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-import { useMembership } from "@/hooks/useMembership";
 
 type Billing = "monthly" | "annual";
 type Audience = "consumer" | "business";
@@ -195,7 +194,6 @@ export default function MembershipScreen() {
   const router = useRouter();
   const [billing, setBilling] = useState<Billing>("monthly");
   const [audience, setAudience] = useState<Audience>("consumer");
-  const { initiateCheckout, checkoutLoading, checkoutPlanId } = useMembership();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -209,11 +207,15 @@ export default function MembershipScreen() {
       await Linking.openURL("mailto:sales@melaninmaps.app?subject=Legacy%20Partner%20Plan%20Inquiry%20%E2%80%94%20Mapping%20with%20Melanin");
       return;
     }
-    const result = await initiateCheckout(plan.name, billing);
-    if (result === "no_auth") {
-      router.push("/login");
-    }
-  }, [billing, initiateCheckout, router]);
+    Alert.alert(
+      "Coming Soon 🎉",
+      "Paid memberships are launching very soon! Join the waitlist to be first to know.",
+      [
+        { text: "Join Waitlist", onPress: () => router.push("/waitlist") },
+        { text: "Maybe Later", style: "cancel" },
+      ],
+    );
+  }, [router]);
 
   const plans = audience === "consumer" ? CONSUMER_PLANS : BUSINESS_PLANS;
 
@@ -359,20 +361,16 @@ export default function MembershipScreen() {
                     backgroundColor: isHighlight ? "rgba(255,255,255,0.2)" : colors.muted,
                     borderWidth: isHighlight ? 1.5 : 0,
                     borderColor: isHighlight ? "rgba(255,255,255,0.4)" : "transparent",
-                    opacity: (checkoutLoading && checkoutPlanId !== plan.name) ? 0.5 : 1,
+                    opacity: 1,
                   },
                 ]}
                 onPress={() => { void handleCta(plan); }}
-                disabled={plan.id === "free" || checkoutLoading}
+                disabled={plan.id === "free"}
                 activeOpacity={0.8}
               >
-                {checkoutLoading && checkoutPlanId === plan.name ? (
-                  <ActivityIndicator size="small" color={isHighlight ? "#FFF" : colors.mutedForeground} />
-                ) : (
-                  <Text style={[styles.ctaTxt, { color: isHighlight ? "#FFF" : colors.mutedForeground }]}>
-                    {plan.cta}
-                  </Text>
-                )}
+                <Text style={[styles.ctaTxt, { color: isHighlight ? "#FFF" : colors.mutedForeground }]}>
+                  {plan.id === "free" ? plan.cta : "Coming Soon"}
+                </Text>
               </TouchableOpacity>
             </View>
           );
