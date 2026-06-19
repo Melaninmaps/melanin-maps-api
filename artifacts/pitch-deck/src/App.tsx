@@ -12,7 +12,7 @@
  * check" if this file has been hand-edited and needs repair.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 
 import { slides } from "@/slideLoader";
@@ -168,6 +168,9 @@ function SlideViewer() {
     height: Math.min(window.innerHeight, window.innerWidth * (9 / 16)),
   }));
 
+  const firstPosition = slides.length > 0 ? slides[0].position : 1;
+  const currentPositionRef = useRef(firstPosition);
+
   useEffect(() => {
     const update = () => {
       setDims({
@@ -179,20 +182,43 @@ function SlideViewer() {
     return () => window.removeEventListener("resize", update);
   }, []);
 
+  const goTo = useCallback((position: number) => {
+    currentPositionRef.current = position;
+    iframeRef.current?.contentWindow?.postMessage({ type: "navigateToSlide", position }, "*");
+  }, []);
+
+  const advance = useCallback(() => {
+    const idx = slides.findIndex((s) => s.position === currentPositionRef.current);
+    if (idx < slides.length - 1) goTo(slides[idx + 1].position);
+  }, [goTo]);
+
+  const retreat = useCallback(() => {
+    const idx = slides.findIndex((s) => s.position === currentPositionRef.current);
+    if (idx > 0) goTo(slides[idx - 1].position);
+  }, [goTo]);
+
   useEffect(() => {
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== " ") return;
-      if (event.key === " ") event.preventDefault();
-      iframeRef.current?.contentWindow?.dispatchEvent(
-        new KeyboardEvent("keydown", { key: event.key, code: event.code, bubbles: true }),
-      );
+      if (event.key === "ArrowRight" || event.key === "ArrowDown" || event.key === " ") {
+        if (event.key === " ") event.preventDefault();
+        advance();
+      } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+        retreat();
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [advance, retreat]);
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.data?.type === "advanceSlide") advance();
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [advance]);
 
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-  const firstPosition = slides.length > 0 ? slides[0].position : 1;
 
   return (
     <div
