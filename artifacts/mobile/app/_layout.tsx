@@ -89,6 +89,7 @@ function OnboardingChecker() {
   const router = useRouter();
 
   useEffect(() => {
+    if (typeof window !== "undefined" && window.location.search.includes("preview=1")) return;
     let active = true;
     AsyncStorage.getItem("@mapping_with_melanin_onboarding_complete")
       .then((val) => {
