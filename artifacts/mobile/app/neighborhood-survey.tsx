@@ -152,7 +152,6 @@ export default function NeighborhoodSurveyScreen() {
     setSubmitted(true);
 
     const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-    if (!apiBase) return;
 
     try {
       await fetch(`${apiBase}/api/surveys`, {

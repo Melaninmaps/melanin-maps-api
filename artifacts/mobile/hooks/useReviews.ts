@@ -30,7 +30,7 @@ export function useReviews(businessId: string) {
 
   const load = useCallback(async () => {
     const apiBase = getApiBase();
-    if (!apiBase || !businessId) return;
+    if (!businessId) return;
     setIsLoading(true);
     try {
       const res = await fetch(`${apiBase}/api/reviews?businessId=${encodeURIComponent(businessId)}`);

@@ -38,12 +38,6 @@ export function useAlerts(state?: string): UseAlertsResult {
     setIsLoading(true);
     try {
       const apiBase = getApiBaseUrl();
-      if (!apiBase) {
-        setAlerts(ALERTS as LiveAlertItem[]);
-        setIsLoading(false);
-        return;
-      }
-
       const qs = state ? `?state=${encodeURIComponent(state)}` : "";
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000);

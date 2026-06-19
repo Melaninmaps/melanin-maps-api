@@ -63,7 +63,6 @@ export default function GroupDetailScreen() {
     setIsLoading(true);
     try {
       const apiBase = getApiBase();
-      if (!apiBase) return;
       const token = await SecureStore.getItemAsync("auth_session_token");
       const res = await fetch(`${apiBase}/api/groups/${id}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},

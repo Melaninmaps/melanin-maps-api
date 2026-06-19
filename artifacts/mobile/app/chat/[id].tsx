@@ -82,7 +82,7 @@ export default function ChatScreen() {
     try {
       const apiBase = getApiBase();
       const token = await getToken();
-      if (!apiBase || !token) return;
+      if (!token) return;
 
       const [convRes, msgsRes] = await Promise.all([
         fetch(`${apiBase}/api/conversations`, { headers: { Authorization: `Bearer ${token}` } }),

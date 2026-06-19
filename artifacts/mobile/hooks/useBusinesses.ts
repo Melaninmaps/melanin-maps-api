@@ -65,12 +65,6 @@ export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinesses
 
     try {
       const apiBase = getApiBaseUrl();
-      if (!apiBase) {
-        setBusinesses(BUSINESSES);
-        setIsLoading(false);
-        return;
-      }
-
       const params = new URLSearchParams();
       if (search.length > 0) params.set("search", search);
       if (category && category !== "All") params.set("category", category);
@@ -115,12 +109,6 @@ export function useBusinessById(id: string): { business: Business | undefined; i
       setIsLoading(true);
       try {
         const apiBase = getApiBaseUrl();
-        if (!apiBase) {
-          setBusiness(BUSINESSES.find((b) => b.id === id));
-          setIsLoading(false);
-          return;
-        }
-
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5000);
         const res = await fetch(`${apiBase}/api/businesses/${id}`, {

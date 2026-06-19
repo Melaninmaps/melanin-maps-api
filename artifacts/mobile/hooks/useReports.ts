@@ -45,10 +45,6 @@ export function useReports(statusFilter: string = "pending"): UseReportsResult {
     setIsLoading(true);
     try {
       const apiBase = getApiBaseUrl();
-      if (!apiBase) {
-        setIsLoading(false);
-        return;
-      }
       const res = await fetch(
         `${apiBase}/api/moderation/reports?status=${encodeURIComponent(statusFilter)}`,
         { headers: { Accept: "application/json" } },
@@ -81,7 +77,6 @@ export function useReports(statusFilter: string = "pending"): UseReportsResult {
       notes?: string,
     ) => {
       const apiBase = getApiBaseUrl();
-      if (!apiBase) return;
       await fetch(`${apiBase}/api/moderation/reports/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

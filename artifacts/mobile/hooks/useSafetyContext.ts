@@ -45,7 +45,6 @@ export function useSafetyContext(city: string | null): UseSafetyContextResult {
   const fetchContext = useCallback(async () => {
     if (!city) return;
     const apiBase = getApiBaseUrl();
-    if (!apiBase) return;
 
     setIsLoading(true);
     setError(null);
