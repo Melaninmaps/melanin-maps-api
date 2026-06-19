@@ -47,7 +47,7 @@ Community discovery, travel, and business platform celebrating Black culture —
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Custom domain: **www.mappingwithmelinan.com** — connect this once the app is published via Replit deployment settings + CNAME at registrar.
 
 ## Gotchas
 
