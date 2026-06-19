@@ -47,7 +47,7 @@ Community discovery, travel, and business platform celebrating Black culture —
 
 ## User preferences
 
-- Custom domain: **www.mappingwithmelinan.com** — connect this once the app is published via Replit deployment settings + CNAME at registrar.
+- Custom domain: **www.melinanmap.com** — already forwarding from melanin-discovery-hub.replit.app; also owns www.mappingwithmelinan.com.
 
 ## Gotchas
 
