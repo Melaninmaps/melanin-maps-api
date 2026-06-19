@@ -47,7 +47,14 @@ export default function ContactScreen() {
     if (!valid) return;
     setLoading(true);
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await new Promise((r) => setTimeout(r, 1200));
+    try {
+      const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      await fetch(`${apiBase}/api/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ formType, name, email, subject, message }),
+      });
+    } catch {}
     setLoading(false);
     setSubmitted(true);
   };

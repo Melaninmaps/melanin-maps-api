@@ -9,3 +9,5 @@ export * from "./check-ins";
 export * from "./points";
 export * from "./event-rsvps";
 export * from "./community-posts";
+export * from "./waitlist";
+export * from "./contact";

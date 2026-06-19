@@ -9,7 +9,7 @@ export const eventRsvpsTable = pgTable(
     eventId: varchar("event_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [primaryKey({ columns: [table.userId, table.eventId] })],
+  (table) => ({ pk: primaryKey({ columns: [table.userId, table.eventId] }) }),
 );
 
 export const insertEventRsvpSchema = createInsertSchema(eventRsvpsTable).omit({

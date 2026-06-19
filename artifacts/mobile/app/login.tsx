@@ -118,9 +118,6 @@ export default function LoginScreen() {
           <View style={styles.field}>
             <View style={styles.labelRow}>
               <Text style={[styles.label, { color: colors.foreground }]}>Password</Text>
-              <TouchableOpacity onPress={() => router.push("/forgot-password")}>
-                <Text style={[styles.forgotLink, { color: colors.primary }]}>Forgot password?</Text>
-              </TouchableOpacity>
             </View>
             <View style={[styles.inputRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Feather name="lock" size={18} color={colors.mutedForeground} style={styles.inputIcon} />

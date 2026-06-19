@@ -45,7 +45,7 @@ export default function WaitlistScreen() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [position] = useState(Math.floor(Math.random() * 800) + 200);
+  const [position, setPosition] = useState(Math.floor(Math.random() * 800) + 200);
 
   const referralCode = email.replace(/[@.]/g, "").toUpperCase().slice(0, 8) || "MELANIN";
   const referralLink = REFERRAL_URL + referralCode;
@@ -56,7 +56,19 @@ export default function WaitlistScreen() {
     if (!valid) return;
     setLoading(true);
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await new Promise((r) => setTimeout(r, 1000));
+    try {
+      const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const code = email.replace(/[@.]/g, "").toUpperCase().slice(0, 8);
+      const res = await fetch(`${apiBase}/api/waitlist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, referralCode: code }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { position?: number };
+        if (data.position) setPosition(data.position);
+      }
+    } catch {}
     setLoading(false);
     setSubmitted(true);
   };

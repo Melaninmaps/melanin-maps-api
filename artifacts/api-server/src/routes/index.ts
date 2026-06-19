@@ -16,6 +16,8 @@ import eventRsvpsRouter from "./event-rsvps";
 import pushTokenRouter from "./push-token";
 import communityRouter from "./community";
 import conversationsRouter from "./conversations";
+import waitlistRouter from "./waitlist";
+import contactRouter from "./contact";
 
 const router: IRouter = Router();
 
@@ -36,5 +38,7 @@ router.use(eventRsvpsRouter);
 router.use(pushTokenRouter);
 router.use(communityRouter);
 router.use(conversationsRouter);
+router.use(waitlistRouter);
+router.use(contactRouter);
 
 export default router;

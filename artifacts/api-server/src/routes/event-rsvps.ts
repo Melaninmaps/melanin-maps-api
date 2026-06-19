@@ -4,7 +4,7 @@ import { eq, and, count } from "drizzle-orm";
 
 const router: IRouter = Router();
 
-router.get("/events/:id/rsvps", async (req: Request, res: Response) => {
+router.get("/events/:id/rsvps", async (req: Request<{ id: string }>, res: Response) => {
   const { id } = req.params;
   try {
     const [result] = await db
@@ -33,7 +33,7 @@ router.get("/events/:id/rsvps", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/events/:id/rsvp", async (req: Request, res: Response) => {
+router.post("/events/:id/rsvp", async (req: Request<{ id: string }>, res: Response) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -51,7 +51,7 @@ router.post("/events/:id/rsvp", async (req: Request, res: Response) => {
   }
 });
 
-router.delete("/events/:id/rsvp", async (req: Request, res: Response) => {
+router.delete("/events/:id/rsvp", async (req: Request<{ id: string }>, res: Response) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
