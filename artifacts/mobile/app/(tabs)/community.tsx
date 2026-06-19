@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
+import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -13,6 +14,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AlertBanner } from "@/components/AlertBanner";
@@ -20,14 +22,46 @@ import { CommunityPostCard } from "@/components/CommunityPostCard";
 import { ALERTS } from "@/constants/data";
 import type { CommunityPost } from "@/constants/types";
 import { useColors } from "@/hooks/useColors";
+import { useGroups, type Group } from "@/hooks/useGroups";
+import { useAuth } from "@/lib/auth";
 
-const TABS = ["Feed", "Alerts", "Recommendations"];
+const TABS = ["Feed", "Groups", "Alerts", "Recommendations"];
 
 const CATEGORY_OPTIONS = [
   { value: "general", label: "Discussion" },
   { value: "recommendation", label: "Recommendation" },
   { value: "alert", label: "Alert" },
 ];
+
+const GROUP_CATEGORIES = [
+  { value: "all", label: "All" },
+  { value: "professional", label: "Professional" },
+  { value: "social", label: "Social" },
+  { value: "travel", label: "Travel" },
+  { value: "culture", label: "Culture" },
+  { value: "activism", label: "Activism" },
+  { value: "health", label: "Health" },
+];
+
+const CATEGORY_COLORS: Record<string, string> = {
+  professional: "#1D4ED8",
+  social: "#7B2D8B",
+  culture: "#C9922B",
+  activism: "#DC2626",
+  travel: "#2D7A4F",
+  health: "#0891B2",
+  general: "#3B1F0E",
+};
+
+const CATEGORY_ICONS: Record<string, string> = {
+  professional: "briefcase",
+  social: "users",
+  culture: "heart",
+  activism: "shield",
+  travel: "map",
+  health: "activity",
+  general: "grid",
+};
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -59,9 +93,69 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
   };
 }
 
+function GroupCard({ group, onPress, onJoinLeave }: {
+  group: Group;
+  onPress: () => void;
+  onJoinLeave: (g: Group) => void;
+}) {
+  const colors = useColors();
+  const catColor = CATEGORY_COLORS[group.category] ?? "#3B1F0E";
+  const catIcon = (CATEGORY_ICONS[group.category] ?? "grid") as any;
+
+  return (
+    <TouchableOpacity
+      style={[styles.groupCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <View style={[styles.groupIconWrap, { backgroundColor: catColor + "18" }]}>
+        <Feather name={catIcon} size={22} color={catColor} />
+      </View>
+      <View style={styles.groupInfo}>
+        <Text style={[styles.groupName, { color: colors.foreground }]} numberOfLines={1}>
+          {group.name}
+        </Text>
+        <Text style={[styles.groupMeta, { color: colors.mutedForeground }]} numberOfLines={2}>
+          {group.description ?? `A community group for ${group.category}`}
+        </Text>
+        <View style={styles.groupFooter}>
+          <View style={styles.groupMembersRow}>
+            <Feather name="users" size={11} color={colors.mutedForeground} />
+            <Text style={[styles.groupMemberCount, { color: colors.mutedForeground }]}>
+              {group.memberCount.toLocaleString()}
+            </Text>
+          </View>
+          {(group.city || group.state) && (
+            <View style={styles.groupMembersRow}>
+              <Feather name="map-pin" size={11} color={colors.mutedForeground} />
+              <Text style={[styles.groupMemberCount, { color: colors.mutedForeground }]}>
+                {[group.city, group.state].filter(Boolean).join(", ")}
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+      <TouchableOpacity
+        style={[
+          styles.joinChip,
+          { backgroundColor: group.isMember ? colors.secondary : catColor, borderColor: group.isMember ? colors.border : catColor },
+        ]}
+        onPress={() => onJoinLeave(group)}
+        activeOpacity={0.8}
+      >
+        <Text style={[styles.joinChipText, { color: group.isMember ? colors.foreground : "#FFFFFF" }]}>
+          {group.isMember ? "Joined" : "Join"}
+        </Text>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+}
+
 export default function CommunityScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState("Feed");
   const [refreshing, setRefreshing] = useState(false);
   const [alerts, setAlerts] = useState(ALERTS);
@@ -71,7 +165,10 @@ export default function CommunityScreen() {
   const [newPostText, setNewPostText] = useState("");
   const [newPostCategory, setNewPostCategory] = useState("general");
   const [submittingPost, setSubmittingPost] = useState(false);
+  const [groupCategory, setGroupCategory] = useState("all");
   const inputRef = useRef<TextInput>(null);
+
+  const { groups, isLoading: groupsLoading, refetch: refetchGroups, join, leave } = useGroups();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -93,7 +190,11 @@ export default function CommunityScreen() {
 
   useEffect(() => { void loadPosts(); }, [loadPosts]);
 
-  const onRefresh = () => { setRefreshing(true); void loadPosts(); };
+  const onRefresh = () => {
+    setRefreshing(true);
+    void loadPosts();
+    void refetchGroups();
+  };
 
   const filteredPosts =
     activeTab === "Recommendations"
@@ -101,6 +202,9 @@ export default function CommunityScreen() {
       : activeTab === "Alerts"
       ? posts.filter((p) => p.category === "alert")
       : posts;
+
+  const filteredGroups =
+    groupCategory === "all" ? groups : groups.filter((g) => g.category === groupCategory);
 
   const submitPost = async () => {
     if (!newPostText.trim()) return;
@@ -132,6 +236,19 @@ export default function CommunityScreen() {
     }
   };
 
+  const handleJoinLeave = async (group: Group) => {
+    if (!isAuthenticated) {
+      Alert.alert("Sign In Required", "Please sign in to join groups.");
+      return;
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (group.isMember) {
+      await leave(group.id);
+    } else {
+      await join(group.id);
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
@@ -155,47 +272,124 @@ export default function CommunityScreen() {
         ))}
       </View>
 
-      <FlatList
-        data={filteredPosts}
-        keyExtractor={(p) => p.id}
-        contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100 }]}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
-        ListHeaderComponent={
-          activeTab === "Alerts" && alerts.length > 0 ? (
-            <View style={styles.alertSection}>
-              {alerts.map((a) => (
-                <AlertBanner key={a.id} alert={a} onDismiss={() => setAlerts((prev) => prev.filter((x) => x.id !== a.id))} />
-              ))}
-            </View>
-          ) : null
-        }
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Feather name="users" size={40} color={colors.muted} />
-            <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>
-              {loading ? "Loading…" : "Nothing here yet"}
-            </Text>
-            {!loading && (
-              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                Be the first to share something with the community.
-              </Text>
+      {activeTab === "Groups" ? (
+        <View style={{ flex: 1 }}>
+          {/* Category filter */}
+          <FlatList
+            horizontal
+            data={GROUP_CATEGORIES}
+            keyExtractor={(c) => c.value}
+            showsHorizontalScrollIndicator={false}
+            style={[styles.categoryScroll, { borderBottomColor: colors.border }]}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.categoryChip,
+                  {
+                    backgroundColor: groupCategory === item.value ? colors.primary : colors.secondary,
+                    borderColor: groupCategory === item.value ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={() => setGroupCategory(item.value)}
+              >
+                <Text style={[styles.categoryChipText, { color: groupCategory === item.value ? "#FFFFFF" : colors.foreground }]}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
             )}
-          </View>
-        }
-        renderItem={({ item }) => <CommunityPostCard post={item} />}
-      />
+          />
 
-      <TouchableOpacity
-        style={[styles.fab, { backgroundColor: colors.primary, bottom: bottomPad + 90 }]}
-        activeOpacity={0.85}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          setShowCompose(true);
-          setTimeout(() => inputRef.current?.focus(), 150);
-        }}
-      >
-        <Feather name="edit-3" size={22} color="#FFFFFF" />
-      </TouchableOpacity>
+          <FlatList
+            data={filteredGroups}
+            keyExtractor={(g) => String(g.id)}
+            contentContainerStyle={[styles.groupsList, { paddingBottom: bottomPad + 100 }]}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+            ListEmptyComponent={
+              groupsLoading ? (
+                <View style={styles.empty}>
+                  <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+              ) : (
+                <View style={styles.empty}>
+                  <Feather name="users" size={40} color={colors.muted} />
+                  <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No groups found</Text>
+                  <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+                    Try a different category or create the first one!
+                  </Text>
+                </View>
+              )
+            }
+            renderItem={({ item }) => (
+              <GroupCard
+                group={item}
+                onPress={() => router.push({ pathname: "/group/[id]", params: { id: String(item.id) } })}
+                onJoinLeave={handleJoinLeave}
+              />
+            )}
+          />
+
+          {/* Create group FAB */}
+          <TouchableOpacity
+            style={[styles.fab, { backgroundColor: colors.primary, bottom: bottomPad + 90 }]}
+            activeOpacity={0.85}
+            onPress={() => {
+              if (!isAuthenticated) {
+                Alert.alert("Sign In Required", "Please sign in to create a group.");
+                return;
+              }
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              Alert.alert("Create Group", "Group creation coming soon!");
+            }}
+          >
+            <Feather name="plus" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+          <FlatList
+            data={filteredPosts}
+            keyExtractor={(p) => p.id}
+            contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100 }]}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+            ListHeaderComponent={
+              activeTab === "Alerts" && alerts.length > 0 ? (
+                <View style={styles.alertSection}>
+                  {alerts.map((a) => (
+                    <AlertBanner key={a.id} alert={a} onDismiss={() => setAlerts((prev) => prev.filter((x) => x.id !== a.id))} />
+                  ))}
+                </View>
+              ) : null
+            }
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <Feather name="users" size={40} color={colors.muted} />
+                <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>
+                  {loading ? "Loading…" : "Nothing here yet"}
+                </Text>
+                {!loading && (
+                  <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+                    Be the first to share something with the community.
+                  </Text>
+                )}
+              </View>
+            }
+            renderItem={({ item }) => <CommunityPostCard post={item} />}
+          />
+
+          <TouchableOpacity
+            style={[styles.fab, { backgroundColor: colors.primary, bottom: bottomPad + 90 }]}
+            activeOpacity={0.85}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setShowCompose(true);
+              setTimeout(() => inputRef.current?.focus(), 150);
+            }}
+          >
+            <Feather name="edit-3" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+        </>
+      )}
 
       <Modal visible={showCompose} animationType="slide" transparent presentationStyle="overFullScreen">
         <View style={styles.modalOverlay}>
@@ -217,13 +411,13 @@ export default function CommunityScreen() {
                 <TouchableOpacity
                   key={opt.value}
                   style={[
-                    styles.categoryChip,
+                    styles.filterChip,
                     { borderColor: newPostCategory === opt.value ? colors.primary : colors.border },
                     newPostCategory === opt.value && { backgroundColor: colors.primary + "18" },
                   ]}
                   onPress={() => setNewPostCategory(opt.value)}
                 >
-                  <Text style={[styles.categoryChipText, { color: newPostCategory === opt.value ? colors.primary : colors.mutedForeground }]}>
+                  <Text style={[styles.filterChipText, { color: newPostCategory === opt.value ? colors.primary : colors.mutedForeground }]}>
                     {opt.label}
                   </Text>
                 </TouchableOpacity>
@@ -262,7 +456,41 @@ const styles = StyleSheet.create({
   searchBtn: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   tabRow: { flexDirection: "row", borderBottomWidth: 1 },
   tabBtn: { flex: 1, alignItems: "center", paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: "transparent" },
-  tabText: { fontFamily: "Inter_500Medium", fontSize: 13 },
+  tabText: { fontFamily: "Inter_500Medium", fontSize: 12 },
+  categoryScroll: { borderBottomWidth: 1, maxHeight: 54 },
+  categoryChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
+  categoryChipText: { fontFamily: "Inter_500Medium", fontSize: 12 },
+  groupsList: { paddingHorizontal: 16, paddingTop: 12, gap: 12 },
+  groupCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  groupIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  groupInfo: { flex: 1, gap: 3 },
+  groupName: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  groupMeta: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  groupFooter: { flexDirection: "row", gap: 12, marginTop: 2 },
+  groupMembersRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+  groupMemberCount: { fontFamily: "Inter_400Regular", fontSize: 11 },
+  joinChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    flexShrink: 0,
+  },
+  joinChipText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   list: { paddingHorizontal: 16, paddingTop: 16 },
   alertSection: { marginBottom: 4 },
   empty: { alignItems: "center", paddingVertical: 60, gap: 10 },
@@ -296,8 +524,8 @@ const styles = StyleSheet.create({
   composeCancelText: { fontFamily: "Inter_400Regular", fontSize: 15 },
   composePostText: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
   categoryRow: { flexDirection: "row", gap: 8, paddingHorizontal: 20, paddingVertical: 12 },
-  categoryChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
-  categoryChipText: { fontFamily: "Inter_500Medium", fontSize: 13 },
+  filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
+  filterChipText: { fontFamily: "Inter_500Medium", fontSize: 13 },
   composeInput: {
     fontFamily: "Inter_400Regular",
     fontSize: 16,

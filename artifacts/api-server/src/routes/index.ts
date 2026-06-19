@@ -20,6 +20,7 @@ import waitlistRouter from "./waitlist";
 import contactRouter from "./contact";
 import eventsRouter from "./events";
 import usersRouter from "./users";
+import groupsRouter from "./groups";
 
 const router: IRouter = Router();
 
@@ -44,5 +45,6 @@ router.use(waitlistRouter);
 router.use(contactRouter);
 router.use(eventsRouter);
 router.use(usersRouter);
+router.use(groupsRouter);
 
 export default router;

@@ -12,3 +12,4 @@ export * from "./community-posts";
 export * from "./waitlist";
 export * from "./contact";
 export * from "./events";
+export * from "./groups";
