@@ -11,3 +11,4 @@ export * from "./event-rsvps";
 export * from "./community-posts";
 export * from "./waitlist";
 export * from "./contact";
+export * from "./events";

@@ -1,0 +1,209 @@
+import { Router, type IRouter, type Request, type Response } from "express";
+import { db, eventsTable } from "@workspace/db";
+import { eq, desc, and, ilike, or } from "drizzle-orm";
+
+const router: IRouter = Router();
+
+router.get("/events", async (req: Request, res: Response) => {
+  try {
+    const { category, search, featured } = req.query;
+
+    const conditions = [];
+
+    if (category && typeof category === "string" && category !== "All") {
+      conditions.push(eq(eventsTable.category, category));
+    }
+
+    if (search && typeof search === "string") {
+      conditions.push(
+        or(
+          ilike(eventsTable.title, `%${search}%`),
+          ilike(eventsTable.city, `%${search}%`),
+          ilike(eventsTable.location, `%${search}%`),
+          ilike(eventsTable.description, `%${search}%`),
+        ),
+      );
+    }
+
+    if (featured === "true") {
+      conditions.push(eq(eventsTable.featured, true));
+    }
+
+    conditions.push(eq(eventsTable.status, "active"));
+
+    const events = await db
+      .select()
+      .from(eventsTable)
+      .where(and(...conditions))
+      .orderBy(desc(eventsTable.createdAt))
+      .limit(100);
+
+    res.json({ events });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch events");
+    res.status(500).json({ error: "Failed to fetch events" });
+  }
+});
+
+router.get("/events/:id", async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const [event] = await db
+      .select()
+      .from(eventsTable)
+      .where(eq(eventsTable.id, id));
+
+    if (!event) {
+      res.status(404).json({ error: "Event not found" });
+      return;
+    }
+
+    res.json({ event });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch event");
+    res.status(500).json({ error: "Failed to fetch event" });
+  }
+});
+
+router.post("/events", async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.id) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    const {
+      title, description, date, dateShort, time, location,
+      city, state, category, organizer, price, isFree,
+      latitude, longitude, featured,
+    } = req.body as Record<string, unknown>;
+
+    if (!title || !date || !city || !state) {
+      res.status(400).json({ error: "title, date, city, and state are required" });
+      return;
+    }
+
+    const id = `evt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+
+    const [event] = await db
+      .insert(eventsTable)
+      .values({
+        id,
+        title: title as string,
+        description: (description as string | undefined) ?? "",
+        date: date as string,
+        dateShort: (dateShort as string | undefined) ?? (date as string).slice(0, 6),
+        time: (time as string | undefined) ?? "",
+        location: (location as string | undefined) ?? "",
+        city: city as string,
+        state: state as string,
+        category: (category as string | undefined) ?? "Cultural",
+        organizer: (organizer as string | undefined) ?? "",
+        price: (price as string | undefined) ?? "Free",
+        isFree: isFree === true || isFree === "true",
+        latitude: latitude != null ? String(latitude) : null,
+        longitude: longitude != null ? String(longitude) : null,
+        featured: featured === true || featured === "true",
+        createdById: req.user.id,
+      })
+      .returning();
+
+    res.status(201).json({ event });
+  } catch (err) {
+    req.log.error({ err }, "Failed to create event");
+    res.status(500).json({ error: "Failed to create event" });
+  }
+});
+
+router.patch("/events/:id", async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.id) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    const id = String(req.params.id);
+    const [existing] = await db
+      .select()
+      .from(eventsTable)
+      .where(eq(eventsTable.id, id));
+
+    if (!existing) {
+      res.status(404).json({ error: "Event not found" });
+      return;
+    }
+
+    if (existing.createdById && existing.createdById !== req.user.id) {
+      res.status(403).json({ error: "Not authorized to edit this event" });
+      return;
+    }
+
+    const {
+      title, description, date, dateShort, time, location,
+      city, state, category, organizer, price, isFree,
+      latitude, longitude, featured, status,
+    } = req.body as Record<string, unknown>;
+
+    const updates: Partial<typeof existing> = {};
+    if (title != null) updates.title = title as string;
+    if (description != null) updates.description = description as string;
+    if (date != null) updates.date = date as string;
+    if (dateShort != null) updates.dateShort = dateShort as string;
+    if (time != null) updates.time = time as string;
+    if (location != null) updates.location = location as string;
+    if (city != null) updates.city = city as string;
+    if (state != null) updates.state = state as string;
+    if (category != null) updates.category = category as string;
+    if (organizer != null) updates.organizer = organizer as string;
+    if (price != null) updates.price = price as string;
+    if (isFree != null) updates.isFree = isFree === true || isFree === "true";
+    if (latitude != null) updates.latitude = String(latitude);
+    if (longitude != null) updates.longitude = String(longitude);
+    if (featured != null) updates.featured = featured === true || featured === "true";
+    if (status != null) updates.status = status as string;
+
+    const [event] = await db
+      .update(eventsTable)
+      .set(updates)
+      .where(eq(eventsTable.id, id))
+      .returning();
+
+    res.json({ event });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update event");
+    res.status(500).json({ error: "Failed to update event" });
+  }
+});
+
+router.delete("/events/:id", async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.id) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    const id = String(req.params.id);
+    const [existing] = await db
+      .select()
+      .from(eventsTable)
+      .where(eq(eventsTable.id, id));
+
+    if (!existing) {
+      res.status(404).json({ error: "Event not found" });
+      return;
+    }
+
+    if (existing.createdById && existing.createdById !== req.user.id) {
+      res.status(403).json({ error: "Not authorized to delete this event" });
+      return;
+    }
+
+    await db.delete(eventsTable).where(eq(eventsTable.id, id));
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to delete event");
+    res.status(500).json({ error: "Failed to delete event" });
+  }
+});
+
+export default router;

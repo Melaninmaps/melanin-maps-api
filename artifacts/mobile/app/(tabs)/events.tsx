@@ -14,7 +14,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryPill } from "@/components/CategoryPill";
 import { EventCard } from "@/components/EventCard";
-import { EVENTS, EVENT_CATEGORIES } from "@/constants/data";
+import { EVENT_CATEGORIES } from "@/constants/data";
+import { useEvents } from "@/hooks/useEvents";
 import { useColors } from "@/hooks/useColors";
 
 const TIME_FILTERS = ["Upcoming", "This Week", "This Month"];
@@ -25,14 +26,11 @@ export default function EventsScreen() {
   const router = useRouter();
   const [timeFilter, setTimeFilter] = useState("Upcoming");
   const [category, setCategory] = useState("All");
-  const [refreshing, setRefreshing] = useState(false);
+
+  const { events, isLoading, refetch } = useEvents({ category });
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
-
-  const filtered = EVENTS.filter(
-    (e) => category === "All" || e.category === category
-  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -82,16 +80,13 @@ export default function EventsScreen() {
       </ScrollView>
 
       <FlatList
-        data={filtered}
+        data={events}
         keyExtractor={(e) => e.id}
         contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100 }]}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => {
-              setRefreshing(true);
-              setTimeout(() => setRefreshing(false), 1000);
-            }}
+            refreshing={isLoading}
+            onRefresh={refetch}
             tintColor={colors.primary}
           />
         }

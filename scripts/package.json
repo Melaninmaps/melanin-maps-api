@@ -8,6 +8,7 @@
     "seed-businesses": "tsx ./src/seed-businesses.ts",
     "seed-products": "tsx ./src/seed-products.ts",
     "archive-old-products": "tsx ./src/archive-old-products.ts",
+    "seed-events": "tsx ./src/seed-events.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

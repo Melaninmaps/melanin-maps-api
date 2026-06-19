@@ -18,6 +18,8 @@ import communityRouter from "./community";
 import conversationsRouter from "./conversations";
 import waitlistRouter from "./waitlist";
 import contactRouter from "./contact";
+import eventsRouter from "./events";
+import usersRouter from "./users";
 
 const router: IRouter = Router();
 
@@ -40,5 +42,7 @@ router.use(communityRouter);
 router.use(conversationsRouter);
 router.use(waitlistRouter);
 router.use(contactRouter);
+router.use(eventsRouter);
+router.use(usersRouter);
 
 export default router;
