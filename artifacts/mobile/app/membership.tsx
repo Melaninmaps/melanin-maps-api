@@ -21,7 +21,9 @@ type Audience = "consumer" | "business";
 
 interface Plan {
   id: string;
+  emoji: string;
   name: string;
+  tagline: string;
   badge: string | null;
   monthlyPrice: number;
   annualTotal: number;
@@ -35,7 +37,9 @@ interface Plan {
 const CONSUMER_PLANS: Plan[] = [
   {
     id: "free",
+    emoji: "🧭",
     name: "Explorer",
+    tagline: "For users discovering the platform",
     badge: null,
     monthlyPrice: 0,
     annualTotal: 0,
@@ -52,7 +56,9 @@ const CONSUMER_PLANS: Plan[] = [
   },
   {
     id: "navigator",
+    emoji: "🌍",
     name: "Navigator",
+    tagline: "For active users who want deeper insights",
     badge: "Most Popular",
     monthlyPrice: 7.99,
     annualTotal: 79,
@@ -72,7 +78,9 @@ const CONSUMER_PLANS: Plan[] = [
   },
   {
     id: "trailblazer",
+    emoji: "👑",
     name: "Trailblazer",
+    tagline: "For power users and frequent travelers",
     badge: "All Access",
     monthlyPrice: 14.99,
     annualTotal: 149,
@@ -95,7 +103,9 @@ const CONSUMER_PLANS: Plan[] = [
 const BUSINESS_PLANS: Plan[] = [
   {
     id: "biz_free",
+    emoji: "📍",
     name: "Community Listing",
+    tagline: "For businesses joining the community",
     badge: null,
     monthlyPrice: 0,
     annualTotal: 0,
@@ -105,6 +115,7 @@ const BUSINESS_PLANS: Plan[] = [
       "Business profile & map placement",
       "Appear in search results",
       "Receive & respond to reviews",
+      "Basic business information",
       "Community visibility",
     ],
     cta: "List Your Business",
@@ -112,7 +123,9 @@ const BUSINESS_PLANS: Plan[] = [
   },
   {
     id: "growth_partner",
+    emoji: "🚀",
     name: "Growth Partner",
+    tagline: "For growing businesses",
     badge: "Popular",
     monthlyPrice: 24.99,
     annualTotal: 249,
@@ -132,7 +145,9 @@ const BUSINESS_PLANS: Plan[] = [
   },
   {
     id: "community_leader",
+    emoji: "⭐",
     name: "Community Leader",
+    tagline: "For established businesses",
     badge: "Best Value",
     monthlyPrice: 69.99,
     annualTotal: 699,
@@ -152,7 +167,9 @@ const BUSINESS_PLANS: Plan[] = [
   },
   {
     id: "legacy_partner",
+    emoji: "🏆",
     name: "Legacy Partner",
+    tagline: "For organizations, franchises & multi-location businesses",
     badge: "Full Suite",
     monthlyPrice: 199.99,
     annualTotal: 1999,
@@ -301,8 +318,14 @@ export default function MembershipScreen() {
               )}
 
               <View style={styles.planTop}>
-                <Text style={[styles.planName, { color: isHighlight ? "#FFF" : colors.foreground }]}>
-                  {plan.name}
+                <View style={styles.planNameRow}>
+                  <Text style={styles.planEmoji}>{plan.emoji}</Text>
+                  <Text style={[styles.planName, { color: isHighlight ? "#FFF" : colors.foreground }]}>
+                    {plan.name}
+                  </Text>
+                </View>
+                <Text style={[styles.planTagline, { color: isHighlight ? "rgba(255,255,255,0.75)" : colors.mutedForeground }]}>
+                  {plan.tagline}
                 </Text>
                 <Text style={[styles.planPrice, { color: isHighlight ? "#FFF" : colors.foreground }]}>
                   {getPrice(plan)}
@@ -442,7 +465,10 @@ const styles = StyleSheet.create({
   planBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   planBadgeTxt: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   planTop: { gap: 4 },
+  planNameRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  planEmoji: { fontSize: 22 },
   planName: { fontSize: 20, fontFamily: "Inter_700Bold" },
+  planTagline: { fontSize: 13, fontFamily: "Inter_400Regular", marginBottom: 4 },
   planPrice: { fontSize: 30, fontFamily: "Inter_700Bold" },
   planPriceSub: { fontSize: 13, fontFamily: "Inter_400Regular" },
   featureList: { gap: 10 },
