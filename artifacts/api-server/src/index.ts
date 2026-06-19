@@ -37,7 +37,7 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-await initStripe();
+initStripe().catch((err: unknown) => logger.warn({ err }, "Stripe init error"));
 
 app.listen(port, (err) => {
   if (err) {
