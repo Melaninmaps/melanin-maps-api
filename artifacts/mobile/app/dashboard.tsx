@@ -91,8 +91,8 @@ export default function DashboardScreen() {
         >
           <View style={{ flex: 1, gap: 4 }}>
             <Text style={styles.memberBadge}>EXPLORE · FREE</Text>
-            <Text style={styles.memberTitle}>Upgrade to Community Pro</Text>
-            <Text style={styles.memberSub}>AI travel planner, unlimited saves & more</Text>
+            <Text style={styles.memberTitle}>Upgrade to Navigator</Text>
+            <Text style={styles.memberSub}>Unlimited favorites, safety insights & more</Text>
           </View>
           <View style={styles.memberArrow}>
             <Feather name="arrow-right" size={20} color="#FFF" />

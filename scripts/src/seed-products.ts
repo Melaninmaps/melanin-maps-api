@@ -5,44 +5,44 @@ interface PlanDef {
   description: string;
   audience: string;
   monthly: number;
-  annual: number;
+  annualTotal: number;
 }
 
 const PLANS: PlanDef[] = [
   {
-    name: "Community Pro",
-    description: "AI travel planner, unlimited saves, community features & more",
+    name: "Navigator",
+    description: "Unlimited favorites, advanced filters, enhanced safety insights & personalized recommendations",
     audience: "consumer",
-    monthly: 999,
-    annual: 799,
+    monthly: 799,
+    annualTotal: 7900,
   },
   {
-    name: "Premium Plus",
-    description: "Everything in Community Pro plus priority listings, exclusive events & concierge perks",
+    name: "Trailblazer",
+    description: "Everything in Navigator plus Cultural Compass™ AI, relocation tools, premium itineraries & priority support",
     audience: "consumer",
-    monthly: 1999,
-    annual: 1599,
+    monthly: 1499,
+    annualTotal: 14900,
   },
   {
-    name: "Growth",
-    description: "Business analytics, featured placement, review management & community reach",
+    name: "Growth Partner",
+    description: "Verification eligibility, enhanced profile, business analytics, event creation & referral tracking",
     audience: "business",
-    monthly: 2999,
-    annual: 2399,
+    monthly: 2499,
+    annualTotal: 24900,
   },
   {
-    name: "Professional",
-    description: "Advanced analytics, verified badge, AI-powered recommendations & priority support",
+    name: "Community Leader",
+    description: "Everything in Growth Partner plus featured placement, enhanced analytics, lead generation & priority support",
     audience: "business",
-    monthly: 7999,
-    annual: 6399,
+    monthly: 6999,
+    annualTotal: 69900,
   },
   {
-    name: "Enterprise",
-    description: "Full suite: custom integrations, dedicated manager, white-glove onboarding & API access",
+    name: "Legacy Partner",
+    description: "Full suite: multi-location management, advanced reporting, sponsorship opportunities & dedicated support",
     audience: "business",
     monthly: 19999,
-    annual: 15999,
+    annualTotal: 199900,
   },
 ];
 
@@ -74,7 +74,7 @@ async function seedProducts() {
       (p) => p.recurring?.interval === "month" && p.unit_amount === plan.monthly,
     );
     const hasAnnual = prices.data.some(
-      (p) => p.recurring?.interval === "year" && p.unit_amount === plan.annual * 12,
+      (p) => p.recurring?.interval === "year" && p.unit_amount === plan.annualTotal,
     );
 
     if (!hasMonthly) {
@@ -93,12 +93,12 @@ async function seedProducts() {
     if (!hasAnnual) {
       const p = await stripe.prices.create({
         product: product.id,
-        unit_amount: plan.annual * 12,
+        unit_amount: plan.annualTotal,
         currency: "usd",
         recurring: { interval: "year" },
         metadata: { billing: "annual" },
       });
-      console.log(`  + Annual price $${((plan.annual * 12) / 100).toFixed(2)}/yr = $${(plan.annual / 100).toFixed(2)}/mo (${p.id})`);
+      console.log(`  + Annual price $${(plan.annualTotal / 100).toFixed(2)}/yr = $${(plan.annualTotal / 100 / 12).toFixed(2)}/mo (${p.id})`);
     } else {
       console.log(`  ✓ Annual price already exists`);
     }
