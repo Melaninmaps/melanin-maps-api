@@ -15,11 +15,13 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/lib/auth";
 
 export default function SignupScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { login } = useAuth();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -48,9 +50,11 @@ export default function SignupScreen() {
     if (!valid) return;
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 900));
-    setLoading(false);
-    router.push("/verify-phone");
+    try {
+      await login();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -178,6 +182,7 @@ export default function SignupScreen() {
 
           <TouchableOpacity
             style={[styles.socialBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => { void login(); }}
             activeOpacity={0.8}
           >
             <Text style={styles.socialIcon}>🌐</Text>
