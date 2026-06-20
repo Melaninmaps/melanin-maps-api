@@ -21,7 +21,8 @@ import { useAuth } from "@/lib/auth";
 import { usePoints } from "@/hooks/usePoints";
 
 const SETTINGS = [
-  { icon: "map" as const, label: "Trip Planner", sub: "Save & plan your next journey", route: "/travel" as const },
+  { icon: "map" as const, label: "Trip Planner", sub: "Chat with KinfolkAI™ for travel picks", route: "/travel" as const },
+  { icon: "bookmark" as const, label: "Trips I'd Love", sub: "Your KinfolkAI™ saved spots", route: "/wishlist" as const },
   { icon: "grid" as const, label: "My Dashboard", sub: "Saved places, activity & stats", route: "/dashboard" as const },
   { icon: "settings" as const, label: "Settings", sub: "Account, notifications, privacy", route: "/settings" as const },
   { icon: "bell" as const, label: "Notifications", sub: "Manage alerts and updates", route: "/notifications-settings" as const },

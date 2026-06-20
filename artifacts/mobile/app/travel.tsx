@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   FlatList,
   KeyboardAvoidingView,
@@ -21,7 +22,8 @@ import { useColors } from "@/hooks/useColors";
 import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent } from "@/hooks/useKinfolk";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useWishlist } from "@/hooks/useWishlist";
-import { KinfolkOnboarding, shouldShowKinfolkOnboarding } from "@/components/KinfolkOnboarding";
+import { KinfolkOnboarding, shouldShowKinfolkOnboarding, resetKinfolkOnboarding } from "@/components/KinfolkOnboarding";
+import { useAuth } from "@/lib/auth";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
@@ -528,10 +530,11 @@ const wsStyles = StyleSheet.create({
 
 // ─── Sub-component: Taste Profile Sheet ─────────────────────────────────────
 function TasteProfileSheet({
-  visible, onClose, colors,
+  visible, onClose, onRetakeQuiz, colors,
 }: {
   visible: boolean;
   onClose: () => void;
+  onRetakeQuiz?: () => void;
   colors: ReturnType<typeof useColors>;
 }) {
   const { preferences, update } = useUserPreferences();
@@ -637,6 +640,16 @@ function TasteProfileSheet({
           </View>
         </ScrollView>
 
+        {onRetakeQuiz && (
+          <TouchableOpacity
+            style={[tpStyles.retakeBtn, { borderColor: colors.border }]}
+            onPress={() => { onClose(); void resetKinfolkOnboarding().then(onRetakeQuiz); }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="refresh" size={14} color={colors.mutedForeground} />
+            <Text style={[tpStyles.retakeBtnText, { color: colors.mutedForeground }]}>Retake KinfolkAI™ setup quiz</Text>
+          </TouchableOpacity>
+        )}
         <View style={[tpStyles.footer, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
           <TouchableOpacity style={[tpStyles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving}>
             <Ionicons name="checkmark-circle" size={18} color="#fff" />
@@ -662,6 +675,8 @@ const tpStyles = StyleSheet.create({
   optionRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   optionBtn: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 },
   optionText: { fontFamily: "Inter_400Regular", fontSize: 13 },
+  retakeBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginHorizontal: 20, marginBottom: 12, paddingVertical: 12, borderRadius: 10, borderWidth: 1 },
+  retakeBtnText: { fontFamily: "Inter_400Regular", fontSize: 13 },
   footer: { padding: 16, borderTopWidth: 1 },
   saveBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, padding: 16 },
   saveBtnText: { fontFamily: "Inter_700Bold", fontSize: 16, color: "#fff" },
@@ -750,6 +765,7 @@ export default function TravelScreen() {
   const { messages, sessionId, isLoading, sessions, sendMessage, submitFeedback, loadSessions, loadSession, startNewSession } = useKinfolk();
   const { preferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
+  const { isAuthenticated } = useAuth();
 
   const [inputText, setInputText] = useState("");
   const [neighborVoice, setNeighborVoice] = useState(true);
@@ -794,11 +810,22 @@ export default function TravelScreen() {
 
   const handleWishlist = useCallback((biz: TravelBusiness, city: string, add: boolean, itemId: string | null) => {
     if (add) {
+      if (!isAuthenticated) {
+        Alert.alert(
+          "Sign in to save spots",
+          "Create a free account to build your \"Trips I'd Love\" wishlist.",
+          [
+            { text: "Not now", style: "cancel" },
+            { text: "Sign in", onPress: () => router.push("/login" as any) },
+          ]
+        );
+        return;
+      }
       void addItem({ businessName: biz.name, category: biz.category, city, neighborhood: biz.neighborhood, description: biz.description, mustTry: biz.mustTry, sessionId });
     } else if (itemId) {
       void removeItem(itemId);
     }
-  }, [addItem, removeItem, sessionId]);
+  }, [addItem, removeItem, sessionId, isAuthenticated]);
 
   const handleHistorySelect = useCallback(async (id: string) => {
     await loadSession(id);
@@ -948,7 +975,12 @@ export default function TravelScreen() {
       </KeyboardAvoidingView>
 
       {/* Taste Profile Sheet */}
-      <TasteProfileSheet visible={showProfile} onClose={() => setShowProfile(false)} colors={colors} />
+      <TasteProfileSheet
+        visible={showProfile}
+        onClose={() => setShowProfile(false)}
+        onRetakeQuiz={() => setShowOnboarding(true)}
+        colors={colors}
+      />
 
       {/* Session History Drawer */}
       <SessionHistoryDrawer

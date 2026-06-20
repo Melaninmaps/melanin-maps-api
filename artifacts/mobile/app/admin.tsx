@@ -575,18 +575,29 @@ function ClaimsTab() {
       {pending > 0 && (
         <View style={[adminStyles.alertBanner, { backgroundColor: "#C9922B12", borderColor: "#C9922B30" }]}>
           <Feather name="check-square" size={15} color="#C9922B" />
-          <Text style={[adminStyles.alertText, { color: "#C9922B" }]}>{pending} claim{pending !== 1 ? "s" : ""} awaiting review</Text>
+          <Text style={[adminStyles.alertText, { color: "#C9922B", flex: 1 }]}>{pending} claim{pending !== 1 ? "s" : ""} awaiting review</Text>
+          <TouchableOpacity onPress={() => { setIsLoading(true); void loadClaims(); }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Feather name="refresh-cw" size={14} color="#C9922B" />
+          </TouchableOpacity>
         </View>
       )}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          {STATUSES.map((s) => (
-            <TouchableOpacity key={s} style={[adminStyles.filterChip, { backgroundColor: filter === s ? colors.primary : colors.secondary, borderColor: filter === s ? colors.primary : colors.border }]} onPress={() => setFilter(s)}>
-              <Text style={[adminStyles.filterChipText, { color: filter === s ? "#FFFFFF" : colors.foreground }]}>{s}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
+      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 8 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }}>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            {STATUSES.map((s) => (
+              <TouchableOpacity key={s} style={[adminStyles.filterChip, { backgroundColor: filter === s ? colors.primary : colors.secondary, borderColor: filter === s ? colors.primary : colors.border }]} onPress={() => setFilter(s)}>
+                <Text style={[adminStyles.filterChipText, { color: filter === s ? "#FFFFFF" : colors.foreground }]}>{s}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+        <TouchableOpacity
+          onPress={() => { setIsLoading(true); void loadClaims(); }}
+          style={[adminStyles.filterChip, { backgroundColor: colors.secondary, borderColor: colors.border, paddingHorizontal: 10 }]}
+        >
+          <Feather name="refresh-cw" size={14} color={colors.foreground} />
+        </TouchableOpacity>
+      </View>
       {isLoading ? (
         <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 24 }} />
       ) : filtered.length === 0 ? (

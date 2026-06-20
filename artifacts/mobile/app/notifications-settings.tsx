@@ -1,8 +1,11 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as Notifications from "expo-notifications";
+import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Platform,
   ScrollView,
   StyleSheet,
@@ -12,6 +15,16 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
+
+async function getAuthToken(): Promise<string | null> {
+  try { return await SecureStore.getItemAsync("auth_session_token"); }
+  catch { return null; }
+}
 
 type Toggle = { id: string; icon: React.ComponentProps<typeof Feather>["name"]; label: string; sub: string; on: boolean; important?: boolean };
 
@@ -38,6 +51,50 @@ export default function NotificationsSettingsScreen() {
   const [quietFrom, setQuietFrom] = useState("10:00 PM");
   const [quietTo, setQuietTo] = useState("8:00 AM");
   const [quietHoursOn, setQuietHoursOn] = useState(true);
+  const [pushEnabled, setPushEnabled] = useState(true);
+  const [pushLoading, setPushLoading] = useState(false);
+
+  useEffect(() => {
+    Notifications.getPermissionsAsync().then(({ status }) => {
+      if (status !== "granted") setPushEnabled(false);
+    }).catch(() => {});
+  }, []);
+
+  const handlePushToggle = async () => {
+    if (pushLoading) return;
+    if (Platform.OS !== "web") Haptics.selectionAsync();
+    setPushLoading(true);
+    try {
+      const token = await getAuthToken();
+      const apiBase = getApiBase();
+      if (!pushEnabled) {
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Permission required", "Enable notifications in your device settings to receive alerts.");
+          setPushLoading(false);
+          return;
+        }
+        const pushToken = await Notifications.getExpoPushTokenAsync().catch(() => null);
+        if (pushToken?.data && token && apiBase) {
+          await fetch(`${apiBase}/api/notifications/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ token: pushToken.data, platform: Platform.OS }),
+          });
+        }
+        setPushEnabled(true);
+      } else {
+        if (token && apiBase) {
+          await fetch(`${apiBase}/api/notifications/register`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        }
+        setPushEnabled(false);
+      }
+    } catch {}
+    finally { setPushLoading(false); }
+  };
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -66,6 +123,26 @@ export default function NotificationsSettingsScreen() {
           <Text style={[styles.infoTxt, { color: colors.mutedForeground }]}>
             Safety alerts are always on to keep you and the community safe.
           </Text>
+        </View>
+
+        <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>DEVICE PUSH</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 16 }]}>
+          <View style={styles.row}>
+            <View style={[styles.rowIcon, { backgroundColor: pushEnabled ? colors.primary + "18" : colors.secondary }]}>
+              <Feather name="smartphone" size={16} color={pushEnabled ? colors.primary : colors.mutedForeground} />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={[styles.rowLabel, { color: colors.foreground }]}>Push Notifications</Text>
+              <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>
+                {pushEnabled ? "Receiving alerts on this device" : "Notifications disabled on this device"}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => void handlePushToggle()} activeOpacity={0.75} disabled={pushLoading}>
+              <View style={[styles.toggle, { backgroundColor: pushEnabled ? colors.primary : colors.border, opacity: pushLoading ? 0.5 : 1 }]}>
+                <View style={[styles.thumb, { transform: [{ translateX: pushEnabled ? 20 : 2 }] }]} />
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>PUSH NOTIFICATIONS</Text>

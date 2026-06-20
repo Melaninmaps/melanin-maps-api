@@ -33,6 +33,15 @@ const BUDGET_OPTIONS = [
   { id: "any", label: "It depends", desc: "Mix it up based on the vibe", emoji: "🤷" },
 ];
 
+const TRIP_STYLE_OPTIONS = [
+  { id: "solo", label: "Solo traveler", emoji: "🧍" },
+  { id: "couple", label: "Couples getaway", emoji: "💑" },
+  { id: "family", label: "Family trip", emoji: "👨‍👩‍👧‍👦" },
+  { id: "group", label: "Friend group", emoji: "👥" },
+  { id: "business", label: "Work trip", emoji: "💼" },
+  { id: "spiritual", label: "Spiritual journey", emoji: "🙏" },
+];
+
 const COMPANION_OPTIONS = [
   { id: "solo", label: "Just me", emoji: "🧍" },
   { id: "partner", label: "Me & my partner", emoji: "💑" },
@@ -51,6 +60,10 @@ export async function markKinfolkOnboardingDone(): Promise<void> {
   try { await AsyncStorage.setItem(ONBOARDING_KEY, "1"); } catch {}
 }
 
+export async function resetKinfolkOnboarding(): Promise<void> {
+  try { await AsyncStorage.removeItem(ONBOARDING_KEY); } catch {}
+}
+
 interface Props {
   visible: boolean;
   onComplete: () => void;
@@ -62,6 +75,7 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
   const [step, setStep] = useState(0);
   const [favCats, setFavCats] = useState<string[]>([]);
   const [budget, setBudget] = useState("any");
+  const [tripStyles, setTripStyles] = useState<string[]>([]);
   const [companion, setCompanion] = useState("solo");
   const [saving, setSaving] = useState(false);
 
@@ -69,15 +83,19 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
     setFavCats((p) => p.includes(id) ? p.filter((c) => c !== id) : [...p, id]);
   }
 
+  function toggleTripStyle(id: string) {
+    setTripStyles((p) => p.includes(id) ? p.filter((s) => s !== id) : [...p, id]);
+  }
+
   async function handleFinish() {
     setSaving(true);
-    await update({ favoriteCategories: favCats, budgetRange: budget, travelCompanion: companion });
+    await update({ favoriteCategories: favCats, budgetRange: budget, tripStyle: tripStyles, travelCompanion: companion });
     await markKinfolkOnboardingDone();
     setSaving(false);
     onComplete();
   }
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
@@ -159,6 +177,32 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
 
           {step === 3 && (
             <View>
+              <Text style={[styles.heading, { color: colors.text }]}>How do you travel?</Text>
+              <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
+                Pick all that describe you — I'll tailor spots for your travel style.
+              </Text>
+              <View style={styles.catGrid}>
+                {TRIP_STYLE_OPTIONS.map((s) => {
+                  const sel = tripStyles.includes(s.id);
+                  return (
+                    <TouchableOpacity
+                      key={s.id}
+                      style={[styles.catChip, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]}
+                      onPress={() => toggleTripStyle(s.id)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.catEmoji}>{s.emoji}</Text>
+                      <Text style={[styles.catLabel, { color: sel ? "#fff" : colors.text }]}>{s.label}</Text>
+                      {sel && <Ionicons name="checkmark-circle" size={14} color="#fff" />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {step === 4 && (
+            <View>
               <Text style={[styles.heading, { color: colors.text }]}>Who's rolling with you?</Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
                 I'll tailor spots based on your travel crew.
@@ -180,7 +224,7 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
               <View style={[styles.learnBadge, { backgroundColor: GOLD + "14", borderColor: GOLD + "30" }]}>
                 <Ionicons name="bulb-outline" size={16} color={GOLD} />
                 <Text style={[styles.learnText, { color: colors.text }]}>
-                  KinfolkAI gets smarter every time you use it. Thumbs up a spot? I remember. Thumbs down? I won't do it again.
+                  KinfolkAI™ gets smarter every time you use it. Thumbs up a spot? I remember. Thumbs down? I won't do it again.
                 </Text>
               </View>
             </View>
@@ -219,7 +263,7 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   progressRow: { flexDirection: "row", justifyContent: "center", gap: 6, paddingTop: 20, paddingBottom: 4 },
-  dot: { width: 28, height: 4, borderRadius: 2 },
+  dot: { width: 22, height: 4, borderRadius: 2 },
   scroll: { padding: 24, paddingBottom: 16 },
   centered: { alignItems: "center", paddingTop: 24 },
   iconWrap: { width: 88, height: 88, borderRadius: 44, alignItems: "center", justifyContent: "center", marginBottom: 20 },
