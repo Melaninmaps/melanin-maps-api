@@ -69,7 +69,8 @@ const WELCOME_CHIPS = [
 
 // ─── Sub-component: Business Card ────────────────────────────────────────────
 function BusinessCard({
-  biz, messageId, city, feedback, onFeedback, wishlistItemId, onWishlist, colors,
+  biz, messageId, city, feedback, onFeedback, wishlistItemId, onWishlist,
+  compareMode, isSelected, onCompareToggle, colors,
 }: {
   biz: TravelBusiness;
   messageId: string;
@@ -78,12 +79,28 @@ function BusinessCard({
   onFeedback: (msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => void;
   wishlistItemId: string | null;
   onWishlist: (biz: TravelBusiness, city: string, add: boolean, itemId: string | null) => void;
+  compareMode?: boolean;
+  isSelected?: boolean;
+  onCompareToggle?: (biz: TravelBusiness) => void;
   colors: ReturnType<typeof useColors>;
 }) {
   const reaction = feedback[biz.name];
   const wishlisted = wishlistItemId !== null;
   return (
-    <View style={[bizStyles.card, { backgroundColor: colors.background, borderColor: colors.border }]}>
+    <TouchableOpacity
+      activeOpacity={compareMode ? 0.75 : 1}
+      onPress={compareMode ? () => onCompareToggle?.(biz) : undefined}
+      style={[
+        bizStyles.card,
+        { backgroundColor: colors.background, borderColor: isSelected ? colors.primary : colors.border },
+        isSelected && { backgroundColor: colors.primary + "08" },
+      ]}
+    >
+      {compareMode && (
+        <View style={[bizStyles.compareCheck, { borderColor: isSelected ? colors.primary : colors.border, backgroundColor: isSelected ? colors.primary : colors.background }]}>
+          {isSelected && <Ionicons name="checkmark" size={11} color="#fff" />}
+        </View>
+      )}
       <View style={bizStyles.cardTop}>
         <View style={[bizStyles.badge, { backgroundColor: colors.primary + "18" }]}>
           <Text style={[bizStyles.badgeText, { color: colors.primary }]}>{biz.category}</Text>
@@ -92,11 +109,13 @@ function BusinessCard({
           <Ionicons name="location-outline" size={11} /> {biz.neighborhood}
         </Text>
         <TouchableOpacity
-          onPress={() => onWishlist(biz, city ?? "", !wishlisted, wishlistItemId)}
+          onPress={() => compareMode ? onCompareToggle?.(biz) : onWishlist(biz, city ?? "", !wishlisted, wishlistItemId)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          style={[bizStyles.wishlistBtn, wishlisted && { backgroundColor: colors.primary + "18" }]}
+          style={[bizStyles.wishlistBtn, !compareMode && wishlisted && { backgroundColor: colors.primary + "18" }]}
         >
-          <Ionicons name={wishlisted ? "bookmark" : "bookmark-outline"} size={16} color={wishlisted ? colors.primary : colors.mutedForeground} />
+          {compareMode
+            ? <Ionicons name={isSelected ? "checkmark-circle" : "ellipse-outline"} size={18} color={isSelected ? colors.primary : colors.mutedForeground} />
+            : <Ionicons name={wishlisted ? "bookmark" : "bookmark-outline"} size={16} color={wishlisted ? colors.primary : colors.mutedForeground} />}
         </TouchableOpacity>
       </View>
       <Text style={[bizStyles.name, { color: colors.text }]}>{biz.name}</Text>
@@ -124,12 +143,13 @@ function BusinessCard({
           <Ionicons name={reaction === "dislike" ? "thumbs-down" : "thumbs-down-outline"} size={16} color={reaction === "dislike" ? "#DC2626" : colors.mutedForeground} />
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
 const bizStyles = StyleSheet.create({
-  card: { borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 8 },
+  card: { borderRadius: 12, borderWidth: 1.5, padding: 12, marginBottom: 8 },
+  compareCheck: { position: "absolute", top: -6, left: -6, width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, alignItems: "center", justifyContent: "center", zIndex: 1 },
   cardTop: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
   badge: { borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2 },
   badgeText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
@@ -205,13 +225,17 @@ const evStyles = StyleSheet.create({
 
 // ─── Sub-component: AI Message ────────────────────────────────────────────────
 function AiMessageBubble({
-  msg, onFeedback, onQuickReply, onWishlist, wishlistedNames, colors,
+  msg, onFeedback, onQuickReply, onWishlist, wishlistedNames,
+  compareMode, compareSelectedNames, onCompareToggle, colors,
 }: {
   msg: ChatMessage;
   onFeedback: (msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => void;
   onQuickReply: (text: string) => void;
   onWishlist: (biz: TravelBusiness, city: string, add: boolean, itemId: string | null) => void;
   wishlistedNames: Record<string, string>;
+  compareMode: boolean;
+  compareSelectedNames: Set<string>;
+  onCompareToggle: (biz: TravelBusiness) => void;
   colors: ReturnType<typeof useColors>;
 }) {
   const recs = msg.recommendations;
@@ -267,6 +291,9 @@ function AiMessageBubble({
                       feedback={msg.feedback ?? {}} onFeedback={onFeedback}
                       wishlistItemId={wishlistedNames[biz.name] ?? null}
                       onWishlist={onWishlist}
+                      compareMode={compareMode}
+                      isSelected={compareSelectedNames.has(biz.name)}
+                      onCompareToggle={onCompareToggle}
                       colors={colors}
                     />
                   ))}
@@ -773,6 +800,8 @@ export default function TravelScreen() {
   const [showHistory, setShowHistory] = useState(false);
   const [showVoiceToggle, setShowVoiceToggle] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareSelected, setCompareSelected] = useState<TravelBusiness[]>([]);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -808,6 +837,11 @@ export default function TravelScreen() {
     return map;
   }, [wishlistItems]);
 
+  const compareSelectedNamesSet = useMemo(
+    () => new Set(compareSelected.map((b) => b.name)),
+    [compareSelected],
+  );
+
   const handleWishlist = useCallback((biz: TravelBusiness, city: string, add: boolean, itemId: string | null) => {
     if (add) {
       if (!isAuthenticated) {
@@ -836,6 +870,27 @@ export default function TravelScreen() {
     startNewSession();
   }, [startNewSession]);
 
+  const handleCompareToggle = useCallback((biz: TravelBusiness) => {
+    setCompareSelected((prev) => {
+      const exists = prev.some((b) => b.name === biz.name);
+      if (exists) return prev.filter((b) => b.name !== biz.name);
+      if (prev.length >= 3) return prev;
+      return [...prev, biz];
+    });
+  }, []);
+
+  const handleCompare = useCallback(async () => {
+    if (compareSelected.length < 2) return;
+    const selected = compareSelected;
+    setCompareMode(false);
+    setCompareSelected([]);
+    const list = selected
+      .map((b, i) => `${i + 1}. ${b.name} (${b.category}${b.neighborhood ? `, ${b.neighborhood}` : ""}) — ${b.description}. Must try: ${b.mustTry}`)
+      .join("\n");
+    const prompt = `Compare these ${selected.length} spots and tell me which is the best fit for me based on my taste profile and everything I've rated:\n\n${list}\n\nPick one winner and explain why it's the right call for me.`;
+    await sendMessage(prompt, { neighborVoice });
+  }, [compareSelected, sendMessage, neighborVoice]);
+
   const hasProfile = preferences && (
     (preferences.favoriteCategories?.length ?? 0) > 0 ||
     (preferences.tripStyle?.length ?? 0) > 0
@@ -852,10 +907,13 @@ export default function TravelScreen() {
         onQuickReply={(t) => void handleSend(t)}
         onWishlist={handleWishlist}
         wishlistedNames={wishlistedNames}
+        compareMode={compareMode}
+        compareSelectedNames={compareSelectedNamesSet}
+        onCompareToggle={handleCompareToggle}
         colors={colors}
       />
     );
-  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames]);
+  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -882,6 +940,13 @@ export default function TravelScreen() {
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name={wishlistItems.length > 0 ? "bookmark" : "bookmark-outline"} size={22} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.headerIconBtn, compareMode && { backgroundColor: "#ffffff40" }]}
+            onPress={() => { setCompareMode((v) => !v); setCompareSelected([]); }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="scale-outline" size={22} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerIconBtn}
@@ -927,6 +992,29 @@ export default function TravelScreen() {
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
         />
+
+        {/* Compare bar */}
+        {compareMode && (
+          <View style={[styles.compareBar, { backgroundColor: colors.card, borderTopColor: colors.border, borderBottomColor: colors.border }]}>
+            <Ionicons name="scale-outline" size={15} color={compareSelected.length >= 2 ? colors.primary : colors.mutedForeground} />
+            <Text style={[styles.compareBarText, { color: compareSelected.length >= 2 ? colors.foreground : colors.mutedForeground }]}>
+              {compareSelected.length === 0
+                ? "Tap spots below to compare (up to 3)"
+                : compareSelected.length === 1
+                  ? "1 of 3 selected — pick at least one more"
+                  : `${compareSelected.length} of 3 selected`}
+            </Text>
+            <TouchableOpacity
+              style={[styles.compareGoBtn, { backgroundColor: compareSelected.length >= 2 ? colors.primary : colors.border }]}
+              onPress={() => void handleCompare()}
+              disabled={compareSelected.length < 2}
+            >
+              <Text style={[styles.compareGoBtnText, { color: compareSelected.length >= 2 ? "#fff" : colors.mutedForeground }]}>
+                Compare →
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Voice toggle (collapsible) */}
         {showVoiceToggle && (
@@ -1014,6 +1102,10 @@ const styles = StyleSheet.create({
   personalBanner: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
   personalBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
   chatContent: { paddingTop: 16, paddingBottom: 8 },
+  compareBar: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1 },
+  compareBarText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 13 },
+  compareGoBtn: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8 },
+  compareGoBtnText: { fontFamily: "Inter_700Bold", fontSize: 13 },
   voiceRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1 },
   voiceLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   voiceSub: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
