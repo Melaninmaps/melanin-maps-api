@@ -99,9 +99,12 @@ export const LogoutMobileSessionResponse = zod.object({
 /**
  * @summary Get AI travel recommendations for a destination
  */
+export const getTravelRecommendationsBodyNeighborVoiceDefault = true;
+
 export const GetTravelRecommendationsBody = zod.object({
   "destination": zod.string().describe('City or region to get recommendations for'),
-  "vibes": zod.array(zod.string()).optional().describe('Travel vibe tags (e.g. foodie, nightlife, culture)')
+  "vibes": zod.array(zod.string()).optional().describe('Travel vibe tags (e.g. foodie, nightlife, culture)'),
+  "neighborVoice": zod.boolean().default(getTravelRecommendationsBodyNeighborVoiceDefault).describe('When true (default), KinfolkAI uses authentic city-specific cultural voice and slang. Set to false for standard, neutral language.')
 })
 
 export const GetTravelRecommendationsResponse = zod.object({

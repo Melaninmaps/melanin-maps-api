@@ -413,6 +413,10 @@ components:
           items:
             type: string
           description: Travel vibe tags (e.g. foodie, nightlife, culture)
+        neighborVoice:
+          type: boolean
+          description: When true (default), KinfolkAI uses authentic city-specific cultural voice and slang. Set to false for standard, neutral language.
+          default: true
       required:
         - destination
     TravelRecommendations:

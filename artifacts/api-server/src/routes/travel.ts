@@ -128,12 +128,14 @@ router.post("/travel/recommendations", async (req, res) => {
     return;
   }
 
-  const { destination, vibes = [] } = parsed.data;
+  const { destination, vibes = [], neighborVoice = true } = parsed.data;
   const vibeList = vibes.length > 0 ? vibes.join(", ") : "general travel";
-  const cityVoice = getCityVoice(destination);
-  const culturalVoiceInstructions = cityVoice
-    ? buildCulturalVoiceInstructions(cityVoice)
-    : `You are the user's neighbor who knows this city. Write like you're texting a friend the real hookup before they visit. Warm, personal, direct — like your auntie who knows everybody. Short sentences. Use "you" and "your" constantly. Drop real community knowledge. Never use travel brochure words like "boasts", "features", "renowned", or "visitors will enjoy". This is kinfolk talking to kinfolk.`;
+  const cityVoice = neighborVoice ? getCityVoice(destination) : null;
+  const culturalVoiceInstructions = !neighborVoice
+    ? `Write in a clear, warm, and informative tone. Be helpful and community-focused, but use standard language without regional slang or dialect. Still celebrate Black culture and Black-owned businesses authentically — just in a universally accessible voice.`
+    : cityVoice
+      ? buildCulturalVoiceInstructions(cityVoice)
+      : `You are the user's neighbor who knows this city. Write like you're texting a friend the real hookup before they visit. Warm, personal, direct — like your auntie who knows everybody. Short sentences. Use "you" and "your" constantly. Drop real community knowledge. Never use travel brochure words like "boasts", "features", "renowned", or "visitors will enjoy". This is kinfolk talking to kinfolk.`;
 
   const prompt = `You are KinfolkAI — built by and for the Black community. Your whole thing is giving people the real, unfiltered scoop on a city, the way only a neighbor who grew up there can.
 

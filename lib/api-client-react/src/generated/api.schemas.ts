@@ -60,6 +60,8 @@ export interface TravelRecommendationRequest {
   destination: string;
   /** Travel vibe tags (e.g. foodie, nightlife, culture) */
   vibes?: string[];
+  /** When true (default), KinfolkAI uses authentic city-specific cultural voice and slang. Set to false for standard, neutral language. */
+  neighborVoice?: boolean;
 }
 
 export interface TravelBusiness {

@@ -10,6 +10,7 @@ import {
   Platform,
   Animated,
   FlatList,
+  Switch,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -80,6 +81,7 @@ export default function TravelScreen() {
   >("businesses");
   const [showFeedbackSurvey, setShowFeedbackSurvey] = useState(false);
   const [tripSaved, setTripSaved] = useState(false);
+  const [neighborVoice, setNeighborVoice] = useState(true);
   const { createItinerary } = useItineraries();
 
   const fadeAnim = useState(new Animated.Value(0))[0];
@@ -103,6 +105,7 @@ export default function TravelScreen() {
         body: JSON.stringify({
           destination: destination.trim(),
           vibes: selectedVibes,
+          neighborVoice,
         }),
       });
 
@@ -255,6 +258,32 @@ export default function TravelScreen() {
                 </TouchableOpacity>
               );
             })}
+          </View>
+
+          <View style={[styles.voiceToggleRow, { borderColor: colors.border }]}>
+            <View style={styles.voiceToggleLeft}>
+              <Ionicons
+                name={neighborVoice ? "chatbubble-ellipses" : "chatbubble-outline"}
+                size={16}
+                color={neighborVoice ? colors.primary : colors.mutedForeground}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.voiceToggleLabel, { color: colors.text }]}>
+                  Neighbor Voice
+                </Text>
+                <Text style={[styles.voiceToggleSub, { color: colors.mutedForeground }]}>
+                  {neighborVoice
+                    ? "City slang & local flavor on"
+                    : "Standard language"}
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={neighborVoice}
+              onValueChange={setNeighborVoice}
+              trackColor={{ false: colors.border, true: colors.primary + "66" }}
+              thumbColor={neighborVoice ? colors.primary : colors.mutedForeground}
+            />
           </View>
 
           <TouchableOpacity
@@ -776,6 +805,31 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
     fontSize: 12,
   },
+  voiceToggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginTop: 16,
+  },
+  voiceToggleLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  voiceToggleLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+  },
+  voiceToggleSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    marginTop: 1,
+  },
   searchBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -783,7 +837,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderRadius: 12,
-    marginTop: 4,
+    marginTop: 12,
   },
   searchBtnText: {
     fontFamily: "Inter_600SemiBold",
