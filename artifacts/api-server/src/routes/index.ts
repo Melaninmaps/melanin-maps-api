@@ -21,6 +21,7 @@ import eventsRouter from "./events";
 import usersRouter from "./users";
 import groupsRouter from "./groups";
 import adminRouter from "./admin";
+import kinfolkRouter from "./kinfolk";
 
 const router: IRouter = Router();
 
@@ -46,5 +47,6 @@ router.use(eventsRouter);
 router.use(usersRouter);
 router.use(groupsRouter);
 router.use(adminRouter);
+router.use(kinfolkRouter);
 
 export default router;

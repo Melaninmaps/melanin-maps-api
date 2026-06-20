@@ -14,3 +14,6 @@ export * from "./contact";
 export * from "./events";
 export * from "./groups";
 export * from "./business-invites";
+export * from "./user-preferences";
+export * from "./kinfolk-sessions";
+export * from "./kinfolk-feedback";
