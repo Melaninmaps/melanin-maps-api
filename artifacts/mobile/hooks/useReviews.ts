@@ -21,6 +21,8 @@ export interface ApiReview {
   rating: number;
   text: string | null;
   wouldReturnAlone: boolean | null;
+  socialHandle: string | null;
+  socialPlatform: string | null;
   createdAt: string;
 }
 
@@ -45,7 +47,14 @@ export function useReviews(businessId: string) {
   useEffect(() => { load(); }, [load]);
 
   const submitReview = useCallback(
-    async (rating: number, text: string, wouldReturnAlone: boolean): Promise<number | null> => {
+    async (
+      rating: number,
+      text: string,
+      wouldReturnAlone: boolean,
+      socialHandle?: string,
+      socialPlatform?: string,
+      businessName?: string,
+    ): Promise<number | null> => {
       const token = await getToken();
       const apiBase = getApiBase();
       if (!token || !apiBase) return null;
@@ -56,7 +65,15 @@ export function useReviews(businessId: string) {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ businessId, rating, text, wouldReturnAlone }),
+          body: JSON.stringify({
+            businessId,
+            rating,
+            text,
+            wouldReturnAlone,
+            socialHandle: socialHandle || null,
+            socialPlatform: socialPlatform || null,
+            businessName: businessName || null,
+          }),
         });
         if (res.ok) {
           const data = (await res.json()) as { review: ApiReview; pointsEarned: number };

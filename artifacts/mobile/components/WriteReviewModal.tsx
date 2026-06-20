@@ -1,4 +1,4 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
 import {
@@ -14,25 +14,41 @@ import {
 } from "react-native";
 import { useColors } from "@/hooks/useColors";
 
+const PLATFORMS = [
+  { id: "instagram", label: "Instagram", icon: "logo-instagram" },
+  { id: "twitter", label: "X / Twitter", icon: "logo-twitter" },
+  { id: "tiktok", label: "TikTok", icon: "musical-notes" },
+  { id: "facebook", label: "Facebook", icon: "logo-facebook" },
+] as const;
+
+type SocialPlatform = (typeof PLATFORMS)[number]["id"];
+
 interface Props {
   visible: boolean;
   businessName: string;
+  businessId?: string;
   onClose: () => void;
-  onSubmit: (rating: number, text: string, wouldReturn: boolean) => void;
+  onSubmit: (rating: number, text: string, wouldReturn: boolean, socialHandle?: string, socialPlatform?: string) => void;
 }
 
-export function WriteReviewModal({ visible, businessName, onClose, onSubmit }: Props) {
+export function WriteReviewModal({ visible, businessName, businessId, onClose, onSubmit }: Props) {
   const colors = useColors();
   const [rating, setRating] = useState(0);
   const [text, setText] = useState("");
   const [wouldReturn, setWouldReturn] = useState<boolean | null>(null);
+  const [socialHandle, setSocialHandle] = useState("");
+  const [socialPlatform, setSocialPlatform] = useState<SocialPlatform | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [inviteSent, setInviteSent] = useState(false);
 
   const reset = () => {
     setRating(0);
     setText("");
     setWouldReturn(null);
+    setSocialHandle("");
+    setSocialPlatform(null);
     setSubmitted(false);
+    setInviteSent(false);
   };
 
   const handleClose = () => {
@@ -43,12 +59,15 @@ export function WriteReviewModal({ visible, businessName, onClose, onSubmit }: P
   const handleSubmit = () => {
     if (rating === 0 || wouldReturn === null) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    const cleanHandle = socialHandle.trim().replace(/^@/, "");
+    const hasInvite = cleanHandle.length > 0 && socialPlatform !== null;
+    setInviteSent(hasInvite);
     setSubmitted(true);
-    onSubmit(rating, text, wouldReturn);
+    onSubmit(rating, text, wouldReturn, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined);
     setTimeout(() => {
       reset();
       onClose();
-    }, 1800);
+    }, 2200);
   };
 
   return (
@@ -67,9 +86,23 @@ export function WriteReviewModal({ visible, businessName, onClose, onSubmit }: P
                 <Feather name="check-circle" size={40} color="#2D7A4F" />
               </View>
               <Text style={[styles.successTitle, { color: colors.foreground }]}>Review Submitted!</Text>
-              <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
-                Thank you for helping the community.
-              </Text>
+              {inviteSent ? (
+                <>
+                  <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
+                    Thank you for helping the community.
+                  </Text>
+                  <View style={[styles.inviteBadge, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "33" }]}>
+                    <Ionicons name="paper-plane" size={14} color={colors.primary} />
+                    <Text style={[styles.inviteBadgeText, { color: colors.primary }]}>
+                      Invite sent to @{socialHandle.replace(/^@/, "")} — 60-day free trial unlocked!
+                    </Text>
+                  </View>
+                </>
+              ) : (
+                <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
+                  Thank you for helping the community.
+                </Text>
+              )}
             </View>
           ) : (
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -144,6 +177,69 @@ export function WriteReviewModal({ visible, businessName, onClose, onSubmit }: P
                 onChangeText={setText}
               />
 
+              {/* Social invite section */}
+              <View style={[styles.inviteSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.inviteHeader}>
+                  <Ionicons name="paper-plane-outline" size={16} color={colors.primary} />
+                  <Text style={[styles.inviteTitle, { color: colors.foreground }]}>
+                    Invite this business
+                  </Text>
+                  <View style={[styles.optionalBadge, { backgroundColor: colors.primary + "18" }]}>
+                    <Text style={[styles.optionalText, { color: colors.primary }]}>optional</Text>
+                  </View>
+                </View>
+                <Text style={[styles.inviteDesc, { color: colors.mutedForeground }]}>
+                  Tag their social handle and we'll send them a 60-day free trial invitation to join Mapping With Melanin.
+                </Text>
+
+                <Text style={[styles.platformLabel, { color: colors.foreground }]}>Platform</Text>
+                <View style={styles.platformRow}>
+                  {PLATFORMS.map((p) => {
+                    const selected = socialPlatform === p.id;
+                    return (
+                      <TouchableOpacity
+                        key={p.id}
+                        style={[
+                          styles.platformChip,
+                          {
+                            borderColor: selected ? colors.primary : colors.border,
+                            backgroundColor: selected ? colors.primary + "18" : colors.background,
+                          },
+                        ]}
+                        onPress={() => setSocialPlatform(p.id)}
+                      >
+                        <Ionicons
+                          name={p.icon as any}
+                          size={14}
+                          color={selected ? colors.primary : colors.mutedForeground}
+                        />
+                        <Text style={[styles.platformChipText, { color: selected ? colors.primary : colors.foreground }]}>
+                          {p.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                <View style={[styles.handleInputRow, { backgroundColor: colors.background, borderColor: socialHandle ? colors.primary : colors.border }]}>
+                  <Text style={[styles.atSign, { color: colors.mutedForeground }]}>@</Text>
+                  <TextInput
+                    style={[styles.handleInput, { color: colors.foreground }]}
+                    placeholder="businesshandle"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={socialHandle}
+                    onChangeText={(v) => setSocialHandle(v.replace(/^@/, ""))}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  {socialHandle.length > 0 && (
+                    <TouchableOpacity onPress={() => setSocialHandle("")}>
+                      <Ionicons name="close-circle" size={16} color={colors.mutedForeground} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+
               <TouchableOpacity
                 style={[
                   styles.submitBtn,
@@ -155,7 +251,9 @@ export function WriteReviewModal({ visible, businessName, onClose, onSubmit }: P
                 disabled={rating === 0 || wouldReturn === null}
                 activeOpacity={0.85}
               >
-                <Text style={styles.submitText}>Submit Review</Text>
+                <Text style={styles.submitText}>
+                  {socialHandle.trim() && socialPlatform ? "Submit & Send Invite" : "Submit Review"}
+                </Text>
               </TouchableOpacity>
 
               <View style={{ height: 24 }} />
@@ -180,7 +278,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
-    maxHeight: "90%",
+    maxHeight: "92%",
   },
   handle: {
     width: 36,
@@ -239,6 +337,79 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
     marginBottom: 20,
   },
+  inviteSection: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    gap: 10,
+  },
+  inviteHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  inviteTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    flex: 1,
+  },
+  optionalBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 20,
+  },
+  optionalText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 11,
+  },
+  inviteDesc: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  platformLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  platformRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  platformChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  platformChipText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+  },
+  handleInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 4,
+    marginTop: 4,
+  },
+  atSign: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+  },
+  handleInput: {
+    flex: 1,
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+  },
   submitBtn: {
     paddingVertical: 16,
     borderRadius: 14,
@@ -251,7 +422,7 @@ const styles = StyleSheet.create({
   },
   successWrap: {
     alignItems: "center",
-    paddingVertical: 40,
+    paddingVertical: 32,
     gap: 12,
   },
   successIcon: {
@@ -269,5 +440,21 @@ const styles = StyleSheet.create({
   successSub: {
     fontFamily: "Inter_400Regular",
     fontSize: 14,
+    textAlign: "center",
+  },
+  inviteBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 4,
+  },
+  inviteBadgeText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    flex: 1,
   },
 });

@@ -138,8 +138,14 @@ export default function BusinessDetailScreen() {
     setShareModalOpen(true);
   };
 
-  const handleReviewSubmit = async (rating: number, text: string, wouldReturn: boolean) => {
-    const pts = await submitReview(rating, text, wouldReturn);
+  const handleReviewSubmit = async (
+    rating: number,
+    text: string,
+    wouldReturn: boolean,
+    socialHandle?: string,
+    socialPlatform?: string,
+  ) => {
+    const pts = await submitReview(rating, text, wouldReturn, socialHandle, socialPlatform, business.name);
     if (pts != null) {
       addLocal(pts);
       showPointsToast(`+${pts} pts — thanks for your review!`);

@@ -11,6 +11,8 @@ export const reviewsTable = pgTable("reviews", {
   rating: integer("rating").notNull(),
   text: text("text"),
   wouldReturnAlone: boolean("would_return_alone"),
+  socialHandle: varchar("social_handle", { length: 100 }),
+  socialPlatform: varchar("social_platform", { length: 30 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
