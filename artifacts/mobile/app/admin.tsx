@@ -1,7 +1,8 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import * as SecureStore from "expo-secure-store";
 import {
   ActivityIndicator,
   Platform,
@@ -501,20 +502,74 @@ function SurveysTab() {
   );
 }
 
+interface ClaimRow {
+  id: string;
+  businessName: string | null;
+  businessId: string;
+  ownerName: string;
+  email: string;
+  phone: string | null;
+  role: string | null;
+  status: string | null;
+  createdAt: string;
+}
+
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
+
 function ClaimsTab() {
   const colors = useColors();
   const [filter, setFilter] = useState("All");
+  const [claims, setClaims] = useState<ClaimRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const STATUSES = ["All", "Pending", "Approved", "Rejected"];
-  const claims = [
-    { business: "Kingdom Cuts Barbershop", city: "Atlanta, GA", claimant: "Marcus T.", method: "Email", status: "pending", submitted: "Jun 15" },
-    { business: "Essence Beauty Lounge", city: "Houston, TX", claimant: "Aisha B.", method: "Document", status: "approved", submitted: "Jun 10" },
-    { business: "Carter & Associates Law", city: "Los Angeles, CA", claimant: "Darius K.", method: "Phone", status: "approved", submitted: "Jun 8" },
-    { business: "New Listing Co.", city: "Chicago, IL", claimant: "Unknown User", method: "Email", status: "rejected", submitted: "Jun 5" },
-    { business: "Urban Roots Cafe", city: "Oakland, CA", claimant: "Zara M.", method: "Document", status: "pending", submitted: "Jun 16" },
-  ];
-  const statusColor = (s: string) => s === "approved" ? "#2D7A4F" : s === "rejected" ? "#DC2626" : "#C9922B";
-  const filtered = filter === "All" ? claims : claims.filter((c) => c.status === filter.toLowerCase());
+
+  const loadClaims = useCallback(async () => {
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const apiBase = getApiBase();
+      if (!token || !apiBase) return;
+      const res = await fetch(`${apiBase}/api/admin/claims`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { claims: ClaimRow[] };
+        setClaims(data.claims);
+      }
+    } catch {}
+    finally { setIsLoading(false); }
+  }, []);
+
+  useEffect(() => { void loadClaims(); }, [loadClaims]);
+
+  const updateStatus = useCallback(async (id: string, status: string) => {
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const apiBase = getApiBase();
+      if (!token || !apiBase) return;
+      const res = await fetch(`${apiBase}/api/admin/claims/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        setClaims((prev) => prev.map((c) => c.id === id ? { ...c, status } : c));
+      }
+    } catch {}
+  }, []);
+
+  const statusColor = (s: string | null) => s === "approved" ? "#2D7A4F" : s === "rejected" ? "#DC2626" : "#C9922B";
+
+  const filtered = filter === "All" ? claims : claims.filter((c) => (c.status ?? "pending") === filter.toLowerCase());
   const pending = claims.filter((c) => c.status === "pending").length;
+
+  function fmtDate(iso: string): string {
+    try { return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
+    catch { return iso; }
+  }
+
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       {pending > 0 && (
@@ -532,32 +587,40 @@ function ClaimsTab() {
           ))}
         </View>
       </ScrollView>
-      {filtered.map((c, i) => (
-        <View key={i} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
-            <View style={[adminStyles.statusBadge, { backgroundColor: statusColor(c.status) + "18" }]}>
-              <Text style={[adminStyles.statusBadgeText, { color: statusColor(c.status) }]}>{c.status}</Text>
-            </View>
-            <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>Submitted {c.submitted}</Text>
-          </View>
-          <Text style={[adminStyles.bizName, { color: colors.foreground, marginBottom: 2 }]}>{c.business}</Text>
-          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{c.city}</Text>
-          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>Claimant: {c.claimant} · Method: {c.method}</Text>
-          {c.status === "pending" && (
-            <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-              <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30" }]}>
-                <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>Approve</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}>
-                <Text style={[adminStyles.smallBtnText, { color: "#DC2626" }]}>Reject</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
-                <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Request Docs</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+      {isLoading ? (
+        <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 24 }} />
+      ) : filtered.length === 0 ? (
+        <View style={{ alignItems: "center", paddingTop: 40 }}>
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>No {filter !== "All" ? filter.toLowerCase() : ""} claims found</Text>
         </View>
-      ))}
+      ) : (
+        filtered.map((c) => (
+          <View key={c.id} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+              <View style={[adminStyles.statusBadge, { backgroundColor: statusColor(c.status) + "18" }]}>
+                <Text style={[adminStyles.statusBadgeText, { color: statusColor(c.status) }]}>{c.status ?? "pending"}</Text>
+              </View>
+              <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>Submitted {fmtDate(c.createdAt)}</Text>
+            </View>
+            <Text style={[adminStyles.bizName, { color: colors.foreground, marginBottom: 2 }]}>{c.businessName ?? c.businessId}</Text>
+            <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>Claimant: {c.ownerName} · {c.role ?? "owner"}</Text>
+            <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{c.email}{c.phone ? ` · ${c.phone}` : ""}</Text>
+            {(c.status === "pending" || c.status == null) && (
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+                <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30" }]} onPress={() => void updateStatus(c.id, "approved")}>
+                  <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>Approve</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]} onPress={() => void updateStatus(c.id, "rejected")}>
+                  <Text style={[adminStyles.smallBtnText, { color: "#DC2626" }]}>Reject</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]} onPress={() => void updateStatus(c.id, "needs_info")}>
+                  <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Request Docs</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        ))
+      )}
     </ScrollView>
   );
 }

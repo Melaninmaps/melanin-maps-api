@@ -23,6 +23,7 @@ import { ReportContentModal } from "@/components/ReportContentModal";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { ShareModal } from "@/components/ShareModal";
 import { WriteReviewModal } from "@/components/WriteReviewModal";
+import { ClaimBusinessModal } from "@/components/ClaimBusinessModal";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinessById } from "@/hooks/useBusinesses";
@@ -52,6 +53,7 @@ export default function BusinessDetailScreen() {
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [claimModalOpen, setClaimModalOpen] = useState(false);
   const [checkInDone, setCheckInDone] = useState(false);
   const [pointsToast, setPointsToast] = useState<string | null>(null);
   const toastOpacity = useRef(new Animated.Value(0)).current;
@@ -360,6 +362,20 @@ export default function BusinessDetailScreen() {
             ))
           )}
         </View>
+
+        {/* Claim this business */}
+        <View style={[styles.claimSection, { borderTopColor: colors.border }]}>
+          <TouchableOpacity style={styles.claimRow} onPress={() => setClaimModalOpen(true)} activeOpacity={0.7}>
+            <View style={[styles.claimIcon, { backgroundColor: colors.primary + "14" }]}>
+              <Feather name="shield" size={14} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.claimLabel, { color: colors.foreground }]}>Is this your business?</Text>
+              <Text style={[styles.claimSub, { color: colors.mutedForeground }]}>Claim this listing to manage your profile</Text>
+            </View>
+            <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
       {pointsToast ? (
@@ -410,6 +426,12 @@ export default function BusinessDetailScreen() {
         businessName={business.name}
         onClose={() => setReviewModalOpen(false)}
         onSubmit={handleReviewSubmit}
+      />
+      <ClaimBusinessModal
+        visible={claimModalOpen}
+        businessId={id ?? ""}
+        businessName={business.name}
+        onClose={() => setClaimModalOpen(false)}
       />
       <ReportContentModal
         visible={reportModalOpen}
@@ -567,6 +589,11 @@ const styles = StyleSheet.create({
   returnAlone: { flexDirection: "row", alignItems: "center", gap: 4 },
   returnAloneText: { fontFamily: "Inter_500Medium", fontSize: 10 },
   reviewText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20 },
+  claimSection: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4, borderTopWidth: 1, marginTop: 8 },
+  claimRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  claimIcon: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  claimLabel: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  claimSub: { fontFamily: "Inter_400Regular", fontSize: 12 },
   footer: {
     flexDirection: "row",
     padding: 16,

@@ -22,6 +22,9 @@ import usersRouter from "./users";
 import groupsRouter from "./groups";
 import adminRouter from "./admin";
 import kinfolkRouter from "./kinfolk";
+import wishlistRouter from "./wishlist";
+import claimsRouter from "./claims";
+import notificationsRouter from "./notifications";
 
 const router: IRouter = Router();
 
@@ -48,5 +51,8 @@ router.use(usersRouter);
 router.use(groupsRouter);
 router.use(adminRouter);
 router.use(kinfolkRouter);
+router.use(wishlistRouter);
+router.use(claimsRouter);
+router.use(notificationsRouter);
 
 export default router;

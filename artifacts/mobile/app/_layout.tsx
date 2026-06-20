@@ -11,16 +11,42 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, View } from "react-native";
+import { Animated, Platform, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import * as Notifications from "expo-notifications";
+import * as SecureStore from "expo-secure-store";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/lib/auth";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+
+function PushNotificationRegistrar() {
+  useEffect(() => {
+    async function registerToken() {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        if (!token) return;
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status !== "granted") return;
+        const pushToken = await Notifications.getExpoPushTokenAsync().catch(() => null);
+        if (!pushToken?.data) return;
+        const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        if (!apiBase) return;
+        await fetch(`${apiBase}/api/notifications/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ token: pushToken.data, platform: Platform.OS }),
+        });
+      } catch {}
+    }
+    void registerToken();
+  }, []);
+  return null;
+}
 
 function BrandedLoader() {
   const pulse = useRef(new Animated.Value(1)).current;
@@ -339,6 +365,13 @@ function RootLayoutNav() {
           presentation: "card",
         }}
       />
+      <Stack.Screen
+        name="wishlist"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
     </Stack>
   );
 }
@@ -369,6 +402,7 @@ export default function RootLayout() {
               <KeyboardProvider>
                 <View style={{ flex: 1 }}>
                   <OnboardingChecker />
+                  <PushNotificationRegistrar />
                   <RootLayoutNav />
                   <AIChatWidget />
                   <CookieConsentBanner />

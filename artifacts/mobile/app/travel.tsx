@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   FlatList,
@@ -20,6 +20,8 @@ import { router } from "expo-router";
 import { useColors } from "@/hooks/useColors";
 import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent } from "@/hooks/useKinfolk";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useWishlist } from "@/hooks/useWishlist";
+import { KinfolkOnboarding, shouldShowKinfolkOnboarding } from "@/components/KinfolkOnboarding";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
@@ -65,16 +67,19 @@ const WELCOME_CHIPS = [
 
 // ─── Sub-component: Business Card ────────────────────────────────────────────
 function BusinessCard({
-  biz, messageId, city, feedback, onFeedback, colors,
+  biz, messageId, city, feedback, onFeedback, wishlistItemId, onWishlist, colors,
 }: {
   biz: TravelBusiness;
   messageId: string;
   city?: string;
   feedback: Record<string, "like" | "dislike">;
   onFeedback: (msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => void;
+  wishlistItemId: string | null;
+  onWishlist: (biz: TravelBusiness, city: string, add: boolean, itemId: string | null) => void;
   colors: ReturnType<typeof useColors>;
 }) {
   const reaction = feedback[biz.name];
+  const wishlisted = wishlistItemId !== null;
   return (
     <View style={[bizStyles.card, { backgroundColor: colors.background, borderColor: colors.border }]}>
       <View style={bizStyles.cardTop}>
@@ -84,6 +89,13 @@ function BusinessCard({
         <Text style={[bizStyles.hood, { color: colors.mutedForeground }]}>
           <Ionicons name="location-outline" size={11} /> {biz.neighborhood}
         </Text>
+        <TouchableOpacity
+          onPress={() => onWishlist(biz, city ?? "", !wishlisted, wishlistItemId)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={[bizStyles.wishlistBtn, wishlisted && { backgroundColor: colors.primary + "18" }]}
+        >
+          <Ionicons name={wishlisted ? "bookmark" : "bookmark-outline"} size={16} color={wishlisted ? colors.primary : colors.mutedForeground} />
+        </TouchableOpacity>
       </View>
       <Text style={[bizStyles.name, { color: colors.text }]}>{biz.name}</Text>
       <Text style={[bizStyles.desc, { color: colors.mutedForeground }]}>{biz.description}</Text>
@@ -94,7 +106,7 @@ function BusinessCard({
         </Text>
       </View>
       <View style={bizStyles.feedbackRow}>
-        <Text style={[bizStyles.feedbackLabel, { color: colors.mutedForeground }]}>Was this helpful?</Text>
+        <Text style={[bizStyles.feedbackLabel, { color: colors.mutedForeground }]}>Helpful?</Text>
         <TouchableOpacity
           style={[bizStyles.feedbackBtn, reaction === "like" && { backgroundColor: "#16A34A22" }]}
           onPress={() => onFeedback(messageId, biz.name, biz.category, city ?? "", "like")}
@@ -119,7 +131,8 @@ const bizStyles = StyleSheet.create({
   cardTop: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
   badge: { borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2 },
   badgeText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
-  hood: { fontFamily: "Inter_400Regular", fontSize: 11, flex: 1, textAlign: "right" },
+  hood: { fontFamily: "Inter_400Regular", fontSize: 11, flex: 1 },
+  wishlistBtn: { padding: 4, borderRadius: 8 },
   name: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 4 },
   desc: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, marginBottom: 8 },
   mustTry: { flexDirection: "row", alignItems: "flex-start", gap: 6, borderRadius: 8, borderWidth: 1, padding: 8, marginBottom: 8 },
@@ -190,11 +203,13 @@ const evStyles = StyleSheet.create({
 
 // ─── Sub-component: AI Message ────────────────────────────────────────────────
 function AiMessageBubble({
-  msg, onFeedback, onQuickReply, colors,
+  msg, onFeedback, onQuickReply, onWishlist, wishlistedNames, colors,
 }: {
   msg: ChatMessage;
   onFeedback: (msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => void;
   onQuickReply: (text: string) => void;
+  onWishlist: (biz: TravelBusiness, city: string, add: boolean, itemId: string | null) => void;
+  wishlistedNames: Record<string, string>;
   colors: ReturnType<typeof useColors>;
 }) {
   const recs = msg.recommendations;
@@ -247,7 +262,10 @@ function AiMessageBubble({
                   recs.businesses.map((biz, i) => (
                     <BusinessCard
                       key={i} biz={biz} messageId={msg.id} city={city}
-                      feedback={msg.feedback ?? {}} onFeedback={onFeedback} colors={colors}
+                      feedback={msg.feedback ?? {}} onFeedback={onFeedback}
+                      wishlistItemId={wishlistedNames[biz.name] ?? null}
+                      onWishlist={onWishlist}
+                      colors={colors}
                     />
                   ))}
               </View>
@@ -731,17 +749,25 @@ export default function TravelScreen() {
 
   const { messages, sessionId, isLoading, sessions, sendMessage, submitFeedback, loadSessions, loadSession, startNewSession } = useKinfolk();
   const { preferences } = useUserPreferences();
+  const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
 
   const [inputText, setInputText] = useState("");
   const [neighborVoice, setNeighborVoice] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showVoiceToggle, setShowVoiceToggle] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     void loadSessions();
   }, [loadSessions]);
+
+  useEffect(() => { void loadWishlist(); }, [loadWishlist]);
+
+  useEffect(() => {
+    void shouldShowKinfolkOnboarding().then((show) => { if (show) setShowOnboarding(true); });
+  }, []);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -759,6 +785,20 @@ export default function TravelScreen() {
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);
   }, [submitFeedback]);
+
+  const wishlistedNames = useMemo<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    for (const item of wishlistItems) map[item.businessName] = item.id;
+    return map;
+  }, [wishlistItems]);
+
+  const handleWishlist = useCallback((biz: TravelBusiness, city: string, add: boolean, itemId: string | null) => {
+    if (add) {
+      void addItem({ businessName: biz.name, category: biz.category, city, neighborhood: biz.neighborhood, description: biz.description, mustTry: biz.mustTry, sessionId });
+    } else if (itemId) {
+      void removeItem(itemId);
+    }
+  }, [addItem, removeItem, sessionId]);
 
   const handleHistorySelect = useCallback(async (id: string) => {
     await loadSession(id);
@@ -783,10 +823,12 @@ export default function TravelScreen() {
         msg={item}
         onFeedback={handleFeedback}
         onQuickReply={(t) => void handleSend(t)}
+        onWishlist={handleWishlist}
+        wishlistedNames={wishlistedNames}
         colors={colors}
       />
     );
-  }, [colors, handleFeedback, handleSend]);
+  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -806,6 +848,13 @@ export default function TravelScreen() {
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name="person-circle-outline" size={22} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.headerIconBtn, wishlistItems.length > 0 && { backgroundColor: "#ffffff25" }]}
+            onPress={() => router.push("/wishlist" as any)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name={wishlistItems.length > 0 ? "bookmark" : "bookmark-outline"} size={22} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerIconBtn}
@@ -909,6 +958,12 @@ export default function TravelScreen() {
         onSelect={handleHistorySelect}
         onNew={handleNewSession}
         colors={colors}
+      />
+
+      {/* KinfolkAI™ Onboarding */}
+      <KinfolkOnboarding
+        visible={showOnboarding}
+        onComplete={() => setShowOnboarding(false)}
       />
     </View>
   );
