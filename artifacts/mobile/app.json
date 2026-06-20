@@ -14,9 +14,24 @@
       "backgroundColor": "#C4622D"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Mapping With Melanin uses your location to show nearby Black-owned businesses and community safety information.",
+        "NSCameraUsageDescription": "Mapping With Melanin uses your camera so you can update your profile photo.",
+        "NSPhotoLibraryUsageDescription": "Mapping With Melanin accesses your photo library so you can choose a profile picture.",
+        "NSPhotoLibraryAddUsageDescription": "Mapping With Melanin saves photos to your library."
+      }
     },
-    "android": {},
+    "android": {
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
+    },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
@@ -28,7 +43,20 @@
         }
       ],
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Mapping With Melanin uses your location to show nearby Black-owned businesses and community safety information."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Mapping With Melanin accesses your photo library so you can choose a profile picture.",
+          "cameraPermission": "Mapping With Melanin uses your camera so you can update your profile photo."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

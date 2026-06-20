@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -42,6 +43,21 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { savedIds, isSaved, toggleSave } = useFavorites();
   const { user, isLoading, isAuthenticated, login, logout } = useAuth();
+  const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
+
+  const pickProfileImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setLocalAvatarUri(result.assets[0].uri);
+    }
+  };
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -106,17 +122,22 @@ export default function ProfileScreen() {
       ) : (
         <>
           <View style={[styles.profileCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
-            {user?.profileImageUrl ? (
-              <Image
-                source={{ uri: user.profileImageUrl }}
-                style={styles.avatarImg}
-                contentFit="cover"
-              />
-            ) : (
-              <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-                <Text style={styles.avatarInitials}>{getInitials(user?.firstName, user?.lastName)}</Text>
+            <TouchableOpacity onPress={pickProfileImage} activeOpacity={0.8} style={styles.avatarWrap}>
+              {localAvatarUri || user?.profileImageUrl ? (
+                <Image
+                  source={{ uri: localAvatarUri ?? user?.profileImageUrl ?? "" }}
+                  style={styles.avatarImg}
+                  contentFit="cover"
+                />
+              ) : (
+                <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+                  <Text style={styles.avatarInitials}>{getInitials(user?.firstName, user?.lastName)}</Text>
+                </View>
+              )}
+              <View style={[styles.avatarOverlay, { backgroundColor: colors.primary }]}>
+                <Feather name="camera" size={10} color="#FFFFFF" />
               </View>
-            )}
+            </TouchableOpacity>
             <View style={styles.profileInfo}>
               <Text style={[styles.name, { color: colors.foreground }]}>
                 {[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Community Member"}
@@ -126,7 +147,7 @@ export default function ProfileScreen() {
               ) : null}
               <Text style={[styles.since, { color: colors.mutedForeground }]}>Member since 2024</Text>
             </View>
-            <TouchableOpacity style={[styles.editBtn, { borderColor: colors.border }]}>
+            <TouchableOpacity style={[styles.editBtn, { borderColor: colors.border }]} onPress={pickProfileImage}>
               <Feather name="edit-2" size={15} color={colors.primary} />
             </TouchableOpacity>
           </View>
@@ -380,6 +401,11 @@ const styles = StyleSheet.create({
     elevation: 2,
     marginBottom: 16,
   },
+  avatarWrap: {
+    position: "relative",
+    width: 60,
+    height: 60,
+  },
   avatar: {
     width: 60,
     height: 60,
@@ -391,6 +417,18 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
+  },
+  avatarOverlay: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: "#FFFFFF",
   },
   avatarInitials: {
     fontFamily: "Inter_700Bold",

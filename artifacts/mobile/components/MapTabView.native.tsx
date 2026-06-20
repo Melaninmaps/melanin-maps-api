@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
+import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -34,9 +35,16 @@ export function MapTabView() {
   const { isSaved, toggleSave } = useFavorites();
   const mapRef = useRef<MapView>(null);
 
+  const [locationGranted, setLocationGranted] = useState(false);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [selected, setSelected] = useState<Business | null>(null);
+
+  useEffect(() => {
+    Location.requestForegroundPermissionsAsync().then(({ status }) => {
+      setLocationGranted(status === "granted");
+    });
+  }, []);
 
   const { businesses } = useBusinesses();
   const filtered = businesses.filter((b) => {
@@ -68,7 +76,7 @@ export function MapTabView() {
         style={StyleSheet.absoluteFill}
         provider={PROVIDER_DEFAULT}
         initialRegion={INITIAL_REGION}
-        showsUserLocation
+        showsUserLocation={locationGranted}
         showsMyLocationButton={false}
       >
         {filtered.map((b) => (
