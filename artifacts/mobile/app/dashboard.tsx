@@ -215,7 +215,7 @@ export default function DashboardScreen() {
         >
           <Text style={styles.travelEmoji}>✈️</Text>
           <View style={{ flex: 1 }}>
-            <Text style={styles.travelTitle}>Plan Your Next Trip</Text>
+            <Text style={styles.travelTitle}>KinfolkAI™</Text>
             <Text style={styles.travelSub}>AI-powered itineraries for Black travelers</Text>
           </View>
           <Feather name="arrow-right" size={20} color="#C9922B" />

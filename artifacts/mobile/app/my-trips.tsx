@@ -63,14 +63,14 @@ export default function MyTripsScreen() {
             <Feather name="bookmark" size={40} color={colors.mutedForeground} />
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No saved trips yet</Text>
             <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>
-              Use the AI Travel Guide to find Black-owned spots, then tap "Save This Trip" to build your itinerary.
+              Use KinfolkAI™ to find Black-owned spots, then tap "Save This Trip" to build your itinerary.
             </Text>
             <TouchableOpacity
               style={[styles.emptyBtn, { backgroundColor: colors.primary }]}
               onPress={() => router.push("/travel" as any)}
               activeOpacity={0.85}
             >
-              <Text style={[styles.emptyBtnText, { color: colors.primaryForeground }]}>Open Travel Guide</Text>
+              <Text style={[styles.emptyBtnText, { color: colors.primaryForeground }]}>Open KinfolkAI™</Text>
             </TouchableOpacity>
           </View>
         )}

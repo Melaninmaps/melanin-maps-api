@@ -212,7 +212,7 @@ export default function DiscoverScreen() {
             style={[styles.travelBanner, { backgroundColor: colors.primary }]}
           >
             <View style={styles.travelBannerLeft}>
-              <Text style={styles.travelBannerEyebrow}>✨ AI-POWERED</Text>
+              <Text style={styles.travelBannerEyebrow}>✨ KINFOLKAI™</Text>
               <Text style={styles.travelBannerTitle}>Plan Your Next Trip</Text>
               <Text style={styles.travelBannerSub}>
                 Black-owned spots, safe neighborhoods & events

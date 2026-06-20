@@ -67,7 +67,7 @@ const CANNED: { pattern: RegExp; replies: string[] }[] = [
   {
     pattern: /itinerary|plan|trip/i,
     replies: [
-      "For a full AI-generated itinerary, tap the '✨ AI-POWERED — Plan Your Next Trip' banner on the Discover tab. Enter your destination and travel vibes and I'll generate a full day-by-day plan with Black-owned spots, safe neighborhoods, timing, and local context.",
+      "For a full AI-generated itinerary, tap the '✨ KINFOLKAI™ — Plan Your Next Trip' banner on the Discover tab. Enter your destination and travel vibes and I'll generate a full day-by-day plan with Black-owned spots, safe neighborhoods, timing, and local context.",
     ],
   },
   {

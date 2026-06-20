@@ -152,7 +152,7 @@ export default function TravelScreen() {
           <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>AI Travel Guide</Text>
+          <Text style={styles.headerTitle}>KinfolkAI™</Text>
           <Text style={styles.headerSub}>
             Black-owned spots & community intel
           </Text>
