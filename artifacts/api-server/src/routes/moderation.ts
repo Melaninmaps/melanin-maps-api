@@ -1,6 +1,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, neighborhoodSurveysTable, safetyReportsTable } from "@workspace/db";
+import { db, neighborhoodSurveysTable, safetyReportsTable, SAFETY_REPORT_CATEGORIES, SAFETY_REPORT_SEVERITIES } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
+
+type ReportCategory = (typeof SAFETY_REPORT_CATEGORIES)[number];
+type ReportSeverity = (typeof SAFETY_REPORT_SEVERITIES)[number];
 
 const router: IRouter = Router();
 
@@ -125,27 +128,35 @@ router.patch("/moderation/reports/:id", async (req: Request, res: Response) => {
 
 router.post("/reports", async (req: Request, res: Response) => {
   try {
-    const { category, targetType, targetId, targetName, description, severity } = req.body as Record<
-      string,
-      unknown
-    >;
+    const body = req.body as Record<string, unknown>;
+    const { category, targetType, targetId, targetName, description, severity } = body;
 
-    if (!category || !targetName) {
-      res.status(400).json({ error: "category and targetName are required" });
+    if (typeof category !== "string" || !(SAFETY_REPORT_CATEGORIES as readonly string[]).includes(category)) {
+      res.status(400).json({ error: `category must be one of: ${SAFETY_REPORT_CATEGORIES.join(", ")}` });
       return;
     }
+
+    if (typeof targetName !== "string" || targetName.trim().length === 0) {
+      res.status(400).json({ error: "targetName is required" });
+      return;
+    }
+
+    const resolvedSeverity: ReportSeverity =
+      typeof severity === "string" && (SAFETY_REPORT_SEVERITIES as readonly string[]).includes(severity)
+        ? (severity as ReportSeverity)
+        : "medium";
 
     const [report] = await db
       .insert(safetyReportsTable)
       .values({
         reporterId: req.user?.id ?? null,
         reporterName: req.user?.id ? "Community Member" : "Anonymous",
-        category: category as string,
-        targetType: (targetType as string | undefined) ?? "business",
-        targetId: (targetId as string | undefined) ?? null,
-        targetName: targetName as string,
-        description: (description as string | undefined) ?? null,
-        severity: (severity as string | undefined) ?? "medium",
+        category: category as ReportCategory,
+        targetType: typeof targetType === "string" ? targetType : "neighborhood",
+        targetId: typeof targetId === "string" ? targetId : null,
+        targetName: targetName.trim(),
+        description: typeof description === "string" && description.trim().length > 0 ? description.trim() : null,
+        severity: resolvedSeverity,
       })
       .returning();
 

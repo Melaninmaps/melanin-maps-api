@@ -9,7 +9,7 @@ interface AlertItem {
   message: string;
   location: string;
   timeAgo: string;
-  severity: "low" | "medium" | "high";
+  severity: "low" | "medium" | "high" | "critical";
   source: "nws" | "fema" | "septa" | "community";
   expires?: string;
   url?: string;
@@ -235,8 +235,8 @@ router.get("/alerts", async (req: Request, res: Response) => {
     );
 
     allAlerts.sort((a, b) => {
-      const order = { high: 0, medium: 1, low: 2 };
-      return order[a.severity] - order[b.severity];
+      const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+      return (order[a.severity] ?? 4) - (order[b.severity] ?? 4);
     });
 
     alertCache.set(cacheKey, { data: allAlerts, fetchedAt: Date.now() });

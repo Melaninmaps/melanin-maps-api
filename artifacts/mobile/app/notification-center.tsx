@@ -12,12 +12,12 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
-type NotifType = "all" | "safety" | "events" | "business" | "community";
+type NotifType = "all" | "safety" | "events" | "business" | "community" | "weather" | "travel";
 
 interface Notif {
   id: string;
   type: Exclude<NotifType, "all">;
-  icon: "shield" | "calendar" | "shopping-bag" | "message-circle" | "star" | "gift" | "bell" | "users";
+  icon: "shield" | "calendar" | "shopping-bag" | "message-circle" | "star" | "gift" | "bell" | "users" | "cloud-rain" | "navigation";
   color: string;
   title: string;
   body: string;
@@ -87,11 +87,37 @@ const NOTIFS: Notif[] = [
     body: "Someone you referred just signed up and set up their profile. Welcome them!",
     time: "2 weeks ago", read: true, group: "Earlier",
   },
+  {
+    id: "n11", type: "weather", icon: "cloud-rain", color: "#1D4ED8",
+    title: "Severe Thunderstorm Warning — Houston, TX",
+    body: "NWS has issued a severe thunderstorm warning until 9pm. Outdoor events may be affected.",
+    time: "2h ago", read: false, group: "Today",
+  },
+  {
+    id: "n12", type: "travel", icon: "navigation", color: "#7C3AED",
+    title: "DC Metro Red Line Delays",
+    body: "Single tracking between Shady Grove and Grosvenor. Add 15–20 minutes to your commute.",
+    time: "4h ago", read: false, group: "Today",
+  },
+  {
+    id: "n13", type: "weather", icon: "cloud-rain", color: "#1D4ED8",
+    title: "FEMA Disaster Declaration — Flood",
+    body: "FEMA has issued a federal disaster declaration for flooding in South Carolina.",
+    time: "3 days ago", read: true, group: "This Week",
+  },
+  {
+    id: "n14", type: "travel", icon: "navigation", color: "#7C3AED",
+    title: "SEPTA Route 34 Detour",
+    body: "Trolley detoured at Broad & Washington through Sunday due to track maintenance.",
+    time: "4 days ago", read: true, group: "This Week",
+  },
 ];
 
 const TABS: { id: NotifType; label: string }[] = [
   { id: "all", label: "All" },
   { id: "safety", label: "Safety" },
+  { id: "weather", label: "Weather" },
+  { id: "travel", label: "Travel" },
   { id: "events", label: "Events" },
   { id: "business", label: "Business" },
   { id: "community", label: "Community" },

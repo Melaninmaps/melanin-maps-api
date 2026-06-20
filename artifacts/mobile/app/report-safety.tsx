@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   KeyboardAvoidingView,
   Platform,
@@ -17,6 +18,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+
+const API_BASE = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
 
 const REPORT_TYPES = [
   {
@@ -133,6 +136,7 @@ export default function ReportSafetyScreen() {
   const [cityFocused, setCityFocused] = useState(false);
   const [neighFocused, setNeighFocused] = useState(false);
   const [descFocused, setDescFocused] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -168,9 +172,40 @@ export default function ReportSafetyScreen() {
     else router.back();
   };
 
-  const handleSubmit = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    animateTo(3, 1);
+  const handleSubmit = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const targetName = form.neighborhood.trim()
+        ? `${form.neighborhood.trim()}, ${form.city.trim()}`
+        : form.city.trim();
+
+      const res = await fetch(`${API_BASE}/api/reports`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: form.reportType,
+          targetType: "neighborhood",
+          targetName,
+          description: form.description.trim(),
+          severity: form.severity,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? `Server error ${res.status}`);
+      }
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      animateTo(3, 1);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      Alert.alert("Submission Failed", `${msg}\n\nPlease try again.`);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const canProceed1 = form.reportType !== "" && form.severity !== "";
@@ -457,14 +492,14 @@ export default function ReportSafetyScreen() {
             </TouchableOpacity>
           )}
           <TouchableOpacity
-            style={[styles.nextBtn, { backgroundColor: (step === 1 ? canProceed1 : canProceed2) ? colors.primary : colors.muted }]}
-            onPress={step === 2 ? handleSubmit : goNext}
+            style={[styles.nextBtn, { backgroundColor: (step === 1 ? canProceed1 : canProceed2) && !submitting ? colors.primary : colors.muted }]}
+            onPress={step === 2 ? () => { void handleSubmit(); } : goNext}
             activeOpacity={0.85}
-            disabled={!(step === 1 ? canProceed1 : canProceed2)}
+            disabled={!(step === 1 ? canProceed1 : canProceed2) || submitting}
           >
-            {step === 2 && <Feather name="send" size={16} color={canProceed2 ? colors.primaryForeground : colors.mutedForeground} />}
-            <Text style={[styles.nextBtnText, { color: (step === 1 ? canProceed1 : canProceed2) ? colors.primaryForeground : colors.mutedForeground }]}>
-              {step === 2 ? "Submit Report" : "Continue"}
+            {step === 2 && <Feather name="send" size={16} color={canProceed2 && !submitting ? colors.primaryForeground : colors.mutedForeground} />}
+            <Text style={[styles.nextBtnText, { color: (step === 1 ? canProceed1 : canProceed2) && !submitting ? colors.primaryForeground : colors.mutedForeground }]}>
+              {step === 2 ? (submitting ? "Submitting…" : "Submit Report") : "Continue"}
             </Text>
             {step === 1 && <Feather name="arrow-right" size={16} color={(step === 1 ? canProceed1 : canProceed2) ? colors.primaryForeground : colors.mutedForeground} />}
           </TouchableOpacity>

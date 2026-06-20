@@ -58,7 +58,21 @@ export const insertSurveySchema = createInsertSchema(neighborhoodSurveysTable).o
 
 export const selectSurveySchema = createSelectSchema(neighborhoodSurveysTable);
 
-export const insertSafetyReportSchema = createInsertSchema(safetyReportsTable).omit({
+export const SAFETY_REPORT_CATEGORIES = [
+  "safety",
+  "sundown",
+  "discrimination",
+  "business",
+  "resource",
+  "positive",
+] as const;
+
+export const SAFETY_REPORT_SEVERITIES = ["low", "medium", "high", "critical"] as const;
+
+export const insertSafetyReportSchema = createInsertSchema(safetyReportsTable, {
+  category: z.enum(SAFETY_REPORT_CATEGORIES),
+  severity: z.enum(SAFETY_REPORT_SEVERITIES).default("medium"),
+}).omit({
   id: true,
   createdAt: true,
   status: true,
