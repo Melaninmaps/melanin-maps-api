@@ -20,6 +20,7 @@ import contactRouter from "./contact";
 import eventsRouter from "./events";
 import usersRouter from "./users";
 import groupsRouter from "./groups";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
@@ -44,5 +45,6 @@ router.use(contactRouter);
 router.use(eventsRouter);
 router.use(usersRouter);
 router.use(groupsRouter);
+router.use(adminRouter);
 
 export default router;

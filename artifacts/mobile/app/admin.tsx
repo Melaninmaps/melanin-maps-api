@@ -1,8 +1,9 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Platform,
   ScrollView,
   StyleSheet,
@@ -13,13 +14,15 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useReports } from "@/hooks/useReports";
+import { useBusinessInvites, type BusinessInvite } from "@/hooks/useBusinessInvites";
 
 const ADMIN_TABS = [
   { id: "overview", label: "Overview", icon: "grid" as const },
+  { id: "invites", label: "Invites", icon: "send" as const },
   { id: "reports", label: "Safety Reports", icon: "flag" as const },
   { id: "reviews", label: "Reviews", icon: "star" as const },
   { id: "claims", label: "Claims", icon: "check-square" as const },
-  { id: "submissions", label: "Submissions", icon: "send" as const },
+  { id: "submissions", label: "Submissions", icon: "inbox" as const },
   { id: "referrals", label: "Referrals", icon: "share-2" as const },
   { id: "analytics", label: "Analytics", icon: "bar-chart-2" as const },
   { id: "email", label: "Email", icon: "mail" as const },
@@ -725,8 +728,189 @@ function EmailTab() {
   );
 }
 
+const PLATFORM_ICONS: Record<string, { name: string; color: string }> = {
+  instagram: { name: "logo-instagram", color: "#E1306C" },
+  twitter:   { name: "logo-twitter",   color: "#1DA1F2" },
+  tiktok:    { name: "musical-notes",  color: "#010101" },
+  facebook:  { name: "logo-facebook",  color: "#1877F2" },
+};
+
+const STATUS_META: Record<string, { label: string; color: string }> = {
+  pending:   { label: "Pending",   color: "#C9922B" },
+  contacted: { label: "Contacted", color: "#1D4ED8" },
+  accepted:  { label: "Accepted",  color: "#2D7A4F" },
+  declined:  { label: "Declined",  color: "#DC2626" },
+  expired:   { label: "Expired",   color: "#6B7280" },
+};
+
+function InviteCard({ invite, onUpdateStatus }: { invite: BusinessInvite; onUpdateStatus: (id: string, status: string) => void }) {
+  const colors = useColors();
+  const platform = PLATFORM_ICONS[invite.socialPlatform] ?? { name: "globe", color: "#6B7280" };
+  const meta = STATUS_META[invite.status] ?? { label: invite.status, color: "#6B7280" };
+
+  const daysLeft = Math.max(0, Math.ceil((new Date(invite.trialEndDate).getTime() - Date.now()) / 86400000));
+  const trialEnd = new Date(invite.trialEndDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+  const NEXT_STATUSES: Record<string, string[]> = {
+    pending:   ["contacted", "declined"],
+    contacted: ["accepted", "declined"],
+    accepted:  [],
+    declined:  [],
+    expired:   [],
+  };
+  const actions = NEXT_STATUSES[invite.status] ?? [];
+
+  return (
+    <View style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border, borderLeftWidth: 4, borderLeftColor: meta.color }]}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View style={[adminStyles.statusBadge, { backgroundColor: meta.color + "18" }]}>
+            <Text style={[adminStyles.statusBadgeText, { color: meta.color }]}>{meta.label}</Text>
+          </View>
+          <Ionicons name={platform.name as any} size={15} color={platform.color} />
+        </View>
+        <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>
+          {new Date(invite.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+        </Text>
+      </View>
+
+      <Text style={[adminStyles.bizName, { color: colors.foreground }]}>@{invite.socialHandle}</Text>
+      {invite.businessName ? (
+        <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{invite.businessName}</Text>
+      ) : null}
+
+      <View style={{ flexDirection: "row", gap: 16, marginTop: 6 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+          <Feather name="clock" size={11} color={daysLeft < 7 ? "#DC2626" : colors.mutedForeground} />
+          <Text style={[adminStyles.scoreText, { color: daysLeft < 7 ? "#DC2626" : colors.mutedForeground }]}>
+            {daysLeft > 0 ? `${daysLeft}d left` : "Expired"} · Trial ends {trialEnd}
+          </Text>
+        </View>
+      </View>
+
+      {invite.notes ? (
+        <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginTop: 4, fontStyle: "italic" }]}>
+          "{invite.notes}"
+        </Text>
+      ) : null}
+
+      {actions.length > 0 && (
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+          {actions.map((a) => {
+            const m = STATUS_META[a] ?? { label: a, color: "#6B7280" };
+            return (
+              <TouchableOpacity
+                key={a}
+                style={[adminStyles.smallBtn, { backgroundColor: m.color + "18", borderColor: m.color + "40" }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onUpdateStatus(invite.id, a);
+                }}
+              >
+                <Text style={[adminStyles.smallBtnText, { color: m.color }]}>
+                  {a === "contacted" ? "Mark Contacted" : a === "accepted" ? "Mark Accepted" : "Mark Declined"}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function InvitesTab() {
+  const colors = useColors();
+  const { invites, isLoading, refresh, updateStatus } = useBusinessInvites();
+  const [filter, setFilter] = useState("All");
+
+  const FILTERS = ["All", "Pending", "Contacted", "Accepted", "Declined", "Expired"];
+
+  const filtered = filter === "All"
+    ? invites
+    : invites.filter((i) => i.status === filter.toLowerCase());
+
+  const counts = {
+    pending:   invites.filter((i) => i.status === "pending").length,
+    contacted: invites.filter((i) => i.status === "contacted").length,
+    accepted:  invites.filter((i) => i.status === "accepted").length,
+  };
+
+  const handleUpdateStatus = async (id: string, status: string) => {
+    await updateStatus(id, status);
+  };
+
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+      <View style={adminStyles.statsGrid}>
+        <StatCard label="Total Invites"  value={String(invites.length)} sub="All time"           color="#3B1F0E" icon="send" />
+        <StatCard label="Pending"         value={String(counts.pending)}   sub="Need outreach"     color="#C9922B" icon="clock" />
+        <StatCard label="Contacted"       value={String(counts.contacted)} sub="Awaiting response" color="#1D4ED8" icon="message-circle" />
+        <StatCard label="Accepted"        value={String(counts.accepted)}  sub="Joined platform"   color="#2D7A4F" icon="check-circle" />
+      </View>
+
+      {counts.pending > 0 && (
+        <View style={[adminStyles.alertBanner, { backgroundColor: "#C9922B12", borderColor: "#C9922B30" }]}>
+          <Feather name="send" size={15} color="#C9922B" />
+          <Text style={[adminStyles.alertText, { color: "#C9922B" }]}>
+            {counts.pending} business{counts.pending !== 1 ? "es" : ""} waiting to be contacted
+          </Text>
+        </View>
+      )}
+
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+        <SectionLabel title="Business Invites" />
+        <TouchableOpacity
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); void refresh(); }}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Feather name="refresh-cw" size={15} color={colors.mutedForeground} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          {FILTERS.map((f) => (
+            <TouchableOpacity
+              key={f}
+              style={[adminStyles.filterChip, {
+                backgroundColor: filter === f ? colors.primary : colors.secondary,
+                borderColor: filter === f ? colors.primary : colors.border,
+              }]}
+              onPress={() => setFilter(f)}
+            >
+              <Text style={[adminStyles.filterChipText, { color: filter === f ? "#FFFFFF" : colors.foreground }]}>
+                {f} {f === "All" ? `(${invites.length})` : `(${invites.filter((i) => i.status === f.toLowerCase()).length})`}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+
+      {isLoading && (
+        <ActivityIndicator color={colors.primary} style={{ marginTop: 32 }} />
+      )}
+
+      {!isLoading && filtered.length === 0 && (
+        <View style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border, alignItems: "center", paddingVertical: 32 }]}>
+          <Feather name="send" size={28} color={colors.mutedForeground} style={{ marginBottom: 8 }} />
+          <Text style={[adminStyles.bizName, { color: colors.foreground }]}>No invites yet</Text>
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>
+            Invites appear when reviewers tag a business's social handle
+          </Text>
+        </View>
+      )}
+
+      {filtered.map((invite) => (
+        <InviteCard key={invite.id} invite={invite} onUpdateStatus={handleUpdateStatus} />
+      ))}
+    </ScrollView>
+  );
+}
+
 const TAB_COMPONENTS: Record<string, React.FC> = {
   overview: OverviewTab,
+  invites: InvitesTab,
   reports: ReportsTab,
   reviews: ReviewsTab,
   claims: ClaimsTab,
