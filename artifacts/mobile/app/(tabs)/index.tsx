@@ -86,7 +86,7 @@ export default function DiscoverScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={["#3B1F0E", "#5C3018"]}
+        colors={["#1C1A10", "#0E0D08"]}
         style={[styles.header, { paddingTop: topPad + 12 }]}
       >
         <View style={styles.headerTop}>
@@ -198,7 +198,7 @@ export default function DiscoverScreen() {
               <Text style={styles.heroTitle}>Map Your Life.{"\n"}Connect Deeper.{"\n"}Live With Purpose.</Text>
               <TouchableOpacity style={styles.heroCta} activeOpacity={0.85}>
                 <Text style={styles.heroCtaText}>Explore Near You</Text>
-                <Feather name="arrow-right" size={14} color="#3B1F0E" />
+                <Feather name="arrow-right" size={14} color="#0A0A08" />
               </TouchableOpacity>
             </LinearGradient>
           </View>
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: "#FACC15",
     borderWidth: 1.5,
-    borderColor: "#3B1F0E",
+    borderColor: "#1C1A10",
   },
   searchWrap: { paddingHorizontal: 20, marginBottom: 12 },
   categoryScroll: { paddingHorizontal: 20, gap: 8 },
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
   heroCtaText: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 12,
-    color: "#3B1F0E",
+    color: "#0A0A08",
   },
   section: { paddingHorizontal: 20, marginBottom: 24 },
   travelBanner: {

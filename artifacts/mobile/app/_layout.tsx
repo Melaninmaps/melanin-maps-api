@@ -97,7 +97,7 @@ function Dot({ delay }: { delay: number }) {
 const loader = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#3B1F0E",
+    backgroundColor: "#0C0C0A",
     alignItems: "center",
     justifyContent: "center",
     gap: 48,

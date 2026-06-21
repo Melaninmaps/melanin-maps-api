@@ -198,7 +198,7 @@ export default function BusinessVerifyScreen() {
 
             {method === "website" && (
               <View style={styles.codeBlock}>
-                <View style={[styles.codeBox, { backgroundColor: "#1A0A00" }]}>
+                <View style={[styles.codeBox, { backgroundColor: "#0E0D08" }]}>
                   <Text style={styles.codeText}>
                     {`<meta name="melanin-verify"\n  content="mwm-abc123xyz789" />`}
                   </Text>
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
   infoSub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
   codeBlock: { gap: 12 },
   codeBox: { borderRadius: 12, padding: 16 },
-  codeText: { fontFamily: "Inter_400Regular", fontSize: 13, color: "#C9922B" },
+  codeText: { fontFamily: "Inter_400Regular", fontSize: 13, color: "#D4AF37" },
   copyBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 10, borderRadius: 10 },
   copyTxt: { fontSize: 14, fontFamily: "Inter_500Medium" },
   socialBtns: { gap: 10 },
