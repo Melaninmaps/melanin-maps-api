@@ -435,3 +435,56 @@ export async function sendTrialExpired(
     `,
   });
 }
+
+export async function sendMembershipCancelled(
+  to: string,
+  firstName: string | null,
+  planType: string,
+) {
+  if (!resend) { log("membership cancelled"); return; }
+  const name = firstName ?? "there";
+  const planLabel = PLAN_LABELS[planType] ?? "Premium";
+  const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Your Mapping with Melanin™ membership has been cancelled`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 8px">Hello ${name},</p>
+
+        <h1 style="font-size:24px;color:#2B1507;font-weight:700;margin:0 0 16px;line-height:1.3">
+          Your ${planLabel} membership has been cancelled.
+        </h1>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          We've processed your cancellation request. Your account has moved to our free Community plan — you'll keep access to the business directory, but Premium features are no longer available.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 28px">
+          We're sorry to see you go. If there's anything we could have done better, we genuinely want to hear it — reply to this email and a real person will read it.
+        </p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:28px;margin-bottom:28px;text-align:center">
+          <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 8px;letter-spacing:1px;text-transform:uppercase">Changed your mind? Come back anytime.</p>
+          <p style="color:#CA922B;font-size:28px;font-weight:700;margin:0 0 4px">${renewalPrice}</p>
+          <p style="color:#F5EBD8;opacity:0.6;font-size:14px;margin:0 0 20px">No long-term commitment. Cancel anytime.</p>
+          <a href="https://mappingwithmelanin.com/membership" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:14px 36px;border-radius:50px;text-decoration:none">
+            Reactivate Membership →
+          </a>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:14px;line-height:1.6;margin:0 0 24px;opacity:0.7">
+          Your data is safe and your account remains active on the free plan. If you ever come back, everything will be right where you left it.
+        </p>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping with Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.5;margin:0">Melanin Maps LLC · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a></p>
+      </div>
+    `,
+  });
+}

@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, businessInvitesTable, businessesTable, usersTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { sendBusinessOutreach } from "../lib/email";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
@@ -116,6 +116,64 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch admin businesses");
     res.status(500).json({ error: "Failed to fetch businesses" });
+  }
+});
+
+router.get("/admin/members", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const members = await db
+      .select({
+        id: usersTable.id,
+        email: usersTable.email,
+        firstName: usersTable.firstName,
+        lastName: usersTable.lastName,
+        memberType: usersTable.memberType,
+        trialEndsAt: usersTable.trialEndsAt,
+        foundingMemberNumber: usersTable.foundingMemberNumber,
+        referralCode: usersTable.referralCode,
+        referralCount: usersTable.referralCount,
+        stripeSubscriptionId: usersTable.stripeSubscriptionId,
+        createdAt: usersTable.createdAt,
+      })
+      .from(usersTable)
+      .orderBy(desc(usersTable.createdAt))
+      .limit(500);
+    res.json({ members });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch members");
+    res.status(500).json({ error: "Failed to fetch members" });
+  }
+});
+
+router.patch("/admin/members/:id", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const { memberType, trialEndsAt, foundingMemberNumber } = req.body as {
+    memberType?: string;
+    trialEndsAt?: string | null;
+    foundingMemberNumber?: number | null;
+  };
+  const VALID_TYPES = ["individual", "business", "founding", "beta", "business_referral"];
+  if (memberType && !VALID_TYPES.includes(memberType)) {
+    res.status(400).json({ error: "Invalid memberType" }); return;
+  }
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const setPayload: any = {};
+    if (memberType !== undefined) setPayload.memberType = memberType;
+    if (trialEndsAt !== undefined) setPayload.trialEndsAt = trialEndsAt ? new Date(trialEndsAt) : null;
+    if (foundingMemberNumber !== undefined) setPayload.foundingMemberNumber = foundingMemberNumber;
+    const [updated] = await db
+      .update(usersTable)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .set(setPayload as any)
+      .where(sql`${usersTable.id} = ${req.params.id}`)
+      .returning();
+    if (!updated) { res.status(404).json({ error: "User not found" }); return; }
+    res.json({ member: updated });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update member status");
+    res.status(500).json({ error: "Failed to update member" });
   }
 });
 

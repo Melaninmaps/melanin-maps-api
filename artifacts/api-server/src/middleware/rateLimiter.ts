@@ -23,3 +23,27 @@ export const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: "Too many auth requests, please try again later." },
 });
+
+export const reviewLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "You can submit up to 5 reviews per hour. Please wait before submitting another." },
+});
+
+export const surveyLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "You can submit up to 10 safety reports per hour. Please try again later." },
+});
+
+export const reportLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many reports submitted. Please try again later." },
+});

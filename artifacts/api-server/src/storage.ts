@@ -75,6 +75,20 @@ export class Storage {
     return (result.rows[0] ?? null) as { price_id: string; unit_amount: number } | null;
   }
 
+  async getUserByStripeCustomerId(customerId: string) {
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.stripeCustomerId, customerId)).limit(1);
+    return user ?? null;
+  }
+
+  async setMemberStatus(userId: string, info: {
+    memberType?: "individual" | "business" | "founding" | "beta" | "business_referral";
+    trialEndsAt?: Date | null;
+    foundingMemberNumber?: number | null;
+  }) {
+    const [user] = await db.update(usersTable).set(info).where(eq(usersTable.id, userId)).returning();
+    return user;
+  }
+
   async getSubscription(subscriptionId: string) {
     const result = await db.execute(
       sql`SELECT * FROM stripe.subscriptions WHERE id = ${subscriptionId}`,

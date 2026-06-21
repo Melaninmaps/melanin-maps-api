@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -67,6 +68,7 @@ export default function SettingsScreen() {
         { id: "reports", icon: "flag", label: "My Safety Reports", route: "/(tabs)/profile" },
         { id: "saved", icon: "bookmark", label: "Saved Businesses", route: "/(tabs)/profile" },
         { id: "membership", icon: "award", label: "Membership", sub: "Explore (Free)", route: "/membership" },
+        { id: "billing", icon: "credit-card", label: "Billing & Invoices", sub: "History and receipts", route: null },
       ],
     },
     {
@@ -118,6 +120,10 @@ export default function SettingsScreen() {
     }
     if (row.id === "licenses") {
       Alert.alert("Open Source Licenses", "This app is built on React Native, Expo, Drizzle ORM, and many other open source projects. Thank you to all contributors.");
+      return;
+    }
+    if (row.id === "billing") {
+      Linking.openURL("https://mappingwithmelanin.com/billing");
       return;
     }
     if (row.id === "signout") {

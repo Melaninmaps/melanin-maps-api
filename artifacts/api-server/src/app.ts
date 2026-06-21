@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
@@ -63,5 +63,12 @@ app.use(authMiddleware);
 app.use("/api", generalLimiter);
 
 app.use("/api", router);
+
+app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
+  const statusCode = (err as any)?.status ?? (err as any)?.statusCode ?? 500;
+  const message = (err as any)?.message ?? "Internal server error";
+  logger.error({ err, url: req.url, method: req.method }, "Unhandled error");
+  res.status(statusCode).json({ error: message });
+});
 
 export default app;

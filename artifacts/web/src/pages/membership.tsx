@@ -80,6 +80,7 @@ export default function Membership() {
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const [spotsRemaining, setSpotsRemaining] = useState<number>(500);
+  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [, navigate] = useLocation();
 
   useEffect(() => {
@@ -101,7 +102,7 @@ export default function Membership() {
       setPendingPlan(plan);
       setModalOpen(true);
     } else {
-      navigate(`/signup?plan=${plan}`);
+      navigate(`/signup?plan=${plan}&billing=${billing}`);
     }
   }
 
@@ -165,8 +166,27 @@ export default function Membership() {
         </div>
       </section>
 
+      {/* ── BILLING TOGGLE ── */}
+      <div className="flex justify-center pt-14 pb-2">
+        <div className="inline-flex items-center bg-white border border-[#3A1F0E]/10 rounded-full p-1 shadow-sm">
+          <button
+            onClick={() => setBilling("monthly")}
+            className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${billing === "monthly" ? "bg-[#2B1507] text-white shadow" : "text-[#3A1F0E]/60 hover:text-[#3A1F0E]"}`}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setBilling("annual")}
+            className={`px-6 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${billing === "annual" ? "bg-[#2B1507] text-white shadow" : "text-[#3A1F0E]/60 hover:text-[#3A1F0E]"}`}
+          >
+            Annual
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${billing === "annual" ? "bg-[#CA922B] text-white" : "bg-[#CA922B]/20 text-[#CA922B]"}`}>Save 34%</span>
+          </button>
+        </div>
+      </div>
+
       {/* ── INDIVIDUAL PLANS ── */}
-      <div className="container mx-auto px-4 max-w-6xl pt-20 pb-4">
+      <div className="container mx-auto px-4 max-w-6xl pt-8 pb-4">
         <div className="flex items-center gap-4 mb-10">
           <div className="w-10 h-10 rounded-2xl bg-[#CA922B]/10 flex items-center justify-center">
             <Users className="w-5 h-5 text-[#CA922B]" />
@@ -214,8 +234,13 @@ export default function Membership() {
               <span className="text-xs font-bold uppercase tracking-wider text-[#CA922B]">Explorer</span>
             </div>
             <h3 className="font-serif font-bold text-2xl text-white mb-2">Premium</h3>
-            <div className="text-4xl font-serif font-bold text-[#CA922B] mb-1">$9.99<span className="text-lg text-[#F5EBD8]/50 font-sans font-normal">/mo</span></div>
-            <p className="text-[#F5EBD8]/50 text-sm mb-1">or $79/year (save 34%)</p>
+            <div className="text-4xl font-serif font-bold text-[#CA922B] mb-1">
+              {billing === "annual" ? "$79" : "$9.99"}
+              <span className="text-lg text-[#F5EBD8]/50 font-sans font-normal">{billing === "annual" ? "/yr" : "/mo"}</span>
+            </div>
+            <p className="text-[#F5EBD8]/50 text-sm mb-1">
+              {billing === "annual" ? "That's $6.58/month — save 34%" : "or $79/year (save 34%)"}
+            </p>
 
             <div className="inline-flex items-center gap-1.5 bg-[#CA922B]/20 border border-[#CA922B]/40 rounded-full px-3 py-1 mb-6 w-fit">
               <Clock className="w-3.5 h-3.5 text-[#CA922B]" />
@@ -346,8 +371,13 @@ export default function Membership() {
               <span className="text-xs font-bold uppercase tracking-wider text-[#CA922B]">Business</span>
             </div>
             <h3 className="font-serif font-bold text-3xl text-white mb-2">Business Starter</h3>
-            <div className="text-4xl font-serif font-bold text-[#CA922B] mb-1">$29.99<span className="text-lg text-[#F5EBD8]/50 font-sans font-normal">/mo</span></div>
-            <p className="text-[#F5EBD8]/50 text-sm mb-2">or $249/year (save 31%)</p>
+            <div className="text-4xl font-serif font-bold text-[#CA922B] mb-1">
+              {billing === "annual" ? "$249" : "$29.99"}
+              <span className="text-lg text-[#F5EBD8]/50 font-sans font-normal">{billing === "annual" ? "/yr" : "/mo"}</span>
+            </div>
+            <p className="text-[#F5EBD8]/50 text-sm mb-2">
+              {billing === "annual" ? "That's $20.75/month — save 31%" : "or $249/year (save 31%)"}
+            </p>
 
             <div className="inline-flex items-center gap-1.5 bg-[#CA922B]/20 border border-[#CA922B]/40 rounded-full px-3 py-1 mb-8 w-fit">
               <Clock className="w-3.5 h-3.5 text-[#CA922B]" />

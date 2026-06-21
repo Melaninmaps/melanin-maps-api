@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "mappingwithmelanin",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -16,6 +16,9 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.melaninmaps.app",
+      "associatedDomains": [
+        "applinks:mappingwithmelanin.com"
+      ],
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Mapping With Melanin uses your location to show nearby Black-owned businesses and community safety information.",
         "NSCameraUsageDescription": "Mapping With Melanin uses your camera so you can update your profile photo.",
@@ -25,6 +28,16 @@
     },
     "android": {
       "package": "com.melaninmaps.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            { "scheme": "https", "host": "mappingwithmelanin.com" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "monochromeImage": "./assets/images/icon.png",

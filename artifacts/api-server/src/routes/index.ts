@@ -32,6 +32,11 @@ import ogRouter from "./og";
 import jobsRouter from "./jobs";
 import impactRouter from "./impact";
 import submitBusinessRouter from "./submit-business";
+import billingRouter from "./billing";
+import cronRouter from "./cron";
+import referralsRouter from "./referrals";
+import contentReportsRouter from "./content-reports";
+import verificationRouter from "./verification";
 
 const router: IRouter = Router();
 
@@ -68,5 +73,10 @@ router.use(ogRouter);
 router.use(jobsRouter);
 router.use(impactRouter);
 router.use(submitBusinessRouter);
+router.use(billingRouter);
+router.use(cronRouter);
+router.use(referralsRouter);
+router.use(contentReportsRouter);
+router.use(verificationRouter);
 
 export default router;

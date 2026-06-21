@@ -27,6 +27,8 @@ export const usersTable = pgTable("users", {
   memberType: varchar("member_type", { enum: ["individual", "business", "founding", "beta", "business_referral"] }).default("individual"),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
   foundingMemberNumber: integer("founding_member_number"),
+  referralCode: varchar("referral_code").unique(),
+  referralCount: integer("referral_count").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

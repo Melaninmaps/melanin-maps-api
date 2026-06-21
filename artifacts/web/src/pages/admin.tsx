@@ -51,7 +51,21 @@ type AdminBusiness = {
   } | null;
 };
 
-type Tab = "waitlist" | "users" | "businesses";
+type Tab = "waitlist" | "users" | "businesses" | "members";
+
+type MemberRow = {
+  id: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  memberType: string | null;
+  trialEndsAt: string | null;
+  foundingMemberNumber: number | null;
+  referralCode: string | null;
+  referralCount: number | null;
+  stripeSubscriptionId: string | null;
+  createdAt: string;
+};
 
 function statusBadge(status: string) {
   if (status === "approved") return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><Check className="w-3 h-3" /> Approved</span>;
@@ -178,6 +192,10 @@ export default function Admin() {
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [businesses, setBusinesses] = useState<AdminBusiness[]>([]);
+  const [members, setMembers] = useState<MemberRow[]>([]);
+  const [memberSearch, setMemberSearch] = useState("");
+  const [editingMember, setEditingMember] = useState<string | null>(null);
+  const [memberEdit, setMemberEdit] = useState<{ memberType?: string; foundingMemberNumber?: string; trialEndsAt?: string }>({});
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -216,9 +234,15 @@ export default function Admin() {
       .then(data => { setBusinesses(data.businesses ?? []); setLastRefreshed(new Date()); });
   }, []);
 
+  const loadMembers = useCallback(() => {
+    return fetch(`${BASE}api/admin/members`, { credentials: "include" })
+      .then(r => r.json())
+      .then(data => { setMembers(data.members ?? []); setLastRefreshed(new Date()); });
+  }, []);
+
   const refreshAll = useCallback(() => {
-    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses()]);
-  }, [loadWaitlist, loadUsers, loadBusinesses]);
+    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses(), loadMembers()]);
+  }, [loadWaitlist, loadUsers, loadBusinesses, loadMembers]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -461,6 +485,14 @@ export default function Admin() {
               Businesses
               {contactedCount > 0 && <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{contactedCount} contacted</span>}
             </button>
+            <button
+              onClick={() => setTab("members")}
+              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "members" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
+            >
+              <Briefcase className="w-4 h-4" />
+              Members
+              {members.length > 0 && <span className="bg-[#CA922B]/20 text-[#CA922B] text-xs font-bold px-2 py-0.5 rounded-full">{members.length}</span>}
+            </button>
           </div>
           <div className="flex items-center gap-3 pr-2">
             <span className="text-[#3A1F0E]/30 text-xs">
@@ -699,6 +731,131 @@ export default function Admin() {
                           >
                             {user.approved ? (<><X className="w-3 h-3 mr-1" /> Revoke</>) : (<><Check className="w-3 h-3 mr-1" /> Approve</>)}
                           </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : tab === "members" ? (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-serif font-bold text-[#3A1F0E]">Members ({members.length})</h2>
+              <input
+                type="text"
+                value={memberSearch}
+                onChange={e => setMemberSearch(e.target.value)}
+                placeholder="Search by email or name…"
+                className="border border-[#3A1F0E]/15 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[#CA922B] w-64 bg-white"
+              />
+            </div>
+            {members.filter(m =>
+              !memberSearch ||
+              m.email?.toLowerCase().includes(memberSearch.toLowerCase()) ||
+              `${m.firstName ?? ""} ${m.lastName ?? ""}`.toLowerCase().includes(memberSearch.toLowerCase())
+            ).length === 0 ? (
+              <div className="text-center py-20 text-[#3A1F0E]/40">
+                <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <p>No members found.</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">User</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Plan</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Trial Ends</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Referrals</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {members.filter(m =>
+                      !memberSearch ||
+                      m.email?.toLowerCase().includes(memberSearch.toLowerCase()) ||
+                      `${m.firstName ?? ""} ${m.lastName ?? ""}`.toLowerCase().includes(memberSearch.toLowerCase())
+                    ).map((m, i) => (
+                      <tr key={m.id} className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}>
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-[#3A1F0E]">{m.firstName} {m.lastName}</div>
+                          <div className="text-xs text-[#3A1F0E]/50">{m.email}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {editingMember === m.id ? (
+                            <select
+                              value={memberEdit.memberType ?? m.memberType ?? "individual"}
+                              onChange={e => setMemberEdit(prev => ({ ...prev, memberType: e.target.value }))}
+                              className="border border-[#CA922B] rounded-lg px-2 py-1 text-xs focus:outline-none"
+                            >
+                              {["individual","business","founding","beta","business_referral"].map(t => (
+                                <option key={t} value={t}>{t}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
+                              m.memberType === "founding" ? "bg-[#CA922B]/20 text-[#CA922B]" :
+                              m.memberType === "beta" ? "bg-purple-100 text-purple-700" :
+                              m.memberType === "business_referral" ? "bg-blue-100 text-blue-700" :
+                              m.memberType === "business" ? "bg-green-100 text-green-700" :
+                              "bg-gray-100 text-gray-600"
+                            }`}>
+                              {m.memberType ?? "individual"}
+                            </span>
+                          )}
+                          {m.stripeSubscriptionId && <span className="ml-1 text-green-600 text-xs">● paid</span>}
+                          {m.foundingMemberNumber && <span className="ml-1 text-[#CA922B] text-xs">#{m.foundingMemberNumber}</span>}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-[#3A1F0E]/60">
+                          {editingMember === m.id ? (
+                            <input
+                              type="date"
+                              value={memberEdit.trialEndsAt ?? (m.trialEndsAt ? m.trialEndsAt.slice(0,10) : "")}
+                              onChange={e => setMemberEdit(prev => ({ ...prev, trialEndsAt: e.target.value }))}
+                              className="border border-[#CA922B] rounded-lg px-2 py-1 text-xs focus:outline-none"
+                            />
+                          ) : m.trialEndsAt ? (
+                            <span className={new Date(m.trialEndsAt) > new Date() ? "text-green-600 font-bold" : "text-red-500"}>
+                              {new Date(m.trialEndsAt).toLocaleDateString()}
+                            </span>
+                          ) : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-[#3A1F0E]/60">
+                          {m.referralCode ? <><span className="font-mono text-[#3A1F0E]">{m.referralCode}</span> ({m.referralCount ?? 0})</> : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          {editingMember === m.id ? (
+                            <div className="flex gap-2">
+                              <Button size="sm" className="h-7 px-3 text-xs rounded-lg bg-[#CA922B] hover:bg-[#B38024] text-white font-bold"
+                                onClick={async () => {
+                                  const updates: Record<string, unknown> = {};
+                                  if (memberEdit.memberType) updates.memberType = memberEdit.memberType;
+                                  if (memberEdit.trialEndsAt) updates.trialEndsAt = memberEdit.trialEndsAt;
+                                  await fetch(`${BASE}api/admin/members/${m.id}`, {
+                                    method: "PATCH", credentials: "include",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify(updates),
+                                  });
+                                  setEditingMember(null);
+                                  setMemberEdit({});
+                                  loadMembers();
+                                }}>
+                                Save
+                              </Button>
+                              <Button size="sm" variant="outline" className="h-7 px-3 text-xs rounded-lg"
+                                onClick={() => { setEditingMember(null); setMemberEdit({}); }}>
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button size="sm" variant="outline"
+                              className="h-7 px-3 text-xs rounded-lg border-[#3A1F0E]/20 text-[#3A1F0E]/60 hover:text-[#3A1F0E]"
+                              onClick={() => { setEditingMember(m.id); setMemberEdit({}); }}>
+                              Edit
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     ))}

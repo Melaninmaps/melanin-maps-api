@@ -29,6 +29,10 @@ import CommunityGuidelines from "@/pages/community-guidelines";
 import Cities from "@/pages/cities";
 import CitySpotlight from "@/pages/city-spotlight";
 import Jobs from "@/pages/jobs";
+import Billing from "@/pages/billing";
+import VerifyBusiness from "@/pages/verify-business";
+import Welcome from "@/pages/welcome";
+import BusinessDashboard from "@/pages/business-dashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -103,6 +107,16 @@ function Router() {
       </Route>
       <Route path="/jobs">
         <Layout><Jobs /></Layout>
+      </Route>
+      <Route path="/billing">
+        <Layout><Billing /></Layout>
+      </Route>
+      <Route path="/verify-business">
+        <Layout><VerifyBusiness /></Layout>
+      </Route>
+      <Route path="/welcome" component={Welcome} />
+      <Route path="/business-dashboard">
+        <Layout><BusinessDashboard /></Layout>
       </Route>
       <Route component={NotFound} />
     </Switch>

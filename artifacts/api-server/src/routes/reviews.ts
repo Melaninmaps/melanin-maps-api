@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
+import { reviewLimiter } from "../middleware/rateLimiter";
 
 const router: IRouter = Router();
 
@@ -86,7 +87,7 @@ router.get("/reviews", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/reviews", async (req: Request, res: Response) => {
+router.post("/reviews", reviewLimiter, async (req: Request, res: Response) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
