@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const sessionsTable = pgTable(
@@ -24,6 +24,9 @@ export const usersTable = pgTable("users", {
   pushToken: varchar("push_token"),
   approved: boolean("approved").notNull().default(true),
   role: varchar("role", { enum: ["user", "tester", "admin"] }).notNull().default("user"),
+  memberType: varchar("member_type", { enum: ["individual", "business", "founding", "beta", "business_referral"] }).default("individual"),
+  trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
+  foundingMemberNumber: integer("founding_member_number"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

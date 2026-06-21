@@ -19,6 +19,14 @@ router.get("/stripe/subscription", async (req: any, res): Promise<void> => {
   }
 });
 
+const TRIAL_DAYS: Record<string, number> = {
+  individual: 14,
+  business: 30,
+  founding: 90,
+  beta: 365,
+  business_referral: 365,
+};
+
 router.post("/stripe/checkout", async (req: any, res): Promise<void> => {
   try {
     if (!req.user) {
@@ -26,7 +34,7 @@ router.post("/stripe/checkout", async (req: any, res): Promise<void> => {
       return;
     }
 
-    const { priceId } = req.body as { priceId: string };
+    const { priceId, planType = "individual" } = req.body as { priceId: string; planType?: string };
     if (!priceId) {
       res.status(400).json({ error: "priceId is required" });
       return;
@@ -45,6 +53,12 @@ router.post("/stripe/checkout", async (req: any, res): Promise<void> => {
       customerId = customer.id;
     }
 
+    const trialDays = TRIAL_DAYS[planType] ?? 14;
+    const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000);
+    const memberType = planType as "individual" | "business" | "founding" | "beta" | "business_referral";
+
+    await storage.updateUserStripeInfo(user.id, { memberType, trialEndsAt });
+
     const domain = process.env.REPLIT_DOMAINS?.split(",")[0] ?? "localhost";
     const baseUrl = `https://${domain}`;
 
@@ -53,12 +67,22 @@ router.post("/stripe/checkout", async (req: any, res): Promise<void> => {
       priceId,
       `${baseUrl}/api/stripe/checkout/success`,
       `${baseUrl}/api/stripe/checkout/cancel`,
+      trialDays,
     );
 
     res.json({ url: session.url });
   } catch (err: any) {
     req.log.error({ err }, "Checkout session creation failed");
     res.status(500).json({ error: "Failed to create checkout session" });
+  }
+});
+
+router.get("/membership/stats", async (_req, res) => {
+  try {
+    const count = await storage.getFoundingMemberCount();
+    res.json({ foundingMemberCount: count, spotsRemaining: Math.max(0, 500 - count) });
+  } catch (err: any) {
+    res.json({ foundingMemberCount: 0, spotsRemaining: 500 });
   }
 });
 

@@ -222,3 +222,216 @@ export async function sendApprovalNotification(to: string, firstName: string | n
     `,
   });
 }
+
+const PLAN_LABELS: Record<string, string> = {
+  individual: "Explorer",
+  business: "Business Starter",
+  founding: "Founding Member",
+  beta: "Beta Tester",
+  business_referral: "Business Referral Partner",
+};
+
+const PLAN_PRICES: Record<string, string> = {
+  individual: "$9.99/month or $79/year",
+  business: "$29.99/month or $249/year",
+  founding: "locked-in introductory rate",
+  beta: "standard monthly rate",
+  business_referral: "$29.99/month",
+};
+
+export async function sendTrialStarted(
+  to: string,
+  firstName: string | null,
+  planType: string,
+  trialDays: number,
+  trialEndsAt: Date,
+) {
+  if (!resend) { log("trial started"); return; }
+  const name = firstName ?? "there";
+  const planLabel = PLAN_LABELS[planType] ?? "Premium";
+  const endDate = trialEndsAt.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Your ${trialDays}-day free trial has started — welcome to Mapping with Melanin™ 🎉`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 8px">Hello ${name},</p>
+
+        <h1 style="font-size:28px;color:#2B1507;font-weight:700;margin:0 0 16px;line-height:1.3">
+          Your free trial is officially underway. 🗺️
+        </h1>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          Your <strong>${planLabel}</strong> free trial has started. You have full Premium access for the next <strong>${trialDays} days</strong> — explore everything without restriction.
+        </p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:24px;margin-bottom:28px">
+          <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 12px;letter-spacing:1px;text-transform:uppercase">Your trial details</p>
+          <p style="color:#F5EBD8;font-size:15px;margin:0 0 8px">
+            <strong>Plan:</strong> <span style="color:#CA922B">${planLabel}</span>
+          </p>
+          <p style="color:#F5EBD8;font-size:15px;margin:0 0 8px">
+            <strong>Trial length:</strong> <span style="color:#CA922B">${trialDays} days free</span>
+          </p>
+          <p style="color:#F5EBD8;font-size:15px;margin:0">
+            <strong>Trial ends:</strong> <span style="color:#CA922B">${endDate}</span>
+          </p>
+        </div>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;margin:0 0 12px">Here's what you can do right now:</p>
+        <ul style="color:#3A1F0E;font-size:15px;line-height:2;margin:0 0 24px;padding-left:20px">
+          <li>Explore Black-owned & Minority-owned businesses in your city</li>
+          <li>Check community safety scores for neighborhoods</li>
+          <li>Save your favorite businesses and build collections</li>
+          <li>Submit reviews and safety reports to help the community</li>
+          <li>Plan your next trip with KinfolkAI</li>
+        </ul>
+
+        <a href="https://mappingwithmelanin.com/discover" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:16px 36px;border-radius:50px;text-decoration:none;margin-bottom:32px">
+          Start Exploring →
+        </a>
+
+        <div style="background:#fff;border:1px solid rgba(58,31,14,0.1);border-radius:12px;padding:20px;margin-bottom:24px">
+          <p style="color:#2B1507;font-size:14px;font-weight:700;margin:0 0 8px">💡 What happens when my trial ends?</p>
+          <p style="color:#3A1F0E;font-size:14px;line-height:1.6;margin:0">
+            We'll send you a reminder email <strong>3 days before your trial ends</strong> on ${endDate}. If you choose to continue, your membership renews at <strong>${renewalPrice}</strong>. If you cancel before then, you owe nothing and your account reverts to our free Community plan — you'll never lose directory access entirely.
+          </p>
+        </div>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping with Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.5;margin:0">Melanin Maps LLC</p>
+      </div>
+    `,
+  });
+}
+
+export async function sendTrialEndingSoon(
+  to: string,
+  firstName: string | null,
+  planType: string,
+  trialEndsAt: Date,
+  daysLeft: number,
+) {
+  if (!resend) { log("trial ending soon"); return; }
+  const name = firstName ?? "there";
+  const planLabel = PLAN_LABELS[planType] ?? "Premium";
+  const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
+  const endDate = trialEndsAt.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Your free trial ends in ${daysLeft} day${daysLeft !== 1 ? "s" : ""} — keep your access to Mapping with Melanin™`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 8px">Hello ${name},</p>
+
+        <h1 style="font-size:26px;color:#2B1507;font-weight:700;margin:0 0 16px;line-height:1.3">
+          Your free trial ends in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}. ⏳
+        </h1>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          Your <strong>${planLabel}</strong> trial expires on <strong>${endDate}</strong>. To keep full access to everything you've been enjoying, continue your membership now.
+        </p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:28px;margin-bottom:28px;text-align:center">
+          <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 8px;letter-spacing:1px;text-transform:uppercase">Continue Your Membership</p>
+          <p style="color:#CA922B;font-size:32px;font-weight:700;margin:0 0 4px">${renewalPrice}</p>
+          <p style="color:#F5EBD8;opacity:0.5;font-size:13px;margin:0 0 20px">Cancel anytime — no long-term commitment</p>
+          <a href="https://mappingwithmelanin.com/membership" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:14px 36px;border-radius:50px;text-decoration:none">
+            Keep My Access →
+          </a>
+        </div>
+
+        <p style="color:#2B1507;font-size:15px;font-weight:700;margin:0 0 12px">What you'll keep with a paid membership:</p>
+        <ul style="color:#3A1F0E;font-size:15px;line-height:2;margin:0 0 24px;padding-left:20px">
+          <li>Unlimited business listings & full profiles</li>
+          <li>Complete neighborhood safety scores</li>
+          <li>Submit reviews, reports & community content</li>
+          <li>KinfolkAI travel planning</li>
+          <li>Save businesses & build personal collections</li>
+          <li>Priority customer support</li>
+        </ul>
+
+        <p style="color:#3A1F0E;font-size:14px;line-height:1.6;margin:0 0 24px;opacity:0.7">
+          If you choose not to renew, your account will automatically move to our free Community plan on ${endDate}. You'll still have access to the directory — just without the Premium features.
+        </p>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping with Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.5;margin:0">Melanin Maps LLC · <a href="https://mappingwithmelanin.com/membership" style="color:#CA922B">Manage membership</a></p>
+      </div>
+    `,
+  });
+}
+
+export async function sendTrialExpired(
+  to: string,
+  firstName: string | null,
+  planType: string,
+) {
+  if (!resend) { log("trial expired"); return; }
+  const name = firstName ?? "there";
+  const planLabel = PLAN_LABELS[planType] ?? "Premium";
+  const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Your Mapping with Melanin™ trial has ended — here's how to continue`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 8px">Hello ${name},</p>
+
+        <h1 style="font-size:26px;color:#2B1507;font-weight:700;margin:0 0 16px;line-height:1.3">
+          Your free trial has ended.
+        </h1>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          Your <strong>${planLabel}</strong> trial period has come to a close. Your account has moved to our free Community plan — you still have access to the directory, but Premium features are no longer available.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 28px">
+          We hope you experienced the value of being connected to a community built around trust, culture, and shared discovery. We'd love to have you stay.
+        </p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:28px;margin-bottom:28px;text-align:center">
+          <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 8px;letter-spacing:1px;text-transform:uppercase">Reactivate Your ${planLabel} Membership</p>
+          <p style="color:#CA922B;font-size:32px;font-weight:700;margin:0 0 4px">${renewalPrice}</p>
+          <p style="color:#F5EBD8;opacity:0.6;font-size:14px;margin:0 0 20px">Cancel anytime. No long-term commitment.</p>
+          <a href="https://mappingwithmelanin.com/membership" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:16px 40px;border-radius:50px;text-decoration:none">
+            Reactivate My Membership →
+          </a>
+        </div>
+
+        <p style="color:#2B1507;font-size:15px;font-weight:700;margin:0 0 12px">What you'll get back:</p>
+        <ul style="color:#3A1F0E;font-size:15px;line-height:2;margin:0 0 28px;padding-left:20px">
+          <li>Unlimited business listings & full profiles</li>
+          <li>Complete neighborhood safety scores</li>
+          <li>Submit reviews, reports & community content</li>
+          <li>KinfolkAI travel planning assistance</li>
+          <li>Save businesses & build personal collections</li>
+          <li>Priority customer support</li>
+        </ul>
+
+        <p style="color:#3A1F0E;font-size:14px;line-height:1.6;margin:0 0 24px;opacity:0.7">
+          Questions or feedback about your experience? We genuinely want to hear from you. Reply to this email or reach us at <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a>.
+        </p>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping with Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.5;margin:0">Melanin Maps LLC · <a href="https://mappingwithmelanin.com/membership" style="color:#CA922B">View plans</a></p>
+      </div>
+    `,
+  });
+}

@@ -10,9 +10,20 @@ export class Storage {
   async updateUserStripeInfo(userId: string, info: {
     stripeCustomerId?: string;
     stripeSubscriptionId?: string;
+    memberType?: "individual" | "business" | "founding" | "beta" | "business_referral";
+    trialEndsAt?: Date;
+    foundingMemberNumber?: number;
   }) {
     const [user] = await db.update(usersTable).set(info).where(eq(usersTable.id, userId)).returning();
     return user;
+  }
+
+  async getFoundingMemberCount() {
+    const [row] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(usersTable)
+      .where(eq(usersTable.memberType, "founding"));
+    return row?.count ?? 0;
   }
 
   async getProduct(productId: string) {
