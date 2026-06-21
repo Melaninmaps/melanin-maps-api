@@ -47,7 +47,7 @@ Community discovery, travel, and business platform celebrating Black culture —
 
 ## User preferences
 
-- Custom domain: **www.melinanmap.com** — already forwarding from melanin-discovery-hub.replit.app; also owns www.mappingwithmelinan.com.
+- Custom domain: **www.melaninmaps.com** — already forwarding from melanin-discovery-hub.replit.app.
 
 ## Gotchas
 
