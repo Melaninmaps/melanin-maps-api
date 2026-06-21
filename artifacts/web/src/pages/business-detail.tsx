@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -85,6 +85,7 @@ export default function BusinessDetail() {
   const id = params?.id || "";
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const prevMetaRef = useRef<{ title: string; ogTitle: string | null; ogDesc: string | null; ogImage: string | null }>({ title: "", ogTitle: null, ogDesc: null, ogImage: null });
 
   const { data: auth } = useGetCurrentAuthUser();
   const { data: business, isLoading: isLoadingBusiness } = useGetBusiness(id, { query: { queryKey: ['getBusiness', id], enabled: !!id } });
@@ -100,6 +101,42 @@ export default function BusinessDetail() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isSaved = savedPlaces?.businessIds.includes(id);
+
+  // Inject OG meta tags for social sharing
+  useEffect(() => {
+    if (!business) return;
+    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    const ogImageUrl = `${window.location.origin}${base}/api/og/business/${id}`;
+    const title = `${business.name} — Mapping With Melanin™`;
+    const description = `${business.category} in ${business.city ?? ""}${business.state ? `, ${business.state}` : ""}. Discover Black-owned businesses on Mapping With Melanin™.`;
+
+    const getOrCreate = (prop: string): HTMLMetaElement => {
+      let el = document.querySelector<HTMLMetaElement>(`meta[property="${prop}"]`);
+      if (!el) { el = document.createElement("meta"); el.setAttribute("property", prop); document.head.appendChild(el); }
+      return el;
+    };
+
+    const prev = prevMetaRef.current;
+    prev.title = document.title;
+    prev.ogTitle = document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.content ?? null;
+    prev.ogDesc = document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.content ?? null;
+    prev.ogImage = document.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.content ?? null;
+
+    document.title = title;
+    getOrCreate("og:title").content = title;
+    getOrCreate("og:description").content = description;
+    getOrCreate("og:image").content = ogImageUrl;
+    getOrCreate("og:type").content = "place";
+    getOrCreate("og:url").content = window.location.href;
+    getOrCreate("twitter:card").setAttribute("content", "summary_large_image");
+
+    return () => {
+      document.title = prev.title || "Mapping With Melanin™";
+      if (prev.ogTitle !== null) getOrCreate("og:title").content = prev.ogTitle;
+      if (prev.ogDesc !== null) getOrCreate("og:description").content = prev.ogDesc;
+      if (prev.ogImage !== null) getOrCreate("og:image").content = prev.ogImage;
+    };
+  }, [business, id]);
 
   const handleSaveToggle = () => {
     if (!auth?.user) {

@@ -78,6 +78,66 @@ export async function sendWaitlistConfirmation(to: string, position: number, ref
   });
 }
 
+export async function sendReferralNudge(
+  to: string,
+  firstName: string,
+  position: number,
+  referralCode: string,
+  newSignupsThisWeek: number,
+) {
+  if (!resend) { log("referral nudge"); return; }
+  const referralLink = `https://mappingwithmelanin.com/?ref=${referralCode}`;
+  const name = firstName || "there";
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `You're #${position} on the Mapping with Melanin™ waitlist 📍`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 16px">Hello ${name},</p>
+
+        <p style="color:#2B1507;font-size:18px;font-weight:700;line-height:1.4;margin:0 0 16px">
+          You're still <span style="color:#CA922B">#${position}</span> on the Mapping with Melanin™ waitlist.
+        </p>
+
+        ${newSignupsThisWeek > 0 ? `
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          <strong>${newSignupsThisWeek.toLocaleString()} people</strong> joined the waitlist this week.
+          Share your referral link to move ahead of them and get closer to early access.
+        </p>
+        ` : `
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          Share your referral link with friends to move up the waitlist and get early access sooner.
+        </p>
+        `}
+
+        <div style="background:#2B1507;border-radius:12px;padding:28px;margin:24px 0">
+          <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 12px;text-align:center;letter-spacing:1px">── Your Referral Link ──</p>
+          <p style="color:#F5EBD8;font-size:15px;line-height:1.6;margin:0 0 16px;text-align:center">
+            Every friend who joins using your link moves you up the list.
+          </p>
+          <a href="${referralLink}" style="color:#CA922B;font-size:15px;word-break:break-all;display:block;margin-bottom:12px;font-weight:700">${referralLink}</a>
+          <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Referral code: <span style="color:#CA922B;font-weight:700;letter-spacing:3px">${referralCode}</span></p>
+        </div>
+
+        <a href="${referralLink}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:14px 32px;border-radius:50px;text-decoration:none;margin-bottom:24px">
+          Share Your Link →
+        </a>
+
+        <p style="color:#3A1F0E;font-size:14px;line-height:1.6;margin:0 0 8px;opacity:0.7">
+          We're building something special and we're grateful you're part of the journey from the beginning.
+        </p>
+
+        <p style="color:#2B1507;font-size:15px;font-weight:700;font-style:italic;margin:16px 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:14px;margin:0 0 4px">The Mapping with Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.5;margin:0">Melanin Maps LLC</p>
+      </div>
+    `,
+  });
+}
+
 export async function sendApprovalNotification(to: string, firstName: string | null) {
   if (!resend) { log("approval notification"); return; }
   const name = firstName ?? "there";
@@ -102,4 +162,3 @@ export async function sendApprovalNotification(to: string, firstName: string | n
     `,
   });
 }
-

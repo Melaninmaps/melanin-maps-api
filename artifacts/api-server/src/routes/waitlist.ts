@@ -237,6 +237,53 @@ router.post("/admin/waitlist/bulk", async (req: Request, res: Response) => {
   }
 });
 
+// ── Admin: send weekly nudge to all pending waitlist members ─────────────────
+
+router.post("/admin/send-weekly-nudge", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const { sendReferralNudge } = await import("../lib/email");
+
+    const [{ total }] = await db.select({ total: count() }).from(waitlistTable);
+    const totalCount = Number(total);
+
+    const [{ newThisWeek }] = await db
+      .select({ newThisWeek: count() })
+      .from(waitlistTable)
+      .where(eq(waitlistTable.status, "pending"));
+
+    const pendingMembers = await db
+      .select({ email: waitlistTable.email, firstName: waitlistTable.firstName, referralCode: waitlistTable.referralCode })
+      .from(waitlistTable)
+      .where(eq(waitlistTable.status, "pending"))
+      .orderBy(waitlistTable.createdAt);
+
+    let sent = 0;
+    let failed = 0;
+    for (let i = 0; i < pendingMembers.length; i++) {
+      const m = pendingMembers[i];
+      if (!m.email || !m.referralCode) continue;
+      try {
+        await sendReferralNudge(
+          m.email,
+          m.firstName ?? "there",
+          i + 1,
+          m.referralCode,
+          Number(newThisWeek),
+        );
+        sent++;
+      } catch {
+        failed++;
+      }
+    }
+
+    res.json({ sent, failed, total: totalCount, nudgedCount: pendingMembers.length });
+  } catch (err) {
+    req.log.error({ err }, "Failed to send weekly nudge");
+    res.status(500).json({ error: "Failed to send weekly nudge" });
+  }
+});
+
 // ── Admin: send nudge email preview to self ───────────────────────────────────
 
 router.post("/admin/nudge-preview", async (req: Request, res: Response) => {

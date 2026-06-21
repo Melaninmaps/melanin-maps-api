@@ -178,6 +178,29 @@ export default function Admin() {
     }
   };
 
+  const sendWeeklyNudge = async () => {
+    if (!window.confirm("This will email every pending waitlist member. Continue?")) return;
+    setNudgeSending(true);
+    setNudgeResult(null);
+    try {
+      const r = await fetch(`${BASE}api/admin/send-weekly-nudge`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await r.json();
+      if (data.sent !== undefined) {
+        setNudgeResult(`✅ Sent ${data.sent} nudge${data.sent !== 1 ? "s" : ""} (${data.failed} failed)`);
+      } else {
+        setNudgeResult(`❌ ${data.error ?? "Failed"}`);
+      }
+    } catch {
+      setNudgeResult("❌ Network error");
+    } finally {
+      setNudgeSending(false);
+      setTimeout(() => setNudgeResult(null), 12000);
+    }
+  };
+
   if (authLoading || isAdmin === null) {
     return <div className="min-h-screen bg-[#FAF6EF] flex items-center justify-center"><div className="w-8 h-8 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" /></div>;
   }
@@ -224,15 +247,23 @@ export default function Admin() {
             </div>
           </div>
 
-          {/* Nudge preview */}
-          <div className="mt-6 flex items-center gap-4 flex-wrap">
+          {/* Email actions */}
+          <div className="mt-6 flex items-center gap-3 flex-wrap">
             <button
               onClick={sendNudgePreview}
               disabled={nudgeSending}
               className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2.5 text-sm font-bold text-[#F5EBD8] transition-colors disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
-              {nudgeSending ? "Sending…" : "Preview Nudge Email"}
+              {nudgeSending ? "Sending…" : "Preview Nudge (to me)"}
+            </button>
+            <button
+              onClick={sendWeeklyNudge}
+              disabled={nudgeSending}
+              className="flex items-center gap-2 bg-[#CA922B]/80 hover:bg-[#CA922B] rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-colors disabled:opacity-50"
+            >
+              <Send className="w-4 h-4" />
+              {nudgeSending ? "Sending…" : "Send Weekly Nudge (All)"}
             </button>
             {nudgeResult && (
               <span className="text-sm text-[#F5EBD8]/80">{nudgeResult}</span>

@@ -28,6 +28,7 @@ import notificationsRouter from "./notifications";
 import stripeRouter from "./stripe";
 import adminUsersRouter from "./admin-users";
 import mapsRouter from "./maps";
+import ogRouter from "./og";
 
 const router: IRouter = Router();
 
@@ -60,5 +61,6 @@ router.use(notificationsRouter);
 router.use(stripeRouter);
 router.use(adminUsersRouter);
 router.use(mapsRouter);
+router.use(ogRouter);
 
 export default router;
