@@ -183,7 +183,7 @@ export default function Home() {
               >
                 <div className={`w-4 h-4 rounded-full bg-white shadow-sm mx-1 transition-transform ${isBusinessOwner ? "translate-x-4" : "translate-x-0"}`} />
               </div>
-              <span className="text-sm text-[#F5EBD8]/80">I own or operate a minority-owned business</span>
+              <span className="text-sm text-[#F5EBD8]/80">I own or operate a Black-owned business</span>
             </label>
 
             {/* Referral row */}
@@ -345,7 +345,7 @@ export default function Home() {
           
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             <div className="bg-[#FAF6EF] p-8 rounded-2xl border border-[#3A1F0E]/5 shadow-sm">
-              <p className="text-xl font-serif text-[#3A1F0E] leading-relaxed italic">"Every dollar you spend is a vote. We make it easy to cast that vote for Minority-owned businesses, melanated entrepreneurs, and community-rooted spaces that reinvest in the culture — so the economic power of the Black dollar stays where it belongs."</p>
+              <p className="text-xl font-serif text-[#3A1F0E] leading-relaxed italic">"Every dollar you spend is a vote. We make it easy to cast that vote for Black-owned businesses, melanated entrepreneurs, and community-rooted spaces that reinvest in the culture — so the economic power of the Black dollar stays where it belongs."</p>
             </div>
             <div className="bg-[#FAF6EF] p-8 rounded-2xl border border-[#3A1F0E]/5 shadow-sm">
               <p className="text-xl font-serif text-[#3A1F0E] leading-relaxed italic">"Every score, review, and recommendation on this platform comes from people who've actually been there. That's not a feature. That's the foundation."</p>
@@ -731,12 +731,12 @@ export default function Home() {
         <div className="container mx-auto px-4 max-w-6xl">
           {/* Top grid: big left + two stacked right */}
           <div className="grid grid-cols-5 gap-3 mb-3">
-            {/* Big left — Minority-Owned Businesses */}
+            {/* Big left — Black-Owned Businesses */}
             <div className="col-span-3 relative rounded-2xl overflow-hidden h-[420px] group cursor-pointer">
-              <img src={`${import.meta.env.BASE_URL}images/cat-minority-owned.jpg`} alt="Minority-Owned Businesses" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <img src={`${import.meta.env.BASE_URL}images/cat-black-owned.jpg`} alt="Black-Owned Businesses" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
               <div className="absolute bottom-0 left-0 p-6">
-                <h3 className="font-serif font-bold text-xl text-white mb-1">Minority-Owned Businesses</h3>
+                <h3 className="font-serif font-bold text-xl text-white mb-1">Black-Owned Businesses</h3>
                 <p className="text-sm text-white/80">Support entrepreneurs who reflect your values</p>
               </div>
             </div>
@@ -810,7 +810,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 gap-6 mb-12">
             {[
-              { title: "Discover", label: "Find Minority-Owned Businesses", desc: "Search by city, category, or keyword. Every listing is community-verified." },
+              { title: "Discover", label: "Find Black-Owned Businesses", desc: "Search by city, category, or keyword. Every listing is community-verified." },
               { title: "Safety", label: "Real-Time Safety Intelligence", desc: "Community-sourced scores, alerts, and the 'Would Return Alone' metric." },
               { title: "Personalized", label: "Your Curated Feed", desc: "AI-powered picks based on your identity, interests, and travel goals." },
               { title: "Community", label: "Connect & Network", desc: "Join groups, attend meetups, and build relationships before you arrive." }
@@ -830,7 +830,7 @@ export default function Home() {
 
           <div className="text-center">
             <Link href="/explore"><Button className="rounded-full bg-[#2B1507] hover:bg-[#1a0c04] text-white px-8 h-12 mb-8">Explore the Platform</Button></Link>
-            <p className="text-xs text-[#3A1F0E]/50">* "Minority-owned business" is defined as any business that is 51% or more owned and operated by a Black person or persons.</p>
+            <p className="text-xs text-[#3A1F0E]/50">* A Black-owned business is defined as any business that is 51% or more owned and operated by a Black person or persons.</p>
           </div>
         </div>
       </section>
@@ -974,7 +974,7 @@ export default function Home() {
                 name: "Aaliyah T.", role: "Frequent Traveler", loc: "Atlanta, GA", initials: "AT"
               },
               { 
-                quote: "I've been looking for something like this for years. Being able to find Minority-owned restaurants, hotels, and shops in cities I've never visited — and know they're community-verified — is a game changer.",
+                quote: "I've been looking for something like this for years. Being able to find Black-owned restaurants, hotels, and shops in cities I've never visited — and know they're community-verified — is a game changer.",
                 name: "Marcus J.", role: "Digital Nomad", loc: "Houston, TX", initials: "MJ"
               },
               { 
@@ -982,7 +982,7 @@ export default function Home() {
                 name: "Simone R.", role: "Relocating Professional", loc: "Charlotte, NC", initials: "SR"
               },
               { 
-                quote: "As a business owner, being listed on this platform has been incredible. I've seen new customers specifically say they found me here because they wanted to support verified Minority-owned businesses.",
+                quote: "As a business owner, being listed on this platform has been incredible. I've seen new customers specifically say they found me here because they wanted to support verified Black-owned businesses.",
                 name: "DeShawn M.", role: "Business Owner", loc: "New Orleans, LA", initials: "DM"
               }
             ].map((t, i) => (

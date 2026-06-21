@@ -9,7 +9,7 @@ const BUSINESSES = [
     score: 96,
     featured: true,
     img: `${import.meta.env.BASE_URL}images/biz-gathering-table.jpg`,
-    tags: ["Community Trusted", "Soul Food", "Minority-Owned"],
+    tags: ["Community Trusted", "Soul Food", "Black-Owned"],
     recommend: 97,
     returnAlone: 94,
     rating: 4.9,
@@ -21,7 +21,7 @@ const BUSINESSES = [
     score: 97,
     featured: true,
     img: `${import.meta.env.BASE_URL}images/biz-heritage-hotel.jpg`,
-    tags: ["Top Rated", "Boutique", "Minority-Owned"],
+    tags: ["Top Rated", "Boutique", "Black-Owned"],
     recommend: 98,
     returnAlone: 96,
     rating: 4.9,
@@ -45,7 +45,7 @@ const BUSINESSES = [
     score: 93,
     featured: false,
     img: `${import.meta.env.BASE_URL}images/biz-afrobeats-fest.jpg`,
-    tags: ["Local Gem", "Live Music", "Minority-Owned"],
+    tags: ["Local Gem", "Live Music", "Black-Owned"],
     recommend: 95,
     returnAlone: 91,
     rating: 4.7,
@@ -57,7 +57,7 @@ const BUSINESSES = [
     score: 92,
     featured: false,
     img: `${import.meta.env.BASE_URL}images/biz-carter-law.jpg`,
-    tags: ["Community Trusted", "Legal", "Minority-Owned"],
+    tags: ["Community Trusted", "Legal", "Black-Owned"],
     recommend: 94,
     returnAlone: 90,
     rating: 4.8,
@@ -69,7 +69,7 @@ const BUSINESSES = [
     score: 89,
     featured: false,
     img: `${import.meta.env.BASE_URL}images/biz-roots-cafe.jpg`,
-    tags: ["Pan-African", "Community Space", "Minority-Owned"],
+    tags: ["Pan-African", "Community Space", "Black-Owned"],
     recommend: 87,
     returnAlone: 83,
     rating: 4.6,
@@ -96,7 +96,7 @@ export default function Businesses() {
           </h1>
           
           <p className="text-[#F5EBD8]/80 text-lg md:text-xl max-w-2xl mb-4 font-light">
-            Connect with verified Minority-owned businesses, service providers, and entrepreneurs while exploring new cities and communities.
+            Connect with verified Black-owned businesses, service providers, and entrepreneurs while exploring new cities and communities.
           </p>
           <p className="text-[#F5EBD8]/60 text-base max-w-2xl mb-10 font-light">
             Every listing is community-reviewed, authenticity-checked, and safety-scored by real members.
@@ -145,7 +145,7 @@ export default function Businesses() {
             ))}
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-            {["Minority-Owned", "Hispanic-Owned", "Asian-Owned", "Women-Owned", "Veteran-Owned", "LGBTQ+-Owned", "Indigenous-Owned", "Immigrant-Owned", "Disability-Owned"].map((c, i) => (
+            {["Black-Owned", "Hispanic-Owned", "Asian-Owned", "Women-Owned", "Veteran-Owned", "LGBTQ+-Owned", "Indigenous-Owned", "Immigrant-Owned", "Disability-Owned"].map((c, i) => (
               <button key={i} className={`px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-bold transition-colors ${i === 0 ? 'bg-[#CA922B]/10 text-[#CA922B] border border-[#CA922B]/30' : 'bg-white border border-[#3A1F0E]/10 text-[#3A1F0E] hover:border-[#CA922B]'}`}>
                 {c}
               </button>
@@ -204,7 +204,7 @@ export default function Businesses() {
           <div className="w-full md:w-1/3 bg-white p-8 rounded-2xl shadow-lg border border-[#3A1F0E]/5 transform rotate-2">
              <div className="w-16 h-16 bg-[#2B1507] rounded-full mx-auto mb-6 flex items-center justify-center"><ShieldCheck className="w-8 h-8 text-[#CA922B]"/></div>
              <div className="text-center font-serif font-bold text-2xl text-[#3A1F0E] mb-2">Get Verified</div>
-             <div className="text-center text-[#3A1F0E]/60 text-sm">Join the network of trusted Minority-owned businesses today.</div>
+             <div className="text-center text-[#3A1F0E]/60 text-sm">Join the network of trusted Black-owned businesses today.</div>
           </div>
         </div>
       </div>
