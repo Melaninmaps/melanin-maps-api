@@ -7,25 +7,77 @@ const router: IRouter = Router();
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
 function isAdmin(req: any) { return req.user?.email && ADMIN_EMAILS.includes(req.user.email); }
 
+const VALID_TYPES = ["restaurant", "retail", "salon", "health", "professional_services", "entertainment", "tech", "nonprofit", "other"];
+
+const VALID_DOC_TYPES = [
+  "articles_of_incorporation",
+  "ein_confirmation",
+  "business_license",
+  "ownership_agreement",
+  "government_issued_id",
+  "other",
+];
+
+const VALID_CERT_ORGS = [
+  "NMSDC",
+  "WBENC",
+  "SBA_8a",
+  "SBA_HUBZone",
+  "NGLCC",
+  "Disability_IN",
+  "NABOB",
+  "NACC",
+  "NBCC",
+  "State_MWBE",
+  "Other",
+];
+
 router.post("/verification/submit", async (req: any, res: Response): Promise<void> => {
   const {
     businessName, businessType, ownerName, websiteUrl,
     instagramHandle, yearsInBusiness, city, state, message, email,
+    // Level 2
+    ownershipPercentage, einNumber, documentsProvided, businessLicenseProvided,
+    // Level 3
+    certificationOrg, certificationUrl, certificationNumber,
   } = req.body as {
     businessName?: string; businessType?: string; ownerName?: string;
     websiteUrl?: string; instagramHandle?: string; yearsInBusiness?: number;
     city?: string; state?: string; message?: string; email?: string;
+    ownershipPercentage?: number; einNumber?: string;
+    documentsProvided?: string[]; businessLicenseProvided?: boolean;
+    certificationOrg?: string; certificationUrl?: string; certificationNumber?: string;
   };
 
   const submitterEmail = email ?? req.user?.email;
   if (!businessName?.trim()) { res.status(400).json({ error: "businessName is required" }); return; }
   if (!ownerName?.trim()) { res.status(400).json({ error: "ownerName is required" }); return; }
   if (!submitterEmail?.trim()) { res.status(400).json({ error: "email is required" }); return; }
-
-  const VALID_TYPES = ["restaurant", "retail", "salon", "health", "professional_services", "entertainment", "tech", "nonprofit", "other"];
   if (!businessType || !VALID_TYPES.includes(businessType)) {
     res.status(400).json({ error: "Invalid businessType" }); return;
   }
+
+  // Validate ownership percentage if provided
+  if (ownershipPercentage !== undefined) {
+    if (typeof ownershipPercentage !== "number" || ownershipPercentage < 51 || ownershipPercentage > 100) {
+      res.status(400).json({ error: "ownershipPercentage must be between 51 and 100" }); return;
+    }
+  }
+
+  // Validate doc types
+  const docList: string[] = Array.isArray(documentsProvided)
+    ? documentsProvided.filter((d) => VALID_DOC_TYPES.includes(d))
+    : [];
+
+  // Validate cert org
+  if (certificationOrg && !VALID_CERT_ORGS.includes(certificationOrg)) {
+    res.status(400).json({ error: "Invalid certificationOrg" }); return;
+  }
+
+  // Determine verification level
+  const hasCert = !!(certificationOrg && certificationUrl?.trim());
+  const hasOwnershipDocs = ownershipPercentage !== undefined && ownershipPercentage >= 51;
+  const verificationLevel = hasCert ? "certified" : hasOwnershipDocs ? "ownership" : "basic";
 
   try {
     const [request] = await db.insert(verificationRequestsTable).values({
@@ -40,8 +92,16 @@ router.post("/verification/submit", async (req: any, res: Response): Promise<voi
       state: state?.trim() || null,
       message: message?.slice(0, 2000) || null,
       submitterEmail: submitterEmail.trim(),
+      verificationLevel,
+      ownershipPercentage: ownershipPercentage ?? null,
+      einNumber: einNumber?.trim().replace(/[^0-9-]/g, "") || null,
+      documentsProvided: docList.length ? JSON.stringify(docList) : null,
+      businessLicenseProvided: businessLicenseProvided ?? false,
+      certificationOrg: certificationOrg || null,
+      certificationUrl: certificationUrl?.trim() || null,
+      certificationNumber: certificationNumber?.trim() || null,
     }).returning();
-    res.status(201).json({ request });
+    res.status(201).json({ request, verificationLevel });
   } catch (err: any) {
     req.log.error({ err }, "Failed to submit verification request");
     res.status(500).json({ error: "Failed to submit verification request" });

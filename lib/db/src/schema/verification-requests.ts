@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, timestamp, varchar, text, integer } from "drizzle-orm/pg-core";
+import { pgTable, timestamp, varchar, text, integer, boolean } from "drizzle-orm/pg-core";
 
 export const verificationRequestsTable = pgTable("verification_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -16,6 +16,21 @@ export const verificationRequestsTable = pgTable("verification_requests", {
   state: varchar("state"),
   message: text("message"),
   submitterEmail: varchar("submitter_email").notNull(),
+
+  // Level 2: Ownership Verification
+  verificationLevel: varchar("verification_level", {
+    enum: ["basic", "ownership", "certified"],
+  }).notNull().default("basic"),
+  ownershipPercentage: integer("ownership_percentage"),
+  einNumber: varchar("ein_number"),
+  documentsProvided: text("documents_provided"),  // JSON array of doc-type strings
+  businessLicenseProvided: boolean("business_license_provided").default(false),
+
+  // Level 3: Third-Party Certification
+  certificationOrg: varchar("certification_org"),
+  certificationUrl: varchar("certification_url"),
+  certificationNumber: varchar("certification_number"),
+
   status: varchar("status", { enum: ["pending", "under_review", "approved", "rejected"] })
     .notNull()
     .default("pending"),
