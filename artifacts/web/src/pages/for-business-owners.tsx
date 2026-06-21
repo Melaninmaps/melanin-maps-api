@@ -1,9 +1,95 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { Check } from "lucide-react";
+
+const BASE = import.meta.env.BASE_URL;
+
+const CATEGORIES = [
+  "Restaurant & Food",
+  "Retail & Shopping",
+  "Health & Wellness",
+  "Beauty & Personal Care",
+  "Professional Services",
+  "Technology",
+  "Real Estate",
+  "Events & Entertainment",
+  "Education & Coaching",
+  "Hospitality & Travel",
+  "Arts & Culture",
+  "Other",
+];
 
 export default function ForBusinessOwners() {
   const scrollToHow = () => {
     document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const scrollToForm = () => {
+    document.getElementById("submit-form")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const [form, setForm] = useState({
+    name: "",
+    businessName: "",
+    category: "",
+    city: "",
+    website: "",
+    email: "",
+    message: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!form.name.trim() || !form.businessName.trim() || !form.email.trim() || !form.message.trim()) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+    if (!form.email.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (form.message.trim().length < 20) {
+      setError("Please tell us a bit more about your business (at least 20 characters).");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${BASE}api/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          formType: "business-submission",
+          name: form.name.trim(),
+          email: form.email.trim(),
+          subject: `Business Submission: ${form.businessName.trim()}${form.city ? ` — ${form.city}` : ""}`,
+          message: [
+            `Business Name: ${form.businessName}`,
+            form.category ? `Category: ${form.category}` : "",
+            form.city ? `City: ${form.city}` : "",
+            form.website ? `Website: ${form.website}` : "",
+            `Message: ${form.message}`,
+          ].filter(Boolean).join("\n"),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as any).error ?? "Submission failed");
+      }
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err.message ?? "Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -29,9 +115,7 @@ export default function ForBusinessOwners() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-16">
-            <a href="mailto:hello@mappingwithmelanin.com?subject=Early Access Application — List My Business">
-              <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-14 text-lg">Apply for Early Access</Button>
-            </a>
+            <Button onClick={scrollToForm} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-14 text-lg">Apply for Early Access</Button>
             <Button variant="outline" onClick={scrollToHow} className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-14 text-lg bg-transparent">Learn More</Button>
           </div>
 
@@ -91,12 +175,146 @@ export default function ForBusinessOwners() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
 
-          <div className="mt-24 text-center bg-[#2B1507] p-12 rounded-3xl text-white">
-            <h2 className="text-3xl font-serif font-bold mb-8">Ready to Join the Directory?</h2>
-            <div className="flex justify-center gap-4">
-              <a href="mailto:hello@mappingwithmelanin.com?subject=Early Access Application — List My Business">
-                <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Apply for Early Access</Button>
+      {/* Submission Form */}
+      <section id="submit-form" className="py-24 bg-[#FAF6EF]">
+        <div className="container mx-auto px-4 max-w-2xl">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
+              <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">APPLY NOW</span>
+            </div>
+            <h2 className="text-4xl font-serif font-bold text-[#3A1F0E] mb-4">Submit Your Business</h2>
+            <p className="text-[#3A1F0E]/70 text-lg">Tell us about your business and we'll be in touch with next steps. Early access spots are limited.</p>
+          </div>
+
+          {submitted ? (
+            <div className="bg-white border border-[#CA922B]/30 rounded-3xl p-12 text-center shadow-sm">
+              <div className="w-16 h-16 rounded-full bg-[#CA922B]/10 flex items-center justify-center mx-auto mb-6">
+                <Check className="w-8 h-8 text-[#CA922B]" />
+              </div>
+              <h3 className="text-2xl font-serif font-bold text-[#2B1507] mb-3">Application Received!</h3>
+              <p className="text-[#3A1F0E]/70 leading-relaxed mb-6">
+                Thank you for applying for early access. Our team will review your submission and reach out within 2–3 business days to walk you through next steps.
+              </p>
+              <p className="text-sm text-[#3A1F0E]/50">Questions? Email us at <a href="mailto:hello@mappingwithmelanin.com" className="text-[#CA922B] underline">hello@mappingwithmelanin.com</a></p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-8 md:p-10 shadow-sm border border-[#3A1F0E]/5 space-y-5">
+              <div className="grid md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-bold text-[#3A1F0E] mb-2">Your Name <span className="text-[#CA922B]">*</span></label>
+                  <input
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
+                    required
+                    placeholder="Jane Smith"
+                    className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B]/60"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#3A1F0E] mb-2">Business Name <span className="text-[#CA922B]">*</span></label>
+                  <input
+                    name="businessName"
+                    value={form.businessName}
+                    onChange={handleChange}
+                    required
+                    placeholder="The Gathering Table"
+                    className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B]/60"
+                  />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-bold text-[#3A1F0E] mb-2">Category</label>
+                  <select
+                    name="category"
+                    value={form.category}
+                    onChange={handleChange}
+                    className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]/60 bg-white"
+                  >
+                    <option value="">Select a category…</option>
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#3A1F0E] mb-2">City</label>
+                  <input
+                    name="city"
+                    value={form.city}
+                    onChange={handleChange}
+                    placeholder="Atlanta, GA"
+                    className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B]/60"
+                  />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-bold text-[#3A1F0E] mb-2">Email Address <span className="text-[#CA922B]">*</span></label>
+                  <input
+                    name="email"
+                    type="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                    placeholder="jane@yourbusiness.com"
+                    className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B]/60"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#3A1F0E] mb-2">Website</label>
+                  <input
+                    name="website"
+                    type="url"
+                    value={form.website}
+                    onChange={handleChange}
+                    placeholder="https://yourbusiness.com"
+                    className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B]/60"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-[#3A1F0E] mb-2">Tell Us About Your Business <span className="text-[#CA922B]">*</span></label>
+                <textarea
+                  name="message"
+                  value={form.message}
+                  onChange={handleChange}
+                  required
+                  rows={5}
+                  placeholder="Share a bit about your business, what you offer, and why you'd like to be listed on Mapping with Melanin™…"
+                  className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B]/60 resize-none"
+                />
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">{error}</div>
+              )}
+
+              <Button type="submit" disabled={submitting} className="w-full h-14 rounded-xl bg-[#CA922B] hover:bg-[#B38024] text-white font-bold text-base">
+                {submitting ? "Submitting…" : "Submit My Business"}
+              </Button>
+
+              <p className="text-center text-xs text-[#3A1F0E]/50">
+                By submitting, you agree to our <Link href="/terms" className="text-[#CA922B] underline">Terms of Service</Link> and <Link href="/privacy-policy" className="text-[#CA922B] underline">Privacy Policy</Link>.
+              </p>
+            </form>
+          )}
+        </div>
+      </section>
+
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="bg-[#2B1507] p-12 rounded-3xl text-white text-center">
+            <h2 className="text-3xl font-serif font-bold mb-4">Have a Quick Question?</h2>
+            <p className="text-[#F5EBD8]/70 mb-8 max-w-lg mx-auto">Our team is happy to answer questions about early access, listing requirements, or membership options.</p>
+            <div className="flex justify-center gap-4 flex-wrap">
+              <a href="mailto:hello@mappingwithmelanin.com?subject=Business Listing Question">
+                <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Email Us</Button>
               </a>
               <Link href="/membership">
                 <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-12">View Membership Plans</Button>

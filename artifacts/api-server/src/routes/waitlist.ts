@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, waitlistTable } from "@workspace/db";
-import { count, desc, eq } from "drizzle-orm";
+import { count, desc, eq, isNotNull } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
 import { sendWaitlistConfirmation } from "../lib/email";
 
@@ -66,7 +66,17 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
 router.get("/waitlist/count", async (_req: Request, res: Response) => {
   try {
     const [{ total }] = await db.select({ total: count() }).from(waitlistTable);
-    res.json({ count: Number(total) });
+    const cityRows = await db
+      .select({ city: waitlistTable.city, total: count() })
+      .from(waitlistTable)
+      .where(isNotNull(waitlistTable.city))
+      .groupBy(waitlistTable.city)
+      .orderBy(desc(count()))
+      .limit(8);
+    const cities = cityRows
+      .filter(r => r.city)
+      .map(r => ({ city: r.city as string, count: Number(r.total) }));
+    res.json({ count: Number(total), cities });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch count" });
   }

@@ -103,7 +103,30 @@ export default function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">11. Changes to This Policy</h2>
+          <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">11. California Privacy Rights (CCPA)</h2>
+          <p className="leading-relaxed text-[#3A1F0E]/80 mb-3">
+            If you are a California resident, the California Consumer Privacy Act (CCPA) grants you the following rights regarding your personal information:
+          </p>
+          <ul className="space-y-2 list-disc pl-6 text-[#3A1F0E]/80 leading-relaxed mb-3">
+            <li><strong>Right to Know:</strong> You may request that we disclose the categories and specific pieces of personal information we have collected about you, the categories of sources from which we collected it, the business or commercial purpose for collecting it, and the categories of third parties with whom we share it.</li>
+            <li><strong>Right to Delete:</strong> You may request that we delete the personal information we have collected about you, subject to certain exceptions (such as completing a transaction you requested or complying with a legal obligation).</li>
+            <li><strong>Right to Opt-Out of Sale:</strong> We do not sell your personal information to third parties. You therefore have no need to opt out of a sale of your data.</li>
+            <li><strong>Right to Non-Discrimination:</strong> We will not discriminate against you for exercising any of your CCPA rights. We will not deny you goods or services, charge different prices, or provide a different level of quality because you exercised your privacy rights.</li>
+            <li><strong>Right to Correct:</strong> You may request that we correct inaccurate personal information we hold about you.</li>
+          </ul>
+          <p className="leading-relaxed text-[#3A1F0E]/80 mb-3">
+            <strong>Categories of personal information collected:</strong> identifiers (name, email, IP address); commercial information (membership status, saved places); internet/network activity (pages visited, searches); geolocation data (city/region); and inferences drawn from the above to build a profile about preferences and interests.
+          </p>
+          <p className="leading-relaxed text-[#3A1F0E]/80 mb-3">
+            <strong>Purposes for collection:</strong> providing platform services, personalizing your experience, processing payments, communicating with you, ensuring platform security, and improving our product.
+          </p>
+          <p className="leading-relaxed text-[#3A1F0E]/80">
+            To submit a CCPA request, email <a href="mailto:privacy@melaninmaps.com" className="text-[#CA922B] underline">privacy@melaninmaps.com</a> with the subject line "CCPA Privacy Request." We will respond within 45 days as required by law. We may need to verify your identity before processing your request.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">12. Changes to This Policy</h2>
           <p className="leading-relaxed text-[#3A1F0E]/80">
             We may update this Privacy Policy from time to time. We will notify you of significant changes via email or a prominent notice on our platform. Continued use of the platform after changes constitutes acceptance of the revised policy.
           </p>

@@ -1,8 +1,8 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Shield, Search, Calendar, MapPin, Sparkles, Bell, ArrowRight, Check, Users, Navigation, Compass, Star, Facebook, Linkedin, Instagram, Link2, ChevronDown } from "lucide-react";
+import { Shield, Search, Calendar, MapPin, Sparkles, Bell, ArrowRight, Check, Users, Navigation, Compass, Star, Facebook, Linkedin, Instagram, Link2, ChevronDown, Music, Ticket, MessageSquare, UserPlus } from "lucide-react";
 import { useListBusinesses } from "@workspace/api-client-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const SITE_URL = "https://mappingwithmelanin.com";
 const SHARE_TEXT = encodeURIComponent("Join Mapping with Melanin — discover trusted businesses, travel safely, and connect with the community. 🌍✊🏾");
@@ -23,6 +23,22 @@ function openShare(platform: string) {
 
 const BASE = import.meta.env.BASE_URL;
 
+interface WaitlistStats {
+  count: number;
+  cities: { city: string; count: number }[];
+}
+
+const FALLBACK_CITIES = [
+  { city: "Atlanta, GA" }, { city: "Houston, TX" }, { city: "Chicago, IL" },
+  { city: "Washington, DC" }, { city: "Los Angeles, CA" }, { city: "New York, NY" },
+  { city: "Charlotte, NC" }, { city: "Dallas, TX" },
+];
+
+function formatCount(n: number): string {
+  if (n >= 1000) return `${Math.floor(n / 100) * 100}+`;
+  return `${n}+`;
+}
+
 export default function Home() {
   const { data: businessesData, isLoading } = useListBusinesses({ limit: 3 });
   const [email, setEmail] = useState("");
@@ -33,6 +49,14 @@ export default function Home() {
   const [submitted, setSubmitted] = useState(false);
   const [position, setPosition] = useState<number | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [waitlistStats, setWaitlistStats] = useState<WaitlistStats | null>(null);
+
+  useEffect(() => {
+    fetch(`${BASE}api/waitlist/count`)
+      .then(r => r.json())
+      .then((data: WaitlistStats) => setWaitlistStats(data))
+      .catch(() => {});
+  }, []);
 
   const handleWaitlist = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,9 +87,17 @@ export default function Home() {
         <div className="absolute inset-0 bg-[#2B1507]/82 z-0" />
         
         <div className="relative z-10 container mx-auto px-6 md:px-10 max-w-5xl flex flex-col items-start text-left">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-8">
-            <Shield className="w-3 h-3 text-[#CA922B]" />
-            <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">SAFETY-FIRST COMMUNITY INTELLIGENCE</span>
+          <div className="flex flex-wrap gap-3 mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10">
+              <Shield className="w-3 h-3 text-[#CA922B]" />
+              <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">SAFETY-FIRST COMMUNITY INTELLIGENCE</span>
+            </div>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/20 bg-white/10">
+              <Users className="w-3 h-3 text-[#F5EBD8]" />
+              <span className="text-xs font-bold text-[#F5EBD8]">
+                {waitlistStats ? `${formatCount(waitlistStats.count)} community members waiting` : "10,000+ community members waiting"}
+              </span>
+            </div>
           </div>
 
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-white mb-6 leading-tight">
@@ -210,7 +242,9 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-center divide-y md:divide-y-0 md:divide-x divide-white/10">
             <div className="px-4 py-2">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">10K+ Community Members</div>
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">
+                {waitlistStats ? `${formatCount(waitlistStats.count)} Members` : "10K+ Community Members"}
+              </div>
               <div className="text-sm text-[#F5EBD8]/70">And growing every day</div>
             </div>
             <div className="px-4 py-2">
@@ -226,6 +260,61 @@ export default function Home() {
               <div className="text-sm text-[#F5EBD8]/70">Every insight, every review</div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* City / State Social Proof Strip */}
+      <section className="bg-[#FAF6EF] py-10 border-b border-[#3A1F0E]/5">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <p className="text-center text-xs font-bold tracking-widest uppercase text-[#3A1F0E]/50 mb-5">
+            Cities already on the waitlist
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            {(waitlistStats?.cities.length ? waitlistStats.cities : FALLBACK_CITIES).map((c, i) => (
+              <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#3A1F0E]/10 shadow-sm">
+                <MapPin className="w-3.5 h-3.5 text-[#CA922B]" />
+                <span className="text-sm font-semibold text-[#3A1F0E]">{c.city}</span>
+                {waitlistStats?.cities.length ? (
+                  <span className="text-xs text-[#3A1F0E]/50 font-bold">{(c as { city: string; count: number }).count} waiting</span>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Referral CTA Section */}
+      <section className="py-20 bg-[#2B1507] text-white">
+        <div className="container mx-auto px-4 max-w-4xl text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
+            <UserPlus className="w-3.5 h-3.5 text-[#CA922B]" />
+            <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">Move Up the List</span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6">
+            Invite Friends. Move Up. Get In First.
+          </h2>
+          <p className="text-[#F5EBD8]/70 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
+            Already on the waitlist? Every friend you invite moves you higher. The more you share, the sooner you get access — and first-in members unlock <span className="text-[#CA922B] font-bold">Founding Member</span> perks: discounted membership, early feature access, and a permanent community badge.
+          </p>
+          <div className="grid md:grid-cols-3 gap-6 mb-10">
+            {[
+              { num: "1", title: "Join the Waitlist", desc: "Sign up above and grab your unique referral code." },
+              { num: "2", title: "Share With Your Network", desc: "Post your referral link on social, text friends, or drop it in a group chat." },
+              { num: "3", title: "Move to the Front", desc: "Each confirmed referral bumps you up. Top referrers unlock Founding Member status." },
+            ].map((step, i) => (
+              <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 text-left">
+                <div className="w-10 h-10 rounded-full bg-[#CA922B] text-white font-bold flex items-center justify-center font-serif text-lg mb-4">{step.num}</div>
+                <h3 className="font-bold text-lg mb-2">{step.title}</h3>
+                <p className="text-[#F5EBD8]/60 text-sm leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+          <a href="#waitlist-form">
+            <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-10 h-14 text-base font-bold">
+              Join & Get Your Referral Link
+            </Button>
+          </a>
+          <p className="text-[#F5EBD8]/40 text-xs mt-4">Already signed up? Check your confirmation email for your referral code.</p>
         </div>
       </section>
 
@@ -742,6 +831,125 @@ export default function Home() {
           <div className="text-center">
             <Link href="/explore"><Button className="rounded-full bg-[#2B1507] hover:bg-[#1a0c04] text-white px-8 h-12 mb-8">Explore the Platform</Button></Link>
             <p className="text-xs text-[#3A1F0E]/50">* "Minority-owned business" is defined as any business that is 51% or more owned and operated by a Black person or persons.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Events & Community Teaser */}
+      <section className="py-24 bg-[#FAF6EF]">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
+              <Sparkles className="w-3.5 h-3.5 text-[#CA922B]" />
+              <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">COMING SOON</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-6">
+              Events. Groups. Community Feed.
+            </h2>
+            <p className="text-lg text-[#3A1F0E]/70 max-w-3xl mx-auto">
+              Mapping with Melanin™ is more than a directory — it's a living community. We're building the tools to help you gather, connect, and belong. Here's a preview of what's coming.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            {/* Events preview card */}
+            <div className="bg-white rounded-3xl border border-[#3A1F0E]/5 shadow-sm overflow-hidden">
+              <div className="bg-gradient-to-br from-[#2B1507] to-[#3A1F0E] p-6 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Ticket className="w-4 h-4 text-[#CA922B]" />
+                    <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">Events</span>
+                  </div>
+                  <span className="text-xs font-bold text-white/40 bg-white/10 px-2 py-1 rounded-full">Coming Soon</span>
+                </div>
+                {[
+                  { title: "ATL Black Business Expo", date: "Aug 2026", loc: "Atlanta, GA", tag: "Business" },
+                  { title: "Melanin & Mimosas Social", date: "Jul 2026", loc: "Houston, TX", tag: "Social" },
+                  { title: "Travel While Black Summit", date: "Sep 2026", loc: "New York, NY", tag: "Travel" },
+                ].map((ev, i) => (
+                  <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-bold text-white text-sm">{ev.title}</p>
+                        <p className="text-[#F5EBD8]/50 text-xs mt-0.5">{ev.date} · {ev.loc}</p>
+                      </div>
+                      <span className="text-xs font-bold text-[#CA922B] bg-[#CA922B]/10 px-2 py-0.5 rounded-full shrink-0">{ev.tag}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="p-5">
+                <p className="text-sm text-[#3A1F0E]/70 leading-relaxed">Discover and RSVP to local events, expos, and community gatherings near you — or anywhere you're planning to travel.</p>
+              </div>
+            </div>
+
+            {/* Groups preview card */}
+            <div className="bg-white rounded-3xl border border-[#3A1F0E]/5 shadow-sm overflow-hidden">
+              <div className="bg-gradient-to-br from-[#2B1507] to-[#3A1F0E] p-6 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-[#CA922B]" />
+                    <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">Groups</span>
+                  </div>
+                  <span className="text-xs font-bold text-white/40 bg-white/10 px-2 py-1 rounded-full">Coming Soon</span>
+                </div>
+                {[
+                  { name: "Black Travel Collective", members: "1.2K", type: "Travel" },
+                  { name: "Melanated Entrepreneurs", members: "890", type: "Business" },
+                  { name: "HBCU Alumni Network", members: "2.4K", type: "Network" },
+                ].map((g, i) => (
+                  <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between gap-2">
+                    <div>
+                      <p className="font-bold text-white text-sm">{g.name}</p>
+                      <p className="text-[#F5EBD8]/50 text-xs mt-0.5">{g.members} members</p>
+                    </div>
+                    <span className="text-xs font-bold text-[#CA922B] bg-[#CA922B]/10 px-2 py-0.5 rounded-full shrink-0">{g.type}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="p-5">
+                <p className="text-sm text-[#3A1F0E]/70 leading-relaxed">Join groups built around travel, entrepreneurship, professional networking, and community interests — and connect before you arrive anywhere.</p>
+              </div>
+            </div>
+
+            {/* Community Feed preview card */}
+            <div className="bg-white rounded-3xl border border-[#3A1F0E]/5 shadow-sm overflow-hidden">
+              <div className="bg-gradient-to-br from-[#2B1507] to-[#3A1F0E] p-6 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-[#CA922B]" />
+                    <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">Community Feed</span>
+                  </div>
+                  <span className="text-xs font-bold text-white/40 bg-white/10 px-2 py-1 rounded-full">Coming Soon</span>
+                </div>
+                {[
+                  { user: "Aaliyah T.", post: "Just discovered the best soul food spot in Charlotte 🙌 Adding it to my list!", time: "2m ago" },
+                  { user: "Marcus J.", post: "Safety score just updated for Midtown ATL — looking great for this weekend!", time: "15m ago" },
+                  { user: "Simone R.", post: "Our Dallas group is organizing a meetup next month. Who's in?", time: "1h ago" },
+                ].map((p, i) => (
+                  <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-5 h-5 rounded-full bg-[#CA922B]/30 text-[#CA922B] flex items-center justify-center text-[9px] font-bold shrink-0">{p.user[0]}</div>
+                      <span className="text-xs font-bold text-[#F5EBD8]">{p.user}</span>
+                      <span className="text-xs text-white/30 ml-auto">{p.time}</span>
+                    </div>
+                    <p className="text-[#F5EBD8]/70 text-xs leading-relaxed">{p.post}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="p-5">
+                <p className="text-sm text-[#3A1F0E]/70 leading-relaxed">A real-time feed of community posts, local tips, safety updates, and business recommendations from members in cities across the country.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <p className="text-[#3A1F0E]/50 text-sm mb-6">These features are in development. Join the waitlist to be the first to access them when they launch.</p>
+            <a href="#" onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+              <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">
+                Join the Waitlist for Early Access
+              </Button>
+            </a>
           </div>
         </div>
       </section>
