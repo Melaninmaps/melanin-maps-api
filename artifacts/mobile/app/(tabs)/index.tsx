@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AlertBanner } from "@/components/AlertBanner";
 import { BusinessCard } from "@/components/BusinessCard";
+import { SkeletonBusinessCardHorizontal, SkeletonBusinessCardVertical } from "@/components/SkeletonCard";
 import { CategoryPill } from "@/components/CategoryPill";
 import { NeighborhoodSafetySurvey } from "@/components/NeighborhoodSafetySurvey";
 import { OnboardingPreferenceSurvey } from "@/components/OnboardingPreferenceSurvey";
@@ -57,7 +58,7 @@ export default function DiscoverScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
-  const { businesses, refetch: refetchBusinesses } = useBusinesses({
+  const { businesses, isLoading: businessesLoading, refetch: refetchBusinesses } = useBusinesses({
     search,
     category: activeCategory,
   });
@@ -242,7 +243,14 @@ export default function DiscoverScreen() {
         )}
 
         {/* Featured businesses */}
-        {featured.length > 0 && (
+        {businessesLoading ? (
+          <View style={styles.section}>
+            <SectionHeader title="Featured Businesses" />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+              {[0, 1, 2].map((i) => <SkeletonBusinessCardHorizontal key={i} />)}
+            </ScrollView>
+          </View>
+        ) : featured.length > 0 ? (
           <View style={styles.section}>
             <SectionHeader title="Featured Businesses" />
             <FlatList
@@ -262,10 +270,15 @@ export default function DiscoverScreen() {
               )}
             />
           </View>
-        )}
+        ) : null}
 
         {/* Nearby businesses */}
-        {nearby.length > 0 && (
+        {businessesLoading ? (
+          <View style={styles.section}>
+            <SectionHeader title="Near You" />
+            {[0, 1, 2, 4].map((i) => <SkeletonBusinessCardVertical key={i} />)}
+          </View>
+        ) : nearby.length > 0 ? (
           <View style={styles.section}>
             <SectionHeader title="Near You" />
             {nearby.map((b) => (
@@ -278,7 +291,7 @@ export default function DiscoverScreen() {
               />
             ))}
           </View>
-        )}
+        ) : null}
 
         {filtered.length === 0 && (
           <View style={styles.empty}>
@@ -379,10 +392,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
   },
   heroTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 20,
+    fontFamily: "PlayfairDisplay_700Bold",
+    fontSize: 22,
     color: "#FFFFFF",
-    lineHeight: 26,
+    lineHeight: 30,
   },
   heroCta: {
     flexDirection: "row",
@@ -416,7 +429,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   travelBannerTitle: {
-    fontFamily: "Inter_700Bold",
+    fontFamily: "PlayfairDisplay_700Bold",
     fontSize: 18,
     color: "#FAF1E4",
   },

@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { usePathname } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
   Animated,
@@ -96,6 +97,7 @@ function getReply(msg: string): string {
 export function AIChatWidget() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { id: "0", text: GREETING, fromUser: false, ts: Date.now() },
@@ -104,6 +106,8 @@ export function AIChatWidget() {
   const [typing, setTyping] = useState(false);
   const listRef = useRef<FlatList>(null);
   const pulse = useRef(new Animated.Value(1)).current;
+
+  const suppressed = ["/onboarding", "/login", "/signup"].some((r) => pathname.startsWith(r));
 
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
@@ -116,7 +120,9 @@ export function AIChatWidget() {
     ).start();
   };
 
-  React.useEffect(() => { startPulse(); }, []);
+  React.useEffect(() => { if (!suppressed) startPulse(); }, [suppressed]);
+
+  if (suppressed) return null;
 
   const send = () => {
     const text = input.trim();
