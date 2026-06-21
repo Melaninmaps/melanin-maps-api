@@ -161,8 +161,11 @@ export default function BusinessDashboardScreen() {
 
         {activeTab === "reviews" && (
           <View style={styles.comingSoon}>
-            <Feather name="star" size={40} color={colors.border} />
-            <Text style={[styles.comingSoonTxt, { color: colors.mutedForeground }]}>Full review management coming soon</Text>
+            <View style={[styles.comingSoonIcon, { backgroundColor: colors.secondary }]}>
+              <Feather name="star" size={28} color={colors.primary} />
+            </View>
+            <Text style={[styles.comingSoonTxt, { color: colors.foreground }]}>Review Management</Text>
+            <Text style={[styles.comingSoonSub, { color: colors.mutedForeground }]}>Customer reviews will appear here once your business profile is active. Respond to reviews and track your rating over time.</Text>
           </View>
         )}
 
@@ -249,8 +252,10 @@ const styles = StyleSheet.create({
   replyBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
   replyTxt: { fontSize: 12, fontFamily: "Inter_500Medium" },
   reviewText: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
-  comingSoon: { alignItems: "center", gap: 12, paddingTop: 60 },
-  comingSoonTxt: { fontSize: 15, fontFamily: "Inter_400Regular" },
+  comingSoon: { alignItems: "center", gap: 12, paddingTop: 60, paddingHorizontal: 32 },
+  comingSoonIcon: { width: 64, height: 64, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 4 },
+  comingSoonTxt: { fontSize: 17, fontFamily: "Inter_700Bold", textAlign: "center" },
+  comingSoonSub: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 22 },
   insightCard: { borderRadius: 16, padding: 18, marginBottom: 16, borderWidth: 1 },
   insightTitle: { fontSize: 15, fontFamily: "Inter_700Bold", marginBottom: 16 },
   barChart: { flexDirection: "row", alignItems: "flex-end", gap: 8, height: 100 },

@@ -264,7 +264,7 @@ export default function CommunityScreen() {
           style={[styles.searchBtn, { backgroundColor: colors.secondary }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            Alert.alert("Search Community", "Search for posts, groups, and events — coming soon!");
+            Alert.alert("Search Community", "Use the category filters below to browse groups, events, and posts by topic.");
           }}
         >
           <Feather name="search" size={18} color={colors.foreground} />
@@ -387,7 +387,7 @@ export default function CommunityScreen() {
                 return;
               }
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              Alert.alert("Create Group", "Group creation coming soon!");
+              Alert.alert("Start a Group", "Ready to bring your community together? Email us at hello@melaninmaps.com to get your group listed.", [{ text: "OK" }]);
             }}
           >
             <Feather name="plus" size={24} color="#FFFFFF" />

@@ -46,10 +46,10 @@ export default function SettingsScreen() {
     {
       title: "Account",
       rows: [
-        { id: "profile", icon: "user", label: "Edit Profile", sub: "Name, photo, bio", route: null },
+        { id: "profile", icon: "user", label: "Edit Profile", sub: "Name, photo, bio", route: "/(tabs)/profile" },
         { id: "email", icon: "mail", label: "Email Address", sub: user?.email ?? "Not signed in", route: null },
-        { id: "password", icon: "lock", label: "Change Password", route: null },
-        { id: "connected", icon: "link", label: "Connected Accounts", sub: "Google, Apple", route: null },
+        { id: "password", icon: "lock", label: "Change Password", sub: "Managed via Replit account", route: null },
+        { id: "connected", icon: "link", label: "Connected Accounts", sub: "Managed via Replit Auth", route: null },
       ],
     },
     {
@@ -63,8 +63,8 @@ export default function SettingsScreen() {
     {
       title: "Community",
       rows: [
-        { id: "reviews", icon: "star", label: "My Reviews", route: null },
-        { id: "reports", icon: "flag", label: "My Safety Reports", route: null },
+        { id: "reviews", icon: "star", label: "My Reviews", route: "/(tabs)/profile" },
+        { id: "reports", icon: "flag", label: "My Safety Reports", route: "/(tabs)/profile" },
         { id: "saved", icon: "bookmark", label: "Saved Businesses", route: "/(tabs)/profile" },
         { id: "membership", icon: "award", label: "Membership", sub: "Explore (Free)", route: "/membership" },
       ],
@@ -94,7 +94,7 @@ export default function SettingsScreen() {
         { id: "guidelines", icon: "users", label: "Community Guidelines", route: "/community-guidelines" },
         { id: "standards", icon: "book-open", label: "Community Standards", route: "/community-standards" },
         { id: "safetyinfo", icon: "shield", label: "Our Safety Philosophy", route: "/safety-info" },
-        { id: "licenses", icon: "code", label: "Open Source Licenses", route: null },
+        { id: "licenses", icon: "code", label: "Open Source Licenses", route: null, sub: "React Native, Expo, and more" },
         { id: "version", icon: "info", label: "Version", value: "1.0.0", route: null },
       ],
     },
@@ -108,6 +108,18 @@ export default function SettingsScreen() {
   const handleRow = (row: Row) => {
     if (Platform.OS !== "web") Haptics.selectionAsync();
     if (row.id === "appearance") { toggleDark(); return; }
+    if (row.id === "password") {
+      Alert.alert("Change Password", "Your password is managed through your Replit account. Visit replit.com/account to update it.");
+      return;
+    }
+    if (row.id === "connected") {
+      Alert.alert("Connected Accounts", "Your connected accounts are managed through Replit Auth at replit.com/account.");
+      return;
+    }
+    if (row.id === "licenses") {
+      Alert.alert("Open Source Licenses", "This app is built on React Native, Expo, Drizzle ORM, and many other open source projects. Thank you to all contributors.");
+      return;
+    }
     if (row.id === "signout") {
       logout();
       router.replace("/login");
