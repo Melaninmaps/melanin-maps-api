@@ -83,7 +83,7 @@ export default function Home() {
     <div className="flex flex-col w-full bg-[#FAF6EF]">
       {/* Hero Section */}
       <section className="relative min-h-[50vh] md:min-h-[110vh] flex items-center pt-20 pb-32 overflow-hidden bg-[#2B1507]">
-        <img src={`${import.meta.env.BASE_URL}images/hero-home-bg.png`} alt="" className="absolute inset-0 w-full h-full object-cover object-bottom" />
+        <img src={`${import.meta.env.BASE_URL}images/hero-home-bg.png`} alt="" className="absolute inset-0 w-full h-full object-cover object-bottom scale-125 origin-bottom" />
         <div className="absolute inset-0 bg-[#2B1507]/82 z-0" />
         
         <div className="relative z-10 container mx-auto px-6 md:px-10 max-w-5xl flex flex-col items-start text-left">
