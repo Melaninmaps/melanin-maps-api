@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AlertBanner } from "@/components/AlertBanner";
 import { BusinessCard } from "@/components/BusinessCard";
+import { SwipeableBusinessCard } from "@/components/SwipeableBusinessCard";
 import { SkeletonBusinessCardHorizontal, SkeletonBusinessCardVertical } from "@/components/SkeletonCard";
 import { CategoryPill } from "@/components/CategoryPill";
 import { NeighborhoodSafetySurvey } from "@/components/NeighborhoodSafetySurvey";
@@ -302,9 +303,9 @@ export default function DiscoverScreen() {
           </View>
         ) : nearby.length > 0 ? (
           <View style={styles.section}>
-            <SectionHeader title="Near You" />
+            <SectionHeader title="Near You" subtitle="Swipe left to save" />
             {nearby.map((b) => (
-              <BusinessCard
+              <SwipeableBusinessCard
                 key={b.id}
                 business={b}
                 onPress={() => router.push({ pathname: "/business/[id]", params: { id: b.id } })}

@@ -2,7 +2,7 @@ import { useGetCurrentAuthUser, useGetMyProfile, useUpdateMyProfile, useListSave
 import { Redirect, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { LogOut, Save, MapPin, Map, FlaskConical } from "lucide-react";
+import { LogOut, Save, MapPin, Map, FlaskConical, Trophy, Star, Shield, Heart, Zap, Award } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -78,6 +78,14 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* Community Badges */}
+        <div className="mb-8">
+          <h3 className="text-lg font-serif font-bold text-white mb-4 flex items-center gap-2">
+            <Trophy className="text-[#CA922B] w-5 h-5" /> Community Badges
+          </h3>
+          <CommunityBadges savedCount={savedPlaces?.businessIds?.length ?? 0} isEarlyTester={(auth?.user as any)?.role === "tester"} />
+        </div>
+
         <div className="grid md:grid-cols-3 gap-8">
           {/* Profile Card */}
           <div className="md:col-span-1">
@@ -139,6 +147,52 @@ export default function Profile() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+interface BadgeDef { icon: typeof Trophy; label: string; description: string; earned: boolean; color: string; bg: string; }
+
+function CommunityBadges({ savedCount, isEarlyTester }: { savedCount: number; isEarlyTester: boolean }) {
+  const badges: BadgeDef[] = [
+    {
+      icon: Heart, label: "Community Member", description: "Joined the Mapping with Melanin community",
+      earned: true, color: "text-rose-600", bg: "bg-rose-50 border-rose-200",
+    },
+    {
+      icon: Star, label: "Explorer", description: "Saved 5 or more businesses",
+      earned: savedCount >= 5, color: "text-[#CA922B]", bg: savedCount >= 5 ? "bg-amber-50 border-amber-200" : "bg-gray-50 border-gray-200",
+    },
+    {
+      icon: Zap, label: "Early Adopter", description: "One of the first to join the platform",
+      earned: isEarlyTester, color: "text-purple-600", bg: isEarlyTester ? "bg-purple-50 border-purple-200" : "bg-gray-50 border-gray-200",
+    },
+    {
+      icon: Shield, label: "Safety Watcher", description: "Submitted a neighborhood safety report",
+      earned: false, color: "text-blue-600", bg: "bg-gray-50 border-gray-200",
+    },
+    {
+      icon: Award, label: "Verified Reviewer", description: "Left 3 or more reviews",
+      earned: false, color: "text-green-600", bg: "bg-gray-50 border-gray-200",
+    },
+    {
+      icon: Trophy, label: "Community Champion", description: "Top contributor this month",
+      earned: false, color: "text-yellow-600", bg: "bg-gray-50 border-gray-200",
+    },
+  ];
+  return (
+    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+      {badges.map((b) => (
+        <div key={b.label} className={`relative rounded-2xl p-3 border text-center transition-all ${b.earned ? b.bg : "bg-white/5 border-white/10"} ${!b.earned ? "opacity-50" : ""}`}>
+          <b.icon className={`w-6 h-6 mx-auto mb-1.5 ${b.earned ? b.color : "text-[#F5EBD8]/40"}`} />
+          <p className={`text-[10px] font-bold leading-tight ${b.earned ? "text-[#3A1F0E]" : "text-[#F5EBD8]/50"}`}>{b.label}</p>
+          {!b.earned && (
+            <div className="absolute inset-0 flex items-end justify-center pb-2 rounded-2xl">
+              <span className="text-[8px] text-[#F5EBD8]/30 uppercase tracking-wider">Locked</span>
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

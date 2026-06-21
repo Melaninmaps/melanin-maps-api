@@ -29,6 +29,8 @@ import stripeRouter from "./stripe";
 import adminUsersRouter from "./admin-users";
 import mapsRouter from "./maps";
 import ogRouter from "./og";
+import jobsRouter from "./jobs";
+import impactRouter from "./impact";
 
 const router: IRouter = Router();
 
@@ -62,5 +64,7 @@ router.use(stripeRouter);
 router.use(adminUsersRouter);
 router.use(mapsRouter);
 router.use(ogRouter);
+router.use(jobsRouter);
+router.use(impactRouter);
 
 export default router;

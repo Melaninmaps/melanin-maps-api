@@ -26,6 +26,9 @@ import Events from "@/pages/events";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import Terms from "@/pages/terms";
 import CommunityGuidelines from "@/pages/community-guidelines";
+import Cities from "@/pages/cities";
+import CitySpotlight from "@/pages/city-spotlight";
+import Jobs from "@/pages/jobs";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -91,6 +94,15 @@ function Router() {
       </Route>
       <Route path="/community-guidelines">
         <Layout><CommunityGuidelines /></Layout>
+      </Route>
+      <Route path="/cities">
+        <Layout><Cities /></Layout>
+      </Route>
+      <Route path="/cities/:city">
+        <Layout><CitySpotlight /></Layout>
+      </Route>
+      <Route path="/jobs">
+        <Layout><Jobs /></Layout>
       </Route>
       <Route component={NotFound} />
     </Switch>

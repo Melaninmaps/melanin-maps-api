@@ -145,7 +145,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <li><Link href="/businesses"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Minority-Owned Businesses</span></Link></li>
                 <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Restaurants & Nightlife</span></Link></li>
                 <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Hotels & Stays</span></Link></li>
-                <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Cultural Landmarks</span></Link></li>
+                <li><Link href="/cities"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">City Spotlights</span></Link></li>
                 <li><Link href="/map"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Explore the Map</span></Link></li>
               </ul>
             </div>
@@ -153,7 +153,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <h3 className="font-serif font-bold text-xl mb-6 text-white">Community</h3>
               <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
                 <li><Link href="/community"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Groups & Meetups</span></Link></li>
-                <li><Link href="/community"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Networking</span></Link></li>
+                <li><Link href="/jobs"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Job Board</span></Link></li>
                 <li><Link href="/events"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Cultural Events</span></Link></li>
                 <li><Link href="/travel"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">KinfolkAI Travel Planner</span></Link></li>
               </ul>

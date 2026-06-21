@@ -3,8 +3,7 @@ import { useListBusinesses } from "@workspace/api-client-react";
 import { Link, useSearch } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Search, MapPin, Star, ShieldCheck, Grid, Map as MapIcon, Compass } from "lucide-react";
+import { Search, MapPin, Star, ShieldCheck, Grid, Map as MapIcon, Compass, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -14,6 +13,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+function isOpenNow(hours: string | null | undefined): boolean {
+  if (!hours) return false;
+  const lower = hours.toLowerCase();
+  if (lower.includes("24") || lower.includes("always open")) return true;
+  if (lower.includes("closed")) return false;
+  const now = new Date();
+  const day = now.getDay();
+  const hour = now.getHours();
+  const minute = now.getMinutes();
+  const current = hour * 60 + minute;
+  const timeMatch = hours.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*[-–]\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+  if (!timeMatch) return true;
+  const parseTime = (h: string, m: string | undefined, period: string | undefined) => {
+    let hr = parseInt(h);
+    const mn = m ? parseInt(m) : 0;
+    if (period?.toLowerCase() === "pm" && hr !== 12) hr += 12;
+    if (period?.toLowerCase() === "am" && hr === 12) hr = 0;
+    return hr * 60 + mn;
+  };
+  const open = parseTime(timeMatch[1], timeMatch[2], timeMatch[3]);
+  const close = parseTime(timeMatch[4], timeMatch[5], timeMatch[6]);
+  return current >= open && current <= close;
+}
+
 export default function Discover() {
   const searchString = useSearch();
   const searchParams = new URLSearchParams(searchString);
@@ -22,11 +45,16 @@ export default function Discover() {
   const [query, setQuery] = useState(initialQuery);
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
+  const [openNow, setOpenNow] = useState(false);
 
   const { data, isLoading } = useListBusinesses({
     search: query || undefined,
     category: activeCategory === "All" ? undefined : activeCategory,
   }, { query: { queryKey: ['businesses', query, activeCategory] } });
+
+  const businesses = openNow
+    ? (data?.businesses ?? []).filter(b => isOpenNow((b as any).hours))
+    : (data?.businesses ?? []);
 
   const categories = [
     "All", 
@@ -88,10 +116,21 @@ export default function Discover() {
         {/* Toolbar */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <div className="text-[#3A1F0E] font-medium">
-            {isLoading ? "Loading..." : <span className="font-bold">{data?.total ?? data?.businesses?.length ?? 0}</span>} results found
+            {isLoading ? "Loading..." : <span className="font-bold">{businesses.length}</span>} results found
           </div>
           
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setOpenNow(!openNow)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
+                openNow
+                  ? "bg-green-600 text-white border-green-600 shadow-sm"
+                  : "bg-white text-[#3A1F0E] border-[#2B1507]/20 hover:border-green-500 hover:text-green-700"
+              }`}
+            >
+              <Clock size={14} className={openNow ? "text-white" : "text-green-600"} />
+              Open Now
+            </button>
             <Select defaultValue="recommended">
               <SelectTrigger className="w-[180px] bg-white border-[#2B1507]/10 rounded-full h-10">
                 <SelectValue placeholder="Sort by" />
@@ -132,13 +171,14 @@ export default function Discover() {
                 </div>
               </div>
             ))
-          ) : data?.businesses.length === 0 ? (
+          ) : businesses.length === 0 ? (
             <div className="col-span-full py-20 text-center space-y-4">
               <Search size={48} className="mx-auto text-[#2B1507]/20" />
-              <p className="text-xl text-[#3A1F0E]">No businesses found matching your criteria.</p>
+              <p className="text-xl text-[#3A1F0E]">{openNow ? "No businesses found that are open right now." : "No businesses found matching your criteria."}</p>
+              {openNow && <button onClick={() => setOpenNow(false)} className="text-[#CA922B] underline text-sm">Show all businesses</button>}
             </div>
           ) : (
-            data?.businesses.map((business) => (
+            businesses.map((business) => (
               <Link key={business.id} href={`/businesses/${business.id}`}>
                 <div className="group relative bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(43,21,7,0.05)] hover:shadow-[0_8px_30px_rgba(43,21,7,0.12)] transition-all duration-300 cursor-pointer h-[420px] flex flex-col border border-[#2B1507]/5">
                   {/* Top Image Area */}

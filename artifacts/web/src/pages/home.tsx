@@ -1,8 +1,41 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Shield, Search, Calendar, MapPin, Sparkles, Bell, ArrowRight, Check, Users, Navigation, Compass, Star, Facebook, Linkedin, Instagram, Link2, ChevronDown, Music, Ticket, MessageSquare, UserPlus } from "lucide-react";
+import { Shield, Search, Calendar, MapPin, Sparkles, Bell, ArrowRight, Check, Users, Navigation, Compass, Star, Facebook, Linkedin, Instagram, Link2, ChevronDown, Music, Ticket, MessageSquare, UserPlus, Building2, Globe, BookOpen } from "lucide-react";
 import { useListBusinesses } from "@workspace/api-client-react";
 import { useState, useEffect } from "react";
+
+const BASE_URL = import.meta.env.BASE_URL;
+
+interface ImpactStats { businesses: number; cities: number; reviews: number; community: number; }
+
+function ImpactCounter() {
+  const [stats, setStats] = useState<ImpactStats | null>(null);
+  useEffect(() => {
+    fetch(`${BASE_URL}api/impact`)
+      .then(r => r.json())
+      .then(setStats)
+      .catch(() => {});
+  }, []);
+  const items = [
+    { icon: Building2, label: "Businesses Listed", value: stats?.businesses ?? 0, suffix: "+" },
+    { icon: Globe, label: "Cities Covered", value: stats?.cities ?? 0, suffix: "" },
+    { icon: BookOpen, label: "Community Reviews", value: stats?.reviews ?? 0, suffix: "+" },
+    { icon: Users, label: "Community Members", value: stats?.community ?? 0, suffix: "+" },
+  ];
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      {items.map(({ icon: Icon, label, value, suffix }) => (
+        <div key={label} className="text-center p-6 rounded-2xl bg-white/5 border border-white/10">
+          <Icon className="w-6 h-6 text-[#CA922B] mx-auto mb-3" />
+          <div className="text-4xl font-serif font-bold text-white mb-1">
+            {value > 0 ? `${value.toLocaleString()}${suffix}` : "—"}
+          </div>
+          <div className="text-[#F5EBD8]/60 text-sm">{label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const SITE_URL = "https://mappingwithmelanin.com";
 const SHARE_TEXT = encodeURIComponent("Join Mapping with Melanin — discover trusted businesses, travel safely, and connect with the community. 🌍✊🏾");
@@ -951,6 +984,19 @@ export default function Home() {
               </Button>
             </a>
           </div>
+        </div>
+      </section>
+
+      {/* Impact Counter */}
+      <section className="py-16 bg-[#2B1507]">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/40 bg-[#CA922B]/10 mb-4">
+              <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">Community Impact</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-white">Growing Every Day</h2>
+          </div>
+          <ImpactCounter />
         </div>
       </section>
 
