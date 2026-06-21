@@ -6,15 +6,16 @@ import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/layout";
 
 import Home from "@/pages/home";
-import Discover from "@/pages/discover";
-import MapPage from "@/pages/map";
+import Explore from "@/pages/explore";
 import BusinessDetail from "@/pages/business-detail";
 import Safety from "@/pages/safety";
-import Events from "@/pages/events";
 import Community from "@/pages/community";
-import Travel from "@/pages/travel";
-import Profile from "@/pages/profile";
+import Businesses from "@/pages/businesses";
+import ForBusinessOwners from "@/pages/for-business-owners";
+import Roadmap from "@/pages/roadmap";
+import Membership from "@/pages/membership";
 import Login from "@/pages/login";
+import Profile from "@/pages/profile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,11 +30,11 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/discover">
-        <Layout><Discover /></Layout>
+      <Route path="/explore">
+        <Layout><Explore /></Layout>
       </Route>
-      <Route path="/map">
-        <Layout><MapPage /></Layout>
+      <Route path="/businesses">
+        <Layout><Businesses /></Layout>
       </Route>
       <Route path="/businesses/:id">
         <Layout><BusinessDetail /></Layout>
@@ -41,19 +42,22 @@ function Router() {
       <Route path="/safety">
         <Layout><Safety /></Layout>
       </Route>
-      <Route path="/events">
-        <Layout><Events /></Layout>
-      </Route>
       <Route path="/community">
         <Layout><Community /></Layout>
       </Route>
-      <Route path="/travel">
-        <Layout><Travel /></Layout>
+      <Route path="/for-business-owners">
+        <Layout><ForBusinessOwners /></Layout>
       </Route>
+      <Route path="/roadmap">
+        <Layout><Roadmap /></Layout>
+      </Route>
+      <Route path="/membership">
+        <Layout><Membership /></Layout>
+      </Route>
+      <Route path="/login" component={Login} />
       <Route path="/profile">
         <Layout><Profile /></Layout>
       </Route>
-      <Route path="/login" component={Login} /> 
       <Route component={NotFound} />
     </Switch>
   );

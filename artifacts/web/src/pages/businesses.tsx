@@ -1,0 +1,109 @@
+import { Button } from "@/components/ui/button";
+import { ShieldCheck, Search, Users, MapPin, CheckCircle } from "lucide-react";
+
+export default function Businesses() {
+  return (
+    <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
+      {/* Hero */}
+      <section className="bg-[#2B1507] py-24 relative overflow-hidden">
+        {/* Simulating dark overlay over barbershop scene */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(43,21,7,0.7)] via-[rgba(43,21,7,0.9)] to-[#2B1507] z-0" />
+        
+        <div className="container mx-auto px-4 md:px-6 relative z-10 flex flex-col items-center text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-8">
+            <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">VERIFIED BUSINESS DIRECTORY</span>
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-serif font-bold text-white mb-6 leading-tight max-w-4xl">
+            Support Trusted<br />
+            <span className="text-[#CA922B]">Businesses.</span><br />
+            Everywhere You Go.
+          </h1>
+          
+          <p className="text-[#F5EBD8]/80 text-lg md:text-xl max-w-2xl mb-4 font-light">
+            Connect with verified Minority-owned businesses, service providers, and entrepreneurs while exploring new cities and communities.
+          </p>
+          <p className="text-[#F5EBD8]/60 text-base max-w-2xl mb-10 font-light">
+            Every listing is community-reviewed, authenticity-checked, and safety-scored by real members.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-14 text-lg">Browse Directory →</Button>
+            <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-14 text-lg bg-transparent">List Your Business</Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats strip */}
+      <section className="bg-[#1c0d04] py-8 border-t border-white/10">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-x divide-white/10">
+            <div className="px-4 text-white font-serif font-bold text-xl md:text-2xl">2,400+ <span className="text-sm font-sans font-normal text-[#F5EBD8]/60 block uppercase tracking-wider mt-1">Verified Businesses</span></div>
+            <div className="px-4 text-white font-serif font-bold text-xl md:text-2xl">48 <span className="text-sm font-sans font-normal text-[#F5EBD8]/60 block uppercase tracking-wider mt-1">States Covered</span></div>
+            <div className="px-4 text-white font-serif font-bold text-xl md:text-2xl">94/100 <span className="text-sm font-sans font-normal text-[#F5EBD8]/60 block uppercase tracking-wider mt-1">Avg. Confidence Score</span></div>
+            <div className="px-4 text-[#CA922B] font-serif font-bold text-xl md:text-2xl">100% <span className="text-sm font-sans font-normal text-[#F5EBD8]/60 block uppercase tracking-wider mt-1">Authenticity Checked</span></div>
+          </div>
+        </div>
+      </section>
+
+      <div className="container mx-auto px-4 max-w-6xl py-24">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+          <div>
+            <h2 className="text-4xl font-serif font-bold text-[#3A1F0E] mb-4">Find Businesses You Can Trust</h2>
+            <p className="text-lg text-[#3A1F0E]/70 max-w-2xl">
+              Every listing carries a Community Confidence Score — built from safety ratings, recommendation rates, and the trust metric that matters most: would members return alone?
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" className="rounded-full border-gray-300">Submit a Business</Button>
+            <Button variant="outline" className="rounded-full border-gray-300">Rate a Neighborhood</Button>
+            <Button className="rounded-full bg-[#2B1507] text-white"><MapPin className="w-4 h-4 mr-2"/> Near Me</Button>
+          </div>
+        </div>
+
+        <div className="space-y-6 mb-16">
+          <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+            {["All", "Restaurants", "Hotels & Stays", "Salons & Spas", "Retail & Boutiques", "Legal & Financial", "Health & Wellness", "Tour Operators", "Professional Services"].map((c, i) => (
+              <button key={i} className={`px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-bold transition-colors ${i === 0 ? 'bg-[#3A1F0E] text-white' : 'bg-white border border-[#3A1F0E]/10 text-[#3A1F0E] hover:border-[#CA922B]'}`}>
+                {c}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+            {["Minority-Owned", "Hispanic-Owned", "Asian-Owned", "Women-Owned", "Veteran-Owned", "LGBTQ+-Owned", "Indigenous-Owned", "Immigrant-Owned", "Disability-Owned"].map((c, i) => (
+              <button key={i} className={`px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-bold transition-colors ${i === 0 ? 'bg-[#CA922B]/10 text-[#CA922B] border border-[#CA922B]/30' : 'bg-white border border-[#3A1F0E]/10 text-[#3A1F0E] hover:border-[#CA922B]'}`}>
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA section */}
+        <div className="bg-[#FAF6EF] p-12 rounded-3xl border border-[#3A1F0E]/10 flex flex-col md:flex-row items-center gap-12 mt-24">
+          <div className="flex-1">
+            <div className="text-xs font-bold tracking-widest text-[#CA922B] uppercase mb-4">FOR BUSINESS OWNERS & COMMUNITY</div>
+            <h3 className="text-3xl font-serif font-bold text-[#3A1F0E] mb-4">Know a Business Worth Sharing?</h3>
+            <p className="text-[#3A1F0E]/70 mb-8 leading-relaxed">
+              Help grow the directory by submitting a business you love. Owners can apply for early access and a verified badge — community members can nominate any business they trust.
+            </p>
+            <div className="flex flex-wrap gap-6 mb-8">
+              <div className="flex items-center gap-2 font-bold text-[#3A1F0E]"><CheckCircle className="w-5 h-5 text-[#CA922B]"/> Verified Badge</div>
+              <div className="flex items-center gap-2 font-bold text-[#3A1F0E]"><CheckCircle className="w-5 h-5 text-[#CA922B]"/> Community Reviews</div>
+              <div className="flex items-center gap-2 font-bold text-[#3A1F0E]"><CheckCircle className="w-5 h-5 text-[#CA922B]"/> Map Discovery</div>
+            </div>
+            <div className="flex flex-wrap gap-4">
+              <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Submit a Business</Button>
+              <Button variant="outline" className="rounded-full border-[#2B1507] text-[#2B1507] px-8 h-12">Apply for Early Access</Button>
+              <Button variant="ghost" className="rounded-full text-[#3A1F0E]/60 hover:text-[#CA922B]">Share the directory</Button>
+            </div>
+          </div>
+          <div className="w-full md:w-1/3 bg-white p-8 rounded-2xl shadow-lg border border-[#3A1F0E]/5 transform rotate-2">
+             <div className="w-16 h-16 bg-[#2B1507] rounded-full mx-auto mb-6 flex items-center justify-center"><ShieldCheck className="w-8 h-8 text-[#CA922B]"/></div>
+             <div className="text-center font-serif font-bold text-2xl text-[#3A1F0E] mb-2">Get Verified</div>
+             <div className="text-center text-[#3A1F0E]/60 text-sm">Join the network of trusted Minority-owned businesses today.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

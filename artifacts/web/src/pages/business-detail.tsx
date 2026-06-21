@@ -24,7 +24,7 @@ export default function BusinessDetail() {
   const queryClient = useQueryClient();
 
   const { data: auth } = useGetCurrentAuthUser();
-  const { data: business, isLoading: isLoadingBusiness } = useGetBusiness(id);
+  const { data: business, isLoading: isLoadingBusiness } = useGetBusiness(id, { query: { enabled: !!id } });
   const { data: reviews, isLoading: isLoadingReviews } = useListReviews({ businessId: id });
   const { data: savedPlaces } = useListSavedPlaces({ query: { enabled: !!auth?.user } });
 
@@ -94,7 +94,7 @@ export default function BusinessDetail() {
     return (
       <div className="min-h-screen bg-[#FAF6EF] flex flex-col items-center justify-center text-center p-10">
         <h2 className="text-3xl font-serif text-[#3A1F0E] mb-4">Business not found</h2>
-        <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B]">Go Back</Button>
+        <Button variant="outline" onClick={() => window.history.back()} className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white">Go Back</Button>
       </div>
     );
   }
@@ -111,7 +111,7 @@ export default function BusinessDetail() {
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 container mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="text-white max-w-3xl">
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
                 <span className="bg-[#CA922B] text-white text-xs uppercase font-bold tracking-wider px-3 py-1 rounded-full">
                   {business.category}
                 </span>
@@ -156,7 +156,7 @@ export default function BusinessDetail() {
 
               <TabsContent value="overview" className="space-y-8 animate-in fade-in">
                 <div className="prose prose-lg text-[#3A1F0E]/80 font-light leading-relaxed">
-                  <p>{business.description || "Discover this exceptional Black-owned business. They provide quality service and a welcoming environment for the community."}</p>
+                  <p>{business.description || "Discover this exceptional business. They provide quality service and a welcoming environment for the community."}</p>
                 </div>
                 
                 {business.blackOwned && (
@@ -165,8 +165,8 @@ export default function BusinessDetail() {
                       <ShieldCheck className="text-[#CA922B] w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-1">Verified Black-Owned</h3>
-                      <p className="text-[#3A1F0E]/70 text-sm">This business is part of our verified network of Black-owned enterprises, supporting economic empowerment.</p>
+                      <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-1">Verified Minority-Owned</h3>
+                      <p className="text-[#3A1F0E]/70 text-sm">This business is part of our verified network of Minority-owned enterprises, supporting economic empowerment.</p>
                     </div>
                   </div>
                 )}
@@ -208,7 +208,7 @@ export default function BusinessDetail() {
                         value={reviewText}
                         onChange={(e) => setReviewText(e.target.value)}
                         rows={4}
-                        className="bg-[#FAF6EF] border-[#2B1507]/10 focus-visible:ring-[#CA922B] resize-none"
+                        className="bg-[#FAF6EF] border-[#2B1507]/10 focus-visible:ring-[#CA922B] resize-none rounded-xl"
                       />
                       <Button type="submit" disabled={isSubmitting} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white">
                         Submit Review
@@ -218,7 +218,7 @@ export default function BusinessDetail() {
                 ) : (
                   <div className="bg-[#2B1507]/5 p-6 rounded-2xl text-center border border-[#2B1507]/10">
                     <p className="text-[#3A1F0E]/70 mb-4">Sign in to share your experience.</p>
-                    <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white">Sign In</Button>
+                    <Button variant="outline" onClick={() => window.location.href='/login'} className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white">Sign In</Button>
                   </div>
                 )}
 
@@ -252,7 +252,7 @@ export default function BusinessDetail() {
                 <div className="bg-[#2B1507]/5 w-full h-64 rounded-2xl flex items-center justify-center border border-[#2B1507]/10">
                   <div className="flex flex-col items-center text-[#3A1F0E]/50">
                     <MapPin className="w-8 h-8 mb-2" />
-                    <span>Map View</span>
+                    <span>Interactive Map Placeholder</span>
                   </div>
                 </div>
               </TabsContent>

@@ -2,174 +2,233 @@ import { useState } from "react";
 import { useListSurveys, useCreateSurvey, useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { Shield, MapPin, AlertCircle, TrendingUp, Search } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Shield, Search, Check, ChevronDown } from "lucide-react";
 
 export default function Safety() {
   const { data: auth } = useGetCurrentAuthUser();
-  const [cityFilter, setCityFilter] = useState("");
-  const { data: surveys, isLoading } = useListSurveys({ city: cityFilter || undefined });
   
-  const createSurvey = useCreateSurvey();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const [formData, setFormData] = useState({
-    city: "",
-    neighborhood: "",
-    safetyScore: 5,
-    tips: ""
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.city || !formData.neighborhood) return;
-
-    createSurvey.mutate({
-      data: {
-        city: formData.city,
-        neighborhood: formData.neighborhood,
-        daytimeSafety: formData.safetyScore,
-        tips: formData.tips
-      }
-    }, {
-      onSuccess: () => {
-        setIsDialogOpen(false);
-        setFormData({ city: "", neighborhood: "", safetyScore: 5, tips: "" });
-        queryClient.invalidateQueries({ queryKey: ["listSurveys"] });
-        toast({ title: "Survey submitted", description: "Thank you for contributing to community safety." });
-      }
-    });
-  };
-
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
       {/* Dark Hero Header */}
-      <section className="bg-[#2B1507] py-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 mix-blend-overlay z-0 pointer-events-none"
-             style={{ backgroundImage: 'radial-gradient(circle at center, #CA922B 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+      <section className="bg-[#2B1507] py-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(43,21,7,0.6)] via-[rgba(43,21,7,0.85)] to-[#2B1507] z-0" />
+        
         <div className="container mx-auto px-4 md:px-6 relative z-10 flex flex-col items-center text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 mb-6">
-            <Shield className="w-3 h-3 text-[#CA922B]" />
-            <span className="text-[10px] font-bold tracking-widest text-[#F5EBD8] uppercase">Safety Intelligence</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-8">
+            <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">SAFETY FIRST</span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-serif font-bold text-white mb-4">Navigate with Confidence</h1>
-          <p className="text-[#F5EBD8]/80 text-lg max-w-2xl mb-8 font-light">
-            Community-sourced safety scores and neighborhood intelligence to help you travel securely.
-          </p>
           
-          {auth?.user ? (
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12 text-base shadow-lg">
-                  Submit Safety Survey
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-[#FAF6EF] border-[#2B1507]/10 sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="font-serif text-2xl text-[#3A1F0E]">Share Your Experience</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-5 pt-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold uppercase tracking-wider text-[#3A1F0E]/70">City</label>
-                    <Input className="bg-white border-[#2B1507]/10 rounded-xl" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} required placeholder="e.g. Atlanta" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold uppercase tracking-wider text-[#3A1F0E]/70">Neighborhood</label>
-                    <Input className="bg-white border-[#2B1507]/10 rounded-xl" value={formData.neighborhood} onChange={(e) => setFormData({...formData, neighborhood: e.target.value})} required placeholder="e.g. West End" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold uppercase tracking-wider text-[#3A1F0E]/70">Safety Score (1-5)</label>
-                    <Input className="bg-white border-[#2B1507]/10 rounded-xl" type="number" min="1" max="5" value={formData.safetyScore} onChange={(e) => setFormData({...formData, safetyScore: Number(e.target.value)})} required />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold uppercase tracking-wider text-[#3A1F0E]/70">Tips & Details</label>
-                    <Textarea className="bg-white border-[#2B1507]/10 rounded-xl resize-none" value={formData.tips} onChange={(e) => setFormData({...formData, tips: e.target.value})} placeholder="What should others know about this area?" rows={3} />
-                  </div>
-                  <Button type="submit" className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12" disabled={createSurvey.isPending}>
-                    Submit Survey
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
-          ) : (
-            <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] bg-transparent hover:bg-[#CA922B] hover:text-white px-8 h-12 text-base">
-              Sign In to Submit Survey
-            </Button>
-          )}
+          <h1 className="text-5xl md:text-7xl font-serif font-bold text-white mb-6 leading-tight max-w-4xl">
+            Travel Smarter.<br />
+            <span className="text-[#CA922B]">Travel Informed.</span>
+          </h1>
+          
+          <p className="text-[#F5EBD8]/80 text-lg md:text-xl max-w-2xl mb-16 font-light">
+            Community-driven safety scores, verified reviews, and real-time insights so you always know what to expect before you arrive.
+          </p>
+
+          <div className="flex flex-wrap justify-center gap-8 md:gap-16">
+            <div className="text-center">
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">50K+</div>
+              <div className="text-sm text-[#F5EBD8]/70">Verified Reviews</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">200+</div>
+              <div className="text-sm text-[#F5EBD8]/70">Cities Scored</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">98%</div>
+              <div className="text-sm text-[#F5EBD8]/70">Accuracy Rate</div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <div className="container mx-auto px-4 md:px-6 py-12">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-          <h2 className="text-3xl font-serif font-bold text-[#3A1F0E]">Recent Surveys</h2>
-          <div className="relative w-full md:w-72">
-            <Search className="absolute left-3 top-3 text-muted-foreground w-4 h-4" />
-            <Input 
-              placeholder="Filter by city..." 
-              value={cityFilter}
-              onChange={(e) => setCityFilter(e.target.value)}
-              className="pl-9 rounded-full border-[#2B1507]/10 bg-white"
-            />
+      {/* How it works */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
+              <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">HOW IT WORKS</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-6">Your Safety, Powered by Community</h2>
+            <p className="text-lg text-[#3A1F0E]/70 max-w-3xl mx-auto">
+              Every feature is built around one goal — making sure you feel safe, welcomed, and informed wherever you travel.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { t: "Community Reviews", d: "Honest, first-hand accounts from Melaninated travelers who have been there. Real experiences, not curated marketing." },
+              { t: "Location Safety Scores", d: "Aggregated community ratings for neighborhoods, cities, and destinations — so you know before you go." },
+              { t: "Verified Member Program", d: "Verified member badges ensure the reviews and connections you trust come from real, authenticated accounts — backed by liveness checks and anti-fraud protection." },
+              { t: "Incident Reporting", d: "Community-powered reporting tools let members flag unsafe experiences and alert others in real time." },
+              { t: "Transparency Ratings", d: "Businesses and destinations are rated on inclusivity, service quality, and how welcoming they are to Black guests." },
+              { t: "Trusted Network", d: "Connect with verified locals and experienced travelers who can give you the real picture before you arrive." }
+            ].map((f, i) => (
+              <div key={i} className="bg-[#FAF6EF] p-8 rounded-2xl border border-[#3A1F0E]/5">
+                <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-3">{f.t}</h3>
+                <p className="text-[#3A1F0E]/70 text-sm leading-relaxed">{f.d}</p>
+              </div>
+            ))}
           </div>
         </div>
+      </section>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {isLoading ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 border border-[#2B1507]/5 shadow-sm">
-                <Skeleton className="h-6 w-1/2 mb-2" />
-                <Skeleton className="h-4 w-1/3 mb-6" />
-                <Skeleton className="h-20 w-full rounded-xl" />
+      {/* Destination Scores */}
+      <section className="py-24 bg-[#FAF6EF]">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
+                <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">DESTINATION SCORES</span>
               </div>
-            ))
-          ) : surveys?.length === 0 ? (
-            <div className="col-span-full py-16 text-center text-[#3A1F0E]/60 bg-white rounded-2xl border border-[#2B1507]/5">
-              <AlertCircle className="mx-auto mb-4 opacity-30 w-12 h-12" />
-              <p className="text-lg">No safety surveys found for this area yet.</p>
+              <h2 className="text-4xl font-serif font-bold text-[#3A1F0E] mb-2">Top-Rated Cities</h2>
+              <p className="text-[#3A1F0E]/70">Community safety scores for the most popular Black travel destinations in the U.S.</p>
             </div>
-          ) : (
-            surveys?.map((survey) => {
-              const score = survey.safetyScore || survey.daytimeSafety || 0;
-              const isHigh = score >= 4;
-              
-              return (
-                <div key={survey.id} className="bg-white rounded-2xl overflow-hidden border border-[#2B1507]/5 shadow-[0_4px_20px_rgba(43,21,7,0.03)] flex flex-col relative group">
-                  <div className={`h-2 w-full ${isHigh ? 'bg-[#CA922B]' : 'bg-[#2B1507]/40'}`} />
-                  
-                  <div className="p-6 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="font-serif font-bold text-xl text-[#3A1F0E]">{survey.neighborhood}</h3>
-                        <div className="flex items-center gap-1 text-sm text-[#3A1F0E]/60 mt-1">
-                          <MapPin size={12} /> {survey.city}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className="w-12 h-12 rounded-full border-4 border-[#CA922B] flex items-center justify-center font-bold text-lg text-[#3A1F0E]">
-                          {score}
-                        </div>
-                        <span className="text-[10px] uppercase font-bold text-[#3A1F0E]/50 mt-1">Score</span>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-[#FAF6EF] p-4 rounded-xl mt-auto">
-                      <p className="text-sm text-[#3A1F0E]/80 leading-relaxed font-light italic">
-                        "{survey.tips || "Safe and welcoming area for the community."}"
-                      </p>
-                    </div>
+            <div className="flex items-center gap-4 text-sm text-[#3A1F0E]/60 bg-white px-4 py-2 rounded-full shadow-sm border border-[#3A1F0E]/5">
+              <span><strong className="text-green-600">9.0+</strong> Excellent</span>
+              <span><strong className="text-blue-600">8.0+</strong> Good</span>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { c: "Atlanta, GA", r: "1,240", s: 9.4, t: "↑ Improving", tags: ["Welcoming", "Minority-Owned Hubs", "Cultural"] },
+              { c: "New Orleans, LA", r: "876", s: 8.9, t: "↑ Improving", tags: ["Historic", "Vibrant", "Community"] },
+              { c: "Harlem, NY", r: "2,103", s: 9.1, t: "→ Stable", tags: ["Cultural", "Arts", "Iconic"] },
+              { c: "Houston, TX", r: "954", s: 8.7, t: "↑ Improving", tags: ["Diverse", "Business", "Food"] },
+              { c: "Chicago, IL", r: "1,432", s: 8.5, t: "→ Stable", tags: ["Arts", "Nightlife", "Community"] },
+              { c: "Washington, D.C.", r: "1,788", s: 9.2, t: "↑ Improving", tags: ["Historic", "Political", "Cultural"] }
+            ].map((city, i) => (
+              <div key={i} className="bg-white p-6 rounded-2xl border border-[#3A1F0E]/5 shadow-sm">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-1">{city.c}</h3>
+                    <div className="text-sm text-[#3A1F0E]/50">{city.r} reviews</div>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <div className="text-3xl font-bold text-[#CA922B] leading-none mb-1">{city.s}</div>
+                    <div className={`text-xs font-bold ${city.t.includes('Improving') ? 'text-green-600' : 'text-blue-600'}`}>{city.t}</div>
                   </div>
                 </div>
-              );
-            })
-          )}
+                <div className="flex flex-wrap gap-2 pt-4 border-t border-[#3A1F0E]/5">
+                  {city.tags.map(tag => (
+                    <span key={tag} className="text-xs font-medium text-[#3A1F0E]/60 bg-[#FAF6EF] px-2 py-1 rounded-md">{tag}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-12">
+              View All Destinations
+            </Button>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Community Reviews & Alert Card */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="grid lg:grid-cols-3 gap-12">
+            <div className="lg:col-span-2">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
+                <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">COMMUNITY REVIEWS</span>
+              </div>
+              <h2 className="text-4xl font-serif font-bold text-[#3A1F0E] mb-10">Real Experiences. Real Voices.</h2>
+              
+              <div className="space-y-6">
+                {[
+                  { n: "Keisha M.", c: "Atlanta, GA", d: "Jun 10, 2026", i: "K", q: "Felt completely at home the entire trip. The restaurant recommendations from the community were spot-on — every spot was welcoming and the food was incredible.", h: 42 },
+                  { n: "Darius P.", c: "New Orleans, LA", d: "Jun 5, 2026", i: "D", q: "Staying in the Tremé neighborhood was a transformative experience. The safety scores helped me choose the right area and I never felt out of place.", h: 38 },
+                  { n: "Simone A.", c: "Harlem, NY", d: "May 28, 2026", i: "S", q: "The community reviews were incredibly accurate. I knew exactly what to expect and felt confident navigating the city solo as a Black woman.", h: 61 }
+                ].map((r, idx) => (
+                  <div key={idx} className="bg-[#FAF6EF] p-6 rounded-2xl border border-[#3A1F0E]/5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-[#2B1507] text-[#F5EBD8] flex items-center justify-center font-bold font-serif">{r.i}</div>
+                        <div>
+                          <div className="font-bold text-[#3A1F0E]">{r.n}</div>
+                          <div className="text-xs text-[#3A1F0E]/50">{r.c} · {r.d}</div>
+                        </div>
+                      </div>
+                      <div className="text-xs font-bold text-green-700 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Verified Traveler
+                      </div>
+                    </div>
+                    <p className="text-[#3A1F0E]/80 italic mb-4">"{r.q}"</p>
+                    <div className="text-xs font-bold text-[#3A1F0E]/40 uppercase tracking-wider cursor-pointer hover:text-[#CA922B]">Helpful ({r.h})</div>
+                  </div>
+                ))}
+              </div>
+              <Button className="mt-8 rounded-full bg-[#2B1507] text-white hover:bg-[#1a0c04] px-8 h-12">Read All Reviews</Button>
+            </div>
+            
+            <div>
+              <div className="bg-[#2B1507] rounded-3xl p-8 text-white sticky top-24 shadow-xl">
+                <Shield className="w-12 h-12 text-[#CA922B] mb-6" />
+                <div className="text-2xl font-serif font-bold mb-2">Harlem, NY</div>
+                <div className="flex items-end gap-2 mb-6">
+                  <div className="text-5xl font-bold text-[#CA922B]">9.1</div>
+                  <div className="text-sm text-[#F5EBD8]/70 pb-1">Community Score</div>
+                </div>
+                <div className="text-sm text-[#F5EBD8]/70 mb-8 border-b border-white/10 pb-6">2,103 reviews</div>
+                
+                <div className="bg-white/10 rounded-xl p-4 border border-[#CA922B]/30 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 text-[#CA922B] font-bold text-sm mb-2">
+                    <Shield className="w-4 h-4" /> Community Alert
+                  </div>
+                  <div className="text-sm text-[#F5EBD8]">1 report in last 30 days</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-24 bg-[#FAF6EF]">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-[#3A1F0E]">Questions — How Safety Works</h2>
+          </div>
+          
+          <div className="space-y-4">
+            {[
+              "How are safety scores calculated?",
+              "Who can submit a review or report?",
+              "What happens when an incident is reported?",
+              "Can businesses respond to reviews?",
+              "Are businesses able to dispute inaccurate reviews?",
+              "How are reviews moderated?",
+              "How do businesses become verified?",
+              "Is my personal information safe?",
+              "How does Mapping with Melanin help travelers make informed decisions?",
+              "How is Mapping with Melanin different from Yelp or Google Reviews?",
+              "What cities have the highest safety scores for Melaninated travelers?"
+            ].map((q, i) => (
+              <div key={i} className="bg-white p-6 rounded-2xl border border-[#3A1F0E]/5 flex justify-between items-center cursor-pointer hover:border-[#CA922B]/50 transition-colors">
+                <span className="font-medium text-[#3A1F0E]">{q}</span>
+                <ChevronDown className="w-5 h-5 text-[#3A1F0E]/40" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-24 bg-[#2B1507] text-center text-white">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6">Travel With Confidence — Know Before You Go. Every Time.</h2>
+          <p className="text-lg text-[#F5EBD8]/70 mb-10">Get early access to community safety scores, verified reviews, and real-time alerts.</p>
+          <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-10 h-14 text-lg">Get Early Access</Button>
+        </div>
+      </section>
     </div>
   );
 }

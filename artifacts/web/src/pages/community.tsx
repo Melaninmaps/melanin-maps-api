@@ -1,149 +1,159 @@
-import { useState } from "react";
-import { useListCommunityPosts, useCreateCommunityPost, useGetCurrentAuthUser } from "@workspace/api-client-react";
+import { useListCommunityPosts, useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Skeleton } from "@/components/ui/skeleton";
-import { MessageSquare, Heart, Share2, Send, Users } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { Users, Globe, MapPin, Calendar, Briefcase, MessageSquare, ArrowRight } from "lucide-react";
 
 export default function Community() {
   const { data: auth } = useGetCurrentAuthUser();
-  const { data: posts, isLoading } = useListCommunityPosts();
-  const createPost = useCreateCommunityPost();
-  
-  const [content, setContent] = useState("");
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const handlePostSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!content.trim()) return;
-
-    createPost.mutate({ data: { content } }, {
-      onSuccess: () => {
-        setContent("");
-        queryClient.invalidateQueries({ queryKey: ["listCommunityPosts"] });
-        toast({ title: "Posted successfully" });
-      }
-    });
-  };
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
       {/* Dark Hero Header */}
-      <section className="bg-[#2B1507] py-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 mix-blend-overlay z-0 pointer-events-none"
-             style={{ backgroundImage: 'radial-gradient(circle at center, #CA922B 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+      <section className="bg-[#2B1507] py-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(43,21,7,0.6)] via-[rgba(43,21,7,0.85)] to-[#2B1507] z-0" />
+        
         <div className="container mx-auto px-4 md:px-6 relative z-10 flex flex-col items-center text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 mb-6">
-            <Users className="w-3 h-3 text-[#CA922B]" />
-            <span className="text-[10px] font-bold tracking-widest text-[#F5EBD8] uppercase">The Kinfolk Feed</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-8">
+            <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">GLOBAL COMMUNITY</span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-serif font-bold text-white mb-4">Community Voices</h1>
-          <p className="text-[#F5EBD8]/80 text-lg max-w-2xl font-light">
-            Share updates, ask for recommendations, and connect with the Melanin Maps network.
+          
+          <h1 className="text-5xl md:text-7xl font-serif font-bold text-white mb-6 leading-tight max-w-4xl">
+            Connect With a<br />
+            <span className="text-[#CA922B]">Global Community</span>
+          </h1>
+          
+          <p className="text-[#F5EBD8]/80 text-lg md:text-xl max-w-2xl mb-16 font-light">
+            Because the best journeys are shared. Meet like-minded travelers, entrepreneurs, professionals, and creators who understand your experience.
           </p>
+
+          <div className="flex flex-wrap justify-center gap-8 md:gap-16">
+            <div className="text-center">
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">10K+</div>
+              <div className="text-sm text-[#F5EBD8]/70">Early Members</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">50+</div>
+              <div className="text-sm text-[#F5EBD8]/70">Active Groups</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">200+</div>
+              <div className="text-sm text-[#F5EBD8]/70">Cities Worldwide</div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <div className="container mx-auto px-4 md:px-6 py-12 max-w-3xl">
-        {/* Create Post Area */}
-        {auth?.user ? (
-          <div className="bg-white rounded-3xl p-6 border border-[#2B1507]/5 shadow-sm mb-10 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-2 h-full bg-[#CA922B]" />
-            <form onSubmit={handlePostSubmit} className="space-y-4">
-              <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-full bg-[#FAF6EF] border border-[#CA922B]/30 flex items-center justify-center shrink-0 text-[#CA922B] font-bold text-lg font-serif">
-                  {auth.user.firstName?.[0] || auth.user.email?.[0]?.toUpperCase() || "M"}
-                </div>
-                <div className="flex-1">
-                  <Textarea 
-                    placeholder="What's happening in your community?" 
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    className="min-h-[100px] text-base border-none bg-[#FAF6EF] focus-visible:ring-0 rounded-2xl p-4 placeholder:text-[#3A1F0E]/30 text-[#3A1F0E] resize-none"
-                  />
-                  <div className="flex justify-end mt-4">
-                    <Button type="submit" disabled={!content.trim() || createPost.isPending} className="rounded-full bg-[#2B1507] hover:bg-[#4a260d] text-white px-6">
-                      <Send size={16} className="mr-2" /> Share Post
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </form>
-          </div>
-        ) : (
-          <div className="bg-white rounded-3xl p-8 border border-[#2B1507]/5 shadow-sm mb-10 text-center flex flex-col items-center">
-            <Users size={32} className="text-[#CA922B] mb-4" />
-            <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-2">Join the Conversation</h3>
-            <p className="text-[#3A1F0E]/60 mb-6">Sign in to share your thoughts and connect with the community.</p>
-            <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8">Sign In</Button>
-          </div>
-        )}
-
-        {/* Feed */}
-        <div className="space-y-6">
-          {isLoading ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 border border-[#2B1507]/5 shadow-sm">
-                <div className="flex gap-4 mb-4">
-                  <Skeleton className="w-12 h-12 rounded-full shrink-0" />
-                  <div className="space-y-2 flex-1 pt-1">
-                    <Skeleton className="h-4 w-1/4" />
-                    <Skeleton className="h-3 w-1/5" />
-                  </div>
-                </div>
-                <Skeleton className="h-16 w-full" />
-              </div>
-            ))
-          ) : posts?.length === 0 ? (
-            <div className="text-center py-20 text-[#3A1F0E]/40 font-serif text-xl">
-              No posts yet. Be the first to speak!
+      {/* How it works */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
+              <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">HOW IT WORKS</span>
             </div>
-          ) : (
-            posts?.map((post) => (
-              <div key={post.id} className="bg-white rounded-3xl p-6 md:p-8 border border-[#2B1507]/5 shadow-sm transition-shadow hover:shadow-md">
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-[#2B1507] text-[#F5EBD8] flex items-center justify-center shrink-0 font-bold text-lg font-serif shadow-sm">
-                    {post.authorName?.[0] || "U"}
-                  </div>
-                  <div>
-                    <div className="font-bold text-[#3A1F0E]">{post.authorName || "Community Member"}</div>
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#3A1F0E]/40 mt-0.5">
-                      {post.createdAt ? new Date(post.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Recently'}
-                    </div>
-                  </div>
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-6">Built for Connection</h2>
+            <p className="text-lg text-[#3A1F0E]/70 max-w-3xl mx-auto">
+              Every feature on Mapping with Melanin is designed to bring people together — locally and globally.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { t: "Community Groups", d: "Join groups built around shared interests — travel styles, cities, professions, and cultural identities." },
+              { t: "Local Meetups", d: "Find and attend in-person gatherings in cities around the world, hosted by community members like you." },
+              { t: "Networking", d: "Connect with entrepreneurs, professionals, and creatives who share your values and vision." },
+              { t: "Cultural Events", d: "Discover festivals, art shows, pop-ups, and cultural celebrations happening near you and globally." },
+              { t: "Travel Partnerships", d: "Find travel companions, co-explorers, and partners for your next adventure — near or far." },
+              { t: "Global Network", d: "Tap into a worldwide community of travelers and locals who can guide, host, and connect with you." }
+            ].map((f, i) => (
+              <div key={i} className="bg-[#FAF6EF] p-8 rounded-2xl border border-[#3A1F0E]/5">
+                <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-3">{f.t}</h3>
+                <p className="text-[#3A1F0E]/70 text-sm leading-relaxed">{f.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Groups */}
+      <section className="py-24 bg-[#FAF6EF]">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
+              <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">DISCOVER FEATURED GROUPS</span>
+            </div>
+          </div>
+          
+          <div className="flex justify-center gap-8 mb-12 border-b border-[#3A1F0E]/10 pb-4">
+            <button className="text-[#3A1F0E] font-bold border-b-2 border-[#CA922B] pb-4 -mb-[18px]">Groups</button>
+            <button className="text-[#3A1F0E]/50 font-bold hover:text-[#3A1F0E] transition-colors">Events</button>
+            <button className="text-[#3A1F0E]/50 font-bold hover:text-[#3A1F0E] transition-colors">Travel</button>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 mb-12">
+            {[
+              { m: "4.2K members", t: "Solo Black Travelers", l: "Global", d: "A safe space for solo travelers to share tips, routes, and real experiences." },
+              { m: "2.8K members", t: "Black Entrepreneurs Abroad", l: "Global", d: "Connecting Minority business owners who work, invest, and build across borders." },
+              { m: "1.5K members", t: "ATL Cultural Explorers", l: "Atlanta, GA", d: "Discover Atlanta's hidden gems, art scenes, and cultural hotspots together." },
+              { m: "3.1K members", t: "Afro-Caribbean Connections", l: "Global", d: "Celebrating the diaspora through shared travel, food, music, and community." }
+            ].map((g, i) => (
+              <div key={i} className="bg-white p-6 rounded-2xl border border-[#3A1F0E]/5 shadow-sm flex flex-col h-full">
+                <div className="flex justify-between items-start mb-4">
+                  <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">{g.m}</span>
                 </div>
-                
-                <div className="pl-16">
-                  <p className="text-[#3A1F0E]/80 text-base leading-relaxed whitespace-pre-wrap font-light mb-4">{post.content}</p>
-                  
-                  {post.imageUrl && (
-                    <div className="rounded-2xl overflow-hidden mb-4 border border-[#2B1507]/10">
-                      <img src={post.imageUrl} alt="Attachment" className="w-full max-h-96 object-cover" />
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center gap-6 pt-4 border-t border-[#2B1507]/5 text-[#3A1F0E]/40">
-                    <button className="flex items-center gap-2 text-sm font-medium hover:text-[#CA922B] transition-colors group">
-                      <Heart size={18} className="group-hover:fill-[#CA922B]" /> 
-                      <span>{post.likesCount || 0}</span>
-                    </button>
-                    <button className="flex items-center gap-2 text-sm font-medium hover:text-[#2B1507] transition-colors">
-                      <MessageSquare size={18} /> 
-                      <span>{post.commentsCount || 0}</span>
-                    </button>
-                    <button className="flex items-center gap-2 text-sm font-medium hover:text-[#2B1507] transition-colors ml-auto">
-                      <Share2 size={18} />
-                    </button>
-                  </div>
+                <h3 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-2">{g.t}</h3>
+                <div className="flex items-center gap-1 text-[#3A1F0E]/50 text-sm mb-4">
+                  <Globe className="w-4 h-4" /> {g.l}
+                </div>
+                <p className="text-[#3A1F0E]/70 mb-6 flex-1">{g.d}</p>
+                <div className="flex gap-3 mt-auto">
+                  <Button className="flex-1 rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white">Join Group</Button>
+                  <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-4"><MessageSquare className="w-4 h-4" /></Button>
                 </div>
               </div>
-            ))
-          )}
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-12">View All Groups</Button>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Community Voices */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-4 max-w-6xl text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
+            <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">COMMUNITY VOICES</span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-16">Real Connections. Real Stories.</h2>
+          
+          <div className="grid md:grid-cols-3 gap-8 text-left">
+            {[
+              { q: "Mapping with Melanin connected me with a travel partner for my trip to Ghana. We've been friends ever since.", n: "Jasmine T.", l: "Atlanta, GA" },
+              { q: "The networking events are incredible. I found my business co-founder through a Mapping with Melanin meetup.", n: "Marcus W.", l: "Chicago, IL" },
+              { q: "Finally a platform that understands what community means to us. I feel at home wherever I travel now.", n: "Aisha R.", l: "Houston, TX" }
+            ].map((t, i) => (
+              <div key={i} className="bg-[#FAF6EF] p-8 rounded-3xl border border-[#3A1F0E]/5">
+                <div className="text-4xl font-serif text-[#CA922B] opacity-50 mb-4">"</div>
+                <p className="text-[#3A1F0E]/80 text-lg italic leading-relaxed mb-8">"{t.q}"</p>
+                <div className="font-bold text-[#3A1F0E]">{t.n}</div>
+                <div className="text-sm text-[#3A1F0E]/60">{t.l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-24 bg-[#2B1507] text-center text-white">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6">Join the Movement — Your Community Is Waiting</h2>
+          <p className="text-lg text-[#F5EBD8]/70 mb-10">Sign up for early access and be among the first to connect with a global network of travelers, entrepreneurs, and explorers.</p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-10 h-14 text-lg">Get Early Access</Button>
+            <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-10 h-14 text-lg bg-transparent">Explore the Map</Button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

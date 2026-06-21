@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "./ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, MessageSquare } from "lucide-react";
 import { useState } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -10,11 +10,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { href: "/discover", label: "Explore" },
+    { href: "/explore", label: "Explore" },
     { href: "/community", label: "Community" },
     { href: "/safety", label: "Safety" },
-    { href: "/events", label: "Events" },
-    { href: "/travel", label: "Travel" },
+    { href: "/businesses", label: "Businesses" },
+    { href: "/for-business-owners", label: "For Business Owners" },
+    { href: "/roadmap", label: "Roadmap" },
+    { href: "/membership", label: "Membership" },
   ];
 
   return (
@@ -22,12 +24,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Sticky Top Navbar */}
       <header className="sticky top-0 z-50 w-full bg-[#2B1507] text-[#F5EBD8] shadow-md">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="font-serif font-bold text-xl md:text-2xl text-white tracking-tight flex items-center gap-2">
-            Mapping with Melanin™
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#FAF6EF] border-2 border-[#CA922B] flex items-center justify-center shrink-0 overflow-hidden">
+              {/* Using a placeholder for logo */}
+              <div className="w-6 h-6 bg-[#2B1507] rounded-full" />
+            </div>
+            <span className="font-serif font-bold text-xl md:text-2xl text-white tracking-tight">
+              Mapping with Melanin™
+            </span>
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden xl:flex items-center gap-6">
             {navItems.map((item) => {
               const isActive = location === item.href || location.startsWith(item.href + "/");
               return (
@@ -42,6 +50,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Auth / Right side */}
           <div className="hidden md:flex items-center gap-4">
+            <MessageSquare className="w-5 h-5 text-[#F5EBD8] cursor-pointer hover:text-[#CA922B] transition-colors" />
             {auth?.user ? (
               <Link href="/profile">
                 <span className="text-sm font-medium hover:text-[#CA922B] transition-colors cursor-pointer">Profile</span>
@@ -59,14 +68,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Mobile Menu Button */}
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden p-2 text-[#F5EBD8]">
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="xl:hidden p-2 text-[#F5EBD8]">
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-[#2B1507] border-t border-white/10 px-4 py-4 flex flex-col gap-4 absolute w-full">
+          <div className="xl:hidden bg-[#2B1507] border-t border-white/10 px-4 py-4 flex flex-col gap-4 absolute w-full shadow-lg">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)}>
                 <span className="block text-base font-medium text-[#F5EBD8] hover:text-[#CA922B] cursor-pointer">{item.label}</span>
@@ -96,6 +105,73 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 w-full flex flex-col">
         {children}
       </main>
+
+      {/* Footer */}
+      <footer className="bg-[#2B1507] text-[#F5EBD8] py-16 border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+            <div>
+              <h3 className="font-serif font-bold text-xl mb-6 text-white">Discover</h3>
+              <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
+                <li>Minority-Owned Businesses</li>
+                <li>Restaurants & Nightlife</li>
+                <li>Hotels & Stays</li>
+                <li>Cultural Landmarks</li>
+                <li>Hidden Gems</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-serif font-bold text-xl mb-6 text-white">Community</h3>
+              <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
+                <li>Groups & Meetups</li>
+                <li>Networking</li>
+                <li>Cultural Events</li>
+                <li>Travel Partnerships</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-serif font-bold text-xl mb-6 text-white">Platform</h3>
+              <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
+                <li>Safety & Reviews</li>
+                <li>Community Guidelines</li>
+                <li>Membership Plans</li>
+                <li>Explore Businesses</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-serif font-bold text-xl mb-6 text-white">About Us</h3>
+              <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
+                <li>Contact</li>
+                <li>Legal</li>
+                <li>Terms of Service</li>
+                <li>Privacy Policy</li>
+                <li>Review Policy</li>
+                <li>Business Verification</li>
+                <li>Refund & Subscription Policy</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#F5EBD8]/60">
+            <p>© 2026 Mapping with Melanin™. All rights reserved. · Privacy Policy · Terms of Service</p>
+          </div>
+        </div>
+      </footer>
+
+      {/* KinfolkAI Widget Placeholder */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <div className="bg-[#2B1507] border border-[#CA922B]/30 shadow-2xl rounded-2xl p-4 flex flex-col gap-2 cursor-pointer hover:shadow-[0_10px_40px_rgba(202,146,43,0.15)] transition-all">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#CA922B]/20 flex items-center justify-center">
+              <MessageSquare className="w-5 h-5 text-[#CA922B]" />
+            </div>
+            <div>
+              <div className="text-white font-bold text-sm">KinfolkAI</div>
+              <div className="text-[#F5EBD8]/70 text-xs">Ask me anything</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
