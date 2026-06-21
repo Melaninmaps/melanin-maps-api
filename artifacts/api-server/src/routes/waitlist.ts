@@ -42,6 +42,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       .insert(waitlistTable)
       .values({
         email: email.toLowerCase().trim(),
+        firstName: firstName?.trim() || null,
         city: city?.trim() || null,
         state: state?.trim().toUpperCase() || null,
         isBusinessOwner: Boolean(isBusinessOwner),
