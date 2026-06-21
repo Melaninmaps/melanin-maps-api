@@ -1,10 +1,106 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+
+const BASE = import.meta.env.BASE_URL;
+
+type CurrentUser = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  approved: boolean;
+  role: "user" | "tester" | "admin";
+} | null;
+
+const WELCOME_COPY = `As a tester for Mapping with Melanin™, your experience, feedback, and insights are essential to shaping what this platform becomes. You're not just trying out features — you're helping build the foundation of something that will genuinely serve and empower our community.
+
+During this testing phase, we ask that you:
+
+• Explore every corner of the app with curiosity and intention
+• Submit honest, detailed feedback — what works, what doesn't, and what's missing
+• Report any bugs, broken flows, or confusing moments you encounter
+• Share your thoughts on how the platform makes you feel as a member of this community
+• Treat your access as the privilege it is — this is a closed beta
+
+Your role is to help us get this right before we open the doors to the broader community. The decisions you help us make now will directly impact thousands of people who will depend on this platform to find trusted businesses, navigate their communities, and connect with people who share their values.
+
+We appreciate your time, your trust, and your commitment to the mission. Let's build something great together.
+
+— The Mapping with Melanin™ Team`;
 
 export default function Membership() {
+  const [currentUser, setCurrentUser] = useState<CurrentUser>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    fetch(`${BASE}api/auth/user`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => setCurrentUser(data.user ?? null))
+      .catch(() => {});
+  }, []);
+
+  const isTester =
+    currentUser?.approved === true && currentUser?.role === "tester";
+
+  function handlePlanClick(href: string) {
+    if (isTester) {
+      setPendingHref(href);
+      setModalOpen(true);
+    } else {
+      navigate(href);
+    }
+  }
+
+  function handleContinue() {
+    setModalOpen(false);
+    if (pendingHref) {
+      navigate(pendingHref);
+      setPendingHref(null);
+    }
+  }
+
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
+      {/* Tester Welcome Modal */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="max-w-2xl bg-[#FAF6EF] border border-[#CA922B]/30 rounded-3xl p-0 overflow-hidden">
+          <div className="bg-[#2B1507] px-8 py-6">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-serif font-bold text-white text-left">
+                Hi {currentUser?.firstName ?? "there"}, welcome to the team. 👋🏾
+              </DialogTitle>
+              <DialogDescription className="text-[#F5EBD8]/70 text-sm text-left mt-1">
+                Before you continue, please read this important message from our team.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="px-8 py-6">
+            <div className="space-y-4 text-[#3A1F0E]/80 text-sm leading-relaxed whitespace-pre-line">
+              {WELCOME_COPY}
+            </div>
+            <div className="mt-8 flex justify-end">
+              <Button
+                onClick={handleContinue}
+                className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12 font-bold shadow-[0_4px_14px_rgba(202,146,43,0.39)]"
+              >
+                I Understand — Continue
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Hero */}
       <section className="bg-[#2B1507] py-24 relative overflow-hidden">
         <img src={`${import.meta.env.BASE_URL}images/hero-community-bg.jpg`} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
@@ -43,9 +139,13 @@ export default function Membership() {
                 </li>
               ))}
             </ul>
-            <Link href="/signup">
-              <Button variant="outline" className="w-full rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white h-12 mt-auto">Get Started Free</Button>
-            </Link>
+            <Button
+              variant="outline"
+              className="w-full rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white h-12 mt-auto"
+              onClick={() => handlePlanClick("/signup")}
+            >
+              Get Started Free
+            </Button>
           </div>
 
           {/* Premium Plan */}
@@ -66,9 +166,12 @@ export default function Membership() {
                 </li>
               ))}
             </ul>
-            <Link href="/signup">
-              <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 mt-auto shadow-[0_4px_14px_rgba(202,146,43,0.39)]">Start Free Trial</Button>
-            </Link>
+            <Button
+              className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 mt-auto shadow-[0_4px_14px_rgba(202,146,43,0.39)]"
+              onClick={() => handlePlanClick("/signup")}
+            >
+              Start Free Trial
+            </Button>
           </div>
 
           {/* Lifetime Plan */}
@@ -85,9 +188,12 @@ export default function Membership() {
                 </li>
               ))}
             </ul>
-            <Link href="/signup">
-              <Button className="w-full rounded-full bg-[#3A1F0E] hover:bg-[#1a0c04] text-white h-12 mt-auto">Become a Founding Member</Button>
-            </Link>
+            <Button
+              className="w-full rounded-full bg-[#3A1F0E] hover:bg-[#1a0c04] text-white h-12 mt-auto"
+              onClick={() => handlePlanClick("/signup")}
+            >
+              Become a Founding Member
+            </Button>
           </div>
         </div>
 

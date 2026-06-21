@@ -23,6 +23,7 @@ export const usersTable = pgTable("users", {
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   pushToken: varchar("push_token"),
   approved: boolean("approved").notNull().default(true),
+  role: varchar("role", { enum: ["user", "tester", "admin"] }).notNull().default("user"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

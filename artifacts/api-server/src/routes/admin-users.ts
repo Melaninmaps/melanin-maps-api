@@ -31,6 +31,7 @@ router.get("/admin/users", async (req: Request, res: Response) => {
         lastName: usersTable.lastName,
         profileImageUrl: usersTable.profileImageUrl,
         approved: usersTable.approved,
+        role: usersTable.role,
         createdAt: usersTable.createdAt,
       })
       .from(usersTable)
@@ -48,21 +49,36 @@ router.patch("/admin/users/:id", async (req: Request, res: Response) => {
     return;
   }
   const id = String(req.params.id);
-  const { approved } = req.body;
-  if (typeof approved !== "boolean") {
+  const { approved, role } = req.body;
+
+  if (approved !== undefined && typeof approved !== "boolean") {
     res.status(400).json({ error: "approved must be a boolean" });
     return;
   }
+  if (role !== undefined && !["user", "tester", "admin"].includes(role)) {
+    res.status(400).json({ error: "role must be one of: user, tester, admin" });
+    return;
+  }
+  if (approved === undefined && role === undefined) {
+    res.status(400).json({ error: "Must provide approved or role" });
+    return;
+  }
+
+  const updateData: Record<string, unknown> = { updatedAt: new Date() };
+  if (approved !== undefined) updateData.approved = approved;
+  if (role !== undefined) updateData.role = role;
+
   try {
     const [updated] = await db
       .update(usersTable)
-      .set({ approved, updatedAt: new Date() })
+      .set(updateData as any)
       .where(eq(usersTable.id, id))
       .returning({
         id: usersTable.id,
         email: usersTable.email,
         firstName: usersTable.firstName,
         approved: usersTable.approved,
+        role: usersTable.role,
       });
     if (!updated) {
       res.status(404).json({ error: "User not found" });
@@ -80,7 +96,7 @@ router.patch("/admin/users/:id", async (req: Request, res: Response) => {
 
     res.json({ user: updated });
   } catch (err) {
-    req.log.error({ err }, "Failed to update user approval");
+    req.log.error({ err }, "Failed to update user");
     res.status(500).json({ error: "Failed to update user" });
   }
 });

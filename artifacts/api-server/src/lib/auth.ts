@@ -11,6 +11,7 @@ export const SESSION_TTL = 7 * 24 * 60 * 60 * 1000;
 
 export interface SessionUser extends AuthUser {
   approved: boolean;
+  role: "user" | "tester" | "admin";
 }
 
 export interface SessionData {

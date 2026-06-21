@@ -26,6 +26,7 @@ type AdminUser = {
   lastName: string | null;
   profileImageUrl: string | null;
   approved: boolean;
+  role: "user" | "tester" | "admin";
   createdAt: string;
 };
 
@@ -94,6 +95,18 @@ export default function Admin() {
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ approved }),
+    });
+    await loadUsers();
+    setUpdating(null);
+  };
+
+  const updateUserRole = async (id: string, role: "user" | "tester") => {
+    setUpdating(id + "-role");
+    await fetch(`${BASE}api/admin/users/${id}`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role }),
     });
     await loadUsers();
     setUpdating(null);
@@ -294,6 +307,7 @@ export default function Admin() {
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">User</th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Email</th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Access</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Role</th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Joined</th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Actions</th>
                     </tr>
@@ -320,6 +334,17 @@ export default function Admin() {
                           {user.approved
                             ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><Check className="w-3 h-3" /> Approved</span>
                             : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold"><Clock className="w-3 h-3" /> Pending</span>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Button
+                            size="sm"
+                            onClick={() => updateUserRole(user.id, user.role === "tester" ? "user" : "tester")}
+                            disabled={updating === user.id + "-role"}
+                            className={`h-7 px-3 rounded-full text-xs ${user.role === "tester" ? "bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200" : "bg-white text-[#3A1F0E]/50 border border-[#3A1F0E]/15 hover:bg-[#FAF6EF]"}`}
+                            variant="outline"
+                          >
+                            {user.role === "tester" ? "Tester ✓" : "Tester"}
+                          </Button>
                         </td>
                         <td className="px-4 py-3 text-[#3A1F0E]/50 text-xs">
                           {new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
