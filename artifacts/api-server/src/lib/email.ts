@@ -138,6 +138,66 @@ export async function sendReferralNudge(
   });
 }
 
+export async function sendBusinessOutreach(to: string, businessName: string, claimLink: string) {
+  if (!resend) { log("business outreach"); return; }
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Your business was recommended on Mapping with Melanin™ — Claim Your Profile`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 16px">Hello ${businessName},</p>
+
+        <p style="color:#CA922B;font-size:18px;font-weight:700;line-height:1.4;margin:0 0 20px">Great news!</p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          Your business was recently recommended by a member of the Mapping with Melanin™ community and has been identified as a place that others may want to discover, support, and learn more about.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          Mapping with Melanin™ is a community-powered platform that helps people discover businesses, events, neighborhoods, employers, and opportunities through shared experiences and trusted recommendations.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          We've created a listing for your business so community members can find you, but we'd love for you to claim your profile and become an active part of the platform.
+        </p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:28px;margin:0 0 28px">
+          <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 16px">By joining, you'll be able to:</p>
+          <ul style="color:#F5EBD8;font-size:15px;line-height:2;margin:0;padding-left:20px">
+            <li>Verify and manage your business information</li>
+            <li>Add photos, products, services, and events</li>
+            <li>Respond to reviews and community feedback</li>
+            <li>Connect directly with potential customers</li>
+            <li>Access business insights and engagement metrics</li>
+            <li>Participate in future promotional opportunities</li>
+          </ul>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 28px">
+          Most importantly, you'll help us build a stronger network of businesses and community resources for people seeking meaningful connections and trusted recommendations.
+        </p>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;margin:0 0 16px">Claim your profile today:</p>
+
+        <a href="${claimLink}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:16px 36px;border-radius:50px;text-decoration:none;margin-bottom:32px">
+          Claim Business Profile →
+        </a>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          Thank you for everything you do for your community. We look forward to welcoming you to Mapping with Melanin™.
+        </p>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping with Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:14px;opacity:0.6;margin:0">Melanin Maps LLC</p>
+      </div>
+    `,
+  });
+}
+
 export async function sendApprovalNotification(to: string, firstName: string | null) {
   if (!resend) { log("approval notification"); return; }
   const name = firstName ?? "there";

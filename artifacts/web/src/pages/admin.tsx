@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Redirect } from "wouter";
-import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send } from "lucide-react";
+import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -31,12 +31,143 @@ type AdminUser = {
   createdAt: string;
 };
 
-type Tab = "waitlist" | "users";
+type AdminBusiness = {
+  id: string;
+  name: string;
+  category: string;
+  city: string;
+  state: string;
+  verified: boolean;
+  blackOwned: boolean;
+  status: string;
+  phone: string | null;
+  website: string | null;
+  createdAt: string;
+  outreach: {
+    businessId: string;
+    status: string;
+    socialHandle: string;
+    createdAt: string;
+  } | null;
+};
+
+type Tab = "waitlist" | "users" | "businesses";
 
 function statusBadge(status: string) {
   if (status === "approved") return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><Check className="w-3 h-3" /> Approved</span>;
   if (status === "rejected") return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold"><X className="w-3 h-3" /> Rejected</span>;
   return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold"><Clock className="w-3 h-3" /> Pending</span>;
+}
+
+function OutreachCell({ business, onSent }: { business: AdminBusiness; onSent: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  const send = async () => {
+    if (!email) return;
+    setSending(true);
+    setResult(null);
+    try {
+      const r = await fetch(`${BASE}api/admin/businesses/${business.id}/outreach`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await r.json();
+      if (r.ok) {
+        setResult({ ok: true, msg: `Sent to ${data.to}` });
+        setEmail("");
+        setTimeout(() => { setOpen(false); setResult(null); onSent(); }, 2500);
+      } else {
+        setResult({ ok: false, msg: data.error ?? "Failed" });
+      }
+    } catch {
+      setResult({ ok: false, msg: "Network error" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (business.outreach) {
+    return (
+      <div className="flex flex-col gap-1">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
+          <Mail className="w-3 h-3" /> Contacted
+        </span>
+        <span className="text-[10px] text-[#3A1F0E]/40">{business.outreach.socialHandle}</span>
+        <button
+          onClick={() => setOpen(!open)}
+          className="text-[10px] text-[#CA922B] hover:underline text-left"
+        >
+          Send again
+        </button>
+        {open && (
+          <div className="mt-1 flex flex-col gap-1.5">
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && send()}
+              placeholder="Business email"
+              className="w-44 border border-[#3A1F0E]/20 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-[#CA922B]"
+            />
+            <button
+              onClick={send}
+              disabled={sending || !email}
+              className="flex items-center gap-1 bg-[#CA922B] text-white rounded-lg px-3 py-1 text-xs font-bold disabled:opacity-50 hover:bg-[#B38024] transition-colors w-fit"
+            >
+              <Send className="w-3 h-3" /> {sending ? "Sending…" : "Send"}
+            </button>
+            {result && <span className={`text-xs ${result.ok ? "text-green-600" : "text-red-500"}`}>{result.msg}</span>}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      {!open ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-1.5 bg-[#2B1507] text-[#F5EBD8] hover:bg-[#3A1F0E] rounded-lg px-3 py-1.5 text-xs font-bold transition-colors w-fit"
+        >
+          <Send className="w-3 h-3" /> Send Outreach
+        </button>
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          <input
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && send()}
+            placeholder="Business email address"
+            autoFocus
+            className="w-48 border border-[#3A1F0E]/20 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#CA922B]"
+          />
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={send}
+              disabled={sending || !email}
+              className="flex items-center gap-1 bg-[#CA922B] text-white rounded-lg px-3 py-1.5 text-xs font-bold disabled:opacity-50 hover:bg-[#B38024] transition-colors"
+            >
+              <Send className="w-3 h-3" /> {sending ? "Sending…" : "Send"}
+            </button>
+            <button
+              onClick={() => { setOpen(false); setEmail(""); setResult(null); }}
+              className="text-xs text-[#3A1F0E]/40 hover:text-[#3A1F0E] px-2 py-1.5"
+            >
+              Cancel
+            </button>
+          </div>
+          {result && <span className={`text-xs ${result.ok ? "text-green-600" : "text-red-500"}`}>{result.msg}</span>}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function Admin() {
@@ -46,6 +177,7 @@ export default function Admin() {
   const [requireApproval, setRequireApproval] = useState(false);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [businesses, setBusinesses] = useState<AdminBusiness[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -53,6 +185,7 @@ export default function Admin() {
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   const [nudgeSending, setNudgeSending] = useState(false);
   const [nudgeResult, setNudgeResult] = useState<string | null>(null);
+  const [bizSearch, setBizSearch] = useState("");
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -77,9 +210,15 @@ export default function Admin() {
       .then(data => { setUsers(data.users ?? []); setLastRefreshed(new Date()); });
   }, []);
 
+  const loadBusinesses = useCallback(() => {
+    return fetch(`${BASE}api/admin/businesses`, { credentials: "include" })
+      .then(r => r.json())
+      .then(data => { setBusinesses(data.businesses ?? []); setLastRefreshed(new Date()); });
+  }, []);
+
   const refreshAll = useCallback(() => {
-    return Promise.all([loadWaitlist(), loadUsers()]);
-  }, [loadWaitlist, loadUsers]);
+    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses()]);
+  }, [loadWaitlist, loadUsers, loadBusinesses]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -220,6 +359,13 @@ export default function Admin() {
 
   const pendingWaitlist = waitlist.filter(e => e.status === "pending").length;
   const pendingUsers = users.filter(u => !u.approved).length;
+  const contactedCount = businesses.filter(b => b.outreach !== null).length;
+
+  const filteredBiz = businesses.filter(b =>
+    !bizSearch || b.name.toLowerCase().includes(bizSearch.toLowerCase()) ||
+    b.city.toLowerCase().includes(bizSearch.toLowerCase()) ||
+    b.category.toLowerCase().includes(bizSearch.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
@@ -231,7 +377,7 @@ export default function Admin() {
               <h1 className="text-3xl font-serif font-bold mb-1">Admin Dashboard</h1>
               <p className="text-[#F5EBD8]/60 text-sm">Mapping with Melanin™ — Internal</p>
             </div>
-            <div className="flex gap-4 text-sm">
+            <div className="flex gap-4 text-sm flex-wrap">
               <div className="bg-white/10 rounded-2xl px-4 py-3 text-center">
                 <div className="text-2xl font-bold text-[#CA922B]">{waitlist.length}</div>
                 <div className="text-[#F5EBD8]/60 text-xs uppercase tracking-wider">Total Waitlist</div>
@@ -243,6 +389,10 @@ export default function Admin() {
               <div className="bg-white/10 rounded-2xl px-4 py-3 text-center">
                 <div className="text-2xl font-bold text-[#CA922B]">{users.length}</div>
                 <div className="text-[#F5EBD8]/60 text-xs uppercase tracking-wider">Registered Users</div>
+              </div>
+              <div className="bg-white/10 rounded-2xl px-4 py-3 text-center">
+                <div className="text-2xl font-bold text-[#CA922B]">{businesses.length}</div>
+                <div className="text-[#F5EBD8]/60 text-xs uppercase tracking-wider">Businesses</div>
               </div>
             </div>
           </div>
@@ -302,6 +452,14 @@ export default function Admin() {
               <Users className="w-4 h-4" />
               Registered Users
               {pendingUsers > 0 && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{pendingUsers}</span>}
+            </button>
+            <button
+              onClick={() => setTab("businesses")}
+              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "businesses" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
+            >
+              <Store className="w-4 h-4" />
+              Businesses
+              {contactedCount > 0 && <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{contactedCount} contacted</span>}
             </button>
           </div>
           <div className="flex items-center gap-3 pr-2">
@@ -473,7 +631,7 @@ export default function Admin() {
               </div>
             )}
           </div>
-        ) : (
+        ) : tab === "users" ? (
           <div>
             <h2 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4">Registered Users ({users.length})</h2>
             {users.length === 0 ? (
@@ -541,6 +699,81 @@ export default function Admin() {
                           >
                             {user.approved ? (<><X className="w-3 h-3 mr-1" /> Revoke</>) : (<><Check className="w-3 h-3 mr-1" /> Approve</>)}
                           </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-serif font-bold text-[#3A1F0E]">
+                Businesses ({businesses.length})
+                {contactedCount > 0 && <span className="ml-3 text-sm font-sans font-normal text-[#3A1F0E]/50">{contactedCount} outreach sent</span>}
+              </h2>
+              <input
+                type="text"
+                value={bizSearch}
+                onChange={e => setBizSearch(e.target.value)}
+                placeholder="Search by name, city, category…"
+                className="border border-[#3A1F0E]/15 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[#CA922B] w-64 bg-white"
+              />
+            </div>
+
+            <div className="mb-4 bg-[#2B1507]/5 border border-[#2B1507]/10 rounded-xl px-4 py-3 text-sm text-[#3A1F0E]/70">
+              <strong className="text-[#3A1F0E]">How to use:</strong> Find a business, click <strong>Send Outreach</strong>, enter their email address, and they'll receive an invitation to claim their profile. Each outreach is logged so you can track who's been contacted.
+            </div>
+
+            {filteredBiz.length === 0 ? (
+              <div className="text-center py-20 text-[#3A1F0E]/40">
+                <Store className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <p>{bizSearch ? "No businesses match your search." : "No businesses found."}</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Business</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Location</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Tags</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Contact</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Outreach</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredBiz.map((biz, i) => (
+                      <tr key={biz.id} className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}>
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-[#3A1F0E]">{biz.name}</div>
+                          <div className="text-xs text-[#3A1F0E]/50 mt-0.5">{biz.category}</div>
+                        </td>
+                        <td className="px-4 py-3 text-[#3A1F0E]/70">
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-[#CA922B] shrink-0" />
+                            {biz.city}, {biz.state}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {biz.verified && <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><Check className="w-2.5 h-2.5" /> Verified</span>}
+                            {biz.blackOwned && <span className="px-2 py-0.5 rounded-full bg-[#CA922B]/10 text-[#CA922B] text-xs font-bold">Black-Owned</span>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-[#3A1F0E]/60">
+                          {biz.phone && <div className="flex items-center gap-1 mb-1">📞 {biz.phone}</div>}
+                          {biz.website && (
+                            <a href={biz.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[#CA922B] hover:underline">
+                              <ExternalLink className="w-3 h-3" /> Website
+                            </a>
+                          )}
+                          {!biz.phone && !biz.website && <span className="text-[#3A1F0E]/30">—</span>}
+                        </td>
+                        <td className="px-4 py-4">
+                          <OutreachCell business={biz} onSent={loadBusinesses} />
                         </td>
                       </tr>
                     ))}
