@@ -51,6 +51,9 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
           onPress={onPress}
           activeOpacity={0.92}
           style={[styles.hCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}
+          accessibilityRole="button"
+          accessibilityLabel={`${business.name}, ${business.category} in ${business.city}`}
+          accessibilityHint="Double tap to view business details"
         >
           <Image source={img} style={styles.hImage} contentFit="cover" />
           {business.blackOwned && (
@@ -66,7 +69,13 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
                 </Text>
                 {business.verified && <VerificationBadge />}
               </View>
-              <TouchableOpacity onPress={handleSave} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <TouchableOpacity
+                onPress={handleSave}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={isSaved ? `Remove ${business.name} from saved` : `Save ${business.name}`}
+                accessibilityState={{ selected: isSaved }}
+              >
                 <Feather
                   name="bookmark"
                   size={16}
@@ -87,6 +96,8 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
               style={[styles.rateSafetyBtn, { backgroundColor: "#DC262608", borderColor: "#DC262630" }]}
               onPress={handleRateSafety}
               hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+              accessibilityRole="button"
+              accessibilityLabel={`Rate safety experience at ${business.name}`}
             >
               <Feather name="shield" size={11} color="#DC2626" />
               <Text style={[styles.rateSafetyText, { color: "#DC2626" }]}>Rate Safety</Text>
@@ -108,6 +119,9 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
         onPress={onPress}
         activeOpacity={0.92}
         style={[styles.vCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}
+        accessibilityRole="button"
+        accessibilityLabel={`${business.name}, ${business.category} in ${business.city}`}
+        accessibilityHint="Double tap to view business details"
       >
         <View style={styles.vImageWrap}>
           <Image source={img} style={styles.vImage} contentFit="cover" />
@@ -122,7 +136,13 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
             <Text style={[styles.vName, { color: colors.foreground }]} numberOfLines={1}>
               {business.name}
             </Text>
-            <TouchableOpacity onPress={handleSave} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <TouchableOpacity
+              onPress={handleSave}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel={isSaved ? `Remove ${business.name} from saved` : `Save ${business.name}`}
+              accessibilityState={{ selected: isSaved }}
+            >
               <Feather
                 name="bookmark"
                 size={18}
@@ -144,6 +164,8 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
             style={[styles.rateSafetyBtn, { backgroundColor: "#DC262608", borderColor: "#DC262630" }]}
             onPress={handleRateSafety}
             hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+            accessibilityRole="button"
+            accessibilityLabel={`Rate safety experience at ${business.name}`}
           >
             <Feather name="shield" size={11} color="#DC2626" />
             <Text style={[styles.rateSafetyText, { color: "#DC2626" }]}>Rate Safety Experience</Text>

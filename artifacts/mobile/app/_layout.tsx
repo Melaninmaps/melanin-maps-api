@@ -25,6 +25,7 @@ import * as SecureStore from "expo-secure-store";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { AuthProvider } from "@/lib/auth";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
@@ -412,6 +413,7 @@ export default function RootLayout() {
                   <RootLayoutNav />
                   <AIChatWidget />
                   <CookieConsentBanner />
+                  <OfflineBanner />
                 </View>
               </KeyboardProvider>
             </GestureHandlerRootView>
