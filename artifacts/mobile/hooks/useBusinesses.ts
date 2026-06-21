@@ -87,8 +87,9 @@ export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinesses
       const mapped = (data.businesses as Record<string, unknown>[]).map(mapApiBusinessToLocal);
       setBusinesses(mapped.length > 0 ? mapped : BUSINESSES);
     } catch {
+      // Keep static data as fallback so the screen isn't empty
       setBusinesses(BUSINESSES);
-      setError(null);
+      setError("Showing cached results — tap to refresh");
     } finally {
       setIsLoading(false);
     }

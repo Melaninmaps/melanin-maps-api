@@ -21,6 +21,7 @@ interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  sessionExpired: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -29,6 +30,7 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   isLoading: true,
   isAuthenticated: false,
+  sessionExpired: false,
   login: async () => {},
   logout: async () => {},
 });
@@ -47,6 +49,7 @@ function getClientId(): string {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const discovery = AuthSession.useAutoDiscovery(ISSUER_URL);
 
@@ -79,11 +82,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (data.user) {
         setUser(data.user);
+        setSessionExpired(false);
       } else {
+        // Token existed but was rejected — session expired
         await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
         setUser(null);
+        setSessionExpired(true);
       }
     } catch {
+      // Network error — don't mark as expired, user may be offline
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -160,6 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
       setUser(null);
+      setSessionExpired(false);
     }
   }, []);
 
@@ -169,6 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isLoading,
         isAuthenticated: !!user,
+        sessionExpired,
         login,
         logout,
       }}

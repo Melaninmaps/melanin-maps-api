@@ -73,7 +73,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Auth / Right side */}
           <div className="hidden md:flex items-center gap-4">
-            <Link href={auth?.user ? "/profile" : "/login"}>
+            <Link href={auth?.user ? "/notifications" : "/login"}>
               <Bell className="w-5 h-5 text-[#F5EBD8] cursor-pointer hover:text-[#CA922B] transition-colors" />
             </Link>
             {auth?.user ? (

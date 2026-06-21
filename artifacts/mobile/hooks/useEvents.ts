@@ -69,6 +69,7 @@ export function useEvents(options: UseEventsOptions = {}) {
       setEvents(mapped.length > 0 ? mapped : EVENTS);
     } catch {
       setEvents(EVENTS);
+      setError("Showing cached events — tap to refresh");
     } finally {
       setIsLoading(false);
     }

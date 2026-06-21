@@ -1,9 +1,10 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/layout";
+import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 
 import Home from "@/pages/home";
 import Explore from "@/pages/explore";
@@ -33,6 +34,20 @@ import Billing from "@/pages/billing";
 import VerifyBusiness from "@/pages/verify-business";
 import Welcome from "@/pages/welcome";
 import BusinessDashboard from "@/pages/business-dashboard";
+import Notifications from "@/pages/notifications";
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { data: auth, isLoading } = useGetCurrentAuthUser();
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FAF6EF]">
+        <div className="w-8 h-8 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  if (!auth?.user) return <Redirect to="/login" />;
+  return <>{children}</>;
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -109,14 +124,17 @@ function Router() {
         <Layout><Jobs /></Layout>
       </Route>
       <Route path="/billing">
-        <Layout><Billing /></Layout>
+        <Layout><ProtectedRoute><Billing /></ProtectedRoute></Layout>
       </Route>
       <Route path="/verify-business">
         <Layout><VerifyBusiness /></Layout>
       </Route>
       <Route path="/welcome" component={Welcome} />
       <Route path="/business-dashboard">
-        <Layout><BusinessDashboard /></Layout>
+        <Layout><ProtectedRoute><BusinessDashboard /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/notifications">
+        <Layout><ProtectedRoute><Notifications /></ProtectedRoute></Layout>
       </Route>
       <Route component={NotFound} />
     </Switch>

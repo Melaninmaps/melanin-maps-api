@@ -158,6 +158,20 @@ function ApprovalChecker() {
   return null;
 }
 
+function SessionExpiryWatcher() {
+  const router = useRouter();
+  const { isLoading, sessionExpired } = useAuth();
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (sessionExpired) {
+      router.replace("/login?expired=1");
+    }
+  }, [isLoading, sessionExpired, router]);
+
+  return null;
+}
+
 function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerBackTitle: "Back", headerShown: false }}>
@@ -434,6 +448,7 @@ export default function RootLayout() {
                 <View style={{ flex: 1 }}>
                   <OnboardingChecker />
                   <ApprovalChecker />
+                  <SessionExpiryWatcher />
                   <PushNotificationRegistrar />
                   <RootLayoutNav />
                   <AIChatWidget />
