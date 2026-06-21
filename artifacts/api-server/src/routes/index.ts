@@ -31,6 +31,7 @@ import mapsRouter from "./maps";
 import ogRouter from "./og";
 import jobsRouter from "./jobs";
 import impactRouter from "./impact";
+import submitBusinessRouter from "./submit-business";
 
 const router: IRouter = Router();
 
@@ -66,5 +67,6 @@ router.use(mapsRouter);
 router.use(ogRouter);
 router.use(jobsRouter);
 router.use(impactRouter);
+router.use(submitBusinessRouter);
 
 export default router;

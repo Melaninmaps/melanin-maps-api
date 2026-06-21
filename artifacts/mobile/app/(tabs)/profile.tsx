@@ -21,6 +21,7 @@ import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
 import { usePoints } from "@/hooks/usePoints";
 import { useMembership } from "@/hooks/useMembership";
+import { BadgeSection } from "@/components/BadgeSection";
 
 const SETTINGS = [
   { icon: "map" as const, label: "Trip Planner", sub: "Chat with KinfolkAI™ for travel picks", route: "/travel" as const },
@@ -208,6 +209,10 @@ export default function ProfileScreen() {
             </View>
           )}
         </>
+      )}
+
+      {isAuthenticated && (
+        <BadgeSection savedCount={savedIds.length} isEarlyTester={false} />
       )}
 
       {isAuthenticated && reviewCount === 0 && savedIds.length === 0 && pointsTotal === 0 && (

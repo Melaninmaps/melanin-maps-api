@@ -33,6 +33,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/community", label: "Community" },
     { href: "/safety", label: "Safety" },
     { href: "/businesses", label: "Businesses" },
+    { href: "/cities", label: "City Spotlights" },
+    { href: "/jobs", label: "Jobs" },
     { href: "/travel", label: "KinfolkAI™" },
     { href: "/membership", label: "Membership" },
   ];
