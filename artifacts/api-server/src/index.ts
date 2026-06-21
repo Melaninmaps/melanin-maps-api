@@ -48,9 +48,6 @@ await initStripe();
 (function checkRequiredConfig() {
   const warnings: string[] = [];
 
-  if (!process.env.STRIPE_WEBHOOK_SECRET) {
-    warnings.push("STRIPE_WEBHOOK_SECRET — Stripe payments will process but membership status won't update automatically. Set this in Replit Secrets and register the webhook at https://dashboard.stripe.com/webhooks pointing to: https://<your-domain>/api/stripe/webhook");
-  }
   if (!process.env.RESEND_API_KEY) {
     warnings.push("RESEND_API_KEY — All transactional emails (trial reminders, membership, welcome) are disabled.");
   }
