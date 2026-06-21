@@ -18,6 +18,8 @@ import Membership from "@/pages/membership";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import Profile from "@/pages/profile";
+import Admin from "@/pages/admin";
+import PendingApproval from "@/pages/pending-approval";
 import Travel from "@/pages/travel";
 import MapPage from "@/pages/map";
 import Events from "@/pages/events";
@@ -76,6 +78,8 @@ function Router() {
       </Route>
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
+      <Route path="/pending-approval" component={PendingApproval} />
+      <Route path="/admin" component={Admin} />
       <Route path="/profile">
         <Layout><Profile /></Layout>
       </Route>

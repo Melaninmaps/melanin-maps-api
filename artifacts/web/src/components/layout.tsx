@@ -1,13 +1,31 @@
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, Redirect } from "wouter";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "./ui/button";
 import { Menu, X, MessageSquare, Bell } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const BASE = import.meta.env.BASE_URL;
+
+function useRequireApproval() {
+  const [requireApproval, setRequireApproval] = useState(false);
+  useEffect(() => {
+    fetch(`${BASE}api/admin/check`, { credentials: "include" })
+      .then(r => r.json())
+      .then(d => setRequireApproval(d.requireApproval === true))
+      .catch(() => {});
+  }, []);
+  return requireApproval;
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { data: auth } = useGetCurrentAuthUser();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const requireApproval = useRequireApproval();
+
+  if (requireApproval && auth?.user && auth.user.approved === false) {
+    return <Redirect to="/pending-approval" />;
+  }
 
   const navItems = [
     { href: "/explore", label: "Explore" },

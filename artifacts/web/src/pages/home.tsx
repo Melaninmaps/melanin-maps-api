@@ -21,15 +21,38 @@ function openShare(platform: string) {
   }
 }
 
+const BASE = import.meta.env.BASE_URL;
+
 export default function Home() {
   const { data: businessesData, isLoading } = useListBusinesses({ limit: 3 });
   const [email, setEmail] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [isBusinessOwner, setIsBusinessOwner] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [position, setPosition] = useState<number | null>(null);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
 
-  const handleWaitlist = (e: React.FormEvent) => {
+  const handleWaitlist = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
-    setSubmitted(true);
+    if (!email || submitting) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${BASE}api/waitlist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, city, state, isBusinessOwner }),
+      });
+      const data = await res.json();
+      setPosition(data.position ?? null);
+      setReferralCode(data.referralCode ?? null);
+      setSubmitted(true);
+    } catch {
+      setSubmitted(true);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -78,7 +101,9 @@ export default function Home() {
               <div className="bg-[#CA922B]/20 border border-[#CA922B]/40 rounded-2xl px-6 py-5 text-center">
                 <div className="text-2xl mb-2">🎉</div>
                 <p className="text-white font-bold text-lg">You're on the list!</p>
+                {position && <p className="text-[#CA922B] font-bold text-sm mt-1">#{position} in line</p>}
                 <p className="text-[#F5EBD8]/70 text-sm mt-1">We'll reach out when your city launches. Tell a friend!</p>
+                {referralCode && <p className="text-[#F5EBD8]/50 text-xs mt-2">Your referral code: <span className="font-bold text-[#CA922B]">{referralCode}</span></p>}
               </div>
             ) : (
             <>
@@ -93,8 +118,8 @@ export default function Home() {
                 className="flex-1 bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60"
                 placeholder="Enter your email address"
               />
-              <Button type="submit" className="shrink-0 h-[50px] px-5 rounded-xl bg-[#CA922B] hover:bg-[#B38024] text-white font-bold text-sm whitespace-nowrap">
-                Join the Waitlist
+              <Button type="submit" disabled={submitting} className="shrink-0 h-[50px] px-5 rounded-xl bg-[#CA922B] hover:bg-[#B38024] text-white font-bold text-sm whitespace-nowrap">
+                {submitting ? "Joining..." : "Join the Waitlist"}
               </Button>
             </div>
 
@@ -102,23 +127,32 @@ export default function Home() {
             <div className="flex gap-2">
               <input
                 type="text"
+                value={city}
+                onChange={e => setCity(e.target.value)}
                 className="flex-1 bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60"
                 placeholder="Your city"
               />
               <input
                 type="text"
+                value={state}
+                onChange={e => setState(e.target.value)}
+                maxLength={2}
                 className="w-28 bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60 uppercase"
                 placeholder="STATE"
               />
             </div>
             <p className="text-xs text-[#F5EBD8]/50">What city and state are you from? We're testing in select locations first.</p>
 
-            {/* Business owner field */}
-            <input
-              type="text"
-              className="w-full bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60"
-              placeholder="Are you a business owner?"
-            />
+            {/* Business owner toggle */}
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <div
+                onClick={() => setIsBusinessOwner(b => !b)}
+                className={`w-10 h-6 rounded-full transition-colors shrink-0 flex items-center ${isBusinessOwner ? "bg-[#CA922B]" : "bg-white/20"}`}
+              >
+                <div className={`w-4 h-4 rounded-full bg-white shadow-sm mx-1 transition-transform ${isBusinessOwner ? "translate-x-4" : "translate-x-0"}`} />
+              </div>
+              <span className="text-sm text-[#F5EBD8]/80">I own or operate a minority-owned business</span>
+            </label>
 
             {/* Referral row */}
             <div className="flex items-center gap-3">
