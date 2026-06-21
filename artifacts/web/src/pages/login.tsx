@@ -18,7 +18,7 @@ export default function Login() {
         
         <a href="/api/login" className="block w-full">
           <Button className="w-full h-14 text-lg rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white shadow-lg">
-            Sign in with Replit
+            Sign In to Continue
           </Button>
         </a>
         

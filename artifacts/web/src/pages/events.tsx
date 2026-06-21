@@ -71,8 +71,17 @@ export default function Events() {
                   {event.imageUrl ? (
                     <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-[#FAF6EF]">
-                      <CalendarIcon className="w-12 h-12 text-[#2B1507]/20" />
+                    <div className={`w-full h-full flex items-center justify-center ${
+                      event.category === 'Finance' ? 'bg-gradient-to-br from-[#1a3a2a] to-[#2d7a4f]' :
+                      event.category === 'Beauty' ? 'bg-gradient-to-br from-[#3a1a3a] to-[#7a2d6b]' :
+                      event.category === 'Cultural' ? 'bg-gradient-to-br from-[#2B1507] to-[#CA922B]' :
+                      event.category === 'Music' ? 'bg-gradient-to-br from-[#0d1a3a] to-[#2d4a8a]' :
+                      event.category === 'Food' ? 'bg-gradient-to-br from-[#3a1a0d] to-[#8a4a1a]' :
+                      event.category === 'Wellness' ? 'bg-gradient-to-br from-[#1a2a2a] to-[#2d6b5a]' :
+                      event.category === 'Business' ? 'bg-gradient-to-br from-[#1a1a2a] to-[#3a3a6b]' :
+                      'bg-gradient-to-br from-[#2B1507] to-[#5a3a1a]'
+                    }`}>
+                      <CalendarIcon className="w-12 h-12 text-white/30" />
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#2B1507]/80 to-transparent opacity-60" />

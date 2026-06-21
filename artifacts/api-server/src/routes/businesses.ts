@@ -31,7 +31,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .limit(200);
 
-    res.json({ businesses });
+    res.json({ businesses, total: businesses.length });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch businesses");
     res.status(500).json({ error: "Failed to fetch businesses" });

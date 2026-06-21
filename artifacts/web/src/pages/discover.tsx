@@ -30,7 +30,7 @@ export default function Discover() {
 
   const categories = [
     "All", 
-    "Minority-Owned Businesses", 
+    "Black-Owned Businesses", 
     "Restaurants & Nightlife", 
     "Hotels & Stays", 
     "Cultural Landmarks", 
@@ -51,7 +51,7 @@ export default function Discover() {
           </div>
           <h1 className="text-4xl md:text-6xl font-serif font-bold text-white mb-4">Explore With Purpose</h1>
           <p className="text-[#F5EBD8]/80 text-lg md:text-xl max-w-2xl mb-8 font-light">
-            Find the best Minority-owned businesses, authentic experiences, and trusted community spots.
+            Find the best Black-owned businesses, authentic experiences, and trusted community spots.
           </p>
           
           <div className="w-full max-w-2xl bg-white rounded-full p-2 flex items-center shadow-lg">
@@ -88,7 +88,7 @@ export default function Discover() {
         {/* Toolbar */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <div className="text-[#3A1F0E] font-medium">
-            {isLoading ? "Loading..." : <span className="font-bold">{data?.total || 0}</span>} results found
+            {isLoading ? "Loading..." : <span className="font-bold">{data?.total ?? data?.businesses?.length ?? 0}</span>} results found
           </div>
           
           <div className="flex items-center gap-4">
@@ -156,9 +156,11 @@ export default function Discover() {
                     
                     {/* Top Left Badges */}
                     <div className="absolute top-4 left-4 flex flex-col gap-2">
-                      <div className="bg-[#CA922B] text-white text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-full shadow-md w-fit">
-                        Featured
-                      </div>
+                      {business.featured && (
+                        <div className="bg-[#CA922B] text-white text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-full shadow-md w-fit">
+                          Featured
+                        </div>
+                      )}
                       {business.confidenceScore && (
                         <div className="score-badge shadow-md">
                           {business.confidenceScore}/100

@@ -63,16 +63,18 @@ export default function Profile() {
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center border border-white/10">
-            <div className="text-2xl font-serif font-bold text-[#CA922B]">0</div>
-            <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">Reviews</div>
-          </div>
-          <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center border border-white/10">
             <div className="text-2xl font-serif font-bold text-[#CA922B]">{savedPlaces?.businessIds?.length ?? 0}</div>
             <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">Saved</div>
           </div>
           <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center border border-white/10">
-            <div className="text-2xl font-serif font-bold text-[#CA922B]">0</div>
+            <div className="text-lg font-serif font-bold text-[#CA922B]/70">—</div>
+            <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">Reviews</div>
+            <div className="text-[9px] text-[#F5EBD8]/40 mt-0.5">Coming soon</div>
+          </div>
+          <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center border border-white/10">
+            <div className="text-lg font-serif font-bold text-[#CA922B]/70">—</div>
             <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">Points</div>
+            <div className="text-[9px] text-[#F5EBD8]/40 mt-0.5">Coming soon</div>
           </div>
         </div>
 
