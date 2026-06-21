@@ -14,7 +14,7 @@ export default function Terms() {
       <div className="max-w-3xl mx-auto px-4 py-16 space-y-10 text-[#3A1F0E]">
         <section>
           <p className="leading-relaxed text-[#3A1F0E]/80">
-            Welcome to Mapping with Melanin™. By accessing or using our platform at <strong>www.melaninmaps.com</strong> or our mobile application, you agree to be bound by these Terms of Service. Please read them carefully.
+            Welcome to Mapping with Melanin™. By accessing or using our platform at <strong>mappingwithmelanin.com</strong> or our mobile application, you agree to be bound by these Terms of Service. Please read them carefully.
           </p>
         </section>
 
@@ -70,7 +70,7 @@ export default function Terms() {
           <ul className="space-y-2 list-disc pl-6 text-[#3A1F0E]/80 leading-relaxed">
             <li>Paid memberships are billed on a recurring basis (monthly or annually).</li>
             <li>You may cancel your membership at any time. Cancellation takes effect at the end of the current billing period.</li>
-            <li>Refunds are not provided for partial billing periods. Contact <a href="mailto:support@melaninmaps.com" className="text-[#CA922B] underline">support@melaninmaps.com</a> for exceptional cases.</li>
+            <li>Refunds are not provided for partial billing periods. Contact <a href="mailto:support@mappingwithmelanin.com" className="text-[#CA922B] underline">support@mappingwithmelanin.com</a> for exceptional cases.</li>
             <li>We reserve the right to change pricing with 30 days' advance notice.</li>
             <li>Payment processing is handled by Stripe. By paying, you also agree to Stripe's Terms of Service.</li>
           </ul>
@@ -129,8 +129,8 @@ export default function Terms() {
           <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">13. Contact</h2>
           <div className="bg-white border border-[#2B1507]/10 rounded-2xl p-6 space-y-1 text-sm text-[#3A1F0E]/80">
             <p><strong>Mapping with Melanin™</strong></p>
-            <p>Email: <a href="mailto:legal@melaninmaps.com" className="text-[#CA922B] underline">legal@melaninmaps.com</a></p>
-            <p>Website: <a href="https://www.melaninmaps.com" className="text-[#CA922B] underline">www.melaninmaps.com</a></p>
+            <p>Email: <a href="mailto:legal@mappingwithmelanin.com" className="text-[#CA922B] underline">legal@mappingwithmelanin.com</a></p>
+            <p>Website: <a href="https://mappingwithmelanin.com" className="text-[#CA922B] underline">mappingwithmelanin.com</a></p>
           </div>
         </section>
       </div>

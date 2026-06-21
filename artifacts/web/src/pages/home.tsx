@@ -4,7 +4,7 @@ import { Shield, Search, Calendar, MapPin, Sparkles, Bell, ArrowRight, Check, Us
 import { useListBusinesses } from "@workspace/api-client-react";
 import { useState } from "react";
 
-const SITE_URL = "https://www.melaninmaps.com";
+const SITE_URL = "https://mappingwithmelanin.com";
 const SHARE_TEXT = encodeURIComponent("Join Mapping with Melanin — discover trusted businesses, travel safely, and connect with the community. 🌍✊🏾");
 
 function openShare(platform: string) {

@@ -77,8 +77,8 @@ export default function ReferralScreen() {
 
   const code = referralCode ?? "—";
   const referralUrl = referralCode
-    ? `https://www.melaninmaps.com/?ref=${referralCode}`
-    : "https://www.melaninmaps.com";
+    ? `https://mappingwithmelanin.com/?ref=${referralCode}`
+    : "https://mappingwithmelanin.com";
 
   const handleCopy = async () => {
     if (!referralCode) return;

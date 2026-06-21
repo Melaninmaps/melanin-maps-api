@@ -128,7 +128,7 @@ export default function CommunityGuidelines() {
             See something that doesn't belong here? Use the flag/report button on any review, post, or business listing, or reach out directly:
           </p>
           <div className="bg-white border border-[#2B1507]/10 rounded-2xl p-6 space-y-1 text-sm text-[#3A1F0E]/80">
-            <p>Email: <a href="mailto:community@melaninmaps.com" className="text-[#CA922B] underline">community@melaninmaps.com</a></p>
+            <p>Email: <a href="mailto:community@mappingwithmelanin.com" className="text-[#CA922B] underline">community@mappingwithmelanin.com</a></p>
             <p>We review all reports within 48 hours and act on confirmed violations within 72 hours.</p>
           </div>
         </section>

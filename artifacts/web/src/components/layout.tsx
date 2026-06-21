@@ -170,7 +170,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div>
               <h3 className="font-serif font-bold text-xl mb-6 text-white">About Us</h3>
               <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
-                <li><a href="mailto:hello@melaninmaps.com" className="hover:text-[#CA922B] transition-colors cursor-pointer">Contact Us</a></li>
+                <li><a href="mailto:hello@mappingwithmelanin.com" className="hover:text-[#CA922B] transition-colors cursor-pointer">Contact Us</a></li>
                 <li><Link href="/for-business-owners"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">List Your Business</span></Link></li>
                 <li><Link href="/terms"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Terms of Service</span></Link></li>
                 <li><Link href="/privacy-policy"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Privacy Policy</span></Link></li>

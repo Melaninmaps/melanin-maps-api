@@ -29,7 +29,7 @@ export default function ForBusinessOwners() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-16">
-            <a href="mailto:hello@melaninmaps.com?subject=Early Access Application — List My Business">
+            <a href="mailto:hello@mappingwithmelanin.com?subject=Early Access Application — List My Business">
               <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-14 text-lg">Apply for Early Access</Button>
             </a>
             <Button variant="outline" onClick={scrollToHow} className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-14 text-lg bg-transparent">Learn More</Button>
@@ -95,7 +95,7 @@ export default function ForBusinessOwners() {
           <div className="mt-24 text-center bg-[#2B1507] p-12 rounded-3xl text-white">
             <h2 className="text-3xl font-serif font-bold mb-8">Ready to Join the Directory?</h2>
             <div className="flex justify-center gap-4">
-              <a href="mailto:hello@melaninmaps.com?subject=Early Access Application — List My Business">
+              <a href="mailto:hello@mappingwithmelanin.com?subject=Early Access Application — List My Business">
                 <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Apply for Early Access</Button>
               </a>
               <Link href="/membership">

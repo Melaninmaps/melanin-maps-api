@@ -387,7 +387,7 @@ export default function CommunityScreen() {
                 return;
               }
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              Alert.alert("Start a Group", "Ready to bring your community together? Email us at hello@melaninmaps.com to get your group listed.", [{ text: "OK" }]);
+              Alert.alert("Start a Group", "Ready to bring your community together? Email us at hello@mappingwithmelanin.com to get your group listed.", [{ text: "OK" }]);
             }}
           >
             <Feather name="plus" size={24} color="#FFFFFF" />

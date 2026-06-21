@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const FROM = "Mapping With Melanin™ <hello@melaninmaps.com>";
+const FROM = "Mapping With Melanin™ <hello@mappingwithmelanin.com>";
 
 function log(msg: string) {
   if (!resend) console.warn("[email] RESEND_API_KEY not set — skipping:", msg);
@@ -9,14 +9,14 @@ function log(msg: string) {
 
 export async function sendWaitlistConfirmation(to: string, position: number, referralCode: string, firstName: string) {
   if (!resend) { log("waitlist confirmation"); return; }
-  const referralLink = `https://www.melaninmaps.com/?ref=${referralCode}`;
+  const referralLink = `https://mappingwithmelanin.com/?ref=${referralCode}`;
   await resend.emails.send({
     from: FROM,
     to,
     subject: "Welcome to the Mapping with Melanin™ Waitlist 🗺️✊🏾",
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
-        <img src="https://www.melaninmaps.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
 
         <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 16px">Hello ${firstName},</p>
 
@@ -87,16 +87,16 @@ export async function sendApprovalNotification(to: string, firstName: string | n
     subject: "You're approved — Welcome to Mapping With Melanin™ 🗺️",
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
-        <img src="https://www.melaninmaps.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
         <h1 style="font-size:28px;color:#2B1507;margin:0 0 12px">You're in, ${name}! 🎉</h1>
         <p style="color:#3A1F0E;opacity:0.7;font-size:16px;line-height:1.6;margin:0 0 28px">
           Your early access to <strong>Mapping With Melanin™</strong> has been approved. Sign in now to start discovering Black-owned businesses, community events, and safety intel in your area.
         </p>
-        <a href="https://www.melaninmaps.com/login" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:14px 32px;border-radius:50px;text-decoration:none;margin-bottom:28px">
+        <a href="https://mappingwithmelanin.com/login" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:14px 32px;border-radius:50px;text-decoration:none;margin-bottom:28px">
           Sign In Now →
         </a>
         <p style="color:#3A1F0E;opacity:0.5;font-size:13px;margin:0">
-          Questions? Reach us at <a href="mailto:hello@melaninmaps.com" style="color:#CA922B">hello@melaninmaps.com</a>
+          Questions? Reach us at <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a>
         </p>
       </div>
     `,

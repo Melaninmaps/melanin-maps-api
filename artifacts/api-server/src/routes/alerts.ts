@@ -41,7 +41,7 @@ function nwsSeverityToLocal(severity: string): AlertItem["severity"] {
 async function fetchNwsAlerts(area: string): Promise<AlertItem[]> {
   const url = `https://api.weather.gov/alerts/active?area=${encodeURIComponent(area)}&limit=10`;
   const res = await fetch(url, {
-    headers: { "User-Agent": "MappingWithMelanin/1.0 (contact@melaninmaps.com)", Accept: "application/geo+json" },
+    headers: { "User-Agent": "MappingWithMelanin/1.0 (contact@mappingwithmelanin.com)", Accept: "application/geo+json" },
     signal: AbortSignal.timeout(8000),
   });
 

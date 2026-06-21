@@ -46,7 +46,7 @@ export default function PendingApproval() {
           </div>
         </div>
 
-        <a href="mailto:hello@melaninmaps.com" className="block w-full mb-4">
+        <a href="mailto:hello@mappingwithmelanin.com" className="block w-full mb-4">
           <Button variant="outline" className="w-full h-12 rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white">
             <Mail className="mr-2 h-4 w-4" /> Contact Us
           </Button>

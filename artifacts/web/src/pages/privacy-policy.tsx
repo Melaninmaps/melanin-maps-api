@@ -15,7 +15,7 @@ export default function PrivacyPolicy() {
         <section>
           <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">1. Introduction</h2>
           <p className="leading-relaxed text-[#3A1F0E]/80">
-            Mapping with Melanin™ ("we", "us", or "our") is committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform, including our website at <strong>www.melaninmaps.com</strong> and our mobile application.
+            Mapping with Melanin™ ("we", "us", or "our") is committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform, including our website at <strong>mappingwithmelanin.com</strong> and our mobile application.
           </p>
         </section>
 
@@ -78,7 +78,7 @@ export default function PrivacyPolicy() {
             <li>Opt out of marketing communications at any time</li>
             <li>Withdraw consent for optional data collection</li>
           </ul>
-          <p className="mt-3 text-[#3A1F0E]/80">To exercise any of these rights, contact us at <a href="mailto:privacy@melaninmaps.com" className="text-[#CA922B] underline">privacy@melaninmaps.com</a>.</p>
+          <p className="mt-3 text-[#3A1F0E]/80">To exercise any of these rights, contact us at <a href="mailto:privacy@mappingwithmelanin.com" className="text-[#CA922B] underline">privacy@mappingwithmelanin.com</a>.</p>
         </section>
 
         <section>
@@ -116,8 +116,8 @@ export default function PrivacyPolicy() {
           </p>
           <div className="mt-4 bg-white border border-[#2B1507]/10 rounded-2xl p-6 space-y-1 text-sm text-[#3A1F0E]/80">
             <p><strong>Mapping with Melanin™</strong></p>
-            <p>Email: <a href="mailto:privacy@melaninmaps.com" className="text-[#CA922B] underline">privacy@melaninmaps.com</a></p>
-            <p>Website: <a href="https://www.melaninmaps.com" className="text-[#CA922B] underline">www.melaninmaps.com</a></p>
+            <p>Email: <a href="mailto:privacy@mappingwithmelanin.com" className="text-[#CA922B] underline">privacy@mappingwithmelanin.com</a></p>
+            <p>Website: <a href="https://mappingwithmelanin.com" className="text-[#CA922B] underline">mappingwithmelanin.com</a></p>
           </div>
         </section>
       </div>
