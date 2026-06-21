@@ -2,9 +2,35 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Shield, Search, Calendar, MapPin, Sparkles, Bell, ArrowRight, Check, Users, Navigation, Compass, Star, Facebook, Linkedin, Instagram, Link2, ChevronDown } from "lucide-react";
 import { useListBusinesses } from "@workspace/api-client-react";
+import { useState } from "react";
+
+const SITE_URL = "https://www.melaninmaps.com";
+const SHARE_TEXT = encodeURIComponent("Join Mapping with Melanin — discover trusted businesses, travel safely, and connect with the community. 🌍✊🏾");
+
+function openShare(platform: string) {
+  const url = encodeURIComponent(SITE_URL);
+  const urls: Record<string, string> = {
+    X: `https://twitter.com/intent/tweet?text=${SHARE_TEXT}&url=${url}`,
+    Facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+    LinkedIn: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`,
+  };
+  if (urls[platform]) {
+    window.open(urls[platform], "_blank", "noopener,noreferrer,width=600,height=500");
+  } else {
+    navigator.clipboard.writeText(SITE_URL).catch(() => {});
+  }
+}
 
 export default function Home() {
   const { data: businessesData, isLoading } = useListBusinesses({ limit: 3 });
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleWaitlist = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setSubmitted(true);
+  };
 
   return (
     <div className="flex flex-col w-full bg-[#FAF6EF]">
@@ -48,14 +74,26 @@ export default function Home() {
 
           {/* Waitlist Form */}
           <div className="w-full max-w-lg space-y-3">
+            {submitted ? (
+              <div className="bg-[#CA922B]/20 border border-[#CA922B]/40 rounded-2xl px-6 py-5 text-center">
+                <div className="text-2xl mb-2">🎉</div>
+                <p className="text-white font-bold text-lg">You're on the list!</p>
+                <p className="text-[#F5EBD8]/70 text-sm mt-1">We'll reach out when your city launches. Tell a friend!</p>
+              </div>
+            ) : (
+            <>
             {/* Email + CTA row */}
+            <form onSubmit={handleWaitlist}>
             <div className="flex gap-2">
               <input
                 type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
                 className="flex-1 bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60"
                 placeholder="Enter your email address"
               />
-              <Button className="shrink-0 h-[50px] px-5 rounded-xl bg-[#CA922B] hover:bg-[#B38024] text-white font-bold text-sm whitespace-nowrap">
+              <Button type="submit" className="shrink-0 h-[50px] px-5 rounded-xl bg-[#CA922B] hover:bg-[#B38024] text-white font-bold text-sm whitespace-nowrap">
                 Join the Waitlist
               </Button>
             </div>
@@ -94,7 +132,7 @@ export default function Home() {
                   { icon: <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.21 8.21 0 0 0 4.79 1.52V6.76a4.85 4.85 0 0 1-1.02-.07z"/></svg>, label: "TikTok" },
                   { icon: <Link2 className="w-4 h-4" />, label: "Copy link" },
                 ].map((s, i) => (
-                  <button key={i} title={s.label} className="w-8 h-8 rounded-full bg-white/10 border border-white/15 text-[#F5EBD8] flex items-center justify-center hover:bg-[#CA922B]/20 hover:border-[#CA922B]/40 transition-colors">
+                  <button key={i} title={s.label} onClick={() => openShare(s.label)} className="w-8 h-8 rounded-full bg-white/10 border border-white/15 text-[#F5EBD8] flex items-center justify-center hover:bg-[#CA922B]/20 hover:border-[#CA922B]/40 transition-colors">
                     {s.icon}
                   </button>
                 ))}
@@ -114,12 +152,15 @@ export default function Home() {
                   { icon: <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.21 8.21 0 0 0 4.79 1.52V6.76a4.85 4.85 0 0 1-1.02-.07z"/></svg>, label: "TikTok" },
                   { icon: <Link2 className="w-4 h-4" />, label: "Copy link" },
                 ].map((s, i) => (
-                  <button key={i} title={s.label} className="w-8 h-8 rounded-full bg-white/10 border border-white/15 text-[#F5EBD8] flex items-center justify-center hover:bg-[#CA922B]/20 hover:border-[#CA922B]/40 transition-colors">
+                  <button key={i} title={s.label} onClick={() => openShare(s.label)} className="w-8 h-8 rounded-full bg-white/10 border border-white/15 text-[#F5EBD8] flex items-center justify-center hover:bg-[#CA922B]/20 hover:border-[#CA922B]/40 transition-colors">
                     {s.icon}
                   </button>
                 ))}
               </div>
             </div>
+            </form>
+            </>
+            )}
           </div>
 
           {/* Scroll indicator */}
@@ -443,7 +484,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <Button className="mt-8 rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">See Scores in Action</Button>
+              <Link href="/safety"><Button className="mt-8 rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">See Scores in Action</Button></Link>
             </div>
             
             <div className="bg-white p-8 rounded-3xl shadow-xl border border-[#3A1F0E]/5">
@@ -527,7 +568,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <Button className="mt-10 rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Explore Safety Features</Button>
+              <Link href="/safety"><Button className="mt-10 rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Explore Safety Features</Button></Link>
             </div>
           </div>
         </div>
@@ -558,7 +599,7 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <Button className="rounded-full bg-[#2B1507] hover:bg-[#1a0c04] text-white px-8 h-12">Join the Community</Button>
+          <Link href="/community"><Button className="rounded-full bg-[#2B1507] hover:bg-[#1a0c04] text-white px-8 h-12">Join the Community</Button></Link>
         </div>
       </section>
 
@@ -665,7 +706,7 @@ export default function Home() {
           </div>
 
           <div className="text-center">
-            <Button className="rounded-full bg-[#2B1507] hover:bg-[#1a0c04] text-white px-8 h-12 mb-8">Explore the Platform</Button>
+            <Link href="/explore"><Button className="rounded-full bg-[#2B1507] hover:bg-[#1a0c04] text-white px-8 h-12 mb-8">Explore the Platform</Button></Link>
             <p className="text-xs text-[#3A1F0E]/50">* "Minority-owned business" is defined as any business that is 51% or more owned and operated by a Black person or persons.</p>
           </div>
         </div>

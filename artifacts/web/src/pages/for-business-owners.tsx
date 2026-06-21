@@ -1,6 +1,11 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 
 export default function ForBusinessOwners() {
+  const scrollToHow = () => {
+    document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
       {/* Hero */}
@@ -24,8 +29,10 @@ export default function ForBusinessOwners() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-16">
-            <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-14 text-lg">Apply for Early Access</Button>
-            <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-14 text-lg bg-transparent">Learn More</Button>
+            <a href="mailto:hello@melaninmaps.com?subject=Early Access Application — List My Business">
+              <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-14 text-lg">Apply for Early Access</Button>
+            </a>
+            <Button variant="outline" onClick={scrollToHow} className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-14 text-lg bg-transparent">Learn More</Button>
           </div>
 
           <div className="flex flex-wrap justify-center gap-8 md:gap-16 pt-8 border-t border-white/10 w-full max-w-4xl">
@@ -62,7 +69,7 @@ export default function ForBusinessOwners() {
             </div>
           </div>
 
-          <div className="text-center mb-16">
+          <div className="text-center mb-16" id="how-it-works">
             <h2 className="text-4xl font-serif font-bold text-[#3A1F0E] mb-6">How It Works</h2>
           </div>
 
@@ -88,8 +95,12 @@ export default function ForBusinessOwners() {
           <div className="mt-24 text-center bg-[#2B1507] p-12 rounded-3xl text-white">
             <h2 className="text-3xl font-serif font-bold mb-8">Ready to Join the Directory?</h2>
             <div className="flex justify-center gap-4">
-              <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Apply for Early Access</Button>
-              <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-12">Submit a Business</Button>
+              <a href="mailto:hello@melaninmaps.com?subject=Early Access Application — List My Business">
+                <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Apply for Early Access</Button>
+              </a>
+              <Link href="/membership">
+                <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-12">View Membership Plans</Button>
+              </Link>
             </div>
           </div>
         </div>

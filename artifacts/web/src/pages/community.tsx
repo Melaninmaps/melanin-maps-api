@@ -1,9 +1,33 @@
-import { useListCommunityPosts, useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Users, Globe, MapPin, Calendar, Briefcase, MessageSquare, ArrowRight } from "lucide-react";
+import { Globe, MessageSquare } from "lucide-react";
+import { useState } from "react";
+import { Link } from "wouter";
+
+const GROUPS = [
+  { m: "4.2K members", t: "Solo Black Travelers", l: "Global", d: "A safe space for solo travelers to share tips, routes, and real experiences." },
+  { m: "2.8K members", t: "Black Entrepreneurs Abroad", l: "Global", d: "Connecting Minority business owners who work, invest, and build across borders." },
+  { m: "1.5K members", t: "ATL Cultural Explorers", l: "Atlanta, GA", d: "Discover Atlanta's hidden gems, art scenes, and cultural hotspots together." },
+  { m: "3.1K members", t: "Afro-Caribbean Connections", l: "Global", d: "Celebrating the diaspora through shared travel, food, music, and community." },
+];
+
+const EVENTS = [
+  { date: "Jul 12", t: "Melanin & Mimosas Brunch", l: "Atlanta, GA", d: "A quarterly gathering of community members for food, vibes, and connection." },
+  { date: "Jul 19", t: "Black Travel Collective Summit", l: "Miami, FL", d: "An annual summit celebrating Black travel culture with panels and experiences." },
+  { date: "Aug 3", t: "Afrofuturism Art Walk", l: "Chicago, IL", d: "Explore Afrofuturist art installations across Chicago's South Side." },
+  { date: "Aug 10", t: "Founders & Freelancers Mixer", l: "Houston, TX", d: "Networking for Black entrepreneurs, creatives, and independent professionals." },
+];
+
+const TRAVEL = [
+  { flag: "🇬🇭", dest: "Accra, Ghana", theme: "Heritage & History", d: "Walk the Cape Coast Castle, visit Makola Market, and connect with diaspora community members already based there." },
+  { flag: "🇯🇲", dest: "Kingston, Jamaica", theme: "Culture & Music", d: "From Trench Town to the Blue Mountains — experience the soul of Jamaica with locals who know it best." },
+  { flag: "🇧🇷", dest: "Salvador, Bahia", theme: "Afro-Brazilian Culture", d: "The most African city outside of Africa. Rich with Candomblé, Capoeira, and Afro-Brazilian art and cuisine." },
+  { flag: "🇲🇦", dest: "Marrakech, Morocco", theme: "Pan-African Exploration", d: "Navigate the medina, experience Saharan culture, and meet community members exploring North Africa." },
+];
+
+type Tab = "Groups" | "Events" | "Travel";
 
 export default function Community() {
-  const { data: auth } = useGetCurrentAuthUser();
+  const [activeTab, setActiveTab] = useState<Tab>("Groups");
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
@@ -74,48 +98,114 @@ export default function Community() {
         </div>
       </section>
 
-      {/* Featured Groups */}
+      {/* Featured Groups / Events / Travel Tabs */}
       <section className="py-24 bg-[#FAF6EF]">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
-              <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">DISCOVER FEATURED GROUPS</span>
+              <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">DISCOVER FEATURED</span>
             </div>
           </div>
           
           <div className="flex justify-center gap-8 mb-12 border-b border-[#3A1F0E]/10 pb-4">
-            <button className="text-[#3A1F0E] font-bold border-b-2 border-[#CA922B] pb-4 -mb-[18px]">Groups</button>
-            <button className="text-[#3A1F0E]/50 font-bold hover:text-[#3A1F0E] transition-colors">Events</button>
-            <button className="text-[#3A1F0E]/50 font-bold hover:text-[#3A1F0E] transition-colors">Travel</button>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6 mb-12">
-            {[
-              { m: "4.2K members", t: "Solo Black Travelers", l: "Global", d: "A safe space for solo travelers to share tips, routes, and real experiences." },
-              { m: "2.8K members", t: "Black Entrepreneurs Abroad", l: "Global", d: "Connecting Minority business owners who work, invest, and build across borders." },
-              { m: "1.5K members", t: "ATL Cultural Explorers", l: "Atlanta, GA", d: "Discover Atlanta's hidden gems, art scenes, and cultural hotspots together." },
-              { m: "3.1K members", t: "Afro-Caribbean Connections", l: "Global", d: "Celebrating the diaspora through shared travel, food, music, and community." }
-            ].map((g, i) => (
-              <div key={i} className="bg-white p-6 rounded-2xl border border-[#3A1F0E]/5 shadow-sm flex flex-col h-full">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">{g.m}</span>
-                </div>
-                <h3 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-2">{g.t}</h3>
-                <div className="flex items-center gap-1 text-[#3A1F0E]/50 text-sm mb-4">
-                  <Globe className="w-4 h-4" /> {g.l}
-                </div>
-                <p className="text-[#3A1F0E]/70 mb-6 flex-1">{g.d}</p>
-                <div className="flex gap-3 mt-auto">
-                  <Button className="flex-1 rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white">Join Group</Button>
-                  <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-4"><MessageSquare className="w-4 h-4" /></Button>
-                </div>
-              </div>
+            {(["Groups", "Events", "Travel"] as Tab[]).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`font-bold pb-4 -mb-[18px] transition-colors ${activeTab === tab ? "text-[#3A1F0E] border-b-2 border-[#CA922B]" : "text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
+              >
+                {tab}
+              </button>
             ))}
           </div>
 
-          <div className="text-center">
-            <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-12">View All Groups</Button>
-          </div>
+          {/* Groups tab */}
+          {activeTab === "Groups" && (
+            <>
+              <div className="grid md:grid-cols-2 gap-6 mb-12">
+                {GROUPS.map((g, i) => (
+                  <div key={i} className="bg-white p-6 rounded-2xl border border-[#3A1F0E]/5 shadow-sm flex flex-col h-full">
+                    <div className="flex justify-between items-start mb-4">
+                      <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">{g.m}</span>
+                    </div>
+                    <h3 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-2">{g.t}</h3>
+                    <div className="flex items-center gap-1 text-[#3A1F0E]/50 text-sm mb-4">
+                      <Globe className="w-4 h-4" /> {g.l}
+                    </div>
+                    <p className="text-[#3A1F0E]/70 mb-6 flex-1">{g.d}</p>
+                    <div className="flex gap-3 mt-auto">
+                      <Link href="/login" className="flex-1">
+                        <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white">Join Group</Button>
+                      </Link>
+                      <Link href="/login">
+                        <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-4"><MessageSquare className="w-4 h-4" /></Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-center">
+                <Link href="/login">
+                  <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-12">View All Groups</Button>
+                </Link>
+              </div>
+            </>
+          )}
+
+          {/* Events tab */}
+          {activeTab === "Events" && (
+            <>
+              <div className="grid md:grid-cols-2 gap-6 mb-12">
+                {EVENTS.map((e, i) => (
+                  <div key={i} className="bg-white p-6 rounded-2xl border border-[#3A1F0E]/5 shadow-sm flex gap-5">
+                    <div className="shrink-0 w-16 h-16 rounded-2xl bg-[#CA922B]/10 border border-[#CA922B]/20 flex flex-col items-center justify-center text-center">
+                      <span className="text-xs font-bold text-[#CA922B] uppercase">{e.date.split(" ")[0]}</span>
+                      <span className="text-xl font-serif font-bold text-[#3A1F0E] leading-none">{e.date.split(" ")[1]}</span>
+                    </div>
+                    <div className="flex flex-col flex-1">
+                      <h3 className="text-lg font-serif font-bold text-[#3A1F0E] mb-1">{e.t}</h3>
+                      <div className="flex items-center gap-1 text-[#3A1F0E]/50 text-sm mb-3">
+                        <Globe className="w-3 h-3" /> {e.l}
+                      </div>
+                      <p className="text-[#3A1F0E]/70 text-sm mb-4 flex-1">{e.d}</p>
+                      <Link href="/login">
+                        <Button size="sm" className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white w-fit">RSVP</Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-center">
+                <Link href="/events">
+                  <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-12">See All Events</Button>
+                </Link>
+              </div>
+            </>
+          )}
+
+          {/* Travel tab */}
+          {activeTab === "Travel" && (
+            <>
+              <div className="grid md:grid-cols-2 gap-6 mb-12">
+                {TRAVEL.map((t, i) => (
+                  <div key={i} className="bg-white p-6 rounded-2xl border border-[#3A1F0E]/5 shadow-sm flex flex-col">
+                    <div className="text-4xl mb-4">{t.flag}</div>
+                    <div className="text-xs font-bold text-[#CA922B] uppercase tracking-widest mb-1">{t.theme}</div>
+                    <h3 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-3">{t.dest}</h3>
+                    <p className="text-[#3A1F0E]/70 text-sm mb-6 flex-1">{t.d}</p>
+                    <Link href="/travel">
+                      <Button className="rounded-full bg-[#2B1507] hover:bg-[#1a0c04] text-white w-fit">Plan with KinfolkAI</Button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+              <div className="text-center">
+                <Link href="/travel">
+                  <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-12">Open KinfolkAI Travel Planner</Button>
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
@@ -150,8 +240,12 @@ export default function Community() {
           <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6">Join the Movement — Your Community Is Waiting</h2>
           <p className="text-lg text-[#F5EBD8]/70 mb-10">Sign up for early access and be among the first to connect with a global network of travelers, entrepreneurs, and explorers.</p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-10 h-14 text-lg">Get Early Access</Button>
-            <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-10 h-14 text-lg bg-transparent">Explore the Map</Button>
+            <Link href="/membership">
+              <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-10 h-14 text-lg">Get Early Access</Button>
+            </Link>
+            <Link href="/map">
+              <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-10 h-14 text-lg bg-transparent">Explore the Map</Button>
+            </Link>
           </div>
         </div>
       </section>

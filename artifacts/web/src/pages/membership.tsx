@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Membership() {
   return (
@@ -42,7 +43,9 @@ export default function Membership() {
                 </li>
               ))}
             </ul>
-            <Button variant="outline" className="w-full rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white h-12 mt-auto">Get Started Free</Button>
+            <Link href="/signup">
+              <Button variant="outline" className="w-full rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white h-12 mt-auto">Get Started Free</Button>
+            </Link>
           </div>
 
           {/* Premium Plan */}
@@ -63,7 +66,9 @@ export default function Membership() {
                 </li>
               ))}
             </ul>
-            <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 mt-auto shadow-[0_4px_14px_rgba(202,146,43,0.39)]">Start Free Trial</Button>
+            <Link href="/signup">
+              <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 mt-auto shadow-[0_4px_14px_rgba(202,146,43,0.39)]">Start Free Trial</Button>
+            </Link>
           </div>
 
           {/* Lifetime Plan */}
@@ -80,7 +85,9 @@ export default function Membership() {
                 </li>
               ))}
             </ul>
-            <Button className="w-full rounded-full bg-[#3A1F0E] hover:bg-[#1a0c04] text-white h-12 mt-auto">Become a Founding Member</Button>
+            <Link href="/signup">
+              <Button className="w-full rounded-full bg-[#3A1F0E] hover:bg-[#1a0c04] text-white h-12 mt-auto">Become a Founding Member</Button>
+            </Link>
           </div>
         </div>
 

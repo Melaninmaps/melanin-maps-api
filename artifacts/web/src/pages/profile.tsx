@@ -60,6 +60,22 @@ export default function Profile() {
           </Button>
         </div>
 
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center border border-white/10">
+            <div className="text-2xl font-serif font-bold text-[#CA922B]">0</div>
+            <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">Reviews</div>
+          </div>
+          <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center border border-white/10">
+            <div className="text-2xl font-serif font-bold text-[#CA922B]">{savedPlaces?.businessIds?.length ?? 0}</div>
+            <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">Saved</div>
+          </div>
+          <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center border border-white/10">
+            <div className="text-2xl font-serif font-bold text-[#CA922B]">0</div>
+            <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">Points</div>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-3 gap-8">
           {/* Profile Card */}
           <div className="md:col-span-1">

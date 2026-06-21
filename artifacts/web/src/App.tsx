@@ -16,6 +16,7 @@ import ForBusinessOwners from "@/pages/for-business-owners";
 import Roadmap from "@/pages/roadmap";
 import Membership from "@/pages/membership";
 import Login from "@/pages/login";
+import Signup from "@/pages/signup";
 import Profile from "@/pages/profile";
 import Travel from "@/pages/travel";
 import MapPage from "@/pages/map";
@@ -74,6 +75,7 @@ function Router() {
         <Layout><Membership /></Layout>
       </Route>
       <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
       <Route path="/profile">
         <Layout><Profile /></Layout>
       </Route>

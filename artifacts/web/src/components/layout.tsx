@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "./ui/button";
-import { Menu, X, MessageSquare } from "lucide-react";
+import { Menu, X, MessageSquare, Bell } from "lucide-react";
 import { useState } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -11,11 +11,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: "/explore", label: "Explore" },
+    { href: "/events", label: "Events" },
     { href: "/community", label: "Community" },
     { href: "/safety", label: "Safety" },
     { href: "/businesses", label: "Businesses" },
-    { href: "/for-business-owners", label: "For Business Owners" },
-    { href: "/roadmap", label: "Roadmap" },
+    { href: "/travel", label: "KinfolkAI™" },
     { href: "/membership", label: "Membership" },
   ];
 
@@ -53,7 +53,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Auth / Right side */}
           <div className="hidden md:flex items-center gap-4">
-            <MessageSquare className="w-5 h-5 text-[#F5EBD8] cursor-pointer hover:text-[#CA922B] transition-colors" />
+            <Link href={auth?.user ? "/profile" : "/login"}>
+              <Bell className="w-5 h-5 text-[#F5EBD8] cursor-pointer hover:text-[#CA922B] transition-colors" />
+            </Link>
             {auth?.user ? (
               <Link href="/profile">
                 <span className="text-sm font-medium hover:text-[#CA922B] transition-colors cursor-pointer">Profile</span>
@@ -63,7 +65,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/login">
                   <span className="text-sm font-medium hover:text-[#CA922B] transition-colors cursor-pointer">Sign In</span>
                 </Link>
-                <Link href="/login">
+                <Link href="/signup">
                   <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-6">Sign Up Free</Button>
                 </Link>
               </>
@@ -94,7 +96,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
                     <span className="block text-base font-medium text-[#F5EBD8] cursor-pointer">Sign In</span>
                   </Link>
-                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)}>
                     <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white">Sign Up Free</Button>
                   </Link>
                 </>
@@ -164,20 +166,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </footer>
 
-      {/* KinfolkAI Widget Placeholder */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <div className="bg-[#2B1507] border border-[#CA922B]/30 shadow-2xl rounded-2xl p-4 flex flex-col gap-2 cursor-pointer hover:shadow-[0_10px_40px_rgba(202,146,43,0.15)] transition-all">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#CA922B]/20 flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-[#CA922B]" />
-            </div>
-            <div>
-              <div className="text-white font-bold text-sm">KinfolkAI</div>
-              <div className="text-[#F5EBD8]/70 text-xs">Ask me anything</div>
+      {/* KinfolkAI Widget */}
+      <Link href="/travel">
+        <div className="fixed bottom-6 right-6 z-50">
+          <div className="bg-[#2B1507] border border-[#CA922B]/30 shadow-2xl rounded-2xl p-4 flex flex-col gap-2 cursor-pointer hover:shadow-[0_10px_40px_rgba(202,146,43,0.15)] transition-all">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#CA922B]/20 flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-[#CA922B]" />
+              </div>
+              <div>
+                <div className="text-white font-bold text-sm">KinfolkAI</div>
+                <div className="text-[#F5EBD8]/70 text-xs">Plan your next trip</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </Link>
     </div>
   );
 }
