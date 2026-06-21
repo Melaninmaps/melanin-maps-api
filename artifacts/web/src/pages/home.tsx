@@ -9,78 +9,65 @@ export default function Home() {
   return (
     <div className="flex flex-col w-full bg-[#FAF6EF]">
       {/* Hero Section */}
-      <section className="relative min-h-[50vh] md:min-h-[85vh] flex items-center justify-center pt-20 pb-32 overflow-hidden bg-[#2B1507]">
+      <section className="relative min-h-[50vh] md:min-h-[100vh] flex items-center pt-20 pb-32 overflow-hidden bg-[#2B1507]">
         <img src={`${import.meta.env.BASE_URL}images/hero-home-bg.jpg`} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
-        <div className="absolute inset-0 bg-[#2B1507]/88 z-0" />
+        <div className="absolute inset-0 bg-[#2B1507]/82 z-0" />
         
-        <div className="relative z-10 container mx-auto px-4 md:px-6 flex flex-col items-center text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-8 animate-fade-in-up">
+        <div className="relative z-10 container mx-auto px-6 md:px-10 max-w-5xl flex flex-col items-start text-left">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-8">
             <Shield className="w-3 h-3 text-[#CA922B]" />
             <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">SAFETY-FIRST COMMUNITY INTELLIGENCE</span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold text-white mb-6 leading-tight max-w-5xl animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-white mb-6 leading-tight">
             Map Your Life.<br />
             <span style={{ color: '#CA922B' }}>Connect Deeper.</span><br />
             Live With Purpose.
           </h1>
 
-          <p className="text-lg md:text-xl text-[#F5EBD8] mb-4 max-w-3xl animate-fade-in-up font-light" style={{ animationDelay: '200ms' }}>
+          <p className="text-base md:text-lg text-[#F5EBD8] mb-3 max-w-2xl font-semibold leading-relaxed">
             Mapping with Melanin™ connects people to trusted businesses, meaningful relationships, thriving communities, and new opportunities through the power of shared experiences and community-driven insights.
           </p>
-          <p className="text-sm md:text-base text-[#F5EBD8]/70 mb-12 max-w-2xl animate-fade-in-up font-light" style={{ animationDelay: '250ms' }}>
+          <p className="text-sm md:text-base text-[#F5EBD8] mb-10 max-w-2xl font-semibold leading-relaxed">
             Most platforms tell you where to go. We help you understand what's really there — and direct your dollars to businesses that reflect your culture and community.
           </p>
 
           {/* Feature Pills */}
-          <div className="flex flex-wrap justify-center gap-3 mb-12 animate-fade-in-up max-w-4xl" style={{ animationDelay: '300ms' }}>
+          <div className="flex flex-wrap gap-2.5 mb-10 max-w-3xl">
             {[
               "Find Businesses", "Discover Events", "Join Groups", "Network Professionally", 
               "Find Travel Partners", "Safety Intelligence", "Real-Time Alerts", "AI Recommendations"
             ].map((label, idx) => (
-              <div key={idx} className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/20 border border-white/10 text-[#F5EBD8] text-sm">
+              <div key={idx} className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/20 border border-white/15 text-[#F5EBD8] text-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#CA922B] shrink-0" />
                 <span>{label}</span>
+                <ArrowRight className="w-3 h-3 opacity-60 shrink-0" />
               </div>
             ))}
           </div>
 
           {/* Waitlist Form */}
-          <div className="w-full max-w-xl bg-[#2B1507]/80 p-8 rounded-2xl border border-white/10 text-left backdrop-blur-md animate-fade-in-up" style={{ animationDelay: '400ms' }}>
-            <h3 className="text-2xl font-serif font-bold text-white mb-4">Join the Waitlist</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-[#F5EBD8] mb-1">What city and state are you from?</label>
-                <input type="text" className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder:text-white/30" placeholder="e.g. Atlanta, GA" />
-                <p className="text-xs text-[#F5EBD8]/50 mt-1">We're testing in select locations first.</p>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-[#F5EBD8] mb-2">Are you a business owner?</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 text-[#F5EBD8] text-sm cursor-pointer">
-                    <input type="radio" name="owner" className="accent-[#CA922B]" /> Yes, I own a business
-                  </label>
-                  <label className="flex items-center gap-2 text-[#F5EBD8] text-sm cursor-pointer">
-                    <input type="radio" name="owner" className="accent-[#CA922B]" /> No, I'm a community member
-                  </label>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-[#F5EBD8] mb-1">Know someone? Refer them:</label>
-                <input type="text" className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder:text-white/30" placeholder="Referral code or email" />
-              </div>
-              <div className="pt-2">
-                <Button className="w-full h-12 rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white font-bold">
-                  Free to join. No spam, ever.
-                </Button>
-                <div className="text-center mt-3">
-                  <a href="#" className="text-sm text-[#CA922B] hover:underline">Spread the word</a>
-                </div>
-              </div>
+          <div className="w-full max-w-lg space-y-3">
+            <input
+              type="email"
+              className="w-full bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60"
+              placeholder="tlindsay428@aol.com"
+            />
+            <div className="flex gap-3">
+              <input
+                type="text"
+                className="flex-1 bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60"
+                placeholder="Philadelphia"
+              />
+              <input
+                type="text"
+                className="w-24 bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60"
+                placeholder="PA"
+              />
             </div>
-          </div>
-          
-          <div className="mt-16 animate-bounce text-[#F5EBD8]/50">
-            <ArrowRight className="w-6 h-6 rotate-90" />
+            <Button className="w-full h-12 rounded-xl bg-[#CA922B] hover:bg-[#B38024] text-white font-bold text-sm">
+              Join the Waitlist
+            </Button>
           </div>
         </div>
       </section>
