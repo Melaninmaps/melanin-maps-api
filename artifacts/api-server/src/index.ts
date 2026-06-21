@@ -44,6 +44,34 @@ async function initStripe() {
 
 await initStripe();
 
+// Startup configuration checks — warn loudly about missing secrets before first request
+(function checkRequiredConfig() {
+  const warnings: string[] = [];
+
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    warnings.push("STRIPE_WEBHOOK_SECRET — Stripe payments will process but membership status won't update automatically. Set this in Replit Secrets and register the webhook at https://dashboard.stripe.com/webhooks pointing to: https://<your-domain>/api/stripe/webhook");
+  }
+  if (!process.env.RESEND_API_KEY) {
+    warnings.push("RESEND_API_KEY — All transactional emails (trial reminders, membership, welcome) are disabled.");
+  }
+  if (!process.env.ADMIN_EMAILS) {
+    warnings.push("ADMIN_EMAILS — No admin email configured. After your first login, call POST /api/admin/bootstrap to promote yourself. Then set ADMIN_EMAILS=your@email.com for future server restarts.");
+  }
+  if (!process.env.GOOGLE_MAPS_API_KEY) {
+    warnings.push("GOOGLE_MAPS_API_KEY — Map embeds on business profiles will show 'Maps not configured'.");
+  }
+  if (!process.env.WMATA_API_KEY) {
+    warnings.push("WMATA_API_KEY — DC Metro transit data will be unavailable.");
+  }
+
+  if (warnings.length > 0) {
+    logger.warn("⚠️  Missing environment configuration:");
+    for (const w of warnings) {
+      logger.warn(`   • ${w}`);
+    }
+  }
+})();
+
 app.listen(port, (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");

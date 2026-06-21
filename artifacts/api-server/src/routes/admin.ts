@@ -11,7 +11,9 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
 function isAdmin(req: Request): boolean {
   const user = (req as any).user;
   if (!user?.email) return false;
-  return ADMIN_EMAILS.includes(user.email);
+  // Check email allowlist first, then fall back to DB role
+  if (ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(user.email)) return true;
+  return user.role === "admin";
 }
 
 const router: IRouter = Router();
@@ -222,6 +224,53 @@ router.post("/admin/businesses/:id/outreach", async (req: Request, res: Response
   } catch (err) {
     req.log.error({ err }, "Failed to send business outreach");
     res.status(500).json({ error: "Failed to send outreach email" });
+  }
+});
+
+/**
+ * One-time admin bootstrap — promotes the first authenticated user to admin.
+ * Only works when ADMIN_EMAILS is not set AND no admin users exist in the DB.
+ * Call this once immediately after your first login in production.
+ */
+router.post("/admin/bootstrap", async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (!user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+
+  // Blocked if ADMIN_EMAILS is already configured
+  if (ADMIN_EMAILS.length > 0) {
+    res.status(403).json({
+      error: "Admin access is managed via the ADMIN_EMAILS environment variable. Add your email there instead.",
+    });
+    return;
+  }
+
+  try {
+    // Block if an admin already exists in the DB
+    const [existingAdmin] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.role, "admin"))
+      .limit(1);
+
+    if (existingAdmin) {
+      res.status(403).json({ error: "An admin account already exists. Contact your existing admin." });
+      return;
+    }
+
+    // Promote the calling user to admin
+    await db
+      .update(usersTable)
+      .set({ role: "admin" })
+      .where(eq(usersTable.id, user.id));
+
+    req.log.info({ userId: user.id, email: user.email }, "Admin bootstrap: first admin account created");
+    res.json({ success: true, message: "You are now an admin. Reload the page to access the admin panel." });
+  } catch (err) {
+    req.log.error({ err }, "Admin bootstrap failed");
+    res.status(500).json({ error: "Bootstrap failed" });
   }
 });
 

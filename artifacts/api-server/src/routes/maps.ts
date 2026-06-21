@@ -1,8 +1,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import { mapsLimiter } from "../middleware/rateLimiter";
 
 const router: IRouter = Router();
 
-router.get("/maps/embed-url", (req: Request, res: Response) => {
+router.get("/maps/embed-url", mapsLimiter, (req: Request, res: Response) => {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   if (!apiKey) {
     res.status(503).json({ error: "Maps not configured" });

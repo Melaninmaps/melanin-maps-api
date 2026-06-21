@@ -47,3 +47,11 @@ export const reportLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: "Too many reports submitted. Please try again later." },
 });
+
+export const mapsLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 60,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many map requests. Please try again later." },
+});
