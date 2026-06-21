@@ -86,7 +86,7 @@ export default function DiscoverScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={["#1C1A10", "#0E0D08"]}
+        colors={["#3A1F0E", "#1C0E06"]}
         style={[styles.header, { paddingTop: topPad + 12 }]}
       >
         <View style={styles.headerTop}>
@@ -198,7 +198,7 @@ export default function DiscoverScreen() {
               <Text style={styles.heroTitle}>Map Your Life.{"\n"}Connect Deeper.{"\n"}Live With Purpose.</Text>
               <TouchableOpacity style={styles.heroCta} activeOpacity={0.85}>
                 <Text style={styles.heroCtaText}>Explore Near You</Text>
-                <Feather name="arrow-right" size={14} color="#0A0A08" />
+                <Feather name="arrow-right" size={14} color="#3A1F0E" />
               </TouchableOpacity>
             </LinearGradient>
           </View>
