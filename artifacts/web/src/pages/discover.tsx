@@ -51,7 +51,7 @@ export default function Discover() {
           </div>
           <h1 className="text-4xl md:text-6xl font-serif font-bold text-white mb-4">Explore With Purpose</h1>
           <p className="text-[#F5EBD8]/80 text-lg md:text-xl max-w-2xl mb-8 font-light">
-            Find the best Black-owned businesses, authentic experiences, and trusted community spots.
+            Find the best Minority-owned businesses, authentic experiences, and trusted community spots.
           </p>
           
           <div className="w-full max-w-2xl bg-white rounded-full p-2 flex items-center shadow-lg">

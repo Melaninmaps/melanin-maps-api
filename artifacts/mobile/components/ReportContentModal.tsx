@@ -15,7 +15,7 @@ import { useColors } from "@/hooks/useColors";
 const REPORT_CATEGORIES = [
   { id: "inaccurate", icon: "alert-circle" as const, label: "Inaccurate Information", sub: "Hours, address, or details are wrong" },
   { id: "closed", icon: "x-circle" as const, label: "Business Closed", sub: "This location is no longer operating" },
-  { id: "not_black_owned", icon: "flag" as const, label: "Not Black-Owned", sub: "Ownership claim appears incorrect" },
+  { id: "not_black_owned", icon: "flag" as const, label: "Not Minority-Owned", sub: "Ownership claim appears incorrect" },
   { id: "discrimination", icon: "shield-off" as const, label: "Discrimination Report", sub: "Experienced racial bias or discrimination" },
   { id: "safety", icon: "alert-triangle" as const, label: "Safety Concern", sub: "Unsafe environment or practices reported" },
   { id: "spam", icon: "trash-2" as const, label: "Spam / Fake Listing", sub: "This listing appears fake or promotional" },

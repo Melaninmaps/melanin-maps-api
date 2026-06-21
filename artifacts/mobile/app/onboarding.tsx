@@ -47,7 +47,7 @@ const SLIDES = [
     eyebrow: "AI-CURATED JOURNEYS",
     title: "Plan Your\nJourney",
     titleItalic: "Your Way.",
-    subtitle: "KinfolkAI™ builds itineraries with Black-owned spots, safe neighborhoods, and community events.",
+    subtitle: "KinfolkAI™ builds itineraries with Minority-owned spots, safe neighborhoods, and community events.",
   },
   {
     id: "join",

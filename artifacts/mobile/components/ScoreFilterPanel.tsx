@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
 import {
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -16,10 +17,23 @@ const PRESET_CHIPS = [
   { label: "90+", min: 90 },
 ];
 
-interface FilterState {
+export const OWNERSHIP_OPTIONS = [
+  { id: "minority-owned", label: "Minority-Owned", emoji: "✊🏾", color: "#3A1F0E" },
+  { id: "black-owned", label: "Black-Owned", emoji: "✊🏾", color: "#3A1F0E" },
+  { id: "women-owned", label: "Women-Owned", emoji: "👩‍💼", color: "#7B2D8B" },
+  { id: "veteran-owned", label: "Veteran-Owned", emoji: "🎖️", color: "#1D4ED8" },
+  { id: "lgbtq-owned", label: "LGBTQIA+-Owned", emoji: "🏳️‍🌈", color: "#DC2626" },
+  { id: "hispanic-owned", label: "Hispanic/Latino-Owned", emoji: "🤝", color: "#2D7A4F" },
+  { id: "asian-owned", label: "Asian-Owned", emoji: "🌏", color: "#0891B2" },
+  { id: "indigenous-owned", label: "Indigenous-Owned", emoji: "🌿", color: "#5E4B1A" },
+  { id: "disability-owned", label: "Disability-Owned", emoji: "♿", color: "#4B5563" },
+  { id: "immigrant-owned", label: "Immigrant-Owned", emoji: "🌍", color: "#6D28D9" },
+];
+
+export interface FilterState {
   minScore: number;
   verifiedOnly: boolean;
-  blackOwnedOnly: boolean;
+  ownershipTypes: string[];
 }
 
 interface Props {
@@ -31,16 +45,27 @@ export function ScoreFilterPanel({ filters, onChange }: Props) {
   const colors = useColors();
   const [expanded, setExpanded] = useState(false);
 
-  const activeCount = (filters.minScore > 0 ? 1 : 0) + (filters.verifiedOnly ? 1 : 0) + (filters.blackOwnedOnly ? 1 : 0);
+  const activeCount =
+    (filters.minScore > 0 ? 1 : 0) +
+    (filters.verifiedOnly ? 1 : 0) +
+    (filters.ownershipTypes.length > 0 ? 1 : 0);
 
   const update = (patch: Partial<FilterState>) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onChange({ ...filters, ...patch });
   };
 
+  const toggleOwnership = (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const next = filters.ownershipTypes.includes(id)
+      ? filters.ownershipTypes.filter((t) => t !== id)
+      : [...filters.ownershipTypes, id];
+    onChange({ ...filters, ownershipTypes: next });
+  };
+
   const reset = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onChange({ minScore: 0, verifiedOnly: false, blackOwnedOnly: false });
+    onChange({ minScore: 0, verifiedOnly: false, ownershipTypes: [] });
   };
 
   return (
@@ -117,24 +142,34 @@ export function ScoreFilterPanel({ filters, onChange }: Props) {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.toggleRow}
-            onPress={() => update({ blackOwnedOnly: !filters.blackOwnedOnly })}
-            activeOpacity={0.8}
-          >
-            <View style={styles.toggleLeft}>
-              <View style={[styles.toggleIcon, { backgroundColor: "#2D1A0E" }]}>
-                <Text style={{ fontSize: 14 }}>✊🏾</Text>
-              </View>
-              <View>
-                <Text style={[styles.toggleLabel, { color: colors.foreground }]}>Black-Owned Only</Text>
-                <Text style={[styles.toggleSub, { color: colors.mutedForeground }]}>Show only Black-owned businesses</Text>
-              </View>
-            </View>
-            <View style={[styles.toggle, { backgroundColor: filters.blackOwnedOnly ? "#D4873A" : colors.border }]}>
-              <View style={[styles.toggleThumb, { transform: [{ translateX: filters.blackOwnedOnly ? 20 : 2 }] }]} />
-            </View>
-          </TouchableOpacity>
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+          <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Ownership</Text>
+          <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>Select one or more to filter</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.ownershipRow}>
+            {OWNERSHIP_OPTIONS.map((opt) => {
+              const active = filters.ownershipTypes.includes(opt.id);
+              return (
+                <TouchableOpacity
+                  key={opt.id}
+                  style={[
+                    styles.ownerChip,
+                    {
+                      backgroundColor: active ? opt.color : colors.secondary,
+                      borderColor: active ? opt.color : colors.border,
+                    },
+                  ]}
+                  onPress={() => toggleOwnership(opt.id)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.ownerEmoji}>{opt.emoji}</Text>
+                  <Text style={[styles.ownerLabel, { color: active ? "#FFFFFF" : colors.foreground }]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
         </View>
       )}
     </View>
@@ -193,6 +228,11 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 13,
   },
+  sectionSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    marginTop: -10,
+  },
   presets: {
     flexDirection: "row",
     gap: 8,
@@ -249,5 +289,26 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     backgroundColor: "#FFFFFF",
+  },
+  ownershipRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingBottom: 4,
+  },
+  ownerChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  ownerEmoji: {
+    fontSize: 13,
+  },
+  ownerLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
   },
 });

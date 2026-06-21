@@ -28,12 +28,7 @@ import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAlerts } from "@/hooks/useAlerts";
-
-interface FilterState {
-  minScore: number;
-  verifiedOnly: boolean;
-  blackOwnedOnly: boolean;
-}
+import { type FilterState } from "@/components/ScoreFilterPanel";
 
 export default function DiscoverScreen() {
   const colors = useColors();
@@ -50,7 +45,7 @@ export default function DiscoverScreen() {
   const [filters, setFilters] = useState<FilterState>({
     minScore: 0,
     verifiedOnly: false,
-    blackOwnedOnly: false,
+    ownershipTypes: [],
   });
   const [showNeighborhoodSurvey, setShowNeighborhoodSurvey] = useState(false);
   const [showPrefsSurvey, setShowPrefsSurvey] = useState(false);
@@ -66,8 +61,15 @@ export default function DiscoverScreen() {
   const filtered = businesses.filter((b) => {
     const matchesScore = b.confidenceScore >= filters.minScore;
     const matchesVerified = !filters.verifiedOnly || b.verified;
-    const matchesBlackOwned = !filters.blackOwnedOnly || b.blackOwned;
-    return matchesScore && matchesVerified && matchesBlackOwned;
+    const matchesOwnership =
+      filters.ownershipTypes.length === 0 ||
+      filters.ownershipTypes.some(
+        (t) =>
+          (t === "minority-owned" && b.blackOwned) ||
+          (t === "black-owned" && b.blackOwned) ||
+          b.ownershipDesignations.includes(t)
+      );
+    return matchesScore && matchesVerified && matchesOwnership;
   });
 
   const featured = filtered.filter((b) => b.featured);
@@ -82,7 +84,7 @@ export default function DiscoverScreen() {
   const activeFilterCount =
     (filters.minScore > 0 ? 1 : 0) +
     (filters.verifiedOnly ? 1 : 0) +
-    (filters.blackOwnedOnly ? 1 : 0);
+    (filters.ownershipTypes.length > 0 ? 1 : 0);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -236,7 +238,7 @@ export default function DiscoverScreen() {
               <Text style={styles.travelBannerEyebrow}>✨ KINFOLKAI™</Text>
               <Text style={styles.travelBannerTitle}>Plan Your Next Trip</Text>
               <Text style={styles.travelBannerSub}>
-                Black-owned spots, safe neighborhoods & events
+                Minority-owned spots, safe neighborhoods & events
               </Text>
             </View>
             <View style={styles.travelBannerRight}>

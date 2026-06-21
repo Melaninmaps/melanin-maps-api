@@ -61,7 +61,7 @@ const COMPANION_OPTIONS = [
 const SUGGESTED_CITIES = ["Atlanta", "Houston", "New Orleans", "DC", "Chicago", "LA", "Miami", "Philly"];
 const WELCOME_CHIPS = [
   "Where's good to eat in Atlanta?",
-  "Best Black-owned hotels in Houston",
+  "Best Minority-owned hotels in Houston",
   "What's the vibe in New Orleans?",
   "Hidden gems in DC",
   "Family spots in Chicago",

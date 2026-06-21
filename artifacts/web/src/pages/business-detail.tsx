@@ -165,8 +165,8 @@ export default function BusinessDetail() {
                       <ShieldCheck className="text-[#CA922B] w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-1">Verified Black-Owned</h3>
-                      <p className="text-[#3A1F0E]/70 text-sm">This business is part of our verified network of Black-owned enterprises, supporting economic empowerment.</p>
+                      <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-1">Verified Minority-Owned</h3>
+                      <p className="text-[#3A1F0E]/70 text-sm">This business is part of our verified network of Minority-owned enterprises, supporting economic empowerment.</p>
                     </div>
                   </div>
                 )}

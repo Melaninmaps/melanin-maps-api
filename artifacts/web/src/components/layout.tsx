@@ -116,7 +116,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div>
               <h3 className="font-serif font-bold text-xl mb-6 text-white">Discover</h3>
               <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
-                <li><Link href="/businesses"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Black-Owned Businesses</span></Link></li>
+                <li><Link href="/businesses"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Minority-Owned Businesses</span></Link></li>
                 <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Restaurants & Nightlife</span></Link></li>
                 <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Hotels & Stays</span></Link></li>
                 <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Cultural Landmarks</span></Link></li>

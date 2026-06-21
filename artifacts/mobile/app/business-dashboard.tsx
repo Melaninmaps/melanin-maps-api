@@ -183,7 +183,7 @@ export default function BusinessDashboardScreen() {
             </View>
             <View style={[styles.insightCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[styles.insightTitle, { color: colors.foreground }]}>Top Search Terms</Text>
-              {["BBQ Atlanta", "Black-owned restaurant", "Sweet Auburn", "Soul food"].map((t, i) => (
+              {["BBQ Atlanta", "Minority-owned restaurant", "Sweet Auburn", "Soul food"].map((t, i) => (
                 <View key={i} style={styles.termRow}>
                   <Text style={[styles.termRank, { color: colors.mutedForeground }]}>#{i + 1}</Text>
                   <Text style={[styles.termTxt, { color: colors.foreground }]}>{t}</Text>

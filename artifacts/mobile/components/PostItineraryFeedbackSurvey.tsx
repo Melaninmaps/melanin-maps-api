@@ -44,7 +44,7 @@ const WORKED_OPTIONS = [
 ];
 
 const IMPROVE_OPTIONS = [
-  "More Black-owned spots",
+  "More Minority-owned spots",
   "Better safety details",
   "More budget options",
   "Better neighborhood context",
