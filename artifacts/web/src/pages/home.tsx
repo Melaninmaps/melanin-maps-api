@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Shield, Search, Calendar, MapPin, Sparkles, Bell, ArrowRight, Check, Users, Navigation, Compass, Star } from "lucide-react";
+import { Shield, Search, Calendar, MapPin, Sparkles, Bell, ArrowRight, Check, Users, Navigation, Compass, Star, Facebook, Linkedin, Instagram, Link2, ChevronDown } from "lucide-react";
 import { useListBusinesses } from "@workspace/api-client-react";
 
 export default function Home() {
@@ -48,26 +48,84 @@ export default function Home() {
 
           {/* Waitlist Form */}
           <div className="w-full max-w-lg space-y-3">
-            <input
-              type="email"
-              className="w-full bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60"
-              placeholder="tlindsay428@aol.com"
-            />
-            <div className="flex gap-3">
+            {/* Email + CTA row */}
+            <div className="flex gap-2">
+              <input
+                type="email"
+                className="flex-1 bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60"
+                placeholder="Enter your email address"
+              />
+              <Button className="shrink-0 h-[50px] px-5 rounded-xl bg-[#CA922B] hover:bg-[#B38024] text-white font-bold text-sm whitespace-nowrap">
+                Join the Waitlist
+              </Button>
+            </div>
+
+            {/* City + State row */}
+            <div className="flex gap-2">
               <input
                 type="text"
                 className="flex-1 bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60"
-                placeholder="Philadelphia"
+                placeholder="Your city"
               />
               <input
                 type="text"
-                className="w-24 bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60"
-                placeholder="PA"
+                className="w-28 bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60 uppercase"
+                placeholder="STATE"
               />
             </div>
-            <Button className="w-full h-12 rounded-xl bg-[#CA922B] hover:bg-[#B38024] text-white font-bold text-sm">
-              Join the Waitlist
-            </Button>
+            <p className="text-xs text-[#F5EBD8]/50">What city and state are you from? We're testing in select locations first.</p>
+
+            {/* Business owner field */}
+            <input
+              type="text"
+              className="w-full bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60"
+              placeholder="Are you a business owner?"
+            />
+
+            {/* Referral row */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-[#F5EBD8]/70 shrink-0">Know someone? Refer them:</span>
+              <div className="flex items-center gap-2">
+                {[
+                  { icon: <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.74l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.912-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>, label: "X" },
+                  { icon: <Facebook className="w-4 h-4" />, label: "Facebook" },
+                  { icon: <Linkedin className="w-4 h-4" />, label: "LinkedIn" },
+                  { icon: <Instagram className="w-4 h-4" />, label: "Instagram" },
+                  { icon: <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.21 8.21 0 0 0 4.79 1.52V6.76a4.85 4.85 0 0 1-1.02-.07z"/></svg>, label: "TikTok" },
+                  { icon: <Link2 className="w-4 h-4" />, label: "Copy link" },
+                ].map((s, i) => (
+                  <button key={i} title={s.label} className="w-8 h-8 rounded-full bg-white/10 border border-white/15 text-[#F5EBD8] flex items-center justify-center hover:bg-[#CA922B]/20 hover:border-[#CA922B]/40 transition-colors">
+                    {s.icon}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-[#F5EBD8]/50">Free to join. No spam, ever.</p>
+
+            {/* Spread the word row */}
+            <div className="flex items-center gap-3 pt-1">
+              <span className="text-sm font-semibold text-[#F5EBD8] shrink-0">Spread the word</span>
+              <div className="flex items-center gap-2">
+                {[
+                  { icon: <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.74l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.912-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>, label: "X" },
+                  { icon: <Facebook className="w-4 h-4" />, label: "Facebook" },
+                  { icon: <Linkedin className="w-4 h-4" />, label: "LinkedIn" },
+                  { icon: <Instagram className="w-4 h-4" />, label: "Instagram" },
+                  { icon: <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.21 8.21 0 0 0 4.79 1.52V6.76a4.85 4.85 0 0 1-1.02-.07z"/></svg>, label: "TikTok" },
+                  { icon: <Link2 className="w-4 h-4" />, label: "Copy link" },
+                ].map((s, i) => (
+                  <button key={i} title={s.label} className="w-8 h-8 rounded-full bg-white/10 border border-white/15 text-[#F5EBD8] flex items-center justify-center hover:bg-[#CA922B]/20 hover:border-[#CA922B]/40 transition-colors">
+                    {s.icon}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Scroll indicator */}
+          <div className="mt-12 flex flex-col items-center gap-1 text-[#F5EBD8]/40 self-center">
+            <span className="text-[10px] font-bold tracking-[0.2em] uppercase">Scroll</span>
+            <ChevronDown className="w-4 h-4 animate-bounce" />
           </div>
         </div>
       </section>
