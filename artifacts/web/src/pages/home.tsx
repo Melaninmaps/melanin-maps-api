@@ -562,27 +562,72 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Business Directory Preview */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-4 max-w-6xl text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
-            <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">VERIFIED BUSINESS DIRECTORY</span>
-          </div>
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-6">Support Trusted Businesses</h2>
-          <p className="text-lg text-[#3A1F0E]/70 max-w-3xl mx-auto mb-4">
-            Connect with verified Minority-owned businesses, service providers, and entrepreneurs — whether you're exploring a new city or finally discovering what's been in your own neighborhood all along.
-          </p>
-          <p className="text-[#3A1F0E]/70 max-w-3xl mx-auto mb-10">
-            You don't have to travel far to keep your dollars in the community. Every listing is community-reviewed and authenticity-checked, because your dollars deserve to go where they're celebrated.
-          </p>
+      {/* Business Directory Preview — Photo Grid */}
+      <section className="py-16 bg-[#FAF6EF]">
+        <div className="container mx-auto px-4 max-w-6xl">
+          {/* Top grid: big left + two stacked right */}
+          <div className="grid grid-cols-5 gap-3 mb-3">
+            {/* Big left — Black-Owned Businesses */}
+            <div className="col-span-3 relative rounded-2xl overflow-hidden h-[420px] group cursor-pointer">
+              <img src={`${import.meta.env.BASE_URL}images/cat-black-owned.jpg`} alt="Black-Owned Businesses" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="absolute bottom-0 left-0 p-6">
+                <h3 className="font-serif font-bold text-xl text-white mb-1">Black-Owned Businesses</h3>
+                <p className="text-sm text-white/80">Support entrepreneurs who reflect your values</p>
+              </div>
+            </div>
 
-          <div className="flex flex-wrap justify-center gap-3 mb-10">
-            {["Restaurants", "Hotels", "Attorneys", "Realtors", "Tour Operators", "Salons & Spas", "Retail Shops", "Financial Services", "Health & Wellness", "Entertainment"].map(cat => (
-              <span key={cat} className="px-4 py-2 bg-[#FAF6EF] text-[#3A1F0E] rounded-full text-sm font-medium border border-[#3A1F0E]/10">{cat}</span>
+            {/* Right column — two stacked */}
+            <div className="col-span-2 flex flex-col gap-3">
+              {/* Cultural Landmarks */}
+              <div className="relative rounded-2xl overflow-hidden h-[204px] group cursor-pointer">
+                <img src={`${import.meta.env.BASE_URL}images/cat-cultural-landmarks.jpg`} alt="Cultural Landmarks" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 p-4">
+                  <h3 className="font-serif font-bold text-base text-white mb-0.5">Cultural Landmarks</h3>
+                  <p className="text-xs text-white/80">Heritage sites &amp; historic destinations</p>
+                </div>
+              </div>
+              {/* Restaurants & Nightlife */}
+              <div className="relative rounded-2xl overflow-hidden h-[204px] group cursor-pointer">
+                <img src={`${import.meta.env.BASE_URL}images/cat-restaurants.jpg`} alt="Restaurants & Nightlife" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 p-4">
+                  <h3 className="font-serif font-bold text-base text-white mb-0.5">Restaurants &amp; Nightlife</h3>
+                  <p className="text-xs text-white/80">Dine and unwind where you belong</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom grid: Hotels + Hidden Gems */}
+          <div className="grid grid-cols-5 gap-3 mb-8">
+            {/* Hotels & Stays */}
+            <div className="col-span-2 relative rounded-2xl overflow-hidden h-[220px] group cursor-pointer">
+              <img src={`${import.meta.env.BASE_URL}images/cat-hotels.jpg`} alt="Hotels & Stays" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="absolute bottom-0 left-0 p-5">
+                <h3 className="font-serif font-bold text-base text-white mb-0.5">Hotels &amp; Stays</h3>
+                <p className="text-xs text-white/80">Rest easy at welcoming accommodations</p>
+              </div>
+            </div>
+            {/* Hidden Gems */}
+            <div className="col-span-3 relative rounded-2xl overflow-hidden h-[220px] group cursor-pointer">
+              <img src={`${import.meta.env.BASE_URL}images/cat-hidden-gems.jpg`} alt="Hidden Gems" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="absolute bottom-0 left-0 p-5">
+                <h3 className="font-serif font-bold text-base text-white mb-0.5">Hidden Gems</h3>
+                <p className="text-xs text-white/80">Discover places only locals know</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Category pills */}
+          <div className="flex flex-wrap gap-3">
+            {["Professional Services", "Community Events", "Tour Operators", "Realtors & Attorneys"].map(cat => (
+              <span key={cat} className="px-5 py-2.5 bg-white text-[#3A1F0E] rounded-full text-sm font-medium border border-[#3A1F0E]/10 hover:border-[#CA922B]/40 cursor-pointer transition-colors">{cat}</span>
             ))}
           </div>
-
-          <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Explore All Businesses</Button>
         </div>
       </section>
 
