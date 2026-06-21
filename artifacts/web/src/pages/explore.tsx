@@ -18,6 +18,8 @@ export default function Explore() {
       recommend: "97%",
       returnAlone: "94%",
       safety: "4.9",
+      featured: true,
+      image: `${import.meta.env.BASE_URL}images/biz-gathering-table.jpg`,
       tags: ["Community Trusted", "Traveler Favorite", "Soul Food", "Minority-Owned", "Dine-In"]
     },
     {
@@ -31,6 +33,8 @@ export default function Explore() {
       recommend: "98%",
       returnAlone: "96%",
       safety: "4.9",
+      featured: true,
+      image: `${import.meta.env.BASE_URL}images/biz-heritage-hotel.jpg`,
       tags: ["Community Trusted", "Top Rated", "Boutique", "Historic", "Minority-Owned"]
     },
     {
@@ -44,6 +48,8 @@ export default function Explore() {
       recommend: "99%",
       returnAlone: "97%",
       safety: "5",
+      featured: false,
+      image: `${import.meta.env.BASE_URL}images/biz-diaspora-arts.jpg`,
       tags: ["Highly Recommended", "Local Gem", "Art", "Culture", "Gallery"]
     },
     {
@@ -57,6 +63,8 @@ export default function Explore() {
       recommend: "95%",
       returnAlone: "91%",
       safety: "4.7",
+      featured: false,
+      image: `${import.meta.env.BASE_URL}images/biz-afrobeats-fest.jpg`,
       tags: ["Traveler Favorite", "Festival", "Music", "Food"]
     },
     {
@@ -70,6 +78,8 @@ export default function Explore() {
       recommend: "94%",
       returnAlone: "90%",
       safety: "4.8",
+      featured: false,
+      image: `${import.meta.env.BASE_URL}images/biz-carter-law.jpg`,
       tags: ["Community Trusted", "Legal", "Business", "Real Estate"]
     },
     {
@@ -83,6 +93,8 @@ export default function Explore() {
       recommend: "91%",
       returnAlone: "87%",
       safety: "4.6",
+      featured: false,
+      image: `${import.meta.env.BASE_URL}images/biz-roots-cafe.jpg`,
       tags: ["Local Gem", "Pan-African", "Coffee", "Brunch"]
     }
   ];
@@ -93,7 +105,8 @@ export default function Explore() {
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
       {/* Hero */}
       <section className="bg-[#2B1507] py-16 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(43,21,7,0.6)] via-[rgba(43,21,7,0.85)] to-[#2B1507] z-0" />
+        <img src={`${import.meta.env.BASE_URL}images/hero-explore-bg.jpg`} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+        <div className="absolute inset-0 bg-[#2B1507]/88 z-0" />
         <div className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
             <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">DISCOVER YOUR WORLD</span>
@@ -141,12 +154,13 @@ export default function Explore() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {staticBusinesses.map(b => (
-            <div key={b.id} className="bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(43,21,7,0.05)] border border-[#3A1F0E]/5 flex flex-col">
-              <div className="h-48 bg-[#2B1507] relative">
-                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at center, #CA922B 1px, transparent 1px)', backgroundSize: '12px 12px' }} />
-                <div className="absolute top-4 left-4 flex flex-col gap-2">
-                  {b.id === "1" || b.id === "2" ? <div className="bg-[#CA922B] text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">Featured</div> : null}
-                  <div className="bg-white text-[#3A1F0E] text-xs font-bold px-2 py-1 rounded shadow-sm">{b.confidenceScore}/100</div>
+            <div key={b.id} className="bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(43,21,7,0.08)] border border-[#3A1F0E]/5 flex flex-col group cursor-pointer hover:shadow-[0_8px_32px_rgba(43,21,7,0.14)] transition-shadow">
+              <div className="h-52 bg-[#2B1507] relative overflow-hidden">
+                <img src={b.image} alt={b.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#2B1507]/80 via-[#2B1507]/20 to-transparent" />
+                <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+                  {b.featured && <div className="bg-[#CA922B] text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">Featured</div>}
+                  <div className="bg-white/95 text-[#3A1F0E] text-xs font-bold px-2 py-1 rounded shadow-sm">{b.confidenceScore}/100</div>
                 </div>
               </div>
               <div className="p-6 flex flex-col flex-1">

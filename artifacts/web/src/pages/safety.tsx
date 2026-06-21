@@ -14,7 +14,8 @@ export default function Safety() {
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
       {/* Dark Hero Header */}
       <section className="bg-[#2B1507] py-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(43,21,7,0.6)] via-[rgba(43,21,7,0.85)] to-[#2B1507] z-0" />
+        <img src={`${import.meta.env.BASE_URL}images/hero-safety-bg.jpg`} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+        <div className="absolute inset-0 bg-[#2B1507]/85 z-0" />
         
         <div className="container mx-auto px-4 md:px-6 relative z-10 flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-8">
