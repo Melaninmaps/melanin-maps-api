@@ -17,8 +17,8 @@ function isAdmin(req: Request): boolean {
 const router: IRouter = Router();
 
 router.get("/admin/invites", async (req: Request, res: Response) => {
-  if (!req.user?.id) {
-    res.status(401).json({ error: "Authentication required" });
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
     return;
   }
   try {
@@ -35,8 +35,8 @@ router.get("/admin/invites", async (req: Request, res: Response) => {
 });
 
 router.patch("/admin/invites/:id", async (req: Request, res: Response) => {
-  if (!req.user?.id) {
-    res.status(401).json({ error: "Authentication required" });
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
     return;
   }
   const id = String(req.params.id);

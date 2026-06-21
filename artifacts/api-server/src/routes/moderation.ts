@@ -5,9 +5,16 @@ import { eq, desc } from "drizzle-orm";
 type ReportCategory = (typeof SAFETY_REPORT_CATEGORIES)[number];
 type ReportSeverity = (typeof SAFETY_REPORT_SEVERITIES)[number];
 
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
+function isAdmin(req: Request): boolean {
+  const user = (req as any).user;
+  return !!(user?.email && ADMIN_EMAILS.includes(user.email));
+}
+
 const router: IRouter = Router();
 
 router.get("/moderation/reports", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
   try {
     const status = typeof req.query.status === "string" ? req.query.status : "pending";
 
@@ -79,6 +86,7 @@ router.get("/moderation/reports", async (req: Request, res: Response) => {
 });
 
 router.patch("/moderation/reports/:id", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
   try {
     const id = req.params["id"] as string;
     const { status, moderatorNotes, kind } = req.body as {

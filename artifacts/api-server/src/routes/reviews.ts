@@ -95,8 +95,9 @@ router.post("/reviews", reviewLimiter, async (req: Request, res: Response) => {
   const { businessId, rating, text, wouldReturnAlone, socialHandle, socialPlatform, businessName } =
     req.body as Record<string, unknown>;
 
-  if (!businessId || !rating) {
-    res.status(400).json({ error: "businessId and rating required" });
+  const ratingNum = Number(rating);
+  if (!businessId || !rating || isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+    res.status(400).json({ error: "businessId required; rating must be a number 1–5" });
     return;
   }
 
@@ -114,7 +115,7 @@ router.post("/reviews", reviewLimiter, async (req: Request, res: Response) => {
         authorName:
           [req.user.firstName, req.user.lastName].filter(Boolean).join(" ") ||
           "Community Member",
-        rating: Number(rating),
+        rating: ratingNum,
         text: typeof text === "string" ? text : null,
         wouldReturnAlone: typeof wouldReturnAlone === "boolean" ? wouldReturnAlone : null,
         socialHandle: cleanHandle,

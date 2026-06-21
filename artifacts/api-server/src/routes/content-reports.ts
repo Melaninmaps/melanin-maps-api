@@ -8,7 +8,7 @@ const router: IRouter = Router();
 const VALID_TARGET_TYPES = ["review", "survey", "business", "post", "user"] as const;
 const VALID_REASONS = ["spam", "fake", "inappropriate", "harassment", "incorrect_info", "other"] as const;
 
-router.post("/reports", reportLimiter, async (req: any, res: Response): Promise<void> => {
+router.post("/content-reports", reportLimiter, async (req: any, res: Response): Promise<void> => {
   if (!req.user) { res.status(401).json({ error: "Authentication required" }); return; }
 
   const { targetType, targetId, reason, description } = req.body as {
@@ -41,7 +41,7 @@ router.post("/reports", reportLimiter, async (req: any, res: Response): Promise<
   }
 });
 
-router.get("/admin/reports", async (req: any, res: Response): Promise<void> => {
+router.get("/admin/content-reports", async (req: any, res: Response): Promise<void> => {
   const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
   if (!req.user?.email || !ADMIN_EMAILS.includes(req.user.email)) {
     res.status(403).json({ error: "Forbidden" }); return;
@@ -55,7 +55,7 @@ router.get("/admin/reports", async (req: any, res: Response): Promise<void> => {
   }
 });
 
-router.patch("/admin/reports/:id", async (req: any, res: Response): Promise<void> => {
+router.patch("/admin/content-reports/:id", async (req: any, res: Response): Promise<void> => {
   const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
   if (!req.user?.email || !ADMIN_EMAILS.includes(req.user.email)) {
     res.status(403).json({ error: "Forbidden" }); return;

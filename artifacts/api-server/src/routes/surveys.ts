@@ -53,24 +53,34 @@ router.post("/surveys", surveyLimiter, async (req: Request, res: Response) => {
     comments,
   } = req.body as Record<string, unknown>;
 
-  if (
-    !city ||
-    !visitPurpose ||
-    !daytimeSafety ||
-    !nighttimeSafety ||
-    !atmosphere ||
-    !policeVisibility ||
-    !policeImpact
-  ) {
+  if (!city || !visitPurpose || !daytimeSafety || !nighttimeSafety || !atmosphere || !policeVisibility || !policeImpact) {
     res.status(400).json({ error: "Required fields missing" });
     return;
   }
 
+  // Validate numeric rating fields (must be 1–5)
+  const numericFields: [string, unknown][] = [
+    ["daytimeSafety", daytimeSafety],
+    ["nighttimeSafety", nighttimeSafety],
+    ["walkability", walkability],
+    ["transitSafety", transitSafety],
+  ];
+  for (const [key, val] of numericFields) {
+    if (val !== undefined && val !== null && val !== "") {
+      const n = Number(val);
+      if (isNaN(n) || n < 1 || n > 5) {
+        res.status(400).json({ error: `${key} must be a number between 1 and 5` });
+        return;
+      }
+    }
+  }
+
+  const safeNum = (v: unknown): number => Math.round(Number(v));
   const scores = computeScores(
-    daytimeSafety as number,
-    nighttimeSafety as number,
-    (walkability as number | null) ?? null,
-    (transitSafety as number | null) ?? null,
+    safeNum(daytimeSafety),
+    safeNum(nighttimeSafety),
+    walkability != null && walkability !== "" ? safeNum(walkability) : null,
+    transitSafety != null && transitSafety !== "" ? safeNum(transitSafety) : null,
     atmosphere as string,
   );
 

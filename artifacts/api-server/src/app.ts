@@ -55,7 +55,27 @@ app.post(
   },
 );
 
-app.use(cors({ credentials: true, origin: true }));
+const allowedOrigins = [
+  "http://localhost",
+  "http://localhost:80",
+  ...(process.env.REPLIT_DOMAINS
+    ? process.env.REPLIT_DOMAINS.split(",").map((d) => `https://${d.trim()}`)
+    : []),
+];
+app.use(
+  cors({
+    credentials: true,
+    origin: (origin, callback) => {
+      // No origin = same-origin or mobile app — allow
+      if (!origin) return callback(null, true);
+      if (process.env.NODE_ENV !== "production") return callback(null, true);
+      if (allowedOrigins.some((o) => origin === o || origin.startsWith(o))) {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
+  }),
+);
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
