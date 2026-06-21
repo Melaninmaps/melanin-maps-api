@@ -4,7 +4,7 @@ import { count, countDistinct, sum, sql } from "drizzle-orm";
 
 const router = Router();
 
-router.get("/api/impact", async (req, res) => {
+router.get("/impact", async (req, res) => {
   try {
     const [bizStats] = await db
       .select({

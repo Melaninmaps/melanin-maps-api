@@ -4,7 +4,7 @@ import { eq, desc, and } from "drizzle-orm";
 
 const router = Router();
 
-router.get("/api/jobs", async (req, res) => {
+router.get("/jobs", async (req, res) => {
   try {
     const { city, type, status = "active" } = req.query as Record<string, string>;
     const conditions = [eq(jobListingsTable.status, status)];
@@ -22,7 +22,7 @@ router.get("/api/jobs", async (req, res) => {
   }
 });
 
-router.post("/api/jobs", async (req, res) => {
+router.post("/jobs", async (req, res) => {
   if (!req.user?.id) { res.status(401).json({ error: "Unauthorized" }); return; }
   const parsed = insertJobListingSchema.safeParse({ ...req.body, postedById: req.user.id });
   if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
@@ -35,7 +35,7 @@ router.post("/api/jobs", async (req, res) => {
   }
 });
 
-router.delete("/api/jobs/:id", async (req, res) => {
+router.delete("/jobs/:id", async (req, res) => {
   if (!req.user?.id) { res.status(401).json({ error: "Unauthorized" }); return; }
   try {
     await db.delete(jobListingsTable).where(
