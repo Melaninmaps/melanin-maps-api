@@ -178,6 +178,35 @@ export default function ProfileScreen() {
         </>
       )}
 
+      {isAuthenticated && reviewCount === 0 && savedIds.length === 0 && pointsTotal === 0 && (
+        <View style={[styles.gettingStartedCard, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.foreground }]}>
+          <Text style={[styles.gettingStartedTitle, { color: colors.foreground }]}>Get Started</Text>
+          <Text style={[styles.gettingStartedSub, { color: colors.mutedForeground }]}>Complete these steps to unlock your community</Text>
+          {[
+            { icon: "compass" as const, label: "Find a Black-owned business", route: "/(tabs)" as const },
+            { icon: "star" as const, label: "Leave your first review", route: "/(tabs)" as const },
+            { icon: "shield" as const, label: "Submit a safety report", route: "/report-safety" as const },
+            { icon: "users" as const, label: "Join a community group", route: "/(tabs)/community" as const },
+          ].map((step, i, arr) => (
+            <TouchableOpacity
+              key={step.label}
+              style={[
+                styles.gettingStartedStep,
+                i < arr.length - 1 && { borderBottomColor: colors.border, borderBottomWidth: 1 },
+              ]}
+              onPress={() => router.push(step.route as any)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.gettingStartedIcon, { backgroundColor: colors.primary + "15" }]}>
+                <Feather name={step.icon} size={15} color={colors.primary} />
+              </View>
+              <Text style={[styles.gettingStartedLabel, { color: colors.foreground }]}>{step.label}</Text>
+              <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Saved Businesses</Text>
@@ -638,6 +667,45 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 13,
     color: "#DC2626",
+  },
+  gettingStartedCard: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 18,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  gettingStartedTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 16,
+    marginBottom: 2,
+  },
+  gettingStartedSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    marginBottom: 12,
+  },
+  gettingStartedStep: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 12,
+  },
+  gettingStartedIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  gettingStartedLabel: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 14,
+    flex: 1,
   },
   signOutBtn: {
     flexDirection: "row",

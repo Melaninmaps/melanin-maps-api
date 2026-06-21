@@ -9,6 +9,7 @@ import {
   Modal,
   Platform,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -19,13 +20,15 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AlertBanner } from "@/components/AlertBanner";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
-import { ALERTS } from "@/constants/data";
+import { EventCard } from "@/components/EventCard";
+import { ALERTS, EVENT_CATEGORIES } from "@/constants/data";
 import type { CommunityPost } from "@/constants/types";
 import { useColors } from "@/hooks/useColors";
+import { useEvents } from "@/hooks/useEvents";
 import { useGroups, type Group } from "@/hooks/useGroups";
 import { useAuth } from "@/lib/auth";
 
-const TABS = ["Feed", "Groups", "Alerts", "Recommendations"];
+const TABS = ["Feed", "Events", "Groups", "Alerts", "Recommendations"];
 
 const CATEGORY_OPTIONS = [
   { value: "general", label: "Discussion" },
@@ -169,6 +172,9 @@ export default function CommunityScreen() {
   const inputRef = useRef<TextInput>(null);
 
   const { groups, isLoading: groupsLoading, refetch: refetchGroups, join, leave } = useGroups();
+  const [eventsCategory, setEventsCategory] = useState("All");
+  const [eventsTimeFilter, setEventsTimeFilter] = useState("Upcoming");
+  const { events, isLoading: eventsLoading, refetch: refetchEvents } = useEvents({ category: eventsCategory });
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -194,6 +200,7 @@ export default function CommunityScreen() {
     setRefreshing(true);
     void loadPosts();
     void refetchGroups();
+    void refetchEvents();
   };
 
   const filteredPosts =
@@ -272,7 +279,42 @@ export default function CommunityScreen() {
         ))}
       </View>
 
-      {activeTab === "Groups" ? (
+      {activeTab === "Events" ? (
+        <View style={{ flex: 1 }}>
+          <View style={[styles.categoryScroll, { borderBottomColor: colors.border }]}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}>
+              {["Upcoming", "This Week", "This Month"].map((f) => (
+                <TouchableOpacity
+                  key={f}
+                  style={[styles.categoryChip, { backgroundColor: eventsTimeFilter === f ? colors.primary : colors.secondary, borderColor: eventsTimeFilter === f ? colors.primary : colors.border }]}
+                  onPress={() => setEventsTimeFilter(f)}
+                >
+                  <Text style={[styles.categoryChipText, { color: eventsTimeFilter === f ? "#FFFFFF" : colors.foreground }]}>{f}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+          <FlatList
+            data={events}
+            keyExtractor={(e) => e.id}
+            contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100 }]}
+            refreshControl={<RefreshControl refreshing={eventsLoading} onRefresh={refetchEvents} tintColor={colors.primary} />}
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <Feather name="calendar" size={40} color={colors.muted} />
+                <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No events found</Text>
+                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Check back soon for upcoming events in your area.</Text>
+              </View>
+            }
+            renderItem={({ item }) => (
+              <EventCard
+                event={item}
+                onPress={() => router.push({ pathname: "/event/[id]", params: { id: item.id } })}
+              />
+            )}
+          />
+        </View>
+      ) : activeTab === "Groups" ? (
         <View style={{ flex: 1 }}>
           {/* Category filter */}
           <FlatList
