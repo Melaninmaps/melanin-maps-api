@@ -26,7 +26,7 @@ import { AIChatWidget } from "@/components/AIChatWidget";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineBanner } from "@/components/OfflineBanner";
-import { AuthProvider } from "@/lib/auth";
+import { AuthProvider, useAuth } from "@/lib/auth";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { initializeRevenueCat, SubscriptionProvider } from "@/lib/revenuecat";
 
@@ -140,6 +140,20 @@ function OnboardingChecker() {
       active = false;
     };
   }, [router]);
+
+  return null;
+}
+
+function ApprovalChecker() {
+  const router = useRouter();
+  const { user, isLoading, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (isAuthenticated && user && user.approved === false) {
+      router.replace("/pending-approval");
+    }
+  }, [isLoading, isAuthenticated, user, router]);
 
   return null;
 }
@@ -419,6 +433,7 @@ export default function RootLayout() {
               <KeyboardProvider>
                 <View style={{ flex: 1 }}>
                   <OnboardingChecker />
+                  <ApprovalChecker />
                   <PushNotificationRegistrar />
                   <RootLayoutNav />
                   <AIChatWidget />

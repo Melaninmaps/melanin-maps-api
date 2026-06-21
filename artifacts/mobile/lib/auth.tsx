@@ -14,6 +14,7 @@ interface User {
   firstName: string | null;
   lastName: string | null;
   profileImageUrl: string | null;
+  approved: boolean;
 }
 
 interface AuthContextValue {

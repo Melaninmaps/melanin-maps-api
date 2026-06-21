@@ -9,6 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -173,39 +174,189 @@ function BusinessesTab() {
   );
 }
 
+interface AdminUser {
+  id: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  approved: boolean;
+  createdAt: string;
+}
+
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
+
+function useAdminUsers() {
+  const [users, setUsers] = React.useState<AdminUser[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/admin/users`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setUsers(data.users ?? []);
+    } catch (e: any) {
+      setError(e.message ?? "Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => { load(); }, [load]);
+
+  const setApproved = React.useCallback(async (userId: string, approved: boolean) => {
+    setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, approved } : u));
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      await fetch(`${getApiBase()}/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ approved }),
+      });
+    } catch {
+      load();
+    }
+  }, [load]);
+
+  return { users, loading, error, refetch: load, setApproved };
+}
+
 function UsersTab() {
   const colors = useColors();
-  const users = [
-    { name: "Simone W.", email: "simone@email.com", role: "user", joined: "Jun 16", color: "#3B1F0E" },
-    { name: "Marcus T.", email: "marcus@email.com", role: "moderator", joined: "May 3", color: "#2D7A4F" },
-    { name: "Aisha B.", email: "aisha@email.com", role: "user", joined: "Apr 22", color: "#C9922B" },
-    { name: "Darius K.", email: "darius@email.com", role: "admin", joined: "Mar 10", color: "#1D4ED8" },
-    { name: "Zara M.", email: "zara@email.com", role: "user", joined: "Jun 1", color: "#7B2D8B" },
-  ];
-  const roleColor = (r: string) => r === "admin" ? "#DC2626" : r === "moderator" ? "#C9922B" : "#2D7A4F";
+  const [search, setSearchText] = React.useState("");
+  const { users, loading, error, refetch, setApproved } = useAdminUsers();
+
+  const filtered = users.filter((u) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      u.email?.toLowerCase().includes(q) ||
+      u.firstName?.toLowerCase().includes(q) ||
+      u.lastName?.toLowerCase().includes(q)
+    );
+  });
+
+  const pending = users.filter((u) => !u.approved).length;
+
+  function initials(u: AdminUser) {
+    const f = u.firstName?.[0] ?? "";
+    const l = u.lastName?.[0] ?? "";
+    return (f + l).toUpperCase() || (u.email?.[0]?.toUpperCase() ?? "?");
+  }
+
+  function displayName(u: AdminUser) {
+    if (u.firstName || u.lastName) return `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
+    return u.email ?? u.id.slice(0, 8);
+  }
+
+  function joinedLabel(iso: string) {
+    try {
+      return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    } catch { return ""; }
+  }
+
+  const AVATAR_COLORS = ["#3B1F0E", "#2D7A4F", "#C9922B", "#1D4ED8", "#7B2D8B", "#DC2626"];
+
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+      {pending > 0 && (
+        <View style={[adminStyles.alertBanner, { backgroundColor: "#C9922B12", borderColor: "#C9922B30", marginBottom: 12 }]}>
+          <Feather name="user-check" size={14} color="#C9922B" />
+          <Text style={[adminStyles.alertText, { color: "#C9922B" }]}>
+            {pending} user{pending !== 1 ? "s" : ""} pending approval
+          </Text>
+        </View>
+      )}
+
       <View style={[adminStyles.searchBarInline, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
         <Feather name="search" size={14} color={colors.mutedForeground} />
-        <Text style={[adminStyles.searchPlaceholder, { color: colors.mutedForeground }]}>Search users...</Text>
+        <TextInput
+          style={[adminStyles.searchPlaceholder, { color: colors.foreground, flex: 1, padding: 0 }]}
+          placeholder="Search by name or email…"
+          placeholderTextColor={colors.mutedForeground}
+          value={search}
+          onChangeText={setSearchText}
+          autoCorrect={false}
+        />
       </View>
-      {users.map((u, i) => (
-        <View key={i} style={[adminStyles.bizRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={[adminStyles.bizAvatar, { backgroundColor: u.color }]}>
-            <Text style={adminStyles.bizAvatarText}>{u.name.split(" ").map((w) => w[0]).join("")}</Text>
+
+      {loading && (
+        <View style={{ alignItems: "center", paddingVertical: 40 }}>
+          <ActivityIndicator color={colors.primary} />
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginTop: 10 }]}>Loading users…</Text>
+        </View>
+      )}
+
+      {!loading && error && (
+        <View style={{ alignItems: "center", paddingVertical: 32 }}>
+          <Text style={[adminStyles.bizName, { color: "#DC2626", marginBottom: 8 }]}>Failed to load</Text>
+          <TouchableOpacity onPress={refetch}>
+            <Text style={[adminStyles.bizCity, { color: colors.primary }]}>Tap to retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {!loading && !error && filtered.map((u, i) => (
+        <View key={u.id} style={[adminStyles.bizRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[adminStyles.bizAvatar, { backgroundColor: AVATAR_COLORS[i % AVATAR_COLORS.length] }]}>
+            <Text style={adminStyles.bizAvatarText}>{initials(u)}</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[adminStyles.bizName, { color: colors.foreground }]}>{u.name}</Text>
-            <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{u.email}</Text>
+            <Text style={[adminStyles.bizName, { color: colors.foreground }]} numberOfLines={1}>
+              {displayName(u)}
+            </Text>
+            <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]} numberOfLines={1}>
+              {u.email ?? "No email"}
+            </Text>
           </View>
-          <View style={{ alignItems: "flex-end", gap: 5 }}>
-            <View style={[adminStyles.statusBadge, { backgroundColor: roleColor(u.role) + "18" }]}>
-              <Text style={[adminStyles.statusBadgeText, { color: roleColor(u.role) }]}>{u.role}</Text>
-            </View>
-            <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>Joined {u.joined}</Text>
+          <View style={{ alignItems: "flex-end", gap: 6 }}>
+            <TouchableOpacity
+              style={[
+                adminStyles.statusBadge,
+                {
+                  backgroundColor: u.approved ? "#2D7A4F18" : "#C9922B18",
+                  borderWidth: 1,
+                  borderColor: u.approved ? "#2D7A4F30" : "#C9922B30",
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                },
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setApproved(u.id, !u.approved);
+              }}
+            >
+              <Text style={[adminStyles.statusBadgeText, { color: u.approved ? "#2D7A4F" : "#C9922B" }]}>
+                {u.approved ? "✓ Approved" : "Pending"}
+              </Text>
+            </TouchableOpacity>
+            <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>
+              Joined {joinedLabel(u.createdAt)}
+            </Text>
           </View>
         </View>
       ))}
+
+      {!loading && !error && filtered.length === 0 && (
+        <View style={{ alignItems: "center", paddingVertical: 40 }}>
+          <Feather name="users" size={32} color={colors.muted} />
+          <Text style={[adminStyles.bizName, { color: colors.mutedForeground, marginTop: 10 }]}>
+            {search ? "No matching users" : "No users yet"}
+          </Text>
+        </View>
+      )}
     </ScrollView>
   );
 }

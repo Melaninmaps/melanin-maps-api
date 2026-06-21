@@ -1,7 +1,6 @@
 import * as oidc from "openid-client";
 import { Router, type IRouter, type Request, type Response } from "express";
 import {
-  GetCurrentAuthUserResponse,
   ExchangeMobileAuthorizationCodeBody,
   ExchangeMobileAuthorizationCodeResponse,
   LogoutMobileSessionResponse,
@@ -70,7 +69,7 @@ async function upsertUser(claims: Record<string, unknown>) {
 
   const [user] = await db
     .insert(usersTable)
-    .values(userData)
+    .values({ ...userData, approved: false })
     .onConflictDoUpdate({
       target: usersTable.id,
       set: {
@@ -83,11 +82,7 @@ async function upsertUser(claims: Record<string, unknown>) {
 }
 
 router.get("/auth/user", (req: Request, res: Response) => {
-  res.json(
-    GetCurrentAuthUserResponse.parse({
-      user: req.isAuthenticated() ? req.user : null,
-    }),
-  );
+  res.json({ user: req.isAuthenticated() ? req.user : null });
 });
 
 router.get("/login", async (req: Request, res: Response) => {
@@ -176,6 +171,7 @@ router.get("/callback", async (req: Request, res: Response) => {
       firstName: dbUser.firstName,
       lastName: dbUser.lastName,
       profileImageUrl: dbUser.profileImageUrl,
+      approved: dbUser.approved,
     },
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
@@ -246,6 +242,7 @@ router.post(
           firstName: dbUser.firstName,
           lastName: dbUser.lastName,
           profileImageUrl: dbUser.profileImageUrl,
+          approved: dbUser.approved,
         },
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
