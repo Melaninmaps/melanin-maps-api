@@ -306,15 +306,19 @@ async function seedRevenueCat() {
     const playMonthlyId = `${tier.id}:monthly`;
     const playAnnualId = `${tier.id}:annual`;
 
-    const [testMonthly, testAnnual, appMonthly, appAnnual, playMonthly, playAnnual] =
-      await Promise.all([
-        ensureProduct(testStoreApp, `TestStore ${tier.displayName} Monthly`, tier.monthly.identifier, tier.monthly.displayName, true, "P1M"),
-        ensureProduct(testStoreApp, `TestStore ${tier.displayName} Annual`, tier.annual.identifier, tier.annual.displayName, true, "P1Y"),
-        ensureProduct(appStoreApp, `AppStore ${tier.displayName} Monthly`, tier.monthly.identifier, tier.monthly.displayName, false, "P1M"),
-        ensureProduct(appStoreApp, `AppStore ${tier.displayName} Annual`, tier.annual.identifier, tier.annual.displayName, false, "P1Y"),
-        ensureProduct(playStoreApp, `PlayStore ${tier.displayName} Monthly`, playMonthlyId, tier.monthly.displayName, false, "P1M"),
-        ensureProduct(playStoreApp, `PlayStore ${tier.displayName} Annual`, playAnnualId, tier.annual.displayName, false, "P1Y"),
-      ]);
+    const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    const testMonthly = await ensureProduct(testStoreApp, `TestStore ${tier.displayName} Monthly`, tier.monthly.identifier, tier.monthly.displayName, true, "P1M");
+    await delay(300);
+    const testAnnual = await ensureProduct(testStoreApp, `TestStore ${tier.displayName} Annual`, tier.annual.identifier, tier.annual.displayName, true, "P1Y");
+    await delay(300);
+    const appMonthly = await ensureProduct(appStoreApp, `AppStore ${tier.displayName} Monthly`, tier.monthly.identifier, tier.monthly.displayName, false, "P1M");
+    await delay(300);
+    const appAnnual = await ensureProduct(appStoreApp, `AppStore ${tier.displayName} Annual`, tier.annual.identifier, tier.annual.displayName, false, "P1Y");
+    await delay(300);
+    const playMonthly = await ensureProduct(playStoreApp, `PlayStore ${tier.displayName} Monthly`, playMonthlyId, tier.monthly.displayName, false, "P1M");
+    await delay(300);
+    const playAnnual = await ensureProduct(playStoreApp, `PlayStore ${tier.displayName} Annual`, playAnnualId, tier.annual.displayName, false, "P1Y");
+    await delay(300);
 
     await Promise.all([
       addTestStorePrices(testMonthly, [

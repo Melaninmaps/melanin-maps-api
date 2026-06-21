@@ -1,7 +1,7 @@
 import { createClient } from "@replit/revenuecat-sdk/client";
 
 export async function getUncachableRevenueCatClient() {
-  const apiKey = process.env.REVENUECAT_API_KEY;
+  const apiKey = process.env.REVENUECAT_API_KEY_V2 ?? process.env.REVENUECAT_API_KEY;
   if (!apiKey) {
     throw new Error("REVENUECAT_API_KEY environment variable is not set");
   }
