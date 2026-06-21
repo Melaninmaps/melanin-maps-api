@@ -65,6 +65,10 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    watch: {
+      usePolling: true,
+      interval: 500,
+    },
   },
   preview: {
     port,

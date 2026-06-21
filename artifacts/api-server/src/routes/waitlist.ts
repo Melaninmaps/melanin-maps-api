@@ -237,6 +237,39 @@ router.post("/admin/waitlist/bulk", async (req: Request, res: Response) => {
   }
 });
 
+// ── Admin: send nudge email preview to self ───────────────────────────────────
+
+router.post("/admin/nudge-preview", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const user = req.user as { email?: string; firstName?: string } | undefined;
+  if (!user?.email) { res.status(400).json({ error: "No admin email found" }); return; }
+  try {
+    const [{ total }] = await db.select({ total: count() }).from(waitlistTable);
+    const topReferrers = await db
+      .select({ email: waitlistTable.email, firstName: waitlistTable.firstName, referralCode: waitlistTable.referralCode, referrals: count() })
+      .from(waitlistTable)
+      .where(isNotNull(waitlistTable.referralCode))
+      .groupBy(waitlistTable.email, waitlistTable.firstName, waitlistTable.referralCode)
+      .orderBy(desc(count()))
+      .limit(5);
+
+    const { sendWaitlistConfirmation } = await import("../lib/email");
+    const sampleCode = topReferrers[0]?.referralCode ?? "PREVIEW1";
+    const sampleName = topReferrers[0]?.firstName ?? user.firstName ?? "Admin";
+    await sendWaitlistConfirmation(user.email, Number(total), sampleCode, sampleName);
+
+    res.json({
+      sent: true,
+      to: user.email,
+      waitlistTotal: Number(total),
+      topReferrers: topReferrers.map(r => ({ email: r.email, referrals: Number(r.referrals) })),
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to send nudge preview");
+    res.status(500).json({ error: "Failed to send preview" });
+  }
+});
+
 // ── Admin: check admin status + config ───────────────────────────────────────
 
 router.get("/admin/check", (req: Request, res: Response) => {

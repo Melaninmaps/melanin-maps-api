@@ -52,6 +52,7 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
     website: b.website as string | undefined,
     hours: b.hours as string | undefined,
     priceRange: b.priceRange as string | undefined,
+    imageUrl: b.imageUrl as string | undefined,
   };
 }
 

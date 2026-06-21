@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Redirect } from "wouter";
-import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw } from "lucide-react";
+import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -51,6 +51,8 @@ export default function Admin() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+  const [nudgeSending, setNudgeSending] = useState(false);
+  const [nudgeResult, setNudgeResult] = useState<string | null>(null);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -154,6 +156,28 @@ export default function Admin() {
     window.open(`${BASE}api/admin/waitlist/export`, "_blank");
   };
 
+  const sendNudgePreview = async () => {
+    setNudgeSending(true);
+    setNudgeResult(null);
+    try {
+      const r = await fetch(`${BASE}api/admin/nudge-preview`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await r.json();
+      if (data.sent) {
+        setNudgeResult(`✅ Preview sent to ${data.to} (${data.waitlistTotal.toLocaleString()} total on waitlist)`);
+      } else {
+        setNudgeResult(`❌ ${data.error ?? "Failed to send"}`);
+      }
+    } catch {
+      setNudgeResult("❌ Network error");
+    } finally {
+      setNudgeSending(false);
+      setTimeout(() => setNudgeResult(null), 8000);
+    }
+  };
+
   if (authLoading || isAdmin === null) {
     return <div className="min-h-screen bg-[#FAF6EF] flex items-center justify-center"><div className="w-8 h-8 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" /></div>;
   }
@@ -198,6 +222,21 @@ export default function Admin() {
                 <div className="text-[#F5EBD8]/60 text-xs uppercase tracking-wider">Registered Users</div>
               </div>
             </div>
+          </div>
+
+          {/* Nudge preview */}
+          <div className="mt-6 flex items-center gap-4 flex-wrap">
+            <button
+              onClick={sendNudgePreview}
+              disabled={nudgeSending}
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2.5 text-sm font-bold text-[#F5EBD8] transition-colors disabled:opacity-50"
+            >
+              <Send className="w-4 h-4" />
+              {nudgeSending ? "Sending…" : "Preview Nudge Email"}
+            </button>
+            {nudgeResult && (
+              <span className="text-sm text-[#F5EBD8]/80">{nudgeResult}</span>
+            )}
           </div>
 
           {!requireApproval && (
