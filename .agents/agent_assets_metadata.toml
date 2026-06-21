@@ -30,8 +30,20 @@ uri = "file://artifacts/mobile/assets/images/event_festival.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "JLHOUYeNCoQMJor8n3kkd"
+uri = "file://attached_assets/app-icon.png"
+type = "image"
+title = "mapping-with-melanin-app-icon"
+
 [[outputs]]
 id = "kU1-MXMYrBRo-HYqMfRHN"
 uri = "file://.local/outputs/Melanin-Discovery-Hub.pptx"
 type = "slides"
 title = "Melanin Discovery Hub.pptx"
+
+[[outputs]]
+id = "5dJ5nD-pBFzwwKpiSjudT"
+uri = "file://attached_assets/app-icon.png"
+type = "image"
+title = "Mapping With Melanin — App Icon"
