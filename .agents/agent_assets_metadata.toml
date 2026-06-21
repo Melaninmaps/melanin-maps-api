@@ -47,3 +47,21 @@ id = "5dJ5nD-pBFzwwKpiSjudT"
 uri = "file://attached_assets/app-icon.png"
 type = "image"
 title = "Mapping With Melanin — App Icon"
+
+[[outputs]]
+id = "gnqp1YS8-XKHffcy24Z1d"
+uri = "file://artifacts/mobile/assets/images/logo.png"
+type = "image"
+title = "logo.png"
+
+[[outputs]]
+id = "5j0PyXvybd7PNB-yP6BBV"
+uri = "file://artifacts/mobile/assets/images/logo-transparent.png"
+type = "image"
+title = "logo-transparent.png"
+
+[[outputs]]
+id = "6p6bzyQVI2tH9dbC962e5"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "Current icon.png (used by the app)"
