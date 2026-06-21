@@ -260,7 +260,13 @@ export default function CommunityScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.foreground }]}>Community</Text>
-        <TouchableOpacity style={[styles.searchBtn, { backgroundColor: colors.secondary }]}>
+        <TouchableOpacity
+          style={[styles.searchBtn, { backgroundColor: colors.secondary }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            Alert.alert("Search Community", "Search for posts, groups, and events — coming soon!");
+          }}
+        >
           <Feather name="search" size={18} color={colors.foreground} />
         </TouchableOpacity>
       </View>

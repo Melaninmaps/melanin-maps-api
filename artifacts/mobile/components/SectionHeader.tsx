@@ -30,8 +30,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   title: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 18,
+    fontFamily: "PlayfairDisplay_700Bold",
+    fontSize: 19,
   },
   seeAll: {
     fontFamily: "Inter_500Medium",

@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -146,35 +147,50 @@ export default function ProfileScreen() {
               {user?.email ? (
                 <Text style={[styles.email, { color: colors.mutedForeground }]}>{user.email}</Text>
               ) : null}
-              <Text style={[styles.since, { color: colors.mutedForeground }]}>Member since 2024</Text>
             </View>
             <TouchableOpacity style={[styles.editBtn, { borderColor: colors.border }]} onPress={pickProfileImage}>
               <Feather name="edit-2" size={15} color={colors.primary} />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.statsRow}>
-            {[
-              { label: "Reviews", value: String(reviewCount) },
-              { label: "Saved", value: String(savedIds.length) },
-              { label: "Points", value: String(pointsTotal) },
-            ].map((stat, i) => (
-              <View
-                key={stat.label}
-                style={[
-                  styles.statBox,
-                  {
-                    backgroundColor: colors.card,
-                    shadowColor: colors.foreground,
-                    borderRightColor: i < 2 ? colors.border : "transparent",
-                  },
-                ]}
-              >
-                <Text style={[styles.statValue, { color: colors.primary }]}>{stat.value}</Text>
-                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{stat.label}</Text>
+          {reviewCount === 0 && savedIds.length === 0 && pointsTotal === 0 ? (
+            <View style={[styles.newUserBanner, { backgroundColor: colors.card, shadowColor: colors.foreground, borderColor: colors.border }]}>
+              <View style={[styles.newUserIconRow]}>
+                {(["compass", "star", "award"] as const).map((icon) => (
+                  <View key={icon} style={[styles.newUserIcon, { backgroundColor: colors.primary + "15" }]}>
+                    <Feather name={icon} size={16} color={colors.primary} />
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
+              <Text style={[styles.newUserTitle, { color: colors.foreground }]}>Your journey starts here</Text>
+              <Text style={[styles.newUserSub, { color: colors.mutedForeground }]}>
+                Explore businesses, leave reviews, and earn points as you build your community presence.
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.statsRow}>
+              {[
+                { label: "Reviews", value: String(reviewCount) },
+                { label: "Saved", value: String(savedIds.length) },
+                { label: "Points", value: String(pointsTotal) },
+              ].map((stat, i) => (
+                <View
+                  key={stat.label}
+                  style={[
+                    styles.statBox,
+                    {
+                      backgroundColor: colors.card,
+                      shadowColor: colors.foreground,
+                      borderRightColor: i < 2 ? colors.border : "transparent",
+                    },
+                  ]}
+                >
+                  <Text style={[styles.statValue, { color: colors.primary }]}>{stat.value}</Text>
+                  <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{stat.label}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </>
       )}
 
@@ -194,7 +210,10 @@ export default function ProfileScreen() {
                 styles.gettingStartedStep,
                 i < arr.length - 1 && { borderBottomColor: colors.border, borderBottomWidth: 1 },
               ]}
-              onPress={() => router.push(step.route as any)}
+              onPress={() => {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push(step.route as any);
+              }}
               activeOpacity={0.7}
             >
               <View style={[styles.gettingStartedIcon, { backgroundColor: colors.primary + "15" }]}>
@@ -667,6 +686,42 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 13,
     color: "#DC2626",
+  },
+  newUserBanner: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 20,
+    alignItems: "center",
+    gap: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  newUserIconRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 4,
+  },
+  newUserIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  newUserTitle: {
+    fontFamily: "PlayfairDisplay_700Bold",
+    fontSize: 17,
+    textAlign: "center",
+  },
+  newUserSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    textAlign: "center",
+    lineHeight: 20,
   },
   gettingStartedCard: {
     marginHorizontal: 20,
