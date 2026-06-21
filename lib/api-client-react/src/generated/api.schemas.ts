@@ -23,6 +23,7 @@ export interface AuthUser {
   lastName: string | null;
   /** @nullable */
   profileImageUrl: string | null;
+  approved?: boolean;
 }
 
 export interface AuthUserEnvelope {
@@ -55,12 +56,222 @@ export interface ErrorEnvelope {
   error: string;
 }
 
+export interface Business {
+  id: string;
+  name: string;
+  category: string;
+  /** @nullable */
+  subcategory?: string | null;
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  address?: string | null;
+  city: string;
+  state: string;
+  /** @nullable */
+  lat?: number | null;
+  /** @nullable */
+  lng?: number | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  website?: string | null;
+  /** @nullable */
+  imageUrl?: string | null;
+  tags?: string[];
+  /** @nullable */
+  priceRange?: string | null;
+  blackOwned: boolean;
+  status?: string;
+  /** @nullable */
+  confidenceScore?: number | null;
+  /** @nullable */
+  reviewCount?: number | null;
+  /** @nullable */
+  averageRating?: number | null;
+  /** @nullable */
+  createdAt?: string | null;
+}
+
+export interface BusinessListResponse {
+  businesses: Business[];
+  total: number;
+}
+
+export interface BusinessInput {
+  name: string;
+  category: string;
+  subcategory?: string;
+  description?: string;
+  address?: string;
+  city: string;
+  state: string;
+  phone?: string;
+  website?: string;
+  tags?: string[];
+  priceRange?: string;
+}
+
+export interface Review {
+  id: string;
+  businessId: string;
+  /** @nullable */
+  userId?: string | null;
+  /** @nullable */
+  authorName?: string | null;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  /** @nullable */
+  text?: string | null;
+  /** @nullable */
+  wouldReturnAlone?: boolean | null;
+  /** @nullable */
+  createdAt?: string | null;
+}
+
+export interface ReviewInput {
+  businessId: string;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  text?: string;
+  authorName?: string;
+  wouldReturnAlone?: boolean;
+}
+
+export interface SavedPlacesResponse {
+  businessIds: string[];
+}
+
+export interface SavePlaceInput {
+  businessId: string;
+}
+
+export interface Survey {
+  id: string;
+  city: string;
+  neighborhood: string;
+  /** @nullable */
+  visitPurpose?: string | null;
+  /** @nullable */
+  daytimeSafety?: number | null;
+  /** @nullable */
+  nighttimeSafety?: number | null;
+  /** @nullable */
+  walkability?: number | null;
+  /** @nullable */
+  atmosphere?: string | null;
+  /** @nullable */
+  safetyScore?: number | null;
+  /** @nullable */
+  communityScore?: number | null;
+  /** @nullable */
+  walkabilityScore?: number | null;
+  /** @nullable */
+  tips?: string | null;
+  /** @nullable */
+  createdAt?: string | null;
+}
+
+export interface SurveyInput {
+  city: string;
+  neighborhood: string;
+  visitPurpose?: string;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  daytimeSafety?: number;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  nighttimeSafety?: number;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  walkability?: number;
+  atmosphere?: string;
+  tips?: string;
+  comments?: string;
+}
+
+export interface UserProfile {
+  id: string;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  firstName?: string | null;
+  /** @nullable */
+  lastName?: string | null;
+  /** @nullable */
+  profileImageUrl?: string | null;
+  /** @nullable */
+  createdAt?: string | null;
+}
+
+export interface UserProfileUpdate {
+  firstName?: string;
+  lastName?: string;
+}
+
+export interface CommunityPost {
+  id: string;
+  /** @nullable */
+  userId?: string | null;
+  /** @nullable */
+  authorName?: string | null;
+  content: string;
+  /** @nullable */
+  imageUrl?: string | null;
+  likesCount?: number;
+  commentsCount?: number;
+  /** @nullable */
+  createdAt?: string | null;
+}
+
+export interface CommunityPostInput {
+  content: string;
+  imageUrl?: string;
+}
+
+export interface Event {
+  id: string;
+  title: string;
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  city?: string | null;
+  /** @nullable */
+  venue?: string | null;
+  /** @nullable */
+  imageUrl?: string | null;
+  /** @nullable */
+  startDate?: string | null;
+  /** @nullable */
+  endDate?: string | null;
+  rsvpCount?: number;
+  isFree?: boolean;
+  /** @nullable */
+  category?: string | null;
+}
+
+export interface EventRsvpInput {
+  eventId: string;
+}
+
 export interface TravelRecommendationRequest {
   /** City or region to get recommendations for */
   destination: string;
   /** Travel vibe tags (e.g. foodie, nightlife, culture) */
   vibes?: string[];
-  /** When true (default), KinfolkAI uses authentic city-specific cultural voice and slang. Set to false for standard, neutral language. */
+  /** When true (default), KinfolkAI uses authentic city-specific cultural voice and slang. */
   neighborVoice?: boolean;
 }
 
@@ -163,5 +374,33 @@ export type HandleBrowserLoginCallbackParams = {
 code?: string;
 state?: string;
 iss?: string;
+};
+
+export type ListBusinessesParams = {
+search?: string;
+category?: string;
+city?: string;
+state?: string;
+limit?: number;
+offset?: number;
+};
+
+export type ListReviewsParams = {
+businessId: string;
+};
+
+export type ListSurveysParams = {
+city?: string;
+neighborhood?: string;
+};
+
+export type ListCommunityPostsParams = {
+limit?: number;
+offset?: number;
+};
+
+export type ListEventsParams = {
+city?: string;
+limit?: number;
 };
 

@@ -6,15 +6,16 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface AuthUser {
+export interface UserProfile {
   id: string;
   /** @nullable */
-  email: string | null;
+  email?: string | null;
   /** @nullable */
-  firstName: string | null;
+  firstName?: string | null;
   /** @nullable */
-  lastName: string | null;
+  lastName?: string | null;
   /** @nullable */
-  profileImageUrl: string | null;
-  approved?: boolean;
+  profileImageUrl?: string | null;
+  /** @nullable */
+  createdAt?: Date | null;
 }

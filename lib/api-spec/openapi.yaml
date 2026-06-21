@@ -12,6 +12,20 @@ tags:
     description: Health operations
   - name: Auth
     description: Browser and mobile authentication endpoints.
+  - name: businesses
+    description: Black-owned business discovery
+  - name: reviews
+    description: Business reviews
+  - name: saved-places
+    description: User saved/favorited businesses
+  - name: surveys
+    description: Neighborhood safety surveys
+  - name: users
+    description: User profile management
+  - name: community
+    description: Community feed posts
+  - name: events
+    description: Community events
   - name: travel
     description: AI-powered travel recommendations
   - name: openai
@@ -30,6 +44,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
   /auth/user:
     get:
       tags: [Auth]
@@ -45,6 +60,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthUserEnvelope'
+
   /login:
     get:
       tags: [Auth]
@@ -60,6 +76,7 @@ paths:
       responses:
         '302':
           description: Redirect to the OIDC authorization endpoint.
+
   /callback:
     get:
       tags: [Auth]
@@ -85,6 +102,7 @@ paths:
       responses:
         '302':
           description: Redirect to the returnTo path on success or /api/login on failure.
+
   /logout:
     get:
       tags: [Auth]
@@ -96,6 +114,7 @@ paths:
       responses:
         '302':
           description: Redirect to the OIDC provider logout URL.
+
   /mobile-auth/token-exchange:
     post:
       tags: [Auth]
@@ -132,6 +151,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+
   /mobile-auth/logout:
     post:
       tags: [Auth]
@@ -146,6 +166,344 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LogoutSuccess'
+
+  /businesses:
+    get:
+      tags: [businesses]
+      operationId: listBusinesses
+      summary: List and search Black-owned businesses
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: city
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of businesses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessListResponse'
+    post:
+      tags: [businesses]
+      operationId: submitBusiness
+      summary: Submit a new Black-owned business
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BusinessInput'
+      responses:
+        '201':
+          description: Business submitted for review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Business'
+
+  /businesses/{id}:
+    get:
+      tags: [businesses]
+      operationId: getBusiness
+      summary: Get a single business by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Business detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Business'
+        '404':
+          description: Not found
+
+  /reviews:
+    get:
+      tags: [reviews]
+      operationId: listReviews
+      summary: List reviews for a business
+      parameters:
+        - name: businessId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+    post:
+      tags: [reviews]
+      operationId: createReview
+      summary: Create a review for a business
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewInput'
+      responses:
+        '201':
+          description: Review created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+
+  /saved-places:
+    get:
+      tags: [saved-places]
+      operationId: listSavedPlaces
+      summary: Get the current user's saved businesses
+      responses:
+        '200':
+          description: List of saved business IDs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedPlacesResponse'
+    post:
+      tags: [saved-places]
+      operationId: savePlace
+      summary: Save a business to favorites
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavePlaceInput'
+      responses:
+        '200':
+          description: Saved successfully
+
+  /saved-places/{businessId}:
+    delete:
+      tags: [saved-places]
+      operationId: unsavePlace
+      summary: Remove a business from favorites
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Removed successfully
+
+  /surveys:
+    get:
+      tags: [surveys]
+      operationId: listSurveys
+      summary: List neighborhood safety surveys
+      parameters:
+        - name: city
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: neighborhood
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of safety surveys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Survey'
+    post:
+      tags: [surveys]
+      operationId: createSurvey
+      summary: Submit a neighborhood safety survey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyInput'
+      responses:
+        '201':
+          description: Survey submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Survey'
+
+  /users/me:
+    get:
+      tags: [users]
+      operationId: getMyProfile
+      summary: Get current user profile
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+    patch:
+      tags: [users]
+      operationId: updateMyProfile
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdate'
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  /community/posts:
+    get:
+      tags: [community]
+      operationId: listCommunityPosts
+      summary: List community feed posts
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of community posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommunityPost'
+    post:
+      tags: [community]
+      operationId: createCommunityPost
+      summary: Create a community post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommunityPostInput'
+      responses:
+        '201':
+          description: Post created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommunityPost'
+
+  /events:
+    get:
+      tags: [events]
+      operationId: listEvents
+      summary: List community events
+      parameters:
+        - name: city
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+
+  /events/{id}:
+    get:
+      tags: [events]
+      operationId: getEvent
+      summary: Get a single event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+
+  /events/rsvp:
+    post:
+      tags: [events]
+      operationId: rsvpEvent
+      summary: RSVP to an event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRsvpInput'
+      responses:
+        '200':
+          description: RSVP confirmed
+
   /travel/recommendations:
     post:
       operationId: getTravelRecommendations
@@ -176,6 +534,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiError"
+
   /openai/conversations:
     get:
       operationId: listOpenaiConversations
@@ -207,6 +566,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OpenaiConversation"
+
   /openai/conversations/{id}:
     get:
       operationId: getOpenaiConversation
@@ -250,6 +610,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OpenaiError"
+
   /openai/conversations/{id}/messages:
     get:
       operationId: listOpenaiMessages
@@ -291,6 +652,7 @@ paths:
           description: SSE stream of assistant text chunks
           content:
             text/event-stream: {}
+
   /openai/generate-image:
     post:
       operationId: generateOpenaiImage
@@ -309,6 +671,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OpenaiImageOutput"
+
 components:
   parameters:
     AuthorizationSessionHeader:
@@ -333,6 +696,7 @@ components:
           type: string
       required:
         - status
+
     ApiError:
       type: object
       properties:
@@ -340,6 +704,7 @@ components:
           type: string
       required:
         - error
+
     AuthUser:
       type: object
       required: [id, email, firstName, lastName, profileImageUrl]
@@ -355,6 +720,9 @@ components:
           type: [string, 'null']
         profileImageUrl:
           type: [string, 'null']
+        approved:
+          type: boolean
+
     AuthUserEnvelope:
       type: object
       required: [user]
@@ -363,6 +731,7 @@ components:
           oneOf:
             - $ref: '#/components/schemas/AuthUser'
             - type: 'null'
+
     MobileTokenExchangeRequest:
       type: object
       required: [code, code_verifier, redirect_uri, state]
@@ -383,12 +752,14 @@ components:
         nonce:
           type: string
           minLength: 1
+
     MobileTokenExchangeSuccess:
       type: object
       required: [token]
       properties:
         token:
           type: string
+
     LogoutSuccess:
       type: object
       required: [success]
@@ -396,12 +767,315 @@ components:
         success:
           type: boolean
           const: true
+
     ErrorEnvelope:
       type: object
       required: [error]
       properties:
         error:
           type: string
+
+    Business:
+      type: object
+      required: [id, name, category, city, state, blackOwned]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        subcategory:
+          type: [string, 'null']
+        description:
+          type: [string, 'null']
+        address:
+          type: [string, 'null']
+        city:
+          type: string
+        state:
+          type: string
+        lat:
+          type: [number, 'null']
+        lng:
+          type: [number, 'null']
+        phone:
+          type: [string, 'null']
+        website:
+          type: [string, 'null']
+        imageUrl:
+          type: [string, 'null']
+        tags:
+          type: array
+          items:
+            type: string
+        priceRange:
+          type: [string, 'null']
+        blackOwned:
+          type: boolean
+        status:
+          type: string
+        confidenceScore:
+          type: [number, 'null']
+        reviewCount:
+          type: [integer, 'null']
+        averageRating:
+          type: [number, 'null']
+        createdAt:
+          type: [string, 'null']
+          format: date-time
+
+    BusinessListResponse:
+      type: object
+      required: [businesses, total]
+      properties:
+        businesses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Business'
+        total:
+          type: integer
+
+    BusinessInput:
+      type: object
+      required: [name, category, city, state]
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        subcategory:
+          type: string
+        description:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        phone:
+          type: string
+        website:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        priceRange:
+          type: string
+
+    Review:
+      type: object
+      required: [id, businessId, rating]
+      properties:
+        id:
+          type: string
+        businessId:
+          type: string
+        userId:
+          type: [string, 'null']
+        authorName:
+          type: [string, 'null']
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        text:
+          type: [string, 'null']
+        wouldReturnAlone:
+          type: [boolean, 'null']
+        createdAt:
+          type: [string, 'null']
+          format: date-time
+
+    ReviewInput:
+      type: object
+      required: [businessId, rating]
+      properties:
+        businessId:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        text:
+          type: string
+        authorName:
+          type: string
+        wouldReturnAlone:
+          type: boolean
+
+    SavedPlacesResponse:
+      type: object
+      required: [businessIds]
+      properties:
+        businessIds:
+          type: array
+          items:
+            type: string
+
+    SavePlaceInput:
+      type: object
+      required: [businessId]
+      properties:
+        businessId:
+          type: string
+
+    Survey:
+      type: object
+      required: [id, city, neighborhood]
+      properties:
+        id:
+          type: string
+        city:
+          type: string
+        neighborhood:
+          type: string
+        visitPurpose:
+          type: [string, 'null']
+        daytimeSafety:
+          type: [integer, 'null']
+        nighttimeSafety:
+          type: [integer, 'null']
+        walkability:
+          type: [integer, 'null']
+        atmosphere:
+          type: [string, 'null']
+        safetyScore:
+          type: [number, 'null']
+        communityScore:
+          type: [number, 'null']
+        walkabilityScore:
+          type: [number, 'null']
+        tips:
+          type: [string, 'null']
+        createdAt:
+          type: [string, 'null']
+          format: date-time
+
+    SurveyInput:
+      type: object
+      required: [city, neighborhood]
+      properties:
+        city:
+          type: string
+        neighborhood:
+          type: string
+        visitPurpose:
+          type: string
+        daytimeSafety:
+          type: integer
+          minimum: 1
+          maximum: 5
+        nighttimeSafety:
+          type: integer
+          minimum: 1
+          maximum: 5
+        walkability:
+          type: integer
+          minimum: 1
+          maximum: 5
+        atmosphere:
+          type: string
+        tips:
+          type: string
+        comments:
+          type: string
+
+    UserProfile:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        email:
+          type: [string, 'null']
+        firstName:
+          type: [string, 'null']
+        lastName:
+          type: [string, 'null']
+        profileImageUrl:
+          type: [string, 'null']
+        createdAt:
+          type: [string, 'null']
+          format: date-time
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+
+    CommunityPost:
+      type: object
+      required: [id, content]
+      properties:
+        id:
+          type: string
+        userId:
+          type: [string, 'null']
+        authorName:
+          type: [string, 'null']
+        content:
+          type: string
+        imageUrl:
+          type: [string, 'null']
+        likesCount:
+          type: integer
+        commentsCount:
+          type: integer
+        createdAt:
+          type: [string, 'null']
+          format: date-time
+
+    CommunityPostInput:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+        imageUrl:
+          type: string
+
+    Event:
+      type: object
+      required: [id, title]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: [string, 'null']
+        city:
+          type: [string, 'null']
+        venue:
+          type: [string, 'null']
+        imageUrl:
+          type: [string, 'null']
+        startDate:
+          type: [string, 'null']
+          format: date-time
+        endDate:
+          type: [string, 'null']
+          format: date-time
+        rsvpCount:
+          type: integer
+        isFree:
+          type: boolean
+        category:
+          type: [string, 'null']
+
+    EventRsvpInput:
+      type: object
+      required: [eventId]
+      properties:
+        eventId:
+          type: string
+
     TravelRecommendationRequest:
       type: object
       properties:
@@ -415,10 +1089,11 @@ components:
           description: Travel vibe tags (e.g. foodie, nightlife, culture)
         neighborVoice:
           type: boolean
-          description: When true (default), KinfolkAI uses authentic city-specific cultural voice and slang. Set to false for standard, neutral language.
+          description: When true (default), KinfolkAI uses authentic city-specific cultural voice and slang.
           default: true
       required:
         - destination
+
     TravelRecommendations:
       type: object
       properties:
@@ -454,6 +1129,7 @@ components:
         - events
         - safetyTips
         - localInsights
+
     TravelBusiness:
       type: object
       properties:
@@ -473,6 +1149,7 @@ components:
         - description
         - neighborhood
         - mustTry
+
     TravelNeighborhood:
       type: object
       properties:
@@ -491,6 +1168,7 @@ components:
         - vibe
         - highlights
         - safetyNote
+
     TravelEvent:
       type: object
       properties:
@@ -507,6 +1185,7 @@ components:
         - type
         - description
         - timing
+
     OpenaiConversation:
       type: object
       properties:
@@ -521,6 +1200,7 @@ components:
         - id
         - title
         - createdAt
+
     OpenaiMessage:
       type: object
       properties:
@@ -541,6 +1221,7 @@ components:
         - role
         - content
         - createdAt
+
     OpenaiConversationInput:
       type: object
       properties:
@@ -548,6 +1229,7 @@ components:
           type: string
       required:
         - title
+
     OpenaiMessageInput:
       type: object
       properties:
@@ -555,6 +1237,7 @@ components:
           type: string
       required:
         - content
+
     OpenaiConversationWithMessages:
       type: object
       properties:
@@ -574,6 +1257,7 @@ components:
         - title
         - createdAt
         - messages
+
     OpenaiImageInput:
       type: object
       properties:
@@ -584,6 +1268,7 @@ components:
           enum: ["1024x1024", "512x512", "256x256"]
       required:
         - prompt
+
     OpenaiImageOutput:
       type: object
       properties:
@@ -591,6 +1276,7 @@ components:
           type: string
       required:
         - b64_json
+
     OpenaiError:
       type: object
       properties:

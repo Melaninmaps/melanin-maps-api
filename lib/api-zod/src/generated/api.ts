@@ -30,7 +30,8 @@ export const GetCurrentAuthUserResponse = zod.object({
   "email": zod.string().email().nullable(),
   "firstName": zod.string().nullable(),
   "lastName": zod.string().nullable(),
-  "profileImageUrl": zod.string().nullable()
+  "profileImageUrl": zod.string().nullable(),
+  "approved": zod.boolean().optional()
 }),zod.null()])
 })
 
@@ -97,6 +98,325 @@ export const LogoutMobileSessionResponse = zod.object({
 
 
 /**
+ * @summary List and search Black-owned businesses
+ */
+export const ListBusinessesQueryParams = zod.object({
+  "search": zod.coerce.string().optional(),
+  "category": zod.coerce.string().optional(),
+  "city": zod.coerce.string().optional(),
+  "state": zod.coerce.string().optional(),
+  "limit": zod.coerce.number().optional(),
+  "offset": zod.coerce.number().optional()
+})
+
+export const ListBusinessesResponse = zod.object({
+  "businesses": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "category": zod.string(),
+  "subcategory": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "address": zod.string().nullish(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "lat": zod.number().nullish(),
+  "lng": zod.number().nullish(),
+  "phone": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "tags": zod.array(zod.string()).optional(),
+  "priceRange": zod.string().nullish(),
+  "blackOwned": zod.boolean(),
+  "status": zod.string().optional(),
+  "confidenceScore": zod.number().nullish(),
+  "reviewCount": zod.number().nullish(),
+  "averageRating": zod.number().nullish(),
+  "createdAt": zod.coerce.date().nullish()
+})),
+  "total": zod.number()
+})
+
+
+/**
+ * @summary Submit a new Black-owned business
+ */
+export const SubmitBusinessBody = zod.object({
+  "name": zod.string(),
+  "category": zod.string(),
+  "subcategory": zod.string().optional(),
+  "description": zod.string().optional(),
+  "address": zod.string().optional(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "phone": zod.string().optional(),
+  "website": zod.string().optional(),
+  "tags": zod.array(zod.string()).optional(),
+  "priceRange": zod.string().optional()
+})
+
+
+/**
+ * @summary Get a single business by ID
+ */
+export const GetBusinessParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetBusinessResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "category": zod.string(),
+  "subcategory": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "address": zod.string().nullish(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "lat": zod.number().nullish(),
+  "lng": zod.number().nullish(),
+  "phone": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "tags": zod.array(zod.string()).optional(),
+  "priceRange": zod.string().nullish(),
+  "blackOwned": zod.boolean(),
+  "status": zod.string().optional(),
+  "confidenceScore": zod.number().nullish(),
+  "reviewCount": zod.number().nullish(),
+  "averageRating": zod.number().nullish(),
+  "createdAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary List reviews for a business
+ */
+export const ListReviewsQueryParams = zod.object({
+  "businessId": zod.coerce.string()
+})
+
+export const listReviewsResponseRatingMax = 5;
+
+
+
+export const ListReviewsResponseItem = zod.object({
+  "id": zod.string(),
+  "businessId": zod.string(),
+  "userId": zod.string().nullish(),
+  "authorName": zod.string().nullish(),
+  "rating": zod.number().min(1).max(listReviewsResponseRatingMax),
+  "text": zod.string().nullish(),
+  "wouldReturnAlone": zod.boolean().nullish(),
+  "createdAt": zod.coerce.date().nullish()
+})
+export const ListReviewsResponse = zod.array(ListReviewsResponseItem)
+
+
+/**
+ * @summary Create a review for a business
+ */
+export const createReviewBodyRatingMax = 5;
+
+
+
+export const CreateReviewBody = zod.object({
+  "businessId": zod.string(),
+  "rating": zod.number().min(1).max(createReviewBodyRatingMax),
+  "text": zod.string().optional(),
+  "authorName": zod.string().optional(),
+  "wouldReturnAlone": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Get the current user's saved businesses
+ */
+export const ListSavedPlacesResponse = zod.object({
+  "businessIds": zod.array(zod.string())
+})
+
+
+/**
+ * @summary Save a business to favorites
+ */
+export const SavePlaceBody = zod.object({
+  "businessId": zod.string()
+})
+
+
+/**
+ * @summary Remove a business from favorites
+ */
+export const UnsavePlaceParams = zod.object({
+  "businessId": zod.coerce.string()
+})
+
+
+/**
+ * @summary List neighborhood safety surveys
+ */
+export const ListSurveysQueryParams = zod.object({
+  "city": zod.coerce.string().optional(),
+  "neighborhood": zod.coerce.string().optional()
+})
+
+export const ListSurveysResponseItem = zod.object({
+  "id": zod.string(),
+  "city": zod.string(),
+  "neighborhood": zod.string(),
+  "visitPurpose": zod.string().nullish(),
+  "daytimeSafety": zod.number().nullish(),
+  "nighttimeSafety": zod.number().nullish(),
+  "walkability": zod.number().nullish(),
+  "atmosphere": zod.string().nullish(),
+  "safetyScore": zod.number().nullish(),
+  "communityScore": zod.number().nullish(),
+  "walkabilityScore": zod.number().nullish(),
+  "tips": zod.string().nullish(),
+  "createdAt": zod.coerce.date().nullish()
+})
+export const ListSurveysResponse = zod.array(ListSurveysResponseItem)
+
+
+/**
+ * @summary Submit a neighborhood safety survey
+ */
+export const createSurveyBodyDaytimeSafetyMax = 5;
+
+export const createSurveyBodyNighttimeSafetyMax = 5;
+
+export const createSurveyBodyWalkabilityMax = 5;
+
+
+
+export const CreateSurveyBody = zod.object({
+  "city": zod.string(),
+  "neighborhood": zod.string(),
+  "visitPurpose": zod.string().optional(),
+  "daytimeSafety": zod.number().min(1).max(createSurveyBodyDaytimeSafetyMax).optional(),
+  "nighttimeSafety": zod.number().min(1).max(createSurveyBodyNighttimeSafetyMax).optional(),
+  "walkability": zod.number().min(1).max(createSurveyBodyWalkabilityMax).optional(),
+  "atmosphere": zod.string().optional(),
+  "tips": zod.string().optional(),
+  "comments": zod.string().optional()
+})
+
+
+/**
+ * @summary Get current user profile
+ */
+export const GetMyProfileResponse = zod.object({
+  "id": zod.string(),
+  "email": zod.string().nullish(),
+  "firstName": zod.string().nullish(),
+  "lastName": zod.string().nullish(),
+  "profileImageUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Update current user profile
+ */
+export const UpdateMyProfileBody = zod.object({
+  "firstName": zod.string().optional(),
+  "lastName": zod.string().optional()
+})
+
+export const UpdateMyProfileResponse = zod.object({
+  "id": zod.string(),
+  "email": zod.string().nullish(),
+  "firstName": zod.string().nullish(),
+  "lastName": zod.string().nullish(),
+  "profileImageUrl": zod.string().nullish(),
+  "createdAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary List community feed posts
+ */
+export const ListCommunityPostsQueryParams = zod.object({
+  "limit": zod.coerce.number().optional(),
+  "offset": zod.coerce.number().optional()
+})
+
+export const ListCommunityPostsResponseItem = zod.object({
+  "id": zod.string(),
+  "userId": zod.string().nullish(),
+  "authorName": zod.string().nullish(),
+  "content": zod.string(),
+  "imageUrl": zod.string().nullish(),
+  "likesCount": zod.number().optional(),
+  "commentsCount": zod.number().optional(),
+  "createdAt": zod.coerce.date().nullish()
+})
+export const ListCommunityPostsResponse = zod.array(ListCommunityPostsResponseItem)
+
+
+/**
+ * @summary Create a community post
+ */
+export const CreateCommunityPostBody = zod.object({
+  "content": zod.string(),
+  "imageUrl": zod.string().optional()
+})
+
+
+/**
+ * @summary List community events
+ */
+export const ListEventsQueryParams = zod.object({
+  "city": zod.coerce.string().optional(),
+  "limit": zod.coerce.number().optional()
+})
+
+export const ListEventsResponseItem = zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "description": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "venue": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "startDate": zod.coerce.date().nullish(),
+  "endDate": zod.coerce.date().nullish(),
+  "rsvpCount": zod.number().optional(),
+  "isFree": zod.boolean().optional(),
+  "category": zod.string().nullish()
+})
+export const ListEventsResponse = zod.array(ListEventsResponseItem)
+
+
+/**
+ * @summary Get a single event
+ */
+export const GetEventParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetEventResponse = zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "description": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "venue": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "startDate": zod.coerce.date().nullish(),
+  "endDate": zod.coerce.date().nullish(),
+  "rsvpCount": zod.number().optional(),
+  "isFree": zod.boolean().optional(),
+  "category": zod.string().nullish()
+})
+
+
+/**
+ * @summary RSVP to an event
+ */
+export const RsvpEventBody = zod.object({
+  "eventId": zod.string()
+})
+
+
+/**
  * @summary Get AI travel recommendations for a destination
  */
 export const getTravelRecommendationsBodyNeighborVoiceDefault = true;
@@ -104,7 +424,7 @@ export const getTravelRecommendationsBodyNeighborVoiceDefault = true;
 export const GetTravelRecommendationsBody = zod.object({
   "destination": zod.string().describe('City or region to get recommendations for'),
   "vibes": zod.array(zod.string()).optional().describe('Travel vibe tags (e.g. foodie, nightlife, culture)'),
-  "neighborVoice": zod.boolean().default(getTravelRecommendationsBodyNeighborVoiceDefault).describe('When true (default), KinfolkAI uses authentic city-specific cultural voice and slang. Set to false for standard, neutral language.')
+  "neighborVoice": zod.boolean().default(getTravelRecommendationsBodyNeighborVoiceDefault).describe('When true (default), KinfolkAI uses authentic city-specific cultural voice and slang.')
 })
 
 export const GetTravelRecommendationsResponse = zod.object({

@@ -6,15 +6,17 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface AuthUser {
+export interface CommunityPost {
   id: string;
   /** @nullable */
-  email: string | null;
+  userId?: string | null;
   /** @nullable */
-  firstName: string | null;
+  authorName?: string | null;
+  content: string;
   /** @nullable */
-  lastName: string | null;
+  imageUrl?: string | null;
+  likesCount?: number;
+  commentsCount?: number;
   /** @nullable */
-  profileImageUrl: string | null;
-  approved?: boolean;
+  createdAt?: Date | null;
 }
