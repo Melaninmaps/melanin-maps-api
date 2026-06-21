@@ -1,6 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, waitlistTable } from "@workspace/db";
-import { count, desc, eq, sql } from "drizzle-orm";
+import { count, desc, eq } from "drizzle-orm";
+import { waitlistLimiter } from "../middleware/rateLimiter";
+import { sendWaitlistConfirmation, sendWaitlistRejection } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -17,7 +19,7 @@ function isAdmin(req: Request): boolean {
 
 // ── Public: join waitlist ────────────────────────────────────────────────────
 
-router.post("/waitlist", async (req: Request, res: Response) => {
+router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) => {
   try {
     const { email, city, state, isBusinessOwner, referralCode, referredBy } = req.body as {
       email?: string;
@@ -49,8 +51,11 @@ router.post("/waitlist", async (req: Request, res: Response) => {
       .onConflictDoNothing();
 
     const [{ total }] = await db.select({ total: count() }).from(waitlistTable);
+    const position = Number(total);
 
-    res.status(201).json({ success: true, position: Number(total), referralCode: code });
+    sendWaitlistConfirmation(email.toLowerCase().trim(), position, code).catch(() => {});
+
+    res.status(201).json({ success: true, position, referralCode: code });
   } catch (err) {
     req.log.error({ err }, "Failed to join waitlist");
     res.status(500).json({ error: "Failed to join waitlist" });
@@ -63,6 +68,49 @@ router.get("/waitlist/count", async (_req: Request, res: Response) => {
     res.json({ count: Number(total) });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch count" });
+  }
+});
+
+router.get("/waitlist/my-entry", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  try {
+    const user = req.user as { email?: string };
+    if (!user.email) { res.json({ entry: null }); return; }
+
+    const [entry] = await db
+      .select()
+      .from(waitlistTable)
+      .where(eq(waitlistTable.email, user.email.toLowerCase()))
+      .limit(1);
+
+    if (!entry) { res.json({ entry: null }); return; }
+
+    const [{ referrals }] = await db
+      .select({ referrals: count() })
+      .from(waitlistTable)
+      .where(eq(waitlistTable.referredBy, entry.referralCode ?? ""));
+
+    res.json({ entry: { ...entry, referralCount: Number(referrals) } });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch user waitlist entry");
+    res.status(500).json({ error: "Failed to fetch entry" });
+  }
+});
+
+router.get("/waitlist/referral-stats/:code", async (req: Request, res: Response) => {
+  const code = String(req.params.code).toUpperCase();
+  try {
+    const [{ referrals }] = await db
+      .select({ referrals: count() })
+      .from(waitlistTable)
+      .where(eq(waitlistTable.referredBy, code));
+    res.json({ code, referrals: Number(referrals) });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch referral stats");
+    res.status(500).json({ error: "Failed to fetch referral stats" });
   }
 });
 
@@ -119,6 +167,11 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
       res.status(404).json({ error: "Entry not found" });
       return;
     }
+
+    if (status === "rejected" && updated.email) {
+      sendWaitlistRejection(updated.email).catch(() => {});
+    }
+
     res.json({ entry: updated });
   } catch (err) {
     req.log.error({ err }, "Failed to update waitlist entry");

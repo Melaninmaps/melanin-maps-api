@@ -24,6 +24,7 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useWishlist } from "@/hooks/useWishlist";
 import { KinfolkOnboarding, shouldShowKinfolkOnboarding, resetKinfolkOnboarding } from "@/components/KinfolkOnboarding";
 import { useAuth } from "@/lib/auth";
+import { useMembership } from "@/hooks/useMembership";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
@@ -793,6 +794,7 @@ export default function TravelScreen() {
   const { preferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
   const { isAuthenticated } = useAuth();
+  const { subscription } = useMembership();
 
   const [inputText, setInputText] = useState("");
   const [neighborVoice, setNeighborVoice] = useState(true);
@@ -917,6 +919,23 @@ export default function TravelScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
+      {/* Premium upsell banner — shown for non-premium, non-trial members */}
+      {isAuthenticated && subscription && subscription.status !== "active" && subscription.status !== "trialing" && (
+        <TouchableOpacity
+          activeOpacity={0.88}
+          onPress={() => router.push("/membership" as any)}
+          style={[styles.premiumBanner, { paddingTop: topPad }]}
+          accessibilityRole="button"
+          accessibilityLabel="Upgrade to KinfolkAI Premium — tap to learn more"
+        >
+          <Ionicons name="star" size={14} color="#C9922B" />
+          <Text style={styles.premiumBannerText}>
+            {" "}Upgrade to Premium for unlimited KinfolkAI conversations
+          </Text>
+          <Ionicons name="chevron-forward" size={14} color="#C9922B" />
+        </TouchableOpacity>
+      )}
+
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 10, backgroundColor: colors.primary }]}>
         <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -1099,6 +1118,8 @@ const styles = StyleSheet.create({
   headerSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: "#ffffff99" },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 4 },
   headerIconBtn: { padding: 6, borderRadius: 20 },
+  premiumBanner: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: "#C9922B18", borderBottomWidth: 1, borderBottomColor: "#C9922B40" },
+  premiumBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, color: "#C9922B", flex: 1 },
   personalBanner: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
   personalBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
   chatContent: { paddingTop: 16, paddingBottom: 8 },

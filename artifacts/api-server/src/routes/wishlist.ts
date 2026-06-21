@@ -46,12 +46,13 @@ router.post("/wishlist", async (req: Request, res: Response) => {
 
 router.patch("/wishlist/:id", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const id = String(req.params.id);
   const { notes } = req.body as { notes?: string };
   try {
     const [item] = await db
       .update(wishlistItemsTable)
       .set({ notes: notes ?? null })
-      .where(and(eq(wishlistItemsTable.id, req.params.id), eq(wishlistItemsTable.userId, req.user.id)))
+      .where(and(eq(wishlistItemsTable.id, id), eq(wishlistItemsTable.userId, req.user.id)))
       .returning();
     if (!item) { res.status(404).json({ error: "Item not found" }); return; }
     res.json({ item });
@@ -63,9 +64,10 @@ router.patch("/wishlist/:id", async (req: Request, res: Response) => {
 
 router.delete("/wishlist/:id", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const id = String(req.params.id);
   try {
     await db.delete(wishlistItemsTable)
-      .where(and(eq(wishlistItemsTable.id, req.params.id), eq(wishlistItemsTable.userId, req.user.id)));
+      .where(and(eq(wishlistItemsTable.id, id), eq(wishlistItemsTable.userId, req.user.id)));
     res.json({ ok: true });
   } catch (err) {
     req.log.error({ err }, "Failed to delete wishlist item");

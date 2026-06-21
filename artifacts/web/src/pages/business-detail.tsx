@@ -13,9 +13,72 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+
+function BusinessMapEmbed({ business }: { business: { name?: string | null; address?: string | null; city?: string | null; state?: string | null } }) {
+  const [embedUrl, setEmbedUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const query = [business.name, business.address, business.city, business.state].filter(Boolean).join(", ");
+  const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+
+  useEffect(() => {
+    if (!query) { setLoading(false); return; }
+    fetch(`${import.meta.env.BASE_URL.replace(/\/$/, "")}/api/maps/embed-url?q=${encodeURIComponent(query)}`)
+      .then((r) => r.json())
+      .then((d) => { if (d.url) setEmbedUrl(d.url); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [query]);
+
+  if (loading) {
+    return <div className="w-full h-64 rounded-2xl bg-[#FAF6EF] animate-pulse border border-[#2B1507]/10" aria-label="Loading map" />;
+  }
+
+  if (embedUrl) {
+    return (
+      <div className="space-y-3">
+        <iframe
+          src={embedUrl}
+          title={`Map showing ${business.name ?? "business location"}`}
+          className="w-full h-72 rounded-2xl border border-[#2B1507]/10 shadow-sm"
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+        <a
+          href={gmapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-sm text-[#CA922B] font-semibold hover:underline"
+        >
+          <Navigation size={14} />
+          Open in Google Maps
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <a
+      href={gmapsUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block w-full h-64 rounded-2xl overflow-hidden border border-[#2B1507]/10 relative bg-[#FAF6EF] group cursor-pointer"
+      aria-label={`View ${business.name ?? "business"} on Google Maps`}
+    >
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl px-6 py-4 flex flex-col items-center shadow-lg border border-[#CA922B]/20 group-hover:shadow-xl transition-shadow">
+          <MapPin className="w-8 h-8 text-[#CA922B] mb-2" aria-hidden="true" />
+          <span className="font-bold text-[#3A1F0E]">{business.city}{business.state ? `, ${business.state}` : ""}</span>
+          <span className="text-xs text-[#CA922B] font-semibold mt-1">View on Google Maps →</span>
+        </div>
+      </div>
+    </a>
+  );
+}
 
 export default function BusinessDetail() {
   const [, params] = useRoute("/businesses/:id");
@@ -249,25 +312,7 @@ export default function BusinessDetail() {
               </TabsContent>
 
               <TabsContent value="location" className="space-y-8 animate-in fade-in">
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([business.name, business.address, business.city, business.state].filter(Boolean).join(", "))}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full h-64 rounded-2xl overflow-hidden border border-[#2B1507]/10 relative bg-[#FAF6EF] group cursor-pointer"
-                >
-                  <img
-                    src={`${import.meta.env.BASE_URL}images/hero-safety-bg.jpg`}
-                    alt="Map view"
-                    className="w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity"
-                  />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl px-6 py-4 flex flex-col items-center shadow-lg border border-[#CA922B]/20 group-hover:shadow-xl transition-shadow">
-                      <MapPin className="w-8 h-8 text-[#CA922B] mb-2" />
-                      <span className="font-bold text-[#3A1F0E]">{business.city}{business.state ? `, ${business.state}` : ''}</span>
-                      <span className="text-xs text-[#CA922B] font-semibold mt-1 flex items-center gap-1">View on Google Maps →</span>
-                    </div>
-                  </div>
-                </a>
+                <BusinessMapEmbed business={business} />
               </TabsContent>
             </Tabs>
           </div>

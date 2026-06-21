@@ -56,12 +56,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden xl:flex items-center gap-6">
+          <nav aria-label="Main navigation" className="hidden xl:flex items-center gap-6">
             {navItems.map((item) => {
               const isActive = location === item.href || location.startsWith(item.href + "/");
               return (
                 <Link key={item.href} href={item.href}>
-                  <span className={`text-sm font-medium transition-colors hover:text-[#CA922B] cursor-pointer ${isActive ? "text-[#CA922B]" : "text-[#F5EBD8]"}`}>
+                  <span aria-current={isActive ? "page" : undefined} className={`text-sm font-medium transition-colors hover:text-[#CA922B] cursor-pointer ${isActive ? "text-[#CA922B]" : "text-[#F5EBD8]"}`}>
                     {item.label}
                   </span>
                 </Link>
@@ -91,14 +91,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Mobile Menu Button */}
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="xl:hidden p-2 text-[#F5EBD8]">
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-nav-menu"
+            className="xl:hidden p-2 text-[#F5EBD8]"
+          >
+            {isMobileMenuOpen ? <X size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
           </button>
         </div>
 
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
-          <div className="xl:hidden bg-[#2B1507] border-t border-white/10 px-4 py-4 flex flex-col gap-4 absolute w-full shadow-lg">
+          <div id="mobile-nav-menu" role="navigation" aria-label="Mobile navigation" className="xl:hidden bg-[#2B1507] border-t border-white/10 px-4 py-4 flex flex-col gap-4 absolute w-full shadow-lg">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)}>
                 <span className="block text-base font-medium text-[#F5EBD8] hover:text-[#CA922B] cursor-pointer">{item.label}</span>
@@ -125,7 +131,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full flex flex-col">
+      <main id="main-content" className="flex-1 w-full flex flex-col" tabIndex={-1}>
         {children}
       </main>
 

@@ -43,7 +43,7 @@ router.get("/groups", async (req: Request, res: Response) => {
 
 router.get("/groups/:id", async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(String(req.params.id), 10);
     if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
     const [group] = await db.select().from(groups).where(eq(groups.id, id)).limit(1);
@@ -112,7 +112,7 @@ router.post("/groups", async (req: Request, res: Response) => {
 router.post("/groups/:id/join", async (req: Request, res: Response) => {
   if (!requireAuth(req, res)) return;
   try {
-    const groupId = parseInt(req.params.id, 10);
+    const groupId = parseInt(String(req.params.id), 10);
     if (isNaN(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
     const userId = req.user!.id;
 
@@ -143,7 +143,7 @@ router.post("/groups/:id/join", async (req: Request, res: Response) => {
 router.delete("/groups/:id/leave", async (req: Request, res: Response) => {
   if (!requireAuth(req, res)) return;
   try {
-    const groupId = parseInt(req.params.id, 10);
+    const groupId = parseInt(String(req.params.id), 10);
     if (isNaN(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
     const userId = req.user!.id;
 

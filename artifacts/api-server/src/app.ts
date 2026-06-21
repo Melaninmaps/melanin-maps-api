@@ -6,6 +6,7 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 import { authMiddleware } from "./middlewares/authMiddleware";
 import { WebhookHandlers } from "./webhookHandlers";
+import { generalLimiter } from "./middleware/rateLimiter";
 
 const app: Express = express();
 
@@ -56,6 +57,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(authMiddleware);
+app.use("/api", generalLimiter);
 
 app.use("/api", router);
 

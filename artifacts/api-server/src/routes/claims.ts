@@ -5,7 +5,7 @@ import { eq, desc } from "drizzle-orm";
 const router: IRouter = Router();
 
 router.post("/businesses/:id/claim", async (req: Request, res: Response) => {
-  const businessId = req.params.id;
+  const businessId = String(req.params.id);
   const { businessName, ownerName, email, phone, role, website, instagramHandle, additionalInfo } = req.body as Record<string, unknown>;
   if (!ownerName || !email || typeof ownerName !== "string" || typeof email !== "string") {
     res.status(400).json({ error: "ownerName and email are required" }); return;
@@ -47,6 +47,7 @@ router.get("/admin/claims", async (req: Request, res: Response) => {
 
 router.patch("/admin/claims/:id", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const id = String(req.params.id);
   const { status, adminNotes } = req.body as { status?: string; adminNotes?: string };
   const validStatuses = ["pending", "approved", "rejected", "needs_info"];
   if (status && !validStatuses.includes(status)) {
@@ -60,7 +61,7 @@ router.patch("/admin/claims/:id", async (req: Request, res: Response) => {
         ...(adminNotes !== undefined && { adminNotes }),
         updatedAt: new Date(),
       })
-      .where(eq(businessClaimsTable.id, req.params.id))
+      .where(eq(businessClaimsTable.id, id))
       .returning();
     if (!claim) { res.status(404).json({ error: "Claim not found" }); return; }
     res.json({ claim });

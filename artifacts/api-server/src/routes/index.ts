@@ -27,6 +27,7 @@ import claimsRouter from "./claims";
 import notificationsRouter from "./notifications";
 import stripeRouter from "./stripe";
 import adminUsersRouter from "./admin-users";
+import mapsRouter from "./maps";
 
 const router: IRouter = Router();
 
@@ -58,5 +59,6 @@ router.use(claimsRouter);
 router.use(notificationsRouter);
 router.use(stripeRouter);
 router.use(adminUsersRouter);
+router.use(mapsRouter);
 
 export default router;

@@ -2,8 +2,10 @@ import { Feather } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import * as SecureStore from "expo-secure-store";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Platform,
   ScrollView,
   Share,
@@ -15,8 +17,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
-const REFERRAL_CODE = "MELANIN-MAP42";
-const REFERRAL_URL = "https://melaninmaps.app/join?ref=MELANIN-MAP42";
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
 
 const TIERS = [
   { label: "Pioneer", min: 0, max: 2, icon: "🌱", color: "#7B4F2E", bg: "#7B4F2E18", reward: "Community badge + early access" },
@@ -31,13 +35,36 @@ const INVITES = [
   { name: "Imani T.", status: "pending", timeAgo: "Invited 3 days ago", color: "#C9922B" },
 ];
 
-const referralCount = 2;
-
 export default function ReferralScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referralCount, setReferralCount] = useState(0);
+  const [loadingEntry, setLoadingEntry] = useState(true);
+
+  useEffect(() => {
+    const fetchEntry = async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const apiBase = getApiBase();
+        if (!token || !apiBase) return;
+        const res = await fetch(`${apiBase}/api/waitlist/my-entry`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { entry: { referralCode?: string; referralCount?: number } | null };
+          if (data.entry?.referralCode) {
+            setReferralCode(data.entry.referralCode);
+            setReferralCount(data.entry.referralCount ?? 0);
+          }
+        }
+      } catch {}
+      finally { setLoadingEntry(false); }
+    };
+    void fetchEntry();
+  }, []);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -48,8 +75,14 @@ export default function ReferralScreen() {
     ? (referralCount - currentTier.min) / (nextTier.min - currentTier.min)
     : 1;
 
+  const code = referralCode ?? "—";
+  const referralUrl = referralCode
+    ? `https://www.melaninmaps.com/?ref=${referralCode}`
+    : "https://www.melaninmaps.com";
+
   const handleCopy = async () => {
-    await Clipboard.setStringAsync(REFERRAL_CODE);
+    if (!referralCode) return;
+    await Clipboard.setStringAsync(referralCode);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
@@ -59,9 +92,9 @@ export default function ReferralScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       await Share.share({
-        message: `Join me on Mapping With Melanin — the community discovery app for us, by us! 🗺️✊🏾\n\nUse my referral code: ${REFERRAL_CODE}\n${REFERRAL_URL}`,
+        message: `Join me on Mapping With Melanin — the community discovery app for us, by us! 🗺️✊🏾\n\nUse my referral code: ${code}\n${referralUrl}`,
         title: "Join Mapping With Melanin",
-        url: REFERRAL_URL,
+        url: referralUrl,
       });
     } catch {}
   };
@@ -93,7 +126,10 @@ export default function ReferralScreen() {
         <View style={[styles.codeCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
           <Text style={[styles.codeLabel, { color: colors.mutedForeground }]}>Your Referral Code</Text>
           <View style={styles.codeRow}>
-            <Text style={[styles.codeText, { color: colors.primary }]}>{REFERRAL_CODE}</Text>
+            {loadingEntry
+              ? <ActivityIndicator size="small" color={colors.primary} />
+              : <Text style={[styles.codeText, { color: colors.primary }]}>{code}</Text>
+            }
             <TouchableOpacity
               style={[styles.copyBtn, { backgroundColor: copied ? "#2D7A4F18" : colors.secondary, borderColor: copied ? "#2D7A4F" : colors.border }]}
               onPress={handleCopy}
@@ -106,7 +142,7 @@ export default function ReferralScreen() {
             </TouchableOpacity>
           </View>
           <Text style={[styles.codeUrl, { color: colors.mutedForeground }]} numberOfLines={1}>
-            {REFERRAL_URL}
+            {referralUrl}
           </Text>
           <TouchableOpacity
             style={[styles.shareBtn, { backgroundColor: colors.primary }]}

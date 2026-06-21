@@ -1,6 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
+import { sendApprovalNotification } from "../lib/email";
+import { sendPushToUser } from "../lib/pushNotifications";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
   .split(",")
@@ -45,7 +47,7 @@ router.patch("/admin/users/:id", async (req: Request, res: Response) => {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
-  const { id } = req.params;
+  const id = String(req.params.id);
   const { approved } = req.body;
   if (typeof approved !== "boolean") {
     res.status(400).json({ error: "approved must be a boolean" });
@@ -56,11 +58,26 @@ router.patch("/admin/users/:id", async (req: Request, res: Response) => {
       .update(usersTable)
       .set({ approved, updatedAt: new Date() })
       .where(eq(usersTable.id, id))
-      .returning({ id: usersTable.id, approved: usersTable.approved });
+      .returning({
+        id: usersTable.id,
+        email: usersTable.email,
+        firstName: usersTable.firstName,
+        approved: usersTable.approved,
+      });
     if (!updated) {
       res.status(404).json({ error: "User not found" });
       return;
     }
+
+    if (approved && updated.email) {
+      sendApprovalNotification(updated.email, updated.firstName).catch(() => {});
+      sendPushToUser(updated.id, {
+        title: "You're approved! 🎉",
+        body: "Welcome to Mapping With Melanin™. Start discovering now.",
+        data: { screen: "/(tabs)/discover" },
+      }).catch(() => {});
+    }
+
     res.json({ user: updated });
   } catch (err) {
     req.log.error({ err }, "Failed to update user approval");
