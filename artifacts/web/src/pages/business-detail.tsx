@@ -8,12 +8,11 @@ import {
   useGetCurrentAuthUser,
   useListSavedPlaces
 } from "@workspace/api-client-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -81,11 +80,11 @@ export default function BusinessDetail() {
 
   if (isLoadingBusiness) {
     return (
-      <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-8">
-        <Skeleton className="w-full h-64 rounded-xl" />
-        <div className="space-y-4">
-          <Skeleton className="h-10 w-1/3" />
-          <Skeleton className="h-6 w-1/4" />
+      <div className="flex flex-col w-full bg-[#FAF6EF] min-h-screen animate-pulse">
+        <div className="h-[60vh] w-full bg-[#2B1507]/10" />
+        <div className="container mx-auto px-4 md:px-6 py-12">
+          <div className="h-12 w-1/3 bg-[#2B1507]/10 rounded mb-4" />
+          <div className="h-6 w-1/4 bg-[#2B1507]/10 rounded" />
         </div>
       </div>
     );
@@ -93,160 +92,226 @@ export default function BusinessDetail() {
 
   if (!business) {
     return (
-      <div className="p-10 text-center text-muted-foreground">
-        <h2>Business not found</h2>
+      <div className="min-h-screen bg-[#FAF6EF] flex flex-col items-center justify-center text-center p-10">
+        <h2 className="text-3xl font-serif text-[#3A1F0E] mb-4">Business not found</h2>
+        <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B]">Go Back</Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-20">
-      <div className="w-full h-64 md:h-96 relative bg-muted">
+    <div className="min-h-screen bg-[#FAF6EF] flex flex-col w-full pb-24">
+      {/* Hero Header */}
+      <div className="relative w-full h-[50vh] md:h-[60vh] bg-[#2B1507]">
         {business.imageUrl && (
           <img src={business.imageUrl} alt={business.name} className="w-full h-full object-cover" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent" />
-      </div>
-
-      <div className="max-w-5xl mx-auto px-6 -mt-32 relative z-10 space-y-8">
-        <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              <Badge variant="secondary">{business.category}</Badge>
-              {business.blackOwned && <Badge className="bg-primary text-primary-foreground">Black Owned</Badge>}
-            </div>
-            <h1 className="text-4xl font-bold font-serif">{business.name}</h1>
-            <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
-              {business.averageRating && (
-                <div className="flex items-center gap-1 text-accent font-medium">
-                  <Star size={18} fill="currentColor" />
-                  <span>{business.averageRating.toFixed(1)} ({business.reviewCount} reviews)</span>
-                </div>
-              )}
-              <div className="flex items-center gap-1">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#2B1507] via-[#2B1507]/40 to-transparent" />
+        
+        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 container mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="text-white max-w-3xl">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="bg-[#CA922B] text-white text-xs uppercase font-bold tracking-wider px-3 py-1 rounded-full">
+                  {business.category}
+                </span>
+                {business.confidenceScore && (
+                  <span className="bg-[#FAF6EF] text-[#CA922B] text-xs font-bold px-3 py-1 rounded-full shadow-md border border-[#CA922B]/20">
+                    {business.confidenceScore}/100 Score
+                  </span>
+                )}
+              </div>
+              <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-2">{business.name}</h1>
+              <div className="flex items-center gap-2 text-[#F5EBD8] text-lg">
                 <MapPin size={18} />
-                <span>{business.address}, {business.city}, {business.state}</span>
+                <span>{business.city}, {business.state}</span>
               </div>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button variant={isSaved ? "secondary" : "outline"} onClick={handleSaveToggle} size="lg">
-              {isSaved ? <><BookmarkCheck className="mr-2" size={20} /> Saved</> : <><Bookmark className="mr-2" size={20} /> Save</>}
-            </Button>
+            
+            <div className="flex gap-3">
+              <Button 
+                onClick={handleSaveToggle} 
+                variant="outline" 
+                className={`rounded-full h-12 px-6 border-white/20 backdrop-blur-md ${isSaved ? "bg-white text-[#2B1507]" : "bg-black/30 text-white hover:bg-white hover:text-[#2B1507]"}`}
+              >
+                {isSaved ? <><BookmarkCheck className="mr-2 w-5 h-5" /> Saved</> : <><Bookmark className="mr-2 w-5 h-5" /> Save</>}
+              </Button>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="md:col-span-2 space-y-8">
-            <section className="space-y-4">
-              <h2 className="text-2xl font-semibold font-serif">About</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                {business.description || "No description available."}
-              </p>
-            </section>
+      {/* Main Content */}
+      <div className="container mx-auto px-4 md:px-6 mt-8">
+        <div className="flex flex-col lg:flex-row gap-12">
+          
+          {/* Left Column - Details */}
+          <div className="flex-1">
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="w-full justify-start bg-transparent border-b border-[#2B1507]/10 rounded-none h-14 p-0 space-x-8 mb-8">
+                <TabsTrigger value="overview" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#CA922B] rounded-none px-0 h-14 font-serif text-lg text-[#3A1F0E]/60 data-[state=active]:text-[#3A1F0E]">Overview</TabsTrigger>
+                <TabsTrigger value="reviews" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#CA922B] rounded-none px-0 h-14 font-serif text-lg text-[#3A1F0E]/60 data-[state=active]:text-[#3A1F0E]">Reviews</TabsTrigger>
+                <TabsTrigger value="location" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#CA922B] rounded-none px-0 h-14 font-serif text-lg text-[#3A1F0E]/60 data-[state=active]:text-[#3A1F0E]">Location & Contact</TabsTrigger>
+              </TabsList>
 
-            <section className="space-y-4">
-              <h2 className="text-2xl font-semibold font-serif">Reviews</h2>
-              {auth?.user ? (
-                <Card>
-                  <CardContent className="pt-6">
+              <TabsContent value="overview" className="space-y-8 animate-in fade-in">
+                <div className="prose prose-lg text-[#3A1F0E]/80 font-light leading-relaxed">
+                  <p>{business.description || "Discover this exceptional Black-owned business. They provide quality service and a welcoming environment for the community."}</p>
+                </div>
+                
+                {business.blackOwned && (
+                  <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5 flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-[#CA922B]/10 flex items-center justify-center shrink-0">
+                      <ShieldCheck className="text-[#CA922B] w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-1">Verified Black-Owned</h3>
+                      <p className="text-[#3A1F0E]/70 text-sm">This business is part of our verified network of Black-owned enterprises, supporting economic empowerment.</p>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="reviews" className="space-y-8 animate-in fade-in">
+                <div className="flex items-center gap-6 bg-white p-6 rounded-2xl border border-[#2B1507]/5">
+                  <div className="flex flex-col items-center justify-center p-4 bg-[#FAF6EF] rounded-xl min-w-[120px]">
+                    <span className="text-4xl font-serif font-bold text-[#3A1F0E]">{business.averageRating?.toFixed(1) || "—"}</span>
+                    <div className="flex text-[#CA922B] my-1">
+                      {Array.from({length: 5}).map((_, i) => (
+                        <Star key={i} size={14} fill={i < Math.round(business.averageRating || 0) ? "currentColor" : "none"} strokeWidth={i < Math.round(business.averageRating || 0) ? 0 : 2} />
+                      ))}
+                    </div>
+                    <span className="text-xs text-[#3A1F0E]/50 uppercase tracking-wider font-bold">{business.reviewCount || 0} Reviews</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-2">Community Voices</h3>
+                    <p className="text-[#3A1F0E]/70 text-sm">Read what the Melanin Maps community has to say about their experience.</p>
+                  </div>
+                </div>
+
+                {auth?.user ? (
+                  <div className="bg-white p-6 rounded-2xl border border-[#2B1507]/5">
+                    <h4 className="font-serif font-bold text-lg mb-4 text-[#3A1F0E]">Leave a Review</h4>
                     <form onSubmit={handleReviewSubmit} className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Your Rating:</span>
-                        <div className="flex gap-1">
+                      <div className="flex items-center gap-3 mb-4">
+                        <span className="text-sm font-medium text-[#3A1F0E]">Rating</span>
+                        <div className="flex gap-1 cursor-pointer">
                           {[1,2,3,4,5].map(r => (
-                            <button key={r} type="button" onClick={() => setRating(r)} className={r <= rating ? "text-accent" : "text-muted"}>
-                              <Star size={24} fill={r <= rating ? "currentColor" : "none"} />
+                            <button key={r} type="button" onClick={() => setRating(r)} className={r <= rating ? "text-[#CA922B]" : "text-[#2B1507]/20"}>
+                              <Star size={24} fill={r <= rating ? "currentColor" : "none"} strokeWidth={r <= rating ? 0 : 2} />
                             </button>
                           ))}
                         </div>
                       </div>
                       <Textarea 
-                        placeholder="Share your experience..." 
+                        placeholder="Share your experience with the community..." 
                         value={reviewText}
                         onChange={(e) => setReviewText(e.target.value)}
-                        rows={3}
+                        rows={4}
+                        className="bg-[#FAF6EF] border-[#2B1507]/10 focus-visible:ring-[#CA922B] resize-none"
                       />
-                      <Button type="submit" disabled={isSubmitting}>Submit Review</Button>
+                      <Button type="submit" disabled={isSubmitting} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white">
+                        Submit Review
+                      </Button>
                     </form>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="p-4 bg-muted/50 rounded-lg text-center">
-                  <p className="text-muted-foreground">Sign in to leave a review</p>
-                </div>
-              )}
-
-              <div className="space-y-4 mt-6">
-                {isLoadingReviews ? (
-                  <Skeleton className="h-24 w-full" />
-                ) : reviews?.length === 0 ? (
-                  <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
+                  </div>
                 ) : (
-                  reviews?.map((review) => (
-                    <Card key={review.id}>
-                      <CardContent className="p-4 space-y-2">
-                        <div className="flex justify-between items-start">
-                          <div className="font-medium">{review.authorName || "Anonymous"}</div>
-                          <div className="flex text-accent">
+                  <div className="bg-[#2B1507]/5 p-6 rounded-2xl text-center border border-[#2B1507]/10">
+                    <p className="text-[#3A1F0E]/70 mb-4">Sign in to share your experience.</p>
+                    <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white">Sign In</Button>
+                  </div>
+                )}
+
+                <div className="space-y-6">
+                  {isLoadingReviews ? (
+                    <Skeleton className="h-32 w-full rounded-2xl" />
+                  ) : reviews?.length === 0 ? (
+                    <p className="text-[#3A1F0E]/50 text-center py-8">No reviews yet.</p>
+                  ) : (
+                    reviews?.map((review) => (
+                      <div key={review.id} className="bg-white p-6 rounded-2xl border border-[#2B1507]/5">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="font-bold text-[#3A1F0E]">{review.authorName || "Community Member"}</div>
+                          <div className="flex text-[#CA922B]">
                             {Array.from({length: 5}).map((_, i) => (
-                              <Star key={i} size={14} fill={i < review.rating ? "currentColor" : "none"} />
+                              <Star key={i} size={14} fill={i < review.rating ? "currentColor" : "none"} strokeWidth={i < review.rating ? 0 : 2} />
                             ))}
                           </div>
                         </div>
-                        <p className="text-muted-foreground text-sm">{review.text}</p>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </div>
-            </section>
+                        <p className="text-[#3A1F0E]/80 text-sm leading-relaxed">{review.text}</p>
+                        <div className="text-xs text-[#3A1F0E]/40 mt-4 uppercase tracking-wider font-bold">
+                          {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : 'Recent'}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="location" className="space-y-8 animate-in fade-in">
+                <div className="bg-[#2B1507]/5 w-full h-64 rounded-2xl flex items-center justify-center border border-[#2B1507]/10">
+                  <div className="flex flex-col items-center text-[#3A1F0E]/50">
+                    <MapPin className="w-8 h-8 mb-2" />
+                    <span>Map View</span>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
 
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Contact Info</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm">
+          {/* Right Column - Info Card */}
+          <div className="w-full lg:w-80 shrink-0">
+            <div className="bg-white rounded-2xl border border-[#2B1507]/10 p-6 sticky top-28 shadow-[0_8px_30px_rgba(43,21,7,0.05)]">
+              <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-6">Contact & Info</h3>
+              
+              <div className="space-y-5">
+                {business.address && (
+                  <div className="flex items-start gap-4 text-[#3A1F0E]/80 text-sm">
+                    <MapPin className="w-5 h-5 text-[#CA922B] shrink-0 mt-0.5" />
+                    <div>
+                      <div>{business.address}</div>
+                      <div>{business.city}, {business.state}</div>
+                      <a href={`https://maps.google.com/?q=${encodeURIComponent(`${business.address} ${business.city} ${business.state}`)}`} target="_blank" rel="noreferrer" className="text-[#CA922B] font-medium hover:underline inline-flex items-center gap-1 mt-1">
+                        Get Directions <Navigation size={12} />
+                      </a>
+                    </div>
+                  </div>
+                )}
+                
                 {business.phone && (
-                  <div className="flex items-center gap-3">
-                    <Phone size={18} className="text-muted-foreground" />
-                    <span>{business.phone}</span>
+                  <div className="flex items-center gap-4 text-[#3A1F0E]/80 text-sm">
+                    <Phone className="w-5 h-5 text-[#CA922B] shrink-0" />
+                    <a href={`tel:${business.phone}`} className="hover:text-[#CA922B]">{business.phone}</a>
                   </div>
                 )}
+                
                 {business.website && (
-                  <div className="flex items-center gap-3">
-                    <Globe size={18} className="text-muted-foreground" />
-                    <a href={business.website} target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                      Visit Website
-                    </a>
+                  <div className="flex items-center gap-4 text-[#3A1F0E]/80 text-sm">
+                    <Globe className="w-5 h-5 text-[#CA922B] shrink-0" />
+                    <a href={business.website} target="_blank" rel="noreferrer" className="hover:text-[#CA922B] truncate">{business.website.replace(/^https?:\/\//, '')}</a>
                   </div>
                 )}
-                {business.priceRange && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-muted-foreground font-medium w-[18px] text-center">$</span>
-                    <span>Price Range: {business.priceRange}</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
 
-            {business.confidenceScore && business.confidenceScore > 70 && (
-              <Card className="bg-chart-2/5 border-chart-2/20">
-                <CardContent className="p-5 flex items-start gap-4">
-                  <ShieldCheck size={24} className="text-chart-2 shrink-0 mt-1" />
-                  <div>
-                    <h3 className="font-semibold text-chart-2">Community Verified</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      This business has high community confidence for safety and welcoming atmosphere.
-                    </p>
+                {business.priceRange && (
+                  <div className="flex items-center gap-4 text-[#3A1F0E]/80 text-sm">
+                    <div className="w-5 h-5 rounded-full bg-[#CA922B]/10 text-[#CA922B] flex items-center justify-center font-bold text-xs shrink-0">$</div>
+                    <span>{business.priceRange}</span>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                )}
+
+                <div className="flex items-start gap-4 text-[#3A1F0E]/80 text-sm pt-5 border-t border-[#2B1507]/10">
+                  <Clock className="w-5 h-5 text-[#CA922B] shrink-0 mt-0.5" />
+                  <div className="space-y-1 w-full">
+                    <div className="flex justify-between font-medium text-[#CA922B]"><span>Today</span><span>Open</span></div>
+                    <div className="flex justify-between"><span>Mon-Fri</span><span>9:00 AM - 6:00 PM</span></div>
+                    <div className="flex justify-between"><span>Saturday</span><span>10:00 AM - 4:00 PM</span></div>
+                    <div className="flex justify-between"><span>Sunday</span><span>Closed</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "./ui/button";
-import { Map, Compass, Shield, Calendar, Users, Plane, User, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -10,71 +10,90 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { href: "/discover", label: "Discover", icon: Compass },
-    { href: "/map", label: "Map", icon: Map },
-    { href: "/safety", label: "Safety", icon: Shield },
-    { href: "/events", label: "Events", icon: Calendar },
-    { href: "/community", label: "Community", icon: Users },
-    { href: "/travel", label: "Travel AI", icon: Plane },
+    { href: "/discover", label: "Explore" },
+    { href: "/community", label: "Community" },
+    { href: "/safety", label: "Safety" },
+    { href: "/events", label: "Events" },
+    { href: "/travel", label: "Travel" },
   ];
 
   return (
-    <div className="min-h-[100dvh] flex flex-col md:flex-row bg-background">
-      {/* Mobile Header */}
-      <header className="md:hidden flex items-center justify-between p-4 border-b bg-card">
-        <Link href="/" className="font-serif font-bold text-xl text-primary">Melanin Maps</Link>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
-          {isMobileMenuOpen ? <X /> : <Menu />}
-        </button>
+    <div className="min-h-[100dvh] flex flex-col bg-[#FAF6EF]">
+      {/* Sticky Top Navbar */}
+      <header className="sticky top-0 z-50 w-full bg-[#2B1507] text-[#F5EBD8] shadow-md">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
+          <Link href="/" className="font-serif font-bold text-xl md:text-2xl text-white tracking-tight flex items-center gap-2">
+            Mapping with Melanin™
+          </Link>
+
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-8">
+            {navItems.map((item) => {
+              const isActive = location === item.href || location.startsWith(item.href + "/");
+              return (
+                <Link key={item.href} href={item.href}>
+                  <span className={`text-sm font-medium transition-colors hover:text-[#CA922B] cursor-pointer ${isActive ? "text-[#CA922B]" : "text-[#F5EBD8]"}`}>
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Auth / Right side */}
+          <div className="hidden md:flex items-center gap-4">
+            {auth?.user ? (
+              <Link href="/profile">
+                <span className="text-sm font-medium hover:text-[#CA922B] transition-colors cursor-pointer">Profile</span>
+              </Link>
+            ) : (
+              <>
+                <Link href="/login">
+                  <span className="text-sm font-medium hover:text-[#CA922B] transition-colors cursor-pointer">Sign In</span>
+                </Link>
+                <Link href="/login">
+                  <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-6">Sign Up Free</Button>
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden p-2 text-[#F5EBD8]">
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {/* Mobile Menu Dropdown */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-[#2B1507] border-t border-white/10 px-4 py-4 flex flex-col gap-4 absolute w-full">
+            {navItems.map((item) => (
+              <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)}>
+                <span className="block text-base font-medium text-[#F5EBD8] hover:text-[#CA922B] cursor-pointer">{item.label}</span>
+              </Link>
+            ))}
+            <div className="pt-4 border-t border-white/10 flex flex-col gap-4">
+              {auth?.user ? (
+                <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
+                  <span className="block text-base font-medium text-[#F5EBD8] cursor-pointer">Profile</span>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                    <span className="block text-base font-medium text-[#F5EBD8] cursor-pointer">Sign In</span>
+                  </Link>
+                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white">Sign Up Free</Button>
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </header>
 
-      {/* Sidebar */}
-      <aside className={`
-        ${isMobileMenuOpen ? "flex" : "hidden"} 
-        md:flex flex-col w-full md:w-64 border-r bg-card p-6 gap-6
-        fixed md:sticky top-[73px] md:top-0 h-[calc(100dvh-73px)] md:h-[100dvh] z-40 overflow-y-auto
-      `}>
-        <div className="hidden md:block">
-          <Link href="/" className="font-serif font-bold text-2xl text-primary tracking-tight">Melanin Maps</Link>
-        </div>
-
-        <nav className="flex flex-col gap-2 flex-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location === item.href || location.startsWith(item.href + "/");
-            return (
-              <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)}>
-                <div className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
-                  isActive 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                }`}>
-                  <Icon size={20} />
-                  <span>{item.label}</span>
-                </div>
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="pt-6 border-t">
-          {auth?.user ? (
-            <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
-              <div className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
-                <User size={20} />
-                <span>Profile</span>
-              </div>
-            </Link>
-          ) : (
-            <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-              <Button className="w-full">Sign In</Button>
-            </Link>
-          )}
-        </div>
-      </aside>
-
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-7xl mx-auto">
+      <main className="flex-1 w-full flex flex-col">
         {children}
       </main>
     </div>

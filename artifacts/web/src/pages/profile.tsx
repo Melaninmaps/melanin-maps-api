@@ -2,9 +2,7 @@ import { useGetCurrentAuthUser, useGetMyProfile, useUpdateMyProfile, useLogoutBr
 import { Redirect, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, Save, User, MapPin } from "lucide-react";
+import { LogOut, Save, MapPin, Compass } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -30,7 +28,7 @@ export default function Profile() {
     }
   }, [profile]);
 
-  if (authLoading) return <div className="p-10"><Skeleton className="h-64 w-full" /></div>;
+  if (authLoading) return <div className="p-10 bg-[#FAF6EF] min-h-screen"><Skeleton className="h-64 w-full rounded-3xl" /></div>;
 
   if (!auth?.user) {
     return <Redirect to="/login" />;
@@ -56,89 +54,106 @@ export default function Profile() {
   };
 
   return (
-    <div className="p-6 lg:p-10 max-w-4xl mx-auto space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-4xl font-serif font-bold tracking-tight">Your Profile</h1>
-        <Button variant="outline" onClick={handleLogout} className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20">
-          <LogOut className="mr-2 h-4 w-4" /> Sign Out
-        </Button>
-      </div>
+    <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
+      <div className="bg-[#2B1507] h-32 md:h-48 w-full absolute top-0 z-0" />
+      
+      <div className="container mx-auto px-4 md:px-6 py-12 relative z-10">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl md:text-5xl font-serif font-bold text-white tracking-tight">Your Profile</h1>
+          <Button variant="outline" onClick={handleLogout} className="rounded-full bg-white/10 text-white border-white/20 hover:bg-white hover:text-[#2B1507] backdrop-blur">
+            <LogOut className="mr-2 h-4 w-4" /> Sign Out
+          </Button>
+        </div>
 
-      <div className="grid md:grid-cols-3 gap-8">
-        <Card className="md:col-span-1 border-border/50">
-          <CardHeader className="text-center pb-2">
-            <Avatar className="w-24 h-24 mx-auto border-2 border-primary/20 mb-4">
-              <AvatarImage src={profile?.profileImageUrl || undefined} />
-              <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                {profile?.firstName?.[0] || profile?.email?.[0]?.toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <CardTitle>{profile?.firstName} {profile?.lastName}</CardTitle>
-            <p className="text-sm text-muted-foreground">{profile?.email}</p>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUpdate} className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">First Name</label>
-                <Input value={firstName} onChange={e => setFirstName(e.target.value)} />
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Profile Card */}
+          <div className="md:col-span-1">
+            <div className="bg-white rounded-3xl p-8 border border-[#2B1507]/5 shadow-[0_8px_30px_rgba(43,21,7,0.08)] text-center relative mt-8 md:mt-0">
+              <div className="w-24 h-24 mx-auto rounded-full bg-[#FAF6EF] border-4 border-white shadow-lg flex items-center justify-center -mt-16 mb-4 text-[#CA922B] text-3xl font-serif font-bold overflow-hidden">
+                {profile?.profileImageUrl ? (
+                  <img src={profile.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  profile?.firstName?.[0] || profile?.email?.[0]?.toUpperCase() || "M"
+                )}
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Last Name</label>
-                <Input value={lastName} onChange={e => setLastName(e.target.value)} />
-              </div>
-              <Button type="submit" className="w-full" disabled={updateProfile.isPending}>
-                <Save className="mr-2 h-4 w-4" /> Save Changes
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+              <h2 className="text-2xl font-serif font-bold text-[#3A1F0E]">{profile?.firstName} {profile?.lastName}</h2>
+              <p className="text-sm text-[#3A1F0E]/50 mb-8">{profile?.email}</p>
+              
+              <form onSubmit={handleUpdate} className="space-y-5 text-left">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">First Name</label>
+                  <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-12" value={firstName} onChange={e => setFirstName(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">Last Name</label>
+                  <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-12" value={lastName} onChange={e => setLastName(e.target.value)} />
+                </div>
+                <Button type="submit" className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 mt-4" disabled={updateProfile.isPending}>
+                  <Save className="mr-2 h-4 w-4" /> Save Changes
+                </Button>
+              </form>
+            </div>
+          </div>
 
-        <Card className="md:col-span-2 border-border/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="text-primary" /> Saved Places
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {savedPlaces?.businessIds.length === 0 ? (
-              <div className="py-10 text-center text-muted-foreground bg-muted/20 rounded-lg border border-dashed">
-                <p>You haven't saved any places yet.</p>
-                <Link href="/discover" className="text-primary hover:underline mt-2 inline-block">Explore places</Link>
-              </div>
-            ) : (
-              <div className="grid sm:grid-cols-2 gap-4">
-                {savedPlaces?.businessIds.map(id => (
-                  <SavedPlaceCard key={id} id={id} />
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          {/* Saved Places */}
+          <div className="md:col-span-2 space-y-6 mt-8 md:mt-0">
+            <h3 className="text-2xl font-serif font-bold text-[#3A1F0E] flex items-center gap-2">
+              <Bookmark className="text-[#CA922B]" /> Saved Places
+            </h3>
+            
+            <div className="bg-white rounded-3xl p-6 border border-[#2B1507]/5 shadow-sm min-h-[400px]">
+              {savedPlaces?.businessIds.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-[#3A1F0E]/40 py-20">
+                  <Compass size={48} className="mb-4 opacity-50" />
+                  <p className="text-lg font-serif">You haven't saved any places yet.</p>
+                  <Link href="/discover">
+                    <Button className="mt-6 rounded-full bg-[#2B1507] hover:bg-[#4a260d] text-white px-8">Explore Directory</Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {savedPlaces?.businessIds.map(id => (
+                    <SavedPlaceCard key={id} id={id} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
+function Bookmark(props: any) {
+  return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinelinejoin="round" {...props}><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+}
+
 function SavedPlaceCard({ id }: { id: string }) {
   const { data: biz, isLoading } = useGetBusiness(id);
 
-  if (isLoading) return <Skeleton className="h-24 w-full" />;
+  if (isLoading) return <Skeleton className="h-28 w-full rounded-2xl" />;
   if (!biz) return null;
 
   return (
     <Link href={`/businesses/${id}`}>
-      <div className="flex gap-3 p-3 border rounded-lg hover:border-primary/50 transition-colors cursor-pointer bg-card">
-        {biz.imageUrl ? (
-          <img src={biz.imageUrl} alt={biz.name} className="w-16 h-16 rounded object-cover shrink-0" />
-        ) : (
-          <div className="w-16 h-16 rounded bg-muted flex items-center justify-center shrink-0">
-            <MapPin size={20} className="text-muted-foreground" />
+      <div className="flex gap-4 p-4 border border-[#2B1507]/10 rounded-2xl hover:border-[#CA922B] transition-colors cursor-pointer bg-white group">
+        <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-[#FAF6EF]">
+          {biz.imageUrl ? (
+            <img src={biz.imageUrl} alt={biz.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <MapPin size={24} className="text-[#2B1507]/20" />
+            </div>
+          )}
+        </div>
+        <div className="overflow-hidden flex flex-col justify-center flex-1">
+          <span className="text-[10px] uppercase font-bold tracking-wider text-[#CA922B] mb-1">{biz.category}</span>
+          <h4 className="font-serif font-bold text-lg text-[#3A1F0E] truncate leading-tight">{biz.name}</h4>
+          <div className="flex items-center gap-1 text-xs text-[#3A1F0E]/50 mt-1">
+            <MapPin size={10} />
+            <span className="truncate">{biz.city}, {biz.state}</span>
           </div>
-        )}
-        <div className="overflow-hidden flex flex-col justify-center">
-          <h4 className="font-semibold text-sm truncate">{biz.name}</h4>
-          <p className="text-xs text-muted-foreground truncate">{biz.city}, {biz.state}</p>
-          <span className="text-xs font-medium text-primary mt-1">{biz.category}</span>
         </div>
       </div>
     </Link>
