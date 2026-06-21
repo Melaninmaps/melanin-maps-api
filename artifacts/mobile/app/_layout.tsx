@@ -28,6 +28,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { AuthProvider } from "@/lib/auth";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { initializeRevenueCat, SubscriptionProvider } from "@/lib/revenuecat";
 
 function PushNotificationRegistrar() {
   useEffect(() => {
@@ -111,6 +112,14 @@ const loader = StyleSheet.create({
   dotsRow: { flexDirection: "row", gap: 10 },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: "rgba(251,247,240,0.9)" },
 });
+
+try {
+  initializeRevenueCat();
+} catch (err: any) {
+  if (__DEV__) {
+    console.warn("RevenueCat init skipped:", err?.message ?? "Unknown error");
+  }
+}
 
 SplashScreen.preventAutoHideAsync();
 
@@ -405,6 +414,7 @@ export default function RootLayout() {
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
+            <SubscriptionProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
               <KeyboardProvider>
                 <View style={{ flex: 1 }}>
@@ -417,6 +427,7 @@ export default function RootLayout() {
                 </View>
               </KeyboardProvider>
             </GestureHandlerRootView>
+            </SubscriptionProvider>
           </AuthProvider>
         </QueryClientProvider>
       </ErrorBoundary>

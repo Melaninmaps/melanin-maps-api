@@ -9,10 +9,12 @@
     "seed-products": "tsx ./src/seed-products.ts",
     "archive-old-products": "tsx ./src/archive-old-products.ts",
     "seed-events": "tsx ./src/seed-events.ts",
+    "seed-revenuecat": "tsx ./src/seedRevenueCat.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@workspace/db": "workspace:*",
+    "@replit/revenuecat-sdk": "^4.2.0",
     "stripe": "^22.2.1"
   },
   "devDependencies": {

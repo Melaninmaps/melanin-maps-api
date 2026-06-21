@@ -20,6 +20,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
 import { usePoints } from "@/hooks/usePoints";
+import { useMembership } from "@/hooks/useMembership";
 
 const SETTINGS = [
   { icon: "map" as const, label: "Trip Planner", sub: "Chat with KinfolkAI™ for travel picks", route: "/travel" as const },
@@ -68,6 +69,7 @@ export default function ProfileScreen() {
   const savedBusinesses = businesses.filter((b) => savedIds.includes(b.id));
   const { total: pointsTotal, ledger } = usePoints();
   const reviewCount = ledger.filter((e) => e.action === "review").length;
+  const { subscription } = useMembership();
 
   return (
     <ScrollView
@@ -146,6 +148,14 @@ export default function ProfileScreen() {
               </Text>
               {user?.email ? (
                 <Text style={[styles.email, { color: colors.mutedForeground }]}>{user.email}</Text>
+              ) : null}
+              {subscription ? (
+                <View style={[styles.memberBadge, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "30" }]}>
+                  <Feather name="award" size={10} color={colors.primary} />
+                  <Text style={[styles.memberBadgeText, { color: colors.primary }]}>
+                    {subscription.productName || "Member"}
+                  </Text>
+                </View>
               ) : null}
             </View>
             <TouchableOpacity style={[styles.editBtn, { borderColor: colors.border }]} onPress={pickProfileImage}>
@@ -308,8 +318,19 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.settingText}>
                 <Text style={[styles.settingLabel, { color: colors.foreground }]}>{item.label}</Text>
-                <Text style={[styles.settingSub, { color: colors.mutedForeground }]}>{item.sub}</Text>
+                <Text style={[styles.settingSub, { color: colors.mutedForeground }]}>
+                  {item.label === "Membership"
+                    ? subscription
+                      ? `${subscription.productName || "Premium"} — Active`
+                      : "Explore (Free) — upgrade anytime"
+                    : item.sub}
+                </Text>
               </View>
+              {item.label === "Membership" && subscription ? (
+                <View style={[styles.activeIndicator, { backgroundColor: "#22C55E18", borderColor: "#22C55E30" }]}>
+                  <View style={[styles.activeDot, { backgroundColor: "#22C55E" }]} />
+                </View>
+              ) : null}
               <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
             </TouchableOpacity>
           ))}
@@ -822,5 +843,34 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 13,
     color: "#FFFFFF",
+  },
+  memberBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginTop: 4,
+  },
+  memberBadgeText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+  },
+  activeIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 4,
+  },
+  activeDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 });

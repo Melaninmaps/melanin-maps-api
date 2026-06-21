@@ -15,6 +15,7 @@
     },
     "ios": {
       "supportsTablet": false,
+      "bundleIdentifier": "com.melaninmaps.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Mapping With Melanin uses your location to show nearby Black-owned businesses and community safety information.",
         "NSCameraUsageDescription": "Mapping With Melanin uses your camera so you can update your profile photo.",
@@ -23,6 +24,7 @@
       }
     },
     "android": {
+      "package": "com.melaninmaps.app",
       "permissions": [
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
