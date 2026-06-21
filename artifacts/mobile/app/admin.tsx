@@ -665,11 +665,6 @@ interface ClaimRow {
   createdAt: string;
 }
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
-
 function ClaimsTab() {
   const colors = useColors();
   const [filter, setFilter] = useState("All");
