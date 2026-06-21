@@ -1,4 +1,4 @@
-import { useGetCurrentAuthUser, useGetMyProfile, useUpdateMyProfile, useLogoutBrowserSession, useListSavedPlaces, useGetBusiness } from "@workspace/api-client-react";
+import { useGetCurrentAuthUser, useGetMyProfile, useUpdateMyProfile, useListSavedPlaces, useGetBusiness } from "@workspace/api-client-react";
 import { Redirect, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,11 +10,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Profile() {
   const { data: auth, isLoading: authLoading } = useGetCurrentAuthUser();
-  const { data: profile } = useGetMyProfile({ query: { enabled: !!auth?.user } });
-  const { data: savedPlaces } = useListSavedPlaces({ query: { enabled: !!auth?.user } });
+  const { data: profile } = useGetMyProfile({ query: { queryKey: ['getMyProfile'], enabled: !!auth?.user } });
+  const { data: savedPlaces } = useListSavedPlaces({ query: { queryKey: ['listSavedPlaces'], enabled: !!auth?.user } });
   
   const updateProfile = useUpdateMyProfile();
-  const logout = useLogoutBrowserSession();
   
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -46,11 +45,7 @@ export default function Profile() {
   };
 
   const handleLogout = () => {
-    logout.mutate(undefined, {
-      onSuccess: () => {
-        window.location.href = "/";
-      }
-    });
+    window.location.href = "/api/logout";
   };
 
   return (
@@ -130,7 +125,7 @@ function BookmarkIcon(props: any) {
 }
 
 function SavedPlaceCard({ id }: { id: string }) {
-  const { data: biz, isLoading } = useGetBusiness(id, { query: { enabled: !!id } });
+  const { data: biz, isLoading } = useGetBusiness(id, { query: { queryKey: ['getBusiness', id], enabled: !!id } });
 
   if (isLoading) return <Skeleton className="h-28 w-full rounded-2xl" />;
   if (!biz) return null;

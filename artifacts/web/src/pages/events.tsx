@@ -1,4 +1,4 @@
-import { useListEvents, useRsvpEvent, useGetCurrentAuthUser } from "@workspace/api-client-react";
+import { useListEvents, useRsvpEvent, useGetCurrentAuthUser, type Event as ApiEvent } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar as CalendarIcon, MapPin, Users, Ticket, ArrowUpRight } from "lucide-react";
@@ -7,7 +7,9 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export default function Events() {
   const { data: auth } = useGetCurrentAuthUser();
-  const { data: events, isLoading } = useListEvents();
+  const { data: eventsData, isLoading } = useListEvents();
+  // API returns { events: [...] } at runtime but TS type says Event[] — handle both
+  const events = (Array.isArray(eventsData) ? eventsData : (eventsData as unknown as { events: ApiEvent[] })?.events) ?? [];
   const rsvpEvent = useRsvpEvent();
   const { toast } = useToast();
   const queryClient = useQueryClient();

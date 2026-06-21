@@ -24,9 +24,9 @@ export default function BusinessDetail() {
   const queryClient = useQueryClient();
 
   const { data: auth } = useGetCurrentAuthUser();
-  const { data: business, isLoading: isLoadingBusiness } = useGetBusiness(id, { query: { enabled: !!id } });
+  const { data: business, isLoading: isLoadingBusiness } = useGetBusiness(id, { query: { queryKey: ['getBusiness', id], enabled: !!id } });
   const { data: reviews, isLoading: isLoadingReviews } = useListReviews({ businessId: id });
-  const { data: savedPlaces } = useListSavedPlaces({ query: { enabled: !!auth?.user } });
+  const { data: savedPlaces } = useListSavedPlaces({ query: { queryKey: ['listSavedPlaces'], enabled: !!auth?.user } });
 
   const savePlace = useSavePlace();
   const unsavePlace = useUnsavePlace();
@@ -44,7 +44,7 @@ export default function BusinessDetail() {
       return;
     }
     if (isSaved) {
-      unsavePlace.mutate(id, {
+      unsavePlace.mutate({ businessId: id }, {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["listSavedPlaces"] });
           toast({ title: "Removed from saved places" });
@@ -165,8 +165,8 @@ export default function BusinessDetail() {
                       <ShieldCheck className="text-[#CA922B] w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-1">Verified Minority-Owned</h3>
-                      <p className="text-[#3A1F0E]/70 text-sm">This business is part of our verified network of Minority-owned enterprises, supporting economic empowerment.</p>
+                      <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-1">Verified Black-Owned</h3>
+                      <p className="text-[#3A1F0E]/70 text-sm">This business is part of our verified network of Black-owned enterprises, supporting economic empowerment.</p>
                     </div>
                   </div>
                 )}

@@ -181,7 +181,7 @@ export default function Home() {
           
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             <div className="bg-[#FAF6EF] p-8 rounded-2xl border border-[#3A1F0E]/5 shadow-sm">
-              <p className="text-xl font-serif text-[#3A1F0E] leading-relaxed italic">"Every dollar you spend is a vote. We make it easy to cast that vote for Minority-owned businesses, melanated entrepreneurs, and community-rooted spaces that reinvest in the culture — so the economic power of the Black dollar stays where it belongs."</p>
+              <p className="text-xl font-serif text-[#3A1F0E] leading-relaxed italic">"Every dollar you spend is a vote. We make it easy to cast that vote for Black-owned businesses, melanated entrepreneurs, and community-rooted spaces that reinvest in the culture — so the economic power of the Black dollar stays where it belongs."</p>
             </div>
             <div className="bg-[#FAF6EF] p-8 rounded-2xl border border-[#3A1F0E]/5 shadow-sm">
               <p className="text-xl font-serif text-[#3A1F0E] leading-relaxed italic">"Every score, review, and recommendation on this platform comes from people who've actually been there. That's not a feature. That's the foundation."</p>
@@ -646,7 +646,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 gap-6 mb-12">
             {[
-              { title: "Discover", label: "Find Minority-Owned Businesses", desc: "Search by city, category, or keyword. Every listing is community-verified." },
+              { title: "Discover", label: "Find Black-Owned Businesses", desc: "Search by city, category, or keyword. Every listing is community-verified." },
               { title: "Safety", label: "Real-Time Safety Intelligence", desc: "Community-sourced scores, alerts, and the 'Would Return Alone' metric." },
               { title: "Personalized", label: "Your Curated Feed", desc: "AI-powered picks based on your identity, interests, and travel goals." },
               { title: "Community", label: "Connect & Network", desc: "Join groups, attend meetups, and build relationships before you arrive." }
@@ -666,7 +666,7 @@ export default function Home() {
 
           <div className="text-center">
             <Button className="rounded-full bg-[#2B1507] hover:bg-[#1a0c04] text-white px-8 h-12 mb-8">Explore the Platform</Button>
-            <p className="text-xs text-[#3A1F0E]/50">* "Minority-owned business" is defined as any business that is 51% or more owned and operated by a Black person or persons.</p>
+            <p className="text-xs text-[#3A1F0E]/50">* "Black-owned business" is defined as any business that is 51% or more owned and operated by a Black person or persons.</p>
           </div>
         </div>
       </section>
@@ -691,7 +691,7 @@ export default function Home() {
                 name: "Aaliyah T.", role: "Frequent Traveler", loc: "Atlanta, GA", initials: "AT"
               },
               { 
-                quote: "I've been looking for something like this for years. Being able to find Minority-owned restaurants, hotels, and shops in cities I've never visited — and know they're community-verified — is a game changer.",
+                quote: "I've been looking for something like this for years. Being able to find Black-owned restaurants, hotels, and shops in cities I've never visited — and know they're community-verified — is a game changer.",
                 name: "Marcus J.", role: "Digital Nomad", loc: "Houston, TX", initials: "MJ"
               },
               { 
@@ -699,7 +699,7 @@ export default function Home() {
                 name: "Simone R.", role: "Relocating Professional", loc: "Charlotte, NC", initials: "SR"
               },
               { 
-                quote: "As a business owner, being listed on this platform has been incredible. I've seen new customers specifically say they found me here because they wanted to support verified Minority-owned businesses.",
+                quote: "As a business owner, being listed on this platform has been incredible. I've seen new customers specifically say they found me here because they wanted to support verified Black-owned businesses.",
                 name: "DeShawn M.", role: "Business Owner", loc: "New Orleans, LA", initials: "DM"
               }
             ].map((t, i) => (

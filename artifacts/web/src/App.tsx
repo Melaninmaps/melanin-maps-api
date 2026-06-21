@@ -7,6 +7,7 @@ import { Layout } from "@/components/layout";
 
 import Home from "@/pages/home";
 import Explore from "@/pages/explore";
+import Discover from "@/pages/discover";
 import BusinessDetail from "@/pages/business-detail";
 import Safety from "@/pages/safety";
 import Community from "@/pages/community";
@@ -16,6 +17,12 @@ import Roadmap from "@/pages/roadmap";
 import Membership from "@/pages/membership";
 import Login from "@/pages/login";
 import Profile from "@/pages/profile";
+import Travel from "@/pages/travel";
+import MapPage from "@/pages/map";
+import Events from "@/pages/events";
+import PrivacyPolicy from "@/pages/privacy-policy";
+import Terms from "@/pages/terms";
+import CommunityGuidelines from "@/pages/community-guidelines";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +40,9 @@ function Router() {
       <Route path="/explore">
         <Layout><Explore /></Layout>
       </Route>
+      <Route path="/discover">
+        <Layout><Discover /></Layout>
+      </Route>
       <Route path="/businesses">
         <Layout><Businesses /></Layout>
       </Route>
@@ -44,6 +54,15 @@ function Router() {
       </Route>
       <Route path="/community">
         <Layout><Community /></Layout>
+      </Route>
+      <Route path="/events">
+        <Layout><Events /></Layout>
+      </Route>
+      <Route path="/travel">
+        <Layout><Travel /></Layout>
+      </Route>
+      <Route path="/map">
+        <Layout><MapPage /></Layout>
       </Route>
       <Route path="/for-business-owners">
         <Layout><ForBusinessOwners /></Layout>
@@ -57,6 +76,15 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/profile">
         <Layout><Profile /></Layout>
+      </Route>
+      <Route path="/privacy-policy">
+        <Layout><PrivacyPolicy /></Layout>
+      </Route>
+      <Route path="/terms">
+        <Layout><Terms /></Layout>
+      </Route>
+      <Route path="/community-guidelines">
+        <Layout><CommunityGuidelines /></Layout>
       </Route>
       <Route component={NotFound} />
     </Switch>

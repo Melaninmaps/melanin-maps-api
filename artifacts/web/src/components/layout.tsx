@@ -116,47 +116,50 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div>
               <h3 className="font-serif font-bold text-xl mb-6 text-white">Discover</h3>
               <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
-                <li>Minority-Owned Businesses</li>
-                <li>Restaurants & Nightlife</li>
-                <li>Hotels & Stays</li>
-                <li>Cultural Landmarks</li>
-                <li>Hidden Gems</li>
+                <li><Link href="/businesses"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Black-Owned Businesses</span></Link></li>
+                <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Restaurants & Nightlife</span></Link></li>
+                <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Hotels & Stays</span></Link></li>
+                <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Cultural Landmarks</span></Link></li>
+                <li><Link href="/map"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Explore the Map</span></Link></li>
               </ul>
             </div>
             <div>
               <h3 className="font-serif font-bold text-xl mb-6 text-white">Community</h3>
               <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
-                <li>Groups & Meetups</li>
-                <li>Networking</li>
-                <li>Cultural Events</li>
-                <li>Travel Partnerships</li>
+                <li><Link href="/community"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Groups & Meetups</span></Link></li>
+                <li><Link href="/community"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Networking</span></Link></li>
+                <li><Link href="/events"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Cultural Events</span></Link></li>
+                <li><Link href="/travel"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">KinfolkAI Travel Planner</span></Link></li>
               </ul>
             </div>
             <div>
               <h3 className="font-serif font-bold text-xl mb-6 text-white">Platform</h3>
               <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
-                <li>Safety & Reviews</li>
-                <li>Community Guidelines</li>
-                <li>Membership Plans</li>
-                <li>Explore Businesses</li>
+                <li><Link href="/safety"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Safety & Reviews</span></Link></li>
+                <li><Link href="/community-guidelines"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Community Guidelines</span></Link></li>
+                <li><Link href="/membership"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Membership Plans</span></Link></li>
+                <li><Link href="/roadmap"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Product Roadmap</span></Link></li>
               </ul>
             </div>
             <div>
               <h3 className="font-serif font-bold text-xl mb-6 text-white">About Us</h3>
               <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
-                <li>Contact</li>
-                <li>Legal</li>
-                <li>Terms of Service</li>
-                <li>Privacy Policy</li>
-                <li>Review Policy</li>
-                <li>Business Verification</li>
-                <li>Refund & Subscription Policy</li>
+                <li><a href="mailto:hello@melaninmaps.com" className="hover:text-[#CA922B] transition-colors cursor-pointer">Contact Us</a></li>
+                <li><Link href="/for-business-owners"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">List Your Business</span></Link></li>
+                <li><Link href="/terms"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Terms of Service</span></Link></li>
+                <li><Link href="/privacy-policy"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Privacy Policy</span></Link></li>
+                <li><Link href="/community-guidelines"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Community Guidelines</span></Link></li>
               </ul>
             </div>
           </div>
           
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#F5EBD8]/60">
-            <p>© 2026 Mapping with Melanin™. All rights reserved. · Privacy Policy · Terms of Service</p>
+            <p>© 2026 Mapping with Melanin™. All rights reserved.</p>
+            <div className="flex gap-4">
+              <Link href="/privacy-policy"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Privacy Policy</span></Link>
+              <Link href="/terms"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Terms of Service</span></Link>
+              <Link href="/community-guidelines"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Community Guidelines</span></Link>
+            </div>
           </div>
         </div>
       </footer>

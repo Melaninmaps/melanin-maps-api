@@ -20,7 +20,7 @@ export default function Explore() {
       safety: "4.9",
       featured: true,
       image: `${import.meta.env.BASE_URL}images/biz-gathering-table.jpg`,
-      tags: ["Community Trusted", "Traveler Favorite", "Soul Food", "Minority-Owned", "Dine-In"]
+      tags: ["Community Trusted", "Traveler Favorite", "Soul Food", "Black-Owned", "Dine-In"]
     },
     {
       id: "2",
@@ -35,7 +35,7 @@ export default function Explore() {
       safety: "4.9",
       featured: true,
       image: `${import.meta.env.BASE_URL}images/biz-heritage-hotel.jpg`,
-      tags: ["Community Trusted", "Top Rated", "Boutique", "Historic", "Minority-Owned"]
+      tags: ["Community Trusted", "Top Rated", "Boutique", "Historic", "Black-Owned"]
     },
     {
       id: "3",
@@ -99,7 +99,7 @@ export default function Explore() {
     }
   ];
 
-  const categories = ["All", "Minority-Owned Businesses", "Restaurants & Nightlife", "Hotels & Stays", "Cultural Landmarks", "Professional Services", "Community Events", "Hidden Gems"];
+  const categories = ["All", "Black-Owned Businesses", "Restaurants & Nightlife", "Hotels & Stays", "Cultural Landmarks", "Professional Services", "Community Events", "Hidden Gems"];
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
@@ -113,7 +113,7 @@ export default function Explore() {
           </div>
           <h1 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4">Explore With Purpose</h1>
           <p className="text-[#F5EBD8]/80 max-w-xl mx-auto mb-8 font-light">
-            Find Minority-owned businesses, cultural landmarks, safe stays, and community events wherever you go.
+            Find Black-owned businesses, cultural landmarks, safe stays, and community events wherever you go.
           </p>
 
           <div className="w-full max-w-2xl bg-white rounded-full p-2 flex items-center shadow-lg">
