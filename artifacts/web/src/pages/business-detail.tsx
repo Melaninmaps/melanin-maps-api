@@ -108,7 +108,7 @@ export default function BusinessDetail() {
     const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     const ogImageUrl = `${window.location.origin}${base}/api/og/business/${id}`;
     const title = `${business.name} — Mapping With Melanin™`;
-    const description = `${business.category} in ${business.city ?? ""}${business.state ? `, ${business.state}` : ""}. Discover Black-owned businesses on Mapping With Melanin™.`;
+    const description = `${business.category} in ${business.city ?? ""}${business.state ? `, ${business.state}` : ""}. Discover Minority-owned businesses on Mapping With Melanin™.`;
 
     const getOrCreate = (prop: string): HTMLMetaElement => {
       let el = document.querySelector<HTMLMetaElement>(`meta[property="${prop}"]`);
