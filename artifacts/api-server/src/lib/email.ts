@@ -7,27 +7,72 @@ function log(msg: string) {
   if (!resend) console.warn("[email] RESEND_API_KEY not set — skipping:", msg);
 }
 
-export async function sendWaitlistConfirmation(to: string, position: number, referralCode: string) {
+export async function sendWaitlistConfirmation(to: string, position: number, referralCode: string, firstName: string) {
   if (!resend) { log("waitlist confirmation"); return; }
+  const referralLink = `https://www.melaninmaps.com/?ref=${referralCode}`;
   await resend.emails.send({
     from: FROM,
     to,
-    subject: `You're #${position} on the Mapping With Melanin™ waitlist 🎉`,
+    subject: "Welcome to the Mapping with Melanin™ Waitlist 🗺️✊🏾",
     html: `
-      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
-        <img src="https://www.melaninmaps.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
-        <h1 style="font-size:28px;color:#2B1507;margin:0 0 12px">You're on the list!</h1>
-        <p style="color:#3A1F0E;opacity:0.7;font-size:16px;line-height:1.6;margin:0 0 24px">
-          Welcome to the Mapping With Melanin™ community. You're <strong style="color:#CA922B">#${position}</strong> in line — we'll send you early access as soon as your city launches.
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://www.melaninmaps.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 16px">Hello ${firstName},</p>
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 16px">Welcome to the Mapping with Melanin™ waitlist!</p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          We're excited to have you join a growing community of travelers, explorers, professionals, entrepreneurs, and changemakers who believe that finding connection, opportunity, and belonging should be easier wherever life takes you.
         </p>
-        <div style="background:#2B1507;border-radius:12px;padding:20px 24px;margin-bottom:24px">
-          <p style="color:#F5EBD8;font-size:13px;margin:0 0 6px;opacity:0.7">YOUR REFERRAL CODE</p>
-          <p style="color:#CA922B;font-size:24px;font-weight:700;margin:0;letter-spacing:4px">${referralCode}</p>
-          <p style="color:#F5EBD8;font-size:13px;margin:8px 0 0;opacity:0.6">Share it to move up the list</p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          Mapping with Melanin™ is more than an app. We're building a community-powered platform designed to help people discover businesses, neighborhoods, employers, events, and communities through real experiences and shared insights.
+        </p>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;margin:0 0 8px">As a waitlist member, you'll be among the first to:</p>
+        <ul style="color:#3A1F0E;font-size:16px;line-height:1.8;margin:0 0 16px;padding-left:20px">
+          <li>Receive early access to the platform</li>
+          <li>Help shape future features and functionality</li>
+          <li>Participate in testing opportunities</li>
+          <li>Share feedback that directly influences development</li>
+          <li>Join a community committed to connection, discovery, and empowerment</li>
+        </ul>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          What makes Mapping with Melanin™ different is that the platform is powered by its community. Every review, recommendation, safety insight, business listing, event submission, and neighborhood experience helps create a richer, more valuable resource for everyone.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          Your voice matters, and we're grateful you've chosen to be part of this journey from the beginning.
+        </p>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;margin:0 0 24px">Waitlist Position: <span style="color:#CA922B">#${position}</span></p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:24px;margin-bottom:24px">
+          <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 12px;text-align:center;letter-spacing:1px">── Move Up the Waitlist ──</p>
+          <p style="color:#F5EBD8;font-size:15px;line-height:1.6;margin:0 0 16px;text-align:center">
+            Invite friends and move up the waitlist. Every person who joins using your link moves you closer to early access.
+          </p>
+          <p style="color:#F5EBD8;font-size:14px;margin:0 0 6px">Your personal link:</p>
+          <a href="${referralLink}" style="color:#CA922B;font-size:14px;word-break:break-all;display:block;margin-bottom:12px">${referralLink}</a>
+          <p style="color:#F5EBD8;font-size:14px;margin:0 0 6px">Your referral code:</p>
+          <p style="color:#CA922B;font-size:20px;font-weight:700;margin:0;letter-spacing:4px">${referralCode}</p>
+          <p style="color:#F5EBD8;font-size:13px;margin:16px 0 0;text-align:center;opacity:0.7">──────────────────────────</p>
         </div>
-        <p style="color:#3A1F0E;opacity:0.5;font-size:13px;margin:0">
-          Questions? Reply to this email or reach us at <a href="mailto:hello@melaninmaps.com" style="color:#CA922B">hello@melaninmaps.com</a>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          We'll keep you updated as we move closer to launch and will reach out with opportunities for early access, testing, and exclusive announcements.
         </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          Thank you for joining us as we build something special.
+        </p>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
+
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping with Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:14px;opacity:0.6;margin:0">Melanin Maps LLC</p>
       </div>
     `,
   });
@@ -58,23 +103,3 @@ export async function sendApprovalNotification(to: string, firstName: string | n
   });
 }
 
-export async function sendWaitlistRejection(to: string) {
-  if (!resend) { log("rejection notice"); return; }
-  await resend.emails.send({
-    from: FROM,
-    to,
-    subject: "Update on your Mapping With Melanin™ application",
-    html: `
-      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
-        <img src="https://www.melaninmaps.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
-        <h1 style="font-size:28px;color:#2B1507;margin:0 0 12px">Thank you for your interest</h1>
-        <p style="color:#3A1F0E;opacity:0.7;font-size:16px;line-height:1.6;margin:0 0 24px">
-          We appreciate you signing up for Mapping With Melanin™. We're currently in a limited early access phase and aren't able to offer you a spot at this time. We'll keep your information and reach out if that changes.
-        </p>
-        <p style="color:#3A1F0E;opacity:0.5;font-size:13px;margin:0">
-          Questions? Reach us at <a href="mailto:hello@melaninmaps.com" style="color:#CA922B">hello@melaninmaps.com</a>
-        </p>
-      </div>
-    `,
-  });
-}

@@ -2,7 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, waitlistTable } from "@workspace/db";
 import { count, desc, eq } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
-import { sendWaitlistConfirmation, sendWaitlistRejection } from "../lib/email";
+import { sendWaitlistConfirmation } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -21,8 +21,9 @@ function isAdmin(req: Request): boolean {
 
 router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) => {
   try {
-    const { email, city, state, isBusinessOwner, referralCode, referredBy } = req.body as {
+    const { email, firstName, city, state, isBusinessOwner, referralCode, referredBy } = req.body as {
       email?: string;
+      firstName?: string;
       city?: string;
       state?: string;
       isBusinessOwner?: boolean;
@@ -53,7 +54,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
     const [{ total }] = await db.select({ total: count() }).from(waitlistTable);
     const position = Number(total);
 
-    sendWaitlistConfirmation(email.toLowerCase().trim(), position, code).catch(() => {});
+    sendWaitlistConfirmation(email.toLowerCase().trim(), position, code, firstName?.trim() || "there").catch(() => {});
 
     res.status(201).json({ success: true, position, referralCode: code });
   } catch (err) {
@@ -166,10 +167,6 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
     if (!updated) {
       res.status(404).json({ error: "Entry not found" });
       return;
-    }
-
-    if (status === "rejected" && updated.email) {
-      sendWaitlistRejection(updated.email).catch(() => {});
     }
 
     res.json({ entry: updated });
