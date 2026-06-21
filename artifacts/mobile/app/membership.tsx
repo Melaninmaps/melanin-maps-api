@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Linking,
   Platform,
@@ -14,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useMembership } from "@/hooks/useMembership";
 
 type Billing = "monthly" | "annual";
 type Audience = "consumer" | "business";
@@ -195,6 +197,8 @@ export default function MembershipScreen() {
   const [billing, setBilling] = useState<Billing>("monthly");
   const [audience, setAudience] = useState<Audience>("consumer");
 
+  const { subscription, checkoutLoading, checkoutPlanId, initiateCheckout, openPortal } = useMembership();
+
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
@@ -207,15 +211,31 @@ export default function MembershipScreen() {
       await Linking.openURL("mailto:sales@melaninmaps.app?subject=Legacy%20Partner%20Plan%20Inquiry%20%E2%80%94%20Mapping%20with%20Melanin");
       return;
     }
-    Alert.alert(
-      "Coming Soon 🎉",
-      "Paid memberships are launching very soon! Join the waitlist to be first to know.",
-      [
-        { text: "Join Waitlist", onPress: () => router.push("/waitlist") },
-        { text: "Maybe Later", style: "cancel" },
-      ],
-    );
-  }, [router]);
+
+    const result = await initiateCheckout(plan.name, billing);
+
+    if (result === "no_auth") {
+      Alert.alert(
+        "Sign in required",
+        "Create a free account to start your membership.",
+        [
+          { text: "Sign In", onPress: () => router.push("/login") },
+          { text: "Cancel", style: "cancel" },
+        ],
+      );
+    } else if (result === "no_product") {
+      Alert.alert(
+        "Coming Soon",
+        "This plan is being set up. Join the waitlist to be first to know when it's available!",
+        [
+          { text: "Join Waitlist", onPress: () => router.push("/waitlist") },
+          { text: "Maybe Later", style: "cancel" },
+        ],
+      );
+    } else if (result === "error") {
+      Alert.alert("Something went wrong", "Please try again in a moment.");
+    }
+  }, [router, billing, initiateCheckout]);
 
   const plans = audience === "consumer" ? CONSUMER_PLANS : BUSINESS_PLANS;
 
@@ -225,6 +245,15 @@ export default function MembershipScreen() {
       return `$${(plan.annualTotal / 12).toFixed(2)}/mo`;
     }
     return `$${plan.monthlyPrice.toFixed(2)}/mo`;
+  };
+
+  const isSubscribed = (plan: Plan) =>
+    subscription !== null && subscription.productName === plan.name;
+
+  const getCtaLabel = (plan: Plan) => {
+    if (plan.id === "free") return plan.cta;
+    if (isSubscribed(plan)) return "Manage Subscription";
+    return plan.cta;
   };
 
   return (
@@ -293,12 +322,29 @@ export default function MembershipScreen() {
         ))}
       </View>
 
+      {subscription && (
+        <TouchableOpacity
+          style={[styles.manageBar, { backgroundColor: colors.secondary }]}
+          onPress={openPortal}
+          activeOpacity={0.8}
+        >
+          <Feather name="credit-card" size={15} color={colors.primary} />
+          <Text style={[styles.manageTxt, { color: colors.foreground }]}>
+            Active: <Text style={{ fontFamily: "Inter_600SemiBold" }}>{subscription.productName ?? "Member"}</Text>
+            {subscription.status === "trialing" ? " · Free trial" : ""}
+          </Text>
+          <Text style={[styles.manageLink, { color: colors.primary }]}>Manage →</Text>
+        </TouchableOpacity>
+      )}
+
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 24 }]}
         showsVerticalScrollIndicator={false}
       >
         {plans.map((plan) => {
           const isHighlight = plan.bg !== null;
+          const loading = checkoutLoading && checkoutPlanId === plan.name;
+          const subscribed = isSubscribed(plan);
           return (
             <View
               key={plan.id}
@@ -358,19 +404,28 @@ export default function MembershipScreen() {
                 style={[
                   styles.ctaBtn,
                   {
-                    backgroundColor: isHighlight ? "rgba(255,255,255,0.2)" : colors.muted,
+                    backgroundColor: subscribed
+                      ? (isHighlight ? "rgba(255,255,255,0.3)" : colors.secondary)
+                      : (isHighlight ? "rgba(255,255,255,0.2)" : colors.muted),
                     borderWidth: isHighlight ? 1.5 : 0,
                     borderColor: isHighlight ? "rgba(255,255,255,0.4)" : "transparent",
-                    opacity: 1,
+                    opacity: (plan.id === "free" || loading) ? 0.7 : 1,
                   },
                 ]}
-                onPress={() => { void handleCta(plan); }}
-                disabled={plan.id === "free"}
+                onPress={() => {
+                  if (subscribed) { void openPortal(); return; }
+                  void handleCta(plan);
+                }}
+                disabled={plan.id === "free" || loading}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.ctaTxt, { color: isHighlight ? "#FFF" : colors.mutedForeground }]}>
-                  {plan.id === "free" ? plan.cta : "Coming Soon"}
-                </Text>
+                {loading ? (
+                  <ActivityIndicator size="small" color={isHighlight ? "#FFF" : colors.mutedForeground} />
+                ) : (
+                  <Text style={[styles.ctaTxt, { color: isHighlight ? "#FFF" : colors.mutedForeground }]}>
+                    {getCtaLabel(plan)}
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           );
@@ -458,6 +513,12 @@ const styles = StyleSheet.create({
   billingTxt: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   savingsBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 20 },
   savingsTxt: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  manageBar: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    marginHorizontal: 20, marginBottom: 14, padding: 12, borderRadius: 12,
+  },
+  manageTxt: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular" },
+  manageLink: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   scroll: { paddingHorizontal: 20, gap: 16 },
   planCard: { borderRadius: 20, padding: 22, gap: 18 },
   planBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },

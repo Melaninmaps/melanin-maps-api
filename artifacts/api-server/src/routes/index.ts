@@ -25,6 +25,7 @@ import kinfolkRouter from "./kinfolk";
 import wishlistRouter from "./wishlist";
 import claimsRouter from "./claims";
 import notificationsRouter from "./notifications";
+import stripeRouter from "./stripe";
 
 const router: IRouter = Router();
 
@@ -54,5 +55,6 @@ router.use(kinfolkRouter);
 router.use(wishlistRouter);
 router.use(claimsRouter);
 router.use(notificationsRouter);
+router.use(stripeRouter);
 
 export default router;
