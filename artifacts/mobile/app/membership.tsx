@@ -268,7 +268,7 @@ export default function MembershipScreen() {
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Membership</Text>
           <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>
-            Support the community & unlock more
+            Support the community & unlock premium features
           </Text>
         </View>
         <View style={{ width: 40 }} />

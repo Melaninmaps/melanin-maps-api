@@ -96,10 +96,10 @@ export default function ProfileScreen() {
             contentFit="contain"
           />
           <Text style={[styles.signInTitle, { color: colors.foreground }]}>
-            Join the Community
+            Connect With a Global Community
           </Text>
           <Text style={[styles.signInSub, { color: colors.mutedForeground }]}>
-            Sign in to save your favorite businesses, leave reviews, RSVP to events, and connect with the community.
+            Mapping with Melanin™ connects people to trusted businesses, meaningful relationships, and thriving communities. Sign in to save favorites, leave reviews, and connect.
           </Text>
           <TouchableOpacity
             style={[styles.signInBtn, { backgroundColor: colors.primary }]}
@@ -113,8 +113,8 @@ export default function ProfileScreen() {
             {[
               { icon: "bookmark", label: "Save Favorites" },
               { icon: "star", label: "Leave Reviews" },
-              { icon: "calendar", label: "RSVP Events" },
-              { icon: "users", label: "Join Community" },
+              { icon: "map-pin", label: "Find Businesses" },
+              { icon: "users", label: "Join Groups" },
             ].map((b) => (
               <View key={b.label} style={[styles.benefitItem, { backgroundColor: colors.background, borderColor: colors.border }]}>
                 <Feather name={b.icon as any} size={18} color={colors.primary} />
@@ -172,9 +172,9 @@ export default function ProfileScreen() {
                   </View>
                 ))}
               </View>
-              <Text style={[styles.newUserTitle, { color: colors.foreground }]}>Your journey starts here</Text>
+              <Text style={[styles.newUserTitle, { color: colors.foreground }]}>Built for Connection</Text>
               <Text style={[styles.newUserSub, { color: colors.mutedForeground }]}>
-                Explore businesses, leave reviews, and earn points as you build your community presence.
+                Every feature on Mapping with Melanin is designed to bring people together — locally and globally.
               </Text>
             </View>
           ) : (
@@ -206,10 +206,10 @@ export default function ProfileScreen() {
 
       {isAuthenticated && reviewCount === 0 && savedIds.length === 0 && pointsTotal === 0 && (
         <View style={[styles.gettingStartedCard, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.foreground }]}>
-          <Text style={[styles.gettingStartedTitle, { color: colors.foreground }]}>Get Started</Text>
-          <Text style={[styles.gettingStartedSub, { color: colors.mutedForeground }]}>Complete these steps to unlock your community</Text>
+          <Text style={[styles.gettingStartedTitle, { color: colors.foreground }]}>Get Connected</Text>
+          <Text style={[styles.gettingStartedSub, { color: colors.mutedForeground }]}>Complete these steps to start connecting locally and globally</Text>
           {[
-            { icon: "compass" as const, label: "Find a Black-owned business", route: "/(tabs)" as const },
+            { icon: "compass" as const, label: "Find a trusted business", route: "/(tabs)" as const },
             { icon: "star" as const, label: "Leave your first review", route: "/(tabs)" as const },
             { icon: "shield" as const, label: "Submit a safety report", route: "/report-safety" as const },
             { icon: "users" as const, label: "Join a community group", route: "/(tabs)/community" as const },
@@ -272,7 +272,7 @@ export default function ProfileScreen() {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.listBizTitle}>Own a Business?</Text>
-            <Text style={styles.listBizSub}>Get listed on the Mapping With Melanin directory and reach thousands of community members.</Text>
+            <Text style={styles.listBizSub}>Get your business community-reviewed, authenticity-checked, and in front of thousands of locals and travelers.</Text>
           </View>
         </View>
         <View style={[styles.listBizCta, { backgroundColor: "rgba(255,255,255,0.2)" }]}>

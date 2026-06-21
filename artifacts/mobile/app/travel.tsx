@@ -512,7 +512,7 @@ function WelcomeScreen({
       </View>
       <Text style={[wsStyles.title, { color: colors.text }]}>Hey, I'm KinfolkAI™</Text>
       <Text style={[wsStyles.sub, { color: colors.mutedForeground }]}>
-        Your personal travel companion for Black-owned spots, community intel, and real city knowledge — from people who actually live there.
+        Your AI travel companion for trusted businesses, community safety intel, and real city knowledge — from people who actually live there.
       </Text>
       <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground }]}>Where you headed?</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>

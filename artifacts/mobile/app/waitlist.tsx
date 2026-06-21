@@ -28,9 +28,9 @@ const SHARE_PLATFORMS = [
 
 const BENEFITS = [
   { icon: "zap", label: "Early Access", desc: "First to explore new cities and features" },
-  { icon: "shield", label: "Safety Insights", desc: "Community-powered safety scores from day one" },
-  { icon: "map-pin", label: "24 Cities", desc: "Black-owned businesses across 24 major cities" },
-  { icon: "users", label: "Community", desc: "Join thousands building a safer travel network" },
+  { icon: "shield", label: "Safety Insights", desc: "Community-driven safety scores, verified reviews, and real-time insights" },
+  { icon: "map-pin", label: "48 States", desc: "2,400+ verified Minority-owned businesses nationwide" },
+  { icon: "users", label: "10K+ Members", desc: "Join a global community of travelers, entrepreneurs, and creators" },
 ];
 
 export default function WaitlistScreen() {
@@ -83,7 +83,7 @@ export default function WaitlistScreen() {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Join me on Mapping with Melanin — the community-powered travel guide for Black explorers. Use my link to skip the line: ${referralLink}`,
+        message: `Join me on Mapping with Melanin™ — connecting people to trusted businesses, meaningful relationships, and thriving communities. Use my link to skip the line: ${referralLink}`,
         url: referralLink,
       });
     } catch {}
@@ -122,7 +122,7 @@ export default function WaitlistScreen() {
                 Join the Waitlist
               </Text>
               <Text style={[styles.heroSub, { color: colors.mutedForeground }]}>
-                Be among the first to discover Black-owned businesses, community safety scores, and AI travel guides across 24 cities.
+                Be among the first to connect with trusted businesses, community safety intelligence, and AI travel guides across 200+ cities worldwide.
               </Text>
 
               <View style={[styles.positionBadge, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }]}>

@@ -23,7 +23,7 @@ const SECTIONS = [
     color: "#3B1F0E",
     title: "About the Platform",
     clauses: [
-      { heading: "What We Provide", body: "Mapping With Melanin™ is a community-powered platform that helps users discover Black-owned businesses, share safety information, and connect with the Black travel and cultural community." },
+      { heading: "What We Provide", body: "Mapping with Melanin™ connects people to trusted businesses, meaningful relationships, thriving communities, and new opportunities through the power of shared experiences and community-driven insights." },
       { heading: "No Guarantee of Accuracy", body: "Business listings, safety ratings, and community-generated content are provided by users. We do not independently verify all information. Always use your own judgment when making decisions based on platform data." },
       { heading: "Service Availability", body: "We aim to maintain continuous availability but do not guarantee uninterrupted access. We reserve the right to modify, suspend, or discontinue the Platform at any time with reasonable notice." },
     ],

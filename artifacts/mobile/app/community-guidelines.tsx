@@ -88,7 +88,7 @@ export default function CommunityGuidelinesScreen() {
           </View>
           <Text style={[styles.introTitle, { color: colors.foreground }]}>Our Community Standards</Text>
           <Text style={[styles.introBody, { color: colors.mutedForeground }]}>
-            Mapping With Melanin™ exists to help Black travelers, explorers, and community members discover safe, welcoming spaces. These guidelines protect that mission.
+            Mapping with Melanin™ connects people to trusted businesses, meaningful relationships, and thriving communities through the power of shared experiences. These guidelines protect that mission.
           </Text>
           <Text style={[styles.introUpdate, { color: colors.mutedForeground }]}>Last updated: June 2026</Text>
         </View>
