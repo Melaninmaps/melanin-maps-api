@@ -358,7 +358,7 @@ export default function Discover() {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-[#2B1507]/90 via-[#2B1507]/30 to-transparent" />
                     <div className="absolute top-4 left-4 flex flex-col gap-2">
-                      {business.featured && (
+                      {(business as any).featured && (
                         <div className="bg-[#CA922B] text-white text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-full shadow-md w-fit">
                           Featured
                         </div>

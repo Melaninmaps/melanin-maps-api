@@ -10,6 +10,9 @@ import { generalLimiter } from "./middleware/rateLimiter";
 
 const app: Express = express();
 
+// Trust the proxy in front of us (Replit's reverse proxy sets X-Forwarded-For)
+app.set("trust proxy", 1);
+
 app.use(
   pinoHttp({
     logger,

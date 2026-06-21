@@ -29,6 +29,7 @@ export interface Business {
   website?: string;
   hours?: string;
   priceRange?: string;
+  imageUrl?: string;
   confidenceScore: number;
   blackOwned: boolean;
   ownershipDesignations: string[];

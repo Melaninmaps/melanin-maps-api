@@ -23,9 +23,9 @@ router.get("/api/jobs", async (req, res) => {
 });
 
 router.post("/api/jobs", async (req, res) => {
-  if (!req.user?.id) return res.status(401).json({ error: "Unauthorized" });
+  if (!req.user?.id) { res.status(401).json({ error: "Unauthorized" }); return; }
   const parsed = insertJobListingSchema.safeParse({ ...req.body, postedById: req.user.id });
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
   try {
     const [job] = await db.insert(jobListingsTable).values(parsed.data).returning();
     res.status(201).json(job);
@@ -36,7 +36,7 @@ router.post("/api/jobs", async (req, res) => {
 });
 
 router.delete("/api/jobs/:id", async (req, res) => {
-  if (!req.user?.id) return res.status(401).json({ error: "Unauthorized" });
+  if (!req.user?.id) { res.status(401).json({ error: "Unauthorized" }); return; }
   try {
     await db.delete(jobListingsTable).where(
       and(eq(jobListingsTable.id, req.params.id), eq(jobListingsTable.postedById, req.user.id))
