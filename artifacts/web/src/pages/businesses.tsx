@@ -1,5 +1,80 @@
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, Search, Users, MapPin, CheckCircle } from "lucide-react";
+import { ShieldCheck, Search, Users, MapPin, CheckCircle, Star } from "lucide-react";
+
+const BUSINESSES = [
+  {
+    name: "The Gathering Table",
+    category: "Restaurant",
+    city: "Atlanta, GA",
+    score: 96,
+    featured: true,
+    img: `${import.meta.env.BASE_URL}images/biz-gathering-table.jpg`,
+    tags: ["Community Trusted", "Soul Food", "Minority-Owned"],
+    recommend: 97,
+    returnAlone: 94,
+    rating: 4.9,
+  },
+  {
+    name: "Heritage Boutique Hotel",
+    category: "Hotel",
+    city: "New Orleans, LA",
+    score: 97,
+    featured: true,
+    img: `${import.meta.env.BASE_URL}images/biz-heritage-hotel.jpg`,
+    tags: ["Top Rated", "Boutique", "Minority-Owned"],
+    recommend: 98,
+    returnAlone: 96,
+    rating: 4.9,
+  },
+  {
+    name: "Diaspora Arts Collective",
+    category: "Cultural Landmark",
+    city: "Harlem, NY",
+    score: 98,
+    featured: false,
+    img: `${import.meta.env.BASE_URL}images/biz-diaspora-arts.jpg`,
+    tags: ["Highly Recommended", "Art", "Culture"],
+    recommend: 99,
+    returnAlone: 97,
+    rating: 5,
+  },
+  {
+    name: "Afrobeats & Culture Fest",
+    category: "Community Event",
+    city: "Houston, TX",
+    score: 93,
+    featured: false,
+    img: `${import.meta.env.BASE_URL}images/biz-afrobeats-fest.jpg`,
+    tags: ["Local Gem", "Live Music", "Minority-Owned"],
+    recommend: 95,
+    returnAlone: 91,
+    rating: 4.7,
+  },
+  {
+    name: "Carter & Associates Law",
+    category: "Professional Services",
+    city: "Chicago, IL",
+    score: 92,
+    featured: false,
+    img: `${import.meta.env.BASE_URL}images/biz-carter-law.jpg`,
+    tags: ["Community Trusted", "Legal", "Minority-Owned"],
+    recommend: 94,
+    returnAlone: 90,
+    rating: 4.8,
+  },
+  {
+    name: "Roots & Routes Café",
+    category: "Restaurant",
+    city: "Washington, D.C.",
+    score: 89,
+    featured: false,
+    img: `${import.meta.env.BASE_URL}images/biz-roots-cafe.jpg`,
+    tags: ["Pan-African", "Community Space", "Minority-Owned"],
+    recommend: 87,
+    returnAlone: 83,
+    rating: 4.6,
+  },
+];
 
 export default function Businesses() {
   return (
@@ -78,8 +153,37 @@ export default function Businesses() {
           </div>
         </div>
 
+        {/* Business listing grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+          {BUSINESSES.map((biz, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-[#3A1F0E]/8 overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <div className="relative h-48 overflow-hidden">
+                <img src={biz.img} alt={biz.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute top-3 left-3 flex gap-2">
+                  {biz.featured && <span className="bg-[#CA922B] text-white text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide">Featured</span>}
+                  <span className="bg-[#2B1507]/80 text-white text-xs font-bold px-2 py-1 rounded-full">{biz.score}/100</span>
+                </div>
+              </div>
+              <div className="p-5">
+                <div className="text-[10px] font-bold tracking-widest text-[#CA922B] uppercase mb-1">{biz.category} · {biz.city}</div>
+                <h3 className="font-serif font-bold text-lg text-[#3A1F0E] mb-2">{biz.name}</h3>
+                <div className="flex gap-4 text-xs text-[#3A1F0E]/60 mb-4">
+                  <span><span className="font-bold text-[#3A1F0E]">{biz.recommend}%</span> Recommend</span>
+                  <span><span className="font-bold text-[#3A1F0E]">{biz.returnAlone}%</span> Return Alone</span>
+                  <span className="flex items-center gap-1"><Star className="w-3 h-3 fill-[#CA922B] text-[#CA922B]"/><span className="font-bold text-[#3A1F0E]">{biz.rating}</span></span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {biz.tags.map((t, j) => (
+                    <span key={j} className="bg-[#FAF6EF] text-[#3A1F0E]/70 text-xs px-3 py-1 rounded-full border border-[#3A1F0E]/8">{t}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* CTA section */}
-        <div className="bg-[#FAF6EF] p-12 rounded-3xl border border-[#3A1F0E]/10 flex flex-col md:flex-row items-center gap-12 mt-24">
+        <div className="bg-[#FAF6EF] p-12 rounded-3xl border border-[#3A1F0E]/10 flex flex-col md:flex-row items-center gap-12 mt-8">
           <div className="flex-1">
             <div className="text-xs font-bold tracking-widest text-[#CA922B] uppercase mb-4">FOR BUSINESS OWNERS & COMMUNITY</div>
             <h3 className="text-3xl font-serif font-bold text-[#3A1F0E] mb-4">Know a Business Worth Sharing?</h3>

@@ -249,10 +249,18 @@ export default function BusinessDetail() {
               </TabsContent>
 
               <TabsContent value="location" className="space-y-8 animate-in fade-in">
-                <div className="bg-[#2B1507]/5 w-full h-64 rounded-2xl flex items-center justify-center border border-[#2B1507]/10">
-                  <div className="flex flex-col items-center text-[#3A1F0E]/50">
-                    <MapPin className="w-8 h-8 mb-2" />
-                    <span>Interactive Map Placeholder</span>
+                <div className="w-full h-64 rounded-2xl overflow-hidden border border-[#2B1507]/10 relative bg-[#FAF6EF]">
+                  <img
+                    src={`${import.meta.env.BASE_URL}images/hero-safety-bg.jpg`}
+                    alt="Map view"
+                    className="w-full h-full object-cover opacity-40"
+                  />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-4 flex flex-col items-center shadow-lg border border-[#CA922B]/20">
+                      <MapPin className="w-8 h-8 text-[#CA922B] mb-2" />
+                      <span className="font-bold text-[#3A1F0E]">{business.city}{business.state ? `, ${business.state}` : ''}</span>
+                      <span className="text-xs text-[#3A1F0E]/50 mt-1">Interactive map coming soon</span>
+                    </div>
                   </div>
                 </div>
               </TabsContent>

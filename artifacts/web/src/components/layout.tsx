@@ -25,9 +25,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 w-full bg-[#2B1507] text-[#F5EBD8] shadow-md">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#FAF6EF] border-2 border-[#CA922B] flex items-center justify-center shrink-0 overflow-hidden">
-              {/* Using a placeholder for logo */}
-              <div className="w-6 h-6 bg-[#2B1507] rounded-full" />
+            <div className="w-12 h-12 rounded-full bg-[#FAF6EF] border-2 border-[#CA922B] shrink-0 overflow-hidden">
+              <img
+                src={`${import.meta.env.BASE_URL}images/logo-transparent.png`}
+                alt="Mapping with Melanin logo"
+                className="w-full h-full object-cover object-top scale-110"
+              />
             </div>
             <span className="font-serif font-bold text-xl md:text-2xl text-white tracking-tight">
               Mapping with Melanin™
