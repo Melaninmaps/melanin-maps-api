@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -78,6 +78,12 @@ export function SafetyExperienceSurvey({ visible, businessName, onClose, onSubmi
 
   const handleClose = () => { reset(); onClose(); };
 
+  useEffect(() => {
+    if (!submitted) return;
+    const t = setTimeout(() => { handleClose(); }, 3500);
+    return () => clearTimeout(t);
+  }, [submitted]);
+
   const canNext = () => {
     if (step === 0) return data.overallSafety > 0 && data.returnAlone > 0 && data.wouldRecommend > 0;
     if (step === 1) return data.timeOfDay !== "" && data.groupType !== "";
@@ -127,14 +133,19 @@ export function SafetyExperienceSurvey({ visible, businessName, onClose, onSubmi
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
             {submitted ? (
               <View style={styles.thankYou}>
-                <View style={[styles.thankIcon, { backgroundColor: "#C4622D18" }]}>
-                  <Feather name="shield" size={40} color="#C4622D" />
+                <View style={[styles.thankIcon, { backgroundColor: "#2D7A4F18" }]}>
+                  <Feather name="check-circle" size={44} color="#2D7A4F" />
                 </View>
-                <Text style={[styles.thankTitle, { color: colors.foreground }]}>Thank You!</Text>
+                <Text style={[styles.thankTitle, { color: colors.foreground }]}>Report Submitted</Text>
+                <Text style={[styles.thankBiz, { color: colors.primary }]}>{businessName}</Text>
                 <Text style={[styles.thankSub, { color: colors.mutedForeground }]}>
-                  Your safety experience helps the community make informed decisions. Your feedback matters.
+                  Your experience has been added to the community safety score for this location. Every report helps our community travel smarter and live with confidence.
                 </Text>
-                <TouchableOpacity style={[styles.doneBtn, { backgroundColor: "#C4622D" }]} onPress={handleClose}>
+                <View style={[styles.thankPoints, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
+                  <Feather name="award" size={14} color={colors.primary} />
+                  <Text style={[styles.thankPointsText, { color: colors.primary }]}>+10 community points earned</Text>
+                </View>
+                <TouchableOpacity style={[styles.doneBtn, { backgroundColor: "#2D7A4F" }]} onPress={handleClose}>
                   <Text style={styles.doneBtnText}>Done</Text>
                 </TouchableOpacity>
               </View>
@@ -326,10 +337,21 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   nextBtnText: { fontFamily: "Inter_700Bold", fontSize: 15 },
-  thankYou: { alignItems: "center", gap: 16, paddingTop: 40 },
-  thankIcon: { width: 80, height: 80, borderRadius: 40, alignItems: "center", justifyContent: "center" },
+  thankYou: { alignItems: "center", gap: 14, paddingTop: 40, paddingHorizontal: 8 },
+  thankIcon: { width: 86, height: 86, borderRadius: 43, alignItems: "center", justifyContent: "center" },
   thankTitle: { fontFamily: "Inter_700Bold", fontSize: 26 },
-  thankSub: { fontFamily: "Inter_400Regular", fontSize: 15, textAlign: "center", lineHeight: 24, paddingHorizontal: 16 },
-  doneBtn: { marginTop: 8, paddingHorizontal: 48, paddingVertical: 14, borderRadius: 14 },
+  thankBiz: { fontFamily: "Inter_600SemiBold", fontSize: 14, marginTop: -6 },
+  thankSub: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 22, paddingHorizontal: 8 },
+  thankPoints: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  thankPointsText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  doneBtn: { marginTop: 4, paddingHorizontal: 48, paddingVertical: 14, borderRadius: 14 },
   doneBtnText: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#FBF7F0" },
 });

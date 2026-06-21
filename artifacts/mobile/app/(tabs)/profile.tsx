@@ -34,6 +34,11 @@ const SETTINGS = [
   { icon: "share-2" as const, label: "Referral Program", sub: "Invite friends, earn rewards", route: "/referral" as const },
 ];
 
+const ADMIN_EMAILS = (process.env.EXPO_PUBLIC_ADMIN_EMAILS ?? "")
+  .split(",")
+  .map((e) => e.trim())
+  .filter(Boolean);
+
 function getInitials(firstName?: string | null, lastName?: string | null): string {
   const f = firstName?.[0] ?? "";
   const l = lastName?.[0] ?? "";
@@ -46,6 +51,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { savedIds, isSaved, toggleSave } = useFavorites();
   const { user, isLoading, isAuthenticated, login, logout } = useAuth();
+  const isAdminUser = !!(user?.email && ADMIN_EMAILS.includes(user.email));
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
 
   const pickProfileImage = async () => {
@@ -243,9 +249,9 @@ export default function ProfileScreen() {
         {savedBusinesses.length === 0 ? (
           <View style={[styles.emptyFavorites, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Feather name="bookmark" size={28} color={colors.muted} />
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>No saved businesses yet</Text>
+            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Your saved places live here</Text>
             <Text style={[styles.emptySubText, { color: colors.mutedForeground }]}>
-              Tap the bookmark icon on any business to save it here.
+              Tap the bookmark on any business to build your personal guide to Black excellence.
             </Text>
           </View>
         ) : (
@@ -292,10 +298,7 @@ export default function ProfileScreen() {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.messagesBannerTitle, { color: colors.foreground }]}>Messages</Text>
-          <Text style={[styles.messagesBannerSub, { color: colors.mutedForeground }]}>3 unread conversations</Text>
-        </View>
-        <View style={[styles.unreadPill, { backgroundColor: colors.primary }]}>
-          <Text style={styles.unreadPillText}>3</Text>
+          <Text style={[styles.messagesBannerSub, { color: colors.mutedForeground }]}>Connect with your community</Text>
         </View>
         <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
       </TouchableOpacity>
@@ -337,26 +340,28 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Admin Panel access */}
-      <TouchableOpacity
-        style={[styles.adminBanner, { backgroundColor: "#1A1A2E", borderColor: "#DC262630" }]}
-        onPress={() => router.push("/admin")}
-        activeOpacity={0.88}
-      >
-        <View style={styles.adminBannerLeft}>
-          <View style={[styles.adminIcon, { backgroundColor: "#DC262620" }]}>
-            <Feather name="shield" size={20} color="#DC2626" />
+      {/* Admin Panel access — only visible to admin users */}
+      {isAdminUser && (
+        <TouchableOpacity
+          style={[styles.adminBanner, { backgroundColor: "#1A1A2E", borderColor: "#DC262630" }]}
+          onPress={() => router.push("/admin")}
+          activeOpacity={0.88}
+        >
+          <View style={styles.adminBannerLeft}>
+            <View style={[styles.adminIcon, { backgroundColor: "#DC262620" }]}>
+              <Feather name="shield" size={20} color="#DC2626" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.adminBannerTitle}>Admin Panel</Text>
+              <Text style={styles.adminBannerSub}>Manage businesses, users, reports & analytics</Text>
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.adminBannerTitle}>Admin Panel</Text>
-            <Text style={styles.adminBannerSub}>Manage businesses, users, reports & analytics</Text>
+          <View style={[styles.adminCta, { backgroundColor: "#DC262618", borderColor: "#DC262640" }]}>
+            <Text style={styles.adminCtaText}>Open</Text>
+            <Feather name="arrow-right" size={13} color="#DC2626" />
           </View>
-        </View>
-        <View style={[styles.adminCta, { backgroundColor: "#DC262618", borderColor: "#DC262640" }]}>
-          <Text style={styles.adminCtaText}>Open</Text>
-          <Feather name="arrow-right" size={13} color="#DC2626" />
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      )}
 
       {isAuthenticated && (
         <TouchableOpacity

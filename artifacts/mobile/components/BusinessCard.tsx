@@ -153,7 +153,7 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
           <View style={styles.vMeta}>
             <Text style={[styles.vCategory, { color: colors.primary }]}>{business.category}</Text>
             {business.verified && <VerificationBadge />}
-            <ConfidenceScoreBadge score={business.confidenceScore} size="sm" />
+            <ConfidenceScoreBadge score={business.confidenceScore} size="md" showLabel />
           </View>
           <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={12} />
           <Text style={[styles.vLocation, { color: colors.mutedForeground }]} numberOfLines={1}>

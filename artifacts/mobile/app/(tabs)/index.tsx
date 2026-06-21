@@ -205,6 +205,26 @@ export default function DiscoverScreen() {
           </View>
         </View>
 
+        {/* Stats strip */}
+        <View style={styles.statsStrip}>
+          {[
+            { value: "2,400+", label: "Verified Businesses" },
+            { value: "48", label: "States" },
+            { value: "94/100", label: "Avg. Score" },
+            { value: "100%", label: "Authenticity Checked" },
+          ].map((stat, i, arr) => (
+            <React.Fragment key={stat.label}>
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{stat.value}</Text>
+                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{stat.label}</Text>
+              </View>
+              {i < arr.length - 1 && (
+                <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+              )}
+            </React.Fragment>
+          ))}
+        </View>
+
         {/* AI Travel banner */}
         <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 24 }]}>
           <TouchableOpacity
@@ -296,9 +316,9 @@ export default function DiscoverScreen() {
         {filtered.length === 0 && (
           <View style={styles.empty}>
             <Feather name="search" size={40} color={colors.muted} />
-            <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No results found</Text>
+            <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No businesses found</Text>
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-              Try adjusting your search, category, or filters.
+              We're growing every day — try a different search, category, or check back soon.
             </Text>
           </View>
         )}
@@ -518,6 +538,36 @@ const styles = StyleSheet.create({
   },
   prefsTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14, marginBottom: 2 },
   prefsSub: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  statsStrip: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: 20,
+    marginBottom: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    backgroundColor: "transparent",
+  },
+  statItem: {
+    flex: 1,
+    alignItems: "center",
+    gap: 2,
+  },
+  statValue: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 15,
+  },
+  statLabel: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 10,
+    textAlign: "center",
+  },
+  statDivider: {
+    width: 1,
+    height: 28,
+    opacity: 0.4,
+  },
   empty: {
     alignItems: "center",
     justifyContent: "center",

@@ -308,8 +308,8 @@ export default function CommunityScreen() {
             ListEmptyComponent={
               <View style={styles.empty}>
                 <Feather name="calendar" size={40} color={colors.muted} />
-                <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No events found</Text>
-                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Check back soon for upcoming events in your area.</Text>
+                <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No events yet</Text>
+                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Because the best journeys are shared — check back soon for events near you.</Text>
               </View>
             }
             renderItem={({ item }) => (
@@ -361,9 +361,9 @@ export default function CommunityScreen() {
               ) : (
                 <View style={styles.empty}>
                   <Feather name="users" size={40} color={colors.muted} />
-                  <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No groups found</Text>
+                  <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No groups here yet</Text>
                   <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                    Try a different category or create the first one!
+                    Every community starts somewhere. Try a different category or be the one who starts this one.
                   </Text>
                 </View>
               )
@@ -413,11 +413,11 @@ export default function CommunityScreen() {
               <View style={styles.empty}>
                 <Feather name="users" size={40} color={colors.muted} />
                 <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>
-                  {loading ? "Loading…" : "Nothing here yet"}
+                  {loading ? "Loading…" : "Start the conversation"}
                 </Text>
                 {!loading && (
                   <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                    Be the first to share something with the community.
+                    Shared stories power this community. Be the first to post something meaningful.
                   </Text>
                 )}
               </View>

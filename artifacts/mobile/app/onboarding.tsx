@@ -160,7 +160,7 @@ export default function OnboardingScreen() {
                 onPress={() => { markComplete(); router.replace("/waitlist"); }}
                 activeOpacity={0.85}
               >
-                <Text style={styles.primaryFinalTxt}>Create Account</Text>
+                <Text style={styles.primaryFinalTxt}>Join the Waitlist</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.ghostBtn}
