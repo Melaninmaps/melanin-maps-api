@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Redirect } from "wouter";
-import { Check, X, Clock, Users, Mail, MapPin, Briefcase } from "lucide-react";
+import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
 
 type WaitlistEntry = {
   id: string;
+  firstName: string | null;
   email: string;
   city: string | null;
   state: string | null;
@@ -47,6 +48,10 @@ export default function Admin() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+  const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     fetch(`${BASE}api/admin/check`, { credentials: "include" })
@@ -61,26 +66,32 @@ export default function Admin() {
   const loadWaitlist = useCallback(() => {
     return fetch(`${BASE}api/admin/waitlist`, { credentials: "include" })
       .then(r => r.json())
-      .then(data => setWaitlist(data.entries ?? []));
+      .then(data => { setWaitlist(data.entries ?? []); setLastRefreshed(new Date()); });
   }, []);
 
   const loadUsers = useCallback(() => {
     return fetch(`${BASE}api/admin/users`, { credentials: "include" })
       .then(r => r.json())
-      .then(data => setUsers(data.users ?? []));
+      .then(data => { setUsers(data.users ?? []); setLastRefreshed(new Date()); });
   }, []);
+
+  const refreshAll = useCallback(() => {
+    return Promise.all([loadWaitlist(), loadUsers()]);
+  }, [loadWaitlist, loadUsers]);
 
   useEffect(() => {
     if (!isAdmin) return;
     setLoading(true);
-    Promise.all([loadWaitlist(), loadUsers()]).finally(() => setLoading(false));
-  }, [isAdmin, loadWaitlist, loadUsers]);
+    refreshAll().finally(() => setLoading(false));
+
+    refreshTimer.current = setInterval(() => { refreshAll(); }, 2 * 60 * 1000);
+    return () => { if (refreshTimer.current) clearInterval(refreshTimer.current); };
+  }, [isAdmin, refreshAll]);
 
   const updateWaitlist = async (id: string, status: string) => {
     setUpdating(id);
     await fetch(`${BASE}api/admin/waitlist/${id}`, {
-      method: "PATCH",
-      credentials: "include",
+      method: "PATCH", credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
@@ -91,8 +102,7 @@ export default function Admin() {
   const updateUser = async (id: string, approved: boolean) => {
     setUpdating(id);
     await fetch(`${BASE}api/admin/users/${id}`, {
-      method: "PATCH",
-      credentials: "include",
+      method: "PATCH", credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ approved }),
     });
@@ -103,13 +113,45 @@ export default function Admin() {
   const updateUserRole = async (id: string, role: "user" | "tester") => {
     setUpdating(id + "-role");
     await fetch(`${BASE}api/admin/users/${id}`, {
-      method: "PATCH",
-      credentials: "include",
+      method: "PATCH", credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role }),
     });
     await loadUsers();
     setUpdating(null);
+  };
+
+  const bulkUpdate = async (status: string) => {
+    if (selected.size === 0) return;
+    setBulkUpdating(true);
+    await fetch(`${BASE}api/admin/waitlist/bulk`, {
+      method: "POST", credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: Array.from(selected), status }),
+    });
+    setSelected(new Set());
+    await loadWaitlist();
+    setBulkUpdating(false);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selected.size === waitlist.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(waitlist.map(e => e.id)));
+    }
+  };
+
+  const exportCsv = () => {
+    window.open(`${BASE}api/admin/waitlist/export`, "_blank");
   };
 
   if (authLoading || isAdmin === null) {
@@ -165,7 +207,7 @@ export default function Admin() {
           )}
           {requireApproval && (
             <div className="mt-4 bg-green-500/20 border border-green-500/40 rounded-xl px-4 py-3 text-sm text-green-200">
-              ✅ <strong>Approval gating is ON.</strong> Unapproved users see the pending-approval screen. Remove <code className="bg-black/20 px-1 rounded">REQUIRE_APPROVAL</code> or set it to <code className="bg-black/20 px-1 rounded">false</code> to disable.
+              ✅ <strong>Approval gating is ON.</strong> Unapproved users see the pending-approval screen.
             </div>
           )}
         </div>
@@ -173,25 +215,86 @@ export default function Admin() {
 
       {/* Tabs */}
       <div className="border-b border-[#3A1F0E]/10 bg-white">
-        <div className="max-w-6xl mx-auto px-6 flex gap-0">
-          <button
-            onClick={() => setTab("waitlist")}
-            className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "waitlist" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
-          >
-            <Mail className="w-4 h-4" />
-            Waitlist
-            {pendingWaitlist > 0 && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{pendingWaitlist}</span>}
-          </button>
-          <button
-            onClick={() => setTab("users")}
-            className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "users" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
-          >
-            <Users className="w-4 h-4" />
-            Registered Users
-            {pendingUsers > 0 && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{pendingUsers}</span>}
-          </button>
+        <div className="max-w-6xl mx-auto px-6 flex gap-0 items-center justify-between">
+          <div className="flex">
+            <button
+              onClick={() => setTab("waitlist")}
+              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "waitlist" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
+            >
+              <Mail className="w-4 h-4" />
+              Waitlist
+              {pendingWaitlist > 0 && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{pendingWaitlist}</span>}
+            </button>
+            <button
+              onClick={() => setTab("users")}
+              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "users" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
+            >
+              <Users className="w-4 h-4" />
+              Registered Users
+              {pendingUsers > 0 && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{pendingUsers}</span>}
+            </button>
+          </div>
+          <div className="flex items-center gap-3 pr-2">
+            <span className="text-[#3A1F0E]/30 text-xs">
+              Updated {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+            <button
+              onClick={() => refreshAll()}
+              className="flex items-center gap-1.5 text-xs text-[#3A1F0E]/50 hover:text-[#3A1F0E] transition-colors py-1 px-2 rounded-lg hover:bg-[#FAF6EF]"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Refresh
+            </button>
+            {tab === "waitlist" && (
+              <button
+                onClick={exportCsv}
+                className="flex items-center gap-1.5 text-xs font-bold text-[#CA922B] hover:text-[#B38024] transition-colors py-1 px-3 rounded-lg border border-[#CA922B]/30 hover:bg-[#CA922B]/5"
+              >
+                <Download className="w-3.5 h-3.5" /> Export CSV
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Bulk action bar */}
+      {tab === "waitlist" && selected.size > 0 && (
+        <div className="bg-[#2B1507] text-white px-6 py-3 flex items-center gap-4">
+          <div className="max-w-6xl mx-auto w-full flex items-center gap-4">
+            <span className="text-sm font-bold text-[#CA922B]">{selected.size} selected</span>
+            <Button
+              size="sm"
+              onClick={() => bulkUpdate("approved")}
+              disabled={bulkUpdating}
+              className="h-7 px-4 rounded-full bg-green-600 hover:bg-green-700 text-white text-xs font-bold"
+            >
+              <Check className="w-3 h-3 mr-1" /> Approve All
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => bulkUpdate("rejected")}
+              disabled={bulkUpdating}
+              className="h-7 px-4 rounded-full bg-red-600 hover:bg-red-700 text-white text-xs font-bold"
+            >
+              <X className="w-3 h-3 mr-1" /> Reject All
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => bulkUpdate("pending")}
+              disabled={bulkUpdating}
+              variant="outline"
+              className="h-7 px-4 rounded-full border-white/30 text-white hover:bg-white/10 text-xs"
+            >
+              Reset All
+            </Button>
+            <button
+              onClick={() => setSelected(new Set())}
+              className="ml-auto text-[#F5EBD8]/50 hover:text-white text-xs"
+            >
+              Clear selection
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <div className="max-w-6xl mx-auto px-6 py-8">
@@ -212,6 +315,15 @@ export default function Admin() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
+                      <th className="px-4 py-3 w-8">
+                        <input
+                          type="checkbox"
+                          checked={selected.size === waitlist.length && waitlist.length > 0}
+                          onChange={toggleSelectAll}
+                          className="rounded accent-[#CA922B]"
+                        />
+                      </th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Name</th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Email</th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Location</th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Type</th>
@@ -222,8 +334,22 @@ export default function Admin() {
                   </thead>
                   <tbody>
                     {waitlist.map((entry, i) => (
-                      <tr key={entry.id} className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}>
+                      <tr
+                        key={entry.id}
+                        className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${selected.has(entry.id) ? "bg-[#CA922B]/5" : i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}
+                      >
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selected.has(entry.id)}
+                            onChange={() => toggleSelect(entry.id)}
+                            className="rounded accent-[#CA922B]"
+                          />
+                        </td>
                         <td className="px-4 py-3 font-medium text-[#3A1F0E]">
+                          {entry.firstName ? entry.firstName : <span className="text-[#3A1F0E]/30">—</span>}
+                        </td>
+                        <td className="px-4 py-3 text-[#3A1F0E]/80">
                           <div className="flex items-center gap-2">
                             <Mail className="w-3.5 h-3.5 text-[#CA922B] shrink-0" />
                             {entry.email}
@@ -251,34 +377,20 @@ export default function Admin() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             {entry.status !== "approved" && (
-                              <Button
-                                size="sm"
-                                onClick={() => updateWaitlist(entry.id, "approved")}
-                                disabled={updating === entry.id}
-                                className="h-7 px-3 rounded-full bg-green-600 hover:bg-green-700 text-white text-xs"
-                              >
+                              <Button size="sm" onClick={() => updateWaitlist(entry.id, "approved")} disabled={updating === entry.id}
+                                className="h-7 px-3 rounded-full bg-green-600 hover:bg-green-700 text-white text-xs">
                                 <Check className="w-3 h-3 mr-1" /> Approve
                               </Button>
                             )}
                             {entry.status !== "rejected" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => updateWaitlist(entry.id, "rejected")}
-                                disabled={updating === entry.id}
-                                className="h-7 px-3 rounded-full border-red-300 text-red-600 hover:bg-red-50 text-xs"
-                              >
+                              <Button size="sm" variant="outline" onClick={() => updateWaitlist(entry.id, "rejected")} disabled={updating === entry.id}
+                                className="h-7 px-3 rounded-full border-red-300 text-red-600 hover:bg-red-50 text-xs">
                                 <X className="w-3 h-3 mr-1" /> Reject
                               </Button>
                             )}
                             {entry.status !== "pending" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => updateWaitlist(entry.id, "pending")}
-                                disabled={updating === entry.id}
-                                className="h-7 px-3 rounded-full text-xs"
-                              >
+                              <Button size="sm" variant="outline" onClick={() => updateWaitlist(entry.id, "pending")} disabled={updating === entry.id}
+                                className="h-7 px-3 rounded-full text-xs">
                                 Reset
                               </Button>
                             )}

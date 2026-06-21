@@ -2,7 +2,7 @@ import { useGetCurrentAuthUser, useGetMyProfile, useUpdateMyProfile, useListSave
 import { Redirect, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { LogOut, Save, MapPin, Map } from "lucide-react";
+import { LogOut, Save, MapPin, Map, FlaskConical } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -88,7 +88,12 @@ export default function Profile() {
                 )}
               </div>
               <h2 className="text-2xl font-serif font-bold text-[#3A1F0E]">{profile?.firstName} {profile?.lastName}</h2>
-              <p className="text-sm text-[#3A1F0E]/50 mb-8">{profile?.email}</p>
+              <p className="text-sm text-[#3A1F0E]/50 mb-3">{profile?.email}</p>
+              {auth?.user && (auth.user as any).role === "tester" && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-bold mb-6 border border-purple-200">
+                  <FlaskConical className="w-3.5 h-3.5" /> Early Tester
+                </span>
+              )}
               
               <form onSubmit={handleUpdate} className="space-y-5 text-left">
                 <div className="space-y-2">

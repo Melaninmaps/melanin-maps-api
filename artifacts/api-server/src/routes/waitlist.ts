@@ -187,6 +187,56 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
   }
 });
 
+// ── Admin: export waitlist as CSV ────────────────────────────────────────────
+
+router.get("/admin/waitlist/export", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const entries = await db.select().from(waitlistTable).orderBy(desc(waitlistTable.createdAt));
+    const header = ["ID","First Name","Email","City","State","Business Owner","Status","Referral Code","Referred By","Approved At","Signed Up"];
+    const rows = entries.map(e => [
+      e.id, e.firstName ?? "", e.email, e.city ?? "", e.state ?? "",
+      e.isBusinessOwner ? "Yes" : "No", e.status,
+      e.referralCode ?? "", e.referredBy ?? "",
+      e.approvedAt ? new Date(e.approvedAt).toISOString() : "",
+      new Date(e.createdAt).toISOString(),
+    ]);
+    const esc = (v: unknown) => `"${String(v).replace(/"/g, '""')}"`;
+    const csv = [header.map(esc).join(","), ...rows.map(r => r.map(esc).join(","))].join("\n");
+    const filename = `waitlist-${new Date().toISOString().slice(0, 10)}.csv`;
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send(csv);
+  } catch (err) {
+    req.log.error({ err }, "Failed to export waitlist");
+    res.status(500).json({ error: "Failed to export waitlist" });
+  }
+});
+
+// ── Admin: bulk update waitlist entries ──────────────────────────────────────
+
+router.post("/admin/waitlist/bulk", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const { ids, status } = req.body as { ids?: string[]; status?: string };
+  const allowed = ["pending", "approved", "rejected"];
+  if (!Array.isArray(ids) || ids.length === 0) {
+    res.status(400).json({ error: "ids must be a non-empty array" }); return;
+  }
+  if (!status || !allowed.includes(status)) {
+    res.status(400).json({ error: "Invalid status" }); return;
+  }
+  try {
+    const { inArray } = await import("drizzle-orm");
+    await db.update(waitlistTable)
+      .set({ status, approvedAt: status === "approved" ? new Date() : null })
+      .where(inArray(waitlistTable.id, ids));
+    res.json({ updated: ids.length });
+  } catch (err) {
+    req.log.error({ err }, "Failed to bulk update waitlist");
+    res.status(500).json({ error: "Failed to bulk update" });
+  }
+});
+
 // ── Admin: check admin status + config ───────────────────────────────────────
 
 router.get("/admin/check", (req: Request, res: Response) => {
