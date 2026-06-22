@@ -173,6 +173,12 @@ export default function CommunityScreen() {
   const [groupCategory, setGroupCategory] = useState("all");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<string | undefined>(undefined);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [groupCreateName, setGroupCreateName] = useState("");
+  const [groupCreateDesc, setGroupCreateDesc] = useState("");
+  const [groupCreateCategory, setGroupCreateCategory] = useState("social");
+  const [groupCreateCity, setGroupCreateCity] = useState("");
+  const [groupCreateSubmitting, setGroupCreateSubmitting] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
   const { groups, isLoading: groupsLoading, refetch: refetchGroups, join, leave } = useGroups();
@@ -202,6 +208,36 @@ export default function CommunityScreen() {
   }, []);
 
   useEffect(() => { void loadPosts(); }, [loadPosts]);
+
+  const handleCreateGroup = async () => {
+    if (!groupCreateName.trim()) return;
+    setGroupCreateSubmitting(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const apiBase = getApiBase();
+      if (!token || !apiBase) return;
+      const res = await fetch(`${apiBase}/api/groups`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          name: groupCreateName.trim(),
+          description: groupCreateDesc.trim() || undefined,
+          category: groupCreateCategory,
+          city: groupCreateCity.trim() || undefined,
+        }),
+      });
+      if (res.ok) {
+        setShowCreateGroup(false);
+        setGroupCreateName("");
+        setGroupCreateDesc("");
+        setGroupCreateCategory("social");
+        setGroupCreateCity("");
+        void refetchGroups();
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch {}
+    setGroupCreateSubmitting(false);
+  };
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -396,7 +432,7 @@ export default function CommunityScreen() {
                 return;
               }
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              Alert.alert("Start a Group", "Ready to bring your community together? Email us at hello@mappingwithmelanin.com to get your group listed.", [{ text: "OK" }]);
+              setShowCreateGroup(true);
             }}
           >
             <Feather name="plus" size={24} color="#FFFFFF" />
@@ -471,6 +507,77 @@ export default function CommunityScreen() {
         onClose={() => setShowUpgrade(false)}
         feature={upgradeFeature}
       />
+
+      <Modal visible={showCreateGroup} animationType="slide" transparent presentationStyle="overFullScreen">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.composeSheet, { backgroundColor: colors.card, paddingBottom: bottomPad + 20 }]}>
+            <View style={[styles.composeHeader, { borderBottomColor: colors.border }]}>
+              <TouchableOpacity onPress={() => setShowCreateGroup(false)}>
+                <Text style={[styles.composeCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={[styles.composeTitle, { color: colors.foreground }]}>Start a Group</Text>
+              <TouchableOpacity
+                onPress={() => void handleCreateGroup()}
+                disabled={!groupCreateName.trim() || groupCreateSubmitting}
+              >
+                {groupCreateSubmitting ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Text style={[styles.composePostText, { color: groupCreateName.trim() ? colors.primary : colors.muted }]}>
+                    Create
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+              <TextInput
+                style={[styles.composeInput, { color: colors.foreground, borderBottomWidth: 1, borderBottomColor: colors.border }]}
+                placeholder="Group name *"
+                placeholderTextColor={colors.mutedForeground}
+                value={groupCreateName}
+                onChangeText={setGroupCreateName}
+                maxLength={80}
+              />
+              <TextInput
+                style={[styles.composeInput, { color: colors.foreground, minHeight: 80, borderBottomWidth: 1, borderBottomColor: colors.border }]}
+                placeholder="What's this group about? (optional)"
+                placeholderTextColor={colors.mutedForeground}
+                value={groupCreateDesc}
+                onChangeText={setGroupCreateDesc}
+                multiline
+                maxLength={300}
+              />
+              <TextInput
+                style={[styles.composeInput, { color: colors.foreground, minHeight: 44, borderBottomWidth: 1, borderBottomColor: colors.border }]}
+                placeholder="City (optional)"
+                placeholderTextColor={colors.mutedForeground}
+                value={groupCreateCity}
+                onChangeText={setGroupCreateCity}
+                maxLength={60}
+              />
+
+              <View style={styles.categoryRow}>
+                {GROUP_CATEGORIES.filter((c) => c.value !== "all").map((opt) => (
+                  <TouchableOpacity
+                    key={opt.value}
+                    style={[
+                      styles.filterChip,
+                      { borderColor: groupCreateCategory === opt.value ? colors.primary : colors.border },
+                      groupCreateCategory === opt.value && { backgroundColor: colors.primary + "18" },
+                    ]}
+                    onPress={() => setGroupCreateCategory(opt.value)}
+                  >
+                    <Text style={[styles.filterChipText, { color: groupCreateCategory === opt.value ? colors.primary : colors.mutedForeground }]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       <Modal visible={showCompose} animationType="slide" transparent presentationStyle="overFullScreen">
         <View style={styles.modalOverlay}>

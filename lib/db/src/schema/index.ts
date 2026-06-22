@@ -27,3 +27,4 @@ export * from "./flash-deals";
 export * from "./business-stories";
 export * from "./points-redemptions";
 export * from "./mentorship-profiles";
+export * from "./notifications";
