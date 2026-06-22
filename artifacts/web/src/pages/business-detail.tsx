@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation } from "lucide-react";
+import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -99,8 +99,18 @@ export default function BusinessDetail() {
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deals, setDeals] = useState<any[]>([]);
+  const [stories, setStories] = useState<any[]>([]);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const isSaved = savedPlaces?.businessIds.includes(id);
+
+  const BASE_URL = import.meta.env.BASE_URL.replace(/\/$/, "");
+  useEffect(() => {
+    if (!id) return;
+    fetch(`${BASE_URL}/api/deals/${id}`).then(r => r.json()).then(d => setDeals(d.deals ?? [])).catch(() => {});
+    fetch(`${BASE_URL}/api/stories/${id}`).then(r => r.json()).then(d => setStories(d.stories ?? [])).catch(() => {});
+  }, [id]);
 
   // Inject OG meta tags for social sharing
   useEffect(() => {
@@ -172,6 +182,14 @@ export default function BusinessDetail() {
         queryClient.invalidateQueries({ queryKey: ["listReviews", { businessId: id }] });
         toast({ title: "Review submitted successfully" });
       },
+      onError: (err: any) => {
+        const status = err?.response?.status ?? err?.status;
+        if (status === 403) {
+          setShowUpgrade(true);
+        } else {
+          toast({ title: "Could not submit review", description: "Please try again.", variant: "destructive" });
+        }
+      },
       onSettled: () => {
         setIsSubmitting(false);
       }
@@ -201,6 +219,35 @@ export default function BusinessDetail() {
 
   return (
     <div className="min-h-screen bg-[#FAF6EF] flex flex-col w-full pb-24">
+      {/* Upgrade Modal */}
+      {showUpgrade && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border border-[#CA922B]/20">
+            <div className="w-16 h-16 rounded-full bg-[#CA922B]/10 flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-8 h-8 text-[#CA922B]" />
+            </div>
+            <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-2">Navigator Required</h2>
+            <p className="text-[#3A1F0E]/70 text-sm mb-6 leading-relaxed">
+              Submitting reviews is a Navigator+ feature. Upgrade to share your experience and help the community.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => { window.location.href = "/membership"; }}
+                className="w-full py-3 rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white font-bold text-sm transition-colors"
+              >
+                Upgrade to Navigator →
+              </button>
+              <button
+                onClick={() => setShowUpgrade(false)}
+                className="w-full py-3 rounded-full text-[#3A1F0E]/60 text-sm font-medium hover:text-[#3A1F0E] transition-colors"
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Header */}
       <div className="relative w-full h-[50vh] md:h-[60vh] bg-[#2B1507]">
         {business.imageUrl && (
@@ -251,6 +298,11 @@ export default function BusinessDetail() {
               <TabsList className="w-full justify-start bg-transparent border-b border-[#2B1507]/10 rounded-none h-14 p-0 space-x-8 mb-8">
                 <TabsTrigger value="overview" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#CA922B] rounded-none px-0 h-14 font-serif text-lg text-[#3A1F0E]/60 data-[state=active]:text-[#3A1F0E]">Overview</TabsTrigger>
                 <TabsTrigger value="reviews" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#CA922B] rounded-none px-0 h-14 font-serif text-lg text-[#3A1F0E]/60 data-[state=active]:text-[#3A1F0E]">Reviews</TabsTrigger>
+                {stories.length > 0 && (
+                  <TabsTrigger value="stories" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#CA922B] rounded-none px-0 h-14 font-serif text-lg text-[#3A1F0E]/60 data-[state=active]:text-[#3A1F0E]">
+                    <BookOpen size={16} className="mr-1.5" />Stories
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="location" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#CA922B] rounded-none px-0 h-14 font-serif text-lg text-[#3A1F0E]/60 data-[state=active]:text-[#3A1F0E]">Location & Contact</TabsTrigger>
               </TabsList>
 
@@ -270,7 +322,69 @@ export default function BusinessDetail() {
                     </div>
                   </div>
                 )}
+
+                {/* Flash Deals */}
+                {deals.length > 0 && (
+                  <div>
+                    <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-4 flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-[#CA922B]" /> Flash Deals
+                    </h3>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {deals.map((deal: any) => (
+                        <div key={deal.id} className="bg-white rounded-2xl p-5 border border-[#CA922B]/20 shadow-sm relative overflow-hidden">
+                          <div className="absolute top-0 right-0 bg-[#CA922B] text-white text-xs font-bold px-3 py-1 rounded-bl-xl">
+                            {deal.discount ?? "Special Offer"}
+                          </div>
+                          <h4 className="font-serif font-bold text-[#3A1F0E] mb-1 pr-16">{deal.title}</h4>
+                          <p className="text-[#3A1F0E]/70 text-sm mb-3">{deal.description}</p>
+                          {deal.validUntil && (
+                            <div className="flex items-center gap-1.5 text-xs text-[#CA922B] font-bold">
+                              <Clock size={12} />
+                              Ends {new Date(deal.validUntil).toLocaleDateString()}
+                            </div>
+                          )}
+                          {deal.membershipRequired && (
+                            <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">
+                              <Lock size={9} /> Navigator+
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </TabsContent>
+
+              {/* Stories tab content */}
+              {stories.length > 0 && (
+                <TabsContent value="stories" className="space-y-6 animate-in fade-in">
+                  {stories.map((story: any) => (
+                    <div key={story.id} className="bg-white rounded-2xl p-6 border border-[#2B1507]/5 shadow-sm">
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                          story.type === "offer" ? "bg-green-100 text-green-700" :
+                          story.type === "event" ? "bg-blue-100 text-blue-700" :
+                          story.type === "milestone" ? "bg-purple-100 text-purple-700" :
+                          "bg-[#FAF6EF] text-[#CA922B]"
+                        }`}>
+                          {story.type ?? "Update"}
+                        </span>
+                        {story.expiresAt && (
+                          <span className="text-xs text-[#3A1F0E]/50 flex items-center gap-1">
+                            <Clock size={11} />
+                            Expires {new Date(story.expiresAt).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                      {story.mediaUrl && (
+                        <img src={story.mediaUrl} alt={story.title} className="w-full h-48 object-cover rounded-xl mb-4" />
+                      )}
+                      <h4 className="font-serif font-bold text-lg text-[#3A1F0E] mb-2">{story.title}</h4>
+                      <p className="text-[#3A1F0E]/70 text-sm leading-relaxed">{story.content}</p>
+                    </div>
+                  ))}
+                </TabsContent>
+              )}
 
               <TabsContent value="reviews" className="space-y-8 animate-in fade-in">
                 <div className="flex items-center gap-6 bg-white p-6 rounded-2xl border border-[#2B1507]/5">

@@ -15,6 +15,17 @@ import {
 
 const BASE = import.meta.env.BASE_URL;
 
+const VIBES = [
+  { emoji: "🍽️", label: "Soul Food", category: "Restaurants & Nightlife" },
+  { emoji: "💇🏾", label: "Hair & Beauty", category: "Professional Services" },
+  { emoji: "🌙", label: "Date Night", category: "Restaurants & Nightlife" },
+  { emoji: "☕", label: "Café Vibes", category: "Restaurants & Nightlife" },
+  { emoji: "💼", label: "Black Biz", category: "Black-Owned Businesses" },
+  { emoji: "🏨", label: "Stay & Explore", category: "Hotels & Stays" },
+  { emoji: "🎭", label: "Culture", category: "Cultural Landmarks" },
+  { emoji: "🎉", label: "Events & More", category: "Community Events" },
+];
+
 function isOpenNow(hours: string | null | undefined): boolean {
   if (!hours) return false;
   const lower = hours.toLowerCase();
@@ -199,14 +210,19 @@ export default function Discover() {
 
   const [query, setQuery] = useState(initialQuery);
   const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [activeVibe, setActiveVibe] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [openNow, setOpenNow] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
 
+  const effectiveCategory = activeVibe
+    ? VIBES.find(v => v.label === activeVibe)?.category ?? undefined
+    : activeCategory === "All" ? undefined : activeCategory;
+
   const { data, isLoading } = useListBusinesses({
     search: query || undefined,
-    category: activeCategory === "All" ? undefined : activeCategory,
-  }, { query: { queryKey: ['businesses', query, activeCategory] } });
+    category: effectiveCategory,
+  }, { query: { queryKey: ['businesses', query, activeCategory, activeVibe] } });
 
   const businesses = openNow
     ? (data?.businesses ?? []).filter(b => isOpenNow((b as any).hours))
@@ -249,6 +265,24 @@ export default function Discover() {
               className="border-0 focus-visible:ring-0 shadow-none text-base h-12 bg-transparent rounded-full"
             />
             <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Search</Button>
+          </div>
+
+          {/* Vibe Match chips */}
+          <div className="flex gap-2 mt-6 flex-wrap justify-center">
+            {VIBES.map(v => (
+              <button
+                key={v.label}
+                onClick={() => setActiveVibe(activeVibe === v.label ? null : v.label)}
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-200 ${
+                  activeVibe === v.label
+                    ? "bg-[#CA922B] text-white border-[#CA922B] shadow-md"
+                    : "bg-white/10 text-[#F5EBD8] border-white/20 hover:bg-white/20 hover:border-[#CA922B]/60 backdrop-blur-sm"
+                }`}
+              >
+                <span>{v.emoji}</span>
+                <span>{v.label}</span>
+              </button>
+            ))}
           </div>
         </div>
       </section>

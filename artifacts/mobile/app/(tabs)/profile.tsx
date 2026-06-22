@@ -37,6 +37,8 @@ const SETTINGS = [
   { icon: "bar-chart-2" as const, label: "Business Dashboard", sub: "Manage your listing", route: "/business-dashboard" as const },
   { icon: "share-2" as const, label: "Referral Program", sub: "Invite friends, earn rewards", route: "/referral" as const },
   { icon: "users" as const, label: "Mentorship Network", sub: "Connect with mentors & peers", route: "/mentorship" as const },
+  { icon: "tag" as const, label: "Affiliate Partner Discounts", sub: "Hotels, flights & travel perks", route: "/affiliate" as const },
+  { icon: "credit-card" as const, label: "Billing & Invoices", sub: "Manage subscription & history", route: "/billing" as const },
 ];
 
 const ADMIN_EMAILS = (process.env.EXPO_PUBLIC_ADMIN_EMAILS ?? "")

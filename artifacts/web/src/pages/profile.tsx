@@ -645,6 +645,16 @@ export default function Profile() {
   const savedCount = savedPlaces?.businessIds?.length ?? 0;
   const isEarlyTester = (auth?.user as any)?.role === "tester";
 
+  const [kinfolkPoints, setKinfolkPoints] = useState<number | null>(null);
+  useEffect(() => {
+    if (!auth?.user) return;
+    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    fetch(`${base}/api/points`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setKinfolkPoints(d.total ?? 0); })
+      .catch(() => {});
+  }, [auth?.user]);
+
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
       <div className="bg-[#2B1507] h-32 md:h-48 w-full absolute top-0 z-0" />
@@ -669,8 +679,8 @@ export default function Profile() {
             <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">Reviews</div>
           </div>
           <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center border border-white/10">
-            <div className="text-lg font-serif font-bold text-[#CA922B]/70">—</div>
-            <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">Points</div>
+            <div className="text-2xl font-serif font-bold text-[#CA922B]">{kinfolkPoints !== null ? kinfolkPoints : "—"}</div>
+            <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">Kinfolk Pts</div>
           </div>
         </div>
 
@@ -734,10 +744,25 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Right 2 columns: full badge panel */}
-          <div className="md:col-span-2 mt-8 md:mt-0">
+          {/* Right 2 columns: full badge panel + quick links */}
+          <div className="md:col-span-2 mt-8 md:mt-0 space-y-6">
             <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm">
               <BadgePanel savedCount={savedCount} isEarlyTester={isEarlyTester} />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {([
+                { label: "Membership", href: "/membership", emoji: "💎" },
+                { label: "Billing & Invoices", href: "/billing", emoji: "📄" },
+                { label: "Partner Deals", href: "/affiliate", emoji: "🏷️" },
+                { label: "Mentorship", href: "/mentorship", emoji: "🤝" },
+              ] as const).map(({ label, href, emoji }) => (
+                <Link key={href} href={href}>
+                  <div className="bg-white rounded-2xl p-4 border border-[#3A1F0E]/5 shadow-sm text-center hover:border-[#CA922B]/30 hover:shadow-md transition-all cursor-pointer group">
+                    <div className="text-2xl mb-2">{emoji}</div>
+                    <div className="text-xs font-bold text-[#3A1F0E] group-hover:text-[#CA922B] transition-colors leading-tight">{label}</div>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
         </div>
