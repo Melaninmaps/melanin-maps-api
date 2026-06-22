@@ -13,6 +13,7 @@ interface Resource {
 const CRISIS: Resource[] = [
   { name: "988 Suicide & Crisis Lifeline", desc: "Free, confidential crisis support. Call or text 988, 24/7. Español disponible.", action: "Call or Text 988", url: "tel:988", isPhone: true },
   { name: "Crisis Text Line", desc: "Text HOME to 741741 — free, 24/7 text-based crisis support.", action: "Text HOME to 741741", url: "sms:741741", isText: true },
+  { name: "Veterans Crisis Line", desc: "Free, confidential crisis support for veterans and their families, 24/7. Call 988 and press 1.", action: "Call 988 → Press 1", url: "tel:988", isPhone: true },
   { name: "SAMHSA National Helpline", desc: "Free, confidential treatment referrals and information for mental health and substance use, 24/7.", action: "Call 1-800-662-4357", url: "tel:18006624357", isPhone: true },
   { name: "National Domestic Violence Hotline", desc: "Free, confidential support for survivors of domestic violence, 24/7.", action: "Call 1-800-799-7233", url: "tel:18007997233", isPhone: true },
 ];
@@ -36,6 +37,7 @@ const RECOVERY: Resource[] = [
 
 const TREATMENT: Resource[] = [
   { name: "SAMHSA Treatment Locator", desc: "Find substance use and mental health treatment facilities near you — searchable by ZIP code.", action: "Find Treatment", url: "https://findtreatment.gov" },
+  { name: "NAMI HelpLine", desc: "Free mental health information, resource referrals, and peer support. Mon–Fri 10am–10pm ET.", action: "Call 1-800-950-6264", url: "tel:18009506264", isPhone: true },
   { name: "Open Path Collective", desc: "Affordable in-person and online therapy sessions ($30–$80) with licensed therapists.", action: "Find a Therapist", url: "https://openpathcollective.org" },
   { name: "Psychology Today Therapist Finder", desc: "Filter therapists by specialty, insurance, and race/ethnicity to find the right fit.", action: "Find a Therapist", url: "https://www.psychologytoday.com/us/therapists" },
   { name: "Inclusive Therapists", desc: "A safer, healing-centered space to find culturally-responsive therapists for BIPOC communities.", action: "Visit Site", url: "https://www.inclusivetherapists.com" },
@@ -109,6 +111,8 @@ export default function Resources() {
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
       {/* Hero */}
       <section className="bg-[#2B1507] py-20 relative overflow-hidden">
+        <img src={`${import.meta.env.BASE_URL}images/hero-community-bg.jpg`} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+        <div className="absolute inset-0 bg-[#2B1507]/85 z-0" />
         <div className="container mx-auto px-4 md:px-6 relative z-10 flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-8">
             <Shield className="w-4 h-4 text-[#CA922B]" />
@@ -125,7 +129,7 @@ export default function Resources() {
               { label: "Crisis Lines", value: "24/7" },
               { label: "Mental Health Orgs", value: "6" },
               { label: "Meeting Finders", value: "5" },
-              { label: "Therapy Resources", value: "4" },
+              { label: "Therapy Resources", value: "5" },
             ].map((s) => (
               <div key={s.label} className="text-center">
                 <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">{s.value}</div>
