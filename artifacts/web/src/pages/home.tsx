@@ -756,22 +756,31 @@ export default function Home() {
           </p>
 
           {/* Community photo strip */}
-          <div className="grid grid-cols-3 gap-3 mb-12 rounded-2xl overflow-hidden h-64">
-            <img
-              src="https://images.pexels.com/photos/20428771/pexels-photo-20428771/free-photo-of-two-women-standing-next-to-each-other-with-one-wearing-a-green-shirt.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
-              alt="Two joyful Black women friends embracing and smiling"
-              className="w-full h-full object-cover object-top"
-            />
-            <img
-              src="https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
-              alt="African American women collaborating in a business setting"
-              className="w-full h-full object-cover"
-            />
-            <img
-              src="https://images.pexels.com/photos/2731372/pexels-photo-2731372.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
-              alt="Stylish African American women enjoying life in vibrant outfits"
-              className="w-full h-full object-cover object-top"
-            />
+          <div className="grid grid-cols-3 gap-3 mb-12 rounded-2xl overflow-hidden" style={{ height: "420px" }}>
+            <div className="relative overflow-hidden rounded-xl">
+              <img
+                src="https://images.pexels.com/photos/20428771/pexels-photo-20428771/free-photo-of-two-women-standing-next-to-each-other-with-one-wearing-a-green-shirt.jpeg?auto=compress&cs=tinysrgb&w=700&h=900&fit=crop&dpr=1"
+                alt="Two joyful Black women friends embracing and smiling"
+                className="w-full h-full object-cover"
+                style={{ objectPosition: "center 10%" }}
+              />
+            </div>
+            <div className="relative overflow-hidden rounded-xl">
+              <img
+                src="https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=700&h=900&fit=crop&dpr=1"
+                alt="African American women collaborating in a business setting"
+                className="w-full h-full object-cover"
+                style={{ objectPosition: "center 15%" }}
+              />
+            </div>
+            <div className="relative overflow-hidden rounded-xl">
+              <img
+                src="https://images.pexels.com/photos/2731372/pexels-photo-2731372.jpeg?auto=compress&cs=tinysrgb&w=700&h=900&fit=crop&dpr=1"
+                alt="Stylish African American women enjoying life in vibrant outfits"
+                className="w-full h-full object-cover"
+                style={{ objectPosition: "center 5%" }}
+              />
+            </div>
           </div>
 
           <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-6 text-left mb-12">
