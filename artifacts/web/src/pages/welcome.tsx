@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 const STEPS = [
   {
     icon: Map,
-    title: "Discover Minority-Owned Businesses Near You",
+    title: "Discover Black-Owned Businesses Near You",
     body: "Search hundreds of verified businesses by category, city, and safety rating. Every listing is community-reviewed and kept up to date.",
     cta: "Explore the Map",
     action: "/discover",
