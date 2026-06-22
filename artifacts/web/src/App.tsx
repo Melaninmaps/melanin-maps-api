@@ -38,6 +38,7 @@ import Notifications from "@/pages/notifications";
 import Affiliate from "@/pages/affiliate";
 import Mentorship from "@/pages/mentorship";
 import RateNeighborhood from "@/pages/rate-neighborhood";
+import ReferralRedirect from "@/pages/referral-redirect";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { data: auth, isLoading } = useGetCurrentAuthUser();
@@ -148,6 +149,7 @@ function Router() {
       <Route path="/rate-neighborhood">
         <Layout><RateNeighborhood /></Layout>
       </Route>
+      <Route path="/r/:code" component={ReferralRedirect} />
       <Route component={NotFound} />
     </Switch>
   );

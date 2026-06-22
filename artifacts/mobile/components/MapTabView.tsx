@@ -14,19 +14,23 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BusinessCard } from "@/components/BusinessCard";
 import { CategoryPill } from "@/components/CategoryPill";
 import { SafetyPulseWidget } from "@/components/SafetyPulseWidget";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { SearchBar } from "@/components/SearchBar";
 import { CATEGORIES } from "@/constants/data";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
+import { useAuth } from "@/lib/auth";
 
 export function MapTabView() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { isSaved, toggleSave } = useFavorites();
+  const { isAuthenticated } = useAuth();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
