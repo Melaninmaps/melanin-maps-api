@@ -101,4 +101,32 @@ router.patch("/admin/users/:id", async (req: Request, res: Response) => {
   }
 });
 
+router.delete("/admin/users/:id", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const id = String(req.params.id);
+  const selfId = (req as any).user?.id;
+  if (id === selfId) {
+    res.status(400).json({ error: "Cannot delete your own account" });
+    return;
+  }
+  try {
+    const [deleted] = await db
+      .delete(usersTable)
+      .where(eq(usersTable.id, id))
+      .returning({ id: usersTable.id, email: usersTable.email });
+    if (!deleted) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    req.log.info({ deletedUserId: deleted.id, deletedEmail: deleted.email, by: selfId }, "Admin deleted user account");
+    res.json({ ok: true, deleted });
+  } catch (err) {
+    req.log.error({ err }, "Failed to delete user");
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+});
+
 export default router;

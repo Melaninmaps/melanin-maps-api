@@ -167,4 +167,41 @@ router.post("/reviews", reviewLimiter, requireMembership("navigator"), async (re
   }
 });
 
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
+
+function isAdmin(req: Request): boolean {
+  const user = (req as any).user;
+  if (!user?.email) return false;
+  if (ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(user.email)) return true;
+  return user.role === "admin";
+}
+
+router.get("/admin/reviews", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const { businessId } = req.query;
+  try {
+    const rows = businessId && typeof businessId === "string"
+      ? await db.select().from(reviewsTable).where(eq(reviewsTable.businessId, businessId)).orderBy(desc(reviewsTable.createdAt)).limit(200)
+      : await db.select().from(reviewsTable).orderBy(desc(reviewsTable.createdAt)).limit(200);
+    res.json({ reviews: rows });
+  } catch (err: any) {
+    req.log.error({ err }, "Failed to fetch admin reviews");
+    res.status(500).json({ error: "Failed to fetch reviews" });
+  }
+});
+
+router.delete("/admin/reviews/:id", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const id = String(req.params.id);
+  try {
+    const [deleted] = await db.delete(reviewsTable).where(eq(reviewsTable.id, id)).returning({ id: reviewsTable.id });
+    if (!deleted) { res.status(404).json({ error: "Review not found" }); return; }
+    req.log.info({ deletedReviewId: deleted.id, by: (req as any).user?.id }, "Admin deleted review");
+    res.json({ ok: true, deleted });
+  } catch (err: any) {
+    req.log.error({ err }, "Failed to delete review");
+    res.status(500).json({ error: "Failed to delete review" });
+  }
+});
+
 export default router;

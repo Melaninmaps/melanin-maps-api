@@ -929,8 +929,8 @@ export default function Home() {
           {/* Community event photo banner */}
           <div className="relative rounded-3xl overflow-hidden h-56 mb-10">
             <img
-              src="https://images.pexels.com/photos/30048674/pexels-photo-30048674/free-photo-of-cultural-celebration-with-african-women-in-traditional-attire.jpeg?auto=compress&cs=tinysrgb&w=1260&h=400&dpr=1"
-              alt="African women celebrating together in vibrant traditional attire"
+              src="https://images.pexels.com/photos/33556355/pexels-photo-33556355/free-photo-of-joyful-beach-play-in-black-and-white.jpeg?auto=compress&cs=tinysrgb&w=1260&h=400&dpr=1"
+              alt="Black children joyfully splashing and playing in the water"
               className="absolute inset-0 w-full h-full object-cover object-center"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-[#2B1507]/80 via-[#2B1507]/40 to-transparent" />

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Redirect } from "wouter";
-import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink } from "lucide-react";
+import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -51,7 +51,16 @@ type AdminBusiness = {
   } | null;
 };
 
-type Tab = "waitlist" | "users" | "businesses" | "members";
+type Tab = "waitlist" | "users" | "businesses" | "members" | "reviews";
+
+type AdminReview = {
+  id: string;
+  businessId: string;
+  authorName: string | null;
+  rating: number;
+  text: string | null;
+  createdAt: string;
+};
 
 type MemberRow = {
   id: string;
@@ -193,6 +202,7 @@ export default function Admin() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [businesses, setBusinesses] = useState<AdminBusiness[]>([]);
   const [members, setMembers] = useState<MemberRow[]>([]);
+  const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [memberSearch, setMemberSearch] = useState("");
   const [editingMember, setEditingMember] = useState<string | null>(null);
   const [memberEdit, setMemberEdit] = useState<{ memberType?: string; foundingMemberNumber?: string; trialEndsAt?: string }>({});
@@ -240,9 +250,15 @@ export default function Admin() {
       .then(data => { setMembers(data.members ?? []); setLastRefreshed(new Date()); });
   }, []);
 
+  const loadReviews = useCallback(() => {
+    return fetch(`${BASE}api/admin/reviews`, { credentials: "include" })
+      .then(r => r.json())
+      .then(data => { setReviews(data.reviews ?? []); setLastRefreshed(new Date()); });
+  }, []);
+
   const refreshAll = useCallback(() => {
-    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses(), loadMembers()]);
-  }, [loadWaitlist, loadUsers, loadBusinesses, loadMembers]);
+    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses(), loadMembers(), loadReviews()]);
+  }, [loadWaitlist, loadUsers, loadBusinesses, loadMembers, loadReviews]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -283,6 +299,22 @@ export default function Admin() {
       body: JSON.stringify({ role }),
     });
     await loadUsers();
+    setUpdating(null);
+  };
+
+  const deleteUser = async (id: string, email: string | null) => {
+    if (!window.confirm(`Permanently delete user${email ? ` "${email}"` : ""}? This cannot be undone.`)) return;
+    setUpdating(id + "-del");
+    await fetch(`${BASE}api/admin/users/${id}`, { method: "DELETE", credentials: "include" });
+    await loadUsers();
+    setUpdating(null);
+  };
+
+  const deleteReview = async (id: string) => {
+    if (!window.confirm("Permanently delete this review? This cannot be undone.")) return;
+    setUpdating(id + "-del");
+    await fetch(`${BASE}api/admin/reviews/${id}`, { method: "DELETE", credentials: "include" });
+    await loadReviews();
     setUpdating(null);
   };
 
@@ -492,6 +524,14 @@ export default function Admin() {
               <Briefcase className="w-4 h-4" />
               Members
               {members.length > 0 && <span className="bg-[#CA922B]/20 text-[#CA922B] text-xs font-bold px-2 py-0.5 rounded-full">{members.length}</span>}
+            </button>
+            <button
+              onClick={() => setTab("reviews")}
+              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "reviews" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
+            >
+              <Star className="w-4 h-4" />
+              Reviews
+              {reviews.length > 0 && <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">{reviews.length}</span>}
             </button>
           </div>
           <div className="flex items-center gap-3 pr-2">
@@ -722,15 +762,27 @@ export default function Admin() {
                           {new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                         </td>
                         <td className="px-4 py-3">
-                          <Button
-                            size="sm"
-                            onClick={() => updateUser(user.id, !user.approved)}
-                            disabled={updating === user.id}
-                            className={`h-7 px-3 rounded-full text-xs ${user.approved ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100" : "bg-green-600 hover:bg-green-700 text-white"}`}
-                            variant="outline"
-                          >
-                            {user.approved ? (<><X className="w-3 h-3 mr-1" /> Revoke</>) : (<><Check className="w-3 h-3 mr-1" /> Approve</>)}
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => updateUser(user.id, !user.approved)}
+                              disabled={updating === user.id}
+                              className={`h-7 px-3 rounded-full text-xs ${user.approved ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100" : "bg-green-600 hover:bg-green-700 text-white"}`}
+                              variant="outline"
+                            >
+                              {user.approved ? (<><X className="w-3 h-3 mr-1" /> Revoke</>) : (<><Check className="w-3 h-3 mr-1" /> Approve</>)}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => deleteUser(user.id, user.email)}
+                              disabled={updating === user.id + "-del"}
+                              className="h-7 px-2 rounded-full text-xs border-red-200 text-red-600 hover:bg-red-50"
+                              title="Delete account"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -866,7 +918,7 @@ export default function Admin() {
               </div>
             )}
           </div>
-        ) : (
+        ) : tab !== "reviews" ? (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-serif font-bold text-[#3A1F0E]">
@@ -933,6 +985,66 @@ export default function Admin() {
                         </td>
                         <td className="px-4 py-4">
                           <OutreachCell business={biz} onSent={loadBusinesses} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <h2 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4">Community Reviews ({reviews.length})</h2>
+            {reviews.length === 0 ? (
+              <div className="text-center py-20 text-[#3A1F0E]/40">
+                <Star className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <p>No reviews yet.</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Author</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Business</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Rating</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Review</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Date</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reviews.map((review, i) => (
+                      <tr key={review.id} className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}>
+                        <td className="px-4 py-3 font-medium text-[#3A1F0E]">
+                          {review.authorName ?? <span className="text-[#3A1F0E]/30">—</span>}
+                        </td>
+                        <td className="px-4 py-3 text-[#3A1F0E]/60 text-xs font-mono">{review.businessId.slice(0, 8)}…</td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-0.5 font-bold text-[#CA922B]">
+                            {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-[#3A1F0E]/70 max-w-xs">
+                          {review.text ? (
+                            <span className="line-clamp-2">{review.text}</span>
+                          ) : <span className="text-[#3A1F0E]/30 text-xs">No text</span>}
+                        </td>
+                        <td className="px-4 py-3 text-[#3A1F0E]/50 text-xs whitespace-nowrap">
+                          {new Date(review.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => deleteReview(review.id)}
+                            disabled={updating === review.id + "-del"}
+                            className="h-7 px-2 rounded-full text-xs border-red-200 text-red-600 hover:bg-red-50"
+                            title="Delete review"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
                         </td>
                       </tr>
                     ))}
