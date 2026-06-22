@@ -113,10 +113,10 @@ export default function Businesses() {
       <section className="bg-[#1c0d04] py-8 border-t border-white/10">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-x divide-white/10">
-            <div className="px-4 text-white font-serif font-bold text-xl md:text-2xl">2,400+ <span className="text-sm font-sans font-normal text-[#F5EBD8]/60 block uppercase tracking-wider mt-1">Verified Businesses</span></div>
-            <div className="px-4 text-white font-serif font-bold text-xl md:text-2xl">48 <span className="text-sm font-sans font-normal text-[#F5EBD8]/60 block uppercase tracking-wider mt-1">States Covered</span></div>
-            <div className="px-4 text-white font-serif font-bold text-xl md:text-2xl">94/100 <span className="text-sm font-sans font-normal text-[#F5EBD8]/60 block uppercase tracking-wider mt-1">Avg. Confidence Score</span></div>
-            <div className="px-4 text-[#CA922B] font-serif font-bold text-xl md:text-2xl">100% <span className="text-sm font-sans font-normal text-[#F5EBD8]/60 block uppercase tracking-wider mt-1">Authenticity Checked</span></div>
+            <div className="px-4 text-white font-serif font-bold text-xl md:text-2xl">2,400+* <span className="text-sm font-sans font-normal text-[#F5EBD8]/60 block uppercase tracking-wider mt-1">Verified Businesses</span></div>
+            <div className="px-4 text-white font-serif font-bold text-xl md:text-2xl">48* <span className="text-sm font-sans font-normal text-[#F5EBD8]/60 block uppercase tracking-wider mt-1">States Covered</span></div>
+            <div className="px-4 text-white font-serif font-bold text-xl md:text-2xl">94/100* <span className="text-sm font-sans font-normal text-[#F5EBD8]/60 block uppercase tracking-wider mt-1">Avg. Confidence Score</span></div>
+            <div className="px-4 text-[#CA922B] font-serif font-bold text-xl md:text-2xl">100%* <span className="text-sm font-sans font-normal text-[#F5EBD8]/60 block uppercase tracking-wider mt-1">Authenticity Checked</span></div>
           </div>
         </div>
       </section>
@@ -161,16 +161,16 @@ export default function Businesses() {
                 <img src={biz.img} alt={biz.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute top-3 left-3 flex gap-2">
                   {biz.featured && <span className="bg-[#CA922B] text-white text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide">Featured</span>}
-                  <span className="bg-[#2B1507]/80 text-white text-xs font-bold px-2 py-1 rounded-full">{biz.score}/100</span>
+                  <span className="bg-[#2B1507]/80 text-white text-xs font-bold px-2 py-1 rounded-full">{biz.score}/100*</span>
                 </div>
               </div>
               <div className="p-5">
                 <div className="text-[10px] font-bold tracking-widest text-[#CA922B] uppercase mb-1">{biz.category} · {biz.city}</div>
                 <h3 className="font-serif font-bold text-lg text-[#3A1F0E] mb-2">{biz.name}</h3>
                 <div className="flex gap-4 text-xs text-[#3A1F0E]/60 mb-4">
-                  <span><span className="font-bold text-[#3A1F0E]">{biz.recommend}%</span> Recommend</span>
-                  <span><span className="font-bold text-[#3A1F0E]">{biz.returnAlone}%</span> Return Alone</span>
-                  <span className="flex items-center gap-1"><Star className="w-3 h-3 fill-[#CA922B] text-[#CA922B]"/><span className="font-bold text-[#3A1F0E]">{biz.rating}</span></span>
+                  <span><span className="font-bold text-[#3A1F0E]">{biz.recommend}%*</span> Recommend</span>
+                  <span><span className="font-bold text-[#3A1F0E]">{biz.returnAlone}%*</span> Return Alone</span>
+                  <span className="flex items-center gap-1"><Star className="w-3 h-3 fill-[#CA922B] text-[#CA922B]"/><span className="font-bold text-[#3A1F0E]">{biz.rating}*</span></span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {biz.tags.map((t, j) => (
@@ -207,6 +207,7 @@ export default function Businesses() {
              <div className="text-center text-[#3A1F0E]/60 text-sm">Join the network of trusted Minority-owned businesses today.</div>
           </div>
         </div>
+        <p className="text-xs text-[#3A1F0E]/40 mt-8 text-center">* All figures marked with an asterisk are illustrative placeholders for visual purposes only and do not reflect actual data.</p>
       </div>
     </div>
   );
