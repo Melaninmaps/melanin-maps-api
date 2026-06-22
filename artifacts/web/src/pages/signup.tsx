@@ -174,7 +174,13 @@ export default function Signup() {
               </Button>
             </a>
 
-            <div className="mt-4 flex items-center gap-3">
+            {/* Email code explanation */}
+            <div className="mt-4 flex items-center gap-2 justify-center text-[#3A1F0E]/40">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              <span className="text-xs">We'll email you a quick sign-in code — no password needed</span>
+            </div>
+
+            <div className="mt-5 flex items-center gap-3">
               <div className="flex-1 h-px bg-[#3A1F0E]/10" />
               <span className="text-xs text-[#3A1F0E]/40 uppercase tracking-wider">or</span>
               <div className="flex-1 h-px bg-[#3A1F0E]/10" />
