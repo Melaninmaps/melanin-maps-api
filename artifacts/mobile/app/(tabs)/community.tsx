@@ -27,6 +27,7 @@ import { useColors } from "@/hooks/useColors";
 import { useEvents } from "@/hooks/useEvents";
 import { useGroups, type Group } from "@/hooks/useGroups";
 import { useAuth } from "@/lib/auth";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 const TABS = ["Feed", "Events", "Groups", "Alerts", "Recommendations"];
 
@@ -170,6 +171,8 @@ export default function CommunityScreen() {
   const [newPostCategory, setNewPostCategory] = useState("general");
   const [submittingPost, setSubmittingPost] = useState(false);
   const [groupCategory, setGroupCategory] = useState("all");
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState<string | undefined>(undefined);
   const inputRef = useRef<TextInput>(null);
 
   const { groups, isLoading: groupsLoading, refetch: refetchGroups, join, leave } = useGroups();
@@ -249,7 +252,8 @@ export default function CommunityScreen() {
 
   const handleJoinLeave = async (group: Group) => {
     if (!isAuthenticated) {
-      Alert.alert("Sign In Required", "Please sign in to join groups.");
+      setUpgradeFeature("Joining Groups");
+      setShowUpgrade(true);
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -387,7 +391,8 @@ export default function CommunityScreen() {
             activeOpacity={0.85}
             onPress={() => {
               if (!isAuthenticated) {
-                Alert.alert("Sign In Required", "Please sign in to create a group.");
+                setUpgradeFeature("Community Groups");
+                setShowUpgrade(true);
                 return;
               }
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -446,6 +451,11 @@ export default function CommunityScreen() {
             style={[styles.fab, { backgroundColor: colors.primary, bottom: bottomPad + 90 }]}
             activeOpacity={0.85}
             onPress={() => {
+              if (!isAuthenticated) {
+                setUpgradeFeature("Community Posts");
+                setShowUpgrade(true);
+                return;
+              }
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               setShowCompose(true);
               setTimeout(() => inputRef.current?.focus(), 150);
@@ -455,6 +465,12 @@ export default function CommunityScreen() {
           </TouchableOpacity>
         </>
       )}
+
+      <UpgradeModal
+        visible={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        feature={upgradeFeature}
+      />
 
       <Modal visible={showCompose} animationType="slide" transparent presentationStyle="overFullScreen">
         <View style={styles.modalOverlay}>

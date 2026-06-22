@@ -56,7 +56,7 @@ export default function BusinessDashboard() {
 
   useEffect(() => {
     fetch(`${BASE}api/auth/user`, { credentials: "include" }).then((r) => r.json()).then((d) => setUser(d.user ?? null)).catch(() => {});
-    fetch(`${BASE}api/businesses?limit=100`, { credentials: "include" }).then((r) => r.json()).then((d) => {
+    fetch(`${BASE}api/businesses/mine`, { credentials: "include" }).then((r) => r.json()).then((d) => {
       setBusinesses(d.businesses ?? []);
       setLoading(false);
     }).catch(() => setLoading(false));
