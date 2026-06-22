@@ -11,7 +11,7 @@ const PARTNERS = [
     color: "#2D7A4F",
     bg: "#2D7A4F0F",
     partners: [
-      { name: "Salamander Collection", desc: "Luxury resorts and boutique hotels celebrating Black excellence in hospitality", discount: "15% off rack rates", code: "MWM15" },
+      { name: "Salamander Collection", desc: "Luxury resorts and boutique hotels celebrating Minority excellence in hospitality", discount: "15% off rack rates", code: "MWM15" },
       { name: "Afro-Luxe Hotels", desc: "Curated collection of Minority-owned boutique properties across the US & Caribbean", discount: "10% off + free breakfast", code: "KINFOLK10" },
     ],
   },
@@ -22,7 +22,7 @@ const PARTNERS = [
     bg: "#1D4ED80F",
     partners: [
       { name: "Black Travel Alliance", desc: "Discounted airfare packages for culturally curated destinations worldwide", discount: "Up to $75 off flights", code: "MWM75" },
-      { name: "TravelNoire", desc: "Group travel packages designed for Black travelers — safety-rated, community-reviewed", discount: "5% off all packages", code: "MELANIN5" },
+      { name: "TravelNoire", desc: "Group travel packages designed for Minority travelers — safety-rated, community-reviewed", discount: "5% off all packages", code: "MELANIN5" },
     ],
   },
   {
@@ -41,8 +41,8 @@ const PARTNERS = [
     color: "#7B2D8B",
     bg: "#7B2D8B0F",
     partners: [
-      { name: "Urban Soul Tours", desc: "Black culture walking tours and city experiences in 25+ US cities", discount: "25% off for members", code: "MELANIN25" },
-      { name: "The Root Food Festival", desc: "Annual celebration of Black culinary culture — VIP tickets for members", discount: "VIP upgrade free", code: "MWMVIP" },
+      { name: "Urban Soul Tours", desc: "Minority culture walking tours and city experiences in 25+ US cities", discount: "25% off for members", code: "MELANIN25" },
+      { name: "The Root Food Festival", desc: "Annual celebration of Minority culinary culture — VIP tickets for members", discount: "VIP upgrade free", code: "MWMVIP" },
     ],
   },
 ];
@@ -69,7 +69,7 @@ export default function Affiliate() {
             <span className="text-[#CA922B]">Save More.</span>
           </h1>
           <p className="text-[#F5EBD8]/80 text-lg max-w-2xl mx-auto">
-            Exclusive discounts from Minority-owned and Black-friendly travel partners — hotels, flights, car rentals, and experiences curated for our community.
+            Exclusive discounts from Minority-owned and Minority-friendly travel partners — hotels, flights, car rentals, and experiences curated for our community.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
             <Link href={`${BASE}membership`}>

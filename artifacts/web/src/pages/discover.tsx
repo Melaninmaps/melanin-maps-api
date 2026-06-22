@@ -20,7 +20,7 @@ const VIBES = [
   { emoji: "💇🏾", label: "Hair & Beauty", category: "Professional Services" },
   { emoji: "🌙", label: "Date Night", category: "Restaurants & Nightlife" },
   { emoji: "☕", label: "Café Vibes", category: "Restaurants & Nightlife" },
-  { emoji: "💼", label: "Black Biz", category: "Minority-Owned Businesses" },
+  { emoji: "💼", label: "Minority Biz", category: "Minority-Owned Businesses" },
   { emoji: "🏨", label: "Stay & Explore", category: "Hotels & Stays" },
   { emoji: "🎭", label: "Culture", category: "Cultural Landmarks" },
   { emoji: "🎉", label: "Events & More", category: "Community Events" },
@@ -479,7 +479,7 @@ export default function Discover() {
                       {business.blackOwned && (
                         <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-[#2B1507]">
                           <ShieldCheck size={14} className="text-[#CA922B]" />
-                          Black Owned
+                          Minority Owned
                         </div>
                       )}
                     </div>

@@ -59,7 +59,7 @@ export default function Terms() {
           <p className="leading-relaxed text-[#3A1F0E]/80 mb-3">Business owners who list on our platform agree to:</p>
           <ul className="space-y-2 list-disc pl-6 text-[#3A1F0E]/80 leading-relaxed">
             <li>Provide accurate information about their business, including ownership status.</li>
-            <li>Not misrepresent Black ownership status. Listings claiming Black ownership are subject to community verification.</li>
+            <li>Not misrepresent Minority ownership status. Listings claiming Minority ownership are subject to community verification.</li>
             <li>Respond professionally to community feedback and reviews.</li>
             <li>Comply with all applicable laws and regulations for their business type.</li>
           </ul>

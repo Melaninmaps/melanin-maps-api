@@ -365,7 +365,7 @@ export default function Home() {
           <div className="flex flex-col justify-center px-10 py-16 lg:py-20 bg-[#FAF6EF]">
             <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-6">More Than a Travel App</h2>
             <p className="text-lg md:text-xl text-[#3A1F0E]/80 leading-relaxed">
-              Mapping with Melanin™ helps you map your life — exposing you to the real culture within your local and global communities so you can make conscious decisions on where you live, where you buy, and where you travel, while keeping Black dollars circulating within Black communities.
+              Mapping with Melanin™ helps you map your life — exposing you to the real culture within your local and global communities so you can make conscious decisions on where you live, where you buy, and where you travel, while keeping Minority dollars circulating within Minority communities.
             </p>
           </div>
         </div>
@@ -388,7 +388,7 @@ export default function Home() {
           
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             <div className="bg-[#FAF6EF] p-8 rounded-2xl border border-[#3A1F0E]/5 shadow-sm">
-              <p className="text-xl font-serif text-[#3A1F0E] leading-relaxed italic">"Every dollar you spend is a vote. We make it easy to cast that vote for Minority-owned businesses, melanated entrepreneurs, and community-rooted spaces that reinvest in the culture — so the economic power of the Black dollar stays where it belongs."</p>
+              <p className="text-xl font-serif text-[#3A1F0E] leading-relaxed italic">"Every dollar you spend is a vote. We make it easy to cast that vote for Minority-owned businesses, melanated entrepreneurs, and community-rooted spaces that reinvest in the culture — so the economic power of the Minority dollar stays where it belongs."</p>
             </div>
             <div className="bg-[#FAF6EF] p-8 rounded-2xl border border-[#3A1F0E]/5 shadow-sm">
               <p className="text-xl font-serif text-[#3A1F0E] leading-relaxed italic">"Every score, review, and recommendation on this platform comes from people who've actually been there. That's not a feature. That's the foundation."</p>
@@ -696,7 +696,7 @@ export default function Home() {
             <div className="order-2 lg:order-1 rounded-3xl text-white relative overflow-hidden h-full flex flex-col justify-end min-h-[480px]">
               <img
                 src="https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800"
-                alt="Carefree young Black woman exploring the city"
+                alt="Carefree young Minority woman exploring the city"
                 className="absolute inset-0 w-full h-full object-cover object-top"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#2B1507]/90 via-[#2B1507]/30 to-transparent"></div>
@@ -820,7 +820,7 @@ export default function Home() {
             <div className="col-span-2 flex flex-col gap-3">
               {/* Cultural Landmarks */}
               <div className="relative rounded-2xl overflow-hidden h-[204px] group cursor-pointer">
-                <img src="https://images.pexels.com/photos/5261131/pexels-photo-5261131.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop&dpr=1" alt="Historic Harlem brownstone facade, iconic Black neighborhood" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" style={{ objectPosition: "center 30%" }} />
+                <img src="https://images.pexels.com/photos/5261131/pexels-photo-5261131.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop&dpr=1" alt="Historic Harlem brownstone facade, iconic Minority neighborhood" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" style={{ objectPosition: "center 30%" }} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 p-4">
                   <h3 className="font-serif font-bold text-base text-white mb-0.5">Cultural Landmarks</h3>
@@ -905,7 +905,7 @@ export default function Home() {
 
           <div className="text-center">
             <Link href="/explore"><Button className="rounded-full bg-[#2B1507] hover:bg-[#1a0c04] text-white px-8 h-12 mb-8">Explore the Platform</Button></Link>
-            <p className="text-xs text-[#3A1F0E]/50">* A Minority-owned business is defined as any business that is 51% or more owned and operated by a Black person or persons.</p>
+            <p className="text-xs text-[#3A1F0E]/50">* A Minority-owned business is defined as any business that is 51% or more owned and operated by a Minority person or persons.</p>
           </div>
         </div>
       </section>
@@ -930,7 +930,7 @@ export default function Home() {
           <div className="relative rounded-3xl overflow-hidden h-56 mb-10">
             <img
               src="https://images.pexels.com/photos/33556355/pexels-photo-33556355/free-photo-of-joyful-beach-play-in-black-and-white.jpeg?auto=compress&cs=tinysrgb&w=1260&h=400&dpr=1"
-              alt="Black children joyfully splashing and playing in the water"
+              alt="Minority children joyfully splashing and playing in the water"
               className="absolute inset-0 w-full h-full object-cover object-center"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-[#2B1507]/80 via-[#2B1507]/40 to-transparent" />
@@ -952,9 +952,9 @@ export default function Home() {
                   <span className="text-xs font-bold text-white/40 bg-white/10 px-2 py-1 rounded-full">Coming Soon</span>
                 </div>
                 {[
-                  { title: "ATL Black Business Expo", date: "Aug 2026", loc: "Atlanta, GA", tag: "Business" },
+                  { title: "ATL Minority Business Expo", date: "Aug 2026", loc: "Atlanta, GA", tag: "Business" },
                   { title: "Melanin & Mimosas Social", date: "Jul 2026", loc: "Houston, TX", tag: "Social" },
-                  { title: "Travel While Black Summit", date: "Sep 2026", loc: "New York, NY", tag: "Travel" },
+                  { title: "Travel While Minority Summit", date: "Sep 2026", loc: "New York, NY", tag: "Travel" },
                 ].map((ev, i) => (
                   <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-3">
                     <div className="flex items-start justify-between gap-2">
@@ -983,7 +983,7 @@ export default function Home() {
                   <span className="text-xs font-bold text-white/40 bg-white/10 px-2 py-1 rounded-full">Coming Soon</span>
                 </div>
                 {[
-                  { name: "Black Travel Collective", members: "1.2K", type: "Travel" },
+                  { name: "Minority Travel Collective", members: "1.2K", type: "Travel" },
                   { name: "Melanated Entrepreneurs", members: "890", type: "Business" },
                   { name: "HBCU Alumni Network", members: "2.4K", type: "Network" },
                 ].map((g, i) => (
@@ -1127,7 +1127,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-6">
             {[
               { 
-                quote: "Finally a platform that actually understands what it means to travel while Black. The safety scores alone are worth it — I checked three cities before my last trip and felt genuinely prepared.",
+                quote: "Finally a platform that actually understands what it means to travel while Minority. The safety scores alone are worth it — I checked three cities before my last trip and felt genuinely prepared.",
                 name: "Aaliyah T.", role: "Frequent Traveler", loc: "Atlanta, GA", initials: "AT"
               },
               { 

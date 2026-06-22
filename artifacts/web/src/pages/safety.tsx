@@ -67,7 +67,7 @@ export default function Safety() {
               { t: "Location Safety Scores", d: "Aggregated community ratings for neighborhoods, cities, and destinations — so you know before you go." },
               { t: "Verified Member Program", d: "Verified member badges ensure the reviews and connections you trust come from real, authenticated accounts — backed by liveness checks and anti-fraud protection." },
               { t: "Incident Reporting", d: "Community-powered reporting tools let members flag unsafe experiences and alert others in real time." },
-              { t: "Transparency Ratings", d: "Businesses and destinations are rated on inclusivity, service quality, and how welcoming they are to Black guests." },
+              { t: "Transparency Ratings", d: "Businesses and destinations are rated on inclusivity, service quality, and how welcoming they are to Minority guests." },
               { t: "Trusted Network", d: "Connect with verified locals and experienced travelers who can give you the real picture before you arrive." }
             ].map((f, i) => (
               <div key={i} className="bg-[#FAF6EF] p-8 rounded-2xl border border-[#3A1F0E]/5">
@@ -88,7 +88,7 @@ export default function Safety() {
                 <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">DESTINATION SCORES</span>
               </div>
               <h2 className="text-4xl font-serif font-bold text-[#3A1F0E] mb-2">Top-Rated Cities</h2>
-              <p className="text-[#3A1F0E]/70">Community safety scores for the most popular Black travel destinations in the U.S.</p>
+              <p className="text-[#3A1F0E]/70">Community safety scores for the most popular Minority travel destinations in the U.S.</p>
             </div>
             <div className="flex items-center gap-4 text-sm text-[#3A1F0E]/60 bg-white px-4 py-2 rounded-full shadow-sm border border-[#3A1F0E]/5">
               <span><strong className="text-green-600">9.0+</strong> Excellent</span>
@@ -147,7 +147,7 @@ export default function Safety() {
                 {[
                   { n: "Keisha M.", c: "Atlanta, GA", d: "Jun 10, 2026", i: "K", q: "Felt completely at home the entire trip. The restaurant recommendations from the community were spot-on — every spot was welcoming and the food was incredible.", h: 42 },
                   { n: "Darius P.", c: "New Orleans, LA", d: "Jun 5, 2026", i: "D", q: "Staying in the Tremé neighborhood was a transformative experience. The safety scores helped me choose the right area and I never felt out of place.", h: 38 },
-                  { n: "Simone A.", c: "Harlem, NY", d: "May 28, 2026", i: "S", q: "The community reviews were incredibly accurate. I knew exactly what to expect and felt confident navigating the city solo as a Black woman.", h: 61 }
+                  { n: "Simone A.", c: "Harlem, NY", d: "May 28, 2026", i: "S", q: "The community reviews were incredibly accurate. I knew exactly what to expect and felt confident navigating the city solo as a Minority woman.", h: 61 }
                 ].map((r, idx) => (
                   <div key={idx} className="bg-[#FAF6EF] p-6 rounded-2xl border border-[#3A1F0E]/5">
                     <div className="flex items-center justify-between mb-4">

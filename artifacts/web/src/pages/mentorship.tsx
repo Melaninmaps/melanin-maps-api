@@ -106,7 +106,7 @@ export default function Mentorship() {
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Connect With<br />
-            <span className="text-[#CA922B]">Black Excellence</span>
+            <span className="text-[#CA922B]">Minority Excellence</span>
           </h1>
           <p className="text-[#F5EBD8]/80 text-lg max-w-2xl">
             Find mentors, collaborate with peers, and connect with professionals across every industry. Real people. Real community. Real growth.

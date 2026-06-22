@@ -6,8 +6,8 @@ const CITIES = [
     slug: "atlanta",
     name: "Atlanta",
     state: "GA",
-    tagline: "The Black Mecca of the South",
-    description: "Home to HBCUs, civil rights history, and a booming Black entrepreneurship scene unlike anywhere else.",
+    tagline: "The Minority Mecca of the South",
+    description: "Home to HBCUs, civil rights history, and a booming Minority entrepreneurship scene unlike anywhere else.",
     safetyScore: 78,
     businesses: "1,200+",
     emoji: "🍑",
@@ -32,7 +32,7 @@ const CITIES = [
     slug: "new-orleans",
     name: "New Orleans",
     state: "LA",
-    tagline: "Birthplace of Jazz, Heart of Black Culture",
+    tagline: "Birthplace of Jazz, Heart of Minority Culture",
     description: "Vibrant Creole culture, world-class cuisine, and deep African roots make NOLA a must-experience destination.",
     safetyScore: 71,
     businesses: "600+",
@@ -46,7 +46,7 @@ const CITIES = [
     name: "Washington",
     state: "DC",
     tagline: "Chocolate City, Always",
-    description: "Steeped in Black political power and culture — from U Street to the Smithsonian's African American Museum.",
+    description: "Steeped in Minority political power and culture — from U Street to the Smithsonian's African American Museum.",
     safetyScore: 80,
     businesses: "800+",
     emoji: "🏛️",
@@ -58,8 +58,8 @@ const CITIES = [
     slug: "new-york",
     name: "New York",
     state: "NY",
-    tagline: "Harlem to Brooklyn — Black Excellence Everywhere",
-    description: "From historic Harlem to Brooklyn's Bed-Stuy, NYC has centuries of Black culture, art, and business.",
+    tagline: "Harlem to Brooklyn — Minority Excellence Everywhere",
+    description: "From historic Harlem to Brooklyn's Bed-Stuy, NYC has centuries of Minority culture, art, and business.",
     safetyScore: 82,
     businesses: "2,400+",
     emoji: "🗽",
@@ -72,7 +72,7 @@ const CITIES = [
     name: "Chicago",
     state: "IL",
     tagline: "The Bronzeville Beat",
-    description: "Bronzeville, the South Side, and a deep music heritage make Chicago a cornerstone of Black American life.",
+    description: "Bronzeville, the South Side, and a deep music heritage make Chicago a cornerstone of Minority American life.",
     safetyScore: 73,
     businesses: "1,100+",
     emoji: "🌬️",
@@ -98,7 +98,7 @@ export default function Cities() {
             Find Your <span className="text-[#CA922B]">City.</span>
           </h1>
           <p className="text-[#F5EBD8]/80 text-xl max-w-2xl mx-auto font-light">
-            Curated guides to the best Minority-owned businesses, safest neighborhoods, and most vibrant cultural hubs across America's most iconic Black cities.
+            Curated guides to the best Minority-owned businesses, safest neighborhoods, and most vibrant cultural hubs across America's most iconic Minority cities.
           </p>
         </div>
       </section>

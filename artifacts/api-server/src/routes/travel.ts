@@ -15,7 +15,7 @@ const CITY_VOICES: Record<string, CityVoice> = {
   "new york": {
     slang: ["deadass", "no cap", "mad", "wildin", "fam", "on sight", "bussin", "lowkey", "bet"],
     phrases: ["deadass this spot is legendary", "no cap you need to pull up", "mad vibes in this neighborhood", "fam this is the move"],
-    culturalTouchstones: ["Harlem Renaissance", "the Bronx hip-hop origins", "Brooklyn Black excellence", "Bed-Stuy do or die", "the culture capital"],
+    culturalTouchstones: ["Harlem Renaissance", "the Bronx hip-hop origins", "Brooklyn Minority excellence", "Bed-Stuy do or die", "the culture capital"],
     writingGuidance: "Write like a proud New Yorker — direct, confident, a little fast-paced. Use 'deadass', 'no cap', 'mad' as an adjective (mad good food), 'fam', 'the city', and 'pull up'. Reference Harlem, Brooklyn, the Bronx. New Yorkers are blunt but passionate about their city.",
   },
   "philadelphia": {
@@ -27,14 +27,14 @@ const CITY_VOICES: Record<string, CityVoice> = {
   "atlanta": {
     slang: ["slime", "on gang", "bussin", "the A", "OTP", "trap", "drip", "lowkey", "no cap", "period", "ATLien", "plug"],
     phrases: ["on gang this spot is bussin", "the A never misses", "this is where the culture lives", "slime you need to pull up"],
-    culturalTouchstones: ["Sweet Auburn", "the BeltLine", "Old Fourth Ward", "Bankhead", "Atlanta as the Black mecca", "HBCUs", "trap music origins", "Tyler Perry Studios"],
-    writingGuidance: "Write with Atlanta swagger — confident, aspirational, culturally rich. ATL is the Black mecca, lean into that. Use 'the A', 'slime' (term of endearment), 'on gang', 'bussin', 'drip'. Reference the BeltLine, Sweet Auburn, the HBCU culture. Atlanta is where Black excellence LIVES.",
+    culturalTouchstones: ["Sweet Auburn", "the BeltLine", "Old Fourth Ward", "Bankhead", "Atlanta as the Minority mecca", "HBCUs", "trap music origins", "Tyler Perry Studios"],
+    writingGuidance: "Write with Atlanta swagger — confident, aspirational, culturally rich. ATL is the Minority mecca, lean into that. Use 'the A', 'slime' (term of endearment), 'on gang', 'bussin', 'drip'. Reference the BeltLine, Sweet Auburn, the HBCU culture. Atlanta is where Minority excellence LIVES.",
   },
   "chicago": {
     slang: ["shorty", "the chi", "finna", "lowkey", "on me", "no cap", "opps", "drip", "bro", "gang", "lick"],
     phrases: ["this spot is cold on me", "the Chi never misses", "finna pull up to this jawn", "shorty this is the spot"],
     culturalTouchstones: ["Bronzeville Black Metropolis", "South Side culture", "Chicago blues roots", "Kanye and Chance legacy", "Harold Washington legacy", "Chatham neighborhood", "Bud Billiken Parade"],
-    writingGuidance: "Write with Chi-town pride — real, resilient, deeply rooted. Use 'the Chi', 'shorty', 'finna', 'on me', and reference the South Side and Bronzeville. Chicago's Black community has deep historical roots — honor that. The writing should feel warm but grounded in reality.",
+    writingGuidance: "Write with Chi-town pride — real, resilient, deeply rooted. Use 'the Chi', 'shorty', 'finna', 'on me', and reference the South Side and Bronzeville. Chicago's Minority community has deep historical roots — honor that. The writing should feel warm but grounded in reality.",
   },
   "houston": {
     slang: ["trill", "H-Town", "third coast", "slabs", "swangas", "screwed up", "chopped not slopped", "finna", "bruh", "what it do"],
@@ -45,14 +45,14 @@ const CITY_VOICES: Record<string, CityVoice> = {
   "los angeles": {
     slang: ["no cap", "faded", "saucy", "dub", "west side", "the crenshaw", "lowkey", "bussin", "hard", "fire", "on god"],
     phrases: ["this spot hits different out west", "no cap the west coast eats", "lowkey this is the move", "dub been holding it down"],
-    culturalTouchstones: ["Crenshaw District", "Leimert Park Village", "Inglewood culture", "Compton legacy", "Central Avenue jazz history", "Eso Won Books", "Black Hollywood"],
-    writingGuidance: "Write with West Coast cool — laid back but confident. LA Black culture is diverse, artistic, and unbothered. Use 'dub' (W/West), 'no cap', 'lowkey', 'hits different', reference Leimert Park, Crenshaw, Inglewood. The vibe is sun-kissed excellence.",
+    culturalTouchstones: ["Crenshaw District", "Leimert Park Village", "Inglewood culture", "Compton legacy", "Central Avenue jazz history", "Eso Won Books", "Minority Hollywood"],
+    writingGuidance: "Write with West Coast cool — laid back but confident. LA Minority culture is diverse, artistic, and unbothered. Use 'dub' (W/West), 'no cap', 'lowkey', 'hits different', reference Leimert Park, Crenshaw, Inglewood. The vibe is sun-kissed excellence.",
   },
   "dc": {
     slang: ["junt", "bama", "DMV", "no cap", "go-go", "move", "finna", "bruh", "joint", "hard"],
     phrases: ["this junt is everything in the DMV", "go-go vibes all day", "bama you need to pull up", "the District never misses"],
     culturalTouchstones: ["U Street Corridor", "go-go music culture", "Howard University legacy", "Anacostia history", "Chuck Brown legacy", "Black Broadway (U Street)", "Ben's Chili Bowl institution"],
-    writingGuidance: "Write with DMV energy — sophisticated but with that go-go bounce underneath. DC is where Black politics, art, and culture collide. Use 'junt', 'bama' (term of endearment in DMV), 'DMV', reference U Street, Howard University, go-go. The writing should feel polished but authentically hood at the same time.",
+    writingGuidance: "Write with DMV energy — sophisticated but with that go-go bounce underneath. DC is where Minority politics, art, and culture collide. Use 'junt', 'bama' (term of endearment in DMV), 'DMV', reference U Street, Howard University, go-go. The writing should feel polished but authentically hood at the same time.",
   },
   "detroit": {
     slang: ["finna", "no cap", "Motown", "313", "on me", "hard", "drip", "bruh", "slime", "lowkey"],
@@ -63,20 +63,20 @@ const CITY_VOICES: Record<string, CityVoice> = {
   "new orleans": {
     slang: ["cher", "lagniappe", "making groceries", "neutral ground", "pass a good time", "where y'at", "laissez les bons temps rouler", "NOLA"],
     phrases: ["cher this spot will make you pass a good time", "lagniappe — a little something extra", "where y'at, this is the move", "NOLA never disappoints"],
-    culturalTouchstones: ["Tremé neighborhood", "Second Line traditions", "Mardi Gras Indian culture", "jazz origins", "Dooky Chase legacy", "Congo Square history", "Black Masking Indians"],
-    writingGuidance: "Write with NOLA warmth and rhythm — joyful, deep-rooted, full of life. New Orleans Black culture is ancient and layered. Use 'cher' (term of endearment), 'lagniappe' (a little something extra), 'pass a good time', 'where y'at'. Reference the Tremé, Second Line, Mardi Gras Indians. NOLA is where Black culture was born in America.",
+    culturalTouchstones: ["Tremé neighborhood", "Second Line traditions", "Mardi Gras Indian culture", "jazz origins", "Dooky Chase legacy", "Congo Square history", "Minority Masking Indians"],
+    writingGuidance: "Write with NOLA warmth and rhythm — joyful, deep-rooted, full of life. New Orleans Minority culture is ancient and layered. Use 'cher' (term of endearment), 'lagniappe' (a little something extra), 'pass a good time', 'where y'at'. Reference the Tremé, Second Line, Mardi Gras Indians. NOLA is where Minority culture was born in America.",
   },
   "miami": {
     slang: ["305", "no cap", "drip", "lit", "Magic City", "fam", "fire", "on god", "bussin", "lowkey"],
     phrases: ["305 always delivers", "Magic City energy is unmatched", "this spot is dripping fr", "fam you need to pull up"],
-    culturalTouchstones: ["Little Haiti culture", "Overtown Black history", "Liberty City", "Afro-Caribbean influence", "Miami Bass music origins", "Opa-locka"],
-    writingGuidance: "Write with Miami heat — vibrant, multicultural, bold. Miami's Black culture blends African-American, Haitian, Caribbean, and Southern traditions. Use '305', 'Magic City', reference the Afro-Caribbean influence, Overtown, Little Haiti. The energy is tropical, luxurious, and deeply cultural.",
+    culturalTouchstones: ["Little Haiti culture", "Overtown Minority history", "Liberty City", "Afro-Caribbean influence", "Miami Bass music origins", "Opa-locka"],
+    writingGuidance: "Write with Miami heat — vibrant, multicultural, bold. Miami's Minority culture blends African-American, Haitian, Caribbean, and Southern traditions. Use '305', 'Magic City', reference the Afro-Caribbean influence, Overtown, Little Haiti. The energy is tropical, luxurious, and deeply cultural.",
   },
   "baltimore": {
     slang: ["no cap", "fam", "joint", "hard", "bruh", "lowkey", "Charm City", "B-More", "hon", "on me"],
     phrases: ["Charm City holds it down", "B-More never misses", "this joint is everything", "fam this is the spot"],
     culturalTouchstones: ["Pennsylvania Avenue history", "Upton neighborhood", "Freddie Gray legacy", "The Wire cultural impact", "Morgan State HBCU", "Billie Holiday birthplace", "Cab Calloway history"],
-    writingGuidance: "Write with Baltimore realness — resilient, proud, underrated. Baltimore is one of the most culturally rich Black cities in America and doesn't get enough credit. Use 'B-More', 'Charm City', reference Pennsylvania Avenue, Morgan State, the deep musical history. Baltimore speaks with a warm directness.",
+    writingGuidance: "Write with Baltimore realness — resilient, proud, underrated. Baltimore is one of the most culturally rich Minority cities in America and doesn't get enough credit. Use 'B-More', 'Charm City', reference Pennsylvania Avenue, Morgan State, the deep musical history. Baltimore speaks with a warm directness.",
   },
   "memphis": {
     slang: ["no cap", "bruh", "finna", "901", "Bluff City", "slime", "hard", "on god", "lowkey", "fam"],
@@ -133,12 +133,12 @@ router.post("/travel/recommendations", async (req, res) => {
   const vibeList = vibes.length > 0 ? vibes.join(", ") : "general travel";
   const cityVoice = neighborVoice ? getCityVoice(destination) : null;
   const culturalVoiceInstructions = !neighborVoice
-    ? `Write in a clear, warm, and informative tone. Be helpful and community-focused, but use standard language without regional slang or dialect. Still celebrate Black culture and Minority-owned businesses authentically — just in a universally accessible voice.`
+    ? `Write in a clear, warm, and informative tone. Be helpful and community-focused, but use standard language without regional slang or dialect. Still celebrate Minority culture and Minority-owned businesses authentically — just in a universally accessible voice.`
     : cityVoice
       ? buildCulturalVoiceInstructions(cityVoice)
       : `You are the user's neighbor who knows this city. Write like you're texting a friend the real hookup before they visit. Warm, personal, direct — like your auntie who knows everybody. Short sentences. Use "you" and "your" constantly. Drop real community knowledge. Never use travel brochure words like "boasts", "features", "renowned", or "visitors will enjoy". This is kinfolk talking to kinfolk.`;
 
-  const prompt = `You are KinfolkAI — built by and for the Black community. Your whole thing is giving people the real, unfiltered scoop on a city, the way only a neighbor who grew up there can.
+  const prompt = `You are KinfolkAI — built by and for the Minority community. Your whole thing is giving people the real, unfiltered scoop on a city, the way only a neighbor who grew up there can.
 
 Your friend is heading to: ${destination}
 What they're into: ${vibeList}
@@ -178,7 +178,7 @@ Return a JSON object with EXACTLY this structure (no extra text, pure JSON):
   "localInsights": ["Something you only know if you LIVE there — a secret, a shortcut, a truth", "insight 2", "insight 3"]
 }
 
-Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 local insights. Only recommend real, authentic Minority-owned or Black-cultural spots — no tourist traps, no chains, no places that don't serve the community.`;
+Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 local insights. Only recommend real, authentic Minority-owned or Minority-cultural spots — no tourist traps, no chains, no places that don't serve the community.`;
 
   try {
     const completion = await openai.chat.completions.create({

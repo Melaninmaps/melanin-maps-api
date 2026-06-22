@@ -19,7 +19,7 @@ export default function Roadmap() {
           </h1>
           
           <p className="text-[#F5EBD8]/80 text-lg md:text-xl max-w-3xl mb-16 font-light">
-            Mapping with Melanin™ is building the trusted infrastructure for Black travel, commerce, and community — one phase at a time. Here's our post-launch roadmap, shaped by the community.
+            Mapping with Melanin™ is building the trusted infrastructure for Minority travel, commerce, and community — one phase at a time. Here's our post-launch roadmap, shaped by the community.
           </p>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-5xl">
@@ -148,7 +148,7 @@ export default function Roadmap() {
           <div className="space-y-6">
             {[
               { s: "gray", t: "Relocation Intelligence", c: "Relocation", d: "Neighborhood scoring, school ratings, cost of living, and community density data for relocation decisions." },
-              { s: "gray", t: "Employer Transparency Ratings", c: "Employment", d: "Community-sourced DEI ratings, workplace culture scores, and employer reviews from Black professionals." },
+              { s: "gray", t: "Employer Transparency Ratings", c: "Employment", d: "Community-sourced DEI ratings, workplace culture scores, and employer reviews from Minority professionals." },
               { s: "gray", t: "Events Discovery", c: "Events", d: "Local and national events — cultural, networking, business, and community." },
               { s: "gray", t: "Networking Features", c: "Social", d: "Professional connections, direct messaging, community introductions, and co-working spaces." },
               { s: "gray", t: "Travel Partner Matching", c: "Travel", d: "Algorithm-based travel companion matching based on destination, travel style, and community identity." },
@@ -187,7 +187,7 @@ export default function Roadmap() {
             {[
               { s: "dark", t: "AI Travel Planner (KinfolkAI)", c: "AI", d: "Conversational AI for personalized trip planning, safety briefings, and discovery recommendations." },
               { s: "dark", t: "Enterprise Partnerships", c: "B2B", d: "Corporate travel programs, HR culture tools, and DEI employer visibility partnerships." },
-              { s: "dark", t: "Global Expansion", c: "International", d: "Expand beyond the U.S. to cover Black travel destinations across the African diaspora and global communities." },
+              { s: "dark", t: "Global Expansion", c: "International", d: "Expand beyond the U.S. to cover Minority travel destinations across the African diaspora and global communities." },
               { s: "dark", t: "Marketplace & Transactions", c: "Commerce", d: "In-platform booking, event ticketing, merchandise shops, and service marketplace for Minority-owned businesses." },
               { s: "dark", t: "White Label Platform", c: "B2B", d: "Licensing the platform infrastructure to organizations, HBCUs, and community networks." }
             ].map((i, idx) => (

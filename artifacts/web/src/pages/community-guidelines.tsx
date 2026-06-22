@@ -14,7 +14,7 @@ export default function CommunityGuidelines() {
       <div className="max-w-3xl mx-auto px-4 py-16 space-y-10 text-[#3A1F0E]">
         <section className="bg-[#CA922B]/10 border border-[#CA922B]/30 rounded-2xl p-6">
           <p className="text-[#3A1F0E]/90 leading-relaxed text-lg font-medium italic">
-            "Mapping with Melanin™ was built for our community — by our community. These guidelines exist to ensure this space remains safe, authentic, and empowering for every Black traveler, entrepreneur, and culture-keeper who calls this platform home."
+            "Mapping with Melanin™ was built for our community — by our community. These guidelines exist to ensure this space remains safe, authentic, and empowering for every Minority traveler, entrepreneur, and culture-keeper who calls this platform home."
           </p>
         </section>
 
@@ -24,7 +24,7 @@ export default function CommunityGuidelines() {
             {[
               { title: "Authenticity", desc: "Real reviews, real experiences, real community intelligence." },
               { title: "Safety", desc: "We protect our members and hold businesses accountable." },
-              { title: "Empowerment", desc: "Every interaction should uplift Black businesses and culture." },
+              { title: "Empowerment", desc: "Every interaction should uplift Minority businesses and culture." },
               { title: "Respect", desc: "Treat every member and business owner with dignity." },
             ].map((v) => (
               <div key={v.title} className="bg-white border border-[#2B1507]/10 rounded-xl p-5">
@@ -85,7 +85,7 @@ export default function CommunityGuidelines() {
         <section>
           <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">Community Feed & Groups</h2>
           <ul className="space-y-3 list-disc pl-6 text-[#3A1F0E]/80 leading-relaxed">
-            <li>Celebrate Black culture, travel, businesses, and achievements.</li>
+            <li>Celebrate Minority culture, travel, businesses, and achievements.</li>
             <li>No hate speech, slurs, or content that demeans any person or group.</li>
             <li>No spam, pyramid schemes, unsolicited promotions, or MLM content.</li>
             <li>No content depicting violence, explicit sexual material, or illegal activity.</li>
@@ -98,7 +98,7 @@ export default function CommunityGuidelines() {
           <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">Business Owner Standards</h2>
           <p className="leading-relaxed text-[#3A1F0E]/80 mb-4">Business owners listed on our platform are ambassadors for the community. We expect:</p>
           <ul className="space-y-3 list-disc pl-6 text-[#3A1F0E]/80 leading-relaxed">
-            <li><strong>Honest ownership representation.</strong> If a business misrepresents its Black ownership status, it will be removed and the owner banned.</li>
+            <li><strong>Honest ownership representation.</strong> If a business misrepresents its Minority ownership status, it will be removed and the owner banned.</li>
             <li><strong>Professional responses</strong> to all reviews, including negative ones. Aggressive or retaliatory responses to reviewers will result in listing suspension.</li>
             <li><strong>Accurate business information.</strong> Keep hours, contact info, and services current.</li>
             <li><strong>No pay-to-play reviews.</strong> Soliciting or purchasing reviews is grounds for permanent removal.</li>

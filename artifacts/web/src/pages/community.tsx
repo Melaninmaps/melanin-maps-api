@@ -4,17 +4,17 @@ import { useState } from "react";
 import { Link } from "wouter";
 
 const GROUPS = [
-  { m: "4.2K members", t: "Solo Black Travelers", l: "Global", d: "A safe space for solo travelers to share tips, routes, and real experiences." },
-  { m: "2.8K members", t: "Black Entrepreneurs Abroad", l: "Global", d: "Connecting Minority business owners who work, invest, and build across borders." },
+  { m: "4.2K members", t: "Solo Minority Travelers", l: "Global", d: "A safe space for solo travelers to share tips, routes, and real experiences." },
+  { m: "2.8K members", t: "Minority Entrepreneurs Abroad", l: "Global", d: "Connecting Minority business owners who work, invest, and build across borders." },
   { m: "1.5K members", t: "ATL Cultural Explorers", l: "Atlanta, GA", d: "Discover Atlanta's hidden gems, art scenes, and cultural hotspots together." },
   { m: "3.1K members", t: "Afro-Caribbean Connections", l: "Global", d: "Celebrating the diaspora through shared travel, food, music, and community." },
 ];
 
 const EVENTS = [
   { date: "Jul 12", t: "Melanin & Mimosas Brunch", l: "Atlanta, GA", d: "A quarterly gathering of community members for food, vibes, and connection." },
-  { date: "Jul 19", t: "Black Travel Collective Summit", l: "Miami, FL", d: "An annual summit celebrating Black travel culture with panels and experiences." },
+  { date: "Jul 19", t: "Minority Travel Collective Summit", l: "Miami, FL", d: "An annual summit celebrating Minority travel culture with panels and experiences." },
   { date: "Aug 3", t: "Afrofuturism Art Walk", l: "Chicago, IL", d: "Explore Afrofuturist art installations across Chicago's South Side." },
-  { date: "Aug 10", t: "Founders & Freelancers Mixer", l: "Houston, TX", d: "Networking for Black entrepreneurs, creatives, and independent professionals." },
+  { date: "Aug 10", t: "Founders & Freelancers Mixer", l: "Houston, TX", d: "Networking for Minority entrepreneurs, creatives, and independent professionals." },
 ];
 
 const TRAVEL = [
