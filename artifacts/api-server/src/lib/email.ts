@@ -300,7 +300,7 @@ export async function sendApprovalNotification(to: string, firstName: string | n
         <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
         <h1 style="font-size:28px;color:#2B1507;margin:0 0 12px">You're in, ${name}! 🎉</h1>
         <p style="color:#3A1F0E;opacity:0.7;font-size:16px;line-height:1.6;margin:0 0 28px">
-          Your early access to <strong>Mapping With Melanin™</strong> has been approved. Sign in now to start discovering Black-owned businesses, community events, and safety intel in your area.
+          Your early access to <strong>Mapping With Melanin™</strong> has been approved. Sign in now to start discovering Minority-owned businesses, community events, and safety intel in your area.
         </p>
         <a href="https://mappingwithmelanin.com/login" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:14px 32px;border-radius:50px;text-decoration:none;margin-bottom:28px">
           Sign In Now →
@@ -375,7 +375,7 @@ export async function sendTrialStarted(
 
         <p style="color:#2B1507;font-size:16px;font-weight:700;margin:0 0 12px">Here's what you can do right now:</p>
         <ul style="color:#3A1F0E;font-size:15px;line-height:2;margin:0 0 24px;padding-left:20px">
-          <li>Explore Black-owned businesses and cultural gems in your city</li>
+          <li>Explore Minority-owned businesses and cultural gems in your city</li>
           <li>Check community safety scores for neighborhoods</li>
           <li>Save your favorite businesses and build collections</li>
           <li>Submit reviews and safety reports to help the community</li>
