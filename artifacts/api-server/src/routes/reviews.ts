@@ -88,7 +88,7 @@ router.get("/reviews", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/reviews", reviewLimiter, requireMembership("trial"), async (req: Request, res: Response) => {
+router.post("/reviews", reviewLimiter, requireMembership("navigator"), async (req: Request, res: Response) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;

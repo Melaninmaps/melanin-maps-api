@@ -790,15 +790,17 @@ export default function Admin() {
                               onChange={e => setMemberEdit(prev => ({ ...prev, memberType: e.target.value }))}
                               className="border border-[#CA922B] rounded-lg px-2 py-1 text-xs focus:outline-none"
                             >
-                              {["individual","business","founding","beta","business_referral"].map(t => (
+                              {["individual","navigator","trailblazer","business","founding","beta","business_referral"].map(t => (
                                 <option key={t} value={t}>{t}</option>
                               ))}
                             </select>
                           ) : (
                             <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
-                              m.memberType === "founding" ? "bg-[#CA922B]/20 text-[#CA922B]" :
+                              m.memberType === "trailblazer" ? "bg-[#CA922B]/20 text-[#CA922B]" :
+                              m.memberType === "founding" ? "bg-amber-100 text-amber-700" :
+                              m.memberType === "navigator" ? "bg-blue-100 text-blue-700" :
                               m.memberType === "beta" ? "bg-purple-100 text-purple-700" :
-                              m.memberType === "business_referral" ? "bg-blue-100 text-blue-700" :
+                              m.memberType === "business_referral" ? "bg-teal-100 text-teal-700" :
                               m.memberType === "business" ? "bg-green-100 text-green-700" :
                               "bg-gray-100 text-gray-600"
                             }`}>

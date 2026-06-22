@@ -10,11 +10,12 @@ type Props = {
 };
 
 const PERKS = [
-  "Full neighborhood safety scores",
-  "Unlimited business profiles & photos",
-  "Submit reviews & safety reports",
-  "KinfolkAI travel planning",
-  "Save businesses & build collections",
+  "Unlimited saved favorites & personalized recommendations",
+  "Enhanced safety insights & neighborhood ratings",
+  "Advanced filters by safety score, rating & category",
+  "Community-sourced safety reports for your destinations",
+  "KinfolkAI Assistant — personalized travel guidance (Trailblazer)",
+  "Premium travel itineraries tailored to your style (Trailblazer)",
 ];
 
 export function UpgradeModal({ visible, onClose, feature }: Props) {

@@ -21,6 +21,8 @@ router.get("/stripe/subscription", async (req: any, res): Promise<void> => {
 
 const TRIAL_DAYS: Record<string, number> = {
   individual: 14,
+  navigator: 14,
+  trailblazer: 14,
   business: 30,
   founding: 90,
   beta: 365,
@@ -55,7 +57,7 @@ router.post("/stripe/checkout", async (req: any, res): Promise<void> => {
 
     const trialDays = TRIAL_DAYS[planType] ?? 14;
     const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000);
-    const memberType = planType as "individual" | "business" | "founding" | "beta" | "business_referral";
+    const memberType = planType as "individual" | "navigator" | "trailblazer" | "business" | "founding" | "beta" | "business_referral";
 
     await storage.updateUserStripeInfo(user.id, { memberType, trialEndsAt });
 

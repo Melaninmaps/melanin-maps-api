@@ -37,21 +37,46 @@ We appreciate your time, your trust, and your commitment to the mission. Let's b
 
 — The Mapping with Melanin™ Team`;
 
-const INDIVIDUAL_FEATURES_FREE = [
-  "Explore the business directory",
-  "View top-level community scores",
-  "Read public reviews",
-  "Join the waitlist for events",
+const EXPLORER_FEATURES = [
+  "Business search & maps",
+  "Read & leave community reviews",
+  "Basic safety alerts",
+  "Community feed & discussions",
+  "View destination guides",
+  "Save up to 10 favorite locations",
+  "Follow destinations",
+  "Discover Minority-owned businesses near you",
+  "Basic recommendations",
 ];
 
-const INDIVIDUAL_FEATURES_EXPLORER = [
-  "Everything in Community",
-  "Unlimited business listings & profiles",
-  "Submit reviews & community safety reports",
-  "Full neighborhood safety scores",
-  "Save businesses & build collections",
-  "Access KinfolkAI travel planning",
-  "Priority customer support",
+const NAVIGATOR_DISCOVERY = [
+  "Unlimited saved favorites — never lose a recommendation",
+  "Advanced filters by safety score, rating, and category",
+  "Enhanced event discovery and cultural experiences",
+  "Personalized recommendations based on your interests",
+];
+
+const NAVIGATOR_SAFETY = [
+  "Enhanced safety insights and neighborhood ratings",
+  "Community-sourced safety reports for your destinations",
+  "Alerts when travel advisories affect saved destinations",
+];
+
+const NAVIGATOR_COMMUNITY = [
+  "Navigator profile badge",
+  "Priority support",
+  "Early access to new features",
+];
+
+const TRAILBLAZER_EXTRAS = [
+  "KinfolkAI Assistant — personalized travel guidance",
+  "Premium travel itineraries tailored to your style",
+  "Advanced relocation insights",
+  "First access to every new feature",
+  "Trailblazer profile badge",
+  "Exclusive partner discounts",
+  "Priority support",
+  "Everything in Navigator, included",
 ];
 
 const BUSINESS_FEATURES = [
@@ -198,95 +223,125 @@ export default function Membership() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 items-stretch">
-          {/* Community Free */}
+
+          {/* ── Explorer (Free) ── */}
           <div className="bg-white rounded-3xl p-8 border border-[#3A1F0E]/10 shadow-[0_8px_30px_rgba(43,21,7,0.05)] flex flex-col">
             <div className="flex items-center gap-2 mb-4">
               <Shield className="w-5 h-5 text-[#3A1F0E]/40" />
-              <span className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/40">Community</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/40">🧭 Explorer</span>
             </div>
-            <h3 className="font-serif font-bold text-2xl text-[#3A1F0E] mb-2">Free</h3>
-            <div className="text-4xl font-serif font-bold text-[#3A1F0E] mb-1">$0</div>
-            <p className="text-[#3A1F0E]/50 text-sm mb-6">Always free. No trial needed.</p>
-            <ul className="space-y-3 mb-8 flex-1">
-              {INDIVIDUAL_FEATURES_FREE.map((f, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <Check className="w-4 h-4 text-[#CA922B] shrink-0 mt-0.5" />
+            <p className="text-[#3A1F0E]/50 text-sm mb-3">Start discovering and supporting the community</p>
+            <div className="text-4xl font-serif font-bold text-[#3A1F0E] mb-1">Free <span className="text-lg font-sans font-normal text-[#3A1F0E]/40">forever</span></div>
+            <p className="text-[#3A1F0E]/40 text-xs mb-6">Always free. No trial needed.</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">What's Included</p>
+            <ul className="space-y-2.5 mb-8 flex-1">
+              {EXPLORER_FEATURES.map((f, i) => (
+                <li key={i} className="flex items-start gap-2.5">
+                  <Check className="w-3.5 h-3.5 text-[#CA922B] shrink-0 mt-0.5" />
                   <span className="text-sm text-[#3A1F0E]/70">{f}</span>
                 </li>
               ))}
             </ul>
             <Button
               variant="outline"
-              className="w-full rounded-full border-[#3A1F0E]/20 text-[#3A1F0E] hover:bg-[#3A1F0E] hover:text-white h-11 mt-auto"
+              className="w-full rounded-full border-[#3A1F0E]/20 text-[#3A1F0E] hover:bg-[#3A1F0E] hover:text-white h-11 mt-auto font-bold"
               onClick={() => handlePlanClick("individual")}
             >
-              Get Started Free
+              Join Free
             </Button>
           </div>
 
-          {/* Explorer — 14-day trial */}
-          <div className="bg-[#2B1507] rounded-3xl p-8 shadow-2xl flex flex-col relative transform md:-translate-y-4 border border-[#CA922B]/30">
+          {/* ── Navigator ── */}
+          <div className="bg-white rounded-3xl p-8 shadow-2xl flex flex-col relative transform md:-translate-y-4 border border-[#CA922B]/40 shadow-[0_16px_48px_rgba(202,146,43,0.15)]">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#CA922B] text-white text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
               Most Popular
             </div>
-            <div className="flex items-center gap-2 mb-4">
-              <Star className="w-5 h-5 text-[#CA922B]" />
-              <span className="text-xs font-bold uppercase tracking-wider text-[#CA922B]">Explorer</span>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#CA922B]">🌍 Navigator</span>
             </div>
-            <h3 className="font-serif font-bold text-2xl text-white mb-2">Premium</h3>
+            <p className="text-[#3A1F0E]/50 text-sm mb-3">For active users who want deeper insights</p>
             <div className="text-4xl font-serif font-bold text-[#CA922B] mb-1">
-              {billing === "annual" ? "$79" : "$9.99"}
-              <span className="text-lg text-[#F5EBD8]/50 font-sans font-normal">{billing === "annual" ? "/yr" : "/mo"}</span>
+              {billing === "annual" ? "$63" : "$7.99"}
+              <span className="text-lg text-[#3A1F0E]/40 font-sans font-normal">{billing === "annual" ? "/yr" : "/month"}</span>
             </div>
-            <p className="text-[#F5EBD8]/50 text-sm mb-1">
-              {billing === "annual" ? "That's $6.58/month — save 34%" : "or $79/year (save 34%)"}
+            <p className="text-[#3A1F0E]/40 text-xs mb-1">
+              {billing === "annual" ? "That's $5.25/month — save 34%" : "or $63/year (save 34%)"}
             </p>
-
-            <div className="inline-flex items-center gap-1.5 bg-[#CA922B]/20 border border-[#CA922B]/40 rounded-full px-3 py-1 mb-6 w-fit">
-              <Clock className="w-3.5 h-3.5 text-[#CA922B]" />
+            <div className="inline-flex items-center gap-1.5 bg-[#CA922B]/10 border border-[#CA922B]/30 rounded-full px-3 py-1 mb-6 w-fit">
+              <Clock className="w-3 h-3 text-[#CA922B]" />
               <span className="text-xs font-bold text-[#CA922B]">14-Day Free Trial</span>
             </div>
 
-            <ul className="space-y-3 mb-8 flex-1">
-              {INDIVIDUAL_FEATURES_EXPLORER.map((f, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <Check className="w-4 h-4 text-[#CA922B] shrink-0 mt-0.5" />
-                  <span className="text-sm text-[#F5EBD8]/90">{f}</span>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-[#CA922B] mb-2">✦ Enhanced Discovery</p>
+            <ul className="space-y-2 mb-4">
+              {NAVIGATOR_DISCOVERY.map((f, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <Check className="w-3.5 h-3.5 text-[#CA922B] shrink-0 mt-0.5" />
+                  <span className="text-sm text-[#3A1F0E]/75">{f}</span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="text-[9px] font-bold uppercase tracking-widest text-[#CA922B] mb-2">🛡 Safety Intelligence</p>
+            <ul className="space-y-2 mb-4">
+              {NAVIGATOR_SAFETY.map((f, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <Check className="w-3.5 h-3.5 text-[#CA922B] shrink-0 mt-0.5" />
+                  <span className="text-sm text-[#3A1F0E]/75">{f}</span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="text-[9px] font-bold uppercase tracking-widest text-[#CA922B] mb-2">👥 Community Benefits</p>
+            <ul className="space-y-2 mb-8 flex-1">
+              {NAVIGATOR_COMMUNITY.map((f, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <Check className="w-3.5 h-3.5 text-[#CA922B] shrink-0 mt-0.5" />
+                  <span className="text-sm text-[#3A1F0E]/75">{f}</span>
+                </li>
+              ))}
+            </ul>
+
+            <Button
+              className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 mt-auto font-bold shadow-[0_4px_14px_rgba(202,146,43,0.39)]"
+              onClick={() => handlePlanClick("navigator")}
+            >
+              Become a Navigator
+            </Button>
+            <p className="text-[#3A1F0E]/30 text-xs text-center mt-3">No credit card required to start. Cancel anytime.</p>
+          </div>
+
+          {/* ── Trailblazer ── */}
+          <div className="bg-[#2B1507] rounded-3xl p-8 border border-[#CA922B]/20 shadow-[0_8px_30px_rgba(43,21,7,0.25)] flex flex-col">
+            <div className="flex items-center gap-2 mb-1">
+              <Crown className="w-5 h-5 text-[#CA922B]" />
+              <span className="text-xs font-bold uppercase tracking-wider text-[#CA922B]">👑 Trailblazer</span>
+            </div>
+            <p className="text-[#F5EBD8]/50 text-sm mb-3">For power users and frequent travelers</p>
+            <div className="text-4xl font-serif font-bold text-[#CA922B] mb-1">
+              {billing === "annual" ? "$119" : "$14.99"}
+              <span className="text-lg text-[#F5EBD8]/40 font-sans font-normal">{billing === "annual" ? "/yr" : "/month"}</span>
+            </div>
+            <p className="text-[#F5EBD8]/40 text-xs mb-6">
+              {billing === "annual" ? "That's $9.92/month — save 34%" : "or $119/year (save 34%)"}
+            </p>
+
+            <p className="text-xs font-bold uppercase tracking-wider text-[#CA922B]/70 mb-3">Everything in Navigator, plus</p>
+            <ul className="space-y-2.5 mb-8 flex-1">
+              {TRAILBLAZER_EXTRAS.map((f, i) => (
+                <li key={i} className="flex items-start gap-2.5">
+                  <Check className="w-3.5 h-3.5 text-[#CA922B] shrink-0 mt-0.5" />
+                  <span className="text-sm text-[#F5EBD8]/85">{f}</span>
                 </li>
               ))}
             </ul>
             <Button
               className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 mt-auto font-bold shadow-[0_4px_14px_rgba(202,146,43,0.39)]"
-              onClick={() => handlePlanClick("individual")}
+              onClick={() => handlePlanClick("trailblazer")}
             >
-              Start 14-Day Free Trial
+              Become a Trailblazer
             </Button>
-            <p className="text-[#F5EBD8]/40 text-xs text-center mt-3">No credit card required to start. Cancel anytime.</p>
-          </div>
-
-          {/* Founding Member */}
-          <div className="bg-gradient-to-b from-white to-[#FAF6EF] rounded-3xl p-8 border border-[#CA922B]/30 shadow-[0_8px_30px_rgba(202,146,43,0.08)] flex flex-col">
-            <div className="flex items-center gap-2 mb-4">
-              <Crown className="w-5 h-5 text-[#CA922B]" />
-              <span className="text-xs font-bold uppercase tracking-wider text-[#CA922B]">Founding Member</span>
-            </div>
-            <h3 className="font-serif font-bold text-2xl text-[#3A1F0E] mb-2">Lifetime</h3>
-            <div className="text-4xl font-serif font-bold text-[#CA922B] mb-1">$199<span className="text-lg text-[#3A1F0E]/50 font-sans font-normal"> once</span></div>
-            <p className="text-[#3A1F0E]/50 text-sm mb-6">Pay once. Own it forever.</p>
-            <ul className="space-y-3 mb-8 flex-1">
-              {FOUNDING_FEATURES.map((f, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <Check className="w-4 h-4 text-[#CA922B] shrink-0 mt-0.5" />
-                  <span className="text-sm text-[#3A1F0E]/80">{f}</span>
-                </li>
-              ))}
-            </ul>
-            <Button
-              className="w-full rounded-full bg-[#3A1F0E] hover:bg-[#1a0c04] text-white h-11 mt-auto"
-              onClick={() => handlePlanClick("founding")}
-            >
-              Become a Founding Member
-            </Button>
+            <p className="text-[#F5EBD8]/30 text-xs text-center mt-3">14-day free trial. Cancel anytime.</p>
           </div>
         </div>
       </div>

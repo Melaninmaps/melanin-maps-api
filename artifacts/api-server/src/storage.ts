@@ -10,7 +10,7 @@ export class Storage {
   async updateUserStripeInfo(userId: string, info: {
     stripeCustomerId?: string;
     stripeSubscriptionId?: string;
-    memberType?: "individual" | "business" | "founding" | "beta" | "business_referral";
+    memberType?: "individual" | "navigator" | "trailblazer" | "business" | "founding" | "beta" | "business_referral";
     trialEndsAt?: Date;
     foundingMemberNumber?: number;
   }) {
@@ -81,7 +81,7 @@ export class Storage {
   }
 
   async setMemberStatus(userId: string, info: {
-    memberType?: "individual" | "business" | "founding" | "beta" | "business_referral";
+    memberType?: "individual" | "navigator" | "trailblazer" | "business" | "founding" | "beta" | "business_referral";
     trialEndsAt?: Date | null;
     foundingMemberNumber?: number | null;
   }) {
