@@ -352,12 +352,22 @@ export default function Home() {
       </section>
 
       {/* "More Than a Travel App" */}
-      <section className="py-24 bg-[#FAF6EF]">
-        <div className="container mx-auto px-4 text-center max-w-4xl">
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-6">More Than a Travel App</h2>
-          <p className="text-lg md:text-xl text-[#3A1F0E]/80 leading-relaxed">
-            Mapping with Melanin™ helps you map your life — exposing you to the real culture within your local and global communities so you can make conscious decisions on where you live, where you buy, and where you travel, while keeping Black dollars circulating within Black communities.
-          </p>
+      <section className="py-0 bg-[#FAF6EF] overflow-hidden">
+        <div className="grid lg:grid-cols-2 min-h-[420px]">
+          <div className="relative h-72 lg:h-auto">
+            <img
+              src="https://images.pexels.com/photos/1049317/pexels-photo-1049317.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&dpr=1"
+              alt="Group of friends traveling and having a great time together"
+              className="absolute inset-0 w-full h-full object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-[#2B1507]/20" />
+          </div>
+          <div className="flex flex-col justify-center px-10 py-16 lg:py-20 bg-[#FAF6EF]">
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-6">More Than a Travel App</h2>
+            <p className="text-lg md:text-xl text-[#3A1F0E]/80 leading-relaxed">
+              Mapping with Melanin™ helps you map your life — exposing you to the real culture within your local and global communities so you can make conscious decisions on where you live, where you buy, and where you travel, while keeping Black dollars circulating within Black communities.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -745,6 +755,25 @@ export default function Home() {
             The most powerful feature of Mapping with Melanin™ is its community. Members don't just consume information — they create it, verify it, and share it so everyone travels better.
           </p>
 
+          {/* Community photo strip */}
+          <div className="grid grid-cols-3 gap-3 mb-12 rounded-2xl overflow-hidden h-52">
+            <img
+              src="https://images.pexels.com/photos/1139370/pexels-photo-1139370.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&dpr=1"
+              alt="Friends laughing together outdoors"
+              className="w-full h-full object-cover"
+            />
+            <img
+              src="https://images.pexels.com/photos/8153998/pexels-photo-8153998.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&dpr=1"
+              alt="Group of friends celebrating together"
+              className="w-full h-full object-cover"
+            />
+            <img
+              src="https://images.pexels.com/photos/4657769/pexels-photo-4657769.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&dpr=1"
+              alt="Friends enjoying time together"
+              className="w-full h-full object-cover"
+            />
+          </div>
+
           <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-6 text-left mb-12">
             {[
               { title: "Community Reports", desc: "Report safety concerns, share positive experiences, recommend locations" },
@@ -886,6 +915,20 @@ export default function Home() {
             <p className="text-lg text-[#3A1F0E]/70 max-w-3xl mx-auto">
               Mapping with Melanin™ is more than a directory — it's a living community. We're building the tools to help you gather, connect, and belong. Here's a preview of what's coming.
             </p>
+          </div>
+
+          {/* Community event photo banner */}
+          <div className="relative rounded-3xl overflow-hidden h-56 mb-10">
+            <img
+              src="https://images.pexels.com/photos/1820961/pexels-photo-1820961.jpeg?auto=compress&cs=tinysrgb&w=1260&h=400&dpr=1"
+              alt="Community members connecting and celebrating"
+              className="absolute inset-0 w-full h-full object-cover object-top"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#2B1507]/80 via-[#2B1507]/40 to-transparent" />
+            <div className="relative z-10 h-full flex flex-col justify-center px-10">
+              <p className="text-[#CA922B] font-bold text-xs uppercase tracking-widest mb-2">Join 10,000+ Members</p>
+              <p className="text-white font-serif font-bold text-2xl md:text-3xl max-w-md">Real people. Real places. Real connection.</p>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 mb-12">
@@ -1040,9 +1083,16 @@ export default function Home() {
                 <div className="text-4xl font-serif text-[#CA922B] opacity-50 mb-4">"</div>
                 <p className="text-[#3A1F0E]/80 text-lg italic leading-relaxed mb-8">"{t.quote}"</p>
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-[#2B1507] text-[#F5EBD8] flex items-center justify-center font-serif font-bold">
-                    {t.initials}
-                  </div>
+                  <img
+                    src={[
+                      "https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1",
+                      "https://images.pexels.com/photos/2269872/pexels-photo-2269872.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1",
+                      "https://images.pexels.com/photos/12895422/pexels-photo-12895422.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1",
+                      "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1",
+                    ][i]}
+                    alt={t.name}
+                    className="w-12 h-12 rounded-full object-cover object-top"
+                  />
                   <div>
                     <div className="font-bold text-[#3A1F0E]">{t.name}</div>
                     <div className="text-sm text-[#3A1F0E]/60">{t.role} · {t.loc}</div>
