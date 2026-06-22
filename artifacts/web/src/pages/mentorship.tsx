@@ -44,6 +44,7 @@ export default function Mentorship() {
   const [form, setForm] = useState({ fullName: "", bio: "", industry: "", role: "mentor", expertise: "", city: "", linkedinUrl: "" });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -71,7 +72,16 @@ export default function Mentorship() {
   );
 
   const handleSave = async () => {
-    if (!auth?.user || !form.fullName.trim()) return;
+    if (!auth?.user) return;
+    if (!form.fullName.trim() || form.fullName.trim().length < 2) {
+      setFormError("Full name is required (at least 2 characters).");
+      return;
+    }
+    if (!form.industry) {
+      setFormError("Please select an industry.");
+      return;
+    }
+    setFormError(null);
     setSaving(true);
     try {
       const res = await fetch(`${BASE}api/mentorship`, {
@@ -162,11 +172,14 @@ export default function Mentorship() {
                 <Input value={form.linkedinUrl} onChange={(e) => setForm({ ...form, linkedinUrl: e.target.value })} placeholder="https://linkedin.com/in/..." className="border-[#E8D5B0]" />
               </div>
             </div>
+            {formError && (
+              <p className="text-red-600 text-sm font-medium mt-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{formError}</p>
+            )}
             <div className="flex gap-3 mt-6">
               <Button className="bg-[#3A1F0E] hover:bg-[#2B1507] text-white font-semibold px-8 h-11 rounded-xl" onClick={handleSave} disabled={saving}>
                 {saving ? "Saving…" : "Save Profile"}
               </Button>
-              <Button variant="outline" className="h-11 border-[#E8D5B0]" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button variant="outline" className="h-11 border-[#E8D5B0]" onClick={() => { setShowForm(false); setFormError(null); }}>Cancel</Button>
             </div>
             {saved && <p className="text-[#2D7A4F] text-sm font-medium mt-3">✓ Profile saved! You'll appear in the directory.</p>}
           </div>

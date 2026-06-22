@@ -211,6 +211,10 @@ export default function Discover() {
   const [query, setQuery] = useState(initialQuery);
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [activeVibe, setActiveVibe] = useState<string | null>(null);
+
+  const scrollToResults = () => {
+    document.getElementById("discover-results")?.scrollIntoView({ behavior: "smooth" });
+  };
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [openNow, setOpenNow] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
@@ -264,7 +268,7 @@ export default function Discover() {
               placeholder="Search for restaurants, services, landmarks..."
               className="border-0 focus-visible:ring-0 shadow-none text-base h-12 bg-transparent rounded-full"
             />
-            <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Search</Button>
+            <Button onClick={scrollToResults} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Search</Button>
           </div>
 
           {/* Vibe Match chips */}
@@ -289,13 +293,13 @@ export default function Discover() {
 
       <div className="container mx-auto px-4 md:px-6 py-8">
         {/* Filter Chips */}
-        <div className="flex flex-wrap gap-2 mb-8 justify-center">
+        <div id="discover-results" className="flex flex-wrap gap-2 mb-8 justify-center">
           {categories.map(cat => (
             <button
               key={cat}
-              onClick={() => setActiveCategory(cat)}
+              onClick={() => { setActiveVibe(null); setActiveCategory(cat); }}
               className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 border ${
-                activeCategory === cat
+                !activeVibe && activeCategory === cat
                   ? "bg-[#2B1507] text-white border-[#2B1507]"
                   : "bg-transparent text-[#3A1F0E] border-[#2B1507]/20 hover:border-[#CA922B] hover:text-[#CA922B]"
               }`}
@@ -303,6 +307,15 @@ export default function Discover() {
               {cat}
             </button>
           ))}
+          {activeVibe && (
+            <button
+              onClick={() => { setActiveVibe(null); setActiveCategory("All"); }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-[#CA922B]/10 text-[#CA922B] border border-[#CA922B]/30 hover:bg-[#CA922B]/20 transition-all"
+            >
+              <X size={13} />
+              Clear vibe filter
+            </button>
+          )}
         </div>
 
         {/* Toolbar */}
@@ -373,10 +386,35 @@ export default function Discover() {
               </div>
             ))
           ) : businesses.length === 0 ? (
-            <div className="col-span-full py-20 text-center space-y-4">
-              <Search size={48} className="mx-auto text-[#2B1507]/20" />
-              <p className="text-xl text-[#3A1F0E]">{openNow ? "No businesses found that are open right now." : "No businesses found matching your criteria."}</p>
-              {openNow && <button onClick={() => setOpenNow(false)} className="text-[#CA922B] underline text-sm">Show all businesses</button>}
+            <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-[#2B1507]/5 px-8">
+              <Search size={40} className="mx-auto text-[#2B1507]/20 mb-4" />
+              <h3 className="text-xl font-bold text-[#3A1F0E] mb-2">
+                {openNow ? "No businesses open right now" : "No businesses found"}
+              </h3>
+              <p className="text-[#3A1F0E]/60 text-sm mb-6 max-w-md mx-auto">
+                {openNow
+                  ? "Try turning off the 'Open Now' filter to see all businesses."
+                  : query || activeVibe || activeCategory !== "All"
+                    ? "Try removing a filter or broadening your search."
+                    : "We're adding new Black-owned businesses every day. Know one we're missing?"}
+              </p>
+              <div className="flex flex-wrap gap-3 justify-center">
+                {(query || activeVibe || activeCategory !== "All" || openNow) && (
+                  <button
+                    onClick={() => { setQuery(""); setActiveVibe(null); setActiveCategory("All"); setOpenNow(false); }}
+                    className="px-5 py-2.5 rounded-full text-sm font-semibold bg-[#FAF6EF] border border-[#2B1507]/10 text-[#3A1F0E] hover:border-[#CA922B] hover:text-[#CA922B] transition-all"
+                  >
+                    Clear all filters
+                  </button>
+                )}
+                <button
+                  onClick={() => setSubmitOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-semibold bg-[#CA922B] text-white hover:bg-[#B38024] transition-all"
+                >
+                  <PlusCircle size={14} />
+                  Submit a Business
+                </button>
+              </div>
             </div>
           ) : (
             businesses.map((business) => (

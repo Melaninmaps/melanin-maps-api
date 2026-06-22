@@ -45,14 +45,20 @@ export function useMembership() {
   const loadProducts = useCallback(async () => {
     const apiBase = getApiBase();
     if (!apiBase) return;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
     try {
-      const res = await fetch(`${apiBase}/api/stripe/products`);
+      const res = await fetch(`${apiBase}/api/stripe/products`, { signal: controller.signal });
+      clearTimeout(timeout);
       if (res.ok) {
         const data = (await res.json()) as { products: StripeProduct[] };
         setProducts(data.products ?? []);
       }
-    } catch {}
-    finally { setProductsLoaded(true); }
+    } catch {
+      clearTimeout(timeout);
+    } finally {
+      setProductsLoaded(true);
+    }
   }, []);
 
   const loadSubscription = useCallback(async () => {

@@ -511,10 +511,13 @@ export default function BusinessDetail() {
                 <div className="flex items-start gap-4 text-[#3A1F0E]/80 text-sm pt-5 border-t border-[#2B1507]/10">
                   <Clock className="w-5 h-5 text-[#CA922B] shrink-0 mt-0.5" />
                   <div className="space-y-1 w-full">
-                    <div className="flex justify-between font-medium text-[#CA922B]"><span>Today</span><span>Open</span></div>
-                    <div className="flex justify-between"><span>Mon-Fri</span><span>9:00 AM - 6:00 PM</span></div>
-                    <div className="flex justify-between"><span>Saturday</span><span>10:00 AM - 4:00 PM</span></div>
-                    <div className="flex justify-between"><span>Sunday</span><span>Closed</span></div>
+                    {(business as any).hours ? (
+                      <div className="text-[#3A1F0E]/80">{(business as any).hours}</div>
+                    ) : (
+                      <div className="text-[#3A1F0E]/50 italic text-xs">
+                        Hours not listed — call ahead to confirm
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

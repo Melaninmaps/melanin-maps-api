@@ -52,16 +52,16 @@ export default function Community() {
 
           <div className="flex flex-wrap justify-center gap-8 md:gap-16">
             <div className="text-center">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">10K+</div>
-              <div className="text-sm text-[#F5EBD8]/70">Early Members</div>
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">🤝</div>
+              <div className="text-sm text-[#F5EBD8]/70">Community-Powered</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">50+</div>
-              <div className="text-sm text-[#F5EBD8]/70">Active Groups</div>
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">🛡️</div>
+              <div className="text-sm text-[#F5EBD8]/70">Safety-First</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">200+</div>
-              <div className="text-sm text-[#F5EBD8]/70">Cities Worldwide</div>
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">🌍</div>
+              <div className="text-sm text-[#F5EBD8]/70">Culturally-Rooted</div>
             </div>
           </div>
         </div>

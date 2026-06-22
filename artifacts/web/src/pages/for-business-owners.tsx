@@ -125,8 +125,8 @@ export default function ForBusinessOwners() {
               <div className="text-sm text-[#F5EBD8]/70 uppercase tracking-wider font-bold">Listed Businesses</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">10K+</div>
-              <div className="text-sm text-[#F5EBD8]/70 uppercase tracking-wider font-bold">Community Members</div>
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">🌱</div>
+              <div className="text-sm text-[#F5EBD8]/70 uppercase tracking-wider font-bold">Growing Community</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">94/100</div>

@@ -33,16 +33,16 @@ export default function Safety() {
 
           <div className="flex flex-wrap justify-center gap-8 md:gap-16">
             <div className="text-center">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">50K+</div>
-              <div className="text-sm text-[#F5EBD8]/70">Verified Reviews</div>
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">🛡️</div>
+              <div className="text-sm text-[#F5EBD8]/70">Community-Verified</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">200+</div>
-              <div className="text-sm text-[#F5EBD8]/70">Cities Scored</div>
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">📡</div>
+              <div className="text-sm text-[#F5EBD8]/70">Real-Time Data</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">98%</div>
-              <div className="text-sm text-[#F5EBD8]/70">Accuracy Rate</div>
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">✊🏾</div>
+              <div className="text-sm text-[#F5EBD8]/70">Your Voice Counts</div>
             </div>
           </div>
         </div>

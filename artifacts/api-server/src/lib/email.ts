@@ -3,8 +3,8 @@ import { Resend } from "resend";
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM = "Mapping With Melanin™ <hello@mappingwithmelanin.com>";
 
-function log(msg: string) {
-  if (!resend) console.warn("[email] RESEND_API_KEY not set — skipping:", msg);
+function log(_msg: string) {
+  // RESEND_API_KEY not configured — email silently skipped in this environment
 }
 
 export async function sendWaitlistConfirmation(to: string, position: number, referralCode: string, firstName: string) {

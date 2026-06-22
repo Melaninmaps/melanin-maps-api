@@ -1,5 +1,6 @@
 import { db, pushTokensTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { logger } from "./logger";
 
 interface PushMessage {
   title: string;
@@ -35,9 +36,9 @@ export async function sendPushToUser(userId: string, message: PushMessage) {
     });
 
     if (!response.ok) {
-      console.warn("[push] Expo push failed:", response.status);
+      logger.warn({ status: response.status }, "[push] Expo push failed");
     }
   } catch (err) {
-    console.warn("[push] Failed to send push notification:", err);
+    logger.warn({ err }, "[push] Failed to send push notification");
   }
 }

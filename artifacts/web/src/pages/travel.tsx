@@ -1,14 +1,18 @@
 import { useState } from "react";
-import { useGetTravelRecommendations } from "@workspace/api-client-react";
+import { useGetTravelRecommendations, useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plane, MapPin, Sparkles, AlertTriangle, Navigation, Loader2, Compass } from "lucide-react";
+import { Plane, MapPin, Sparkles, AlertTriangle, Navigation, Loader2, Compass, Lock } from "lucide-react";
+import { Link } from "wouter";
+
+const BASE = import.meta.env.BASE_URL;
 
 export default function Travel() {
   const [destination, setDestination] = useState("");
   const [vibes, setVibes] = useState<string[]>([]);
   const [vibeInput, setVibeInput] = useState("");
   
+  const { data: auth, isLoading: authLoading } = useGetCurrentAuthUser();
   const getRecs = useGetTravelRecommendations();
   const recs = getRecs.data;
 
@@ -51,7 +55,35 @@ export default function Travel() {
       </section>
 
       <div className="container mx-auto px-4 md:px-6 py-12 max-w-4xl">
-        <div className="bg-white rounded-3xl p-8 border border-[#2B1507]/5 shadow-sm mb-12">
+
+        {/* Auth soft gate for signed-out users */}
+        {!authLoading && !auth?.user && (
+          <div className="bg-white rounded-3xl border border-[#2B1507]/8 shadow-sm mb-8 overflow-hidden">
+            <div className="flex flex-col items-center text-center px-8 py-12">
+              <div className="w-16 h-16 rounded-2xl bg-[#CA922B]/10 flex items-center justify-center mb-5">
+                <Lock className="w-7 h-7 text-[#CA922B]" />
+              </div>
+              <h2 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-3">Sign in to Plan Your Journey</h2>
+              <p className="text-[#3A1F0E]/60 max-w-sm mb-8 font-light leading-relaxed">
+                KinfolkAI builds personalized itineraries with Black-owned spots, cultural gems, and trusted safety intel — tailored just for you.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link href={`${BASE}login`}>
+                  <Button className="bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-11 rounded-full font-semibold">
+                    Sign In to Continue
+                  </Button>
+                </Link>
+                <Link href="/">
+                  <Button variant="outline" className="border-[#2B1507]/20 text-[#3A1F0E] hover:border-[#CA922B] hover:text-[#CA922B] px-8 h-11 rounded-full">
+                    Explore First
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className={`bg-white rounded-3xl p-8 border border-[#2B1507]/5 shadow-sm mb-12 ${!authLoading && !auth?.user ? "opacity-50 pointer-events-none select-none" : ""}`}>
           <form onSubmit={handlePlan} className="space-y-8">
             <div className="space-y-3">
               <label className="text-xs font-bold uppercase tracking-widest text-[#3A1F0E]/50">Destination</label>

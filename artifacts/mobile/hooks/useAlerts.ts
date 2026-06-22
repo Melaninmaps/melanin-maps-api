@@ -30,7 +30,7 @@ function getApiBaseUrl(): string {
 
 export function useAlerts(state?: string): UseAlertsResult {
   const [alerts, setAlerts] = useState<LiveAlertItem[]>(ALERTS as LiveAlertItem[]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isLive, setIsLive] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
