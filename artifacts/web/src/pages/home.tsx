@@ -1091,6 +1091,9 @@ export default function Home() {
                 Join the Waitlist →
               </Button>
             </a>
+            <p className="text-white/30 text-xs mt-8 max-w-xl mx-auto leading-relaxed">
+              Apple and the Apple logo are trademarks of Apple Inc., registered in the U.S. and other countries. App Store is a service mark of Apple Inc. Google Play and the Google Play logo are trademarks of Google LLC. Mapping with Melanin™ is not affiliated with, endorsed by, or sponsored by Apple Inc. or Google LLC. App availability, launch timing, and features are subject to change without notice. Joining the waitlist does not guarantee access or constitute a purchase agreement.
+            </p>
           </div>
         </div>
       </section>
