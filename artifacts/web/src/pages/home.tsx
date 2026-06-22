@@ -352,22 +352,12 @@ export default function Home() {
       </section>
 
       {/* "More Than a Travel App" */}
-      <section className="py-0 bg-[#FAF6EF] overflow-hidden">
-        <div className="grid lg:grid-cols-2 min-h-[420px]">
-          <div className="relative h-72 lg:h-auto">
-            <img
-              src="https://images.pexels.com/photos/6181059/pexels-photo-6181059.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&dpr=1"
-              alt="Black couple exploring the city together with a map, traveling with joy"
-              className="absolute inset-0 w-full h-full object-cover object-center"
-            />
-            <div className="absolute inset-0 bg-[#2B1507]/20" />
-          </div>
-          <div className="flex flex-col justify-center px-10 py-16 lg:py-20 bg-[#FAF6EF]">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-6">More Than a Travel App</h2>
-            <p className="text-lg md:text-xl text-[#3A1F0E]/80 leading-relaxed">
-              Mapping with Melanin™ helps you map your life — exposing you to the real culture within your local and global communities so you can make conscious decisions on where you live, where you buy, and where you travel, while keeping Black dollars circulating within Black communities.
-            </p>
-          </div>
+      <section className="py-24 bg-[#FAF6EF]">
+        <div className="container mx-auto px-4 text-center max-w-4xl">
+          <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-6">More Than a Travel App</h2>
+          <p className="text-lg md:text-xl text-[#3A1F0E]/80 leading-relaxed">
+            Mapping with Melanin™ helps you map your life — exposing you to the real culture within your local and global communities so you can make conscious decisions on where you live, where you buy, and where you travel, while keeping Black dollars circulating within Black communities.
+          </p>
         </div>
       </section>
 
