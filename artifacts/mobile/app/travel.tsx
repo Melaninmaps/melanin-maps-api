@@ -25,6 +25,7 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { KinfolkOnboarding, shouldShowKinfolkOnboarding, resetKinfolkOnboarding } from "@/components/KinfolkOnboarding";
 import { useAuth } from "@/lib/auth";
 import { useMembership } from "@/hooks/useMembership";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
@@ -802,6 +803,7 @@ export default function TravelScreen() {
   const [showHistory, setShowHistory] = useState(false);
   const [showVoiceToggle, setShowVoiceToggle] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [compareSelected, setCompareSelected] = useState<TravelBusiness[]>([]);
   const flatListRef = useRef<FlatList>(null);
@@ -825,9 +827,13 @@ export default function TravelScreen() {
   const handleSend = useCallback(async (text?: string) => {
     const msg = (text ?? inputText).trim();
     if (!msg) return;
+    if (!isAuthenticated || !subscription) {
+      setShowUpgrade(true);
+      return;
+    }
     setInputText("");
     await sendMessage(msg, { neighborVoice });
-  }, [inputText, neighborVoice, sendMessage]);
+  }, [inputText, neighborVoice, sendMessage, isAuthenticated, subscription]);
 
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);
@@ -919,6 +925,12 @@ export default function TravelScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <UpgradeModal
+        visible={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        feature="KinfolkAI™"
+      />
+
       {/* Premium upsell banner — shown for non-premium, non-trial members */}
       {isAuthenticated && subscription && subscription.status !== "active" && subscription.status !== "trialing" && (
         <TouchableOpacity

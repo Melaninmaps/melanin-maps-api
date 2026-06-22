@@ -29,11 +29,6 @@ const TIERS = [
   { label: "Legend", min: 25, max: Infinity, icon: "👑", color: "#2D7A4F", bg: "#2D7A4F18", reward: "$100 credit + lifetime perks" },
 ];
 
-const INVITES = [
-  { name: "Zara M.", status: "joined", timeAgo: "2 days ago", color: "#3B1F0E" },
-  { name: "Kwame A.", status: "joined", timeAgo: "1 week ago", color: "#2D7A4F" },
-  { name: "Imani T.", status: "pending", timeAgo: "Invited 3 days ago", color: "#C9922B" },
-];
 
 export default function ReferralScreen() {
   const colors = useColors();
@@ -228,26 +223,28 @@ export default function ReferralScreen() {
 
         {/* Invite history */}
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Your Invites</Text>
-        {INVITES.map((invite) => (
-          <View key={invite.name} style={[styles.inviteRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={[styles.inviteAvatar, { backgroundColor: invite.color }]}>
-              <Text style={styles.inviteInitials}>{invite.name.split(" ").map((w) => w[0]).join("")}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.inviteName, { color: colors.foreground }]}>{invite.name}</Text>
-              <Text style={[styles.inviteTime, { color: colors.mutedForeground }]}>{invite.timeAgo}</Text>
-            </View>
-            <View style={[
-              styles.inviteStatus,
-              { backgroundColor: invite.status === "joined" ? "#2D7A4F18" : "#C9922B18" }
-            ]}>
-              <View style={[styles.statusDot, { backgroundColor: invite.status === "joined" ? "#2D7A4F" : "#C9922B" }]} />
-              <Text style={[styles.statusText, { color: invite.status === "joined" ? "#2D7A4F" : "#C9922B" }]}>
-                {invite.status === "joined" ? "Joined" : "Pending"}
+        {referralCount === 0 ? (
+          <View style={[styles.inviteRow, { backgroundColor: colors.card, borderColor: colors.border, justifyContent: "center", paddingVertical: 24 }]}>
+            <View style={{ alignItems: "center", gap: 8 }}>
+              <Feather name="users" size={28} color={colors.muted} />
+              <Text style={[styles.inviteName, { color: colors.mutedForeground, textAlign: "center" }]}>
+                No invites yet
+              </Text>
+              <Text style={[styles.inviteTime, { color: colors.mutedForeground, textAlign: "center" }]}>
+                Share your link above to start growing your community.
               </Text>
             </View>
           </View>
-        ))}
+        ) : (
+          <View style={[styles.inviteRow, { backgroundColor: colors.card, borderColor: colors.border, justifyContent: "center", paddingVertical: 20 }]}>
+            <View style={{ alignItems: "center", gap: 6 }}>
+              <Text style={[styles.inviteNum, { color: colors.primary }]}>{referralCount}</Text>
+              <Text style={[styles.inviteTime, { color: colors.mutedForeground }]}>
+                {referralCount === 1 ? "person" : "people"} joined using your code
+              </Text>
+            </View>
+          </View>
+        )}
 
         {/* How it works */}
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>How It Works</Text>

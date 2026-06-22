@@ -38,6 +38,25 @@ router.get("/businesses", async (req: Request, res: Response) => {
   }
 });
 
+router.get("/businesses/mine", async (req: any, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.json({ business: null });
+      return;
+    }
+    const [business] = await db
+      .select()
+      .from(businessesTable)
+      .where(eq(businessesTable.submittedById, userId))
+      .limit(1);
+    res.json({ business: business ?? null });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch user business");
+    res.status(500).json({ error: "Failed to fetch business" });
+  }
+});
+
 router.get("/businesses/:id", async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);

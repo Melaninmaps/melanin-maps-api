@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, neighborhoodSurveysTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { surveyLimiter } from "../middleware/rateLimiter";
+import { requireMembership } from "../middleware/requireMembership";
 
 const router: IRouter = Router();
 
@@ -35,7 +36,7 @@ function computeScores(
   return { safety, community, walk };
 }
 
-router.post("/surveys", surveyLimiter, async (req: Request, res: Response) => {
+router.post("/surveys", surveyLimiter, requireMembership("trial"), async (req: Request, res: Response) => {
   const {
     city,
     neighborhood,

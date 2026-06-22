@@ -81,58 +81,61 @@ function OverviewTab() {
   const colors = useColors();
   const { items, pendingCount, highCount } = useReports("pending");
   const pendingBizCount = items.filter((i) => i.kind === "survey").length;
+  const { users, loading: usersLoading } = useAdminUsers();
+  const userCount = usersLoading ? "…" : String(users.length);
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={adminStyles.statsGrid}>
-        <StatCard label="Total Users" value="3,284" sub="+12% this week" color="#3B1F0E" icon="users" />
-        <StatCard label="Businesses" value="35+" sub={pendingBizCount > 0 ? `${pendingBizCount} pending` : "Verified listings"} color="#C9922B" icon="briefcase" />
-        <StatCard label="Reviews" value="1,902" sub="+24 today" color="#2D7A4F" icon="star" />
+        <StatCard label="Total Users" value={userCount} sub="Registered members" color="#3B1F0E" icon="users" />
+        <StatCard label="Businesses" value="—" sub={pendingBizCount > 0 ? `${pendingBizCount} pending` : "Verified listings"} color="#C9922B" icon="briefcase" />
+        <StatCard label="Reviews" value="—" sub="Community reviews" color="#2D7A4F" icon="star" />
         <StatCard label="Reports" value={String(pendingCount)} sub={highCount > 0 ? `${highCount} high severity` : "All clear"} color="#DC2626" icon="flag" />
       </View>
-
-      <SectionLabel title="Recent Activity" />
-      {[
-        { icon: "user-plus" as const, text: "New user registered: Simone W.", time: "2 min ago", color: "#2D7A4F" },
-        { icon: "briefcase" as const, text: "Business listing submitted: Kingdom Cuts", time: "15 min ago", color: "#C9922B" },
-        { icon: "flag" as const, text: "New report: inaccurate info on Listing #23", time: "34 min ago", color: "#DC2626" },
-        { icon: "star" as const, text: "New review posted for Sweet Auburn BBQ", time: "1h ago", color: "#3B1F0E" },
-        { icon: "calendar" as const, text: "New event submitted: Houston Jazz Night", time: "2h ago", color: "#1D4ED8" },
-      ].map((a, i) => (
-        <View key={i} style={[adminStyles.activityRow, { borderBottomColor: colors.border }]}>
-          <View style={[adminStyles.activityIcon, { backgroundColor: a.color + "15" }]}>
-            <Feather name={a.icon} size={14} color={a.color} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[adminStyles.activityText, { color: colors.foreground }]}>{a.text}</Text>
-            <Text style={[adminStyles.activityTime, { color: colors.mutedForeground }]}>{a.time}</Text>
-          </View>
-        </View>
-      ))}
 
       <SectionLabel title="Quick Actions" />
       <ActionRow icon="check-circle" label="Approve Pending Businesses" sub={pendingBizCount > 0 ? `${pendingBizCount} submissions awaiting review` : "No pending submissions"} color="#2D7A4F" badge={pendingBizCount} />
       <ActionRow icon="flag" label="Review Reports Queue" sub={pendingCount > 0 ? `${pendingCount} report${pendingCount !== 1 ? "s" : ""} need attention` : "All clear"} color="#DC2626" badge={pendingCount} />
-      <ActionRow icon="star" label="Moderate Reviews" sub="3 flagged reviews" color="#C9922B" badge={3} />
     </ScrollView>
   );
 }
 
 function BusinessesTab() {
   const colors = useColors();
-  const STATUSES = [
-    { label: "All", count: 148 },
-    { label: "Active", count: 134 },
-    { label: "Pending", count: 5 },
-    { label: "Flagged", count: 9 },
-  ];
   const [statusFilter, setStatusFilter] = useState("All");
-  const bizList = [
-    { name: "Sweet Auburn BBQ", city: "Atlanta, GA", status: "active", score: 94, blackOwned: true },
-    { name: "Essence Beauty Lounge", city: "Houston, TX", status: "active", score: 91, blackOwned: true },
-    { name: "Kingdom Cuts Barbershop", city: "Atlanta, GA", status: "pending", score: 71, blackOwned: true },
-    { name: "Carter & Associates Law", city: "Los Angeles, CA", status: "active", score: 96, blackOwned: true },
-    { name: "New Listing Co.", city: "Chicago, IL", status: "pending", score: 55, blackOwned: false },
+  const [bizList, setBizList] = useState<Array<{ id: string; name: string; city: string; state: string; status?: string; confidenceScore?: number; blackOwned?: boolean; verified?: boolean }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    const load = async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const res = await fetch(`${getApiBase()}/api/admin/businesses`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json() as { businesses?: typeof bizList };
+          setBizList(data.businesses ?? []);
+        }
+      } catch {}
+      finally { setLoading(false); }
+    };
+    void load();
+  }, []);
+
+  const allCount = bizList.length;
+  const activeCount = bizList.filter((b) => b.status === "active" || b.verified).length;
+  const pendingCount = bizList.filter((b) => b.status === "pending" || (!b.status && !b.verified)).length;
+  const STATUSES = [
+    { label: "All", count: allCount },
+    { label: "Active", count: activeCount },
+    { label: "Pending", count: pendingCount },
   ];
+  const filtered = statusFilter === "Active"
+    ? bizList.filter((b) => b.status === "active" || b.verified)
+    : statusFilter === "Pending"
+    ? bizList.filter((b) => b.status === "pending" || (!b.status && !b.verified))
+    : bizList;
+
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
@@ -148,25 +151,34 @@ function BusinessesTab() {
           ))}
         </View>
       </ScrollView>
-      {bizList.map((b, i) => (
-        <View key={i} style={[adminStyles.bizRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      {loading ? (
+        <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 24 }} />
+      ) : filtered.length === 0 ? (
+        <View style={{ alignItems: "center", paddingTop: 40, gap: 8 }}>
+          <Feather name="briefcase" size={32} color={colors.muted} />
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>No businesses found</Text>
+        </View>
+      ) : filtered.map((b, i) => (
+        <View key={b.id ?? i} style={[adminStyles.bizRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[adminStyles.bizAvatar, { backgroundColor: colors.primary + "20" }]}>
             <Feather name="briefcase" size={16} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               <Text style={[adminStyles.bizName, { color: colors.foreground }]}>{b.name}</Text>
-              {b.blackOwned && <Text style={{ fontSize: 10 }}>✊🏾</Text>}
+              {(b.blackOwned) && <Text style={{ fontSize: 10 }}>✊🏾</Text>}
             </View>
-            <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{b.city}</Text>
+            <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{b.city}{b.state ? `, ${b.state}` : ""}</Text>
           </View>
           <View style={{ alignItems: "flex-end", gap: 5 }}>
-            <View style={[adminStyles.statusBadge, { backgroundColor: b.status === "active" ? "#2D7A4F18" : "#C9922B18" }]}>
-              <Text style={[adminStyles.statusBadgeText, { color: b.status === "active" ? "#2D7A4F" : "#C9922B" }]}>
-                {b.status === "active" ? "Active" : "Pending"}
+            <View style={[adminStyles.statusBadge, { backgroundColor: (b.status === "active" || b.verified) ? "#2D7A4F18" : "#C9922B18" }]}>
+              <Text style={[adminStyles.statusBadgeText, { color: (b.status === "active" || b.verified) ? "#2D7A4F" : "#C9922B" }]}>
+                {(b.status === "active" || b.verified) ? "Active" : "Pending"}
               </Text>
             </View>
-            <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>Score: {b.score}</Text>
+            {b.confidenceScore != null && (
+              <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>Score: {b.confidenceScore}</Text>
+            )}
           </View>
         </View>
       ))}

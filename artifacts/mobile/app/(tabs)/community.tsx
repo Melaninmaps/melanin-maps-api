@@ -164,6 +164,7 @@ export default function CommunityScreen() {
   const [alerts, setAlerts] = useState(ALERTS);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
   const [newPostText, setNewPostText] = useState("");
   const [newPostCategory, setNewPostCategory] = useState("general");
@@ -180,14 +181,17 @@ export default function CommunityScreen() {
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   const loadPosts = useCallback(async () => {
+    setLoadError(false);
     try {
       const res = await fetch(`${getApiBase()}/api/community/posts`);
       if (res.ok) {
         const data = await res.json() as { posts: Record<string, unknown>[] };
         setPosts((data.posts ?? []).map(toPostCard));
+      } else {
+        setLoadError(true);
       }
     } catch {
-      // silently show empty state on error
+      setLoadError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -411,11 +415,24 @@ export default function CommunityScreen() {
             }
             ListEmptyComponent={
               <View style={styles.empty}>
-                <Feather name="users" size={40} color={colors.muted} />
+                <Feather
+                  name={loadError ? "wifi-off" : "users"}
+                  size={40}
+                  color={colors.muted}
+                />
                 <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>
-                  {loading ? "Loading…" : "Start the conversation"}
+                  {loading ? "Loading…" : loadError ? "Couldn't load posts" : "Start the conversation"}
                 </Text>
-                {!loading && (
+                {!loading && loadError && (
+                  <TouchableOpacity
+                    onPress={() => { setLoading(true); void loadPosts(); }}
+                    style={[styles.retryBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+                  >
+                    <Feather name="refresh-cw" size={14} color={colors.primary} />
+                    <Text style={[styles.retryTxt, { color: colors.primary }]}>Tap to retry</Text>
+                  </TouchableOpacity>
+                )}
+                {!loading && !loadError && (
                   <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
                     Shared stories power this community. Be the first to post something meaningful.
                   </Text>
@@ -544,6 +561,8 @@ const styles = StyleSheet.create({
   empty: { alignItems: "center", paddingVertical: 60, gap: 10 },
   emptyTitle: { fontFamily: "Inter_600SemiBold", fontSize: 16 },
   emptyText: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", paddingHorizontal: 40 },
+  retryBtn: { flexDirection: "row" as const, alignItems: "center" as const, gap: 6, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10, borderWidth: 1, marginTop: 4 },
+  retryTxt: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   fab: {
     position: "absolute",
     right: 20,

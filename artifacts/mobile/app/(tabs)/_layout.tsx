@@ -100,7 +100,15 @@ function ClassicTabLayout() {
       />
       <Tabs.Screen
         name="events"
-        options={{ href: null }}
+        options={{
+          title: "Events",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="calendar" tintColor={color} size={24} />
+            ) : (
+              <Feather name="calendar" size={22} color={color} />
+            ),
+        }}
       />
       <Tabs.Screen
         name="community"
