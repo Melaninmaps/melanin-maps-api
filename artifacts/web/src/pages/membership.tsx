@@ -79,15 +79,49 @@ const TRAILBLAZER_EXTRAS = [
   "Everything in Navigator, included",
 ];
 
-const BUSINESS_FEATURES = [
-  "Claim & verify your business profile",
-  "Upload photos, menus & services",
-  "Respond to reviews & community reports",
-  "View business analytics & engagement data",
-  "Post jobs & events directly from your dashboard",
-  "Featured placement in search results",
-  "Direct messaging with potential customers",
-  "Priority support + onboarding call",
+const BIZ_COMMUNITY_FEATURES = [
+  "Business profile",
+  "Basic contact information",
+  "Website link",
+  "Business category listing",
+  "Community reviews",
+  "Ability to claim profile",
+  "1 photo",
+  "Basic map placement",
+];
+
+const BIZ_GROWTH_EXTRAS = [
+  "Up to 10 photos",
+  "Business description",
+  "Social media links",
+  "Ability to respond to reviews",
+  "Basic analytics",
+  "Event posting",
+  "Special offers & coupons",
+  '"Verified Business" eligibility',
+];
+
+const BIZ_PREMIUM_EXTRAS = [
+  "Featured placement in search",
+  "Featured placement on maps",
+  "Advanced analytics",
+  "Customer lead tracking",
+  "Unlimited events",
+  "Unlimited offers",
+  "Priority support",
+  "Community recommendation boosts",
+  "Promotional campaigns",
+];
+
+const BIZ_ENTERPRISE_EXTRAS = [
+  "Multiple business locations",
+  "Organization profile",
+  "Sponsorship opportunities",
+  "Dedicated account support",
+  "Regional advertising opportunities",
+  "Community partnership badge",
+  "Enhanced reporting",
+  "Early access to new features",
 ];
 
 const FOUNDING_FEATURES = [
@@ -409,7 +443,7 @@ export default function Membership() {
 
       {/* ── BUSINESS PLANS ── */}
       <div className="container mx-auto px-4 max-w-6xl py-8">
-        <div className="flex items-center gap-4 mb-10">
+        <div className="flex items-center gap-4 mb-4">
           <div className="w-10 h-10 rounded-2xl bg-[#CA922B]/10 flex items-center justify-center">
             <Building2 className="w-5 h-5 text-[#CA922B]" />
           </div>
@@ -418,101 +452,188 @@ export default function Membership() {
             <p className="text-[#3A1F0E]/60 text-sm">For business owners, operators, and entrepreneurs</p>
           </div>
         </div>
+        <p className="text-[#3A1F0E]/50 text-sm mb-10">All paid plans include a <strong className="text-[#3A1F0E]/70">30-day free trial</strong> — no credit card required to start.</p>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-[#2B1507] rounded-3xl p-10 border border-[#CA922B]/20 shadow-xl flex flex-col">
-            <div className="flex items-center gap-2 mb-4">
-              <Building2 className="w-5 h-5 text-[#CA922B]" />
-              <span className="text-xs font-bold uppercase tracking-wider text-[#CA922B]">Business</span>
+        {/* 4-tier grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch mb-16">
+
+          {/* Tier 1 — Community Listing (Free) */}
+          <div className="bg-white rounded-3xl p-7 border border-[#3A1F0E]/10 shadow-[0_8px_30px_rgba(43,21,7,0.05)] flex flex-col">
+            <div className="mb-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/40">Tier 1</span>
+              <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mt-1">Community Listing</h3>
+              <p className="text-[#3A1F0E]/50 text-xs mt-1">Best for businesses wanting visibility</p>
             </div>
-            <h3 className="font-serif font-bold text-3xl text-white mb-2">Business Starter</h3>
-            <div className="text-4xl font-serif font-bold text-[#CA922B] mb-1">
-              {billing === "annual" ? "$249" : "$29.99"}
-              <span className="text-lg text-[#F5EBD8]/50 font-sans font-normal">{billing === "annual" ? "/yr" : "/mo"}</span>
-            </div>
-            <p className="text-[#F5EBD8]/50 text-sm mb-2">
-              {billing === "annual" ? "That's $20.75/month — save 31%" : "or $249/year (save 31%)"}
-            </p>
-
-            <div className="inline-flex items-center gap-1.5 bg-[#CA922B]/20 border border-[#CA922B]/40 rounded-full px-3 py-1 mb-8 w-fit">
-              <Clock className="w-3.5 h-3.5 text-[#CA922B]" />
-              <span className="text-xs font-bold text-[#CA922B]">30-Day Free Trial</span>
-            </div>
-
-            <p className="text-[#F5EBD8]/60 text-sm leading-relaxed mb-8">
-              Businesses need time to see real value. Your 30-day trial gives you enough time to claim your profile, upload photos, respond to reviews, and start seeing whether traffic and leads are being generated.
-            </p>
-
-            <ul className="space-y-3 mb-10 flex-1">
-              {BUSINESS_FEATURES.map((f, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <Check className="w-4 h-4 text-[#CA922B] shrink-0 mt-0.5" />
-                  <span className="text-sm text-[#F5EBD8]/85">{f}</span>
+            <div className="text-3xl font-serif font-bold text-[#3A1F0E] mb-1">Free</div>
+            <p className="text-[#3A1F0E]/40 text-xs mb-5">$0/month, always</p>
+            <ul className="space-y-2 flex-1 mb-6">
+              {BIZ_COMMUNITY_FEATURES.map((f, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <Check className="w-3.5 h-3.5 text-[#CA922B] shrink-0 mt-0.5" />
+                  <span className="text-xs text-[#3A1F0E]/70">{f}</span>
                 </li>
               ))}
             </ul>
             <Button
-              className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 font-bold shadow-[0_4px_14px_rgba(202,146,43,0.39)]"
+              variant="outline"
+              className="w-full rounded-full border-[#3A1F0E]/20 text-[#3A1F0E] hover:bg-[#3A1F0E] hover:text-white h-10 text-sm font-bold mt-auto"
               onClick={() => handlePlanClick("business")}
             >
-              Start 30-Day Free Trial
+              Claim Free Listing
             </Button>
-            <p className="text-[#F5EBD8]/30 text-xs text-center mt-3">No credit card required to start. Cancel anytime.</p>
           </div>
 
-          <div className="flex flex-col gap-6">
-            {/* Beta Tester */}
-            <div className="bg-white rounded-3xl p-8 border border-[#CA922B]/20 shadow-[0_8px_30px_rgba(43,21,7,0.05)] flex-1">
-              <div className="flex items-center gap-2 mb-3">
-                <Award className="w-5 h-5 text-[#CA922B]" />
-                <span className="text-xs font-bold uppercase tracking-wider text-[#CA922B]">Beta Tester Program</span>
-              </div>
-              <h3 className="font-serif font-bold text-xl text-[#2B1507] mb-2">6–12 Months Free Premium</h3>
-              <p className="text-[#3A1F0E]/60 text-sm leading-relaxed mb-5">
-                Our beta testers are helping build the platform. In return, you receive 6–12 months of full Premium access free, an exclusive <strong className="text-[#CA922B]">Beta Tester badge</strong>, and Founder's Circle eligibility.
-              </p>
-              <ul className="space-y-2 mb-6">
-                {["6–12 months of Premium — free", "Exclusive Beta Tester badge", "Founder's Circle eligibility", "Direct feedback channel to the team"].map((f, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-[#CA922B] shrink-0" />
-                    <span className="text-xs text-[#3A1F0E]/70">{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button
-                variant="outline"
-                className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white h-10 px-6 text-sm"
-                onClick={() => handlePlanClick("beta")}
-              >
-                Apply as Beta Tester
-              </Button>
+          {/* Tier 2 — Growth */}
+          <div className="bg-white rounded-3xl p-7 border border-[#CA922B]/30 shadow-[0_8px_30px_rgba(202,146,43,0.08)] flex flex-col">
+            <div className="mb-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#CA922B]">Tier 2</span>
+              <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mt-1">Growth</h3>
+              <p className="text-[#3A1F0E]/50 text-xs mt-1">Small businesses seeking more exposure</p>
             </div>
+            <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">
+              {billing === "annual" ? "$199" : "$19.99"}
+              <span className="text-base text-[#3A1F0E]/40 font-sans font-normal">{billing === "annual" ? "/yr" : "/mo"}</span>
+            </div>
+            <p className="text-[#3A1F0E]/40 text-xs mb-2">{billing === "annual" ? "That's $16.58/mo — save 17%" : "or $199/year (save 17%)"}</p>
+            <div className="inline-flex items-center gap-1 bg-[#CA922B]/10 border border-[#CA922B]/30 rounded-full px-2.5 py-0.5 mb-5 w-fit">
+              <Clock className="w-3 h-3 text-[#CA922B]" />
+              <span className="text-[10px] font-bold text-[#CA922B]">30-Day Free Trial</span>
+            </div>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-[#CA922B] mb-2">Everything in Free, plus</p>
+            <ul className="space-y-2 flex-1 mb-6">
+              {BIZ_GROWTH_EXTRAS.map((f, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <Check className="w-3.5 h-3.5 text-[#CA922B] shrink-0 mt-0.5" />
+                  <span className="text-xs text-[#3A1F0E]/70">{f}</span>
+                </li>
+              ))}
+            </ul>
+            <Button
+              className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-10 text-sm font-bold mt-auto shadow-[0_4px_14px_rgba(202,146,43,0.3)]"
+              onClick={() => handlePlanClick("business")}
+            >
+              Start Free Trial
+            </Button>
+          </div>
 
-            {/* Business Referral */}
-            <div className="bg-white rounded-3xl p-8 border border-[#CA922B]/20 shadow-[0_8px_30px_rgba(43,21,7,0.05)] flex-1">
-              <div className="flex items-center gap-2 mb-3">
-                <Star className="w-5 h-5 text-[#CA922B]" />
-                <span className="text-xs font-bold uppercase tracking-wider text-[#CA922B]">Business Referral Partner</span>
+          {/* Tier 3 — Premium (featured) */}
+          <div className="bg-[#2B1507] rounded-3xl p-7 border border-[#CA922B]/30 shadow-2xl flex flex-col relative">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#CA922B] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg whitespace-nowrap">
+              Most Popular
+            </div>
+            <div className="mb-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#CA922B]">Tier 3</span>
+              <h3 className="font-serif font-bold text-xl text-white mt-1">Premium</h3>
+              <p className="text-[#F5EBD8]/50 text-xs mt-1">Established businesses wanting growth</p>
+            </div>
+            <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">
+              {billing === "annual" ? "$499" : "$49.99"}
+              <span className="text-base text-[#F5EBD8]/40 font-sans font-normal">{billing === "annual" ? "/yr" : "/mo"}</span>
+            </div>
+            <p className="text-[#F5EBD8]/40 text-xs mb-2">{billing === "annual" ? "That's $41.58/mo — save 17%" : "or $499/year (save 17%)"}</p>
+            <div className="inline-flex items-center gap-1 bg-[#CA922B]/20 border border-[#CA922B]/40 rounded-full px-2.5 py-0.5 mb-5 w-fit">
+              <Clock className="w-3 h-3 text-[#CA922B]" />
+              <span className="text-[10px] font-bold text-[#CA922B]">30-Day Free Trial</span>
+            </div>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-[#CA922B]/70 mb-2">Everything in Growth, plus</p>
+            <ul className="space-y-2 flex-1 mb-6">
+              {BIZ_PREMIUM_EXTRAS.map((f, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <Check className="w-3.5 h-3.5 text-[#CA922B] shrink-0 mt-0.5" />
+                  <span className="text-xs text-[#F5EBD8]/80">{f}</span>
+                </li>
+              ))}
+            </ul>
+            <Button
+              className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-10 text-sm font-bold mt-auto shadow-[0_4px_14px_rgba(202,146,43,0.39)]"
+              onClick={() => handlePlanClick("business")}
+            >
+              Start Free Trial
+            </Button>
+            <p className="text-[#F5EBD8]/30 text-[10px] text-center mt-2">No credit card required.</p>
+          </div>
+
+          {/* Tier 4 — Enterprise */}
+          <div className="bg-gradient-to-b from-[#FAF6EF] to-white rounded-3xl p-7 border border-[#CA922B]/20 shadow-[0_8px_30px_rgba(43,21,7,0.06)] flex flex-col">
+            <div className="mb-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#CA922B]">Tier 4</span>
+              <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mt-1">Enterprise</h3>
+              <p className="text-[#3A1F0E]/50 text-xs mt-1">Multi-location, franchises & orgs</p>
+            </div>
+            <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">
+              {billing === "annual" ? "$1,499" : "$149.99"}
+              <span className="text-base text-[#3A1F0E]/40 font-sans font-normal">{billing === "annual" ? "/yr" : "/mo"}</span>
+            </div>
+            <p className="text-[#3A1F0E]/40 text-xs mb-2">{billing === "annual" ? "That's $124.92/mo — save 17%" : "or $1,499/year (save 17%)"}</p>
+            <div className="inline-flex items-center gap-1 bg-[#CA922B]/10 border border-[#CA922B]/30 rounded-full px-2.5 py-0.5 mb-5 w-fit">
+              <Clock className="w-3 h-3 text-[#CA922B]" />
+              <span className="text-[10px] font-bold text-[#CA922B]">30-Day Free Trial</span>
+            </div>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-[#CA922B] mb-2">Everything in Premium, plus</p>
+            <ul className="space-y-2 flex-1 mb-6">
+              {BIZ_ENTERPRISE_EXTRAS.map((f, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <Check className="w-3.5 h-3.5 text-[#CA922B] shrink-0 mt-0.5" />
+                  <span className="text-xs text-[#3A1F0E]/70">{f}</span>
+                </li>
+              ))}
+            </ul>
+            <Button
+              className="w-full rounded-full bg-[#3A1F0E] hover:bg-[#1a0c04] text-white h-10 text-sm font-bold mt-auto"
+              onClick={() => handlePlanClick("business")}
+            >
+              Contact Us
+            </Button>
+          </div>
+        </div>
+
+        {/* ── FOUNDING BUSINESS LAUNCH OFFER ── */}
+        <div className="bg-gradient-to-br from-[#2B1507] via-[#3A1F0E] to-[#2B1507] rounded-3xl p-10 md:p-14 relative overflow-hidden border border-[#CA922B]/20">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#CA922B]/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#CA922B]/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+          <div className="relative z-10 flex flex-col md:flex-row items-start gap-10">
+            <div className="flex-1">
+              <div className="inline-flex items-center gap-2 bg-[#CA922B]/20 border border-[#CA922B]/40 rounded-full px-4 py-1.5 mb-6">
+                <Award className="w-3.5 h-3.5 text-[#CA922B]" />
+                <span className="text-xs font-bold uppercase tracking-wider text-[#CA922B]">Founding Business Program — First 250 Only</span>
               </div>
-              <h3 className="font-serif font-bold text-xl text-[#2B1507] mb-2">12 Months Free + Referrals</h3>
-              <p className="text-[#3A1F0E]/60 text-sm leading-relaxed mb-5">
-                Businesses recruiting early receive 12 months of Premium free, plus the ability to refer up to 20 users. A perfect fit for businesses with an existing community.
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-4">
+                12 Months of Premium.<br />
+                <span className="text-[#CA922B]">Completely Free.</span>
+              </h2>
+              <p className="text-[#F5EBD8]/70 text-base leading-relaxed mb-6 max-w-xl">
+                The first <strong className="text-white">250 businesses</strong> to join receive 12 months of full Premium access at no cost — including featured placement, analytics, and event tools. After your free year, lock in our introductory rate and keep your <strong className="text-[#CA922B]">Founding Business badge</strong> permanently on your profile.
               </p>
-              <ul className="space-y-2 mb-6">
-                {["12 months of Premium — free", "Refer up to 20 users", "Founding Business badge", "Priority placement in search during launch"].map((f, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-[#CA922B] shrink-0" />
-                    <span className="text-xs text-[#3A1F0E]/70">{f}</span>
+              <ul className="space-y-2 mb-8">
+                {[
+                  "12 months of Premium access — free",
+                  "Founding Business badge on your profile",
+                  "Priority placement during launch",
+                  "Ability to refer up to 20 users",
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-[#CA922B]/20 flex items-center justify-center shrink-0">
+                      <Check className="w-3 h-3 text-[#CA922B]" />
+                    </div>
+                    <span className="text-[#F5EBD8]/80 text-sm">{item}</span>
                   </li>
                 ))}
               </ul>
               <Button
-                variant="outline"
-                className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white h-10 px-6 text-sm"
+                className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 px-8 font-bold shadow-[0_4px_20px_rgba(202,146,43,0.5)] text-base"
                 onClick={() => handlePlanClick("business_referral")}
               >
-                Become a Referral Partner
+                Claim Your Founding Business Spot →
               </Button>
+            </div>
+            <div className="md:w-56 shrink-0 flex flex-col items-center text-center bg-white/5 border border-[#CA922B]/20 rounded-2xl p-8">
+              <div className="text-5xl font-serif font-bold text-[#CA922B] mb-1">250</div>
+              <div className="text-white font-bold mb-1">total spots</div>
+              <div className="text-[#F5EBD8]/50 text-xs mb-4">Limited launch offer</div>
+              <div className="w-full bg-white/10 rounded-full h-2 mb-3">
+                <div className="bg-[#CA922B] h-2 rounded-full w-[8%]" />
+              </div>
+              <p className="text-[#F5EBD8]/50 text-xs">Spots filling fast</p>
             </div>
           </div>
         </div>
@@ -557,11 +678,15 @@ export default function Membership() {
           <h3 className="text-xl font-serif font-bold text-[#2B1507] mb-6">Trial Periods at a Glance</h3>
           <div className="space-y-4">
             {[
-              { label: "Individual Explorer", trial: "14-day free trial", price: "$9.99/month after", icon: "👤" },
-              { label: "Business Starter", trial: "30-day free trial", price: "$29.99/month after", icon: "🏢" },
-              { label: "Founding Member Launch Promo (first 500)", trial: "90-day free trial", price: "Locked-in intro rate after", icon: "👑" },
-              { label: "Beta Tester Program", trial: "6–12 months free", price: "Standard rate after", icon: "🧪" },
-              { label: "Business Referral Partner", trial: "12 months free", price: "$29.99/month after", icon: "🤝" },
+              { label: "Explorer (Individual)", trial: "Always free", price: "$0 — no trial needed", icon: "🧭" },
+              { label: "Navigator (Individual)", trial: "14-day free trial", price: "$7.99/month after", icon: "🌍" },
+              { label: "Trailblazer (Individual)", trial: "14-day free trial", price: "$14.99/month after", icon: "👑" },
+              { label: "Founding Member (first 500)", trial: "90-day free trial", price: "Locked-in intro rate after", icon: "🏅" },
+              { label: "Business Community Listing", trial: "Always free", price: "$0 — no trial needed", icon: "🏢" },
+              { label: "Business Growth", trial: "30-day free trial", price: "$19.99/month after", icon: "📈" },
+              { label: "Business Premium", trial: "30-day free trial", price: "$49.99/month after", icon: "⭐" },
+              { label: "Business Enterprise", trial: "30-day free trial", price: "$149.99/month after", icon: "🏛" },
+              { label: "Founding Business (first 250)", trial: "12 months free", price: "Intro rate after", icon: "🤝" },
             ].map((row, i) => (
               <div key={i} className="flex items-center justify-between py-3 border-b border-[#3A1F0E]/8 last:border-0">
                 <div className="flex items-center gap-3">
