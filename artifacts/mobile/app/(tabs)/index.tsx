@@ -59,6 +59,19 @@ export default function DiscoverScreen() {
     category: activeCategory,
   });
 
+  const [activeVibe, setActiveVibe] = useState<string | null>(null);
+
+  const VIBES: { label: string; emoji: string; categories: string[] }[] = [
+    { label: "Soul Food", emoji: "🍽️", categories: ["Food", "Restaurant"] },
+    { label: "Hair & Beauty", emoji: "💈", categories: ["Beauty", "Hair"] },
+    { label: "Wellness", emoji: "💆", categories: ["Health", "Wellness"] },
+    { label: "Art & Culture", emoji: "🎨", categories: ["Arts", "Culture", "Gallery"] },
+    { label: "Late Night", emoji: "🌙", categories: ["Entertainment", "Nightlife", "Bar"] },
+    { label: "Shopping", emoji: "🛍️", categories: ["Retail", "Shop"] },
+    { label: "Date Night", emoji: "💑", categories: ["Restaurant", "Food", "Entertainment"] },
+    { label: "Family", emoji: "👨‍👩‍👧", categories: ["Food", "Entertainment", "Health"] },
+  ];
+
   const filtered = businesses.filter((b) => {
     const matchesScore = b.confidenceScore >= filters.minScore;
     const matchesVerified = !filters.verifiedOnly || b.verified;
@@ -70,7 +83,12 @@ export default function DiscoverScreen() {
           (t === "black-owned" && b.blackOwned) ||
           b.ownershipDesignations.includes(t)
       );
-    return matchesScore && matchesVerified && matchesOwnership;
+    const matchesVibe = !activeVibe
+      ? true
+      : VIBES.find((v) => v.label === activeVibe)?.categories.some(
+          (cat) => b.category?.toLowerCase().includes(cat.toLowerCase())
+        ) ?? true;
+    return matchesScore && matchesVerified && matchesOwnership && matchesVibe;
   });
 
   const featured = filtered.filter((b) => b.featured);
@@ -249,6 +267,32 @@ export default function DiscoverScreen() {
             </View>
           </TouchableOpacity>
         </View>
+
+        {/* Vibe Match chips */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.vibeScroll}
+        >
+          {VIBES.map((v) => (
+            <TouchableOpacity
+              key={v.label}
+              style={[
+                styles.vibeChip,
+                activeVibe === v.label
+                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                  : { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+              onPress={() => setActiveVibe(activeVibe === v.label ? null : v.label)}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.vibeEmoji}>{v.emoji}</Text>
+              <Text style={[styles.vibeLabel, { color: activeVibe === v.label ? "#FFFFFF" : colors.foreground }]}>
+                {v.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
         {/* Filter panel */}
         <View style={{ paddingHorizontal: 20 }}>
@@ -471,6 +515,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  vibeScroll: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  vibeChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  vibeEmoji: { fontSize: 15 },
+  vibeLabel: { fontFamily: "Inter_500Medium", fontSize: 13 },
   filterSummary: {
     flexDirection: "row",
     alignItems: "center",

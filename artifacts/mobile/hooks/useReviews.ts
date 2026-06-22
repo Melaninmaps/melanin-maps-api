@@ -80,7 +80,12 @@ export function useReviews(businessId: string) {
           setReviews((prev) => [data.review, ...prev]);
           return data.pointsEarned;
         }
-      } catch {}
+        if (res.status === 403) {
+          const err = new Error("Membership required to leave reviews");
+          (err as any).code = "MEMBERSHIP_REQUIRED";
+          throw err;
+        }
+      } catch (e) { throw e; }
       return null;
     },
     [businessId],

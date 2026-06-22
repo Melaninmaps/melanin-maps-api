@@ -30,6 +30,11 @@ import { useBusinessById } from "@/hooks/useBusinesses";
 import { useReviews } from "@/hooks/useReviews";
 import { useCheckins } from "@/hooks/useCheckins";
 import { usePoints } from "@/hooks/usePoints";
+import { useDeals } from "@/hooks/useDeals";
+import { useStories } from "@/hooks/useStories";
+import { FlashDealsSection } from "@/components/FlashDealsSection";
+import { BusinessStoriesSection } from "@/components/BusinessStoriesSection";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 const CATEGORY_IMAGES: Record<string, any> = {
   Food: require("@/assets/images/bento-businesses.jpg"),
@@ -55,12 +60,15 @@ export default function BusinessDetailScreen() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [claimModalOpen, setClaimModalOpen] = useState(false);
   const [checkInDone, setCheckInDone] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [pointsToast, setPointsToast] = useState<string | null>(null);
   const toastOpacity = useRef(new Animated.Value(0)).current;
 
   const { reviews: apiReviews, submitReview } = useReviews(id ?? "");
   const { hasCheckedIn, checkIn } = useCheckins();
   const { addLocal } = usePoints();
+  const { deals } = useDeals(id ?? "");
+  const { stories } = useStories(id ?? "");
 
   const { business, isLoading } = useBusinessById(id ?? "");
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -147,10 +155,16 @@ export default function BusinessDetailScreen() {
     socialHandle?: string,
     socialPlatform?: string,
   ) => {
-    const pts = await submitReview(rating, text, wouldReturn, socialHandle, socialPlatform, business.name);
-    if (pts != null) {
-      addLocal(pts);
-      showPointsToast(`+${pts} pts — thanks for your review!`);
+    try {
+      const pts = await submitReview(rating, text, wouldReturn, socialHandle, socialPlatform, business.name);
+      if (pts != null) {
+        addLocal(pts);
+        showPointsToast(`+${pts} pts — thanks for your review!`);
+      }
+    } catch (e: unknown) {
+      if ((e as any)?.code === "MEMBERSHIP_REQUIRED") {
+        setShowUpgrade(true);
+      }
     }
   };
 
@@ -297,6 +311,9 @@ export default function BusinessDetailScreen() {
               ))}
             </View>
           )}
+
+          <FlashDealsSection deals={deals} />
+          <BusinessStoriesSection stories={stories} />
 
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Location</Text>
           <View style={[styles.mapWrap, { borderColor: colors.border }]}>
@@ -445,6 +462,11 @@ export default function BusinessDetailScreen() {
         city={business.city}
         state={business.state}
         category={business.category}
+      />
+      <UpgradeModal
+        visible={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        feature="Leaving Reviews"
       />
     </View>
   );

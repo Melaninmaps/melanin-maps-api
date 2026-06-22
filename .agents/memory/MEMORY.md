@@ -3,3 +3,4 @@
 - [Dark mode pattern](dark-mode-pattern.md) — ThemeProvider wraps SafeAreaProvider in _layout.tsx; useTheme() from contexts/ThemeContext.tsx; AsyncStorage key `@melanin_maps_theme`.
 - [Points toast pattern](points-toast-pattern.md) — Animated opacity sequence used for in-app points feedback; useNativeDriver:true required for mobile perf.
 - [KinfolkAI personalization architecture](kinfolk-ai-personalization.md) — multi-turn chat, user_preferences/kinfolk_sessions/kinfolk_feedback DB tables, /api/kinfolk/* routes, chat UI in travel.tsx.
+- [Already-built platform features](already-built-features.md) — Stripe webhooks, requireMembership, billing toggle, UpgradeModal, content reports, referrals, verification, admin panel, billing history, welcome onboarding, deep links, business dashboard all fully exist — check before rebuilding.

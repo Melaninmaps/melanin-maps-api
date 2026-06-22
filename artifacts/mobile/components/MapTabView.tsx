@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BusinessCard } from "@/components/BusinessCard";
 import { CategoryPill } from "@/components/CategoryPill";
+import { SafetyPulseWidget } from "@/components/SafetyPulseWidget";
 import { SearchBar } from "@/components/SearchBar";
 import { CATEGORIES } from "@/constants/data";
 import { useColors } from "@/hooks/useColors";
@@ -67,6 +68,7 @@ export function MapTabView() {
         )}
         style={styles.catRow}
       />
+      <SafetyPulseWidget />
       <FlatList
         data={filtered}
         keyExtractor={(b) => b.id}

@@ -21,7 +21,10 @@ import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
 import { usePoints } from "@/hooks/usePoints";
 import { useMembership } from "@/hooks/useMembership";
+import { useCheckins } from "@/hooks/useCheckins";
 import { BadgeSection } from "@/components/BadgeSection";
+import { MilestoneSection } from "@/components/MilestoneSection";
+import { PointsRedemptionModal } from "@/components/PointsRedemptionModal";
 
 const SETTINGS = [
   { icon: "map" as const, label: "Trip Planner", sub: "Chat with KinfolkAI™ for travel picks", route: "/travel" as const },
@@ -33,6 +36,7 @@ const SETTINGS = [
   { icon: "award" as const, label: "Membership", sub: "Explore (Free) — upgrade anytime", route: "/membership" as const },
   { icon: "bar-chart-2" as const, label: "Business Dashboard", sub: "Manage your listing", route: "/business-dashboard" as const },
   { icon: "share-2" as const, label: "Referral Program", sub: "Invite friends, earn rewards", route: "/referral" as const },
+  { icon: "users" as const, label: "Mentorship Network", sub: "Connect with mentors & peers", route: "/mentorship" as const },
 ];
 
 const ADMIN_EMAILS = (process.env.EXPO_PUBLIC_ADMIN_EMAILS ?? "")
@@ -54,6 +58,7 @@ export default function ProfileScreen() {
   const { user, isLoading, isAuthenticated, login, logout } = useAuth();
   const isAdminUser = !!(user?.email && ADMIN_EMAILS.includes(user.email));
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
+  const [showRedemption, setShowRedemption] = useState(false);
 
   const pickProfileImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -77,6 +82,8 @@ export default function ProfileScreen() {
   const { total: pointsTotal, ledger } = usePoints();
   const reviewCount = ledger.filter((e) => e.action === "review").length;
   const { subscription } = useMembership();
+  const { checkedInIds } = useCheckins();
+  const checkInCount = checkedInIds.length;
 
   return (
     <ScrollView
@@ -214,6 +221,38 @@ export default function ProfileScreen() {
       {isAuthenticated && (
         <BadgeSection savedCount={savedIds.length} isEarlyTester={false} />
       )}
+
+      {isAuthenticated && (
+        <View style={{ paddingHorizontal: 16 }}>
+          <MilestoneSection
+            reviewCount={reviewCount}
+            savedCount={savedIds.length}
+            pointsTotal={pointsTotal}
+            checkInCount={checkInCount}
+          />
+        </View>
+      )}
+
+      {isAuthenticated && pointsTotal > 0 && (
+        <TouchableOpacity
+          style={[styles.redeemBanner, { backgroundColor: "#CA922B14", borderColor: "#CA922B30" }]}
+          onPress={() => setShowRedemption(true)}
+          activeOpacity={0.85}
+        >
+          <View style={[styles.redeemIconWrap, { backgroundColor: "#CA922B22" }]}>
+            <Feather name="zap" size={18} color="#CA922B" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.redeemTitle, { color: "#CA922B" }]}>Redeem Your Points</Text>
+            <Text style={[styles.redeemSub, { color: "#CA922B99" }]}>
+              {pointsTotal} pts available — free months, badges & more
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={16} color="#CA922B" />
+        </TouchableOpacity>
+      )}
+
+      <PointsRedemptionModal visible={showRedemption} onClose={() => setShowRedemption(false)} />
 
       {isAuthenticated && reviewCount === 0 && savedIds.length === 0 && pointsTotal === 0 && (
         <View style={[styles.gettingStartedCard, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.foreground }]}>
@@ -882,5 +921,32 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  redeemBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginHorizontal: 16,
+    marginTop: 4,
+    marginBottom: 8,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    padding: 14,
+  },
+  redeemIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  redeemTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+  },
+  redeemSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    marginTop: 1,
   },
 });

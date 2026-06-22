@@ -37,6 +37,10 @@ import cronRouter from "./cron";
 import referralsRouter from "./referrals";
 import contentReportsRouter from "./content-reports";
 import verificationRouter from "./verification";
+import dealsRouter from "./deals";
+import storiesRouter from "./stories";
+import redemptionsRouter from "./redemptions";
+import mentorshipRouter from "./mentorship";
 
 const router: IRouter = Router();
 
@@ -78,5 +82,9 @@ router.use(cronRouter);
 router.use(referralsRouter);
 router.use(contentReportsRouter);
 router.use(verificationRouter);
+router.use(dealsRouter);
+router.use(storiesRouter);
+router.use(redemptionsRouter);
+router.use(mentorshipRouter);
 
 export default router;
