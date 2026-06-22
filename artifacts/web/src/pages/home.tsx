@@ -759,16 +759,16 @@ export default function Home() {
           <div className="grid grid-cols-3 gap-3 mb-12 rounded-2xl overflow-hidden" style={{ height: "420px" }}>
             <div className="relative overflow-hidden rounded-xl">
               <img
-                src="https://images.pexels.com/photos/20428771/pexels-photo-20428771/free-photo-of-two-women-standing-next-to-each-other-with-one-wearing-a-green-shirt.jpeg?auto=compress&cs=tinysrgb&w=700&h=900&fit=crop&dpr=1"
-                alt="Two joyful Black women friends embracing and smiling"
+                src="https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=700&h=900&fit=crop&dpr=1"
+                alt="African American women collaborating in a business setting"
                 className="w-full h-full object-cover"
-                style={{ objectPosition: "center 10%" }}
+                style={{ objectPosition: "center 15%" }}
               />
             </div>
             <div className="relative overflow-hidden rounded-xl">
               <img
-                src="https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=700&h=900&fit=crop&dpr=1"
-                alt="African American women collaborating in a business setting"
+                src="https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=700&h=900&fit=crop&dpr=1"
+                alt="Two African American men enjoying a moment together, laughing and sharing"
                 className="w-full h-full object-cover"
                 style={{ objectPosition: "center 15%" }}
               />
