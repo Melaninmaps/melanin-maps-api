@@ -122,7 +122,7 @@ Return EXACTLY this JSON format (no markdown, no extra text — pure valid JSON)
 If you're asking a question or don't have enough info yet, set "recommendations" to null.
 "followUpSuggestions" should always be 3 short, natural things the user might say next (e.g., "More food spots", "What's the nightlife like?", "Tell me about the neighborhoods").
 Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 local insights.
-Only recommend real Black-owned or culturally Black spots — no tourist traps, no chains.`;
+Only recommend real Minority-owned or culturally Black spots — no tourist traps, no chains.`;
 }
 
 // ─── GET /api/kinfolk/preferences ─────────────────────────────────────────────

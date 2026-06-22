@@ -54,9 +54,9 @@ function buildSvg(name: string, category: string, city: string, state: string): 
   <text x="80" y="560" font-family="Georgia, serif" font-size="26" font-weight="700" font-style="italic" fill="${BRAND_CREAM}" opacity="0.9">Mapping With Melanin™</text>
   <text x="80" y="592" font-family="Arial, sans-serif" font-size="18" fill="${BRAND_GOLD}" opacity="0.7">mappingwithmelanin.com</text>
 
-  <!-- Black-owned badge -->
+  <!-- Minority-owned badge -->
   <rect x="920" y="530" width="220" height="48" rx="24" fill="${BRAND_GOLD}" />
-  <text x="1030" y="562" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="${BRAND_DARK}" text-anchor="middle">✊🏾 Black-Owned</text>
+  <text x="1030" y="562" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="${BRAND_DARK}" text-anchor="middle">✊🏾 Minority-Owned</text>
 </svg>`;
 }
 

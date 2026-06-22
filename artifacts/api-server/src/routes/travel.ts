@@ -133,7 +133,7 @@ router.post("/travel/recommendations", async (req, res) => {
   const vibeList = vibes.length > 0 ? vibes.join(", ") : "general travel";
   const cityVoice = neighborVoice ? getCityVoice(destination) : null;
   const culturalVoiceInstructions = !neighborVoice
-    ? `Write in a clear, warm, and informative tone. Be helpful and community-focused, but use standard language without regional slang or dialect. Still celebrate Black culture and Black-owned businesses authentically — just in a universally accessible voice.`
+    ? `Write in a clear, warm, and informative tone. Be helpful and community-focused, but use standard language without regional slang or dialect. Still celebrate Black culture and Minority-owned businesses authentically — just in a universally accessible voice.`
     : cityVoice
       ? buildCulturalVoiceInstructions(cityVoice)
       : `You are the user's neighbor who knows this city. Write like you're texting a friend the real hookup before they visit. Warm, personal, direct — like your auntie who knows everybody. Short sentences. Use "you" and "your" constantly. Drop real community knowledge. Never use travel brochure words like "boasts", "features", "renowned", or "visitors will enjoy". This is kinfolk talking to kinfolk.`;
@@ -178,7 +178,7 @@ Return a JSON object with EXACTLY this structure (no extra text, pure JSON):
   "localInsights": ["Something you only know if you LIVE there — a secret, a shortcut, a truth", "insight 2", "insight 3"]
 }
 
-Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 local insights. Only recommend real, authentic Black-owned or Black-cultural spots — no tourist traps, no chains, no places that don't serve the community.`;
+Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 local insights. Only recommend real, authentic Minority-owned or Black-cultural spots — no tourist traps, no chains, no places that don't serve the community.`;
 
   try {
     const completion = await openai.chat.completions.create({

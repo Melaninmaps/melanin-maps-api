@@ -45,7 +45,7 @@ const EXPLORER_FEATURES = [
   "View destination guides",
   "Save up to 10 favorite locations",
   "Follow destinations",
-  "Discover Black-owned businesses near you",
+  "Discover Minority-owned businesses near you",
   "Basic recommendations",
 ];
 

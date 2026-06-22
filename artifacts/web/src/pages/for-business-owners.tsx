@@ -111,7 +111,7 @@ export default function ForBusinessOwners() {
           </h1>
           
           <p className="text-[#F5EBD8]/80 text-lg md:text-xl max-w-2xl mb-10 font-light">
-            List your Black-owned business on the platform built for conscious consumers who are actively looking to support businesses like yours.
+            List your Minority-owned business on the platform built for conscious consumers who are actively looking to support businesses like yours.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-16">

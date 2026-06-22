@@ -118,7 +118,7 @@ export default function BusinessDetail() {
     const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     const ogImageUrl = `${window.location.origin}${base}/api/og/business/${id}`;
     const title = `${business.name} — Mapping With Melanin™`;
-    const description = `${business.category} in ${business.city ?? ""}${business.state ? `, ${business.state}` : ""}. Discover Black-owned businesses on Mapping With Melanin™.`;
+    const description = `${business.category} in ${business.city ?? ""}${business.state ? `, ${business.state}` : ""}. Discover Minority-owned businesses on Mapping With Melanin™.`;
 
     const getOrCreate = (prop: string): HTMLMetaElement => {
       let el = document.querySelector<HTMLMetaElement>(`meta[property="${prop}"]`);
@@ -317,8 +317,8 @@ export default function BusinessDetail() {
                       <ShieldCheck className="text-[#CA922B] w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-1">Verified Black-Owned</h3>
-                      <p className="text-[#3A1F0E]/70 text-sm">This business is part of our verified network of Black-owned enterprises, supporting economic empowerment.</p>
+                      <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-1">Verified Minority-Owned</h3>
+                      <p className="text-[#3A1F0E]/70 text-sm">This business is part of our verified network of Minority-owned enterprises, supporting economic empowerment.</p>
                     </div>
                   </div>
                 )}

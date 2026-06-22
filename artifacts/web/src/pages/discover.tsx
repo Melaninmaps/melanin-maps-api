@@ -20,7 +20,7 @@ const VIBES = [
   { emoji: "💇🏾", label: "Hair & Beauty", category: "Professional Services" },
   { emoji: "🌙", label: "Date Night", category: "Restaurants & Nightlife" },
   { emoji: "☕", label: "Café Vibes", category: "Restaurants & Nightlife" },
-  { emoji: "💼", label: "Black Biz", category: "Black-Owned Businesses" },
+  { emoji: "💼", label: "Black Biz", category: "Minority-Owned Businesses" },
   { emoji: "🏨", label: "Stay & Explore", category: "Hotels & Stays" },
   { emoji: "🎭", label: "Culture", category: "Cultural Landmarks" },
   { emoji: "🎉", label: "Events & More", category: "Community Events" },
@@ -234,7 +234,7 @@ export default function Discover() {
 
   const categories = [
     "All",
-    "Black-Owned Businesses",
+    "Minority-Owned Businesses",
     "Restaurants & Nightlife",
     "Hotels & Stays",
     "Cultural Landmarks",
@@ -257,7 +257,7 @@ export default function Discover() {
           </div>
           <h1 className="text-4xl md:text-6xl font-serif font-bold text-white mb-4">Explore With Purpose</h1>
           <p className="text-[#F5EBD8]/80 text-lg md:text-xl max-w-2xl mb-8 font-light">
-            Find the best Black-owned businesses, authentic experiences, and trusted community spots.
+            Find the best Minority-owned businesses, authentic experiences, and trusted community spots.
           </p>
 
           <div className="w-full max-w-2xl bg-white rounded-full p-2 flex items-center shadow-lg">
@@ -396,7 +396,7 @@ export default function Discover() {
                   ? "Try turning off the 'Open Now' filter to see all businesses."
                   : query || activeVibe || activeCategory !== "All"
                     ? "Try removing a filter or broadening your search."
-                    : "We're adding new Black-owned businesses every day. Know one we're missing?"}
+                    : "We're adding new Minority-owned businesses every day. Know one we're missing?"}
               </p>
               <div className="flex flex-wrap gap-3 justify-center">
                 {(query || activeVibe || activeCategory !== "All" || openNow) && (
@@ -500,7 +500,7 @@ export default function Discover() {
             </div>
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-3">Know a business we're missing?</h2>
             <p className="text-[#F5EBD8]/70 text-base md:text-lg max-w-xl">
-              Help build the most comprehensive guide to Black-owned businesses. Every submission is reviewed and credited.
+              Help build the most comprehensive guide to Minority-owned businesses. Every submission is reviewed and credited.
             </p>
           </div>
           <div className="relative z-10 shrink-0">

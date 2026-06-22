@@ -16,7 +16,7 @@ const CITY_DATA: Record<string, {
     name: "Atlanta", state: "GA", tagline: "The Black Mecca of the South", emoji: "🍑",
     image: "https://images.unsplash.com/photo-1575917649705-5b59aaa12e6b?w=1400&auto=format&fit=crop",
     searchTerm: "Atlanta",
-    description: "Atlanta has long been America's Black cultural capital — home to more Black millionaires, Black-owned businesses, and HBCUs than almost any other city. From the birthplace of Dr. King to today's booming creative and tech economy, ATL is where Black excellence is not the exception, but the standard.",
+    description: "Atlanta has long been America's Black cultural capital — home to more Black millionaires, Minority-owned businesses, and HBCUs than almost any other city. From the birthplace of Dr. King to today's booming creative and tech economy, ATL is where Black excellence is not the exception, but the standard.",
     safetyScore: 78,
     culture: "Atlanta's culture blends Southern hospitality with urban ambition. The city's historically Black neighborhoods — Sweet Auburn, Pittsburgh, and West End — are experiencing a renaissance of community investment.",
     neighborhoods: [
@@ -26,9 +26,9 @@ const CITY_DATA: Record<string, {
       { name: "East Atlanta Village", vibe: "Local restaurants + music", score: 79 },
     ],
     mustVisit: [
-      { icon: Utensils, label: "Cascade Road dining corridor", description: "Miles of Black-owned restaurants and eateries" },
+      { icon: Utensils, label: "Cascade Road dining corridor", description: "Miles of Minority-owned restaurants and eateries" },
       { icon: Music, label: "Live music in the West End", description: "Local jazz, R&B, and gospel venues" },
-      { icon: Coffee, label: "Black-owned cafes in Kirkwood", description: "Community-centered coffee and co-working" },
+      { icon: Coffee, label: "Minority-owned cafes in Kirkwood", description: "Community-centered coffee and co-working" },
     ],
     travelTips: [
       "Rent a car — MARTA is limited, the city is spread out",
@@ -53,7 +53,7 @@ const CITY_DATA: Record<string, {
     mustVisit: [
       { icon: Utensils, label: "Third Ward soul food", description: "Legendary Creole and Southern cooking" },
       { icon: Music, label: "Blues and zydeco venues", description: "Gulf Coast music tradition at its finest" },
-      { icon: Coffee, label: "Black-owned co-working spaces", description: "Growing entrepreneur ecosystem" },
+      { icon: Coffee, label: "Minority-owned co-working spaces", description: "Growing entrepreneur ecosystem" },
     ],
     travelTips: [
       "The Museum District has world-class African American art collections",
@@ -78,7 +78,7 @@ const CITY_DATA: Record<string, {
     mustVisit: [
       { icon: Utensils, label: "Dooky Chase's Restaurant", description: "Legendary Creole fine dining, a civil rights landmark" },
       { icon: Music, label: "Tremé second lines", description: "Authentic street parades every weekend" },
-      { icon: Coffee, label: "Café Dumonde-style beignets", description: "Black-owned cafes with true NOLA flavor" },
+      { icon: Coffee, label: "Café Dumonde-style beignets", description: "Minority-owned cafes with true NOLA flavor" },
     ],
     travelTips: [
       "Walk the Tremé — it's a living museum",
@@ -103,7 +103,7 @@ const CITY_DATA: Record<string, {
     mustVisit: [
       { icon: Utensils, label: "Ben's Chili Bowl", description: "DC institution since 1958" },
       { icon: Music, label: "Blues Alley Jazz Club", description: "Historic venue in Georgetown" },
-      { icon: Coffee, label: "U Street coffee shops", description: "Black-owned cafes in the heart of the corridor" },
+      { icon: Coffee, label: "U Street coffee shops", description: "Minority-owned cafes in the heart of the corridor" },
     ],
     travelTips: [
       "The NMAAHC (African American Museum) requires timed entry — book in advance",
@@ -128,7 +128,7 @@ const CITY_DATA: Record<string, {
     mustVisit: [
       { icon: Utensils, label: "Harlem restaurant row", description: "Soul food, Caribbean, and global Black cuisine" },
       { icon: Music, label: "Live jazz and gospel in Harlem", description: "Sunday gospel at Abyssinian Baptist Church" },
-      { icon: Coffee, label: "Brooklyn Black-owned cafes", description: "Bed-Stuy's thriving café culture" },
+      { icon: Coffee, label: "Brooklyn Minority-owned cafes", description: "Bed-Stuy's thriving café culture" },
     ],
     travelTips: [
       "Take the A/C/E to 125th St for Harlem — walk the whole strip",

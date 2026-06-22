@@ -98,7 +98,7 @@ export default function Safety() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { c: "Atlanta, GA", r: "1,240", s: 9.4, t: "↑ Improving", tags: ["Welcoming", "Black-Owned Hubs", "Cultural"] },
+              { c: "Atlanta, GA", r: "1,240", s: 9.4, t: "↑ Improving", tags: ["Welcoming", "Minority-Owned Hubs", "Cultural"] },
               { c: "New Orleans, LA", r: "876", s: 8.9, t: "↑ Improving", tags: ["Historic", "Vibrant", "Community"] },
               { c: "Harlem, NY", r: "2,103", s: 9.1, t: "→ Stable", tags: ["Cultural", "Arts", "Iconic"] },
               { c: "Houston, TX", r: "954", s: 8.7, t: "↑ Improving", tags: ["Diverse", "Business", "Food"] },

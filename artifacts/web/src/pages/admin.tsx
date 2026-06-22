@@ -971,7 +971,7 @@ export default function Admin() {
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1">
                             {biz.verified && <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><Check className="w-2.5 h-2.5" /> Verified</span>}
-                            {biz.blackOwned && <span className="px-2 py-0.5 rounded-full bg-[#CA922B]/10 text-[#CA922B] text-xs font-bold">Black-Owned</span>}
+                            {biz.blackOwned && <span className="px-2 py-0.5 rounded-full bg-[#CA922B]/10 text-[#CA922B] text-xs font-bold">Minority-Owned</span>}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-xs text-[#3A1F0E]/60">
