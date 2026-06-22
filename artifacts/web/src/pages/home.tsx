@@ -683,11 +683,15 @@ export default function Home() {
       <section className="py-24 bg-white">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="order-2 lg:order-1 bg-[#2B1507] p-8 rounded-3xl text-white relative overflow-hidden h-full flex flex-col justify-center min-h-[400px]">
-              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at center, #CA922B 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-              <div className="relative z-10 text-center">
-                <Shield className="w-16 h-16 text-[#CA922B] mx-auto mb-6" />
-                <div className="inline-block bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 text-left">
+            <div className="order-2 lg:order-1 rounded-3xl text-white relative overflow-hidden h-full flex flex-col justify-end min-h-[480px]">
+              <img
+                src="https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800"
+                alt="Carefree young Black woman exploring the city"
+                className="absolute inset-0 w-full h-full object-cover object-top"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#2B1507]/90 via-[#2B1507]/30 to-transparent"></div>
+              <div className="relative z-10 p-8">
+                <div className="inline-block bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 text-left w-full">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse"></div>
                     <span className="font-bold text-lg">All Clear</span>
