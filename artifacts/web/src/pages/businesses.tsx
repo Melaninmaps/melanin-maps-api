@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, Search, Users, MapPin, CheckCircle, Star } from "lucide-react";
+import { Link } from "wouter";
 
 const BUSINESSES = [
   {
@@ -131,7 +132,7 @@ export default function Businesses() {
           </div>
           <div className="flex gap-3">
             <Button variant="outline" className="rounded-full border-gray-300">Submit a Business</Button>
-            <Button variant="outline" className="rounded-full border-gray-300">Rate a Neighborhood</Button>
+            <Link href="/rate-neighborhood"><Button variant="outline" className="rounded-full border-gray-300">Rate a Neighborhood</Button></Link>
             <Button className="rounded-full bg-[#2B1507] text-white"><MapPin className="w-4 h-4 mr-2"/> Near Me</Button>
           </div>
         </div>

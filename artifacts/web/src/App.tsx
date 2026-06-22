@@ -37,6 +37,7 @@ import BusinessDashboard from "@/pages/business-dashboard";
 import Notifications from "@/pages/notifications";
 import Affiliate from "@/pages/affiliate";
 import Mentorship from "@/pages/mentorship";
+import RateNeighborhood from "@/pages/rate-neighborhood";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { data: auth, isLoading } = useGetCurrentAuthUser();
@@ -143,6 +144,9 @@ function Router() {
       </Route>
       <Route path="/mentorship">
         <Layout><Mentorship /></Layout>
+      </Route>
+      <Route path="/rate-neighborhood">
+        <Layout><RateNeighborhood /></Layout>
       </Route>
       <Route component={NotFound} />
     </Switch>
