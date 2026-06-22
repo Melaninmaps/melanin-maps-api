@@ -32,6 +32,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/community", label: "Community" },
     { href: "/safety", label: "Safety" },
     { href: "/businesses", label: "Businesses" },
+    { href: "/travel", label: "KinfolkAI™" },
     { href: "/for-business-owners", label: "For Business Owners", featured: true },
     { href: "/roadmap", label: "Roadmap" },
     { href: "/membership", label: "Membership" },
@@ -56,14 +57,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Link>
 
           {/* Desktop Nav */}
-          <nav aria-label="Main navigation" className="hidden xl:flex items-center gap-6">
+          <nav aria-label="Main navigation" className="hidden xl:flex items-center gap-4">
             {navItems.map((item) => {
               const isActive = location === item.href || location.startsWith(item.href + "/");
               return (
                 <Link key={item.href} href={item.href}>
                   <span
                     aria-current={isActive ? "page" : undefined}
-                    className={`text-sm font-medium transition-colors cursor-pointer ${
+                    className={`text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${
                       item.featured
                         ? "text-[#CA922B] hover:text-[#B38024]"
                         : isActive
