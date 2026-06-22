@@ -156,7 +156,7 @@ export default function Explore() {
           </div>
           <h1 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4">Explore With Purpose</h1>
           <p className="text-[#F5EBD8]/80 max-w-xl mx-auto mb-8 font-light">
-            Find Minority-owned businesses, cultural landmarks, safe stays, and community events wherever you go.
+            Find Black-owned businesses, cultural landmarks, safe stays, and community events wherever you go.
           </p>
 
           <div className="w-full max-w-2xl bg-white rounded-full p-2 flex items-center shadow-lg">

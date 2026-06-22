@@ -155,6 +155,11 @@ export default function DashboardScreen() {
           </View>
           {eventsLoading ? (
             <ActivityIndicator color={colors.primary} />
+          ) : upcomingEvents.length === 0 ? (
+            <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="calendar" size={20} color={colors.mutedForeground} />
+              <Text style={[styles.emptyCardText, { color: colors.mutedForeground }]}>No upcoming events right now</Text>
+            </View>
           ) : (
             <View style={{ gap: 10 }}>
               {upcomingEvents.map((ev) => (

@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Platform,
@@ -19,6 +19,7 @@ export default function VerifyPhoneScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { phone } = useLocalSearchParams<{ phone?: string }>();
 
   const [code, setCode] = useState("");
   const [countdown, setCountdown] = useState(60);
@@ -91,7 +92,9 @@ export default function VerifyPhoneScreen() {
           <Text style={[styles.title, { color: colors.foreground }]}>Check your phone</Text>
           <Text style={[styles.sub, { color: colors.mutedForeground }]}>
             We sent a 6-digit verification code to{"\n"}
-            <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>+1 (555) 000-••••</Text>
+            <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>
+              {phone ? phone.replace(/(\d{3})(\d{3})(\d{4})$/, "+1 ($1) $2-••••") : "+1 (•••) •••-••••"}
+            </Text>
           </Text>
         </View>
 

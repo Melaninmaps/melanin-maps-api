@@ -11,7 +11,7 @@ export default function MapPage() {
     <div className="h-full flex flex-col p-6 lg:p-10 space-y-6 min-h-[100dvh]">
       <div className="space-y-2 shrink-0">
         <h1 className="text-4xl font-serif font-bold tracking-tight">Explore the Map</h1>
-        <p className="text-muted-foreground text-lg">Browse Minority-owned businesses and community destinations.</p>
+        <p className="text-muted-foreground text-lg">Browse Black-owned businesses and community destinations.</p>
       </div>
 
       <div className="flex-1 bg-muted/30 rounded-xl border p-6 overflow-y-auto">

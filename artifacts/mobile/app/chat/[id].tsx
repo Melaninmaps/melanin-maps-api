@@ -76,6 +76,7 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [myUserId, setMyUserId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   const loadConv = useCallback(async () => {
     if (!isRealConv || !id) return;
@@ -113,7 +114,7 @@ export default function ChatScreen() {
         );
       }
     } catch {
-      // keep empty state
+      setLoadError(true);
     }
   }, [id, isRealConv, numericId, myUserId]);
 
@@ -168,6 +169,23 @@ export default function ChatScreen() {
         </Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={{ color: colors.primary, fontFamily: "Inter_500Medium" }}>Go back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <View style={[styles.notFound, { backgroundColor: colors.background }]}>
+        <Feather name="wifi-off" size={36} color={colors.muted} />
+        <Text style={[{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 15, textAlign: "center" }]}>
+          Couldn't load this conversation.{"\n"}Check your connection and try again.
+        </Text>
+        <TouchableOpacity onPress={() => { setLoadError(false); void loadConv(); }}>
+          <Text style={{ color: colors.primary, fontFamily: "Inter_500Medium" }}>Retry</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13 }}>Go back</Text>
         </TouchableOpacity>
       </View>
     );
