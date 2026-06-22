@@ -820,7 +820,7 @@ export default function Home() {
             <div className="col-span-2 flex flex-col gap-3">
               {/* Cultural Landmarks */}
               <div className="relative rounded-2xl overflow-hidden h-[204px] group cursor-pointer">
-                <img src={`${import.meta.env.BASE_URL}images/cat-cultural-landmarks.jpg`} alt="Cultural Landmarks" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src="https://images.pexels.com/photos/5261131/pexels-photo-5261131.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop&dpr=1" alt="Historic Harlem brownstone facade, iconic Black neighborhood" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" style={{ objectPosition: "center 30%" }} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 p-4">
                   <h3 className="font-serif font-bold text-base text-white mb-0.5">Cultural Landmarks</h3>
