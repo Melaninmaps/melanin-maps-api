@@ -59,8 +59,9 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
     const cleanName = firstName?.trim() || null;
     sendWaitlistConfirmation(cleanEmail, position, code, cleanName ?? "there")
       .then(() => db.update(waitlistTable).set({ welcomeEmailSent: true }).where(eq(waitlistTable.referralCode, code)))
-      .catch(() => {});
-    sendWelcomeEmail(cleanEmail, cleanName).catch(() => {});
+      .catch((err: unknown) => req.log.error({ err }, "Failed to send waitlist confirmation email"));
+    sendWelcomeEmail(cleanEmail, cleanName)
+      .catch((err: unknown) => req.log.error({ err }, "Failed to send welcome email"));
 
     res.status(201).json({ success: true, position, referralCode: code });
   } catch (err) {
