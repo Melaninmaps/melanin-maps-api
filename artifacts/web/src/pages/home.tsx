@@ -553,7 +553,7 @@ export default function Home() {
               },
               {
                 title: "Emergency Resource Hub",
-                desc: "Quick access to emergency contacts, nearby hospitals, urgent care centers, law enforcement, transportation resources, and support services.",
+                desc: "Quick access to emergency contacts, nearby hospitals, urgent care centers, emergency services, transportation resources, and support services.",
                 bullets: ["Emergency contacts", "Nearby hospitals", "Urgent care locator", "Transportation resources", "Support services"],
                 label: "Help When You Need It Most · Key Differentiator"
               }
@@ -730,7 +730,7 @@ export default function Home() {
                   { title: "Real-Time Safety Alerts", desc: "Incidents, disruptions, and community-reported conditions delivered instantly" },
                   { title: "Community Safety Scores", desc: "Aggregated ratings for neighborhoods, cities, and destinations" },
                   { title: "Verified Member Program", desc: "Trusted interactions with authenticated members through liveness checks and anti-fraud protection" },
-                  { title: "Emergency Resource Hub", desc: "Hospitals, urgent care, law enforcement, and support services — one tap away" }
+                  { title: "Emergency Resource Hub", desc: "Hospitals, urgent care, emergency services, and support services — one tap away" }
                 ].map((item, i) => (
                   <div key={i}>
                     <h4 className="font-bold text-[#3A1F0E] text-lg">{item.title}</h4>

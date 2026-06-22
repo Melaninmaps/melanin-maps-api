@@ -33,7 +33,7 @@ const PRINCIPLES = [
   {
     icon: "lock" as const,
     title: "No Surveillance, No Profiling",
-    body: "We will never use Mapping with Melanin data to profile communities, share location data with law enforcement, or allow businesses to identify individual reviewers. Our data is for the community — not about it.",
+    body: "We will never use Mapping with Melanin data to profile communities, share location data with emergency services, or allow businesses to identify individual reviewers. Our data is for the community — not about it.",
     color: "#3B1F0E",
   },
   {
