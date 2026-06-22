@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { Shield, Search, Check, ChevronDown } from "lucide-react";
+import { Shield, Search, Check, ChevronDown, ShieldCheck, Radio, Users } from "lucide-react";
 
 export default function Safety() {
   const { data: auth } = useGetCurrentAuthUser();
@@ -33,15 +33,15 @@ export default function Safety() {
 
           <div className="flex flex-wrap justify-center gap-8 md:gap-16">
             <div className="text-center">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">🛡️</div>
+              <div className="flex justify-center mb-2"><ShieldCheck className="w-8 h-8 text-[#CA922B]" /></div>
               <div className="text-sm text-[#F5EBD8]/70">Community-Verified</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">📡</div>
+              <div className="flex justify-center mb-2"><Radio className="w-8 h-8 text-[#CA922B]" /></div>
               <div className="text-sm text-[#F5EBD8]/70">Real-Time Data</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">✊🏾</div>
+              <div className="flex justify-center mb-2"><Users className="w-8 h-8 text-[#CA922B]" /></div>
               <div className="text-sm text-[#F5EBD8]/70">Your Voice Counts</div>
             </div>
           </div>

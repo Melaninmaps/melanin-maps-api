@@ -66,10 +66,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <span
                     aria-current={isActive ? "page" : undefined}
                     className={`text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${
-                      item.featured
-                        ? "text-[#CA922B] hover:text-[#B38024]"
-                        : isActive
+                      isActive
                         ? "text-[#CA922B]"
+                        : item.featured
+                        ? "text-[#F5EBD8] font-semibold border-b border-[#CA922B]/50 hover:text-[#CA922B]"
                         : "text-[#F5EBD8] hover:text-[#CA922B]"
                     }`}
                   >
@@ -115,7 +115,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div id="mobile-nav-menu" role="navigation" aria-label="Mobile navigation" className="xl:hidden bg-[#2B1507] border-t border-white/10 px-4 py-4 flex flex-col gap-4 absolute w-full shadow-lg">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)}>
-                <span className={`block text-base font-medium cursor-pointer hover:text-[#CA922B] ${item.featured ? "text-[#CA922B]" : "text-[#F5EBD8]"}`}>{item.label}</span>
+                <span className={`block text-base font-medium cursor-pointer hover:text-[#CA922B] ${item.featured ? "text-[#F5EBD8] font-semibold" : "text-[#F5EBD8]"}`}>{item.label}</span>
               </Link>
             ))}
             <div className="pt-4 border-t border-white/10 flex flex-col gap-4">

@@ -98,8 +98,10 @@ export default function Mentorship() {
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
       {/* Hero */}
-      <div className="bg-gradient-to-br from-[#3A1F0E] to-[#1C0E06] text-white py-16 px-6">
-        <div className="max-w-4xl mx-auto">
+      <div className="bg-[#2B1507] text-white py-16 px-6 relative overflow-hidden">
+        <img src={`${BASE}images/hero-community-bg.jpg`} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+        <div className="absolute inset-0 bg-[#2B1507]/85 z-0" />
+        <div className="max-w-4xl mx-auto relative z-10">
           <div className="inline-flex items-center gap-2 bg-[#CA922B20] border border-[#CA922B40] text-[#CA922B] text-sm font-semibold px-4 py-2 rounded-full mb-6">
             <Users size={14} />
             Community Mentorship Network
