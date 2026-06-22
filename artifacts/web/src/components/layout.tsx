@@ -202,7 +202,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* KinfolkAI Widget */}
       <Link href="/travel">
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-6 left-6 z-50">
           <div className="bg-[#2B1507] border border-[#CA922B]/30 shadow-2xl rounded-2xl p-4 flex flex-col gap-2 cursor-pointer hover:shadow-[0_10px_40px_rgba(202,146,43,0.15)] transition-all">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-[#CA922B]/20 flex items-center justify-center">
