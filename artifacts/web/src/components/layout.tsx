@@ -29,13 +29,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: "/explore", label: "Explore" },
-    { href: "/events", label: "Events" },
     { href: "/community", label: "Community" },
     { href: "/safety", label: "Safety" },
     { href: "/businesses", label: "Businesses" },
-    { href: "/cities", label: "City Spotlights" },
-    { href: "/jobs", label: "Jobs" },
-    { href: "/travel", label: "KinfolkAI™" },
+    { href: "/for-business-owners", label: "For Business Owners", featured: true },
+    { href: "/roadmap", label: "Roadmap" },
     { href: "/membership", label: "Membership" },
   ];
 
@@ -63,7 +61,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
               const isActive = location === item.href || location.startsWith(item.href + "/");
               return (
                 <Link key={item.href} href={item.href}>
-                  <span aria-current={isActive ? "page" : undefined} className={`text-sm font-medium transition-colors hover:text-[#CA922B] cursor-pointer ${isActive ? "text-[#CA922B]" : "text-[#F5EBD8]"}`}>
+                  <span
+                    aria-current={isActive ? "page" : undefined}
+                    className={`text-sm font-medium transition-colors cursor-pointer ${
+                      item.featured
+                        ? "text-[#CA922B] hover:text-[#B38024]"
+                        : isActive
+                        ? "text-[#CA922B]"
+                        : "text-[#F5EBD8] hover:text-[#CA922B]"
+                    }`}
+                  >
                     {item.label}
                   </span>
                 </Link>
@@ -109,7 +116,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div id="mobile-nav-menu" role="navigation" aria-label="Mobile navigation" className="xl:hidden bg-[#2B1507] border-t border-white/10 px-4 py-4 flex flex-col gap-4 absolute w-full shadow-lg">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)}>
-                <span className="block text-base font-medium text-[#F5EBD8] hover:text-[#CA922B] cursor-pointer">{item.label}</span>
+                <span className={`block text-base font-medium cursor-pointer hover:text-[#CA922B] ${item.featured ? "text-[#CA922B]" : "text-[#F5EBD8]"}`}>{item.label}</span>
               </Link>
             ))}
             <div className="pt-4 border-t border-white/10 flex flex-col gap-4">
