@@ -356,8 +356,8 @@ export default function Home() {
         <div className="grid lg:grid-cols-2 min-h-[420px]">
           <div className="relative h-72 lg:h-auto">
             <img
-              src="https://images.pexels.com/photos/1049317/pexels-photo-1049317.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&dpr=1"
-              alt="Group of friends traveling and having a great time together"
+              src="https://images.pexels.com/photos/6181059/pexels-photo-6181059.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&dpr=1"
+              alt="Black couple exploring the city together with a map, traveling with joy"
               className="absolute inset-0 w-full h-full object-cover object-center"
             />
             <div className="absolute inset-0 bg-[#2B1507]/20" />
@@ -756,21 +756,21 @@ export default function Home() {
           </p>
 
           {/* Community photo strip */}
-          <div className="grid grid-cols-3 gap-3 mb-12 rounded-2xl overflow-hidden h-52">
+          <div className="grid grid-cols-3 gap-3 mb-12 rounded-2xl overflow-hidden h-64">
             <img
-              src="https://images.pexels.com/photos/1139370/pexels-photo-1139370.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&dpr=1"
-              alt="Friends laughing together outdoors"
+              src="https://images.pexels.com/photos/20428771/pexels-photo-20428771/free-photo-of-two-women-standing-next-to-each-other-with-one-wearing-a-green-shirt.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
+              alt="Two joyful Black women friends embracing and smiling"
+              className="w-full h-full object-cover object-top"
+            />
+            <img
+              src="https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
+              alt="African American women collaborating in a business setting"
               className="w-full h-full object-cover"
             />
             <img
-              src="https://images.pexels.com/photos/8153998/pexels-photo-8153998.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&dpr=1"
-              alt="Group of friends celebrating together"
-              className="w-full h-full object-cover"
-            />
-            <img
-              src="https://images.pexels.com/photos/4657769/pexels-photo-4657769.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&dpr=1"
-              alt="Friends enjoying time together"
-              className="w-full h-full object-cover"
+              src="https://images.pexels.com/photos/2731372/pexels-photo-2731372.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
+              alt="Stylish African American women enjoying life in vibrant outfits"
+              className="w-full h-full object-cover object-top"
             />
           </div>
 
@@ -920,9 +920,9 @@ export default function Home() {
           {/* Community event photo banner */}
           <div className="relative rounded-3xl overflow-hidden h-56 mb-10">
             <img
-              src="https://images.pexels.com/photos/1820961/pexels-photo-1820961.jpeg?auto=compress&cs=tinysrgb&w=1260&h=400&dpr=1"
-              alt="Community members connecting and celebrating"
-              className="absolute inset-0 w-full h-full object-cover object-top"
+              src="https://images.pexels.com/photos/30048674/pexels-photo-30048674/free-photo-of-cultural-celebration-with-african-women-in-traditional-attire.jpeg?auto=compress&cs=tinysrgb&w=1260&h=400&dpr=1"
+              alt="African women celebrating together in vibrant traditional attire"
+              className="absolute inset-0 w-full h-full object-cover object-center"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-[#2B1507]/80 via-[#2B1507]/40 to-transparent" />
             <div className="relative z-10 h-full flex flex-col justify-center px-10">
