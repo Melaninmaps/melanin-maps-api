@@ -81,22 +81,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Auth / Right side */}
           <div className="hidden md:flex items-center gap-4">
-            <Link href={auth?.user ? "/notifications" : "/login"}>
-              <Bell className="w-5 h-5 text-[#F5EBD8] cursor-pointer hover:text-[#CA922B] transition-colors" />
-            </Link>
             {auth?.user ? (
-              <Link href="/profile">
-                <span className="text-sm font-medium hover:text-[#CA922B] transition-colors cursor-pointer">Profile</span>
-              </Link>
-            ) : (
               <>
-                <Link href="/login">
-                  <span className="text-sm font-medium hover:text-[#CA922B] transition-colors cursor-pointer whitespace-nowrap">Sign In</span>
+                <Link href="/notifications">
+                  <Bell className="w-5 h-5 text-[#F5EBD8] cursor-pointer hover:text-[#CA922B] transition-colors" />
                 </Link>
-                <Link href="/signup">
-                  <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-6">Sign Up Free</Button>
+                <Link href="/profile">
+                  <span className="text-sm font-medium hover:text-[#CA922B] transition-colors cursor-pointer">Profile</span>
                 </Link>
               </>
+            ) : (
+              <a href="/#waitlist-form">
+                <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-6 font-semibold">Join the Waitlist</Button>
+              </a>
             )}
           </div>
 
@@ -126,14 +123,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <span className="block text-base font-medium text-[#F5EBD8] cursor-pointer">Profile</span>
                 </Link>
               ) : (
-                <>
-                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                    <span className="block text-base font-medium text-[#F5EBD8] cursor-pointer">Sign In</span>
-                  </Link>
-                  <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white">Sign Up Free</Button>
-                  </Link>
-                </>
+                <a href="/#waitlist-form" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white font-semibold">Join the Waitlist</Button>
+                </a>
               )}
             </div>
           </div>

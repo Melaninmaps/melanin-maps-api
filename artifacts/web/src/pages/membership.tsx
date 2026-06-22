@@ -156,21 +156,19 @@ export default function Membership() {
 
   const isTester = currentUser?.approved === true && currentUser?.role === "tester";
 
-  function handlePlanClick(plan: string) {
+  function handlePlanClick(_plan: string) {
     if (isTester) {
-      setPendingPlan(plan);
+      setPendingPlan(_plan);
       setModalOpen(true);
     } else {
-      navigate(`/signup?plan=${plan}&billing=${billing}`);
+      window.location.href = "/#waitlist-form";
     }
   }
 
   function handleContinue() {
     setModalOpen(false);
-    if (pendingPlan) {
-      navigate(`/signup?plan=${pendingPlan}`);
-      setPendingPlan(null);
-    }
+    setPendingPlan(null);
+    window.location.href = "/#waitlist-form";
   }
 
   const spotsPercent = Math.round(((500 - spotsRemaining) / 500) * 100);
