@@ -45,14 +45,14 @@ export default function ReferralScreen() {
         const token = await SecureStore.getItemAsync("auth_session_token");
         const apiBase = getApiBase();
         if (!token || !apiBase) return;
-        const res = await fetch(`${apiBase}/api/waitlist/my-entry`, {
+        const res = await fetch(`${apiBase}/api/referrals/my-code`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const data = (await res.json()) as { entry: { referralCode?: string; referralCount?: number } | null };
-          if (data.entry?.referralCode) {
-            setReferralCode(data.entry.referralCode);
-            setReferralCount(data.entry.referralCount ?? 0);
+          const data = (await res.json()) as { referralCode?: string; referralCount?: number };
+          if (data.referralCode) {
+            setReferralCode(data.referralCode);
+            setReferralCount(data.referralCount ?? 0);
           }
         }
       } catch {}
@@ -72,7 +72,7 @@ export default function ReferralScreen() {
 
   const code = referralCode ?? "—";
   const referralUrl = referralCode
-    ? `https://mappingwithmelanin.com/?ref=${referralCode}`
+    ? `https://mappingwithmelanin.com/r/${referralCode}`
     : "https://mappingwithmelanin.com";
 
   const handleCopy = async () => {
