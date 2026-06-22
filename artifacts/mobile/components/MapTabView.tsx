@@ -87,6 +87,23 @@ export function MapTabView() {
         )}
       />
 
+      {/* Safety Insights — gated for members */}
+      <TouchableOpacity
+        style={[styles.safetyBtn, { backgroundColor: colors.secondary }]}
+        activeOpacity={0.85}
+        onPress={() => {
+          if (!isAuthenticated) {
+            setShowUpgrade(true);
+          } else {
+            router.push("/safety-info");
+          }
+        }}
+      >
+        <Feather name="shield" size={15} color="#CA922B" />
+        <Text style={[styles.safetyBtnText, { color: "#CA922B" }]}>Safety Insights</Text>
+        {!isAuthenticated && <Feather name="lock" size={12} color="#CA922B" style={{ marginLeft: 2 }} />}
+      </TouchableOpacity>
+
       <TouchableOpacity
         style={styles.sosBtn}
         activeOpacity={0.85}
@@ -99,6 +116,12 @@ export function MapTabView() {
         <Feather name="phone-call" size={18} color="#FFFFFF" />
         <Text style={styles.sosBtnText}>SOS</Text>
       </TouchableOpacity>
+
+      <UpgradeModal
+        visible={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        feature="Safety Insights"
+      />
     </View>
   );
 }
@@ -144,4 +167,21 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   sosBtnText: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF", letterSpacing: 1 },
+  safetyBtn: {
+    position: "absolute",
+    bottom: 160,
+    right: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  safetyBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
 });

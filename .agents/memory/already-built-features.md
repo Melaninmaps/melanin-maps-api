@@ -5,30 +5,33 @@ description: Major features that were fully implemented in prior sessions — ch
 
 ## Stripe & Billing
 - `webhookHandlers.ts` handles: `checkout.session.completed` → `sendTrialStarted`, `customer.subscription.trial_will_end` → `sendTrialEndingSoon`, `customer.subscription.deleted` → `sendTrialExpired` or `sendMembershipCancelled`
-- `/api/cron/trial-reminders` — daily cron endpoint (guarded by `CRON_SECRET` env var)
+- `/api/cron/trial-reminders` — daily cron endpoint in `routes/cron.ts` (guarded by `CRON_SECRET` env var); queries DB directly for expiring/expired trials
 - `/api/billing/invoices` — Stripe invoice list, wired in `billing.ts` route
 - `billing.tsx` (web) — full invoice history + subscription status page at `/billing`
 - Annual/monthly billing toggle already in `membership.tsx` (state: `billing` "monthly"|"annual", prices wired)
 
 ## Auth & Membership
 - `requireMembership(tier)` middleware in `artifacts/api-server/src/middleware/requireMembership.ts`
-- `reviewLimiter` on POST `/api/reviews`, `surveyLimiter` on POST `/api/surveys`
-- `UpgradeModal` component at `artifacts/mobile/components/UpgradeModal.tsx` — used in community.tsx and business/[id].tsx
+- `reviewLimiter` on POST `/api/reviews` in `routes/reviews.ts`
+- `UpgradeModal` component at `artifacts/mobile/components/UpgradeModal.tsx`
+  - Used in: `community.tsx`, `business/[id].tsx`, `travel.tsx`, and `MapTabView.tsx` (safety insights gate)
 
 ## Content & Community
 - `content-reports` route + `contentReportsTable` in DB — `ReportButton.tsx` component exists on mobile
 - `verification.ts` route + `verificationRequestsTable` in DB — web form at `/verify-business`
 - `referrals.ts` route — `referralCode` + `referralCount` columns already on `usersTable`
+- `/r/:code` referral redirect route in web App.tsx → `pages/referral-redirect.tsx` → redirects to `/?ref=:code`
 
 ## Admin
-- `admin.tsx` (web, 1060 lines) — full admin panel with waitlist, users, members tabs; supports editing `memberType`, `trialEndsAt`, `foundingMemberNumber` per user
+- `admin.tsx` (web, 1100+ lines) — full admin panel with waitlist analytics, users, members tabs; supports editing `memberType`, `trialEndsAt`, `foundingMemberNumber` per user
+- Waitlist tab has: KPI cards, 14-day growth sparkline, city leaderboard, referral leaderboard, enhanced table with referral counts
 
 ## Onboarding & Navigation
 - `welcome.tsx` (web) — 3-step post-signup onboarding at `/welcome`
 - Deep links in `app.json`: scheme `mappingwithmelanin`, `intentFilters` for `https://mappingwithmelanin.com`
 - `business-dashboard.tsx` (web, 228 lines) — business owner portal at `/business-dashboard`
 
-## Session-added features (this session)
+## Session-added features (prior sessions)
 - DB tables: `flash_deals`, `business_stories`, `points_redemptions`, `mentorship_profiles`
 - API routes: `/api/deals`, `/api/stories`, `/api/rewards`, `/api/redemptions`, `/api/mentorship`
 - Mobile hooks: `useDeals`, `useStories`, `useRedemptions`
