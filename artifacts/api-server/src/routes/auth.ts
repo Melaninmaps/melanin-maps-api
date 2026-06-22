@@ -1,5 +1,6 @@
 import * as oidc from "openid-client";
 import { Router, type IRouter, type Request, type Response } from "express";
+import { eq } from "drizzle-orm";
 import {
   ExchangeMobileAuthorizationCodeBody,
   ExchangeMobileAuthorizationCodeResponse,
@@ -17,6 +18,7 @@ import {
   ISSUER_URL,
   type SessionData,
 } from "../lib/auth";
+import { sendWelcomeEmail } from "../lib/email";
 
 const OIDC_COOKIE_TTL = 10 * 60 * 1000;
 
@@ -67,6 +69,13 @@ async function upsertUser(claims: Record<string, unknown>) {
       | null,
   };
 
+  const [existing] = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(eq(usersTable.id, userData.id));
+
+  const isNew = !existing;
+
   const [user] = await db
     .insert(usersTable)
     .values({ ...userData, approved: false })
@@ -78,6 +87,11 @@ async function upsertUser(claims: Record<string, unknown>) {
       },
     })
     .returning();
+
+  if (isNew && user.email) {
+    sendWelcomeEmail(user.email, user.firstName).catch(() => {});
+  }
+
   return user;
 }
 

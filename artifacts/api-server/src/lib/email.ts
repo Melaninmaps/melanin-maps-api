@@ -7,6 +7,89 @@ function log(_msg: string) {
   // RESEND_API_KEY not configured — email silently skipped in this environment
 }
 
+export async function sendWelcomeEmail(to: string, firstName: string | null) {
+  if (!resend) { log("welcome email"); return; }
+  const name = firstName ?? "there";
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: "Welcome to Mapping With Melanin™ 🗺️✊🏾",
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
+
+        <h1 style="font-size:28px;color:#2B1507;font-weight:700;margin:0 0 12px;line-height:1.3">
+          Welcome, ${name}. You're in. 🎉
+        </h1>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          Your account has been created. You're now part of a growing community of travelers, entrepreneurs, and explorers who believe finding connection, safety, and belonging should be easier — wherever life takes you.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          Here's what you can start doing right now:
+        </p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:28px;margin-bottom:28px">
+          <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 16px;letter-spacing:1px;text-transform:uppercase">Your platform at a glance</p>
+          <table style="width:100%;border-collapse:collapse">
+            <tr>
+              <td style="padding:10px 0;border-bottom:1px solid rgba(245,235,216,0.1);vertical-align:top;width:32px">
+                <span style="font-size:20px">🏪</span>
+              </td>
+              <td style="padding:10px 0 10px 12px;border-bottom:1px solid rgba(245,235,216,0.1)">
+                <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 2px">Discover Black-Owned Businesses</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Browse hundreds of verified businesses across every category and city.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 0;border-bottom:1px solid rgba(245,235,216,0.1);vertical-align:top;width:32px">
+                <span style="font-size:20px">🛡️</span>
+              </td>
+              <td style="padding:10px 0 10px 12px;border-bottom:1px solid rgba(245,235,216,0.1)">
+                <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 2px">Community Safety Intel</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Read and submit neighborhood safety reports from real community members.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 0;border-bottom:1px solid rgba(245,235,216,0.1);vertical-align:top;width:32px">
+                <span style="font-size:20px">🗺️</span>
+              </td>
+              <td style="padding:10px 0 10px 12px;border-bottom:1px solid rgba(245,235,216,0.1)">
+                <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 2px">Map View</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">See businesses pinned on a full map with safety overlays for any area.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 0;vertical-align:top;width:32px">
+                <span style="font-size:20px">✨</span>
+              </td>
+              <td style="padding:10px 0 10px 12px">
+                <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 2px">KinfolkAI Travel Planning</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Plan journeys that center culture, community, and comfort with AI assistance.</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="text-align:center;margin-bottom:32px">
+          <a href="https://mappingwithmelanin.com/discover" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:16px 40px;border-radius:50px;text-decoration:none">
+            Start Exploring →
+          </a>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 8px">
+          Have a question or want to submit a business? Reply to this email — a real person will read it.
+        </p>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:24px 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping With Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.6;margin:0">Melanin Maps LLC · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a></p>
+      </div>
+    `,
+  });
+}
+
 export async function sendWaitlistConfirmation(to: string, position: number, referralCode: string, firstName: string) {
   if (!resend) { log("waitlist confirmation"); return; }
   const referralLink = `https://mappingwithmelanin.com/?ref=${referralCode}`;
