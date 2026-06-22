@@ -12,6 +12,7 @@ export const waitlistTable = pgTable("waitlist_signups", {
   referralCode: varchar("referral_code", { length: 20 }),
   referredBy: varchar("referred_by", { length: 20 }),
   notes: text("notes"),
+  welcomeEmailSent: boolean("welcome_email_sent").notNull().default(false),
   approvedAt: timestamp("approved_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

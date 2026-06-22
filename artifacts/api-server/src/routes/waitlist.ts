@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, waitlistTable } from "@workspace/db";
-import { count, desc, eq, isNotNull } from "drizzle-orm";
+import { count, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
 import { sendWaitlistConfirmation } from "../lib/email";
 
@@ -55,7 +55,9 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
     const [{ total }] = await db.select({ total: count() }).from(waitlistTable);
     const position = Number(total);
 
-    sendWaitlistConfirmation(email.toLowerCase().trim(), position, code, firstName?.trim() || "there").catch(() => {});
+    sendWaitlistConfirmation(email.toLowerCase().trim(), position, code, firstName?.trim() || "there")
+      .then(() => db.update(waitlistTable).set({ welcomeEmailSent: true }).where(eq(waitlistTable.referralCode, code)))
+      .catch(() => {});
 
     res.status(201).json({ success: true, position, referralCode: code });
   } catch (err) {
@@ -314,6 +316,53 @@ router.post("/admin/nudge-preview", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to send nudge preview");
     res.status(500).json({ error: "Failed to send preview" });
+  }
+});
+
+// ── Admin: send welcome email blast to all who haven't received one ───────────
+
+router.post("/admin/send-welcome-blast", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const { eq: drizzleEq } = await import("drizzle-orm");
+    const unsent = await db
+      .select()
+      .from(waitlistTable)
+      .where(drizzleEq(waitlistTable.welcomeEmailSent, false))
+      .orderBy(waitlistTable.createdAt);
+
+    const totalOnList = await db.select({ total: count() }).from(waitlistTable);
+    const totalCount = Number(totalOnList[0].total);
+
+    let sent = 0;
+    let failed = 0;
+
+    for (let i = 0; i < unsent.length; i++) {
+      const entry = unsent[i];
+      if (!entry.email || !entry.referralCode) { failed++; continue; }
+      const position = i + 1;
+      try {
+        await sendWaitlistConfirmation(
+          entry.email,
+          position,
+          entry.referralCode,
+          entry.firstName ?? "there",
+        );
+        await db.update(waitlistTable)
+          .set({ welcomeEmailSent: true })
+          .where(drizzleEq(waitlistTable.id, entry.id));
+        sent++;
+        // Respect Resend rate limits — 2 emails/sec max
+        if (i % 10 === 9) await new Promise(r => setTimeout(r, 500));
+      } catch {
+        failed++;
+      }
+    }
+
+    res.json({ sent, failed, skipped: totalCount - unsent.length, total: totalCount });
+  } catch (err) {
+    req.log.error({ err }, "Failed to send welcome blast");
+    res.status(500).json({ error: "Failed to send welcome blast" });
   }
 });
 
