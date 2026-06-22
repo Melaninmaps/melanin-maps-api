@@ -3,6 +3,7 @@ import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTabl
 import { eq, desc } from "drizzle-orm";
 import { reviewLimiter } from "../middleware/rateLimiter";
 import { requireMembership } from "../middleware/requireMembership";
+import { checkContent, redactForLog } from "../lib/contentFilter";
 
 const router: IRouter = Router();
 
@@ -100,6 +101,15 @@ router.post("/reviews", reviewLimiter, requireMembership("navigator"), async (re
   if (!businessId || !rating || isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
     res.status(400).json({ error: "businessId required; rating must be a number 1–5" });
     return;
+  }
+
+  if (typeof text === "string" && text.trim()) {
+    const filter = checkContent(text);
+    if (!filter.ok) {
+      req.log.warn({ userId: req.user.id, matched: redactForLog(filter.matched) }, "Review blocked by content filter");
+      res.status(422).json({ error: filter.reason, code: "CONTENT_POLICY_VIOLATION" });
+      return;
+    }
   }
 
   const cleanHandle = typeof socialHandle === "string"

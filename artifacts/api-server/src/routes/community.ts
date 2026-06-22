@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, communityPostsTable } from "@workspace/db";
 import { eq, desc, sql } from "drizzle-orm";
 import { storage } from "../storage";
+import { checkContent, redactForLog } from "../lib/contentFilter";
 
 const router: IRouter = Router();
 
@@ -30,6 +31,12 @@ router.post("/community/posts", async (req: Request, res: Response) => {
     const { content, category = "general" } = req.body as { content?: string; category?: string };
     if (!content?.trim()) {
       res.status(400).json({ error: "content is required" });
+      return;
+    }
+    const filter = checkContent(content);
+    if (!filter.ok) {
+      req.log.warn({ userId: req.user.id, matched: redactForLog(filter.matched) }, "Community post blocked by content filter");
+      res.status(422).json({ error: filter.reason, code: "CONTENT_POLICY_VIOLATION" });
       return;
     }
     const user = await storage.getUser(req.user.id);
