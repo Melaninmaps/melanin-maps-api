@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable } from "@workspace/db";
+import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
+import { sendPushToUser, sendPushToUsersWithSavedBusiness } from "../lib/pushNotifications";
 import { reviewLimiter } from "../middleware/rateLimiter";
 import { requireMembership } from "../middleware/requireMembership";
 import { checkContent, redactForLog } from "../lib/contentFilter";
@@ -169,6 +170,17 @@ router.post("/reviews", reviewLimiter, requireMembership("navigator"), async (re
         req.log.warn({ err }, "Failed to send invite notification email");
       });
     }
+
+    const [biz] = await db
+      .select({ submittedById: businessesTable.submittedById, name: businessesTable.name })
+      .from(businessesTable)
+      .where(eq(businessesTable.id, businessId as string))
+      .limit(1);
+
+    if (biz?.submittedById && biz.submittedById !== req.user.id) {
+      sendPushToUser(biz.submittedById, { title: "New Review ⭐", body: `Someone left a ${ratingNum}-star review for ${biz.name ?? "your business"}.`, data: { screen: "business", id: businessId } }).catch(() => {});
+    }
+    sendPushToUsersWithSavedBusiness(businessId as string, { title: "New Review", body: `A new review was posted for ${biz?.name ?? "a saved business"}.`, data: { screen: "business", id: businessId } }).catch(() => {});
 
     res.status(201).json({ review, pointsEarned: POINTS_VALUES.review, invite });
   } catch (err) {

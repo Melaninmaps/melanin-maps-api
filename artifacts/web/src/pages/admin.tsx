@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Redirect } from "wouter";
-import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2 } from "lucide-react";
+import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2, Flag, AlertTriangle } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -53,7 +53,7 @@ type AdminBusiness = {
   } | null;
 };
 
-type Tab = "waitlist" | "users" | "businesses" | "members" | "reviews";
+type Tab = "waitlist" | "users" | "businesses" | "members" | "reviews" | "reports";
 
 type AdminReview = {
   id: string;
@@ -61,6 +61,17 @@ type AdminReview = {
   authorName: string | null;
   rating: number;
   text: string | null;
+  createdAt: string;
+};
+
+type ContentReportRow = {
+  id: string;
+  reporterId: string | null;
+  targetType: string;
+  targetId: string;
+  reason: string;
+  description: string | null;
+  status: string;
   createdAt: string;
 };
 
@@ -205,6 +216,7 @@ export default function Admin() {
   const [businesses, setBusinesses] = useState<AdminBusiness[]>([]);
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
+  const [reports, setReports] = useState<ContentReportRow[]>([]);
   const [memberSearch, setMemberSearch] = useState("");
   const [editingMember, setEditingMember] = useState<string | null>(null);
   const [memberEdit, setMemberEdit] = useState<{ memberType?: string; foundingMemberNumber?: string; trialEndsAt?: string }>({});
@@ -258,9 +270,16 @@ export default function Admin() {
       .then(data => { setReviews(data.reviews ?? []); setLastRefreshed(new Date()); });
   }, []);
 
+  const loadReports = useCallback(() => {
+    return fetch(`${BASE}api/admin/content-reports`, { credentials: "include" })
+      .then(r => r.json())
+      .then(data => { setReports(data.reports ?? []); setLastRefreshed(new Date()); })
+      .catch(() => {});
+  }, []);
+
   const refreshAll = useCallback(() => {
-    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses(), loadMembers(), loadReviews()]);
-  }, [loadWaitlist, loadUsers, loadBusinesses, loadMembers, loadReviews]);
+    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses(), loadMembers(), loadReviews(), loadReports()]);
+  }, [loadWaitlist, loadUsers, loadBusinesses, loadMembers, loadReviews, loadReports]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -572,6 +591,18 @@ export default function Admin() {
               <Star className="w-4 h-4" />
               Reviews
               {reviews.length > 0 && <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">{reviews.length}</span>}
+            </button>
+            <button
+              onClick={() => setTab("reports")}
+              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "reports" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
+            >
+              <Flag className="w-4 h-4" />
+              Reports
+              {reports.filter(r => r.status === "pending").length > 0 && (
+                <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                  {reports.filter(r => r.status === "pending").length} pending
+                </span>
+              )}
             </button>
           </div>
           <div className="flex items-center gap-3 pr-2">
@@ -1168,7 +1199,7 @@ export default function Admin() {
               </div>
             )}
           </div>
-        ) : (
+        ) : tab === "reviews" ? (
           <div>
             <h2 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4">Community Reviews ({reviews.length})</h2>
             {reviews.length === 0 ? (
@@ -1220,6 +1251,123 @@ export default function Admin() {
                           >
                             <Trash2 className="w-3 h-3" />
                           </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <h2 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4">
+              Content Reports
+              <span className="ml-3 text-sm font-sans font-normal text-[#3A1F0E]/50">({reports.length} total, {reports.filter(r => r.status === "pending").length} pending)</span>
+            </h2>
+            {reports.length === 0 ? (
+              <div className="text-center py-20 text-[#3A1F0E]/40">
+                <Flag className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <p>No content reports yet.</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Type</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Target</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Reason</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Description</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Status</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Date</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reports.map((report, i) => (
+                      <tr key={report.id} className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#3A1F0E]/10 text-[#3A1F0E] text-xs font-bold capitalize">
+                            {report.targetType}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-[#3A1F0E]/60 text-xs font-mono">{report.targetId.slice(0, 8)}…</td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-xs font-bold capitalize">
+                            {report.reason.replace(/_/g, " ")}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-[#3A1F0E]/70 max-w-xs">
+                          {report.description ? (
+                            <span className="line-clamp-2">{report.description}</span>
+                          ) : <span className="text-[#3A1F0E]/30 text-xs">No description</span>}
+                        </td>
+                        <td className="px-4 py-3">
+                          {report.status === "pending" && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-bold">
+                              <AlertTriangle className="w-3 h-3" /> Pending
+                            </span>
+                          )}
+                          {report.status === "reviewed" && (
+                            <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">Reviewed</span>
+                          )}
+                          {report.status === "dismissed" && (
+                            <span className="px-2 py-0.5 rounded-full bg-[#3A1F0E]/10 text-[#3A1F0E]/50 text-xs font-bold">Dismissed</span>
+                          )}
+                          {report.status === "actioned" && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                              <Check className="w-3 h-3" /> Actioned
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-[#3A1F0E]/50 text-xs whitespace-nowrap">
+                          {new Date(report.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </td>
+                        <td className="px-4 py-3">
+                          {report.status === "pending" && (
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={updating === report.id + "-dismiss"}
+                                onClick={async () => {
+                                  setUpdating(report.id + "-dismiss");
+                                  await fetch(`${BASE}api/admin/content-reports/${report.id}`, {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    credentials: "include",
+                                    body: JSON.stringify({ status: "dismissed" }),
+                                  });
+                                  setReports(prev => prev.map(r => r.id === report.id ? { ...r, status: "dismissed" } : r));
+                                  setUpdating(null);
+                                }}
+                                className="h-7 px-2 rounded-full text-xs border-[#3A1F0E]/20 text-[#3A1F0E]/60 hover:bg-[#3A1F0E]/5"
+                                title="Dismiss"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                disabled={updating === report.id + "-action"}
+                                onClick={async () => {
+                                  setUpdating(report.id + "-action");
+                                  await fetch(`${BASE}api/admin/content-reports/${report.id}`, {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    credentials: "include",
+                                    body: JSON.stringify({ status: "actioned" }),
+                                  });
+                                  setReports(prev => prev.map(r => r.id === report.id ? { ...r, status: "actioned" } : r));
+                                  setUpdating(null);
+                                }}
+                                className="h-7 px-2 rounded-full text-xs bg-green-600 hover:bg-green-700 text-white"
+                                title="Mark actioned"
+                              >
+                                <Check className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}

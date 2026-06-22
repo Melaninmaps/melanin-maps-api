@@ -488,3 +488,71 @@ export async function sendMembershipCancelled(
     `,
   });
 }
+
+export async function sendWeeklyDigest(
+  to: string,
+  firstName: string | null,
+  businesses: Array<{ name: string; category: string; city: string; state: string; id: string }>,
+  weekLabel: string,
+) {
+  if (!resend) { log("weekly digest"); return; }
+  const name = firstName ?? "there";
+
+  const bizCards = businesses.slice(0, 6).map(b => `
+    <a href="https://mappingwithmelanin.com/business/${b.id}" style="display:block;text-decoration:none;margin-bottom:16px">
+      <div style="background:#fff;border-radius:12px;padding:16px 20px;border:1px solid rgba(43,21,7,0.08)">
+        <p style="color:#2B1507;font-size:15px;font-weight:700;margin:0 0 4px">${b.name}</p>
+        <p style="color:#CA922B;font-size:12px;font-weight:600;margin:0 0 4px;text-transform:uppercase;letter-spacing:0.5px">${b.category}</p>
+        <p style="color:#3A1F0E;font-size:13px;margin:0;opacity:0.6">${b.city}, ${b.state}</p>
+      </div>
+    </a>
+  `).join("");
+
+  const noBizMessage = `
+    <p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 24px">
+      No new businesses were added this week, but our community is growing. Explore the full directory and you might discover something you haven't seen yet.
+    </p>
+  `;
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Your weekly Black-owned business digest — ${weekLabel}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 8px">Hey ${name} 👋🏾</p>
+
+        <h1 style="font-size:26px;color:#2B1507;font-weight:700;margin:0 0 8px;line-height:1.3;font-style:italic">
+          This Week in Black Excellence
+        </h1>
+        <p style="color:#3A1F0E;font-size:14px;margin:0 0 28px;opacity:0.6">${weekLabel}</p>
+
+        <p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 20px">
+          Here are the newest Black-owned businesses added to the Mapping with Melanin™ directory this week. Every discovery, share, and check-in helps our community grow stronger.
+        </p>
+
+        ${businesses.length > 0 ? bizCards : noBizMessage}
+
+        <div style="text-align:center;margin:28px 0">
+          <a href="https://mappingwithmelanin.com/discover" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:14px 36px;border-radius:50px;text-decoration:none">
+            Explore the Full Directory →
+          </a>
+        </div>
+
+        <div style="background:#2B1507;border-radius:12px;padding:24px;margin-bottom:28px;text-align:center">
+          <p style="color:#F5EBD8;font-size:13px;font-weight:700;margin:0 0 6px;letter-spacing:1px;text-transform:uppercase">Know a Black-owned business?</p>
+          <p style="color:#F5EBD8;font-size:14px;margin:0 0 16px;opacity:0.7">Help us grow the most comprehensive directory of Black-owned businesses in the country.</p>
+          <a href="https://mappingwithmelanin.com/submit-business" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:14px;padding:10px 24px;border-radius:50px;text-decoration:none">
+            Submit a Business
+          </a>
+        </div>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping with Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.5;margin:0">Melanin Maps LLC · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a> · <a href="https://mappingwithmelanin.com/unsubscribe" style="color:#CA922B">Unsubscribe</a></p>
+      </div>
+    `,
+  });
+}

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock } from "lucide-react";
+import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -102,6 +102,8 @@ export default function BusinessDetail() {
   const [deals, setDeals] = useState<any[]>([]);
   const [stories, setStories] = useState<any[]>([]);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [checkInDone, setCheckInDone] = useState(false);
+  const [checkInLoading, setCheckInLoading] = useState(false);
 
   const isSaved = savedPlaces?.businessIds.includes(id);
 
@@ -167,6 +169,35 @@ export default function BusinessDetail() {
           toast({ title: "Added to saved places" });
         }
       });
+    }
+  };
+
+  const handleCheckIn = async () => {
+    if (!auth?.user) {
+      toast({ title: "Sign in required", description: "Please sign in to check in." });
+      return;
+    }
+    if (checkInDone) return;
+    setCheckInLoading(true);
+    try {
+      const res = await fetch(`${BASE_URL}/api/checkins`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ businessId: id }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCheckInDone(true);
+        toast({ title: `✓ Checked in! +${data.pointsEarned ?? 10} points earned` });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast({ title: "Already checked in", description: err.error ?? "You've already checked in here today.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Check-in failed", description: "Please try again.", variant: "destructive" });
+    } finally {
+      setCheckInLoading(false);
     }
   };
 
@@ -282,6 +313,15 @@ export default function BusinessDetail() {
                 className={`rounded-full h-12 px-6 border-white/20 backdrop-blur-md ${isSaved ? "bg-white text-[#2B1507]" : "bg-black/30 text-white hover:bg-white hover:text-[#2B1507]"}`}
               >
                 {isSaved ? <><BookmarkCheck className="mr-2 w-5 h-5" /> Saved</> : <><Bookmark className="mr-2 w-5 h-5" /> Save</>}
+              </Button>
+              <Button
+                onClick={handleCheckIn}
+                disabled={checkInDone || checkInLoading}
+                variant="outline"
+                className={`rounded-full h-12 px-6 border-white/20 backdrop-blur-md ${checkInDone ? "bg-green-500/80 text-white border-green-400/40" : "bg-black/30 text-white hover:bg-white hover:text-[#2B1507]"}`}
+              >
+                <CheckSquare className="mr-2 w-5 h-5" />
+                {checkInDone ? "Checked In ✓" : checkInLoading ? "Checking in…" : "Check In"}
               </Button>
             </div>
           </div>

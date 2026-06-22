@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable } from "@workspace/db";
-import { and, isNotNull, lte, gt, eq, isNull } from "drizzle-orm";
-import { sendTrialEndingSoon, sendTrialExpired } from "../lib/email";
+import { db, usersTable, businessesTable } from "@workspace/db";
+import { and, isNotNull, lte, gt, eq, isNull, gte } from "drizzle-orm";
+import { sendTrialEndingSoon, sendTrialExpired, sendWeeklyDigest } from "../lib/email";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
@@ -84,6 +84,49 @@ router.post("/cron/trial-reminders", async (req, res): Promise<void> => {
 router.post("/cron/referral-stats", async (req, res): Promise<void> => {
   if (!verifyCronSecret(req, res)) return;
   res.json({ ok: true, message: "No-op — referral counts are updated in real time" });
+});
+
+router.post("/cron/weekly-digest", async (req, res): Promise<void> => {
+  if (!verifyCronSecret(req, res)) return;
+
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const weekLabel = sevenDaysAgo.toLocaleDateString("en-US", { month: "long", day: "numeric" }) +
+    " – " + now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
+  try {
+    const newBusinesses = await db
+      .select({ id: businessesTable.id, name: businessesTable.name, category: businessesTable.category, city: businessesTable.city, state: businessesTable.state })
+      .from(businessesTable)
+      .where(gte(businessesTable.createdAt, sevenDaysAgo))
+      .limit(6);
+
+    const recipients = await db
+      .select({ email: usersTable.email, firstName: usersTable.firstName })
+      .from(usersTable)
+      .where(and(isNotNull(usersTable.email), eq(usersTable.approved, true)));
+
+    let sent = 0;
+    let failed = 0;
+
+    for (const user of recipients) {
+      if (!user.email) continue;
+      try {
+        await sendWeeklyDigest(user.email, user.firstName, newBusinesses, weekLabel);
+        sent++;
+        await new Promise(r => setTimeout(r, 600));
+      } catch (err) {
+        logger.error({ err, email: user.email }, "Failed to send weekly digest");
+        failed++;
+      }
+    }
+
+    logger.info({ sent, failed, newBusinesses: newBusinesses.length }, "Weekly digest cron completed");
+    res.json({ ok: true, sent, failed, newBusinesses: newBusinesses.length, weekLabel });
+  } catch (err: any) {
+    logger.error({ err }, "Weekly digest cron failed");
+    res.status(500).json({ error: "Cron job failed" });
+  }
 });
 
 export default router;
