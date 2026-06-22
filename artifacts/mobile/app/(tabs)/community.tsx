@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   FlatList,
+  Linking,
   Modal,
   Platform,
   RefreshControl,
@@ -29,7 +30,7 @@ import { useGroups, type Group } from "@/hooks/useGroups";
 import { useAuth } from "@/lib/auth";
 import { UpgradeModal } from "@/components/UpgradeModal";
 
-const TABS = ["Feed", "Events", "Groups", "Alerts", "Recommendations"];
+const TABS = ["Feed", "Events", "Groups", "Resources", "Alerts", "Recommendations"];
 
 const CATEGORY_OPTIONS = [
   { value: "general", label: "Discussion" },
@@ -438,6 +439,113 @@ export default function CommunityScreen() {
             <Feather name="plus" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
+      ) : activeTab === "Resources" ? (
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 40, gap: 14 }]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Crisis banner */}
+          <View style={[styles.resCrisisBanner, { backgroundColor: "#DC2626" }]}>
+            <Feather name="alert-circle" size={20} color="#FFF" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.resCrisisTitle}>In a crisis? Get help now.</Text>
+              <Text style={styles.resCrisisSub}>Free, confidential, available 24/7</Text>
+            </View>
+          </View>
+          <View style={styles.resRow}>
+            <TouchableOpacity style={[styles.resCrisisBtn, { backgroundColor: "#DC2626" }]} onPress={() => Linking.openURL("tel:988").catch(() => {})}>
+              <Feather name="phone-call" size={16} color="#FFF" />
+              <Text style={styles.resCrisisBtnText}>Call / Text 988</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.resCrisisBtn, { backgroundColor: "#B91C1C" }]} onPress={() => Linking.openURL("sms:741741").catch(() => {})}>
+              <Feather name="message-circle" size={16} color="#FFF" />
+              <Text style={styles.resCrisisBtnText}>Text HOME to 741741</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Section: Black Mental Health */}
+          <Text style={[styles.resSectionTitle, { color: colors.foreground }]}>Black Mental Health</Text>
+          {[
+            { name: "Black Mental Health Alliance", url: "https://blackmentalhealth.com", color: "#7B2D8B" },
+            { name: "Therapy for Black Girls", url: "https://therapyforblackgirls.com", color: "#7B2D8B" },
+            { name: "Therapy for Black Men", url: "https://therapyforblackmen.org", color: "#4C1D95" },
+            { name: "Boris Lawrence Henson Foundation", url: "https://borislhensonfoundation.org", color: "#4C1D95" },
+            { name: "Loveland Foundation", url: "https://thelovelandfoundation.org", color: "#7B2D8B" },
+          ].map((r) => (
+            <TouchableOpacity
+              key={r.name}
+              style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => Linking.openURL(r.url).catch(() => {})}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.resCardDot, { backgroundColor: r.color }]} />
+              <Text style={[styles.resCardName, { color: colors.foreground }]}>{r.name}</Text>
+              <Feather name="external-link" size={14} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          ))}
+
+          {/* Section: AA & NA Meetings */}
+          <Text style={[styles.resSectionTitle, { color: colors.foreground }]}>AA & NA Meeting Finders</Text>
+          {[
+            { name: "AA Meeting Finder — aa.org", url: "https://www.aa.org/find-aa", color: "#1D4ED8" },
+            { name: "NA Meeting Search — na.org", url: "https://www.na.org/meetingsearch/", color: "#1D4ED8" },
+            { name: "Meeting Guide (AA App)", url: "https://meetingguide.org", color: "#1E40AF" },
+            { name: "SMART Recovery Meetings", url: "https://www.smartrecovery.org/community/calendar.php", color: "#2D7A4F" },
+            { name: "In The Rooms — Online Meetings", url: "https://www.intherooms.com", color: "#1D4ED8" },
+          ].map((r) => (
+            <TouchableOpacity
+              key={r.name}
+              style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => Linking.openURL(r.url).catch(() => {})}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.resCardDot, { backgroundColor: r.color }]} />
+              <Text style={[styles.resCardName, { color: colors.foreground }]}>{r.name}</Text>
+              <Feather name="external-link" size={14} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          ))}
+
+          {/* Section: Crisis Hotlines */}
+          <Text style={[styles.resSectionTitle, { color: colors.foreground }]}>Crisis Hotlines</Text>
+          {[
+            { name: "SAMHSA Helpline", action: "1-800-662-4357", url: "tel:18006624357", color: "#B91C1C" },
+            { name: "Domestic Violence Hotline", action: "1-800-799-7233", url: "tel:18007997233", color: "#B91C1C" },
+          ].map((r) => (
+            <TouchableOpacity
+              key={r.name}
+              style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => Linking.openURL(r.url).catch(() => {})}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.resCardDot, { backgroundColor: r.color }]} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.resCardName, { color: colors.foreground }]}>{r.name}</Text>
+                <Text style={[styles.resCardSub, { color: colors.mutedForeground }]}>{r.action}</Text>
+              </View>
+              <Feather name="phone" size={14} color={r.color} />
+            </TouchableOpacity>
+          ))}
+
+          {/* Section: Find a Therapist */}
+          <Text style={[styles.resSectionTitle, { color: colors.foreground }]}>Find Treatment & Therapy</Text>
+          {[
+            { name: "SAMHSA Treatment Locator", url: "https://findtreatment.gov", color: "#CA922B" },
+            { name: "Open Path Collective ($30–$80/session)", url: "https://openpathcollective.org", color: "#C9922B" },
+            { name: "Inclusive Therapists", url: "https://www.inclusivetherapists.com", color: "#2D7A4F" },
+          ].map((r) => (
+            <TouchableOpacity
+              key={r.name}
+              style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => Linking.openURL(r.url).catch(() => {})}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.resCardDot, { backgroundColor: r.color }]} />
+              <Text style={[styles.resCardName, { color: colors.foreground }]}>{r.name}</Text>
+              <Feather name="external-link" size={14} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       ) : (
         <>
           <FlatList
@@ -726,4 +834,15 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   charCount: { fontFamily: "Inter_400Regular", fontSize: 12, textAlign: "right", paddingHorizontal: 20, paddingBottom: 8 },
+  resCrisisBanner: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14, padding: 14 },
+  resCrisisTitle: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFF" },
+  resCrisisSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.85)" },
+  resRow: { flexDirection: "row", gap: 10 },
+  resCrisisBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 12, borderRadius: 12 },
+  resCrisisBtnText: { fontFamily: "Inter_700Bold", fontSize: 13, color: "#FFF" },
+  resSectionTitle: { fontFamily: "Inter_700Bold", fontSize: 16, marginTop: 4 },
+  resCard: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12 },
+  resCardDot: { width: 10, height: 10, borderRadius: 5, flexShrink: 0 },
+  resCardName: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 14, lineHeight: 20 },
+  resCardSub: { fontFamily: "Inter_400Regular", fontSize: 12 },
 });

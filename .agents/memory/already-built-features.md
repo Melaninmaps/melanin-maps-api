@@ -54,6 +54,12 @@ description: Major features that were fully implemented in prior sessions — ch
 ## Mobile Business Detail
 - Full check-in via `useCheckins` hook + `handleCheckIn` with animated points toast
 
+## Mental Health & Recovery Resources
+- `resources.tsx` (mobile, standalone screen) — crisis lines (988, SAMHSA, DV hotline), Black mental health orgs (6), AA/NA meeting finders (5), treatment locators (4); all tappable via `Linking.openURL`
+- Community tab "Resources" — 4th tab in TABS array in `community.tsx`; renders same resource categories inline with tap-to-call/text crisis buttons at top
+- `resources.tsx` (web) — full page at `/resources` with dark hero, red crisis banner, 4 card grid sections; route added in App.tsx
+- "Resources" added to web nav (`layout.tsx` navItems between Safety and Businesses); "Mental Health & Recovery" added to footer Community section
+
 ## Session-added features (prior sessions)
 - DB tables: `flash_deals`, `business_stories`, `points_redemptions`, `mentorship_profiles`
 - API routes: `/api/deals`, `/api/stories`, `/api/rewards`, `/api/redemptions`, `/api/mentorship`

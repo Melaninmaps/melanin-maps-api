@@ -39,6 +39,7 @@ import Affiliate from "@/pages/affiliate";
 import Mentorship from "@/pages/mentorship";
 import RateNeighborhood from "@/pages/rate-neighborhood";
 import ReferralRedirect from "@/pages/referral-redirect";
+import Resources from "@/pages/resources";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { data: auth, isLoading } = useGetCurrentAuthUser();
@@ -150,6 +151,9 @@ function Router() {
         <Layout><RateNeighborhood /></Layout>
       </Route>
       <Route path="/r/:code" component={ReferralRedirect} />
+      <Route path="/resources">
+        <Layout><Resources /></Layout>
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );

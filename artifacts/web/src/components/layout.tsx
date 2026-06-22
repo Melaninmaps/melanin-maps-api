@@ -31,6 +31,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/explore", label: "Explore" },
     { href: "/community", label: "Community" },
     { href: "/safety", label: "Safety" },
+    { href: "/resources", label: "Resources" },
     { href: "/businesses", label: "Businesses" },
     { href: "/travel", label: "KinfolkAI™" },
     { href: "/mentorship", label: "Mentorship" },
@@ -158,6 +159,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <li><Link href="/jobs"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Job Board</span></Link></li>
                 <li><Link href="/events"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Cultural Events</span></Link></li>
                 <li><Link href="/travel"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">KinfolkAI Travel Planner</span></Link></li>
+                <li><Link href="/resources"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Mental Health & Recovery</span></Link></li>
               </ul>
             </div>
             <div>
