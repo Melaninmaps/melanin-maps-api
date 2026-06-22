@@ -28,7 +28,7 @@ const TRIP_LENGTHS = ["Day trip", "Weekend getaway", "3–5 days", "A week or mo
 const INTERESTS = [
   "Restaurants", "Bars & Nightlife", "Salons & Spas", "Shopping", "Hotels",
   "Entertainment", "Fitness", "Coffee Shops", "Art & Culture",
-  "Outdoor Activities", "Minority-Owned Only",
+  "Outdoor Activities", "Black-Owned Only",
 ];
 const SAFETY_PRIORITIES = [
   { id: "top", label: "Top priority — always filter by safety score", weight: 1.0 },
@@ -103,7 +103,7 @@ export default function OnboardingPreferenceSurveyScreen() {
   };
 
   const safetyObj = SAFETY_PRIORITIES.find((s) => s.id === safetyPriority);
-  const blackOwnedWeight = interests.includes("Minority-Owned Only") ? 1.0 : 0;
+  const blackOwnedWeight = interests.includes("Black-Owned Only") ? 1.0 : 0;
 
   const handleSubmit = () => {
     setSubmitted(true);
@@ -141,7 +141,7 @@ export default function OnboardingPreferenceSurveyScreen() {
                 <View style={[styles.profileDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.profileItem}>
                   <Text style={[styles.profileVal, { color: colors.primary }]}>100%</Text>
-                  <Text style={[styles.profileKey, { color: colors.mutedForeground }]}>Minority-Owned</Text>
+                  <Text style={[styles.profileKey, { color: colors.mutedForeground }]}>Black-Owned</Text>
                 </View>
               </>
             )}
@@ -280,7 +280,7 @@ export default function OnboardingPreferenceSurveyScreen() {
               <View style={styles.chips}>
                 {INTERESTS.map((i) => (
                   <Chip key={i} label={i} selected={interests.includes(i)} multi onPress={() => toggleInterest(i)}
-                    color={i === "Minority-Owned Only" ? colors.accent : colors.primary}
+                    color={i === "Black-Owned Only" ? colors.accent : colors.primary}
                     primaryForeground={colors.primaryForeground}
                     secondary={colors.secondary} border={colors.border} foreground={colors.foreground} />
                 ))}

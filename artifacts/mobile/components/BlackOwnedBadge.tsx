@@ -10,14 +10,14 @@ export function BlackOwnedBadge({ size = "sm" }: Props) {
     return (
       <View style={styles.badgeMd}>
         <Text style={styles.fistMd}>✊🏾</Text>
-        <Text style={styles.labelMd}>Minority-Owned</Text>
+        <Text style={styles.labelMd}>Black-Owned</Text>
       </View>
     );
   }
   return (
     <View style={styles.badgeSm}>
       <Text style={styles.fistSm}>✊🏾</Text>
-      <Text style={styles.labelSm}>Minority-Owned</Text>
+      <Text style={styles.labelSm}>Black-Owned</Text>
     </View>
   );
 }

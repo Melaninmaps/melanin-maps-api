@@ -98,7 +98,7 @@ export default function Cities() {
             Find Your <span className="text-[#CA922B]">City.</span>
           </h1>
           <p className="text-[#F5EBD8]/80 text-xl max-w-2xl mx-auto font-light">
-            Curated guides to the best Minority-owned businesses, safest neighborhoods, and most vibrant cultural hubs across America's most iconic Black cities.
+            Curated guides to the best Black-owned businesses, safest neighborhoods, and most vibrant cultural hubs across America's most iconic Black cities.
           </p>
         </div>
       </section>

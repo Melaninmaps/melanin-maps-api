@@ -11,11 +11,10 @@ export default function MapPage() {
     <div className="h-full flex flex-col p-6 lg:p-10 space-y-6 min-h-[100dvh]">
       <div className="space-y-2 shrink-0">
         <h1 className="text-4xl font-serif font-bold tracking-tight">Explore the Map</h1>
-        <p className="text-muted-foreground text-lg">Browse local destinations in grid view.</p>
+        <p className="text-muted-foreground text-lg">Browse Black-owned businesses and community destinations.</p>
       </div>
 
       <div className="flex-1 bg-muted/30 rounded-xl border p-6 overflow-y-auto">
-        {/* Placeholder for actual map implementation */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {isLoading ? (
              Array.from({ length: 8 }).map((_, i) => (

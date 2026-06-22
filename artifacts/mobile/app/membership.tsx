@@ -183,7 +183,7 @@ const BUSINESS_PLANS: Plan[] = [
       "Sponsorship opportunities",
       "Dedicated support",
       "Custom campaigns",
-      "API integrations (coming soon)",
+      "API integrations",
     ],
     cta: "Contact Sales",
     ctaActive: true,

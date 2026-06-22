@@ -33,7 +33,7 @@ const CATEGORY_IMAGES: Record<string, any> = {
 const MOCK_REVIEWS = [
   { id: "r1", author: "Simone W.", rating: 5, text: "Absolutely amazing! The quality and service exceeded all expectations. Will definitely be back.", timeAgo: "3 days ago", initials: "SW", color: "#3B1F0E" },
   { id: "r2", author: "Marcus T.", rating: 4, text: "Great experience overall. The staff was incredibly welcoming and knowledgeable. Highly recommend to anyone in the community.", timeAgo: "1 week ago", initials: "MT", color: "#C9922B" },
-  { id: "r3", author: "Aisha B.", rating: 5, text: "This place is a gem. So proud to support Minority-owned businesses like this one. They really care about their customers.", timeAgo: "2 weeks ago", initials: "AB", color: "#2D7A4F" },
+  { id: "r3", author: "Aisha B.", rating: 5, text: "This place is a gem. So proud to support Black-owned businesses like this one. They really care about their customers.", timeAgo: "2 weeks ago", initials: "AB", color: "#2D7A4F" },
 ];
 
 export default function BusinessDetailScreen() {

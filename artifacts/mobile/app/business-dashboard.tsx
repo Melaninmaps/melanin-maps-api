@@ -163,9 +163,9 @@ export default function BusinessDashboardScreen() {
 
   const statCards = [
     { label: "Profile Views", value: "—", change: "Data available after approval", icon: "eye" as const, color: "#442A19" },
-    { label: "Saved", value: "—", change: "Tracking coming soon", icon: "bookmark" as const, color: "#CA922B" },
+    { label: "Saved", value: "—", change: "Data available after launch", icon: "bookmark" as const, color: "#CA922B" },
     { label: "Avg Rating", value: reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) + "★" : "—", change: `${reviews.length} review${reviews.length !== 1 ? "s" : ""}`, icon: "star" as const, color: "#2D7A4F" },
-    { label: "Messages", value: "—", change: "Coming soon", icon: "message-circle" as const, color: "#7B4F2E" },
+    { label: "Messages", value: "—", change: "In development", icon: "message-circle" as const, color: "#7B4F2E" },
   ];
 
   return (
@@ -293,7 +293,7 @@ export default function BusinessDashboardScreen() {
             </View>
             <Text style={[styles.comingSoonTxt, { color: colors.foreground }]}>Review Management</Text>
             <Text style={[styles.comingSoonSub, { color: colors.mutedForeground }]}>
-              Respond to reviews and track your rating over time. Full review management is coming soon.
+              Respond to reviews and track your rating over time. This feature is in active development.
             </Text>
           </View>
         )}
@@ -303,7 +303,7 @@ export default function BusinessDashboardScreen() {
             <View style={[styles.comingSoonIcon, { backgroundColor: colors.secondary }]}>
               <Feather name="bar-chart-2" size={28} color={colors.primary} />
             </View>
-            <Text style={[styles.comingSoonTxt, { color: colors.foreground }]}>Analytics Coming Soon</Text>
+            <Text style={[styles.comingSoonTxt, { color: colors.foreground }]}>Analytics Dashboard</Text>
             <Text style={[styles.comingSoonSub, { color: colors.mutedForeground }]}>
               Profile views, search impressions, and customer engagement insights will be available here once your listing is active.
             </Text>

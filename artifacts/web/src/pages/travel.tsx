@@ -45,7 +45,7 @@ export default function Travel() {
           </div>
           <h1 className="text-4xl md:text-6xl font-serif font-bold text-white mb-4">Design Your Journey</h1>
           <p className="text-[#F5EBD8]/80 text-lg max-w-2xl font-light">
-            AI-powered itineraries featuring Minority-owned spots, cultural events, and trusted neighborhood advice.
+            AI-powered itineraries featuring Black-owned spots, cultural events, and trusted neighborhood advice.
           </p>
         </div>
       </section>

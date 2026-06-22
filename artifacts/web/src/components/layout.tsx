@@ -91,7 +91,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             ) : (
               <>
                 <Link href="/login">
-                  <span className="text-sm font-medium hover:text-[#CA922B] transition-colors cursor-pointer">Sign In</span>
+                  <span className="text-sm font-medium hover:text-[#CA922B] transition-colors cursor-pointer whitespace-nowrap">Sign In</span>
                 </Link>
                 <Link href="/signup">
                   <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-6">Sign Up Free</Button>
@@ -152,7 +152,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div>
               <h3 className="font-serif font-bold text-xl mb-6 text-white">Discover</h3>
               <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
-                <li><Link href="/businesses"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Minority-Owned Businesses</span></Link></li>
+                <li><Link href="/businesses"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Black-Owned Businesses</span></Link></li>
                 <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Restaurants & Nightlife</span></Link></li>
                 <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Hotels & Stays</span></Link></li>
                 <li><Link href="/cities"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">City Spotlights</span></Link></li>
@@ -200,22 +200,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </footer>
 
-      {/* KinfolkAI Widget */}
-      <Link href="/travel">
-        <div className="fixed bottom-6 right-6 z-50">
-          <div className="bg-[#2B1507] border border-[#CA922B]/30 shadow-2xl rounded-2xl p-4 flex flex-col gap-2 cursor-pointer hover:shadow-[0_10px_40px_rgba(202,146,43,0.15)] transition-all">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#CA922B]/20 flex items-center justify-center">
-                <MessageSquare className="w-5 h-5 text-[#CA922B]" />
-              </div>
-              <div>
-                <div className="text-white font-bold text-sm">KinfolkAI</div>
-                <div className="text-[#F5EBD8]/70 text-xs">Plan your next trip</div>
+      {/* KinfolkAI Widget — hidden on auth/payment-critical pages */}
+      {!["/login", "/signup", "/membership"].includes(location) && (
+        <Link href="/travel">
+          <div className="fixed bottom-6 right-6 z-50">
+            <div className="bg-[#2B1507] border border-[#CA922B]/30 shadow-2xl rounded-2xl p-4 flex flex-col gap-2 cursor-pointer hover:shadow-[0_10px_40px_rgba(202,146,43,0.15)] transition-all">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#CA922B]/20 flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-[#CA922B]" />
+                </div>
+                <div>
+                  <div className="text-white font-bold text-sm">KinfolkAI</div>
+                  <div className="text-[#F5EBD8]/70 text-xs">Plan your next trip</div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </Link>
+        </Link>
+      )}
     </div>
   );
 }

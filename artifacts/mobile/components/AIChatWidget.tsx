@@ -24,20 +24,20 @@ interface Message {
   ts: number;
 }
 
-const GREETING = "Hi! I'm KinfolkAI™. Ask me anything about Minority-owned spots, safe neighborhoods, itinerary ideas, or travel tips in any city.";
+const GREETING = "Hi! I'm KinfolkAI™. Ask me anything about Black-owned spots, safe neighborhoods, itinerary ideas, or travel tips in any city.";
 
 const CANNED: { pattern: RegExp; replies: string[] }[] = [
   {
     pattern: /atlanta/i,
     replies: [
-      "Atlanta has an incredible Black culture scene! I'd recommend starting in the Old Fourth Ward, checking out Sweet Auburn Ave, and trying the Beltline trail. Sweetwater Creek State Park is great for outdoors, and there are dozens of top-rated Minority-owned restaurants in West End and Cascade.",
-      "For Atlanta, the neighborhoods with the highest community safety scores are Buckhead (daytime), Midtown, and Decatur. The Old Fourth Ward has the densest cluster of Minority-owned businesses on the map.",
+      "Atlanta has an incredible Black culture scene! I'd recommend starting in the Old Fourth Ward, checking out Sweet Auburn Ave, and trying the Beltline trail. Sweetwater Creek State Park is great for outdoors, and there are dozens of top-rated Black-owned restaurants in West End and Cascade.",
+      "For Atlanta, the neighborhoods with the highest community safety scores are Buckhead (daytime), Midtown, and Decatur. The Old Fourth Ward has the densest cluster of Black-owned businesses on the map.",
     ],
   },
   {
     pattern: /houston/i,
     replies: [
-      "Houston's Third Ward and Midtown have the strongest Minority-owned business clusters. Check out Emancipation Park — recently renovated and historically significant. The Museum District is walkable and culturally rich.",
+      "Houston's Third Ward and Midtown have the strongest Black-owned business clusters. Check out Emancipation Park — recently renovated and historically significant. The Museum District is walkable and culturally rich.",
     ],
   },
   {
@@ -50,13 +50,13 @@ const CANNED: { pattern: RegExp; replies: string[] }[] = [
   {
     pattern: /black.?owned/i,
     replies: [
-      "Every business on Mapping with Melanin is community-verified for Black ownership. You can filter by Minority-Owned Only on the Discover tab or use the map filter. Minority-owned businesses are promoted within their category tier.",
+      "Every business on Mapping with Melanin is community-verified for Black ownership. You can filter by Black-Owned Only on the Discover tab or use the map filter. Black-owned businesses are promoted within their category tier.",
     ],
   },
   {
     pattern: /restaurant|eat|food|foodie/i,
     replies: [
-      "Our top-rated Minority-owned restaurants right now include spots in Atlanta, Houston, and New Orleans. Use the category filter on Discover to browse Restaurants, then sort by safety score. The community favorites section shows the highest-rated this week.",
+      "Our top-rated Black-owned restaurants right now include spots in Atlanta, Houston, and New Orleans. Use the category filter on Discover to browse Restaurants, then sort by safety score. The community favorites section shows the highest-rated this week.",
     ],
   },
   {
@@ -68,7 +68,7 @@ const CANNED: { pattern: RegExp; replies: string[] }[] = [
   {
     pattern: /itinerary|plan|trip/i,
     replies: [
-      "For a full AI-generated itinerary, tap the '✨ KINFOLKAI™ — Plan Your Next Trip' banner on the Discover tab. Enter your destination and travel vibes and I'll generate a full day-by-day plan with Minority-owned spots, safe neighborhoods, timing, and local context.",
+      "For a full AI-generated itinerary, tap the '✨ KINFOLKAI™ — Plan Your Next Trip' banner on the Discover tab. Enter your destination and travel vibes and I'll generate a full day-by-day plan with Black-owned spots, safe neighborhoods, timing, and local context.",
     ],
   },
   {
@@ -80,7 +80,7 @@ const CANNED: { pattern: RegExp; replies: string[] }[] = [
   {
     pattern: /dc|washington/i,
     replies: [
-      "Washington DC has incredible Black history. U Street Corridor, known as 'Black Broadway,' has the highest concentration of Minority-owned businesses in our DC catalog. Shaw and Columbia Heights also score highly for community atmosphere.",
+      "Washington DC has incredible Black history. U Street Corridor, known as 'Black Broadway,' has the highest concentration of Black-owned businesses in our DC catalog. Shaw and Columbia Heights also score highly for community atmosphere.",
     ],
   },
 ];

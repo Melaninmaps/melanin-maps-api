@@ -214,7 +214,7 @@ export default function Discover() {
 
   const categories = [
     "All",
-    "Minority-Owned Businesses",
+    "Black-Owned Businesses",
     "Restaurants & Nightlife",
     "Hotels & Stays",
     "Cultural Landmarks",
@@ -237,7 +237,7 @@ export default function Discover() {
           </div>
           <h1 className="text-4xl md:text-6xl font-serif font-bold text-white mb-4">Explore With Purpose</h1>
           <p className="text-[#F5EBD8]/80 text-lg md:text-xl max-w-2xl mb-8 font-light">
-            Find the best Minority-owned businesses, authentic experiences, and trusted community spots.
+            Find the best Black-owned businesses, authentic experiences, and trusted community spots.
           </p>
 
           <div className="w-full max-w-2xl bg-white rounded-full p-2 flex items-center shadow-lg">
@@ -352,8 +352,14 @@ export default function Discover() {
                     {business.imageUrl ? (
                       <img src={business.imageUrl} alt={business.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-[#FAF6EF]">
-                        <Compass className="w-12 h-12 text-[#2B1507]/20" />
+                      <div className="w-full h-full flex flex-col items-center justify-center"
+                        style={{ background: `linear-gradient(135deg, #2B1507 0%, #4A2510 50%, #2B1507 100%)` }}>
+                        <div className="w-20 h-20 rounded-full bg-[#CA922B]/20 border-2 border-[#CA922B]/40 flex items-center justify-center mb-3">
+                          <span className="text-[#CA922B] font-serif font-bold text-4xl leading-none">
+                            {business.name?.[0]?.toUpperCase() ?? "M"}
+                          </span>
+                        </div>
+                        <span className="text-[#F5EBD8]/50 text-xs font-bold tracking-widest uppercase px-4 text-center line-clamp-1">{business.category}</span>
                       </div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-[#2B1507]/90 via-[#2B1507]/30 to-transparent" />

@@ -45,7 +45,7 @@ const SECTIONS = [
     color: "#2D7A4F",
     title: "Business Listings",
     clauses: [
-      { heading: "Listing Your Business", body: "Businesses listed on the Platform must genuinely be Minority-owned or substantially Black-led. Submitting false ownership information is a serious violation and may result in removal and legal action." },
+      { heading: "Listing Your Business", body: "Businesses listed on the Platform must genuinely be Black-owned or substantially Black-led. Submitting false ownership information is a serious violation and may result in removal and legal action." },
       { heading: "Verification Badges", body: "\"Verified\" badges are granted after document review by our team. \"Self-Identified\" indicates the business owner has attested to ownership without third-party verification. Confidence scores reflect aggregated community signals." },
       { heading: "Business Owner Rights", body: "Verified business owners may respond to reviews and update business information. Owners may not request removal of negative reviews unless the review violates our Community Standards." },
     ],

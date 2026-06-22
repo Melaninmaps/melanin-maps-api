@@ -913,7 +913,7 @@ function EmailTab() {
   ];
   const drip = [
     { day: "Day 0", subject: "Welcome to Mapping With Melanin™", sent: 2841, opened: 1847, clicked: 612, status: "active" },
-    { day: "Day 2", subject: "Discover Minority-owned businesses near you", sent: 2614, opened: 1180, clicked: 447, status: "active" },
+    { day: "Day 2", subject: "Discover Black-owned businesses near you", sent: 2614, opened: 1180, clicked: 447, status: "active" },
     { day: "Day 5", subject: "Rate your first neighborhood", sent: 1823, opened: 910, clicked: 302, status: "active" },
     { day: "Day 10", subject: "Your safety impact so far", sent: 1240, opened: 694, clicked: 208, status: "active" },
     { day: "Day 30", subject: "You've been with us a month 🙌", sent: 412, opened: 267, clicked: 89, status: "active" },

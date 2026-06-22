@@ -109,7 +109,7 @@ export default function Jobs() {
                 Work With <span className="text-[#CA922B]">Your Community</span>
               </h1>
               <p className="text-[#F5EBD8]/70 text-lg max-w-xl">
-                Jobs at Minority-owned businesses. Support the ecosystem — hire and get hired within the community.
+                Jobs at Black-owned businesses. Support the ecosystem — hire and get hired within the community.
               </p>
             </div>
             <div className="shrink-0">

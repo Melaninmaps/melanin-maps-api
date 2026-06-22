@@ -239,7 +239,7 @@ export default function DiscoverScreen() {
               <Text style={styles.travelBannerEyebrow}>✨ KINFOLKAI™</Text>
               <Text style={styles.travelBannerTitle}>Plan Your Next Trip</Text>
               <Text style={styles.travelBannerSub}>
-                Minority-owned spots, safe neighborhoods & events
+                Black-owned spots, safe neighborhoods & events
               </Text>
             </View>
             <View style={styles.travelBannerRight}>

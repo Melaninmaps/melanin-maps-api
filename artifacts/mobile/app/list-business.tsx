@@ -481,7 +481,7 @@ export default function ListBusinessScreen() {
                   </View>
 
                   <Toggle
-                    label="This is a Minority-owned business"
+                    label="This is a Black-owned business"
                     value={form.isBlackOwned}
                     onToggle={() => update("isBlackOwned")(!form.isBlackOwned)}
                     colors={colors}
@@ -599,7 +599,7 @@ export default function ListBusinessScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.reviewNoticeTitle, { color: colors.foreground }]}>Verification Process</Text>
                       <Text style={[styles.reviewNoticeText, { color: colors.mutedForeground }]}>
-                        Our team reviews every listing to ensure quality and authenticity. Minority-owned businesses are eligible for our Verified badge after review.
+                        Our team reviews every listing to ensure quality and authenticity. Black-owned businesses are eligible for our Verified badge after review.
                       </Text>
                     </View>
                   </View>

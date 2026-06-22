@@ -29,7 +29,7 @@ const SHARE_PLATFORMS = [
 const BENEFITS = [
   { icon: "zap", label: "Early Access", desc: "First to explore new cities and features" },
   { icon: "shield", label: "Safety Insights", desc: "Community-driven safety scores, verified reviews, and real-time insights" },
-  { icon: "map-pin", label: "48 States", desc: "2,400+ verified Minority-owned businesses nationwide" },
+  { icon: "map-pin", label: "48 States", desc: "2,400+ verified Black-owned businesses nationwide" },
   { icon: "users", label: "10K+ Members", desc: "Join a global community of travelers, entrepreneurs, and creators" },
 ];
 
