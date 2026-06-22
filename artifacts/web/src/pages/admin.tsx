@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Redirect } from "wouter";
-import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star } from "lucide-react";
+import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -15,6 +15,8 @@ type WaitlistEntry = {
   isBusinessOwner: boolean;
   status: string;
   referralCode: string | null;
+  referredBy: string | null;
+  welcomeEmailSent: boolean;
   notes: string | null;
   approvedAt: string | null;
   createdAt: string;
@@ -414,6 +416,7 @@ export default function Admin() {
   }
 
   const pendingWaitlist = waitlist.filter(e => e.status === "pending").length;
+  const approvedWaitlist = waitlist.filter(e => e.status === "approved").length;
   const pendingUsers = users.filter(u => !u.approved).length;
   const contactedCount = businesses.filter(b => b.outreach !== null).length;
 
@@ -422,6 +425,43 @@ export default function Admin() {
     b.city.toLowerCase().includes(bizSearch.toLowerCase()) ||
     b.category.toLowerCase().includes(bizSearch.toLowerCase())
   );
+
+  // ── Waitlist analytics (all computed client-side) ─────────────────────────
+  const referralCounts: Record<string, number> = {};
+  for (const e of waitlist) {
+    if (e.referredBy) referralCounts[e.referredBy] = (referralCounts[e.referredBy] ?? 0) + 1;
+  }
+
+  const topReferrers = waitlist
+    .map(e => ({ ...e, refCount: referralCounts[e.referralCode ?? ""] ?? 0 }))
+    .filter(e => e.refCount > 0)
+    .sort((a, b) => b.refCount - a.refCount)
+    .slice(0, 8);
+
+  const cityCounts: Record<string, number> = {};
+  for (const e of waitlist) {
+    if (!e.city) continue;
+    const key = [e.city, e.state].filter(Boolean).join(", ");
+    cityCounts[key] = (cityCounts[key] ?? 0) + 1;
+  }
+  const topCities = Object.entries(cityCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const maxCity = Math.max(...topCities.map(c => c[1]), 1);
+
+  const last14: { label: string; count: number }[] = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (13 - i));
+    const key = d.toISOString().slice(0, 10);
+    return {
+      label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      count: waitlist.filter(e => e.createdAt.slice(0, 10) === key).length,
+    };
+  });
+  const maxDay = Math.max(...last14.map(d => d.count), 1);
+
+  const bizOwnerCount = waitlist.filter(e => e.isBusinessOwner).length;
+  const referredCount = waitlist.filter(e => e.referredBy).length;
+  const emailSentCount = waitlist.filter(e => e.welcomeEmailSent).length;
+  const totalWithCode = waitlist.filter(e => e.referralCode).length;
 
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
@@ -603,105 +643,240 @@ export default function Admin() {
             <div className="w-8 h-8 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : tab === "waitlist" ? (
-          <div>
-            <h2 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4">Waitlist Signups ({waitlist.length})</h2>
-            {waitlist.length === 0 ? (
-              <div className="text-center py-20 text-[#3A1F0E]/40">
-                <Mail className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                <p>No waitlist signups yet.</p>
+          <div className="space-y-6">
+
+            {/* ── KPI Row ───────────────────────────────────────────────── */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {[
+                { label: "Total", value: waitlist.length, icon: <Users className="w-4 h-4" />, color: "text-[#CA922B]" },
+                { label: "Pending", value: pendingWaitlist, icon: <Clock className="w-4 h-4" />, color: "text-amber-500" },
+                { label: "Approved", value: approvedWaitlist, icon: <Check className="w-4 h-4" />, color: "text-green-600" },
+                { label: "Biz Owners", value: bizOwnerCount, icon: <Briefcase className="w-4 h-4" />, color: "text-blue-600" },
+                { label: "Referred In", value: referredCount, icon: <GitBranch className="w-4 h-4" />, color: "text-purple-600" },
+                { label: "Email Sent", value: emailSentCount, icon: <Mail className="w-4 h-4" />, color: "text-teal-600" },
+              ].map(({ label, value, icon, color }) => (
+                <div key={label} className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-4 text-center shadow-sm">
+                  <div className={`flex items-center justify-center mb-1 ${color}`}>{icon}</div>
+                  <div className={`text-2xl font-bold ${color}`}>{value}</div>
+                  <div className="text-[#3A1F0E]/50 text-xs uppercase tracking-wider mt-0.5">{label}</div>
+                  {waitlist.length > 0 && label !== "Total" && (
+                    <div className="text-[#3A1F0E]/30 text-xs mt-1">{Math.round(value / waitlist.length * 100)}%</div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* ── 14-day Growth Sparkline ──────────────────────────────── */}
+            <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="w-4 h-4 text-[#CA922B]" />
+                <h3 className="font-bold text-sm text-[#3A1F0E] uppercase tracking-wider">Signups — Last 14 Days</h3>
+                <span className="ml-auto text-xs text-[#3A1F0E]/40">
+                  {last14.reduce((s, d) => s + d.count, 0)} this period
+                </span>
               </div>
-            ) : (
-              <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
-                      <th className="px-4 py-3 w-8">
-                        <input
-                          type="checkbox"
-                          checked={selected.size === waitlist.length && waitlist.length > 0}
-                          onChange={toggleSelectAll}
-                          className="rounded accent-[#CA922B]"
-                        />
-                      </th>
-                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Name</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Email</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Location</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Type</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Status</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Signed Up</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {waitlist.map((entry, i) => (
-                      <tr
-                        key={entry.id}
-                        className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${selected.has(entry.id) ? "bg-[#CA922B]/5" : i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}
-                      >
-                        <td className="px-4 py-3">
-                          <input
-                            type="checkbox"
-                            checked={selected.has(entry.id)}
-                            onChange={() => toggleSelect(entry.id)}
-                            className="rounded accent-[#CA922B]"
+              <div className="flex items-end gap-1 h-20">
+                {last14.map((d, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
+                    <div
+                      className="w-full rounded-t-sm bg-[#CA922B]/80 hover:bg-[#CA922B] transition-colors"
+                      style={{ height: `${Math.max(2, (d.count / maxDay) * 64)}px` }}
+                    />
+                    {d.count > 0 && (
+                      <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-[#CA922B] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        {d.count}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between mt-2">
+                <span className="text-[10px] text-[#3A1F0E]/30">{last14[0]?.label}</span>
+                <span className="text-[10px] text-[#3A1F0E]/30">{last14[last14.length - 1]?.label}</span>
+              </div>
+            </div>
+
+            {/* ── City Breakdown + Referral Leaderboard ────────────────── */}
+            <div className="grid md:grid-cols-2 gap-4">
+
+              {/* City breakdown */}
+              <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <MapPin className="w-4 h-4 text-[#CA922B]" />
+                  <h3 className="font-bold text-sm text-[#3A1F0E] uppercase tracking-wider">Top Cities</h3>
+                  <span className="ml-auto text-xs text-[#3A1F0E]/40">{topCities.length} cities</span>
+                </div>
+                {topCities.length === 0 ? (
+                  <p className="text-[#3A1F0E]/30 text-sm text-center py-4">No city data yet</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {topCities.map(([city, cnt]) => (
+                      <div key={city}>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="font-medium text-[#3A1F0E] truncate max-w-[70%]">{city}</span>
+                          <span className="text-[#CA922B] font-bold">{cnt}</span>
+                        </div>
+                        <div className="h-2 bg-[#FAF6EF] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#CA922B] rounded-full transition-all"
+                            style={{ width: `${(cnt / maxCity) * 100}%` }}
                           />
-                        </td>
-                        <td className="px-4 py-3 font-medium text-[#3A1F0E]">
-                          {entry.firstName ? entry.firstName : <span className="text-[#3A1F0E]/30">—</span>}
-                        </td>
-                        <td className="px-4 py-3 text-[#3A1F0E]/80">
-                          <div className="flex items-center gap-2">
-                            <Mail className="w-3.5 h-3.5 text-[#CA922B] shrink-0" />
-                            {entry.email}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-[#3A1F0E]/70">
-                          {entry.city || entry.state ? (
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3 text-[#CA922B]" />
-                              {[entry.city, entry.state].filter(Boolean).join(", ")}
-                            </div>
-                          ) : <span className="text-[#3A1F0E]/30">—</span>}
-                        </td>
-                        <td className="px-4 py-3">
-                          {entry.isBusinessOwner ? (
-                            <span className="inline-flex items-center gap-1 text-xs text-[#CA922B] font-bold"><Briefcase className="w-3 h-3" /> Business Owner</span>
-                          ) : (
-                            <span className="text-xs text-[#3A1F0E]/40">Community</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">{statusBadge(entry.status)}</td>
-                        <td className="px-4 py-3 text-[#3A1F0E]/50 text-xs">
-                          {new Date(entry.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            {entry.status !== "approved" && (
-                              <Button size="sm" onClick={() => updateWaitlist(entry.id, "approved")} disabled={updating === entry.id}
-                                className="h-7 px-3 rounded-full bg-green-600 hover:bg-green-700 text-white text-xs">
-                                <Check className="w-3 h-3 mr-1" /> Approve
-                              </Button>
-                            )}
-                            {entry.status !== "rejected" && (
-                              <Button size="sm" variant="outline" onClick={() => updateWaitlist(entry.id, "rejected")} disabled={updating === entry.id}
-                                className="h-7 px-3 rounded-full border-red-300 text-red-600 hover:bg-red-50 text-xs">
-                                <X className="w-3 h-3 mr-1" /> Reject
-                              </Button>
-                            )}
-                            {entry.status !== "pending" && (
-                              <Button size="sm" variant="outline" onClick={() => updateWaitlist(entry.id, "pending")} disabled={updating === entry.id}
-                                className="h-7 px-3 rounded-full text-xs">
-                                Reset
-                              </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* Referral leaderboard */}
+              <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <Award className="w-4 h-4 text-[#CA922B]" />
+                  <h3 className="font-bold text-sm text-[#3A1F0E] uppercase tracking-wider">Referral Leaderboard</h3>
+                  <span className="ml-auto text-xs text-[#3A1F0E]/40">
+                    {totalWithCode} have codes
+                  </span>
+                </div>
+                {topReferrers.length === 0 ? (
+                  <p className="text-[#3A1F0E]/30 text-sm text-center py-4">No referrals yet</p>
+                ) : (
+                  <div className="space-y-2">
+                    {topReferrers.map((e, i) => (
+                      <div key={e.id} className="flex items-center gap-3 py-1.5 border-b border-[#3A1F0E]/5 last:border-0">
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                          i === 0 ? "bg-amber-100 text-amber-700" :
+                          i === 1 ? "bg-slate-100 text-slate-600" :
+                          i === 2 ? "bg-orange-100 text-orange-700" :
+                          "bg-[#FAF6EF] text-[#3A1F0E]/40"
+                        }`}>{i + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-[#3A1F0E] truncate">{e.firstName ?? e.email.split("@")[0]}</div>
+                          <div className="text-xs text-[#3A1F0E]/40 truncate">{e.referralCode}</div>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <div className="text-sm font-bold text-[#CA922B]">{e.refCount}</div>
+                          <div className="text-[10px] text-[#3A1F0E]/30">referred</div>
+                        </div>
+                        <div className="w-16 h-2 bg-[#FAF6EF] rounded-full overflow-hidden shrink-0">
+                          <div
+                            className="h-full bg-[#CA922B] rounded-full"
+                            style={{ width: `${(e.refCount / (topReferrers[0]?.refCount ?? 1)) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ── Full Table ───────────────────────────────────────────── */}
+            <div>
+              <h2 className="text-base font-bold text-[#3A1F0E] mb-3 flex items-center gap-2">
+                <BarChart2 className="w-4 h-4 text-[#CA922B]" />
+                All Signups ({waitlist.length})
+              </h2>
+              {waitlist.length === 0 ? (
+                <div className="text-center py-20 text-[#3A1F0E]/40">
+                  <Mail className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                  <p>No waitlist signups yet.</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
+                        <th className="px-4 py-3 w-8">
+                          <input type="checkbox" checked={selected.size === waitlist.length && waitlist.length > 0} onChange={toggleSelectAll} className="rounded accent-[#CA922B]" />
+                        </th>
+                        <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Name</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Email</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Location</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Type</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Referrals</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Status</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Signed Up</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {waitlist.map((entry, i) => {
+                        const refCount = referralCounts[entry.referralCode ?? ""] ?? 0;
+                        return (
+                          <tr key={entry.id} className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${selected.has(entry.id) ? "bg-[#CA922B]/5" : i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}>
+                            <td className="px-4 py-3">
+                              <input type="checkbox" checked={selected.has(entry.id)} onChange={() => toggleSelect(entry.id)} className="rounded accent-[#CA922B]" />
+                            </td>
+                            <td className="px-4 py-3 font-medium text-[#3A1F0E]">
+                              {entry.firstName ?? <span className="text-[#3A1F0E]/30">—</span>}
+                            </td>
+                            <td className="px-4 py-3 text-[#3A1F0E]/80">
+                              <div className="flex items-center gap-2">
+                                <Mail className="w-3.5 h-3.5 text-[#CA922B] shrink-0" />
+                                {entry.email}
+                                {entry.welcomeEmailSent && <span title="Welcome email sent" className="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0" />}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-[#3A1F0E]/70">
+                              {entry.city || entry.state ? (
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="w-3 h-3 text-[#CA922B]" />
+                                  {[entry.city, entry.state].filter(Boolean).join(", ")}
+                                </div>
+                              ) : <span className="text-[#3A1F0E]/30">—</span>}
+                            </td>
+                            <td className="px-4 py-3">
+                              {entry.isBusinessOwner
+                                ? <span className="inline-flex items-center gap-1 text-xs text-[#CA922B] font-bold"><Briefcase className="w-3 h-3" /> Biz Owner</span>
+                                : <span className="text-xs text-[#3A1F0E]/40">Community</span>}
+                            </td>
+                            <td className="px-4 py-3">
+                              {refCount > 0 ? (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-bold text-[#CA922B]">{refCount}</span>
+                                  <div className="flex gap-0.5">{Array.from({ length: Math.min(refCount, 5) }).map((_, j) => <div key={j} className="w-1.5 h-1.5 rounded-full bg-[#CA922B]" />)}</div>
+                                </div>
+                              ) : (
+                                <span className="text-[#3A1F0E]/20">—</span>
+                              )}
+                              {entry.referredBy && (
+                                <div className="text-[10px] text-[#3A1F0E]/30 mt-0.5">via {entry.referredBy}</div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">{statusBadge(entry.status)}</td>
+                            <td className="px-4 py-3 text-[#3A1F0E]/50 text-xs">
+                              {new Date(entry.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                {entry.status !== "approved" && (
+                                  <Button size="sm" onClick={() => updateWaitlist(entry.id, "approved")} disabled={updating === entry.id}
+                                    className="h-7 px-3 rounded-full bg-green-600 hover:bg-green-700 text-white text-xs">
+                                    <Check className="w-3 h-3 mr-1" /> Approve
+                                  </Button>
+                                )}
+                                {entry.status !== "rejected" && (
+                                  <Button size="sm" variant="outline" onClick={() => updateWaitlist(entry.id, "rejected")} disabled={updating === entry.id}
+                                    className="h-7 px-3 rounded-full border-red-300 text-red-600 hover:bg-red-50 text-xs">
+                                    <X className="w-3 h-3 mr-1" /> Reject
+                                  </Button>
+                                )}
+                                {entry.status !== "pending" && (
+                                  <Button size="sm" variant="outline" onClick={() => updateWaitlist(entry.id, "pending")} disabled={updating === entry.id}
+                                    className="h-7 px-3 rounded-full text-xs">
+                                    Reset
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         ) : tab === "users" ? (
           <div>
