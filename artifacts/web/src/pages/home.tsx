@@ -808,7 +808,7 @@ export default function Home() {
           <div className="grid grid-cols-5 gap-3 mb-3">
             {/* Big left — Black-Owned Businesses */}
             <div className="col-span-3 relative rounded-2xl overflow-hidden h-[420px] group cursor-pointer">
-              <img src={`${import.meta.env.BASE_URL}images/cat-black-owned.jpg`} alt="Minority-Owned Businesses" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <img src="https://images.pexels.com/photos/5686076/pexels-photo-5686076.jpeg?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop&dpr=1" alt="Diverse multiracial business team collaborating in a modern office" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" style={{ objectPosition: "center 20%" }} />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
               <div className="absolute bottom-0 left-0 p-6">
                 <h3 className="font-serif font-bold text-xl text-white mb-1">Minority-Owned Businesses</h3>
