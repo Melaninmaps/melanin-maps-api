@@ -2,7 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, waitlistTable } from "@workspace/db";
 import { count, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
-import { sendWaitlistConfirmation } from "../lib/email";
+import { sendWaitlistConfirmation, sendWelcomeEmail } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -55,9 +55,12 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
     const [{ total }] = await db.select({ total: count() }).from(waitlistTable);
     const position = Number(total);
 
-    sendWaitlistConfirmation(email.toLowerCase().trim(), position, code, firstName?.trim() || "there")
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanName = firstName?.trim() || null;
+    sendWaitlistConfirmation(cleanEmail, position, code, cleanName ?? "there")
       .then(() => db.update(waitlistTable).set({ welcomeEmailSent: true }).where(eq(waitlistTable.referralCode, code)))
       .catch(() => {});
+    sendWelcomeEmail(cleanEmail, cleanName).catch(() => {});
 
     res.status(201).json({ success: true, position, referralCode: code });
   } catch (err) {
