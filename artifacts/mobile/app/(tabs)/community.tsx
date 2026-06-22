@@ -316,7 +316,12 @@ export default function CommunityScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={[styles.tabRow, { borderBottomColor: colors.border }]}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={[styles.tabRow, { borderBottomColor: colors.border }]}
+        contentContainerStyle={{ flexDirection: "row" }}
+      >
         {TABS.map((tab) => (
           <TouchableOpacity
             key={tab}
@@ -328,7 +333,7 @@ export default function CommunityScreen() {
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
 
       {activeTab === "Events" ? (
         <View style={{ flex: 1 }}>
@@ -750,9 +755,9 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: "Inter_700Bold", fontSize: 26 },
   searchBtn: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  tabRow: { flexDirection: "row", borderBottomWidth: 1 },
-  tabBtn: { flex: 1, alignItems: "center", paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: "transparent" },
-  tabText: { fontFamily: "Inter_500Medium", fontSize: 12 },
+  tabRow: { borderBottomWidth: 1 },
+  tabBtn: { alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: "transparent" },
+  tabText: { fontFamily: "Inter_500Medium", fontSize: 13 },
   categoryScroll: { borderBottomWidth: 1, maxHeight: 54 },
   categoryChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
   categoryChipText: { fontFamily: "Inter_500Medium", fontSize: 12 },

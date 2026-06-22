@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ExternalLink, Phone, MessageCircle, Heart, MapPin, Search, Shield, AlertCircle } from "lucide-react";
 
 interface Resource {
@@ -45,7 +46,7 @@ interface SectionConfig {
   subtitle: string;
   accent: string;
   bg: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   data: Resource[];
 }
 
@@ -119,7 +120,7 @@ export default function Resources() {
           <p className="text-[#F5EBD8]/80 text-lg md:text-xl max-w-2xl mb-8 font-light">
             Crisis lines, Black mental health resources, NA & AA meeting finders, and affordable therapy — all in one place, for our community.
           </p>
-          <div className="flex flex-wrap justify-center gap-6 md:gap-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12 w-full max-w-sm md:max-w-none">
             {[
               { label: "Crisis Lines", value: "24/7" },
               { label: "Mental Health Orgs", value: "6" },

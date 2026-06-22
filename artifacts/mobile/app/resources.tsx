@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+type Colors = ReturnType<typeof useColors>;
 
 type FeatherName = React.ComponentProps<typeof Feather>["name"];
 
@@ -62,7 +63,7 @@ const SECTIONS = [
   { title: "Find Treatment", subtitle: "Therapists, counselors & treatment centers", icon: "search" as FeatherName, accent: "#CA922B", data: TREATMENT },
 ];
 
-function ResourceCard({ resource, colors }: { resource: Resource; colors: any }) {
+function ResourceCard({ resource, colors }: { resource: Resource; colors: Colors }) {
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={[styles.cardIcon, { backgroundColor: resource.color + "18" }]}>
