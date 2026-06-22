@@ -227,6 +227,9 @@ export default function Admin() {
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   const [nudgeSending, setNudgeSending] = useState(false);
   const [nudgeResult, setNudgeResult] = useState<string | null>(null);
+  const [welcomeEmails, setWelcomeEmails] = useState("");
+  const [welcomeSending, setWelcomeSending] = useState(false);
+  const [welcomeResult, setWelcomeResult] = useState<string | null>(null);
   const [bizSearch, setBizSearch] = useState("");
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -394,6 +397,35 @@ export default function Admin() {
     }
   };
 
+  const sendWelcomeTo = async () => {
+    const emails = welcomeEmails.split(/[\n,]+/).map(e => e.trim()).filter(Boolean);
+    if (emails.length === 0) return;
+    setWelcomeSending(true);
+    setWelcomeResult(null);
+    try {
+      const r = await fetch(`${BASE}api/admin/send-welcome-to`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emails }),
+        credentials: "include",
+      });
+      const data = await r.json() as { sent: number; failed: number; notFound: number; results?: { email: string; status: string }[] };
+      if (r.ok) {
+        const lines = [`✅ Sent: ${data.sent}  |  Not found: ${data.notFound}  |  Failed: ${data.failed}`];
+        if (data.results) {
+          data.results.filter(x => x.status !== "sent").forEach(x => lines.push(`  • ${x.email} → ${x.status}`));
+        }
+        setWelcomeResult(lines.join("\n"));
+        if (data.sent > 0) { setWelcomeEmails(""); loadWaitlist(); }
+      } else {
+        setWelcomeResult(`❌ ${(data as any).error ?? "Failed"}`);
+      }
+    } catch {
+      setWelcomeResult("❌ Network error");
+    }
+    setWelcomeSending(false);
+  };
+
   const sendWeeklyNudge = async () => {
     if (!window.confirm("This will email every pending waitlist member. Continue?")) return;
     setNudgeSending(true);
@@ -533,6 +565,37 @@ export default function Admin() {
             {nudgeResult && (
               <span className="text-sm text-[#F5EBD8]/80">{nudgeResult}</span>
             )}
+          </div>
+
+          {/* Force-send waitlist welcome email to specific addresses */}
+          <div className="mt-4 bg-white/10 rounded-2xl p-4 border border-white/10">
+            <div className="flex items-center gap-2 mb-2">
+              <Mail className="w-4 h-4 text-[#CA922B]" />
+              <span className="text-sm font-bold text-[#F5EBD8]">Send Waitlist Welcome Email to Specific Addresses</span>
+            </div>
+            <p className="text-xs text-[#F5EBD8]/50 mb-3">
+              Paste one email per line (or comma-separated). Only emails on the waitlist will receive the waitlist confirmation email with their position and referral code.
+            </p>
+            <textarea
+              value={welcomeEmails}
+              onChange={e => setWelcomeEmails(e.target.value)}
+              placeholder={"jane@example.com\njohn@example.com"}
+              rows={4}
+              className="w-full bg-black/20 border border-white/20 rounded-xl px-3 py-2 text-sm text-[#F5EBD8] placeholder-[#F5EBD8]/30 resize-none focus:outline-none focus:border-[#CA922B]/60"
+            />
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
+              <button
+                onClick={sendWelcomeTo}
+                disabled={welcomeSending || !welcomeEmails.trim()}
+                className="flex items-center gap-2 bg-teal-600/80 hover:bg-teal-600 rounded-xl px-4 py-2 text-sm font-bold text-white transition-colors disabled:opacity-50"
+              >
+                <Send className="w-3.5 h-3.5" />
+                {welcomeSending ? "Sending…" : "Send Waitlist Welcome Email"}
+              </button>
+              {welcomeResult && (
+                <pre className="text-xs text-[#F5EBD8]/80 whitespace-pre-wrap">{welcomeResult}</pre>
+              )}
+            </div>
           </div>
 
           {!requireApproval && (

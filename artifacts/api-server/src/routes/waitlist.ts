@@ -370,6 +370,56 @@ router.post("/admin/send-welcome-blast", async (req: Request, res: Response) => 
   }
 });
 
+// ── Admin: force-send waitlist confirmation to specific emails ────────────────
+router.post("/admin/send-welcome-to", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const { emails } = req.body as { emails: string[] };
+    if (!Array.isArray(emails) || emails.length === 0) {
+      res.status(400).json({ error: "emails array required" }); return;
+    }
+
+    const { eq: drizzleEq } = await import("drizzle-orm");
+
+    // Load all entries ordered by signup date so position = index + 1
+    const allEntries = await db.select().from(waitlistTable).orderBy(waitlistTable.createdAt);
+
+    const results: { email: string; status: "sent" | "not_found" | "no_code" | "failed" }[] = [];
+
+    for (const rawEmail of emails) {
+      const email = rawEmail.trim().toLowerCase();
+      const idx = allEntries.findIndex(e => (e.email ?? "").toLowerCase() === email);
+
+      if (idx === -1) { results.push({ email, status: "not_found" }); continue; }
+
+      const entry = allEntries[idx];
+      if (!entry.referralCode) { results.push({ email, status: "no_code" }); continue; }
+
+      try {
+        await sendWaitlistConfirmation(
+          entry.email!,
+          idx + 1,
+          entry.referralCode,
+          entry.firstName ?? "there",
+        );
+        // Mark as sent
+        await db.update(waitlistTable).set({ welcomeEmailSent: true }).where(drizzleEq(waitlistTable.id, entry.id));
+        results.push({ email, status: "sent" });
+      } catch {
+        results.push({ email, status: "failed" });
+      }
+    }
+
+    const sent = results.filter(r => r.status === "sent").length;
+    const failed = results.filter(r => r.status === "failed").length;
+    const notFound = results.filter(r => r.status === "not_found").length;
+    res.json({ sent, failed, notFound, results });
+  } catch (err) {
+    req.log.error({ err }, "Failed to send targeted welcome emails");
+    res.status(500).json({ error: "Failed to send targeted welcome emails" });
+  }
+});
+
 // ── Admin: check admin status + config ───────────────────────────────────────
 
 router.get("/admin/check", (req: Request, res: Response) => {
