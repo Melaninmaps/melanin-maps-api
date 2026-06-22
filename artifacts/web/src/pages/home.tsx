@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Shield, Search, Calendar, MapPin, Sparkles, Bell, ArrowRight, Check, Users, Navigation, Compass, Star, Facebook, Linkedin, Instagram, Link2, ChevronDown, Music, Ticket, MessageSquare, UserPlus, Building2, Globe, BookOpen } from "lucide-react";
 import { useListBusinesses } from "@workspace/api-client-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const BASE_URL = import.meta.env.BASE_URL;
 
@@ -82,13 +82,23 @@ export default function Home() {
   const [submitted, setSubmitted] = useState(false);
   const [position, setPosition] = useState<number | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referredBy, setReferredBy] = useState("");
   const [waitlistStats, setWaitlistStats] = useState<WaitlistStats | null>(null);
+  const referredByRef = useRef(false);
 
   useEffect(() => {
     fetch(`${BASE}api/waitlist/count`)
       .then(r => r.json())
       .then((data: WaitlistStats) => setWaitlistStats(data))
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (referredByRef.current) return;
+    referredByRef.current = true;
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) setReferredBy(ref.toUpperCase());
   }, []);
 
   const handleWaitlist = async (e: React.FormEvent) => {
@@ -99,7 +109,7 @@ export default function Home() {
       const res = await fetch(`${BASE}api/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, city, state, isBusinessOwner }),
+        body: JSON.stringify({ email, city, state, isBusinessOwner, referredBy: referredBy.trim() || undefined }),
       });
       const data = await res.json();
       setPosition(data.position ?? null);
@@ -218,6 +228,19 @@ export default function Home() {
               </div>
               <span className="text-sm text-[#F5EBD8]/80">I own or operate a Minority-owned business</span>
             </label>
+
+            {/* Referral code input */}
+            <div className="space-y-1">
+              <input
+                type="text"
+                value={referredBy}
+                onChange={e => setReferredBy(e.target.value.toUpperCase())}
+                maxLength={12}
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60 uppercase tracking-widest"
+                placeholder="REFERRAL CODE (optional)"
+              />
+              <p className="text-xs text-[#F5EBD8]/40">Have a friend's referral code? Enter it above to move up the list.</p>
+            </div>
 
             {/* Referral row */}
             <div className="flex items-center gap-3">
