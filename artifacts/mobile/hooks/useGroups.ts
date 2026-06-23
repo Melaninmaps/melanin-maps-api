@@ -19,6 +19,7 @@ export interface Group {
   description: string | null;
   category: string;
   memberCount: number;
+  maxMembers: number;
   isPrivate: boolean;
   city: string | null;
   state: string | null;

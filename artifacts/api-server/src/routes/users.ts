@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, ilike, or, and, ne } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -26,6 +26,46 @@ router.get("/users/me", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch user profile");
     res.status(500).json({ error: "Failed to fetch profile" });
+  }
+});
+
+router.get("/users/search", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+
+  try {
+    const q = String(req.query.q ?? "").trim();
+    if (!q || q.length < 2) {
+      res.json({ users: [] });
+      return;
+    }
+
+    const pattern = `%${q}%`;
+    const results = await db
+      .select({
+        id: usersTable.id,
+        firstName: usersTable.firstName,
+        lastName: usersTable.lastName,
+        profileImageUrl: usersTable.profileImageUrl,
+      })
+      .from(usersTable)
+      .where(
+        and(
+          ne(usersTable.id, req.user.id),
+          or(
+            ilike(usersTable.firstName, pattern),
+            ilike(usersTable.lastName, pattern)
+          )
+        )
+      )
+      .limit(15);
+
+    res.json({ users: results });
+  } catch (err) {
+    req.log.error({ err }, "GET /api/users/search error");
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

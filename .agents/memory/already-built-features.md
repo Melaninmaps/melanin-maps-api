@@ -60,6 +60,15 @@ description: Major features that were fully implemented in prior sessions — ch
 - `resources.tsx` (web) — full page at `/resources` with dark hero, red crisis banner, 4 card grid sections; route added in App.tsx
 - "Resources" added to web nav (`layout.tsx` navItems between Safety and Businesses); "Mental Health & Recovery" added to footer Community section
 
+## Group Travel Planning (current session)
+- `groupInvites` and `groupItineraries` DB tables added to `lib/db/src/schema/groups.ts`; `maxMembers` column added to `groups` table
+- API: POST /api/groups/:id/invite (admin-only), GET /api/groups/my-invites, POST /api/groups/invites/:id/respond (accept/decline), POST /api/groups/:id/plan-trip (OpenAI), GET /api/groups/:id/itineraries
+- GET /api/users/search?q=name added to users.ts
+- Mobile screens: `group/invite.tsx` (search + send invite), `group/my-invites.tsx` (accept/decline), `group/plan-trip.tsx` (AI itinerary generator with 3 options)
+- `group/[id].tsx` updated: member action cards (Plan a Trip + Invite), pending invite list for admins, saved trip plans section
+- `useGroups` Group interface updated to include `maxMembers`
+- Mobile screens CANNOT import from `@workspace/db/schema` — define types locally instead
+
 ## Session-added features (prior sessions)
 - DB tables: `flash_deals`, `business_stories`, `points_redemptions`, `mentorship_profiles`
 - API routes: `/api/deals`, `/api/stories`, `/api/rewards`, `/api/redemptions`, `/api/mentorship`
