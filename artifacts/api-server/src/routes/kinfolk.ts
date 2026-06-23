@@ -466,6 +466,156 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   }
 });
 
+// ─── POST /api/kinfolk/business-action-plan ────────────────────────────────────
+router.post("/kinfolk/business-action-plan", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
+  if (!openai) return void res.status(503).json({ error: "AI service unavailable" });
+
+  const { businessName, businessCategory, businessCity, reviews } = req.body as {
+    businessName?: string;
+    businessCategory?: string;
+    businessCity?: string;
+    reviews?: Array<{ rating: number; content: string | null }>;
+  };
+
+  const reviewsText = reviews?.length
+    ? reviews.map((r) => `- Rating: ${r.rating}/5 | Feedback: ${r.content ?? "(no written feedback)"}`).join("\n")
+    : "No community reviews yet.";
+
+  const prompt = `You are an expert Black business advisor helping "${businessName ?? "a business"}" (category: ${businessCategory ?? "General"}, city: ${businessCity ?? "Unknown"}) build an improvement action plan.
+
+COMMUNITY FEEDBACK FROM REVIEWS:
+${reviewsText}
+
+Analyze the feedback and generate a practical, budget-conscious action plan. If no reviews mention specific issues, generate proactive improvements relevant to the business category and community expectations.
+
+Return EXACTLY this JSON (no markdown, pure valid JSON):
+{
+  "summary": "2-3 sentence overview of what the feedback signals and what the plan focuses on",
+  "actionItems": [
+    {
+      "issue": "Short description of the issue or opportunity",
+      "priority": "critical|high|medium|low",
+      "category": "Accessibility|Safety|Cleanliness|Service|Experience|Marketing|Infrastructure|Community",
+      "actions": ["specific action step 1", "action step 2", "action step 3"],
+      "estimatedCost": "e.g. $500–$1,500 or Free",
+      "estimatedTimeline": "e.g. 1–2 weeks or Same day",
+      "resources": ["Optional: local vendor/org/program that can help"]
+    }
+  ]
+}
+
+Include 3–6 action items. Prioritize accessibility (ADA compliance, wheelchair access, signage) and safety first. Be specific with dollar estimates — research realistic costs for small businesses. Keep language warm, community-centered, and practical.`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.6,
+      max_tokens: 1500,
+    });
+
+    const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
+    const parsed = JSON.parse(raw) as { summary: string; actionItems: unknown[] };
+    res.json(parsed);
+  } catch (err) {
+    req.log.error({ err }, "Business action plan failed");
+    res.status(500).json({ error: "Failed to generate action plan" });
+  }
+});
+
+// ─── POST /api/kinfolk/expansion-analysis ─────────────────────────────────────
+router.post("/kinfolk/expansion-analysis", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
+  if (!openai) return void res.status(503).json({ error: "AI service unavailable" });
+
+  const { businessName, businessCategory, businessCity, avgRating, reviewCount, savesCount } = req.body as {
+    businessName?: string;
+    businessCategory?: string;
+    businessCity?: string;
+    avgRating?: number;
+    reviewCount?: number;
+    savesCount?: number;
+  };
+
+  // Fetch platform survey data for context
+  let surveyContext = "";
+  try {
+    const { neighborhoodSurveysTable } = await import("@workspace/db");
+    const surveys = await db
+      .select({
+        city: neighborhoodSurveysTable.city,
+        daytimeSafety: neighborhoodSurveysTable.daytimeSafety,
+        nighttimeSafety: neighborhoodSurveysTable.nighttimeSafety,
+        walkability: neighborhoodSurveysTable.walkability,
+        atmosphere: neighborhoodSurveysTable.atmosphere,
+      })
+      .from(neighborhoodSurveysTable)
+      .limit(50);
+
+    const cityMap: Record<string, { safetySum: number; count: number }> = {};
+    for (const s of surveys) {
+      const c = s.city;
+      if (!cityMap[c]) cityMap[c] = { safetySum: 0, count: 0 };
+      const avg = ((s.daytimeSafety ?? 0) + (s.nighttimeSafety ?? 0)) / 2;
+      cityMap[c].safetySum += avg;
+      cityMap[c].count += 1;
+    }
+    const citySummary = Object.entries(cityMap)
+      .map(([city, { safetySum, count }]) => `${city}: avg safety ${(safetySum / count).toFixed(1)}/5 (${count} community reports)`)
+      .join(", ");
+    if (citySummary) surveyContext = `Platform community safety data by city: ${citySummary}`;
+  } catch { /* non-critical */ }
+
+  const prompt = `You are a business expansion strategist advising a Black-owned ${businessCategory ?? "business"} called "${businessName ?? "this business"}" currently based in ${businessCity ?? "their city"}.
+
+CURRENT PERFORMANCE:
+- Average rating: ${avgRating?.toFixed(1) ?? "N/A"}/5
+- Community reviews: ${reviewCount ?? 0}
+- Saves by community members: ${savesCount ?? 0}
+${surveyContext ? `\n${surveyContext}` : ""}
+
+Based on community demand patterns, urban demographics, and the growth of Black consumer spending power ($1.8 trillion annually), generate an expansion vision and action plan.
+
+Return EXACTLY this JSON (no markdown, pure valid JSON):
+{
+  "summary": "2-3 sentence big-picture expansion vision tailored to this business",
+  "opportunities": [
+    {
+      "city": "City name",
+      "state": "State abbreviation",
+      "opportunity": "Specific opportunity description",
+      "marketSignal": "Why this market is ready — data, demographics, community need",
+      "estimatedDemand": "e.g. High — 2.4M Black residents, no comparable business within 10 miles",
+      "actionSteps": ["step 1", "step 2", "step 3"]
+    }
+  ],
+  "insights": [
+    "Platform-level insight about community demand or untapped market",
+    "Trend insight relevant to this category",
+    "Strategic partnership or funding opportunity"
+  ]
+}
+
+Include 2–4 city opportunities and 3–4 strategic insights. Focus on cities with strong Black communities: Atlanta, Houston, Chicago, DC, New York, New Orleans, LA, Miami, Dallas, Philadelphia, Detroit, Baltimore, Memphis, Charlotte. Prioritize cities near ${businessCity ?? "their base"}.`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
+      max_tokens: 1500,
+    });
+
+    const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
+    const parsed = JSON.parse(raw) as { summary: string; opportunities: unknown[]; insights: string[] };
+    res.json(parsed);
+  } catch (err) {
+    req.log.error({ err }, "Expansion analysis failed");
+    res.status(500).json({ error: "Failed to generate expansion analysis" });
+  }
+});
+
 // ─── Share a trip ──────────────────────────────────────────────────────────────
 router.post("/kinfolk/sessions/:id/share", async (req: Request, res: Response) => {
   if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });

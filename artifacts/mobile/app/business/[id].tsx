@@ -325,6 +325,12 @@ export default function BusinessDetailScreen() {
           </View>
 
           {/* Reviews */}
+          <View style={[styles.responseTagline, { backgroundColor: colors.primary + "0D", borderColor: colors.primary + "25" }]}>
+            <Feather name="shield" size={13} color={colors.primary} style={{ marginTop: 1 }} />
+            <Text style={[styles.responseTaglineText, { color: colors.primary }]}>
+              Every business has the right to respond. Every customer has the right to be heard. Every concern deserves the opportunity for resolution.
+            </Text>
+          </View>
           <View style={styles.reviewsHeader}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
               Reviews ({allReviews.length})
@@ -672,5 +678,22 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 14,
     color: "#FFFFFF",
+  },
+  responseTagline: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  responseTaglineText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 18,
+    fontStyle: "italic",
   },
 });

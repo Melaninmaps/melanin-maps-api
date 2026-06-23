@@ -65,6 +65,36 @@ interface AnalyticsTrend {
   count: number;
 }
 
+interface ActionItem {
+  issue: string;
+  priority: "critical" | "high" | "medium" | "low";
+  category: string;
+  actions: string[];
+  estimatedCost: string;
+  estimatedTimeline: string;
+  resources?: string[];
+}
+
+interface ActionPlanData {
+  summary: string;
+  actionItems: ActionItem[];
+}
+
+interface ExpansionOpportunity {
+  city: string;
+  state: string;
+  opportunity: string;
+  marketSignal: string;
+  estimatedDemand: string;
+  actionSteps: string[];
+}
+
+interface ExpansionData {
+  summary: string;
+  opportunities: ExpansionOpportunity[];
+  insights: string[];
+}
+
 interface AnalyticsData {
   tier: "navigator" | "trailblazer";
   metrics: { saves: number; reviews: number; avgRating: number; views30d: number; skipFeedbackCount: number };
@@ -137,6 +167,10 @@ export default function BusinessDashboardScreen() {
   const [analyticsError, setAnalyticsError] = useState<"paywall" | "error" | null>(null);
   const [nudge, setNudge] = useState<PostNudgeData | null>(null);
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
+  const [actionPlan, setActionPlan] = useState<ActionPlanData | null>(null);
+  const [actionPlanLoading, setActionPlanLoading] = useState(false);
+  const [expansionData, setExpansionData] = useState<ExpansionData | null>(null);
+  const [expansionLoading, setExpansionLoading] = useState(false);
 
   React.useEffect(() => {
     if (business?.feedbackOptIn !== undefined) setFeedbackOptIn(business.feedbackOptIn);
@@ -179,6 +213,50 @@ export default function BusinessDashboardScreen() {
   useEffect(() => {
     if (activeTab === "insights") void loadAnalytics();
   }, [activeTab]);
+
+  async function generateActionPlan() {
+    if (!business || actionPlanLoading) return;
+    setActionPlanLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const base = getApiBase();
+      if (!token || !base) return;
+      const res = await fetch(`${base}/api/kinfolk/business-action-plan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          businessName: business.name,
+          businessCategory: business.category,
+          businessCity: business.city,
+          reviews: reviews.map((r) => ({ rating: r.rating, content: r.content })),
+        }),
+      });
+      if (res.ok) setActionPlan(await res.json() as ActionPlanData);
+    } catch {} finally { setActionPlanLoading(false); }
+  }
+
+  async function generateExpansionAnalysis() {
+    if (!business || expansionLoading) return;
+    setExpansionLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const base = getApiBase();
+      if (!token || !base) return;
+      const res = await fetch(`${base}/api/kinfolk/expansion-analysis`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          businessName: business.name,
+          businessCategory: business.category,
+          businessCity: business.city,
+          avgRating: analytics?.metrics.avgRating,
+          reviewCount: analytics?.metrics.reviews,
+          savesCount: analytics?.metrics.saves,
+        }),
+      });
+      if (res.ok) setExpansionData(await res.json() as ExpansionData);
+    } catch {} finally { setExpansionLoading(false); }
+  }
 
   async function toggleFeedbackOptIn() {
     if (togglingFeedback) return;
@@ -529,15 +607,127 @@ export default function BusinessDashboardScreen() {
         )}
 
         {activeTab === "reviews" && (
-          <View style={styles.comingSoon}>
-            <View style={[styles.comingSoonIcon, { backgroundColor: colors.secondary }]}>
-              <Feather name="star" size={28} color={colors.primary} />
+          <>
+            {/* Tagline */}
+            <View style={[styles.taglineBanner, { backgroundColor: colors.primary + "0D", borderColor: colors.primary + "20" }]}>
+              <Feather name="shield" size={14} color={colors.primary} style={{ marginTop: 1, flexShrink: 0 }} />
+              <Text style={[styles.taglineText, { color: colors.primary }]}>
+                Every business has the right to respond. Every customer has the right to be heard. Every concern deserves the opportunity for resolution.
+              </Text>
             </View>
-            <Text style={[styles.comingSoonTxt, { color: colors.foreground }]}>Review Management</Text>
-            <Text style={[styles.comingSoonSub, { color: colors.mutedForeground }]}>
-              Respond to reviews and track your rating over time. This feature is in active development.
-            </Text>
-          </View>
+
+            {/* Reviews list */}
+            <Text style={[styles.sectionTitle, { color: colors.foreground, marginTop: 4 }]}>Community Reviews</Text>
+            {reviews.length === 0 ? (
+              <View style={[styles.noReviews, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Feather name="star" size={24} color={colors.muted} />
+                <Text style={[styles.noReviewsTxt, { color: colors.mutedForeground }]}>
+                  No reviews yet. Once customers leave reviews they'll appear here.
+                </Text>
+              </View>
+            ) : reviews.map((r, i) => (
+              <View key={r.id ?? i} style={[styles.reviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.reviewTop}>
+                  <View style={[styles.reviewAvatar, { backgroundColor: colors.primary + "20" }]}>
+                    <Feather name="user" size={16} color={colors.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.reviewName, { color: colors.foreground }]}>Community Member</Text>
+                    <View style={styles.reviewStars}>
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Feather key={s} name="star" size={12} color={s <= r.rating ? colors.primary : colors.border} />
+                      ))}
+                    </View>
+                  </View>
+                </View>
+                {r.content ? (
+                  <Text style={[styles.reviewText, { color: colors.mutedForeground }]}>{r.content}</Text>
+                ) : null}
+              </View>
+            ))}
+
+            {/* KinfolkAI Action Plan */}
+            <View style={[styles.aiPlanCard, { backgroundColor: "#3A1F0E", borderColor: "#CA922B30" }]}>
+              <View style={styles.aiPlanHeader}>
+                <View style={styles.aiPlanBadge}>
+                  <Feather name="zap" size={11} color="#FFF" />
+                  <Text style={styles.aiPlanBadgeText}>KinfolkAI™</Text>
+                </View>
+                <Text style={[styles.aiPlanTitle, { color: "#FFF" }]}>Business Improvement Plan</Text>
+                <Text style={[styles.aiPlanSub, { color: "rgba(255,255,255,0.55)" }]}>
+                  Analyze your community feedback and get a tailored action plan with budget estimates and timelines.
+                </Text>
+              </View>
+
+              {!actionPlan && !actionPlanLoading && (
+                <TouchableOpacity
+                  style={[styles.aiPlanBtn, { backgroundColor: "#CA922B" }]}
+                  onPress={() => { void generateActionPlan(); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }}
+                  activeOpacity={0.85}
+                >
+                  <Feather name="cpu" size={15} color="#FFF" />
+                  <Text style={styles.aiPlanBtnText}>Generate Action Plan</Text>
+                </TouchableOpacity>
+              )}
+
+              {actionPlanLoading && (
+                <View style={styles.aiPlanLoading}>
+                  <ActivityIndicator color="#CA922B" />
+                  <Text style={[styles.aiPlanLoadingText, { color: "rgba(255,255,255,0.6)" }]}>Analyzing feedback…</Text>
+                </View>
+              )}
+
+              {actionPlan && (
+                <View style={styles.aiPlanResults}>
+                  <Text style={[styles.aiPlanSummary, { color: "rgba(255,255,255,0.8)" }]}>{actionPlan.summary}</Text>
+                  {actionPlan.actionItems.map((item, idx) => {
+                    const priorityColor: Record<string, string> = { critical: "#DC2626", high: "#CA922B", medium: "#2D7A4F", low: "#6B7280" };
+                    const pc = priorityColor[item.priority] ?? "#CA922B";
+                    return (
+                      <View key={idx} style={[styles.aiPlanItem, { borderLeftColor: pc, backgroundColor: "rgba(255,255,255,0.04)" }]}>
+                        <View style={styles.aiPlanItemTop}>
+                          <Text style={[styles.aiPlanIssue, { color: "#FFF" }]}>{item.issue}</Text>
+                          <View style={[styles.aiPlanPriority, { backgroundColor: pc + "25" }]}>
+                            <Text style={[styles.aiPlanPriorityText, { color: pc }]}>{item.priority}</Text>
+                          </View>
+                        </View>
+                        <Text style={[styles.aiPlanCategory, { color: "#CA922B" }]}>{item.category}</Text>
+                        {item.actions.map((a, ai) => (
+                          <View key={ai} style={styles.aiPlanStep}>
+                            <Text style={[styles.aiPlanStepDot, { color: "rgba(255,255,255,0.4)" }]}>•</Text>
+                            <Text style={[styles.aiPlanStepText, { color: "rgba(255,255,255,0.75)" }]}>{a}</Text>
+                          </View>
+                        ))}
+                        <View style={styles.aiPlanMeta}>
+                          <View style={styles.aiPlanMetaItem}>
+                            <Feather name="dollar-sign" size={11} color="rgba(255,255,255,0.4)" />
+                            <Text style={[styles.aiPlanMetaText, { color: "rgba(255,255,255,0.55)" }]}>{item.estimatedCost}</Text>
+                          </View>
+                          <View style={styles.aiPlanMetaItem}>
+                            <Feather name="clock" size={11} color="rgba(255,255,255,0.4)" />
+                            <Text style={[styles.aiPlanMetaText, { color: "rgba(255,255,255,0.55)" }]}>{item.estimatedTimeline}</Text>
+                          </View>
+                        </View>
+                        {item.resources && item.resources.length > 0 && (
+                          <Text style={[styles.aiPlanResource, { color: "#CA922B" }]}>
+                            Resources: {item.resources.join(", ")}
+                          </Text>
+                        )}
+                      </View>
+                    );
+                  })}
+                  <TouchableOpacity
+                    style={[styles.aiPlanRefresh, { borderColor: "rgba(202,146,43,0.3)" }]}
+                    onPress={() => { setActionPlan(null); void generateActionPlan(); }}
+                    activeOpacity={0.7}
+                  >
+                    <Feather name="refresh-cw" size={13} color="#CA922B" />
+                    <Text style={[styles.aiPlanRefreshText, { color: "#CA922B" }]}>Refresh Plan</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </>
         )}
 
         {activeTab === "insights" && (
@@ -732,6 +922,87 @@ export default function BusinessDashboardScreen() {
                       <Feather name="chevron-right" size={14} color="#CA922B" />
                     </TouchableOpacity>
                   )}
+
+                  {/* Expansion Analysis */}
+                  <View style={[styles.expansionCard, { backgroundColor: "#0E1F0E", borderColor: "#2D7A4F30" }]}>
+                    <View style={styles.expansionHeader}>
+                      <View style={styles.expansionBadge}>
+                        <Feather name="trending-up" size={11} color="#FFF" />
+                        <Text style={styles.expansionBadgeText}>KinfolkAI™ Expansion</Text>
+                      </View>
+                      <Text style={[styles.expansionTitle, { color: "#FFF" }]}>Growth & Expansion Vision</Text>
+                      <Text style={[styles.expansionSub, { color: "rgba(255,255,255,0.5)" }]}>
+                        AI analysis of community demand, market gaps, and strategic expansion opportunities for your business.
+                      </Text>
+                    </View>
+
+                    {!expansionData && !expansionLoading && (
+                      <TouchableOpacity
+                        style={[styles.expansionBtn, { backgroundColor: "#2D7A4F" }]}
+                        onPress={() => { void generateExpansionAnalysis(); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }}
+                        activeOpacity={0.85}
+                      >
+                        <Feather name="map" size={15} color="#FFF" />
+                        <Text style={styles.expansionBtnText}>Analyze Expansion Opportunities</Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {expansionLoading && (
+                      <View style={styles.expansionLoading}>
+                        <ActivityIndicator color="#2D7A4F" />
+                        <Text style={[styles.expansionLoadingText, { color: "rgba(255,255,255,0.6)" }]}>Analyzing market data…</Text>
+                      </View>
+                    )}
+
+                    {expansionData && (
+                      <View style={styles.expansionResults}>
+                        <Text style={[styles.expansionSummary, { color: "rgba(255,255,255,0.8)" }]}>{expansionData.summary}</Text>
+
+                        {expansionData.opportunities.map((opp, idx) => (
+                          <View key={idx} style={[styles.expansionOpp, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "#2D7A4F30" }]}>
+                            <View style={styles.expansionOppHeader}>
+                              <Text style={[styles.expansionCity, { color: "#FFF" }]}>{opp.city}, {opp.state}</Text>
+                              <View style={[styles.demandBadge, { backgroundColor: "#2D7A4F30" }]}>
+                                <Text style={[styles.demandText, { color: "#2D7A4F" }]}>High Demand</Text>
+                              </View>
+                            </View>
+                            <Text style={[styles.expansionOppTitle, { color: "#4ADE80" }]}>{opp.opportunity}</Text>
+                            <Text style={[styles.expansionMarket, { color: "rgba(255,255,255,0.55)" }]}>{opp.marketSignal}</Text>
+                            <Text style={[styles.expansionDemand, { color: "rgba(255,255,255,0.4)" }]}>{opp.estimatedDemand}</Text>
+                            <View style={styles.expansionSteps}>
+                              {opp.actionSteps.map((step, si) => (
+                                <View key={si} style={styles.expansionStep}>
+                                  <Text style={[styles.expansionStepNum, { color: "#2D7A4F" }]}>{si + 1}</Text>
+                                  <Text style={[styles.expansionStepText, { color: "rgba(255,255,255,0.7)" }]}>{step}</Text>
+                                </View>
+                              ))}
+                            </View>
+                          </View>
+                        ))}
+
+                        {expansionData.insights.length > 0 && (
+                          <>
+                            <Text style={[styles.expansionInsightsTitle, { color: "rgba(255,255,255,0.5)" }]}>STRATEGIC INSIGHTS</Text>
+                            {expansionData.insights.map((insight, i) => (
+                              <View key={i} style={styles.expansionInsightRow}>
+                                <Feather name="zap" size={13} color="#2D7A4F" style={{ marginTop: 1 }} />
+                                <Text style={[styles.expansionInsightText, { color: "rgba(255,255,255,0.7)" }]}>{insight}</Text>
+                              </View>
+                            ))}
+                          </>
+                        )}
+
+                        <TouchableOpacity
+                          style={[styles.expansionRefresh, { borderColor: "rgba(45,122,79,0.3)" }]}
+                          onPress={() => { setExpansionData(null); void generateExpansionAnalysis(); }}
+                          activeOpacity={0.7}
+                        >
+                          <Feather name="refresh-cw" size={13} color="#2D7A4F" />
+                          <Text style={[styles.expansionRefreshText, { color: "#2D7A4F" }]}>Refresh Analysis</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
                 </>
               );
             })()}
@@ -898,4 +1169,65 @@ const styles = StyleSheet.create({
 
   upgradeStrip: { margin: 20, borderRadius: 14, padding: 16, flexDirection: "row", alignItems: "center", gap: 10 },
   upgradeStripTxt: { flex: 1, fontSize: 13, fontFamily: "Inter_500Medium", color: "#CA922B", lineHeight: 18 },
+
+  taglineBanner: { flexDirection: "row", alignItems: "flex-start", gap: 8, borderRadius: 10, borderWidth: 1, padding: 12, marginBottom: 18 },
+  taglineText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, fontStyle: "italic" },
+
+  aiPlanCard: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 12, marginTop: 20 },
+  aiPlanHeader: { gap: 6 },
+  aiPlanBadge: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "#CA922B", alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  aiPlanBadgeText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#FFF", letterSpacing: 0.4 },
+  aiPlanTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  aiPlanSub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
+  aiPlanBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 13, borderRadius: 12 },
+  aiPlanBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#FFF" },
+  aiPlanLoading: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12 },
+  aiPlanLoadingText: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  aiPlanResults: { gap: 12 },
+  aiPlanSummary: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20 },
+  aiPlanItem: { borderLeftWidth: 3, borderRadius: 10, padding: 12, gap: 8 },
+  aiPlanItemTop: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
+  aiPlanIssue: { fontSize: 14, fontFamily: "Inter_600SemiBold", flex: 1 },
+  aiPlanPriority: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 },
+  aiPlanPriorityText: { fontSize: 10, fontFamily: "Inter_700Bold", textTransform: "uppercase" },
+  aiPlanCategory: { fontSize: 11, fontFamily: "Inter_600SemiBold", letterSpacing: 0.4, textTransform: "uppercase" },
+  aiPlanStep: { flexDirection: "row", gap: 6, alignItems: "flex-start" },
+  aiPlanStepDot: { fontSize: 14, lineHeight: 20 },
+  aiPlanStepText: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19, flex: 1 },
+  aiPlanMeta: { flexDirection: "row", gap: 14, marginTop: 4 },
+  aiPlanMetaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+  aiPlanMetaText: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  aiPlanResource: { fontSize: 11, fontFamily: "Inter_400Regular", lineHeight: 17 },
+  aiPlanRefresh: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10, borderRadius: 10, borderWidth: 1, marginTop: 4 },
+  aiPlanRefreshText: { fontSize: 13, fontFamily: "Inter_500Medium" },
+
+  expansionCard: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 12, marginTop: 16 },
+  expansionHeader: { gap: 6 },
+  expansionBadge: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "#2D7A4F", alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  expansionBadgeText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#FFF", letterSpacing: 0.4 },
+  expansionTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  expansionSub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
+  expansionBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 13, borderRadius: 12 },
+  expansionBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#FFF" },
+  expansionLoading: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12 },
+  expansionLoadingText: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  expansionResults: { gap: 12 },
+  expansionSummary: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20 },
+  expansionOpp: { borderRadius: 12, borderWidth: 1, padding: 14, gap: 6 },
+  expansionOppHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  expansionCity: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  demandBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+  demandText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
+  expansionOppTitle: { fontSize: 13, fontFamily: "Inter_600SemiBold", lineHeight: 19 },
+  expansionMarket: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
+  expansionDemand: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  expansionSteps: { gap: 6, marginTop: 4 },
+  expansionStep: { flexDirection: "row", gap: 8, alignItems: "flex-start" },
+  expansionStepNum: { fontSize: 12, fontFamily: "Inter_700Bold", width: 16 },
+  expansionStepText: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, flex: 1 },
+  expansionInsightsTitle: { fontSize: 10, fontFamily: "Inter_600SemiBold", letterSpacing: 0.8, marginTop: 4 },
+  expansionInsightRow: { flexDirection: "row", gap: 8, alignItems: "flex-start" },
+  expansionInsightText: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19, flex: 1 },
+  expansionRefresh: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10, borderRadius: 10, borderWidth: 1, marginTop: 4 },
+  expansionRefreshText: { fontSize: 13, fontFamily: "Inter_500Medium" },
 });
