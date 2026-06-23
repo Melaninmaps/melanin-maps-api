@@ -140,7 +140,7 @@ export default function Home() {
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/20 bg-white/10">
               <Users className="w-3 h-3 text-[#F5EBD8]" />
               <span className="text-xs font-bold text-[#F5EBD8]">
-                {waitlistStats && waitlistStats.count >= 1000 ? `${formatCount(waitlistStats.count)} community members waiting` : "10,000+ community members waiting"}
+                {waitlistStats ? `${formatCount(waitlistStats.count)} community members waiting` : "Join our growing community"}
               </span>
             </div>
           </div>
@@ -318,7 +318,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-center divide-y md:divide-y-0 md:divide-x divide-white/10">
             <div className="px-4 py-2">
               <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">
-                {waitlistStats && waitlistStats.count >= 1000 ? `${formatCount(waitlistStats.count)} Members` : "10K+ Community Members"}
+                {waitlistStats ? `${formatCount(waitlistStats.count).replace("+", "")} Members` : "—"}
               </div>
               <div className="text-sm text-[#F5EBD8]/70">And growing every day</div>
             </div>

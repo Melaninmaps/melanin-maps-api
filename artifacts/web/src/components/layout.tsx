@@ -42,23 +42,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#FAF6EF]">
       {/* Sticky Top Navbar */}
-      <header className="sticky top-0 z-50 w-full bg-[#2B1507] text-[#F5EBD8] shadow-md">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-[#FAF6EF] border-2 border-[#CA922B] shrink-0 overflow-hidden">
+      <header className="sticky top-0 z-50 w-full bg-[#2B1507] text-[#F5EBD8] shadow-md border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 md:gap-3 shrink-0 mr-4">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#FAF6EF] border-2 border-[#CA922B] shrink-0 overflow-hidden">
               <img
                 src={`${import.meta.env.BASE_URL}images/logo-transparent.png`}
                 alt="Mapping with Melanin logo"
                 className="w-full h-full object-cover object-top scale-110"
               />
             </div>
-            <span className="font-serif font-bold text-xl md:text-2xl text-white tracking-tight">
-              Mapping with Melanin™
+            <span className="font-serif font-bold text-white tracking-tight">
+              <span className="hidden sm:inline xl:hidden 2xl:inline text-xl">Mapping with Melanin™</span>
+              <span className="hidden xl:inline 2xl:hidden text-lg">MWM™</span>
+              <span className="sm:hidden text-base">MWM™</span>
             </span>
           </Link>
 
           {/* Desktop Nav */}
-          <nav aria-label="Main navigation" className="hidden xl:flex items-center gap-4">
+          <nav aria-label="Main navigation" className="hidden xl:flex items-center gap-3">
             {navItems.map((item) => {
               const isActive = location === item.href || location.startsWith(item.href + "/");
               return (
@@ -81,7 +83,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           {/* Auth / Right side */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden xl:flex items-center gap-4">
             {auth?.user ? (
               <>
                 <Link href="/notifications">
@@ -98,15 +100,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Hamburger — visible on all screens below xl */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={isMobileMenuOpen}
             aria-controls="mobile-nav-menu"
-            className="xl:hidden p-2 text-[#F5EBD8]"
+            className="xl:hidden flex items-center justify-center w-10 h-10 rounded-lg border border-white/20 bg-white/5 hover:bg-white/15 transition-colors text-[#F5EBD8] shrink-0"
           >
-            {isMobileMenuOpen ? <X size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
+            {isMobileMenuOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
           </button>
         </div>
 
