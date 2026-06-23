@@ -28,3 +28,4 @@ export * from "./business-stories";
 export * from "./points-redemptions";
 export * from "./mentorship-profiles";
 export * from "./notifications";
+export * from "./travel";

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   FlatList,
@@ -26,6 +27,7 @@ import { KinfolkOnboarding, shouldShowKinfolkOnboarding, resetKinfolkOnboarding 
 import { useAuth } from "@/lib/auth";
 import { useMembership } from "@/hooks/useMembership";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import * as SecureStore from "expo-secure-store";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
@@ -780,6 +782,279 @@ const shStyles = StyleSheet.create({
   itemDate: { fontFamily: "Inter_400Regular", fontSize: 12 },
 });
 
+// ─── Flight Tracker ───────────────────────────────────────────────────────────
+type TrackedFlight = {
+  id: string;
+  flight_number: string;
+  airline: string | null;
+  departure_date: string;
+  origin: string | null;
+  destination: string | null;
+  notes: string | null;
+  status?: string;
+  statusMessage?: string;
+  delay?: number;
+};
+
+function getFlightApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
+
+function FlightTrackerModal({
+  visible, onClose, isAuthenticated, colors,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  isAuthenticated: boolean;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const [flights, setFlights] = useState<TrackedFlight[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [flightNum, setFlightNum] = useState("");
+  const [depDate, setDepDate] = useState("");
+  const [origin, setOrigin] = useState("");
+  const [dest, setDest] = useState("");
+  const [airline, setAirline] = useState("");
+
+  const loadFlights = useCallback(async () => {
+    if (!isAuthenticated) return;
+    setLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const base = getFlightApiBase();
+      const res = await fetch(`${base}/api/travel/flights/status`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { flights: TrackedFlight[] };
+        setFlights(data.flights ?? []);
+      }
+    } catch { /* noop */ }
+    finally { setLoading(false); }
+  }, [isAuthenticated]);
+
+  useEffect(() => { if (visible) void loadFlights(); }, [visible, loadFlights]);
+
+  const handleAdd = async () => {
+    if (!flightNum.trim() || !depDate.trim()) {
+      Alert.alert("Required", "Flight number and departure date are required.");
+      return;
+    }
+    setAdding(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const base = getFlightApiBase();
+      const res = await fetch(`${base}/api/travel/flights`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          flightNumber: flightNum.trim(),
+          departureDate: depDate.trim(),
+          origin: origin.trim() || undefined,
+          destination: dest.trim() || undefined,
+          airline: airline.trim() || undefined,
+        }),
+      });
+      if (res.ok) {
+        setFlightNum(""); setDepDate(""); setOrigin(""); setDest(""); setAirline("");
+        setShowAddForm(false);
+        void loadFlights();
+      } else {
+        Alert.alert("Error", "Failed to add flight.");
+      }
+    } finally { setAdding(false); }
+  };
+
+  const handleDelete = async (id: string) => {
+    const token = await SecureStore.getItemAsync("auth_session_token");
+    const base = getFlightApiBase();
+    await fetch(`${base}/api/travel/flights/${id}`, {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    setFlights((prev) => prev.filter((f) => f.id !== id));
+  };
+
+  const statusColor = (status?: string) => {
+    if (status === "delayed") return "#EF4444";
+    if (status === "cancelled") return "#DC2626";
+    if (status === "on_time") return "#22C55E";
+    if (status === "diverted") return "#F59E0B";
+    return colors.mutedForeground;
+  };
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <View style={[ftStyles.container, { backgroundColor: colors.background }]}>
+        <View style={[ftStyles.header, { borderBottomColor: colors.border }]}>
+          <View style={ftStyles.headerLeft}>
+            <Ionicons name="airplane-outline" size={20} color={colors.primary} />
+            <Text style={[ftStyles.title, { color: colors.foreground }]}>Flight Tracker</Text>
+          </View>
+          <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons name="close" size={22} color={colors.foreground} />
+          </TouchableOpacity>
+        </View>
+
+        {!isAuthenticated ? (
+          <View style={ftStyles.emptyWrap}>
+            <Ionicons name="airplane-outline" size={40} color={colors.mutedForeground} />
+            <Text style={[ftStyles.emptyText, { color: colors.mutedForeground }]}>Sign in to track your flights</Text>
+          </View>
+        ) : (
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={ftStyles.scroll}>
+            <Text style={[ftStyles.subtitle, { color: colors.mutedForeground }]}>
+              Save flight numbers from your travel plans. We check status and alert you to delays.
+            </Text>
+
+            {!showAddForm && (
+              <TouchableOpacity
+                style={[ftStyles.addBtn, { backgroundColor: colors.primary + "14", borderColor: colors.primary + "30" }]}
+                onPress={() => setShowAddForm(true)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
+                <Text style={[ftStyles.addBtnText, { color: colors.primary }]}>Track a Flight</Text>
+              </TouchableOpacity>
+            )}
+
+            {showAddForm && (
+              <View style={[ftStyles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[ftStyles.formTitle, { color: colors.foreground }]}>Add Flight</Text>
+                <TextInput
+                  style={[ftStyles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+                  placeholder="Flight # (e.g. AA1234)"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={flightNum}
+                  onChangeText={(t) => setFlightNum(t.toUpperCase())}
+                  autoCapitalize="characters"
+                />
+                <TextInput
+                  style={[ftStyles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+                  placeholder="Departure Date (YYYY-MM-DD)"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={depDate}
+                  onChangeText={setDepDate}
+                />
+                <View style={ftStyles.row}>
+                  <TextInput
+                    style={[ftStyles.input, ftStyles.halfInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+                    placeholder="From (ATL)"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={origin}
+                    onChangeText={(t) => setOrigin(t.toUpperCase())}
+                    autoCapitalize="characters"
+                  />
+                  <TextInput
+                    style={[ftStyles.input, ftStyles.halfInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+                    placeholder="To (IAH)"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={dest}
+                    onChangeText={(t) => setDest(t.toUpperCase())}
+                    autoCapitalize="characters"
+                  />
+                </View>
+                <TextInput
+                  style={[ftStyles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+                  placeholder="Airline (optional)"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={airline}
+                  onChangeText={setAirline}
+                />
+                <View style={ftStyles.formActions}>
+                  <TouchableOpacity style={[ftStyles.cancelBtn, { borderColor: colors.border }]} onPress={() => setShowAddForm(false)}>
+                    <Text style={[ftStyles.cancelBtnText, { color: colors.mutedForeground }]}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[ftStyles.saveFlightBtn, { backgroundColor: colors.primary }]} onPress={() => void handleAdd()} disabled={adding}>
+                    <Text style={ftStyles.saveFlightBtnText}>{adding ? "Saving…" : "Save Flight"}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {loading ? (
+              <ActivityIndicator style={{ marginTop: 24 }} color={colors.primary} />
+            ) : flights.length === 0 && !showAddForm ? (
+              <View style={ftStyles.emptyWrap}>
+                <Ionicons name="airplane-outline" size={40} color={colors.mutedForeground} />
+                <Text style={[ftStyles.emptyText, { color: colors.mutedForeground }]}>No flights tracked yet</Text>
+                <Text style={[ftStyles.emptySub, { color: colors.mutedForeground }]}>
+                  Add flight numbers from your travel plans to receive delay alerts
+                </Text>
+              </View>
+            ) : (
+              flights.map((f) => (
+                <View key={f.id} style={[ftStyles.flightCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={[ftStyles.flightIcon, { backgroundColor: colors.primary + "14" }]}>
+                    <Ionicons name="airplane" size={18} color={colors.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={ftStyles.flightTop}>
+                      <Text style={[ftStyles.flightNum, { color: colors.foreground }]}>{f.flight_number}</Text>
+                      {f.airline && <Text style={[ftStyles.flightAirline, { color: colors.mutedForeground }]}> · {f.airline}</Text>}
+                    </View>
+                    <Text style={[ftStyles.flightMeta, { color: colors.mutedForeground }]}>
+                      {f.departure_date}
+                      {f.origin && f.destination ? ` · ${f.origin} → ${f.destination}` : f.origin ? ` · from ${f.origin}` : f.destination ? ` · to ${f.destination}` : ""}
+                    </Text>
+                    {f.status && f.status !== "upcoming" && (
+                      <View style={[ftStyles.statusBadge, { backgroundColor: statusColor(f.status) + "18" }]}>
+                        <View style={[ftStyles.statusDot, { backgroundColor: statusColor(f.status) }]} />
+                        <Text style={[ftStyles.statusText, { color: statusColor(f.status) }]}>
+                          {f.statusMessage ?? f.status}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  <TouchableOpacity onPress={() => void handleDelete(f.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Ionicons name="trash-outline" size={18} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                </View>
+              ))
+            )}
+          </ScrollView>
+        )}
+      </View>
+    </Modal>
+  );
+}
+
+const ftStyles = StyleSheet.create({
+  container: { flex: 1 },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 20, borderBottomWidth: 1 },
+  headerLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
+  title: { fontFamily: "Inter_700Bold", fontSize: 20 },
+  subtitle: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, marginBottom: 4 },
+  scroll: { padding: 16, gap: 12 },
+  addBtn: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, borderWidth: 1, padding: 14 },
+  addBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  formCard: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 10 },
+  formTitle: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 2 },
+  input: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 14 },
+  row: { flexDirection: "row", gap: 10 },
+  halfInput: { flex: 1 },
+  formActions: { flexDirection: "row", gap: 10, marginTop: 2 },
+  cancelBtn: { flex: 1, borderRadius: 10, borderWidth: 1, paddingVertical: 11, alignItems: "center" },
+  cancelBtnText: { fontFamily: "Inter_500Medium", fontSize: 14 },
+  saveFlightBtn: { flex: 2, borderRadius: 10, paddingVertical: 11, alignItems: "center" },
+  saveFlightBtnText: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#fff" },
+  emptyWrap: { alignItems: "center", gap: 10, paddingVertical: 32 },
+  emptyText: { fontFamily: "Inter_500Medium", fontSize: 15 },
+  emptySub: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center", paddingHorizontal: 20 },
+  flightCard: { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 14, borderRadius: 16, borderWidth: 1 },
+  flightIcon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  flightTop: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", marginBottom: 3 },
+  flightNum: { fontFamily: "Inter_700Bold", fontSize: 16 },
+  flightAirline: { fontFamily: "Inter_400Regular", fontSize: 13 },
+  flightMeta: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  statusBadge: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, marginTop: 5, alignSelf: "flex-start" },
+  statusDot: { width: 6, height: 6, borderRadius: 3 },
+  statusText: { fontFamily: "Inter_500Medium", fontSize: 11 },
+});
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function formatTime(d: Date): string {
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -806,6 +1081,7 @@ export default function TravelScreen() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [compareSelected, setCompareSelected] = useState<TravelBusiness[]>([]);
+  const [showFlights, setShowFlights] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -981,6 +1257,13 @@ export default function TravelScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerIconBtn}
+            onPress={() => setShowFlights(true)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="airplane-outline" size={22} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerIconBtn}
             onPress={() => { void loadSessions(); setShowHistory(true); }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
@@ -1115,6 +1398,14 @@ export default function TravelScreen() {
       <KinfolkOnboarding
         visible={showOnboarding}
         onComplete={() => setShowOnboarding(false)}
+      />
+
+      {/* Flight Tracker */}
+      <FlightTrackerModal
+        visible={showFlights}
+        onClose={() => setShowFlights(false)}
+        isAuthenticated={isAuthenticated}
+        colors={colors}
       />
     </View>
   );

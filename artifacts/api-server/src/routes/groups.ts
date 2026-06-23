@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { db } from "@workspace/db";
-import { groups, groupMembers, groupInvites, groupItineraries } from "@workspace/db/schema";
+import { groups, groupMembers, groupInvites, groupItineraries, groupSuggestions } from "@workspace/db/schema";
 import { userPreferencesTable, usersTable } from "@workspace/db/schema";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
@@ -495,6 +495,103 @@ router.delete("/groups/:id/leave", async (req: Request, res: Response) => {
     res.json({ left: true, groupId });
   } catch (err) {
     req.log.error({ err }, "DELETE /api/groups/:id/leave error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/groups/:id/suggestions", async (req: Request, res: Response) => {
+  try {
+    const groupId = parseInt(String(req.params.id), 10);
+    if (isNaN(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+    const items = await db
+      .select()
+      .from(groupSuggestions)
+      .where(eq(groupSuggestions.groupId, groupId))
+      .orderBy(desc(groupSuggestions.upvotes), desc(groupSuggestions.createdAt));
+
+    res.json({ suggestions: items });
+  } catch (err) {
+    req.log.error({ err }, "GET /api/groups/:id/suggestions error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/groups/:id/suggestions", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const groupId = parseInt(String(req.params.id), 10);
+    if (isNaN(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
+    const userId = req.user!.id;
+
+    const { type, value, notes } = req.body as {
+      type?: string;
+      value?: string;
+      notes?: string;
+    };
+
+    if (!value || !String(value).trim()) {
+      res.status(400).json({ error: "value is required" });
+      return;
+    }
+
+    const validTypes = ["location", "event_type", "restaurant", "activity", "destination"];
+    const suggType = validTypes.includes(String(type)) ? String(type) : "location";
+
+    const [suggestion] = await db
+      .insert(groupSuggestions)
+      .values({ groupId, userId, type: suggType, value: String(value).trim(), notes: notes ?? null })
+      .returning();
+
+    res.status(201).json({ suggestion });
+  } catch (err) {
+    req.log.error({ err }, "POST /api/groups/:id/suggestions error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/groups/:id/suggestions/:suggId/upvote", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const groupId = parseInt(String(req.params.id), 10);
+    const suggId = parseInt(String(req.params.suggId), 10);
+    if (isNaN(groupId) || isNaN(suggId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+    const [updated] = await db
+      .update(groupSuggestions)
+      .set({ upvotes: sql`${groupSuggestions.upvotes} + 1` })
+      .where(and(eq(groupSuggestions.id, suggId), eq(groupSuggestions.groupId, groupId)))
+      .returning();
+
+    if (!updated) { res.status(404).json({ error: "Suggestion not found" }); return; }
+    res.json({ suggestion: updated });
+  } catch (err) {
+    req.log.error({ err }, "POST /api/groups/:id/suggestions/:suggId/upvote error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/groups/:id/suggestions/:suggId", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const groupId = parseInt(String(req.params.id), 10);
+    const suggId = parseInt(String(req.params.suggId), 10);
+    if (isNaN(groupId) || isNaN(suggId)) { res.status(400).json({ error: "Invalid id" }); return; }
+    const userId = req.user!.id;
+
+    const [sugg] = await db
+      .select({ id: groupSuggestions.id, userId: groupSuggestions.userId })
+      .from(groupSuggestions)
+      .where(and(eq(groupSuggestions.id, suggId), eq(groupSuggestions.groupId, groupId)))
+      .limit(1);
+
+    if (!sugg) { res.status(404).json({ error: "Suggestion not found" }); return; }
+    if (sugg.userId !== userId) { res.status(403).json({ error: "Not authorized" }); return; }
+
+    await db.delete(groupSuggestions).where(eq(groupSuggestions.id, suggId));
+    res.json({ deleted: true });
+  } catch (err) {
+    req.log.error({ err }, "DELETE /api/groups/:id/suggestions/:suggId error");
     res.status(500).json({ error: "Internal server error" });
   }
 });

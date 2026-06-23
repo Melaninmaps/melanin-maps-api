@@ -78,7 +78,22 @@ export const groupItineraries = pgTable("group_itineraries", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const groupSuggestions = pgTable("group_suggestions", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id")
+    .notNull()
+    .references(() => groups.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull(),
+  type: text("type").notNull().default("location"),
+  value: text("value").notNull(),
+  notes: text("notes"),
+  upvotes: integer("upvotes").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export type Group = typeof groups.$inferSelect;
 export type GroupMember = typeof groupMembers.$inferSelect;
 export type GroupInvite = typeof groupInvites.$inferSelect;
 export type GroupItinerary = typeof groupItineraries.$inferSelect;
+export type GroupSuggestion = typeof groupSuggestions.$inferSelect;
+export type InsertGroupSuggestion = typeof groupSuggestions.$inferInsert;

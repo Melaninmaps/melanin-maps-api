@@ -18,6 +18,17 @@ import { useColors } from "@/hooks/useColors";
 import { useGroups, type Group } from "@/hooks/useGroups";
 import { useAuth } from "@/lib/auth";
 
+type GroupSuggestion = {
+  id: number;
+  groupId: number;
+  userId: string;
+  type: string;
+  value: string;
+  notes: string | null;
+  upvotes: number;
+  createdAt: string | Date;
+};
+
 type GroupItinerary = {
   id: number;
   groupId: number;
@@ -64,6 +75,14 @@ function formatDate(iso: string | Date): string {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+const SUGG_TYPES = [
+  { key: "location", label: "📍 Location", color: "#2D7A4F" },
+  { key: "destination", label: "✈️ Destination", color: "#1D4ED8" },
+  { key: "event_type", label: "🎉 Event", color: "#7B2D8B" },
+  { key: "restaurant", label: "🍽️ Restaurant", color: "#C9922B" },
+  { key: "activity", label: "🎯 Activity", color: "#DC2626" },
+];
+
 export default function GroupDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
@@ -76,8 +95,14 @@ export default function GroupDetailScreen() {
   const [members, setMembers] = useState<GroupMemberRow[]>([]);
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
   const [itineraries, setItineraries] = useState<GroupItinerary[]>([]);
+  const [suggestions, setSuggestions] = useState<GroupSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [joining, setJoining] = useState(false);
+  const [showAddSugg, setShowAddSugg] = useState(false);
+  const [suggType, setSuggType] = useState("location");
+  const [suggValue, setSuggValue] = useState("");
+  const [suggNotes, setSuggNotes] = useState("");
+  const [addingSugg, setAddingSugg] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -89,9 +114,10 @@ export default function GroupDetailScreen() {
       const apiBase = getApiBase();
       const token = await SecureStore.getItemAsync("auth_session_token");
       const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-      const [groupRes, itinRes] = await Promise.all([
+      const [groupRes, itinRes, suggRes] = await Promise.all([
         fetch(`${apiBase}/api/groups/${id}`, { headers: authHeaders }),
         token ? fetch(`${apiBase}/api/groups/${id}/itineraries`, { headers: authHeaders }) : Promise.resolve(null),
+        fetch(`${apiBase}/api/groups/${id}/suggestions`),
       ]);
       if (groupRes.ok) {
         const data = await groupRes.json() as {
@@ -107,11 +133,62 @@ export default function GroupDetailScreen() {
         const data = await itinRes.json() as { itineraries: GroupItinerary[] };
         setItineraries(data.itineraries ?? []);
       }
+      if (suggRes.ok) {
+        const data = await suggRes.json() as { suggestions: GroupSuggestion[] };
+        setSuggestions(data.suggestions ?? []);
+      }
     } catch { /* show not found */ }
     finally { setIsLoading(false); }
   }, [id]);
 
   useEffect(() => { void loadGroup(); }, [loadGroup]);
+
+  const handleAddSuggestion = async () => {
+    if (!suggValue.trim()) { Alert.alert("Required", "Please enter a suggestion."); return; }
+    setAddingSugg(true);
+    try {
+      const apiBase = getApiBase();
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${apiBase}/api/groups/${id}/suggestions`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ type: suggType, value: suggValue.trim(), notes: suggNotes.trim() || undefined }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { suggestion: GroupSuggestion };
+        setSuggestions((prev) => [data.suggestion, ...prev]);
+        setSuggValue(""); setSuggNotes(""); setSuggType("location");
+        setShowAddSugg(false);
+      } else {
+        Alert.alert("Error", "Failed to add suggestion.");
+      }
+    } finally { setAddingSugg(false); }
+  };
+
+  const handleUpvote = async (suggId: number) => {
+    if (!isAuthenticated) { Alert.alert("Sign In Required", "Please sign in to upvote."); return; }
+    const apiBase = getApiBase();
+    const token = await SecureStore.getItemAsync("auth_session_token");
+    const res = await fetch(`${apiBase}/api/groups/${id}/suggestions/${suggId}/upvote`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      setSuggestions((prev) =>
+        prev.map((s) => s.id === suggId ? { ...s, upvotes: s.upvotes + 1 } : s)
+      );
+    }
+  };
+
+  const handleDeleteSuggestion = async (suggId: number) => {
+    const apiBase = getApiBase();
+    const token = await SecureStore.getItemAsync("auth_session_token");
+    await fetch(`${apiBase}/api/groups/${id}/suggestions/${suggId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setSuggestions((prev) => prev.filter((s) => s.id !== suggId));
+  };
 
   const handleJoinLeave = async () => {
     if (!group) return;
@@ -331,6 +408,69 @@ export default function GroupDetailScreen() {
           </View>
         )}
 
+        {/* Bucket List / Suggestions */}
+        {(suggestions.length > 0 || group.isMember) && (
+          <View style={styles.section}>
+            <View style={styles.suggHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Group Bucket List</Text>
+              {group.isMember && (
+                <TouchableOpacity
+                  style={[styles.addSuggBtn, { backgroundColor: catColor + "14", borderColor: catColor + "30" }]}
+                  onPress={() => setShowAddSugg(true)}
+                  activeOpacity={0.8}
+                >
+                  <Feather name="plus" size={14} color={catColor} />
+                  <Text style={[styles.addSuggBtnText, { color: catColor }]}>Add Idea</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            {suggestions.length === 0 ? (
+              <View style={[styles.suggEmptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Feather name="star" size={20} color={colors.mutedForeground} />
+                <Text style={[styles.suggEmptyText, { color: colors.mutedForeground }]}>
+                  No ideas yet — add locations, destinations, events, or activities your crew wants to explore
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.suggList}>
+                {suggestions.map((s) => {
+                  const typeInfo = SUGG_TYPES.find((t) => t.key === s.type) ?? SUGG_TYPES[0];
+                  return (
+                    <View key={s.id} style={[styles.suggCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                      <View style={[styles.suggTypeBadge, { backgroundColor: typeInfo.color + "18" }]}>
+                        <Text style={[styles.suggTypeText, { color: typeInfo.color }]}>{typeInfo.label}</Text>
+                      </View>
+                      <Text style={[styles.suggValue, { color: colors.foreground }]}>{s.value}</Text>
+                      {s.notes ? <Text style={[styles.suggNotes, { color: colors.mutedForeground }]}>{s.notes}</Text> : null}
+                      <View style={styles.suggFooter}>
+                        <TouchableOpacity
+                          style={[styles.upvoteBtn, { borderColor: colors.border }]}
+                          onPress={() => void handleUpvote(s.id)}
+                          activeOpacity={0.7}
+                        >
+                          <Feather name="chevrons-up" size={14} color={s.upvotes > 0 ? catColor : colors.mutedForeground} />
+                          <Text style={[styles.upvoteCount, { color: s.upvotes > 0 ? catColor : colors.mutedForeground }]}>
+                            {s.upvotes}
+                          </Text>
+                        </TouchableOpacity>
+                        <Text style={[styles.suggDate, { color: colors.mutedForeground }]}>{formatDate(s.createdAt)}</Text>
+                        {s.userId === group.createdBy && (
+                          <TouchableOpacity
+                            onPress={() => void handleDeleteSuggestion(s.id)}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <Feather name="trash-2" size={13} color={colors.mutedForeground} />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Stats card */}
         <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.statItem}>
@@ -369,6 +509,73 @@ export default function GroupDetailScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Add Suggestion Modal */}
+      <Modal visible={showAddSugg} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowAddSugg(false)}>
+        <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.foreground }]}>Add to Bucket List</Text>
+            <TouchableOpacity onPress={() => setShowAddSugg(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Feather name="x" size={22} color={colors.foreground} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.modalScroll} keyboardShouldPersistTaps="handled">
+            <Text style={[styles.modalLabel, { color: colors.mutedForeground }]}>Type</Text>
+            <View style={styles.typeRow}>
+              {SUGG_TYPES.map((t) => (
+                <TouchableOpacity
+                  key={t.key}
+                  style={[
+                    styles.typeChip,
+                    { borderColor: suggType === t.key ? t.color : colors.border, backgroundColor: suggType === t.key ? t.color + "14" : colors.card },
+                  ]}
+                  onPress={() => setSuggType(t.key)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.typeChipText, { color: suggType === t.key ? t.color : colors.mutedForeground }]}>{t.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={[styles.modalLabel, { color: colors.mutedForeground }]}>
+              {suggType === "destination" ? "City or Country" : suggType === "restaurant" ? "Restaurant Name" : suggType === "event_type" ? "Event or Vibe" : suggType === "activity" ? "Activity" : "Place or Neighborhood"}
+            </Text>
+            <TextInput
+              style={[styles.modalInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              placeholder={
+                suggType === "destination" ? "e.g. New Orleans, Havana"
+                : suggType === "restaurant" ? "e.g. Dooky Chase's"
+                : suggType === "event_type" ? "e.g. Jazz festival, gallery opening"
+                : suggType === "activity" ? "e.g. Kayaking, cooking class"
+                : "e.g. Treme, the French Quarter"
+              }
+              placeholderTextColor={colors.mutedForeground}
+              value={suggValue}
+              onChangeText={setSuggValue}
+            />
+            <Text style={[styles.modalLabel, { color: colors.mutedForeground }]}>Notes (optional)</Text>
+            <TextInput
+              style={[styles.modalInput, styles.modalTextArea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              placeholder="Why do you want to go here? Any tips?"
+              placeholderTextColor={colors.mutedForeground}
+              value={suggNotes}
+              onChangeText={setSuggNotes}
+              multiline
+              numberOfLines={3}
+            />
+          </ScrollView>
+          <View style={[styles.modalFooter, { borderTopColor: colors.border, paddingBottom: bottomPad + 16 }]}>
+            <TouchableOpacity
+              style={[styles.modalSaveBtn, { backgroundColor: catColor }]}
+              onPress={() => void handleAddSuggestion()}
+              disabled={addingSugg}
+              activeOpacity={0.85}
+            >
+              <Feather name="plus" size={18} color="#fff" />
+              <Text style={styles.modalSaveBtnText}>{addingSugg ? "Adding…" : "Add to Bucket List"}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: bottomPad + 16 }]}>
         {group.isPrivate && !group.isMember ? (
@@ -475,4 +682,32 @@ const styles = StyleSheet.create({
     gap: 10, height: 52, borderRadius: 14, borderWidth: 1.5,
   },
   joinBtnText: { fontFamily: "Inter_700Bold", fontSize: 16 },
+  suggHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  addSuggBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
+  addSuggBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  suggEmptyCard: { borderRadius: 14, borderWidth: 1, padding: 16, flexDirection: "row", alignItems: "center", gap: 12 },
+  suggEmptyText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, flex: 1 },
+  suggList: { gap: 10 },
+  suggCard: { borderRadius: 14, borderWidth: 1, padding: 14, gap: 6 },
+  suggTypeBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  suggTypeText: { fontFamily: "Inter_500Medium", fontSize: 12 },
+  suggValue: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
+  suggNotes: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  suggFooter: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4 },
+  upvoteBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1 },
+  upvoteCount: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  suggDate: { fontFamily: "Inter_400Regular", fontSize: 11, flex: 1 },
+  modalContainer: { flex: 1 },
+  modalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 20, borderBottomWidth: 1 },
+  modalTitle: { fontFamily: "Inter_700Bold", fontSize: 20 },
+  modalScroll: { padding: 20, gap: 8 },
+  modalLabel: { fontFamily: "Inter_500Medium", fontSize: 13, marginBottom: 4, marginTop: 8 },
+  typeRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 4 },
+  typeChip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
+  typeChipText: { fontFamily: "Inter_500Medium", fontSize: 13 },
+  modalInput: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 11, fontFamily: "Inter_400Regular", fontSize: 14 },
+  modalTextArea: { minHeight: 80, textAlignVertical: "top" },
+  modalFooter: { padding: 16, borderTopWidth: 1 },
+  modalSaveBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 52, borderRadius: 14 },
+  modalSaveBtnText: { fontFamily: "Inter_700Bold", fontSize: 16, color: "#fff" },
 });

@@ -10,7 +10,7 @@ interface AlertItem {
   location: string;
   timeAgo: string;
   severity: "low" | "medium" | "high" | "critical";
-  source: "nws" | "fema" | "septa" | "community";
+  source: "nws" | "fema" | "septa" | "wmata" | "cta" | "bart" | "community";
   expires?: string;
   url?: string;
 }
@@ -158,7 +158,7 @@ async function fetchWmataAlerts(): Promise<AlertItem[]> {
       location: "Washington, DC",
       timeAgo: i.DateUpdated ? timeAgo(i.DateUpdated) : "recently",
       severity: i.IncidentType === "Alert" ? ("high" as const) : ("medium" as const),
-      source: "community" as const,
+      source: "wmata" as const,
     };
   });
 }
@@ -202,12 +202,123 @@ async function fetchSeptaAlerts(): Promise<AlertItem[]> {
     }));
 }
 
+async function fetchCtaAlerts(): Promise<AlertItem[]> {
+  const url =
+    "https://www.transitchicago.com/api/1.0/alerts.aspx?outputType=JSON&active=true&accessibility=false";
+  const res = await fetch(url, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(8000),
+  });
+
+  if (!res.ok) return [];
+
+  const json = (await res.json()) as {
+    CTAAlerts?: {
+      Alert?:
+        | Array<{
+            AlertId?: string;
+            Headline?: string;
+            ShortDescription?: string;
+            SeverityScore?: string;
+            ImpactType?: string;
+            EventStart?: string;
+            Service?: Array<{ ServiceType?: string; ServiceTypeDescription?: string; ServiceName?: string }> | { ServiceType?: string; ServiceTypeDescription?: string; ServiceName?: string };
+          }>
+        | { AlertId?: string; Headline?: string; ShortDescription?: string; SeverityScore?: string; ImpactType?: string; EventStart?: string };
+    };
+  };
+
+  const rawAlerts = json.CTAAlerts?.Alert;
+  if (!rawAlerts) return [];
+
+  const alerts = Array.isArray(rawAlerts) ? rawAlerts : [rawAlerts];
+
+  return alerts
+    .filter((a) => a.AlertId)
+    .slice(0, 6)
+    .map((a) => {
+      const score = parseInt(String(a.SeverityScore ?? "3"), 10);
+      const severity: AlertItem["severity"] =
+        score >= 8 ? "high" : score >= 5 ? "medium" : "low";
+
+      const services = a.Service
+        ? Array.isArray(a.Service)
+          ? a.Service
+          : [a.Service]
+        : [];
+      const serviceNames = services
+        .map((s) => s.ServiceName ?? s.ServiceTypeDescription ?? "")
+        .filter(Boolean)
+        .slice(0, 3)
+        .join(", ");
+
+      return {
+        id: `cta-${a.AlertId ?? Math.random()}`,
+        type: "travel" as const,
+        title: `Chicago CTA${serviceNames ? ` — ${serviceNames}` : ""}: ${a.ImpactType ?? "Alert"}`,
+        message: (a.ShortDescription ?? a.Headline ?? "Service alert").slice(0, 140),
+        location: "Chicago, IL",
+        timeAgo: a.EventStart ? timeAgo(a.EventStart) : "recently",
+        severity,
+        source: "cta" as const,
+      };
+    });
+}
+
+async function fetchBartAlerts(): Promise<AlertItem[]> {
+  const url =
+    "https://api.bart.gov/api/bsa.aspx?cmd=bsa&key=MW9S-E7SL-26DU-VUS2&json=y";
+  const res = await fetch(url, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(8000),
+  });
+
+  if (!res.ok) return [];
+
+  const json = (await res.json()) as {
+    root?: {
+      bsa?:
+        | Array<{ "@id"?: string; type?: string; description?: { "#cdata-section"?: string } | string; posted?: string }>
+        | { "@id"?: string; type?: string; description?: { "#cdata-section"?: string } | string; posted?: string };
+    };
+  };
+
+  const rawBsa = json.root?.bsa;
+  if (!rawBsa) return [];
+
+  const bsaList = Array.isArray(rawBsa) ? rawBsa : [rawBsa];
+
+  return bsaList
+    .filter((b) => {
+      const desc = typeof b.description === "object" ? b.description?.["#cdata-section"] : b.description;
+      return desc && String(desc).trim().length > 0 && String(desc) !== "No delays reported.";
+    })
+    .slice(0, 4)
+    .map((b, idx) => {
+      const desc = typeof b.description === "object"
+        ? (b.description?.["#cdata-section"] ?? "")
+        : (b.description ?? "");
+      const alertType = String(b.type ?? "").toLowerCase();
+      const severity: AlertItem["severity"] =
+        alertType === "delay" ? "high" : alertType === "emergency" ? "critical" : "medium";
+      return {
+        id: `bart-${b["@id"] ?? idx}`,
+        type: "travel" as const,
+        title: `BART ${b.type ?? "Alert"}`,
+        message: String(desc).trim().slice(0, 140),
+        location: "San Francisco Bay Area, CA",
+        timeAgo: b.posted ? timeAgo(b.posted) : "recently",
+        severity,
+        source: "bart" as const,
+      };
+    });
+}
+
 router.get("/alerts", async (req: Request, res: Response) => {
   try {
     const state = typeof req.query.state === "string" ? req.query.state.toUpperCase() : "";
-    const cacheKey = state || "national";
-    const isPA = state === "PA";
-    const isDC = state === "DC" || state === "MD" || state === "VA";
+    const city = typeof req.query.city === "string" ? req.query.city.toLowerCase() : "";
+    const cacheKey = city || state || "national";
 
     const cached = alertCache.get(cacheKey);
     if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
@@ -215,18 +326,20 @@ router.get("/alerts", async (req: Request, res: Response) => {
       return;
     }
 
+    const isPA = state === "PA";
+    const isDC = state === "DC" || state === "MD" || state === "VA";
+    const isIL = state === "IL" || city === "chicago";
+    const isCA = state === "CA" || city === "sf" || city === "san francisco" || city === "oakland" || city === "bay area";
+
     const fetches: Promise<AlertItem[]>[] = [
       state ? fetchNwsAlerts(state) : Promise.resolve([] as AlertItem[]),
       fetchFemaAlerts(),
     ];
 
-    if (isPA) {
-      fetches.push(fetchSeptaAlerts());
-    }
-
-    if (isDC) {
-      fetches.push(fetchWmataAlerts());
-    }
+    if (isPA) fetches.push(fetchSeptaAlerts());
+    if (isDC) fetches.push(fetchWmataAlerts());
+    if (isIL) fetches.push(fetchCtaAlerts());
+    if (isCA) fetches.push(fetchBartAlerts());
 
     const results = await Promise.allSettled(fetches);
 
