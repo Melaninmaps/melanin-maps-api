@@ -134,45 +134,4 @@ router.patch("/moderation/reports/:id", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/reports", async (req: Request, res: Response) => {
-  try {
-    const body = req.body as Record<string, unknown>;
-    const { category, targetType, targetId, targetName, description, severity } = body;
-
-    if (typeof category !== "string" || !(SAFETY_REPORT_CATEGORIES as readonly string[]).includes(category)) {
-      res.status(400).json({ error: `category must be one of: ${SAFETY_REPORT_CATEGORIES.join(", ")}` });
-      return;
-    }
-
-    if (typeof targetName !== "string" || targetName.trim().length === 0) {
-      res.status(400).json({ error: "targetName is required" });
-      return;
-    }
-
-    const resolvedSeverity: ReportSeverity =
-      typeof severity === "string" && (SAFETY_REPORT_SEVERITIES as readonly string[]).includes(severity)
-        ? (severity as ReportSeverity)
-        : "medium";
-
-    const [report] = await db
-      .insert(safetyReportsTable)
-      .values({
-        reporterId: req.user?.id ?? null,
-        reporterName: req.user?.id ? "Community Member" : "Anonymous",
-        category: category as ReportCategory,
-        targetType: typeof targetType === "string" ? targetType : "neighborhood",
-        targetId: typeof targetId === "string" ? targetId : null,
-        targetName: targetName.trim(),
-        description: typeof description === "string" && description.trim().length > 0 ? description.trim() : null,
-        severity: resolvedSeverity,
-      })
-      .returning();
-
-    res.status(201).json({ report });
-  } catch (err) {
-    req.log.error({ err }, "Failed to submit report");
-    res.status(500).json({ error: "Failed to submit report" });
-  }
-});
-
 export default router;

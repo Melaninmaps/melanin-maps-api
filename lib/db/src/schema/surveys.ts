@@ -1,4 +1,4 @@
-import { integer, jsonb, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -82,6 +82,22 @@ export const insertSafetyReportSchema = createInsertSchema(safetyReportsTable, {
 });
 
 export const selectSafetyReportSchema = createSelectSchema(safetyReportsTable);
+
+export const safetyIncidentsTable = pgTable("safety_incidents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  city: varchar("city", { length: 100 }).notNull(),
+  neighborhood: varchar("neighborhood", { length: 255 }),
+  category: varchar("category", { length: 100 }).notNull(),
+  severity: varchar("severity", { length: 20 }).notNull().default("medium"),
+  reportCount: integer("report_count").notNull().default(1),
+  status: varchar("status", { length: 20 }).notNull().default("active"),
+  notificationsSent: boolean("notifications_sent").notNull().default(false),
+  triggeredAt: timestamp("triggered_at", { withTimezone: true }).notNull().defaultNow(),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type SafetyIncident = typeof safetyIncidentsTable.$inferSelect;
 
 export type NeighborhoodSurvey = typeof neighborhoodSurveysTable.$inferSelect;
 export type InsertNeighborhoodSurvey = z.infer<typeof insertSurveySchema>;

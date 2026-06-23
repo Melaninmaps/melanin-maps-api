@@ -1,5 +1,5 @@
-import { db, pushTokensTable, savedPlacesTable } from "@workspace/db";
-import { eq, inArray } from "drizzle-orm";
+import { db, pushTokensTable, savedPlacesTable, businessesTable, notificationsTable } from "@workspace/db";
+import { eq, inArray, ilike } from "drizzle-orm";
 import { logger } from "./logger";
 
 interface PushMessage {
@@ -72,5 +72,49 @@ export async function sendPushToUsersWithSavedBusiness(
     }
   } catch (err) {
     logger.warn({ err }, "[push] Failed to send push notifications to savers");
+  }
+}
+
+export async function sendPushToBusinessOwnersByCity(
+  city: string,
+  message: PushMessage,
+): Promise<void> {
+  try {
+    const businesses = await db
+      .select({ submittedById: businessesTable.submittedById, id: businessesTable.id, name: businessesTable.name })
+      .from(businessesTable)
+      .where(ilike(businessesTable.city, `%${city}%`));
+
+    const ownerIds = [...new Set(
+      businesses
+        .map((b) => b.submittedById)
+        .filter((id): id is string => id != null && id.length > 0),
+    )];
+
+    if (ownerIds.length === 0) return;
+
+    const tokens = await db
+      .select({ token: pushTokensTable.token, userId: pushTokensTable.userId })
+      .from(pushTokensTable)
+      .where(inArray(pushTokensTable.userId, ownerIds));
+
+    for (const row of tokens) {
+      if (row.token) await sendToToken(row.token, message);
+    }
+
+    if (ownerIds.length > 0) {
+      await db.insert(notificationsTable).values(
+        ownerIds.map((userId) => ({
+          userId,
+          type: "safety" as const,
+          title: message.title,
+          body: message.body,
+        })),
+      );
+    }
+
+    logger.info({ city, ownerCount: ownerIds.length }, "[push] Safety incident notifications sent to business owners");
+  } catch (err) {
+    logger.warn({ err }, "[push] Failed to send safety incident push to business owners");
   }
 }

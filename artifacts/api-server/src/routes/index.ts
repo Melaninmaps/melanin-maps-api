@@ -41,6 +41,7 @@ import dealsRouter from "./deals";
 import storiesRouter from "./stories";
 import redemptionsRouter from "./redemptions";
 import mentorshipRouter from "./mentorship";
+import reportsRouter from "./reports";
 
 const router: IRouter = Router();
 
@@ -86,5 +87,6 @@ router.use(dealsRouter);
 router.use(storiesRouter);
 router.use(redemptionsRouter);
 router.use(mentorshipRouter);
+router.use(reportsRouter);
 
 export default router;
