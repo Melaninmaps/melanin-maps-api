@@ -67,6 +67,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 type GroupMemberRow = { userId: string; role: string; joinedAt: Date };
 type PendingInvite = { id: number; invitedUserId: string; invitedUserFirstName: string | null; invitedUserLastName: string | null; createdAt: Date };
 type GroupDetail = Group & { isMember: boolean; isAdmin: boolean };
+type ConnectionRow = { id: number; status: string; requesterId: string; recipientId: string; otherId: string | null; otherFirstName: string | null; otherLastName: string | null };
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -106,6 +107,19 @@ export default function GroupDetailScreen() {
   const [suggNotes, setSuggNotes] = useState("");
   const [addingSugg, setAddingSugg] = useState(false);
 
+  const [connections, setConnections] = useState<ConnectionRow[]>([]);
+  const [showConnectModal, setShowConnectModal] = useState(false);
+  const [connectTarget, setConnectTarget] = useState<{ userId: string; name: string } | null>(null);
+  const [connecting, setConnecting] = useState(false);
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
+  const [safetyConnectionId, setSafetyConnectionId] = useState<number | null>(null);
+  const [safetyContactName, setSafetyContactName] = useState("");
+  const [safetyContactEmail, setSafetyContactEmail] = useState("");
+  const [savingSafety, setSavingSafety] = useState(false);
+  const [showAdminSettings, setShowAdminSettings] = useState(false);
+  const [ageRestricted, setAgeRestricted] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
@@ -130,6 +144,7 @@ export default function GroupDetailScreen() {
         setGroup(data.group);
         setMembers(data.members ?? []);
         setPendingInvites(data.pendingInvites ?? []);
+        setAgeRestricted(data.group.isAgeRestricted ?? false);
       }
       if (itinRes?.ok) {
         const data = await itinRes.json() as { itineraries: GroupItinerary[] };
@@ -190,6 +205,93 @@ export default function GroupDetailScreen() {
       headers: { Authorization: `Bearer ${token}` },
     });
     setSuggestions((prev) => prev.filter((s) => s.id !== suggId));
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated || !id) return;
+    const load = async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        if (!token) return;
+        const res = await fetch(`${getApiBase()}/api/connections`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) { const d = await res.json() as { connections: ConnectionRow[] }; setConnections(d.connections ?? []); }
+      } catch { /* ignore */ }
+    };
+    void load();
+  }, [isAuthenticated, id]);
+
+  const getConnectionWith = (memberId: string) =>
+    connections.find((c) => (c.requesterId === memberId || c.recipientId === memberId));
+
+  const handleOpenConnect = (memberId: string, memberName: string) => {
+    setConnectTarget({ userId: memberId, name: memberName });
+    setShowConnectModal(true);
+  };
+
+  const handleSendConnect = async () => {
+    if (!connectTarget) return;
+    setConnecting(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/connections/request`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ recipientId: connectTarget.userId, groupId: id ? parseInt(String(id), 10) : undefined }),
+      });
+      if (res.ok) {
+        const d = await res.json() as { connection: ConnectionRow };
+        setConnections((prev) => [...prev, d.connection]);
+        setShowConnectModal(false);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        Alert.alert("Error", "Failed to send connection request.");
+      }
+    } finally { setConnecting(false); }
+  };
+
+  const handleOpenSafetyShare = (connectionId: number) => {
+    setSafetyConnectionId(connectionId);
+    setSafetyContactName(""); setSafetyContactEmail("");
+    setShowSafetyModal(true);
+  };
+
+  const handleSubmitSafetyShare = async () => {
+    if (!safetyConnectionId || !safetyContactName.trim() || !safetyContactEmail.trim()) {
+      Alert.alert("Required", "Please fill in the trusted contact's name and email.");
+      return;
+    }
+    setSavingSafety(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/connections/${safetyConnectionId}/safety-share`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ trustedContactName: safetyContactName.trim(), trustedContactEmail: safetyContactEmail.trim() }),
+      });
+      if (res.ok) {
+        setShowSafetyModal(false);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert("Safety Share Initiated", `Your connection will be notified to confirm. Once both agree, ${safetyContactName} will receive both your profiles.`);
+      } else {
+        const d = await res.json() as { error?: string };
+        Alert.alert("Error", d.error ?? "Failed to initiate safety share.");
+      }
+    } finally { setSavingSafety(false); }
+  };
+
+  const handleToggleAgeRestriction = async (value: boolean) => {
+    if (!group) return;
+    setAgeRestricted(value);
+    setSavingSettings(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/groups/${group.id}/settings`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ isAgeRestricted: value }),
+      });
+      if (!res.ok) { setAgeRestricted(!value); Alert.alert("Error", "Failed to update group settings."); }
+    } finally { setSavingSettings(false); }
   };
 
   const handleJoinLeave = async () => {
@@ -269,6 +371,12 @@ export default function GroupDetailScreen() {
               <View style={styles.heroBadge}>
                 <Feather name="lock" size={12} color="rgba(255,255,255,0.9)" />
                 <Text style={styles.heroBadgeText}>Invite-Only</Text>
+              </View>
+            )}
+            {group.isAgeRestricted && (
+              <View style={[styles.heroBadge, { backgroundColor: "rgba(220,38,38,0.35)" }]}>
+                <Feather name="shield" size={12} color="rgba(255,255,255,0.9)" />
+                <Text style={styles.heroBadgeText}>18+ Only</Text>
               </View>
             )}
           </View>
@@ -371,6 +479,94 @@ export default function GroupDetailScreen() {
                 </View>
               ))}
             </View>
+          </View>
+        )}
+
+        {/* Members list (visible to group members) */}
+        {group.isMember && members.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Members ({members.length})</Text>
+            <View style={[styles.membersList, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              {members.map((m, idx) => {
+                if (m.userId === user?.id) return null;
+                const conn = getConnectionWith(m.userId);
+                const connStatus = conn?.status;
+                const memberName = `Member ${idx + 1}`;
+                return (
+                  <View
+                    key={m.userId}
+                    style={[styles.memberRow, idx < members.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}
+                  >
+                    <View style={[styles.memberAvatar, { backgroundColor: catColor + "18" }]}>
+                      <Feather name="user" size={16} color={catColor} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.memberName, { color: colors.foreground }]}>{memberName}</Text>
+                      <Text style={[styles.memberRole, { color: colors.mutedForeground }]}>{m.role === "admin" ? "Admin" : "Member"}</Text>
+                    </View>
+                    {!connStatus && (
+                      <TouchableOpacity
+                        style={[styles.connectBtn, { borderColor: catColor, backgroundColor: catColor + "12" }]}
+                        onPress={() => handleOpenConnect(m.userId, memberName)}
+                        activeOpacity={0.7}
+                      >
+                        <Feather name="user-plus" size={13} color={catColor} />
+                        <Text style={[styles.connectBtnText, { color: catColor }]}>Connect</Text>
+                      </TouchableOpacity>
+                    )}
+                    {connStatus === "pending" && (
+                      <View style={[styles.connStatusPill, { backgroundColor: "#C9922B18", borderColor: "#C9922B40" }]}>
+                        <Text style={[styles.connStatusText, { color: "#C9922B" }]}>Pending</Text>
+                      </View>
+                    )}
+                    {connStatus === "accepted" && (
+                      <TouchableOpacity
+                        style={[styles.safetyBtn, { borderColor: "#16A34A", backgroundColor: "#16A34A12" }]}
+                        onPress={() => handleOpenSafetyShare(conn!.id)}
+                        activeOpacity={0.7}
+                      >
+                        <Feather name="shield" size={13} color="#16A34A" />
+                        <Text style={[styles.connectBtnText, { color: "#16A34A" }]}>Safety Share</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* Admin Settings */}
+        {group.isAdmin && (
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={[styles.adminSettingsHeader, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => setShowAdminSettings((v) => !v)}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: catColor + "18" }]}>
+                <Feather name="settings" size={18} color={catColor} />
+              </View>
+              <Text style={[styles.adminSettingsTitle, { color: colors.foreground }]}>Group Settings</Text>
+              <Feather name={showAdminSettings ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
+            </TouchableOpacity>
+            {showAdminSettings && (
+              <View style={[styles.adminSettingsBody, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.settingRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.settingLabel, { color: colors.foreground }]}>18+ Age Restriction</Text>
+                    <Text style={[styles.settingDesc, { color: colors.mutedForeground }]}>Only members 18 and older can join this group</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.toggleTrack, { backgroundColor: ageRestricted ? "#DC2626" : colors.muted }]}
+                    onPress={() => !savingSettings && void handleToggleAgeRestriction(!ageRestricted)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={[styles.toggleThumb, { transform: [{ translateX: ageRestricted ? 20 : 2 }] }]} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
         )}
 
@@ -579,6 +775,93 @@ export default function GroupDetailScreen() {
         </View>
       </Modal>
 
+      {/* Connect Request Modal */}
+      <Modal visible={showConnectModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowConnectModal(false)}>
+        <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.foreground }]}>Send Connection Request</Text>
+            <TouchableOpacity onPress={() => setShowConnectModal(false)} activeOpacity={0.7}>
+              <Feather name="x" size={22} color={colors.foreground} />
+            </TouchableOpacity>
+          </View>
+          <View style={{ padding: 24, gap: 16 }}>
+            <View style={[styles.connectModalIcon, { backgroundColor: catColor + "15", borderColor: catColor + "30" }]}>
+              <Feather name="user-plus" size={32} color={catColor} />
+            </View>
+            <Text style={[styles.connectModalHeading, { color: colors.foreground }]}>
+              Connect with {connectTarget?.name}
+            </Text>
+            <Text style={[styles.connectModalBody, { color: colors.mutedForeground }]}>
+              Connecting lets you message each other and enables mutual safety features like trusted contact sharing for safer meetups.
+            </Text>
+          </View>
+          <View style={[styles.modalFooter, { borderTopColor: colors.border }]}>
+            <TouchableOpacity
+              style={[styles.modalSaveBtn, { backgroundColor: catColor, opacity: connecting ? 0.6 : 1 }]}
+              onPress={() => void handleSendConnect()}
+              disabled={connecting}
+              activeOpacity={0.85}
+            >
+              {connecting ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="user-plus" size={18} color="#fff" />}
+              <Text style={styles.modalSaveBtnText}>{connecting ? "Sending…" : "Send Request"}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Safety Share Modal */}
+      <Modal visible={showSafetyModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowSafetyModal(false)}>
+        <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.foreground }]}>Safety Share</Text>
+            <TouchableOpacity onPress={() => setShowSafetyModal(false)} activeOpacity={0.7}>
+              <Feather name="x" size={22} color={colors.foreground} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={[styles.modalScroll, { paddingBottom: 16 }]}>
+            <View style={[styles.safetyInfoBanner, { backgroundColor: "#16A34A12", borderColor: "#16A34A30" }]}>
+              <Feather name="shield" size={18} color="#16A34A" />
+              <Text style={[styles.safetyInfoText, { color: colors.foreground }]}>
+                Your trusted contact will receive both your profile and your connection's profile once you both consent. They'll know you're meeting up.
+              </Text>
+            </View>
+            <Text style={[styles.modalLabel, { color: colors.foreground }]}>Trusted Contact Name</Text>
+            <TextInput
+              style={[styles.modalInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+              placeholder="Full name"
+              placeholderTextColor={colors.mutedForeground}
+              value={safetyContactName}
+              onChangeText={setSafetyContactName}
+              autoCapitalize="words"
+            />
+            <Text style={[styles.modalLabel, { color: colors.foreground }]}>Trusted Contact Email</Text>
+            <TextInput
+              style={[styles.modalInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+              placeholder="email@example.com"
+              placeholderTextColor={colors.mutedForeground}
+              value={safetyContactEmail}
+              onChangeText={setSafetyContactEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <Text style={[styles.safetyNote, { color: colors.mutedForeground }]}>
+              Your connection will receive a consent request. The share only activates once both parties agree.
+            </Text>
+          </ScrollView>
+          <View style={[styles.modalFooter, { borderTopColor: colors.border }]}>
+            <TouchableOpacity
+              style={[styles.modalSaveBtn, { backgroundColor: "#16A34A", opacity: savingSafety ? 0.6 : 1 }]}
+              onPress={() => void handleSubmitSafetyShare()}
+              disabled={savingSafety}
+              activeOpacity={0.85}
+            >
+              {savingSafety ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="shield" size={18} color="#fff" />}
+              <Text style={styles.modalSaveBtnText}>{savingSafety ? "Initiating…" : "Initiate Safety Share"}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: bottomPad + 16 }]}>
         {group.isPrivate && !group.isMember ? (
           <View style={[styles.privateNotice, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -712,4 +995,28 @@ const styles = StyleSheet.create({
   modalFooter: { padding: 16, borderTopWidth: 1 },
   modalSaveBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 52, borderRadius: 14 },
   modalSaveBtnText: { fontFamily: "Inter_700Bold", fontSize: 16, color: "#fff" },
+  membersList: { borderRadius: 16, borderWidth: 1, overflow: "hidden" },
+  memberRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14 },
+  memberAvatar: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  memberName: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  memberRole: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 },
+  connectBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10, borderWidth: 1.5 },
+  connectBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  connStatusPill: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, borderWidth: 1 },
+  connStatusText: { fontFamily: "Inter_500Medium", fontSize: 12 },
+  safetyBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10, borderWidth: 1.5 },
+  adminSettingsHeader: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 16, borderWidth: 1 },
+  adminSettingsTitle: { fontFamily: "Inter_600SemiBold", fontSize: 15, flex: 1 },
+  adminSettingsBody: { borderRadius: 16, borderWidth: 1, marginTop: 8, overflow: "hidden" },
+  settingRow: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16 },
+  settingLabel: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  settingDesc: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, marginTop: 3 },
+  toggleTrack: { width: 46, height: 26, borderRadius: 13, justifyContent: "center" },
+  toggleThumb: { width: 22, height: 22, borderRadius: 11, backgroundColor: "#FFFFFF", shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2, elevation: 2 },
+  connectModalIcon: { width: 72, height: 72, borderRadius: 20, alignSelf: "center", alignItems: "center", justifyContent: "center", borderWidth: 1.5 },
+  connectModalHeading: { fontFamily: "Inter_700Bold", fontSize: 20, textAlign: "center" },
+  connectModalBody: { fontFamily: "Inter_400Regular", fontSize: 15, textAlign: "center", lineHeight: 22 },
+  safetyInfoBanner: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderRadius: 12, borderWidth: 1, padding: 14, marginBottom: 8 },
+  safetyInfoText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, flex: 1 },
+  safetyNote: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, marginTop: 12, textAlign: "center" },
 });

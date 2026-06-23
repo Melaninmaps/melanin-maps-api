@@ -15,6 +15,7 @@ interface User {
   lastName: string | null;
   profileImageUrl: string | null;
   approved: boolean;
+  dateOfBirth?: string | null;
 }
 
 interface AuthContextValue {

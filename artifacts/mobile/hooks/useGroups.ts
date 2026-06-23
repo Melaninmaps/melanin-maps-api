@@ -21,6 +21,7 @@ export interface Group {
   memberCount: number;
   maxMembers: number;
   isPrivate: boolean;
+  isAgeRestricted: boolean;
   city: string | null;
   state: string | null;
   createdAt: string;

@@ -29,3 +29,4 @@ export * from "./points-redemptions";
 export * from "./mentorship-profiles";
 export * from "./notifications";
 export * from "./travel";
+export * from "./connections";

@@ -43,6 +43,7 @@ import redemptionsRouter from "./redemptions";
 import mentorshipRouter from "./mentorship";
 import reportsRouter from "./reports";
 import travelFlightsRouter from "./travel-flights";
+import connectionsRouter from "./connections";
 
 const router: IRouter = Router();
 
@@ -90,5 +91,6 @@ router.use(redemptionsRouter);
 router.use(mentorshipRouter);
 router.use(reportsRouter);
 router.use(travelFlightsRouter);
+router.use(connectionsRouter);
 
 export default router;

@@ -12,7 +12,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, usePathname, type Href } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useRef } from "react";
 import { Animated, Platform, StyleSheet, View } from "react-native";
@@ -154,6 +154,24 @@ function ApprovalChecker() {
       router.replace("/pending-approval");
     }
   }, [isLoading, isAuthenticated, user, router]);
+
+  return null;
+}
+
+function DobChecker() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user, isLoading, isAuthenticated } = useAuth();
+  const SKIP_PATHS = ["/onboarding", "/login", "/signup", "/dob-collection", "/pending-approval"];
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!isAuthenticated || !user) return;
+    if (SKIP_PATHS.some((p) => pathname.startsWith(p))) return;
+    if (!user.dateOfBirth) {
+      router.replace("/dob-collection" as Href);
+    }
+  }, [isLoading, isAuthenticated, user, pathname, router]);
 
   return null;
 }
@@ -448,6 +466,7 @@ export default function RootLayout() {
                 <View style={{ flex: 1 }}>
                   <OnboardingChecker />
                   <ApprovalChecker />
+                  <DobChecker />
                   <SessionExpiryWatcher />
                   <PushNotificationRegistrar />
                   <RootLayoutNav />

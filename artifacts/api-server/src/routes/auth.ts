@@ -95,8 +95,18 @@ async function upsertUser(claims: Record<string, unknown>) {
   return user;
 }
 
-router.get("/auth/user", (req: Request, res: Response) => {
-  res.json({ user: req.isAuthenticated() ? req.user : null });
+router.get("/auth/user", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) { res.json({ user: null }); return; }
+  try {
+    const [dbRow] = await db
+      .select({ dateOfBirth: usersTable.dateOfBirth })
+      .from(usersTable)
+      .where(eq(usersTable.id, req.user!.id))
+      .limit(1);
+    res.json({ user: { ...req.user, dateOfBirth: dbRow?.dateOfBirth ?? null } });
+  } catch {
+    res.json({ user: req.user });
+  }
 });
 
 router.get("/login", async (req: Request, res: Response) => {
@@ -273,6 +283,34 @@ router.post(
     }
   },
 );
+
+router.patch("/auth/user/profile", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const userId = req.user!.id;
+    const { dateOfBirth } = req.body as { dateOfBirth?: string };
+    if (!dateOfBirth) { res.status(400).json({ error: "dateOfBirth is required" }); return; }
+
+    const dob = new Date(dateOfBirth);
+    if (isNaN(dob.getTime())) { res.status(400).json({ error: "Invalid date format" }); return; }
+
+    const ageMs = Date.now() - dob.getTime();
+    const ageYears = ageMs / (1000 * 60 * 60 * 24 * 365.25);
+    if (ageYears < 13) { res.status(400).json({ error: "You must be at least 13 years old to use this platform." }); return; }
+    if (ageYears > 120) { res.status(400).json({ error: "Invalid date of birth." }); return; }
+
+    const [updated] = await db
+      .update(usersTable)
+      .set({ dateOfBirth: dob })
+      .where(eq(usersTable.id, userId))
+      .returning({ dateOfBirth: usersTable.dateOfBirth });
+
+    res.json({ dateOfBirth: updated.dateOfBirth });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /api/auth/user/profile error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 router.post("/mobile-auth/logout", async (req: Request, res: Response) => {
   const sid = getSessionId(req);

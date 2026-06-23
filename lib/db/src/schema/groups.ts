@@ -12,6 +12,7 @@ export const groups = pgTable("groups", {
   city: text("city"),
   state: text("state"),
   imageUrl: text("image_url"),
+  isAgeRestricted: boolean("is_age_restricted").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

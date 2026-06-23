@@ -160,6 +160,43 @@ router.post("/groups", async (req: Request, res: Response) => {
   }
 });
 
+router.patch("/groups/:id/settings", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const groupId = parseInt(String(req.params.id), 10);
+    if (isNaN(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
+    const userId = req.user!.id;
+
+    const [admin] = await db
+      .select()
+      .from(groupMembers)
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId), eq(groupMembers.role, "admin")))
+      .limit(1);
+    if (!admin) { res.status(403).json({ error: "Only group admins can update settings" }); return; }
+
+    const { isAgeRestricted, isPrivate, name, description, maxMembers } = req.body as {
+      isAgeRestricted?: boolean;
+      isPrivate?: boolean;
+      name?: string;
+      description?: string;
+      maxMembers?: number;
+    };
+
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (isAgeRestricted !== undefined) updates.isAgeRestricted = isAgeRestricted;
+    if (isPrivate !== undefined) updates.isPrivate = isPrivate;
+    if (name?.trim()) updates.name = name.trim();
+    if (description !== undefined) updates.description = description.trim() || null;
+    if (maxMembers !== undefined) updates.maxMembers = Math.min(Math.max(Number(maxMembers) || 8, 2), 8);
+
+    const [updated] = await db.update(groups).set(updates).where(eq(groups.id, groupId)).returning();
+    res.json({ group: updated });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /api/groups/:id/settings error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.post("/groups/:id/invite", async (req: Request, res: Response) => {
   if (!requireAuth(req, res)) return;
   try {
@@ -446,6 +483,20 @@ router.post("/groups/:id/join", async (req: Request, res: Response) => {
     if (group.isPrivate) {
       res.status(403).json({ error: "This group requires an invitation to join" });
       return;
+    }
+
+    if (group.isAgeRestricted) {
+      const [userData] = await db.select({ dateOfBirth: usersTable.dateOfBirth }).from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+      if (!userData?.dateOfBirth) {
+        res.status(403).json({ error: "This group is 18+ only. Please add your date of birth in your profile settings." });
+        return;
+      }
+      const ageMs = Date.now() - new Date(userData.dateOfBirth).getTime();
+      const ageYears = ageMs / (1000 * 60 * 60 * 24 * 365.25);
+      if (ageYears < 18) {
+        res.status(403).json({ error: "You must be 18 or older to join this group." });
+        return;
+      }
     }
 
     if (group.memberCount >= group.maxMembers) {
