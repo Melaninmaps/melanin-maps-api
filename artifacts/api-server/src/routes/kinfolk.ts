@@ -5,6 +5,7 @@ import {
   db,
   usersTable,
   userPreferencesTable,
+  userSettingsTable,
   kinfolkSessionsTable,
   kinfolkFeedbackTable,
   savedPlacesTable,
@@ -406,7 +407,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       reply = rawContent;
     }
 
-    // Save/update session
+    // Save/update session — skip if user has opted out of memory
     const timestamp = new Date().toISOString();
     const newUserMsg: SessionMessage = { role: "user", content: message, timestamp };
     const newAiMsg: SessionMessage = {
@@ -418,8 +419,19 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     };
     const updatedMessages = [...existingMessages, newUserMsg, newAiMsg];
 
-    let finalSessionId = sessionId;
+    let memoryEnabled = true;
     if (req.user?.id) {
+      const [userSettings] = await db
+        .select({ kinfolkMemoryEnabled: userSettingsTable.kinfolkMemoryEnabled })
+        .from(userSettingsTable)
+        .where(eq(userSettingsTable.userId, req.user.id))
+        .limit(1)
+        .catch(() => []);
+      if (userSettings?.kinfolkMemoryEnabled === false) memoryEnabled = false;
+    }
+
+    let finalSessionId = sessionId;
+    if (req.user?.id && memoryEnabled) {
       if (currentSession) {
         await db
           .update(kinfolkSessionsTable)

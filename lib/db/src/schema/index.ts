@@ -37,3 +37,4 @@ export * from "./skip-feedback";
 export * from "./profile-views";
 export * from "./location-shares";
 export * from "./meetup-verifications";
+export * from "./user-settings";

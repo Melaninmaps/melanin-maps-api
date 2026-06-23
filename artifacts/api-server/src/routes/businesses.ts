@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable, businessProfileViewsTable } from "@workspace/db";
+import { db, businessesTable, businessProfileViewsTable, userSettingsTable } from "@workspace/db";
 import { eq, and, or, ilike } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -82,10 +82,22 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
     }
 
     const userId = (req as any).user?.id as string | undefined;
-    db.insert(businessProfileViewsTable)
-      .values({ businessId: id, userId: userId ?? null })
-      .execute()
-      .catch(() => {});
+    // Fire-and-forget: skip tracking if user has opted out
+    void (async () => {
+      if (userId) {
+        const [settings] = await db
+          .select({ profileViewTrackingEnabled: userSettingsTable.profileViewTrackingEnabled })
+          .from(userSettingsTable)
+          .where(eq(userSettingsTable.userId, userId))
+          .limit(1)
+          .catch(() => []);
+        if (settings?.profileViewTrackingEnabled === false) return;
+      }
+      db.insert(businessProfileViewsTable)
+        .values({ businessId: id, userId: userId ?? null })
+        .execute()
+        .catch(() => {});
+    })();
 
     res.json({ business });
   } catch (err) {

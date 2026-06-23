@@ -53,6 +53,7 @@ import skipFeedbackRouter from "./skip-feedback";
 import businessesAnalyticsRouter from "./businesses-analytics";
 import promoteRouter from "./promote";
 import postNudgeRouter from "./post-nudge";
+import userSettingsRouter from "./user-settings";
 
 const router: IRouter = Router();
 
@@ -110,5 +111,6 @@ router.use(skipFeedbackRouter);
 router.use(businessesAnalyticsRouter);
 router.use(promoteRouter);
 router.use(postNudgeRouter);
+router.use(userSettingsRouter);
 
 export default router;
