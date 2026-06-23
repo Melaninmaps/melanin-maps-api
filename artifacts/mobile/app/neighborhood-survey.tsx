@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  Alert,
   Platform,
   ScrollView,
   StyleSheet,
@@ -175,6 +176,8 @@ export default function NeighborhoodSurveyScreen() {
         }),
       });
     } catch {
+      setSubmitted(false);
+      Alert.alert("Submission Failed", "We couldn't save your survey. Please check your connection and try again.");
     }
   };
 
