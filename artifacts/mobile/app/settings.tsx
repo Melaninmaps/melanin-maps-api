@@ -58,6 +58,7 @@ export default function SettingsScreen() {
       rows: [
         { id: "notifications", icon: "bell", label: "Notifications", sub: "Alerts and reminders", route: "/notifications-settings" },
         { id: "privacy", icon: "shield", label: "Privacy & Safety", sub: "Visibility and data", route: "/privacy" },
+        { id: "familysafety", icon: "users", label: "Family Safety", sub: "Parental controls & keyword filters", route: "/family-safety" },
         { id: "appearance", icon: "moon", label: "Dark Mode", value: isDark ? "On" : "Off", route: null },
       ],
     },

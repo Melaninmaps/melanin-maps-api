@@ -1,5 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, conversations as conversationsTable, messages as messagesTable } from "@workspace/db";
+import { scanForFamily } from "../lib/familyFilter";
 import { eq, asc, desc, sql } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -80,6 +81,11 @@ router.post("/conversations/:id/messages", async (req: Request, res: Response) =
     const { content } = req.body as { content?: string };
     if (!content?.trim()) {
       res.status(400).json({ error: "content is required" });
+      return;
+    }
+    const scan = await scanForFamily(content.trim(), req.user!.id, "message");
+    if (scan.blocked) {
+      res.status(422).json({ error: "Your message was blocked by your guardian's content filter.", code: "FAMILY_FILTER_BLOCKED" });
       return;
     }
     const [msg] = await db

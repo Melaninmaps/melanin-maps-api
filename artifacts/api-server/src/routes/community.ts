@@ -3,6 +3,7 @@ import { db, communityPostsTable } from "@workspace/db";
 import { eq, desc, sql } from "drizzle-orm";
 import { storage } from "../storage";
 import { checkContent, redactForLog } from "../lib/contentFilter";
+import { scanForFamily } from "../lib/familyFilter";
 
 const router: IRouter = Router();
 
@@ -37,6 +38,11 @@ router.post("/community/posts", async (req: Request, res: Response) => {
     if (!filter.ok) {
       req.log.warn({ userId: req.user.id, matched: redactForLog(filter.matched) }, "Community post blocked by content filter");
       res.status(422).json({ error: filter.reason, code: "CONTENT_POLICY_VIOLATION" });
+      return;
+    }
+    const familyScan = await scanForFamily(content.trim(), req.user.id, "community_post");
+    if (familyScan.blocked) {
+      res.status(422).json({ error: "This post was blocked by your guardian's content filter.", code: "FAMILY_FILTER_BLOCKED" });
       return;
     }
     const user = await storage.getUser(req.user.id);
