@@ -32,7 +32,8 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       referredBy?: string;
     };
 
-    if (!email || !email.includes("@")) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
       res.status(400).json({ error: "Valid email is required" });
       return;
     }

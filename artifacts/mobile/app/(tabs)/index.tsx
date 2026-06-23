@@ -218,7 +218,7 @@ export default function DiscoverScreen() {
             >
               <Text style={styles.heroLabel}>SAFETY-FIRST COMMUNITY INTELLIGENCE</Text>
               <Text style={styles.heroTitle}>Map Your Life.{"\n"}Connect Deeper.{"\n"}Live With Purpose.</Text>
-              <TouchableOpacity style={styles.heroCta} activeOpacity={0.85}>
+              <TouchableOpacity style={styles.heroCta} activeOpacity={0.85} onPress={() => router.push("/(tabs)/map")}>
                 <Text style={styles.heroCtaText}>Explore Near You</Text>
                 <Feather name="arrow-right" size={14} color="#3A1F0E" />
               </TouchableOpacity>

@@ -4,6 +4,17 @@ import { eq, and, or, ilike } from "drizzle-orm";
 
 const router: IRouter = Router();
 
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
+  .split(",")
+  .map((e) => e.trim())
+  .filter(Boolean);
+
+function isAdmin(req: Request): boolean {
+  const user = (req as any).user;
+  if (!user?.email) return false;
+  return ADMIN_EMAILS.includes(user.email);
+}
+
 router.get("/businesses", async (req: Request, res: Response) => {
   try {
     const { category, search } = req.query;
@@ -136,6 +147,10 @@ router.patch("/businesses/:id/status", async (req: Request, res: Response) => {
   try {
     if (!req.user?.id) {
       res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    if (!isAdmin(req)) {
+      res.status(403).json({ error: "Admin access required" });
       return;
     }
 

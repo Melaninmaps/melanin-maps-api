@@ -7,8 +7,23 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Shield, Search, Check, ChevronDown, ShieldCheck, Radio, Users } from "lucide-react";
 
+const FAQ_ITEMS = [
+  { q: "How are safety scores calculated?", a: "Safety scores are calculated from community-submitted reports, verified member reviews, and real-time incident data. Each score reflects the collective experience of people who've actually been there and is updated continuously as new reports come in." },
+  { q: "Who can submit a review or report?", a: "Any verified Mapping with Melanin™ member can submit a safety review or incident report. We require authentication to maintain accountability and reduce fraudulent submissions." },
+  { q: "What happens when an incident is reported?", a: "Our moderation team reviews every incident report within 24 hours. Verified incidents are reflected in the safety score, and alerts are sent to nearby members when a situation warrants immediate attention." },
+  { q: "Can businesses respond to reviews?", a: "Yes. Verified business owners can respond publicly to reviews through their business dashboard. We encourage open dialogue between businesses and the community they serve." },
+  { q: "Are businesses able to dispute inaccurate reviews?", a: "Yes. Business owners can flag reviews they believe are inaccurate. Our team investigates disputes and removes content that violates our community guidelines." },
+  { q: "How are reviews moderated?", a: "All reviews go through automated screening for harmful content, followed by human review when flagged. Our team of community moderators ensures every review meets our standards for authenticity and respect." },
+  { q: "How do businesses become verified?", a: "Businesses apply for verification through our Business Verification program. We review documentation confirming minority ownership and business legitimacy before awarding verified status." },
+  { q: "Is my personal information safe?", a: "Absolutely. Your personal information is never sold to third parties. Reviews can be submitted under your name or anonymously, and all data is encrypted and securely stored." },
+  { q: "How does Mapping with Melanin help travelers make informed decisions?", a: "We aggregate community safety scores, verified reviews, and local insights so you can research any neighborhood or business before you arrive — giving you the confidence to explore new places on your terms." },
+  { q: "How is Mapping with Melanin different from Yelp or Google Reviews?", a: "We're built specifically for the Melanated community. Our safety scores reflect real experiences from people who share your background, not generic ratings. We surface culture-specific insights that mainstream platforms miss entirely." },
+  { q: "What cities have the highest safety scores for Melaninated travelers?", a: "Our top-rated cities include Atlanta, GA; Houston, TX; Chicago, IL; Miami, FL; and Washington, DC — all with strong Black business communities and high community safety scores from verified members." },
+];
+
 export default function Safety() {
   const { data: auth } = useGetCurrentAuthUser();
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
   
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
@@ -199,23 +214,26 @@ export default function Safety() {
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-[#3A1F0E]">Questions — How Safety Works</h2>
           </div>
           
-          <div className="space-y-4">
-            {[
-              "How are safety scores calculated?",
-              "Who can submit a review or report?",
-              "What happens when an incident is reported?",
-              "Can businesses respond to reviews?",
-              "Are businesses able to dispute inaccurate reviews?",
-              "How are reviews moderated?",
-              "How do businesses become verified?",
-              "Is my personal information safe?",
-              "How does Mapping with Melanin help travelers make informed decisions?",
-              "How is Mapping with Melanin different from Yelp or Google Reviews?",
-              "What cities have the highest safety scores for Melaninated travelers?"
-            ].map((q, i) => (
-              <div key={i} className="bg-white p-6 rounded-2xl border border-[#3A1F0E]/5 flex justify-between items-center cursor-pointer hover:border-[#CA922B]/50 transition-colors">
-                <span className="font-medium text-[#3A1F0E]">{q}</span>
-                <ChevronDown className="w-5 h-5 text-[#3A1F0E]/40" />
+          <div className="space-y-3">
+            {FAQ_ITEMS.map((item, i) => (
+              <div
+                key={i}
+                className="bg-white rounded-2xl border border-[#3A1F0E]/5 hover:border-[#CA922B]/40 transition-colors overflow-hidden"
+              >
+                <button
+                  className="w-full p-6 flex justify-between items-center cursor-pointer text-left gap-4"
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                >
+                  <span className="font-medium text-[#3A1F0E]">{item.q}</span>
+                  <ChevronDown
+                    className={`w-5 h-5 text-[#CA922B] shrink-0 transition-transform duration-200 ${openFaq === i ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {openFaq === i && (
+                  <div className="px-6 pb-6 text-[#3A1F0E]/70 text-sm leading-relaxed border-t border-[#3A1F0E]/5 pt-4">
+                    {item.a}
+                  </div>
+                )}
               </div>
             ))}
           </div>

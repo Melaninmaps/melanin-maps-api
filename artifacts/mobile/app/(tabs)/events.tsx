@@ -27,7 +27,7 @@ export default function EventsScreen() {
   const [timeFilter, setTimeFilter] = useState("Upcoming");
   const [category, setCategory] = useState("All");
 
-  const { events, isLoading, refetch } = useEvents({ category });
+  const { events, isLoading, error, refetch } = useEvents({ category });
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -40,6 +40,13 @@ export default function EventsScreen() {
           <Feather name="sliders" size={16} color={colors.foreground} />
         </TouchableOpacity>
       </View>
+
+      {error ? (
+        <View style={[styles.errorBanner, { backgroundColor: "#FEF3C7" }]}>
+          <Feather name="alert-circle" size={14} color="#92400E" />
+          <Text style={styles.errorBannerText}>{error}</Text>
+        </View>
+      ) : null}
 
       <View style={[styles.timeFilterRow, { borderBottomColor: colors.border }]}>
         {TIME_FILTERS.map((f) => (
@@ -167,6 +174,21 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 16,
+  },
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 20,
+    marginTop: 10,
+    padding: 12,
+    borderRadius: 10,
+  },
+  errorBannerText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    color: "#92400E",
+    flex: 1,
   },
   emptyText: {
     fontFamily: "Inter_400Regular",

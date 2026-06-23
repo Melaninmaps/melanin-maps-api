@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   RefreshControl,
   ScrollView,
@@ -69,7 +70,10 @@ export default function MessagesScreen() {
         </View>
         <TouchableOpacity
           style={[styles.composeBtn, { backgroundColor: colors.primary }]}
-          onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            Alert.alert("Coming Soon", "Direct messaging will be available in a future update. Stay tuned!");
+          }}
         >
           <Feather name="edit-2" size={15} color="#FFFFFF" />
         </TouchableOpacity>
