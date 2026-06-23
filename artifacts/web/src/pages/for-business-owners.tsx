@@ -53,7 +53,8 @@ export default function ForBusinessOwners() {
       setError("Please fill in all required fields.");
       return;
     }
-    if (!form.email.includes("@")) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
       setError("Please enter a valid email address.");
       return;
     }

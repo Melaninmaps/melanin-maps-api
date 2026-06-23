@@ -1162,11 +1162,12 @@ export default function Home() {
 
           <div className="text-center">
             <p className="text-[#3A1F0E]/50 text-sm mb-6">These features are in development. Join the waitlist to be the first to access them when they launch.</p>
-            <a href="#" onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
-              <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">
-                Join the Waitlist for Early Access
-              </Button>
-            </a>
+            <button
+              onClick={() => document.getElementById("waitlist-form")?.scrollIntoView({ behavior: "smooth" })}
+              className="inline-flex items-center justify-center rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12 font-medium text-sm transition-colors"
+            >
+              Join the Waitlist for Early Access
+            </button>
           </div>
         </div>
       </section>
