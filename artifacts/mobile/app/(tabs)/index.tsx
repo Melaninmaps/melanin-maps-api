@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AlertBanner } from "@/components/AlertBanner";
 import { BusinessCard } from "@/components/BusinessCard";
+import { SkipFeedbackModal } from "@/components/SkipFeedbackModal";
 import { SwipeableBusinessCard } from "@/components/SwipeableBusinessCard";
 import { SkeletonBusinessCardHorizontal, SkeletonBusinessCardVertical } from "@/components/SkeletonCard";
 import { CategoryPill } from "@/components/CategoryPill";
@@ -50,6 +51,7 @@ export default function DiscoverScreen() {
   });
   const [showNeighborhoodSurvey, setShowNeighborhoodSurvey] = useState(false);
   const [showPrefsSurvey, setShowPrefsSurvey] = useState(false);
+  const [feedbackBusiness, setFeedbackBusiness] = useState<{ id: string; name: string; feedbackOptIn?: boolean } | null>(null);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -327,17 +329,37 @@ export default function DiscoverScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ gap: 12 }}
               renderItem={({ item }) => (
-                <BusinessCard
-                  business={item}
-                  onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })}
-                  isSaved={isSaved(item.id)}
-                  onToggleSave={() => toggleSave(item.id)}
-                  horizontal
-                />
+                <View>
+                  <BusinessCard
+                    business={item}
+                    onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })}
+                    isSaved={isSaved(item.id)}
+                    onToggleSave={() => toggleSave(item.id)}
+                    horizontal
+                  />
+                  {item.feedbackOptIn && (
+                    <TouchableOpacity
+                      style={styles.notForMeBtn}
+                      onPress={() => setFeedbackBusiness(item)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.notForMeTxt, { color: colors.mutedForeground }]}>Not for me — leave a note</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               )}
             />
           </View>
         ) : null}
+
+        {feedbackBusiness && (
+          <SkipFeedbackModal
+            visible={!!feedbackBusiness}
+            businessId={feedbackBusiness.id}
+            businessName={feedbackBusiness.name}
+            onClose={() => setFeedbackBusiness(null)}
+          />
+        )}
 
         {/* Nearby businesses */}
         {businessesLoading ? (
@@ -481,6 +503,8 @@ const styles = StyleSheet.create({
     color: "#0A0A08",
   },
   section: { paddingHorizontal: 20, marginBottom: 24 },
+  notForMeBtn: { marginTop: 4, paddingVertical: 4, alignItems: "center" },
+  notForMeTxt: { fontSize: 11, fontFamily: "Inter_400Regular", textDecorationLine: "underline" },
   travelBanner: {
     borderRadius: 16,
     padding: 16,

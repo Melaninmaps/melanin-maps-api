@@ -38,6 +38,7 @@ export interface Business {
   wouldReturnAlone?: number;
   recommendationRate?: number;
   reviews?: Review[];
+  feedbackOptIn?: boolean;
 }
 
 export interface Event {

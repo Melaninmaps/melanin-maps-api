@@ -29,6 +29,7 @@ interface MyBusiness {
   verified?: boolean;
   blackOwned?: boolean;
   confidenceScore?: number;
+  feedbackOptIn?: boolean;
 }
 
 interface ReviewRow {
@@ -91,6 +92,30 @@ export default function BusinessDashboardScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "insights">("overview");
   const { business, reviews, loading } = useMyBusiness();
+  const [feedbackOptIn, setFeedbackOptIn] = useState<boolean>(false);
+  const [togglingFeedback, setTogglingFeedback] = useState(false);
+
+  React.useEffect(() => {
+    if (business?.feedbackOptIn !== undefined) setFeedbackOptIn(business.feedbackOptIn);
+  }, [business?.feedbackOptIn]);
+
+  async function toggleFeedbackOptIn() {
+    if (togglingFeedback) return;
+    setTogglingFeedback(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const base = getApiBase();
+      if (!token || !base) return;
+      const next = !feedbackOptIn;
+      const res = await fetch(`${base}/api/businesses/mine/feedback-opt-in`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ enabled: next }),
+      });
+      if (res.ok) setFeedbackOptIn(next);
+    } catch {}
+    finally { setTogglingFeedback(false); }
+  }
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -247,6 +272,32 @@ export default function BusinessDashboardScreen() {
               ))}
             </View>
 
+            {/* Direct feedback opt-in toggle */}
+            <TouchableOpacity
+              style={[styles.feedbackToggleCard, { backgroundColor: colors.card, borderColor: feedbackOptIn ? "#CA922B" : colors.border }]}
+              onPress={toggleFeedbackOptIn}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.feedbackToggleIcon, { backgroundColor: "#CA922B18" }]}>
+                <Feather name="message-circle" size={20} color="#CA922B" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.feedbackToggleTitle, { color: colors.foreground }]}>Direct Skip Feedback</Text>
+                <Text style={[styles.feedbackToggleSub, { color: colors.mutedForeground }]}>
+                  {feedbackOptIn
+                    ? "On — users who skip your listing can send you a private, constructive note."
+                    : "Off — enable to receive private notes from users who skip your listing."}
+                </Text>
+              </View>
+              {togglingFeedback ? (
+                <ActivityIndicator size="small" color="#CA922B" />
+              ) : (
+                <View style={[styles.togglePill, { backgroundColor: feedbackOptIn ? "#CA922B" : colors.border }]}>
+                  <View style={[styles.toggleDot, { transform: [{ translateX: feedbackOptIn ? 14 : 0 }] }]} />
+                </View>
+              )}
+            </TouchableOpacity>
+
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Recent Reviews</Text>
             </View>
@@ -367,7 +418,13 @@ const styles = StyleSheet.create({
   statChange: { fontSize: 12, fontFamily: "Inter_500Medium", marginTop: 2 },
   sectionTitle: { fontSize: 17, fontFamily: "Inter_700Bold", marginBottom: 14 },
   sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
-  actionsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 28 },
+  actionsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 20 },
+  feedbackToggleCard: { flexDirection: "row", alignItems: "center", gap: 14, padding: 14, borderRadius: 14, borderWidth: 1, marginBottom: 24 },
+  feedbackToggleIcon: { width: 40, height: 40, borderRadius: 10, justifyContent: "center", alignItems: "center" },
+  feedbackToggleTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", marginBottom: 3 },
+  feedbackToggleSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
+  togglePill: { width: 36, height: 22, borderRadius: 11, justifyContent: "center", paddingHorizontal: 3 },
+  toggleDot: { width: 16, height: 16, borderRadius: 8, backgroundColor: "#fff" },
   actionCard: {
     width: "30%", borderRadius: 14, padding: 14, alignItems: "center",
     gap: 8, borderWidth: 1,

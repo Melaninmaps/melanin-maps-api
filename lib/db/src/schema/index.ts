@@ -33,5 +33,6 @@ export * from "./connections";
 export * from "./family-safety";
 export * from "./safety-checkins";
 export * from "./safety-tips";
+export * from "./skip-feedback";
 export * from "./location-shares";
 export * from "./meetup-verifications";
