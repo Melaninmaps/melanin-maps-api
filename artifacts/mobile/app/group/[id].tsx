@@ -6,10 +6,12 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -89,7 +91,7 @@ export default function GroupDetailScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { join, leave } = useGroups();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const [group, setGroup] = useState<GroupDetail | null>(null);
   const [members, setMembers] = useState<GroupMemberRow[]>([]);
@@ -454,7 +456,7 @@ export default function GroupDetailScreen() {
                           </Text>
                         </TouchableOpacity>
                         <Text style={[styles.suggDate, { color: colors.mutedForeground }]}>{formatDate(s.createdAt)}</Text>
-                        {s.userId === group.createdBy && (
+                        {(s.userId === user?.id || group.isAdmin) && (
                           <TouchableOpacity
                             onPress={() => void handleDeleteSuggestion(s.id)}
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

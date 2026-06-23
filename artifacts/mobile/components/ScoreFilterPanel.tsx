@@ -28,6 +28,7 @@ export const OWNERSHIP_OPTIONS = [
   { id: "indigenous-owned", label: "Indigenous-Owned", emoji: "🌿", color: "#5E4B1A" },
   { id: "disability-owned", label: "Disability-Owned", emoji: "♿", color: "#4B5563" },
   { id: "immigrant-owned", label: "Immigrant-Owned", emoji: "🌍", color: "#6D28D9" },
+  { id: "d9-affiliated", label: "D9 Affiliated", emoji: "🐾", color: "#7B1E1E" },
 ];
 
 export interface FilterState {

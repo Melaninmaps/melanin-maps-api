@@ -224,7 +224,7 @@ async function fetchCtaAlerts(): Promise<AlertItem[]> {
             EventStart?: string;
             Service?: Array<{ ServiceType?: string; ServiceTypeDescription?: string; ServiceName?: string }> | { ServiceType?: string; ServiceTypeDescription?: string; ServiceName?: string };
           }>
-        | { AlertId?: string; Headline?: string; ShortDescription?: string; SeverityScore?: string; ImpactType?: string; EventStart?: string };
+        | { AlertId?: string; Headline?: string; ShortDescription?: string; SeverityScore?: string; ImpactType?: string; EventStart?: string; Service?: Array<{ ServiceType?: string; ServiceTypeDescription?: string; ServiceName?: string }> | { ServiceType?: string; ServiceTypeDescription?: string; ServiceName?: string } };
     };
   };
 

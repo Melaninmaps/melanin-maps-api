@@ -51,6 +51,7 @@ function buildMobileBadges(savedCount: number, isEarlyTester: boolean): MobileBa
     { id: "ambassador", icon: "flag", label: "Ambassador", description: "Platform representative", requirement: "Invitation only", earned: false, color: "#059669" },
     { id: "founders_circle", icon: "box", label: "Founder's Circle", description: "Early mission supporter", requirement: "Waitlist + beta + year 1", earned: isEarlyTester, color: "#7C3AED" },
     { id: "legacy_builder", icon: "award", label: "Legacy Builder", description: "Highest platform honor", requirement: "250 contributions, 25 referrals, 1 year", earned: false, color: "#CA922B" },
+    { id: "d9_member", icon: "users", label: "Divine Nine", description: "Member of a historically Black Greek-letter org", requirement: "Verify D9 affiliation in profile settings", earned: false, color: "#7B1E1E" },
   ];
 }
 

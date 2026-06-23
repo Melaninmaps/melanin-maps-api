@@ -9,7 +9,8 @@ export type OwnershipType =
   | "lgbtq-owned"
   | "disability-owned"
   | "indigenous-owned"
-  | "immigrant-owned";
+  | "immigrant-owned"
+  | "d9-affiliated";
 
 interface BadgeConfig {
   label: string;
@@ -60,6 +61,12 @@ const BADGE_CONFIG: Record<OwnershipType, BadgeConfig> = {
     emoji: "🌍",
     bg: "#0A1A40",
     accent: "#C9A050",
+  },
+  "d9-affiliated": {
+    label: "D9 Affiliated",
+    emoji: "🐾",
+    bg: "#2A0A0A",
+    accent: "#CA922B",
   },
 };
 
