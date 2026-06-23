@@ -42,7 +42,7 @@ router.post("/notifications/:id/read", async (req: Request, res: Response): Prom
       .set({ read: true })
       .where(
         and(
-          eq(notificationsTable.id, req.params.id),
+          eq(notificationsTable.id, String(req.params.id)),
           eq(notificationsTable.userId, req.user.id),
         ),
       );
