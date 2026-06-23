@@ -31,6 +31,7 @@ export const businessesTable = pgTable("businesses", {
   hours: varchar("hours", { length: 255 }),
   priceRange: varchar("price_range", { length: 10 }),
   imageUrl: varchar("image_url", { length: 512 }),
+  photos: jsonb("photos").$type<string[]>().notNull().default([]),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   submittedById: varchar("submitted_by_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

@@ -372,6 +372,35 @@ export default function BusinessDetail() {
               </TabsList>
 
               <TabsContent value="overview" className="space-y-8 animate-in fade-in">
+                {/* Photo Gallery */}
+                {(() => {
+                  const photos: string[] = (business as unknown as { photos?: string[] }).photos ?? [];
+                  const allPhotos = [
+                    ...(business.imageUrl ? [business.imageUrl] : []),
+                    ...photos.filter(p => p !== business.imageUrl),
+                  ];
+                  if (allPhotos.length <= 1) return null;
+                  return (
+                    <div>
+                      <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-4 flex items-center gap-2">
+                        <span>Photos</span>
+                        <span className="text-sm font-sans font-normal text-[#3A1F0E]/40">({allPhotos.length})</span>
+                      </h3>
+                      <div className={`grid gap-2 ${allPhotos.length === 2 ? "grid-cols-2" : "grid-cols-2 md:grid-cols-3"}`}>
+                        {allPhotos.map((src, i) => (
+                          <a key={i} href={src} target="_blank" rel="noopener noreferrer"
+                            className={`block relative overflow-hidden rounded-2xl bg-[#3A1F0E]/5 group ${i === 0 && allPhotos.length >= 3 ? "col-span-2 md:col-span-1 md:row-span-2" : ""}`}
+                            style={{ aspectRatio: i === 0 && allPhotos.length >= 3 ? "16/9" : "4/3" }}>
+                            <img src={src} alt={`${business.name ?? ""} photo ${i + 1}`}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="prose prose-lg text-[#3A1F0E]/80 font-light leading-relaxed">
                   <p>{business.description || "Discover this exceptional business. They provide quality service and a welcoming environment for the community."}</p>
                 </div>

@@ -40,6 +40,7 @@ import Mentorship from "@/pages/mentorship";
 import RateNeighborhood from "@/pages/rate-neighborhood";
 import ReferralRedirect from "@/pages/referral-redirect";
 import Resources from "@/pages/resources";
+import SharedTrip from "@/pages/shared-trip";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { data: auth, isLoading } = useGetCurrentAuthUser();
@@ -154,6 +155,7 @@ function Router() {
       <Route path="/resources">
         <Layout><Resources /></Layout>
       </Route>
+      <Route path="/shared/trip/:shareId" component={SharedTrip} />
       <Route component={NotFound} />
     </Switch>
   );

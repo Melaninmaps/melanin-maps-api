@@ -1,5 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import crypto from "crypto";
 import {
   db,
   userPreferencesTable,
@@ -410,6 +411,56 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     req.log.error({ err }, "KinfolkAI chat failed");
     res.status(500).json({ error: "Failed to generate response" });
   }
+});
+
+// ─── Share a trip ──────────────────────────────────────────────────────────────
+router.post("/kinfolk/sessions/:id/share", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
+  const { id } = req.params as { id: string };
+
+  const [session] = await db
+    .select()
+    .from(kinfolkSessionsTable)
+    .where(eq(kinfolkSessionsTable.id, id))
+    .limit(1);
+
+  if (!session || session.userId !== req.user.id) {
+    return void res.status(404).json({ error: "Trip not found" });
+  }
+
+  let { shareId } = session;
+  if (!shareId) {
+    shareId = crypto.randomBytes(8).toString("hex");
+    await db
+      .update(kinfolkSessionsTable)
+      .set({ shareId })
+      .where(eq(kinfolkSessionsTable.id, id));
+  }
+
+  return void res.json({ shareId, shareUrl: `/shared/trip/${shareId}` });
+});
+
+// ─── View a shared trip (public) ───────────────────────────────────────────────
+router.get("/kinfolk/shared/:shareId", async (req: Request, res: Response) => {
+  const { shareId } = req.params as { shareId: string };
+
+  const [session] = await db
+    .select()
+    .from(kinfolkSessionsTable)
+    .where(eq(kinfolkSessionsTable.shareId, shareId))
+    .limit(1);
+
+  if (!session) return void res.status(404).json({ error: "Trip not found" });
+
+  const msgs = session.messages ?? [];
+  const lastRec = [...msgs].reverse().find(m => m.role === "assistant" && m.recommendations);
+
+  return void res.json({
+    title: session.title,
+    destination: session.destination,
+    lastRecommendations: lastRec?.recommendations ?? null,
+    followUpSuggestions: lastRec?.followUpSuggestions ?? [],
+  });
 });
 
 export default router;

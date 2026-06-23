@@ -378,6 +378,130 @@ export default function Membership() {
         </div>
       </div>
 
+      {/* ── FEATURE COMPARISON TABLE ── */}
+      <div className="container mx-auto px-4 max-w-5xl py-8 pb-4">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 bg-[#CA922B]/10 border border-[#CA922B]/30 rounded-full px-4 py-1.5 mb-4">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#CA922B]">Compare Plans</span>
+          </div>
+          <h2 className="text-3xl font-serif font-bold text-[#2B1507] mb-2">Everything You Get</h2>
+          <p className="text-[#3A1F0E]/50 text-sm">A full breakdown of features across every individual plan.</p>
+        </div>
+
+        <div className="bg-white rounded-3xl border border-[#3A1F0E]/10 shadow-[0_8px_30px_rgba(43,21,7,0.06)] overflow-hidden">
+          {/* Header row */}
+          <div className="grid grid-cols-4 bg-[#2B1507]">
+            <div className="p-5" />
+            {[
+              { icon: "🧭", label: "Explorer", sub: "Free" },
+              { icon: "🌍", label: "Navigator", sub: "$7.99/mo", highlight: true },
+              { icon: "👑", label: "Trailblazer", sub: "Contact us" },
+            ].map(({ icon, label, sub, highlight }) => (
+              <div key={label} className={`p-5 text-center border-l border-white/10 ${highlight ? "bg-[#CA922B]/20" : ""}`}>
+                <div className="text-lg mb-0.5">{icon}</div>
+                <div className={`font-serif font-bold text-sm ${highlight ? "text-[#CA922B]" : "text-white"}`}>{label}</div>
+                <div className="text-[#F5EBD8]/50 text-xs">{sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Feature rows */}
+          {[
+            {
+              section: "Discovery",
+              rows: [
+                { label: "Business search & maps", explorer: true, navigator: true, trailblazer: true },
+                { label: "Community reviews (read & write)", explorer: true, navigator: true, trailblazer: true },
+                { label: "Destination guides", explorer: true, navigator: true, trailblazer: true },
+                { label: "Save favorite locations", explorer: "Up to 10", navigator: "Unlimited", trailblazer: "Unlimited" },
+                { label: "Advanced filters (safety, rating, price)", explorer: false, navigator: true, trailblazer: true },
+                { label: "Personalized recommendations", explorer: false, navigator: true, trailblazer: true },
+              ],
+            },
+            {
+              section: "Safety Intelligence",
+              rows: [
+                { label: "Basic safety alerts", explorer: true, navigator: true, trailblazer: true },
+                { label: "Community safety reports", explorer: true, navigator: true, trailblazer: true },
+                { label: "Enhanced neighborhood ratings", explorer: false, navigator: true, trailblazer: true },
+                { label: "Travel advisories for saved places", explorer: false, navigator: true, trailblazer: true },
+              ],
+            },
+            {
+              section: "KinfolkAI™",
+              rows: [
+                { label: "AI travel assistant", explorer: false, navigator: false, trailblazer: true },
+                { label: "Personalized itineraries", explorer: false, navigator: false, trailblazer: true },
+                { label: "Shareable trip guides", explorer: false, navigator: false, trailblazer: true },
+                { label: "Relocation insights", explorer: false, navigator: false, trailblazer: true },
+              ],
+            },
+            {
+              section: "Community & Perks",
+              rows: [
+                { label: "Community feed & events", explorer: true, navigator: true, trailblazer: true },
+                { label: "Profile badge", explorer: false, navigator: "Navigator", trailblazer: "Trailblazer" },
+                { label: "Priority support", explorer: false, navigator: true, trailblazer: true },
+                { label: "Early access to new features", explorer: false, navigator: true, trailblazer: true },
+                { label: "Roadmap voting & input", explorer: false, navigator: false, trailblazer: true },
+                { label: "All future premium features", explorer: false, navigator: false, trailblazer: true },
+              ],
+            },
+          ].map(({ section, rows }) => (
+            <div key={section}>
+              <div className="grid grid-cols-4 bg-[#FAF6EF] border-t border-[#3A1F0E]/8">
+                <div className="px-5 py-2.5 col-span-4">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#CA922B]">{section}</span>
+                </div>
+              </div>
+              {rows.map(({ label, explorer, navigator, trailblazer }, i) => (
+                <div key={i} className={`grid grid-cols-4 border-t border-[#3A1F0E]/6 ${i % 2 === 1 ? "bg-[#FAF6EF]/40" : ""}`}>
+                  <div className="px-5 py-3.5 text-sm text-[#3A1F0E]/70 font-medium">{label}</div>
+                  {[explorer, navigator, trailblazer].map((val, j) => (
+                    <div key={j} className={`px-5 py-3.5 flex items-center justify-center border-l border-[#3A1F0E]/6 ${j === 1 ? "bg-[#CA922B]/4" : ""}`}>
+                      {val === true ? (
+                        <div className="w-5 h-5 rounded-full bg-[#CA922B]/15 flex items-center justify-center">
+                          <Check className="w-3 h-3 text-[#CA922B]" />
+                        </div>
+                      ) : val === false ? (
+                        <span className="text-[#3A1F0E]/20 text-lg font-light">—</span>
+                      ) : (
+                        <span className="text-xs font-semibold text-[#3A1F0E]/70 text-center">{val}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          ))}
+
+          {/* CTA row */}
+          <div className="grid grid-cols-4 border-t border-[#3A1F0E]/10 bg-[#FAF6EF]/60">
+            <div className="px-5 py-5" />
+            {[
+              { label: "Join Free", variant: "outline" as const, action: "individual" },
+              { label: "Start Navigator", variant: "gold" as const, action: "individual" },
+              { label: "Become Trailblazer", variant: "dark" as const, action: "trailblazer" },
+            ].map(({ label, variant, action }) => (
+              <div key={label} className={`px-4 py-5 flex justify-center border-l border-[#3A1F0E]/6 ${variant === "gold" ? "bg-[#CA922B]/4" : ""}`}>
+                <button
+                  onClick={() => handlePlanClick(action as "individual" | "trailblazer" | "founding")}
+                  className={`text-xs font-bold px-4 py-2 rounded-full transition-colors whitespace-nowrap ${
+                    variant === "gold"
+                      ? "bg-[#CA922B] text-white hover:bg-[#B38024] shadow-[0_4px_14px_rgba(202,146,43,0.35)]"
+                      : variant === "dark"
+                      ? "bg-[#2B1507] text-white hover:bg-[#3A1F0E]"
+                      : "border border-[#3A1F0E]/20 text-[#3A1F0E] hover:bg-[#3A1F0E] hover:text-white"
+                  }`}
+                >
+                  {label}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* ── FOUNDING MEMBER LAUNCH PROMO ── */}
       <div className="container mx-auto px-4 max-w-6xl py-16">
         <div className="bg-gradient-to-br from-[#2B1507] via-[#3A1F0E] to-[#2B1507] rounded-3xl p-10 md:p-14 relative overflow-hidden border border-[#CA922B]/20">

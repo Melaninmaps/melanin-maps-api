@@ -18,6 +18,7 @@ export const kinfolkSessionsTable = pgTable("kinfolk_sessions", {
   destination: varchar("destination", { length: 255 }),
   vibes: jsonb("vibes").$type<string[]>().default([]),
   messages: jsonb("messages").$type<SessionMessage[]>().default([]),
+  shareId: varchar("share_id", { length: 64 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -3,7 +3,7 @@ import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import {
   Sparkles, Send, Plus, MapPin, ChevronRight, ThumbsUp, ThumbsDown,
   Clock, Compass, ShieldCheck, Lightbulb, Loader2, Lock, MessageSquare,
-  Settings, X, Copy, Check, History, Menu,
+  Settings, X, Copy, Check, History, Menu, Share2, ArrowRight,
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -208,7 +208,7 @@ function BusinessCard({ biz, onFeedback, feedback }: { biz: Business; onFeedback
 }
 
 // ─── Recommendation cards ─────────────────────────────────────────────────────
-function RecommendationCards({ recs, onFeedback, feedback, onCopy }: { recs: Recommendations; onFeedback: (n: string, c: string, r: "like" | "dislike") => void; feedback: Record<string, "like" | "dislike">; onCopy: (recs: Recommendations) => void }) {
+function RecommendationCards({ recs, onFeedback, feedback, onCopy, onShare }: { recs: Recommendations; onFeedback: (n: string, c: string, r: "like" | "dislike") => void; feedback: Record<string, "like" | "dislike">; onCopy: (recs: Recommendations) => void; onShare?: () => void }) {
   return (
     <div className="mt-3 space-y-4">
       <div className="bg-[#2B1507] rounded-2xl p-4 text-white">
@@ -218,10 +218,18 @@ function RecommendationCards({ recs, onFeedback, feedback, onCopy }: { recs: Rec
             <div className="text-xl font-serif font-bold text-white mb-2">{recs.destination}</div>
             <p className="text-[#F5EBD8]/80 text-sm leading-relaxed">{recs.summary}</p>
           </div>
-          <button onClick={() => onCopy(recs)} title="Copy trip summary"
-            className="shrink-0 p-2 rounded-lg bg-white/10 hover:bg-white/20 text-[#F5EBD8]/70 hover:text-white transition-colors mt-1">
-            <Copy size={13} />
-          </button>
+          <div className="flex flex-col gap-1.5 shrink-0 mt-1">
+            {onShare && (
+              <button onClick={onShare} title="Share trip"
+                className="p-2 rounded-lg bg-[#CA922B]/20 hover:bg-[#CA922B]/30 text-[#CA922B] transition-colors">
+                <Share2 size={13} />
+              </button>
+            )}
+            <button onClick={() => onCopy(recs)} title="Copy trip summary"
+              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-[#F5EBD8]/70 hover:text-white transition-colors">
+              <Copy size={13} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -305,6 +313,7 @@ export default function Travel() {
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [copyToast, setCopyToast] = useState<string | null>(null);
+  const [shareLink, setShareLink] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -389,6 +398,20 @@ export default function Travel() {
     });
   };
 
+  const shareTrip = async () => {
+    if (!sessionId) return;
+    try {
+      const r = await fetch(`${BASE}api/kinfolk/sessions/${sessionId}/share`, {
+        method: "POST", credentials: "include",
+      });
+      if (r.ok) {
+        const { shareId } = await r.json() as { shareId: string; shareUrl: string };
+        const url = `${window.location.origin}${BASE}shared/trip/${shareId}`;
+        setShareLink(url);
+      }
+    } catch { /* ignore */ }
+  };
+
   const copyTrip = (recs: Recommendations) => {
     const lines = [
       `🗺️ KinfolkAI Guide: ${recs.destination}`,
@@ -414,6 +437,38 @@ export default function Travel() {
       {copyToast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#2B1507] text-[#F5EBD8] px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg">
           <Check size={14} className="text-[#CA922B]" />{copyToast}
+        </div>
+      )}
+
+      {/* Share modal */}
+      {shareLink && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShareLink(null)}>
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#CA922B]/10 flex items-center justify-center">
+                  <Share2 size={13} className="text-[#CA922B]" />
+                </div>
+                <span className="font-serif font-bold text-[#2B1507] text-base">Share This Trip</span>
+              </div>
+              <button onClick={() => setShareLink(null)} className="p-1.5 rounded-lg hover:bg-[#FAF6EF] text-[#3A1F0E]/40">
+                <X size={15} />
+              </button>
+            </div>
+            <p className="text-xs text-[#3A1F0E]/50 mb-3">Anyone with this link can view your KinfolkAI trip guide.</p>
+            <div className="flex items-center gap-2 bg-[#FAF6EF] rounded-xl px-3 py-2.5 border border-[#3A1F0E]/8 mb-4">
+              <span className="text-xs text-[#3A1F0E]/60 truncate flex-1 font-mono">{shareLink}</span>
+              <button
+                onClick={() => { navigator.clipboard.writeText(shareLink); setCopyToast("Link copied!"); setTimeout(() => setCopyToast(null), 2000); }}
+                className="shrink-0 px-3 py-1.5 bg-[#2B1507] text-white text-xs font-bold rounded-lg hover:bg-[#3A1F0E] transition-colors">
+                Copy
+              </button>
+            </div>
+            <a href={shareLink} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-[#CA922B]/30 text-[#CA922B] text-sm font-medium hover:bg-[#CA922B]/5 transition-colors">
+              Preview trip page <ArrowRight size={13} />
+            </a>
+          </div>
         </div>
       )}
 
@@ -559,7 +614,7 @@ export default function Travel() {
                         {msg.content}
                       </div>
                       {msg.recommendations && (
-                        <RecommendationCards recs={msg.recommendations} onFeedback={handleFeedback} feedback={feedback} onCopy={copyTrip} />
+                        <RecommendationCards recs={msg.recommendations} onFeedback={handleFeedback} feedback={feedback} onCopy={copyTrip} onShare={isLoggedIn && sessionId ? shareTrip : undefined} />
                       )}
                       {msg.followUpSuggestions && msg.followUpSuggestions.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-3">
