@@ -48,6 +48,7 @@ import familyRouter from "./family";
 import safetyCheckinsRouter from "./safety-checkins";
 import locationSharesRouter from "./location-shares";
 import meetupVerificationsRouter from "./meetup-verifications";
+import safetyTipsRouter from "./safety-tips";
 
 const router: IRouter = Router();
 
@@ -100,5 +101,6 @@ router.use(familyRouter);
 router.use(safetyCheckinsRouter);
 router.use(locationSharesRouter);
 router.use(meetupVerificationsRouter);
+router.use(safetyTipsRouter);
 
 export default router;

@@ -75,6 +75,18 @@ export async function sendPushToUsersWithSavedBusiness(
   }
 }
 
+export async function sendPushToAllMembers(message: PushMessage): Promise<void> {
+  try {
+    const tokens = await db.select({ token: pushTokensTable.token }).from(pushTokensTable);
+    for (const row of tokens) {
+      if (row.token) await sendToToken(row.token, message);
+    }
+    logger.info({ count: tokens.length }, "[push] Safety tip alert sent to all members");
+  } catch (err) {
+    logger.warn({ err }, "[push] Failed to send safety tip alerts");
+  }
+}
+
 export async function sendPushToBusinessOwnersByCity(
   city: string,
   message: PushMessage,

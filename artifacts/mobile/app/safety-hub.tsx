@@ -123,6 +123,7 @@ export default function SafetyHubScreen() {
   };
 
   const FEATURES = [
+    { id: "tip", icon: "alert-triangle" as const, title: "Submit Safety Tip", desc: "Pin a location where violence or hate occurred. Nearby verified members are alerted to confirm.", color: "#DC2626", route: "/safety-tip" },
     { id: "checkin", icon: "check-circle" as const, title: "Safety Check-In", desc: "Schedule a check-in. Your contact is alerted if you don't confirm.", color: "#16A34A", route: "/checkin" },
     { id: "location", icon: "map-pin" as const, title: "Location Sharing", desc: "Share your live location with a trusted contact temporarily.", color: "#2563EB", route: "/location-share" },
     { id: "meetup", icon: "users" as const, title: "Meetup Verification", desc: "Mutually verify in-person meetups with connections you trust.", color: "#7C3AED", route: "/member-connections" },
