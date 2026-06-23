@@ -125,8 +125,8 @@ export default function SafetyHubScreen() {
   const FEATURES = [
     { id: "checkin", icon: "check-circle" as const, title: "Safety Check-In", desc: "Schedule a check-in. Your contact is alerted if you don't confirm.", color: "#16A34A", route: "/checkin" },
     { id: "location", icon: "map-pin" as const, title: "Location Sharing", desc: "Share your live location with a trusted contact temporarily.", color: "#2563EB", route: "/location-share" },
-    { id: "meetup", icon: "users" as const, title: "Meetup Verification", desc: "Mutually verify in-person meetups with connections you trust.", color: "#7C3AED", route: "/connections" },
-    { id: "report", icon: "flag" as const, title: "Anonymous Report", desc: "Report unsafe content or behavior without revealing your identity.", color: "#DC2626", route: "/report" },
+    { id: "meetup", icon: "users" as const, title: "Meetup Verification", desc: "Mutually verify in-person meetups with connections you trust.", color: "#7C3AED", route: "/member-connections" },
+    { id: "report", icon: "flag" as const, title: "Anonymous Report", desc: "Report unsafe content or behavior without revealing your identity.", color: "#DC2626", route: "/report-safety" },
     { id: "family", icon: "shield" as const, title: "Family Safety", desc: "Parental controls and keyword filters for children's accounts.", color: "#CA922B", route: "/family-safety" },
     { id: "survey", icon: "star" as const, title: "Neighborhood Safety", desc: "Share and read community safety reports for any neighborhood.", color: "#0891B2", route: "/(tabs)/safety" },
   ];
@@ -175,7 +175,7 @@ export default function SafetyHubScreen() {
                     </View>
                     <TouchableOpacity
                       style={[styles.imSafeBtn, { backgroundColor: "#2563EB" }]}
-                      onPress={() => router.push("/connections" as Parameters<typeof router.push>[0])}
+                      onPress={() => router.push("/member-connections" as Parameters<typeof router.push>[0])}
                       activeOpacity={0.85}
                     >
                       <Text style={styles.imSafeBtnText}>Confirm</Text>
