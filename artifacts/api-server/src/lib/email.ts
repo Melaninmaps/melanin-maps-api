@@ -580,6 +580,44 @@ export async function sendMembershipCancelled(
   });
 }
 
+export async function sendCheckinOverdueEmail(
+  to: string,
+  trustedContactName: string,
+  memberName: string,
+  scheduledAt: Date,
+  location: string | null,
+  city: string | null,
+) {
+  if (!resend) { log("checkin overdue"); return; }
+  const timeStr = scheduledAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  const dateStr = scheduledAt.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  const where = [location, city].filter(Boolean).join(", ") || "their destination";
+  await resend.emails.send({
+    from: "Mapping With Melanin Safety <safety@mappingwithmelanin.com>",
+    to,
+    subject: `⚠️ Safety Alert: ${memberName} hasn't checked in`,
+    html: `
+      <div style="max-width:600px;margin:0 auto;font-family:Georgia,serif;background:#FEFCF8;padding:0;border-radius:16px;overflow:hidden;border:1px solid rgba(43,21,7,0.1)">
+        <div style="background:linear-gradient(135deg,#7B2020 0%,#991B1B 100%);padding:32px 40px;text-align:center">
+          <p style="color:rgba(255,255,255,0.9);font-size:14px;margin:0 0 8px;letter-spacing:1px;text-transform:uppercase">Mapping With Melanin™ Safety</p>
+          <h1 style="color:#FFFFFF;font-size:26px;font-weight:700;margin:0">Safety Check-In Alert</h1>
+        </div>
+        <div style="padding:40px">
+          <p style="color:#2B1507;font-size:16px;margin:0 0 20px">Hi ${trustedContactName},</p>
+          <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:20px;margin:0 0 24px">
+            <p style="color:#991B1B;font-size:16px;font-weight:700;margin:0 0 8px">⚠️ Missed Check-In</p>
+            <p style="color:#7F1D1D;font-size:15px;margin:0"><strong>${memberName}</strong> was expected to check in by <strong>${timeStr} on ${dateStr}</strong> from <strong>${where}</strong> — and hasn't confirmed their safety yet.</p>
+          </div>
+          <p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 16px">Please try reaching out to them directly. If you believe they may be in danger, contact local emergency services.</p>
+          <p style="color:#3A1F0E;font-size:13px;margin:0 0 32px;opacity:0.7">This is an automated alert from the Mapping With Melanin safety check-in system, set up by ${memberName}.</p>
+          <p style="color:#2B1507;font-size:15px;font-weight:700;font-style:italic;margin:0">Map Your Life. Connect Deeper.™</p>
+          <p style="color:#3A1F0E;font-size:13px;margin:4px 0 0;opacity:0.5">Mapping With Melanin™ · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a></p>
+        </div>
+      </div>
+    `,
+  });
+}
+
 export async function sendWeeklyDigest(
   to: string,
   firstName: string | null,

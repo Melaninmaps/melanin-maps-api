@@ -52,12 +52,49 @@ const HATE_SPEECH: string[] = [
 const THREATS: string[] = [
   "i will kill you",
   "i'm going to kill you",
+  "ima kill you",
   "i will rape you",
   "kill yourself",
   "kys",
+  "go kill yourself",
   "i know where you live",
   "i will find you",
   "i will hurt you",
+  "i'm going to hurt you",
+  "you're going to die",
+  "watch your back",
+  "i will come for you",
+  "i know your address",
+  "you'll regret this",
+  "make your life hell",
+  "destroy you",
+  "end you",
+];
+
+const CYBERBULLYING: string[] = [
+  "nobody likes you",
+  "everyone hates you",
+  "you should die",
+  "you're worthless",
+  "you're pathetic",
+  "kill urself",
+  "kys loser",
+  "no one wants you",
+  "you're disgusting",
+  "you're ugly and nobody",
+  "go away forever",
+  "do the world a favor and",
+];
+
+const DOXXING: string[] = [
+  "i'm posting your address",
+  "posting your info",
+  "exposing your location",
+  "dox you",
+  "doxx you",
+  "releasing your personal",
+  "sharing your home address",
+  "leaked your address",
 ];
 
 function buildWordPattern(words: string[]): RegExp {
@@ -73,6 +110,8 @@ function buildPhrasePattern(phrases: string[]): RegExp {
 const SEXUAL_RE = buildWordPattern(EXPLICIT_SEXUAL);
 const HATE_RE = buildWordPattern(HATE_SPEECH);
 const THREAT_RE = buildPhrasePattern(THREATS);
+const BULLY_RE = buildPhrasePattern(CYBERBULLYING);
+const DOXX_RE = buildPhrasePattern(DOXXING);
 
 export function checkContent(text: string): FilterResult {
   const normalized = text.replace(/\s+/g, " ").trim();
@@ -101,6 +140,24 @@ export function checkContent(text: string): FilterResult {
       ok: false,
       reason: "Your post contains threatening language. This is not allowed and may be reported to the appropriate authorities.",
       matched: threatMatch[1],
+    };
+  }
+
+  const bullyMatch = BULLY_RE.exec(normalized);
+  if (bullyMatch) {
+    return {
+      ok: false,
+      reason: "Your post contains language that could be considered harassment or cyberbullying. Please keep this community supportive and respectful.",
+      matched: bullyMatch[1],
+    };
+  }
+
+  const doxxMatch = DOXX_RE.exec(normalized);
+  if (doxxMatch) {
+    return {
+      ok: false,
+      reason: "Your post appears to contain or threaten to share someone's personal information. This is strictly prohibited.",
+      matched: doxxMatch[1],
     };
   }
 

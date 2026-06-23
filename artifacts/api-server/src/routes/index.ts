@@ -45,6 +45,9 @@ import reportsRouter from "./reports";
 import travelFlightsRouter from "./travel-flights";
 import connectionsRouter from "./connections";
 import familyRouter from "./family";
+import safetyCheckinsRouter from "./safety-checkins";
+import locationSharesRouter from "./location-shares";
+import meetupVerificationsRouter from "./meetup-verifications";
 
 const router: IRouter = Router();
 
@@ -94,5 +97,8 @@ router.use(reportsRouter);
 router.use(travelFlightsRouter);
 router.use(connectionsRouter);
 router.use(familyRouter);
+router.use(safetyCheckinsRouter);
+router.use(locationSharesRouter);
+router.use(meetupVerificationsRouter);
 
 export default router;

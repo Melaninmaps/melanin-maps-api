@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable, businessesTable } from "@workspace/db";
+import { db, usersTable, businessesTable, safetyCheckinsTable } from "@workspace/db";
 import { and, isNotNull, lte, gt, eq, isNull, gte } from "drizzle-orm";
-import { sendTrialEndingSoon, sendTrialExpired, sendWeeklyDigest } from "../lib/email";
+import { sendTrialEndingSoon, sendTrialExpired, sendWeeklyDigest, sendCheckinOverdueEmail } from "../lib/email";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
@@ -78,6 +78,54 @@ router.post("/cron/trial-reminders", async (req, res): Promise<void> => {
   } catch (err: any) {
     logger.error({ err }, "Trial cron failed");
     res.status(500).json({ error: "Cron job failed" });
+  }
+});
+
+router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
+  if (!verifyCronSecret(req, res)) return;
+  const now = new Date();
+  try {
+    const overdue = await db
+      .select({
+        id: safetyCheckinsTable.id,
+        userId: safetyCheckinsTable.userId,
+        trustedContactEmail: safetyCheckinsTable.trustedContactEmail,
+        trustedContactName: safetyCheckinsTable.trustedContactName,
+        scheduledAt: safetyCheckinsTable.scheduledAt,
+        location: safetyCheckinsTable.location,
+        city: safetyCheckinsTable.city,
+        firstName: usersTable.firstName,
+        lastName: usersTable.lastName,
+      })
+      .from(safetyCheckinsTable)
+      .leftJoin(usersTable, eq(usersTable.id, safetyCheckinsTable.userId))
+      .where(and(
+        eq(safetyCheckinsTable.status, "pending"),
+        lte(safetyCheckinsTable.scheduledAt, now),
+        isNull(safetyCheckinsTable.notifiedAt),
+      ));
+
+    let notified = 0;
+    for (const row of overdue) {
+      try {
+        const memberName = [row.firstName, row.lastName].filter(Boolean).join(" ") || "Your contact";
+        await sendCheckinOverdueEmail(
+          row.trustedContactEmail, row.trustedContactName, memberName,
+          row.scheduledAt, row.location, row.city,
+        );
+        await db.update(safetyCheckinsTable)
+          .set({ status: "overdue", notifiedAt: now })
+          .where(eq(safetyCheckinsTable.id, row.id));
+        notified++;
+      } catch (err) {
+        logger.error({ err, id: row.id }, "Failed to send overdue checkin email");
+      }
+    }
+    logger.info({ notified }, "Safety checkin cron completed");
+    res.json({ ok: true, notified });
+  } catch (err: unknown) {
+    logger.error({ err }, "Safety checkin cron failed");
+    res.status(500).json({ error: "Cron failed" });
   }
 });
 

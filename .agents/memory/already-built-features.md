@@ -81,4 +81,18 @@ description: Major features that were fully implemented in prior sessions — ch
 - Business detail: UpgradeModal shown on 403 from review submission
 - `useReviews.submitReview` throws `{ code: "MEMBERSHIP_REQUIRED" }` on 403
 
+## Safety Features (6 features)
+- `safety_checkins` DB table — userId, trustedContactEmail, scheduledAt, status (pending/checked_in/overdue/cancelled), notifiedAt
+- `location_shares` DB table — sharerId, shareToken (unique), expiresAt, currentLat/Lng, isActive
+- `meetup_verifications` DB table — initiatorId, partnerId, connectionId (optional int FK), status (pending/confirmed/expired)
+- API routes: `GET/POST /api/safety/checkins`, `PATCH /api/safety/checkins/:id/confirm`, `DELETE /api/safety/checkins/:id`
+- API routes: `GET/POST /api/safety/location-shares`, `PATCH /api/safety/location-shares/:token/update`, `GET /api/safety/location-shares/:token/view`, `DELETE /api/safety/location-shares/:id`
+- API routes: `GET/POST /api/meetups`, `PATCH /api/meetups/:id/confirm`
+- Cron: `POST /api/cron/safety-checkins` — finds pending check-ins past scheduledAt, emails trusted contact via `sendCheckinOverdueEmail`, marks status=overdue
+- `sendCheckinOverdueEmail` added to `email.ts`
+- `contentFilter.ts` enhanced: added CYBERBULLYING and DOXXING pattern arrays (checked via `buildPhrasePattern`) alongside existing THREATS, HATE_SPEECH, EXPLICIT_SEXUAL
+- Mobile screens: `app/safety-hub.tsx` (dashboard with live check-in/share/meetup status), `app/checkin.tsx` (full check-in flow), `app/location-share.tsx` (live location share + copy link)
+- `hooks/useGeoSafeAlert.ts` — expo-location → Google reverse geocode → query surveys by city → amber banner in MapTabView if avg safety score < 45 (1hr cooldown per city in AsyncStorage)
+- Geo alert banner wired into `MapTabView.tsx`; Safety Hub wired into `settings.tsx` under Privacy & Safety
+
 **Why:** Recording these to avoid rebuilding already-complete work across sessions.

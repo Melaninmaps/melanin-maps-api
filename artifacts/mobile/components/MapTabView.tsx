@@ -21,6 +21,7 @@ import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
+import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 
 export function MapTabView() {
   const colors = useColors();
@@ -34,6 +35,8 @@ export function MapTabView() {
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
+
+  const { alert: geoAlert, dismissAlert } = useGeoSafeAlert();
 
   const { businesses } = useBusinesses();
   const filtered = businesses.filter((b) => {
@@ -54,6 +57,18 @@ export function MapTabView() {
           <Text style={[styles.mapNoticeText, { color: colors.primary }]}>Use Expo Go for interactive map</Text>
         </View>
       </View>
+      {geoAlert && (
+        <TouchableOpacity
+          style={styles.geoAlertBanner}
+          onPress={dismissAlert}
+          activeOpacity={0.85}
+        >
+          <Feather name="alert-triangle" size={15} color="#fff" />
+          <Text style={styles.geoAlertText}>
+            Community safety alert for {geoAlert.city}{geoAlert.neighborhood ? ` · ${geoAlert.neighborhood}` : ""} — avg score {geoAlert.avgSafetyScore}/100 from {geoAlert.surveyCount} reports. Tap to dismiss.
+          </Text>
+        </TouchableOpacity>
+      )}
       <View style={styles.searchRow}>
         <SearchBar value={search} onChangeText={setSearch} />
       </View>
@@ -145,6 +160,21 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   mapNoticeText: { fontFamily: "Inter_500Medium", fontSize: 12 },
+  geoAlertBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#B45309",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  geoAlertText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    color: "#fff",
+    flex: 1,
+    lineHeight: 17,
+  },
   searchRow: { paddingHorizontal: 16, paddingVertical: 10 },
   catRow: { flexShrink: 0 },
   catList: { paddingHorizontal: 16, gap: 8, paddingBottom: 10 },
