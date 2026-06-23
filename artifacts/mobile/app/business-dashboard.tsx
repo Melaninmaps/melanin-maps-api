@@ -48,6 +48,18 @@ interface AnalyticsSuggestion {
   body: string;
 }
 
+interface PostNudgeData {
+  peakHours: number[];
+  peakDays: string[];
+  isNearPeak: boolean;
+  bestTimeLabel: string;
+  topDayLabel: string;
+  nudgeMessage: string;
+  suggestedCaption: string;
+  viewsThisMonth: number;
+  hasSufficientData: boolean;
+}
+
 interface AnalyticsTrend {
   day: string;
   count: number;
@@ -123,10 +135,27 @@ export default function BusinessDashboardScreen() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState<"paywall" | "error" | null>(null);
+  const [nudge, setNudge] = useState<PostNudgeData | null>(null);
+  const [nudgeDismissed, setNudgeDismissed] = useState(false);
 
   React.useEffect(() => {
     if (business?.feedbackOptIn !== undefined) setFeedbackOptIn(business.feedbackOptIn);
   }, [business?.feedbackOptIn]);
+
+  React.useEffect(() => {
+    if (!business) return;
+    void (async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const base = getApiBase();
+        if (!token || !base) return;
+        const res = await fetch(`${base}/api/businesses/mine/post-nudge`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) setNudge(await res.json() as PostNudgeData);
+      } catch {}
+    })();
+  }, [business?.id]);
 
   const loadAnalytics = useCallback(async () => {
     if (analyticsLoading || analytics) return;
@@ -359,6 +388,80 @@ export default function BusinessDashboardScreen() {
               </View>
               <Feather name="chevron-right" size={16} color="#2D7A4F" />
             </TouchableOpacity>
+
+            {/* KinfolkAI post nudge */}
+            {nudge && !nudgeDismissed && (
+              <View style={[styles.nudgeCard, {
+                backgroundColor: nudge.isNearPeak ? "#0F1F0F" : colors.card,
+                borderColor: nudge.isNearPeak ? "#2D7A4F" : colors.border,
+              }]}>
+                <View style={styles.nudgeTop}>
+                  <View style={[styles.nudgeBadge, { backgroundColor: nudge.isNearPeak ? "#2D7A4F" : "#CA922B" }]}>
+                    <Feather name="zap" size={11} color="#FFF" />
+                    <Text style={styles.nudgeBadgeText}>KinfolkAI™</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setNudgeDismissed(true)} hitSlop={8}>
+                    <Feather name="x" size={16} color={nudge.isNearPeak ? "rgba(255,255,255,0.4)" : colors.mutedForeground} />
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={[styles.nudgeHeadline, { color: nudge.isNearPeak ? "#FFF" : colors.foreground }]}>
+                  {nudge.isNearPeak
+                    ? "Your customers are active right now"
+                    : `Peak time: ${nudge.bestTimeLabel}`}
+                </Text>
+                <Text style={[styles.nudgeBody, { color: nudge.isNearPeak ? "rgba(255,255,255,0.65)" : colors.mutedForeground }]}>
+                  {nudge.hasSufficientData
+                    ? nudge.nudgeMessage
+                    : `Most of your customers engage on ${nudge.topDayLabel}. Post regularly to build your audience.`}
+                </Text>
+
+                {nudge.suggestedCaption.length > 0 && (
+                  <View style={[styles.nudgeCaption, {
+                    backgroundColor: nudge.isNearPeak ? "rgba(45,122,79,0.15)" : colors.background,
+                    borderColor: nudge.isNearPeak ? "#2D7A4F40" : colors.border,
+                  }]}>
+                    <Text style={[styles.nudgeCaptionLabel, { color: nudge.isNearPeak ? "#2D7A4F" : "#CA922B" }]}>Suggested caption</Text>
+                    <Text style={[styles.nudgeCaptionText, { color: nudge.isNearPeak ? "rgba(255,255,255,0.8)" : colors.foreground }]}>
+                      {nudge.suggestedCaption}
+                    </Text>
+                  </View>
+                )}
+
+                <View style={styles.nudgeActions}>
+                  <TouchableOpacity
+                    style={[styles.nudgePostBtn, { backgroundColor: nudge.isNearPeak ? "#2D7A4F" : colors.primary }]}
+                    onPress={() => {
+                      if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      router.push(`/(tabs)/community?compose=true&caption=${encodeURIComponent(nudge.suggestedCaption)}` as never);
+                    }}
+                    activeOpacity={0.85}
+                  >
+                    <Feather name="edit-3" size={14} color="#FFF" />
+                    <Text style={styles.nudgePostBtnText}>Post Now</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.nudgeNotifyBtn, { borderColor: nudge.isNearPeak ? "#2D7A4F50" : colors.border }]}
+                    onPress={async () => {
+                      try {
+                        const token = await SecureStore.getItemAsync("auth_session_token");
+                        const base = getApiBase();
+                        await fetch(`${base}/api/businesses/mine/post-nudge/notify`, {
+                          method: "POST",
+                          headers: { Authorization: `Bearer ${token ?? ""}` },
+                        });
+                      } catch {}
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Feather name="bell" size={14} color={nudge.isNearPeak ? "#2D7A4F" : colors.mutedForeground} />
+                    <Text style={[styles.nudgeNotifyText, { color: nudge.isNearPeak ? "#2D7A4F" : colors.mutedForeground }]}>
+                      Remind me at peak time
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
 
             {/* Direct feedback opt-in toggle */}
             <TouchableOpacity
@@ -697,6 +800,20 @@ const styles = StyleSheet.create({
   promoteIcon: { width: 40, height: 40, borderRadius: 10, justifyContent: "center", alignItems: "center", flexShrink: 0 },
   promoteTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
   promoteSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
+  nudgeCard: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 16, gap: 10 },
+  nudgeTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  nudgeBadge: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  nudgeBadgeText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#FFF", letterSpacing: 0.4 },
+  nudgeHeadline: { fontSize: 15, fontFamily: "Inter_700Bold", lineHeight: 21 },
+  nudgeBody: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
+  nudgeCaption: { borderRadius: 10, borderWidth: 1, padding: 10, gap: 4 },
+  nudgeCaptionLabel: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.5, textTransform: "uppercase" },
+  nudgeCaptionText: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
+  nudgeActions: { flexDirection: "row", gap: 10, marginTop: 4 },
+  nudgePostBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 10 },
+  nudgePostBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#FFF" },
+  nudgeNotifyBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 9, borderRadius: 10, borderWidth: 1 },
+  nudgeNotifyText: { fontSize: 12, fontFamily: "Inter_500Medium" },
   feedbackToggleCard: { flexDirection: "row", alignItems: "center", gap: 14, padding: 14, borderRadius: 14, borderWidth: 1, marginBottom: 24 },
   feedbackToggleIcon: { width: 40, height: 40, borderRadius: 10, justifyContent: "center", alignItems: "center" },
   feedbackToggleTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", marginBottom: 3 },

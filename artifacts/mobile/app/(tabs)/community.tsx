@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -160,6 +160,7 @@ export default function CommunityScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const params = useLocalSearchParams<{ compose?: string; caption?: string }>();
   const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState("Feed");
   const [refreshing, setRefreshing] = useState(false);
@@ -209,6 +210,13 @@ export default function CommunityScreen() {
   }, []);
 
   useEffect(() => { void loadPosts(); }, [loadPosts]);
+
+  useEffect(() => {
+    if (params.compose === "true") {
+      if (params.caption) setNewPostText(decodeURIComponent(params.caption));
+      setShowCompose(true);
+    }
+  }, [params.compose, params.caption]);
 
   const handleCreateGroup = async () => {
     if (!groupCreateName.trim()) return;

@@ -52,6 +52,7 @@ import safetyTipsRouter from "./safety-tips";
 import skipFeedbackRouter from "./skip-feedback";
 import businessesAnalyticsRouter from "./businesses-analytics";
 import promoteRouter from "./promote";
+import postNudgeRouter from "./post-nudge";
 
 const router: IRouter = Router();
 
@@ -108,5 +109,6 @@ router.use(safetyTipsRouter);
 router.use(skipFeedbackRouter);
 router.use(businessesAnalyticsRouter);
 router.use(promoteRouter);
+router.use(postNudgeRouter);
 
 export default router;
