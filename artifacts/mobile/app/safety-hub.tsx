@@ -127,7 +127,7 @@ export default function SafetyHubScreen() {
     { id: "location", icon: "map-pin" as const, title: "Location Sharing", desc: "Share your live location with a trusted contact temporarily.", color: "#2563EB", route: "/location-share" },
     { id: "meetup", icon: "users" as const, title: "Meetup Verification", desc: "Mutually verify in-person meetups with connections you trust.", color: "#7C3AED", route: "/member-connections" },
     { id: "report", icon: "flag" as const, title: "Anonymous Report", desc: "Report unsafe content or behavior without revealing your identity.", color: "#DC2626", route: "/report-safety" },
-    { id: "family", icon: "shield" as const, title: "Family Safety", desc: "Parental controls and keyword filters for children's accounts.", color: "#CA922B", route: "/family-safety" },
+    { id: "family", icon: "eye" as const, title: "Under-18 Content Shield", desc: "All messages and posts from users under 18 are automatically scanned and filtered for harmful content.", color: "#CA922B", route: null },
     { id: "survey", icon: "star" as const, title: "Neighborhood Safety", desc: "Share and read community safety reports for any neighborhood.", color: "#0891B2", route: "/(tabs)/safety" },
   ];
 
@@ -218,7 +218,7 @@ export default function SafetyHubScreen() {
                 <TouchableOpacity
                   key={f.id}
                   style={[styles.featureCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => router.push(f.route as Parameters<typeof router.push>[0])}
+                  onPress={() => f.route && router.push(f.route as Parameters<typeof router.push>[0])}
                   activeOpacity={0.75}
                 >
                   <View style={[styles.featureIcon, { backgroundColor: f.color + "18" }]}>

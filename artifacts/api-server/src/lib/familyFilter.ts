@@ -1,10 +1,6 @@
-import {
-  db,
-  familyLinksTable,
-  contentFilterRulesTable,
-  contentFilterViolationsTable,
-} from "@workspace/db";
-import { and, eq } from "drizzle-orm";
+import { db, usersTable, contentFilterViolationsTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
+import { checkContent } from "./contentFilter";
 
 export interface FamilyScanResult {
   blocked: boolean;
@@ -16,48 +12,29 @@ export async function scanForFamily(
   userId: string,
   channel: string
 ): Promise<FamilyScanResult> {
-  const links = await db
-    .select({
-      linkId: familyLinksTable.id,
-      parentUserId: familyLinksTable.parentUserId,
-      keywords: contentFilterRulesTable.keywords,
-      blockContent: contentFilterRulesTable.blockContent,
-    })
-    .from(familyLinksTable)
-    .leftJoin(
-      contentFilterRulesTable,
-      eq(contentFilterRulesTable.familyLinkId, familyLinksTable.id)
-    )
-    .where(
-      and(
-        eq(familyLinksTable.childUserId, userId),
-        eq(familyLinksTable.status, "active")
-      )
-    );
+  const [user] = await db
+    .select({ dateOfBirth: usersTable.dateOfBirth })
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
 
-  if (links.length === 0) return { blocked: false, matchedKeywords: [] };
+  if (!user?.dateOfBirth) return { blocked: false, matchedKeywords: [] };
 
-  const lower = content.toLowerCase();
-  const allMatched = new Set<string>();
-  let shouldBlock = false;
+  const ageMs = Date.now() - new Date(user.dateOfBirth).getTime();
+  const ageYears = ageMs / (1000 * 60 * 60 * 24 * 365.25);
 
-  for (const link of links) {
-    const kws: string[] = link.keywords ?? [];
-    if (kws.length === 0) continue;
-    const matched = kws.filter((kw: string) => lower.includes(kw.toLowerCase()));
-    if (matched.length === 0) continue;
-    matched.forEach((kw: string) => allMatched.add(kw));
-    if (link.blockContent !== false) shouldBlock = true;
-    await db.insert(contentFilterViolationsTable).values({
-      familyLinkId: link.linkId,
-      childUserId: userId,
-      parentUserId: link.parentUserId,
-      channel,
-      contentSnippet: content.slice(0, 300),
-      matchedKeywords: matched,
-      wasBlocked: link.blockContent !== false,
-    });
-  }
+  if (ageYears >= 18) return { blocked: false, matchedKeywords: [] };
 
-  return { blocked: shouldBlock, matchedKeywords: [...allMatched] };
+  const result = checkContent(content);
+  if (result.ok) return { blocked: false, matchedKeywords: [] };
+
+  await db.insert(contentFilterViolationsTable).values({
+    userId,
+    channel,
+    contentSnippet: content.slice(0, 300),
+    matchedKeywords: [result.matched],
+    wasBlocked: true,
+  });
+
+  return { blocked: true, matchedKeywords: [result.matched] };
 }

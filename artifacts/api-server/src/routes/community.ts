@@ -42,7 +42,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
     }
     const familyScan = await scanForFamily(content.trim(), req.user.id, "community_post");
     if (familyScan.blocked) {
-      res.status(422).json({ error: "This post was blocked by your guardian's content filter.", code: "FAMILY_FILTER_BLOCKED" });
+      res.status(422).json({ error: "This post contains content that is not permitted for users under 18.", code: "MINOR_CONTENT_BLOCKED" });
       return;
     }
     const user = await storage.getUser(req.user.id);

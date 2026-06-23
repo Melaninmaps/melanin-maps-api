@@ -85,7 +85,7 @@ router.post("/conversations/:id/messages", async (req: Request, res: Response) =
     }
     const scan = await scanForFamily(content.trim(), req.user!.id, "message");
     if (scan.blocked) {
-      res.status(422).json({ error: "Your message was blocked by your guardian's content filter.", code: "FAMILY_FILTER_BLOCKED" });
+      res.status(422).json({ error: "Your message contains content that is not permitted for users under 18.", code: "MINOR_CONTENT_BLOCKED" });
       return;
     }
     const [msg] = await db
