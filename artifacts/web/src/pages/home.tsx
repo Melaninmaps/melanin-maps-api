@@ -56,6 +56,36 @@ function openShare(platform: string) {
 
 const BASE = import.meta.env.BASE_URL;
 
+function WaveDivider({ fromBg, toBg, path = "M0,25 C400,55 900,5 1440,35" }: { fromBg: string; toBg: string; path?: string }) {
+  return (
+    <div style={{ backgroundColor: fromBg, marginBottom: -1 }}>
+      <svg viewBox="0 0 1440 60" className="w-full block" preserveAspectRatio="none">
+        <path d={`${path} L1440,60 L0,60 Z`} fill={toBg} />
+      </svg>
+    </div>
+  );
+}
+
+function OrnamentDivider({ bg, light = false }: { bg: string; light?: boolean }) {
+  const gold = light ? "rgba(202,146,43,0.25)" : "rgba(202,146,43,0.4)";
+  const diamond = light ? "rgba(202,146,43,0.35)" : "rgba(202,146,43,0.55)";
+  return (
+    <div style={{ backgroundColor: bg }} className="flex items-center justify-center py-10">
+      <div className="flex items-center gap-3">
+        <div className="w-20 h-px" style={{ background: `linear-gradient(to right, transparent, ${gold})` }} />
+        <div className="w-1.5 h-1.5 rotate-45" style={{ backgroundColor: diamond }} />
+        <div className="w-2 h-2 rotate-45 border" style={{ borderColor: diamond }} />
+        <div className="w-1 h-1 rotate-45" style={{ backgroundColor: gold }} />
+        <div className="text-[10px] font-bold tracking-[0.3em] uppercase" style={{ color: diamond }}>✦</div>
+        <div className="w-1 h-1 rotate-45" style={{ backgroundColor: gold }} />
+        <div className="w-2 h-2 rotate-45 border" style={{ borderColor: diamond }} />
+        <div className="w-1.5 h-1.5 rotate-45" style={{ backgroundColor: diamond }} />
+        <div className="w-20 h-px" style={{ background: `linear-gradient(to left, transparent, ${gold})` }} />
+      </div>
+    </div>
+  );
+}
+
 interface WaitlistStats {
   count: number;
   cities: { city: string; count: number }[];
@@ -338,6 +368,8 @@ export default function Home() {
         </div>
       </section>
 
+      <WaveDivider fromBg="#3A1F0E" toBg="#FAF6EF" path="M0,30 C500,60 940,0 1440,40" />
+
       {/* City / State Social Proof Strip */}
       <section className="bg-[#FAF6EF] py-10 border-b border-[#3A1F0E]/5">
         <div className="container mx-auto px-4 max-w-5xl">
@@ -357,6 +389,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <WaveDivider fromBg="#FAF6EF" toBg="#2B1507" path="M0,40 C480,10 960,55 1440,20" />
 
       {/* Referral CTA Section */}
       <section className="py-20 bg-[#2B1507] text-white">
@@ -393,6 +427,8 @@ export default function Home() {
         </div>
       </section>
 
+      <WaveDivider fromBg="#2B1507" toBg="#FAF6EF" path="M0,20 C350,55 1000,5 1440,35" />
+
       {/* "More Than a Travel App" */}
       <section className="py-0 bg-[#FAF6EF] overflow-hidden">
         <div className="grid lg:grid-cols-2 min-h-[420px]">
@@ -412,6 +448,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <OrnamentDivider bg="#FAF6EF" light />
 
       {/* Why We Built This */}
       <section className="py-24 bg-white">
@@ -438,6 +476,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <OrnamentDivider bg="white" light />
 
       {/* The Problem */}
       <section className="py-24 bg-[#FAF6EF]">
@@ -473,6 +513,8 @@ export default function Home() {
         </div>
       </section>
 
+      <OrnamentDivider bg="#FAF6EF" light />
+
       {/* The Solution */}
       <section className="py-24 bg-white">
         <div className="container mx-auto px-4 max-w-6xl">
@@ -505,6 +547,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <WaveDivider fromBg="white" toBg="#2B1507" path="M0,35 C420,5 960,55 1440,25" />
 
       {/* Future Vision */}
       <section className="py-24 bg-[#2B1507] text-white overflow-hidden">
@@ -547,6 +591,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <WaveDivider fromBg="#2B1507" toBg="#FAF6EF" path="M0,15 C360,55 1080,5 1440,40" />
 
       {/* Platform Features */}
       <section className="py-24 bg-[#FAF6EF]">
@@ -617,6 +663,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <WaveDivider fromBg="#FAF6EF" toBg="#2B1507" path="M0,45 C480,5 960,55 1440,15" />
 
       {/* KinfolkAI Feature Section */}
       <section className="py-24 bg-[#2B1507] overflow-hidden relative">
@@ -929,6 +977,8 @@ export default function Home() {
         </div>
       </section>
 
+      <WaveDivider fromBg="#2B1507" toBg="#FAF6EF" path="M0,25 C420,60 980,5 1440,38" />
+
       {/* Business Directory Preview — Photo Grid */}
       <section className="py-16 bg-[#FAF6EF]">
         <div className="container mx-auto px-4 max-w-6xl">
@@ -998,6 +1048,8 @@ export default function Home() {
         </div>
       </section>
 
+      <OrnamentDivider bg="#FAF6EF" light />
+
       {/* Built for Every Part */}
       <section className="py-24 bg-[#FAF6EF]">
         <div className="container mx-auto px-4 max-w-6xl">
@@ -1037,6 +1089,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <OrnamentDivider bg="#FAF6EF" light />
 
       {/* Events & Community Teaser */}
       <section className="py-24 bg-[#FAF6EF]">
@@ -1172,6 +1226,8 @@ export default function Home() {
         </div>
       </section>
 
+      <WaveDivider fromBg="#FAF6EF" toBg="#2B1507" path="M0,40 C500,5 900,55 1440,20" />
+
       {/* App Coming Soon */}
       <section className="py-24 bg-[#2B1507] text-white overflow-hidden">
         <div className="container mx-auto px-4 max-w-5xl">
@@ -1227,6 +1283,8 @@ export default function Home() {
         </div>
       </section>
 
+      <OrnamentDivider bg="#2B1507" />
+
       {/* Impact Counter */}
       <section className="py-16 bg-[#2B1507]">
         <div className="container mx-auto px-4 max-w-5xl">
@@ -1239,6 +1297,8 @@ export default function Home() {
           <ImpactCounter />
         </div>
       </section>
+
+      <WaveDivider fromBg="#2B1507" toBg="white" path="M0,20 C400,55 950,10 1440,40" />
 
       {/* Community Voices */}
       <section className="py-24 bg-white">
