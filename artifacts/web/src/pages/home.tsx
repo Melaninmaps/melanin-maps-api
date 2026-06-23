@@ -599,6 +599,92 @@ export default function Home() {
         </div>
       </section>
 
+      {/* KinfolkAI Feature Section */}
+      <section className="py-24 bg-[#2B1507] overflow-hidden relative">
+        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "radial-gradient(circle at 70% 50%, #CA922B 0%, transparent 60%)" }} />
+        <div className="container mx-auto px-4 max-w-6xl relative z-10">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
+                <Sparkles className="w-3 h-3 text-[#CA922B]" />
+                <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">KinfolkAI™ — Exclusive Feature</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-6 leading-tight">
+                Your AI travel guide that actually knows the culture.
+              </h2>
+              <p className="text-[#F5EBD8]/70 text-lg mb-8 leading-relaxed">
+                Ask KinfolkAI where to eat, stay, explore, and how to stay safe — and get recommendations shaped by your tastes, your budget, and the real community behind each city.
+              </p>
+              <div className="space-y-3 mb-10">
+                {[
+                  "Plan a full weekend itinerary with Black-owned spots only",
+                  "Get neighborhood safety scores before you arrive",
+                  "Discover hidden gems your family will actually love",
+                  "Personalized to your vibe, budget & dietary needs",
+                ].map(item => (
+                  <div key={item} className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-[#CA922B]/20 border border-[#CA922B]/40 flex items-center justify-center shrink-0 mt-0.5">
+                      <Check className="w-3 h-3 text-[#CA922B]" />
+                    </div>
+                    <span className="text-[#F5EBD8]/80 text-sm">{item}</span>
+                  </div>
+                ))}
+              </div>
+              <Link href="/travel">
+                <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white font-bold px-8 h-12 text-base">
+                  Chat with KinfolkAI <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+
+            <div className="space-y-3">
+              <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-4">
+                <div className="flex items-center gap-3 pb-3 border-b border-white/10">
+                  <div className="w-8 h-8 rounded-full bg-[#CA922B] flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-white font-bold text-sm">KinfolkAI™</div>
+                    <div className="text-[#F5EBD8]/40 text-xs">Your cultural travel companion</div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-end">
+                    <div className="bg-[#CA922B]/20 border border-[#CA922B]/30 rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%]">
+                      <p className="text-[#F5EBD8] text-sm">"Plan me a Black-owned food crawl in Atlanta this Saturday — soul food and brunch spots, under $30 a person"</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-start">
+                    <div className="bg-white/8 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[90%] space-y-2">
+                      <p className="text-[#F5EBD8] text-sm font-medium">Here's your Saturday crawl, kin! 🙌🏾</p>
+                      <p className="text-[#F5EBD8]/70 text-xs leading-relaxed">
+                        <span className="text-[#CA922B] font-bold">11am</span> — Busy Bee Cafe (West End) — iconic soul food, cash-only, go early<br />
+                        <span className="text-[#CA922B] font-bold">1:30pm</span> — Slutty Vegan on Edgewood — plant-based, huge energy, Black-founded<br />
+                        <span className="text-[#CA922B] font-bold">3pm</span> — Sweet Auburn Market — browse, snack, community vibe<br />
+                        <span className="text-[#CA922B] font-bold">Safety note:</span> all spots rated 4.5+ by the community ✓
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-white/10">
+                  {["Add dinner options", "Show me the map", "What about DC instead?"].map(chip => (
+                    <Link key={chip} href="/travel">
+                      <div className="px-3 py-1.5 rounded-full bg-white/5 border border-white/15 text-[#F5EBD8]/70 text-xs hover:bg-[#CA922B]/20 hover:border-[#CA922B]/40 hover:text-[#CA922B] transition-colors cursor-pointer">
+                        {chip}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <p className="text-center text-[#F5EBD8]/30 text-xs">Navigator+ members get full KinfolkAI access with saved trips & personalization</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Comparison Table */}
       <section className="py-24 bg-white">
         <div className="container mx-auto px-4 max-w-4xl">

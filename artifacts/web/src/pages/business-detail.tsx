@@ -17,6 +17,31 @@ import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
+function getOpenStatus(hours: string | null | undefined): { open: boolean; label: string } | null {
+  if (!hours) return null;
+  const h = hours.toLowerCase().trim();
+  if (h === "closed" || h === "temporarily closed") return { open: false, label: "Temporarily Closed" };
+  const now = new Date();
+  const mins = now.getHours() * 60 + now.getMinutes();
+  function parseTime(t: string): number | null {
+    const m = t.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i);
+    if (!m) return null;
+    let hr = parseInt(m[1]);
+    const min = m[2] ? parseInt(m[2]) : 0;
+    const ap = m[3].toLowerCase();
+    if (ap === "pm" && hr !== 12) hr += 12;
+    if (ap === "am" && hr === 12) hr = 0;
+    return hr * 60 + min;
+  }
+  const rangeMatch = h.match(/(\d{1,2}(?::\d{2})?\s*[ap]m)\s*[-–]\s*(\d{1,2}(?::\d{2})?\s*[ap]m)/i);
+  if (!rangeMatch) return null;
+  const open = parseTime(rangeMatch[1]);
+  const close = parseTime(rangeMatch[2]);
+  if (open === null || close === null) return null;
+  const isOpen = mins >= open && mins < close;
+  return { open: isOpen, label: isOpen ? "Open Now" : "Closed Now" };
+}
+
 function BusinessMapEmbed({ business }: { business: { name?: string | null; address?: string | null; city?: string | null; state?: string | null } }) {
   const [embedUrl, setEmbedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -550,16 +575,57 @@ export default function BusinessDetail() {
 
                 <div className="flex items-start gap-4 text-[#3A1F0E]/80 text-sm pt-5 border-t border-[#2B1507]/10">
                   <Clock className="w-5 h-5 text-[#CA922B] shrink-0 mt-0.5" />
-                  <div className="space-y-1 w-full">
-                    {(business as any).hours ? (
-                      <div className="text-[#3A1F0E]/80">{(business as any).hours}</div>
-                    ) : (
-                      <div className="text-[#3A1F0E]/50 italic text-xs">
-                        Hours not listed — call ahead to confirm
-                      </div>
-                    )}
+                  <div className="space-y-1.5 w-full">
+                    {(() => {
+                      const status = getOpenStatus((business as any).hours);
+                      return (
+                        <>
+                          {status && (
+                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${status.open ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${status.open ? "bg-green-500" : "bg-red-500"}`} />
+                              {status.label}
+                            </div>
+                          )}
+                          {(business as any).hours ? (
+                            <div className="text-[#3A1F0E]/70 text-xs leading-relaxed">{(business as any).hours}</div>
+                          ) : (
+                            <div className="text-[#3A1F0E]/50 italic text-xs">Hours not listed — call ahead to confirm</div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
+
+                {((business as any).safetyRating != null || (business as any).wouldReturnAlone != null || (business as any).recommendationRate != null) && (
+                  <div className="pt-5 border-t border-[#2B1507]/10 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-[#CA922B]" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60">Community Safety</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(business as any).safetyRating != null && (
+                        <div className="bg-[#FAF6EF] rounded-xl p-3 text-center">
+                          <div className="text-lg font-serif font-bold text-[#3A1F0E]">{parseFloat((business as any).safetyRating).toFixed(1)}</div>
+                          <div className="text-[10px] text-[#3A1F0E]/50 uppercase tracking-wider font-bold mt-0.5">Safety</div>
+                        </div>
+                      )}
+                      {(business as any).wouldReturnAlone != null && (
+                        <div className="bg-[#FAF6EF] rounded-xl p-3 text-center">
+                          <div className="text-lg font-serif font-bold text-[#3A1F0E]">{(business as any).wouldReturnAlone}%</div>
+                          <div className="text-[10px] text-[#3A1F0E]/50 uppercase tracking-wider font-bold mt-0.5">Alone</div>
+                        </div>
+                      )}
+                      {(business as any).recommendationRate != null && (
+                        <div className="bg-[#FAF6EF] rounded-xl p-3 text-center">
+                          <div className="text-lg font-serif font-bold text-[#3A1F0E]">{(business as any).recommendationRate}%</div>
+                          <div className="text-[10px] text-[#3A1F0E]/50 uppercase tracking-wider font-bold mt-0.5">Recommend</div>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-[#3A1F0E]/40 leading-relaxed">Safety stats from community surveys. "Alone" = % who would return solo.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

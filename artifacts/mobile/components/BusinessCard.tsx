@@ -11,6 +11,31 @@ import { RatingStars } from "./RatingStars";
 import { VerificationBadge } from "./VerificationBadge";
 import { SafetyExperienceSurvey } from "./SafetyExperienceSurvey";
 
+function getOpenStatus(hours?: string | null): { open: boolean; label: string } | null {
+  if (!hours) return null;
+  const h = hours.toLowerCase().trim();
+  if (h === "closed" || h === "temporarily closed") return { open: false, label: "Closed" };
+  const now = new Date();
+  const mins = now.getHours() * 60 + now.getMinutes();
+  function parseTime(t: string): number | null {
+    const m = t.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i);
+    if (!m) return null;
+    let hr = parseInt(m[1]);
+    const min = m[2] ? parseInt(m[2]) : 0;
+    const ap = m[3].toLowerCase();
+    if (ap === "pm" && hr !== 12) hr += 12;
+    if (ap === "am" && hr === 12) hr = 0;
+    return hr * 60 + min;
+  }
+  const rangeMatch = h.match(/(\d{1,2}(?::\d{2})?\s*[ap]m)\s*[-–]\s*(\d{1,2}(?::\d{2})?\s*[ap]m)/i);
+  if (!rangeMatch) return null;
+  const open = parseTime(rangeMatch[1]);
+  const close = parseTime(rangeMatch[2]);
+  if (open === null || close === null) return null;
+  const isOpen = mins >= open && mins < close;
+  return { open: isOpen, label: isOpen ? "Open" : "Closed" };
+}
+
 const CATEGORY_IMAGES: Record<string, any> = {
   Food: require("@/assets/images/bento-businesses.jpg"),
   Beauty: require("@/assets/images/bento-nightlife.jpg"),
@@ -92,6 +117,16 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
               </Text>
               <ConfidenceScoreBadge score={business.confidenceScore} size="sm" />
             </View>
+            {(() => {
+              const status = getOpenStatus(business.hours);
+              if (!status) return null;
+              return (
+                <View style={[styles.openBadge, { backgroundColor: status.open ? "#DCFCE7" : "#FEE2E2" }]}>
+                  <View style={[styles.openDot, { backgroundColor: status.open ? "#16A34A" : "#DC2626" }]} />
+                  <Text style={[styles.openText, { color: status.open ? "#15803D" : "#B91C1C" }]}>{status.label}</Text>
+                </View>
+              );
+            })()}
             <TouchableOpacity
               style={[styles.rateSafetyBtn, { backgroundColor: "#DC262608", borderColor: "#DC262630" }]}
               onPress={handleRateSafety}
@@ -160,6 +195,16 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
             {business.address}, {business.city}
             {business.priceRange ? ` · ${business.priceRange}` : ""}
           </Text>
+          {(() => {
+            const status = getOpenStatus(business.hours);
+            if (!status) return null;
+            return (
+              <View style={[styles.openBadge, { backgroundColor: status.open ? "#DCFCE7" : "#FEE2E2" }]}>
+                <View style={[styles.openDot, { backgroundColor: status.open ? "#16A34A" : "#DC2626" }]} />
+                <Text style={[styles.openText, { color: status.open ? "#15803D" : "#B91C1C" }]}>{status.label}</Text>
+              </View>
+            );
+          })()}
           <TouchableOpacity
             style={[styles.rateSafetyBtn, { backgroundColor: "#DC262608", borderColor: "#DC262630" }]}
             onPress={handleRateSafety}
@@ -231,6 +276,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginTop: 2,
+  },
+  openBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    alignSelf: "flex-start",
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 20,
+    marginTop: 3,
+  },
+  openDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 10,
+  },
+  openText: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 10,
   },
   hLocation: {
     fontFamily: "Inter_400Regular",

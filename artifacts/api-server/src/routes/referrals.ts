@@ -84,6 +84,27 @@ router.post("/referrals/track", async (req: any, res): Promise<void> => {
   }
 });
 
+router.get("/referrals/preview/:code", async (req, res): Promise<void> => {
+  const code = req.params.code?.toUpperCase();
+  try {
+    const [referrer] = await db
+      .select({ firstName: usersTable.firstName, createdAt: usersTable.createdAt })
+      .from(usersTable)
+      .where(eq(usersTable.referralCode, code))
+      .limit(1);
+
+    if (!referrer) { res.status(404).json({ error: "Referral code not found" }); return; }
+
+    res.json({
+      firstName: referrer.firstName ?? "A friend",
+      memberSince: referrer.createdAt ? new Date(referrer.createdAt).getFullYear().toString() : null,
+    });
+  } catch (err: any) {
+    req.log.error({ err }, "Failed to preview referral");
+    res.status(500).json({ error: "Failed to look up referral" });
+  }
+});
+
 router.get("/r/:code", async (req, res): Promise<void> => {
   const code = req.params.code?.toUpperCase();
   try {
