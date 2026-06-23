@@ -3,6 +3,7 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 import crypto from "crypto";
 import {
   db,
+  usersTable,
   userPreferencesTable,
   kinfolkSessionsTable,
   kinfolkFeedbackTable,
@@ -10,6 +11,7 @@ import {
   type SessionMessage,
 } from "@workspace/db";
 import { eq, desc, and } from "drizzle-orm";
+import { storage } from "../storage";
 
 const router: IRouter = Router();
 
@@ -246,6 +248,8 @@ router.get("/kinfolk/sessions/:id", async (req: Request, res: Response) => {
 });
 
 // ─── POST /api/kinfolk/chat ───────────────────────────────────────────────────
+const FREE_MONTHLY_LIMIT = 3;
+
 router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   const { sessionId, message, vibes = [], neighborVoice = true } = req.body as {
     sessionId?: string;
@@ -260,6 +264,43 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   }
 
   try {
+    // ── Enforce free-tier monthly query limit ─────────────────────────────────
+    if (req.user?.id) {
+      const user = await storage.getUser(req.user.id);
+      const isFree =
+        !user?.stripeSubscriptionId &&
+        user?.memberType !== "founding" &&
+        user?.memberType !== "beta" &&
+        user?.memberType !== "navigator" &&
+        user?.memberType !== "trailblazer" &&
+        !(user?.trialEndsAt && user.trialEndsAt > new Date());
+
+      if (isFree) {
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        const sameMonth = user?.kinfolkQueryMonth === currentMonth;
+        const usedQueries = sameMonth ? (user?.kinfolkQueriesThisMonth ?? 0) : 0;
+
+        if (usedQueries >= FREE_MONTHLY_LIMIT) {
+          res.status(429).json({
+            error: `You've used your ${FREE_MONTHLY_LIMIT} free KinfolkAI queries this month. Upgrade to Navigator or Trailblazer for unlimited access.`,
+            code: "KINFOLK_LIMIT_REACHED",
+            used: usedQueries,
+            limit: FREE_MONTHLY_LIMIT,
+            upgradeUrl: "/membership",
+          });
+          return;
+        }
+
+        await db
+          .update(usersTable)
+          .set({
+            kinfolkQueryMonth: currentMonth,
+            kinfolkQueriesThisMonth: sameMonth ? usedQueries + 1 : 1,
+          })
+          .where(eq(usersTable.id, req.user.id));
+      }
+    }
+
     // Fetch personalization context (optional auth — works for guests too)
     let prefs: typeof userPreferencesTable.$inferSelect | null = null;
     let likedSpots: string[] = [];

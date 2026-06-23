@@ -53,6 +53,7 @@ export type ChatMessage = {
   followUpSuggestions?: string[];
   timestamp: Date;
   feedback?: Record<string, "like" | "dislike">;
+  limitReached?: boolean;
 };
 
 export type SessionSummary = {
@@ -122,6 +123,19 @@ export function useKinfolk() {
           followUpSuggestions: data.followUpSuggestions ?? [],
           timestamp: new Date(),
           feedback: {},
+        };
+        setMessages((prev) => [...prev, aiMsg]);
+      } else if (res.status === 429) {
+        const errData = await res.json().catch(() => ({})) as { code?: string; used?: number; limit?: number };
+        const isLimit = errData.code === "KINFOLK_LIMIT_REACHED";
+        const aiMsg: ChatMessage = {
+          id: makeId(),
+          role: "assistant",
+          content: isLimit
+            ? `You've used all ${errData.limit ?? 3} of your free KinfolkAI queries for this month. Upgrade to Navigator or Trailblazer for unlimited conversations — I'll be here when you're ready. ✨`
+            : "Too many requests — give it a moment and try again.",
+          timestamp: new Date(),
+          limitReached: isLimit,
         };
         setMessages((prev) => [...prev, aiMsg]);
       } else {

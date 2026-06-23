@@ -324,6 +324,42 @@ export default function BusinessDashboardScreen() {
               ))}
             </View>
 
+            {/* Promoted listing CTA */}
+            <TouchableOpacity
+              style={[styles.promoteCard, { backgroundColor: "#1A2E1A", borderColor: "#2D7A4F50" }]}
+              onPress={async () => {
+                if (Platform.OS !== "web") Haptics.selectionAsync();
+                try {
+                  const token = await SecureStore.getItemAsync("auth_session_token");
+                  const base = getApiBase();
+                  const res = await fetch(`${base}/api/businesses/mine/promote`, {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${token ?? ""}` },
+                  });
+                  const data = await res.json() as { checkoutUrl?: string; alreadyPromoted?: boolean; promotedUntil?: string; code?: string; message?: string; error?: string };
+                  if (data.alreadyPromoted) {
+                    alert(`Your listing is already promoted until ${data.promotedUntil ? new Date(data.promotedUntil).toLocaleDateString() : "soon"}.`);
+                  } else if (data.code === "NOT_CONFIGURED") {
+                    alert("Promoted listings are coming soon. Check back shortly!");
+                  } else if (data.checkoutUrl) {
+                    router.push(data.checkoutUrl as never);
+                  }
+                } catch { alert("Could not start promotion checkout. Try again."); }
+              }}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.promoteIcon, { backgroundColor: "#2D7A4F20" }]}>
+                <Feather name="trending-up" size={20} color="#2D7A4F" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.promoteTitle, { color: "#FFF" }]}>Promote My Listing</Text>
+                <Text style={[styles.promoteSub, { color: "rgba(255,255,255,0.55)" }]}>
+                  Get featured placement in search results and the map for 30 days — paid add-on.
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={16} color="#2D7A4F" />
+            </TouchableOpacity>
+
             {/* Direct feedback opt-in toggle */}
             <TouchableOpacity
               style={[styles.feedbackToggleCard, { backgroundColor: colors.card, borderColor: feedbackOptIn ? "#CA922B" : colors.border }]}
@@ -657,6 +693,10 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 17, fontFamily: "Inter_700Bold", marginBottom: 14 },
   sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
   actionsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 20 },
+  promoteCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 14, borderWidth: 1, marginBottom: 16 },
+  promoteIcon: { width: 40, height: 40, borderRadius: 10, justifyContent: "center", alignItems: "center", flexShrink: 0 },
+  promoteTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
+  promoteSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
   feedbackToggleCard: { flexDirection: "row", alignItems: "center", gap: 14, padding: 14, borderRadius: 14, borderWidth: 1, marginBottom: 24 },
   feedbackToggleIcon: { width: 40, height: 40, borderRadius: 10, justifyContent: "center", alignItems: "center" },
   feedbackToggleTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", marginBottom: 3 },

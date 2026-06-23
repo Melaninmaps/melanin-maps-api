@@ -1,6 +1,7 @@
-import { Router, type IRouter, type Request, type Response } from "express";
+import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { db, safetyCheckinsTable } from "@workspace/db";
 import { and, desc, eq } from "drizzle-orm";
+import { requireFamilySafety } from "../middleware/requireFamilySafety";
 
 const router: IRouter = Router();
 
@@ -23,7 +24,7 @@ router.get("/safety/checkins", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/safety/checkins", async (req: Request, res: Response) => {
+router.post("/safety/checkins", requireFamilySafety, async (req: Request, res: Response) => {
   const userId = requireAuth(req, res); if (!userId) return;
   try {
     const { trustedContactName, trustedContactEmail, scheduledAt, note, location, city } =

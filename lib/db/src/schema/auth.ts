@@ -30,6 +30,8 @@ export const usersTable = pgTable("users", {
   referralCode: varchar("referral_code").unique(),
   referralCount: integer("referral_count").notNull().default(0),
   dateOfBirth: timestamp("date_of_birth", { withTimezone: false }),
+  kinfolkQueryMonth: varchar("kinfolk_query_month", { length: 7 }),
+  kinfolkQueriesThisMonth: integer("kinfolk_queries_this_month").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

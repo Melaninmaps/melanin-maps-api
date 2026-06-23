@@ -33,6 +33,7 @@ export const businessesTable = pgTable("businesses", {
   imageUrl: varchar("image_url", { length: 512 }),
   photos: jsonb("photos").$type<string[]>().notNull().default([]),
   feedbackOptIn: boolean("feedback_opt_in").notNull().default(false),
+  promotedUntil: timestamp("promoted_until", { withTimezone: true }),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   submittedById: varchar("submitted_by_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

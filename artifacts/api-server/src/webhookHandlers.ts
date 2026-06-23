@@ -1,5 +1,5 @@
 import { getStripeSync } from "./stripeClient";
-import { db, usersTable } from "@workspace/db";
+import { db, usersTable, businessesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { sendTrialStarted, sendTrialEndingSoon, sendTrialExpired, sendMembershipCancelled } from "./lib/email";
 import { logger } from "./lib/logger";
@@ -26,6 +26,16 @@ async function handleCustomEvent(event: { type: string; data: { object: Record<s
   try {
     switch (event.type) {
       case "checkout.session.completed": {
+        // ── Promoted listing (one-time payment) ────────────────────────────────
+        if (obj.mode === "payment" && obj.metadata?.type === "promoted_listing") {
+          const { businessId, durationDays } = obj.metadata as { businessId: string; durationDays: string };
+          const days = parseInt(durationDays ?? "30", 10);
+          const promotedUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+          await db.update(businessesTable).set({ promotedUntil }).where(eq(businessesTable.id, businessId));
+          logger.info({ businessId, promotedUntil }, "[promote] listing activated");
+          break;
+        }
+        // ── Subscription checkout ───────────────────────────────────────────────
         if (obj.mode !== "subscription" || !obj.customer) break;
         const user = await getUserByCustomerId(String(obj.customer));
         if (!user?.email || !user.trialEndsAt) break;

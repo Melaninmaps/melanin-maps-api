@@ -1,7 +1,8 @@
-import { Router, type IRouter, type Request, type Response } from "express";
+import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { db, locationSharesTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import crypto from "node:crypto";
+import { requireFamilySafety } from "../middleware/requireFamilySafety";
 
 const router: IRouter = Router();
 
@@ -22,7 +23,7 @@ router.get("/safety/location-shares", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/safety/location-shares", async (req: Request, res: Response) => {
+router.post("/safety/location-shares", requireFamilySafety, async (req: Request, res: Response) => {
   const userId = requireAuth(req, res); if (!userId) return;
   try {
     const { recipientEmail, label, durationMinutes = 60 } =

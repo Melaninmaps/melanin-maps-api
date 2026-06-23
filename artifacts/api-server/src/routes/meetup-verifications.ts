@@ -1,6 +1,7 @@
-import { Router, type IRouter, type Request, type Response } from "express";
+import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { db, meetupVerificationsTable, usersTable } from "@workspace/db";
 import { and, desc, eq, or } from "drizzle-orm";
+import { requireFamilySafety } from "../middleware/requireFamilySafety";
 
 const router: IRouter = Router();
 
@@ -42,7 +43,7 @@ router.get("/meetups", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/meetups", async (req: Request, res: Response) => {
+router.post("/meetups", requireFamilySafety, async (req: Request, res: Response) => {
   const userId = requireAuth(req, res); if (!userId) return;
   try {
     const { partnerId, connectionId, location, note } =

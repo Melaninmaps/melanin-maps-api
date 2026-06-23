@@ -51,6 +51,7 @@ import meetupVerificationsRouter from "./meetup-verifications";
 import safetyTipsRouter from "./safety-tips";
 import skipFeedbackRouter from "./skip-feedback";
 import businessesAnalyticsRouter from "./businesses-analytics";
+import promoteRouter from "./promote";
 
 const router: IRouter = Router();
 
@@ -106,5 +107,6 @@ router.use(meetupVerificationsRouter);
 router.use(safetyTipsRouter);
 router.use(skipFeedbackRouter);
 router.use(businessesAnalyticsRouter);
+router.use(promoteRouter);
 
 export default router;
