@@ -50,6 +50,7 @@ import locationSharesRouter from "./location-shares";
 import meetupVerificationsRouter from "./meetup-verifications";
 import safetyTipsRouter from "./safety-tips";
 import skipFeedbackRouter from "./skip-feedback";
+import businessesAnalyticsRouter from "./businesses-analytics";
 
 const router: IRouter = Router();
 
@@ -104,5 +105,6 @@ router.use(locationSharesRouter);
 router.use(meetupVerificationsRouter);
 router.use(safetyTipsRouter);
 router.use(skipFeedbackRouter);
+router.use(businessesAnalyticsRouter);
 
 export default router;

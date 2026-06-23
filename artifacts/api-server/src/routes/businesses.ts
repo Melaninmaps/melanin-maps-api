@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable } from "@workspace/db";
+import { db, businessesTable, businessProfileViewsTable } from "@workspace/db";
 import { eq, and, or, ilike } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -80,6 +80,12 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
       res.status(404).json({ error: "Business not found" });
       return;
     }
+
+    const userId = (req as any).user?.id as string | undefined;
+    db.insert(businessProfileViewsTable)
+      .values({ businessId: id, userId: userId ?? null })
+      .execute()
+      .catch(() => {});
 
     res.json({ business });
   } catch (err) {
