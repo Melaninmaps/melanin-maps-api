@@ -21,9 +21,10 @@ function isAdmin(req: Request): boolean {
 
 router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) => {
   try {
-    const { email, firstName, city, state, isBusinessOwner, referralCode, referredBy } = req.body as {
+    const { email, firstName, lastName, city, state, isBusinessOwner, referralCode, referredBy } = req.body as {
       email?: string;
       firstName?: string;
+      lastName?: string;
       city?: string;
       state?: string;
       isBusinessOwner?: boolean;
@@ -43,6 +44,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       .values({
         email: email.toLowerCase().trim(),
         firstName: firstName?.trim() || null,
+        lastName: lastName?.trim() || null,
         city: city?.trim() || null,
         state: state?.trim().toUpperCase() || null,
         isBusinessOwner: Boolean(isBusinessOwner),
@@ -56,11 +58,12 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
     const position = Number(total);
 
     const cleanEmail = email.toLowerCase().trim();
-    const cleanName = firstName?.trim() || null;
-    sendWaitlistConfirmation(cleanEmail, position, code, cleanName ?? "there")
+    const cleanFirst = firstName?.trim() || null;
+    const cleanLast = lastName?.trim() || null;
+    sendWaitlistConfirmation(cleanEmail, position, code, cleanFirst ?? "there", cleanLast ?? undefined)
       .then(() => db.update(waitlistTable).set({ welcomeEmailSent: true }).where(eq(waitlistTable.referralCode, code)))
       .catch((err: unknown) => req.log.error({ err }, "Failed to send waitlist confirmation email"));
-    sendWelcomeEmail(cleanEmail, cleanName)
+    sendWelcomeEmail(cleanEmail, cleanFirst)
       .catch((err: unknown) => req.log.error({ err }, "Failed to send welcome email"));
 
     res.status(201).json({ success: true, position, referralCode: code });

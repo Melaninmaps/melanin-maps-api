@@ -41,6 +41,8 @@ export default function WaitlistScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -62,7 +64,7 @@ export default function WaitlistScreen() {
       const res = await fetch(`${apiBase}/api/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, referralCode: code }),
+        body: JSON.stringify({ email, firstName: firstName.trim() || undefined, lastName: lastName.trim() || undefined, referralCode: code }),
       });
       if (res.ok) {
         const data = (await res.json()) as { position?: number };
@@ -148,6 +150,24 @@ export default function WaitlistScreen() {
             </View>
 
             <View style={styles.form}>
+              <View style={styles.nameRow}>
+                <TextInput
+                  style={[styles.input, styles.nameInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                  placeholder="First name"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  autoCapitalize="words"
+                />
+                <TextInput
+                  style={[styles.input, styles.nameInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                  placeholder="Last name"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={lastName}
+                  onChangeText={setLastName}
+                  autoCapitalize="words"
+                />
+              </View>
               <Text style={[styles.formLabel, { color: colors.foreground }]}>Email Address</Text>
               <TextInput
                 style={[styles.input, { backgroundColor: colors.card, borderColor: valid || !email ? colors.border : colors.destructive, color: colors.foreground }]}
@@ -255,6 +275,8 @@ const styles = StyleSheet.create({
   benefitLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   benefitDesc: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
   form: { gap: 12 },
+  nameRow: { flexDirection: "row", gap: 10 },
+  nameInput: { flex: 1 },
   formLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   input: { borderWidth: 1, borderRadius: 14, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular" },
   joinBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 17, borderRadius: 16 },

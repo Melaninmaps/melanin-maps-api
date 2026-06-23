@@ -5,6 +5,7 @@ export const waitlistTable = pgTable("waitlist_signups", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email", { length: 255 }).notNull().unique(),
   firstName: varchar("first_name", { length: 100 }),
+  lastName: varchar("last_name", { length: 100 }),
   city: varchar("city", { length: 100 }),
   state: varchar("state", { length: 50 }),
   isBusinessOwner: boolean("is_business_owner").notNull().default(false),

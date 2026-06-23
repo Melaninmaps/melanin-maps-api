@@ -75,6 +75,8 @@ function formatCount(n: number): string {
 export default function Home() {
   const { data: businessesData, isLoading } = useListBusinesses({ limit: 3 });
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [isBusinessOwner, setIsBusinessOwner] = useState(false);
@@ -109,7 +111,7 @@ export default function Home() {
       const res = await fetch(`${BASE}api/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, city, state, isBusinessOwner, referredBy: referredBy.trim() || undefined }),
+        body: JSON.stringify({ email, firstName: firstName.trim() || undefined, lastName: lastName.trim() || undefined, city, state, isBusinessOwner, referredBy: referredBy.trim() || undefined }),
       });
       const data = await res.json();
       setPosition(data.position ?? null);
@@ -184,6 +186,23 @@ export default function Home() {
             <>
             {/* Email + CTA row */}
             <form onSubmit={handleWaitlist}>
+            {/* First + Last name row */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={firstName}
+                onChange={e => setFirstName(e.target.value)}
+                className="flex-1 bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60"
+                placeholder="First name"
+              />
+              <input
+                type="text"
+                value={lastName}
+                onChange={e => setLastName(e.target.value)}
+                className="flex-1 bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#CA922B]/60"
+                placeholder="Last name"
+              />
+            </div>
             <div className="flex gap-2">
               <input
                 type="email"

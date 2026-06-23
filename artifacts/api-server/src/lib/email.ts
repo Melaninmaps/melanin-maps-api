@@ -90,8 +90,9 @@ export async function sendWelcomeEmail(to: string, firstName: string | null) {
   });
 }
 
-export async function sendWaitlistConfirmation(to: string, position: number, referralCode: string, firstName: string) {
+export async function sendWaitlistConfirmation(to: string, position: number, referralCode: string, firstName: string, lastName?: string) {
   if (!resend) { log("waitlist confirmation"); return; }
+  const fullName = lastName ? `${firstName} ${lastName}` : firstName;
   const referralLink = `https://mappingwithmelanin.com/?ref=${referralCode}`;
   await resend.emails.send({
     from: FROM,
@@ -101,7 +102,7 @@ export async function sendWaitlistConfirmation(to: string, position: number, ref
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
         <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
 
-        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 8px">Hello ${firstName},</p>
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 8px">Hello ${fullName},</p>
 
         <h1 style="font-size:28px;color:#2B1507;font-weight:700;margin:0 0 24px;line-height:1.3">You're in!</h1>
 
