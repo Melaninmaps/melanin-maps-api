@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { db } from "@workspace/db";
 import { groups, groupMembers, groupInvites, groupItineraries } from "@workspace/db/schema";
-import { userPreferencesTable } from "@workspace/db/schema";
+import { userPreferencesTable, usersTable } from "@workspace/db/schema";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import type { GroupItineraryContent } from "@workspace/db/schema";
@@ -96,11 +96,18 @@ router.get("/groups/:id", async (req: Request, res: Response) => {
       ? members.some((m) => m.userId === req.user.id && m.role === "admin")
       : false;
 
-    let pendingInvites: { id: number; invitedUserId: string; createdAt: Date }[] = [];
+    let pendingInvites: { id: number; invitedUserId: string; invitedUserFirstName: string | null; invitedUserLastName: string | null; createdAt: Date }[] = [];
     if (isAdmin) {
       pendingInvites = await db
-        .select({ id: groupInvites.id, invitedUserId: groupInvites.invitedUserId, createdAt: groupInvites.createdAt })
+        .select({
+          id: groupInvites.id,
+          invitedUserId: groupInvites.invitedUserId,
+          invitedUserFirstName: usersTable.firstName,
+          invitedUserLastName: usersTable.lastName,
+          createdAt: groupInvites.createdAt,
+        })
         .from(groupInvites)
+        .leftJoin(usersTable, eq(usersTable.id, groupInvites.invitedUserId))
         .where(and(eq(groupInvites.groupId, id), eq(groupInvites.status, "pending")));
     }
 

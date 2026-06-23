@@ -52,7 +52,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 type GroupMemberRow = { userId: string; role: string; joinedAt: Date };
-type PendingInvite = { id: number; invitedUserId: string; createdAt: Date };
+type PendingInvite = { id: number; invitedUserId: string; invitedUserFirstName: string | null; invitedUserLastName: string | null; createdAt: Date };
 type GroupDetail = Group & { isMember: boolean; isAdmin: boolean };
 
 function getApiBase(): string {
@@ -170,7 +170,7 @@ export default function GroupDetailScreen() {
           <View style={[styles.heroIcon, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
             <Feather name={catIcon} size={32} color="#FFFFFF" />
           </View>
-          <Text style={styles.heroTitle}>{group.name}</Text>
+          <Text style={styles.heroTitle} numberOfLines={2} adjustsFontSizeToFit>{group.name}</Text>
           {(group.city || group.state) && (
             <View style={styles.locationRow}>
               <Feather name="map-pin" size={13} color="rgba(255,255,255,0.8)" />
@@ -222,8 +222,11 @@ export default function GroupDetailScreen() {
                 <View style={[styles.actionIcon, { backgroundColor: "#2D7A4F22" }]}>
                   <Feather name="map" size={20} color="#2D7A4F" />
                 </View>
-                <Text style={[styles.actionLabel, { color: "#2D7A4F" }]}>Plan a Trip</Text>
-                <Text style={[styles.actionSub, { color: colors.mutedForeground }]}>AI suggests itineraries for your crew</Text>
+                <View style={styles.actionContent}>
+                  <Text style={[styles.actionLabel, { color: "#2D7A4F" }]}>Plan a Trip</Text>
+                  <Text style={[styles.actionSub, { color: colors.mutedForeground }]}>AI suggests itineraries for your crew</Text>
+                </View>
+                <Feather name="chevron-right" size={16} color="#2D7A4F" />
               </TouchableOpacity>
 
               {/* Invite (admin only) */}
@@ -239,10 +242,13 @@ export default function GroupDetailScreen() {
                   <View style={[styles.actionIcon, { backgroundColor: catColor + "20" }]}>
                     <Feather name="user-plus" size={20} color={catColor} />
                   </View>
-                  <Text style={[styles.actionLabel, { color: catColor }]}>Invite Members</Text>
-                  <Text style={[styles.actionSub, { color: colors.mutedForeground }]}>
-                    {(group.maxMembers ?? 8) - group.memberCount} spot{(group.maxMembers ?? 8) - group.memberCount !== 1 ? "s" : ""} remaining
-                  </Text>
+                  <View style={styles.actionContent}>
+                    <Text style={[styles.actionLabel, { color: catColor }]}>Invite Members</Text>
+                    <Text style={[styles.actionSub, { color: colors.mutedForeground }]}>
+                      {(group.maxMembers ?? 8) - group.memberCount} spot{(group.maxMembers ?? 8) - group.memberCount !== 1 ? "s" : ""} remaining
+                    </Text>
+                  </View>
+                  <Feather name="chevron-right" size={16} color={catColor} />
                 </TouchableOpacity>
               )}
 
@@ -251,8 +257,10 @@ export default function GroupDetailScreen() {
                   <View style={[styles.actionIcon, { backgroundColor: colors.background }]}>
                     <Feather name="users" size={20} color={colors.mutedForeground} />
                   </View>
-                  <Text style={[styles.actionLabel, { color: colors.mutedForeground }]}>Group Full</Text>
-                  <Text style={[styles.actionSub, { color: colors.mutedForeground }]}>Max {group.maxMembers} members reached</Text>
+                  <View style={styles.actionContent}>
+                    <Text style={[styles.actionLabel, { color: colors.mutedForeground }]}>Group Full</Text>
+                    <Text style={[styles.actionSub, { color: colors.mutedForeground }]}>Max {group.maxMembers} members reached</Text>
+                  </View>
                 </View>
               )}
             </View>
@@ -273,7 +281,9 @@ export default function GroupDetailScreen() {
                     <Feather name="user" size={14} color={catColor} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.pendingId, { color: colors.foreground }]}>Invited member</Text>
+                    <Text style={[styles.pendingId, { color: colors.foreground }]}>
+                      {[inv.invitedUserFirstName, inv.invitedUserLastName].filter(Boolean).join(" ") || "Member"}
+                    </Text>
                     <Text style={[styles.pendingDate, { color: colors.mutedForeground }]}>Sent {formatDate(String(inv.createdAt))}</Text>
                   </View>
                   <View style={[styles.pendingBadge, { backgroundColor: "#C9922B18" }]}>
@@ -428,8 +438,9 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 12, padding: 14,
     borderRadius: 16, borderWidth: 1,
   },
-  actionIcon: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  actionLabel: { fontFamily: "Inter_700Bold", fontSize: 15, flex: 1 },
+  actionIcon: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  actionContent: { flex: 1, gap: 2 },
+  actionLabel: { fontFamily: "Inter_700Bold", fontSize: 15 },
   actionSub: { fontFamily: "Inter_400Regular", fontSize: 12 },
   pendingCard: { borderRadius: 16, borderWidth: 1, overflow: "hidden" },
   pendingRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 12 },

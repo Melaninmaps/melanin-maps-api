@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   emptySubtitle: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", maxWidth: 260, lineHeight: 21 },
   card: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 12 },
   cardTop: { flexDirection: "row", gap: 12 },
-  catIcon: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center", shrink: 0 } as any,
+  catIcon: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   cardInfo: { flex: 1, gap: 5 },
   groupName: { fontFamily: "Inter_700Bold", fontSize: 16 },
   locationRow: { flexDirection: "row", alignItems: "center", gap: 4 },
