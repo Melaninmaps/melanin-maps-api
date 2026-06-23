@@ -56,31 +56,42 @@ function openShare(platform: string) {
 
 const BASE = import.meta.env.BASE_URL;
 
-function WaveDivider({ fromBg, toBg, path = "M0,25 C400,55 900,5 1440,35" }: { fromBg: string; toBg: string; path?: string }) {
+function WaveDivider({ fromBg, toBg, flip = false }: { fromBg: string; toBg: string; flip?: boolean }) {
+  const d = flip
+    ? "M0,40 C360,10 1080,70 1440,30 L1440,80 L0,80 Z"
+    : "M0,30 C360,70 1080,10 1440,50 L1440,80 L0,80 Z";
   return (
-    <div style={{ backgroundColor: fromBg, marginBottom: -1 }}>
-      <svg viewBox="0 0 1440 60" className="w-full block" preserveAspectRatio="none">
-        <path d={`${path} L1440,60 L0,60 Z`} fill={toBg} />
+    <div style={{ backgroundColor: fromBg, display: "block", lineHeight: 0, fontSize: 0 }}>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 1440 80"
+        style={{ display: "block", width: "100%", height: "80px" }}
+        preserveAspectRatio="none"
+      >
+        <path d={d} fill={toBg} />
       </svg>
     </div>
   );
 }
 
 function OrnamentDivider({ bg, light = false }: { bg: string; light?: boolean }) {
-  const gold = light ? "rgba(202,146,43,0.25)" : "rgba(202,146,43,0.4)";
-  const diamond = light ? "rgba(202,146,43,0.35)" : "rgba(202,146,43,0.55)";
+  const lineColor = light ? "rgba(202,146,43,0.2)" : "rgba(202,146,43,0.35)";
+  const accentColor = light ? "rgba(202,146,43,0.5)" : "rgba(202,146,43,0.75)";
+  const textColor = light ? "#3A1F0E" : "#F5EBD8";
   return (
-    <div style={{ backgroundColor: bg }} className="flex items-center justify-center py-10">
-      <div className="flex items-center gap-3">
-        <div className="w-20 h-px" style={{ background: `linear-gradient(to right, transparent, ${gold})` }} />
-        <div className="w-1.5 h-1.5 rotate-45" style={{ backgroundColor: diamond }} />
-        <div className="w-2 h-2 rotate-45 border" style={{ borderColor: diamond }} />
-        <div className="w-1 h-1 rotate-45" style={{ backgroundColor: gold }} />
-        <div className="text-[10px] font-bold tracking-[0.3em] uppercase" style={{ color: diamond }}>✦</div>
-        <div className="w-1 h-1 rotate-45" style={{ backgroundColor: gold }} />
-        <div className="w-2 h-2 rotate-45 border" style={{ borderColor: diamond }} />
-        <div className="w-1.5 h-1.5 rotate-45" style={{ backgroundColor: diamond }} />
-        <div className="w-20 h-px" style={{ background: `linear-gradient(to left, transparent, ${gold})` }} />
+    <div style={{ backgroundColor: bg, padding: "32px 0" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", maxWidth: "480px", margin: "0 auto", padding: "0 24px" }}>
+        <div style={{ flex: 1, height: "1px", background: `linear-gradient(to right, transparent, ${lineColor})` }} />
+        <span style={{ fontSize: "10px", fontFamily: "serif", letterSpacing: "0.35em", color: accentColor, fontWeight: 600, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+          ✦
+        </span>
+        <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.3em", color: textColor, opacity: 0.4, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+          Mapping With Melanin
+        </span>
+        <span style={{ fontSize: "10px", fontFamily: "serif", letterSpacing: "0.35em", color: accentColor, fontWeight: 600, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+          ✦
+        </span>
+        <div style={{ flex: 1, height: "1px", background: `linear-gradient(to left, transparent, ${lineColor})` }} />
       </div>
     </div>
   );
@@ -368,7 +379,7 @@ export default function Home() {
         </div>
       </section>
 
-      <WaveDivider fromBg="#3A1F0E" toBg="#FAF6EF" path="M0,30 C500,60 940,0 1440,40" />
+      <WaveDivider fromBg="#3A1F0E" toBg="#FAF6EF" />
 
       {/* City / State Social Proof Strip */}
       <section className="bg-[#FAF6EF] py-10 border-b border-[#3A1F0E]/5">
@@ -390,7 +401,7 @@ export default function Home() {
         </div>
       </section>
 
-      <WaveDivider fromBg="#FAF6EF" toBg="#2B1507" path="M0,40 C480,10 960,55 1440,20" />
+      <WaveDivider fromBg="#FAF6EF" toBg="#2B1507" flip />
 
       {/* Referral CTA Section */}
       <section className="py-20 bg-[#2B1507] text-white">
@@ -427,7 +438,7 @@ export default function Home() {
         </div>
       </section>
 
-      <WaveDivider fromBg="#2B1507" toBg="#FAF6EF" path="M0,20 C350,55 1000,5 1440,35" />
+      <WaveDivider fromBg="#2B1507" toBg="#FAF6EF" />
 
       {/* "More Than a Travel App" */}
       <section className="py-0 bg-[#FAF6EF] overflow-hidden">
@@ -548,7 +559,7 @@ export default function Home() {
         </div>
       </section>
 
-      <WaveDivider fromBg="white" toBg="#2B1507" path="M0,35 C420,5 960,55 1440,25" />
+      <WaveDivider fromBg="white" toBg="#2B1507" flip />
 
       {/* Future Vision */}
       <section className="py-24 bg-[#2B1507] text-white overflow-hidden">
@@ -592,7 +603,7 @@ export default function Home() {
         </div>
       </section>
 
-      <WaveDivider fromBg="#2B1507" toBg="#FAF6EF" path="M0,15 C360,55 1080,5 1440,40" />
+      <WaveDivider fromBg="#2B1507" toBg="#FAF6EF" flip />
 
       {/* Platform Features */}
       <section className="py-24 bg-[#FAF6EF]">
@@ -664,7 +675,7 @@ export default function Home() {
         </div>
       </section>
 
-      <WaveDivider fromBg="#FAF6EF" toBg="#2B1507" path="M0,45 C480,5 960,55 1440,15" />
+      <WaveDivider fromBg="#FAF6EF" toBg="#2B1507" />
 
       {/* KinfolkAI Feature Section */}
       <section className="py-24 bg-[#2B1507] overflow-hidden relative">
@@ -977,7 +988,7 @@ export default function Home() {
         </div>
       </section>
 
-      <WaveDivider fromBg="#2B1507" toBg="#FAF6EF" path="M0,25 C420,60 980,5 1440,38" />
+      <WaveDivider fromBg="#2B1507" toBg="#FAF6EF" />
 
       {/* Business Directory Preview — Photo Grid */}
       <section className="py-16 bg-[#FAF6EF]">
@@ -1226,7 +1237,7 @@ export default function Home() {
         </div>
       </section>
 
-      <WaveDivider fromBg="#FAF6EF" toBg="#2B1507" path="M0,40 C500,5 900,55 1440,20" />
+      <WaveDivider fromBg="#FAF6EF" toBg="#2B1507" flip />
 
       {/* App Coming Soon */}
       <section className="py-24 bg-[#2B1507] text-white overflow-hidden">
@@ -1298,7 +1309,7 @@ export default function Home() {
         </div>
       </section>
 
-      <WaveDivider fromBg="#2B1507" toBg="white" path="M0,20 C400,55 950,10 1440,40" />
+      <WaveDivider fromBg="#2B1507" toBg="white" />
 
       {/* Community Voices */}
       <section className="py-24 bg-white">
