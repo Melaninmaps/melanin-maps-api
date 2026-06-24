@@ -20,6 +20,7 @@
         "applinks:mappingwithmelanin.com"
       ],
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "Mapping With Melanin uses your location to show nearby Black-owned businesses and community safety information.",
         "NSCameraUsageDescription": "Mapping With Melanin uses your camera so you can update your profile photo.",
         "NSPhotoLibraryUsageDescription": "Mapping With Melanin accesses your photo library so you can choose a profile picture.",
