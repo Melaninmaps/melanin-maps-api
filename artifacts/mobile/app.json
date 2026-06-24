@@ -25,7 +25,8 @@
         "NSCameraUsageDescription": "Mapping With Melanin uses your camera so you can update your profile photo.",
         "NSPhotoLibraryUsageDescription": "Mapping With Melanin accesses your photo library so you can choose a profile picture.",
         "NSPhotoLibraryAddUsageDescription": "Mapping With Melanin saves photos to your library."
-      }
+      },
+      "buildNumber": "3"
     },
     "android": {
       "googleMapsApiKey": "${GOOGLE_MAPS_API_KEY}",
@@ -100,11 +101,11 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "owner": "mappingwithmelanin",
     "extra": {
       "eas": {
-        "projectId": "177b337e-459e-4643-bb33-b47304d955cf"
+        "projectId": "0f873107-7787-46ab-9a04-685c2a6756b1"
       }
-    }
+    },
+    "owner": "tlindsay428"
   }
 }
