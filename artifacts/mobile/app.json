@@ -35,9 +35,15 @@
           "action": "VIEW",
           "autoVerify": true,
           "data": [
-            { "scheme": "https", "host": "mappingwithmelanin.com" }
+            {
+              "scheme": "https",
+              "host": "mappingwithmelanin.com"
+            }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "adaptiveIcon": {
@@ -93,6 +99,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "0f873107-7787-46ab-9a04-685c2a6756b1"
+      }
+    },
+    "owner": "tlindsay428"
   }
 }
