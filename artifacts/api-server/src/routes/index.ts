@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import path from "path";
 import healthRouter from "./health";
 import authRouter from "./auth";
 import businessesRouter from "./businesses";
@@ -112,5 +113,9 @@ router.use(businessesAnalyticsRouter);
 router.use(promoteRouter);
 router.use(postNudgeRouter);
 router.use(userSettingsRouter);
+
+router.get("/download/mobile-build.zip", (req, res) => {
+  res.download(path.join(__dirname, "../../mobile-build.zip"), "mobile-build.zip");
+});
 
 export default router;
