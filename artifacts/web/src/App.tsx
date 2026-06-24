@@ -126,6 +126,9 @@ function Router() {
       <Route path="/privacy-policy">
         <Layout><PrivacyPolicy /></Layout>
       </Route>
+      <Route path="/privacy">
+        <Layout><PrivacyPolicy /></Layout>
+      </Route>
       <Route path="/terms">
         <Layout><Terms /></Layout>
       </Route>
