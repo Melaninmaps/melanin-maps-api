@@ -1,8 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, waitlistTable } from "@workspace/db";
+import { db, waitlistTable, usersTable } from "@workspace/db";
 import { count, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
-import { sendWaitlistConfirmation, sendWelcomeEmail } from "../lib/email";
+import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -188,6 +188,25 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
     if (!updated) {
       res.status(404).json({ error: "Entry not found" });
       return;
+    }
+
+    // When approved: also approve their user account (if they have one) and send notification email
+    if (status === "approved" && updated.email) {
+      const [existingUser] = await db
+        .select({ id: usersTable.id, firstName: usersTable.firstName, approved: usersTable.approved })
+        .from(usersTable)
+        .where(eq(usersTable.email, updated.email.toLowerCase()))
+        .limit(1);
+
+      if (existingUser && !existingUser.approved) {
+        await db
+          .update(usersTable)
+          .set({ approved: true })
+          .where(eq(usersTable.id, existingUser.id));
+      }
+
+      sendApprovalNotification(updated.email, updated.firstName ?? null)
+        .catch((err: unknown) => req.log.error({ err }, "Failed to send waitlist approval email"));
     }
 
     res.json({ entry: updated });

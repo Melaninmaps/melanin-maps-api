@@ -27,11 +27,10 @@ export default function PendingApproval() {
         </h1>
         <p className="text-[#3A1F0E]/60 text-base leading-relaxed mb-6 font-light">
           Your account is pending approval. We're reviewing early access
-          applications in batches — you'll get an email as soon as your city
-          launches.
+          applications in batches — you'll get an email the moment you're approved.
         </p>
 
-        <div className="bg-[#FAF6EF] rounded-2xl p-5 mb-8 text-left space-y-3">
+        <div className="bg-[#FAF6EF] rounded-2xl p-5 mb-6 text-left space-y-3">
           <div className="flex items-start gap-3">
             <div className="w-6 h-6 rounded-full bg-[#CA922B] text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">1</div>
             <p className="text-sm text-[#3A1F0E]/70">Your account has been created and is in the review queue.</p>
@@ -42,8 +41,17 @@ export default function PendingApproval() {
           </div>
           <div className="flex items-start gap-3">
             <div className="w-6 h-6 rounded-full bg-[#3A1F0E]/20 text-[#3A1F0E]/40 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">3</div>
-            <p className="text-sm text-[#3A1F0E]/50">You'll receive an email when you're approved.</p>
+            <p className="text-sm text-[#3A1F0E]/50">You'll get an email with a link — then sign in right here on the website.</p>
           </div>
+        </div>
+
+        <div className="bg-[#2B1507] rounded-2xl p-5 mb-8 text-left">
+          <p className="text-[#CA922B] font-bold text-sm mb-1">📱 No app download needed</p>
+          <p className="text-[#F5EBD8]/70 text-sm leading-relaxed">
+            You'll access the platform right here at{" "}
+            <a href="https://mappingwithmelanin.com" className="text-[#CA922B] font-bold underline">mappingwithmelanin.com</a>.
+            The mobile app is coming soon — the website has everything in the meantime.
+          </p>
         </div>
 
         <a href="mailto:hello@mappingwithmelanin.com" className="block w-full mb-4">

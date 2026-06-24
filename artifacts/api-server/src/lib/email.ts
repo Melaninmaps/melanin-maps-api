@@ -110,6 +110,15 @@ export async function sendWaitlistConfirmation(to: string, position: number, ref
           Thank you for joining the Mapping with Melanin™ waitlist and becoming one of the founding members of our growing community.
         </p>
 
+        <div style="background:#2B1507;border-radius:12px;padding:20px 24px;margin:0 0 20px">
+          <p style="color:#CA922B;font-size:15px;font-weight:700;margin:0 0 6px">📱 Where to access the platform</p>
+          <p style="color:#F5EBD8;font-size:14px;line-height:1.6;margin:0">
+            Once you're approved, you'll access Mapping with Melanin™ directly at
+            <a href="https://mappingwithmelanin.com" style="color:#CA922B;font-weight:700"> mappingwithmelanin.com</a> —
+            no app download needed. The mobile app is on the way, but the full platform is live on the web right now.
+          </p>
+        </div>
+
         <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
           We're building more than an app. We're creating a community-powered platform designed to help people discover businesses, neighborhoods, employers, events, and meaningful connections through trusted experiences and shared insights.
         </p>
