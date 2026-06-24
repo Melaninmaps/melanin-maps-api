@@ -65,3 +65,27 @@ id = "6p6bzyQVI2tH9dbC962e5"
 uri = "file://artifacts/mobile/assets/images/icon.png"
 type = "image"
 title = "App Icon (1024x1024) — upload this to Google Play"
+
+[[outputs]]
+id = "pFmFKtYD3FdD06fMP9qm3"
+uri = "file://screenshots/chromebook-discover.jpg"
+type = "image"
+title = "Screenshot 1 — Discover"
+
+[[outputs]]
+id = "zC2zb1lPe-9pmRpcOzTk3"
+uri = "file://screenshots/chromebook-map.jpg"
+type = "image"
+title = "Screenshot 2 — Map & Business List"
+
+[[outputs]]
+id = "yWNK9cpYWvW3teI-V-9Lj"
+uri = "file://screenshots/chromebook-safety.jpg"
+type = "image"
+title = "Screenshot 3 — Safety"
+
+[[outputs]]
+id = "IRTpv5KGJkKPl42q2opiv"
+uri = "file://screenshots/chromebook-community.jpg"
+type = "image"
+title = "Screenshot 4 — Community"
