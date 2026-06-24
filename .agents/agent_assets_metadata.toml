@@ -89,3 +89,27 @@ id = "IRTpv5KGJkKPl42q2opiv"
 uri = "file://screenshots/chromebook-community.jpg"
 type = "image"
 title = "Screenshot 4 — Community"
+
+[[outputs]]
+id = "9wEdUjrYNEbFaGpHsMBZ9"
+uri = "file://screenshots/chromebook-discover-hd.jpg"
+type = "image"
+title = "Screenshot 1 — Discover (1920x1080)"
+
+[[outputs]]
+id = "D-hEE3I1RdFZyONw2e3zS"
+uri = "file://screenshots/chromebook-map-hd.jpg"
+type = "image"
+title = "Screenshot 2 — Map (1920x1080)"
+
+[[outputs]]
+id = "6V1EAjdPfhL07_Ack9A6p"
+uri = "file://screenshots/chromebook-safety-hd.jpg"
+type = "image"
+title = "Screenshot 3 — Safety (1920x1080)"
+
+[[outputs]]
+id = "s39ffcsfcaoS1jZe44Cg-"
+uri = "file://screenshots/chromebook-community-hd.jpg"
+type = "image"
+title = "Screenshot 4 — Community (1920x1080)"
