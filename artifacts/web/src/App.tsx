@@ -44,6 +44,7 @@ import RateNeighborhood from "@/pages/rate-neighborhood";
 import ReferralRedirect from "@/pages/referral-redirect";
 import Resources from "@/pages/resources";
 import SharedTrip from "@/pages/shared-trip";
+import DeleteAccount from "@/pages/delete-account";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { data: auth, isLoading } = useGetCurrentAuthUser();
@@ -128,6 +129,9 @@ function Router() {
       </Route>
       <Route path="/privacy">
         <Layout><PrivacyPolicy /></Layout>
+      </Route>
+      <Route path="/delete-account">
+        <Layout><DeleteAccount /></Layout>
       </Route>
       <Route path="/terms">
         <Layout><Terms /></Layout>
