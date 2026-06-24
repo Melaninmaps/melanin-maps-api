@@ -100,11 +100,11 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
+    "owner": "mappingwithmelanin",
     "extra": {
       "eas": {
-        "projectId": "0f873107-7787-46ab-9a04-685c2a6756b1"
+        "projectId": "177b337e-459e-4643-bb33-b47304d955cf"
       }
-    },
-    "owner": "tlindsay428"
+    }
   }
 }
