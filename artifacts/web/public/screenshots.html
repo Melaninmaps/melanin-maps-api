@@ -31,7 +31,7 @@
 <h1>Mapping With Melanin™</h1>
 <p class="sub">App Store Screenshots — 1284 × 2778px (iPhone 6.5") — Click each button to download</p>
 <div class="grid" id="grid"></div>
-<button class="dl-all" onclick="downloadAll()">⬇ Download All 5 Screenshots</button>
+<button class="dl-all" onclick="downloadAll()">⬇ Download All 7 Screenshots</button>
 
 <script>
 const W = 1284, H = 2778;
@@ -724,6 +724,246 @@ function wrapText(ctx, text, x, y, maxWidth, lineH) {
   ctx.fillText(line, x, cy);
 }
 
+// ─── SCREEN 6: MESSAGES LIST ─────────────────────────────────────────────────
+function drawMessages(ctx) {
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+  drawStatusBar(ctx);
+
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${68}px -apple-system, sans-serif`;
+  ctx.fillText('Messages', 60, 200);
+
+  // New message button
+  ctx.fillStyle = C.gold;
+  ctx.font = `${56}px sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.fillText('✏', W - 60, 200);
+  ctx.textAlign = 'left';
+
+  // Search bar
+  roundRect(ctx, 50, 230, W - 100, 100, 20, C.card, C.border);
+  ctx.fillStyle = C.muted;
+  ctx.font = `${40}px sans-serif`;
+  ctx.fillText('🔍', 88, 292);
+  ctx.font = `${38}px -apple-system, sans-serif`;
+  ctx.fillText('Search messages...', 155, 292);
+
+  // Filter pills
+  const filters = ['All', 'Unread', 'Community', 'Business'];
+  let fx = 50;
+  filters.forEach((f, i) => {
+    const tw = ctx.measureText(f).width + 56;
+    roundRect(ctx, fx, 358, tw, 64, 32, i === 0 ? C.gold : C.card, i === 0 ? null : C.border);
+    ctx.fillStyle = i === 0 ? '#fff' : C.muted;
+    ctx.font = `${i===0?'bold ':''} ${34}px -apple-system, sans-serif`;
+    ctx.fillText(f, fx + 28, 398);
+    fx += tw + 18;
+  });
+
+  const convos = [
+    { name: 'Keisha M.', msg: 'Thanks for the recommendation! The food was amazing 🙌', time: '2m', unread: 3, color: '#2D7A4F', initials: 'KM' },
+    { name: 'Essence Kitchen', msg: "Hi! We're hosting a community dinner this Saturday...", time: '15m', unread: 1, color: '#C9922B', initials: 'EK' },
+    { name: 'Marcus & Darius', msg: 'Marcus: Bro the map feature is fire 🔥', time: '1h', unread: 0, color: '#7B2D8B', initials: 'MD' },
+    { name: 'DC Black Foodies', msg: 'You: Has anyone tried the new spot on U St?', time: '3h', unread: 0, color: '#1D4ED8', initials: 'DC' },
+    { name: 'Crown & Glory Salon', msg: 'Your appointment is confirmed for Saturday at 2pm', time: '5h', unread: 0, color: '#8B1A1A', initials: 'CG' },
+    { name: 'Nia Johnson', msg: 'Girl yes!! We have to go to the Juneteenth event', time: '1d', unread: 2, color: '#C9922B', initials: 'NJ' },
+    { name: 'Community Safety', msg: 'New report submitted near your saved area', time: '2d', unread: 0, color: '#2D7A4F', initials: 'CS' },
+    { name: 'Melanin Wellness Spa', msg: 'Thank you for your 5-star review! We appreciate...', time: '3d', unread: 0, color: '#7B4F2E', initials: 'MW' },
+  ];
+
+  convos.forEach((c, i) => {
+    const cy = 450 + i * 250;
+    roundRect(ctx, 50, cy, W - 100, 220, 0, 'transparent', null);
+
+    // Divider (except first)
+    if (i > 0) {
+      ctx.strokeStyle = C.border;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(160, cy); ctx.lineTo(W - 50, cy); ctx.stroke();
+    }
+
+    // Avatar circle
+    ctx.fillStyle = c.color;
+    ctx.beginPath(); ctx.arc(110, cy + 110, 75, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${44}px -apple-system, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(c.initials, 110, cy + 126);
+    ctx.textAlign = 'left';
+
+    // Online dot
+    ctx.fillStyle = C.green;
+    ctx.beginPath(); ctx.arc(168, cy + 168, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = C.bg;
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    // Name + time
+    ctx.fillStyle = C.cream;
+    ctx.font = `bold ${44}px -apple-system, sans-serif`;
+    ctx.fillText(c.name, 215, cy + 80);
+    ctx.fillStyle = C.muted;
+    ctx.font = `${34}px -apple-system, sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.fillText(c.time, W - 70, cy + 80);
+    ctx.textAlign = 'left';
+
+    // Message preview
+    ctx.fillStyle = c.unread > 0 ? C.cream : C.muted;
+    ctx.font = `${c.unread > 0 ? 'bold ' : ''}${36}px -apple-system, sans-serif`;
+    const preview = c.msg.length > 48 ? c.msg.slice(0, 48) + '…' : c.msg;
+    ctx.fillText(preview, 215, cy + 140);
+
+    // Unread badge
+    if (c.unread > 0) {
+      ctx.fillStyle = C.gold;
+      ctx.beginPath(); ctx.arc(W - 90, cy + 140, 32, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${32}px -apple-system, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(c.unread, W - 90, cy + 150);
+      ctx.textAlign = 'left';
+    }
+  });
+
+  drawTabBar(ctx, 2);
+}
+
+// ─── SCREEN 7: CHAT CONVERSATION ─────────────────────────────────────────────
+function drawChat(ctx) {
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+  drawStatusBar(ctx);
+
+  // Header
+  roundRect(ctx, 0, 0, W, 230, 0, C.card, null);
+  ctx.fillStyle = C.cream;
+  ctx.font = `${48}px sans-serif`;
+  ctx.fillText('←', 50, 180);
+
+  // Avatar
+  ctx.fillStyle = '#2D7A4F';
+  ctx.beginPath(); ctx.arc(210, 160, 62, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${42}px -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('KM', 210, 176);
+  ctx.textAlign = 'left';
+
+  // Online dot
+  ctx.fillStyle = C.green;
+  ctx.beginPath(); ctx.arc(258, 205, 16, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = C.card;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${48}px -apple-system, sans-serif`;
+  ctx.fillText('Keisha M.', 295, 155);
+  ctx.fillStyle = C.green;
+  ctx.font = `${34}px -apple-system, sans-serif`;
+  ctx.fillText('Active now', 295, 200);
+
+  // Menu dots
+  ctx.fillStyle = C.gold;
+  ctx.font = `${52}px sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.fillText('⋯', W - 50, 175);
+  ctx.textAlign = 'left';
+
+  // Date separator
+  ctx.fillStyle = C.muted;
+  ctx.font = `${32}px -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('Today', W/2, 295);
+  ctx.textAlign = 'left';
+  ctx.strokeStyle = C.border;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(50, 285); ctx.lineTo(W/2 - 80, 285); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W/2 + 80, 285); ctx.lineTo(W - 50, 285); ctx.stroke();
+
+  const messages = [
+    { fromMe: false, text: 'Hey! Have you been to Essence Kitchen on U Street? My friend said it\'s amazing 🍽', time: '9:14 AM' },
+    { fromMe: true, text: 'Yes!! I went last month. The oxtails and cornbread are unreal. Definitely go!', time: '9:16 AM', status: '✓✓' },
+    { fromMe: false, text: 'Okay I\'m sold 😂 Is it Black-owned? Trying to be intentional about where I spend', time: '9:17 AM' },
+    { fromMe: true, text: 'Yes it\'s verified on Mapping With Melanin! Family-owned since 2018. Community safety score is 92 too 🙌', time: '9:18 AM', status: '✓✓' },
+    { fromMe: false, text: 'That app is so helpful omg. Just found 3 new spots near me I never knew about!', time: '9:20 AM' },
+    { fromMe: true, text: 'Right?! The KinfolkAI feature is my fav — asked it for Black-owned brunch spots in Atlanta and it gave me a whole itinerary 💛', time: '9:22 AM', status: '✓' },
+    { fromMe: false, text: 'Thanks for the recommendation! The food was amazing 🙌', time: '9:45 AM' },
+  ];
+
+  let msgY = 330;
+  messages.forEach(m => {
+    const maxW = W * 0.72;
+    const padding = 36;
+    ctx.font = `${36}px -apple-system, sans-serif`;
+    const words = m.text.split(' ');
+    let lines = [];
+    let cur = '';
+    words.forEach(w => {
+      const test = cur + w + ' ';
+      if (ctx.measureText(test).width > maxW - padding * 2 && cur) {
+        lines.push(cur.trim());
+        cur = w + ' ';
+      } else { cur = test; }
+    });
+    if (cur.trim()) lines.push(cur.trim());
+
+    const lineH = 52;
+    const bH = lines.length * lineH + padding * 1.8 + (m.fromMe && m.status ? 42 : 0);
+    const bW = Math.min(maxW, Math.max(...lines.map(l => ctx.measureText(l).width)) + padding * 2);
+    const bX = m.fromMe ? W - bW - 50 : 50;
+    const radius = 28;
+
+    roundRect(ctx, bX, msgY, bW, bH, radius,
+      m.fromMe ? C.gold : C.card2, null);
+
+    ctx.fillStyle = m.fromMe ? '#fff' : C.cream;
+    ctx.font = `${36}px -apple-system, sans-serif`;
+    lines.forEach((line, li) => {
+      ctx.fillText(line, bX + padding, msgY + padding * 1.4 + li * lineH);
+    });
+
+    if (m.fromMe && m.status) {
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = `${28}px sans-serif`;
+      ctx.textAlign = 'right';
+      ctx.fillText(m.status + ' ' + m.time, bX + bW - padding, msgY + bH - 18);
+      ctx.textAlign = 'left';
+    } else {
+      ctx.fillStyle = C.muted;
+      ctx.font = `${28}px -apple-system, sans-serif`;
+      ctx.fillText(m.time, bX, msgY + bH + 14);
+    }
+
+    msgY += bH + 50;
+  });
+
+  // Input bar
+  const inputY = H - 270;
+  roundRect(ctx, 50, inputY, W - 200, 110, 30, C.card, C.border);
+  ctx.fillStyle = C.muted;
+  ctx.font = `${38}px -apple-system, sans-serif`;
+  ctx.fillText('Message Keisha...', 100, inputY + 65);
+
+  // Attachment icon
+  ctx.fillStyle = C.muted;
+  ctx.font = `${52}px sans-serif`;
+  ctx.fillText('📎', W - 190, inputY + 72);
+
+  // Send button
+  ctx.fillStyle = C.gold;
+  ctx.beginPath(); ctx.arc(W - 70, inputY + 55, 48, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${44}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('↑', W - 70, inputY + 72);
+  ctx.textAlign = 'left';
+
+  drawTabBar(ctx, 2);
+}
+
 // ─── RENDER ALL ──────────────────────────────────────────────────────────────
 const screens = [
   { id: 's1', label: '1. Discover', draw: drawDiscover },
@@ -731,6 +971,8 @@ const screens = [
   { id: 's3', label: '3. Business Profile', draw: drawProfile },
   { id: 's4', label: '4. Safety Hub', draw: drawSafety },
   { id: 's5', label: '5. KinfolkAI™', draw: drawKinfolk },
+  { id: 's6', label: '6. Messages', draw: drawMessages },
+  { id: 's7', label: '7. Chat', draw: drawChat },
 ];
 
 const grid = document.getElementById('grid');
