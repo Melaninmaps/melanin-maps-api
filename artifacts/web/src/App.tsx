@@ -7,6 +7,9 @@ import { Layout } from "@/components/layout";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 
 import Home from "@/pages/home";
+import About from "@/pages/about";
+import Features from "@/pages/features";
+import Contact from "@/pages/contact";
 import Explore from "@/pages/explore";
 import Discover from "@/pages/discover";
 import BusinessDetail from "@/pages/business-detail";
@@ -68,6 +71,15 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/about">
+        <Layout><About /></Layout>
+      </Route>
+      <Route path="/features">
+        <Layout><Features /></Layout>
+      </Route>
+      <Route path="/contact">
+        <Layout><Contact /></Layout>
+      </Route>
       <Route path="/explore">
         <Layout><Explore /></Layout>
       </Route>

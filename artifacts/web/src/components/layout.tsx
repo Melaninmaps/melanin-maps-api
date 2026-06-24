@@ -28,15 +28,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }
 
   const navItems = [
+    { href: "/about", label: "About" },
+    { href: "/features", label: "Features" },
     { href: "/explore", label: "Explore" },
+    { href: "/businesses", label: "Businesses" },
     { href: "/community", label: "Community" },
     { href: "/safety", label: "Safety" },
-    { href: "/resources", label: "Resources" },
-    { href: "/businesses", label: "Businesses" },
     { href: "/travel", label: "KinfolkAI™" },
-    { href: "/mentorship", label: "Mentorship" },
+    { href: "/events", label: "Events" },
     { href: "/for-business-owners", label: "For Business Owners", featured: true },
-    { href: "/membership", label: "Membership" },
+    { href: "/contact", label: "Contact" },
   ];
 
   return (
