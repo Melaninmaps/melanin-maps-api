@@ -115,7 +115,8 @@ router.use(postNudgeRouter);
 router.use(userSettingsRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
-  res.download(path.join(__dirname, "../../mobile-build.zip"), "mobile-build.zip");
+  const filePath = path.join(process.cwd(), "mobile-build.zip");
+  res.download(filePath, "mobile-build.zip");
 });
 
 export default router;
