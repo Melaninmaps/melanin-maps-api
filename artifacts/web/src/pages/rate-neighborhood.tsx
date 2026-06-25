@@ -23,6 +23,13 @@ const ATMOSPHERES = [
 const ATMOSPHERE_SCORES: Record<string, number> = {
   very_welcoming: 5, mostly_welcoming: 4, neutral: 3, slightly_unwelcoming: 2, uncomfortable: 1,
 };
+const COMMUNITY_RATINGS = [
+  { level: 1, label: "Love It", display: "🤎", sublabel: "Great spot for our community" },
+  { level: 2, label: "Good Find", display: "🤎🤎", sublabel: "Worth checking out" },
+  { level: 3, label: "Worth Visiting", display: "🤎🤎🤎", sublabel: "Solid experience overall" },
+  { level: 4, label: "Community Favorite", display: "🤎🤎🤎🤎", sublabel: "Highly recommended" },
+  { level: 5, label: "Put Your People On", display: "👑", sublabel: "Top tier — tell everyone" },
+];
 const CULTURAL_CONNECTION_OPTIONS = [
   { id: "yes", label: "Yes, very much so", emoji: "✊🏾" },
   { id: "somewhat", label: "Somewhat", emoji: "🙂" },
@@ -107,6 +114,7 @@ export default function RateNeighborhood() {
   const [daytimeSafety, setDaytimeSafety] = useState(0);
   const [nighttimeSafety, setNighttimeSafety] = useState(0);
   const [atmosphere, setAtmosphere] = useState("");
+  const [communityRating, setCommunityRating] = useState(0);
   const [culturallyConnected, setCulturallyConnected] = useState("");
   const [accessibility, setAccessibility] = useState<string[]>([]);
   const [tips, setTips] = useState<string[]>([]);
@@ -139,6 +147,7 @@ export default function RateNeighborhood() {
           visitPurpose, visitFreq: visitFreq || undefined,
           daytimeSafety, nighttimeSafety,
           atmosphere,
+          communityRating: communityRating || undefined,
           culturallyConnected: culturallyConnected || undefined,
           accessibility, tips,
           comments: comments || undefined,
@@ -185,7 +194,7 @@ export default function RateNeighborhood() {
               <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-11">View Safety Scores</Button>
             </Link>
             <Button variant="outline" className="rounded-full border-[#3A1F0E]/20 text-[#3A1F0E] px-8 h-11"
-              onClick={() => { setSubmitted(false); setStep(1); setCity(""); setNeighborhood(""); setVisitPurpose(""); setVisitFreq(""); setDaytimeSafety(0); setNighttimeSafety(0); setAtmosphere(""); setCulturallyConnected(""); setAccessibility([]); setTips([]); setComments(""); }}>
+              onClick={() => { setSubmitted(false); setStep(1); setCity(""); setNeighborhood(""); setVisitPurpose(""); setVisitFreq(""); setDaytimeSafety(0); setNighttimeSafety(0); setAtmosphere(""); setCommunityRating(0); setCulturallyConnected(""); setAccessibility([]); setTips([]); setComments(""); }}>
               Rate Another
             </Button>
           </div>
@@ -325,6 +334,33 @@ export default function RateNeighborhood() {
               <div>
                 <h2 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-1">🏘️ Community Experience</h2>
                 <p className="text-[#3A1F0E]/60 text-sm">Atmosphere is required — cultural connection and accessibility are optional</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-[#3A1F0E] mb-3">
+                  Overall community rating <span className="font-normal text-[#3A1F0E]/50">(optional)</span>
+                </label>
+                <div className="space-y-2">
+                  {COMMUNITY_RATINGS.map((r) => (
+                    <button key={r.level} type="button" onClick={() => setCommunityRating(communityRating === r.level ? 0 : r.level)}
+                      className={`w-full flex items-center justify-between px-5 py-4 rounded-xl border-2 transition-all text-left ${
+                        communityRating === r.level
+                          ? r.level === 5
+                            ? "border-[#CA922B] bg-[#CA922B]/10"
+                            : "border-[#CA922B] bg-[#CA922B]/8"
+                          : "border-[#3A1F0E]/10 bg-white hover:border-[#CA922B]/40"
+                      }`}>
+                      <span className="flex items-center gap-3">
+                        <span className="text-lg leading-none">{r.display}</span>
+                        <span className="flex flex-col">
+                          <span className={`font-bold text-sm ${communityRating === r.level && r.level === 5 ? "text-[#CA922B]" : "text-[#3A1F0E]"}`}>{r.label}</span>
+                          <span className="text-xs text-[#3A1F0E]/50">{r.sublabel}</span>
+                        </span>
+                      </span>
+                      {communityRating === r.level && <CheckCircle className="w-5 h-5 text-[#CA922B]" />}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
