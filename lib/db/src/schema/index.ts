@@ -53,3 +53,4 @@ export * from "./category-waitlist";
 export * from "./business-nominations";
 export * from "./business-identity";
 export * from "./business-broadcasts";
+export * from "./community-health";

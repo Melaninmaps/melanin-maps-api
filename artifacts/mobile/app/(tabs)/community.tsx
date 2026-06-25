@@ -538,6 +538,24 @@ export default function CommunityScreen() {
           contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 40, gap: 14 }]}
           showsVerticalScrollIndicator={false}
         >
+          {/* Health Hub card */}
+          <TouchableOpacity
+            style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#0891B233" }]}
+            onPress={() => router.push("/health-hub" as never)}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.resSpacesIcon, { backgroundColor: "#0891B218" }]}>
+              <Feather name="shield" size={22} color="#0891B2" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.resSpacesTitle, { color: colors.foreground }]}>Health Hub</Text>
+              <Text style={[styles.resSpacesSub, { color: colors.mutedForeground }]}>
+                Evidence-based health articles curated by verified Black physicians. Follow topics that matter to you.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+
           {/* Community Spaces card */}
           <TouchableOpacity
             style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#2D7A4F33" }]}
