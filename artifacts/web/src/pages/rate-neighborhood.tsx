@@ -609,11 +609,17 @@ export default function RateNeighborhood() {
               </div>
 
               {error === "waitlist" && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
-                  <p className="text-amber-800 font-medium text-sm mb-3">You need a Mapping with Melanin™ account to submit a survey.</p>
-                  <Link href="/#waitlist-form">
-                    <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-6 h-10 text-sm">Join the Waitlist for Early Access</Button>
-                  </Link>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center space-y-3">
+                  <p className="text-amber-800 font-medium text-sm">You need a Mapping with Melanin™ account to submit a survey.</p>
+                  <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                    <Link href="/signup">
+                      <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-6 h-10 text-sm">Create an Account</Button>
+                    </Link>
+                    <Link href="/login">
+                      <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-6 h-10 text-sm bg-transparent">Sign In</Button>
+                    </Link>
+                  </div>
+                  <p className="text-amber-700/60 text-xs">Or <Link href="/#waitlist-form" className="underline">join the waitlist</Link> for early access</p>
                 </div>
               )}
               {error && error !== "waitlist" && (
