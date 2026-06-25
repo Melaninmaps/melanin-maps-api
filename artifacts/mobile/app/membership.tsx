@@ -42,7 +42,7 @@ const CONSUMER_PLANS: Plan[] = [
     id: "free",
     emoji: "👥",
     name: "Community Member",
-    tagline: "Perfect for discovering businesses and connecting with the community",
+    tagline: "Discover, connect, review, and participate.",
     badge: null,
     monthlyPrice: 0,
     annualTotal: 0,
@@ -72,7 +72,7 @@ const CONSUMER_PLANS: Plan[] = [
     emoji: "⭐",
     name: "Community Premium",
     stripeKey: "Navigator",
-    tagline: "AI-powered travel, deeper insights, and exclusive perks",
+    tagline: "Travel smarter, relocate confidently, and unlock AI-powered tools.",
     badge: "Recommended",
     monthlyPrice: 7.99,
     annualTotal: 79,
@@ -102,7 +102,7 @@ const BUSINESS_PLANS: Plan[] = [
     id: "biz_free",
     emoji: "🏢",
     name: "Community Business",
-    tagline: "For businesses joining the Mapping With Melanin community",
+    tagline: "Get discovered.",
     badge: null,
     fee: "6% Marketplace Fee",
     monthlyPrice: 0,
@@ -131,7 +131,7 @@ const BUSINESS_PLANS: Plan[] = [
     emoji: "🚀",
     name: "Growth Business",
     stripeKey: "Growth Business",
-    tagline: "For growing businesses ready to scale their community presence",
+    tagline: "Grow your audience.",
     badge: "Recommended",
     fee: "5% Marketplace Fee",
     monthlyPrice: 29,
@@ -161,7 +161,7 @@ const BUSINESS_PLANS: Plan[] = [
     emoji: "👑",
     name: "Premium Business",
     stripeKey: "Premium Business",
-    tagline: "For established businesses with the deepest community roots",
+    tagline: "Scale your business.",
     badge: "Full Access",
     fee: "3% Marketplace Fee",
     monthlyPrice: 79,
@@ -341,6 +341,25 @@ export default function MembershipScreen() {
           <Text style={{ fontSize: 16 }}>🎁</Text>
           <Text style={[styles.launchTxt, { color: "#2D7A4F" }]}>
             Launch Offer — 90-day free Premium trial, no credit card required
+          </Text>
+        </View>
+      )}
+
+      {/* Business Success Promise — business only */}
+      {audience === "business" && (
+        <View style={[styles.promiseCard, { backgroundColor: colors.card, borderColor: colors.primary + "44" }]}>
+          <View style={styles.promiseHeader}>
+            <Text style={{ fontSize: 20 }}>🤝</Text>
+            <Text style={[styles.promiseTitle, { color: colors.foreground }]}>
+              Business Success Promise
+            </Text>
+          </View>
+          <Text style={[styles.promiseBody, { color: colors.mutedForeground }]}>
+            Our memberships aren't designed to charge you more — they're designed to help you{" "}
+            <Text style={[styles.promiseEmphasis, { color: colors.foreground }]}>earn more.</Text>
+          </Text>
+          <Text style={[styles.promiseBody, { color: colors.mutedForeground }]}>
+            Every upgrade saves you time, attracts more customers, improves your visibility, and reduces your marketplace costs.
           </Text>
         </View>
       )}
@@ -590,6 +609,13 @@ const styles = StyleSheet.create({
   foundingName: { fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 6 },
   foundingBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   foundingBadgeTxt: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  promiseCard: {
+    marginHorizontal: 20, marginBottom: 14, padding: 16, borderRadius: 14, borderWidth: 1, gap: 10,
+  },
+  promiseHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  promiseTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  promiseBody: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20 },
+  promiseEmphasis: { fontFamily: "Inter_600SemiBold" },
   feeBadge: {
     flexDirection: "row", alignItems: "center", gap: 5,
     alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 4,
