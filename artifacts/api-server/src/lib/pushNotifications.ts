@@ -1,5 +1,5 @@
-import { db, pushTokensTable, savedPlacesTable, businessesTable, notificationsTable } from "@workspace/db";
-import { eq, inArray, ilike } from "drizzle-orm";
+import { db, pushTokensTable, savedPlacesTable, businessesTable, notificationsTable, businessProfileViewsTable } from "@workspace/db";
+import { eq, inArray, ilike, gte, and } from "drizzle-orm";
 import { logger } from "./logger";
 
 interface PushMessage {
@@ -72,6 +72,60 @@ export async function sendPushToUsersWithSavedBusiness(
     }
   } catch (err) {
     logger.warn({ err }, "[push] Failed to send push notifications to savers");
+  }
+}
+
+export async function sendAddressUpdateNotifications(
+  businessId: string,
+  businessName: string,
+  oldAddress: string,
+  newAddress: string,
+): Promise<void> {
+  try {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const [savedRows, recentViewers] = await Promise.all([
+      db.select({ userId: savedPlacesTable.userId }).from(savedPlacesTable).where(eq(savedPlacesTable.businessId, businessId)),
+      db
+        .select({ userId: businessProfileViewsTable.userId })
+        .from(businessProfileViewsTable)
+        .where(and(eq(businessProfileViewsTable.businessId, businessId), gte(businessProfileViewsTable.viewedAt, sevenDaysAgo))),
+    ]);
+
+    const userIdSet = new Set<string>();
+    for (const r of savedRows) if (r.userId) userIdSet.add(r.userId);
+    for (const r of recentViewers) if (r.userId) userIdSet.add(r.userId);
+    const userIds = [...userIdSet];
+
+    if (userIds.length === 0) return;
+
+    const message: PushMessage = {
+      title: `📍 ${businessName} moved`,
+      body: `New address: ${newAddress}`,
+      data: { businessId, type: "address_update" },
+    };
+
+    const tokens = await db
+      .select({ token: pushTokensTable.token })
+      .from(pushTokensTable)
+      .where(inArray(pushTokensTable.userId, userIds));
+
+    for (const row of tokens) {
+      if (row.token) await sendToToken(row.token, message);
+    }
+
+    await db.insert(notificationsTable).values(
+      userIds.map((userId) => ({
+        userId,
+        type: "system" as const,
+        title: message.title,
+        body: message.body,
+      })),
+    );
+
+    logger.info({ businessId, notified: userIds.length }, "[push] Address update notifications sent");
+  } catch (err) {
+    logger.warn({ err }, "[push] Failed to send address update notifications");
   }
 }
 

@@ -72,6 +72,21 @@ export default function BusinessDetailScreen() {
   const { stories } = useStories(id ?? "");
 
   const { business, isLoading } = useBusinessById(id ?? "");
+
+  useEffect(() => {
+    if (!id) return;
+    void (async () => {
+      try {
+        const { getItemAsync } = await import("expo-secure-store");
+        const token = await getItemAsync("auth_session_token");
+        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        await fetch(`${base}/api/businesses/${id}/view`, {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+      } catch {}
+    })();
+  }, [id]);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   if (isLoading && !business) {

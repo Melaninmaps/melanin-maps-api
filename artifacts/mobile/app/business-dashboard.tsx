@@ -10,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -162,6 +163,13 @@ export default function BusinessDashboardScreen() {
   const { business, reviews, loading } = useMyBusiness();
   const [feedbackOptIn, setFeedbackOptIn] = useState<boolean>(false);
   const [togglingFeedback, setTogglingFeedback] = useState(false);
+  const [addrExpanded, setAddrExpanded] = useState(false);
+  const [addrAddress, setAddrAddress] = useState("");
+  const [addrCity, setAddrCity] = useState("");
+  const [addrState, setAddrState] = useState("");
+  const [addrZip, setAddrZip] = useState("");
+  const [addrSaving, setAddrSaving] = useState(false);
+  const [addrResult, setAddrResult] = useState<"success" | "error" | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState<"paywall" | "error" | null>(null);
@@ -175,6 +183,14 @@ export default function BusinessDashboardScreen() {
   React.useEffect(() => {
     if (business?.feedbackOptIn !== undefined) setFeedbackOptIn(business.feedbackOptIn);
   }, [business?.feedbackOptIn]);
+
+  React.useEffect(() => {
+    if (business && !addrExpanded) {
+      setAddrAddress((business as any).address ?? "");
+      setAddrCity(business.city ?? "");
+      setAddrState(business.state ?? "");
+    }
+  }, [business?.id]);
 
   React.useEffect(() => {
     if (!business) return;
@@ -430,6 +446,116 @@ export default function BusinessDashboardScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+
+            {/* Update Address */}
+            <TouchableOpacity
+              style={[styles.promoteCard, { backgroundColor: colors.card, borderColor: addrExpanded ? colors.primary + "60" : colors.border }]}
+              onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setAddrExpanded(v => !v); setAddrResult(null); }}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.promoteIcon, { backgroundColor: colors.primary + "15" }]}>
+                <Feather name="map-pin" size={20} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.promoteTitle, { color: colors.foreground }]}>Update Business Address</Text>
+                <Text style={[styles.promoteSub, { color: colors.mutedForeground }]}>
+                  {addrExpanded ? "Fill in the new address below" : `${business.city}, ${business.state} · tap to update`}
+                </Text>
+              </View>
+              <Feather name={addrExpanded ? "chevron-up" : "chevron-down"} size={16} color={colors.primary} />
+            </TouchableOpacity>
+
+            {addrExpanded && (
+              <View style={[styles.addrForm, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[styles.addrLabel, { color: colors.mutedForeground }]}>Street Address</Text>
+                <TextInput
+                  style={[styles.addrInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+                  value={addrAddress}
+                  onChangeText={setAddrAddress}
+                  placeholder="123 Main Street"
+                  placeholderTextColor={colors.mutedForeground}
+                />
+                <View style={{ flexDirection: "row", gap: 10 }}>
+                  <View style={{ flex: 2 }}>
+                    <Text style={[styles.addrLabel, { color: colors.mutedForeground }]}>City</Text>
+                    <TextInput
+                      style={[styles.addrInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+                      value={addrCity}
+                      onChangeText={setAddrCity}
+                      placeholder="Atlanta"
+                      placeholderTextColor={colors.mutedForeground}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.addrLabel, { color: colors.mutedForeground }]}>State</Text>
+                    <TextInput
+                      style={[styles.addrInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+                      value={addrState}
+                      onChangeText={setAddrState}
+                      placeholder="GA"
+                      placeholderTextColor={colors.mutedForeground}
+                      maxLength={2}
+                      autoCapitalize="characters"
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.addrLabel, { color: colors.mutedForeground }]}>ZIP</Text>
+                    <TextInput
+                      style={[styles.addrInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+                      value={addrZip}
+                      onChangeText={setAddrZip}
+                      placeholder="30301"
+                      placeholderTextColor={colors.mutedForeground}
+                      keyboardType="numeric"
+                      maxLength={10}
+                    />
+                  </View>
+                </View>
+
+                {addrResult === "success" && (
+                  <View style={[styles.addrAlert, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F40" }]}>
+                    <Feather name="check-circle" size={14} color="#2D7A4F" />
+                    <Text style={[styles.addrAlertText, { color: "#2D7A4F" }]}>Address updated! Savers and recent visitors have been notified.</Text>
+                  </View>
+                )}
+                {addrResult === "error" && (
+                  <View style={[styles.addrAlert, { backgroundColor: "#DC262618", borderColor: "#DC262640" }]}>
+                    <Feather name="alert-circle" size={14} color="#DC2626" />
+                    <Text style={[styles.addrAlertText, { color: "#DC2626" }]}>Failed to update address. Please try again.</Text>
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  style={[styles.addrSaveBtn, { backgroundColor: colors.primary, opacity: addrSaving ? 0.6 : 1 }]}
+                  disabled={addrSaving}
+                  onPress={async () => {
+                    if (!addrAddress.trim() || !addrCity.trim() || !addrState.trim()) {
+                      setAddrResult("error"); return;
+                    }
+                    setAddrSaving(true);
+                    setAddrResult(null);
+                    try {
+                      const token = await SecureStore.getItemAsync("auth_session_token");
+                      const base = getApiBase();
+                      const res = await fetch(`${base}/api/businesses/${business.id}/address`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token ?? ""}` },
+                        body: JSON.stringify({ address: addrAddress.trim(), city: addrCity.trim(), state: addrState.trim(), zip: addrZip.trim() }),
+                      });
+                      setAddrResult(res.ok ? "success" : "error");
+                      if (res.ok) setAddrExpanded(false);
+                    } catch { setAddrResult("error"); }
+                    finally { setAddrSaving(false); }
+                  }}
+                >
+                  {addrSaving ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <Text style={styles.addrSaveBtnText}>Save & Notify</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
 
             {/* Promoted listing CTA */}
             <TouchableOpacity
@@ -1230,4 +1356,11 @@ const styles = StyleSheet.create({
   expansionInsightText: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19, flex: 1 },
   expansionRefresh: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10, borderRadius: 10, borderWidth: 1, marginTop: 4 },
   expansionRefreshText: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  addrForm: { borderWidth: 1, borderRadius: 16, padding: 16, marginBottom: 12, gap: 6 },
+  addrLabel: { fontFamily: "Inter_500Medium", fontSize: 11, marginBottom: 2 },
+  addrInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 14, marginBottom: 4 },
+  addrAlert: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderRadius: 10, padding: 10, marginTop: 4 },
+  addrAlertText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1, lineHeight: 17 },
+  addrSaveBtn: { borderRadius: 12, paddingVertical: 13, alignItems: "center", marginTop: 8 },
+  addrSaveBtnText: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#FFFFFF" },
 });

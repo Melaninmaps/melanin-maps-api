@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, businessesTable, businessProfileViewsTable, userSettingsTable } from "@workspace/db";
 import { eq, and, or, ilike } from "drizzle-orm";
+import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 
 const router: IRouter = Router();
 
@@ -201,6 +202,52 @@ router.patch("/businesses/:id/status", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to update business status");
     res.status(500).json({ error: "Failed to update status" });
+  }
+});
+
+router.post("/businesses/:id/view", async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const userId = req.user?.id ?? null;
+    await db.insert(businessProfileViewsTable).values({ businessId: id, userId });
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to record business view");
+    res.status(500).json({ error: "Failed to record view" });
+  }
+});
+
+router.patch("/businesses/:id/address", async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+
+    const id = String(req.params.id);
+    const [existing] = await db.select().from(businessesTable).where(eq(businessesTable.id, id));
+    if (!existing) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const isOwner = existing.submittedById === req.user.id;
+    if (!isOwner && !isAdmin(req)) { res.status(403).json({ error: "Access denied" }); return; }
+
+    const { address, city, state, zip } = req.body as { address?: string; city?: string; state?: string; zip?: string };
+    if (!address?.trim() || !city?.trim() || !state?.trim()) {
+      res.status(400).json({ error: "address, city, and state are required" }); return;
+    }
+
+    const oldAddress = `${existing.address}, ${existing.city}, ${existing.state}`;
+    const newAddress = `${address.trim()}, ${city.trim()}, ${state.trim()}${zip ? ` ${zip.trim()}` : ""}`;
+
+    const [business] = await db
+      .update(businessesTable)
+      .set({ address: address.trim(), city: city.trim(), state: state.trim(), updatedAt: new Date() })
+      .where(eq(businessesTable.id, id))
+      .returning();
+
+    void sendAddressUpdateNotifications(id, existing.name, oldAddress, newAddress);
+
+    res.json({ business, notified: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update business address");
+    res.status(500).json({ error: "Failed to update address" });
   }
 });
 
