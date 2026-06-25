@@ -55,3 +55,15 @@ export const expertFollowsTable = pgTable("expert_follows", {
   expertId: varchar("expert_id", { length: 100 }).notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const knowledgeTopicsTable = pgTable("knowledge_topics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  topicName: varchar("topic_name", { length: 200 }).notNull(),
+  category: varchar("category", { length: 50 }).notNull(),
+  description: text("description"),
+  tier: varchar("tier", { length: 20 }).notNull().default("free"),
+  searchFrequencyDays: integer("search_frequency_days").notNull().default(7),
+  lastSearchedAt: timestamp("last_searched_at"),
+  enabled: boolean("enabled").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
