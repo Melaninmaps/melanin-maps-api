@@ -93,6 +93,9 @@ function Router() {
       <Route path="/businesses/:id">
         <Layout><BusinessDetail /></Layout>
       </Route>
+      <Route path="/business/:id">
+        <Layout><BusinessDetail /></Layout>
+      </Route>
       <Route path="/safety">
         <Layout><Safety /></Layout>
       </Route>

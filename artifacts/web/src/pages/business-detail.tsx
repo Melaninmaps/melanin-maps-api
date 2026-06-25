@@ -106,8 +106,9 @@ function BusinessMapEmbed({ business }: { business: { name?: string | null; addr
 }
 
 export default function BusinessDetail() {
-  const [, params] = useRoute("/businesses/:id");
-  const id = params?.id || "";
+  const [, paramsLong] = useRoute("/businesses/:id");
+  const [, paramsShort] = useRoute("/business/:id");
+  const id = paramsLong?.id || paramsShort?.id || "";
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const prevMetaRef = useRef<{ title: string; ogTitle: string | null; ogDesc: string | null; ogImage: string | null }>({ title: "", ogTitle: null, ogDesc: null, ogImage: null });

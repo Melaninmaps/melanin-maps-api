@@ -623,6 +623,7 @@ export default function BusinessDetailScreen() {
       <ShareModal
         visible={shareModalOpen}
         onClose={() => setShareModalOpen(false)}
+        businessId={business.id}
         businessName={business.name}
         city={business.city}
         state={business.state}

@@ -19,15 +19,17 @@ import { useColors } from "@/hooks/useColors";
 interface ShareModalProps {
   visible: boolean;
   onClose: () => void;
+  businessId: string;
   businessName: string;
   city: string;
   state: string;
   category: string;
 }
 
-export function ShareModal({ visible, onClose, businessName, city, state, category }: ShareModalProps) {
+export function ShareModal({ visible, onClose, businessId, businessName, city, state, category }: ShareModalProps) {
   const colors = useColors();
   const slideAnim = useRef(new Animated.Value(300)).current;
+  const profileUrl = `https://mappingwithmelanin.com/business/${businessId}`;
 
   React.useEffect(() => {
     if (visible) {
@@ -46,7 +48,7 @@ export function ShareModal({ visible, onClose, businessName, city, state, catego
     }
   }, [visible]);
 
-  const caption = `🖤 Check out ${businessName} on Mapping With Melanin!\n📍 ${city}, ${state} — ${category}\n\n#MappingWithMelanin #BlackOwned #SupportBlackBusinesses #BlackExcellence`;
+  const caption = `🖤 Check out ${businessName} on Mapping With Melanin!\n📍 ${city}, ${state} — ${category}\n👉 ${profileUrl}\n\n#MappingWithMelanin #BlackOwned #SupportBlackBusinesses #BlackExcellence`;
 
   const copyAndOpen = async (url: string, appName: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -78,7 +80,7 @@ export function ShareModal({ visible, onClose, businessName, city, state, catego
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onClose();
     try {
-      await Share.share({ message: caption, title: businessName });
+      await Share.share({ message: caption, url: profileUrl, title: businessName });
     } catch {}
   };
 
