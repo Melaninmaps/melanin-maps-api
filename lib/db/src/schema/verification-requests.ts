@@ -25,6 +25,7 @@ export const verificationRequestsTable = pgTable("verification_requests", {
   ownershipPercentage: integer("ownership_percentage"),
   einNumber: varchar("ein_number"),
   documentsProvided: text("documents_provided"),  // JSON array of doc-type strings
+  documentUrls: text("document_urls"),  // JSON array of {type, name, url, size} objects
   businessLicenseProvided: boolean("business_license_provided").default(false),
 
   // Level 3: Third-Party Certification
