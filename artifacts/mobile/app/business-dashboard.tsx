@@ -195,6 +195,14 @@ const ACTIONS = [
   { id: "analytics", icon: "bar-chart-2" as const, label: "Analytics", color: "#3A1F0E", route: null },
 ];
 
+const DEFAULT_GROWTH_CATALOGUE = [
+  { type: "priority_search" as const, name: "Priority Search Placement", description: "Rise to the top of search results when users look for businesses like yours. Your listing ranks above organic results for relevant queries.", priceCents: 2900, priceDisplay: "$29", durationDays: 30, icon: "search", tagline: "30 days · Rise higher in every relevant search" },
+  { type: "category_featured" as const, name: "Category Feature", description: "Be the first business seen when someone browses your category. Featured position at the top of your category page.", priceCents: 4900, priceDisplay: "$49", durationDays: 30, icon: "star", tagline: "30 days · Top spot in your category" },
+  { type: "city_featured" as const, name: "City & Neighborhood Feature", description: "Stand out to users searching in your city or neighborhood. Featured placement for location-specific searches.", priceCents: 7900, priceDisplay: "$79", durationDays: 30, icon: "map-pin", tagline: "30 days · Featured for local searches" },
+  { type: "cultural_spotlight" as const, name: "Cultural Spotlight", description: "Get elevated placement during Black cultural events, heritage months, and holidays — when community engagement is highest.", priceCents: 9900, priceDisplay: "$99", durationDays: 14, icon: "zap", tagline: "14 days · Premium placement during peak moments" },
+  { type: "event_featured" as const, name: "Featured Event Listing", description: "Promote your event to the top of the community events feed. Reach community members actively looking for what's happening.", priceCents: 3900, priceDisplay: "$39", durationDays: 14, icon: "calendar", tagline: "14 days · Front-row placement in the events feed" },
+];
+
 export default function BusinessDashboardScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -254,6 +262,17 @@ export default function BusinessDashboardScreen() {
   React.useEffect(() => {
     if (business?.sellerAgreementAcceptedAt) setSellerAgreementAccepted(true);
   }, [business?.sellerAgreementAcceptedAt]);
+
+  // Refresh growth tools when user returns from Stripe checkout
+  React.useEffect(() => {
+    if (!growthCheckoutLoading) return;
+    const sub = AppState.addEventListener("change", (nextState) => {
+      if (nextState !== "active") return;
+      setGrowthTools(null);
+      setGrowthCheckoutLoading(null);
+    });
+    return () => sub.remove();
+  }, [growthCheckoutLoading]);
 
   // Poll DocuSign status when user returns to the app after signing in the browser
   React.useEffect(() => {
@@ -1880,14 +1899,14 @@ export default function BusinessDashboardScreen() {
               </Text>
             </View>
 
-            {growthLoading && (
+            {growthLoading && !growthTools && (
               <View style={styles.growLoading}>
                 <ActivityIndicator color={colors.primary} />
               </View>
             )}
 
             {/* Active promotions */}
-            {!growthLoading && growthTools && growthTools.activePromotions.length > 0 && (
+            {growthTools && growthTools.activePromotions.length > 0 && (
               <View style={[styles.growSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.growSectionHeader}>
                   <View style={[styles.growActiveBadge, { backgroundColor: "#2D7A4F" }]}>
@@ -1919,7 +1938,7 @@ export default function BusinessDashboardScreen() {
             )}
 
             {/* Pending promotions */}
-            {!growthLoading && growthTools && growthTools.pendingPromotions.length > 0 && (
+            {growthTools && growthTools.pendingPromotions.length > 0 && (
               <View style={[styles.growSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Text style={[styles.growSectionTitle, { color: colors.mutedForeground }]}>Pending Payment</Text>
                 {growthTools.pendingPromotions.map((promo) => {
@@ -1948,13 +1967,7 @@ export default function BusinessDashboardScreen() {
               Featured businesses must match the searcher's query — no irrelevant results, ever.
             </Text>
 
-            {(growthTools?.catalogue ?? [
-              { type: "priority_search" as const, name: "Priority Search Placement", description: "Rise to the top of search results when users look for businesses like yours. Your listing ranks above organic results for relevant queries.", priceCents: 2900, priceDisplay: "$29", durationDays: 30, icon: "search", tagline: "30 days · Rise higher in every relevant search" },
-              { type: "category_featured" as const, name: "Category Feature", description: "Be the first business seen when someone browses your category. Featured position at the top of your category page.", priceCents: 4900, priceDisplay: "$49", durationDays: 30, icon: "star", tagline: "30 days · Top spot in your category" },
-              { type: "city_featured" as const, name: "City & Neighborhood Feature", description: "Stand out to users searching in your city or neighborhood. Featured placement for location-specific searches.", priceCents: 7900, priceDisplay: "$79", durationDays: 30, icon: "map-pin", tagline: "30 days · Featured for local searches" },
-              { type: "cultural_spotlight" as const, name: "Cultural Spotlight", description: "Get elevated placement during Black cultural events, heritage months, and holidays — when community engagement is highest.", priceCents: 9900, priceDisplay: "$99", durationDays: 14, icon: "zap", tagline: "14 days · Premium placement during peak moments" },
-              { type: "event_featured" as const, name: "Featured Event Listing", description: "Promote your event to the top of the community events feed. Reach community members actively looking for what's happening.", priceCents: 3900, priceDisplay: "$39", durationDays: 14, icon: "calendar", tagline: "14 days · Front-row placement in the events feed" },
-            ]).map((tool) => {
+            {(growthTools?.catalogue ?? DEFAULT_GROWTH_CATALOGUE).map((tool) => {
               const isActive = growthTools?.activePromotions.some((p) => p.type === tool.type) ?? false;
               const isLoading = growthCheckoutLoading === tool.type;
               return (
@@ -2144,7 +2157,7 @@ const styles = StyleSheet.create({
   verifyBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   tabs: { flexDirection: "row", borderBottomWidth: 1 },
   tab: { flex: 1, alignItems: "center", paddingVertical: 14 },
-  tabTxt: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  tabTxt: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   scroll: { padding: 20, gap: 0 },
   statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 24 },
   statCard: {

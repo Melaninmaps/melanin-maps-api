@@ -3,8 +3,9 @@ import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Linking,
   Platform,
   ScrollView,
@@ -30,11 +31,7 @@ const CATEGORY_IMAGES: Record<string, any> = {
   Finance: require("@/assets/images/bento-businesses.jpg"),
 };
 
-const MOCK_REVIEWS = [
-  { id: "r1", author: "Simone W.", rating: 5, text: "Absolutely amazing! The quality and service exceeded all expectations. Will definitely be back.", timeAgo: "3 days ago", initials: "SW", color: "#3B1F0E" },
-  { id: "r2", author: "Marcus T.", rating: 4, text: "Great experience overall. The staff was incredibly welcoming and knowledgeable. Highly recommend to anyone in the community.", timeAgo: "1 week ago", initials: "MT", color: "#C9922B" },
-  { id: "r3", author: "Aisha B.", rating: 5, text: "This place is a gem. So proud to support Black-owned businesses like this one. They really care about their customers.", timeAgo: "2 weeks ago", initials: "AB", color: "#2D7A4F" },
-];
+type ReviewRow = { id: string; authorName: string | null; rating: number; body: string; createdAt: string };
 
 export default function BusinessDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -45,6 +42,18 @@ export default function BusinessDetailScreen() {
 
   const { business } = useBusinessById(id ?? "");
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  const [reviews, setReviews] = useState<ReviewRow[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  useEffect(() => {
+    if (!id) return;
+    setReviewsLoading(true);
+    fetch(`/api/reviews?businessId=${id}`)
+      .then((r) => (r.ok ? r.json() : { reviews: [] }))
+      .then((data: { reviews: ReviewRow[] }) => setReviews(data.reviews ?? []))
+      .catch(() => {})
+      .finally(() => setReviewsLoading(false));
+  }, [id]);
 
   if (!business) {
     return (
@@ -148,21 +157,37 @@ export default function BusinessDetailScreen() {
           )}
 
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Reviews</Text>
-          {MOCK_REVIEWS.map((rev) => (
-            <View key={rev.id} style={[styles.reviewCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
-              <View style={styles.reviewHeader}>
-                <View style={[styles.reviewAvatar, { backgroundColor: rev.color }]}>
-                  <Text style={styles.reviewInitials}>{rev.initials}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.reviewAuthor, { color: colors.foreground }]}>{rev.author}</Text>
-                  <Text style={[styles.reviewTime, { color: colors.mutedForeground }]}>{rev.timeAgo}</Text>
-                </View>
-                <RatingStars rating={rev.rating} showCount={false} size={12} />
-              </View>
-              <Text style={[styles.reviewText, { color: colors.foreground }]}>{rev.text}</Text>
+          {reviewsLoading ? (
+            <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+          ) : reviews.length === 0 ? (
+            <View style={{ paddingVertical: 20, alignItems: "center" }}>
+              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 14 }}>
+                No reviews yet — be the first to share your experience!
+              </Text>
             </View>
-          ))}
+          ) : (
+            reviews.map((rev) => {
+              const initials = (rev.authorName ?? "?").split(" ").map((n) => n[0] ?? "").join("").slice(0, 2).toUpperCase();
+              const AVATAR_COLORS = ["#3B1F0E", "#C9922B", "#2D7A4F", "#5B3FA0", "#1A5276"];
+              const avatarColor = AVATAR_COLORS[rev.id.charCodeAt(0) % AVATAR_COLORS.length] ?? "#3B1F0E";
+              const timeAgo = new Date(rev.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+              return (
+                <View key={rev.id} style={[styles.reviewCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
+                  <View style={styles.reviewHeader}>
+                    <View style={[styles.reviewAvatar, { backgroundColor: avatarColor }]}>
+                      <Text style={styles.reviewInitials}>{initials}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.reviewAuthor, { color: colors.foreground }]}>{rev.authorName ?? "Anonymous"}</Text>
+                      <Text style={[styles.reviewTime, { color: colors.mutedForeground }]}>{timeAgo}</Text>
+                    </View>
+                    <RatingStars rating={rev.rating} showCount={false} size={12} />
+                  </View>
+                  <Text style={[styles.reviewText, { color: colors.foreground }]}>{rev.body}</Text>
+                </View>
+              );
+            })
+          )}
         </View>
       </ScrollView>
 

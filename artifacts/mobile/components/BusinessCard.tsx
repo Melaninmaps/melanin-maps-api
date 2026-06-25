@@ -115,7 +115,14 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
                 />
               </TouchableOpacity>
             </View>
-            <Text style={[styles.hCategory, { color: colors.primary }]}>{business.category}</Text>
+            <View style={styles.hCategoryRow}>
+              <Text style={[styles.hCategory, { color: colors.primary }]}>{business.category}</Text>
+              {business.featured && (
+                <View style={styles.featuredPill}>
+                  <Text style={styles.featuredPillText}>✦ Featured</Text>
+                </View>
+              )}
+            </View>
             <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={11} />
             <View style={styles.hBottom}>
               <Text style={[styles.hLocation, { color: colors.mutedForeground }]} numberOfLines={1}>
@@ -201,6 +208,11 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
           <View style={styles.vMeta}>
             <Text style={[styles.vCategory, { color: colors.primary }]}>{business.category}</Text>
             {business.verified && <VerificationBadge />}
+            {business.featured && (
+              <View style={styles.featuredPill}>
+                <Text style={styles.featuredPillText}>✦ Featured</Text>
+              </View>
+            )}
             <ConfidenceScoreBadge score={business.confidenceScore} size="md" showLabel />
           </View>
           <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={12} />
@@ -383,6 +395,26 @@ const styles = StyleSheet.create({
   rateSafetyText: {
     fontFamily: "Inter_500Medium",
     fontSize: 11,
+  },
+  hCategoryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexWrap: "wrap",
+  },
+  featuredPill: {
+    backgroundColor: "#CA922B18",
+    borderRadius: 20,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: "#CA922B40",
+  },
+  featuredPillText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 9,
+    color: "#CA922B",
+    letterSpacing: 0.2,
   },
   warningBanner: {
     flexDirection: "row",
