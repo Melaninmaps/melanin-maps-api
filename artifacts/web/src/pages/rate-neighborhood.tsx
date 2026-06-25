@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { MapPin, CheckCircle, EyeOff, ChevronRight, ChevronLeft, Shield } from "lucide-react";
+import { MapPin, CheckCircle, EyeOff, ChevronRight, ChevronLeft, Shield, Search, X } from "lucide-react";
 import { Link } from "wouter";
 
 const CITIES = [
@@ -109,6 +109,11 @@ export default function RateNeighborhood() {
   const [step, setStep] = useState(1);
   const [city, setCity] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
+  const [businessSearch, setBusinessSearch] = useState("");
+  const [businessResults, setBusinessResults] = useState<{ id: string; name: string; category: string; city: string }[]>([]);
+  const [linkedBusiness, setLinkedBusiness] = useState<{ id: string; name: string; category: string; city: string } | null>(null);
+  const [businessSearchOpen, setBusinessSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const [visitPurpose, setVisitPurpose] = useState("");
   const [visitFreq, setVisitFreq] = useState("");
   const [daytimeSafety, setDaytimeSafety] = useState(0);
@@ -122,6 +127,29 @@ export default function RateNeighborhood() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!businessSearch.trim() || linkedBusiness) { setBusinessResults([]); return; }
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`${BASE}api/businesses?search=${encodeURIComponent(businessSearch)}&limit=6`);
+        if (res.ok) {
+          const data = await res.json();
+          setBusinessResults((data.businesses ?? data).slice(0, 6));
+          setBusinessSearchOpen(true);
+        }
+      } catch { /* silent */ }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [businessSearch, linkedBusiness, BASE]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setBusinessSearchOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   const atmObj = ATMOSPHERES.find((a) => a.id === atmosphere);
   const scores = computeScores(daytimeSafety, nighttimeSafety, ATMOSPHERE_SCORES[atmosphere] ?? 0);
@@ -146,6 +174,7 @@ export default function RateNeighborhood() {
           city, neighborhood: neighborhood || undefined,
           visitPurpose, visitFreq: visitFreq || undefined,
           daytimeSafety, nighttimeSafety,
+          linkedBusinessId: linkedBusiness?.id || undefined,
           atmosphere,
           communityRating: communityRating || undefined,
           culturallyConnected: culturallyConnected || undefined,
@@ -194,7 +223,7 @@ export default function RateNeighborhood() {
               <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-11">View Safety Scores</Button>
             </Link>
             <Button variant="outline" className="rounded-full border-[#3A1F0E]/20 text-[#3A1F0E] px-8 h-11"
-              onClick={() => { setSubmitted(false); setStep(1); setCity(""); setNeighborhood(""); setVisitPurpose(""); setVisitFreq(""); setDaytimeSafety(0); setNighttimeSafety(0); setAtmosphere(""); setCommunityRating(0); setCulturallyConnected(""); setAccessibility([]); setTips([]); setComments(""); }}>
+              onClick={() => { setSubmitted(false); setStep(1); setCity(""); setNeighborhood(""); setBusinessSearch(""); setLinkedBusiness(null); setVisitPurpose(""); setVisitFreq(""); setDaytimeSafety(0); setNighttimeSafety(0); setAtmosphere(""); setCommunityRating(0); setCulturallyConnected(""); setAccessibility([]); setTips([]); setComments(""); }}>
               Rate Another
             </Button>
           </div>
@@ -280,6 +309,54 @@ export default function RateNeighborhood() {
                   placeholder="e.g. Old Fourth Ward, Harlem, Hyde Park…"
                   className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B] bg-[#FAF6EF]"
                 />
+              </div>
+
+              <div ref={searchRef} className="relative">
+                <label className="block text-sm font-bold text-[#3A1F0E] mb-2">
+                  Visited a specific business? <span className="font-normal text-[#3A1F0E]/50">(optional — link it here)</span>
+                </label>
+                {linkedBusiness ? (
+                  <div className="flex items-center justify-between bg-[#CA922B]/10 border border-[#CA922B]/30 rounded-xl px-4 py-3">
+                    <span className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-[#CA922B] shrink-0" />
+                      <span className="text-sm font-medium text-[#3A1F0E]">{linkedBusiness.name}</span>
+                      <span className="text-xs text-[#3A1F0E]/50">{linkedBusiness.category} · {linkedBusiness.city}</span>
+                    </span>
+                    <button type="button" onClick={() => { setLinkedBusiness(null); setBusinessSearch(""); }}
+                      className="text-[#3A1F0E]/40 hover:text-[#3A1F0E] transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3A1F0E]/30" />
+                      <input
+                        type="text"
+                        value={businessSearch}
+                        onChange={(e) => setBusinessSearch(e.target.value)}
+                        onFocus={() => businessResults.length > 0 && setBusinessSearchOpen(true)}
+                        placeholder="Search for a Black-owned business…"
+                        className="w-full border border-[#3A1F0E]/15 rounded-xl pl-9 pr-4 py-3 text-sm text-[#3A1F0E] placeholder-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B] bg-[#FAF6EF]"
+                      />
+                    </div>
+                    {businessSearchOpen && businessResults.length > 0 && (
+                      <div className="absolute z-10 top-full mt-1 left-0 right-0 bg-white border border-[#3A1F0E]/10 rounded-xl shadow-lg overflow-hidden">
+                        {businessResults.map((b) => (
+                          <button key={b.id} type="button"
+                            onClick={() => { setLinkedBusiness(b); setBusinessSearch(""); setBusinessSearchOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#FAF6EF] transition-colors border-b border-[#3A1F0E]/5 last:border-0">
+                            <MapPin className="w-4 h-4 text-[#CA922B] shrink-0" />
+                            <span className="flex flex-col min-w-0">
+                              <span className="text-sm font-medium text-[#3A1F0E] truncate">{b.name}</span>
+                              <span className="text-xs text-[#3A1F0E]/50">{b.category} · {b.city}</span>
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
 
               <div>
