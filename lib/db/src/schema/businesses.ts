@@ -42,6 +42,7 @@ export const businessesTable = pgTable("businesses", {
   stripeConnectAccountId: varchar("stripe_connect_account_id"),
   returnPolicy: text("return_policy"),
   sellerAgreementAcceptedAt: timestamp("seller_agreement_accepted_at", { withTimezone: true }),
+  marketplaceTier: varchar("marketplace_tier", { length: 20 }).notNull().default("free"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

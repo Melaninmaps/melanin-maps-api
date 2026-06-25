@@ -182,6 +182,7 @@ export default function BusinessDashboardScreen() {
   const [policyResult, setPolicyResult] = useState<"success" | "error" | null>(null);
   const [sellerAgreementAccepted, setSellerAgreementAccepted] = useState(false);
   const [showAgreementModal, setShowAgreementModal] = useState(false);
+  const [marketplaceTier, setMarketplaceTier] = useState<{ tier: string; label: string; feePercent: number } | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState<"paywall" | "error" | null>(null);
@@ -214,6 +215,24 @@ export default function BusinessDashboardScreen() {
   React.useEffect(() => {
     if (business?.sellerAgreementAcceptedAt) setSellerAgreementAccepted(true);
   }, [business?.sellerAgreementAcceptedAt]);
+
+  React.useEffect(() => {
+    if (!business) return;
+    void (async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const base = getApiBase();
+        if (!token || !base) return;
+        const res = await fetch(`${base}/api/businesses/${business.id}/marketplace-tier`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json() as { tier: string; label: string; feePercent: number };
+          setMarketplaceTier(data);
+        }
+      } catch {}
+    })();
+  }, [business?.id]);
 
   React.useEffect(() => {
     if (business && !addrExpanded) {
@@ -1106,6 +1125,68 @@ export default function BusinessDashboardScreen() {
                     <View style={{ marginLeft: "auto", backgroundColor: colors.primary + "18", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 }}>
                       <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 10, color: colors.primary }}>PHASE 1 ACTIVE</Text>
                     </View>
+                  </View>
+
+                  {/* Current fee rate banner */}
+                  {(() => {
+                    const tier = marketplaceTier?.tier ?? "free";
+                    const feePercent = marketplaceTier?.feePercent ?? 6;
+                    const tierLabel = marketplaceTier?.label ?? "Free";
+                    const tierColor = tier === "premium" ? "#C9922B" : tier === "growth" ? "#2D7A4F" : colors.mutedForeground;
+                    return (
+                      <View style={{ backgroundColor: tierColor + "15", borderRadius: 10, borderWidth: 1, borderColor: tierColor + "30", padding: 12, marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 10 }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: tierColor, marginBottom: 2 }}>
+                            YOUR MARKETPLACE FEE — {tierLabel.toUpperCase()} TIER
+                          </Text>
+                          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+                            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 26, color: tierColor }}>{feePercent}%</Text>
+                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground }}>per transaction</Text>
+                          </View>
+                          {tier === "free" && (
+                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
+                              Upgrade to Growth (5%) or Premium (3%) to keep more of every sale.
+                            </Text>
+                          )}
+                          {tier === "growth" && (
+                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
+                              Upgrade to Premium to unlock our lowest 3% rate.
+                            </Text>
+                          )}
+                          {tier === "premium" && (
+                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
+                              You're on our best rate. Thank you for being a Premium member.
+                            </Text>
+                          )}
+                        </View>
+                        <View style={{ alignItems: "center", gap: 3 }}>
+                          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: tierColor + "20", alignItems: "center", justifyContent: "center" }}>
+                            <Feather name={tier === "premium" ? "star" : tier === "growth" ? "trending-up" : "tag"} size={16} color={tierColor} />
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  })()}
+
+                  {/* Fee comparison table */}
+                  <View style={{ borderRadius: 10, borderWidth: 1, borderColor: colors.border, overflow: "hidden", marginBottom: 14 }}>
+                    {[
+                      { label: "Free", fee: "6%", icon: "tag" as const, tier: "free" },
+                      { label: "Growth", fee: "5%", icon: "trending-up" as const, tier: "growth" },
+                      { label: "Premium", fee: "3%", icon: "star" as const, tier: "premium" },
+                    ].map((row, idx) => {
+                      const isActive = (marketplaceTier?.tier ?? "free") === row.tier;
+                      const rowColor = row.tier === "premium" ? "#C9922B" : row.tier === "growth" ? "#2D7A4F" : colors.mutedForeground;
+                      return (
+                        <View key={row.tier} style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 9, backgroundColor: isActive ? rowColor + "12" : "transparent", borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: colors.border }}>
+                          <Feather name={row.icon} size={13} color={isActive ? rowColor : colors.mutedForeground} style={{ marginRight: 8 }} />
+                          <Text style={{ fontFamily: isActive ? "Inter_700Bold" : "Inter_400Regular", fontSize: 13, color: isActive ? colors.foreground : colors.mutedForeground, flex: 1 }}>
+                            {row.label}{isActive ? "  ✓ Your plan" : ""}
+                          </Text>
+                          <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: isActive ? rowColor : colors.mutedForeground }}>{row.fee}</Text>
+                        </View>
+                      );
+                    })}
                   </View>
 
                   {/* Phase 1 */}

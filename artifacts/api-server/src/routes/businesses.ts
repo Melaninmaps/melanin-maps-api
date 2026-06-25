@@ -335,4 +335,52 @@ router.patch("/businesses/:id/policy", async (req: Request, res: Response) => {
   }
 });
 
+// Fee rates for the Founding Member Advantage tier system
+const TIER_FEE: Record<string, number> = { free: 6, growth: 5, premium: 3 };
+const TIER_LABELS: Record<string, string> = { free: "Free", growth: "Growth", premium: "Premium" };
+const VALID_TIERS = ["free", "growth", "premium"];
+
+router.get("/businesses/:id/marketplace-tier", async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+    const id = String(req.params.id);
+    const [biz] = await db
+      .select({ id: businessesTable.id, submittedById: businessesTable.submittedById, marketplaceTier: businessesTable.marketplaceTier })
+      .from(businessesTable).where(eq(businessesTable.id, id)).limit(1);
+    if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
+    if (biz.submittedById !== req.user.id && !isAdmin(req)) { res.status(403).json({ error: "Access denied" }); return; }
+    const tier = biz.marketplaceTier ?? "free";
+    res.json({
+      tier,
+      label: TIER_LABELS[tier] ?? "Free",
+      feePercent: TIER_FEE[tier] ?? 6,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to get marketplace tier");
+    res.status(500).json({ error: "Failed to get marketplace tier" });
+  }
+});
+
+router.patch("/admin/businesses/:id/marketplace-tier", async (req: Request, res: Response) => {
+  try {
+    if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }
+    const id = String(req.params.id);
+    const { tier } = req.body as { tier?: string };
+    if (!tier || !VALID_TIERS.includes(tier)) {
+      res.status(400).json({ error: `tier must be one of: ${VALID_TIERS.join(", ")}` });
+      return;
+    }
+    const [biz] = await db
+      .update(businessesTable)
+      .set({ marketplaceTier: tier, updatedAt: new Date() })
+      .where(eq(businessesTable.id, id))
+      .returning({ id: businessesTable.id, marketplaceTier: businessesTable.marketplaceTier });
+    if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
+    res.json({ id: biz.id, tier: biz.marketplaceTier, feePercent: TIER_FEE[tier] ?? 6 });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update marketplace tier");
+    res.status(500).json({ error: "Failed to update marketplace tier" });
+  }
+});
+
 export default router;

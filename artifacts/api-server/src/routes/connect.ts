@@ -6,24 +6,23 @@ import { getUncachableStripeClient } from "../stripeClient";
 const router: IRouter = Router();
 
 /**
- * Tiered platform fee on each transaction:
- *   < $25       → 3%
- *   $25–$250    → 6%
- *   > $250      → 5%
+ * Founding Member Advantage — tiered marketplace fee based on business plan:
+ *   free    → 6%  (default)
+ *   growth  → 5%
+ *   premium → 3%
  *
- * priceInCents — full transaction total (unit price × quantity) in cents
+ * totalCents — full transaction total (unit price × quantity) in cents
+ * tier       — marketplaceTier from the businesses table
  * returns the fee amount in cents, rounded to the nearest cent
  */
-function platformFee(totalCents: number): number {
-  const totalDollars = totalCents / 100;
-  let rate: number;
-  if (totalDollars < 25) {
-    rate = 0.03;
-  } else if (totalDollars <= 250) {
-    rate = 0.06;
-  } else {
-    rate = 0.05;
-  }
+export const MARKETPLACE_FEE_RATES: Record<string, number> = {
+  free: 0.06,
+  growth: 0.05,
+  premium: 0.03,
+};
+
+function platformFee(totalCents: number, tier: string): number {
+  const rate = MARKETPLACE_FEE_RATES[tier] ?? MARKETPLACE_FEE_RATES.free;
   return Math.round(totalCents * rate);
 }
 
@@ -305,7 +304,11 @@ router.post("/connect/listings/:id/checkout", async (req: Request, res: Response
   if (!listing.stripePriceId) { res.status(400).json({ error: "Listing has no price configured" }); return; }
 
   const [biz] = await db
-    .select({ stripeConnectAccountId: businessesTable.stripeConnectAccountId, name: businessesTable.name })
+    .select({
+      stripeConnectAccountId: businessesTable.stripeConnectAccountId,
+      name: businessesTable.name,
+      marketplaceTier: businessesTable.marketplaceTier,
+    })
     .from(businessesTable)
     .where(eq(businessesTable.id, listing.businessId))
     .limit(1);
@@ -318,7 +321,7 @@ router.post("/connect/listings/:id/checkout", async (req: Request, res: Response
   try {
     const stripe = await getUncachableStripeClient();
     const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(",")[0]}`;
-    const applicationFeeAmount = platformFee(listing.priceInCents * quantity);
+    const applicationFeeAmount = platformFee(listing.priceInCents * quantity, biz.marketplaceTier ?? "free");
 
     const session = await stripe.checkout.sessions.create(
       {
