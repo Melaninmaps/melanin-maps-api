@@ -142,6 +142,7 @@ export default function ReferralLanding() {
                   {submitting ? "Joining…" : <><span>Join the Waitlist</span><ArrowRight className="w-4 h-4" /></>}
                 </button>
                 <p className="text-center text-[#F5EBD8]/40 text-xs">Free to join. No spam, ever.</p>
+                <p className="text-center text-[#F5EBD8]/30 text-xs mt-1">We don't sell your attention—we help our community discover great businesses.</p>
               </form>
             )}
           </div>

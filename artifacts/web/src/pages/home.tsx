@@ -228,7 +228,8 @@ export default function Home() {
               ) : (
                 <>
                   <h2 className="text-2xl font-serif font-bold text-white mb-2">Join the Waitlist</h2>
-                  <p className="text-[#F5EBD8]/60 text-sm mb-6">Free to join. No spam, ever.</p>
+                  <p className="text-[#F5EBD8]/60 text-sm mb-2">Free to join. No spam, ever.</p>
+                  <p className="text-[#F5EBD8]/40 text-xs mb-6">We don't sell your attention—we help our community discover great businesses.</p>
                   <form onSubmit={handleWaitlist} className="flex flex-col gap-3">
                     <div className="grid grid-cols-2 gap-3">
                       <input type="text" placeholder="First name" value={firstName} onChange={e => setFirstName(e.target.value)}

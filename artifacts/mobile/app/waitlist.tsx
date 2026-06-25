@@ -246,7 +246,7 @@ export default function WaitlistScreen() {
                 )}
               </TouchableOpacity>
               <Text style={[styles.privacy, { color: colors.mutedForeground }]}>
-                No spam. Unsubscribe anytime. Your data is never sold.
+                No spam. Unsubscribe anytime. Your data is never sold.{"\n"}We don't sell your attention—we help our community discover great businesses.
               </Text>
             </View>
           </>
