@@ -129,7 +129,7 @@ export default function CreateListScreen() {
           <Text style={[styles.sectionLabel, { color: colors.foreground }]}>List title <Text style={{ color: "#DC2626" }}>*</Text></Text>
           <TextInput
             style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-            placeholder="e.g. Black-owned brunch spots in Chicago"
+            placeholder="e.g. minority-owned brunch spots in Chicago"
             placeholderTextColor={colors.mutedForeground}
             value={title}
             onChangeText={(t) => t.length <= 80 && setTitle(t)}

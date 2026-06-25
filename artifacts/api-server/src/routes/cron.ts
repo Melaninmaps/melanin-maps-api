@@ -210,7 +210,7 @@ const DEFAULT_TOPICS = [
   { topicName: "Building generational wealth as a Black family", category: "money", tier: "free", description: "Investing, real estate, estate planning, breaking cycles of financial exclusion" },
   { topicName: "Black history milestones Americans should know", category: "history", tier: "free", description: "Lesser-known stories, Reconstruction, Black Wall Street, civil rights beyond MLK" },
   { topicName: "HBCUs — finding the right fit for your student", category: "education", tier: "free", description: "HBCU profiles, financial aid, career outcomes, campus culture" },
-  { topicName: "Black-owned restaurants and food traditions", category: "food", tier: "free", description: "Soul food, African diaspora cuisine, finding and supporting Black chefs" },
+  { topicName: "minority-owned restaurants and food traditions", category: "food", tier: "free", description: "Soul food, African diaspora cuisine, finding and supporting Black chefs" },
   { topicName: "Navigating the job market as a Black professional", category: "careers", tier: "free", description: "Workplace microaggressions, negotiation, Black-friendly employers, networking" },
   { topicName: "Wellness practices rooted in African traditions", category: "wellness", tier: "free", description: "Holistic health, ancestral wellness, stress and burnout in the Black community" },
 ] as const;
@@ -500,7 +500,7 @@ router.post("/cron/founding-anniversary", async (req, res): Promise<void> => {
               {
                 role: "system",
                 content:
-                  "You write warm, celebratory 2-3 sentence messages for Black-owned business owners on their Founding Business anniversary. Tone: genuine pride, community love, business empowerment. Never use the word 'vibrant'. Be specific with numbers. End with a line that makes them feel seen.",
+                  "You write warm, celebratory 2-3 sentence messages for minority-owned business owners on their Founding Business anniversary. Tone: genuine pride, community love, business empowerment. Never use the word 'vibrant'. Be specific with numbers. End with a line that makes them feel seen.",
               },
               {
                 role: "user",

@@ -28,7 +28,7 @@ export default function Slide06HowItWorks() {
             <div style={{ fontSize: "3vw", fontWeight: 700, color: "#D4AF37", letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: "2vh" }}>Discover</div>
             <div style={{ width: "4vw", height: "2px", background: "#D4AF37", marginBottom: "2.5vh" }} />
             <div style={{ fontSize: "2.5vw", color: "rgba(255,255,255,0.75)", lineHeight: 1.55, maxWidth: "28vw" }}>
-              Search Black-owned businesses by category, ownership type, and price
+              Search minority-owned businesses by category, ownership type, and price
             </div>
           </div>
 

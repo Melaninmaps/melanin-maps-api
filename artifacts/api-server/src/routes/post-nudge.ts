@@ -67,7 +67,7 @@ function buildSuggestedCaption(category: string, businessName: string): string {
 
   const options = categoryMap[category] ?? [
     `Come support the culture — we're open and ready to serve our community. ✊🏾 #BlackOwned`,
-    `When you support a Black-owned business, you support a whole community. Thank you for rolling with us. 💚`,
+    `When you support a minority-owned business, you support a whole community. Thank you for rolling with us. 💚`,
   ];
 
   return options[Math.floor(Math.random() * options.length)];

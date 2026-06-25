@@ -152,7 +152,7 @@ Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 
 Only recommend real Minority-owned or culturally Minority spots — no tourist traps, no chains.${businessCatalog?.length ? `
 
 VERIFIED PLATFORM BUSINESSES${destination ? ` IN ${destination.toUpperCase()}` : ""} — PRIORITIZE THESE:
-These are real, verified Black-owned businesses listed on Mapping With Melanin™. When they match the user's vibe or needs, recommend them by name and tell their story authentically. Weave in their mission, values, and personality — not just their category.
+These are real, verified minority-owned businesses listed on Mapping With Melanin™. When they match the user's vibe or needs, recommend them by name and tell their story authentically. Weave in their mission, values, and personality — not just their category.
 
 ${businessCatalog.map(b => {
   const lines: string[] = [`• ${b.name} | ${b.category}${b.verified ? " ✓ Verified" : ""}`];
@@ -705,7 +705,7 @@ router.post("/kinfolk/expansion-analysis", async (req: Request, res: Response) =
     if (citySummary) surveyContext = `Platform community safety data by city: ${citySummary}`;
   } catch { /* non-critical */ }
 
-  const prompt = `You are a business expansion strategist advising a Black-owned ${businessCategory ?? "business"} called "${businessName ?? "this business"}" currently based in ${businessCity ?? "their city"}.${expansionIdentityContext}
+  const prompt = `You are a business expansion strategist advising a minority-owned ${businessCategory ?? "business"} called "${businessName ?? "this business"}" currently based in ${businessCity ?? "their city"}.${expansionIdentityContext}
 
 CURRENT PERFORMANCE:
 - Average rating: ${avgRating?.toFixed(1) ?? "N/A"}/5

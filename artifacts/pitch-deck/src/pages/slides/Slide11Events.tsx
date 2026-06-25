@@ -27,7 +27,7 @@ export default function Slide11Events() {
               <div style={{ fontSize: "1.5vw", marginBottom: "1.5vh" }}>&#9670;</div>
               <div style={{ fontSize: "2.8vw", fontWeight: 700, color: "#FFFFFF", marginBottom: "1vh" }}>Events &amp; RSVP</div>
               <div style={{ width: "3vw", height: "2px", background: "#D4AF37", marginBottom: "1.5vh" }} />
-              <div style={{ fontSize: "2.2vw", color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>Browse and RSVP to local events hosted by Black-owned venues and community groups</div>
+              <div style={{ fontSize: "2.2vw", color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>Browse and RSVP to local events hosted by minority-owned venues and community groups</div>
             </div>
             <div style={{ flex: 1, padding: "3vh 2.5vw", border: "1px solid rgba(212,175,55,0.3)", background: "rgba(212,175,55,0.04)", display: "flex", flexDirection: "column" }}>
               <div style={{ fontSize: "1.5vw", marginBottom: "1.5vh" }}>&#9670;</div>

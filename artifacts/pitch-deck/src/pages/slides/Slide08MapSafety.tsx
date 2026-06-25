@@ -22,7 +22,7 @@ export default function Slide08MapSafety() {
             <div style={{ fontSize: "3.5vw", fontWeight: 700, color: "#FFFFFF", marginBottom: "1.5vh", lineHeight: 1.1 }}>Business Pins</div>
             <div style={{ width: "5vw", height: "2px", background: "#D4AF37", marginBottom: "2.5vh" }} />
             <div style={{ fontSize: "2.5vw", color: "rgba(255,255,255,0.7)", lineHeight: 1.55, marginBottom: "4vh" }}>
-              Full-screen interactive map showing Black-owned businesses as pins with quick-view profile cards on tap
+              Full-screen interactive map showing minority-owned businesses as pins with quick-view profile cards on tap
             </div>
             <div style={{ fontSize: "1vw", letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(212,175,55,0.6)", marginBottom: "2vh" }}>Layer Two</div>
             <div style={{ fontSize: "3.5vw", fontWeight: 700, color: "#FFFFFF", marginBottom: "1.5vh", lineHeight: 1.1 }}>Safety Overlay</div>

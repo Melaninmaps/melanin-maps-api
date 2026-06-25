@@ -18,7 +18,7 @@ export default function Slide03Mission() {
         </div>
 
         <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "5.5vw", fontWeight: 700, margin: "0 0 4vh 0", color: "#FFFFFF", lineHeight: 1.15, letterSpacing: "0.02em", textWrap: "balance" }}>
-          Discover, support, and celebrate Black-owned businesses wherever you go
+          Discover, support, and celebrate minority-owned businesses wherever you go
         </h2>
 
         <div style={{ width: "12vw", height: "2px", background: "#D4AF37", margin: "0 auto 4vh" }} />

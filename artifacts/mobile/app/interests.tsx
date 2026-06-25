@@ -24,7 +24,7 @@ const INTERESTS = [
   { id: "events", emoji: "🎉", label: "Events", sub: "Concerts & gatherings" },
   { id: "arts", emoji: "🎨", label: "Arts & Culture", sub: "Museums & galleries" },
   { id: "nightlife", emoji: "🌙", label: "Nightlife", sub: "Bars & entertainment" },
-  { id: "shopping", emoji: "🛍️", label: "Shopping", sub: "Black-owned shops" },
+  { id: "shopping", emoji: "🛍️", label: "Shopping", sub: "minority-owned shops" },
   { id: "sports", emoji: "⚽", label: "Sports", sub: "Athletics & fitness" },
 ];
 

@@ -219,7 +219,7 @@ export default function BusinessOwnerHome() {
             <Text style={styles.emptyEmoji}>🏪</Text>
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No business listed yet</Text>
             <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-              List your Black-owned business to get discovered by the community, collect reviews, and access growth tools.
+              List your minority-owned business to get discovered by the community, collect reviews, and access growth tools.
             </Text>
             <TouchableOpacity
               style={[styles.listBtn, { backgroundColor: colors.primary }]}

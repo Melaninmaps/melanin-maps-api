@@ -655,7 +655,7 @@ export async function sendWeeklyDigest(
   await resend.emails.send({
     from: FROM,
     to,
-    subject: `Your weekly Black-owned business digest — ${weekLabel}`,
+    subject: `Your weekly minority-owned business digest — ${weekLabel}`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
         <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
@@ -668,7 +668,7 @@ export async function sendWeeklyDigest(
         <p style="color:#3A1F0E;font-size:14px;margin:0 0 28px;opacity:0.6">${weekLabel}</p>
 
         <p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 20px">
-          Here are the newest Black-owned businesses added to the Mapping with Melanin™ directory this week. Every discovery, share, and check-in helps our community grow stronger.
+          Here are the newest minority-owned businesses added to the Mapping with Melanin™ directory this week. Every discovery, share, and check-in helps our community grow stronger.
         </p>
 
         ${businesses.length > 0 ? bizCards : noBizMessage}
@@ -680,8 +680,8 @@ export async function sendWeeklyDigest(
         </div>
 
         <div style="background:#2B1507;border-radius:12px;padding:24px;margin-bottom:28px;text-align:center">
-          <p style="color:#F5EBD8;font-size:13px;font-weight:700;margin:0 0 6px;letter-spacing:1px;text-transform:uppercase">Know a Black-owned business?</p>
-          <p style="color:#F5EBD8;font-size:14px;margin:0 0 16px;opacity:0.7">Help us grow the most comprehensive directory of Black-owned businesses in the country.</p>
+          <p style="color:#F5EBD8;font-size:13px;font-weight:700;margin:0 0 6px;letter-spacing:1px;text-transform:uppercase">Know a minority-owned business?</p>
+          <p style="color:#F5EBD8;font-size:14px;margin:0 0 16px;opacity:0.7">Help us grow the most comprehensive directory of minority-owned businesses in the country.</p>
           <a href="https://mappingwithmelanin.com/submit-business" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:14px;padding:10px 24px;border-radius:50px;text-decoration:none">
             Submit a Business
           </a>
@@ -732,7 +732,7 @@ export async function sendFoundingWelcomeEmail(
             We're excited to officially welcome <strong>${businessName}</strong> as one of our Founding Businesses on Mapping with Melanin™.
           </p>
           <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 16px">
-            This is more than a membership — it's an opportunity to help shape a platform built to connect communities, support Black-owned businesses, and make discovering trusted businesses easier than ever.
+            This is more than a membership — it's an opportunity to help shape a platform built to connect communities, support minority-owned businesses, and make discovering trusted businesses easier than ever.
           </p>
           <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 28px">
             As one of our Founding Businesses, you're joining an exclusive group of early partners whose feedback and participation will help influence the future of the platform.

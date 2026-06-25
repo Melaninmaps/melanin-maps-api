@@ -9,7 +9,7 @@ export default function Slide04WhyWeExist() {
       <div className="bg-primary w-[12vw] h-[0.15vh] mb-[5vh]" />
 
       <div className="font-display italic text-text text-[4.8vw] leading-snug mb-[5vh]" style={{ textWrap: "balance" as any }}>
-        We believe discovering and supporting Black-owned businesses should be easier.
+        We believe discovering and supporting minority-owned businesses should be easier.
       </div>
 
       <div className="font-body text-muted text-[3.2vw] leading-relaxed" style={{ textWrap: "balance" as any }}>

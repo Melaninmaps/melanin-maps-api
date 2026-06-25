@@ -83,7 +83,7 @@ export default function Home() {
           </FadeIn>
           <FadeIn delay={0.2}>
             <p className="text-lg md:text-xl text-background/80 max-w-2xl mx-auto leading-relaxed mb-10">
-              The #1 community platform dedicated to celebrating, supporting, and amplifying Black-owned businesses across America.
+              The #1 community platform dedicated to celebrating, supporting, and amplifying minority-owned businesses across America.
             </p>
           </FadeIn>
           <FadeIn delay={0.3} className="print:hidden">
@@ -104,7 +104,7 @@ export default function Home() {
             </h2>
             <div className="w-24 h-1 bg-primary mx-auto mb-8 rounded-full"></div>
             <p className="text-xl md:text-2xl text-foreground/80 leading-relaxed font-medium">
-              A mobile-first platform where Black travelers, locals, and community members discover Black-owned businesses, plan safe journeys, and support the community economy. 
+              A mobile-first platform where Black travelers, locals, and community members discover minority-owned businesses, plan safe journeys, and support the community economy. 
             </p>
             <p className="text-lg text-foreground/60 mt-6 max-w-2xl mx-auto">
               Powered by AI, built by the community, for the community.
@@ -152,7 +152,7 @@ export default function Home() {
               {
                 icon: <Users size={28} />,
                 title: "Be Found by the Right People",
-                desc: "100,000+ users actively searching for Black-owned businesses, events, and experiences in their city and on their travels."
+                desc: "100,000+ users actively searching for minority-owned businesses, events, and experiences in their city and on their travels."
               },
               {
                 icon: <ShieldCheck size={28} />,

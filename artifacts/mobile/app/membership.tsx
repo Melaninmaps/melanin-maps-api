@@ -672,7 +672,7 @@ export default function MembershipScreen() {
               <Text style={[styles.feeTableTitle, { color: colors.foreground }]}>Marketplace Fees</Text>
             </View>
             <Text style={[styles.feeNote, { color: colors.mutedForeground, marginBottom: 10 }]}>
-              Standard rates apply to businesses joining after the Founding Program closes. Every transaction helps fund AI, community tools, safety intelligence, verification, and continued investment in Black-owned businesses.
+              Standard rates apply to businesses joining after the Founding Program closes. Every transaction helps fund AI, community tools, safety intelligence, verification, and continued investment in minority-owned businesses.
             </Text>
             {[
               { name: "Community Business", fee: "10%" },

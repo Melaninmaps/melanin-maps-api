@@ -42,7 +42,7 @@ const SECTIONS = [
     icon: "shopping-bag" as const,
     color: "#2D7A4F",
     title: "Who You're Buying From",
-    body: "Mapping With Melanin™ is a marketplace that connects you with independent Black-owned businesses. When you make a purchase, your transaction is directly with the business owner — not with Mapping With Melanin™.\n\nThe seller's name is displayed on every listing. You are entering a contract of sale with that business, and they are responsible for fulfilling your order.",
+    body: "Mapping With Melanin™ is a marketplace that connects you with independent minority-owned businesses. When you make a purchase, your transaction is directly with the business owner — not with Mapping With Melanin™.\n\nThe seller's name is displayed on every listing. You are entering a contract of sale with that business, and they are responsible for fulfilling your order.",
   },
   {
     icon: "refresh-ccw" as const,
@@ -66,7 +66,7 @@ const SECTIONS = [
     icon: "info" as const,
     color: "#DC2626",
     title: "What We're Not Responsible For",
-    body: "Mapping With Melanin™ is not responsible for:\n\n✗ Product quality, safety, or fitness for a particular purpose\n✗ Accurate fulfillment of your order by the seller\n✗ Seller's compliance with their stated return policy\n✗ Delays or failures in shipping or delivery\n✗ Claims arising from the seller's products or conduct\n\nAll sellers on the platform are verified Black-owned businesses, but verification of ownership does not constitute an endorsement of product quality or business practices.",
+    body: "Mapping With Melanin™ is not responsible for:\n\n✗ Product quality, safety, or fitness for a particular purpose\n✗ Accurate fulfillment of your order by the seller\n✗ Seller's compliance with their stated return policy\n✗ Delays or failures in shipping or delivery\n✗ Claims arising from the seller's products or conduct\n\nAll sellers on the platform are verified minority-owned businesses, but verification of ownership does not constitute an endorsement of product quality or business practices.",
   },
 ];
 
@@ -124,7 +124,7 @@ export function MarketplaceTermsModal({ visible, onAccepted, onClose }: Props) {
               Before You Shop
             </Text>
             <Text style={[styles.preambleBody, { color: colors.mutedForeground }]}>
-              Mapping With Melanin™ connects you with independent Black-owned businesses. Please read these short terms so you know exactly what to expect when you buy.
+              Mapping With Melanin™ connects you with independent minority-owned businesses. Please read these short terms so you know exactly what to expect when you buy.
             </Text>
           </View>
 

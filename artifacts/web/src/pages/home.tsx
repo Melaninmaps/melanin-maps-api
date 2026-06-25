@@ -349,7 +349,7 @@ export default function Home() {
             </div>
             <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4">Everything You Need in One Place</h2>
             <p className="text-lg text-[#F5EBD8]/70 max-w-2xl mx-auto">
-              Discover Black-owned businesses, travel with confidence, connect with community, and make decisions with real intelligence behind every choice.
+              Discover minority-owned businesses, travel with confidence, connect with community, and make decisions with real intelligence behind every choice.
             </p>
           </div>
 
@@ -359,7 +359,7 @@ export default function Home() {
                 icon: Search,
                 label: "Discover",
                 title: "Find Businesses & Places",
-                desc: "Community-verified Black-owned businesses, restaurants, hotels, cultural landmarks, and hidden gems — wherever you are.",
+                desc: "Community-verified minority-owned businesses, restaurants, hotels, cultural landmarks, and hidden gems — wherever you are.",
                 link: "/businesses",
                 cta: "Browse Businesses"
               },

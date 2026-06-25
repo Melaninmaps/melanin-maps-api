@@ -38,7 +38,7 @@ const BUDGET_OPTS = [{ id: "budget", label: "Budget 💵" }, { id: "mid", label:
 const TRIP_STYLES = [{ id: "solo", label: "Solo" }, { id: "couple", label: "Couple" }, { id: "family", label: "Family" }, { id: "group", label: "Friend group" }, { id: "business", label: "Work trip" }, { id: "spiritual", label: "Spiritual" }];
 const COMPANIONS = [{ id: "solo", label: "Solo" }, { id: "partner", label: "Partner" }, { id: "family", label: "Family" }, { id: "friends", label: "Friends" }, { id: "colleagues", label: "Colleagues" }];
 const WELCOME_CHIPS = [
-  "Where's good to eat in Atlanta?", "Best Black-owned spots in Houston",
+  "Where's good to eat in Atlanta?", "Best minority-owned spots in Houston",
   "What's the vibe in New Orleans?", "Hidden gems in DC",
   "Family-friendly spots in Chicago", "Nightlife in Miami?",
   "Tell me about Harlem", "Top spots in Philly",
@@ -556,7 +556,7 @@ export default function Travel() {
                 </div>
                 <h2 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-3">Sign in to chat with KinfolkAI</h2>
                 <p className="text-[#3A1F0E]/60 mb-8 text-sm leading-relaxed">
-                  Your AI travel companion for Black-owned spots, cultural gems, and trusted safety intel — personalized just for you.
+                  Your AI travel companion for minority-owned spots, cultural gems, and trusted safety intel — personalized just for you.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link href={`${BASE}login`}><button className="bg-[#CA922B] hover:bg-[#B38024] text-white px-8 py-2.5 rounded-full font-semibold text-sm transition-colors">Sign In to Continue</button></Link>

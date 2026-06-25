@@ -21,7 +21,7 @@ export default function Slide12Membership() {
             <div style={{ fontSize: "1vw", letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(212,175,55,0.5)", marginBottom: "1.5vh" }}>Tier 01</div>
             <div style={{ fontSize: "2.8vw", fontWeight: 700, color: "#FFFFFF", marginBottom: "1vh" }}>Free</div>
             <div style={{ width: "3vw", height: "2px", background: "rgba(212,175,55,0.4)", marginBottom: "2vh" }} />
-            <div style={{ fontSize: "2.1vw", color: "rgba(255,255,255,0.6)", lineHeight: 1.6 }}>Browse and discover Black-owned businesses</div>
+            <div style={{ fontSize: "2.1vw", color: "rgba(255,255,255,0.6)", lineHeight: 1.6 }}>Browse and discover minority-owned businesses</div>
           </div>
 
           <div style={{ flex: 1, padding: "3vh 2vw", border: "1px solid rgba(212,175,55,0.3)", background: "rgba(212,175,55,0.03)", display: "flex", flexDirection: "column" }}>
@@ -35,7 +35,7 @@ export default function Slide12Membership() {
             <div style={{ fontSize: "1vw", letterSpacing: "0.3em", textTransform: "uppercase", color: "#D4AF37", marginBottom: "1.5vh" }}>Tier 03</div>
             <div style={{ fontSize: "2.8vw", fontWeight: 700, color: "#D4AF37", marginBottom: "1vh" }}>Premium</div>
             <div style={{ width: "3vw", height: "2px", background: "#D4AF37", marginBottom: "2vh" }} />
-            <div style={{ fontSize: "2.1vw", color: "rgba(255,255,255,0.8)", lineHeight: 1.6 }}>Early access, exclusive deals from Black-owned businesses, and priority features</div>
+            <div style={{ fontSize: "2.1vw", color: "rgba(255,255,255,0.8)", lineHeight: 1.6 }}>Early access, exclusive deals from minority-owned businesses, and priority features</div>
           </div>
 
           <div style={{ flex: 1, padding: "3vh 2vw", border: "1px solid rgba(212,175,55,0.3)", background: "rgba(212,175,55,0.03)", display: "flex", flexDirection: "column" }}>

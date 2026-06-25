@@ -81,7 +81,7 @@ export default function OnboardingTravel() {
           <Text style={styles.titleItalic}>Your Way.</Text>
         </View>
         <Text style={styles.subtitle}>
-          KinfolkAI™ builds personalized itineraries featuring Black-owned spots,
+          KinfolkAI™ builds personalized itineraries featuring minority-owned spots,
           safe neighborhoods, cultural events, and community recommendations — all
           tailored to your vibe, budget, and travel style.
         </Text>

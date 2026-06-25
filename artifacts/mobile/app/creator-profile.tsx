@@ -30,7 +30,7 @@ type CreatorData = {
 const CREATOR_DB: Record<string, CreatorData> = {
   "@yaratravels": {
     name: "Yara Mensah", handle: "@yaratravels",
-    bio: "Black travel creator documenting Black-owned spots across the diaspora. ATL-based. Ghana-raised. I find the food, you book the flights. 🌍",
+    bio: "Black travel creator documenting minority-owned spots across the diaspora. ATL-based. Ghana-raised. I find the food, you book the flights. 🌍",
     cities: 82, videos: 340, followers: 12400,
     coverColor: "#2D5016", emoji: "🌍",
     badges: ["🏆 Verified Creator", "🍽️ Food & Culture", "🌍 Diaspora Traveler"],
@@ -56,7 +56,7 @@ const CREATOR_DB: Record<string, CreatorData> = {
     recentVideos: [
       { title: "Traveling solo in Brazil as a Black man", city: "São Paulo, Brazil", views: "77K", emoji: "🇧🇷" },
       { title: "Harlem vs. South End — the comparison nobody asked for", city: "New York / Boston", views: "29K", emoji: "🏙️" },
-      { title: "Best Black-owned hotels in Charlotte", city: "Charlotte, NC", views: "18K", emoji: "🏨" },
+      { title: "Best minority-owned hotels in Charlotte", city: "Charlotte, NC", views: "18K", emoji: "🏨" },
       { title: "Why I'll never stop going to Jamaica", city: "Kingston, Jamaica", views: "55K", emoji: "🌴" },
     ],
     topCities: [
@@ -75,7 +75,7 @@ const CREATOR_DB: Record<string, CreatorData> = {
     recentVideos: [
       { title: "Houston's best Afro-Caribbean restaurants", city: "Houston, TX", views: "41K", emoji: "🍲" },
       { title: "Finding community in Chicago's South Side", city: "Chicago, IL", views: "38K", emoji: "🤝" },
-      { title: "Black-owned wellness spots in LA", city: "Los Angeles, CA", views: "26K", emoji: "🧘🏾" },
+      { title: "minority-owned wellness spots in LA", city: "Los Angeles, CA", views: "26K", emoji: "🧘🏾" },
       { title: "The real Wakanda: visiting Accra in 2024", city: "Accra, Ghana", views: "84K", emoji: "🌟" },
     ],
     topCities: [

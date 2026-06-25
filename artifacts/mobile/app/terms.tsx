@@ -45,7 +45,7 @@ const SECTIONS = [
     color: "#2D7A4F",
     title: "Business Listings",
     clauses: [
-      { heading: "Listing Your Business", body: "Businesses listed on the Platform must genuinely be Black-owned or substantially Black-led. Submitting false ownership information is a serious violation and may result in removal and legal action." },
+      { heading: "Listing Your Business", body: "Businesses listed on the Platform must genuinely be minority-owned or substantially Black-led. Submitting false ownership information is a serious violation and may result in removal and legal action." },
       { heading: "Verification Badges", body: "\"Verified\" badges are granted after document review by our team. \"Self-Identified\" indicates the business owner has attested to ownership without third-party verification. Confidence scores reflect aggregated community signals." },
       { heading: "Business Owner Rights", body: "Verified business owners may respond to reviews and update business information. Owners may not request removal of negative reviews unless the review violates our Community Standards." },
     ],
@@ -69,7 +69,7 @@ const SECTIONS = [
     clauses: [
       {
         heading: "We Are a Marketplace, Not the Seller",
-        body: "Mapping With Melanin™ operates as a marketplace that connects buyers with independent Black-owned businesses. When you purchase a product or service through the Platform, your transaction is with the business owner — not with Mapping With Melanin™. General dissatisfaction with a product does not make Mapping With Melanin™ liable as the seller.",
+        body: "Mapping With Melanin™ operates as a marketplace that connects buyers with independent minority-owned businesses. When you purchase a product or service through the Platform, your transaction is with the business owner — not with Mapping With Melanin™. General dissatisfaction with a product does not make Mapping With Melanin™ liable as the seller.",
       },
       {
         heading: "Business Refund & Return Policies",

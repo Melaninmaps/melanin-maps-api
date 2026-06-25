@@ -650,9 +650,9 @@ function drawKinfolk(ctx) {
   // Chat messages
   const msgs = [
     { side: 'user', text: "I'm visiting Atlanta this weekend. Where should I eat?" },
-    { side: 'ai', text: "✨ Welcome to Atlanta! Here are my top picks for Black-owned restaurants:\n\n🍽 The RECESS — upscale Southern fusion, must-try shrimp & grits\n\n🍗 Busy Bee Café — legendary soul food since 1947, Dr. King's favorite\n\n🍋 Slutty Vegan — Atlanta's iconic plant-based destination" },
+    { side: 'ai', text: "✨ Welcome to Atlanta! Here are my top picks for minority-owned restaurants:\n\n🍽 The RECESS — upscale Southern fusion, must-try shrimp & grits\n\n🍗 Busy Bee Café — legendary soul food since 1947, Dr. King's favorite\n\n🍋 Slutty Vegan — Atlanta's iconic plant-based destination" },
     { side: 'user', text: "Any beauty spots near Buckhead?" },
-    { side: 'ai', text: "Absolutely! For Black-owned beauty in Buckhead:\n\n💇 Trim + Proper — premium grooming & locs\n\n💅 Melanin & Co. Spa — facials, lashes & self-care\n\nBoth are community-verified ✓" },
+    { side: 'ai', text: "Absolutely! For minority-owned beauty in Buckhead:\n\n💇 Trim + Proper — premium grooming & locs\n\n💅 Melanin & Co. Spa — facials, lashes & self-care\n\nBoth are community-verified ✓" },
   ];
 
   let msgY = 360;
@@ -693,7 +693,7 @@ function drawKinfolk(ctx) {
   roundRect(ctx, 50, inputY, W - 140, 110, 30, C.card, C.border);
   ctx.fillStyle = C.muted;
   ctx.font = `${38}px -apple-system, sans-serif`;
-  ctx.fillText('Ask about Black-owned places...', 100, inputY + 65);
+  ctx.fillText('Ask about minority-owned places...', 100, inputY + 65);
   // Send button
   ctx.fillStyle = C.gold;
   ctx.beginPath(); ctx.arc(W - 90, inputY + 55, 48, 0, Math.PI*2); ctx.fill();
@@ -886,10 +886,10 @@ function drawChat(ctx) {
   const messages = [
     { fromMe: false, text: 'Hey! Have you been to Essence Kitchen on U Street? My friend said it\'s amazing 🍽', time: '9:14 AM' },
     { fromMe: true, text: 'Yes!! I went last month. The oxtails and cornbread are unreal. Definitely go!', time: '9:16 AM', status: '✓✓' },
-    { fromMe: false, text: 'Okay I\'m sold 😂 Is it Black-owned? Trying to be intentional about where I spend', time: '9:17 AM' },
+    { fromMe: false, text: 'Okay I\'m sold 😂 Is it minority-owned? Trying to be intentional about where I spend', time: '9:17 AM' },
     { fromMe: true, text: 'Yes it\'s verified on Mapping With Melanin! Family-owned since 2018. Community safety score is 92 too 🙌', time: '9:18 AM', status: '✓✓' },
     { fromMe: false, text: 'That app is so helpful omg. Just found 3 new spots near me I never knew about!', time: '9:20 AM' },
-    { fromMe: true, text: 'Right?! The KinfolkAI feature is my fav — asked it for Black-owned brunch spots in Atlanta and it gave me a whole itinerary 💛', time: '9:22 AM', status: '✓' },
+    { fromMe: true, text: 'Right?! The KinfolkAI feature is my fav — asked it for minority-owned brunch spots in Atlanta and it gave me a whole itinerary 💛', time: '9:22 AM', status: '✓' },
     { fromMe: false, text: 'Thanks for the recommendation! The food was amazing 🙌', time: '9:45 AM' },
   ];
 

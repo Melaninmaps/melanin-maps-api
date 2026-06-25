@@ -17,7 +17,7 @@ import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
 
 const PERKS = [
-  { icon: "map-pin", text: "Discover Black-owned businesses near you" },
+  { icon: "map-pin", text: "Discover minority-owned businesses near you" },
   { icon: "shield", text: "Community-powered safety ratings" },
   { icon: "users", text: "Connect with the community" },
   { icon: "star", text: "Save favorites & write reviews" },

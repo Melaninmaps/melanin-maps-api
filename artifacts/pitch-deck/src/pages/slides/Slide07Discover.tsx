@@ -20,11 +20,11 @@ export default function Slide07Discover() {
         <div style={{ display: "flex", gap: "5vw", flex: 1, alignItems: "stretch" }}>
           <div style={{ flex: "0 0 40%", display: "flex", flexDirection: "column", justifyContent: "center", borderRight: "1px solid rgba(212,175,55,0.25)", paddingRight: "5vw" }}>
             <p style={{ fontFamily: "'Playfair Display', serif", fontSize: "3.2vw", fontWeight: 400, color: "rgba(212,175,55,0.9)", lineHeight: 1.5, margin: "0 0 3vh 0", fontStyle: "italic" }}>
-              "The most comprehensive Black-owned business search ever built"
+              "The most comprehensive minority-owned business search ever built"
             </p>
             <div style={{ width: "6vw", height: "2px", background: "#D4AF37", marginBottom: "3vh" }} />
             <div style={{ fontSize: "2.4vw", color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>
-              Search and filter across hundreds of Black-owned businesses with community-verified data
+              Search and filter across hundreds of minority-owned businesses with community-verified data
             </div>
           </div>
 

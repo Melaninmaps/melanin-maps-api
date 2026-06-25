@@ -397,7 +397,7 @@ Their collective preferences:
 ${destHint}
 ${lengthHint}
 
-Generate 3 distinct trip itinerary options. Emphasize Black-owned businesses, culturally rich neighborhoods, HBCUs, jazz & soul food hotspots, cultural landmarks, and community safety. Each option should feel unique (different vibe, not just different city).
+Generate 3 distinct trip itinerary options. Emphasize minority-owned businesses, culturally rich neighborhoods, HBCUs, jazz & soul food hotspots, cultural landmarks, and community safety. Each option should feel unique (different vibe, not just different city).
 
 Return ONLY valid JSON matching this exact TypeScript type — no markdown, no prose, just the JSON:
 {

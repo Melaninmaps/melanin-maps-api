@@ -32,7 +32,7 @@ export const BUSINESSES: Business[] = [
     reviews: [
       { id: "r1", author: "Simone W.", initials: "SW", color: "#C4622D", rating: 5, text: "Absolutely amazing! The quality and service exceeded all expectations. Will definitely be back.", timeAgo: "3 days ago", wouldReturnAlone: true },
       { id: "r2", author: "Marcus T.", initials: "MT", color: "#D4873A", rating: 4, text: "Great experience overall. The staff was incredibly welcoming and knowledgeable. Highly recommend to anyone in the community.", timeAgo: "1 week ago", wouldReturnAlone: true },
-      { id: "r3", author: "Aisha B.", initials: "AB", color: "#2D7A4F", rating: 5, text: "This place is a gem. So proud to support Black-owned businesses like this one. They really care about their customers.", timeAgo: "2 weeks ago", wouldReturnAlone: true },
+      { id: "r3", author: "Aisha B.", initials: "AB", color: "#2D7A4F", rating: 5, text: "This place is a gem. So proud to support minority-owned businesses like this one. They really care about their customers.", timeAgo: "2 weeks ago", wouldReturnAlone: true },
     ],
   },
   {
@@ -308,7 +308,7 @@ export const EVENTS: Event[] = [
     id: "e3",
     title: "Harlem Jazz & Soul Food Night",
     description:
-      "An evening of live jazz performances paired with the best soul food from Harlem's finest Black-owned restaurants. Celebrate our musical and culinary heritage.",
+      "An evening of live jazz performances paired with the best soul food from Harlem's finest minority-owned restaurants. Celebrate our musical and culinary heritage.",
     date: "July 20, 2026",
     dateShort: "Jul 20",
     time: "6:00 PM – 11:00 PM",
@@ -327,7 +327,7 @@ export const EVENTS: Event[] = [
     id: "e4",
     title: "Melanin Beauty Expo",
     description:
-      "The premier beauty expo celebrating melanin beauty, featuring 80+ Black-owned beauty brands, live demonstrations, masterclasses, and celebrity stylists.",
+      "The premier beauty expo celebrating melanin beauty, featuring 80+ minority-owned beauty brands, live demonstrations, masterclasses, and celebrity stylists.",
     date: "August 3, 2026",
     dateShort: "Aug 3",
     time: "10:00 AM – 6:00 PM",
@@ -370,7 +370,7 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
     author: "Zara M.",
     authorInitials: "ZM",
     authorColor: "#C4622D",
-    content: "Just discovered this incredible Black-owned bookstore in DC — Roots & Culture. If you haven't been, GO! The selection of Afrofuturism and Black history books is unmatched. 📚✊🏾",
+    content: "Just discovered this incredible minority-owned bookstore in DC — Roots & Culture. If you haven't been, GO! The selection of Afrofuturism and Black history books is unmatched. 📚✊🏾",
     likes: 47,
     comments: 12,
     timeAgo: "2h ago",

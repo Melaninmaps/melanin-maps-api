@@ -31,7 +31,7 @@ export default function Slide04Solution() {
             <div style={{ fontSize: "2vw", marginBottom: "2vh" }}>&#9670;</div>
             <div style={{ fontSize: "2.8vw", fontWeight: 700, color: "#FFFFFF", marginBottom: "1.5vh", lineHeight: 1.1 }}>Business Directory</div>
             <div style={{ width: "4vw", height: "2px", background: "#D4AF37", marginBottom: "2vh" }} />
-            <div style={{ fontSize: "2.2vw", color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>Verified Black-owned businesses with confidence scoring and ownership badges</div>
+            <div style={{ fontSize: "2.2vw", color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>Verified minority-owned businesses with confidence scoring and ownership badges</div>
           </div>
           <div style={{ flex: 1, padding: "3vh 2.5vw", border: "1px solid rgba(212,175,55,0.3)", background: "rgba(212,175,55,0.04)", display: "flex", flexDirection: "column" }}>
             <div style={{ fontSize: "2vw", marginBottom: "2vh" }}>&#9670;</div>

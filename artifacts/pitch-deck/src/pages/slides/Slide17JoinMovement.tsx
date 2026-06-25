@@ -38,7 +38,7 @@ export default function Slide17JoinMovement() {
               <div style={{ fontSize: "1vw", letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(212,175,55,0.6)", marginBottom: "1vh" }}>For Businesses</div>
               <div style={{ fontSize: "2.8vw", fontWeight: 700, color: "#FFFFFF", marginBottom: "1vh", lineHeight: 1.1 }}>List Your Business</div>
               <div style={{ width: "3vw", height: "2px", background: "#D4AF37", marginBottom: "1.5vh" }} />
-              <div style={{ fontSize: "2.2vw", color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>Get discovered by an engaged community that is actively seeking to support Black-owned businesses</div>
+              <div style={{ fontSize: "2.2vw", color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>Get discovered by an engaged community that is actively seeking to support minority-owned businesses</div>
             </div>
           </div>
 

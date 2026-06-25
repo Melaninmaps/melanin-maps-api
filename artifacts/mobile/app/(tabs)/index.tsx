@@ -88,7 +88,7 @@ export default function DiscoverScreen() {
       filters.ownershipTypes.some(
         (t) =>
           (t === "minority-owned" && b.blackOwned) ||
-          (t === "black-owned" && b.blackOwned) ||
+          (t === "minority-owned" && b.blackOwned) ||
           b.ownershipDesignations.includes(t)
       );
     const matchesVibe = !activeVibe
@@ -265,7 +265,7 @@ export default function DiscoverScreen() {
               <Text style={styles.travelBannerEyebrow}>✨ KINFOLKAI™</Text>
               <Text style={styles.travelBannerTitle}>Plan Your Next Trip</Text>
               <Text style={styles.travelBannerSub}>
-                Black-owned spots, safe neighborhoods & events
+                minority-owned spots, safe neighborhoods & events
               </Text>
             </View>
             <View style={styles.travelBannerRight}>

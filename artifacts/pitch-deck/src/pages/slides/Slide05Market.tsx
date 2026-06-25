@@ -31,7 +31,7 @@ export default function Slide05Market() {
             <div style={{ fontSize: "1vw", letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(212,175,55,0.6)", marginBottom: "1.5vh" }}>Businesses Nationwide</div>
             <div style={{ fontSize: "10vw", fontWeight: 700, color: "#FFFFFF", lineHeight: 1 }}>3.1M+</div>
             <div style={{ width: "6vw", height: "2px", background: "#D4AF37", margin: "2.5vh auto" }} />
-            <div style={{ fontSize: "2.4vw", color: "rgba(255,255,255,0.7)", lineHeight: 1.4 }}>Black-owned businesses in America</div>
+            <div style={{ fontSize: "2.4vw", color: "rgba(255,255,255,0.7)", lineHeight: 1.4 }}>minority-owned businesses in America</div>
           </div>
 
           <div style={{ width: "1px", height: "45vh", background: "linear-gradient(180deg, transparent, rgba(212,175,55,0.4), transparent)", flexShrink: 0 }} />

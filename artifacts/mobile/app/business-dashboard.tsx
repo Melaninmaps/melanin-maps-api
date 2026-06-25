@@ -514,7 +514,7 @@ export default function BusinessDashboardScreen() {
           </View>
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No Business Listed Yet</Text>
           <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-            List your Black-owned business to access your dashboard, manage reviews, and connect with customers.
+            List your minority-owned business to access your dashboard, manage reviews, and connect with customers.
           </Text>
           <TouchableOpacity
             style={[styles.listBtn, { backgroundColor: colors.primary }]}
@@ -1250,7 +1250,7 @@ export default function BusinessDashboardScreen() {
                 </View>
                 <Text style={[styles.paywallTitle, { color: colors.foreground }]}>Verification Required</Text>
                 <Text style={[styles.paywallBody, { color: colors.mutedForeground }]}>
-                  Only verified Black-owned businesses can sell directly on Mapping With Melanin. Complete your verification to unlock in-app selling.
+                  Only verified minority-owned businesses can sell directly on Mapping With Melanin. Complete your verification to unlock in-app selling.
                 </Text>
                 <TouchableOpacity
                   style={[styles.paywallBtn, { backgroundColor: "#C9922B" }]}
@@ -1481,7 +1481,7 @@ export default function BusinessDashboardScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: colors.foreground, marginBottom: 2 }}>Phase 1 — Verified Sellers Only</Text>
                       <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, lineHeight: 17 }}>
-                        Products, services, and event tickets from MWM-verified Black-owned businesses. You're here.
+                        Products, services, and event tickets from MWM-verified minority-owned businesses. You're here.
                       </Text>
                     </View>
                   </View>

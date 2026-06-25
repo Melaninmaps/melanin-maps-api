@@ -95,7 +95,7 @@ function sellerAgreementHtml(businessName: string, ownerName: string): string {
 <p>Mapping With Melanin™ ("MWM") is a community discovery and commerce platform. By signing, you ("Seller") agree to list and sell through the MWM marketplace under these terms.</p>
 
 <h4>2. Eligibility</h4>
-<p>Sellers must be verified Black-owned businesses. Misrepresentation of ownership is grounds for immediate removal and forfeiture of pending payouts.</p>
+<p>Sellers must be verified minority-owned businesses. Misrepresentation of ownership is grounds for immediate removal and forfeiture of pending payouts.</p>
 
 <h4>3. Marketplace Fees</h4>
 <p>Platform fees are deducted automatically per transaction by seller tier:<br>
@@ -180,7 +180,7 @@ function verificationCertHtml(businessName: string, ownerName: string): string {
 <p>I, ${ownerName}, certify under penalty of removal from Mapping With Melanin™ that:</p>
 <ol>
 <li>I am the owner or authorized representative of <strong>${businessName}</strong>.</li>
-<li>The business is 51% or more Black-owned, or qualifies under another minority ownership category as represented in my verification submission.</li>
+<li>The business is 51% or more minority-owned, or qualifies under another minority ownership category as represented in my verification submission.</li>
 <li>All information submitted — including business name, address, ownership details, EIN, and supporting documentation — is <strong>true, accurate, and complete</strong>.</li>
 <li>All documents provided are genuine and have not been altered or fabricated.</li>
 <li>I understand that submitting false information will result in immediate removal from the platform and may be subject to legal action.</li>

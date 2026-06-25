@@ -23,13 +23,13 @@ const WOULD_USE_AGAIN = [
 ];
 const WHAT_WORKED = [
   "Great restaurant picks", "Good safety scores", "Realistic timing",
-  "Matched my budget", "Black-owned focus", "Good neighborhood variety",
+  "Matched my budget", "minority-owned focus", "Good neighborhood variety",
   "Accurate descriptions", "Easy to follow", "Discovered new places", "Felt culturally relevant",
 ];
 const WHAT_TO_IMPROVE = [
   "More diverse categories", "Better safety context", "More budget options",
   "Longer itineraries", "Better time estimates", "More local gems",
-  "Clearer directions", "More nightlife options", "More family-friendly options", "Better Black-owned coverage",
+  "Clearer directions", "More nightlife options", "More family-friendly options", "Better minority-owned coverage",
 ];
 
 const TOTAL_STEPS = 4;
