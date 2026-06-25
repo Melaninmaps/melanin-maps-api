@@ -57,6 +57,9 @@ export function useReviews(businessId: string) {
       businessName?: string,
       videoUrl?: string,
       nonMinorityOwned?: boolean,
+      communitySupport?: number,
+      website?: string,
+      location?: string,
     ): Promise<number | null> => {
       const token = await getToken();
       const apiBase = getApiBase();
@@ -78,6 +81,9 @@ export function useReviews(businessId: string) {
             businessName: businessName || null,
             videoUrl: videoUrl || null,
             nonMinorityOwned: nonMinorityOwned ?? false,
+            communitySupport: communitySupport ?? null,
+            website: website || null,
+            location: location || null,
           }),
         });
         if (res.ok) {

@@ -37,7 +37,7 @@ interface Props {
   businessName: string;
   businessId?: string;
   onClose: () => void;
-  onSubmit: (rating: number, text: string, wouldReturn: boolean, socialHandle?: string, socialPlatform?: string, videoUrl?: string, nonMinorityOwned?: boolean) => void;
+  onSubmit: (rating: number, text: string, wouldReturn: boolean, socialHandle?: string, socialPlatform?: string, videoUrl?: string, nonMinorityOwned?: boolean, communitySupport?: number, website?: string, location?: string) => void;
 }
 
 export function WriteReviewModal({ visible, businessName, businessId, onClose, onSubmit }: Props) {
@@ -48,6 +48,9 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
   const [socialHandle, setSocialHandle] = useState("");
   const [socialPlatform, setSocialPlatform] = useState<SocialPlatform | null>(null);
   const [videoLink, setVideoLink] = useState("");
+  const [website, setWebsite] = useState("");
+  const [location, setLocation] = useState("");
+  const [communitySupport, setCommunitySupport] = useState(0);
   const [nonMinorityOwned, setNonMinorityOwned] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [inviteSent, setInviteSent] = useState(false);
@@ -59,6 +62,9 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
     setSocialHandle("");
     setSocialPlatform(null);
     setVideoLink("");
+    setWebsite("");
+    setLocation("");
+    setCommunitySupport(0);
     setNonMinorityOwned(false);
     setSubmitted(false);
     setInviteSent(false);
@@ -77,7 +83,7 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
     const cleanVideoUrl = videoLink.trim() && isValidVideoUrl(videoLink) ? videoLink.trim() : undefined;
     setInviteSent(hasInvite);
     setSubmitted(true);
-    onSubmit(rating, text, wouldReturn, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl, nonMinorityOwned);
+    onSubmit(rating, text, wouldReturn, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl, nonMinorityOwned, communitySupport > 0 && !nonMinorityOwned ? communitySupport : undefined, website.trim() || undefined, location.trim() || undefined);
     setTimeout(() => {
       reset();
       onClose();
@@ -189,6 +195,70 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
                 numberOfLines={4}
                 value={text}
                 onChangeText={setText}
+              />
+
+              {!nonMinorityOwned && (
+                <>
+                  <Text style={[styles.label, { color: colors.foreground }]}>
+                    You <Text style={{ color: colors.primary }}>NEED</Text> to support!{" "}
+                    <Text style={{ color: colors.mutedForeground }}>(optional)</Text>
+                  </Text>
+                  <Text style={[styles.supportSub, { color: colors.mutedForeground }]}>
+                    How strongly would you recommend the community show up for this business?
+                  </Text>
+                  <View style={styles.stars}>
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <TouchableOpacity
+                        key={s}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setCommunitySupport(communitySupport === s ? 0 : s);
+                        }}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Feather
+                          name="star"
+                          size={34}
+                          color={s <= communitySupport ? colors.primary : colors.border}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  {communitySupport > 0 && (
+                    <Text style={[styles.supportHint, { color: colors.primary }]}>
+                      {communitySupport === 1 && "Worth checking out"}
+                      {communitySupport === 2 && "Solid spot — spread the word"}
+                      {communitySupport === 3 && "Strong community pick!"}
+                      {communitySupport === 4 && "A must-visit — go now!"}
+                      {communitySupport === 5 && "🔥 Drop everything and support this business!"}
+                    </Text>
+                  )}
+                </>
+              )}
+
+              <Text style={[styles.label, { color: colors.foreground }]}>
+                Website <Text style={{ color: colors.mutedForeground }}>(optional)</Text>
+              </Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                placeholder="https://theirbusiness.com"
+                placeholderTextColor={colors.mutedForeground}
+                value={website}
+                onChangeText={setWebsite}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+              />
+
+              <Text style={[styles.label, { color: colors.foreground }]}>
+                Address / Location <Text style={{ color: colors.mutedForeground }}>(optional)</Text>
+              </Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                placeholder="e.g. 123 Main St, Atlanta, GA"
+                placeholderTextColor={colors.mutedForeground}
+                value={location}
+                onChangeText={setLocation}
               />
 
               {/* Video link section */}
@@ -465,6 +535,19 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: "Inter_400Regular",
     fontSize: 14,
+  },
+  supportSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    marginTop: -8,
+    marginBottom: 10,
+  },
+  supportHint: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    marginTop: 6,
+    marginBottom: 12,
+    textAlign: "center",
   },
   nmoRow: {
     flexDirection: "row",

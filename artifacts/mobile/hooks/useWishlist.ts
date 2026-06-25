@@ -61,6 +61,8 @@ export function useWishlist() {
     mustTry?: string | null;
     sessionId?: string | null;
     nonMinorityOwned?: boolean | null;
+    website?: string | null;
+    location?: string | null;
   }): Promise<WishlistItem | null> => {
     const token = await getToken();
     const apiBase = getApiBase();

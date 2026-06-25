@@ -157,9 +157,12 @@ export default function BusinessDetailScreen() {
     socialPlatform?: string,
     videoUrl?: string,
     nonMinorityOwned?: boolean,
+    communitySupport?: number,
+    website?: string,
+    location?: string,
   ) => {
     try {
-      const pts = await submitReview(rating, text, wouldReturn, socialHandle, socialPlatform, business.name, videoUrl, nonMinorityOwned);
+      const pts = await submitReview(rating, text, wouldReturn, socialHandle, socialPlatform, business.name, videoUrl, nonMinorityOwned, communitySupport, website, location);
       if (pts != null) {
         addLocal(pts);
         showPointsToast(`+${pts} pts — thanks for your review!`);

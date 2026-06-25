@@ -270,21 +270,23 @@ function AddBusinessModal({
 }: {
   visible: boolean;
   onClose: () => void;
-  onSave: (name: string, city: string, country: string, nonMinorityOwned: boolean) => void;
+  onSave: (name: string, city: string, country: string, nonMinorityOwned: boolean, website: string, location: string) => void;
   colors: ReturnType<typeof useColors>;
 }) {
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("");
+  const [website, setWebsite] = useState("");
+  const [location, setLocation] = useState("");
   const [nonMinorityOwned, setNonMinorityOwned] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const reset = () => { setName(""); setCity(""); setCountry(""); setNonMinorityOwned(false); setSaving(false); };
+  const reset = () => { setName(""); setCity(""); setCountry(""); setWebsite(""); setLocation(""); setNonMinorityOwned(false); setSaving(false); };
   const handleClose = () => { reset(); onClose(); };
   const handleSave = async () => {
     if (!name.trim()) return;
     setSaving(true);
-    await onSave(name.trim(), city.trim(), country.trim(), nonMinorityOwned);
+    await onSave(name.trim(), city.trim(), country.trim(), nonMinorityOwned, website.trim(), location.trim());
     reset();
     onClose();
   };
@@ -333,6 +335,31 @@ function AddBusinessModal({
               placeholderTextColor={colors.mutedForeground}
               value={country}
               onChangeText={setCountry}
+            />
+
+            <Text style={[modalStyles.label, { color: colors.foreground }]}>
+              Website <Text style={[modalStyles.optional, { color: colors.mutedForeground }]}>(optional)</Text>
+            </Text>
+            <TextInput
+              style={[modalStyles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              placeholder="e.g. https://mybusiness.com"
+              placeholderTextColor={colors.mutedForeground}
+              value={website}
+              onChangeText={setWebsite}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+            />
+
+            <Text style={[modalStyles.label, { color: colors.foreground }]}>
+              Address / Location <Text style={[modalStyles.optional, { color: colors.mutedForeground }]}>(optional)</Text>
+            </Text>
+            <TextInput
+              style={[modalStyles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              placeholder="e.g. 123 Main St, Atlanta, GA"
+              placeholderTextColor={colors.mutedForeground}
+              value={location}
+              onChangeText={setLocation}
             />
 
             <TouchableOpacity
@@ -665,13 +692,15 @@ export default function WishlistScreen() {
     });
   }, [addItem]);
 
-  const handleAddBusiness = useCallback(async (name: string, city: string, country: string, nonMinorityOwned: boolean) => {
+  const handleAddBusiness = useCallback(async (name: string, city: string, country: string, nonMinorityOwned: boolean, website: string, location: string) => {
     await addItem({
       businessName: name,
       city: city || null,
       country: country || null,
       destinationType: "business",
       nonMinorityOwned,
+      website: website || null,
+      location: location || null,
     });
   }, [addItem]);
 

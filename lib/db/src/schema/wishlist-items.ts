@@ -17,6 +17,8 @@ export const wishlistItemsTable = pgTable("wishlist_items", {
   sessionId: varchar("session_id"),
   notes: text("notes"),
   nonMinorityOwned: boolean("non_minority_owned").default(false),
+  website: varchar("website", { length: 500 }),
+  location: varchar("location", { length: 255 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

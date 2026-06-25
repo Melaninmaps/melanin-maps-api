@@ -21,7 +21,7 @@ router.get("/wishlist", async (req: Request, res: Response) => {
 
 router.post("/wishlist", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
-  const { businessName, category, city, neighborhood, country, destinationType, description, mustTry, sessionId, notes, nonMinorityOwned } = req.body as Record<string, unknown>;
+  const { businessName, category, city, neighborhood, country, destinationType, description, mustTry, sessionId, notes, nonMinorityOwned, website, location } = req.body as Record<string, unknown>;
   if (!businessName || typeof businessName !== "string") {
     res.status(400).json({ error: "businessName is required" }); return;
   }
@@ -39,6 +39,8 @@ router.post("/wishlist", async (req: Request, res: Response) => {
       sessionId: typeof sessionId === "string" ? sessionId : null,
       notes: typeof notes === "string" ? notes : null,
       nonMinorityOwned: nonMinorityOwned === true,
+      website: typeof website === "string" && website.trim() ? website.trim() : null,
+      location: typeof location === "string" && location.trim() ? location.trim() : null,
     }).returning();
     res.status(201).json({ item });
   } catch (err) {
