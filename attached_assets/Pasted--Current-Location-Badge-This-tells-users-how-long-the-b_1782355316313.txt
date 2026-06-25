@@ -1,0 +1,59 @@
+📍 Current Location Badge
+This tells users how long the business has been operating at its current address.
+🆕 New Location — Less than 6 months
+📍 Established — 6 months–2 years
+🏠 Neighborhood Staple — 2–5 years
+🏆 Community Landmark — 5–10 years
+👑 Legacy Location — 10+ years
+🌳 Generational Location — 25+ years
+🏢 Time in Business Badge
+This reflects the age of the business itself, regardless of relocations.
+🌱 New Business — Under 1 year
+🚀 Growing Business — 1–3 years
+⭐ Established Business — 3–5 years
+💼 Trusted Business — 5–10 years
+🏅 Community Pillar — 10–20 years
+👑 Legacy Business — 20–50 years
+🖤 Generational Legacy — 50+ years
+⭐ I also recommend adding a few optional trust badges.
+Verified
+✅ Verified Business
+🏛 Verified Black-Owned
+👩🏾‍💼 Verified Woman-Owned
+👨🏾‍👩🏾‍👧🏾 Family-Owned
+Community
+❤️ Community Favorite
+🌟 Highly Recommended
+🤝 Community Partner
+🎉 Event Host
+Customer Experience
+😊 Exceptional Service
+👨‍👩‍👧 Family Friendly
+♿ Accessibility Friendly
+🌈 Inclusive Environment
+🐶 Pet Friendly
+🌱 Eco Conscious
+Safety & Trust
+These align well with your platform's mission without implying guarantees.
+🛡️ Community Trusted
+🧭 Solo Traveler Friendly
+🌙 Late-Night Friendly
+👶 Kid Friendly
+🚗 Easy Parking
+🚇 Transit Accessible
+🌟 A feature unique to Mapping with Melanin™
+Since your platform is centered on community and safety, you could introduce earned trust badges based on community feedback rather than business self-selection:
+🛡️ Community Trusted – Consistently positive safety feedback.
+💚 Welcoming Environment – High scores for friendliness and inclusivity.
+🤝 Responsive Owner – Business regularly responds to feedback and resolves concerns.
+⭐ Consistently Recommended – High percentage of users say they'd recommend the business.
+🌍 Traveler Approved – Highly rated by visitors from outside the area.
+🏡 Local Favorite – Frequently visited and highly rated by nearby community members.
+These badges become meaningful because they're earned through community engagement, not simply selected by the business.
+I also recommend displaying a small "About this badge" tooltip so users can tap any badge and see exactly how it was earned. That transparency will help build trust in the platform and make the badges more valuable to both users and businesses.
+
+
+
+
+
+

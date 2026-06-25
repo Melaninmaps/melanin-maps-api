@@ -204,4 +204,37 @@ router.patch("/businesses/:id/status", async (req: Request, res: Response) => {
   }
 });
 
+router.patch("/businesses/:id/badges", async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+    if (!isAdmin(req)) { res.status(403).json({ error: "Admin access required" }); return; }
+
+    const id = String(req.params.id);
+    const { currentLocationSince, businessFoundedDate, trustBadges } = req.body as {
+      currentLocationSince?: string | null;
+      businessFoundedDate?: string | null;
+      trustBadges?: string[];
+    };
+
+    const [existing] = await db.select().from(businessesTable).where(eq(businessesTable.id, id));
+    if (!existing) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const [business] = await db
+      .update(businessesTable)
+      .set({
+        currentLocationSince: currentLocationSince ?? null,
+        businessFoundedDate: businessFoundedDate ?? null,
+        trustBadges: Array.isArray(trustBadges) ? trustBadges : existing.trustBadges,
+        updatedAt: new Date(),
+      })
+      .where(eq(businessesTable.id, id))
+      .returning();
+
+    res.json({ business });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update business badges");
+    res.status(500).json({ error: "Failed to update badges" });
+  }
+});
+
 export default router;

@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlackOwnedBadge } from "@/components/BlackOwnedBadge";
+import { BusinessTimeBadges } from "@/components/BusinessTimeBadges";
 import { OwnershipBadges } from "@/components/OwnershipBadges";
 import { BusinessMapView } from "@/components/BusinessMapView";
 import { ConfidenceScoreBadge } from "@/components/ConfidenceScoreBadge";
@@ -241,6 +242,16 @@ export default function BusinessDetailScreen() {
                   * Ownership designations indicate the business is owned and operated 51% or more by the identified group. Businesses may self-identify or submit documentation for VERIFIED status.
                 </Text>
               )}
+              <BusinessTimeBadges
+                currentLocationSince={(business as any).currentLocationSince}
+                businessFoundedDate={(business as any).businessFoundedDate}
+                trustBadges={(business as any).trustBadges}
+                safetyRating={business.safetyRating}
+                wouldReturnAlone={business.wouldReturnAlone}
+                recommendationRate={business.recommendationRate}
+                rating={business.rating}
+                reviewCount={business.reviewCount}
+              />
             </View>
             <ConfidenceScoreBadge score={business.confidenceScore} size="lg" showLabel />
           </View>

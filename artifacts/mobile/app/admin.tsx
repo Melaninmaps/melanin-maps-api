@@ -5,14 +5,17 @@ import React, { useCallback, useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
 import {
   ActivityIndicator,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { OPTIONAL_TRUST_BADGES } from "@/utils/businessBadges";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useReports } from "@/hooks/useReports";
@@ -99,11 +102,169 @@ function OverviewTab() {
   );
 }
 
+type AdminBiz = {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  status?: string;
+  confidenceScore?: number;
+  blackOwned?: boolean;
+  verified?: boolean;
+  currentLocationSince?: string | null;
+  businessFoundedDate?: string | null;
+  trustBadges?: string[];
+};
+
+function BadgeEditModal({ biz, onClose, onSaved }: { biz: AdminBiz; onClose: () => void; onSaved: (updated: AdminBiz) => void }) {
+  const colors = useColors();
+  const [locationSince, setLocationSince] = useState(biz.currentLocationSince ?? "");
+  const [foundedDate, setFoundedDate] = useState(biz.businessFoundedDate ?? "");
+  const [selectedBadges, setSelectedBadges] = useState<string[]>(biz.trustBadges ?? []);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const badgeKeys = Object.keys(OPTIONAL_TRUST_BADGES);
+
+  const toggleBadge = (id: string) => {
+    setSelectedBadges(prev => prev.includes(id) ? prev.filter(b => b !== id) : [...prev, id]);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/businesses/${biz.id}/badges`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          currentLocationSince: locationSince.trim() || null,
+          businessFoundedDate: foundedDate.trim() || null,
+          trustBadges: selectedBadges,
+        }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      onSaved({ ...biz, currentLocationSince: locationSince.trim() || null, businessFoundedDate: foundedDate.trim() || null, trustBadges: selectedBadges });
+      onClose();
+    } catch {
+      setError("Failed to save. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" }}>
+        <View style={[badgeModalStyles.sheet, { backgroundColor: colors.card }]}>
+          <View style={[badgeModalStyles.handle, { backgroundColor: colors.border }]} />
+          <Text style={[badgeModalStyles.title, { color: colors.foreground }]}>Edit Badges</Text>
+          <Text style={[badgeModalStyles.bizName, { color: colors.mutedForeground }]}>{biz.name}</Text>
+
+          <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 480 }}>
+            <Text style={[badgeModalStyles.sectionHeader, { color: colors.foreground }]}>📍 Location at current address since</Text>
+            <Text style={[badgeModalStyles.hint, { color: colors.mutedForeground }]}>Format: YYYY-MM (e.g. 2019-06)</Text>
+            <TextInput
+              style={[badgeModalStyles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+              value={locationSince}
+              onChangeText={setLocationSince}
+              placeholder="e.g. 2019-06"
+              placeholderTextColor={colors.mutedForeground}
+              maxLength={7}
+            />
+
+            <Text style={[badgeModalStyles.sectionHeader, { color: colors.foreground }]}>🗓 Business founded date</Text>
+            <Text style={[badgeModalStyles.hint, { color: colors.mutedForeground }]}>Format: YYYY-MM (e.g. 2015-01)</Text>
+            <TextInput
+              style={[badgeModalStyles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+              value={foundedDate}
+              onChangeText={setFoundedDate}
+              placeholder="e.g. 2015-01"
+              placeholderTextColor={colors.mutedForeground}
+              maxLength={7}
+            />
+
+            <Text style={[badgeModalStyles.sectionHeader, { color: colors.foreground }]}>🏅 Optional Trust Badges</Text>
+            {badgeKeys.map((key) => {
+              const b = OPTIONAL_TRUST_BADGES[key]!;
+              const on = selectedBadges.includes(key);
+              return (
+                <TouchableOpacity
+                  key={key}
+                  style={[badgeModalStyles.badgeRow, { borderColor: on ? b.color + "60" : colors.border, backgroundColor: on ? b.color + "10" : colors.background }]}
+                  onPress={() => toggleBadge(key)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ fontSize: 18, marginRight: 10 }}>{b.emoji}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[badgeModalStyles.badgeLabel, { color: colors.foreground }]}>{b.label}</Text>
+                    <Text style={[badgeModalStyles.badgeDesc, { color: colors.mutedForeground }]}>{b.description}</Text>
+                  </View>
+                  <Switch
+                    value={on}
+                    onValueChange={() => toggleBadge(key)}
+                    trackColor={{ true: b.color, false: colors.border }}
+                    thumbColor="#FFFFFF"
+                    style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+                  />
+                </TouchableOpacity>
+              );
+            })}
+
+            {selectedBadges.length > 0 && (
+              <View style={[badgeModalStyles.selectedSummary, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}>
+                <Text style={[badgeModalStyles.selectedCount, { color: colors.primary }]}>{selectedBadges.length} badge{selectedBadges.length !== 1 ? "s" : ""} selected</Text>
+              </View>
+            )}
+          </ScrollView>
+
+          {error && <Text style={badgeModalStyles.errorText}>{error}</Text>}
+
+          <View style={badgeModalStyles.actions}>
+            <TouchableOpacity style={[badgeModalStyles.cancelBtn, { borderColor: colors.border }]} onPress={onClose}>
+              <Text style={[badgeModalStyles.cancelText, { color: colors.mutedForeground }]}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[badgeModalStyles.saveBtn, { backgroundColor: colors.primary, opacity: saving ? 0.6 : 1 }]}
+              onPress={save}
+              disabled={saving}
+            >
+              <Text style={badgeModalStyles.saveText}>{saving ? "Saving…" : "Save Badges"}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const badgeModalStyles = StyleSheet.create({
+  sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 36 },
+  handle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
+  title: { fontFamily: "PlayfairDisplay_700Bold", fontSize: 20, marginBottom: 2 },
+  bizName: { fontFamily: "Inter_400Regular", fontSize: 13, marginBottom: 16 },
+  sectionHeader: { fontFamily: "Inter_700Bold", fontSize: 13, marginTop: 16, marginBottom: 2 },
+  hint: { fontFamily: "Inter_400Regular", fontSize: 11, marginBottom: 6 },
+  input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 14, marginBottom: 8 },
+  badgeRow: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 12, padding: 10, marginBottom: 8 },
+  badgeLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  badgeDesc: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15 },
+  selectedSummary: { borderWidth: 1, borderRadius: 12, padding: 10, marginTop: 4, marginBottom: 8, alignItems: "center" },
+  selectedCount: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  errorText: { color: "#DC2626", fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 8 },
+  actions: { flexDirection: "row", gap: 10, marginTop: 16 },
+  cancelBtn: { flex: 1, borderWidth: 1, borderRadius: 12, paddingVertical: 13, alignItems: "center" },
+  cancelText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  saveBtn: { flex: 2, borderRadius: 12, paddingVertical: 13, alignItems: "center" },
+  saveText: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#FFFFFF" },
+});
+
 function BusinessesTab() {
   const colors = useColors();
   const [statusFilter, setStatusFilter] = useState("All");
-  const [bizList, setBizList] = useState<Array<{ id: string; name: string; city: string; state: string; status?: string; confidenceScore?: number; blackOwned?: boolean; verified?: boolean }>>([]);
+  const [bizList, setBizList] = useState<AdminBiz[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingBiz, setEditingBiz] = useState<AdminBiz | null>(null);
 
   React.useEffect(() => {
     const load = async () => {
@@ -113,7 +274,7 @@ function BusinessesTab() {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (res.ok) {
-          const data = await res.json() as { businesses?: typeof bizList };
+          const data = await res.json() as { businesses?: AdminBiz[] };
           setBizList(data.businesses ?? []);
         }
       } catch {}
@@ -137,6 +298,7 @@ function BusinessesTab() {
     : bizList;
 
   return (
+    <>
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: "row", gap: 8 }}>
@@ -159,7 +321,12 @@ function BusinessesTab() {
           <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>No businesses found</Text>
         </View>
       ) : filtered.map((b, i) => (
-        <View key={b.id ?? i} style={[adminStyles.bizRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <TouchableOpacity
+          key={b.id ?? i}
+          style={[adminStyles.bizRow, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setEditingBiz(b); }}
+          activeOpacity={0.8}
+        >
           <View style={[adminStyles.bizAvatar, { backgroundColor: colors.primary + "20" }]}>
             <Feather name="briefcase" size={16} color={colors.primary} />
           </View>
@@ -169,6 +336,9 @@ function BusinessesTab() {
               {(b.blackOwned) && <Text style={{ fontSize: 10 }}>✊🏾</Text>}
             </View>
             <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{b.city}{b.state ? `, ${b.state}` : ""}</Text>
+            {(b.trustBadges?.length ?? 0) > 0 && (
+              <Text style={[adminStyles.bizCity, { color: colors.primary, fontSize: 10 }]}>🏅 {b.trustBadges!.length} badge{b.trustBadges!.length !== 1 ? "s" : ""}</Text>
+            )}
           </View>
           <View style={{ alignItems: "flex-end", gap: 5 }}>
             <View style={[adminStyles.statusBadge, { backgroundColor: (b.status === "active" || b.verified) ? "#2D7A4F18" : "#C9922B18" }]}>
@@ -179,10 +349,22 @@ function BusinessesTab() {
             {b.confidenceScore != null && (
               <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>Score: {b.confidenceScore}</Text>
             )}
+            <Feather name="award" size={13} color={colors.primary} />
           </View>
-        </View>
+        </TouchableOpacity>
       ))}
     </ScrollView>
+    {editingBiz && (
+      <BadgeEditModal
+        biz={editingBiz}
+        onClose={() => setEditingBiz(null)}
+        onSaved={(updated) => {
+          setBizList(prev => prev.map(b => b.id === updated.id ? updated : b));
+          setEditingBiz(null);
+        }}
+      />
+    )}
+    </>
   );
 }
 
