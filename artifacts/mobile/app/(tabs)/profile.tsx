@@ -533,6 +533,34 @@ export default function ProfileScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* Premium trial countdown — shown while trial is active and user has no paid subscription */}
+      {isAuthenticated && !!(user as any)?.trialEndsAt && (() => {
+        const trialEnd = new Date((user as any).trialEndsAt as string);
+        const msLeft = trialEnd.getTime() - Date.now();
+        const daysLeft = Math.ceil(msLeft / (24 * 60 * 60 * 1000));
+        if (daysLeft <= 0) return null;
+        return (
+          <TouchableOpacity
+            style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 14, backgroundColor: colors.primary + "12", borderWidth: 1, borderColor: colors.primary + "30", padding: 14, flexDirection: "row", alignItems: "center", gap: 12 }}
+            onPress={() => router.push("/membership")}
+            activeOpacity={0.85}
+          >
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary + "20", alignItems: "center", justifyContent: "center" }}>
+              <Feather name="zap" size={18} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: colors.primary, marginBottom: 1 }}>
+                Premium Trial — {daysLeft} day{daysLeft !== 1 ? "s" : ""} left
+              </Text>
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, lineHeight: 15 }}>
+                You're exploring all Premium features free. Tap to keep access after your trial.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        );
+      })()}
+
       {/* Messages shortcut */}
       <TouchableOpacity
         style={[styles.messagesBanner, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.foreground }]}

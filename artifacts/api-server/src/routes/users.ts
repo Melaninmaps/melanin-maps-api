@@ -11,7 +11,7 @@ router.get("/users/me", async (req: Request, res: Response) => {
   }
 
   try {
-    const [user] = await db
+    let [user] = await db
       .select()
       .from(usersTable)
       .where(eq(usersTable.id, req.user.id));
@@ -19,6 +19,13 @@ router.get("/users/me", async (req: Request, res: Response) => {
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
+    }
+
+    // Auto-start 90-day community premium trial if not yet set
+    if (!user.trialEndsAt) {
+      const trialEndsAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+      await db.update(usersTable).set({ trialEndsAt }).where(eq(usersTable.id, req.user.id));
+      user = { ...user, trialEndsAt };
     }
 
     const { stripeCustomerId, stripeSubscriptionId, pushToken, ...safeUser } = user;

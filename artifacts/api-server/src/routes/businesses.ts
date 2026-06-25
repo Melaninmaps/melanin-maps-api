@@ -398,14 +398,16 @@ router.patch("/admin/businesses/:id/founding-status", async (req: Request, res: 
   }
 });
 
-// Transaction-value sliding scale (matches connect.ts FEE_SCHEDULE)
+// Flat-tier fee schedule (matches connect.ts TIER_FEES)
 const FEE_SCHEDULE_DISPLAY = [
-  { label: "Under $25",  rate: 4 },
-  { label: "$25 – $250", rate: 7 },
-  { label: "Over $250",  rate: 5 },
+  { tier: "free",    label: "Free",    rate: 6, note: "standard listing" },
+  { tier: "growth",  label: "Growth",  rate: 5, note: "growing businesses" },
+  { tier: "premium", label: "Premium", rate: 3, note: "established sellers" },
 ];
 const FOUNDING_RATE_PERCENT = 3;
-const FOUNDING_WINDOW_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
+const FOUNDING_WINDOW_MS = 3 * 365.25 * 24 * 60 * 60 * 1000; // 3 years
+const BUSINESS_TRIAL_DAYS = 180; // 6-month business premium trial
+const BUSINESS_TRIAL_MS = BUSINESS_TRIAL_DAYS * 24 * 60 * 60 * 1000;
 const TIER_LABELS: Record<string, string> = { free: "Free", growth: "Growth", premium: "Premium" };
 const VALID_TIERS = ["free", "growth", "premium"];
 
@@ -420,32 +422,52 @@ router.get("/businesses/:id/marketplace-tier", async (req: Request, res: Respons
         marketplaceTier: businessesTable.marketplaceTier,
         foundingBusiness: businessesTable.foundingBusiness,
         foundingGrantedAt: businessesTable.foundingGrantedAt,
+        businessTrialStartedAt: businessesTable.businessTrialStartedAt,
       })
       .from(businessesTable).where(eq(businessesTable.id, id)).limit(1);
     if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
     if (biz.submittedById !== req.user.id && !isAdmin(req)) { res.status(403).json({ error: "Access denied" }); return; }
 
+    // Auto-start 180-day business premium trial if not yet started
+    let trialStartedAt = biz.businessTrialStartedAt;
+    if (!trialStartedAt) {
+      trialStartedAt = new Date();
+      await db.update(businessesTable)
+        .set({ businessTrialStartedAt: trialStartedAt, updatedAt: new Date() })
+        .where(eq(businessesTable.id, id));
+    }
+    const trialEndsAt = new Date(trialStartedAt.getTime() + BUSINESS_TRIAL_MS);
+    const trialActive = Date.now() < trialEndsAt.getTime();
+    const trialDaysLeft = trialActive ? Math.ceil((trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)) : 0;
+
     const tier = biz.marketplaceTier ?? "free";
 
-    // Check founding status
+    // Check founding status (3-year rate lock)
     let foundingActive = false;
     let foundingExpiresAt: Date | null = null;
+    let foundingPremiumUntil: Date | null = null;
     if (biz.foundingBusiness && biz.foundingGrantedAt) {
       const elapsed = Date.now() - new Date(biz.foundingGrantedAt).getTime();
       if (elapsed < FOUNDING_WINDOW_MS) {
         foundingActive = true;
         foundingExpiresAt = new Date(new Date(biz.foundingGrantedAt).getTime() + FOUNDING_WINDOW_MS);
       }
+      // Founding businesses get 6 months of premium features from grant date
+      const FOUNDING_PREMIUM_MS = 180 * 24 * 60 * 60 * 1000;
+      foundingPremiumUntil = new Date(new Date(biz.foundingGrantedAt).getTime() + FOUNDING_PREMIUM_MS);
     }
 
     res.json({
       tier,
       label: TIER_LABELS[tier] ?? "Free",
-      // Founding businesses see a flat rate; everyone else sees the schedule
       feePercent: foundingActive ? FOUNDING_RATE_PERCENT : null,
       foundingActive,
       foundingExpiresAt: foundingExpiresAt?.toISOString() ?? null,
+      foundingPremiumUntil: foundingPremiumUntil?.toISOString() ?? null,
       feeSchedule: FEE_SCHEDULE_DISPLAY,
+      trialActive,
+      trialEndsAt: trialEndsAt.toISOString(),
+      trialDaysLeft,
     });
   } catch (err) {
     req.log.error({ err }, "Failed to get marketplace tier");

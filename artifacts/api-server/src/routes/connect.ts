@@ -6,46 +6,37 @@ import { getUncachableStripeClient } from "../stripeClient";
 const router: IRouter = Router();
 
 /**
- * Transaction-value sliding scale (all non-founding businesses):
- *   Under $25     → 4%
- *   $25 – $250    → 7%
- *   Over $250     → 5%
+ * Flat-tier marketplace fees:
+ *   Free tier     → 6%
+ *   Growth tier   → 5%
+ *   Premium tier  → 3%
  *
- * Founding businesses (first 500) pay a flat 3% for their first 2 years,
- * then fall into the standard sliding scale above.
+ * Founding businesses (first 500) pay a flat 3% for their first 3 years,
+ * then fall into the standard tier fee for their marketplace tier.
  *
  * totalCents        — full transaction total (unit price × quantity) in cents
+ * tier              — business marketplace tier (free | growth | premium)
  * foundingBusiness  — whether the business has founding status
  * foundingGrantedAt — timestamp when founding status was granted
  * returns the fee amount in cents, rounded to the nearest cent
  */
-export const FEE_SCHEDULE: Array<{ maxCents: number; rate: number; label: string }> = [
-  { maxCents: 2499,         rate: 0.04, label: "Under $25" },
-  { maxCents: 25000,        rate: 0.07, label: "$25 – $250" },
-  { maxCents: Infinity,     rate: 0.05, label: "Over $250" },
-];
-
+export const TIER_FEES: Record<string, number> = { free: 0.06, growth: 0.05, premium: 0.03 };
 export const FOUNDING_RATE = 0.03;
-export const FOUNDING_WINDOW_MS = 2 * 365.25 * 24 * 60 * 60 * 1000; // 2 years in ms
-
-function slidingRate(totalCents: number): number {
-  const bracket = FEE_SCHEDULE.find((b) => totalCents <= b.maxCents) ?? FEE_SCHEDULE[FEE_SCHEDULE.length - 1];
-  return bracket.rate;
-}
+export const FOUNDING_WINDOW_MS = 3 * 365.25 * 24 * 60 * 60 * 1000; // 3 years in ms
 
 function platformFee(
   totalCents: number,
+  tier: string,
   foundingBusiness?: boolean,
   foundingGrantedAt?: Date | null,
 ): number {
-  // Founding members get 3% flat for the first 2 years
   if (foundingBusiness && foundingGrantedAt) {
     const elapsed = Date.now() - new Date(foundingGrantedAt).getTime();
     if (elapsed < FOUNDING_WINDOW_MS) {
       return Math.round(totalCents * FOUNDING_RATE);
     }
   }
-  return Math.round(totalCents * slidingRate(totalCents));
+  return Math.round(totalCents * (TIER_FEES[tier] ?? TIER_FEES.free));
 }
 
 async function requireBusinessOwner(req: Request, res: Response, businessId: string): Promise<typeof businessesTable.$inferSelect | null> {
@@ -347,6 +338,7 @@ router.post("/connect/listings/:id/checkout", async (req: Request, res: Response
     const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(",")[0]}`;
     const applicationFeeAmount = platformFee(
       listing.priceInCents * quantity,
+      biz.marketplaceTier ?? "free",
       biz.foundingBusiness ?? false,
       biz.foundingGrantedAt,
     );

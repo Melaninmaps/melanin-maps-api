@@ -184,7 +184,7 @@ export default function BusinessDashboardScreen() {
   const [policyResult, setPolicyResult] = useState<"success" | "error" | null>(null);
   const [sellerAgreementAccepted, setSellerAgreementAccepted] = useState(false);
   const [showAgreementModal, setShowAgreementModal] = useState(false);
-  const [marketplaceTier, setMarketplaceTier] = useState<{ tier: string; label: string; feePercent: number } | null>(null);
+  const [marketplaceTier, setMarketplaceTier] = useState<Record<string, unknown> | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState<"paywall" | "error" | null>(null);
@@ -1003,11 +1003,11 @@ export default function BusinessDashboardScreen() {
                   </View>
                 </View>
                 {[
-                  { icon: "tag" as const, text: "3% marketplace rate for 2 years, then 4%" },
-                  { icon: "trending-up" as const, text: "Priority placement in search results" },
-                  { icon: "zap" as const, text: "Early access to new features" },
-                  { icon: "globe" as const, text: "Recognition on mappingwithmelanin.com" },
-                  { icon: "smartphone" as const, text: "Featured in the app's Founding Businesses section" },
+                  { icon: "zap" as const, text: "6 months of Premium features — AI tools, enhanced analytics, priority placement" },
+                  { icon: "tag" as const, text: "3% marketplace rate locked in for 3 years, then your standard tier rate" },
+                  { icon: "award" as const, text: "Founding Business badge on your profile and listing" },
+                  { icon: "trending-up" as const, text: "Priority consideration for new features and partnerships" },
+                  { icon: "globe" as const, text: "Recognition on mappingwithmelanin.com and early access to future tools" },
                 ].map((item) => (
                   <View key={item.text} style={{ flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 6 }}>
                     <Feather name={item.icon} size={13} color="#C9922B" style={{ marginTop: 2 }} />
@@ -1166,17 +1166,42 @@ export default function BusinessDashboardScreen() {
                     </View>
                   </View>
 
+                  {/* Business trial countdown */}
+                  {(() => {
+                    const trialActive = (marketplaceTier as any)?.trialActive ?? false;
+                    const trialDaysLeft = (marketplaceTier as any)?.trialDaysLeft ?? 0;
+                    if (!trialActive) return null;
+                    return (
+                      <View style={{ backgroundColor: "#2D7A4F18", borderRadius: 10, borderWidth: 1, borderColor: "#2D7A4F30", padding: 12, marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 10 }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: "#2D7A4F", marginBottom: 2 }}>
+                            PREMIUM TRIAL ACTIVE · {trialDaysLeft} DAYS LEFT
+                          </Text>
+                          <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, lineHeight: 16 }}>
+                            You're on a free 6-month Premium business trial. Upgrade before it ends to keep all features.
+                          </Text>
+                        </View>
+                        <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#2D7A4F20", alignItems: "center", justifyContent: "center" }}>
+                          <Feather name="zap" size={16} color="#2D7A4F" />
+                        </View>
+                      </View>
+                    );
+                  })()}
+
                   {/* Current fee rate banner */}
                   {(() => {
                     const foundingActive = (marketplaceTier as any)?.foundingActive ?? false;
                     const foundingExpiresAt = (marketplaceTier as any)?.foundingExpiresAt ?? null;
                     const expiryYear = foundingExpiresAt ? new Date(foundingExpiresAt).getFullYear() : null;
+                    const tier = (marketplaceTier as any)?.tier ?? "free";
+                    const TIER_FEE_DISPLAY: Record<string, string> = { free: "6%", growth: "5%", premium: "3%" };
+                    const tierFee = TIER_FEE_DISPLAY[tier as string] ?? "6%";
                     const bannerColor = foundingActive ? "#C9922B" : colors.primary;
                     return (
                       <View style={{ backgroundColor: bannerColor + "15", borderRadius: 10, borderWidth: 1, borderColor: bannerColor + "30", padding: 12, marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 10 }}>
                         <View style={{ flex: 1 }}>
                           <Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: bannerColor, marginBottom: 2 }}>
-                            {foundingActive ? "⭐ FOUNDING RATE — LOCKED IN" : "MARKETPLACE FEE SCHEDULE"}
+                            {foundingActive ? "⭐ FOUNDING RATE — LOCKED IN" : "YOUR MARKETPLACE FEE"}
                           </Text>
                           {foundingActive ? (
                             <>
@@ -1186,14 +1211,20 @@ export default function BusinessDashboardScreen() {
                               </View>
                               {expiryYear && (
                                 <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
-                                  Founding rate through {expiryYear}, then standard schedule.
+                                  Founding rate guaranteed through {expiryYear}.
                                 </Text>
                               )}
                             </>
                           ) : (
-                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, marginTop: 2, lineHeight: 18 }}>
-                              4% under $25 · 7% on $25–$250 · 5% over $250
-                            </Text>
+                            <>
+                              <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+                                <Text style={{ fontFamily: "Inter_700Bold", fontSize: 26, color: bannerColor }}>{tierFee}</Text>
+                                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground }}>flat — all transactions</Text>
+                              </View>
+                              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
+                                {tier === "free" ? "Upgrade to Growth (5%) or Premium (3%) to reduce your fee." : tier === "growth" ? "Upgrade to Premium to lower to 3%." : "Best available rate — Premium tier."}
+                              </Text>
+                            </>
                           )}
                         </View>
                         <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: bannerColor + "20", alignItems: "center", justifyContent: "center" }}>
@@ -1207,13 +1238,13 @@ export default function BusinessDashboardScreen() {
                   <View style={{ borderRadius: 10, borderWidth: 1, borderColor: colors.border, overflow: "hidden", marginBottom: 14 }}>
                     <View style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border }}>
                       <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                        Standard Rate Schedule
+                        Seller Tier Rate Schedule
                       </Text>
                     </View>
                     {[
-                      { label: "Under $25",  fee: "4%", note: "micro transactions",  color: "#2D7A4F" },
-                      { label: "$25 – $250", fee: "7%", note: "recommended standard", color: colors.primary },
-                      { label: "Over $250",  fee: "5%", note: "high-value sales",     color: "#C9922B" },
+                      { label: "Free Tier",    fee: "6%", note: "standard listing",     color: colors.mutedForeground },
+                      { label: "Growth Tier",  fee: "5%", note: "growing businesses",   color: colors.primary },
+                      { label: "Premium Tier", fee: "3%", note: "established sellers",  color: "#2D7A4F" },
                     ].map((row, idx) => (
                       <View key={row.label} style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: colors.border }}>
                         <View style={{ flex: 1 }}>
@@ -1227,7 +1258,7 @@ export default function BusinessDashboardScreen() {
                     <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 10, backgroundColor: "#C9922B08", borderTopWidth: 1, borderTopColor: colors.border }}>
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#C9922B" }}>⭐ Founding Members</Text>
-                        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground }}>flat rate, first 2 years</Text>
+                        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground }}>flat rate, locked 3 years</Text>
                       </View>
                       <Text style={{ fontFamily: "Inter_700Bold", fontSize: 16, color: "#C9922B" }}>3%</Text>
                     </View>

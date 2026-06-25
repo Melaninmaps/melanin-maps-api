@@ -46,6 +46,7 @@ export const businessesTable = pgTable("businesses", {
   foundingBusiness: boolean("founding_business").notNull().default(false),
   foundingNumber: integer("founding_number"),
   foundingGrantedAt: timestamp("founding_granted_at", { withTimezone: true }),
+  businessTrialStartedAt: timestamp("business_trial_started_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
