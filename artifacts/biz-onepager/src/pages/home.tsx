@@ -238,91 +238,168 @@ export default function Home() {
 
       {/* Pricing / Plans */}
       <section className="py-24 px-6 bg-background print-page-break">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <FadeIn>
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-6">Choose Your Plan</h2>
-              <p className="text-xl text-foreground/70 max-w-2xl mx-auto">
-                Start for free, or unlock the full power of the platform to actively drive growth.
+            <div className="text-center mb-6">
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-4">Choose Your Tier</h2>
+              <p className="text-xl text-foreground/70 max-w-2xl mx-auto mb-3">
+                Every upgrade answers one question: <strong className="text-foreground">why would I pay more?</strong>
+              </p>
+              <p className="text-base text-foreground/50 max-w-xl mx-auto">
+                Each tier is designed to help your business make more money, save time, or reach more customers — not just unlock features.
               </p>
             </div>
           </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Free Plan */}
-            <FadeIn delay={0.1}>
-              <Card className="p-10 h-full bg-card border-2 border-border flex flex-col">
-                <div className="mb-8">
-                  <h3 className="text-2xl font-bold text-foreground mb-2">Community</h3>
-                  <div className="text-4xl font-serif font-bold text-foreground mb-2">Free</div>
-                  <p className="text-foreground/60">Everything you need to get on the map.</p>
+          {/* Upgrade promise row */}
+          <FadeIn delay={0.05}>
+            <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12 text-sm text-foreground/60">
+              {[
+                { icon: <TrendingUp size={15} className="text-primary" />, label: "Make more money" },
+                { icon: <Zap size={15} className="text-primary" />, label: "Save time" },
+                { icon: <Star size={15} className="text-primary" />, label: "Increase visibility" },
+              ].map((p, i) => (
+                <div key={i} className="flex items-center gap-2 justify-center">
+                  {p.icon}
+                  <span>{p.label}</span>
                 </div>
-                
-                <ul className="space-y-4 flex-grow mb-8">
+              ))}
+            </div>
+          </FadeIn>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {/* Community — Free */}
+            <FadeIn delay={0.1}>
+              <Card className="p-8 h-full bg-card border border-border flex flex-col">
+                <div className="mb-6">
+                  <div className="text-3xl mb-3">🆓</div>
+                  <h3 className="text-xl font-bold text-foreground">Community Business</h3>
+                  <p className="text-primary font-semibold text-sm mt-1 mb-3">Be discovered.</p>
+                  <div className="text-3xl font-serif font-bold text-foreground mb-1">Free</div>
+                  <div className="inline-flex items-center gap-1 text-xs text-foreground/50 bg-foreground/5 border border-foreground/10 px-2 py-1 rounded-full">
+                    10% marketplace fee
+                  </div>
+                </div>
+                <p className="text-sm text-foreground/60 mb-5">Perfect for new businesses, side hustles, and startups that want to establish an online presence.</p>
+                <ul className="space-y-3 flex-grow mb-6">
                   {[
-                    "Business listing with photos and contact info",
-                    "Basic analytics (views, saves)",
-                    "Community reviews and ratings",
-                    "Map pin + neighborhood profile"
+                    "Business profile & story",
+                    "Business verification",
+                    "Photos & business videos",
+                    "Marketplace — sell products & services",
+                    "Receive & respond to reviews",
+                    "Create events & community posts",
+                    "Basic analytics & messaging",
+                    "2 business notifications / month",
                   ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-3 text-foreground/80">
-                      <Check className="text-secondary shrink-0 mt-1" size={18} />
+                    <li key={i} className="flex items-start gap-2.5 text-sm text-foreground/75">
+                      <Check className="text-primary shrink-0 mt-0.5" size={15} />
                       <span>{item}</span>
                     </li>
                   ))}
                 </ul>
-                
-                <Button variant="outline" className="w-full py-6 text-lg border-foreground/20 print:hidden">
-                  Start Free
+                <Button variant="outline" className="w-full py-5 border-foreground/20 print:hidden">
+                  List Your Business Free
                 </Button>
               </Card>
             </FadeIn>
 
-            {/* Premium Plan */}
+            {/* Growth */}
             <FadeIn delay={0.2}>
-              <Card className="p-10 h-full bg-foreground text-background border-none relative overflow-hidden flex flex-col shadow-2xl shadow-foreground/20">
-                {/* Accent line */}
-                <div className="absolute top-0 left-0 w-full h-2 bg-primary"></div>
-                
-                <div className="mb-8 relative z-10">
-                  <div className="inline-block py-1 px-3 rounded-full bg-primary/20 text-primary text-xs font-bold tracking-wider uppercase mb-4">
-                    Recommended
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">Family Membership</h3>
-                  <div className="text-4xl font-serif font-bold text-primary mb-2 flex items-end gap-2">
-                    $9.99 <span className="text-lg font-sans font-normal text-background/60 pb-1">/ mo</span>
-                  </div>
-                  <p className="text-background/80">Active promotion and deep insights.</p>
+              <Card className="p-8 h-full bg-card border-2 border-primary/40 flex flex-col relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold tracking-widest uppercase px-4 py-1 rounded-full">
+                  Recommended
                 </div>
-                
-                <div className="text-sm font-medium text-white/90 mb-4 pb-4 border-b border-white/10">
-                  Everything in Free, plus:
+                <div className="mb-6">
+                  <div className="text-3xl mb-3">🚀</div>
+                  <h3 className="text-xl font-bold text-foreground">Growth Business</h3>
+                  <p className="text-primary font-semibold text-sm mt-1 mb-3">Reach more customers.</p>
+                  <div className="text-3xl font-serif font-bold text-foreground mb-1 flex items-end gap-1.5">
+                    $29 <span className="text-base font-sans font-normal text-foreground/50 pb-0.5">/ mo</span>
+                  </div>
+                  <div className="inline-flex items-center gap-1 text-xs text-primary bg-primary/10 border border-primary/20 px-2 py-1 rounded-full">
+                    8% marketplace fee
+                  </div>
                 </div>
-                
-                <ul className="space-y-4 flex-grow mb-8 relative z-10">
+                <p className="text-sm text-foreground/60 mb-4">For businesses that want to actively attract more customers and understand how they're performing.</p>
+                <div className="text-xs font-semibold text-foreground/40 uppercase tracking-wider mb-3">Everything in Community, plus:</div>
+                <ul className="space-y-3 flex-grow mb-6">
                   {[
-                    <span key="1"><strong>KinfolkAI™</strong> featured recommendations</span>,
-                    "Verified Black-Owned badge",
-                    "Advanced analytics + peak hours insights",
-                    "Post nudge alerts for perfect timing",
-                    "Flash deal promotion capabilities",
-                    "Event listings on platform",
-                    "Priority in search results",
-                    <span key="8" className="text-primary font-bold">6 months free when you join today</span>
+                    { label: "Higher search placement & priority in category searches", section: "Visibility" },
+                    { label: "8 customer broadcasts / month", section: "Marketing" },
+                    { label: "Promotional offers & featured events", section: "Marketing" },
+                    { label: "Customer demographics, profile views & sales trends", section: "Analytics" },
+                    { label: "AI social media captions & promotion ideas", section: "AI" },
+                    { label: "AI responses to reviews & marketing assistant", section: "AI" },
                   ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-3 text-background/90">
-                      <Sparkles className="text-primary shrink-0 mt-1" size={18} />
+                    <li key={i} className="flex items-start gap-2.5 text-sm text-foreground/75">
+                      <Sparkles className="text-primary shrink-0 mt-0.5" size={14} />
+                      <span>{item.label}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button className="w-full py-5 bg-primary text-white hover:bg-primary/90 print:hidden border-none">
+                  Start Free Trial
+                </Button>
+              </Card>
+            </FadeIn>
+
+            {/* Premium */}
+            <FadeIn delay={0.3}>
+              <Card className="p-8 h-full bg-foreground text-background border-none relative overflow-hidden flex flex-col shadow-2xl shadow-foreground/20">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-primary" />
+                <div className="mb-6 relative z-10">
+                  <div className="text-3xl mb-3">👑</div>
+                  <div className="inline-block py-0.5 px-2.5 rounded-full bg-primary/20 text-primary text-xs font-bold tracking-wider uppercase mb-2">
+                    Full Access
+                  </div>
+                  <h3 className="text-xl font-bold text-white">Premium Business</h3>
+                  <p className="text-primary font-semibold text-sm mt-1 mb-3">Build a thriving business.</p>
+                  <div className="text-3xl font-serif font-bold text-primary mb-1 flex items-end gap-1.5">
+                    $79 <span className="text-base font-sans font-normal text-background/50 pb-0.5">/ mo</span>
+                  </div>
+                  <div className="inline-flex items-center gap-1 text-xs text-primary bg-primary/15 border border-primary/30 px-2 py-1 rounded-full">
+                    6% marketplace fee — lowest rate
+                  </div>
+                </div>
+                <p className="text-sm text-background/60 mb-4 relative z-10">For established businesses that want every available growth tool and the lowest fees.</p>
+                <div className="text-xs font-semibold text-white/30 uppercase tracking-wider mb-3 relative z-10">Everything in Growth, plus:</div>
+                <ul className="space-y-3 flex-grow mb-6 relative z-10">
+                  {[
+                    "Highest search priority + homepage feature eligibility",
+                    "Destination highlights & city spotlight opportunities",
+                    <span key="hs"><strong className="text-primary">Business Health Score™</strong> — 0–100 composite dashboard</span>,
+                    "AI business consultant & growth recommendations",
+                    "20 broadcasts / month + priority customer support",
+                    "Revenue insights & geographic customer trends",
+                    "Unlimited products + featured product eligibility",
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-2.5 text-sm text-background/85">
+                      <Sparkles className="text-primary shrink-0 mt-0.5" size={14} />
                       <span>{item}</span>
                     </li>
                   ))}
                 </ul>
-                
-                <Button className="w-full py-6 text-lg bg-primary text-white hover:bg-primary/90 print:hidden relative z-10 shadow-lg shadow-primary/20 border-none">
-                  Claim 6 Months Free
+                <Button className="w-full py-5 bg-primary text-white hover:bg-primary/90 print:hidden relative z-10 shadow-lg shadow-primary/20 border-none">
+                  Start Free Trial
                 </Button>
               </Card>
             </FadeIn>
           </div>
+
+          {/* Founding program callout */}
+          <FadeIn delay={0.4}>
+            <div className="max-w-5xl mx-auto mt-8 border border-primary/25 bg-primary/5 rounded-xl p-6 flex flex-col sm:flex-row items-center gap-4">
+              <div className="text-2xl">🔒</div>
+              <div className="flex-1 text-center sm:text-left">
+                <div className="font-bold text-foreground mb-1">Founding Business Program — First 500 Only</div>
+                <div className="text-sm text-foreground/60">Lock your marketplace fee for 3 years: Community 6% · Growth 5% · Premium 3%</div>
+              </div>
+              <Button variant="outline" className="border-primary/30 text-primary hover:bg-primary/5 print:hidden shrink-0">
+                Apply Now
+              </Button>
+            </div>
+          </FadeIn>
         </div>
       </section>
 
