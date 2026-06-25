@@ -13,6 +13,7 @@ export const reviewsTable = pgTable("reviews", {
   wouldReturnAlone: boolean("would_return_alone"),
   socialHandle: varchar("social_handle", { length: 100 }),
   socialPlatform: varchar("social_platform", { length: 30 }),
+  videoUrl: varchar("video_url", { length: 500 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

@@ -23,6 +23,7 @@ export interface ApiReview {
   wouldReturnAlone: boolean | null;
   socialHandle: string | null;
   socialPlatform: string | null;
+  videoUrl: string | null;
   createdAt: string;
 }
 
@@ -54,6 +55,7 @@ export function useReviews(businessId: string) {
       socialHandle?: string,
       socialPlatform?: string,
       businessName?: string,
+      videoUrl?: string,
     ): Promise<number | null> => {
       const token = await getToken();
       const apiBase = getApiBase();
@@ -73,6 +75,7 @@ export function useReviews(businessId: string) {
             socialHandle: socialHandle || null,
             socialPlatform: socialPlatform || null,
             businessName: businessName || null,
+            videoUrl: videoUrl || null,
           }),
         });
         if (res.ok) {

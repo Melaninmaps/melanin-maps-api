@@ -95,7 +95,7 @@ router.post("/reviews", reviewLimiter, requireMembership("navigator"), async (re
     res.status(401).json({ error: "Authentication required" });
     return;
   }
-  const { businessId, rating, text, wouldReturnAlone, socialHandle, socialPlatform, businessName } =
+  const { businessId, rating, text, wouldReturnAlone, socialHandle, socialPlatform, businessName, videoUrl } =
     req.body as Record<string, unknown>;
 
   const ratingNum = Number(rating);
@@ -132,6 +132,7 @@ router.post("/reviews", reviewLimiter, requireMembership("navigator"), async (re
         wouldReturnAlone: typeof wouldReturnAlone === "boolean" ? wouldReturnAlone : null,
         socialHandle: cleanHandle,
         socialPlatform: cleanHandle ? cleanPlatform : null,
+        videoUrl: typeof videoUrl === "string" && videoUrl.trim() ? videoUrl.trim() : null,
       })
       .returning();
 

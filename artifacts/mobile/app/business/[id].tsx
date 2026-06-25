@@ -111,7 +111,7 @@ export default function BusinessDetailScreen() {
 
   const allReviews: Array<{
     id: string; author: string; initials: string; color: string;
-    rating: number; text: string; timeAgo: string; wouldReturnAlone?: boolean;
+    rating: number; text: string; timeAgo: string; wouldReturnAlone?: boolean; videoUrl?: string;
   }> = [
     ...apiReviews.map((r) => ({
       id: r.id,
@@ -122,6 +122,7 @@ export default function BusinessDetailScreen() {
       text: r.text ?? "",
       timeAgo: new Date(r.createdAt).toLocaleDateString(),
       wouldReturnAlone: r.wouldReturnAlone ?? undefined,
+      videoUrl: r.videoUrl ?? undefined,
     })),
     ...(business.reviews ?? []),
   ];
@@ -154,9 +155,10 @@ export default function BusinessDetailScreen() {
     wouldReturn: boolean,
     socialHandle?: string,
     socialPlatform?: string,
+    videoUrl?: string,
   ) => {
     try {
-      const pts = await submitReview(rating, text, wouldReturn, socialHandle, socialPlatform, business.name);
+      const pts = await submitReview(rating, text, wouldReturn, socialHandle, socialPlatform, business.name, videoUrl);
       if (pts != null) {
         addLocal(pts);
         showPointsToast(`+${pts} pts — thanks for your review!`);
@@ -380,6 +382,16 @@ export default function BusinessDetailScreen() {
                 </View>
                 {rev.text ? (
                   <Text style={[styles.reviewText, { color: colors.foreground }]}>{rev.text}</Text>
+                ) : null}
+                {rev.videoUrl ? (
+                  <TouchableOpacity
+                    style={[styles.videoLink, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+                    onPress={() => Linking.openURL(rev.videoUrl!)}
+                    activeOpacity={0.75}
+                  >
+                    <Feather name="play-circle" size={14} color={colors.primary} />
+                    <Text style={[styles.videoLinkText, { color: colors.primary }]}>Watch Video</Text>
+                  </TouchableOpacity>
                 ) : null}
               </View>
             ))
@@ -617,6 +629,8 @@ const styles = StyleSheet.create({
   returnAlone: { flexDirection: "row", alignItems: "center", gap: 4 },
   returnAloneText: { fontFamily: "Inter_500Medium", fontSize: 10 },
   reviewText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20 },
+  videoLink: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, marginTop: 8 },
+  videoLinkText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   claimSection: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4, borderTopWidth: 1, marginTop: 8 },
   claimRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   claimIcon: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },

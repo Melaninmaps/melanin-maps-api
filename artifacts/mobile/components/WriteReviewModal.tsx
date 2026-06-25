@@ -21,6 +21,15 @@ const PLATFORMS = [
   { id: "facebook", label: "Facebook", icon: "logo-facebook" },
 ] as const;
 
+const VIDEO_PATTERNS: { platform: string; regex: RegExp }[] = [
+  { platform: "YouTube", regex: /^https?:\/\/(www\.)?(youtube\.com\/(watch|shorts)|youtu\.be\/)/i },
+  { platform: "TikTok", regex: /^https?:\/\/(www\.)?tiktok\.com\//i },
+  { platform: "Instagram", regex: /^https?:\/\/(www\.)?instagram\.com\/(reel|p|tv)\//i },
+  { platform: "Facebook", regex: /^https?:\/\/(www\.)?(facebook\.com|fb\.watch)\//i },
+];
+function isValidVideoUrl(url: string) { return VIDEO_PATTERNS.some(({ regex }) => regex.test(url.trim())); }
+function detectVideoPlatform(url: string) { return VIDEO_PATTERNS.find(({ regex }) => regex.test(url.trim()))?.platform ?? "Video"; }
+
 type SocialPlatform = (typeof PLATFORMS)[number]["id"];
 
 interface Props {
@@ -28,7 +37,7 @@ interface Props {
   businessName: string;
   businessId?: string;
   onClose: () => void;
-  onSubmit: (rating: number, text: string, wouldReturn: boolean, socialHandle?: string, socialPlatform?: string) => void;
+  onSubmit: (rating: number, text: string, wouldReturn: boolean, socialHandle?: string, socialPlatform?: string, videoUrl?: string) => void;
 }
 
 export function WriteReviewModal({ visible, businessName, businessId, onClose, onSubmit }: Props) {
@@ -38,6 +47,7 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
   const [wouldReturn, setWouldReturn] = useState<boolean | null>(null);
   const [socialHandle, setSocialHandle] = useState("");
   const [socialPlatform, setSocialPlatform] = useState<SocialPlatform | null>(null);
+  const [videoLink, setVideoLink] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [inviteSent, setInviteSent] = useState(false);
 
@@ -47,6 +57,7 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
     setWouldReturn(null);
     setSocialHandle("");
     setSocialPlatform(null);
+    setVideoLink("");
     setSubmitted(false);
     setInviteSent(false);
   };
@@ -61,9 +72,10 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const cleanHandle = socialHandle.trim().replace(/^@/, "");
     const hasInvite = cleanHandle.length > 0 && socialPlatform !== null;
+    const cleanVideoUrl = videoLink.trim() && isValidVideoUrl(videoLink) ? videoLink.trim() : undefined;
     setInviteSent(hasInvite);
     setSubmitted(true);
-    onSubmit(rating, text, wouldReturn, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined);
+    onSubmit(rating, text, wouldReturn, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl);
     setTimeout(() => {
       reset();
       onClose();
@@ -176,6 +188,35 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
                 value={text}
                 onChangeText={setText}
               />
+
+              {/* Video link section */}
+              <View style={[styles.videoSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.videoHeader}>
+                  <Feather name="play-circle" size={16} color={colors.primary} />
+                  <Text style={[styles.videoTitle, { color: colors.foreground }]}>Add a Video</Text>
+                  <View style={[styles.optionalBadge, { backgroundColor: colors.primary + "18" }]}>
+                    <Text style={[styles.optionalText, { color: colors.primary }]}>optional</Text>
+                  </View>
+                </View>
+                <Text style={[styles.inviteDesc, { color: colors.mutedForeground }]}>
+                  Share a YouTube, TikTok, Instagram, or Facebook video link from your visit.
+                </Text>
+                <TextInput
+                  style={[styles.videoInput, { backgroundColor: colors.background, borderColor: videoLink && !isValidVideoUrl(videoLink) ? "#DC2626" : videoLink && isValidVideoUrl(videoLink) ? "#2D7A4F" : colors.border, color: colors.foreground }]}
+                  placeholder="https://www.tiktok.com/@user/video/..."
+                  placeholderTextColor={colors.mutedForeground}
+                  value={videoLink}
+                  onChangeText={setVideoLink}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="url"
+                />
+                {videoLink.length > 0 && (
+                  <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: isValidVideoUrl(videoLink) ? "#2D7A4F" : "#DC2626" }}>
+                    {isValidVideoUrl(videoLink) ? `✓ ${detectVideoPlatform(videoLink)} link detected` : "Please enter a valid YouTube, TikTok, Instagram, or Facebook URL"}
+                  </Text>
+                )}
+              </View>
 
               {/* Social invite section */}
               <View style={[styles.inviteSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -456,5 +497,30 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
     fontSize: 12,
     flex: 1,
+  },
+  videoSection: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    gap: 10,
+  },
+  videoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  videoTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    flex: 1,
+  },
+  videoInput: {
+    borderWidth: 1.5,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
   },
 });

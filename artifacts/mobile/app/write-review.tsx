@@ -69,6 +69,22 @@ function Chip({ label, selected, onPress, multi = false, color, primaryForegroun
   );
 }
 
+const VIDEO_PATTERNS: { platform: string; regex: RegExp }[] = [
+  { platform: "YouTube", regex: /^https?:\/\/(www\.)?(youtube\.com\/(watch|shorts)|youtu\.be\/)/i },
+  { platform: "TikTok", regex: /^https?:\/\/(www\.)?tiktok\.com\//i },
+  { platform: "Instagram", regex: /^https?:\/\/(www\.)?instagram\.com\/(reel|p|tv)\//i },
+  { platform: "Facebook", regex: /^https?:\/\/(www\.)?(facebook\.com|fb\.watch)\//i },
+];
+
+function isValidVideoUrl(url: string): boolean {
+  return VIDEO_PATTERNS.some(({ regex }) => regex.test(url.trim()));
+}
+
+function detectVideoPlatform(url: string): string {
+  const match = VIDEO_PATTERNS.find(({ regex }) => regex.test(url.trim()));
+  return match?.platform ?? "Video";
+}
+
 function computeScore(safety: number, returnAlone: number, recommend: number): number {
   if (!safety || !returnAlone || !recommend) return 0;
   return Math.round((safety * 0.4 + returnAlone * 0.35 + recommend * 0.25) / 5 * 100);
@@ -97,6 +113,7 @@ export default function WriteReviewScreen() {
   const [incidentReported, setIncidentReported] = useState("");
   const [tips, setTips] = useState<string[]>([]);
   const [comments, setComments] = useState("");
+  const [videoLink, setVideoLink] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
   const score = computeScore(safetyRating, returnAloneRating, recommendRating);
@@ -110,6 +127,8 @@ export default function WriteReviewScreen() {
   const next = () => {
     if (step < TOTAL_STEPS) setStep((s) => s + 1);
   };
+
+  const cleanVideoLink = videoLink.trim() && isValidVideoUrl(videoLink) ? videoLink.trim() : undefined;
 
   const handleSubmit = () => {
     setSubmitted(true);
@@ -388,6 +407,31 @@ export default function WriteReviewScreen() {
               <Text style={[styles.charCount, { color: colors.mutedForeground }]}>{comments.length}/500</Text>
             </View>
 
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>
+                Add a video link{" "}
+                <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text>
+              </Text>
+              <Text style={[styles.qHint, { color: colors.mutedForeground }]}>
+                Paste a YouTube, TikTok, Instagram, or Facebook video URL
+              </Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.card, borderColor: videoLink && !isValidVideoUrl(videoLink) ? colors.destructive : colors.border, color: colors.foreground }]}
+                placeholder="https://www.tiktok.com/@user/video/..."
+                placeholderTextColor={colors.mutedForeground}
+                value={videoLink}
+                onChangeText={setVideoLink}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+              />
+              {videoLink.length > 0 && (
+                <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: isValidVideoUrl(videoLink) ? colors.success : colors.destructive, marginTop: 4 }}>
+                  {isValidVideoUrl(videoLink) ? `✓ ${detectVideoPlatform(videoLink)} link detected` : "Please enter a valid YouTube, TikTok, Instagram, or Facebook URL"}
+                </Text>
+              )}
+            </View>
+
             <View style={[styles.anonRow, { backgroundColor: colors.secondary }]}>
               <Feather name="eye-off" size={16} color={colors.mutedForeground} />
               <Text style={[styles.anonTxt, { color: colors.mutedForeground }]}>
@@ -455,6 +499,8 @@ const styles = StyleSheet.create({
   incidentOptionTxt: { flex: 1, fontSize: 15, fontFamily: "Inter_500Medium" },
   textarea: { borderWidth: 1, borderRadius: 14, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular", minHeight: 130 },
   charCount: { fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "right" },
+  qHint: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17, marginTop: -4 },
+  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, fontFamily: "Inter_400Regular" },
   anonRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 12 },
   anonTxt: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
   footer: { paddingHorizontal: 20, paddingTop: 14, borderTopWidth: 1 },
