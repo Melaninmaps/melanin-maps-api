@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable } from "@workspace/db";
-import { eq, and, or, ilike, desc, sql } from "drizzle-orm";
+import { db, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable } from "@workspace/db";
+import { eq, and, or, ilike, desc, sql, gt } from "drizzle-orm";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
 
@@ -48,7 +48,36 @@ router.get("/businesses", async (req: Request, res: Response) => {
       )
       .limit(200);
 
-    res.json({ businesses, total: businesses.length });
+    // Annotate businesses that have active growth-tool promotions as featured.
+    // Only businesses that already matched the search criteria are promoted —
+    // no injecting off-topic results.
+    const now = new Date();
+    const activePromos = await db
+      .select({ businessId: businessPromotionsTable.businessId, type: businessPromotionsTable.type })
+      .from(businessPromotionsTable)
+      .where(
+        and(
+          eq(businessPromotionsTable.status, "active"),
+          gt(businessPromotionsTable.endsAt, now),
+        ),
+      );
+    const promotedIdToType = new Map(activePromos.map((p) => [p.businessId, p.type]));
+
+    const annotated = businesses
+      .map((b) => ({
+        ...b,
+        featured: b.featured || promotedIdToType.has(b.id),
+        promotionType: promotedIdToType.get(b.id) ?? null,
+      }))
+      .sort((a, b) => {
+        if (a.featured && !b.featured) return -1;
+        if (!a.featured && b.featured) return 1;
+        if (b.foundingBusiness !== a.foundingBusiness) return b.foundingBusiness ? 1 : -1;
+        return (b.confidenceScore ?? 0) - (a.confidenceScore ?? 0);
+      });
+
+    const featuredCount = annotated.filter((b) => b.featured).length;
+    res.json({ businesses: annotated, total: annotated.length, featuredCount });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch businesses");
     res.status(500).json({ error: "Failed to fetch businesses" });

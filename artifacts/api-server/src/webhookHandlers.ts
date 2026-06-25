@@ -1,5 +1,5 @@
 import { getStripeSync } from "./stripeClient";
-import { db, usersTable, businessesTable } from "@workspace/db";
+import { db, usersTable, businessesTable, businessPromotionsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { sendTrialStarted, sendTrialEndingSoon, sendTrialExpired, sendMembershipCancelled } from "./lib/email";
 import { logger } from "./lib/logger";
@@ -26,13 +26,35 @@ async function handleCustomEvent(event: { type: string; data: { object: Record<s
   try {
     switch (event.type) {
       case "checkout.session.completed": {
-        // ── Promoted listing (one-time payment) ────────────────────────────────
+        // ── Business Growth Tool (one-time payment) ────────────────────────────
+        if (obj.mode === "payment" && obj.metadata?.type === "business_growth_tool") {
+          const { promotionId, businessId, durationDays } = obj.metadata as {
+            promotionId: string;
+            businessId: string;
+            durationDays: string;
+          };
+          const days = parseInt(durationDays ?? "30", 10);
+          const startsAt = new Date();
+          const endsAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+          await db
+            .update(businessPromotionsTable)
+            .set({ status: "active", startsAt, endsAt })
+            .where(eq(businessPromotionsTable.id, promotionId));
+          // Also update legacy promotedUntil for backward compat
+          await db
+            .update(businessesTable)
+            .set({ promotedUntil: endsAt })
+            .where(eq(businessesTable.id, businessId));
+          logger.info({ promotionId, businessId, endsAt }, "[growth-tools] promotion activated");
+          break;
+        }
+        // ── Promoted listing legacy (one-time payment) ─────────────────────────
         if (obj.mode === "payment" && obj.metadata?.type === "promoted_listing") {
           const { businessId, durationDays } = obj.metadata as { businessId: string; durationDays: string };
           const days = parseInt(durationDays ?? "30", 10);
           const promotedUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
           await db.update(businessesTable).set({ promotedUntil }).where(eq(businessesTable.id, businessId));
-          logger.info({ businessId, promotedUntil }, "[promote] listing activated");
+          logger.info({ businessId, promotedUntil }, "[promote] legacy listing activated");
           break;
         }
         // ── Subscription checkout ───────────────────────────────────────────────

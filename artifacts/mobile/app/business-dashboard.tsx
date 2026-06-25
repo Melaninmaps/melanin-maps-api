@@ -118,6 +118,37 @@ interface AnalyticsData {
   viewsVsPeersPct: number;
 }
 
+interface GrowthPromotion {
+  id: string;
+  type: "priority_search" | "category_featured" | "city_featured" | "cultural_spotlight" | "event_featured";
+  status: string;
+  targetCategory?: string | null;
+  targetCity?: string | null;
+  targetNeighborhood?: string | null;
+  targetEvent?: string | null;
+  endsAt?: string | null;
+  durationDays?: number | null;
+  priceUsdCents?: number | null;
+}
+
+interface GrowthTool {
+  type: GrowthPromotion["type"];
+  name: string;
+  description: string;
+  priceCents: number;
+  priceDisplay: string;
+  durationDays: number;
+  icon: string;
+  tagline: string;
+}
+
+interface GrowthToolsData {
+  business: { id: string; name: string; category: string; city: string };
+  activePromotions: GrowthPromotion[];
+  pendingPromotions: GrowthPromotion[];
+  catalogue: GrowthTool[];
+}
+
 function useMyBusiness() {
   const [business, setBusiness] = useState<MyBusiness | null>(null);
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
@@ -168,7 +199,7 @@ export default function BusinessDashboardScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "insights" | "products">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "insights" | "products" | "grow">("overview");
   const { business, reviews, loading } = useMyBusiness();
   const [feedbackOptIn, setFeedbackOptIn] = useState<boolean>(false);
   const [togglingFeedback, setTogglingFeedback] = useState(false);
@@ -197,6 +228,9 @@ export default function BusinessDashboardScreen() {
   const [actionPlanLoading, setActionPlanLoading] = useState(false);
   const [expansionData, setExpansionData] = useState<ExpansionData | null>(null);
   const [expansionLoading, setExpansionLoading] = useState(false);
+  const [growthTools, setGrowthTools] = useState<GrowthToolsData | null>(null);
+  const [growthLoading, setGrowthLoading] = useState(false);
+  const [growthCheckoutLoading, setGrowthCheckoutLoading] = useState<string | null>(null);
 
   const { listings, connectStatus, loading: listingsLoading, startOnboarding, createListing, toggleActive, deleteListing } =
     useOwnerListings(business?.id ?? "");
@@ -303,8 +337,48 @@ export default function BusinessDashboardScreen() {
     finally { setAnalyticsLoading(false); }
   }, [analyticsLoading, analytics]);
 
+  const loadGrowthTools = useCallback(async () => {
+    if (growthLoading || growthTools) return;
+    setGrowthLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const base = getApiBase();
+      if (!token || !base) return;
+      const res = await fetch(`${base}/api/businesses/mine/growth-tools`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) setGrowthTools(await res.json() as GrowthToolsData);
+    } catch {} finally { setGrowthLoading(false); }
+  }, [growthLoading, growthTools]);
+
+  async function startGrowthToolCheckout(type: GrowthPromotion["type"]) {
+    if (growthCheckoutLoading) return;
+    setGrowthCheckoutLoading(type);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const base = getApiBase();
+      if (!token || !base) return;
+      const res = await fetch(`${base}/api/businesses/mine/growth-tools/checkout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ type }),
+      });
+      const data = await res.json() as { checkoutUrl?: string; error?: string };
+      if (data.checkoutUrl) {
+        await Linking.openURL(data.checkoutUrl);
+      } else {
+        Alert.alert("Error", data.error ?? "Could not start checkout. Please try again.");
+      }
+    } catch {
+      Alert.alert("Error", "Could not start checkout. Check your connection and try again.");
+    } finally {
+      setGrowthCheckoutLoading(null);
+    }
+  }
+
   useEffect(() => {
     if (activeTab === "insights") void loadAnalytics();
+    if (activeTab === "grow") void loadGrowthTools();
   }, [activeTab]);
 
   async function generateActionPlan() {
@@ -469,7 +543,7 @@ export default function BusinessDashboardScreen() {
       </View>
 
       <View style={[styles.tabs, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        {(["overview", "reviews", "insights", "products"] as const).map((t) => (
+        {(["overview", "reviews", "products", "grow", "insights"] as const).map((t) => (
           <TouchableOpacity
             key={t}
             style={[styles.tab, activeTab === t && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
@@ -709,27 +783,12 @@ export default function BusinessDashboardScreen() {
               </View>
             )}
 
-            {/* Promoted listing CTA */}
+            {/* Growth tools teaser — directs to Grow tab */}
             <TouchableOpacity
-              style={[styles.promoteCard, { backgroundColor: "#1A2E1A", borderColor: "#2D7A4F50" }]}
-              onPress={async () => {
+              style={[styles.promoteCard, { backgroundColor: "#0F1F18", borderColor: "#2D7A4F50" }]}
+              onPress={() => {
                 if (Platform.OS !== "web") Haptics.selectionAsync();
-                try {
-                  const token = await SecureStore.getItemAsync("auth_session_token");
-                  const base = getApiBase();
-                  const res = await fetch(`${base}/api/businesses/mine/promote`, {
-                    method: "POST",
-                    headers: { Authorization: `Bearer ${token ?? ""}` },
-                  });
-                  const data = await res.json() as { checkoutUrl?: string; alreadyPromoted?: boolean; promotedUntil?: string; code?: string; message?: string; error?: string };
-                  if (data.alreadyPromoted) {
-                    alert(`Your listing is already promoted until ${data.promotedUntil ? new Date(data.promotedUntil).toLocaleDateString() : "soon"}.`);
-                  } else if (data.code === "NOT_CONFIGURED") {
-                    alert("Promoted listings are coming soon. Check back shortly!");
-                  } else if (data.checkoutUrl) {
-                    router.push(data.checkoutUrl as never);
-                  }
-                } catch { alert("Could not start promotion checkout. Try again."); }
+                setActiveTab("grow");
               }}
               activeOpacity={0.85}
             >
@@ -737,9 +796,9 @@ export default function BusinessDashboardScreen() {
                 <Feather name="trending-up" size={20} color="#2D7A4F" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.promoteTitle, { color: "#FFF" }]}>Promote My Listing</Text>
+                <Text style={[styles.promoteTitle, { color: "#FFF" }]}>Growth Tools</Text>
                 <Text style={[styles.promoteSub, { color: "rgba(255,255,255,0.55)" }]}>
-                  Get featured placement in search results and the map for 30 days — paid add-on.
+                  Priority search, featured placement, AI tools & more — tap to explore.
                 </Text>
               </View>
               <Feather name="chevron-right" size={16} color="#2D7A4F" />
@@ -1810,6 +1869,222 @@ export default function BusinessDashboardScreen() {
             })()}
           </>
         )}
+
+        {activeTab === "grow" && (
+          <>
+            {/* Section header */}
+            <View style={styles.growHeader}>
+              <Text style={[styles.growTitle, { color: colors.foreground }]}>Growth Tools</Text>
+              <Text style={[styles.growSubtitle, { color: colors.mutedForeground }]}>
+                Paid tools that help your business get discovered — only shown to users who are already looking for what you offer.
+              </Text>
+            </View>
+
+            {growthLoading && (
+              <View style={styles.growLoading}>
+                <ActivityIndicator color={colors.primary} />
+              </View>
+            )}
+
+            {/* Active promotions */}
+            {!growthLoading && growthTools && growthTools.activePromotions.length > 0 && (
+              <View style={[styles.growSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.growSectionHeader}>
+                  <View style={[styles.growActiveBadge, { backgroundColor: "#2D7A4F" }]}>
+                    <Text style={styles.growActiveBadgeText}>ACTIVE</Text>
+                  </View>
+                  <Text style={[styles.growSectionTitle, { color: colors.foreground }]}>Running Now</Text>
+                </View>
+                {growthTools.activePromotions.map((promo) => {
+                  const tool = growthTools.catalogue.find((c) => c.type === promo.type);
+                  const endsDate = promo.endsAt ? new Date(promo.endsAt) : null;
+                  return (
+                    <View key={promo.id} style={[styles.growActiveRow, { borderColor: colors.border }]}>
+                      <View style={[styles.growActiveIcon, { backgroundColor: "#2D7A4F20" }]}>
+                        <Feather name={(tool?.icon ?? "trending-up") as any} size={16} color="#2D7A4F" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.growActiveTitle, { color: colors.foreground }]}>{tool?.name ?? promo.type}</Text>
+                        <Text style={[styles.growActiveExpiry, { color: colors.mutedForeground }]}>
+                          {endsDate ? `Expires ${endsDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : "Active"}
+                        </Text>
+                      </View>
+                      <View style={[styles.growStatusPill, { backgroundColor: "#2D7A4F20" }]}>
+                        <Text style={[styles.growStatusPillText, { color: "#2D7A4F" }]}>Live</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+            {/* Pending promotions */}
+            {!growthLoading && growthTools && growthTools.pendingPromotions.length > 0 && (
+              <View style={[styles.growSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[styles.growSectionTitle, { color: colors.mutedForeground }]}>Pending Payment</Text>
+                {growthTools.pendingPromotions.map((promo) => {
+                  const tool = growthTools.catalogue.find((c) => c.type === promo.type);
+                  return (
+                    <View key={promo.id} style={[styles.growActiveRow, { borderColor: colors.border }]}>
+                      <View style={[styles.growActiveIcon, { backgroundColor: "#CA922B20" }]}>
+                        <Feather name={(tool?.icon ?? "clock") as any} size={16} color="#CA922B" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.growActiveTitle, { color: colors.foreground }]}>{tool?.name ?? promo.type}</Text>
+                        <Text style={[styles.growActiveExpiry, { color: colors.mutedForeground }]}>Awaiting payment confirmation</Text>
+                      </View>
+                      <View style={[styles.growStatusPill, { backgroundColor: "#CA922B20" }]}>
+                        <Text style={[styles.growStatusPillText, { color: "#CA922B" }]}>Pending</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+            {/* Available tools */}
+            <Text style={[styles.growCatalogueTitle, { color: colors.foreground }]}>Placement Tools</Text>
+            <Text style={[styles.growCatalogueDesc, { color: colors.mutedForeground }]}>
+              Featured businesses must match the searcher's query — no irrelevant results, ever.
+            </Text>
+
+            {(growthTools?.catalogue ?? [
+              { type: "priority_search" as const, name: "Priority Search Placement", description: "Rise to the top of search results when users look for businesses like yours. Your listing ranks above organic results for relevant queries.", priceCents: 2900, priceDisplay: "$29", durationDays: 30, icon: "search", tagline: "30 days · Rise higher in every relevant search" },
+              { type: "category_featured" as const, name: "Category Feature", description: "Be the first business seen when someone browses your category. Featured position at the top of your category page.", priceCents: 4900, priceDisplay: "$49", durationDays: 30, icon: "star", tagline: "30 days · Top spot in your category" },
+              { type: "city_featured" as const, name: "City & Neighborhood Feature", description: "Stand out to users searching in your city or neighborhood. Featured placement for location-specific searches.", priceCents: 7900, priceDisplay: "$79", durationDays: 30, icon: "map-pin", tagline: "30 days · Featured for local searches" },
+              { type: "cultural_spotlight" as const, name: "Cultural Spotlight", description: "Get elevated placement during Black cultural events, heritage months, and holidays — when community engagement is highest.", priceCents: 9900, priceDisplay: "$99", durationDays: 14, icon: "zap", tagline: "14 days · Premium placement during peak moments" },
+              { type: "event_featured" as const, name: "Featured Event Listing", description: "Promote your event to the top of the community events feed. Reach community members actively looking for what's happening.", priceCents: 3900, priceDisplay: "$39", durationDays: 14, icon: "calendar", tagline: "14 days · Front-row placement in the events feed" },
+            ]).map((tool) => {
+              const isActive = growthTools?.activePromotions.some((p) => p.type === tool.type) ?? false;
+              const isLoading = growthCheckoutLoading === tool.type;
+              return (
+                <View key={tool.type} style={[styles.growToolCard, { backgroundColor: colors.card, borderColor: isActive ? "#2D7A4F60" : colors.border }]}>
+                  <View style={styles.growToolTop}>
+                    <View style={[styles.growToolIcon, { backgroundColor: isActive ? "#2D7A4F20" : colors.muted ?? colors.border }]}>
+                      <Feather name={tool.icon as any} size={18} color={isActive ? "#2D7A4F" : colors.foreground} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.growToolName, { color: colors.foreground }]}>{tool.name}</Text>
+                      <Text style={[styles.growToolTagline, { color: colors.mutedForeground }]}>{tool.tagline}</Text>
+                    </View>
+                    {isActive && (
+                      <View style={[styles.growStatusPill, { backgroundColor: "#2D7A4F20" }]}>
+                        <Text style={[styles.growStatusPillText, { color: "#2D7A4F" }]}>Active</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={[styles.growToolDesc, { color: colors.mutedForeground }]}>{tool.description}</Text>
+                  <View style={styles.growToolFooter}>
+                    <View>
+                      <Text style={[styles.growToolPrice, { color: colors.foreground }]}>{tool.priceDisplay}</Text>
+                      <Text style={[styles.growToolPriceSub, { color: colors.mutedForeground }]}>one-time · {tool.durationDays} days</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.growToolBtn, {
+                        backgroundColor: isActive ? colors.card : colors.primary,
+                        borderColor: isActive ? colors.border : colors.primary,
+                        borderWidth: isActive ? 1 : 0,
+                        opacity: isLoading ? 0.6 : 1,
+                      }]}
+                      onPress={() => {
+                        if (Platform.OS !== "web") Haptics.selectionAsync();
+                        void startGrowthToolCheckout(tool.type as GrowthPromotion["type"]);
+                      }}
+                      activeOpacity={0.8}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <ActivityIndicator size="small" color="#FFF" />
+                      ) : (
+                        <Text style={[styles.growToolBtnText, { color: isActive ? colors.mutedForeground : "#FFF" }]}>
+                          {isActive ? "Renew" : "Get Started"}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })}
+
+            {/* AI tools */}
+            <Text style={[styles.growCatalogueTitle, { color: colors.foreground, marginTop: 8 }]}>AI-Powered Tools</Text>
+            <Text style={[styles.growCatalogueDesc, { color: colors.mutedForeground }]}>
+              Included with your business account — powered by KinfolkAI™.
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.growToolCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => {
+                if (Platform.OS !== "web") Haptics.selectionAsync();
+                setActiveTab("insights");
+              }}
+              activeOpacity={0.85}
+            >
+              <View style={styles.growToolTop}>
+                <View style={[styles.growToolIcon, { backgroundColor: "#7B4F2E20" }]}>
+                  <Feather name="edit-3" size={18} color="#7B4F2E" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.growToolName, { color: colors.foreground }]}>AI Promotion Writer</Text>
+                  <Text style={[styles.growToolTagline, { color: colors.mutedForeground }]}>Generate promo copy, captions & offers</Text>
+                </View>
+                <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+              </View>
+              <Text style={[styles.growToolDesc, { color: colors.mutedForeground }]}>
+                KinfolkAI™ writes promotional copy, social captions, and limited-time offer ideas tailored to your business and customer base.
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.growToolCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => {
+                if (Platform.OS !== "web") Haptics.selectionAsync();
+                setActiveTab("reviews");
+              }}
+              activeOpacity={0.85}
+            >
+              <View style={styles.growToolTop}>
+                <View style={[styles.growToolIcon, { backgroundColor: "#442A1920" }]}>
+                  <Feather name="message-circle" size={18} color="#442A19" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.growToolName, { color: colors.foreground }]}>AI Review Response</Text>
+                  <Text style={[styles.growToolTagline, { color: colors.mutedForeground }]}>Respond to reviews with confidence</Text>
+                </View>
+                <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+              </View>
+              <Text style={[styles.growToolDesc, { color: colors.mutedForeground }]}>
+                Get AI-drafted responses to customer reviews — professional, warm, and true to your brand voice.
+              </Text>
+            </TouchableOpacity>
+
+            {/* Analytics quick link */}
+            <TouchableOpacity
+              style={[styles.growToolCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => {
+                if (Platform.OS !== "web") Haptics.selectionAsync();
+                setActiveTab("insights");
+              }}
+              activeOpacity={0.85}
+            >
+              <View style={styles.growToolTop}>
+                <View style={[styles.growToolIcon, { backgroundColor: "#CA922B20" }]}>
+                  <Feather name="bar-chart-2" size={18} color="#CA922B" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.growToolName, { color: colors.foreground }]}>Business Analytics</Text>
+                  <Text style={[styles.growToolTagline, { color: colors.mutedForeground }]}>Views, saves, ratings & peer benchmarks</Text>
+                </View>
+                <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+              </View>
+              <Text style={[styles.growToolDesc, { color: colors.mutedForeground }]}>
+                See how your business compares to peers, track engagement trends, and get personalised suggestions. Available on Navigator and Trailblazer plans.
+              </Text>
+            </TouchableOpacity>
+
+            <View style={{ height: 16 }} />
+          </>
+        )}
       </ScrollView>
 
       {business && (
@@ -2075,4 +2350,32 @@ const styles = StyleSheet.create({
   requirementDot: { width: 26, height: 26, borderRadius: 13, borderWidth: 1.5, alignItems: "center", justifyContent: "center", marginTop: 1 },
   requirementLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginBottom: 2 },
   requirementSub: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  growHeader: { marginBottom: 20 },
+  growTitle: { fontSize: 22, fontFamily: "Inter_700Bold", marginBottom: 6 },
+  growSubtitle: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
+  growLoading: { alignItems: "center", paddingVertical: 40 },
+  growSection: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 16, gap: 12 },
+  growSectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
+  growSectionTitle: { fontSize: 13, fontFamily: "Inter_600SemiBold", letterSpacing: 0.2 },
+  growActiveBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 20 },
+  growActiveBadgeText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#FFF", letterSpacing: 0.5 },
+  growActiveRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingTop: 10, borderTopWidth: 1 },
+  growActiveIcon: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  growActiveTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
+  growActiveExpiry: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  growStatusPill: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20 },
+  growStatusPillText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  growCatalogueTitle: { fontSize: 17, fontFamily: "Inter_700Bold", marginBottom: 4, marginTop: 8 },
+  growCatalogueDesc: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18, marginBottom: 14 },
+  growToolCard: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 12, gap: 10 },
+  growToolTop: { flexDirection: "row", alignItems: "center", gap: 12 },
+  growToolIcon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  growToolName: { fontSize: 15, fontFamily: "Inter_700Bold", marginBottom: 2 },
+  growToolTagline: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  growToolDesc: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
+  growToolFooter: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 2 },
+  growToolPrice: { fontSize: 20, fontFamily: "Inter_700Bold" },
+  growToolPriceSub: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
+  growToolBtn: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, minWidth: 110, alignItems: "center" },
+  growToolBtnText: { fontSize: 14, fontFamily: "Inter_700Bold" },
 });
