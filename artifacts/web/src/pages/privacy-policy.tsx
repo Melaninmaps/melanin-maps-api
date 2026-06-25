@@ -78,7 +78,7 @@ export default function PrivacyPolicy() {
             <li>Opt out of marketing communications at any time</li>
             <li>Withdraw consent for optional data collection</li>
           </ul>
-          <p className="mt-3 text-[#3A1F0E]/80">To exercise any of these rights, contact us at <a href="mailto:privacy@mappingwithmelanin.com" className="text-[#CA922B] underline">privacy@mappingwithmelanin.com</a>.</p>
+          <p className="mt-3 text-[#3A1F0E]/80">To exercise any of these rights, contact us at <a href="mailto:hello@mappingwithmelanin.com?subject=Privacy%20Rights%20Request" className="text-[#CA922B] underline">hello@mappingwithmelanin.com</a>.</p>
         </section>
 
         <section>
@@ -121,7 +121,7 @@ export default function PrivacyPolicy() {
             <strong>Purposes for collection:</strong> providing platform services, personalizing your experience, processing payments, communicating with you, ensuring platform security, and improving our product.
           </p>
           <p className="leading-relaxed text-[#3A1F0E]/80">
-            To submit a CCPA request, email <a href="mailto:privacy@melaninmaps.com" className="text-[#CA922B] underline">privacy@melaninmaps.com</a> with the subject line "CCPA Privacy Request." We will respond within 45 days as required by law. We may need to verify your identity before processing your request.
+            To submit a CCPA request, email <a href="mailto:hello@mappingwithmelanin.com?subject=CCPA%20Privacy%20Request" className="text-[#CA922B] underline">hello@mappingwithmelanin.com</a> with the subject line "CCPA Privacy Request." We will respond within 45 days as required by law. We may need to verify your identity before processing your request.
           </p>
         </section>
 
@@ -139,7 +139,7 @@ export default function PrivacyPolicy() {
           </p>
           <div className="mt-4 bg-white border border-[#2B1507]/10 rounded-2xl p-6 space-y-1 text-sm text-[#3A1F0E]/80">
             <p><strong>Mapping with Melanin™</strong></p>
-            <p>Email: <a href="mailto:privacy@mappingwithmelanin.com" className="text-[#CA922B] underline">privacy@mappingwithmelanin.com</a></p>
+            <p>Email: <a href="mailto:hello@mappingwithmelanin.com?subject=Privacy%20Policy%20Question" className="text-[#CA922B] underline">hello@mappingwithmelanin.com</a></p>
             <p>Website: <a href="https://mappingwithmelanin.com" className="text-[#CA922B] underline">mappingwithmelanin.com</a></p>
           </div>
         </section>

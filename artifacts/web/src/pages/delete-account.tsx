@@ -21,8 +21,8 @@ export default function DeleteAccount() {
 
       <p style={{ marginTop: 24, color: "#555" }}>
         If you need assistance, contact us at{" "}
-        <a href="mailto:support@mappingwithmelanin.com" style={{ color: "#8B4513" }}>
-          support@mappingwithmelanin.com
+        <a href="mailto:hello@mappingwithmelanin.com?subject=Account%20Deletion%20Support" style={{ color: "#8B4513" }}>
+          hello@mappingwithmelanin.com
         </a>
       </p>
     </div>

@@ -70,7 +70,7 @@ export default function Terms() {
           <ul className="space-y-2 list-disc pl-6 text-[#3A1F0E]/80 leading-relaxed">
             <li>Paid memberships are billed on a recurring basis (monthly or annually).</li>
             <li>You may cancel your membership at any time. Cancellation takes effect at the end of the current billing period.</li>
-            <li>Refunds are not provided for partial billing periods. Contact <a href="mailto:support@mappingwithmelanin.com" className="text-[#CA922B] underline">support@mappingwithmelanin.com</a> for exceptional cases.</li>
+            <li>Refunds are not provided for partial billing periods. Contact <a href="mailto:hello@mappingwithmelanin.com?subject=Billing%20%26%20Refund%20Inquiry" className="text-[#CA922B] underline">hello@mappingwithmelanin.com</a> for exceptional cases.</li>
             <li>We reserve the right to change pricing with 30 days' advance notice.</li>
             <li>Payment processing is handled by Stripe. By paying, you also agree to Stripe's Terms of Service.</li>
           </ul>
@@ -129,7 +129,7 @@ export default function Terms() {
           <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">13. Contact</h2>
           <div className="bg-white border border-[#2B1507]/10 rounded-2xl p-6 space-y-1 text-sm text-[#3A1F0E]/80">
             <p><strong>Mapping with Melanin™</strong></p>
-            <p>Email: <a href="mailto:legal@mappingwithmelanin.com" className="text-[#CA922B] underline">legal@mappingwithmelanin.com</a></p>
+            <p>Email: <a href="mailto:hello@mappingwithmelanin.com?subject=Legal%20Inquiry%20%E2%80%94%20Terms%20of%20Service" className="text-[#CA922B] underline">hello@mappingwithmelanin.com</a></p>
             <p>Website: <a href="https://mappingwithmelanin.com" className="text-[#CA922B] underline">mappingwithmelanin.com</a></p>
           </div>
         </section>
