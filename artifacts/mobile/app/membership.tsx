@@ -526,6 +526,68 @@ export default function MembershipScreen() {
           </View>
         )}
 
+        {/* Verified Business section — business only */}
+        {audience === "business" && (
+          <View style={[styles.verifyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.verifyHeader}>
+              <Text style={{ fontSize: 20 }}>✅</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.verifyTitle, { color: colors.foreground }]}>How We Verify Businesses</Text>
+                <Text style={[styles.verifySub, { color: colors.mutedForeground }]}>
+                  Our verification confirms Black ownership — so the community can discover and trust with confidence.
+                </Text>
+              </View>
+            </View>
+
+            {[
+              {
+                step: "1",
+                icon: "file-text" as const,
+                label: "Submit your business",
+                detail: "Provide your business name, category, location, and contact info when you list.",
+              },
+              {
+                step: "2",
+                icon: "check-square" as const,
+                label: "Ownership documentation",
+                detail: "We review proof of Black ownership — such as a business license, LLC filing, or signed attestation.",
+              },
+              {
+                step: "3",
+                icon: "users" as const,
+                label: "Community signals",
+                detail: "Community reviews, check-ins, and referrals from existing verified businesses add trust weight.",
+              },
+              {
+                step: "4",
+                icon: "award" as const,
+                label: "Verified badge awarded",
+                detail: "Once approved, your listing displays a Verified Black-Owned badge visible to every user.",
+              },
+            ].map((s, i) => (
+              <View key={i} style={styles.verifyStep}>
+                <View style={[styles.verifyStepNum, { backgroundColor: colors.primary + "22" }]}>
+                  <Text style={[styles.verifyStepNumTxt, { color: colors.primary }]}>{s.step}</Text>
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Feather name={s.icon} size={13} color={colors.primary} />
+                    <Text style={[styles.verifyStepLabel, { color: colors.foreground }]}>{s.label}</Text>
+                  </View>
+                  <Text style={[styles.verifyStepDetail, { color: colors.mutedForeground }]}>{s.detail}</Text>
+                </View>
+              </View>
+            ))}
+
+            <View style={[styles.verifyNote, { backgroundColor: colors.primary + "11", borderColor: colors.primary + "33" }]}>
+              <Feather name="info" size={13} color={colors.primary} />
+              <Text style={[styles.verifyNoteTxt, { color: colors.mutedForeground }]}>
+                Verification is available at every membership tier — including Community Business (free). It's about trust, not the tier you choose.
+              </Text>
+            </View>
+          </View>
+        )}
+
         <View style={[styles.guaranteeBox, { backgroundColor: colors.secondary }]}>
           <Feather name="shield" size={20} color={colors.success} />
           <View style={{ flex: 1 }}>
@@ -609,6 +671,25 @@ const styles = StyleSheet.create({
   foundingName: { fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 6 },
   foundingBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   foundingBadgeTxt: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  verifyCard: {
+    borderRadius: 16, padding: 18, gap: 16, borderWidth: 1,
+  },
+  verifyHeader: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  verifyTitle: { fontSize: 15, fontFamily: "Inter_700Bold", marginBottom: 4 },
+  verifySub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
+  verifyStep: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  verifyStepNum: {
+    width: 28, height: 28, borderRadius: 14,
+    alignItems: "center", justifyContent: "center", marginTop: 1,
+  },
+  verifyStepNumTxt: { fontSize: 13, fontFamily: "Inter_700Bold" },
+  verifyStepLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  verifyStepDetail: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17, marginTop: 2 },
+  verifyNote: {
+    flexDirection: "row", alignItems: "flex-start", gap: 8,
+    padding: 12, borderRadius: 10, borderWidth: 1,
+  },
+  verifyNoteTxt: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
   promiseCard: {
     marginHorizontal: 20, marginBottom: 14, padding: 16, borderRadius: 14, borderWidth: 1, gap: 10,
   },
