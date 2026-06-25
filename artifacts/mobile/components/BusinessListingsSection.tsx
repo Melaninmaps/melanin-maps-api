@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -13,19 +14,33 @@ import {
 import { Feather } from "@expo/vector-icons";
 import { useListings, type Listing } from "@/hooks/useListings";
 import { useColors } from "@/hooks/useColors";
+import {
+  MarketplaceTermsModal,
+  hasAcceptedMarketplaceTerms,
+} from "@/components/MarketplaceTermsModal";
 
 interface Props {
   businessId: string;
   businessName: string;
   returnPolicy?: string | null;
-  onReportIssue?: (listing: Listing) => void;
 }
 
 function formatPrice(cents: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency.toUpperCase(),
+  }).format(cents / 100);
 }
 
-function ListingCard({ listing, onBuy, buying }: { listing: Listing; onBuy: () => void; buying: boolean }) {
+function ListingCard({
+  listing,
+  onBuy,
+  buying,
+}: {
+  listing: Listing;
+  onBuy: () => void;
+  buying: boolean;
+}) {
   const colors = useColors();
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -40,12 +55,18 @@ function ListingCard({ listing, onBuy, buying }: { listing: Listing; onBuy: () =
         {listing.category ? (
           <Text style={[styles.category, { color: colors.mutedForeground }]}>{listing.category}</Text>
         ) : null}
-        <Text style={[styles.cardTitle, { color: colors.foreground }]} numberOfLines={2}>{listing.name}</Text>
+        <Text style={[styles.cardTitle, { color: colors.foreground }]} numberOfLines={2}>
+          {listing.name}
+        </Text>
         {listing.description ? (
-          <Text style={[styles.cardDesc, { color: colors.mutedForeground }]} numberOfLines={2}>{listing.description}</Text>
+          <Text style={[styles.cardDesc, { color: colors.mutedForeground }]} numberOfLines={2}>
+            {listing.description}
+          </Text>
         ) : null}
         <View style={styles.cardFooter}>
-          <Text style={[styles.price, { color: colors.primary }]}>{formatPrice(listing.priceInCents, listing.currency)}</Text>
+          <Text style={[styles.price, { color: colors.primary }]}>
+            {formatPrice(listing.priceInCents, listing.currency)}
+          </Text>
           <TouchableOpacity
             style={[styles.buyBtn, { backgroundColor: colors.primary }, buying && { opacity: 0.6 }]}
             onPress={onBuy}
@@ -65,15 +86,24 @@ function ListingCard({ listing, onBuy, buying }: { listing: Listing; onBuy: () =
 }
 
 const DISCLAIMER_TEXT =
-  "Mapping With Melanin™ is a marketplace that connects you with independent Black-owned businesses. " +
-  "Each purchase is a transaction between you and the business owner — not with Mapping With Melanin™. " +
-  "The business is responsible for fulfillment, returns, and refunds per their stated policy.";
+  "Mapping With Melanin™ is a marketplace. Your purchase is directly with the business owner, " +
+  "not with Mapping With Melanin™. The business is responsible for fulfillment and their stated return policy.";
 
-export function BusinessListingsSection({ businessId, businessName, returnPolicy, onReportIssue }: Props) {
+export function BusinessListingsSection({ businessId, businessName, returnPolicy }: Props) {
   const colors = useColors();
   const { listings, loading, openCheckout } = useListings(businessId);
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [disclaimerExpanded, setDisclaimerExpanded] = useState(false);
+
+  // Marketplace terms state
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  // When terms are accepted, immediately trigger the pending buy if one is queued
+  const [pendingListing, setPendingListing] = useState<Listing | null>(null);
+
+  useEffect(() => {
+    void hasAcceptedMarketplaceTerms().then(setTermsAccepted);
+  }, []);
 
   if (loading) {
     return (
@@ -85,16 +115,16 @@ export function BusinessListingsSection({ businessId, businessName, returnPolicy
 
   if (listings.length === 0) return null;
 
-  const handleBuy = async (listing: Listing) => {
+  const proceedToCheckout = async (listing: Listing) => {
     const returnNote = returnPolicy
       ? `Return policy: ${returnPolicy}`
       : "This business has not published a return policy. Contact them directly before purchasing.";
 
     Alert.alert(
       "Before You Buy",
-      `You are purchasing from ${businessName}, an independent business on Mapping With Melanin™.\n\n` +
+      `You are purchasing from ${businessName}, an independent seller on Mapping With Melanin™.\n\n` +
         `${returnNote}\n\n` +
-        "Mapping With Melanin™ is a marketplace and is not the seller. Disputes must be resolved with the business directly or through our dispute process.",
+        "Mapping With Melanin™ is a marketplace and is not the seller of this item.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -117,6 +147,15 @@ export function BusinessListingsSection({ businessId, businessName, returnPolicy
     );
   };
 
+  const handleBuy = (listing: Listing) => {
+    if (!termsAccepted) {
+      setPendingListing(listing);
+      setShowTermsModal(true);
+    } else {
+      void proceedToCheckout(listing);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Shop</Text>
@@ -132,7 +171,11 @@ export function BusinessListingsSection({ businessId, businessName, returnPolicy
           <Text style={[styles.disclaimerLabel, { color: colors.mutedForeground }]}>
             Marketplace — {businessName} is the seller
           </Text>
-          <Feather name={disclaimerExpanded ? "chevron-up" : "chevron-down"} size={13} color={colors.mutedForeground} />
+          <Feather
+            name={disclaimerExpanded ? "chevron-up" : "chevron-down"}
+            size={13}
+            color={colors.mutedForeground}
+          />
         </View>
         {disclaimerExpanded && (
           <Text style={[styles.disclaimerBody, { color: colors.mutedForeground }]}>{DISCLAIMER_TEXT}</Text>
@@ -159,7 +202,7 @@ export function BusinessListingsSection({ businessId, businessName, returnPolicy
           <ListingCard
             key={l.id}
             listing={l}
-            onBuy={() => void handleBuy(l)}
+            onBuy={() => handleBuy(l)}
             buying={buyingId === l.id}
           />
         ))}
@@ -170,15 +213,35 @@ export function BusinessListingsSection({ businessId, businessName, returnPolicy
         onPress={() =>
           Alert.alert(
             "Report an Issue",
-            "Had a problem with an order? You can file a dispute through Settings → Orders & Disputes, or contact the business directly.",
+            "Had a problem with an order? File a dispute through Settings → Orders & Disputes, or contact the business directly.",
             [{ text: "OK" }]
           )
         }
         activeOpacity={0.7}
       >
         <Feather name="flag" size={12} color={colors.mutedForeground} />
-        <Text style={[styles.reportText, { color: colors.mutedForeground }]}>Problem with an order? Report an issue</Text>
+        <Text style={[styles.reportText, { color: colors.mutedForeground }]}>
+          Problem with an order? Report an issue
+        </Text>
       </TouchableOpacity>
+
+      {/* Marketplace terms modal — shown once before first purchase */}
+      <MarketplaceTermsModal
+        visible={showTermsModal}
+        onAccepted={() => {
+          setTermsAccepted(true);
+          setShowTermsModal(false);
+          if (pendingListing) {
+            const listing = pendingListing;
+            setPendingListing(null);
+            void proceedToCheckout(listing);
+          }
+        }}
+        onClose={() => {
+          setShowTermsModal(false);
+          setPendingListing(null);
+        }}
+      />
     </View>
   );
 }
@@ -212,12 +275,7 @@ const styles = StyleSheet.create({
   },
   policyText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
   scroll: { paddingHorizontal: 16, gap: 12, paddingBottom: 4 },
-  card: {
-    width: 200,
-    borderRadius: 12,
-    borderWidth: 1,
-    overflow: "hidden",
-  },
+  card: { width: 200, borderRadius: 12, borderWidth: 1, overflow: "hidden" },
   cardImage: { width: "100%", height: 120 },
   cardImagePlaceholder: { width: "100%", height: 120, justifyContent: "center", alignItems: "center" },
   cardBody: { padding: 12 },
@@ -228,6 +286,13 @@ const styles = StyleSheet.create({
   price: { fontFamily: "Inter_700Bold", fontSize: 16 },
   buyBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 8 },
   buyBtnText: { color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 13 },
-  reportRow: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
+  reportRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
   reportText: { fontSize: 11, fontFamily: "Inter_400Regular" },
 });

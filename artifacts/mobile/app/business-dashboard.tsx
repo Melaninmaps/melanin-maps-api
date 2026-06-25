@@ -1098,6 +1098,69 @@ export default function BusinessDashboardScreen() {
                   </Text>
                 </View>
 
+                {/* Seller program phases */}
+                <View style={[styles.addrForm, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 8 }]}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                    <Feather name="layers" size={16} color={colors.primary} />
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: colors.foreground }}>Seller Program</Text>
+                    <View style={{ marginLeft: "auto", backgroundColor: colors.primary + "18", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 }}>
+                      <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 10, color: colors.primary }}>PHASE 1 ACTIVE</Text>
+                    </View>
+                  </View>
+
+                  {/* Phase 1 */}
+                  <View style={{ flexDirection: "row", gap: 10, marginBottom: 10 }}>
+                    <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                      <Feather name="check" size={13} color="#FFF" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: colors.foreground, marginBottom: 2 }}>Phase 1 — Verified Sellers Only</Text>
+                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, lineHeight: 17 }}>
+                        Products, services, and event tickets from MWM-verified Black-owned businesses. You're here.
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Divider */}
+                  <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 2, marginBottom: 10 }} />
+
+                  {/* Phase 2 */}
+                  <View style={{ flexDirection: "row", gap: 10, marginBottom: 10, opacity: 0.5 }}>
+                    <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: colors.mutedForeground, alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                      <Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.mutedForeground }}>2</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                        <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: colors.foreground }}>Phase 2 — Open Applications</Text>
+                        <View style={{ backgroundColor: colors.secondary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+                          <Text style={{ fontFamily: "Inter_500Medium", fontSize: 10, color: colors.mutedForeground }}>COMING SOON</Text>
+                        </View>
+                      </View>
+                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, lineHeight: 17 }}>
+                        More businesses apply after completing identity, tax, and banking verification. Seller ratings and performance metrics launch.
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Phase 3 */}
+                  <View style={{ flexDirection: "row", gap: 10, opacity: 0.4 }}>
+                    <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: colors.mutedForeground, alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                      <Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.mutedForeground }}>3</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                        <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: colors.foreground }}>Phase 3 — Top Performer Benefits</Text>
+                        <View style={{ backgroundColor: colors.secondary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+                          <Text style={{ fontFamily: "Inter_500Medium", fontSize: 10, color: colors.mutedForeground }}>FUTURE</Text>
+                        </View>
+                      </View>
+                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, lineHeight: 17 }}>
+                        Top-rated sellers unlock lower marketplace fees, priority placement, and exclusive promotional opportunities.
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
                 <View style={styles.sectionHeader}>
                   <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Your Listings</Text>
                   <TouchableOpacity
