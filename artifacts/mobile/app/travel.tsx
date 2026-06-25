@@ -69,6 +69,7 @@ const WELCOME_CHIPS = [
   "What's the vibe in New Orleans?",
   "Hidden gems in DC",
   "Family spots in Chicago",
+  "Would my community like this city?",
 ];
 
 // ─── Sub-component: Business Card ────────────────────────────────────────────
@@ -518,6 +519,21 @@ function WelcomeScreen({
       <Text style={[wsStyles.sub, { color: colors.mutedForeground }]}>
         Your AI travel companion for trusted businesses, community safety intel, and real city knowledge — from people who actually live there.
       </Text>
+
+      {/* Trip Journals shortcut */}
+      <TouchableOpacity
+        style={[wsStyles.journalCard, { backgroundColor: "#1A3B2B" }]}
+        onPress={() => { router.push("/journals" as never); }}
+        activeOpacity={0.85}
+      >
+        <Text style={wsStyles.journalEmoji}>🗺️</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={wsStyles.journalTitle}>Trip Journals</Text>
+          <Text style={wsStyles.journalSub}>Community travel guides from people who look like you</Text>
+        </View>
+        <Ionicons name="arrow-forward" size={16} color="#C9922B" />
+      </TouchableOpacity>
+
       <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground }]}>Where you headed?</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
         {SUGGESTED_CITIES.map((c) => (
@@ -557,6 +573,10 @@ const wsStyles = StyleSheet.create({
   cityChipText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   promptChip: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, borderWidth: 1, padding: 14, marginBottom: 8, width: "100%" },
   promptText: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
+  journalCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 14, marginBottom: 20, width: "100%" },
+  journalEmoji: { fontSize: 26 },
+  journalTitle: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#FFFFFF", marginBottom: 2 },
+  journalSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.75)" },
 });
 
 // ─── Sub-component: Taste Profile Sheet ─────────────────────────────────────

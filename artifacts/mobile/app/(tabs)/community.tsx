@@ -556,6 +556,24 @@ export default function CommunityScreen() {
             <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
           </TouchableOpacity>
 
+          {/* Trip Journals card */}
+          <TouchableOpacity
+            style={[styles.resSpacesCard, { backgroundColor: "#1A3B2B", borderColor: "#2D7A4F55" }]}
+            onPress={() => router.push("/journals")}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.resSpacesIcon, { backgroundColor: "rgba(255,255,255,0.12)" }]}>
+              <Feather name="book-open" size={22} color="#FFFFFF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.resSpacesTitle, { color: "#FFFFFF" }]}>Trip Journals</Text>
+              <Text style={[styles.resSpacesSub, { color: "rgba(255,255,255,0.75)" }]}>
+                Community travel guides — real trips from real people who look like you.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color="rgba(255,255,255,0.6)" />
+          </TouchableOpacity>
+
           {/* My Community card */}
           <TouchableOpacity
             style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#C9922B33" }]}

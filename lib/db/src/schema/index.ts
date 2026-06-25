@@ -45,3 +45,4 @@ export * from "./saved-community-locations";
 export * from "./purchase-disputes";
 export * from "./docusign-envelopes";
 export * from "./business-promotions";
+export * from "./trip-journals";

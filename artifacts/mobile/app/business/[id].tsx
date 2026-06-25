@@ -36,6 +36,8 @@ import { useStories } from "@/hooks/useStories";
 import { FlashDealsSection } from "@/components/FlashDealsSection";
 import { BusinessStoriesSection } from "@/components/BusinessStoriesSection";
 import { BusinessListingsSection } from "@/components/BusinessListingsSection";
+import { BusinessMilestonesSection } from "@/components/BusinessMilestonesSection";
+import { CircleTrustedSection } from "@/components/CircleTrustedSection";
 import { UpgradeModal } from "@/components/UpgradeModal";
 
 const CATEGORY_IMAGES: Record<string, any> = {
@@ -357,15 +359,19 @@ export default function BusinessDetailScreen() {
             </View>
           )}
 
+          <BusinessMilestonesSection business={business} />
+
           <FlashDealsSection deals={deals} />
           <BusinessStoriesSection stories={stories} />
           <BusinessListingsSection businessId={id ?? ""} businessName={business.name} returnPolicy={(business as any).returnPolicy} />
+
+          <CircleTrustedSection business={business} />
 
           {/* Show Me the Vibe */}
           <TouchableOpacity
             style={[styles.vibeCard, { backgroundColor: "#1A3B2B" }]}
             activeOpacity={0.85}
-            onPress={() => router.push("/travel-videos")}
+            onPress={() => router.push({ pathname: "/travel-videos", params: { businessId: id, businessName: business.name } } as never)}
           >
             <Text style={styles.vibeCardEmoji}>🎥</Text>
             <View style={{ flex: 1 }}>
