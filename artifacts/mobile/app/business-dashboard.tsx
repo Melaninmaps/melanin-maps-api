@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useOwnerListings, LISTING_TYPES, type Listing, type ListingType } from "@/hooks/useListings";
+import { SellerAgreementModal } from "@/components/SellerAgreementModal";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -35,6 +36,8 @@ interface MyBusiness {
   blackOwned?: boolean;
   confidenceScore?: number;
   feedbackOptIn?: boolean;
+  sellerAgreementAcceptedAt?: string | null;
+  phone?: string | null;
 }
 
 interface ReviewRow {
@@ -177,6 +180,8 @@ export default function BusinessDashboardScreen() {
   const [returnPolicy, setReturnPolicy] = useState("");
   const [policySaving, setPolicySaving] = useState(false);
   const [policyResult, setPolicyResult] = useState<"success" | "error" | null>(null);
+  const [sellerAgreementAccepted, setSellerAgreementAccepted] = useState(false);
+  const [showAgreementModal, setShowAgreementModal] = useState(false);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState<"paywall" | "error" | null>(null);
@@ -205,6 +210,10 @@ export default function BusinessDashboardScreen() {
   React.useEffect(() => {
     if ((business as any)?.returnPolicy != null) setReturnPolicy((business as any).returnPolicy as string);
   }, [(business as any)?.returnPolicy]);
+
+  React.useEffect(() => {
+    if (business?.sellerAgreementAcceptedAt) setSellerAgreementAccepted(true);
+  }, [business?.sellerAgreementAcceptedAt]);
 
   React.useEffect(() => {
     if (business && !addrExpanded) {
@@ -955,6 +964,53 @@ export default function BusinessDashboardScreen() {
 
         {activeTab === "products" && (
           <>
+            {/* Seller setup requirements checklist — shown until fully set up */}
+            {(!business?.verified || !sellerAgreementAccepted || !connectStatus?.onboarded) && (
+              <View style={[styles.addrForm, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 12 }]}>
+                <Text style={[styles.formLabel, { color: colors.foreground, marginTop: 0, marginBottom: 10, fontSize: 14 }]}>
+                  Seller Setup Requirements
+                </Text>
+                {([
+                  {
+                    done: !!business?.verified,
+                    label: "Identity & Business Verified",
+                    sub: "Submit verification documents for review",
+                  },
+                  {
+                    done: sellerAgreementAccepted,
+                    label: "Seller Agreement Accepted",
+                    sub: "Read and accept the Marketplace Seller Agreement",
+                  },
+                  {
+                    done: !!connectStatus?.onboarded,
+                    label: "Payment Account Connected",
+                    sub: "Link your bank account via Stripe Connect",
+                  },
+                  {
+                    done: !!connectStatus?.onboarded,
+                    label: "Tax & Banking Verified",
+                    sub: "Completed automatically during Stripe setup",
+                  },
+                ] as const).map((step, i) => (
+                  <View key={i} style={[styles.requirementRow, { borderColor: colors.border }]}>
+                    <View style={[
+                      styles.requirementDot,
+                      { backgroundColor: step.done ? "#2D7A4F" : colors.muted, borderColor: step.done ? "#2D7A4F" : colors.border },
+                    ]}>
+                      {step.done
+                        ? <Feather name="check" size={11} color="#FFF" />
+                        : <Text style={{ fontSize: 10, fontFamily: "Inter_700Bold", color: colors.mutedForeground }}>{i + 1}</Text>
+                      }
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.requirementLabel, { color: step.done ? "#2D7A4F" : colors.foreground }]}>{step.label}</Text>
+                      <Text style={[styles.requirementSub, { color: colors.mutedForeground }]}>{step.sub}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+
             {!business?.verified ? (
               <View style={[styles.paywallCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={[styles.paywallIcon, { backgroundColor: "#C9922B18" }]}>
@@ -973,6 +1029,24 @@ export default function BusinessDashboardScreen() {
                   <Text style={styles.paywallBtnTxt}>Get Verified</Text>
                 </TouchableOpacity>
               </View>
+            ) : !sellerAgreementAccepted ? (
+              <View style={[styles.paywallCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={[styles.paywallIcon, { backgroundColor: "#3B1F0E18" }]}>
+                  <Feather name="file-text" size={32} color="#3B1F0E" />
+                </View>
+                <Text style={[styles.paywallTitle, { color: colors.foreground }]}>Accept Seller Agreement</Text>
+                <Text style={[styles.paywallBody, { color: colors.mutedForeground }]}>
+                  Before listing products, review and accept the Marketplace Seller Agreement. It covers your responsibilities for product quality, fulfillment, taxes, and customer service.
+                </Text>
+                <TouchableOpacity
+                  style={[styles.paywallBtn, { backgroundColor: "#3B1F0E" }]}
+                  activeOpacity={0.85}
+                  onPress={() => setShowAgreementModal(true)}
+                >
+                  <Feather name="file-text" size={15} color="#FFF" />
+                  <Text style={styles.paywallBtnTxt}>Review & Accept Agreement</Text>
+                </TouchableOpacity>
+              </View>
             ) : !connectStatus?.onboarded ? (
               <View style={[styles.paywallCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={[styles.paywallIcon, { backgroundColor: colors.primary + "18" }]}>
@@ -980,7 +1054,7 @@ export default function BusinessDashboardScreen() {
                 </View>
                 <Text style={[styles.paywallTitle, { color: colors.foreground }]}>Start Selling In-App</Text>
                 <Text style={[styles.paywallBody, { color: colors.mutedForeground }]}>
-                  Connect your Stripe account to list products and services. Customers can buy directly from your business profile, and funds are deposited to your bank.
+                  Connect your Stripe account to list products and services. Stripe will verify your identity, bank account, and tax information. Funds are deposited directly to your bank.
                 </Text>
                 <TouchableOpacity
                   style={[styles.paywallBtn, { backgroundColor: colors.primary }, onboarding && { opacity: 0.6 }]}
@@ -1458,6 +1532,19 @@ export default function BusinessDashboardScreen() {
           </>
         )}
       </ScrollView>
+
+      {business && (
+        <SellerAgreementModal
+          visible={showAgreementModal}
+          businessId={business.id}
+          businessName={business.name}
+          onAccepted={() => {
+            setSellerAgreementAccepted(true);
+            setShowAgreementModal(false);
+          }}
+          onClose={() => setShowAgreementModal(false)}
+        />
+      )}
     </View>
   );
 }
@@ -1705,4 +1792,8 @@ const styles = StyleSheet.create({
   listingPrice: { fontSize: 15, fontFamily: "Inter_700Bold" },
   listingActions: { flexDirection: "row", alignItems: "center", gap: 12 },
   toggleBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  requirementRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, paddingVertical: 8, borderBottomWidth: 1 },
+  requirementDot: { width: 26, height: 26, borderRadius: 13, borderWidth: 1.5, alignItems: "center", justifyContent: "center", marginTop: 1 },
+  requirementLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginBottom: 2 },
+  requirementSub: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
 });

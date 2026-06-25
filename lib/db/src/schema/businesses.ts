@@ -41,6 +41,7 @@ export const businessesTable = pgTable("businesses", {
   submittedById: varchar("submitted_by_id"),
   stripeConnectAccountId: varchar("stripe_connect_account_id"),
   returnPolicy: text("return_policy"),
+  sellerAgreementAcceptedAt: timestamp("seller_agreement_accepted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
