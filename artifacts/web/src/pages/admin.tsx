@@ -53,7 +53,19 @@ type AdminBusiness = {
   } | null;
 };
 
-type Tab = "waitlist" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges";
+type Tab = "waitlist" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist";
+
+type CategoryWaitlistEntry = {
+  id: number;
+  parentCategory: string;
+  subcategory: string | null;
+  businessName: string | null;
+  email: string;
+  phone: string | null;
+  city: string | null;
+  state: string | null;
+  createdAt: string;
+};
 
 type ChallengeApplicationRow = {
   id: number;
@@ -235,6 +247,8 @@ export default function Admin() {
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [reports, setReports] = useState<ContentReportRow[]>([]);
   const [challengeApps, setChallengeApps] = useState<ChallengeApplicationRow[]>([]);
+  const [categoryWaitlistEntries, setCategoryWaitlistEntries] = useState<CategoryWaitlistEntry[]>([]);
+  const [categoryWaitlistByCategory, setCategoryWaitlistByCategory] = useState<Record<string, number>>({});
   const [memberSearch, setMemberSearch] = useState("");
   const [editingMember, setEditingMember] = useState<string | null>(null);
   const [memberEdit, setMemberEdit] = useState<{ memberType?: string; foundingMemberNumber?: string; trialEndsAt?: string }>({});
@@ -305,9 +319,20 @@ export default function Admin() {
       .catch(() => {});
   }, []);
 
+  const loadCategoryWaitlist = useCallback(() => {
+    return fetch(`${BASE}api/admin/category-waitlist`, { credentials: "include" })
+      .then(r => r.json())
+      .then(data => {
+        setCategoryWaitlistEntries(data.entries ?? []);
+        setCategoryWaitlistByCategory(data.byCategory ?? {});
+        setLastRefreshed(new Date());
+      })
+      .catch(() => {});
+  }, []);
+
   const refreshAll = useCallback(() => {
-    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses(), loadMembers(), loadReviews(), loadReports(), loadChallengeApps()]);
-  }, [loadWaitlist, loadUsers, loadBusinesses, loadMembers, loadReviews, loadReports, loadChallengeApps]);
+    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses(), loadMembers(), loadReviews(), loadReports(), loadChallengeApps(), loadCategoryWaitlist()]);
+  }, [loadWaitlist, loadUsers, loadBusinesses, loadMembers, loadReviews, loadReports, loadChallengeApps, loadCategoryWaitlist]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -701,6 +726,18 @@ export default function Admin() {
               {challengeApps.filter(a => a.status === "pending").length > 0 && (
                 <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">
                   {challengeApps.filter(a => a.status === "pending").length} pending
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setTab("category-waitlist")}
+              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "category-waitlist" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
+            >
+              <BarChart2 className="w-4 h-4" />
+              Category Waitlist
+              {categoryWaitlistEntries.length > 0 && (
+                <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                  {categoryWaitlistEntries.length}
                 </span>
               )}
             </button>
@@ -1628,6 +1665,79 @@ export default function Admin() {
                               Reset
                             </Button>
                           )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+        {/* ── Category Waitlist tab ──────────────────────────────────────── */}
+        {tab === "category-waitlist" && (
+          <div className="p-6 space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-[#3A1F0E]">Category Interest Waitlist</h2>
+              <p className="text-[#3A1F0E]/60 text-sm mt-0.5">
+                Business owners who signed up to be notified when their category launches. Use this to prioritize which categories to build next.
+              </p>
+            </div>
+
+            {/* Interest by category summary */}
+            {Object.keys(categoryWaitlistByCategory).length > 0 && (
+              <div>
+                <h3 className="text-sm font-bold text-[#3A1F0E]/70 uppercase tracking-wider mb-3">Demand by Category</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {Object.entries(categoryWaitlistByCategory)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([cat, count]) => (
+                      <div key={cat} className="bg-white rounded-xl border border-[#E8D5B7] p-4 flex items-center gap-3">
+                        <div className="text-2xl font-bold text-[#CA922B] min-w-[2rem] text-center">{count}</div>
+                        <div className="text-[#3A1F0E] text-xs font-semibold leading-tight">{cat}</div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Individual entries */}
+            {categoryWaitlistEntries.length === 0 ? (
+              <div className="text-center py-16 text-[#3A1F0E]/40">
+                <BarChart2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="font-semibold">No waitlist signups yet</p>
+                <p className="text-sm mt-1">When business owners express interest in coming-soon categories, they'll appear here.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-[#E8D5B7]">
+                <table className="w-full text-sm">
+                  <thead className="bg-[#FAF6EF] border-b border-[#E8D5B7]">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-bold text-[#3A1F0E]/70">Category</th>
+                      <th className="px-4 py-3 text-left font-bold text-[#3A1F0E]/70">Business Name</th>
+                      <th className="px-4 py-3 text-left font-bold text-[#3A1F0E]/70">Email</th>
+                      <th className="px-4 py-3 text-left font-bold text-[#3A1F0E]/70">City</th>
+                      <th className="px-4 py-3 text-left font-bold text-[#3A1F0E]/70">Signed Up</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E8D5B7]/60">
+                    {categoryWaitlistEntries.map((entry) => (
+                      <tr key={entry.id} className="hover:bg-[#FAF6EF]/50 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-[#3A1F0E]">{entry.parentCategory}</div>
+                          {entry.subcategory && (
+                            <div className="text-[#3A1F0E]/50 text-xs mt-0.5">{entry.subcategory}</div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-[#3A1F0E]">{entry.businessName ?? <span className="text-[#3A1F0E]/30 italic">—</span>}</td>
+                        <td className="px-4 py-3">
+                          <a href={`mailto:${entry.email}`} className="text-blue-600 hover:underline text-xs">{entry.email}</a>
+                        </td>
+                        <td className="px-4 py-3 text-[#3A1F0E]/70 text-xs">
+                          {[entry.city, entry.state].filter(Boolean).join(", ") || <span className="text-[#3A1F0E]/30 italic">—</span>}
+                        </td>
+                        <td className="px-4 py-3 text-[#3A1F0E]/50 text-xs">
+                          {new Date(entry.createdAt).toLocaleDateString()}
                         </td>
                       </tr>
                     ))}

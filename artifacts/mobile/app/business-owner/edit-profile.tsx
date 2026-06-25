@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { CATEGORY_GROUPS, getCategoryGroup, isLiveCategory } from "@/constants/categories";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -28,23 +29,6 @@ async function getToken(): Promise<string | null> {
   } catch { return null; }
 }
 
-const CATEGORIES = [
-  "Food & Beverage",
-  "Shopping & Retail",
-  "Beauty & Personal Care",
-  "Health & Wellness",
-  "Professional Services",
-  "Home Services",
-  "Automotive",
-  "Real Estate & Housing",
-  "Technology",
-  "Creative Services",
-  "Events & Entertainment",
-  "Travel & Hospitality",
-  "Family & Education",
-  "Pet Services",
-  "Community & Nonprofit",
-];
 
 const HOURS_OPTIONS = [
   "Mon–Fri 9am–5pm",
@@ -59,6 +43,7 @@ const HOURS_OPTIONS = [
 type FormState = {
   name: string;
   category: string;
+  subcategory: string;
   description: string;
   phone: string;
   website: string;
@@ -77,7 +62,7 @@ export default function EditBusinessProfile() {
   const [showCategories, setShowCategories] = useState(false);
   const [showHours, setShowHours] = useState(false);
   const [form, setForm] = useState<FormState>({
-    name: "", category: "", description: "", phone: "", website: "", hours: "",
+    name: "", category: "", subcategory: "", description: "", phone: "", website: "", hours: "",
   });
   const [original, setOriginal] = useState<FormState | null>(null);
 
@@ -96,6 +81,7 @@ export default function EditBusinessProfile() {
           const f: FormState = {
             name: data.business.name ?? "",
             category: data.business.category ?? "",
+            subcategory: (data.business as FormState & { id: string; subcategory?: string }).subcategory ?? "",
             description: data.business.description ?? "",
             phone: data.business.phone ?? "",
             website: data.business.website ?? "",
@@ -134,6 +120,7 @@ export default function EditBusinessProfile() {
         body: JSON.stringify({
           name: form.name.trim(),
           category: form.category,
+          subcategory: form.subcategory || form.category,
           description: form.description.trim(),
           phone: form.phone.trim() || null,
           website: form.website.trim() || null,
@@ -201,32 +188,73 @@ export default function EditBusinessProfile() {
             activeOpacity={0.8}
           >
             <Text style={[styles.selectBtnTxt, { color: form.category ? colors.foreground : colors.mutedForeground }]}>
-              {form.category || "Select a category"}
+              {form.category ? `${CATEGORY_GROUPS.find(g => g.name === form.category)?.emoji ?? ""} ${form.category}` : "Select a category"}
             </Text>
             <Feather name={showCategories ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
           {showCategories && (
             <View style={[styles.picker, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              {CATEGORIES.map((cat) => (
+              {CATEGORY_GROUPS.map((group) => (
                 <TouchableOpacity
-                  key={cat}
+                  key={group.name}
                   style={[
                     styles.pickerOption,
-                    form.category === cat && { backgroundColor: colors.primary + "18" },
+                    form.category === group.name && { backgroundColor: colors.primary + "18" },
                   ]}
                   onPress={() => {
                     if (Platform.OS !== "web") Haptics.selectionAsync();
-                    update("category")(cat);
+                    update("category")(group.name);
                     setShowCategories(false);
                   }}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.pickerOptionTxt, { color: form.category === cat ? colors.primary : colors.foreground, fontFamily: form.category === cat ? "Inter_700Bold" : "Inter_400Regular" }]}>
-                    {cat}
-                  </Text>
-                  {form.category === cat && <Feather name="check" size={14} color={colors.primary} />}
+                  <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <Text style={{ fontSize: 16 }}>{group.emoji}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.pickerOptionTxt, { color: form.category === group.name ? colors.primary : colors.foreground, fontFamily: form.category === group.name ? "Inter_700Bold" : "Inter_400Regular" }]}>
+                        {group.name}
+                      </Text>
+                      {!group.liveAtLaunch && (
+                        <Text style={{ fontSize: 10, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>Coming soon</Text>
+                      )}
+                    </View>
+                  </View>
+                  {form.category === group.name && <Feather name="check" size={14} color={colors.primary} />}
                 </TouchableOpacity>
               ))}
+            </View>
+          )}
+          {/* Subcategory picker */}
+          {form.category && (
+            <View style={{ marginTop: 10, gap: 6 }}>
+              <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>Subcategory (optional)</Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                {(getCategoryGroup(form.category)?.subcategories ?? []).map((sub) => {
+                  const isSubSelected = form.subcategory === sub.name;
+                  return (
+                    <TouchableOpacity
+                      key={sub.name}
+                      onPress={() => {
+                        if (Platform.OS !== "web") Haptics.selectionAsync();
+                        update("subcategory")(isSubSelected ? "" : sub.name);
+                      }}
+                      style={{
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 16,
+                        borderWidth: 1,
+                        backgroundColor: isSubSelected ? colors.primary + "15" : colors.background,
+                        borderColor: isSubSelected ? colors.primary : colors.border,
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={{ fontSize: 12, fontFamily: isSubSelected ? "Inter_600SemiBold" : "Inter_400Regular", color: isSubSelected ? colors.primary : colors.foreground }}>
+                        {sub.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
           )}
         </View>

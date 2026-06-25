@@ -130,8 +130,8 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
     "Pet Services", "Community & Nonprofit",
   ];
 
-  const { name, category, description, phone, website, hours } = req.body as {
-    name?: string; category?: string; description?: string;
+  const { name, category, subcategory, description, phone, website, hours } = req.body as {
+    name?: string; category?: string; subcategory?: string; description?: string;
     phone?: string | null; website?: string | null; hours?: string | null;
   };
 
@@ -141,7 +141,7 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (name?.trim()) updates.name = name.trim();
-  if (category) { updates.category = category; updates.subcategory = category; }
+  if (category) { updates.category = category; updates.subcategory = subcategory?.trim() || category; }
   if (description !== undefined) updates.description = description.trim();
   if (phone !== undefined) updates.phone = phone?.trim() || null;
   if (website !== undefined) updates.website = website?.trim() || null;

@@ -49,3 +49,4 @@ export * from "./trip-journals";
 export * from "./plate-passes";
 export * from "./community-lists";
 export * from "./challenge-applications";
+export * from "./category-waitlist";

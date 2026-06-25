@@ -18,24 +18,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-
-const CATEGORIES = [
-  "Food & Beverage",
-  "Shopping & Retail",
-  "Beauty & Personal Care",
-  "Health & Wellness",
-  "Professional Services",
-  "Home Services",
-  "Automotive",
-  "Real Estate & Housing",
-  "Technology",
-  "Creative Services",
-  "Events & Entertainment",
-  "Travel & Hospitality",
-  "Family & Education",
-  "Pet Services",
-  "Community & Nonprofit",
-];
+import { CATEGORY_GROUPS, getCategoryGroup, isLiveCategory, type CategoryGroup } from "@/constants/categories";
 
 const PRICE_RANGES = ["$", "$$", "$$$", "$$$$"];
 
@@ -54,6 +37,7 @@ const TOTAL_STEPS = 4;
 interface FormData {
   name: string;
   category: string;
+  subcategory: string;
   description: string;
   address: string;
   city: string;
@@ -72,6 +56,7 @@ interface FormData {
 const INITIAL_FORM: FormData = {
   name: "",
   category: "",
+  subcategory: "",
   description: "",
   address: "",
   city: "",
@@ -275,6 +260,11 @@ export default function ListBusinessScreen() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [waitlistCat, setWaitlistCat] = useState<CategoryGroup | null>(null);
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistCity, setWaitlistCity] = useState("");
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
+  const [waitlistDone, setWaitlistDone] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -310,6 +300,27 @@ export default function ListBusinessScreen() {
     else router.back();
   };
 
+  const handleWaitlistSubmit = async () => {
+    if (!waitlistCat || !waitlistEmail.trim() || !waitlistEmail.includes("@")) return;
+    setWaitlistSubmitting(true);
+    try {
+      const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      await fetch(`${apiBase}/api/category-waitlist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          parentCategory: waitlistCat.name,
+          email: waitlistEmail.trim(),
+          city: waitlistCity.trim() || null,
+          businessName: form.name.trim() || null,
+        }),
+      });
+      setWaitlistDone(true);
+    } catch { } finally {
+      setWaitlistSubmitting(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (submitting) return;
     setSubmitting(true);
@@ -325,6 +336,7 @@ export default function ListBusinessScreen() {
         body: JSON.stringify({
           name: form.name,
           category: form.category,
+          subcategory: form.subcategory || form.category,
           description: form.description,
           address: form.address,
           city: form.city,
@@ -452,13 +464,151 @@ export default function ListBusinessScreen() {
                   />
 
                   <View style={{ marginBottom: 16 }}>
-                    <Text style={[fieldStyles.label, { color: colors.foreground, marginBottom: 10 }]}>Category *</Text>
-                    <ChipGroup
-                      options={CATEGORIES}
-                      value={form.category}
-                      onSelect={update("category") as (v: string) => void}
-                      colors={colors}
-                    />
+                    <Text style={[fieldStyles.label, { color: colors.foreground, marginBottom: 6 }]}>Category *</Text>
+                    <Text style={[fieldStyles.hint, { color: colors.mutedForeground, marginBottom: 10 }]}>
+                      Select your business category. More categories launching soon.
+                    </Text>
+                    {/* Parent category chips */}
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                      {CATEGORY_GROUPS.map((group) => {
+                        const isSelected = form.category === group.name;
+                        const isWaitlisted = !group.liveAtLaunch;
+                        return (
+                          <TouchableOpacity
+                            key={group.name}
+                            onPress={() => {
+                              if (isWaitlisted) {
+                                Haptics.selectionAsync();
+                                setWaitlistCat(group);
+                                setWaitlistDone(false);
+                                setWaitlistEmail("");
+                                setWaitlistCity("");
+                                update("category")("");
+                                update("subcategory")("");
+                                return;
+                              }
+                              Haptics.selectionAsync();
+                              update("category")(group.name);
+                              update("subcategory")("");
+                              setWaitlistCat(null);
+                              setWaitlistDone(false);
+                            }}
+                            style={[
+                              chipStyles.chip,
+                              {
+                                backgroundColor: isSelected
+                                  ? colors.primary
+                                  : isWaitlisted
+                                  ? colors.muted
+                                  : colors.card,
+                                borderColor: isSelected ? colors.primary : colors.border,
+                                opacity: isWaitlisted ? 0.75 : 1,
+                                flexDirection: "row",
+                                alignItems: "center",
+                                gap: 4,
+                              },
+                            ]}
+                            activeOpacity={0.8}
+                          >
+                            <Text style={{ fontSize: 13 }}>{group.emoji}</Text>
+                            <Text style={[chipStyles.chipText, { color: isSelected ? colors.primaryForeground : colors.foreground }]}>
+                              {group.name}
+                            </Text>
+                            {isWaitlisted && (
+                              <Text style={{ fontSize: 9, color: colors.mutedForeground, fontFamily: "Inter_500Medium" }}>
+                                Soon
+                              </Text>
+                            )}
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+
+                    {/* Subcategory chips — shown when a live category is selected */}
+                    {form.category && isLiveCategory(form.category) && (
+                      <View style={{ marginTop: 14 }}>
+                        <Text style={[fieldStyles.hint, { color: colors.mutedForeground, marginBottom: 8 }]}>
+                          Choose a subcategory (optional):
+                        </Text>
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                          {(getCategoryGroup(form.category)?.subcategories ?? []).map((sub) => {
+                            const isSubSelected = form.subcategory === sub.name;
+                            return (
+                              <TouchableOpacity
+                                key={sub.name}
+                                onPress={() => { Haptics.selectionAsync(); update("subcategory")(isSubSelected ? "" : sub.name); }}
+                                style={[chipStyles.chip, {
+                                  backgroundColor: isSubSelected ? colors.primary + "22" : colors.card,
+                                  borderColor: isSubSelected ? colors.primary : colors.border,
+                                }]}
+                                activeOpacity={0.8}
+                              >
+                                <Text style={[chipStyles.chipText, { color: isSubSelected ? colors.primary : colors.foreground }]}>
+                                  {sub.name}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Coming-soon waitlist capture */}
+                    {waitlistCat && !isLiveCategory(waitlistCat.name) && (
+                      <View style={{ marginTop: 14, padding: 14, borderRadius: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, gap: 10 }}>
+                        {waitlistDone ? (
+                          <View style={{ alignItems: "center", gap: 6 }}>
+                            <Text style={{ fontSize: 22 }}>🎉</Text>
+                            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: colors.foreground, textAlign: "center" }}>
+                              You're on the waitlist!
+                            </Text>
+                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, textAlign: "center" }}>
+                              We'll notify you when {waitlistCat.emoji} {waitlistCat.name} launches on Mapping With Melanin.
+                            </Text>
+                            <TouchableOpacity onPress={() => { setWaitlistCat(null); setWaitlistDone(false); }}>
+                              <Text style={{ fontSize: 13, color: colors.primary, fontFamily: "Inter_600SemiBold", marginTop: 4 }}>
+                                Pick a different category
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        ) : (
+                          <>
+                            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: colors.foreground }}>
+                              {waitlistCat.emoji} {waitlistCat.name} — Coming Soon
+                            </Text>
+                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, lineHeight: 18 }}>
+                              This category isn't live yet. Drop your email and we'll notify you the moment it launches.
+                            </Text>
+                            <TextInput
+                              style={{ borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, fontFamily: "Inter_400Regular", borderColor: colors.border, backgroundColor: colors.background, color: colors.foreground }}
+                              placeholder="Your email address *"
+                              placeholderTextColor={colors.mutedForeground}
+                              value={waitlistEmail}
+                              onChangeText={setWaitlistEmail}
+                              keyboardType="email-address"
+                              autoCapitalize="none"
+                            />
+                            <TextInput
+                              style={{ borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, fontFamily: "Inter_400Regular", borderColor: colors.border, backgroundColor: colors.background, color: colors.foreground }}
+                              placeholder="Your city (optional)"
+                              placeholderTextColor={colors.mutedForeground}
+                              value={waitlistCity}
+                              onChangeText={setWaitlistCity}
+                              autoCapitalize="words"
+                            />
+                            <TouchableOpacity
+                              onPress={handleWaitlistSubmit}
+                              disabled={waitlistSubmitting || !waitlistEmail.includes("@")}
+                              style={{ backgroundColor: colors.primary, borderRadius: 10, paddingVertical: 11, alignItems: "center", opacity: (waitlistSubmitting || !waitlistEmail.includes("@")) ? 0.5 : 1 }}
+                            >
+                              <Text style={{ color: "#FFF", fontFamily: "Inter_600SemiBold", fontSize: 14 }}>
+                                {waitlistSubmitting ? "Saving…" : "Notify Me When Live"}
+                              </Text>
+                            </TouchableOpacity>
+                          </>
+                        )}
+                      </View>
+                    )}
                   </View>
 
                   <Field
