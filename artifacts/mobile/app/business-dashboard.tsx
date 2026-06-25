@@ -871,7 +871,25 @@ export default function BusinessDashboardScreen() {
 
         {activeTab === "products" && (
           <>
-            {!connectStatus?.onboarded ? (
+            {!business?.verified ? (
+              <View style={[styles.paywallCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={[styles.paywallIcon, { backgroundColor: "#C9922B18" }]}>
+                  <Feather name="shield" size={32} color="#C9922B" />
+                </View>
+                <Text style={[styles.paywallTitle, { color: colors.foreground }]}>Verification Required</Text>
+                <Text style={[styles.paywallBody, { color: colors.mutedForeground }]}>
+                  Only verified Black-owned businesses can sell directly on Mapping With Melanin. Complete your verification to unlock in-app selling.
+                </Text>
+                <TouchableOpacity
+                  style={[styles.paywallBtn, { backgroundColor: "#C9922B" }]}
+                  activeOpacity={0.85}
+                  onPress={() => router.push("/business-verify" as any)}
+                >
+                  <Feather name="shield" size={15} color="#FFF" />
+                  <Text style={styles.paywallBtnTxt}>Get Verified</Text>
+                </TouchableOpacity>
+              </View>
+            ) : !connectStatus?.onboarded ? (
               <View style={[styles.paywallCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={[styles.paywallIcon, { backgroundColor: colors.primary + "18" }]}>
                   <Feather name="shopping-bag" size={32} color={colors.primary} />

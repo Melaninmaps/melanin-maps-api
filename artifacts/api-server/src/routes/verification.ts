@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Response } from "express";
-import { db, verificationRequestsTable } from "@workspace/db";
+import { db, verificationRequestsTable, businessClaimsTable, businessesTable } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -79,9 +79,21 @@ router.post("/verification/submit", async (req: any, res: Response): Promise<voi
   const hasOwnershipDocs = ownershipPercentage !== undefined && ownershipPercentage >= 51;
   const verificationLevel = hasCert ? "certified" : hasOwnershipDocs ? "ownership" : "basic";
 
+  // Look up the business claimed by this user so we can link the request
+  let resolvedBusinessId: string | null = null;
+  if (req.user?.id) {
+    const [claim] = await db
+      .select({ businessId: businessClaimsTable.businessId })
+      .from(businessClaimsTable)
+      .where(eq(businessClaimsTable.userId, req.user.id))
+      .limit(1);
+    resolvedBusinessId = claim?.businessId ?? null;
+  }
+
   try {
     const [request] = await db.insert(verificationRequestsTable).values({
       submitterId: req.user?.id ?? null,
+      businessId: resolvedBusinessId,
       businessName: businessName.trim(),
       businessType: businessType as any,
       ownerName: ownerName.trim(),
@@ -131,6 +143,14 @@ router.patch("/admin/verification-requests/:id", async (req: any, res: Response)
     if (adminNotes !== undefined) updates.adminNotes = adminNotes;
     const [updated] = await db.update(verificationRequestsTable).set(updates).where(eq(verificationRequestsTable.id, req.params.id)).returning();
     if (!updated) { res.status(404).json({ error: "Request not found" }); return; }
+
+    // Cascade: when approved, mark the linked business as verified
+    if (status === "approved" && updated.businessId) {
+      await db.update(businessesTable)
+        .set({ verified: true })
+        .where(eq(businessesTable.id, updated.businessId));
+    }
+
     res.json({ request: updated });
   } catch (err: any) {
     req.log.error({ err }, "Failed to update verification request");

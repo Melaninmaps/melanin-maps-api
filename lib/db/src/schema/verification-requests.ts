@@ -4,6 +4,7 @@ import { pgTable, timestamp, varchar, text, integer, boolean } from "drizzle-orm
 export const verificationRequestsTable = pgTable("verification_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   submitterId: varchar("submitter_id"),
+  businessId: varchar("business_id"),
   businessName: varchar("business_name").notNull(),
   businessType: varchar("business_type", {
     enum: ["restaurant", "retail", "salon", "health", "professional_services", "entertainment", "tech", "nonprofit", "other"],
