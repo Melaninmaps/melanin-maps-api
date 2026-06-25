@@ -1,4 +1,5 @@
 export * from "./auth";
+export * from "./smart-pathways";
 export * from "./businesses";
 export * from "./conversations";
 export * from "./messages";

@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -9,9 +10,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Callout, Marker, PROVIDER_DEFAULT } from "react-native-maps";
+import MapView, { Callout, Marker, PROVIDER_DEFAULT, type Region } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryPill } from "@/components/CategoryPill";
+import { IntentModal, type PinLocation } from "@/components/IntentModal";
 import { RatingStars } from "@/components/RatingStars";
 import { SearchBar } from "@/components/SearchBar";
 import { VerificationBadge } from "@/components/VerificationBadge";
@@ -21,7 +23,7 @@ import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
 
-const INITIAL_REGION = {
+const INITIAL_REGION: Region = {
   latitude: 33.7,
   longitude: -84.38,
   latitudeDelta: 10,
@@ -39,6 +41,9 @@ export function MapTabView() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [selected, setSelected] = useState<Business | null>(null);
+  const [currentRegion, setCurrentRegion] = useState<Region>(INITIAL_REGION);
+  const [showIntentModal, setShowIntentModal] = useState(false);
+  const [pendingPinLocation, setPendingPinLocation] = useState<PinLocation | null>(null);
 
   useEffect(() => {
     Location.requestForegroundPermissionsAsync().then(({ status }) => {
@@ -69,6 +74,31 @@ export function MapTabView() {
     );
   };
 
+  const handlePinArea = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const lat = currentRegion.latitude;
+    const lng = currentRegion.longitude;
+    let label = "My selected area";
+    let city: string | undefined;
+    let state: string | undefined;
+    try {
+      const [place] = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+      if (place) {
+        city = place.city ?? place.subregion ?? undefined;
+        state = place.region ?? undefined;
+        label = place.district ?? place.subregion ?? place.city ?? place.name ?? label;
+      }
+    } catch { /**/ }
+    setPendingPinLocation({ label, city, state, latitude: lat, longitude: lng });
+    setShowIntentModal(true);
+  };
+
+  const handlePinSaved = (intentId: string, pinId: string) => {
+    setShowIntentModal(false);
+    setPendingPinLocation(null);
+    router.push({ pathname: "/smart-pathway", params: { pinId } } as never);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <MapView
@@ -78,6 +108,7 @@ export function MapTabView() {
         initialRegion={INITIAL_REGION}
         showsUserLocation={locationGranted}
         showsMyLocationButton={false}
+        onRegionChangeComplete={setCurrentRegion}
       >
         {filtered.map((b) => (
           <Marker
@@ -97,6 +128,7 @@ export function MapTabView() {
         ))}
       </MapView>
 
+      {/* Search + category overlay */}
       <View style={[styles.overlay, { top: insets.top + 8 }]}>
         <View style={styles.searchWrap}>
           <SearchBar value={search} onChangeText={setSearch} />
@@ -117,6 +149,20 @@ export function MapTabView() {
         </ScrollView>
       </View>
 
+      {/* Pin Area button */}
+      <TouchableOpacity
+        style={[styles.pinAreaBtn, {
+          backgroundColor: colors.primary,
+          bottom: (selected ? 200 : 100) + insets.bottom + 58,
+        }]}
+        onPress={handlePinArea}
+        activeOpacity={0.85}
+      >
+        <Feather name="map-pin" size={16} color="#FFF" />
+        <Text style={styles.pinAreaTxt}>Pin Area</Text>
+      </TouchableOpacity>
+
+      {/* My location button */}
       <TouchableOpacity
         style={[styles.myLocationBtn, { backgroundColor: colors.card, shadowColor: colors.foreground, bottom: (selected ? 200 : 100) + insets.bottom }]}
         onPress={() => {
@@ -128,6 +174,7 @@ export function MapTabView() {
         <Feather name="navigation" size={20} color={colors.primary} />
       </TouchableOpacity>
 
+      {/* Selected business card */}
       {selected && (
         <View style={[styles.selectedCard, { backgroundColor: colors.card, shadowColor: colors.foreground, bottom: insets.bottom + 90 }]}>
           <View style={styles.selectedTop}>
@@ -154,11 +201,39 @@ export function MapTabView() {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Explore this neighborhood */}
+          <TouchableOpacity
+            style={[styles.exploreNeighborhood, { borderTopColor: colors.border }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setPendingPinLocation({
+                label: `${selected.city} area`,
+                city: selected.city,
+                state: selected.state,
+                latitude: selected.latitude,
+                longitude: selected.longitude,
+              });
+              setShowIntentModal(true);
+            }}
+          >
+            <Feather name="compass" size={14} color={colors.primary} />
+            <Text style={[styles.exploreTxt, { color: colors.primary }]}>Explore this neighborhood →</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity onPress={() => setSelected(null)} style={styles.dismissBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name="x" size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Intent Modal */}
+      <IntentModal
+        visible={showIntentModal}
+        location={pendingPinLocation}
+        onClose={() => { setShowIntentModal(false); setPendingPinLocation(null); }}
+        onSaved={handlePinSaved}
+      />
     </View>
   );
 }
@@ -173,6 +248,12 @@ const styles = StyleSheet.create({
     borderWidth: 2, shadowColor: "#000", shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15, shadowRadius: 4, elevation: 4,
   },
+  pinAreaBtn: {
+    position: "absolute", right: 16, flexDirection: "row", alignItems: "center", gap: 6,
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 22,
+    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 5,
+  },
+  pinAreaTxt: { color: "#FFF", fontWeight: "700", fontSize: 13 },
   myLocationBtn: {
     position: "absolute", right: 16, width: 46, height: 46, borderRadius: 23,
     alignItems: "center", justifyContent: "center",
@@ -192,5 +273,7 @@ const styles = StyleSheet.create({
   actionBtn: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   viewBtn: { paddingHorizontal: 16, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   viewText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  exploreNeighborhood: { flexDirection: "row", alignItems: "center", gap: 6, paddingTop: 12, marginTop: 10, borderTopWidth: 1 },
+  exploreTxt: { fontSize: 13, fontWeight: "700" },
   dismissBtn: { position: "absolute", top: 10, right: 10 },
 });
