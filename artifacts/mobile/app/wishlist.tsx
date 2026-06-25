@@ -10,6 +10,7 @@ import { router } from "expo-router";
 import { useColors } from "@/hooks/useColors";
 import { useWishlist, type WishlistItem } from "@/hooks/useWishlist";
 import { useSpaceWarnings } from "@/hooks/useSpaceWarnings";
+import { useThumbsUpAlerts } from "@/hooks/useThumbsUpAlerts";
 import { Feather } from "@expo/vector-icons";
 
 const GOLD = "#C9922B";
@@ -318,13 +319,14 @@ function TypePickerModal({
 }
 
 function WishlistCard({
-  item, onDelete, onNotesSave, colors, warningCount = 0,
+  item, onDelete, onNotesSave, colors, warningCount = 0, thumbsUpCount = 0,
 }: {
   item: WishlistItem;
   onDelete: (id: string) => void;
   onNotesSave: (id: string, notes: string) => void;
   colors: ReturnType<typeof useColors>;
   warningCount?: number;
+  thumbsUpCount?: number;
 }) {
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesText, setNotesText] = useState(item.notes ?? "");
@@ -342,6 +344,12 @@ function WishlistCard({
 
   return (
     <View style={[cardStyles.card, { backgroundColor: colors.card, borderColor }]}>
+      {thumbsUpCount >= 3 && !warningCount && (
+        <View style={cardStyles.thumbsUpBanner}>
+          <Ionicons name="thumbs-up" size={12} color="#2D7A4F" />
+          <Text style={cardStyles.thumbsUpText}>{thumbsUpCount} community members would return here alone</Text>
+        </View>
+      )}
       {warningCount >= 3 && (
         <View style={cardStyles.warningBanner}>
           <Feather name="alert-octagon" size={12} color="#7C2D12" />
@@ -467,6 +475,12 @@ const cardStyles = StyleSheet.create({
   notesCancel: { fontFamily: "Inter_400Regular", fontSize: 13 },
   notesSave: { borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7 },
   notesSaveText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" },
+  thumbsUpBanner: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: "#2D7A4F15", borderColor: "#2D7A4F40",
+    borderWidth: 1, borderRadius: 8, padding: 8, marginBottom: 10,
+  },
+  thumbsUpText: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#2D7A4F", flex: 1 },
   warningBanner: {
     flexDirection: "row", alignItems: "center", gap: 6,
     backgroundColor: "#7C2D1215", borderColor: "#7C2D1240",
@@ -497,6 +511,7 @@ export default function WishlistScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { items, isLoading, load, addItem, removeItem, updateNotes } = useWishlist();
   const { isWarned } = useSpaceWarnings();
+  const { getThumbsUpCount } = useThumbsUpAlerts();
   const [typePickerOpen, setTypePickerOpen] = useState(false);
   const [addDestModalOpen, setAddDestModalOpen] = useState(false);
   const [addEmployerModalOpen, setAddEmployerModalOpen] = useState(false);
@@ -625,6 +640,7 @@ export default function WishlistScreen() {
                   key={item.id} item={item} colors={colors}
                   onDelete={handleDelete} onNotesSave={handleNotesSave}
                   warningCount={isWarned(item.businessName, item.city ?? "")}
+                  thumbsUpCount={getThumbsUpCount(item.businessName)}
                 />
               ))}
             </View>

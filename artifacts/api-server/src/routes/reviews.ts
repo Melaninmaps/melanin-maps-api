@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable } from "@workspace/db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { sendPushToUser, sendPushToUsersWithSavedBusiness } from "../lib/pushNotifications";
 import { reviewLimiter } from "../middleware/rateLimiter";
 import { requireMembership } from "../middleware/requireMembership";
@@ -114,6 +114,27 @@ async function sendInviteNotification(opts: {
     }),
   });
 }
+
+router.get("/reviews/thumbs-up", async (req: Request, res: Response) => {
+  try {
+    const alerts = await db
+      .select({
+        businessName: businessesTable.name,
+        thumbsUpCount: sql<number>`count(*)::int`,
+      })
+      .from(reviewsTable)
+      .innerJoin(businessesTable, eq(reviewsTable.businessId, businessesTable.id))
+      .where(eq(reviewsTable.wouldReturnAlone, true))
+      .groupBy(businessesTable.id, businessesTable.name)
+      .having(sql`count(*) >= 3`)
+      .orderBy(sql`count(*) desc`)
+      .limit(200);
+    res.json({ alerts });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch thumbs-up alerts");
+    res.status(500).json({ error: "Failed to fetch thumbs-up alerts" });
+  }
+});
 
 router.get("/reviews", async (req: Request, res: Response) => {
   const { businessId } = req.query;
