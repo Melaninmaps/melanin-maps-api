@@ -1,38 +1,54 @@
-import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
+
+export const COMMUNITY_RATINGS = [
+  { level: 1, label: "Love It", display: "🤎", color: "#C9922B" },
+  { level: 2, label: "Good Find", display: "🤎🤎", color: "#C9922B" },
+  { level: 3, label: "Worth Visiting", display: "🤎🤎🤎", color: "#C9922B" },
+  { level: 4, label: "Community Favorite", display: "🤎🤎🤎🤎", color: "#C9922B" },
+  { level: 5, label: "Put Your People On", display: "👑", color: "#CA922B" },
+] as const;
+
+export function getCommunityRating(rating: number) {
+  const level = Math.min(5, Math.max(1, Math.round(rating)));
+  return COMMUNITY_RATINGS[level - 1]!;
+}
 
 interface Props {
   rating: number;
   reviewCount?: number;
   size?: number;
   showCount?: boolean;
+  showLabel?: boolean;
 }
 
-export function RatingStars({ rating, reviewCount, size = 12, showCount = true }: Props) {
+export function RatingStars({ rating, reviewCount, size = 12, showCount = true, showLabel = false }: Props) {
   const colors = useColors();
-  const fullStars = Math.floor(rating);
-  const hasHalf = rating - fullStars >= 0.5;
+  if (!rating || rating <= 0) return null;
+  const info = getCommunityRating(rating);
+  const isPutYourPeopleOn = Math.round(rating) === 5;
 
   return (
     <View style={styles.container}>
-      {Array.from({ length: 5 }).map((_, i) => {
-        const filled = i < fullStars;
-        const half = !filled && i === fullStars && hasHalf;
-        return (
-          <Feather
-            key={i}
-            name={filled || half ? "star" : "star"}
-            size={size}
-            color={filled || half ? colors.accent : colors.border}
-          />
-        );
-      })}
+      <Text style={{ fontSize: size + 2, lineHeight: size + 8 }}>{info.display}</Text>
+      {showLabel && (
+        <Text
+          style={[
+            styles.label,
+            {
+              color: isPutYourPeopleOn ? colors.primary : colors.foreground,
+              fontSize: size,
+              fontFamily: isPutYourPeopleOn ? "Inter_700Bold" : "Inter_500Medium",
+            },
+          ]}
+        >
+          {info.label}
+        </Text>
+      )}
       {showCount && reviewCount !== undefined && (
         <Text style={[styles.count, { color: colors.mutedForeground, fontSize: size }]}>
-          {" "}
-          {rating.toFixed(1)} ({reviewCount})
+          {" "}{rating.toFixed(1)} ({reviewCount})
         </Text>
       )}
     </View>
@@ -43,6 +59,11 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 4,
+    flexWrap: "wrap",
+  },
+  label: {
+    fontFamily: "Inter_500Medium",
   },
   count: {
     fontFamily: "Inter_400Regular",

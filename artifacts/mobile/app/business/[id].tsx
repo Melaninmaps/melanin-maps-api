@@ -170,7 +170,7 @@ export default function BusinessDetailScreen() {
   const handleReviewSubmit = async (
     rating: number,
     text: string,
-    wouldReturn: boolean,
+    wouldReturn: boolean | null,
     socialHandle?: string,
     socialPlatform?: string,
     videoUrl?: string,
@@ -409,17 +409,23 @@ export default function BusinessDetailScreen() {
                     <Text style={[styles.reviewTime, { color: colors.mutedForeground }]}>{rev.timeAgo}</Text>
                   </View>
                   <View style={styles.reviewRight}>
-                    <RatingStars rating={rev.rating} showCount={false} size={12} />
-                    {rev.wouldReturnAlone != null && (
+                    <RatingStars rating={rev.rating} showCount={false} size={11} showLabel />
+                    {rev.wouldReturnAlone === true && (
                       <View style={styles.returnAlone}>
-                        <Feather
-                          name={rev.wouldReturnAlone ? "thumbs-up" : "thumbs-down"}
-                          size={11}
-                          color={rev.wouldReturnAlone ? "#2D7A4F" : "#DC2626"}
-                        />
-                        <Text style={[styles.returnAloneText, { color: rev.wouldReturnAlone ? "#2D7A4F" : "#DC2626" }]}>
-                          {rev.wouldReturnAlone ? "Would return" : "Wouldn't return"}
-                        </Text>
+                        <Text style={{ fontSize: 11 }}>👍</Text>
+                        <Text style={[styles.returnAloneText, { color: "#2D7A4F" }]}>Would return</Text>
+                      </View>
+                    )}
+                    {rev.wouldReturnAlone === false && (
+                      <View style={styles.returnAlone}>
+                        <Text style={{ fontSize: 11 }}>👎</Text>
+                        <Text style={[styles.returnAloneText, { color: "#DC2626" }]}>Wouldn't return</Text>
+                      </View>
+                    )}
+                    {rev.wouldReturnAlone === null && (
+                      <View style={styles.returnAlone}>
+                        <Text style={{ fontSize: 11 }}>🤷🏾</Text>
+                        <Text style={[styles.returnAloneText, { color: "#888" }]}>Maybe</Text>
                       </View>
                     )}
                   </View>

@@ -52,7 +52,7 @@ export function useReviews(businessId: string) {
     async (
       rating: number,
       text: string,
-      wouldReturnAlone: boolean,
+      wouldReturnAlone: boolean | null,
       socialHandle?: string,
       socialPlatform?: string,
       businessName?: string,

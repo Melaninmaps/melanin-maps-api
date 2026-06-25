@@ -13,6 +13,7 @@ import {
   ScrollView,
 } from "react-native";
 import { useColors } from "@/hooks/useColors";
+import { COMMUNITY_RATINGS } from "@/components/RatingStars";
 
 const PLATFORMS = [
   { id: "instagram", label: "Instagram", icon: "logo-instagram" },
@@ -37,14 +38,14 @@ interface Props {
   businessName: string;
   businessId?: string;
   onClose: () => void;
-  onSubmit: (rating: number, text: string, wouldReturn: boolean, socialHandle?: string, socialPlatform?: string, videoUrl?: string, nonMinorityOwned?: boolean, communitySupport?: number, website?: string, location?: string, isAnonymous?: boolean, volunteerAsMentor?: boolean, nowHiringUrl?: string) => void;
+  onSubmit: (rating: number, text: string, wouldReturn: boolean | null, socialHandle?: string, socialPlatform?: string, videoUrl?: string, nonMinorityOwned?: boolean, communitySupport?: number, website?: string, location?: string, isAnonymous?: boolean, volunteerAsMentor?: boolean, nowHiringUrl?: string) => void;
 }
 
 export function WriteReviewModal({ visible, businessName, businessId, onClose, onSubmit }: Props) {
   const colors = useColors();
   const [rating, setRating] = useState(0);
   const [text, setText] = useState("");
-  const [wouldReturn, setWouldReturn] = useState<boolean | null>(null);
+  const [wouldReturn, setWouldReturn] = useState<"yes" | "maybe" | "no" | null>(null);
   const [socialHandle, setSocialHandle] = useState("");
   const [socialPlatform, setSocialPlatform] = useState<SocialPlatform | null>(null);
   const [videoLink, setVideoLink] = useState("");
@@ -93,10 +94,11 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
     const cleanVideoUrl = videoLink.trim() && isValidVideoUrl(videoLink) ? videoLink.trim() : undefined;
     const willMentor = nonMinorityOwned && recommendsAsEmployer === true && !isAnonymous && volunteerAsMentor;
     const cleanNowHiring = nonMinorityOwned && recommendsAsEmployer === true && nowHiringUrl.trim() ? nowHiringUrl.trim() : undefined;
+    const wouldReturnBool = wouldReturn === "yes" ? true : wouldReturn === "no" ? false : null;
     setInviteSent(hasInvite);
     setVolunteeredAsMentor(willMentor);
     setSubmitted(true);
-    onSubmit(rating, text, wouldReturn, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl, nonMinorityOwned, communitySupport > 0 && !nonMinorityOwned ? communitySupport : undefined, website.trim() || undefined, location.trim() || undefined, nonMinorityOwned ? isAnonymous : undefined, willMentor || undefined, cleanNowHiring);
+    onSubmit(rating, text, wouldReturnBool, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl, nonMinorityOwned, communitySupport > 0 && !nonMinorityOwned ? communitySupport : undefined, website.trim() || undefined, location.trim() || undefined, nonMinorityOwned ? isAnonymous : undefined, willMentor || undefined, cleanNowHiring);
     setTimeout(() => {
       reset();
       onClose();
@@ -145,52 +147,62 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
               <Text style={[styles.sub, { color: colors.mutedForeground }]}>{businessName}</Text>
 
               <Text style={[styles.label, { color: colors.foreground }]}>Your Rating</Text>
-              <View style={styles.stars}>
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <TouchableOpacity
-                    key={s}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setRating(s);
-                    }}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Feather
-                      name="star"
-                      size={34}
-                      color={s <= rating ? "#D4873A" : colors.border}
-                    />
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.ratingCards}>
+                {COMMUNITY_RATINGS.map((r) => {
+                  const selected = rating === r.level;
+                  const isCrown = r.level === 5;
+                  return (
+                    <TouchableOpacity
+                      key={r.level}
+                      style={[styles.ratingCard, {
+                        borderColor: selected ? colors.primary : colors.border,
+                        backgroundColor: selected ? colors.primary + "12" : colors.card,
+                      }]}
+                      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setRating(r.level); }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.ratingCardEmoji}>{r.display}</Text>
+                      <Text style={[styles.ratingCardLabel, {
+                        color: selected ? colors.primary : colors.foreground,
+                        fontFamily: selected && isCrown ? "Inter_700Bold" : "Inter_600SemiBold",
+                      }]}>{r.label}</Text>
+                      {selected && <Feather name="check-circle" size={16} color={colors.primary} />}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
 
-              <Text style={[styles.label, { color: colors.foreground }]}>Would you return alone?</Text>
+              <Text style={[styles.label, { color: colors.foreground }]}>Would you come back?</Text>
               <View style={styles.yesNo}>
                 <TouchableOpacity
-                  style={[
-                    styles.yesNoBtn,
-                    {
-                      borderColor: wouldReturn === true ? "#2D7A4F" : colors.border,
-                      backgroundColor: wouldReturn === true ? "#2D7A4F18" : colors.card,
-                    },
-                  ]}
-                  onPress={() => setWouldReturn(true)}
+                  style={[styles.yesNoBtn, {
+                    borderColor: wouldReturn === "yes" ? "#2D7A4F" : colors.border,
+                    backgroundColor: wouldReturn === "yes" ? "#2D7A4F18" : colors.card,
+                  }]}
+                  onPress={() => setWouldReturn("yes")}
                 >
-                  <Feather name="thumbs-up" size={18} color={wouldReturn === true ? "#2D7A4F" : colors.mutedForeground} />
-                  <Text style={[styles.yesNoText, { color: wouldReturn === true ? "#2D7A4F" : colors.foreground }]}>Yes</Text>
+                  <Text style={{ fontSize: 16 }}>👍</Text>
+                  <Text style={[styles.yesNoText, { color: wouldReturn === "yes" ? "#2D7A4F" : colors.foreground }]}>Yes</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[
-                    styles.yesNoBtn,
-                    {
-                      borderColor: wouldReturn === false ? "#DC2626" : colors.border,
-                      backgroundColor: wouldReturn === false ? "#DC262618" : colors.card,
-                    },
-                  ]}
-                  onPress={() => setWouldReturn(false)}
+                  style={[styles.yesNoBtn, {
+                    borderColor: wouldReturn === "maybe" ? colors.primary : colors.border,
+                    backgroundColor: wouldReturn === "maybe" ? colors.primary + "18" : colors.card,
+                  }]}
+                  onPress={() => setWouldReturn("maybe")}
                 >
-                  <Feather name="thumbs-down" size={18} color={wouldReturn === false ? "#DC2626" : colors.mutedForeground} />
-                  <Text style={[styles.yesNoText, { color: wouldReturn === false ? "#DC2626" : colors.foreground }]}>No</Text>
+                  <Text style={{ fontSize: 16 }}>🤷🏾</Text>
+                  <Text style={[styles.yesNoText, { color: wouldReturn === "maybe" ? colors.primary : colors.foreground }]}>Maybe</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.yesNoBtn, {
+                    borderColor: wouldReturn === "no" ? "#DC2626" : colors.border,
+                    backgroundColor: wouldReturn === "no" ? "#DC262618" : colors.card,
+                  }]}
+                  onPress={() => setWouldReturn("no")}
+                >
+                  <Text style={{ fontSize: 16 }}>👎</Text>
+                  <Text style={[styles.yesNoText, { color: wouldReturn === "no" ? "#DC2626" : colors.foreground }]}>No</Text>
                 </TouchableOpacity>
               </View>
 
@@ -231,11 +243,7 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
                         }}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       >
-                        <Feather
-                          name="star"
-                          size={34}
-                          color={s <= communitySupport ? colors.primary : colors.border}
-                        />
+                        <Text style={{ fontSize: 30, opacity: s <= communitySupport ? 1 : 0.25 }}>🤎</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -554,6 +562,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 10,
   },
+  ratingCards: {
+    gap: 8,
+    marginBottom: 24,
+  },
+  ratingCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+  },
+  ratingCardEmoji: {
+    fontSize: 20,
+    lineHeight: 26,
+    minWidth: 44,
+  },
+  ratingCardLabel: {
+    flex: 1,
+    fontSize: 15,
+  },
   stars: {
     flexDirection: "row",
     gap: 8,
@@ -561,22 +591,22 @@ const styles = StyleSheet.create({
   },
   yesNo: {
     flexDirection: "row",
-    gap: 12,
+    gap: 8,
     marginBottom: 24,
   },
   yesNoBtn: {
     flex: 1,
-    flexDirection: "row",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingVertical: 14,
+    gap: 4,
+    paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1.5,
   },
   yesNoText: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 15,
+    fontSize: 13,
   },
   input: {
     borderRadius: 12,

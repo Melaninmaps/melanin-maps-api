@@ -181,7 +181,7 @@ export default function BusinessDetailScreen() {
                       <Text style={[styles.reviewAuthor, { color: colors.foreground }]}>{rev.authorName ?? "Anonymous"}</Text>
                       <Text style={[styles.reviewTime, { color: colors.mutedForeground }]}>{timeAgo}</Text>
                     </View>
-                    <RatingStars rating={rev.rating} showCount={false} size={12} />
+                    <RatingStars rating={rev.rating} showCount={false} size={11} showLabel />
                   </View>
                   <Text style={[styles.reviewText, { color: colors.foreground }]}>{rev.body}</Text>
                 </View>
