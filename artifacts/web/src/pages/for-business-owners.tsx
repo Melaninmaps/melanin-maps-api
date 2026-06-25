@@ -36,6 +36,10 @@ export default function ForBusinessOwners() {
     city: "",
     website: "",
     email: "",
+    instagram: "",
+    facebook: "",
+    tiktok: "",
+    twitter: "",
     message: "",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -77,6 +81,10 @@ export default function ForBusinessOwners() {
             form.category ? `Category: ${form.category}` : "",
             form.city ? `City: ${form.city}` : "",
             form.website ? `Website: ${form.website}` : "",
+            form.instagram ? `Instagram: ${form.instagram}` : "",
+            form.facebook ? `Facebook: ${form.facebook}` : "",
+            form.tiktok ? `TikTok: ${form.tiktok}` : "",
+            form.twitter ? `X / Twitter: ${form.twitter}` : "",
             `Message: ${form.message}`,
           ].filter(Boolean).join("\n"),
         }),
@@ -276,6 +284,30 @@ export default function ForBusinessOwners() {
                     placeholder="https://yourbusiness.com"
                     className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B]/60"
                   />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-[#3A1F0E] mb-3">Social Media <span className="font-normal text-[#3A1F0E]/50">(optional — add any that apply)</span></label>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {[
+                    { name: "instagram", icon: "📸", placeholder: "@yourbusiness or profile URL", label: "Instagram" },
+                    { name: "facebook", icon: "📘", placeholder: "facebook.com/yourbusiness", label: "Facebook" },
+                    { name: "tiktok", icon: "🎵", placeholder: "@yourbusiness or profile URL", label: "TikTok" },
+                    { name: "twitter", icon: "𝕏", placeholder: "@yourbusiness", label: "X / Twitter" },
+                  ].map(({ name, icon, placeholder, label }) => (
+                    <div key={name} className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base leading-none select-none">{icon}</span>
+                      <input
+                        name={name}
+                        value={form[name as keyof typeof form]}
+                        onChange={handleChange}
+                        placeholder={placeholder}
+                        aria-label={label}
+                        className="w-full border border-[#3A1F0E]/15 rounded-xl pl-9 pr-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B]/60"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
 
