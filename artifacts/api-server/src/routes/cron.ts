@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import {
   db,
+  pool,
   usersTable,
   businessesTable,
   safetyCheckinsTable,
@@ -11,10 +12,20 @@ import {
   expertProfilesTable,
   pushTokensTable,
   notificationsTable,
+  savedPlacesTable,
+  businessProfileViewsTable,
+  marketplaceFeeConfigTable,
 } from "@workspace/db";
-import { and, isNotNull, lte, gt, eq, isNull, gte, inArray, or } from "drizzle-orm";
+import { and, isNotNull, lte, gt, eq, isNull, gte, inArray, or, count } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { sendTrialEndingSoon, sendTrialExpired, sendWeeklyDigest, sendCheckinOverdueEmail } from "../lib/email";
+import {
+  sendTrialEndingSoon,
+  sendTrialExpired,
+  sendWeeklyDigest,
+  sendCheckinOverdueEmail,
+  sendFoundingAnniversaryEmail,
+  type FoundingAnniversaryMetrics,
+} from "../lib/email";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
@@ -395,4 +406,156 @@ Return ONLY a JSON object with this exact shape:
   }
 });
 
+// ─── POST /cron/founding-anniversary ─────────────────────────────────────────
+// Runs daily. Finds founding businesses whose anniversary (month+day) matches
+// today, pulls their metrics, generates an AI fee-savings message, and sends
+// the annual anniversary email. Safe to run every day — only matching businesses
+// receive mail.
+router.post("/cron/founding-anniversary", async (req, res): Promise<void> => {
+  if (!verifyCronSecret(req, res)) return;
+  let sent = 0;
+  let failed = 0;
+  try {
+    // ── 1. Find founding businesses whose anniversary is today (not first year)
+    const { rows: foundingBizzes } = await pool.query<{
+      id: string;
+      name: string;
+      founding_number: number;
+      founding_granted_at: Date;
+      review_count: number;
+      rating: string | null;
+      submitted_by_id: string | null;
+      locked_fee: string | null;
+      business_status: string;
+      email: string | null;
+      first_name: string | null;
+      last_name: string | null;
+    }>(
+      `SELECT b.id, b.name, b.founding_number, b.founding_granted_at,
+              b.review_count, b.rating::text, b.submitted_by_id,
+              b.locked_fee::text, b.business_status,
+              u.email, u.first_name, u.last_name
+       FROM businesses b
+       LEFT JOIN users u ON u.id = b.submitted_by_id
+       WHERE b.founding_business = true
+         AND b.founding_granted_at IS NOT NULL
+         AND EXTRACT(MONTH FROM b.founding_granted_at) = EXTRACT(MONTH FROM CURRENT_DATE)
+         AND EXTRACT(DAY   FROM b.founding_granted_at) = EXTRACT(DAY   FROM CURRENT_DATE)
+         AND EXTRACT(YEAR  FROM b.founding_granted_at) < EXTRACT(YEAR  FROM CURRENT_DATE)`,
+    );
+
+    if (foundingBizzes.length === 0) {
+      res.json({ sent: 0, failed: 0, message: "No anniversaries today" });
+      return;
+    }
+
+    // ── 2. Load fee configs once (used for all businesses)
+    const feeConfigs = await db.select().from(marketplaceFeeConfigTable);
+
+    for (const biz of foundingBizzes) {
+      try {
+        if (!biz.email) continue;
+
+        const yearsActive = new Date().getFullYear() - new Date(biz.founding_granted_at).getFullYear();
+
+        // ── 3. Pull per-business metrics in parallel
+        const [viewsResult, savesResult] = await Promise.all([
+          db
+            .select({ total: count() })
+            .from(businessProfileViewsTable)
+            .where(eq(businessProfileViewsTable.businessId, biz.id)),
+          db
+            .select({ total: count() })
+            .from(savedPlacesTable)
+            .where(eq(savedPlacesTable.businessId, biz.id)),
+        ]);
+
+        const profileViews = viewsResult[0]?.total ?? 0;
+        const saves = savesResult[0]?.total ?? 0;
+        const reviews = biz.review_count ?? 0;
+        const rating = biz.rating ? parseFloat(biz.rating) : 0;
+
+        // ── 4. Compute fee rates
+        const tier = biz.business_status || "community";
+        const cfg = feeConfigs.find((c) => c.tier === tier);
+        const standardFeePercent = cfg ? Math.round(Number(cfg.standardFee) * 100) : 10;
+        const foundingFeePercent = biz.locked_fee
+          ? Math.round(Number(biz.locked_fee) * 100)
+          : cfg
+          ? Math.round(Number(cfg.foundingFee) * 100)
+          : 5;
+
+        // Estimate annual savings: fee diff × conservative $1,000 of marketplace activity per review
+        const estimatedVolume = Math.max(reviews * 1000, 5000); // at least $5k baseline
+        const feeDiff = (standardFeePercent - foundingFeePercent) / 100;
+        const feeSavedEst = parseFloat((estimatedVolume * feeDiff).toFixed(2));
+
+        // ── 5. Generate AI fee-savings message
+        let aiMessage = `Your ${foundingFeePercent}% founding rate — compared to the standard ${standardFeePercent}% — means every dollar you earn on the platform goes further. That's real money reinvested directly back into ${biz.name}.`;
+        try {
+          const completion = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            max_tokens: 120,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You write warm, celebratory 2-3 sentence messages for Black-owned business owners on their Founding Business anniversary. Tone: genuine pride, community love, business empowerment. Never use the word 'vibrant'. Be specific with numbers. End with a line that makes them feel seen.",
+              },
+              {
+                role: "user",
+                content: `Write an anniversary fee-savings message for ${biz.name} (${yearsActive}-year anniversary).
+Facts:
+- Profile views: ${profileViews.toLocaleString()}
+- Community saves: ${saves.toLocaleString()}
+- Reviews: ${reviews}, Avg rating: ${rating > 0 ? rating.toFixed(1) : "not yet rated"}
+- Founding fee: ${foundingFeePercent}% (vs standard ${standardFeePercent}%)
+- Estimated fee savings this year: $${feeSavedEst.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+
+Frame it as: "You had activity totaling [engagement], and your founding rate helped you reinvest approximately $${feeSavedEst.toFixed(0)} back into your business this year."
+Keep it under 75 words. Use their business name naturally.`,
+              },
+            ],
+          });
+          aiMessage = completion.choices[0]?.message?.content?.trim() ?? aiMessage;
+        } catch (aiErr) {
+          logger.warn({ aiErr, bizId: biz.id }, "AI message generation failed — using fallback");
+        }
+
+        // ── 6. Send the anniversary email
+        const metrics: FoundingAnniversaryMetrics = {
+          profileViews: Number(profileViews),
+          saves: Number(saves),
+          reviews,
+          rating,
+          foundingFeePercent,
+          standardFeePercent,
+          feeSavedEst,
+        };
+
+        await sendFoundingAnniversaryEmail(
+          biz.email,
+          biz.first_name,
+          biz.name,
+          biz.founding_number,
+          yearsActive,
+          metrics,
+          aiMessage,
+        );
+        sent++;
+      } catch (bizErr) {
+        logger.error({ bizErr, bizId: biz.id }, "Founding anniversary email failed for business");
+        failed++;
+      }
+    }
+
+    logger.info({ sent, failed, total: foundingBizzes.length }, "Founding anniversary cron completed");
+    res.json({ sent, failed, total: foundingBizzes.length });
+  } catch (err) {
+    logger.error({ err }, "Founding anniversary cron failed");
+    res.status(500).json({ error: "Cron job failed" });
+  }
+});
+
 export default router;
+

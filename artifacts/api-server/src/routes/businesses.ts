@@ -3,6 +3,7 @@ import { db, businessesTable, businessProfileViewsTable, userSettingsTable, user
 import { eq, and, or, ilike, desc, sql, gt } from "drizzle-orm";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
+import { sendFoundingWelcomeEmail } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -468,7 +469,7 @@ router.patch("/admin/businesses/:id/founding-status", async (req: Request, res: 
     if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
     res.json(biz);
 
-    // Async: send founding agreement via DocuSign when founding is granted
+    // Async post-approval tasks: welcome email + DocuSign agreement
     if (founding && biz.foundingNumber) {
       void (async () => {
         try {
@@ -480,30 +481,39 @@ router.patch("/admin/businesses/:id/founding-status", async (req: Request, res: 
             .select({ email: usersTable.email, firstName: usersTable.firstName, lastName: usersTable.lastName })
             .from(usersTable).where(eq(usersTable.id, fullBiz.submittedById)).limit(1);
           if (!owner?.email) return;
-          const ownerName = [owner.firstName, owner.lastName].filter(Boolean).join(" ") || owner.email;
-          const domain = process.env.REPLIT_DOMAINS?.split(",")[0] ?? "";
-          const returnUrl = `https://${domain}/api/docusign/signed?type=founding_agreement&businessId=${biz.id}`;
-          const { envelopeId } = await createFoundingAgreementEnvelope({
-            businessId: biz.id,
-            businessName: biz.name,
-            ownerName,
-            foundingNumber: biz.foundingNumber!,
-            signerEmail: owner.email,
-            clientUserId: fullBiz.submittedById,
-            returnUrl,
-          });
-          // Persist so webhook and status polling can look it up
-          await db.insert(docusignEnvelopesTable).values({
-            envelopeId,
-            businessId: biz.id,
-            userId: fullBiz.submittedById,
-            type: "founding_agreement",
-            status: "sent",
-            signerEmail: owner.email,
-            signerName: ownerName,
-          }).onConflictDoNothing();
-        } catch (dsErr) {
-          req.log.error({ dsErr }, "DocuSign founding agreement async trigger failed — non-fatal");
+
+          // Send founding welcome email immediately — non-fatal, does not block DocuSign
+          void sendFoundingWelcomeEmail(owner.email, owner.firstName, biz.name, biz.foundingNumber!)
+            .catch((emailErr: unknown) => req.log.error({ emailErr }, "Founding welcome email failed — non-fatal"));
+
+          // DocuSign founding agreement — separate try/catch so email always fires
+          try {
+            const ownerName = [owner.firstName, owner.lastName].filter(Boolean).join(" ") || owner.email;
+            const domain = process.env.REPLIT_DOMAINS?.split(",")[0] ?? "";
+            const returnUrl = `https://${domain}/api/docusign/signed?type=founding_agreement&businessId=${biz.id}`;
+            const { envelopeId } = await createFoundingAgreementEnvelope({
+              businessId: biz.id,
+              businessName: biz.name,
+              ownerName,
+              foundingNumber: biz.foundingNumber!,
+              signerEmail: owner.email,
+              clientUserId: fullBiz.submittedById,
+              returnUrl,
+            });
+            await db.insert(docusignEnvelopesTable).values({
+              envelopeId,
+              businessId: biz.id,
+              userId: fullBiz.submittedById,
+              type: "founding_agreement",
+              status: "sent",
+              signerEmail: owner.email,
+              signerName: ownerName,
+            }).onConflictDoNothing();
+          } catch (dsErr) {
+            req.log.error({ dsErr }, "DocuSign founding agreement async trigger failed — non-fatal");
+          }
+        } catch (err) {
+          req.log.error({ err }, "Founding async post-approval tasks failed — non-fatal");
         }
       })();
     }

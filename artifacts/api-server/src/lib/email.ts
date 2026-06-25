@@ -694,3 +694,321 @@ export async function sendWeeklyDigest(
     `,
   });
 }
+
+// ── Founding Business Welcome Email ──────────────────────────────────────────
+export async function sendFoundingWelcomeEmail(
+  to: string,
+  firstName: string | null,
+  businessName: string,
+  foundingNumber: number,
+) {
+  if (!resend) { log("founding welcome email"); return; }
+  const name = firstName ?? "there";
+  const badge = String(foundingNumber).padStart(3, "0");
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: "🎉 Welcome! You're Officially a Founding Business with Mapping with Melanin™",
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:0;border-radius:16px;overflow:hidden">
+
+        <!-- Hero Banner -->
+        <div style="background:linear-gradient(135deg,#2B1507 0%,#442A19 60%,#CA922B 100%);padding:48px 32px 40px;text-align:center">
+          <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:24px;display:block;margin-left:auto;margin-right:auto" />
+          <div style="display:inline-block;background:rgba(202,146,43,0.25);border:1px solid #CA922B;border-radius:50px;padding:6px 20px;margin-bottom:16px">
+            <p style="color:#CA922B;font-size:12px;font-weight:700;margin:0;letter-spacing:2px;text-transform:uppercase">Founding Business #${badge}</p>
+          </div>
+          <h1 style="font-size:30px;color:#F5EBD8;font-weight:700;margin:0 0 12px;line-height:1.3">
+            Congratulations, ${name}! 🎉
+          </h1>
+          <p style="color:#F5EBD8;font-size:17px;margin:0;opacity:0.85;line-height:1.5">
+            <strong>${businessName}</strong> is officially a<br/>Founding Business on Mapping with Melanin™
+          </p>
+        </div>
+
+        <!-- Intro -->
+        <div style="padding:36px 32px 0">
+          <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 16px">
+            We're excited to officially welcome <strong>${businessName}</strong> as one of our Founding Businesses on Mapping with Melanin™.
+          </p>
+          <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 16px">
+            This is more than a membership — it's an opportunity to help shape a platform built to connect communities, support Black-owned businesses, and make discovering trusted businesses easier than ever.
+          </p>
+          <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 28px">
+            As one of our Founding Businesses, you're joining an exclusive group of early partners whose feedback and participation will help influence the future of the platform.
+          </p>
+        </div>
+
+        <!-- Benefits Block -->
+        <div style="margin:0 32px 28px;background:#2B1507;border-radius:16px;overflow:hidden">
+          <div style="padding:22px 24px 16px;border-bottom:1px solid rgba(245,235,216,0.1)">
+            <p style="color:#CA922B;font-size:12px;font-weight:700;margin:0;letter-spacing:2px;text-transform:uppercase">Your Founding Business Benefits</p>
+          </div>
+          <table style="width:100%;border-collapse:collapse">
+            <tr>
+              <td style="padding:16px 24px;border-bottom:1px solid rgba(245,235,216,0.08);vertical-align:top;width:36px">
+                <span style="font-size:22px">🏆</span>
+              </td>
+              <td style="padding:16px 24px 16px 0;border-bottom:1px solid rgba(245,235,216,0.08)">
+                <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 4px">Founding Business Badge</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.65;line-height:1.5">Show customers that you helped build our community from the very beginning.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 24px;border-bottom:1px solid rgba(245,235,216,0.08);vertical-align:top">
+                <span style="font-size:22px">💰</span>
+              </td>
+              <td style="padding:16px 24px 16px 0;border-bottom:1px solid rgba(245,235,216,0.08)">
+                <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 4px">Locked Marketplace Fees</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.65;line-height:1.5">Your exclusive Founding marketplace fee has been locked for three years, giving your business long-term savings as we continue to grow.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 24px;border-bottom:1px solid rgba(245,235,216,0.08);vertical-align:top">
+                <span style="font-size:22px">👑</span>
+              </td>
+              <td style="padding:16px 24px 16px 0;border-bottom:1px solid rgba(245,235,216,0.08)">
+                <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 4px">Six Months of Premium Business Membership</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.65;line-height:1.5">Enjoy premium tools and features at no additional cost during your introductory period.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 24px;border-bottom:1px solid rgba(245,235,216,0.08);vertical-align:top">
+                <span style="font-size:22px">🚀</span>
+              </td>
+              <td style="padding:16px 24px 16px 0;border-bottom:1px solid rgba(245,235,216,0.08)">
+                <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 4px">Priority Onboarding</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.65;line-height:1.5">Our team will prioritize your onboarding experience to help you get the most out of the platform.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 24px;border-bottom:1px solid rgba(245,235,216,0.08);vertical-align:top">
+                <span style="font-size:22px">🧠</span>
+              </td>
+              <td style="padding:16px 24px 16px 0;border-bottom:1px solid rgba(245,235,216,0.08)">
+                <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 4px">Early Access</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.65;line-height:1.5">Be among the first to experience new features, tools, and improvements before they're released to the public.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 24px;vertical-align:top">
+                <span style="font-size:22px">🌍</span>
+              </td>
+              <td style="padding:16px 24px 16px 0">
+                <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 4px">Founding Business Recognition</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.65;line-height:1.5">Your business will be recognized throughout the platform as one of the companies that believed in Mapping with Melanin™ from the very beginning.</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- What's Next -->
+        <div style="padding:0 32px 28px">
+          <p style="color:#2B1507;font-size:19px;font-weight:700;margin:0 0 16px">What's Next?</p>
+          <p style="color:#3A1F0E;font-size:15px;line-height:1.7;margin:0 0 16px">
+            Over the coming weeks you'll receive onboarding guidance, platform updates, and tips to help you maximize your visibility and connect with customers across the Mapping with Melanin™ community.
+          </p>
+          <p style="color:#2B1507;font-size:15px;font-weight:700;margin:0 0 12px">We also encourage you to:</p>
+          <table style="width:100%;border-collapse:collapse">
+            ${[
+              "Complete your business profile.",
+              "Upload your logo, photos, and videos.",
+              "Share your story and what makes your business unique.",
+              "Invite your customers to follow your business and leave reviews.",
+              "Explore upcoming features designed to help your business grow.",
+            ].map(item => `
+            <tr>
+              <td style="padding:6px 0;vertical-align:top;width:24px">
+                <span style="color:#2D7A4F;font-weight:700;font-size:15px">✔</span>
+              </td>
+              <td style="padding:6px 0 6px 8px">
+                <p style="color:#3A1F0E;font-size:15px;margin:0;line-height:1.5">${item}</p>
+              </td>
+            </tr>`).join("")}
+          </table>
+        </div>
+
+        <!-- CTA -->
+        <div style="text-align:center;padding:0 32px 32px">
+          <a href="https://mappingwithmelanin.com/business-dashboard" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:16px 44px;border-radius:50px;text-decoration:none;letter-spacing:0.3px">
+            Go to Your Business Dashboard →
+          </a>
+        </div>
+
+        <!-- Thank You -->
+        <div style="background:#2B1507;border-radius:0 0 16px 16px;padding:32px">
+          <p style="color:#CA922B;font-size:12px;font-weight:700;margin:0 0 16px;letter-spacing:2px;text-transform:uppercase">Thank You</p>
+          <p style="color:#F5EBD8;font-size:15px;line-height:1.7;margin:0 0 16px;opacity:0.85">
+            Thank you for believing in our mission. We're building more than a marketplace — we're building a trusted community where businesses can thrive, customers can discover with confidence, and meaningful connections can flourish.
+          </p>
+          <p style="color:#F5EBD8;font-size:15px;line-height:1.7;margin:0 0 24px;opacity:0.85">
+            We're honored to have your business as one of our Founding Businesses and look forward to growing together. Welcome to the Mapping with Melanin™ family.
+          </p>
+          <p style="color:#CA922B;font-size:16px;font-weight:700;font-style:italic;margin:0 0 6px">Map Your Life. Connect Deeper.™</p>
+          <p style="color:#F5EBD8;font-size:14px;margin:0 0 4px;opacity:0.8">The Mapping With Melanin™ Team</p>
+          <p style="color:#F5EBD8;font-size:12px;opacity:0.45;margin:0">Melanin Maps LLC · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a></p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+// ── Founding Business Anniversary Email ───────────────────────────────────────
+export interface FoundingAnniversaryMetrics {
+  profileViews: number;
+  saves: number;
+  reviews: number;
+  rating: number;
+  foundingFeePercent: number;   // e.g. 5 (meaning 5%)
+  standardFeePercent: number;   // e.g. 10
+  feeSavedEst: number;          // estimated $ saved (float, 2dp)
+}
+
+export async function sendFoundingAnniversaryEmail(
+  to: string,
+  firstName: string | null,
+  businessName: string,
+  foundingNumber: number,
+  yearsActive: number,
+  metrics: FoundingAnniversaryMetrics,
+  aiMessage: string,
+) {
+  if (!resend) { log("founding anniversary email"); return; }
+  const name = firstName ?? "there";
+  const badge = String(foundingNumber).padStart(3, "0");
+
+  const ordinalSuffix = (n: number) => {
+    const s = ["th","st","nd","rd"];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
+  };
+
+  const fmtNum = (n: number) => n.toLocaleString("en-US");
+  const fmtUSD = (n: number) => "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `🎂 Happy ${ordinalSuffix(yearsActive)} Founding Anniversary, ${businessName}!`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:0;border-radius:16px;overflow:hidden">
+
+        <!-- Anniversary Hero -->
+        <div style="background:linear-gradient(135deg,#2B1507 0%,#442A19 55%,#CA922B 100%);padding:48px 32px 40px;text-align:center">
+          <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:20px;display:block;margin-left:auto;margin-right:auto" />
+          <div style="font-size:48px;margin-bottom:12px">🎂</div>
+          <div style="display:inline-block;background:rgba(202,146,43,0.25);border:1px solid #CA922B;border-radius:50px;padding:6px 20px;margin-bottom:16px">
+            <p style="color:#CA922B;font-size:12px;font-weight:700;margin:0;letter-spacing:2px;text-transform:uppercase">Founding Business #${badge} · Year ${yearsActive}</p>
+          </div>
+          <h1 style="font-size:28px;color:#F5EBD8;font-weight:700;margin:0 0 10px;line-height:1.3">
+            Happy ${ordinalSuffix(yearsActive)} Anniversary, ${name}!
+          </h1>
+          <p style="color:#F5EBD8;font-size:16px;margin:0;opacity:0.85;line-height:1.5">
+            ${yearsActive} year${yearsActive !== 1 ? "s" : ""} of building something meaningful together.
+          </p>
+        </div>
+
+        <!-- Milestone Stats -->
+        <div style="padding:32px 32px 0">
+          <p style="color:#2B1507;font-size:19px;font-weight:700;margin:0 0 16px;text-align:center">Your Impact at a Glance</p>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:24px">
+            <table style="width:100%;border-collapse:collapse">
+              <tr>
+                <td style="width:48%;padding:0 6px 12px 0;vertical-align:top">
+                  <div style="background:#2B1507;border-radius:14px;padding:20px;text-align:center">
+                    <p style="color:#CA922B;font-size:28px;font-weight:700;margin:0 0 4px">${fmtNum(metrics.profileViews)}</p>
+                    <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.75">Profile Views</p>
+                  </div>
+                </td>
+                <td style="width:48%;padding:0 0 12px 6px;vertical-align:top">
+                  <div style="background:#2B1507;border-radius:14px;padding:20px;text-align:center">
+                    <p style="color:#CA922B;font-size:28px;font-weight:700;margin:0 0 4px">${fmtNum(metrics.saves)}</p>
+                    <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.75">Community Saves</p>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="width:48%;padding:0 6px 0 0;vertical-align:top">
+                  <div style="background:#2B1507;border-radius:14px;padding:20px;text-align:center">
+                    <p style="color:#CA922B;font-size:28px;font-weight:700;margin:0 0 4px">${fmtNum(metrics.reviews)}</p>
+                    <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.75">Reviews Received</p>
+                  </div>
+                </td>
+                <td style="width:48%;padding:0 0 0 6px;vertical-align:top">
+                  <div style="background:#2B1507;border-radius:14px;padding:20px;text-align:center">
+                    <p style="color:#CA922B;font-size:28px;font-weight:700;margin:0 0 4px">${metrics.rating > 0 ? metrics.rating.toFixed(1) + "★" : "—"}</p>
+                    <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.75">Avg Rating</p>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- AI Fee Savings Card -->
+        <div style="margin:0 32px 28px;background:linear-gradient(135deg,#2D7A4F,#1A5C38);border-radius:16px;padding:28px">
+          <p style="color:#A8F0C6;font-size:12px;font-weight:700;margin:0 0 8px;letter-spacing:2px;text-transform:uppercase">💰 Your Founding Rate Reinvestment</p>
+          <p style="color:#F5EBD8;font-size:15px;line-height:1.7;margin:0 0 20px">${aiMessage}</p>
+          <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:16px 20px;display:flex;justify-content:space-between">
+            <table style="width:100%;border-collapse:collapse">
+              <tr>
+                <td style="text-align:center;padding:0 12px 0 0;border-right:1px solid rgba(245,235,216,0.15)">
+                  <p style="color:#A8F0C6;font-size:22px;font-weight:700;margin:0 0 4px">${metrics.foundingFeePercent}%</p>
+                  <p style="color:#F5EBD8;font-size:11px;margin:0;opacity:0.6">Your Locked Rate</p>
+                </td>
+                <td style="text-align:center;padding:0 12px;border-right:1px solid rgba(245,235,216,0.15)">
+                  <p style="color:#F5EBD8;font-size:22px;font-weight:700;margin:0 0 4px;opacity:0.45;text-decoration:line-through">${metrics.standardFeePercent}%</p>
+                  <p style="color:#F5EBD8;font-size:11px;margin:0;opacity:0.45">Standard Rate</p>
+                </td>
+                <td style="text-align:center;padding:0 0 0 12px">
+                  <p style="color:#A8F0C6;font-size:22px;font-weight:700;margin:0 0 4px">${fmtUSD(metrics.feeSavedEst)}</p>
+                  <p style="color:#F5EBD8;font-size:11px;margin:0;opacity:0.6">Noted Savings</p>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- Founding Milestones Reminder -->
+        <div style="padding:0 32px 28px">
+          <p style="color:#2B1507;font-size:19px;font-weight:700;margin:0 0 16px">Still Going Strong — Your Founding Benefits</p>
+          <div style="background:#2B1507;border-radius:14px;padding:20px 24px">
+            ${[
+              ["🏆","Founding Business Badge","Displayed on your profile for all to see."],
+              ["💰","Locked Fee Rate","Your ${metrics.foundingFeePercent}% rate stays locked. No surprises."],
+              ["🧠","Early Access","You'll be among the first to experience every new feature."],
+              ["🌍","Founding Recognition","You believed in this vision before anyone else — and we don't forget it."],
+            ].map(([icon, title, desc]) => `
+            <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px">
+              <span style="font-size:20px;flex-shrink:0">${icon}</span>
+              <div>
+                <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 3px">${title}</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.65;line-height:1.5">${desc}</p>
+              </div>
+            </div>`).join("")}
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div style="text-align:center;padding:0 32px 36px">
+          <a href="https://mappingwithmelanin.com/business-dashboard" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:16px 44px;border-radius:50px;text-decoration:none;letter-spacing:0.3px">
+            Explore Your Dashboard →
+          </a>
+          <p style="color:#3A1F0E;font-size:13px;margin:16px 0 0;opacity:0.6">
+            Update your profile · Discover new features · Connect with your community
+          </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="background:#2B1507;border-radius:0 0 16px 16px;padding:28px 32px">
+          <p style="color:#F5EBD8;font-size:15px;line-height:1.7;margin:0 0 16px;opacity:0.85">
+            Thank you for ${yearsActive} year${yearsActive !== 1 ? "s" : ""} of trust, loyalty, and partnership. We're building this for you — and with you.
+          </p>
+          <p style="color:#CA922B;font-size:16px;font-weight:700;font-style:italic;margin:0 0 6px">Map Your Life. Connect Deeper.™</p>
+          <p style="color:#F5EBD8;font-size:14px;margin:0 0 4px;opacity:0.8">The Mapping With Melanin™ Team</p>
+          <p style="color:#F5EBD8;font-size:12px;opacity:0.45;margin:0">Melanin Maps LLC · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a> · <a href="https://mappingwithmelanin.com/unsubscribe" style="color:#CA922B">Unsubscribe</a></p>
+        </div>
+      </div>
+    `,
+  });
+}
