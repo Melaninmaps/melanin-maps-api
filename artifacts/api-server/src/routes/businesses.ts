@@ -118,6 +118,49 @@ router.get("/businesses/mine", async (req: any, res: Response) => {
   }
 });
 
+router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const VALID_CATEGORIES = [
+    "Food & Beverage", "Shopping & Retail", "Beauty & Personal Care",
+    "Health & Wellness", "Professional Services", "Home Services",
+    "Automotive", "Real Estate & Housing", "Technology", "Creative Services",
+    "Events & Entertainment", "Travel & Hospitality", "Family & Education",
+    "Pet Services", "Community & Nonprofit",
+  ];
+
+  const { name, category, description, phone, website, hours } = req.body as {
+    name?: string; category?: string; description?: string;
+    phone?: string | null; website?: string | null; hours?: string | null;
+  };
+
+  if (category && !VALID_CATEGORIES.includes(category)) {
+    res.status(400).json({ error: "Invalid category" }); return;
+  }
+
+  const updates: Record<string, unknown> = { updatedAt: new Date() };
+  if (name?.trim()) updates.name = name.trim();
+  if (category) { updates.category = category; updates.subcategory = category; }
+  if (description !== undefined) updates.description = description.trim();
+  if (phone !== undefined) updates.phone = phone?.trim() || null;
+  if (website !== undefined) updates.website = website?.trim() || null;
+  if (hours !== undefined) updates.hours = hours?.trim() || null;
+
+  try {
+    const [updated] = await db
+      .update(businessesTable)
+      .set(updates)
+      .where(eq(businessesTable.submittedById, String(userId)))
+      .returning();
+    if (!updated) { res.status(404).json({ error: "Business not found" }); return; }
+    res.json({ business: updated });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update business profile");
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
 router.get("/businesses/:id", async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);

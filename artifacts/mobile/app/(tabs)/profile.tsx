@@ -41,7 +41,7 @@ const SETTINGS = [
   { icon: "bell" as const, label: "Notifications", sub: "Manage alerts and updates", route: "/notifications-settings" as const },
   { icon: "shield" as const, label: "Privacy & Safety", sub: "Control your data and visibility", route: "/privacy" as const },
   { icon: "award" as const, label: "Membership", sub: "Explore (Free) — upgrade anytime", route: "/membership" as const },
-  { icon: "bar-chart-2" as const, label: "Business Dashboard", sub: "Manage your listing", route: "/business-dashboard" as const },
+  { icon: "briefcase" as const, label: "Business Admin", sub: "Manage your listing, category & profile", route: "/business-owner" as const },
   { icon: "share-2" as const, label: "Referral Program", sub: "Invite friends, earn rewards", route: "/referral" as const },
   { icon: "users" as const, label: "Mentorship Network", sub: "Connect with mentors & peers", route: "/mentorship" as const },
   { icon: "tag" as const, label: "Affiliate Partner Discounts", sub: "Hotels, flights & travel perks", route: "/affiliate" as const },
