@@ -58,11 +58,15 @@ router.get("/businesses/mine/broadcast-quota", async (req: Request, res: Respons
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
 
   const [biz] = await db
-    .select({ id: businessesTable.id, marketplaceTier: businessesTable.marketplaceTier })
+    .select({ id: businessesTable.id, marketplaceTier: businessesTable.marketplaceTier, verified: businessesTable.verified })
     .from(businessesTable)
     .where(eq(businessesTable.submittedById, req.user.id))
     .limit(1);
   if (!biz) { res.status(404).json({ error: "No business found" }); return; }
+  if (!biz.verified) {
+    res.status(403).json({ error: "Broadcasts are only available to verified businesses.", code: "unverified" });
+    return;
+  }
 
   const quota = await getQuotaInfo(biz.id, biz.marketplaceTier ?? "free", false);
   res.json({ ...quota, tier: biz.marketplaceTier ?? "free" });
@@ -73,11 +77,15 @@ router.get("/businesses/mine/broadcasts", async (req: Request, res: Response) =>
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
 
   const [biz] = await db
-    .select({ id: businessesTable.id, marketplaceTier: businessesTable.marketplaceTier })
+    .select({ id: businessesTable.id, marketplaceTier: businessesTable.marketplaceTier, verified: businessesTable.verified })
     .from(businessesTable)
     .where(eq(businessesTable.submittedById, req.user.id))
     .limit(1);
   if (!biz) { res.status(404).json({ error: "No business found" }); return; }
+  if (!biz.verified) {
+    res.status(403).json({ error: "Broadcasts are only available to verified businesses.", code: "unverified" });
+    return;
+  }
 
   const broadcasts = await db
     .select()
@@ -105,11 +113,15 @@ router.post("/businesses/mine/broadcasts", async (req: Request, res: Response) =
   if (body.length > 1000) { res.status(400).json({ error: "body max 1000 chars" }); return; }
 
   const [biz] = await db
-    .select({ id: businessesTable.id, name: businessesTable.name, marketplaceTier: businessesTable.marketplaceTier })
+    .select({ id: businessesTable.id, name: businessesTable.name, marketplaceTier: businessesTable.marketplaceTier, verified: businessesTable.verified })
     .from(businessesTable)
     .where(eq(businessesTable.submittedById, req.user.id))
     .limit(1);
   if (!biz) { res.status(404).json({ error: "No business found" }); return; }
+  if (!biz.verified) {
+    res.status(403).json({ error: "Broadcasts are only available to verified businesses.", code: "unverified" });
+    return;
+  }
 
   const isEmergency = type === "emergency";
   const quota = await getQuotaInfo(biz.id, biz.marketplaceTier ?? "free", isEmergency);

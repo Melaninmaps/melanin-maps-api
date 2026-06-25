@@ -69,6 +69,7 @@ export default function BroadcastsScreen() {
   const [tab, setTab] = useState<"compose" | "history">("compose");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [unverified, setUnverified] = useState(false);
 
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
   const [quota, setQuota] = useState<Quota | null>(null);
@@ -84,6 +85,10 @@ export default function BroadcastsScreen() {
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
       const res = await fetch(`${getApiBase()}/api/businesses/mine/broadcasts`, { headers });
+      if (res.status === 403) {
+        setUnverified(true);
+        return;
+      }
       if (res.ok) {
         const data = await res.json() as { broadcasts: Broadcast[]; quota: Quota };
         setBroadcasts(data.broadcasts);
@@ -178,6 +183,28 @@ export default function BroadcastsScreen() {
       <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
         {loading ? (
           <ActivityIndicator color={colors.primary} style={{ marginTop: 60 }} />
+        ) : unverified ? (
+          <View style={styles.gateCard}>
+            <Text style={{ fontSize: 48, textAlign: "center" }}>🔒</Text>
+            <Text style={[styles.gateTitle, { color: colors.foreground }]}>Verification Required</Text>
+            <Text style={[styles.gateSub, { color: colors.mutedForeground }]}>
+              Broadcasts are only available to verified businesses. Verification protects our community by ensuring only trusted, confirmed business owners can send push notifications to followers.
+            </Text>
+            <View style={[styles.gateSteps, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.gateStepTitle, { color: colors.foreground }]}>How to get verified:</Text>
+              <Text style={[styles.gateStep, { color: colors.mutedForeground }]}>✅ Complete your business profile</Text>
+              <Text style={[styles.gateStep, { color: colors.mutedForeground }]}>✅ Fill in your Business Identity</Text>
+              <Text style={[styles.gateStep, { color: colors.mutedForeground }]}>📋 Submit a verification request to our team</Text>
+              <Text style={[styles.gateStep, { color: colors.mutedForeground }]}>⏱ Typical review: 2–5 business days</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.gateBtn, { backgroundColor: colors.primary }]}
+              onPress={() => router.push("/business-owner/identity" as never)}
+            >
+              <Feather name="user-check" size={16} color="#FFF" />
+              <Text style={styles.gateBtnTxt}>Complete Business Identity</Text>
+            </TouchableOpacity>
+          </View>
         ) : tab === "compose" ? (
           <>
             {/* Quota card */}
@@ -362,6 +389,15 @@ const styles = StyleSheet.create({
 
   sendBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 16, borderRadius: 14, marginTop: 8 },
   sendBtnTxt: { color: "#FFF", fontWeight: "700", fontSize: 16 },
+
+  gateCard: { alignItems: "center", paddingTop: 48, paddingHorizontal: 8, gap: 14 },
+  gateTitle: { fontSize: 22, fontWeight: "800", textAlign: "center" },
+  gateSub: { fontSize: 14, lineHeight: 21, textAlign: "center" },
+  gateSteps: { width: "100%", borderRadius: 14, borderWidth: 1, padding: 16, gap: 8 },
+  gateStepTitle: { fontSize: 14, fontWeight: "700", marginBottom: 4 },
+  gateStep: { fontSize: 13, lineHeight: 20 },
+  gateBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14, marginTop: 4 },
+  gateBtnTxt: { color: "#FFF", fontWeight: "700", fontSize: 15 },
 
   empty: { alignItems: "center", paddingTop: 60, gap: 10 },
   emptyTitle: { fontSize: 18, fontWeight: "700" },
