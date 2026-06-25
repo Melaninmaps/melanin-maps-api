@@ -6,23 +6,41 @@ import { getUncachableStripeClient } from "../stripeClient";
 const router: IRouter = Router();
 
 /**
- * Flat-tier marketplace fees:
- *   Free tier     → 6%
- *   Growth tier   → 5%
- *   Premium tier  → 3%
+ * Marketplace fee model — tiered by membership + volume modifiers:
+ *
+ * Membership tier rates:
+ *   Community (free) → 10%
+ *   Growth           → 8%
+ *   Premium          → 6%
+ *   Enterprise       → 4%
+ *
+ * Volume-based caps (applied on top of tier rate):
+ *   Under $25  → capped at 5%  (micro-transaction protection)
+ *   $25–$250   → tier rate applies as-is
+ *   Over $250  → capped at 6%  (large-transaction protection)
  *
  * Founding businesses (first 500) pay a flat 3% for their first 3 years,
  * then fall into the standard tier fee for their marketplace tier.
  *
  * totalCents        — full transaction total (unit price × quantity) in cents
- * tier              — business marketplace tier (free | growth | premium)
+ * tier              — business marketplace tier (free | growth | premium | enterprise)
  * foundingBusiness  — whether the business has founding status
  * foundingGrantedAt — timestamp when founding status was granted
  * returns the fee amount in cents, rounded to the nearest cent
  */
-export const TIER_FEES: Record<string, number> = { free: 0.06, growth: 0.05, premium: 0.03 };
+export const TIER_FEES: Record<string, number> = {
+  free: 0.10,
+  growth: 0.08,
+  premium: 0.06,
+  enterprise: 0.04,
+};
 export const FOUNDING_RATE = 0.03;
 export const FOUNDING_WINDOW_MS = 3 * 365.25 * 24 * 60 * 60 * 1000; // 3 years in ms
+
+const MICRO_THRESHOLD_CENTS = 2500;   // $25 — micro-transaction cap applies below
+const LARGE_THRESHOLD_CENTS = 25000;  // $250 — large-transaction cap applies above
+const MICRO_CAP_RATE = 0.05;          // 5% max for micro-transactions
+const LARGE_CAP_RATE = 0.06;          // 6% max for large transactions
 
 function platformFee(
   totalCents: number,
@@ -36,7 +54,14 @@ function platformFee(
       return Math.round(totalCents * FOUNDING_RATE);
     }
   }
-  return Math.round(totalCents * (TIER_FEES[tier] ?? TIER_FEES.free));
+  const tierRate = TIER_FEES[tier] ?? TIER_FEES.free;
+  let effectiveRate = tierRate;
+  if (totalCents < MICRO_THRESHOLD_CENTS) {
+    effectiveRate = Math.min(tierRate, MICRO_CAP_RATE);
+  } else if (totalCents > LARGE_THRESHOLD_CENTS) {
+    effectiveRate = Math.min(tierRate, LARGE_CAP_RATE);
+  }
+  return Math.round(totalCents * effectiveRate);
 }
 
 async function requireBusinessOwner(req: Request, res: Response, businessId: string): Promise<typeof businessesTable.$inferSelect | null> {

@@ -99,7 +99,7 @@ function sellerAgreementHtml(businessName: string, ownerName: string): string {
 
 <h4>3. Marketplace Fees</h4>
 <p>Platform fees are deducted automatically per transaction by seller tier:<br>
-&bull; Free Tier — 6% &bull; Growth Tier — 5% &bull; Premium Tier — 3%<br>
+&bull; Community (Free) — 10% &bull; Growth — 8% &bull; Premium — 6% &bull; Enterprise — 4%<br>
 Founding Business members retain their locked introductory rate for their 3-year guarantee period.</p>
 
 <h4>4. Payouts</h4>

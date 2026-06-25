@@ -115,7 +115,7 @@ const BUSINESS_PLANS: Plan[] = [
     name: "Community Business",
     tagline: "Get discovered.",
     badge: null,
-    fee: "6% Marketplace Fee",
+    fee: "10% Marketplace Fee",
     monthlyPrice: 0,
     annualTotal: 0,
     color: "#8B7355",
@@ -144,7 +144,7 @@ const BUSINESS_PLANS: Plan[] = [
     stripeKey: "Growth Business",
     tagline: "Grow your audience.",
     badge: "Recommended",
-    fee: "5% Marketplace Fee",
+    fee: "8% Marketplace Fee",
     monthlyPrice: 29,
     annualTotal: 290,
     color: "#3B1F0E",
@@ -174,7 +174,7 @@ const BUSINESS_PLANS: Plan[] = [
     stripeKey: "Premium Business",
     tagline: "Scale your business.",
     badge: "Full Access",
-    fee: "3% Marketplace Fee",
+    fee: "6% Marketplace Fee",
     monthlyPrice: 79,
     annualTotal: 790,
     color: "#1A0A00",
@@ -195,6 +195,32 @@ const BUSINESS_PLANS: Plan[] = [
       "Premium badge",
     ],
     cta: "Start Free Trial",
+    ctaActive: true,
+  },
+  {
+    id: "enterprise_business",
+    emoji: "🏛️",
+    name: "Enterprise Partner",
+    tagline: "Built for community leaders.",
+    badge: "Enterprise",
+    fee: "4% Marketplace Fee",
+    monthlyPrice: 199,
+    annualTotal: 1990,
+    color: "#0A0A0A",
+    bg: "#0A0A0A",
+    features: [
+      "Everything in Premium Business",
+      "Dedicated account manager",
+      "Custom analytics & reporting",
+      "API access for integrations",
+      "White-glove onboarding",
+      "Featured homepage placement",
+      "Custom promotional campaigns",
+      "Priority fraud & dispute support",
+      "Quarterly business reviews",
+      "Enterprise badge",
+    ],
+    cta: "Contact Sales",
     ctaActive: true,
   },
 ];
@@ -218,6 +244,10 @@ export default function MembershipScreen() {
     if (plan.id === "biz_free") { router.push("/list-business"); return; }
     if (plan.id === "legacy_partner") {
       await Linking.openURL("mailto:sales@melaninmaps.app?subject=Legacy%20Partner%20Plan%20Inquiry%20%E2%80%94%20Mapping%20with%20Melanin");
+      return;
+    }
+    if (plan.id === "enterprise_business") {
+      await Linking.openURL("mailto:sales@melaninmaps.app?subject=Enterprise%20Partner%20Inquiry%20%E2%80%94%20Mapping%20with%20Melanin");
       return;
     }
 
@@ -619,19 +649,28 @@ export default function MembershipScreen() {
               <Feather name="percent" size={15} color={colors.primary} />
               <Text style={[styles.feeTableTitle, { color: colors.foreground }]}>Marketplace Fees</Text>
             </View>
+            <Text style={[styles.feeNote, { color: colors.mutedForeground, marginBottom: 10 }]}>
+              Every purchase helps fund community discovery, business growth tools, safety features, and continued investment in Black-owned businesses.
+            </Text>
             {[
-              { name: "Community Business", fee: "6%" },
-              { name: "Growth Business", fee: "5%" },
-              { name: "Premium Business", fee: "3%" },
-            ].map((row, i) => (
-              <View key={i} style={[styles.feeRow, i < 2 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+              { name: "Community Business", fee: "10%" },
+              { name: "Growth Business", fee: "8%" },
+              { name: "Premium Business", fee: "6%" },
+              { name: "Enterprise Partner", fee: "4%" },
+            ].map((row, i, arr) => (
+              <View key={i} style={[styles.feeRow, i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
                 <Text style={[styles.feeRowName, { color: colors.foreground }]}>{row.name}</Text>
                 <Text style={[styles.feeRowVal, { color: colors.primary }]}>{row.fee}</Text>
               </View>
             ))}
-            <Text style={[styles.feeNote, { color: colors.mutedForeground }]}>
-              Fees apply to products and services sold through the Mapping With Melanin marketplace.
-            </Text>
+            <View style={{ marginTop: 10, gap: 4 }}>
+              <Text style={[styles.feeNote, { color: colors.mutedForeground }]}>
+                Transactions under $25 are capped at 5% regardless of tier. Transactions over $250 are capped at 6%.
+              </Text>
+              <Text style={[styles.feeNote, { color: colors.mutedForeground }]}>
+                Founding Business partners retain their locked 3% rate for their first 3 years.
+              </Text>
+            </View>
           </View>
         )}
 
