@@ -35,11 +35,11 @@ export class Storage {
 
   async listProductsWithPrices() {
     const result = await db.execute(sql`
-      WITH paginated_products AS (
-        SELECT id, name, description, metadata, active
+      WITH latest_products AS (
+        SELECT DISTINCT ON (name) id, name, description, metadata, active
         FROM stripe.products
         WHERE active = true
-        ORDER BY id
+        ORDER BY name, created DESC
       )
       SELECT
         p.id        AS product_id,
@@ -53,9 +53,9 @@ export class Storage {
         pr.recurring,
         pr.active   AS price_active,
         pr.metadata AS price_metadata
-      FROM paginated_products p
+      FROM latest_products p
       LEFT JOIN stripe.prices pr ON pr.product = p.id AND pr.active = true
-      ORDER BY p.id, pr.unit_amount
+      ORDER BY p.name, pr.unit_amount
     `);
     return result.rows;
   }
@@ -70,6 +70,7 @@ export class Storage {
         AND p.active = true
         AND pr.active = true
         AND pr.recurring->>'interval' = ${interval}
+      ORDER BY p.created DESC
       LIMIT 1
     `);
     return (result.rows[0] ?? null) as { price_id: string; unit_amount: number } | null;
