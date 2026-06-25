@@ -98,6 +98,14 @@ export default function BusinessOwnerHome() {
 
   const sections: AdminSection[] = [
     {
+      id: "identity",
+      icon: "user",
+      label: "Business Identity",
+      sub: "Your story, values, vibe, accessibility & growth goals",
+      color: "#5B2D8E",
+      route: "/business-owner/identity",
+    },
+    {
       id: "edit",
       icon: "edit-2",
       label: "Edit Business Profile",

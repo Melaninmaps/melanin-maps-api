@@ -51,3 +51,4 @@ export * from "./community-lists";
 export * from "./challenge-applications";
 export * from "./category-waitlist";
 export * from "./business-nominations";
+export * from "./business-identity";
