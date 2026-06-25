@@ -1,4 +1,4 @@
-import { pgTable, varchar, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, pgTable, varchar, text, timestamp } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -17,6 +17,9 @@ export const jobListingsTable = pgTable("job_listings", {
   applicationUrl: varchar("application_url", { length: 500 }),
   contactEmail: varchar("contact_email", { length: 255 }),
   postedById: varchar("posted_by_id"),
+  postedByName: varchar("posted_by_name", { length: 200 }),
+  industry: varchar("industry", { length: 100 }),
+  isPersonalReferral: boolean("is_personal_referral").notNull().default(false),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   expiresAt: timestamp("expires_at", { withTimezone: true }),

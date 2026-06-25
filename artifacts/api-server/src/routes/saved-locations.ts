@@ -21,11 +21,19 @@ router.get("/saved-locations", async (req: Request, res: Response) => {
 
 router.post("/saved-locations", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
-  const { label, city, state, zipCode, neighborhood } = req.body as {
+  const { label, city, state, zipCode, neighborhood, locationType, industry } = req.body as {
     label?: string; city?: string; state?: string; zipCode?: string; neighborhood?: string;
+    locationType?: string; industry?: string;
   };
-  if (!label?.trim() || !city?.trim() || !state?.trim()) {
-    res.status(400).json({ error: "label, city, and state are required" }); return;
+  const isProfessional = locationType === "professional";
+  if (!label?.trim()) {
+    res.status(400).json({ error: "label is required" }); return;
+  }
+  if (isProfessional && !industry?.trim()) {
+    res.status(400).json({ error: "industry is required for professional communities" }); return;
+  }
+  if (!isProfessional && (!city?.trim() || !state?.trim())) {
+    res.status(400).json({ error: "city and state are required for geographic locations" }); return;
   }
   try {
     const [row] = await db
@@ -33,8 +41,10 @@ router.post("/saved-locations", async (req: Request, res: Response) => {
       .values({
         userId: req.user.id,
         label: label.trim(),
-        city: city.trim(),
-        state: state.trim().toUpperCase(),
+        locationType: isProfessional ? "professional" : "geographic",
+        city: isProfessional ? null : city!.trim(),
+        state: isProfessional ? null : state!.trim().toUpperCase(),
+        industry: isProfessional ? industry!.trim() : null,
         zipCode: zipCode?.trim() || null,
         neighborhood: neighborhood?.trim() || null,
         isMyComm: false,

@@ -24,8 +24,10 @@ const AUTH_TOKEN_KEY = "auth_session_token";
 interface SavedLocation {
   id: string;
   label: string;
-  city: string;
-  state: string;
+  locationType: string;
+  city: string | null;
+  state: string | null;
+  industry: string | null;
   zipCode: string | null;
   neighborhood: string | null;
   isMyComm: boolean;
@@ -51,7 +53,8 @@ export default function MyCommunityScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ label: "", city: "", state: "", zipCode: "", neighborhood: "" });
+  const [addType, setAddType] = useState<"geographic" | "professional">("geographic");
+  const [form, setForm] = useState({ label: "", city: "", state: "", zipCode: "", neighborhood: "", industry: "" });
   const [formError, setFormError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -74,29 +77,29 @@ export default function MyCommunityScreen() {
 
   const handleAdd = async () => {
     setFormError(null);
-    if (!form.label.trim() || !form.city.trim() || !form.state.trim()) {
-      setFormError("Label, city, and state are required.");
-      return;
+    if (!form.label.trim()) { setFormError("Label is required."); return; }
+    if (addType === "professional" && !form.industry.trim()) {
+      setFormError("Please select an industry."); return;
+    }
+    if (addType === "geographic" && (!form.city.trim() || !form.state.trim())) {
+      setFormError("City and state are required."); return;
     }
     setSaving(true);
     try {
       const apiBase = getApiBase();
       const token = await getToken();
+      const body = addType === "professional"
+        ? { label: form.label.trim(), locationType: "professional", industry: form.industry.trim() }
+        : { label: form.label.trim(), city: form.city.trim(), state: form.state.trim(), zipCode: form.zipCode.trim() || undefined, neighborhood: form.neighborhood.trim() || undefined };
       const res = await fetch(`${apiBase}/api/saved-locations`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          label: form.label.trim(),
-          city: form.city.trim(),
-          state: form.state.trim(),
-          zipCode: form.zipCode.trim() || undefined,
-          neighborhood: form.neighborhood.trim() || undefined,
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error("Failed to save");
       const data = (await res.json()) as { location: SavedLocation };
       setLocations((prev) => [...prev, data.location]);
-      setForm({ label: "", city: "", state: "", zipCode: "", neighborhood: "" });
+      setForm({ label: "", city: "", state: "", zipCode: "", neighborhood: "", industry: "" });
       setShowAdd(false);
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
@@ -178,99 +181,123 @@ export default function MyCommunityScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* My Community callout */}
-        <View style={[styles.commCard, { backgroundColor: myComm ? "#2D7A4F12" : colors.card, borderColor: myComm ? "#2D7A4F40" : colors.border }]}>
-          <View style={[styles.commIcon, { backgroundColor: myComm ? "#2D7A4F20" : colors.muted }]}>
-            <Feather name="home" size={22} color={myComm ? "#2D7A4F" : colors.mutedForeground} />
-          </View>
-          <View style={{ flex: 1 }}>
-            {myComm ? (
-              <>
-                <Text style={[styles.commLabel, { color: "#2D7A4F" }]}>My Community</Text>
-                <Text style={[styles.commCity, { color: colors.foreground }]}>
-                  {myComm.label} — {myComm.city}, {myComm.state}{myComm.zipCode ? ` ${myComm.zipCode}` : ""}
-                </Text>
-                <Text style={[styles.commSub, { color: colors.mutedForeground }]}>
-                  You'll get notified about events here
-                </Text>
-              </>
-            ) : (
-              <>
-                <Text style={[styles.commLabel, { color: colors.mutedForeground }]}>No community set</Text>
-                <Text style={[styles.commSub, { color: colors.mutedForeground }]}>
-                  Save a location and tap "Set as My Community" to get local event notifications.
-                </Text>
-              </>
-            )}
-          </View>
-        </View>
-
-        {/* Saved locations list */}
-        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Saved Locations</Text>
-
-        {isLoading ? (
-          <ActivityIndicator color={colors.primary} style={{ marginTop: 32 }} />
-        ) : locations.length === 0 ? (
-          <View style={[styles.empty, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="map-pin" size={28} color={colors.mutedForeground} />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No saved locations yet</Text>
-            <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-              Tap + to save a city, neighborhood, or ZIP code
-            </Text>
-          </View>
-        ) : (
-          locations.map((loc) => (
-            <View
-              key={loc.id}
-              style={[styles.locCard, { backgroundColor: colors.card, borderColor: loc.isMyComm ? "#2D7A4F40" : colors.border }]}
-            >
-              <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
-                <View style={[styles.locPin, { backgroundColor: loc.isMyComm ? "#2D7A4F18" : colors.muted }]}>
-                  <Feather name="map-pin" size={16} color={loc.isMyComm ? "#2D7A4F" : colors.mutedForeground} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                    <Text style={[styles.locLabel, { color: colors.foreground }]}>{loc.label}</Text>
-                    {loc.isMyComm && (
-                      <View style={styles.myCommBadge}>
-                        <Text style={styles.myCommBadgeText}>MY COMMUNITY</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={[styles.locDetail, { color: colors.mutedForeground }]}>
-                    {[loc.neighborhood, loc.city, loc.state, loc.zipCode].filter(Boolean).join(", ")}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => handleDelete(loc.id, loc.label)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Feather name="trash-2" size={15} color={colors.mutedForeground} />
-                </TouchableOpacity>
+        {(() => {
+          const geoMyComm = locations.find((l) => l.isMyComm && l.locationType !== "professional");
+          return (
+            <View style={[styles.commCard, { backgroundColor: geoMyComm ? "#2D7A4F12" : colors.card, borderColor: geoMyComm ? "#2D7A4F40" : colors.border }]}>
+              <View style={[styles.commIcon, { backgroundColor: geoMyComm ? "#2D7A4F20" : colors.muted }]}>
+                <Feather name="home" size={22} color={geoMyComm ? "#2D7A4F" : colors.mutedForeground} />
               </View>
-
-              <View style={[styles.locActions, { borderTopColor: colors.border }]}>
-                {loc.isMyComm ? (
-                  <TouchableOpacity style={styles.locActionBtn} onPress={() => handleUnset(loc.id)}>
-                    <Feather name="x-circle" size={14} color={colors.mutedForeground} />
-                    <Text style={[styles.locActionText, { color: colors.mutedForeground }]}>Unset</Text>
-                  </TouchableOpacity>
+              <View style={{ flex: 1 }}>
+                {geoMyComm ? (
+                  <>
+                    <Text style={[styles.commLabel, { color: "#2D7A4F" }]}>My Community</Text>
+                    <Text style={[styles.commCity, { color: colors.foreground }]}>
+                      {geoMyComm.label} — {geoMyComm.city}, {geoMyComm.state}{geoMyComm.zipCode ? ` ${geoMyComm.zipCode}` : ""}
+                    </Text>
+                    <Text style={[styles.commSub, { color: colors.mutedForeground }]}>You'll get notified about events here</Text>
+                  </>
                 ) : (
-                  <TouchableOpacity style={styles.locActionBtn} onPress={() => handleSetMyComm(loc.id)}>
-                    <Feather name="home" size={14} color="#2D7A4F" />
-                    <Text style={[styles.locActionText, { color: "#2D7A4F" }]}>Set as My Community</Text>
-                  </TouchableOpacity>
+                  <>
+                    <Text style={[styles.commLabel, { color: colors.mutedForeground }]}>No community set</Text>
+                    <Text style={[styles.commSub, { color: colors.mutedForeground }]}>
+                      Save a location and tap "Set as My Community" to get local event notifications.
+                    </Text>
+                  </>
                 )}
-                <TouchableOpacity
-                  style={styles.locActionBtn}
-                  onPress={() => router.push({ pathname: "/spaces", params: { q: loc.city } } as any)}
-                >
-                  <Feather name="search" size={14} color={colors.primary} />
-                  <Text style={[styles.locActionText, { color: colors.primary }]}>Browse spaces here</Text>
-                </TouchableOpacity>
               </View>
             </View>
-          ))
-        )}
+          );
+        })()}
+
+        {/* Saved locations list */}
+        {(() => {
+          const geoLocs = locations.filter((l) => l.locationType !== "professional");
+          const profLocs = locations.filter((l) => l.locationType === "professional");
+          return (
+            <>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Saved Locations</Text>
+              {isLoading ? (
+                <ActivityIndicator color={colors.primary} style={{ marginTop: 32 }} />
+              ) : geoLocs.length === 0 ? (
+                <View style={[styles.empty, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Feather name="map-pin" size={28} color={colors.mutedForeground} />
+                  <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No saved locations yet</Text>
+                  <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>Tap + to save a city, neighborhood, or ZIP code</Text>
+                </View>
+              ) : geoLocs.map((loc) => (
+                <View key={loc.id} style={[styles.locCard, { backgroundColor: colors.card, borderColor: loc.isMyComm ? "#2D7A4F40" : colors.border }]}>
+                  <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
+                    <View style={[styles.locPin, { backgroundColor: loc.isMyComm ? "#2D7A4F18" : colors.muted }]}>
+                      <Feather name="map-pin" size={16} color={loc.isMyComm ? "#2D7A4F" : colors.mutedForeground} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                        <Text style={[styles.locLabel, { color: colors.foreground }]}>{loc.label}</Text>
+                        {loc.isMyComm && <View style={styles.myCommBadge}><Text style={styles.myCommBadgeText}>MY COMMUNITY</Text></View>}
+                      </View>
+                      <Text style={[styles.locDetail, { color: colors.mutedForeground }]}>
+                        {[loc.neighborhood, loc.city, loc.state, loc.zipCode].filter(Boolean).join(", ")}
+                      </Text>
+                    </View>
+                    <TouchableOpacity onPress={() => handleDelete(loc.id, loc.label)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                      <Feather name="trash-2" size={15} color={colors.mutedForeground} />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={[styles.locActions, { borderTopColor: colors.border }]}>
+                    {loc.isMyComm ? (
+                      <TouchableOpacity style={styles.locActionBtn} onPress={() => handleUnset(loc.id)}>
+                        <Feather name="x-circle" size={14} color={colors.mutedForeground} />
+                        <Text style={[styles.locActionText, { color: colors.mutedForeground }]}>Unset</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity style={styles.locActionBtn} onPress={() => handleSetMyComm(loc.id)}>
+                        <Feather name="home" size={14} color="#2D7A4F" />
+                        <Text style={[styles.locActionText, { color: "#2D7A4F" }]}>Set as My Community</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity style={styles.locActionBtn} onPress={() => router.push({ pathname: "/spaces", params: { q: loc.city ?? "" } } as any)}>
+                      <Feather name="search" size={14} color={colors.primary} />
+                      <Text style={[styles.locActionText, { color: colors.primary }]}>Browse spaces here</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+
+              {profLocs.length > 0 && (
+                <>
+                  <Text style={[styles.sectionTitle, { color: colors.foreground, marginTop: 8 }]}>Professional Communities</Text>
+                  {profLocs.map((loc) => (
+                    <View key={loc.id} style={[styles.locCard, { backgroundColor: colors.card, borderColor: "#1D4ED840" }]}>
+                      <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
+                        <View style={[styles.locPin, { backgroundColor: "#1D4ED818" }]}>
+                          <Feather name="briefcase" size={16} color="#1D4ED8" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.locLabel, { color: colors.foreground }]}>{loc.label}</Text>
+                          <Text style={[styles.locDetail, { color: colors.mutedForeground }]}>{loc.industry}</Text>
+                        </View>
+                        <TouchableOpacity onPress={() => handleDelete(loc.id, loc.label)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                          <Feather name="trash-2" size={15} color={colors.mutedForeground} />
+                        </TouchableOpacity>
+                      </View>
+                      <View style={[styles.locActions, { borderTopColor: colors.border }]}>
+                        <TouchableOpacity style={styles.locActionBtn} onPress={() => router.push("/mentorship" as any)}>
+                          <Feather name="users" size={14} color="#1D4ED8" />
+                          <Text style={[styles.locActionText, { color: "#1D4ED8" }]}>Browse mentors</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.locActionBtn} onPress={() => router.push({ pathname: "/spaces", params: { q: loc.industry ?? "" } } as any)}>
+                          <Feather name="search" size={14} color={colors.primary} />
+                          <Text style={[styles.locActionText, { color: colors.primary }]}>Browse spaces</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ))}
+                </>
+              )}
+            </>
+          );
+        })()}
       </ScrollView>
 
       {/* Add Location Modal */}
@@ -280,91 +307,92 @@ export default function MyCommunityScreen() {
           <View style={[styles.sheet, { backgroundColor: colors.background }]}>
             <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Save a Location</Text>
+              <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Add a Community</Text>
               <Text style={[styles.sheetSub, { color: colors.mutedForeground }]}>
-                Give it a name and fill in the location details
+                Save a place or join your professional industry network
               </Text>
+
+              {/* Type toggle */}
+              <View style={[styles.typeToggle, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+                {(["geographic", "professional"] as const).map((t) => (
+                  <TouchableOpacity
+                    key={t}
+                    style={[styles.typeTab, addType === t && { backgroundColor: colors.background, borderColor: colors.border }]}
+                    onPress={() => { setAddType(t); setFormError(null); }}
+                    activeOpacity={0.8}
+                  >
+                    <Feather name={t === "geographic" ? "map-pin" : "briefcase"} size={13} color={addType === t ? colors.primary : colors.mutedForeground} />
+                    <Text style={[styles.typeTabText, { color: addType === t ? colors.foreground : colors.mutedForeground }]}>
+                      {t === "geographic" ? "Location" : "Profession"}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
               <Text style={[styles.fieldLabel, { color: colors.foreground }]}>
                 Label <Text style={{ color: "#DC2626" }}>*</Text>
               </Text>
               <TextInput
                 style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-                placeholder={'e.g. "Home", "ATL neighborhood", "Dad\'s area"'}
+                placeholder={addType === "professional" ? 'e.g. "My Tech Network"' : 'e.g. "Home", "ATL neighborhood"'}
                 placeholderTextColor={colors.mutedForeground}
                 value={form.label}
                 onChangeText={(v) => setForm((f) => ({ ...f, label: v }))}
               />
 
-              <View style={{ flexDirection: "row", gap: 10 }}>
-                <View style={{ flex: 1 }}>
+              {addType === "professional" ? (
+                <>
                   <Text style={[styles.fieldLabel, { color: colors.foreground }]}>
-                    City <Text style={{ color: "#DC2626" }}>*</Text>
+                    Industry <Text style={{ color: "#DC2626" }}>*</Text>
                   </Text>
-                  <TextInput
-                    style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-                    placeholder="Atlanta"
-                    placeholderTextColor={colors.mutedForeground}
-                    value={form.city}
-                    onChangeText={(v) => setForm((f) => ({ ...f, city: v }))}
-                  />
-                </View>
-                <View style={{ width: 70 }}>
-                  <Text style={[styles.fieldLabel, { color: colors.foreground }]}>
-                    State <Text style={{ color: "#DC2626" }}>*</Text>
-                  </Text>
-                  <TextInput
-                    style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-                    placeholder="GA"
-                    placeholderTextColor={colors.mutedForeground}
-                    value={form.state}
-                    onChangeText={(v) => setForm((f) => ({ ...f, state: v }))}
-                    autoCapitalize="characters"
-                    maxLength={2}
-                  />
-                </View>
-              </View>
+                  <View style={[styles.industryGrid]}>
+                    {[
+                      "Technology & Software","Healthcare & Wellness","Finance & Banking","Real Estate",
+                      "Food & Beverage","Beauty & Grooming","Fashion & Retail","Entertainment & Media",
+                      "Education & Training","Legal & Consulting","Construction & Trades","Arts & Culture",
+                      "Nonprofit & Advocacy","Sports & Fitness","Travel & Hospitality","Marketing & PR",
+                      "Music & Events","Other",
+                    ].map((ind) => (
+                      <TouchableOpacity
+                        key={ind}
+                        style={[styles.industryChip, { borderColor: form.industry === ind ? "#1D4ED8" : colors.border, backgroundColor: form.industry === ind ? "#1D4ED812" : colors.card }]}
+                        onPress={() => setForm((f) => ({ ...f, industry: ind }))}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[styles.industryChipText, { color: form.industry === ind ? "#1D4ED8" : colors.foreground }]}>{ind}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              ) : (
+                <>
+                  <View style={{ flexDirection: "row", gap: 10 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.fieldLabel, { color: colors.foreground }]}>City <Text style={{ color: "#DC2626" }}>*</Text></Text>
+                      <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} placeholder="Atlanta" placeholderTextColor={colors.mutedForeground} value={form.city} onChangeText={(v) => setForm((f) => ({ ...f, city: v }))} />
+                    </View>
+                    <View style={{ width: 70 }}>
+                      <Text style={[styles.fieldLabel, { color: colors.foreground }]}>State <Text style={{ color: "#DC2626" }}>*</Text></Text>
+                      <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} placeholder="GA" placeholderTextColor={colors.mutedForeground} value={form.state} onChangeText={(v) => setForm((f) => ({ ...f, state: v }))} autoCapitalize="characters" maxLength={2} />
+                    </View>
+                  </View>
+                  <View style={{ flexDirection: "row", gap: 10 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Neighborhood</Text>
+                      <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} placeholder="e.g. West End" placeholderTextColor={colors.mutedForeground} value={form.neighborhood} onChangeText={(v) => setForm((f) => ({ ...f, neighborhood: v }))} />
+                    </View>
+                    <View style={{ width: 100 }}>
+                      <Text style={[styles.fieldLabel, { color: colors.foreground }]}>ZIP Code</Text>
+                      <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} placeholder="30310" placeholderTextColor={colors.mutedForeground} value={form.zipCode} onChangeText={(v) => setForm((f) => ({ ...f, zipCode: v }))} keyboardType="number-pad" maxLength={5} />
+                    </View>
+                  </View>
+                </>
+              )}
 
-              <View style={{ flexDirection: "row", gap: 10 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Neighborhood</Text>
-                  <TextInput
-                    style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-                    placeholder="e.g. West End"
-                    placeholderTextColor={colors.mutedForeground}
-                    value={form.neighborhood}
-                    onChangeText={(v) => setForm((f) => ({ ...f, neighborhood: v }))}
-                  />
-                </View>
-                <View style={{ width: 100 }}>
-                  <Text style={[styles.fieldLabel, { color: colors.foreground }]}>ZIP Code</Text>
-                  <TextInput
-                    style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-                    placeholder="30310"
-                    placeholderTextColor={colors.mutedForeground}
-                    value={form.zipCode}
-                    onChangeText={(v) => setForm((f) => ({ ...f, zipCode: v }))}
-                    keyboardType="number-pad"
-                    maxLength={5}
-                  />
-                </View>
-              </View>
+              {formError ? <Text style={[styles.errorText, { color: "#DC2626" }]}>{formError}</Text> : null}
 
-              {formError ? (
-                <Text style={[styles.errorText, { color: "#DC2626" }]}>{formError}</Text>
-              ) : null}
-
-              <TouchableOpacity
-                style={[styles.submitBtn, { backgroundColor: colors.primary, opacity: saving ? 0.6 : 1 }]}
-                onPress={handleAdd}
-                disabled={saving}
-                activeOpacity={0.85}
-              >
-                {saving ? (
-                  <ActivityIndicator color="#FBF7F0" size="small" />
-                ) : (
-                  <Text style={styles.submitBtnText}>Save Location</Text>
-                )}
+              <TouchableOpacity style={[styles.submitBtn, { backgroundColor: colors.primary, opacity: saving ? 0.6 : 1 }]} onPress={handleAdd} disabled={saving} activeOpacity={0.85}>
+                {saving ? <ActivityIndicator color="#FBF7F0" size="small" /> : <Text style={styles.submitBtnText}>Save</Text>}
               </TouchableOpacity>
               <View style={{ height: 32 }} />
             </ScrollView>
@@ -408,6 +436,12 @@ const styles = StyleSheet.create({
   fieldLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginBottom: 6, marginTop: 12 },
   input: { borderWidth: 1, borderRadius: 12, padding: 12, fontSize: 14, fontFamily: "Inter_400Regular" },
   errorText: { fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 8 },
+  typeToggle: { flexDirection: "row", borderRadius: 12, borderWidth: 1, padding: 3, marginBottom: 4, gap: 2 },
+  typeTab: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 9, borderRadius: 10, borderWidth: 1, borderColor: "transparent" },
+  typeTabText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  industryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
+  industryChip: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
+  industryChipText: { fontFamily: "Inter_400Regular", fontSize: 13 },
   submitBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 16, borderRadius: 16, marginTop: 20 },
   submitBtnText: { fontFamily: "Inter_700Bold", fontSize: 16, color: "#FBF7F0" },
 });

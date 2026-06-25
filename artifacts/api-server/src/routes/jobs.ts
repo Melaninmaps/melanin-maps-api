@@ -24,7 +24,13 @@ router.get("/jobs", async (req, res) => {
 
 router.post("/jobs", async (req, res) => {
   if (!req.user?.id) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const parsed = insertJobListingSchema.safeParse({ ...req.body, postedById: req.user.id });
+  const body = req.body as Record<string, unknown>;
+  const isReferral = body.isPersonalReferral === true;
+  const parsed = insertJobListingSchema.safeParse({
+    ...body,
+    postedById: req.user.id,
+    isPersonalReferral: isReferral,
+  });
   if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
   try {
     const [job] = await db.insert(jobListingsTable).values(parsed.data).returning();

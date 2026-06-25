@@ -253,6 +253,34 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* Profession community + mentorship quick actions */}
+          {user?.industry ? (
+            <View style={[styles.profActionsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.profActionsHeader]}>
+                <Feather name="briefcase" size={16} color="#1D4ED8" />
+                <Text style={[styles.profActionsTitle, { color: colors.foreground }]}>{user.industry}</Text>
+              </View>
+              <View style={styles.profActionsRow}>
+                <TouchableOpacity
+                  style={[styles.profActionBtn, { backgroundColor: "#1D4ED812", borderColor: "#1D4ED830" }]}
+                  onPress={() => router.push("/my-community" as any)}
+                  activeOpacity={0.8}
+                >
+                  <Feather name="users" size={14} color="#1D4ED8" />
+                  <Text style={[styles.profActionBtnText, { color: "#1D4ED8" }]}>Join Community</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.profActionBtn, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}
+                  onPress={() => router.push("/mentorship" as any)}
+                  activeOpacity={0.8}
+                >
+                  <Feather name="award" size={14} color={colors.primary} />
+                  <Text style={[styles.profActionBtnText, { color: colors.primary }]}>Offer Mentorship</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : null}
+
           {reviewCount === 0 && savedIds.length === 0 && pointsTotal === 0 ? (
             <View style={[styles.newUserBanner, { backgroundColor: colors.card, shadowColor: colors.foreground, borderColor: colors.border }]}>
               <View style={[styles.newUserIconRow]}>
@@ -1106,6 +1134,42 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
     fontSize: 12,
     marginTop: 1,
+  },
+  profActionsCard: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+    gap: 10,
+  },
+  profActionsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  profActionsTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    flex: 1,
+  },
+  profActionsRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  profActionBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  profActionBtnText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
   },
   modalOverlay: {
     flex: 1,
