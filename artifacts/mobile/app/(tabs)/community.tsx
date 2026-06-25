@@ -574,6 +574,42 @@ export default function CommunityScreen() {
             <Feather name="chevron-right" size={18} color="rgba(255,255,255,0.6)" />
           </TouchableOpacity>
 
+          {/* Community Lists card */}
+          <TouchableOpacity
+            style={[styles.resSpacesCard, { backgroundColor: "#3B1F0E", borderColor: "#C9922B55" }]}
+            onPress={() => router.push("/community-lists" as never)}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.resSpacesIcon, { backgroundColor: "rgba(255,255,255,0.12)" }]}>
+              <Feather name="list" size={22} color="#C9922B" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.resSpacesTitle, { color: "#FFFFFF" }]}>Community Lists</Text>
+              <Text style={[styles.resSpacesSub, { color: "rgba(255,255,255,0.75)" }]}>
+                Curated business picks — brunch spots, date nights, family-friendly gems &amp; more.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color="rgba(255,255,255,0.6)" />
+          </TouchableOpacity>
+
+          {/* Business Challenges card */}
+          <TouchableOpacity
+            style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#2D7A4F33" }]}
+            onPress={() => router.push("/challenges" as never)}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.resSpacesIcon, { backgroundColor: "#2D7A4F18" }]}>
+              <Feather name="award" size={22} color="#2D7A4F" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.resSpacesTitle, { color: colors.foreground }]}>Business Challenges</Text>
+              <Text style={[styles.resSpacesSub, { color: colors.mutedForeground }]}>
+                Restaurant Week, Black Business Month &amp; more — join campaigns, earn points &amp; badges.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+
           {/* My Community card */}
           <TouchableOpacity
             style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#C9922B33" }]}

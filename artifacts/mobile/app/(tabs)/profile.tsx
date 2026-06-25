@@ -169,6 +169,13 @@ export default function ProfileScreen() {
   const { subscription } = useMembership();
   const { checkedInIds } = useCheckins();
   const checkInCount = checkedInIds.length;
+  const eventsAttended = ledger.filter((e) => e.action === "rsvp").length;
+  const citiesExplored = new Set(savedBusinesses.map((b) => b.city).filter(Boolean)).size;
+  const coffeeCount = savedBusinesses.filter((b) =>
+    (b.category ?? "").toLowerCase().includes("coffee") ||
+    (b.category ?? "").toLowerCase().includes("cafe") ||
+    (b.tags ?? []).some((t: string) => t.toLowerCase().includes("coffee"))
+  ).length;
 
   return (
     <ScrollView
@@ -348,6 +355,41 @@ export default function ProfileScreen() {
             pointsTotal={pointsTotal}
             checkInCount={checkInCount}
           />
+        </View>
+      )}
+
+      {isAuthenticated && (checkInCount > 0 || reviewCount > 0 || citiesExplored > 0) && (
+        <View style={{ paddingHorizontal: 16 }}>
+          <View style={[streakStyles.wrap, { backgroundColor: "#3B1F0E" }]}>
+            <View style={streakStyles.headerRow}>
+              <Text style={streakStyles.headerEmoji}>🤎</Text>
+              <View>
+                <Text style={streakStyles.headerTitle}>Your Impact This Month</Text>
+                <Text style={streakStyles.headerSub}>You're building something real</Text>
+              </View>
+            </View>
+            <View style={streakStyles.grid}>
+              <View style={[streakStyles.cell, { backgroundColor: "rgba(255,255,255,0.07)" }]}>
+                <Text style={streakStyles.cellNum}>{checkInCount}</Text>
+                <Text style={streakStyles.cellLabel}>🏪 Businesses{"\n"}Supported</Text>
+              </View>
+              <View style={[streakStyles.cell, { backgroundColor: "rgba(255,255,255,0.07)" }]}>
+                <Text style={streakStyles.cellNum}>{citiesExplored || 1}</Text>
+                <Text style={streakStyles.cellLabel}>🌍 Cities{"\n"}Explored</Text>
+              </View>
+              <View style={[streakStyles.cell, { backgroundColor: "rgba(255,255,255,0.07)" }]}>
+                <Text style={streakStyles.cellNum}>{coffeeCount}</Text>
+                <Text style={streakStyles.cellLabel}>☕ Coffee Shops{"\n"}Discovered</Text>
+              </View>
+              <View style={[streakStyles.cell, { backgroundColor: "rgba(255,255,255,0.07)" }]}>
+                <Text style={streakStyles.cellNum}>{eventsAttended}</Text>
+                <Text style={streakStyles.cellLabel}>🎉 Events{"\n"}Attended</Text>
+              </View>
+            </View>
+            <View style={streakStyles.footer}>
+              <Text style={streakStyles.footerTxt}>Every check-in, review, and visit makes a difference. Keep going. 🔥</Text>
+            </View>
+          </View>
         </View>
       )}
 
@@ -1300,4 +1342,18 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     fontSize: 15,
   },
+});
+
+const streakStyles = StyleSheet.create({
+  wrap: { borderRadius: 16, padding: 16, gap: 12 },
+  headerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  headerEmoji: { fontSize: 28 },
+  headerTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#FFFFFF" },
+  headerSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.7)", marginTop: 2 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  cell: { width: "47%", borderRadius: 12, padding: 12, gap: 4, alignItems: "flex-start" },
+  cellNum: { fontSize: 26, fontFamily: "Inter_700Bold", color: "#FFFFFF" },
+  cellLabel: { fontSize: 11, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.8)", lineHeight: 17 },
+  footer: { paddingTop: 8, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.12)" },
+  footerTxt: { fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.65)", textAlign: "center" },
 });

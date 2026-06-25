@@ -38,6 +38,8 @@ import { BusinessStoriesSection } from "@/components/BusinessStoriesSection";
 import { BusinessListingsSection } from "@/components/BusinessListingsSection";
 import { BusinessMilestonesSection } from "@/components/BusinessMilestonesSection";
 import { CircleTrustedSection } from "@/components/CircleTrustedSection";
+import { KnowBeforeYouGoSection } from "@/components/KnowBeforeYouGoSection";
+import { PassThePlateModal } from "@/components/PassThePlateModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
 
 const CATEGORY_IMAGES: Record<string, any> = {
@@ -67,6 +69,8 @@ export default function BusinessDetailScreen() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [pointsToast, setPointsToast] = useState<string | null>(null);
   const toastOpacity = useRef(new Animated.Value(0)).current;
+  const [passThePlateOpen, setPassThePlateOpen] = useState(false);
+  const [platePassCount, setPlatePassCount] = useState(0);
 
   const { reviews: apiReviews, submitReview } = useReviews(id ?? "");
   const { hasCheckedIn, checkIn } = useCheckins();
@@ -90,6 +94,14 @@ export default function BusinessDetailScreen() {
       } catch {}
     })();
   }, [id]);
+  useEffect(() => {
+    if (!id) return;
+    fetch(`/api/plate-passes/${id}/count`)
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { thisWeek?: number } | null) => { if (d?.thisWeek) setPlatePassCount(d.thisWeek); })
+      .catch(() => {});
+  }, [id]);
+
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   if (isLoading && !business) {
@@ -367,6 +379,33 @@ export default function BusinessDetailScreen() {
 
           <CircleTrustedSection business={business} />
 
+          <KnowBeforeYouGoSection business={business} />
+
+          {/* Pass the Plate */}
+          <TouchableOpacity
+            style={[styles.plateCard, { backgroundColor: "#3B1F0E", borderColor: "#C9922B55" }]}
+            activeOpacity={0.85}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setPassThePlateOpen(true);
+            }}
+          >
+            <View style={styles.plateCardLeft}>
+              <Text style={styles.plateEmoji}>🍽️</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.plateTitle}>Pass the Plate</Text>
+                <Text style={styles.plateSub}>
+                  {platePassCount > 0
+                    ? `${platePassCount} people passed the plate this week`
+                    : "Tag friends, family & your community"}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.plateArrowWrap}>
+              <Feather name="chevron-right" size={18} color="#C9922B" />
+            </View>
+          </TouchableOpacity>
+
           {/* Show Me the Vibe */}
           <TouchableOpacity
             style={[styles.vibeCard, { backgroundColor: "#1A3B2B" }]}
@@ -567,6 +606,13 @@ export default function BusinessDetailScreen() {
         visible={showUpgrade}
         onClose={() => setShowUpgrade(false)}
         feature="Leaving Reviews"
+      />
+      <PassThePlateModal
+        visible={passThePlateOpen}
+        businessId={id ?? ""}
+        businessName={business?.name ?? ""}
+        onClose={() => setPassThePlateOpen(false)}
+        onSuccess={() => setPlatePassCount(prev => prev + 1)}
       />
     </View>
   );
@@ -806,4 +852,13 @@ const styles = StyleSheet.create({
   vibeCardEmoji: { fontSize: 26 },
   vibeCardTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#fff", marginBottom: 3 },
   vibeCardSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.78)" },
+  plateCard: {
+    flexDirection: "row", alignItems: "center",
+    borderRadius: 14, borderWidth: 1, padding: 16,
+  },
+  plateCardLeft: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12 },
+  plateEmoji: { fontSize: 26 },
+  plateTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#FFFFFF", marginBottom: 3 },
+  plateSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.75)" },
+  plateArrowWrap: { width: 24, alignItems: "center" },
 });
