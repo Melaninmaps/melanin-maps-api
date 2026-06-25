@@ -476,6 +476,24 @@ export default function CommunityScreen() {
             <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
           </TouchableOpacity>
 
+          {/* My Community card */}
+          <TouchableOpacity
+            style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#C9922B33" }]}
+            onPress={() => router.push("/my-community")}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.resSpacesIcon, { backgroundColor: "#C9922B18" }]}>
+              <Feather name="map-pin" size={22} color="#C9922B" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.resSpacesTitle, { color: colors.foreground }]}>My Community</Text>
+              <Text style={[styles.resSpacesSub, { color: colors.mutedForeground }]}>
+                Save neighborhoods &amp; ZIP codes. Get notified when events happen near you.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+
           {/* Crisis banner */}
           <View style={[styles.resCrisisBanner, { backgroundColor: "#DC2626" }]}>
             <Feather name="alert-circle" size={20} color="#FFF" />

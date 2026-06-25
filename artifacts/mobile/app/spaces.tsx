@@ -273,8 +273,16 @@ export default function SpacesScreen() {
                 </View>
               </View>
 
-              <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Neighborhood</Text>
-              <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} placeholder="e.g. Sweet Auburn, West End, Bankhead" placeholderTextColor={colors.mutedForeground} value={form.neighborhood ?? ""} onChangeText={(v) => setForm((f) => ({ ...f, neighborhood: v }))} />
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Neighborhood</Text>
+                  <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} placeholder="e.g. Sweet Auburn" placeholderTextColor={colors.mutedForeground} value={form.neighborhood ?? ""} onChangeText={(v) => setForm((f) => ({ ...f, neighborhood: v }))} />
+                </View>
+                <View style={{ width: 90 }}>
+                  <Text style={[styles.fieldLabel, { color: colors.foreground }]}>ZIP Code</Text>
+                  <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} placeholder="30314" placeholderTextColor={colors.mutedForeground} value={form.zipCode ?? ""} onChangeText={(v) => setForm((f) => ({ ...f, zipCode: v }))} keyboardType="number-pad" maxLength={5} />
+                </View>
+              </View>
 
               <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Address</Text>
               <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} placeholder="Street address (optional)" placeholderTextColor={colors.mutedForeground} value={form.address ?? ""} onChangeText={(v) => setForm((f) => ({ ...f, address: v }))} />

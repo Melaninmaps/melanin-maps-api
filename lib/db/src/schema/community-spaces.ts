@@ -13,6 +13,7 @@ export const communitySpaceListingsTable = pgTable("community_space_listings", {
   neighborhood: varchar("neighborhood", { length: 200 }),
   city: varchar("city", { length: 100 }).notNull(),
   state: varchar("state", { length: 50 }),
+  zipCode: varchar("zip_code", { length: 10 }),
   spaceType: varchar("space_type", { length: 30 }).notNull().default("rent"),
   priceLabel: varchar("price_label", { length: 100 }),
   sqft: integer("sqft"),

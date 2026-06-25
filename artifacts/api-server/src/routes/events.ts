@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, eventsTable } from "@workspace/db";
+import { db, eventsTable, savedCommunityLocationsTable, notificationsTable } from "@workspace/db";
 import { eq, desc, and, ilike, or } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -107,6 +107,35 @@ router.post("/events", async (req: Request, res: Response) => {
         createdById: req.user.id,
       })
       .returning();
+
+    // Fan out community event notifications to users who have this city set as My Community
+    try {
+      const communityMembers = await db
+        .select({ userId: savedCommunityLocationsTable.userId })
+        .from(savedCommunityLocationsTable)
+        .where(
+          and(
+            eq(savedCommunityLocationsTable.isMyComm, true),
+            ilike(savedCommunityLocationsTable.city, (city as string).trim()),
+          ),
+        );
+
+      if (communityMembers.length > 0) {
+        const notifs = communityMembers
+          .filter((m) => m.userId !== req.user!.id)
+          .map((m) => ({
+            userId: m.userId,
+            type: "community" as const,
+            title: `New event in your community`,
+            body: `${title as string} is happening in ${city as string} on ${date as string}.`,
+          }));
+        if (notifs.length > 0) {
+          await db.insert(notificationsTable).values(notifs);
+        }
+      }
+    } catch (notifErr) {
+      req.log.error({ err: notifErr }, "Failed to fan out community event notifications");
+    }
 
     res.status(201).json({ event });
   } catch (err) {

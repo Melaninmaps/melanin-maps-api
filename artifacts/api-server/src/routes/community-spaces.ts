@@ -43,7 +43,7 @@ router.get("/spaces/:id", async (req: Request, res: Response) => {
 router.post("/spaces", requireTrust, async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   const {
-    title, description, address, neighborhood, city, state,
+    title, description, address, neighborhood, city, state, zipCode,
     spaceType, priceLabel, sqft, listingUrl,
     agentName, agentPhone, agentEmail, agentUrl,
   } = req.body as Record<string, unknown>;
@@ -70,6 +70,7 @@ router.post("/spaces", requireTrust, async (req: Request, res: Response) => {
       neighborhood: typeof neighborhood === "string" && neighborhood.trim() ? neighborhood.trim() : null,
       city: (city as string).trim(),
       state: typeof state === "string" && state.trim() ? state.trim() : null,
+      zipCode: typeof zipCode === "string" && zipCode.trim() ? zipCode.trim() : null,
       spaceType: resolvedType,
       priceLabel: typeof priceLabel === "string" && priceLabel.trim() ? priceLabel.trim() : null,
       sqft: typeof sqft === "number" && sqft > 0 ? sqft : null,

@@ -419,6 +419,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="my-community"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
         name="space/[id]"
         options={{
           headerShown: false,

@@ -21,6 +21,7 @@ export interface CommunitySpace {
   neighborhood: string | null;
   city: string;
   state: string | null;
+  zipCode: string | null;
   spaceType: string;
   priceLabel: string | null;
   sqft: number | null;
@@ -40,6 +41,7 @@ export interface CreateSpacePayload {
   neighborhood?: string;
   city: string;
   state?: string;
+  zipCode?: string;
   spaceType: string;
   priceLabel?: string;
   sqft?: number;

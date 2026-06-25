@@ -37,7 +37,7 @@ export default function SpaceDetailScreen() {
   }
 
   const meta = TYPE_META[space.spaceType] ?? TYPE_META.rent;
-  const locationParts = [space.address, space.neighborhood, space.city, space.state].filter(Boolean);
+  const locationParts = [space.address, space.neighborhood, space.city, space.state, space.zipCode].filter(Boolean);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
