@@ -6,23 +6,45 @@ import { getUncachableStripeClient } from "../stripeClient";
 const router: IRouter = Router();
 
 /**
- * Founding Member Advantage — tiered marketplace fee based on business plan:
+ * Marketplace fee rates by tier:
  *   free    → 6%  (default)
- *   growth  → 5%
- *   premium → 3%
+ *   growth  → 7%
+ *   premium → 4%
  *
- * totalCents — full transaction total (unit price × quantity) in cents
- * tier       — marketplaceTier from the businesses table
+ * Founding businesses (first 500) receive 3% for their first 2 years,
+ * then automatically move to the standard premium rate of 4%.
+ *
+ * totalCents        — full transaction total (unit price × quantity) in cents
+ * tier              — marketplaceTier from the businesses table
+ * foundingBusiness  — whether the business has founding status
+ * foundingGrantedAt — timestamp when founding status was granted
  * returns the fee amount in cents, rounded to the nearest cent
  */
 export const MARKETPLACE_FEE_RATES: Record<string, number> = {
   free: 0.06,
-  growth: 0.05,
-  premium: 0.03,
+  growth: 0.07,
+  premium: 0.04,
 };
 
-function platformFee(totalCents: number, tier: string): number {
-  const rate = MARKETPLACE_FEE_RATES[tier] ?? MARKETPLACE_FEE_RATES.free;
+const FOUNDING_RATE = 0.03;
+const FOUNDING_WINDOW_MS = 2 * 365.25 * 24 * 60 * 60 * 1000; // 2 years in ms
+
+function platformFee(
+  totalCents: number,
+  tier: string,
+  foundingBusiness?: boolean,
+  foundingGrantedAt?: Date | null,
+): number {
+  let rate = MARKETPLACE_FEE_RATES[tier] ?? MARKETPLACE_FEE_RATES.free;
+
+  // Founding members get 3% for the first 2 years from grant date
+  if (foundingBusiness && foundingGrantedAt) {
+    const elapsed = Date.now() - new Date(foundingGrantedAt).getTime();
+    if (elapsed < FOUNDING_WINDOW_MS) {
+      rate = FOUNDING_RATE;
+    }
+  }
+
   return Math.round(totalCents * rate);
 }
 
@@ -308,6 +330,8 @@ router.post("/connect/listings/:id/checkout", async (req: Request, res: Response
       stripeConnectAccountId: businessesTable.stripeConnectAccountId,
       name: businessesTable.name,
       marketplaceTier: businessesTable.marketplaceTier,
+      foundingBusiness: businessesTable.foundingBusiness,
+      foundingGrantedAt: businessesTable.foundingGrantedAt,
     })
     .from(businessesTable)
     .where(eq(businessesTable.id, listing.businessId))
@@ -321,7 +345,12 @@ router.post("/connect/listings/:id/checkout", async (req: Request, res: Response
   try {
     const stripe = await getUncachableStripeClient();
     const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(",")[0]}`;
-    const applicationFeeAmount = platformFee(listing.priceInCents * quantity, biz.marketplaceTier ?? "free");
+    const applicationFeeAmount = platformFee(
+      listing.priceInCents * quantity,
+      biz.marketplaceTier ?? "free",
+      biz.foundingBusiness ?? false,
+      biz.foundingGrantedAt,
+    );
 
     const session = await stripe.checkout.sessions.create(
       {

@@ -1003,7 +1003,7 @@ export default function BusinessDashboardScreen() {
                   </View>
                 </View>
                 {[
-                  { icon: "tag" as const, text: "3% marketplace rate — locked in for life" },
+                  { icon: "tag" as const, text: "3% marketplace rate for 2 years, then 4%" },
                   { icon: "trending-up" as const, text: "Priority placement in search results" },
                   { icon: "zap" as const, text: "Early access to new features" },
                   { icon: "globe" as const, text: "Recognition on mappingwithmelanin.com" },
@@ -1171,28 +1171,36 @@ export default function BusinessDashboardScreen() {
                     const tier = marketplaceTier?.tier ?? "free";
                     const feePercent = marketplaceTier?.feePercent ?? 6;
                     const tierLabel = marketplaceTier?.label ?? "Free";
-                    const tierColor = tier === "premium" ? "#C9922B" : tier === "growth" ? "#2D7A4F" : colors.mutedForeground;
+                    const foundingActive = (marketplaceTier as any)?.foundingActive ?? false;
+                    const foundingExpiresAt = (marketplaceTier as any)?.foundingExpiresAt ?? null;
+                    const tierColor = foundingActive ? "#C9922B" : tier === "premium" ? "#C9922B" : tier === "growth" ? "#2D7A4F" : colors.mutedForeground;
+                    const expiryYear = foundingExpiresAt ? new Date(foundingExpiresAt).getFullYear() : null;
                     return (
                       <View style={{ backgroundColor: tierColor + "15", borderRadius: 10, borderWidth: 1, borderColor: tierColor + "30", padding: 12, marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 10 }}>
                         <View style={{ flex: 1 }}>
                           <Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: tierColor, marginBottom: 2 }}>
-                            YOUR MARKETPLACE FEE — {tierLabel.toUpperCase()} TIER
+                            {foundingActive ? "⭐ FOUNDING RATE — LOCKED IN" : `YOUR MARKETPLACE FEE — ${tierLabel.toUpperCase()} TIER`}
                           </Text>
                           <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
                             <Text style={{ fontFamily: "Inter_700Bold", fontSize: 26, color: tierColor }}>{feePercent}%</Text>
                             <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground }}>per transaction</Text>
                           </View>
-                          {tier === "free" && (
+                          {foundingActive && expiryYear && (
                             <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
-                              Upgrade to Growth (5%) or Premium (3%) to keep more of every sale.
+                              Founding rate through {expiryYear}, then 4% (Premium rate).
                             </Text>
                           )}
-                          {tier === "growth" && (
+                          {!foundingActive && tier === "free" && (
                             <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
-                              Upgrade to Premium to unlock our lowest 3% rate.
+                              Upgrade to Growth (7%) or Premium (4%) to keep more of every sale.
                             </Text>
                           )}
-                          {tier === "premium" && (
+                          {!foundingActive && tier === "growth" && (
+                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
+                              Upgrade to Premium to unlock our lowest 4% rate.
+                            </Text>
+                          )}
+                          {!foundingActive && tier === "premium" && (
                             <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
                               You're on our best rate. Thank you for being a Premium member.
                             </Text>
@@ -1200,7 +1208,7 @@ export default function BusinessDashboardScreen() {
                         </View>
                         <View style={{ alignItems: "center", gap: 3 }}>
                           <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: tierColor + "20", alignItems: "center", justifyContent: "center" }}>
-                            <Feather name={tier === "premium" ? "star" : tier === "growth" ? "trending-up" : "tag"} size={16} color={tierColor} />
+                            <Feather name={foundingActive ? "star" : tier === "premium" ? "star" : tier === "growth" ? "trending-up" : "tag"} size={16} color={tierColor} />
                           </View>
                         </View>
                       </View>
@@ -1211,8 +1219,8 @@ export default function BusinessDashboardScreen() {
                   <View style={{ borderRadius: 10, borderWidth: 1, borderColor: colors.border, overflow: "hidden", marginBottom: 14 }}>
                     {[
                       { label: "Free", fee: "6%", icon: "tag" as const, tier: "free" },
-                      { label: "Growth", fee: "5%", icon: "trending-up" as const, tier: "growth" },
-                      { label: "Premium", fee: "3%", icon: "star" as const, tier: "premium" },
+                      { label: "Growth", fee: "7%", icon: "trending-up" as const, tier: "growth" },
+                      { label: "Premium", fee: "4%", icon: "star" as const, tier: "premium" },
                     ].map((row, idx) => {
                       const isActive = (marketplaceTier?.tier ?? "free") === row.tier;
                       const rowColor = row.tier === "premium" ? "#C9922B" : row.tier === "growth" ? "#2D7A4F" : colors.mutedForeground;
@@ -1226,6 +1234,14 @@ export default function BusinessDashboardScreen() {
                         </View>
                       );
                     })}
+                    {/* Founding rate row */}
+                    <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 9, backgroundColor: "#C9922B08", borderTopWidth: 1, borderTopColor: colors.border }}>
+                      <Text style={{ fontSize: 13, marginRight: 8 }}>⭐</Text>
+                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, flex: 1 }}>
+                        Founding (first 2 yrs)
+                      </Text>
+                      <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: "#C9922B" }}>3%</Text>
+                    </View>
                   </View>
 
                   {/* Phase 1 */}

@@ -376,6 +376,7 @@ router.patch("/admin/businesses/:id/founding-status", async (req: Request, res: 
       .set({
         foundingBusiness: founding,
         foundingNumber: founding ? foundingNumber : null,
+        foundingGrantedAt: founding ? new Date() : null,
         marketplaceTier: founding ? "premium" : undefined,
         updatedAt: new Date(),
       })
@@ -385,6 +386,7 @@ router.patch("/admin/businesses/:id/founding-status", async (req: Request, res: 
         name: businessesTable.name,
         foundingBusiness: businessesTable.foundingBusiness,
         foundingNumber: businessesTable.foundingNumber,
+        foundingGrantedAt: businessesTable.foundingGrantedAt,
         marketplaceTier: businessesTable.marketplaceTier,
       });
 
@@ -397,7 +399,10 @@ router.patch("/admin/businesses/:id/founding-status", async (req: Request, res: 
 });
 
 // Fee rates for the Founding Member Advantage tier system
-const TIER_FEE: Record<string, number> = { free: 6, growth: 5, premium: 3 };
+// Founding businesses pay 3% for their first 2 years, then 4% (premium rate)
+const TIER_FEE: Record<string, number> = { free: 6, growth: 7, premium: 4 };
+const FOUNDING_RATE_PERCENT = 3;
+const FOUNDING_WINDOW_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
 const TIER_LABELS: Record<string, string> = { free: "Free", growth: "Growth", premium: "Premium" };
 const VALID_TIERS = ["free", "growth", "premium"];
 
@@ -406,15 +411,38 @@ router.get("/businesses/:id/marketplace-tier", async (req: Request, res: Respons
     if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
     const id = String(req.params.id);
     const [biz] = await db
-      .select({ id: businessesTable.id, submittedById: businessesTable.submittedById, marketplaceTier: businessesTable.marketplaceTier })
+      .select({
+        id: businessesTable.id,
+        submittedById: businessesTable.submittedById,
+        marketplaceTier: businessesTable.marketplaceTier,
+        foundingBusiness: businessesTable.foundingBusiness,
+        foundingGrantedAt: businessesTable.foundingGrantedAt,
+      })
       .from(businessesTable).where(eq(businessesTable.id, id)).limit(1);
     if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
     if (biz.submittedById !== req.user.id && !isAdmin(req)) { res.status(403).json({ error: "Access denied" }); return; }
+
     const tier = biz.marketplaceTier ?? "free";
+
+    // Founding businesses pay 3% for first 2 years, then standard 4%
+    let feePercent = TIER_FEE[tier] ?? 6;
+    let foundingActive = false;
+    let foundingExpiresAt: Date | null = null;
+    if (biz.foundingBusiness && biz.foundingGrantedAt) {
+      const elapsed = Date.now() - new Date(biz.foundingGrantedAt).getTime();
+      if (elapsed < FOUNDING_WINDOW_MS) {
+        feePercent = FOUNDING_RATE_PERCENT;
+        foundingActive = true;
+        foundingExpiresAt = new Date(new Date(biz.foundingGrantedAt).getTime() + FOUNDING_WINDOW_MS);
+      }
+    }
+
     res.json({
       tier,
       label: TIER_LABELS[tier] ?? "Free",
-      feePercent: TIER_FEE[tier] ?? 6,
+      feePercent,
+      foundingActive,
+      foundingExpiresAt: foundingExpiresAt?.toISOString() ?? null,
     });
   } catch (err) {
     req.log.error({ err }, "Failed to get marketplace tier");
