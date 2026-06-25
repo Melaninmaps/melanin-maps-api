@@ -412,6 +412,20 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="spaces"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
+        name="space/[id]"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
         name="safety-info"
         options={{
           headerShown: false,

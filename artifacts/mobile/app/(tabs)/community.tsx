@@ -458,6 +458,24 @@ export default function CommunityScreen() {
           contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 40, gap: 14 }]}
           showsVerticalScrollIndicator={false}
         >
+          {/* Community Spaces card */}
+          <TouchableOpacity
+            style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#2D7A4F33" }]}
+            onPress={() => router.push("/spaces")}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.resSpacesIcon, { backgroundColor: "#2D7A4F18" }]}>
+              <Feather name="home" size={22} color="#2D7A4F" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.resSpacesTitle, { color: colors.foreground }]}>Community Spaces</Text>
+              <Text style={[styles.resSpacesSub, { color: colors.mutedForeground }]}>
+                Browse spaces for rent, sale &amp; business shared by the community. Know a great spot? Post it.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+
           {/* Crisis banner */}
           <View style={[styles.resCrisisBanner, { backgroundColor: "#DC2626" }]}>
             <Feather name="alert-circle" size={20} color="#FFF" />
@@ -847,6 +865,10 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   charCount: { fontFamily: "Inter_400Regular", fontSize: 12, textAlign: "right", paddingHorizontal: 20, paddingBottom: 8 },
+  resSpacesCard: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14, borderWidth: 1.5, padding: 14 },
+  resSpacesIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  resSpacesTitle: { fontFamily: "Inter_700Bold", fontSize: 15 },
+  resSpacesSub: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 3, lineHeight: 17 },
   resCrisisBanner: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14, padding: 14 },
   resCrisisTitle: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFF" },
   resCrisisSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.85)" },

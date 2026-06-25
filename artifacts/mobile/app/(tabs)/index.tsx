@@ -31,6 +31,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAlerts } from "@/hooks/useAlerts";
 import { type FilterState } from "@/components/ScoreFilterPanel";
+import { useSpaces } from "@/hooks/useSpaces";
 
 export default function DiscoverScreen() {
   const colors = useColors();
@@ -60,6 +61,8 @@ export default function DiscoverScreen() {
     search,
     category: activeCategory,
   });
+
+  const { spaces: searchSpaces } = useSpaces(search.trim().length > 2 ? { q: search.trim() } : undefined);
 
   const [activeVibe, setActiveVibe] = useState<string | null>(null);
 
@@ -268,6 +271,39 @@ export default function DiscoverScreen() {
               </View>
             </View>
           </TouchableOpacity>
+        </View>
+
+        {/* Community Spaces banner */}
+        <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 12 }]}>
+          <TouchableOpacity
+            style={[styles.spacesBanner, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/spaces")}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.spacesIconWrap, { backgroundColor: "#2D7A4F18" }]}>
+              <Feather name="home" size={22} color="#2D7A4F" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.spacesBannerTitle, { color: colors.foreground }]}>Community Spaces</Text>
+              <Text style={[styles.spacesBannerSub, { color: colors.mutedForeground }]}>
+                Spaces for rent, sale & business in safe neighborhoods
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+          {searchSpaces.length > 0 && (
+            <TouchableOpacity
+              style={[styles.spacesMatch, { backgroundColor: "#2D7A4F12", borderColor: "#2D7A4F33" }]}
+              onPress={() => router.push({ pathname: "/spaces", params: { q: search } } as any)}
+              activeOpacity={0.85}
+            >
+              <Feather name="briefcase" size={13} color="#2D7A4F" />
+              <Text style={[styles.spacesMatchText, { color: "#2D7A4F" }]}>
+                {searchSpaces.length} space{searchSpaces.length !== 1 ? "s" : ""} match "{search}" — tap to view
+              </Text>
+              <Feather name="arrow-right" size={13} color="#2D7A4F" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Vibe Match chips */}
@@ -539,6 +575,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  spacesBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+  },
+  spacesIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  spacesBannerTitle: { fontFamily: "Inter_700Bold", fontSize: 14 },
+  spacesBannerSub: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2, lineHeight: 17 },
+  spacesMatch: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 8,
+  },
+  spacesMatchText: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 12 },
   vibeScroll: {
     paddingHorizontal: 16,
     paddingVertical: 12,
