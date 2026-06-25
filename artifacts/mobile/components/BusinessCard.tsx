@@ -52,9 +52,10 @@ interface Props {
   isSaved: boolean;
   onToggleSave: () => void;
   horizontal?: boolean;
+  warningCount?: number;
 }
 
-export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizontal = false }: Props) {
+export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizontal = false, warningCount = 0 }: Props) {
   const colors = useColors();
   const img = CATEGORY_IMAGES[business.category] ?? CATEGORY_IMAGES["Food"];
   const [showSafetySurvey, setShowSafetySurvey] = useState(false);
@@ -87,6 +88,12 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
             </View>
           )}
           <View style={styles.hContent}>
+            {warningCount >= 3 && (
+              <View style={styles.warningBanner}>
+                <Feather name="alert-octagon" size={11} color="#7C2D12" />
+                <Text style={styles.warningText}>{warningCount} community reports filed</Text>
+              </View>
+            )}
             <View style={styles.hTop}>
               <View style={styles.hTitleRow}>
                 <Text style={[styles.hName, { color: colors.foreground }]} numberOfLines={1}>
@@ -167,6 +174,12 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
           )}
         </View>
         <View style={styles.vContent}>
+          {warningCount >= 3 && (
+            <View style={styles.warningBanner}>
+              <Feather name="alert-octagon" size={11} color="#7C2D12" />
+              <Text style={styles.warningText}>{warningCount} community reports filed</Text>
+            </View>
+          )}
           <View style={styles.vTitleRow}>
             <Text style={[styles.vName, { color: colors.foreground }]} numberOfLines={1}>
               {business.name}
@@ -370,5 +383,23 @@ const styles = StyleSheet.create({
   rateSafetyText: {
     fontFamily: "Inter_500Medium",
     fontSize: 11,
+  },
+  warningBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#7C2D1215",
+    borderColor: "#7C2D1240",
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginBottom: 6,
+    alignSelf: "flex-start",
+  },
+  warningText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+    color: "#7C2D12",
   },
 });

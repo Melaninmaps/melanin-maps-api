@@ -22,6 +22,7 @@ import { useAuth } from "@/lib/auth";
 import { usePoints } from "@/hooks/usePoints";
 import { useMembership } from "@/hooks/useMembership";
 import { useCheckins } from "@/hooks/useCheckins";
+import { useSpaceWarnings } from "@/hooks/useSpaceWarnings";
 import { BadgeSection } from "@/components/BadgeSection";
 import { MilestoneSection } from "@/components/MilestoneSection";
 import { PointsRedemptionModal } from "@/components/PointsRedemptionModal";
@@ -81,6 +82,7 @@ export default function ProfileScreen() {
 
   const { businesses } = useBusinesses();
   const savedBusinesses = businesses.filter((b) => savedIds.includes(b.id));
+  const { isWarned } = useSpaceWarnings();
   const { total: pointsTotal, ledger } = usePoints();
   const reviewCount = ledger.filter((e) => e.action === "review").length;
   const { subscription } = useMembership();
@@ -308,6 +310,7 @@ export default function ProfileScreen() {
               onPress={() => router.push({ pathname: "/business/[id]", params: { id: b.id } })}
               isSaved={isSaved(b.id)}
               onToggleSave={() => toggleSave(b.id)}
+              warningCount={isWarned(b.name, b.city)}
             />
           ))
         )}

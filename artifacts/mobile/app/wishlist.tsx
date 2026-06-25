@@ -8,6 +8,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useColors } from "@/hooks/useColors";
 import { useWishlist, type WishlistItem } from "@/hooks/useWishlist";
+import { useSpaceWarnings } from "@/hooks/useSpaceWarnings";
+import { Feather } from "@expo/vector-icons";
 
 const GOLD = "#C9922B";
 
@@ -39,19 +41,26 @@ function groupByCity(items: WishlistItem[]): Array<{ city: string; items: Wishli
 }
 
 function WishlistCard({
-  item, onDelete, onNotesSave, colors,
+  item, onDelete, onNotesSave, colors, warningCount = 0,
 }: {
   item: WishlistItem;
   onDelete: (id: string) => void;
   onNotesSave: (id: string, notes: string) => void;
   colors: ReturnType<typeof useColors>;
+  warningCount?: number;
 }) {
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesText, setNotesText] = useState(item.notes ?? "");
   const catColor = getCategoryColor(item.category);
 
   return (
-    <View style={[cardStyles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View style={[cardStyles.card, { backgroundColor: colors.card, borderColor: warningCount >= 3 ? "#7C2D1240" : colors.border }]}>
+      {warningCount >= 3 && (
+        <View style={cardStyles.warningBanner}>
+          <Feather name="alert-octagon" size={12} color="#7C2D12" />
+          <Text style={cardStyles.warningText}>{warningCount} community reports filed for this space</Text>
+        </View>
+      )}
       <View style={cardStyles.cardTop}>
         {item.category && (
           <View style={[cardStyles.badge, { backgroundColor: catColor + "18" }]}>
@@ -143,6 +152,12 @@ const cardStyles = StyleSheet.create({
   notesCancel: { fontFamily: "Inter_400Regular", fontSize: 13 },
   notesSave: { borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7 },
   notesSaveText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" },
+  warningBanner: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: "#7C2D1215", borderColor: "#7C2D1240",
+    borderWidth: 1, borderRadius: 8, padding: 8, marginBottom: 10,
+  },
+  warningText: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#7C2D12", flex: 1 },
 });
 
 export default function WishlistScreen() {
@@ -150,6 +165,7 @@ export default function WishlistScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { items, isLoading, load, removeItem, updateNotes } = useWishlist();
+  const { isWarned } = useSpaceWarnings();
 
   useEffect(() => { void load(); }, [load]);
 
@@ -225,6 +241,7 @@ export default function WishlistScreen() {
                 <WishlistCard
                   key={item.id} item={item} colors={colors}
                   onDelete={handleDelete} onNotesSave={handleNotesSave}
+                  warningCount={isWarned(item.businessName, item.city ?? "")}
                 />
               ))}
             </View>
