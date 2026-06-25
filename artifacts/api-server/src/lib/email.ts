@@ -1190,6 +1190,15 @@ export async function sendBusinessSubmissionAlert(data: {
   });
 }
 
+function detectOutreachMethod(url: string): { platform: string; method: "dm" | "email"; instruction: string } {
+  const u = url.toLowerCase();
+  if (u.includes("instagram.com")) return { platform: "Instagram", method: "dm", instruction: "Send a DM on Instagram" };
+  if (u.includes("tiktok.com"))    return { platform: "TikTok",    method: "dm", instruction: "Send a DM on TikTok" };
+  if (u.includes("twitter.com") || u.includes("x.com")) return { platform: "X / Twitter", method: "dm", instruction: "Send a DM on X" };
+  if (u.includes("facebook.com")) return { platform: "Facebook",  method: "dm", instruction: "Send a DM on Facebook" };
+  return { platform: "Website", method: "email", instruction: "Send an email via their website contact page" };
+}
+
 export async function sendNominationAlert(data: {
   nominationName: string;
   nominationCategory?: string;
@@ -1198,6 +1207,14 @@ export async function sendNominationAlert(data: {
   neighborhood?: string;
 }) {
   if (!resend) { log("nomination alert"); return; }
+
+  const outreach = data.nominationSocialLink ? detectOutreachMethod(data.nominationSocialLink) : null;
+  const outreachBadge = outreach
+    ? outreach.method === "dm"
+      ? `<span style="display:inline-block;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;margin-left:8px">📩 DM on ${outreach.platform}</span>`
+      : `<span style="display:inline-block;background:#15803d;color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;margin-left:8px">✉️ Email via Website</span>`
+    : "";
+
   await resend.emails.send({
     from: FROM,
     to: "hello@mappingwithmelanin.com",
@@ -1212,12 +1229,16 @@ export async function sendNominationAlert(data: {
             <tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700;width:140px">Business</td><td style="padding:6px 0;color:#2B1507;font-size:16px;font-weight:700">${data.nominationName}</td></tr>
             ${data.nominationCategory ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Category</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.nominationCategory}</td></tr>` : ""}
             ${(data.city || data.neighborhood) ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Location</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.neighborhood ? `${data.neighborhood}, ` : ""}${data.city ?? ""}</td></tr>` : ""}
-            ${data.nominationSocialLink ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Social / Website</td><td style="padding:6px 0;font-size:14px"><a href="${data.nominationSocialLink}" style="color:#CA922B">${data.nominationSocialLink}</a></td></tr>` : ""}
+            ${data.nominationSocialLink ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700;vertical-align:top">Contact</td><td style="padding:6px 0;font-size:14px"><a href="${data.nominationSocialLink}" style="color:#CA922B">${data.nominationSocialLink}</a>${outreachBadge}</td></tr>` : ""}
           </table>
         </div>
-        <div style="background:#2B1507;border-radius:12px;padding:16px">
-          <p style="color:#CA922B;font-size:14px;font-weight:700;margin:0 0 4px">Action needed</p>
-          <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.8">Reach out to onboard or archive this nomination in the admin panel.</p>
+        <div style="background:#2B1507;border-radius:12px;padding:20px">
+          <p style="color:#CA922B;font-size:14px;font-weight:700;margin:0 0 6px">Action needed</p>
+          ${outreach
+            ? `<p style="color:#F5EBD8;font-size:14px;margin:0 0 4px;font-weight:600">${outreach.instruction}</p>
+               <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Introduce MWM and invite them to list their business on the platform.</p>`
+            : `<p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.8">Find their contact info and reach out to invite them to the platform.</p>`
+          }
         </div>
       </div>
     `,
