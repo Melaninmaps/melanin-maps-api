@@ -96,7 +96,7 @@ const JOURNEY_TEMPLATES: Record<string, { phases: Array<{ id: string; title: str
 router.post("/journeys", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
 
-  const { journeyType, city, state, description } = req.body as Record<string, string>;
+  const { journeyType, city, state, description, selectedNeeds } = req.body as Record<string, string>;
   if (!journeyType || !JOURNEY_TEMPLATES[journeyType]) {
     res.status(400).json({ error: "Valid journeyType required", validTypes: Object.keys(JOURNEY_TEMPLATES) });
     return;
@@ -118,10 +118,15 @@ router.post("/journeys", async (req: Request, res: Response) => {
           .limit(15)
       : [];
 
-    const prompt = `You are KinfolkAI™, helping a community member plan their "${journeyType}" journey${location ? ` in ${location}` : ""}. 
-${description ? `Their description: "${description}"` : ""}
+    const needsContext = [
+      description ? `Their context: "${description}"` : "",
+      selectedNeeds ? `Specific needs they flagged: ${selectedNeeds}` : "",
+    ].filter(Boolean).join("\n");
 
-Generate a journey with personalized steps and insights for each phase. Return EXACTLY this JSON:
+    const prompt = `You are KinfolkAI™, helping a community member plan their "${journeyType}" journey${location ? ` in ${location}` : ""}. 
+${needsContext}
+
+Generate a journey with personalized steps and insights for each phase. Prioritize phases and steps that directly address their stated needs. Return EXACTLY this JSON:
 {
   "aiContext": "1-2 sentence summary of this person's journey and what matters most",
   "phases": [

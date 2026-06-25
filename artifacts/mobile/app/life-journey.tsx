@@ -77,6 +77,71 @@ export default function LifeJourneyScreen() {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedNeeds, setSelectedNeeds] = useState<string[]>([]);
+
+  const JOURNEY_NEEDS: Record<string, Array<{ label: string; emoji: string }>> = {
+    moving: [
+      { label: "Moving Company", emoji: "🚚" }, { label: "Home Repair", emoji: "🔧" },
+      { label: "Home Organizer", emoji: "📦" }, { label: "Cleaning Service", emoji: "🧹" },
+      { label: "Storage Unit", emoji: "🏪" }, { label: "Real Estate Agent", emoji: "🏠" },
+      { label: "Healthcare Provider", emoji: "🏥" }, { label: "Schools / Childcare", emoji: "🎓" },
+      { label: "Community & Church", emoji: "🤝" }, { label: "Financial / Banking", emoji: "🏦" },
+      { label: "Hair & Beauty", emoji: "✂️" }, { label: "Mental Health", emoji: "💆" },
+    ],
+    "new-to-city": [
+      { label: "Hair & Beauty", emoji: "✂️" }, { label: "Healthcare Provider", emoji: "🏥" },
+      { label: "Gym & Fitness", emoji: "💪" }, { label: "Community Groups", emoji: "🤝" },
+      { label: "Place of Worship", emoji: "⛪" }, { label: "Professional Networking", emoji: "💼" },
+      { label: "Restaurants & Food", emoji: "🍽️" }, { label: "Mental Health", emoji: "💆" },
+      { label: "Financial Services", emoji: "🏦" }, { label: "Transportation", emoji: "🚗" },
+    ],
+    "starting-business": [
+      { label: "Business Attorney", emoji: "⚖️" }, { label: "Accountant / CPA", emoji: "📊" },
+      { label: "Business Insurance", emoji: "🛡️" }, { label: "Coworking Space", emoji: "💻" },
+      { label: "Marketing & Design", emoji: "🎨" }, { label: "Business Mentor", emoji: "🤝" },
+      { label: "Mental Health Support", emoji: "💆" }, { label: "Bookkeeper", emoji: "📚" },
+      { label: "Web / Tech Support", emoji: "🌐" }, { label: "Product Suppliers", emoji: "📦" },
+    ],
+    "new-baby": [
+      { label: "OB-GYN / Midwife", emoji: "👶" }, { label: "Pediatrician", emoji: "🏥" },
+      { label: "Childcare / Daycare", emoji: "🏫" }, { label: "Postpartum Support", emoji: "💆" },
+      { label: "Lactation Consultant", emoji: "🤱" }, { label: "Parent Groups", emoji: "🤝" },
+      { label: "Nutritionist", emoji: "🥗" }, { label: "Mental Health", emoji: "🧠" },
+      { label: "Baby Essentials Shop", emoji: "🧸" }, { label: "Doula", emoji: "💛" },
+    ],
+    "getting-married": [
+      { label: "Wedding Venue", emoji: "💒" }, { label: "Caterer", emoji: "🍽️" },
+      { label: "Photographer", emoji: "📸" }, { label: "Hair & Makeup", emoji: "💄" },
+      { label: "Wedding Planner", emoji: "📋" }, { label: "Florist", emoji: "🌸" },
+      { label: "DJ / Entertainment", emoji: "🎵" }, { label: "Officiant", emoji: "📖" },
+      { label: "Honeymoon Travel", emoji: "✈️" }, { label: "Legal / Name Change", emoji: "⚖️" },
+    ],
+    college: [
+      { label: "Financial Aid Help", emoji: "🎓" }, { label: "Tutoring", emoji: "📚" },
+      { label: "Mental Health", emoji: "💆" }, { label: "Career Coaching", emoji: "💼" },
+      { label: "Internship Search", emoji: "🔍" }, { label: "Housing", emoji: "🏠" },
+      { label: "Community / Greek Life", emoji: "🤝" }, { label: "Healthcare", emoji: "🏥" },
+    ],
+    "career-change": [
+      { label: "Career Coach", emoji: "🎯" }, { label: "Resume Writer", emoji: "📝" },
+      { label: "Training / Certification", emoji: "🎓" }, { label: "Networking Groups", emoji: "🤝" },
+      { label: "Mental Health Support", emoji: "💆" }, { label: "Financial Planning", emoji: "💰" },
+      { label: "Coworking Space", emoji: "💻" }, { label: "Recruiter", emoji: "🔍" },
+    ],
+    retirement: [
+      { label: "Financial Advisor", emoji: "💰" }, { label: "Estate Planning", emoji: "📋" },
+      { label: "Healthcare / Medicare", emoji: "🏥" }, { label: "Senior Community", emoji: "🤝" },
+      { label: "Downsizing Help", emoji: "🏠" }, { label: "Wellness & Fitness", emoji: "💪" },
+      { label: "Travel Planning", emoji: "✈️" }, { label: "Hobbies & Classes", emoji: "🎨" },
+    ],
+  };
+
+  const toggleNeed = (label: string) => {
+    setSelectedNeeds((prev) =>
+      prev.includes(label) ? prev.filter((n) => n !== label) : [...prev, label],
+    );
+    Haptics.selectionAsync();
+  };
 
   const getApiBase = () =>
     process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
@@ -136,7 +201,13 @@ export default function LifeJourneyScreen() {
       const res = await fetch(`${apiBase}/api/journeys`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders(token) },
-        body: JSON.stringify({ journeyType: selectedType, city: city.trim(), state: state.trim(), description: description.trim() }),
+        body: JSON.stringify({
+          journeyType: selectedType,
+          city: city.trim(),
+          state: state.trim(),
+          description: description.trim(),
+          selectedNeeds: selectedNeeds.length > 0 ? selectedNeeds.join(", ") : undefined,
+        }),
       });
       if (!res.ok) throw new Error("Failed to create journey");
       const d = await res.json() as { journey: Journey };
@@ -258,10 +329,41 @@ export default function LifeJourneyScreen() {
                 />
               </View>
 
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground, marginTop: 16 }]}>Tell KinfolkAI™ a little more (optional)</Text>
+              {JOURNEY_NEEDS[selectedType] && (
+                <>
+                  <Text style={[styles.sectionLabel, { color: colors.mutedForeground, marginTop: 20 }]}>
+                    What do you need help with?
+                  </Text>
+                  <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>
+                    Tap everything that applies — even things you haven't thought about yet
+                  </Text>
+                  <View style={styles.chipsWrap}>
+                    {JOURNEY_NEEDS[selectedType]!.map((need) => {
+                      const active = selectedNeeds.includes(need.label);
+                      return (
+                        <TouchableOpacity
+                          key={need.label}
+                          style={[
+                            styles.chip,
+                            { borderColor: active ? primaryGold : colors.border, backgroundColor: active ? primaryGold + "18" : colors.card },
+                          ]}
+                          onPress={() => toggleNeed(need.label)}
+                          activeOpacity={0.75}
+                        >
+                          <Text style={styles.chipEmoji}>{need.emoji}</Text>
+                          <Text style={[styles.chipLabel, { color: active ? primaryGold : colors.foreground }]}>{need.label}</Text>
+                          {active && <Feather name="check" size={11} color={primaryGold} />}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </>
+              )}
+
+              <Text style={[styles.sectionLabel, { color: colors.mutedForeground, marginTop: 20 }]}>Anything else KinfolkAI™ should know? (optional)</Text>
               <TextInput
                 style={[styles.textarea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-                placeholder={`e.g. "Moving with my family, need good schools and a community feel"`}
+                placeholder={`e.g. "Single mom, moving with two kids, budget is tight — need to find affordable options and a good school district"`}
                 placeholderTextColor={colors.mutedForeground}
                 value={description}
                 onChangeText={setDescription}
@@ -562,7 +664,12 @@ const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1 },
   headerTitle: { fontSize: 17, fontWeight: "700", flex: 1, textAlign: "center" },
   backBtn: { width: 36, height: 36, justifyContent: "center" },
-  sectionLabel: { fontSize: 12, fontWeight: "600", letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 12 },
+  sectionLabel: { fontSize: 12, fontWeight: "600", letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 },
+  sectionHint: { fontSize: 12, marginBottom: 12, lineHeight: 17 },
+  chipsWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 4 },
+  chip: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 20, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 7 },
+  chipEmoji: { fontSize: 14 },
+  chipLabel: { fontSize: 13, fontWeight: "500" },
   typeGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   typeCard: { width: "47%", borderRadius: 12, borderWidth: 1.5, padding: 14, position: "relative" },
   typeIcon: { fontSize: 24, marginBottom: 6 },
