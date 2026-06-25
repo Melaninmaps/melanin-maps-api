@@ -6,46 +6,46 @@ import { getUncachableStripeClient } from "../stripeClient";
 const router: IRouter = Router();
 
 /**
- * Marketplace fee rates by tier:
- *   free    → 6%  (default)
- *   growth  → 7%
- *   premium → 4%
+ * Transaction-value sliding scale (all non-founding businesses):
+ *   Under $25     → 4%
+ *   $25 – $250    → 7%
+ *   Over $250     → 5%
  *
- * Founding businesses (first 500) receive 3% for their first 2 years,
- * then automatically move to the standard premium rate of 4%.
+ * Founding businesses (first 500) pay a flat 3% for their first 2 years,
+ * then fall into the standard sliding scale above.
  *
  * totalCents        — full transaction total (unit price × quantity) in cents
- * tier              — marketplaceTier from the businesses table
  * foundingBusiness  — whether the business has founding status
  * foundingGrantedAt — timestamp when founding status was granted
  * returns the fee amount in cents, rounded to the nearest cent
  */
-export const MARKETPLACE_FEE_RATES: Record<string, number> = {
-  free: 0.06,
-  growth: 0.07,
-  premium: 0.04,
-};
+export const FEE_SCHEDULE: Array<{ maxCents: number; rate: number; label: string }> = [
+  { maxCents: 2499,         rate: 0.04, label: "Under $25" },
+  { maxCents: 25000,        rate: 0.07, label: "$25 – $250" },
+  { maxCents: Infinity,     rate: 0.05, label: "Over $250" },
+];
 
-const FOUNDING_RATE = 0.03;
-const FOUNDING_WINDOW_MS = 2 * 365.25 * 24 * 60 * 60 * 1000; // 2 years in ms
+export const FOUNDING_RATE = 0.03;
+export const FOUNDING_WINDOW_MS = 2 * 365.25 * 24 * 60 * 60 * 1000; // 2 years in ms
+
+function slidingRate(totalCents: number): number {
+  const bracket = FEE_SCHEDULE.find((b) => totalCents <= b.maxCents) ?? FEE_SCHEDULE[FEE_SCHEDULE.length - 1];
+  return bracket.rate;
+}
 
 function platformFee(
   totalCents: number,
-  tier: string,
   foundingBusiness?: boolean,
   foundingGrantedAt?: Date | null,
 ): number {
-  let rate = MARKETPLACE_FEE_RATES[tier] ?? MARKETPLACE_FEE_RATES.free;
-
-  // Founding members get 3% for the first 2 years from grant date
+  // Founding members get 3% flat for the first 2 years
   if (foundingBusiness && foundingGrantedAt) {
     const elapsed = Date.now() - new Date(foundingGrantedAt).getTime();
     if (elapsed < FOUNDING_WINDOW_MS) {
-      rate = FOUNDING_RATE;
+      return Math.round(totalCents * FOUNDING_RATE);
     }
   }
-
-  return Math.round(totalCents * rate);
+  return Math.round(totalCents * slidingRate(totalCents));
 }
 
 async function requireBusinessOwner(req: Request, res: Response, businessId: string): Promise<typeof businessesTable.$inferSelect | null> {
@@ -347,7 +347,6 @@ router.post("/connect/listings/:id/checkout", async (req: Request, res: Response
     const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(",")[0]}`;
     const applicationFeeAmount = platformFee(
       listing.priceInCents * quantity,
-      biz.marketplaceTier ?? "free",
       biz.foundingBusiness ?? false,
       biz.foundingGrantedAt,
     );

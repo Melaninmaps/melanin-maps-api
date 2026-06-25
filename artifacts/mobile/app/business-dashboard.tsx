@@ -1168,79 +1168,68 @@ export default function BusinessDashboardScreen() {
 
                   {/* Current fee rate banner */}
                   {(() => {
-                    const tier = marketplaceTier?.tier ?? "free";
-                    const feePercent = marketplaceTier?.feePercent ?? 6;
-                    const tierLabel = marketplaceTier?.label ?? "Free";
                     const foundingActive = (marketplaceTier as any)?.foundingActive ?? false;
                     const foundingExpiresAt = (marketplaceTier as any)?.foundingExpiresAt ?? null;
-                    const tierColor = foundingActive ? "#C9922B" : tier === "premium" ? "#C9922B" : tier === "growth" ? "#2D7A4F" : colors.mutedForeground;
                     const expiryYear = foundingExpiresAt ? new Date(foundingExpiresAt).getFullYear() : null;
+                    const bannerColor = foundingActive ? "#C9922B" : colors.primary;
                     return (
-                      <View style={{ backgroundColor: tierColor + "15", borderRadius: 10, borderWidth: 1, borderColor: tierColor + "30", padding: 12, marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 10 }}>
+                      <View style={{ backgroundColor: bannerColor + "15", borderRadius: 10, borderWidth: 1, borderColor: bannerColor + "30", padding: 12, marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 10 }}>
                         <View style={{ flex: 1 }}>
-                          <Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: tierColor, marginBottom: 2 }}>
-                            {foundingActive ? "⭐ FOUNDING RATE — LOCKED IN" : `YOUR MARKETPLACE FEE — ${tierLabel.toUpperCase()} TIER`}
+                          <Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: bannerColor, marginBottom: 2 }}>
+                            {foundingActive ? "⭐ FOUNDING RATE — LOCKED IN" : "MARKETPLACE FEE SCHEDULE"}
                           </Text>
-                          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
-                            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 26, color: tierColor }}>{feePercent}%</Text>
-                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground }}>per transaction</Text>
-                          </View>
-                          {foundingActive && expiryYear && (
-                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
-                              Founding rate through {expiryYear}, then 4% (Premium rate).
-                            </Text>
-                          )}
-                          {!foundingActive && tier === "free" && (
-                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
-                              Upgrade to Growth (7%) or Premium (4%) to keep more of every sale.
-                            </Text>
-                          )}
-                          {!foundingActive && tier === "growth" && (
-                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
-                              Upgrade to Premium to unlock our lowest 4% rate.
-                            </Text>
-                          )}
-                          {!foundingActive && tier === "premium" && (
-                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
-                              You're on our best rate. Thank you for being a Premium member.
+                          {foundingActive ? (
+                            <>
+                              <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+                                <Text style={{ fontFamily: "Inter_700Bold", fontSize: 26, color: bannerColor }}>3%</Text>
+                                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground }}>flat — all transactions</Text>
+                              </View>
+                              {expiryYear && (
+                                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
+                                  Founding rate through {expiryYear}, then standard schedule.
+                                </Text>
+                              )}
+                            </>
+                          ) : (
+                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, marginTop: 2, lineHeight: 18 }}>
+                              4% under $25 · 7% on $25–$250 · 5% over $250
                             </Text>
                           )}
                         </View>
-                        <View style={{ alignItems: "center", gap: 3 }}>
-                          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: tierColor + "20", alignItems: "center", justifyContent: "center" }}>
-                            <Feather name={foundingActive ? "star" : tier === "premium" ? "star" : tier === "growth" ? "trending-up" : "tag"} size={16} color={tierColor} />
-                          </View>
+                        <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: bannerColor + "20", alignItems: "center", justifyContent: "center" }}>
+                          <Feather name={foundingActive ? "star" : "percent"} size={16} color={bannerColor} />
                         </View>
                       </View>
                     );
                   })()}
 
-                  {/* Fee comparison table */}
+                  {/* Fee schedule table */}
                   <View style={{ borderRadius: 10, borderWidth: 1, borderColor: colors.border, overflow: "hidden", marginBottom: 14 }}>
-                    {[
-                      { label: "Free", fee: "6%", icon: "tag" as const, tier: "free" },
-                      { label: "Growth", fee: "7%", icon: "trending-up" as const, tier: "growth" },
-                      { label: "Premium", fee: "4%", icon: "star" as const, tier: "premium" },
-                    ].map((row, idx) => {
-                      const isActive = (marketplaceTier?.tier ?? "free") === row.tier;
-                      const rowColor = row.tier === "premium" ? "#C9922B" : row.tier === "growth" ? "#2D7A4F" : colors.mutedForeground;
-                      return (
-                        <View key={row.tier} style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 9, backgroundColor: isActive ? rowColor + "12" : "transparent", borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: colors.border }}>
-                          <Feather name={row.icon} size={13} color={isActive ? rowColor : colors.mutedForeground} style={{ marginRight: 8 }} />
-                          <Text style={{ fontFamily: isActive ? "Inter_700Bold" : "Inter_400Regular", fontSize: 13, color: isActive ? colors.foreground : colors.mutedForeground, flex: 1 }}>
-                            {row.label}{isActive ? "  ✓ Your plan" : ""}
-                          </Text>
-                          <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: isActive ? rowColor : colors.mutedForeground }}>{row.fee}</Text>
-                        </View>
-                      );
-                    })}
-                    {/* Founding rate row */}
-                    <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 9, backgroundColor: "#C9922B08", borderTopWidth: 1, borderTopColor: colors.border }}>
-                      <Text style={{ fontSize: 13, marginRight: 8 }}>⭐</Text>
-                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, flex: 1 }}>
-                        Founding (first 2 yrs)
+                    <View style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                      <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                        Standard Rate Schedule
                       </Text>
-                      <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: "#C9922B" }}>3%</Text>
+                    </View>
+                    {[
+                      { label: "Under $25",  fee: "4%", note: "micro transactions",  color: "#2D7A4F" },
+                      { label: "$25 – $250", fee: "7%", note: "recommended standard", color: colors.primary },
+                      { label: "Over $250",  fee: "5%", note: "high-value sales",     color: "#C9922B" },
+                    ].map((row, idx) => (
+                      <View key={row.label} style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: colors.border }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: colors.foreground }}>{row.label}</Text>
+                          <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground }}>{row.note}</Text>
+                        </View>
+                        <Text style={{ fontFamily: "Inter_700Bold", fontSize: 16, color: row.color }}>{row.fee}</Text>
+                      </View>
+                    ))}
+                    {/* Founding rate row */}
+                    <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 10, backgroundColor: "#C9922B08", borderTopWidth: 1, borderTopColor: colors.border }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#C9922B" }}>⭐ Founding Members</Text>
+                        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground }}>flat rate, first 2 years</Text>
+                      </View>
+                      <Text style={{ fontFamily: "Inter_700Bold", fontSize: 16, color: "#C9922B" }}>3%</Text>
                     </View>
                   </View>
 

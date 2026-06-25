@@ -398,9 +398,12 @@ router.patch("/admin/businesses/:id/founding-status", async (req: Request, res: 
   }
 });
 
-// Fee rates for the Founding Member Advantage tier system
-// Founding businesses pay 3% for their first 2 years, then 4% (premium rate)
-const TIER_FEE: Record<string, number> = { free: 6, growth: 7, premium: 4 };
+// Transaction-value sliding scale (matches connect.ts FEE_SCHEDULE)
+const FEE_SCHEDULE_DISPLAY = [
+  { label: "Under $25",  rate: 4 },
+  { label: "$25 – $250", rate: 7 },
+  { label: "Over $250",  rate: 5 },
+];
 const FOUNDING_RATE_PERCENT = 3;
 const FOUNDING_WINDOW_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
 const TIER_LABELS: Record<string, string> = { free: "Free", growth: "Growth", premium: "Premium" };
@@ -424,14 +427,12 @@ router.get("/businesses/:id/marketplace-tier", async (req: Request, res: Respons
 
     const tier = biz.marketplaceTier ?? "free";
 
-    // Founding businesses pay 3% for first 2 years, then standard 4%
-    let feePercent = TIER_FEE[tier] ?? 6;
+    // Check founding status
     let foundingActive = false;
     let foundingExpiresAt: Date | null = null;
     if (biz.foundingBusiness && biz.foundingGrantedAt) {
       const elapsed = Date.now() - new Date(biz.foundingGrantedAt).getTime();
       if (elapsed < FOUNDING_WINDOW_MS) {
-        feePercent = FOUNDING_RATE_PERCENT;
         foundingActive = true;
         foundingExpiresAt = new Date(new Date(biz.foundingGrantedAt).getTime() + FOUNDING_WINDOW_MS);
       }
@@ -440,9 +441,11 @@ router.get("/businesses/:id/marketplace-tier", async (req: Request, res: Respons
     res.json({
       tier,
       label: TIER_LABELS[tier] ?? "Free",
-      feePercent,
+      // Founding businesses see a flat rate; everyone else sees the schedule
+      feePercent: foundingActive ? FOUNDING_RATE_PERCENT : null,
       foundingActive,
       foundingExpiresAt: foundingExpiresAt?.toISOString() ?? null,
+      feeSchedule: FEE_SCHEDULE_DISPLAY,
     });
   } catch (err) {
     req.log.error({ err }, "Failed to get marketplace tier");
@@ -465,7 +468,7 @@ router.patch("/admin/businesses/:id/marketplace-tier", async (req: Request, res:
       .where(eq(businessesTable.id, id))
       .returning({ id: businessesTable.id, marketplaceTier: businessesTable.marketplaceTier });
     if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
-    res.json({ id: biz.id, tier: biz.marketplaceTier, feePercent: TIER_FEE[tier] ?? 6 });
+    res.json({ id: biz.id, tier: biz.marketplaceTier, feeSchedule: FEE_SCHEDULE_DISPLAY });
   } catch (err) {
     req.log.error({ err }, "Failed to update marketplace tier");
     res.status(500).json({ error: "Failed to update marketplace tier" });
