@@ -40,6 +40,11 @@ const ACCESSIBILITY_FEATURES = [
   "Wheelchair accessible sidewalks", "Good street lighting", "Accessible public transit",
   "Gender-neutral restrooms nearby", "Family-friendly spaces", "LGBTQ+ friendly businesses", "None noticed",
 ];
+const BUSINESS_CATEGORIES = [
+  "Restaurant", "Café / Coffee", "Bar / Lounge", "Retail", "Beauty / Salon",
+  "Barbershop", "Health & Wellness", "Fitness", "Art & Culture", "Entertainment",
+  "Hotel / Lodging", "Professional Services", "Food Truck", "Bakery", "Other",
+];
 const VISITOR_TIPS = [
   "Great for solo travelers", "Better with a group at night", "Keep valuables hidden",
   "Use rideshare after dark", "Parking can be tricky", "Very family friendly",
@@ -113,6 +118,10 @@ export default function RateNeighborhood() {
   const [businessResults, setBusinessResults] = useState<{ id: string; name: string; category: string; city: string }[]>([]);
   const [linkedBusiness, setLinkedBusiness] = useState<{ id: string; name: string; category: string; city: string } | null>(null);
   const [businessSearchOpen, setBusinessSearchOpen] = useState(false);
+  const [nominateMode, setNominateMode] = useState(false);
+  const [nominateName, setNominateName] = useState("");
+  const [nominateCategory, setNominateCategory] = useState("");
+  const [nominateSocialLink, setNominateSocialLink] = useState("");
   const searchRef = useRef<HTMLDivElement>(null);
   const [visitPurpose, setVisitPurpose] = useState("");
   const [visitFreq, setVisitFreq] = useState("");
@@ -175,6 +184,11 @@ export default function RateNeighborhood() {
           visitPurpose, visitFreq: visitFreq || undefined,
           daytimeSafety, nighttimeSafety,
           linkedBusinessId: linkedBusiness?.id || undefined,
+          nomination: nominateMode && nominateName ? {
+            name: nominateName,
+            category: nominateCategory || undefined,
+            socialLink: nominateSocialLink || undefined,
+          } : undefined,
           atmosphere,
           communityRating: communityRating || undefined,
           culturallyConnected: culturallyConnected || undefined,
@@ -223,7 +237,7 @@ export default function RateNeighborhood() {
               <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-11">View Safety Scores</Button>
             </Link>
             <Button variant="outline" className="rounded-full border-[#3A1F0E]/20 text-[#3A1F0E] px-8 h-11"
-              onClick={() => { setSubmitted(false); setStep(1); setCity(""); setNeighborhood(""); setBusinessSearch(""); setLinkedBusiness(null); setVisitPurpose(""); setVisitFreq(""); setDaytimeSafety(0); setNighttimeSafety(0); setAtmosphere(""); setCommunityRating(0); setCulturallyConnected(""); setAccessibility([]); setTips([]); setComments(""); }}>
+              onClick={() => { setSubmitted(false); setStep(1); setCity(""); setNeighborhood(""); setBusinessSearch(""); setLinkedBusiness(null); setNominateMode(false); setNominateName(""); setNominateCategory(""); setNominateSocialLink(""); setVisitPurpose(""); setVisitFreq(""); setDaytimeSafety(0); setNighttimeSafety(0); setAtmosphere(""); setCommunityRating(0); setCulturallyConnected(""); setAccessibility([]); setTips([]); setComments(""); }}>
               Rate Another
             </Button>
           </div>
@@ -327,6 +341,38 @@ export default function RateNeighborhood() {
                       <X className="w-4 h-4" />
                     </button>
                   </div>
+                ) : nominateMode ? (
+                  <div className="border-2 border-[#CA922B]/40 rounded-2xl p-5 space-y-4 bg-[#FAF6EF]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-[#3A1F0E]">✊🏾 Nominate this business</span>
+                      <button type="button" onClick={() => { setNominateMode(false); setNominateName(""); setNominateCategory(""); setNominateSocialLink(""); }}
+                        className="text-[#3A1F0E]/40 hover:text-[#3A1F0E] transition-colors"><X className="w-4 h-4" /></button>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#3A1F0E]/70 mb-1">Business name</label>
+                      <input type="text" value={nominateName} onChange={(e) => setNominateName(e.target.value)}
+                        placeholder="Business name"
+                        className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-2.5 text-sm text-[#3A1F0E] placeholder-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B] bg-white" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#3A1F0E]/70 mb-2">Category</label>
+                      <div className="flex flex-wrap gap-2">
+                        {BUSINESS_CATEGORIES.map((cat) => (
+                          <button key={cat} type="button" onClick={() => setNominateCategory(cat)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${nominateCategory === cat ? "bg-[#CA922B] border-[#CA922B] text-white" : "bg-white border-[#3A1F0E]/15 text-[#3A1F0E] hover:border-[#CA922B]/50"}`}>
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#3A1F0E]/70 mb-1">Instagram, website, or social link <span className="font-normal opacity-60">(optional)</span></label>
+                      <input type="url" value={nominateSocialLink} onChange={(e) => setNominateSocialLink(e.target.value)}
+                        placeholder="https://instagram.com/thebusiness or website URL"
+                        className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-2.5 text-sm text-[#3A1F0E] placeholder-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B] bg-white" />
+                    </div>
+                    <p className="text-xs text-[#3A1F0E]/50">Your nomination will be sent to our team. If approved, this business will be added to the platform and your review will be linked to them.</p>
+                  </div>
                 ) : (
                   <>
                     <div className="relative">
@@ -340,7 +386,7 @@ export default function RateNeighborhood() {
                         className="w-full border border-[#3A1F0E]/15 rounded-xl pl-9 pr-4 py-3 text-sm text-[#3A1F0E] placeholder-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B] bg-[#FAF6EF]"
                       />
                     </div>
-                    {businessSearchOpen && businessResults.length > 0 && (
+                    {businessSearchOpen && (
                       <div className="absolute z-10 top-full mt-1 left-0 right-0 bg-white border border-[#3A1F0E]/10 rounded-xl shadow-lg overflow-hidden">
                         {businessResults.map((b) => (
                           <button key={b.id} type="button"
@@ -353,7 +399,29 @@ export default function RateNeighborhood() {
                             </span>
                           </button>
                         ))}
+                        {businessSearch.trim().length > 1 && (
+                          <button type="button"
+                            onClick={() => { setNominateMode(true); setNominateName(businessSearch.trim()); setBusinessSearch(""); setBusinessSearchOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#FAF6EF] transition-colors border-t border-[#CA922B]/20 bg-[#CA922B]/5">
+                            <span className="text-lg">✊🏾</span>
+                            <span className="flex flex-col min-w-0">
+                              <span className="text-sm font-bold text-[#CA922B]">Nominate "{businessSearch.trim()}"</span>
+                              <span className="text-xs text-[#3A1F0E]/50">They're not on MWM yet — request to add them</span>
+                            </span>
+                          </button>
+                        )}
                       </div>
+                    )}
+                    {businessSearch.trim().length > 1 && !businessSearchOpen && !businessResults.length && (
+                      <button type="button"
+                        onClick={() => { setNominateMode(true); setNominateName(businessSearch.trim()); setBusinessSearch(""); }}
+                        className="mt-2 w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-[#CA922B]/30 bg-[#CA922B]/5 hover:bg-[#CA922B]/10 transition-colors text-left">
+                        <span className="text-lg">✊🏾</span>
+                        <span className="flex flex-col">
+                          <span className="text-sm font-bold text-[#CA922B]">Nominate "{businessSearch.trim()}"</span>
+                          <span className="text-xs text-[#3A1F0E]/50">They're not on MWM yet — request to add them</span>
+                        </span>
+                      </button>
                     )}
                   </>
                 )}
@@ -391,6 +459,13 @@ export default function RateNeighborhood() {
                 </p>
               </div>
 
+              {(linkedBusiness || (nominateMode && nominateName)) && (
+                <div className="flex items-center gap-3 bg-[#2B1507]/5 border border-[#2B1507]/15 rounded-xl px-4 py-3">
+                  <span className="text-base">📍</span>
+                  <span className="text-sm text-[#3A1F0E]/70">You're reviewing <span className="font-bold text-[#3A1F0E]">{linkedBusiness ? linkedBusiness.name : nominateName}</span>{!linkedBusiness && <span className="ml-1 text-xs text-[#CA922B] font-medium">(nomination pending)</span>}</span>
+                </div>
+              )}
+
               {[
                 { label: "Daytime safety", val: daytimeSafety, set: setDaytimeSafety },
                 { label: "Nighttime safety", val: nighttimeSafety, set: setNighttimeSafety },
@@ -412,6 +487,13 @@ export default function RateNeighborhood() {
                 <h2 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-1">🏘️ Community Experience</h2>
                 <p className="text-[#3A1F0E]/60 text-sm">Atmosphere is required — cultural connection and accessibility are optional</p>
               </div>
+
+              {(linkedBusiness || (nominateMode && nominateName)) && (
+                <div className="flex items-center gap-3 bg-[#2B1507]/5 border border-[#2B1507]/15 rounded-xl px-4 py-3">
+                  <span className="text-base">📍</span>
+                  <span className="text-sm text-[#3A1F0E]/70">You're reviewing <span className="font-bold text-[#3A1F0E]">{linkedBusiness ? linkedBusiness.name : nominateName}</span>{!linkedBusiness && <span className="ml-1 text-xs text-[#CA922B] font-medium">(nomination pending)</span>}</span>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-bold text-[#3A1F0E] mb-3">
@@ -492,6 +574,13 @@ export default function RateNeighborhood() {
                 <h2 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-1">💬 Tips & Comments</h2>
                 <p className="text-[#3A1F0E]/60 text-sm">Completely optional — help other visitors know what to expect</p>
               </div>
+
+              {(linkedBusiness || (nominateMode && nominateName)) && (
+                <div className="flex items-center gap-3 bg-[#2B1507]/5 border border-[#2B1507]/15 rounded-xl px-4 py-3">
+                  <span className="text-base">📍</span>
+                  <span className="text-sm text-[#3A1F0E]/70">You're reviewing <span className="font-bold text-[#3A1F0E]">{linkedBusiness ? linkedBusiness.name : nominateName}</span>{!linkedBusiness && <span className="ml-1 text-xs text-[#CA922B] font-medium">(nomination pending)</span>}</span>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-bold text-[#3A1F0E] mb-3">Quick tips for visitors</label>
