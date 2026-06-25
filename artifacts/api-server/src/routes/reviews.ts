@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable } from "@workspace/db";
+import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable, usersTable } from "@workspace/db";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { sendPushToUser, sendPushToUsersWithSavedBusiness } from "../lib/pushNotifications";
 import { reviewLimiter } from "../middleware/rateLimiter";
@@ -124,7 +124,8 @@ router.get("/reviews/thumbs-up", async (req: Request, res: Response) => {
       })
       .from(reviewsTable)
       .innerJoin(businessesTable, eq(reviewsTable.businessId, businessesTable.id))
-      .where(eq(reviewsTable.wouldReturnAlone, true))
+      .innerJoin(usersTable, eq(reviewsTable.userId, usersTable.id))
+      .where(and(eq(reviewsTable.wouldReturnAlone, true), eq(usersTable.approved, true)))
       .groupBy(businessesTable.id, businessesTable.name)
       .having(sql`count(*) >= 3`)
       .orderBy(sql`count(*) desc`)
