@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -98,6 +98,9 @@ export default function ProfileScreen() {
   const [editIndustry, setEditIndustry] = useState("");
   const [editJobTitle, setEditJobTitle] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [allTopics, setAllTopics] = useState<{ id: string; label: string; emoji: string; description: string }[]>([]);
+  const [myTopicIds, setMyTopicIds] = useState<string[]>([]);
+  const [topicsLoading, setTopicsLoading] = useState(false);
 
   const getApiBase = () =>
     process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
@@ -158,6 +161,34 @@ export default function ProfileScreen() {
       setLocalAvatarUri(result.assets[0].uri);
     }
   };
+
+  const loadTopics = useCallback(async () => {
+    setTopicsLoading(true);
+    try {
+      const apiBase = getApiBase();
+      const [topicsRes, mineRes] = await Promise.all([
+        fetch(`${apiBase}/api/health-hub/topics`),
+        isAuthenticated
+          ? (async () => {
+              const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
+              return fetch(`${apiBase}/api/health-hub/topics/mine`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+              });
+            })()
+          : Promise.resolve(null),
+      ]);
+      if (topicsRes.ok) {
+        const d = await topicsRes.json() as { topics: { id: string; label: string; emoji: string; description: string }[] };
+        setAllTopics(d.topics);
+      }
+      if (mineRes?.ok) {
+        const d = await mineRes.json() as { topicIds: string[] };
+        setMyTopicIds(d.topicIds);
+      }
+    } catch { /* silent */ } finally { setTopicsLoading(false); }
+  }, [isAuthenticated]);
+
+  useEffect(() => { void loadTopics(); }, [loadTopics]);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -532,36 +563,52 @@ export default function ProfileScreen() {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Saved Businesses</Text>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Saved Topics</Text>
+          <TouchableOpacity onPress={() => router.push("/health-hub" as never)}>
+            <Text style={[styles.seeAll, { color: colors.primary }]}>Manage →</Text>
+          </TouchableOpacity>
         </View>
-        {savedBusinesses.length === 0 ? (
-          <View style={[styles.emptyFavorites, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="bookmark" size={28} color={colors.muted} />
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Your saved places live here</Text>
+        {topicsLoading ? (
+          <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+        ) : myTopicIds.length === 0 ? (
+          <TouchableOpacity
+            style={[styles.emptyFavorites, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/health-hub" as never)}
+            activeOpacity={0.8}
+          >
+            <Feather name="shield" size={28} color={colors.muted} />
+            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>No saved health topics yet</Text>
             <Text style={[styles.emptySubText, { color: colors.mutedForeground }]}>
-              Tap the bookmark on any business to build your personal guide to Black excellence.
+              Follow topics in the Health Hub to get curated articles from verified physicians.
             </Text>
-          </View>
+          </TouchableOpacity>
         ) : (
-          savedBusinesses.map((b) => (
-            <View key={b.id}>
-              <BusinessCard
-                business={b}
-                onPress={() => router.push({ pathname: "/business/[id]", params: { id: b.id } })}
-                isSaved={isSaved(b.id)}
-                onToggleSave={() => toggleSave(b.id)}
-                warningCount={isWarned(b.name, b.city)}
-              />
-              <TouchableOpacity
-                style={[styles.alertsRow, { borderColor: colors.border, backgroundColor: colors.card }]}
-                onPress={() => router.push({ pathname: "/notification-prefs", params: { businessId: b.id, businessName: b.name } })}
-              >
-                <Feather name="bell" size={13} color={colors.primary} />
-                <Text style={[styles.alertsRowTxt, { color: colors.primary }]}>Manage alerts from {b.name}</Text>
-                <Feather name="chevron-right" size={13} color={colors.primary} />
-              </TouchableOpacity>
-            </View>
-          ))
+          <View style={styles.topicGrid}>
+            {allTopics
+              .filter((t) => myTopicIds.includes(t.id))
+              .map((t) => (
+                <TouchableOpacity
+                  key={t.id}
+                  style={[styles.topicChip, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => {
+                    void Haptics.selectionAsync();
+                    router.push("/health-hub" as never);
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.topicChipEmoji}>{t.emoji}</Text>
+                  <Text style={[styles.topicChipLabel, { color: colors.foreground }]} numberOfLines={1}>{t.label}</Text>
+                </TouchableOpacity>
+              ))}
+            <TouchableOpacity
+              style={[styles.topicChip, styles.topicChipAdd, { borderColor: colors.primary + "50", backgroundColor: colors.primary + "0D" }]}
+              onPress={() => router.push("/health-hub" as never)}
+              activeOpacity={0.75}
+            >
+              <Feather name="plus" size={14} color={colors.primary} />
+              <Text style={[styles.topicChipLabel, { color: colors.primary }]}>Add more</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
 
@@ -898,6 +945,34 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: "Inter_700Bold",
     fontSize: 18,
+  },
+  seeAll: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+  },
+  topicGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  topicChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  topicChipAdd: {
+    borderStyle: "dashed",
+  },
+  topicChipEmoji: {
+    fontSize: 15,
+  },
+  topicChipLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
   },
   emptyFavorites: {
     alignItems: "center",
