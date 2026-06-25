@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -16,6 +16,7 @@ export const wishlistItemsTable = pgTable("wishlist_items", {
   mustTry: text("must_try"),
   sessionId: varchar("session_id"),
   notes: text("notes"),
+  nonMinorityOwned: boolean("non_minority_owned").default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

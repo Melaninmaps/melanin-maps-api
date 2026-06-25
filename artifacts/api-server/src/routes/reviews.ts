@@ -162,7 +162,7 @@ router.post("/reviews", reviewLimiter, requireTrust, requireMembership("navigato
     res.status(401).json({ error: "Authentication required" });
     return;
   }
-  const { businessId, rating, text, wouldReturnAlone, socialHandle, socialPlatform, businessName, videoUrl } =
+  const { businessId, rating, text, wouldReturnAlone, socialHandle, socialPlatform, businessName, videoUrl, nonMinorityOwned } =
     req.body as Record<string, unknown>;
 
   const ratingNum = Number(rating);
@@ -210,6 +210,7 @@ router.post("/reviews", reviewLimiter, requireTrust, requireMembership("navigato
         socialHandle: cleanHandle,
         socialPlatform: cleanHandle ? cleanPlatform : null,
         videoUrl: typeof videoUrl === "string" && videoUrl.trim() ? videoUrl.trim() : null,
+        nonMinorityOwned: nonMinorityOwned === true,
       })
       .returning();
 
@@ -221,7 +222,7 @@ router.post("/reviews", reviewLimiter, requireTrust, requireMembership("navigato
     });
 
     let invite = null;
-    if (cleanHandle && cleanPlatform) {
+    if (cleanHandle && cleanPlatform && nonMinorityOwned !== true) {
       const [newInvite] = await db
         .insert(businessInvitesTable)
         .values({

@@ -14,6 +14,7 @@ export const reviewsTable = pgTable("reviews", {
   socialHandle: varchar("social_handle", { length: 100 }),
   socialPlatform: varchar("social_platform", { length: 30 }),
   videoUrl: varchar("video_url", { length: 500 }),
+  nonMinorityOwned: boolean("non_minority_owned").default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

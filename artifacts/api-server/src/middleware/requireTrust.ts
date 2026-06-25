@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
-const COOLDOWN_HOURS = 24;
+const COOLDOWN_HOURS = parseInt(process.env.POSTING_COOLDOWN_HOURS ?? "24", 10);
 
 export async function requireTrust(req: Request, res: Response, next: NextFunction): Promise<void> {
   const userId = (req as any).user?.id;

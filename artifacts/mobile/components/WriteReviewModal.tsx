@@ -37,7 +37,7 @@ interface Props {
   businessName: string;
   businessId?: string;
   onClose: () => void;
-  onSubmit: (rating: number, text: string, wouldReturn: boolean, socialHandle?: string, socialPlatform?: string, videoUrl?: string) => void;
+  onSubmit: (rating: number, text: string, wouldReturn: boolean, socialHandle?: string, socialPlatform?: string, videoUrl?: string, nonMinorityOwned?: boolean) => void;
 }
 
 export function WriteReviewModal({ visible, businessName, businessId, onClose, onSubmit }: Props) {
@@ -48,6 +48,7 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
   const [socialHandle, setSocialHandle] = useState("");
   const [socialPlatform, setSocialPlatform] = useState<SocialPlatform | null>(null);
   const [videoLink, setVideoLink] = useState("");
+  const [nonMinorityOwned, setNonMinorityOwned] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [inviteSent, setInviteSent] = useState(false);
 
@@ -58,6 +59,7 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
     setSocialHandle("");
     setSocialPlatform(null);
     setVideoLink("");
+    setNonMinorityOwned(false);
     setSubmitted(false);
     setInviteSent(false);
   };
@@ -75,7 +77,7 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
     const cleanVideoUrl = videoLink.trim() && isValidVideoUrl(videoLink) ? videoLink.trim() : undefined;
     setInviteSent(hasInvite);
     setSubmitted(true);
-    onSubmit(rating, text, wouldReturn, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl);
+    onSubmit(rating, text, wouldReturn, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl, nonMinorityOwned);
     setTimeout(() => {
       reset();
       onClose();
@@ -282,6 +284,19 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
               </View>
 
               <TouchableOpacity
+                style={[styles.nmoRow, { borderColor: nonMinorityOwned ? "#C9922B" : colors.border, backgroundColor: nonMinorityOwned ? "#C9922B10" : colors.card }]}
+                onPress={() => setNonMinorityOwned((v) => !v)}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.nmoCheck, { borderColor: nonMinorityOwned ? "#C9922B" : colors.border, backgroundColor: nonMinorityOwned ? "#C9922B" : "transparent" }]}>
+                  {nonMinorityOwned && <Feather name="check" size={11} color="#fff" />}
+                </View>
+                <Text style={[styles.nmoText, { color: nonMinorityOwned ? "#C9922B" : colors.mutedForeground }]}>
+                  This is not a minority-owned business
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
                 style={[
                   styles.submitBtn,
                   {
@@ -293,7 +308,7 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
                 activeOpacity={0.85}
               >
                 <Text style={styles.submitText}>
-                  {socialHandle.trim() && socialPlatform ? "Submit & Send Invite" : "Submit Review"}
+                  {socialHandle.trim() && socialPlatform && !nonMinorityOwned ? "Submit & Send Invite" : "Submit Review"}
                 </Text>
               </TouchableOpacity>
 
@@ -450,6 +465,29 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: "Inter_400Regular",
     fontSize: 14,
+  },
+  nmoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 14,
+  },
+  nmoCheck: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  nmoText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 13,
+    flex: 1,
   },
   submitBtn: {
     paddingVertical: 16,

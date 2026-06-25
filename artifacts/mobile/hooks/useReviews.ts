@@ -56,6 +56,7 @@ export function useReviews(businessId: string) {
       socialPlatform?: string,
       businessName?: string,
       videoUrl?: string,
+      nonMinorityOwned?: boolean,
     ): Promise<number | null> => {
       const token = await getToken();
       const apiBase = getApiBase();
@@ -76,6 +77,7 @@ export function useReviews(businessId: string) {
             socialPlatform: socialPlatform || null,
             businessName: businessName || null,
             videoUrl: videoUrl || null,
+            nonMinorityOwned: nonMinorityOwned ?? false,
           }),
         });
         if (res.ok) {

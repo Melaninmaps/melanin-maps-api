@@ -263,13 +263,118 @@ function AddEmployerModal({
   );
 }
 
+const BUSINESS_AMBER = "#C9922B";
+
+function AddBusinessModal({
+  visible, onClose, onSave, colors,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onSave: (name: string, city: string, country: string, nonMinorityOwned: boolean) => void;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const [name, setName] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
+  const [nonMinorityOwned, setNonMinorityOwned] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const reset = () => { setName(""); setCity(""); setCountry(""); setNonMinorityOwned(false); setSaving(false); };
+  const handleClose = () => { reset(); onClose(); };
+  const handleSave = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    await onSave(name.trim(), city.trim(), country.trim(), nonMinorityOwned);
+    reset();
+    onClose();
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
+      <KeyboardAvoidingView style={modalStyles.overlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <TouchableOpacity style={modalStyles.backdrop} activeOpacity={1} onPress={handleClose} />
+        <View style={[modalStyles.sheet, { backgroundColor: colors.background }]}>
+          <View style={[modalStyles.handle, { backgroundColor: colors.border }]} />
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <Text style={[modalStyles.title, { color: colors.foreground }]}>Save a Business</Text>
+            <Text style={[modalStyles.sub, { color: colors.mutedForeground }]}>
+              Track a business you've visited or want to remember
+            </Text>
+
+            <Text style={[modalStyles.label, { color: colors.foreground }]}>
+              Business Name <Text style={{ color: colors.destructive }}>*</Text>
+            </Text>
+            <TextInput
+              style={[modalStyles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              placeholder="e.g. Busboys and Poets, Slutty Vegan"
+              placeholderTextColor={colors.mutedForeground}
+              value={name}
+              onChangeText={setName}
+              autoFocus
+            />
+
+            <Text style={[modalStyles.label, { color: colors.foreground }]}>
+              City <Text style={[modalStyles.optional, { color: colors.mutedForeground }]}>(optional)</Text>
+            </Text>
+            <TextInput
+              style={[modalStyles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              placeholder="e.g. Washington, DC"
+              placeholderTextColor={colors.mutedForeground}
+              value={city}
+              onChangeText={setCity}
+            />
+
+            <Text style={[modalStyles.label, { color: colors.foreground }]}>
+              Country <Text style={[modalStyles.optional, { color: colors.mutedForeground }]}>(optional)</Text>
+            </Text>
+            <TextInput
+              style={[modalStyles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              placeholder="e.g. USA, Ghana, Jamaica"
+              placeholderTextColor={colors.mutedForeground}
+              value={country}
+              onChangeText={setCountry}
+            />
+
+            <TouchableOpacity
+              style={[bizModalStyles.nmoRow, { borderColor: nonMinorityOwned ? BUSINESS_AMBER : colors.border, backgroundColor: nonMinorityOwned ? BUSINESS_AMBER + "12" : colors.card }]}
+              onPress={() => setNonMinorityOwned((v) => !v)}
+              activeOpacity={0.8}
+            >
+              <View style={[bizModalStyles.nmoCheck, { borderColor: nonMinorityOwned ? BUSINESS_AMBER : colors.border, backgroundColor: nonMinorityOwned ? BUSINESS_AMBER : "transparent" }]}>
+                {nonMinorityOwned && <Ionicons name="checkmark" size={12} color="#fff" />}
+              </View>
+              <Text style={[bizModalStyles.nmoText, { color: nonMinorityOwned ? BUSINESS_AMBER : colors.mutedForeground }]}>
+                This is not a minority-owned business
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[modalStyles.saveBtn, { backgroundColor: name.trim() ? colors.primary : colors.muted }]}
+              onPress={handleSave}
+              disabled={!name.trim() || saving}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="storefront-outline" size={16} color={name.trim() ? "#fff" : colors.mutedForeground} />
+              <Text style={[modalStyles.saveBtnText, { color: name.trim() ? "#fff" : colors.mutedForeground }]}>
+                {saving ? "Saving…" : "Save Business"}
+              </Text>
+            </TouchableOpacity>
+            <View style={{ height: 16 }} />
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
 function TypePickerModal({
-  visible, onClose, onPickDestination, onPickEmployer, colors,
+  visible, onClose, onPickDestination, onPickEmployer, onPickBusiness, colors,
 }: {
   visible: boolean;
   onClose: () => void;
   onPickDestination: () => void;
   onPickEmployer: () => void;
+  onPickBusiness: () => void;
   colors: ReturnType<typeof useColors>;
 }) {
   return (
@@ -307,6 +412,22 @@ function TypePickerModal({
               <Text style={[typePickerStyles.optionTitle, { color: colors.foreground }]}>Employer</Text>
               <Text style={[typePickerStyles.optionSub, { color: colors.mutedForeground }]}>
                 A company or organization you want to work for
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[typePickerStyles.option, { backgroundColor: colors.card, borderColor: BUSINESS_AMBER + "40" }]}
+            onPress={() => { onClose(); onPickBusiness(); }}
+            activeOpacity={0.85}
+          >
+            <View style={[typePickerStyles.optionIcon, { backgroundColor: BUSINESS_AMBER + "18" }]}>
+              <Ionicons name="storefront-outline" size={24} color={BUSINESS_AMBER} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[typePickerStyles.optionTitle, { color: colors.foreground }]}>Business</Text>
+              <Text style={[typePickerStyles.optionSub, { color: colors.mutedForeground }]}>
+                A spot you've visited or want to remember
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} />
@@ -515,6 +636,7 @@ export default function WishlistScreen() {
   const [typePickerOpen, setTypePickerOpen] = useState(false);
   const [addDestModalOpen, setAddDestModalOpen] = useState(false);
   const [addEmployerModalOpen, setAddEmployerModalOpen] = useState(false);
+  const [addBusinessModalOpen, setAddBusinessModalOpen] = useState(false);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -540,6 +662,16 @@ export default function WishlistScreen() {
       city: city || null,
       country: country || null,
       destinationType: "employer",
+    });
+  }, [addItem]);
+
+  const handleAddBusiness = useCallback(async (name: string, city: string, country: string, nonMinorityOwned: boolean) => {
+    await addItem({
+      businessName: name,
+      city: city || null,
+      country: country || null,
+      destinationType: "business",
+      nonMinorityOwned,
     });
   }, [addItem]);
 
@@ -663,6 +795,7 @@ export default function WishlistScreen() {
         onClose={() => setTypePickerOpen(false)}
         onPickDestination={() => setAddDestModalOpen(true)}
         onPickEmployer={() => setAddEmployerModalOpen(true)}
+        onPickBusiness={() => setAddBusinessModalOpen(true)}
         colors={colors}
       />
       <AddDestinationModal
@@ -677,9 +810,41 @@ export default function WishlistScreen() {
         onSave={handleAddEmployer}
         colors={colors}
       />
+      <AddBusinessModal
+        visible={addBusinessModalOpen}
+        onClose={() => setAddBusinessModalOpen(false)}
+        onSave={handleAddBusiness}
+        colors={colors}
+      />
     </View>
   );
 }
+
+const bizModalStyles = StyleSheet.create({
+  nmoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  nmoCheck: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  nmoText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 13,
+    flex: 1,
+  },
+});
 
 const typePickerStyles = StyleSheet.create({
   sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, marginTop: "auto" },
