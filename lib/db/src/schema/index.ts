@@ -62,3 +62,6 @@ export * from "./identity-verifications";
 export * from "./review-helpful-votes";
 export * from "./life-journeys";
 export * from "./entity-connections";
+export * from "./community-signals";
+export * from "./notifications";
+export * from "./knowledge-channels";

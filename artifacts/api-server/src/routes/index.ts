@@ -77,6 +77,10 @@ import marketplaceFeesRouter from "./marketplace-fees";
 import trustRouter from "./trust";
 import journeysRouter from "./journeys";
 import entityConnectionsRouter from "./entity-connections";
+import signalsRouter from "./signals";
+import smartSearchRouter from "./smart-search";
+import notificationsHubRouter from "./notifications-hub";
+import knowledgeChannelsRouter from "./knowledge-channels";
 
 const router: IRouter = Router();
 
@@ -157,6 +161,10 @@ router.use(marketplaceFeesRouter);
 router.use(trustRouter);
 router.use(journeysRouter);
 router.use(entityConnectionsRouter);
+router.use(signalsRouter);
+router.use(smartSearchRouter);
+router.use(notificationsHubRouter);
+router.use(knowledgeChannelsRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");
