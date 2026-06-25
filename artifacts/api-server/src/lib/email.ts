@@ -334,7 +334,7 @@ const PLAN_LABELS: Record<string, string> = {
 const PLAN_PRICES: Record<string, string> = {
   individual: "$9.99/month or $79/year",
   business: "$29.99/month or $249/year",
-  founding: "locked-in introductory rate",
+  founding: "locked founding rate (Community 6% · Growth 5% · Premium 3%) for 3 years",
   beta: "standard monthly rate",
   business_referral: "$29.99/month",
 };

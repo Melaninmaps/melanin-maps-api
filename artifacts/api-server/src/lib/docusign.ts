@@ -140,7 +140,15 @@ function foundingAgreementHtml(businessName: string, ownerName: string, founding
 <p>MWM recognizes ${businessName} as Founding Business #${foundingNumber}. This status is exclusive to the first 500 verified businesses during the MWM launch period.</p>
 
 <h4>2. Guaranteed Rate Lock</h4>
-<p>${businessName} is guaranteed a <strong>3% platform fee</strong> on all marketplace transactions through <strong>${expiryDate}</strong> (the "Rate Lock Period"), regardless of seller tier. After this period, the applicable tier rate applies.</p>
+<p>${businessName} is guaranteed a <strong>reduced, locked platform fee</strong> on all marketplace transactions through <strong>${expiryDate}</strong> (the "Rate Lock Period"), based on their membership tier at the time of signing. After this period, the then-current standard tier rate applies.</p>
+<table style="width:100%;border-collapse:collapse;margin:12px 0">
+<thead><tr style="background:#fffbf0"><th style="text-align:left;padding:8px;border:1px solid #c9922b">Membership Tier</th><th style="text-align:center;padding:8px;border:1px solid #c9922b">Standard Fee</th><th style="text-align:center;padding:8px;border:1px solid #c9922b">Founding Locked Fee</th></tr></thead>
+<tbody>
+<tr><td style="padding:8px;border:1px solid #ddd">Community Business</td><td style="text-align:center;padding:8px;border:1px solid #ddd">10%</td><td style="text-align:center;padding:8px;border:1px solid #ddd;font-weight:bold;color:#8a6200">6%</td></tr>
+<tr style="background:#fafafa"><td style="padding:8px;border:1px solid #ddd">Growth Business</td><td style="text-align:center;padding:8px;border:1px solid #ddd">8%</td><td style="text-align:center;padding:8px;border:1px solid #ddd;font-weight:bold;color:#8a6200">5%</td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd">Premium Business</td><td style="text-align:center;padding:8px;border:1px solid #ddd">6%</td><td style="text-align:center;padding:8px;border:1px solid #ddd;font-weight:bold;color:#8a6200">3%</td></tr>
+</tbody></table>
+<p style="font-size:0.9em;color:#555">The locked rate applicable to ${businessName} is determined by the membership tier active at the time this agreement is executed.</p>
 
 <h4>3. Premium Feature Access</h4>
 <p>6 months of complimentary Premium features from this date, including: AI business tools, enhanced analytics, priority search placement, Founding Business badge, featured business opportunities, and early access to new features.</p>

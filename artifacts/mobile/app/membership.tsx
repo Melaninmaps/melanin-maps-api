@@ -621,7 +621,6 @@ export default function MembershipScreen() {
               {[
                 "Six months of Premium Business membership",
                 "Founding Business badge on your profile",
-                "Marketplace fee locked for 3 years",
                 "Early access to new features",
                 "Recognition as an early supporter",
                 "Opportunities to be featured in launch marketing",
@@ -631,6 +630,22 @@ export default function MembershipScreen() {
                   <Text style={[styles.featureTxt, { color: colors.foreground }]}>{f}</Text>
                 </View>
               ))}
+              <View style={[styles.featureRow, { flexDirection: "column", alignItems: "flex-start", gap: 6, marginTop: 4 }]}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Text style={{ fontSize: 14 }}>🔒</Text>
+                  <Text style={[styles.featureTxt, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>Marketplace fee locked for 3 years:</Text>
+                </View>
+                {[
+                  { tier: "Community Business", fee: "6%" },
+                  { tier: "Growth Business",    fee: "5%" },
+                  { tier: "Premium Business",   fee: "3%" },
+                ].map((row, i) => (
+                  <View key={i} style={{ flexDirection: "row", justifyContent: "space-between", width: "100%", paddingLeft: 22 }}>
+                    <Text style={[styles.featureTxt, { color: colors.mutedForeground }]}>{row.tier}</Text>
+                    <Text style={[styles.featureTxt, { color: "#C9A84C", fontFamily: "Inter_700Bold" }]}>{row.fee}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
             <TouchableOpacity
               style={[styles.ctaBtn, { backgroundColor: "#C9A84C22", borderWidth: 1.5, borderColor: "#C9A84C" }]}
@@ -667,8 +682,8 @@ export default function MembershipScreen() {
               <Text style={[styles.feeNote, { color: colors.mutedForeground }]}>
                 Transactions under $25 are capped at 5% regardless of tier. Transactions over $250 are capped at 6%.
               </Text>
-              <Text style={[styles.feeNote, { color: colors.mutedForeground }]}>
-                Founding Business partners retain their locked 3% rate for their first 3 years.
+              <Text style={[styles.feeNote, { color: "#C9A84C" }]}>
+                🔒 Founding Businesses lock in reduced rates for 3 years: Community 6% · Growth 5% · Premium 3%
               </Text>
             </View>
           </View>
