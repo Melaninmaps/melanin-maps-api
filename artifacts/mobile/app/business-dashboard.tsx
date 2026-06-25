@@ -228,6 +228,8 @@ export default function BusinessDashboardScreen() {
   const [dsSigningLoading, setDsSigningLoading] = useState(false);
   const [dsEnvelopeId, setDsEnvelopeId] = useState<string | null>(null);
   const [marketplaceTier, setMarketplaceTier] = useState<Record<string, unknown> | null>(null);
+  const [feeLoading, setFeeLoading] = useState(false);
+  const [feeError, setFeeError] = useState(false);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState<"paywall" | "error" | null>(null);
@@ -299,11 +301,13 @@ export default function BusinessDashboardScreen() {
 
   React.useEffect(() => {
     if (!business) return;
+    setFeeLoading(true);
+    setFeeError(false);
     void (async () => {
       try {
         const token = await SecureStore.getItemAsync("auth_session_token");
         const base = getApiBase();
-        if (!token || !base) return;
+        if (!token || !base) { setFeeLoading(false); return; }
         const res = await fetch(`${base}/api/marketplace-fees/my`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -315,8 +319,14 @@ export default function BusinessDashboardScreen() {
             promotionExpirationDate: string | null; membershipRenewalDate: string | null;
           };
           setMarketplaceTier(data as unknown as Record<string, unknown>);
+        } else {
+          setFeeError(true);
         }
-      } catch {}
+      } catch {
+        setFeeError(true);
+      } finally {
+        setFeeLoading(false);
+      }
     })();
   }, [business?.id]);
 
@@ -604,7 +614,19 @@ export default function BusinessDashboardScreen() {
             </View>
 
             {/* ── Marketplace Fee Card ─────────────────────────────────── */}
-            {marketplaceTier && (() => {
+            {feeLoading && (
+              <View style={[styles.promoteCard, { backgroundColor: colors.card, borderColor: colors.border, alignItems: "center", justifyContent: "center", padding: 24 }]}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, marginTop: 8 }}>Loading marketplace rate…</Text>
+              </View>
+            )}
+            {!feeLoading && feeError && (
+              <View style={[styles.promoteCard, { backgroundColor: colors.card, borderColor: "#DC262630", padding: 16, flexDirection: "row", alignItems: "center", gap: 10 }]}>
+                <Feather name="alert-circle" size={16} color="#DC2626" />
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, flex: 1 }}>Unable to load marketplace rate. Pull down to refresh.</Text>
+              </View>
+            )}
+            {!feeLoading && !feeError && marketplaceTier && (() => {
               const fee = marketplaceTier as unknown as {
                 feePercent: string; source: string; reason: string;
                 tierLabel: string; isLocked: boolean; lockedUntil: string | null;

@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable } from "@workspace/db";
-import { eq, and, or, ilike, desc, sql, gt } from "drizzle-orm";
+import { db, pool, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable } from "@workspace/db";
+import { eq, and, or, ilike, desc, sql, gt, count } from "drizzle-orm";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
 import { sendFoundingWelcomeEmail } from "../lib/email";
@@ -622,4 +622,69 @@ router.patch("/admin/businesses/:id/marketplace-tier", async (req: Request, res:
   }
 });
 
+// ── Admin: list pending business submissions ──────────────────────────────────
+router.get("/admin/businesses/pending", async (req: Request, res: Response) => {
+  try {
+    if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }
+    const { rows } = await pool.query<{
+      id: string; name: string; category: string | null;
+      city: string | null; state: string | null;
+      submitted_by_id: string | null; created_at: string;
+      founding_business: boolean;
+      submitter_first_name: string | null; submitter_last_name: string | null;
+      submitter_email: string | null;
+    }>(
+      `SELECT b.id, b.name, b.category, b.city, b.state,
+              b.submitted_by_id, b.created_at, b.founding_business,
+              u.first_name AS submitter_first_name,
+              u.last_name  AS submitter_last_name,
+              u.email      AS submitter_email
+       FROM businesses b
+       LEFT JOIN users u ON u.id = b.submitted_by_id
+       WHERE b.status = 'pending'
+       ORDER BY b.created_at DESC`
+    );
+    res.json(rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      category: r.category,
+      city: r.city,
+      state: r.state,
+      submittedById: r.submitted_by_id,
+      createdAt: r.created_at,
+      foundingBusiness: r.founding_business,
+      submittedBy: r.submitter_first_name
+        ? [r.submitter_first_name, r.submitter_last_name].filter(Boolean).join(" ")
+        : (r.submitter_email ?? "Unknown"),
+    })));
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch pending businesses");
+    res.status(500).json({ error: "Failed to fetch pending businesses" });
+  }
+});
+
+// ── Admin: approve or reject a business submission ────────────────────────────
+router.patch("/admin/businesses/:id/status", async (req: Request, res: Response) => {
+  try {
+    if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }
+    const id = String(req.params.id);
+    const { status } = req.body as { status?: string };
+    const ALLOWED = ["active", "approved", "rejected", "pending", "suspended"];
+    if (!status || !ALLOWED.includes(status)) {
+      res.status(400).json({ error: `status must be one of: ${ALLOWED.join(", ")}` }); return;
+    }
+    const [biz] = await db
+      .update(businessesTable)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(businessesTable.id, id))
+      .returning({ id: businessesTable.id, name: businessesTable.name, status: businessesTable.status });
+    if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
+    res.json(biz);
+  } catch (err) {
+    req.log.error({ err }, "Failed to update business status");
+    res.status(500).json({ error: "Failed to update business status" });
+  }
+});
+
 export default router;
+

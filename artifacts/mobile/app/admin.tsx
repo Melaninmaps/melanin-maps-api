@@ -1,7 +1,7 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
 import {
   ActivityIndicator,
@@ -20,6 +20,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useReports } from "@/hooks/useReports";
 import { useBusinessInvites, type BusinessInvite } from "@/hooks/useBusinessInvites";
+
+const AdminNavContext = React.createContext<(tab: string) => void>(() => {});
 
 const ADMIN_TABS = [
   { id: "overview", label: "Overview", icon: "grid" as const },
@@ -83,22 +85,40 @@ function ActionRow({ icon, label, sub, color, badge, onPress }: { icon: any; lab
 
 function OverviewTab() {
   const colors = useColors();
+  const setTab = useContext(AdminNavContext);
   const { items, pendingCount, highCount } = useReports("pending");
-  const pendingBizCount = items.filter((i) => i.kind === "survey").length;
   const { users, loading: usersLoading } = useAdminUsers();
   const userCount = usersLoading ? "…" : String(users.length);
+  const [pendingBizCount, setPendingBizCount] = useState(0);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        if (!token) return;
+        const res = await fetch(`${getApiBase()}/api/admin/businesses/pending`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json() as unknown[];
+          setPendingBizCount(data.length);
+        }
+      } catch { /* non-fatal */ }
+    })();
+  }, []);
+
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={adminStyles.statsGrid}>
         <StatCard label="Total Users" value={userCount} sub="Registered members" color="#3B1F0E" icon="users" />
-        <StatCard label="Businesses" value="—" sub={pendingBizCount > 0 ? `${pendingBizCount} pending` : "Verified listings"} color="#C9922B" icon="briefcase" />
-        <StatCard label="Reviews" value="—" sub="Community reviews" color="#2D7A4F" icon="star" />
-        <StatCard label="Reports" value={String(pendingCount)} sub={highCount > 0 ? `${highCount} high severity` : "All clear"} color="#DC2626" icon="flag" />
+        <StatCard label="Pending" value={pendingBizCount > 0 ? String(pendingBizCount) : "—"} sub={pendingBizCount > 0 ? "Awaiting review" : "All clear"} color="#C9922B" icon="briefcase" />
+        <StatCard label="Safety Reports" value={String(pendingCount)} sub={highCount > 0 ? `${highCount} high severity` : "All clear"} color="#DC2626" icon="flag" />
+        <StatCard label="Users Active" value={usersLoading ? "…" : String(users.filter((u: any) => u.approved !== false).length)} sub="Approved accounts" color="#2D7A4F" icon="user-check" />
       </View>
 
       <SectionLabel title="Quick Actions" />
-      <ActionRow icon="check-circle" label="Approve Pending Businesses" sub={pendingBizCount > 0 ? `${pendingBizCount} submissions awaiting review` : "No pending submissions"} color="#2D7A4F" badge={pendingBizCount} />
-      <ActionRow icon="flag" label="Review Reports Queue" sub={pendingCount > 0 ? `${pendingCount} report${pendingCount !== 1 ? "s" : ""} need attention` : "All clear"} color="#DC2626" badge={pendingCount} />
+      <ActionRow icon="check-circle" label="Approve Pending Businesses" sub={pendingBizCount > 0 ? `${pendingBizCount} submission${pendingBizCount !== 1 ? "s" : ""} awaiting review` : "No pending submissions"} color="#2D7A4F" badge={pendingBizCount} onPress={() => setTab("submissions")} />
+      <ActionRow icon="flag" label="Review Reports Queue" sub={pendingCount > 0 ? `${pendingCount} report${pendingCount !== 1 ? "s" : ""} need attention` : "All clear"} color="#DC2626" badge={pendingCount} onPress={() => setTab("reports")} />
     </ScrollView>
   );
 }
@@ -977,66 +997,170 @@ function ClaimsTab() {
   );
 }
 
+type PendingSubmission = {
+  id: string;
+  name: string;
+  category: string | null;
+  city: string | null;
+  state: string | null;
+  submittedBy: string;
+  createdAt: string;
+  foundingBusiness: boolean;
+  localStatus?: "pending" | "approved" | "rejected";
+};
+
 function SubmissionsTab() {
   const colors = useColors();
   const [filter, setFilter] = useState("All");
+  const [submissions, setSubmissions] = useState<PendingSubmission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const STATUSES = ["All", "Pending", "Approved", "Rejected"];
-  const submissions = [
-    { name: "Kingdom Cuts Barbershop", category: "Beauty", city: "Atlanta, GA", submittedBy: "Marcus T.", blackOwned: true, status: "pending", submitted: "Jun 16" },
-    { name: "Urban Roots Cafe", category: "Restaurant", city: "Oakland, CA", submittedBy: "Zara M.", blackOwned: true, status: "pending", submitted: "Jun 15" },
-    { name: "Harambee Tech Hub", category: "Coworking", city: "Houston, TX", submittedBy: "Kwame A.", blackOwned: true, status: "approved", submitted: "Jun 10" },
-    { name: "New Listing Co.", category: "Retail", city: "Chicago, IL", submittedBy: "Anonymous", blackOwned: false, status: "rejected", submitted: "Jun 5" },
-    { name: "Cleo's Bistro", category: "Restaurant", city: "Washington, DC", submittedBy: "Simone W.", blackOwned: true, status: "pending", submitted: "Jun 17" },
-  ];
+
+  const fetchSubmissions = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      if (!token) return;
+      const res = await fetch(`${getApiBase()}/api/admin/businesses/pending`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) { setError(true); return; }
+      const data = await res.json() as PendingSubmission[];
+      setSubmissions(data.map((d) => ({ ...d, localStatus: "pending" })));
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void fetchSubmissions(); }, [fetchSubmissions]);
+
+  const handleAction = async (bizId: string, newStatus: "approved" | "rejected") => {
+    setActionLoadingId(bizId);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      if (!token) return;
+      const res = await fetch(`${getApiBase()}/api/admin/businesses/${bizId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        setSubmissions((prev) => prev.map((s) => s.id === bizId ? { ...s, localStatus: newStatus } : s));
+      }
+    } catch { /* non-fatal */ } finally {
+      setActionLoadingId(null);
+    }
+  };
+
   const statusColor = (s: string) => s === "approved" ? "#2D7A4F" : s === "rejected" ? "#DC2626" : "#C9922B";
-  const filtered = filter === "All" ? submissions : submissions.filter((s) => s.status === filter.toLowerCase());
-  const pending = submissions.filter((s) => s.status === "pending").length;
+  const displayed = submissions.filter((s) => {
+    if (filter === "All") return true;
+    return s.localStatus === filter.toLowerCase();
+  });
+  const pending = submissions.filter((s) => s.localStatus === "pending").length;
+
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
-      {pending > 0 && (
+      {loading && (
+        <View style={{ alignItems: "center", paddingVertical: 40 }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[adminStyles.alertText, { color: colors.mutedForeground, marginTop: 10 }]}>Loading submissions…</Text>
+        </View>
+      )}
+      {!loading && error && (
+        <View style={[adminStyles.alertBanner, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}>
+          <Feather name="alert-circle" size={15} color="#DC2626" />
+          <Text style={[adminStyles.alertText, { color: "#DC2626", flex: 1 }]}>Failed to load submissions.</Text>
+          <TouchableOpacity onPress={() => void fetchSubmissions()}>
+            <Text style={{ color: "#DC2626", fontWeight: "700", fontSize: 13 }}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {!loading && !error && pending > 0 && (
         <View style={[adminStyles.alertBanner, { backgroundColor: "#3B1F0E12", borderColor: "#3B1F0E30" }]}>
           <Feather name="send" size={15} color="#3B1F0E" />
           <Text style={[adminStyles.alertText, { color: "#3B1F0E" }]}>{pending} submission{pending !== 1 ? "s" : ""} awaiting review</Text>
         </View>
       )}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          {STATUSES.map((s) => (
-            <TouchableOpacity key={s} style={[adminStyles.filterChip, { backgroundColor: filter === s ? colors.primary : colors.secondary, borderColor: filter === s ? colors.primary : colors.border }]} onPress={() => setFilter(s)}>
-              <Text style={[adminStyles.filterChipText, { color: filter === s ? "#FFFFFF" : colors.foreground }]}>{s}</Text>
-            </TouchableOpacity>
-          ))}
+      {!loading && !error && submissions.length === 0 && (
+        <View style={{ alignItems: "center", paddingVertical: 48 }}>
+          <Feather name="inbox" size={36} color={colors.mutedForeground} />
+          <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 16, color: colors.foreground, marginTop: 12 }}>All caught up</Text>
+          <Text style={{ fontFamily: "Inter_400Regular", fontSize: 14, color: colors.mutedForeground, marginTop: 4 }}>No pending business submissions.</Text>
         </View>
-      </ScrollView>
-      {filtered.map((s, i) => (
-        <View key={i} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
-            <View style={[adminStyles.statusBadge, { backgroundColor: statusColor(s.status) + "18" }]}>
-              <Text style={[adminStyles.statusBadgeText, { color: statusColor(s.status) }]}>{s.status}</Text>
+      )}
+      {!loading && !error && submissions.length > 0 && (
+        <>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              {STATUSES.map((s) => (
+                <TouchableOpacity key={s} style={[adminStyles.filterChip, { backgroundColor: filter === s ? colors.primary : colors.secondary, borderColor: filter === s ? colors.primary : colors.border }]} onPress={() => setFilter(s)}>
+                  <Text style={[adminStyles.filterChipText, { color: filter === s ? "#FFFFFF" : colors.foreground }]}>{s}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
-            <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>{s.submitted}</Text>
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
-            <Text style={[adminStyles.bizName, { color: colors.foreground }]}>{s.name}</Text>
-            {s.blackOwned && <Text style={{ fontSize: 12 }}>✊🏾</Text>}
-          </View>
-          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{s.category} · {s.city}</Text>
-          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>Submitted by: {s.submittedBy}</Text>
-          {s.status === "pending" && (
-            <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-              <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30" }]}>
-                <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>Approve</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}>
-                <Text style={[adminStyles.smallBtnText, { color: "#DC2626" }]}>Reject</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
-                <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Edit</Text>
-              </TouchableOpacity>
+          </ScrollView>
+          {displayed.length === 0 && (
+            <View style={{ alignItems: "center", paddingVertical: 36 }}>
+              <Feather name="check-circle" size={30} color={colors.mutedForeground} />
+              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 14, color: colors.mutedForeground, marginTop: 10 }}>
+                No {filter.toLowerCase()} submissions
+              </Text>
             </View>
           )}
-        </View>
-      ))}
+          {displayed.map((s) => (
+            <View key={s.id} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+                <View style={[adminStyles.statusBadge, { backgroundColor: statusColor(s.localStatus ?? "pending") + "18" }]}>
+                  <Text style={[adminStyles.statusBadgeText, { color: statusColor(s.localStatus ?? "pending") }]}>{s.localStatus ?? "pending"}</Text>
+                </View>
+                <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>
+                  {s.createdAt ? new Date(s.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
+                </Text>
+              </View>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                <Text style={[adminStyles.bizName, { color: colors.foreground }]}>{s.name}</Text>
+                {s.foundingBusiness && <Text style={{ fontSize: 12 }}>🏆</Text>}
+              </View>
+              {(s.category || s.city) && (
+                <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>
+                  {[s.category, s.city && s.state ? `${s.city}, ${s.state}` : s.city].filter(Boolean).join(" · ")}
+                </Text>
+              )}
+              <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>Submitted by: {s.submittedBy}</Text>
+              {s.localStatus === "pending" && (
+                <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+                  <TouchableOpacity
+                    style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30", opacity: actionLoadingId === s.id ? 0.6 : 1 }]}
+                    onPress={() => void handleAction(s.id, "approved")}
+                    disabled={actionLoadingId === s.id}
+                  >
+                    {actionLoadingId === s.id
+                      ? <ActivityIndicator size={12} color="#2D7A4F" />
+                      : <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>Approve</Text>
+                    }
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630", opacity: actionLoadingId === s.id ? 0.6 : 1 }]}
+                    onPress={() => void handleAction(s.id, "rejected")}
+                    disabled={actionLoadingId === s.id}
+                  >
+                    {actionLoadingId === s.id
+                      ? <ActivityIndicator size={12} color="#DC2626" />
+                      : <Text style={[adminStyles.smallBtnText, { color: "#DC2626" }]}>Reject</Text>
+                    }
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          ))}
+        </>
+      )}
     </ScrollView>
   );
 }
@@ -1742,7 +1866,9 @@ export default function AdminScreen() {
 
       {/* Tab content */}
       <View style={[styles.content, { paddingBottom: bottomPad }]}>
-        <TabContent />
+        <AdminNavContext.Provider value={setActiveTab}>
+          <TabContent />
+        </AdminNavContext.Provider>
       </View>
     </View>
   );
