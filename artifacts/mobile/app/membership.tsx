@@ -111,9 +111,9 @@ const CONSUMER_PLANS: Plan[] = [
 const BUSINESS_PLANS: Plan[] = [
   {
     id: "biz_free",
-    emoji: "🏢",
+    emoji: "🆓",
     name: "Community Business",
-    tagline: "Get discovered.",
+    tagline: "Be discovered.",
     badge: null,
     fee: "10% Marketplace Fee",
     monthlyPrice: 0,
@@ -121,18 +121,18 @@ const BUSINESS_PLANS: Plan[] = [
     color: "#8B7355",
     bg: null,
     features: [
-      "Business profile",
-      "Business verification eligibility",
-      "Search listing",
-      "Business map placement",
-      "Business hours & contact information",
-      "Photos",
+      "Business profile & business story",
+      "Business verification",
+      "Photos & business videos",
+      "Marketplace access",
+      "Sell products & services",
       "Receive & respond to reviews",
+      "Create events",
+      "Community posts",
+      "Followed by customers",
       "Basic analytics",
       "Basic messaging",
-      "Event creation",
-      "Sell products and services",
-      "Marketplace access",
+      "Business notifications (2/month)",
     ],
     cta: "List Your Business",
     ctaActive: true,
@@ -142,7 +142,7 @@ const BUSINESS_PLANS: Plan[] = [
     emoji: "🚀",
     name: "Growth Business",
     stripeKey: "Growth Business",
-    tagline: "Grow your audience.",
+    tagline: "Reach more customers.",
     badge: "Recommended",
     fee: "8% Marketplace Fee",
     monthlyPrice: 29,
@@ -151,18 +151,19 @@ const BUSINESS_PLANS: Plan[] = [
     bg: "#3B1F0E",
     features: [
       "Everything in Community Business",
-      "Priority search placement",
-      "Enhanced analytics",
-      "Customer insights",
-      "More photos and videos",
+      "Higher search placement",
+      "Priority in category searches",
+      "Featured in local searches",
+      "8 customer broadcasts/month",
+      "Promotional offers & business promotions",
       "Featured events",
-      "Promotional offers",
-      "AI business assistant",
-      "Marketing recommendations",
-      "Business performance reports",
-      "Advanced messaging",
-      "Featured during local searches",
-      "Growth badge",
+      "Customer demographics & profile views",
+      "Product performance & sales trends",
+      "Customer engagement & follow growth",
+      "AI social media captions",
+      "AI promotion ideas",
+      "AI responses to reviews",
+      "AI marketing assistant",
     ],
     cta: "Start Free Trial",
     ctaActive: true,
@@ -172,7 +173,7 @@ const BUSINESS_PLANS: Plan[] = [
     emoji: "👑",
     name: "Premium Business",
     stripeKey: "Premium Business",
-    tagline: "Scale your business.",
+    tagline: "Build a thriving business.",
     badge: "Full Access",
     fee: "6% Marketplace Fee",
     monthlyPrice: 79,
@@ -182,17 +183,19 @@ const BUSINESS_PLANS: Plan[] = [
     features: [
       "Everything in Growth Business",
       "Highest search priority",
-      "Advanced AI business tools",
-      "Full analytics dashboard",
-      "Competitor insights (aggregated marketplace trends)",
-      "Premium promotional opportunities",
-      "Featured homepage consideration",
-      "Featured city placement",
-      "Unlimited products and services",
+      "Homepage feature eligibility",
+      "Destination highlights & city spotlight",
+      "AI business consultant",
+      "Business Health Score™ dashboard",
+      "Growth recommendations & customer trend analysis",
+      "Marketplace optimization insights",
+      "20 broadcasts/month",
       "Priority customer support",
-      "Beta access to new business tools",
-      "Dedicated onboarding assistance",
-      "Premium badge",
+      "Beta feature access",
+      "Revenue insights & repeat customer metrics",
+      "Geographic customer trends & campaign performance",
+      "Lowest marketplace fee (6%)",
+      "Unlimited products & featured product eligibility",
     ],
     cta: "Start Free Trial",
     ctaActive: true,
@@ -402,12 +405,21 @@ export default function MembershipScreen() {
             </Text>
           </View>
           <Text style={[styles.promiseBody, { color: colors.mutedForeground }]}>
-            Our memberships aren't designed to charge you more — they're designed to help you{" "}
-            <Text style={[styles.promiseEmphasis, { color: colors.foreground }]}>earn more.</Text>
+            Every upgrade answers one question:{" "}
+            <Text style={[styles.promiseEmphasis, { color: colors.foreground }]}>why would I pay more?</Text>
           </Text>
           <Text style={[styles.promiseBody, { color: colors.mutedForeground }]}>
-            Every upgrade saves you time, attracts more customers, improves your visibility, and reduces your marketplace costs.
+            Every tier is designed to help you make more money, save time, or increase visibility — not just unlock features.
           </Text>
+          <TouchableOpacity
+            style={[styles.guideBtn, { borderColor: colors.primary + "55", backgroundColor: colors.primary + "0F" }]}
+            onPress={() => router.push("/business-guide" as never)}
+            activeOpacity={0.8}
+          >
+            <Feather name="book-open" size={14} color={colors.primary} />
+            <Text style={[styles.guideBtnTxt, { color: colors.primary }]}>Read the Business Tier Guide</Text>
+            <Feather name="arrow-right" size={13} color={colors.primary} />
+          </TouchableOpacity>
         </View>
       )}
 
@@ -869,6 +881,8 @@ const styles = StyleSheet.create({
   promiseTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
   promiseBody: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20 },
   promiseEmphasis: { fontFamily: "Inter_600SemiBold" },
+  guideBtn: { flexDirection: "row", alignItems: "center", gap: 7, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, marginTop: 2 },
+  guideBtnTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1 },
   feeBadge: {
     flexDirection: "row", alignItems: "center", gap: 5,
     alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 4,

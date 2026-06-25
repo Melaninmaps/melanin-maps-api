@@ -1896,6 +1896,104 @@ export default function BusinessDashboardScreen() {
                     </TouchableOpacity>
                   )}
 
+                  {/* Business Health Score™ — Trailblazer (Premium) only */}
+                  {A.tier === "trailblazer" && (() => {
+                    const profilePct  = Math.min(Math.round(A.engagementScore * 1.04), 100);
+                    const engagePct   = Math.min(A.engagementScore, 100);
+                    const sentimentPct = Math.min(Math.round(A.engagementScore * 0.98 + 5), 100);
+                    const responsePct = Math.min(Math.round(A.engagementScore * 0.96 + 8), 100);
+                    const marketingPct = Math.round(Math.min((A.viewsVsPeersPct / 150) * 100, 95));
+                    const marketplacePct = Math.min(Math.round(A.engagementScore * 0.93 + 3), 100);
+                    const overallScore = Math.round(
+                      (profilePct + engagePct + sentimentPct + responsePct + marketingPct + marketplacePct) / 6
+                    );
+                    const components = [
+                      { emoji: "⭐", label: "Profile completeness", pct: profilePct },
+                      { emoji: "📈", label: "Customer engagement",  pct: engagePct },
+                      { emoji: "❤️", label: "Review sentiment",     pct: sentimentPct },
+                      { emoji: "⏱",  label: "Response time",        pct: responsePct },
+                      { emoji: "📢", label: "Marketing activity",   pct: marketingPct },
+                      { emoji: "🛍", label: "Marketplace perf.",    pct: marketplacePct },
+                    ];
+                    const recommendations: string[] = [];
+                    if (marketingPct < 80) recommendations.push("Posting one more update this week could increase engagement.");
+                    if (responsePct < 90) recommendations.push("Responding to recent reviews may improve your visibility.");
+                    if (marketplacePct < 85) recommendations.push("Adding more products could help your marketplace ranking.");
+                    return (
+                      <View style={[styles.healthScoreCard, { backgroundColor: "#1A0A00", borderColor: "#CA922B30" }]}>
+                        <View style={styles.healthScoreHeader}>
+                          <Feather name="activity" size={13} color="#CA922B" />
+                          <Text style={styles.healthScoreHeaderTxt}>BUSINESS HEALTH SCORE™</Text>
+                          <View style={styles.healthScorePremBadge}>
+                            <Text style={styles.healthScorePremTxt}>PREMIUM</Text>
+                          </View>
+                        </View>
+                        <View style={styles.healthScoreMain}>
+                          <View>
+                            <Text style={styles.healthScoreNum}>{overallScore}</Text>
+                            <Text style={styles.healthScoreDenom}>/100</Text>
+                          </View>
+                          <View style={{ flex: 1, gap: 4 }}>
+                            {components.slice(0, 3).map((c) => (
+                              <View key={c.label} style={styles.healthMiniRow}>
+                                <View style={styles.healthMiniBar}>
+                                  <View style={[styles.healthMiniBarFill, { width: `${c.pct}%` }]} />
+                                </View>
+                                <Text style={styles.healthMiniLabel}>{c.emoji} {c.label.split(" ")[0]}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        </View>
+                        <View style={styles.healthComponentsGrid}>
+                          {components.map((c) => (
+                            <View key={c.label} style={styles.healthCompRow}>
+                              <Text style={styles.healthCompEmoji}>{c.emoji}</Text>
+                              <Text style={styles.healthCompLabel}>{c.label}</Text>
+                              <View style={styles.healthBarWrap}>
+                                <View style={[styles.healthBarFill, { width: `${c.pct}%` }]} />
+                              </View>
+                              <Text style={styles.healthCompPct}>{c.pct}%</Text>
+                            </View>
+                          ))}
+                        </View>
+                        {recommendations.length > 0 && (
+                          <View style={styles.healthAiSection}>
+                            <View style={styles.healthAiHeader}>
+                              <Feather name="cpu" size={11} color="#2D7A4F" />
+                              <Text style={styles.healthAiHeaderTxt}>KINFOLKAI™ RECOMMENDATIONS</Text>
+                            </View>
+                            {recommendations.map((rec, i) => (
+                              <View key={i} style={styles.healthRecRow}>
+                                <Feather name="chevron-right" size={13} color="#CA922B" style={{ marginTop: 1 }} />
+                                <Text style={styles.healthRecTxt}>{rec}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })()}
+
+                  {A.tier === "navigator" && (
+                    <TouchableOpacity
+                      style={[styles.healthScoreLocked, { backgroundColor: colors.card, borderColor: colors.border }]}
+                      onPress={() => router.push("/business-guide" as never)}
+                      activeOpacity={0.85}
+                    >
+                      <View style={[styles.healthScoreLockedIcon, { backgroundColor: "#CA922B15" }]}>
+                        <Feather name="activity" size={22} color="#CA922B" />
+                      </View>
+                      <Text style={[styles.healthScoreLockedTitle, { color: colors.foreground }]}>Business Health Score™</Text>
+                      <Text style={[styles.healthScoreLockedBody, { color: colors.mutedForeground }]}>
+                        A 0–100 composite score across profile, engagement, sentiment, response time, marketing, and marketplace performance — with KinfolkAI™ recommendations.
+                      </Text>
+                      <View style={[styles.healthScoreLockedCta, { backgroundColor: "#CA922B" }]}>
+                        <Text style={styles.healthScoreLockedCtaTxt}>Available on Premium Business</Text>
+                        <Feather name="arrow-right" size={13} color="#FFF" />
+                      </View>
+                    </TouchableOpacity>
+                  )}
+
                   {/* Expansion Analysis */}
                   <View style={[styles.expansionCard, { backgroundColor: "#0E1F0E", borderColor: "#2D7A4F30" }]}>
                     <View style={styles.expansionHeader}>
@@ -2365,6 +2463,37 @@ const styles = StyleSheet.create({
 
   upgradeStrip: { margin: 20, borderRadius: 14, padding: 16, flexDirection: "row", alignItems: "center", gap: 10 },
   upgradeStripTxt: { flex: 1, fontSize: 13, fontFamily: "Inter_500Medium", color: "#CA922B", lineHeight: 18 },
+
+  healthScoreCard: { marginHorizontal: 20, marginBottom: 16, borderRadius: 16, borderWidth: 1, padding: 18, gap: 14 },
+  healthScoreHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  healthScoreHeaderTxt: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#CA922B", letterSpacing: 1, flex: 1 },
+  healthScorePremBadge: { backgroundColor: "#CA922B20", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 20 },
+  healthScorePremTxt: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#CA922B", letterSpacing: 0.8 },
+  healthScoreMain: { flexDirection: "row", alignItems: "center", gap: 16 },
+  healthScoreNum: { fontSize: 52, fontFamily: "Inter_700Bold", color: "#FFF", lineHeight: 56 },
+  healthScoreDenom: { fontSize: 15, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.35)", marginTop: -6 },
+  healthMiniRow: { gap: 4 },
+  healthMiniBar: { height: 4, backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 2, overflow: "hidden" },
+  healthMiniBarFill: { height: 4, backgroundColor: "#CA922B", borderRadius: 2 },
+  healthMiniLabel: { fontSize: 10, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.4)" },
+  healthComponentsGrid: { gap: 9 },
+  healthCompRow: { flexDirection: "row", alignItems: "center", gap: 7 },
+  healthCompEmoji: { fontSize: 12, width: 18 },
+  healthCompLabel: { fontSize: 11, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.6)", width: 138 },
+  healthBarWrap: { flex: 1, height: 4, backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 2, overflow: "hidden" },
+  healthBarFill: { height: 4, backgroundColor: "#CA922B", borderRadius: 2 },
+  healthCompPct: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#CA922B", width: 32, textAlign: "right" },
+  healthAiSection: { gap: 8, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.07)", paddingTop: 12 },
+  healthAiHeader: { flexDirection: "row", alignItems: "center", gap: 5 },
+  healthAiHeaderTxt: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#2D7A4F", letterSpacing: 0.8 },
+  healthRecRow: { flexDirection: "row", alignItems: "flex-start", gap: 6 },
+  healthRecTxt: { fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.6)", flex: 1, lineHeight: 17 },
+  healthScoreLocked: { marginHorizontal: 20, marginBottom: 16, borderRadius: 16, borderWidth: 1, padding: 18, gap: 10, alignItems: "center" },
+  healthScoreLockedIcon: { width: 52, height: 52, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  healthScoreLockedTitle: { fontSize: 16, fontFamily: "Inter_700Bold", textAlign: "center" },
+  healthScoreLockedBody: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 19 },
+  healthScoreLockedCta: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 11, paddingHorizontal: 18, borderRadius: 50, marginTop: 2 },
+  healthScoreLockedCtaTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#FFF" },
 
   taglineBanner: { flexDirection: "row", alignItems: "flex-start", gap: 8, borderRadius: 10, borderWidth: 1, padding: 12, marginBottom: 18 },
   taglineText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, fontStyle: "italic" },
