@@ -56,7 +56,7 @@ type JournalInsight = {
   id: string; pmid: string; title: string; abstract?: string; authors: string[];
   journalId: string; journalLabel?: string; journalAbbrev?: string; pubDate?: string;
   doi?: string; url: string; designationIds: string[]; healthTopicIds: string[];
-  bookmarkCount: number; bookmarked: boolean; isCurated: boolean; syncedAt: string;
+  bookmarkCount: number; bookmarked: boolean; pinned: boolean; isCurated: boolean; syncedAt: string;
 };
 
 // ─── Static meta (mirrors server configs) ─────────────────────────────────────
@@ -89,7 +89,8 @@ export default function HealthHubScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const isAdmin = !!(user as any)?.role && (user as any).role === "admin";
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
@@ -191,6 +192,8 @@ export default function HealthHubScreen() {
             selectedDesignations.some(d => (ins.designationIds as string[]).includes(d))
           );
         }
+        // Pinned articles always float to the top
+        data.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
         setInsights(data);
         setInsightsLoaded(true);
       }
@@ -290,6 +293,43 @@ export default function HealthHubScreen() {
       const h = await authHeaders();
       await fetch(`${getApiBase()}/api/journal-insights/${insight.id}/bookmark`, { method: "POST", headers: h });
     } catch { loadInsights(); }
+  };
+
+  const handlePin = async (insight: JournalInsight) => {
+    if (!isAuthenticated) { Alert.alert("Sign in", "Sign in to pin articles."); return; }
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const nowPinned = !insight.pinned;
+    setInsights(prev => {
+      const updated = prev.map(ins => ins.id === insight.id
+        ? { ...ins, pinned: nowPinned, bookmarked: true }
+        : ins
+      );
+      return [...updated].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    });
+    try {
+      const h = await authHeaders();
+      await fetch(`${getApiBase()}/api/journal-insights/${insight.id}/pin`, { method: "POST", headers: h });
+    } catch { loadInsights(); }
+  };
+
+  const handleDelete = async (insight: JournalInsight) => {
+    Alert.alert(
+      "Remove article?",
+      "This removes the article from the community feed permanently.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove", style: "destructive",
+          onPress: async () => {
+            setInsights(prev => prev.filter(ins => ins.id !== insight.id));
+            try {
+              const h = await authHeaders();
+              await fetch(`${getApiBase()}/api/journal-insights/${insight.id}`, { method: "DELETE", headers: h });
+            } catch { loadInsights(); }
+          },
+        },
+      ]
+    );
   };
 
   const isApprovedPhysician = physician?.status === "approved";
@@ -616,14 +656,26 @@ export default function HealthHubScreen() {
                     <View style={[styles.postActions, { borderTopColor: colors.border }]}>
                       <TouchableOpacity style={styles.actionBtn} onPress={() => Linking.openURL(ins.url)}>
                         <Feather name="external-link" size={15} color={colors.primary} />
-                        <Text style={[styles.actionTxt, { color: colors.primary }]}>Read on PubMed</Text>
+                        <Text style={[styles.actionTxt, { color: colors.primary }]}>PubMed</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.actionBtn} onPress={() => handlePin(ins)}>
+                        <Feather name="map-pin" size={15} color={ins.pinned ? "#F59E0B" : colors.mutedForeground} />
+                        <Text style={[styles.actionTxt, { color: ins.pinned ? "#F59E0B" : colors.mutedForeground }]}>
+                          {ins.pinned ? "Pinned" : "Pin"}
+                        </Text>
                       </TouchableOpacity>
                       <TouchableOpacity style={styles.actionBtn} onPress={() => handleBookmark(ins)}>
-                        <Feather name={ins.bookmarked ? "bookmark" : "bookmark"} size={15} color={ins.bookmarked ? colors.primary : colors.mutedForeground} />
+                        <Feather name="bookmark" size={15} color={ins.bookmarked ? colors.primary : colors.mutedForeground} />
                         <Text style={[styles.actionTxt, { color: ins.bookmarked ? colors.primary : colors.mutedForeground }]}>
                           {ins.bookmarked ? "Saved" : "Save"}
                         </Text>
                       </TouchableOpacity>
+                      {isAdmin && (
+                        <TouchableOpacity style={styles.actionBtn} onPress={() => handleDelete(ins)}>
+                          <Feather name="trash-2" size={15} color="#DC2626" />
+                          <Text style={[styles.actionTxt, { color: "#DC2626" }]}>Delete</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   </View>
                 );

@@ -219,12 +219,13 @@ router.get("/journal-insights", async (req: Request, res: Response) => {
   const limit = Math.min(parseInt(limitStr ?? "20", 10) || 20, 50);
   const offset = parseInt(offsetStr ?? "0", 10) || 0;
 
-  // We pull all and filter in JS for array-contains (JSONB) — works fine at this scale
+  // Only show active articles
   const rows = await db
     .select()
     .from(journalInsightsTable)
+    .where(eq(journalInsightsTable.status, "active"))
     .orderBy(desc(journalInsightsTable.syncedAt))
-    .limit(500); // fetch a pool then filter
+    .limit(500);
 
   let filtered = rows;
 
@@ -241,18 +242,22 @@ router.get("/journal-insights", async (req: Request, res: Response) => {
   const total = filtered.length;
   const page = filtered.slice(offset, offset + limit);
 
-  // Attach bookmark status for auth users
-  let bookmarkedSet = new Set<string>();
+  // Attach bookmark + pinned status for auth users
+  let bookmarkMap = new Map<string, { bookmarked: boolean; pinned: boolean }>();
   if (req.user?.id) {
     const bookmarks = await db
-      .select({ insightId: journalInsightBookmarksTable.insightId })
+      .select({ insightId: journalInsightBookmarksTable.insightId, pinned: journalInsightBookmarksTable.pinned })
       .from(journalInsightBookmarksTable)
       .where(eq(journalInsightBookmarksTable.userId, req.user.id));
-    bookmarkedSet = new Set(bookmarks.map(b => b.insightId));
+    bookmarks.forEach(b => bookmarkMap.set(b.insightId, { bookmarked: true, pinned: b.pinned }));
   }
 
   res.json({
-    insights: page.map(r => ({ ...r, bookmarked: bookmarkedSet.has(r.id) })),
+    insights: page.map(r => ({
+      ...r,
+      bookmarked: bookmarkMap.get(r.id)?.bookmarked ?? false,
+      pinned: bookmarkMap.get(r.id)?.pinned ?? false,
+    })),
     total,
     limit,
     offset,
@@ -303,6 +308,52 @@ router.post("/journal-insights/:id/bookmark", async (req: Request, res: Response
     await db.update(journalInsightsTable).set({ bookmarkCount: sql`bookmark_count + 1` }).where(eq(journalInsightsTable.id, insightId));
     res.json({ bookmarked: true });
   }
+});
+
+// ─── POST /api/journal-insights/:id/pin ──────────────────────────────────────
+router.post("/journal-insights/:id/pin", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+
+  const insightId = String(req.params.id);
+
+  const [existing] = await db
+    .select()
+    .from(journalInsightBookmarksTable)
+    .where(and(
+      eq(journalInsightBookmarksTable.insightId, insightId),
+      eq(journalInsightBookmarksTable.userId, req.user.id),
+    ))
+    .limit(1);
+
+  if (existing) {
+    // Toggle pin; if unpinning from a pin-only action keep the bookmark row
+    const newPinned = !existing.pinned;
+    await db
+      .update(journalInsightBookmarksTable)
+      .set({ pinned: newPinned })
+      .where(eq(journalInsightBookmarksTable.id, existing.id));
+    res.json({ pinned: newPinned, bookmarked: true });
+  } else {
+    // Auto-bookmark + pin in one step
+    await db.insert(journalInsightBookmarksTable).values({ insightId, userId: req.user.id, pinned: true });
+    await db.update(journalInsightsTable).set({ bookmarkCount: sql`bookmark_count + 1` }).where(eq(journalInsightsTable.id, insightId));
+    res.json({ pinned: true, bookmarked: true });
+  }
+});
+
+// ─── DELETE /api/journal-insights/:id ────────────────────────────────────────
+router.delete("/journal-insights/:id", async (req: Request, res: Response) => {
+  if ((req as any).user?.role !== "admin") { res.status(403).json({ error: "Admin only" }); return; }
+
+  const [insight] = await db
+    .update(journalInsightsTable)
+    .set({ status: "removed" })
+    .where(eq(journalInsightsTable.id, String(req.params.id)))
+    .returning({ id: journalInsightsTable.id });
+
+  if (!insight) { res.status(404).json({ error: "Not found" }); return; }
+  req.log.info({ insightId: insight.id }, "Journal insight removed by admin");
+  res.json({ success: true });
 });
 
 // ─── POST /api/journal-insights/admin/sync ───────────────────────────────────

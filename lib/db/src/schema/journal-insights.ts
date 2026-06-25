@@ -74,7 +74,8 @@ export const journalInsightsTable = pgTable("journal_insights", {
   designationIds: jsonb("designation_ids").$type<DesignationId[]>().notNull().default([]),
   healthTopicIds: jsonb("health_topic_ids").$type<string[]>().notNull().default([]),
   bookmarkCount: integer("bookmark_count").notNull().default(0),
-  isCurated: boolean("is_curated").notNull().default(false), // manually added by MwM team
+  isCurated: boolean("is_curated").notNull().default(false),
+  status: varchar("status", { length: 20, enum: ["active", "removed"] }).notNull().default("active"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   syncedAt: timestamp("synced_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -84,6 +85,7 @@ export const journalInsightBookmarksTable = pgTable("journal_insight_bookmarks",
   id: uuid("id").primaryKey().defaultRandom(),
   insightId: uuid("insight_id").notNull(),
   userId: varchar("user_id", { length: 255 }).notNull(),
+  pinned: boolean("pinned").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
