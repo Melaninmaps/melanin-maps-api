@@ -450,7 +450,7 @@ export default function VerifyBusiness() {
         <div className="mt-8 flex items-start gap-3 text-xs text-[#3A1F0E]/50 bg-[#2B1507]/4 rounded-2xl p-4">
           <FileText className="w-4 h-4 shrink-0 mt-0.5 text-[#CA922B]" />
           <p>
-            All documentation is reviewed confidentially by our team. We do not share your EIN or ownership documents publicly. Common verification standards require <strong>51% or greater ownership</strong> by members of the represented group.
+            <strong className="text-[#3A1F0E]/70">All minority-owned businesses are welcome on Mapping With Melanin</strong> — verification is optional, not a requirement to list. We understand every business is at a different stage in its journey. The Verified Badge is an additional layer of community trust for businesses ready to take that step. All documentation is reviewed confidentially and never shared publicly. Common verification standards require <strong>51% or greater ownership</strong> by members of the represented group.
           </p>
         </div>
       </div>

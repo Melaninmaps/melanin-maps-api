@@ -160,7 +160,7 @@ export default function ForBusinessOwners() {
 
           <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-[#CA922B]/30 before:to-transparent">
             {[
-              { t: "Apply for Early Access", d: "Submit your business for review. We'll verify your ownership and community alignment." },
+              { t: "Apply for Early Access", d: "All minority-owned businesses are welcome — no matter where you are in your journey. Submit your listing and, when you're ready, apply for our special Verified Badge to build even more community trust." },
               { t: "Build Your Profile", d: "Add photos, hours, menu, services, and your story. Make your listing shine." },
               { t: "Get Discovered", d: "Members searching your city and category will find you first — with your Community Confidence Score front and center." },
               { t: "Grow With the Community", d: "Respond to reviews, engage with members, and track your visibility with the business analytics dashboard." }

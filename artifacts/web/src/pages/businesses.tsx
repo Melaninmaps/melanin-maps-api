@@ -188,9 +188,14 @@ export default function Businesses() {
           <div className="flex-1">
             <div className="text-xs font-bold tracking-widest text-[#CA922B] uppercase mb-4">FOR BUSINESS OWNERS & COMMUNITY</div>
             <h3 className="text-3xl font-serif font-bold text-[#3A1F0E] mb-4">Know a Business Worth Sharing?</h3>
-            <p className="text-[#3A1F0E]/70 mb-8 leading-relaxed">
-              Help grow the directory by submitting a business you love. Owners can apply for early access and a verified badge — community members can nominate any business they trust.
+            <p className="text-[#3A1F0E]/70 mb-6 leading-relaxed">
+              Help grow the directory by submitting a business you love. Community members can nominate any business they trust — and owners can claim their listing at any stage.
             </p>
+            <div className="bg-[#CA922B]/10 border border-[#CA922B]/30 rounded-2xl px-5 py-4 mb-8">
+              <p className="text-sm text-[#3A1F0E] leading-relaxed">
+                <span className="font-bold text-[#CA922B]">All minority-owned businesses are welcome.</span> We understand every business is at a different stage in its journey — you don't need to be established to join. When you're ready, apply for our special <span className="font-bold">Verified Badge</span> to earn even greater trust from the community.
+              </p>
+            </div>
             <div className="flex flex-wrap gap-6 mb-8">
               <div className="flex items-center gap-2 font-bold text-[#3A1F0E]"><CheckCircle className="w-5 h-5 text-[#CA922B]"/> Verified Badge</div>
               <div className="flex items-center gap-2 font-bold text-[#3A1F0E]"><CheckCircle className="w-5 h-5 text-[#CA922B]"/> Community Reviews</div>
