@@ -27,6 +27,7 @@ interface Plan {
   stripeKey?: string;
   tagline: string;
   badge: string | null;
+  fee?: string;
   monthlyPrice: number;
   annualTotal: number;
   color: string;
@@ -102,7 +103,8 @@ const BUSINESS_PLANS: Plan[] = [
     emoji: "🏢",
     name: "Community Business",
     tagline: "For businesses joining the Mapping With Melanin community",
-    badge: "6% Marketplace Fee",
+    badge: null,
+    fee: "6% Marketplace Fee",
     monthlyPrice: 0,
     annualTotal: 0,
     color: "#8B7355",
@@ -125,72 +127,63 @@ const BUSINESS_PLANS: Plan[] = [
     ctaActive: true,
   },
   {
-    id: "growth_partner",
+    id: "growth_business",
     emoji: "🚀",
-    name: "Growth Partner",
-    stripeKey: "Growth Partner",
-    tagline: "For growing businesses ready to scale",
-    badge: "Popular",
-    monthlyPrice: 24.99,
-    annualTotal: 249,
+    name: "Growth Business",
+    stripeKey: "Growth Business",
+    tagline: "For growing businesses ready to scale their community presence",
+    badge: "Recommended",
+    fee: "5% Marketplace Fee",
+    monthlyPrice: 29,
+    annualTotal: 290,
     color: "#3B1F0E",
     bg: "#3B1F0E",
     features: [
       "Everything in Community Business",
-      "Verification eligibility",
-      "Enhanced profile & more photos",
-      "Business analytics",
-      "Event creation",
-      "Promotional offers",
-      "Referral tracking",
-    ],
-    cta: "Start Free Trial",
-    ctaActive: true,
-  },
-  {
-    id: "community_leader",
-    emoji: "⭐",
-    name: "Community Leader",
-    stripeKey: "Community Leader",
-    tagline: "For established businesses with deeper community roots",
-    badge: "Best Value",
-    monthlyPrice: 69.99,
-    annualTotal: 699,
-    color: "#2D7A4F",
-    bg: "#2D7A4F",
-    features: [
-      "Everything in Growth Partner",
-      "Featured placement",
+      "Priority search placement",
       "Enhanced analytics",
-      "Lead generation tools",
-      "Advanced promotions",
-      "Priority support",
-      "Additional admin users",
+      "Customer insights",
+      "More photos and videos",
+      "Featured events",
+      "Promotional offers",
+      "AI business assistant",
+      "Marketing recommendations",
+      "Business performance reports",
+      "Advanced messaging",
+      "Featured during local searches",
+      "Growth badge",
     ],
     cta: "Start Free Trial",
     ctaActive: true,
   },
   {
-    id: "legacy_partner",
-    emoji: "🏆",
-    name: "Legacy Partner",
-    stripeKey: "Legacy Partner",
-    tagline: "For organizations, franchises & multi-location businesses",
-    badge: "Full Suite",
-    monthlyPrice: 199.99,
-    annualTotal: 1999,
+    id: "premium_business",
+    emoji: "👑",
+    name: "Premium Business",
+    stripeKey: "Premium Business",
+    tagline: "For established businesses with the deepest community roots",
+    badge: "Full Access",
+    fee: "3% Marketplace Fee",
+    monthlyPrice: 79,
+    annualTotal: 790,
     color: "#1A0A00",
     bg: "#1A0A00",
     features: [
-      "Everything in Community Leader",
-      "Multi-location management",
-      "Advanced reporting",
-      "Sponsorship opportunities",
-      "Dedicated support",
-      "Custom campaigns",
-      "API integrations",
+      "Everything in Growth Business",
+      "Highest search priority",
+      "Advanced AI business tools",
+      "Full analytics dashboard",
+      "Competitor insights (aggregated marketplace trends)",
+      "Premium promotional opportunities",
+      "Featured homepage consideration",
+      "Featured city placement",
+      "Unlimited products and services",
+      "Priority customer support",
+      "Beta access to new business tools",
+      "Dedicated onboarding assistance",
+      "Premium badge",
     ],
-    cta: "Contact Sales",
+    cta: "Start Free Trial",
     ctaActive: true,
   },
 ];
@@ -398,6 +391,14 @@ export default function MembershipScreen() {
                     Billed ${plan.annualTotal.toFixed(0)}/yr
                   </Text>
                 )}
+                {plan.fee && (
+                  <View style={[styles.feeBadge, { backgroundColor: isHighlight ? "rgba(255,255,255,0.15)" : colors.secondary }]}>
+                    <Feather name="percent" size={11} color={isHighlight ? "rgba(255,255,255,0.9)" : colors.mutedForeground} />
+                    <Text style={[styles.feeBadgeTxt, { color: isHighlight ? "rgba(255,255,255,0.9)" : colors.mutedForeground }]}>
+                      {plan.fee}
+                    </Text>
+                  </View>
+                )}
               </View>
 
               <View style={styles.featureList}>
@@ -446,39 +447,63 @@ export default function MembershipScreen() {
           );
         })}
 
-        {/* Founding Partner — business only */}
+        {/* Founding Business Program — business only */}
         {audience === "business" && (
           <View style={[styles.foundingCard, { backgroundColor: colors.card, borderColor: "#C9A84C" }]}>
             <View style={styles.foundingHeader}>
-              <Text style={styles.foundingEmoji}>🌟</Text>
+              <Text style={styles.foundingEmoji}>🎁</Text>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.foundingName, { color: colors.foreground }]}>Founding Partner</Text>
+                <Text style={[styles.foundingName, { color: colors.foreground }]}>Founding Business Program</Text>
                 <View style={[styles.foundingBadge, { backgroundColor: "#C9A84C22" }]}>
-                  <Text style={[styles.foundingBadgeTxt, { color: "#C9A84C" }]}>Invite Only · First Year Free</Text>
+                  <Text style={[styles.foundingBadgeTxt, { color: "#C9A84C" }]}>First 500 verified businesses · First 6 months after launch</Text>
                 </View>
               </View>
             </View>
             <View style={styles.featureList}>
               {[
-                "Growth Partner features free for 12 months",
-                "Founding Partner badge on your profile",
-                "Early access to new platform features",
-                "Help shape the platform direction",
-                "Refer up to 20 users for premium benefits",
+                "Six months of Premium Business membership",
+                "Founding Business badge on your profile",
+                "Marketplace fee locked for 3 years",
+                "Early access to new features",
+                "Recognition as an early supporter",
+                "Opportunities to be featured in launch marketing",
               ].map((f, i) => (
                 <View key={i} style={styles.featureRow}>
-                  <Feather name="star" size={14} color="#C9A84C" />
+                  <Text style={{ fontSize: 14 }}>⭐</Text>
                   <Text style={[styles.featureTxt, { color: colors.foreground }]}>{f}</Text>
                 </View>
               ))}
             </View>
             <TouchableOpacity
               style={[styles.ctaBtn, { backgroundColor: "#C9A84C22", borderWidth: 1.5, borderColor: "#C9A84C" }]}
-              onPress={() => router.push("/waitlist")}
+              onPress={() => router.push("/list-business")}
               activeOpacity={0.8}
             >
-              <Text style={[styles.ctaTxt, { color: "#C9A84C" }]}>Join the Waitlist</Text>
+              <Text style={[styles.ctaTxt, { color: "#C9A84C" }]}>Apply as a Founding Business</Text>
             </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Marketplace Fees table — business only */}
+        {audience === "business" && (
+          <View style={[styles.feeTable, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.feeTableHeader}>
+              <Feather name="percent" size={15} color={colors.primary} />
+              <Text style={[styles.feeTableTitle, { color: colors.foreground }]}>Marketplace Fees</Text>
+            </View>
+            {[
+              { name: "Community Business", fee: "6%" },
+              { name: "Growth Business", fee: "5%" },
+              { name: "Premium Business", fee: "3%" },
+            ].map((row, i) => (
+              <View key={i} style={[styles.feeRow, i < 2 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+                <Text style={[styles.feeRowName, { color: colors.foreground }]}>{row.name}</Text>
+                <Text style={[styles.feeRowVal, { color: colors.primary }]}>{row.fee}</Text>
+              </View>
+            ))}
+            <Text style={[styles.feeNote, { color: colors.mutedForeground }]}>
+              Fees apply to products and services sold through the Mapping With Melanin marketplace.
+            </Text>
           </View>
         )}
 
@@ -565,6 +590,25 @@ const styles = StyleSheet.create({
   foundingName: { fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 6 },
   foundingBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   foundingBadgeTxt: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  feeBadge: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 4,
+    borderRadius: 20, marginTop: 6,
+  },
+  feeBadgeTxt: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  feeTable: {
+    borderRadius: 16, padding: 18, gap: 0,
+    borderWidth: 1,
+  },
+  feeTableHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 },
+  feeTableTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  feeRow: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingVertical: 12,
+  },
+  feeRowName: { fontSize: 14, fontFamily: "Inter_400Regular" },
+  feeRowVal: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  feeNote: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 10, lineHeight: 18 },
   guaranteeBox: {
     flexDirection: "row", alignItems: "flex-start", gap: 12,
     padding: 16, borderRadius: 14,
