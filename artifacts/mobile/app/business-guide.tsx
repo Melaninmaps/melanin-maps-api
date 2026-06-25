@@ -262,7 +262,7 @@ export default function BusinessGuideScreen() {
               <View style={[styles.foundingNote, { backgroundColor: isDark ? "rgba(202,146,43,0.12)" : "#CA922B0F", borderColor: isDark ? "#CA922B30" : "#CA922B25" }]}>
                 <Feather name="lock" size={11} color="#CA922B" />
                 <Text style={styles.foundingNoteTxt}>
-                  Founding Business rate: <Text style={{ fontFamily: "Inter_700Bold" }}>{tier.fee.founding}</Text> — locked for 3 years
+                  Founding Business rate: <Text style={{ fontFamily: "Inter_700Bold" }}>{tier.fee.founding}</Text> — 1% off standard, locked for 3 years
                 </Text>
               </View>
 

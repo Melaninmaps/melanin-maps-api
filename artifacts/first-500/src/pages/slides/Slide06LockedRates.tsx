@@ -18,7 +18,7 @@ export default function Slide06LockedRates() {
         </div>
         <div className="bg-primary w-[30vw] h-[0.15vh] mb-[3vh]" />
         <div className="font-body text-muted text-[2.8vw] leading-relaxed mb-[3.5vh]">
-          Your fees are locked for 3 years — a thank you for joining at the beginning.
+          Founding Businesses receive a <span className="text-primary font-bold">1% discount</span> off standard marketplace rates — locked in for 3 years as a thank you for joining at the beginning.
         </div>
         <div className="flex justify-between items-center border-b border-surface pb-[1.8vh] mb-[1.8vh]" style={{ borderBottomColor: 'rgba(201,168,76,0.25)' }}>
           <span className="font-body text-muted text-[2.8vw]">Community Business</span>

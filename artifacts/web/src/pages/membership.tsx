@@ -519,7 +519,7 @@ export default function Membership() {
                 <span className="text-[#CA922B]">90-Day Free Premium</span>
               </h2>
               <p className="text-[#F5EBD8]/70 text-base leading-relaxed mb-6 max-w-xl">
-                The first <strong className="text-white">500 members</strong> to join receive 90 days of full Premium access — completely free. No credit card required. After your 90-day trial, you'll lock in our introductory rate and receive a permanent <strong className="text-[#CA922B]">Founding Member badge</strong> on your profile.
+                The first <strong className="text-white">500 members</strong> to join receive 90 days of full Premium access — completely free. No credit card required. After your 90-day trial, you'll lock in a <strong className="text-[#CA922B]">1% discount off standard rates for 3 years</strong> and receive a permanent <strong className="text-[#CA922B]">Founding Member badge</strong> on your profile.
               </p>
               <ul className="space-y-2 mb-8">
                 {[
@@ -724,7 +724,7 @@ export default function Membership() {
                 <span className="text-[#CA922B]">Completely Free.</span>
               </h2>
               <p className="text-[#F5EBD8]/70 text-base leading-relaxed mb-6 max-w-xl">
-                The first <strong className="text-white">250 businesses</strong> to join receive 12 months of full Premium access at no cost — including featured placement, analytics, and event tools. After your free year, lock in our introductory rate and keep your <strong className="text-[#CA922B]">Founding Business badge</strong> permanently on your profile.
+                The first <strong className="text-white">250 businesses</strong> to join receive 12 months of full Premium access at no cost — including featured placement, analytics, and event tools. After your free year, lock in a <strong className="text-[#CA922B]">1% discount off standard rates for 3 years</strong> and keep your <strong className="text-[#CA922B]">Founding Business badge</strong> permanently on your profile.
               </p>
               <ul className="space-y-2 mb-8">
                 {[

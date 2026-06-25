@@ -15,7 +15,7 @@ export default function Slide13BusinessModel() {
       title: "Marketplace Fees",
       sub: "Transaction Revenue",
       detail: "6–10% on every product & service sale",
-      detail2: "Founding members lock rates for 3 years",
+      detail2: "Founding members save 1% for 3 years (locked)",
       note: "Revenue grows automatically with GMV",
     },
     {
