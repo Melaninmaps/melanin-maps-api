@@ -351,7 +351,7 @@ export default function BusinessDetailScreen() {
 
           <FlashDealsSection deals={deals} />
           <BusinessStoriesSection stories={stories} />
-          <BusinessListingsSection businessId={id ?? ""} businessName={business.name} />
+          <BusinessListingsSection businessId={id ?? ""} businessName={business.name} returnPolicy={(business as any).returnPolicy} />
 
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Location</Text>
           <View style={[styles.mapWrap, { borderColor: colors.border }]}>

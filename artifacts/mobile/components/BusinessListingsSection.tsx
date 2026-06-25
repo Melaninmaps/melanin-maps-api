@@ -10,12 +10,15 @@ import {
   Linking,
   Alert,
 } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { useListings, type Listing } from "@/hooks/useListings";
 import { useColors } from "@/hooks/useColors";
 
 interface Props {
   businessId: string;
   businessName: string;
+  returnPolicy?: string | null;
+  onReportIssue?: (listing: Listing) => void;
 }
 
 function formatPrice(cents: number, currency: string): string {
@@ -61,10 +64,16 @@ function ListingCard({ listing, onBuy, buying }: { listing: Listing; onBuy: () =
   );
 }
 
-export function BusinessListingsSection({ businessId, businessName }: Props) {
+const DISCLAIMER_TEXT =
+  "Mapping With Melanin™ is a marketplace that connects you with independent Black-owned businesses. " +
+  "Each purchase is a transaction between you and the business owner — not with Mapping With Melanin™. " +
+  "The business is responsible for fulfillment, returns, and refunds per their stated policy.";
+
+export function BusinessListingsSection({ businessId, businessName, returnPolicy, onReportIssue }: Props) {
   const colors = useColors();
   const { listings, loading, openCheckout } = useListings(businessId);
   const [buyingId, setBuyingId] = useState<string | null>(null);
+  const [disclaimerExpanded, setDisclaimerExpanded] = useState(false);
 
   if (loading) {
     return (
@@ -77,22 +86,70 @@ export function BusinessListingsSection({ businessId, businessName }: Props) {
   if (listings.length === 0) return null;
 
   const handleBuy = async (listing: Listing) => {
-    setBuyingId(listing.id);
-    try {
-      const url = await openCheckout(listing);
-      if (url) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert("Oops", "Couldn't open checkout. Try again.");
-      }
-    } finally {
-      setBuyingId(null);
-    }
+    const returnNote = returnPolicy
+      ? `Return policy: ${returnPolicy}`
+      : "This business has not published a return policy. Contact them directly before purchasing.";
+
+    Alert.alert(
+      "Before You Buy",
+      `You are purchasing from ${businessName}, an independent business on Mapping With Melanin™.\n\n` +
+        `${returnNote}\n\n` +
+        "Mapping With Melanin™ is a marketplace and is not the seller. Disputes must be resolved with the business directly or through our dispute process.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Continue to Checkout",
+          onPress: async () => {
+            setBuyingId(listing.id);
+            try {
+              const url = await openCheckout(listing);
+              if (url) {
+                await Linking.openURL(url);
+              } else {
+                Alert.alert("Oops", "Couldn't open checkout. Try again.");
+              }
+            } finally {
+              setBuyingId(null);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
     <View style={styles.container}>
       <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Shop</Text>
+
+      {/* Marketplace disclaimer */}
+      <TouchableOpacity
+        style={[styles.disclaimer, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+        onPress={() => setDisclaimerExpanded((v) => !v)}
+        activeOpacity={0.8}
+      >
+        <View style={styles.disclaimerRow}>
+          <Feather name="info" size={14} color={colors.mutedForeground} />
+          <Text style={[styles.disclaimerLabel, { color: colors.mutedForeground }]}>
+            Marketplace — {businessName} is the seller
+          </Text>
+          <Feather name={disclaimerExpanded ? "chevron-up" : "chevron-down"} size={13} color={colors.mutedForeground} />
+        </View>
+        {disclaimerExpanded && (
+          <Text style={[styles.disclaimerBody, { color: colors.mutedForeground }]}>{DISCLAIMER_TEXT}</Text>
+        )}
+      </TouchableOpacity>
+
+      {/* Return policy */}
+      {returnPolicy ? (
+        <View style={[styles.policyBanner, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Feather name="refresh-ccw" size={13} color={colors.primary} />
+          <Text style={[styles.policyText, { color: colors.foreground }]}>
+            <Text style={{ fontFamily: "Inter_600SemiBold" }}>Return policy: </Text>
+            {returnPolicy}
+          </Text>
+        </View>
+      ) : null}
+
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -107,14 +164,53 @@ export function BusinessListingsSection({ businessId, businessName }: Props) {
           />
         ))}
       </ScrollView>
+
+      <TouchableOpacity
+        style={styles.reportRow}
+        onPress={() =>
+          Alert.alert(
+            "Report an Issue",
+            "Had a problem with an order? You can file a dispute through Settings → Orders & Disputes, or contact the business directly.",
+            [{ text: "OK" }]
+          )
+        }
+        activeOpacity={0.7}
+      >
+        <Feather name="flag" size={12} color={colors.mutedForeground} />
+        <Text style={[styles.reportText, { color: colors.mutedForeground }]}>Problem with an order? Report an issue</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { marginTop: 8 },
-  sectionTitle: { fontFamily: "Inter_700Bold", fontSize: 17, marginBottom: 12, paddingHorizontal: 16 },
+  sectionTitle: { fontFamily: "Inter_700Bold", fontSize: 17, marginBottom: 8, paddingHorizontal: 16 },
   loadingRow: { justifyContent: "center", alignItems: "center", paddingVertical: 16 },
+  disclaimer: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 6,
+  },
+  disclaimerRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  disclaimerLabel: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular" },
+  disclaimerBody: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
+  policyBanner: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 7,
+  },
+  policyText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
   scroll: { paddingHorizontal: 16, gap: 12, paddingBottom: 4 },
   card: {
     width: 200,
@@ -132,4 +228,6 @@ const styles = StyleSheet.create({
   price: { fontFamily: "Inter_700Bold", fontSize: 16 },
   buyBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 8 },
   buyBtnText: { color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  reportRow: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
+  reportText: { fontSize: 11, fontFamily: "Inter_400Regular" },
 });

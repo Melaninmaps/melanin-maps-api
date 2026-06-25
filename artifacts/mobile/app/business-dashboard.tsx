@@ -173,6 +173,10 @@ export default function BusinessDashboardScreen() {
   const [addrZip, setAddrZip] = useState("");
   const [addrSaving, setAddrSaving] = useState(false);
   const [addrResult, setAddrResult] = useState<"success" | "error" | null>(null);
+  const [policyExpanded, setPolicyExpanded] = useState(false);
+  const [returnPolicy, setReturnPolicy] = useState("");
+  const [policySaving, setPolicySaving] = useState(false);
+  const [policyResult, setPolicyResult] = useState<"success" | "error" | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState<"paywall" | "error" | null>(null);
@@ -197,6 +201,10 @@ export default function BusinessDashboardScreen() {
   React.useEffect(() => {
     if (business?.feedbackOptIn !== undefined) setFeedbackOptIn(business.feedbackOptIn);
   }, [business?.feedbackOptIn]);
+
+  React.useEffect(() => {
+    if ((business as any)?.returnPolicy != null) setReturnPolicy((business as any).returnPolicy as string);
+  }, [(business as any)?.returnPolicy]);
 
   React.useEffect(() => {
     if (business && !addrExpanded) {
@@ -571,6 +579,81 @@ export default function BusinessDashboardScreen() {
               </View>
             )}
 
+            {/* Return & Refund Policy */}
+            <TouchableOpacity
+              style={[styles.promoteCard, { backgroundColor: colors.card, borderColor: policyExpanded ? colors.primary + "60" : colors.border }]}
+              onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setPolicyExpanded(v => !v); setPolicyResult(null); }}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.promoteIcon, { backgroundColor: colors.primary + "15" }]}>
+                <Feather name="refresh-ccw" size={20} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.promoteTitle, { color: colors.foreground }]}>Return & Refund Policy</Text>
+                <Text style={[styles.promoteSub, { color: colors.mutedForeground }]}>
+                  {policyExpanded ? "Set your policy — buyers see this before checkout" : (returnPolicy || "Not set · tap to add")}
+                </Text>
+              </View>
+              <Feather name={policyExpanded ? "chevron-up" : "chevron-down"} size={16} color={colors.primary} />
+            </TouchableOpacity>
+
+            {policyExpanded && (
+              <View style={[styles.addrForm, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[styles.addrLabel, { color: colors.mutedForeground }]}>
+                  Describe your return/refund policy for buyers. E.g. "All sales final" or "Returns accepted within 14 days".
+                </Text>
+                <TextInput
+                  style={[styles.addrInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground, minHeight: 64, textAlignVertical: "top" }]}
+                  value={returnPolicy}
+                  onChangeText={setReturnPolicy}
+                  placeholder="e.g. All sales final. For digital products, no refunds after download."
+                  placeholderTextColor={colors.mutedForeground}
+                  multiline
+                  numberOfLines={3}
+                />
+
+                {policyResult === "success" && (
+                  <View style={[styles.addrAlert, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F40" }]}>
+                    <Feather name="check-circle" size={14} color="#2D7A4F" />
+                    <Text style={[styles.addrAlertText, { color: "#2D7A4F" }]}>Policy saved. Buyers will see this before checkout.</Text>
+                  </View>
+                )}
+                {policyResult === "error" && (
+                  <View style={[styles.addrAlert, { backgroundColor: "#DC262618", borderColor: "#DC262640" }]}>
+                    <Feather name="alert-circle" size={14} color="#DC2626" />
+                    <Text style={[styles.addrAlertText, { color: "#DC2626" }]}>Failed to save. Please try again.</Text>
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  style={[styles.addrSaveBtn, { backgroundColor: colors.primary, opacity: policySaving ? 0.6 : 1 }]}
+                  disabled={policySaving}
+                  onPress={async () => {
+                    setPolicySaving(true);
+                    setPolicyResult(null);
+                    try {
+                      const token = await SecureStore.getItemAsync("auth_session_token");
+                      const base = getApiBase();
+                      const res = await fetch(`${base}/api/businesses/${business.id}/policy`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token ?? ""}` },
+                        body: JSON.stringify({ returnPolicy: returnPolicy.trim() }),
+                      });
+                      setPolicyResult(res.ok ? "success" : "error");
+                      if (res.ok) setPolicyExpanded(false);
+                    } catch { setPolicyResult("error"); }
+                    finally { setPolicySaving(false); }
+                  }}
+                >
+                  {policySaving ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <Text style={styles.addrSaveBtnText}>Save Policy</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Promoted listing CTA */}
             <TouchableOpacity
               style={[styles.promoteCard, { backgroundColor: "#1A2E1A", borderColor: "#2D7A4F50" }]}
@@ -918,6 +1001,29 @@ export default function BusinessDashboardScreen() {
               </View>
             ) : (
               <>
+                {/* Seller obligations card */}
+                <View style={[styles.addrForm, { backgroundColor: "#0F1F0F", borderColor: "#2D7A4F40", marginBottom: 8 }]}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <Feather name="shield" size={16} color="#2D7A4F" />
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: "#FFF" }}>Your Seller Responsibilities</Text>
+                  </View>
+                  {[
+                    "Fulfill orders promptly and as described",
+                    "Honor your stated return & refund policy",
+                    "Respond to buyer disputes within 48 hours",
+                    "Accurate listing descriptions — no misrepresentation",
+                    "Repeated violations may result in account removal",
+                  ].map((item) => (
+                    <View key={item} style={{ flexDirection: "row", alignItems: "flex-start", gap: 6, marginBottom: 4 }}>
+                      <Feather name="check" size={12} color="#2D7A4F" style={{ marginTop: 3 }} />
+                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.75)", flex: 1, lineHeight: 18 }}>{item}</Text>
+                    </View>
+                  ))}
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 6, lineHeight: 16 }}>
+                    Mapping With Melanin™ is a marketplace. You are the seller of record and responsible for your products and customers.
+                  </Text>
+                </View>
+
                 <View style={styles.sectionHeader}>
                   <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Your Listings</Text>
                   <TouchableOpacity

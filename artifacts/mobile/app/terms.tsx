@@ -62,6 +62,38 @@ const SECTIONS = [
     ],
   },
   {
+    id: "marketplace",
+    icon: "shopping-bag" as const,
+    color: "#2D7A4F",
+    title: "Marketplace & Transactions",
+    clauses: [
+      {
+        heading: "We Are a Marketplace, Not the Seller",
+        body: "Mapping With Melanin™ operates as a marketplace that connects buyers with independent Black-owned businesses. When you purchase a product or service through the Platform, your transaction is with the business owner — not with Mapping With Melanin™. General dissatisfaction with a product does not make Mapping With Melanin™ liable as the seller.",
+      },
+      {
+        heading: "Business Refund & Return Policies",
+        body: "Each business sets its own refund and return policy, which is displayed on their listing page before you complete a purchase. Mapping With Melanin™ does not set, guarantee, or enforce individual business policies. Buyers are encouraged to review the business's policy before purchasing.",
+      },
+      {
+        heading: "Dispute Process",
+        body: "If you have an unresolved issue with a purchase — including items not received, items significantly not as described, or defective goods — you may file a dispute through Settings → Orders & Disputes. We will contact the business and facilitate communication. Disputes must be filed within 60 days of purchase. For payment card disputes, you may also contact your card issuer.",
+      },
+      {
+        heading: "Fraud Reporting",
+        body: "If you believe a business is engaged in fraudulent activity — including misrepresenting ownership, selling counterfeit goods, or collecting payment without intent to fulfill — report it immediately through the Report button on the business profile or via contact@mappingwithmelanin.com. We investigate all fraud reports and cooperate with law enforcement when required.",
+      },
+      {
+        heading: "Platform Enforcement",
+        body: "Mapping With Melanin™ reserves the right to suspend or permanently remove businesses that repeatedly violate platform policies, accumulate unresolved disputes, engage in fraud, or harm community members. We also reserve the right to issue refunds directly to buyers and seek reimbursement from the business in cases of clear misconduct.",
+      },
+      {
+        heading: "Our Payment Responsibilities",
+        body: "We are responsible for processing payments accurately and securely through our payment processor (Stripe). We maintain records of all transactions and provide receipts. We do not store full card details. In the event of a platform-side payment error, we will correct it promptly.",
+      },
+    ],
+  },
+  {
     id: "prohibited",
     icon: "slash" as const,
     color: "#DC2626",
