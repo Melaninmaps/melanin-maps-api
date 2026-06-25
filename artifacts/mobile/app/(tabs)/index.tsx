@@ -32,6 +32,7 @@ import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAlerts } from "@/hooks/useAlerts";
 import { type FilterState } from "@/components/ScoreFilterPanel";
 import { useSpaces } from "@/hooks/useSpaces";
+import { useDismissedBusinesses } from "@/hooks/useDismissedBusinesses";
 
 export default function DiscoverScreen() {
   const colors = useColors();
@@ -63,6 +64,7 @@ export default function DiscoverScreen() {
   });
 
   const { spaces: searchSpaces } = useSpaces(search.trim().length > 2 ? { q: search.trim() } : undefined);
+  const { isDismissed, dismissBusiness } = useDismissedBusinesses();
 
   const [activeVibe, setActiveVibe] = useState<string | null>(null);
 
@@ -78,6 +80,7 @@ export default function DiscoverScreen() {
   ];
 
   const filtered = businesses.filter((b) => {
+    if (isDismissed(b.id)) return false;
     const matchesScore = b.confidenceScore >= filters.minScore;
     const matchesVerified = !filters.verifiedOnly || b.verified;
     const matchesOwnership =
@@ -373,15 +376,25 @@ export default function DiscoverScreen() {
                     onToggleSave={() => toggleSave(item.id)}
                     horizontal
                   />
-                  {item.feedbackOptIn && (
+                  <View style={styles.cardActions}>
+                    {item.feedbackOptIn && (
+                      <TouchableOpacity
+                        style={styles.notForMeBtn}
+                        onPress={() => setFeedbackBusiness(item)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.notForMeTxt, { color: colors.mutedForeground }]}>Leave a note</Text>
+                      </TouchableOpacity>
+                    )}
                     <TouchableOpacity
-                      style={styles.notForMeBtn}
-                      onPress={() => setFeedbackBusiness(item)}
+                      style={styles.hideBtn}
+                      onPress={() => dismissBusiness(item.id)}
                       activeOpacity={0.7}
                     >
-                      <Text style={[styles.notForMeTxt, { color: colors.mutedForeground }]}>Not for me — leave a note</Text>
+                      <Feather name="x" size={11} color={colors.mutedForeground} />
+                      <Text style={[styles.hideTxt, { color: colors.mutedForeground }]}>Not interested</Text>
                     </TouchableOpacity>
-                  )}
+                  </View>
                 </View>
               )}
             />
@@ -407,13 +420,22 @@ export default function DiscoverScreen() {
           <View style={styles.section}>
             <SectionHeader title="Near You" subtitle="Swipe left to save" />
             {nearby.map((b) => (
-              <SwipeableBusinessCard
-                key={b.id}
-                business={b}
-                onPress={() => router.push({ pathname: "/business/[id]", params: { id: b.id } })}
-                isSaved={isSaved(b.id)}
-                onToggleSave={() => toggleSave(b.id)}
-              />
+              <View key={b.id}>
+                <SwipeableBusinessCard
+                  business={b}
+                  onPress={() => router.push({ pathname: "/business/[id]", params: { id: b.id } })}
+                  isSaved={isSaved(b.id)}
+                  onToggleSave={() => toggleSave(b.id)}
+                />
+                <TouchableOpacity
+                  style={[styles.hideBtn, { justifyContent: "center", marginBottom: 4 }]}
+                  onPress={() => dismissBusiness(b.id)}
+                  activeOpacity={0.7}
+                >
+                  <Feather name="x" size={11} color={colors.mutedForeground} />
+                  <Text style={[styles.hideTxt, { color: colors.mutedForeground }]}>Not interested</Text>
+                </TouchableOpacity>
+              </View>
             ))}
           </View>
         ) : null}
@@ -541,6 +563,9 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: 20, marginBottom: 24 },
   notForMeBtn: { marginTop: 4, paddingVertical: 4, alignItems: "center" },
   notForMeTxt: { fontSize: 11, fontFamily: "Inter_400Regular", textDecorationLine: "underline" },
+  cardActions: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: 12, marginTop: 4 },
+  hideBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 4 },
+  hideTxt: { fontSize: 11, fontFamily: "Inter_400Regular" },
   travelBanner: {
     borderRadius: 16,
     padding: 16,

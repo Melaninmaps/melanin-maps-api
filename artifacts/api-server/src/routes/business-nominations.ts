@@ -1,0 +1,156 @@
+import { Router, type Request, type Response } from "express";
+import { db, businessNominationsTable, businessesTable } from "@workspace/db";
+import { eq, ilike, and, desc } from "drizzle-orm";
+
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
+  .split(",")
+  .map((e) => e.trim())
+  .filter(Boolean);
+
+function isAdmin(req: Request): boolean {
+  const user = (req as any).user;
+  if (!user?.email) return false;
+  if (ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(user.email)) return true;
+  return user.role === "admin";
+}
+
+const router = Router();
+
+router.post("/business-nominations", async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id as string | undefined;
+  const {
+    businessName, category, city, state, phone, website,
+    ownerName, ownerContact, notes, nominatorEmail,
+  } = req.body as {
+    businessName?: string; category?: string; city?: string; state?: string;
+    phone?: string; website?: string; ownerName?: string; ownerContact?: string;
+    notes?: string; nominatorEmail?: string;
+  };
+
+  if (!businessName?.trim() || !city?.trim() || !state?.trim()) {
+    res.status(400).json({ error: "businessName, city, and state are required" });
+    return;
+  }
+
+  try {
+    const [existing] = await db
+      .select({ id: businessesTable.id, name: businessesTable.name })
+      .from(businessesTable)
+      .where(and(
+        ilike(businessesTable.name, businessName.trim()),
+        ilike(businessesTable.city, city.trim()),
+      ))
+      .limit(1);
+
+    if (existing) {
+      res.json({
+        isDuplicate: true,
+        type: "already_listed",
+        businessId: existing.id,
+        message: "Great news — this business is already listed on Mapping With Melanin!",
+      });
+      return;
+    }
+
+    const [existingNom] = await db
+      .select({ id: businessNominationsTable.id })
+      .from(businessNominationsTable)
+      .where(and(
+        ilike(businessNominationsTable.businessName, businessName.trim()),
+        ilike(businessNominationsTable.city, city.trim()),
+      ))
+      .limit(1);
+
+    if (existingNom) {
+      res.json({
+        isDuplicate: true,
+        type: "already_nominated",
+        message: "Someone already nominated this business — thanks for confirming the community demand!",
+      });
+      return;
+    }
+
+    const [nomination] = await db
+      .insert(businessNominationsTable)
+      .values({
+        nominatedByUserId: userId ?? null,
+        nominatorEmail: nominatorEmail?.trim() || null,
+        businessName: businessName.trim(),
+        category: category?.trim() || null,
+        city: city.trim(),
+        state: state.trim(),
+        phone: phone?.trim() || null,
+        website: website?.trim() || null,
+        ownerName: ownerName?.trim() || null,
+        ownerContact: ownerContact?.trim() || null,
+        notes: notes?.trim() || null,
+      })
+      .returning();
+
+    res.status(201).json({ nomination, isDuplicate: false });
+  } catch (err) {
+    req.log.error({ err }, "Failed to submit business nomination");
+    res.status(500).json({ error: "Failed to submit nomination" });
+  }
+});
+
+router.get("/business-nominations/mine", async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id as string | undefined;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  try {
+    const nominations = await db
+      .select()
+      .from(businessNominationsTable)
+      .where(eq(businessNominationsTable.nominatedByUserId, userId))
+      .orderBy(desc(businessNominationsTable.createdAt));
+    res.json({ nominations });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch your nominations");
+    res.status(500).json({ error: "Failed to fetch nominations" });
+  }
+});
+
+router.get("/admin/business-nominations", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const nominations = await db
+      .select()
+      .from(businessNominationsTable)
+      .orderBy(desc(businessNominationsTable.createdAt))
+      .limit(500);
+    res.json({ nominations });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch nominations");
+    res.status(500).json({ error: "Failed to fetch nominations" });
+  }
+});
+
+router.patch("/admin/business-nominations/:id", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const id = String(req.params.id);
+  const { status, matchedBusinessId, referralCredited } = req.body as {
+    status?: string; matchedBusinessId?: string; referralCredited?: boolean;
+  };
+  const allowed = ["pending", "verified", "joined", "duplicate", "declined"];
+  if (status && !allowed.includes(status)) {
+    res.status(400).json({ error: "Invalid status" }); return;
+  }
+  try {
+    const updates: Record<string, unknown> = {};
+    if (status) updates.status = status;
+    if (matchedBusinessId !== undefined) updates.matchedBusinessId = matchedBusinessId;
+    if (referralCredited !== undefined) updates.referralCredited = referralCredited;
+    const [updated] = await db
+      .update(businessNominationsTable)
+      .set(updates)
+      .where(eq(businessNominationsTable.id, id))
+      .returning();
+    if (!updated) { res.status(404).json({ error: "Nomination not found" }); return; }
+    res.json({ nomination: updated });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update nomination");
+    res.status(500).json({ error: "Failed to update nomination" });
+  }
+});
+
+export default router;
