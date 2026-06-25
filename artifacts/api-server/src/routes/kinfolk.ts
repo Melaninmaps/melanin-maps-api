@@ -11,7 +11,9 @@ import {
   savedPlacesTable,
   businessesTable,
   businessIdentityTable,
+  lifeJourneysTable,
   type SessionMessage,
+  type JourneyPhase,
 } from "@workspace/db";
 import { eq, desc, and, ilike } from "drizzle-orm";
 import { storage } from "../storage";
@@ -73,8 +75,9 @@ function buildSystemPrompt(opts: {
   destination?: string | null;
   neighborVoice: boolean;
   businessCatalog?: BusinessCatalogEntry[];
+  activeJourney?: { title: string; city?: string | null; journeyType: string; phases: JourneyPhase[]; aiContext?: string | null } | null;
 }): string {
-  const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, neighborVoice, businessCatalog } = opts;
+  const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, neighborVoice, businessCatalog, activeJourney } = opts;
 
   const cityVoice = destination ? getCityVoice(destination) : null;
   const voiceInstructions = !neighborVoice
@@ -105,11 +108,24 @@ ${prefs.dietaryNotes ? `- Dietary notes: ${prefs.dietaryNotes}` : ""}` : "USER P
     ? `\nTHEIR SAVED PLACES (they already love these):\n${savedPlaces.map((s) => `- ${s}`).join("\n")}`
     : "";
 
+  const journeySection = activeJourney
+    ? `\nACTIVE LIFE JOURNEY — THIS IS CRITICAL CONTEXT:
+The user is currently on a "${activeJourney.journeyType}" journey titled "${activeJourney.title}"${activeJourney.city ? ` in ${activeJourney.city}` : ""}.
+${activeJourney.aiContext ? `Journey context: ${activeJourney.aiContext}` : ""}
+Current phases and their status:
+${activeJourney.phases.map((p) => {
+  const completedSteps = p.steps.filter((s) => s.completed).length;
+  return `- ${p.icon} ${p.title} [${p.status.toUpperCase()}] — ${completedSteps}/${p.steps.length} steps done`;
+}).join("\n")}
+Active phase: ${activeJourney.phases.find((p) => p.status === "active")?.title ?? "none"}
+IMPORTANT: When they ask about any topic related to their journey, connect it back. Reference their journey naturally. Suggest next steps. Help them make progress. This is their guide — make every conversation feel connected to where they're going.`
+    : "";
+
   return `You are KinfolkAI™ — a conversational travel companion built by and for the Minority community. You are not a search engine. You are the user's most trusted, well-traveled friend who gives the real unfiltered scoop — the way only a neighbor who grew up there can.
 
 You have memory. You know this person. You learn from every interaction. You get more personalized every time they talk to you.
 
-${profileSection}${likedSection}${dislikedSection}${savedSection}
+${profileSection}${likedSection}${dislikedSection}${savedSection}${journeySection}
 
 CONVERSATION STYLE:
 - Be warm, conversational, like their most well-traveled friend who's been everywhere
@@ -437,8 +453,30 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-critical — proceed without catalog */ }
     }
 
+    // Fetch active life journey for this user (inject into system prompt)
+    let activeJourney: { title: string; city: string | null; journeyType: string; phases: JourneyPhase[]; aiContext: string | null } | null = null;
+    if (req.user?.id) {
+      try {
+        const [latestJourney] = await db
+          .select()
+          .from(lifeJourneysTable)
+          .where(and(eq(lifeJourneysTable.userId, req.user.id), eq(lifeJourneysTable.status, "active")))
+          .orderBy(desc(lifeJourneysTable.updatedAt))
+          .limit(1);
+        if (latestJourney) {
+          activeJourney = {
+            title: latestJourney.title,
+            city: latestJourney.city,
+            journeyType: latestJourney.journeyType,
+            phases: latestJourney.phases as JourneyPhase[],
+            aiContext: latestJourney.aiContext ?? null,
+          };
+        }
+      } catch { /* non-critical */ }
+    }
+
     // Build system prompt
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, neighborVoice, businessCatalog });
+    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, neighborVoice, businessCatalog, activeJourney });
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages

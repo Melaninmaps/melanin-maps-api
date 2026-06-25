@@ -60,3 +60,5 @@ export * from "./journal-insights";
 export * from "./marketplace-fees";
 export * from "./identity-verifications";
 export * from "./review-helpful-votes";
+export * from "./life-journeys";
+export * from "./entity-connections";
