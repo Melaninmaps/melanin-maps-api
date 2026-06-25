@@ -1,11 +1,12 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, docusignEnvelopesTable, businessesTable, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import {
   createSellerAgreementEnvelope,
   createFoundingAgreementEnvelope,
   createVerificationEnvelope,
   getEnvelopeStatus,
+  getEmbeddedSigningUrl,
   docuSignConsentUrl,
 } from "../lib/docusign";
 
@@ -51,9 +52,12 @@ router.post("/docusign/seller-agreement", async (req: Request, res: Response) =>
     const ownerName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
     const returnUrl = `${baseUrl()}/api/docusign/signed?type=seller_agreement&businessId=${businessId}`;
 
-    // Check for an existing pending envelope
+    // Check for an existing pending seller-agreement envelope for this specific business
     const [existing] = await db.select().from(docusignEnvelopesTable)
-      .where(eq(docusignEnvelopesTable.businessId, businessId))
+      .where(and(
+        eq(docusignEnvelopesTable.businessId, businessId),
+        eq(docusignEnvelopesTable.type, "seller_agreement"),
+      ))
       .limit(1);
 
     if (existing && existing.status !== "completed") {
@@ -61,27 +65,13 @@ router.post("/docusign/seller-agreement", async (req: Request, res: Response) =>
         const current = await getEnvelopeStatus(existing.envelopeId);
         if (current.status === "completed") {
           await db.update(businessesTable).set({ sellerAgreementAcceptedAt: new Date(), updatedAt: new Date() }).where(eq(businessesTable.id, businessId));
-          await db.update(docusignEnvelopesTable).set({ status: "completed" }).where(eq(docusignEnvelopesTable.envelopeId, existing.envelopeId));
+          await db.update(docusignEnvelopesTable).set({ status: "completed", updatedAt: new Date() }).where(eq(docusignEnvelopesTable.envelopeId, existing.envelopeId));
           res.json({ alreadySigned: true }); return;
         }
-        // Re-use existing envelope, get fresh signing URL
-        const { createSellerAgreementEnvelope: _unused, ...rest } = await import("../lib/docusign");
-        void _unused; void rest;
-        const { getDocuSignAccessToken } = await import("../lib/docusign");
-        const token = await getDocuSignAccessToken();
-        const viewRes = await fetch(
-          `${process.env.DOCUSIGN_BASE_URL}/v2.1/accounts/${process.env.DOCUSIGN_ACCOUNT_ID}/envelopes/${existing.envelopeId}/views/recipient`,
-          {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ returnUrl, authenticationMethod: "none", email: user.email, userName: ownerName, clientUserId: req.user.id }),
-          },
-        );
-        if (viewRes.ok) {
-          const { url } = (await viewRes.json()) as { url: string };
-          res.json({ signingUrl: url, envelopeId: existing.envelopeId }); return;
-        }
-      } catch { /* fall through to create new */ }
+        // Re-use existing envelope — get a fresh embedded signing URL using the static import
+        const signingUrl = await getEmbeddedSigningUrl(existing.envelopeId, user.email, ownerName, req.user.id, returnUrl);
+        res.json({ signingUrl, envelopeId: existing.envelopeId }); return;
+      } catch { /* fall through to create a new envelope */ }
     }
 
     const { envelopeId, signingUrl } = await createSellerAgreementEnvelope({
@@ -234,24 +224,62 @@ router.get("/docusign/status/:envelopeId", async (req: Request, res: Response) =
 });
 
 // ── GET /api/docusign/signed ───────────────────────────────────────────────
-// DocuSign redirects here after signing. Updates DB and shows a confirmation page.
+// DocuSign redirects here after signing. Only updates the DB when event=signing_complete.
 router.get("/docusign/signed", async (req: Request, res: Response) => {
-  const { type, businessId } = req.query as { type?: string; businessId?: string };
+  const { type, businessId, event } = req.query as { type?: string; businessId?: string; event?: string };
 
-  const messages: Record<string, { title: string; body: string }> = {
-    seller_agreement: { title: "Seller Agreement Signed!", body: "You're all set. Return to the Mapping With Melanin app to complete your seller setup." },
-    founding_agreement: { title: "Founding Business Agreement Signed!", body: "Welcome to the Founding Business Program. Return to the app to see your Founding Business badge." },
-    verification: { title: "Verification Certified!", body: "Your certification has been received. Our team will review your verification request shortly." },
+  const signed = event === "signing_complete";
+
+  const messages: Record<string, { title: string; body: string; badge: string }> = {
+    seller_agreement: {
+      title: signed ? "Seller Agreement Signed!" : "Signing Session Ended",
+      body: signed
+        ? "You're all set. Return to the Mapping With Melanin app to complete your seller setup."
+        : "You did not complete signing. Return to the app and try again when ready.",
+      badge: signed ? "✅" : "↩️",
+    },
+    founding_agreement: {
+      title: signed ? "Founding Business Agreement Signed!" : "Signing Session Ended",
+      body: signed
+        ? "Welcome to the Founding Business Program. Return to the app to see your Founding Business badge."
+        : "You did not complete signing. Return to the app and try again when ready.",
+      badge: signed ? "⭐" : "↩️",
+    },
+    verification: {
+      title: signed ? "Verification Certified!" : "Signing Session Ended",
+      body: signed
+        ? "Your certification has been received. Our team will review your verification request shortly."
+        : "You did not complete signing. Return to the app and try again when ready.",
+      badge: signed ? "✅" : "↩️",
+    },
   };
 
-  const msg = messages[type ?? ""] ?? { title: "Document Signed", body: "Thank you! Return to the Mapping With Melanin app." };
+  const msg = messages[type ?? ""] ?? {
+    title: signed ? "Document Signed" : "Signing Session Ended",
+    body: "Return to the Mapping With Melanin app.",
+    badge: signed ? "✅" : "↩️",
+  };
 
-  if (type === "seller_agreement" && businessId) {
+  // Only update sellerAgreementAcceptedAt when the user actually completed signing
+  if (signed && type === "seller_agreement" && businessId) {
     try {
-      await db.update(businessesTable)
-        .set({ sellerAgreementAcceptedAt: new Date(), updatedAt: new Date() })
-        .where(eq(businessesTable.id, businessId));
-    } catch { /* best-effort */ }
+      // Verify there is a tracked envelope for this business before updating
+      const [record] = await db.select({ envelopeId: docusignEnvelopesTable.envelopeId })
+        .from(docusignEnvelopesTable)
+        .where(and(
+          eq(docusignEnvelopesTable.businessId, businessId),
+          eq(docusignEnvelopesTable.type, "seller_agreement"),
+        ))
+        .limit(1);
+      if (record) {
+        await db.update(businessesTable)
+          .set({ sellerAgreementAcceptedAt: new Date(), updatedAt: new Date() })
+          .where(eq(businessesTable.id, businessId));
+        await db.update(docusignEnvelopesTable)
+          .set({ status: "completed", updatedAt: new Date() })
+          .where(eq(docusignEnvelopesTable.envelopeId, record.envelopeId));
+      }
+    } catch { /* best-effort — webhook is the reliable path */ }
   }
 
   res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${msg.title}</title>
@@ -259,7 +287,7 @@ router.get("/docusign/signed", async (req: Request, res: Response) => {
 .card{background:#fff;border-radius:16px;padding:48px 40px;max-width:420px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}
 h2{color:#2D7A4F;margin-bottom:12px}p{color:#555;line-height:1.7}
 .badge{font-size:48px;margin-bottom:16px}</style></head>
-<body><div class="card"><div class="badge">✅</div><h2>${msg.title}</h2><p>${msg.body}</p></div></body></html>`);
+<body><div class="card"><div class="badge">${msg.badge}</div><h2>${msg.title}</h2><p>${msg.body}</p></div></body></html>`);
 });
 
 // ── POST /api/docusign/webhook ─────────────────────────────────────────────

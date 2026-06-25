@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   Dimensions,
   Linking,
   Platform,
@@ -185,6 +186,7 @@ export default function BusinessDashboardScreen() {
   const [sellerAgreementAccepted, setSellerAgreementAccepted] = useState(false);
   const [showAgreementModal, setShowAgreementModal] = useState(false);
   const [dsSigningLoading, setDsSigningLoading] = useState(false);
+  const [dsEnvelopeId, setDsEnvelopeId] = useState<string | null>(null);
   const [marketplaceTier, setMarketplaceTier] = useState<Record<string, unknown> | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
@@ -218,6 +220,28 @@ export default function BusinessDashboardScreen() {
   React.useEffect(() => {
     if (business?.sellerAgreementAcceptedAt) setSellerAgreementAccepted(true);
   }, [business?.sellerAgreementAcceptedAt]);
+
+  // Poll DocuSign status when user returns to the app after signing in the browser
+  React.useEffect(() => {
+    if (!dsEnvelopeId) return;
+    const sub = AppState.addEventListener("change", async (nextState) => {
+      if (nextState !== "active") return;
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const resp = await fetch(`${getApiBase()}/api/docusign/status/${dsEnvelopeId}`, {
+          headers: { Authorization: `Bearer ${token ?? ""}` },
+        });
+        if (!resp.ok) return;
+        const data = await resp.json() as { status: string };
+        if (data.status === "completed") {
+          setSellerAgreementAccepted(true);
+          setDsEnvelopeId(null);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+      } catch { /* ignore — user can refresh manually */ }
+    });
+    return () => sub.remove();
+  }, [dsEnvelopeId]);
 
   React.useEffect(() => {
     if (!business) return;
@@ -1114,6 +1138,7 @@ export default function BusinessDashboardScreen() {
                       const data = await resp.json();
                       if (data.alreadySigned) { setSellerAgreementAccepted(true); return; }
                       if (data.signingUrl) {
+                        if (data.envelopeId) setDsEnvelopeId(data.envelopeId);
                         await Linking.openURL(data.signingUrl);
                       } else {
                         Alert.alert("Error", data.error ?? "Could not open agreement. Please try again.");

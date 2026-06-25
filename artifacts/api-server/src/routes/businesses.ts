@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable } from "@workspace/db";
+import { db, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable } from "@workspace/db";
 import { eq, and, or, ilike, desc, sql } from "drizzle-orm";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
@@ -409,7 +409,7 @@ router.patch("/admin/businesses/:id/founding-status", async (req: Request, res: 
           const ownerName = [owner.firstName, owner.lastName].filter(Boolean).join(" ") || owner.email;
           const domain = process.env.REPLIT_DOMAINS?.split(",")[0] ?? "";
           const returnUrl = `https://${domain}/api/docusign/signed?type=founding_agreement&businessId=${biz.id}`;
-          await createFoundingAgreementEnvelope({
+          const { envelopeId } = await createFoundingAgreementEnvelope({
             businessId: biz.id,
             businessName: biz.name,
             ownerName,
@@ -418,6 +418,16 @@ router.patch("/admin/businesses/:id/founding-status", async (req: Request, res: 
             clientUserId: fullBiz.submittedById,
             returnUrl,
           });
+          // Persist so webhook and status polling can look it up
+          await db.insert(docusignEnvelopesTable).values({
+            envelopeId,
+            businessId: biz.id,
+            userId: fullBiz.submittedById,
+            type: "founding_agreement",
+            status: "sent",
+            signerEmail: owner.email,
+            signerName: ownerName,
+          }).onConflictDoNothing();
         } catch (dsErr) {
           req.log.error({ dsErr }, "DocuSign founding agreement async trigger failed — non-fatal");
         }

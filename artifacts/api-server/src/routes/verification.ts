@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { db, verificationRequestsTable, businessClaimsTable, businessesTable } from "@workspace/db";
+import { db, verificationRequestsTable, businessClaimsTable, businessesTable, docusignEnvelopesTable } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
 import { objectStorageClient } from "../lib/objectStorage";
 import { createVerificationEnvelope } from "../lib/docusign";
@@ -156,13 +156,22 @@ router.post("/verification/submit", async (req: any, res: Response): Promise<voi
       void (async () => {
         try {
           const domain = process.env.REPLIT_DOMAINS?.split(",")[0] ?? "";
-          await createVerificationEnvelope({
+          const { envelopeId } = await createVerificationEnvelope({
             businessName: businessName.trim(),
             ownerName: ownerName.trim(),
             signerEmail: submitterEmail.trim(),
             clientUserId: req.user!.id,
             returnUrl: `https://${domain}/api/docusign/signed?type=verification`,
           });
+          // Persist so webhook and status polling can look it up
+          await db.insert(docusignEnvelopesTable).values({
+            envelopeId,
+            userId: req.user!.id,
+            type: "verification",
+            status: "sent",
+            signerEmail: submitterEmail.trim(),
+            signerName: ownerName.trim(),
+          }).onConflictDoNothing();
         } catch (dsErr) {
           req.log?.error?.({ dsErr }, "DocuSign verification cert async trigger failed — non-fatal");
         }

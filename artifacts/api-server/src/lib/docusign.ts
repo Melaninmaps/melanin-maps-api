@@ -76,6 +76,12 @@ async function embeddedUrl(envelopeId: string, email: string, name: string, clie
   return data.url as string;
 }
 
+export async function getEmbeddedSigningUrl(
+  envelopeId: string, email: string, name: string, clientUserId: string, returnUrl: string,
+): Promise<string> {
+  return embeddedUrl(envelopeId, email, name, clientUserId, returnUrl);
+}
+
 // ── Document HTML builders ──────────────────────────────────────────────────
 
 function sellerAgreementHtml(businessName: string, ownerName: string): string {
