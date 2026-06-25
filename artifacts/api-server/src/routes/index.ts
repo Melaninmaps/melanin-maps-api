@@ -72,6 +72,7 @@ import savedLocationsRouter from "./saved-locations";
 import disputesRouter from "./disputes";
 import docusignRouter from "./docusign";
 import smartPathwaysRouter from "./smart-pathways";
+import knowledgeRouter from "./knowledge";
 
 const router: IRouter = Router();
 
@@ -147,6 +148,7 @@ router.use(savedLocationsRouter);
 router.use(disputesRouter);
 router.use(docusignRouter);
 router.use(smartPathwaysRouter);
+router.use(knowledgeRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

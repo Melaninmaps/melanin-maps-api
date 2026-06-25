@@ -20,6 +20,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "map", selected: "map.fill" }} />
         <Label>Map</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="library">
+        <Icon sf={{ default: "books.vertical", selected: "books.vertical.fill" }} />
+        <Label>Library</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="community">
         <Icon sf={{ default: "person.3", selected: "person.3.fill" }} />
         <Label>Community</Label>
@@ -107,6 +111,18 @@ function ClassicTabLayout() {
               <SymbolView name="calendar" tintColor={color} size={24} />
             ) : (
               <Feather name="calendar" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="library"
+        options={{
+          title: "Library",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="books.vertical" tintColor={color} size={24} />
+            ) : (
+              <Feather name="book-open" size={22} color={color} />
             ),
         }}
       />
