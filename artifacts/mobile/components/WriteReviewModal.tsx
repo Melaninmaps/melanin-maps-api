@@ -37,7 +37,7 @@ interface Props {
   businessName: string;
   businessId?: string;
   onClose: () => void;
-  onSubmit: (rating: number, text: string, wouldReturn: boolean, socialHandle?: string, socialPlatform?: string, videoUrl?: string, nonMinorityOwned?: boolean, communitySupport?: number, website?: string, location?: string) => void;
+  onSubmit: (rating: number, text: string, wouldReturn: boolean, socialHandle?: string, socialPlatform?: string, videoUrl?: string, nonMinorityOwned?: boolean, communitySupport?: number, website?: string, location?: string, isAnonymous?: boolean, volunteerAsMentor?: boolean) => void;
 }
 
 export function WriteReviewModal({ visible, businessName, businessId, onClose, onSubmit }: Props) {
@@ -52,8 +52,12 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
   const [location, setLocation] = useState("");
   const [communitySupport, setCommunitySupport] = useState(0);
   const [nonMinorityOwned, setNonMinorityOwned] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [recommendsAsEmployer, setRecommendsAsEmployer] = useState<boolean | null>(null);
+  const [volunteerAsMentor, setVolunteerAsMentor] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [inviteSent, setInviteSent] = useState(false);
+  const [volunteeredAsMentor, setVolunteeredAsMentor] = useState(false);
 
   const reset = () => {
     setRating(0);
@@ -66,8 +70,12 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
     setLocation("");
     setCommunitySupport(0);
     setNonMinorityOwned(false);
+    setIsAnonymous(false);
+    setRecommendsAsEmployer(null);
+    setVolunteerAsMentor(false);
     setSubmitted(false);
     setInviteSent(false);
+    setVolunteeredAsMentor(false);
   };
 
   const handleClose = () => {
@@ -81,9 +89,11 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
     const cleanHandle = socialHandle.trim().replace(/^@/, "");
     const hasInvite = cleanHandle.length > 0 && socialPlatform !== null;
     const cleanVideoUrl = videoLink.trim() && isValidVideoUrl(videoLink) ? videoLink.trim() : undefined;
+    const willMentor = nonMinorityOwned && recommendsAsEmployer === true && !isAnonymous && volunteerAsMentor;
     setInviteSent(hasInvite);
+    setVolunteeredAsMentor(willMentor);
     setSubmitted(true);
-    onSubmit(rating, text, wouldReturn, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl, nonMinorityOwned, communitySupport > 0 && !nonMinorityOwned ? communitySupport : undefined, website.trim() || undefined, location.trim() || undefined);
+    onSubmit(rating, text, wouldReturn, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl, nonMinorityOwned, communitySupport > 0 && !nonMinorityOwned ? communitySupport : undefined, website.trim() || undefined, location.trim() || undefined, nonMinorityOwned ? isAnonymous : undefined, willMentor || undefined);
     setTimeout(() => {
       reset();
       onClose();
@@ -106,22 +116,24 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
                 <Feather name="check-circle" size={40} color="#2D7A4F" />
               </View>
               <Text style={[styles.successTitle, { color: colors.foreground }]}>Review Submitted!</Text>
-              {inviteSent ? (
-                <>
-                  <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
-                    Thank you for helping the community.
+              <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
+                Thank you for helping the community.
+              </Text>
+              {inviteSent && (
+                <View style={[styles.inviteBadge, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "33" }]}>
+                  <Ionicons name="paper-plane" size={14} color={colors.primary} />
+                  <Text style={[styles.inviteBadgeText, { color: colors.primary }]}>
+                    Invite sent to @{socialHandle.replace(/^@/, "")} — 60-day free trial unlocked!
                   </Text>
-                  <View style={[styles.inviteBadge, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "33" }]}>
-                    <Ionicons name="paper-plane" size={14} color={colors.primary} />
-                    <Text style={[styles.inviteBadgeText, { color: colors.primary }]}>
-                      Invite sent to @{socialHandle.replace(/^@/, "")} — 60-day free trial unlocked!
-                    </Text>
-                  </View>
-                </>
-              ) : (
-                <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
-                  Thank you for helping the community.
-                </Text>
+                </View>
+              )}
+              {volunteeredAsMentor && (
+                <View style={[styles.inviteBadge, { backgroundColor: "#7C3AED18", borderColor: "#7C3AED33" }]}>
+                  <Ionicons name="school" size={14} color="#7C3AED" />
+                  <Text style={[styles.inviteBadgeText, { color: "#7C3AED" }]}>
+                    You're now listed as a career mentor — thank you!
+                  </Text>
+                </View>
               )}
             </View>
           ) : (
@@ -355,7 +367,15 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
 
               <TouchableOpacity
                 style={[styles.nmoRow, { borderColor: nonMinorityOwned ? "#C9922B" : colors.border, backgroundColor: nonMinorityOwned ? "#C9922B10" : colors.card }]}
-                onPress={() => setNonMinorityOwned((v) => !v)}
+                onPress={() => {
+                  const next = !nonMinorityOwned;
+                  setNonMinorityOwned(next);
+                  if (!next) {
+                    setIsAnonymous(false);
+                    setRecommendsAsEmployer(null);
+                    setVolunteerAsMentor(false);
+                  }
+                }}
                 activeOpacity={0.8}
               >
                 <View style={[styles.nmoCheck, { borderColor: nonMinorityOwned ? "#C9922B" : colors.border, backgroundColor: nonMinorityOwned ? "#C9922B" : "transparent" }]}>
@@ -365,6 +385,79 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
                   This is not a minority-owned business
                 </Text>
               </TouchableOpacity>
+
+              {nonMinorityOwned && (
+                <View style={[styles.nmoExtras, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  {/* Anonymous / Verified toggle */}
+                  <Text style={[styles.label, { color: colors.foreground, marginBottom: 8 }]}>Post as</Text>
+                  <View style={styles.anonRow}>
+                    <TouchableOpacity
+                      style={[styles.anonBtn, { borderColor: isAnonymous ? "#6B7280" : colors.border, backgroundColor: isAnonymous ? "#6B728018" : colors.background }]}
+                      onPress={() => { setIsAnonymous(true); setVolunteerAsMentor(false); }}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="eye-off-outline" size={15} color={isAnonymous ? "#6B7280" : colors.mutedForeground} />
+                      <Text style={[styles.anonBtnText, { color: isAnonymous ? "#6B7280" : colors.foreground }]}>Anonymous</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.anonBtn, { borderColor: !isAnonymous ? colors.primary : colors.border, backgroundColor: !isAnonymous ? colors.primary + "18" : colors.background }]}
+                      onPress={() => setIsAnonymous(false)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="shield-checkmark-outline" size={15} color={!isAnonymous ? colors.primary : colors.mutedForeground} />
+                      <Text style={[styles.anonBtnText, { color: !isAnonymous ? colors.primary : colors.foreground }]}>Verified User</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {isAnonymous && (
+                    <Text style={[styles.anonHint, { color: colors.mutedForeground }]}>
+                      Your name will appear as "Anonymous Community Member"
+                    </Text>
+                  )}
+
+                  {/* Employer recommendation */}
+                  <Text style={[styles.label, { color: colors.foreground, marginTop: 16, marginBottom: 8 }]}>
+                    Would you recommend this place as an employer?
+                  </Text>
+                  <View style={styles.yesNo}>
+                    <TouchableOpacity
+                      style={[styles.yesNoBtn, { borderColor: recommendsAsEmployer === true ? "#2D7A4F" : colors.border, backgroundColor: recommendsAsEmployer === true ? "#2D7A4F18" : colors.background }]}
+                      onPress={() => setRecommendsAsEmployer(true)}
+                    >
+                      <Feather name="thumbs-up" size={16} color={recommendsAsEmployer === true ? "#2D7A4F" : colors.mutedForeground} />
+                      <Text style={[styles.yesNoText, { color: recommendsAsEmployer === true ? "#2D7A4F" : colors.foreground }]}>Yes</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.yesNoBtn, { borderColor: recommendsAsEmployer === false ? "#DC2626" : colors.border, backgroundColor: recommendsAsEmployer === false ? "#DC262618" : colors.background }]}
+                      onPress={() => { setRecommendsAsEmployer(false); setVolunteerAsMentor(false); }}
+                    >
+                      <Feather name="thumbs-down" size={16} color={recommendsAsEmployer === false ? "#DC2626" : colors.mutedForeground} />
+                      <Text style={[styles.yesNoText, { color: recommendsAsEmployer === false ? "#DC2626" : colors.foreground }]}>No</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Mentor volunteer — only if employer recommended + posting as verified */}
+                  {recommendsAsEmployer === true && !isAnonymous && (
+                    <TouchableOpacity
+                      style={[styles.mentorRow, { borderColor: volunteerAsMentor ? "#7C3AED" : colors.border, backgroundColor: volunteerAsMentor ? "#7C3AED10" : colors.background }]}
+                      onPress={() => setVolunteerAsMentor((v) => !v)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={[styles.nmoCheck, { borderColor: volunteerAsMentor ? "#7C3AED" : colors.border, backgroundColor: volunteerAsMentor ? "#7C3AED" : "transparent" }]}>
+                        {volunteerAsMentor && <Feather name="check" size={11} color="#fff" />}
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.mentorTitle, { color: volunteerAsMentor ? "#7C3AED" : colors.foreground }]}>
+                          Volunteer as a career mentor
+                        </Text>
+                        <Text style={[styles.mentorSub, { color: colors.mutedForeground }]}>
+                          Help job seekers in this industry — we'll list you in our mentorship directory
+                        </Text>
+                      </View>
+                      <Ionicons name="school-outline" size={20} color={volunteerAsMentor ? "#7C3AED" : colors.mutedForeground} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
 
               <TouchableOpacity
                 style={[
@@ -557,7 +650,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    marginBottom: 14,
+    marginBottom: 10,
   },
   nmoCheck: {
     width: 20,
@@ -571,6 +664,58 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
     fontSize: 13,
     flex: 1,
+  },
+  nmoExtras: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 14,
+    gap: 2,
+  },
+  anonRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 4,
+  },
+  anonBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1.5,
+  },
+  anonBtnText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+  },
+  anonHint: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  mentorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1.5,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  mentorTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  mentorSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    lineHeight: 15,
   },
   submitBtn: {
     paddingVertical: 16,

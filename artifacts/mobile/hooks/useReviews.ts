@@ -60,6 +60,8 @@ export function useReviews(businessId: string) {
       communitySupport?: number,
       website?: string,
       location?: string,
+      isAnonymous?: boolean,
+      volunteerAsMentor?: boolean,
     ): Promise<number | null> => {
       const token = await getToken();
       const apiBase = getApiBase();
@@ -84,6 +86,8 @@ export function useReviews(businessId: string) {
             communitySupport: communitySupport ?? null,
             website: website || null,
             location: location || null,
+            isAnonymous: isAnonymous ?? false,
+            volunteerAsMentor: volunteerAsMentor ?? false,
           }),
         });
         if (res.ok) {

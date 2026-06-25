@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable, usersTable } from "@workspace/db";
+import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable, usersTable, mentorshipProfilesTable } from "@workspace/db";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { sendPushToUser, sendPushToUsersWithSavedBusiness, sendThreeStarAlert } from "../lib/pushNotifications";
 import { reviewLimiter } from "../middleware/rateLimiter";
@@ -162,7 +162,7 @@ router.post("/reviews", reviewLimiter, requireTrust, requireMembership("navigato
     res.status(401).json({ error: "Authentication required" });
     return;
   }
-  const { businessId, rating, text, wouldReturnAlone, socialHandle, socialPlatform, businessName, videoUrl, nonMinorityOwned, communitySupport, website, location } =
+  const { businessId, rating, text, wouldReturnAlone, socialHandle, socialPlatform, businessName, videoUrl, nonMinorityOwned, communitySupport, website, location, isAnonymous, recommendsAsEmployer, volunteerAsMentor } =
     req.body as Record<string, unknown>;
 
   const ratingNum = Number(rating);
@@ -202,8 +202,10 @@ router.post("/reviews", reviewLimiter, requireTrust, requireMembership("navigato
         userId: req.user.id,
         businessId: businessId as string,
         authorName:
-          [req.user.firstName, req.user.lastName].filter(Boolean).join(" ") ||
-          "Community Member",
+          isAnonymous === true
+            ? "Anonymous Community Member"
+            : [req.user.firstName, req.user.lastName].filter(Boolean).join(" ") || "Community Member",
+        isAnonymous: isAnonymous === true,
         rating: ratingNum,
         text: typeof text === "string" ? text : null,
         wouldReturnAlone: typeof wouldReturnAlone === "boolean" ? wouldReturnAlone : null,
@@ -211,6 +213,7 @@ router.post("/reviews", reviewLimiter, requireTrust, requireMembership("navigato
         socialPlatform: cleanHandle ? cleanPlatform : null,
         videoUrl: typeof videoUrl === "string" && videoUrl.trim() ? videoUrl.trim() : null,
         nonMinorityOwned: nonMinorityOwned === true,
+        recommendsAsEmployer: nonMinorityOwned === true && recommendsAsEmployer === true,
         communitySupport: typeof communitySupport === "number" && !nonMinorityOwned ? communitySupport : null,
         website: typeof website === "string" && website.trim() ? website.trim() : null,
         location: typeof location === "string" && location.trim() ? location.trim() : null,
@@ -251,6 +254,20 @@ router.post("/reviews", reviewLimiter, requireTrust, requireMembership("navigato
       }).catch((err) => {
         req.log.warn({ err }, "Failed to send invite notification email");
       });
+    }
+
+    if (nonMinorityOwned === true && volunteerAsMentor === true && isAnonymous !== true) {
+      const fullName = [req.user.firstName, req.user.lastName].filter(Boolean).join(" ") || "Community Member";
+      await db
+        .insert(mentorshipProfilesTable)
+        .values({ userId: req.user.id, fullName, role: "mentor", available: true })
+        .onConflictDoUpdate({
+          target: mentorshipProfilesTable.userId,
+          set: { available: true },
+        })
+        .catch((err) => {
+          req.log.warn({ err }, "Failed to upsert mentorship profile from review");
+        });
     }
 
     const reviewerName = [req.user.firstName, req.user.lastName].filter(Boolean).join(" ") || "Community Member";
