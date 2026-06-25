@@ -131,7 +131,7 @@ export default function RateNeighborhood() {
 
   const canNext1 = city.length > 0 && visitPurpose.length > 0;
   const canNext2 = daytimeSafety > 0 && nighttimeSafety > 0;
-  const canNext3 = atmosphere.length > 0 && policeVisibility.length > 0 && policeImpact.length > 0;
+  const canNext3 = atmosphere.length > 0;
   const canGoNext = step === 1 ? canNext1 : step === 2 ? canNext2 : step === 3 ? canNext3 : true;
 
   const toggleMulti = (arr: string[], setArr: (v: string[]) => void, val: string) => {
@@ -349,7 +349,7 @@ export default function RateNeighborhood() {
             <div className="space-y-8">
               <div>
                 <h2 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-1">🏘️ Community Experience</h2>
-                <p className="text-[#3A1F0E]/60 text-sm">Atmosphere and both emergency services questions are required</p>
+                <p className="text-[#3A1F0E]/60 text-sm">Atmosphere is required — accessibility is optional</p>
               </div>
 
               <div>
@@ -362,36 +362,6 @@ export default function RateNeighborhood() {
                       }`}>
                       <span className="font-medium text-[#3A1F0E]">{a.emoji} {a.label}</span>
                       {atmosphere === a.id && <CheckCircle className="w-5 h-5 text-[#CA922B]" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-[#3A1F0E] mb-3">How would you describe the level of emergency services presence?</label>
-                <div className="space-y-2">
-                  {POLICE_VISIBILITY_OPTIONS.map((opt) => (
-                    <button key={opt.id} type="button" onClick={() => setPoliceVisibility(opt.id)}
-                      className={`w-full flex items-center justify-between px-5 py-4 rounded-xl border-2 transition-all text-left ${
-                        policeVisibility === opt.id ? "border-[#CA922B] bg-[#CA922B]/8" : "border-[#3A1F0E]/10 bg-white hover:border-[#CA922B]/40"
-                      }`}>
-                      <span className="font-medium text-[#3A1F0E]">{opt.label}</span>
-                      {policeVisibility === opt.id && <CheckCircle className="w-5 h-5 text-[#CA922B]" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-[#3A1F0E] mb-3">How did the level of emergency services presence affect your sense of safety?</label>
-                <div className="space-y-2">
-                  {POLICE_IMPACT_OPTIONS.map((opt) => (
-                    <button key={opt.id} type="button" onClick={() => setPoliceImpact(opt.id)}
-                      className={`w-full flex items-center justify-between px-5 py-4 rounded-xl border-2 transition-all text-left ${
-                        policeImpact === opt.id ? "border-[#CA922B] bg-[#CA922B]/8" : "border-[#3A1F0E]/10 bg-white hover:border-[#CA922B]/40"
-                      }`}>
-                      <span className="font-medium text-[#3A1F0E]">{opt.label}</span>
-                      {policeImpact === opt.id && <CheckCircle className="w-5 h-5 text-[#CA922B]" />}
                     </button>
                   ))}
                 </div>
