@@ -160,6 +160,7 @@ router.post("/stripe/portal", async (req: any, res): Promise<void> => {
   }
 });
 
+
 router.get("/stripe/products", async (req: any, res) => {
   try {
     const rows = await storage.listProductsWithPrices();
