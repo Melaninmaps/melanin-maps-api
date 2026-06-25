@@ -81,6 +81,7 @@ import signalsRouter from "./signals";
 import smartSearchRouter from "./smart-search";
 import notificationsHubRouter from "./notifications-hub";
 import knowledgeChannelsRouter from "./knowledge-channels";
+import { recommendRouter } from "./recommend";
 
 const router: IRouter = Router();
 
@@ -165,6 +166,7 @@ router.use(signalsRouter);
 router.use(smartSearchRouter);
 router.use(notificationsHubRouter);
 router.use(knowledgeChannelsRouter);
+router.use(recommendRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

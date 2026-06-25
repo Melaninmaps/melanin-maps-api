@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, Star, ArrowRight } from "lucide-react";
+import { Check, Sparkles, Star, ArrowRight, Brain, MapPin, Zap, Compass, BookOpen, Bell } from "lucide-react";
 
 function WaveDivider({ fromBg, toBg, flip = false }: { fromBg: string; toBg: string; flip?: boolean }) {
   const d = flip
@@ -110,7 +110,189 @@ export default function Features() {
         </div>
       </section>
 
-      <WaveDivider fromBg="#FAF6EF" toBg="#2B1507" />
+      {/* ── EXCLUSIVE INTELLIGENCE FEATURES ── */}
+      <section className="py-20 bg-[#FAF6EF]">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#7C3AED]/40 bg-[#7C3AED]/8 mb-5">
+              <Sparkles className="w-3 h-3 text-[#7C3AED]" />
+              <span className="text-xs font-bold tracking-widest text-[#7C3AED] uppercase">Exclusive — Not Available Anywhere Else</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-4">
+              The Platform That Thinks With You.
+            </h2>
+            <p className="text-lg text-[#3A1F0E]/65 max-w-2xl mx-auto">
+              Every feature here is connected. Your journey informs your search. Your preferences shape your recommendations. Your community makes everyone smarter.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
+            {/* Life Journey™ */}
+            <div className="bg-white rounded-2xl border border-[#CA922B]/20 p-8 flex flex-col">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-11 h-11 rounded-xl bg-[#CA922B]/10 flex items-center justify-center">
+                  <Compass className="w-5 h-5 text-[#CA922B]" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">Life Journey™</div>
+                  <h3 className="font-serif font-bold text-[#3A1F0E] text-lg leading-tight">Your AI-Guided Life Roadmap</h3>
+                </div>
+              </div>
+              <p className="text-[#3A1F0E]/65 text-sm leading-relaxed mb-5 flex-1">
+                Tell us you're moving, starting a business, having a baby, or changing careers — KinfolkAI™ builds you a personalized, phase-by-phase guide. Not generic advice. A real plan built around your city, your needs, and what others in your situation actually did.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {["Moving", "New Baby", "Career Change", "Starting a Business", "New to City", "Retirement"].map(t => (
+                  <span key={t} className="px-3 py-1 bg-[#CA922B]/8 border border-[#CA922B]/20 text-[#CA922B] text-xs font-bold rounded-full">{t}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Smart Match™ */}
+            <div className="bg-white rounded-2xl border border-[#7C3AED]/20 p-8 flex flex-col">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-11 h-11 rounded-xl bg-[#7C3AED]/10 flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-[#7C3AED]" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold tracking-widest text-[#7C3AED] uppercase">Smart Match™</div>
+                  <h3 className="font-serif font-bold text-[#3A1F0E] text-lg leading-tight">Your Favorites, Found in Your New City</h3>
+                </div>
+              </div>
+              <p className="text-[#3A1F0E]/65 text-sm leading-relaxed mb-5 flex-1">
+                Loved your natural hair stylist in Atlanta? Moving to Houston? Smart Match™ already found you three verified alternatives — before you even asked. The platform remembers what you love and bridges it to wherever you're going.
+              </p>
+              <div className="bg-[#7C3AED]/5 border border-[#7C3AED]/15 rounded-xl p-4">
+                <div className="text-xs font-bold text-[#7C3AED] mb-2">How it works</div>
+                <div className="space-y-1 text-xs text-[#3A1F0E]/65">
+                  <div className="flex items-center gap-2"><span className="text-[#7C3AED]">→</span> Reads your saved & liked businesses</div>
+                  <div className="flex items-center gap-2"><span className="text-[#7C3AED]">→</span> Detects your journey destination</div>
+                  <div className="flex items-center gap-2"><span className="text-[#7C3AED]">→</span> Surfaces verified equivalents in your new city</div>
+                  <div className="flex items-center gap-2"><span className="text-[#7C3AED]">→</span> KinfolkAI™ proactively tells you about them</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Community Intelligence™ */}
+            <div className="bg-white rounded-2xl border border-[#16A34A]/20 p-7 flex flex-col">
+              <div className="w-10 h-10 rounded-xl bg-[#16A34A]/10 flex items-center justify-center mb-4">
+                <Brain className="w-5 h-5 text-[#16A34A]" />
+              </div>
+              <div className="text-xs font-bold tracking-widest text-[#16A34A] uppercase mb-2">Community Intelligence™</div>
+              <h3 className="font-serif font-bold text-[#3A1F0E] mb-3">The Platform That Learns</h3>
+              <p className="text-[#3A1F0E]/65 text-sm leading-relaxed flex-1">
+                Every save, search, review, and journey step feeds the intelligence layer. Trending businesses surface automatically. Journey patterns from thousands of similar users inform your next step.
+              </p>
+            </div>
+
+            {/* Intent-Aware Search */}
+            <div className="bg-white rounded-2xl border border-[#0EA5E9]/20 p-7 flex flex-col">
+              <div className="w-10 h-10 rounded-xl bg-[#0EA5E9]/10 flex items-center justify-center mb-4">
+                <MapPin className="w-5 h-5 text-[#0EA5E9]" />
+              </div>
+              <div className="text-xs font-bold tracking-widest text-[#0EA5E9] uppercase mb-2">Smart Search</div>
+              <h3 className="font-serif font-bold text-[#3A1F0E] mb-3">One Question. Every Resource.</h3>
+              <p className="text-[#3A1F0E]/65 text-sm leading-relaxed flex-1">
+                Ask "I need a doctor who takes Medicaid" and get businesses, articles, events, and a suggested Life Journey™ — all from the same search. Intent-detection understands what you're really trying to accomplish.
+              </p>
+            </div>
+
+            {/* Knowledge Hub Channels */}
+            <div className="bg-white rounded-2xl border border-[#F59E0B]/20 p-7 flex flex-col">
+              <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/10 flex items-center justify-center mb-4">
+                <BookOpen className="w-5 h-5 text-[#F59E0B]" />
+              </div>
+              <div className="text-xs font-bold tracking-widest text-[#F59E0B] uppercase mb-2">Knowledge Hub</div>
+              <h3 className="font-serif font-bold text-[#3A1F0E] mb-3">12 Channels. Every Resource Connected.</h3>
+              <p className="text-[#3A1F0E]/65 text-sm leading-relaxed flex-1">
+                Health, Travel, Relocation, Business, Finance, Parenting, Education, Culture, Legal, Safety — each channel surfaces businesses + articles + events in that topic. One tap, everything you need.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── RECOMMENDATION ENGINE™ ── */}
+      <section className="py-24 bg-[#0F0A03] overflow-hidden relative">
+        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(ellipse at 30% 60%, #7C3AED 0%, transparent 50%), radial-gradient(ellipse at 70% 30%, #CA922B 0%, transparent 50%)" }} />
+        <div className="container mx-auto px-4 max-w-6xl relative z-10">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#7C3AED]/50 bg-[#7C3AED]/10 mb-6">
+                <Brain className="w-3 h-3 text-[#7C3AED]" />
+                <span className="text-xs font-bold tracking-widest text-[#7C3AED] uppercase">Recommendation Engine™ — Platform Infrastructure</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-6 leading-tight">
+                The Brain Behind<br />Every Feature.
+              </h2>
+              <p className="text-[#F5EBD8]/70 text-lg mb-8 leading-relaxed">
+                Instead of hardcoding "show businesses," the Recommendation Engine asks four questions with every interaction — then returns the single best next action for that specific person, at that specific moment.
+              </p>
+              <div className="space-y-4 mb-10">
+                {[
+                  { q: "What is this user trying to accomplish?", color: "#CA922B" },
+                  { q: "What stage of their journey are they in?", color: "#7C3AED" },
+                  { q: "What has helped similar users?", color: "#16A34A" },
+                  { q: "What trustworthy resources are relevant right now?", color: "#0EA5E9" },
+                ].map(({ q, color }) => (
+                  <div key={q} className="flex items-start gap-4">
+                    <div className="w-1.5 h-1.5 rounded-full mt-2 shrink-0" style={{ backgroundColor: color }} />
+                    <span className="text-[#F5EBD8]/80 text-base">{q}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+                <div className="text-xs font-bold uppercase tracking-widest text-[#F5EBD8]/40 mb-3">This single system powers</div>
+                <div className="flex flex-wrap gap-2">
+                  {["Search", "KinfolkAI™", "Notifications", "Life Journey™", "Smart Match™", "Business Discovery", "Health Resources", "Travel Planning"].map(f => (
+                    <span key={f} className="px-3 py-1.5 bg-white/5 border border-white/10 text-[#F5EBD8]/70 text-xs font-medium rounded-lg">{f}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {/* Engine simulation card */}
+              <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+                <div className="flex items-center gap-2 mb-5 pb-4 border-b border-white/10">
+                  <div className="w-2 h-2 rounded-full bg-[#7C3AED]" />
+                  <span className="text-xs font-bold text-[#F5EBD8]/50 uppercase tracking-widest">Recommendation Engine™ — Live Example</span>
+                </div>
+                <div className="space-y-4">
+                  <div className="text-xs text-[#F5EBD8]/40 uppercase tracking-widest font-bold">User Context</div>
+                  <div className="bg-white/5 rounded-xl p-3 text-sm text-[#F5EBD8]/70 space-y-1">
+                    <div><span className="text-[#CA922B] font-bold">Journey:</span> Moving to Houston, TX — Phase 3: Find a Realtor</div>
+                    <div><span className="text-[#CA922B] font-bold">History:</span> Saved 3 salons in Atlanta, liked 2 soul food spots</div>
+                    <div><span className="text-[#CA922B] font-bold">Intent signal:</span> Searched "mortgage lender"</div>
+                  </div>
+                  <div className="text-xs text-[#F5EBD8]/40 uppercase tracking-widest font-bold mt-4">Next Best Actions</div>
+                  {[
+                    { type: "Journey", icon: "🗺️", title: "Continue Phase 3 — 2 steps remaining", color: "#CA922B" },
+                    { type: "Smart Match", icon: "🔗", title: "3 salons found in Houston matching your Atlanta saves", color: "#7C3AED" },
+                    { type: "Business", icon: "🏦", title: "Community-recommended mortgage lenders near you", color: "#16A34A" },
+                    { type: "Discovery", icon: "💆", title: "Have you found a healthcare provider in Houston yet?", color: "#0EA5E9" },
+                  ].map(({ type, icon, title, color }) => (
+                    <div key={type} className="flex items-center gap-3 bg-white/3 rounded-xl p-3 border border-white/5">
+                      <span className="text-lg">{icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold uppercase tracking-widest mb-0.5" style={{ color }}>{type}</div>
+                        <div className="text-sm text-[#F5EBD8]/80 truncate">{title}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <p className="text-center text-[#F5EBD8]/25 text-xs px-4">
+                Not separate features. One intelligent system that makes each feature feel like it was built just for you.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <WaveDivider fromBg="#0F0A03" toBg="#2B1507" />
 
       {/* KinfolkAI */}
       <section className="py-24 bg-[#2B1507] overflow-hidden relative">
@@ -215,6 +397,12 @@ export default function Features() {
                   { f: "Verified Business Network", t: "Limited", m: "✓" },
                   { f: "Emergency Resources", t: "✗", m: "✓" },
                   { f: "Cultural Discovery", t: "Limited", m: "✓" },
+                  { f: "Life Journey™ AI Roadmap", t: "✗", m: "✓ Exclusive" },
+                  { f: "Smart Match™ (cross-city recommendations)", t: "✗", m: "✓ Exclusive" },
+                  { f: "Community Intelligence™", t: "✗", m: "✓ Exclusive" },
+                  { f: "Intent-Aware Smart Search", t: "✗", m: "✓ Exclusive" },
+                  { f: "Recommendation Engine™", t: "✗", m: "✓ Exclusive" },
+                  { f: "Knowledge Hub Channels", t: "✗", m: "✓ Exclusive" },
                 ].map((row, i) => (
                   <tr key={i} className="hover:bg-[#FAF6EF]/50">
                     <td className="py-4 px-6 font-medium text-[#3A1F0E]">{row.f}</td>
