@@ -43,6 +43,20 @@ const STANDARDS = [
     ],
   },
   {
+    id: "video",
+    icon: "video" as const,
+    title: "Video Content Standards",
+    color: "#2D7A4F",
+    items: [
+      { label: "Videos are community content", body: "When you upload a travel video, you retain ownership of that content subject to our platform license. Your video documents your genuine experience and cannot be silently removed by the business you are reviewing." },
+      { label: "Businesses cannot pay for removal", body: "Mapping With Melanin™ does not accept payment — in any form — to remove, suppress, deprioritize, or otherwise disadvantage community videos or reviews. Every piece of community content is governed by the same transparent process regardless of who is named in it." },
+      { label: "Business response rights", body: "Businesses may post a single public response to any video. Responses are labeled 'Business Response,' verified, and visible alongside the original video. A response cannot alter, hide, or override the creator's content." },
+      { label: "Reporting and moderation review", body: "Businesses may report a video or formally request a moderation review if they believe it violates our policies. Removal decisions are made exclusively by our human moderation team — never automatically and never as a result of payment." },
+      { label: "Issue Resolved badge", body: "When a business addresses a concern and the original creator confirms the issue was resolved, an 'Issue Resolved' badge is added to the video. This badge reflects voluntary mutual acknowledgment — neither party can apply it unilaterally." },
+      { label: "Control matrix", body: "Upload: users only. Delete own video: users and platform (policy violations). Public response: businesses only. Report: businesses and users. Removal decision: platform only. Appeal: businesses and users." },
+    ],
+  },
+  {
     id: "data",
     icon: "database" as const,
     title: "Data & Privacy Standards",

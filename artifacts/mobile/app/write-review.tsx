@@ -442,6 +442,13 @@ export default function WriteReviewScreen() {
         )}
       </ScrollView>
 
+      <View style={[styles.anonRow, { backgroundColor: colors.secondary, marginHorizontal: 20, marginBottom: 6, borderRadius: 10 }]}>
+        <Feather name="shield" size={15} color={colors.mutedForeground} />
+        <Text style={[styles.anonTxt, { color: colors.mutedForeground }]}>
+          Your review is community content. Businesses may respond publicly but cannot remove it. Only our moderation team removes content for verified policy violations.
+        </Text>
+      </View>
+
       <View style={[styles.footer, { paddingBottom: bottomPad + 16, backgroundColor: colors.background, borderTopColor: colors.border }]}>
         {step < TOTAL_STEPS ? (
           <TouchableOpacity

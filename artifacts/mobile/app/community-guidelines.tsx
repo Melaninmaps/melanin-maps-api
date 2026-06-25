@@ -51,6 +51,18 @@ const SECTIONS = [
     ],
   },
   {
+    icon: "video" as const,
+    title: "Videos Are Community Content",
+    color: "#2D7A4F",
+    rules: [
+      "Videos you upload document your real experience — you retain ownership, and your perspective stands on its own.",
+      "Businesses cannot delete, suppress, or pay to remove your video. Only our moderation team can remove content, and only for verified policy violations.",
+      "Businesses may post a single public response visible alongside your video. Future viewers see both sides.",
+      "If a business addresses your concern, you can return, add a follow-up, or mark the issue resolved — that choice is always yours.",
+      "Upload only videos documenting genuine personal experiences. Staged, fabricated, or coordinated content undermines the community.",
+    ],
+  },
+  {
     icon: "slash" as const,
     title: "What's Not Allowed",
     color: "#DC2626",
@@ -60,6 +72,7 @@ const SECTIONS = [
       "Impersonating another user, business, or community figure.",
       "Sharing illegal content, inciting violence, or coordinating harmful activity.",
       "Manipulating safety scores or business ratings through fake submissions.",
+      "Paying — in any form — to remove, suppress, or deprioritize community videos or reviews.",
     ],
   },
 ];
