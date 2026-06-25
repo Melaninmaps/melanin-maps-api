@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, jobListingsTable, insertJobListingSchema } from "@workspace/db";
+import { db, jobListingsTable, insertJobListingSchema, usersTable } from "@workspace/db";
 import { eq, desc, and } from "drizzle-orm";
 
 const router = Router();
@@ -26,10 +26,21 @@ router.post("/jobs", async (req, res) => {
   if (!req.user?.id) { res.status(401).json({ error: "Unauthorized" }); return; }
   const body = req.body as Record<string, unknown>;
   const isReferral = body.isPersonalReferral === true;
+
+  let posterName: string | null = null;
+  if (isReferral) {
+    const [poster] = await db.select({ firstName: usersTable.firstName, lastName: usersTable.lastName })
+      .from(usersTable).where(eq(usersTable.id, req.user.id)).limit(1);
+    if (poster) {
+      posterName = [poster.firstName, poster.lastName].filter(Boolean).join(" ") || null;
+    }
+  }
+
   const parsed = insertJobListingSchema.safeParse({
     ...body,
     postedById: req.user.id,
     isPersonalReferral: isReferral,
+    postedByName: posterName,
   });
   if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
   try {

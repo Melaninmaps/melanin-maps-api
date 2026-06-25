@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -17,6 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import * as SecureStore from "expo-secure-store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BusinessCard } from "@/components/BusinessCard";
 import { useColors } from "@/hooks/useColors";
@@ -84,7 +86,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { savedIds, isSaved, toggleSave } = useFavorites();
-  const { user, isLoading, isAuthenticated, login, logout } = useAuth();
+  const { user, isLoading, isAuthenticated, login, logout, refreshUser } = useAuth();
   const isAdminUser = !!(user?.email && ADMIN_EMAILS.includes(user.email));
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
   const [showRedemption, setShowRedemption] = useState(false);
@@ -96,19 +98,29 @@ export default function ProfileScreen() {
   const [editJobTitle, setEditJobTitle] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
+  const getApiBase = () =>
+    process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setShowIndustryPicker(false);
+  };
+
   const openEditModal = () => {
     setEditFirstName(user?.firstName ?? "");
     setEditLastName(user?.lastName ?? "");
     setEditIndustry(user?.industry ?? "");
     setEditJobTitle(user?.jobTitle ?? "");
+    setShowIndustryPicker(false);
     setShowEditModal(true);
   };
 
   const saveProfile = async () => {
     setIsSaving(true);
     try {
-      const token = await (await import("expo-secure-store")).getItemAsync("auth_session_token");
-      await fetch("/api/users/me", {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const apiBase = getApiBase();
+      const res = await fetch(`${apiBase}/api/users/me`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -121,10 +133,12 @@ export default function ProfileScreen() {
           jobTitle: editJobTitle,
         }),
       });
-      setShowEditModal(false);
+      if (!res.ok) throw new Error("Save failed");
+      closeEditModal();
+      await refreshUser();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
-      // silently fail — user can retry
+      Alert.alert("Couldn't save", "Something went wrong. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -358,16 +372,23 @@ export default function ProfileScreen() {
 
       <PointsRedemptionModal visible={showRedemption} onClose={() => setShowRedemption(false)} />
 
-      <Modal visible={showEditModal} animationType="slide" transparent presentationStyle="overFullScreen" onRequestClose={() => setShowEditModal(false)}>
+      <Modal visible={showEditModal} animationType="slide" transparent presentationStyle="overFullScreen" onRequestClose={closeEditModal}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.modalOverlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowEditModal(false)} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={closeEditModal} />
           <View style={[styles.modalSheet, { backgroundColor: colors.background }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-              <TouchableOpacity onPress={() => setShowEditModal(false)} style={styles.modalCancel}>
-                <Text style={[styles.modalCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
+              <TouchableOpacity
+                onPress={() => showIndustryPicker ? setShowIndustryPicker(false) : closeEditModal()}
+                style={styles.modalCancel}
+              >
+                <Text style={[styles.modalCancelText, { color: colors.mutedForeground }]}>
+                  {showIndustryPicker ? "Back" : "Cancel"}
+                </Text>
               </TouchableOpacity>
-              <Text style={[styles.modalTitle, { color: colors.foreground }]}>Edit Profile</Text>
-              <TouchableOpacity onPress={saveProfile} disabled={isSaving} style={styles.modalSave}>
+              <Text style={[styles.modalTitle, { color: colors.foreground }]}>
+                {showIndustryPicker ? "Select Industry" : "Edit Profile"}
+              </Text>
+              <TouchableOpacity onPress={saveProfile} disabled={isSaving || showIndustryPicker} style={styles.modalSave}>
                 {isSaving ? (
                   <ActivityIndicator size="small" color={colors.primary} />
                 ) : (

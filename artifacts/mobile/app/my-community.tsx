@@ -154,8 +154,6 @@ export default function MyCommunityScreen() {
     ]);
   };
 
-  const myComm = locations.find((l) => l.isMyComm);
-
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
@@ -282,13 +280,13 @@ export default function MyCommunityScreen() {
                         </TouchableOpacity>
                       </View>
                       <View style={[styles.locActions, { borderTopColor: colors.border }]}>
-                        <TouchableOpacity style={styles.locActionBtn} onPress={() => router.push("/mentorship" as any)}>
+                          <TouchableOpacity style={[styles.locActionBtn, { flex: 1 }]} onPress={() => router.push({ pathname: "/mentorship", params: { industry: loc.industry ?? "" } } as any)}>
                           <Feather name="users" size={14} color="#1D4ED8" />
                           <Text style={[styles.locActionText, { color: "#1D4ED8" }]}>Browse mentors</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.locActionBtn} onPress={() => router.push({ pathname: "/spaces", params: { q: loc.industry ?? "" } } as any)}>
+                        <TouchableOpacity style={[styles.locActionBtn, { flex: 1 }]} onPress={() => router.push("/spaces" as any)}>
                           <Feather name="search" size={14} color={colors.primary} />
-                          <Text style={[styles.locActionText, { color: colors.primary }]}>Browse spaces</Text>
+                          <Text style={[styles.locActionText, { color: colors.primary }]}>Find spaces</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -301,9 +299,9 @@ export default function MyCommunityScreen() {
       </ScrollView>
 
       {/* Add Location Modal */}
-      <Modal visible={showAdd} animationType="slide" transparent onRequestClose={() => setShowAdd(false)}>
+      <Modal visible={showAdd} animationType="slide" transparent onRequestClose={() => { setShowAdd(false); setAddType("geographic"); setForm({ label: "", city: "", state: "", zipCode: "", neighborhood: "", industry: "" }); setFormError(null); }}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-          <TouchableOpacity style={styles.modalBg} activeOpacity={1} onPress={() => setShowAdd(false)} />
+          <TouchableOpacity style={styles.modalBg} activeOpacity={1} onPress={() => { setShowAdd(false); setAddType("geographic"); setForm({ label: "", city: "", state: "", zipCode: "", neighborhood: "", industry: "" }); setFormError(null); }} />
           <View style={[styles.sheet, { backgroundColor: colors.background }]}>
             <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
