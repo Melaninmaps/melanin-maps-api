@@ -18,25 +18,13 @@ import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
 import { useMembership } from "@/hooks/useMembership";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { VideoDetailModal, type VideoItem } from "@/components/VideoDetailModal";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_WIDTH = (SCREEN_WIDTH - 20 * 2 - 12) / 2;
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
-type VideoCard = {
-  id: string;
-  title: string;
-  destination: string;
-  country: string;
-  creator: string;
-  creatorHandle: string;
-  duration: string;
-  views: string;
-  likes: string;
-  thumbColor: string;
-  thumbEmoji: string;
-  featured?: boolean;
-};
+type VideoCard = VideoItem;
 
 const MOCK_VIDEOS: VideoCard[] = [
   {
@@ -93,6 +81,12 @@ const MOCK_VIDEOS: VideoCard[] = [
     likes: "614",
     thumbColor: "#4A1A6B",
     thumbEmoji: "🎺",
+    businessResponse: {
+      responder: "Dooky Chase's Restaurant",
+      role: "Owner",
+      date: "June 14, 2026",
+      text: "Thank you for visiting and capturing the spirit of Treme so beautifully. The 45-minute wait you mentioned was during our annual Juneteenth dinner — we were operating at capacity with a packed house. We hope you'll come back on a regular evening when we can give you the full, unhurried experience we're known for.",
+    },
   },
   {
     id: "5",
@@ -119,6 +113,12 @@ const MOCK_VIDEOS: VideoCard[] = [
     likes: "1.7K",
     thumbColor: "#3B1F0E",
     thumbEmoji: "🗽",
+    businessResponse: {
+      responder: "Sylvia's Restaurant",
+      role: "General Manager",
+      date: "June 20, 2026",
+      text: "Janelle, we're so glad you included us! Your video brought in three new tables this week who mentioned seeing it here — that's the power of authentic community storytelling. We've updated our weekday menu to include the shrimp and grits you highlighted. Come back soon!",
+    },
   },
   {
     id: "7",
@@ -209,6 +209,12 @@ function VideoTile({
           <Feather name="heart" size={11} color={colors.mutedForeground} />
           <Text style={[styles.tileStat, { color: colors.mutedForeground }]}>{video.likes}</Text>
         </View>
+        {video.businessResponse && (
+          <View style={[styles.responseBadge, { backgroundColor: colors.primary + "18" }]}>
+            <Feather name="briefcase" size={10} color={colors.primary} />
+            <Text style={[styles.responseBadgeTxt, { color: colors.primary }]}>Business responded</Text>
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -226,6 +232,7 @@ export default function TravelVideosScreen() {
   const [activeDestination, setActiveDestination] = useState("All");
   const [activeFeedTab, setActiveFeedTab] = useState("Trending");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<VideoCard | null>(null);
 
   const filtered = MOCK_VIDEOS.filter((v) => {
     const matchesDestination =
@@ -432,12 +439,7 @@ export default function TravelVideosScreen() {
                 key={video.id}
                 video={video}
                 colors={colors}
-                onPress={() =>
-                  Alert.alert(
-                    video.title,
-                    `By ${video.creator} · ${video.views} views · ${video.duration}\n\nVideo playback coming soon!`,
-                  )
-                }
+                onPress={() => setSelectedVideo(video)}
               />
             ))}
             {activeFeedTab === "My Videos" && (
@@ -488,6 +490,17 @@ export default function TravelVideosScreen() {
           </View>
         )}
 
+        {/* Content policy banner */}
+        <View style={[styles.contentPolicyBanner, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+          <Feather name="shield" size={14} color={colors.mutedForeground} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.contentPolicyTitle, { color: colors.foreground }]}>Community Content Policy</Text>
+            <Text style={[styles.contentPolicyBody, { color: colors.mutedForeground }]}>
+              Videos are owned by their creators. Businesses cannot remove community content — they may respond publicly or report to our moderation team for review.
+            </Text>
+          </View>
+        </View>
+
         <View style={{ height: insets.bottom + 32 }} />
       </ScrollView>
 
@@ -495,6 +508,12 @@ export default function TravelVideosScreen() {
         visible={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         feature="travel video creator tools"
+      />
+
+      <VideoDetailModal
+        visible={selectedVideo !== null}
+        video={selectedVideo}
+        onClose={() => setSelectedVideo(null)}
       />
     </View>
   );
@@ -586,6 +605,17 @@ const styles = StyleSheet.create({
   tileCreator: { fontSize: 11, fontFamily: "Inter_400Regular", flex: 1 },
   tileStats: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
   tileStat: { fontSize: 11, fontFamily: "Inter_400Regular", marginRight: 4 },
+  responseBadge: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6, marginTop: 4, alignSelf: "flex-start",
+  },
+  responseBadgeTxt: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
+  contentPolicyBanner: {
+    flexDirection: "row", alignItems: "flex-start", gap: 10,
+    margin: 16, padding: 14, borderRadius: 12, borderWidth: 1,
+  },
+  contentPolicyTitle: { fontSize: 13, fontFamily: "Inter_600SemiBold", marginBottom: 3 },
+  contentPolicyBody: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
   emptyState: {
     alignItems: "center", paddingVertical: 48, paddingHorizontal: 32,
     width: "100%",
