@@ -44,6 +44,8 @@ export default function WaitlistScreen() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [isBusinessOwner, setIsBusinessOwner] = useState(false);
+  const [websiteUrl, setWebsiteUrl] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -52,7 +54,9 @@ export default function WaitlistScreen() {
   const referralCode = email.replace(/[@.]/g, "").toUpperCase().slice(0, 8) || "MELANIN";
   const referralLink = REFERRAL_URL + referralCode;
 
-  const valid = email.includes("@") && email.includes(".");
+  const emailValid = email.includes("@") && email.includes(".");
+  const websiteValid = !isBusinessOwner || websiteUrl.trim().length > 0;
+  const valid = emailValid && websiteValid;
 
   const handleJoin = async () => {
     if (!valid) return;
@@ -64,7 +68,14 @@ export default function WaitlistScreen() {
       const res = await fetch(`${apiBase}/api/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, firstName: firstName.trim() || undefined, lastName: lastName.trim() || undefined, referralCode: code }),
+        body: JSON.stringify({
+          email,
+          firstName: firstName.trim() || undefined,
+          lastName: lastName.trim() || undefined,
+          isBusinessOwner,
+          websiteUrl: isBusinessOwner ? websiteUrl.trim() : undefined,
+          referralCode: code,
+        }),
       });
       if (res.ok) {
         const data = (await res.json()) as { position?: number };
@@ -170,7 +181,7 @@ export default function WaitlistScreen() {
               </View>
               <Text style={[styles.formLabel, { color: colors.foreground }]}>Email Address</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: colors.card, borderColor: valid || !email ? colors.border : colors.destructive, color: colors.foreground }]}
+                style={[styles.input, { backgroundColor: colors.card, borderColor: emailValid || !email ? colors.border : colors.destructive, color: colors.foreground }]}
                 placeholder="Enter your email to join"
                 placeholderTextColor={colors.mutedForeground}
                 value={email}
@@ -178,6 +189,47 @@ export default function WaitlistScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
+
+              {/* Business owner toggle */}
+              <TouchableOpacity
+                style={[styles.toggleRow, { backgroundColor: colors.card, borderColor: isBusinessOwner ? colors.primary + "60" : colors.border }]}
+                onPress={() => { setIsBusinessOwner((v) => !v); setWebsiteUrl(""); }}
+                activeOpacity={0.8}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.toggleLabel, { color: colors.foreground }]}>I'm a business owner</Text>
+                  <Text style={[styles.toggleSub, { color: colors.mutedForeground }]}>Get listed as a Black-owned business</Text>
+                </View>
+                <View style={[styles.toggle, { backgroundColor: isBusinessOwner ? colors.primary : colors.muted }]}>
+                  <View style={[styles.toggleThumb, { transform: [{ translateX: isBusinessOwner ? 18 : 2 }] }]} />
+                </View>
+              </TouchableOpacity>
+
+              {/* Website / social URL — required for business owners */}
+              {isBusinessOwner && (
+                <>
+                  <Text style={[styles.formLabel, { color: colors.foreground }]}>
+                    Website or Social Media <Text style={{ color: colors.destructive }}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      { backgroundColor: colors.card, borderColor: !websiteUrl.trim() ? colors.destructive : colors.border, color: colors.foreground },
+                    ]}
+                    placeholder="https://yourbusiness.com or @handle"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={websiteUrl}
+                    onChangeText={setWebsiteUrl}
+                    keyboardType="url"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <Text style={[styles.fieldHint, { color: colors.mutedForeground }]}>
+                    Required so we can verify and feature your business.
+                  </Text>
+                </>
+              )}
+
               <TouchableOpacity
                 style={[styles.joinBtn, { backgroundColor: valid ? colors.primary : colors.muted }]}
                 onPress={handleJoin}
@@ -275,6 +327,12 @@ const styles = StyleSheet.create({
   benefitLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   benefitDesc: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
   form: { gap: 12 },
+  toggleRow: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderRadius: 14, padding: 14 },
+  toggleLabel: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  toggleSub: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 },
+  toggle: { width: 42, height: 24, borderRadius: 12, justifyContent: "center" },
+  toggleThumb: { width: 20, height: 20, borderRadius: 10, backgroundColor: "#FFF", position: "absolute" },
+  fieldHint: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: -4 },
   nameRow: { flexDirection: "row", gap: 10 },
   nameInput: { flex: 1 },
   formLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold" },

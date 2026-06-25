@@ -21,13 +21,14 @@ function isAdmin(req: Request): boolean {
 
 router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) => {
   try {
-    const { email, firstName, lastName, city, state, isBusinessOwner, referralCode, referredBy } = req.body as {
+    const { email, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy } = req.body as {
       email?: string;
       firstName?: string;
       lastName?: string;
       city?: string;
       state?: string;
       isBusinessOwner?: boolean;
+      websiteUrl?: string;
       referralCode?: string;
       referredBy?: string;
     };
@@ -35,6 +36,11 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
       res.status(400).json({ error: "Valid email is required" });
+      return;
+    }
+
+    if (isBusinessOwner && !websiteUrl?.trim()) {
+      res.status(400).json({ error: "Business owners must provide a website or social media link" });
       return;
     }
 
@@ -49,6 +55,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
         city: city?.trim() || null,
         state: state?.trim().toUpperCase() || null,
         isBusinessOwner: Boolean(isBusinessOwner),
+        websiteUrl: websiteUrl?.trim() || null,
         referralCode: code,
         referredBy: referredBy ?? null,
         status: "pending",

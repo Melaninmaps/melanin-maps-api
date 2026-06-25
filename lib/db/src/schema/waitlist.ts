@@ -9,6 +9,7 @@ export const waitlistTable = pgTable("waitlist_signups", {
   city: varchar("city", { length: 100 }),
   state: varchar("state", { length: 50 }),
   isBusinessOwner: boolean("is_business_owner").notNull().default(false),
+  websiteUrl: varchar("website_url", { length: 500 }),
   status: varchar("status", { length: 20 }).notNull().default("pending"),
   referralCode: varchar("referral_code", { length: 20 }),
   referredBy: varchar("referred_by", { length: 20 }),
