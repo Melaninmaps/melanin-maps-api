@@ -1012,3 +1012,131 @@ export async function sendFoundingAnniversaryEmail(
     `,
   });
 }
+
+export async function sendClaimReceived(to: string, ownerName: string, businessName: string) {
+  if (!resend) { log("claim received email"); return; }
+  const name = ownerName.split(" ")[0] || ownerName;
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `We received your claim for ${businessName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
+
+        <h1 style="font-size:26px;color:#2B1507;font-weight:700;margin:0 0 12px;line-height:1.3">
+          Claim received, ${name}. 🛡️
+        </h1>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          Thanks for claiming <strong>${businessName}</strong> on Mapping With Melanin™. Our team will review your submission and verify your ownership within <strong>2–3 business days</strong>.
+        </p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:24px;margin-bottom:28px">
+          <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 14px;letter-spacing:1px;text-transform:uppercase">What happens next</p>
+          <table style="width:100%;border-collapse:collapse">
+            <tr>
+              <td style="padding:10px 0;border-bottom:1px solid rgba(245,235,216,0.1);vertical-align:top;width:28px"><span style="font-size:18px">🔍</span></td>
+              <td style="padding:10px 0 10px 12px;border-bottom:1px solid rgba(245,235,216,0.1)">
+                <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 2px">Review</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Our team checks the details you submitted against the business listing.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 0;border-bottom:1px solid rgba(245,235,216,0.1);vertical-align:top;width:28px"><span style="font-size:18px">📧</span></td>
+              <td style="padding:10px 0 10px 12px;border-bottom:1px solid rgba(245,235,216,0.1)">
+                <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 2px">We may reach out</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">If we need additional verification (a document, a quick call), we'll email you at this address.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 0;vertical-align:top;width:28px"><span style="font-size:18px">✅</span></td>
+              <td style="padding:10px 0 10px 12px">
+                <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 2px">Approval &amp; access</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Once approved, you'll get an email with a link to log in and manage your listing.</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:14px;line-height:1.6;margin:0 0 28px">
+          Questions? Reply to this email or reach us at <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a>.
+        </p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:24px">
+          <p style="color:#CA922B;font-size:15px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
+          <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Melanin Maps LLC · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a></p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+export async function sendClaimApproved(to: string, ownerName: string, businessName: string) {
+  if (!resend) { log("claim approved email"); return; }
+  const name = ownerName.split(" ")[0] || ownerName;
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `You're approved! Manage ${businessName} on Mapping With Melanin™`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
+
+        <h1 style="font-size:26px;color:#2B1507;font-weight:700;margin:0 0 12px;line-height:1.3">
+          You're the verified owner of ${businessName}. 🎉
+        </h1>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          Hey ${name} — your ownership claim has been <strong>approved</strong>. You now have full access to your business dashboard on Mapping With Melanin™.
+        </p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:24px;margin-bottom:28px">
+          <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 14px;letter-spacing:1px;text-transform:uppercase">What you can do now</p>
+          <table style="width:100%;border-collapse:collapse">
+            <tr>
+              <td style="padding:9px 0;border-bottom:1px solid rgba(245,235,216,0.1);vertical-align:top;width:28px"><span style="font-size:18px">✏️</span></td>
+              <td style="padding:9px 0 9px 12px;border-bottom:1px solid rgba(245,235,216,0.1)">
+                <p style="color:#F5EBD8;font-size:13px;font-weight:700;margin:0 0 1px">Edit your listing</p>
+                <p style="color:#F5EBD8;font-size:12px;margin:0;opacity:0.7">Update your hours, photos, description, and contact info.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:9px 0;border-bottom:1px solid rgba(245,235,216,0.1);vertical-align:top;width:28px"><span style="font-size:18px">💬</span></td>
+              <td style="padding:9px 0 9px 12px;border-bottom:1px solid rgba(245,235,216,0.1)">
+                <p style="color:#F5EBD8;font-size:13px;font-weight:700;margin:0 0 1px">Respond to reviews</p>
+                <p style="color:#F5EBD8;font-size:12px;margin:0;opacity:0.7">Engage with your community directly from the dashboard.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:9px 0;border-bottom:1px solid rgba(245,235,216,0.1);vertical-align:top;width:28px"><span style="font-size:18px">📊</span></td>
+              <td style="padding:9px 0 9px 12px;border-bottom:1px solid rgba(245,235,216,0.1)">
+                <p style="color:#F5EBD8;font-size:13px;font-weight:700;margin:0 0 1px">View analytics</p>
+                <p style="color:#F5EBD8;font-size:12px;margin:0;opacity:0.7">See how many people are finding and saving your business.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:9px 0;vertical-align:top;width:28px"><span style="font-size:18px">🛡️</span></td>
+              <td style="padding:9px 0 9px 12px">
+                <p style="color:#F5EBD8;font-size:13px;font-weight:700;margin:0 0 1px">Get fully verified</p>
+                <p style="color:#F5EBD8;font-size:12px;margin:0;opacity:0.7">Submit docs to earn the Verified Minority-Owned badge and build trust.</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="text-align:center;margin-bottom:32px">
+          <a href="https://mappingwithmelanin.com/business-dashboard" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:16px 44px;border-radius:50px;text-decoration:none">
+            Go to My Dashboard →
+          </a>
+          <p style="color:#3A1F0E;font-size:13px;margin:12px 0 0;opacity:0.6">Log in with the account linked to this email address.</p>
+        </div>
+
+        <div style="background:#2B1507;border-radius:12px;padding:24px">
+          <p style="color:#CA922B;font-size:15px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
+          <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Melanin Maps LLC · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a></p>
+        </div>
+      </div>
+    `,
+  });
+}

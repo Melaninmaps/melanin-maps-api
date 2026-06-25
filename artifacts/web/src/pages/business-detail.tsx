@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare } from "lucide-react";
+import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare, Shield, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -130,6 +130,52 @@ export default function BusinessDetail() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [checkInDone, setCheckInDone] = useState(false);
   const [checkInLoading, setCheckInLoading] = useState(false);
+
+  const [claimOpen, setClaimOpen] = useState(false);
+  const [claimName, setClaimName] = useState("");
+  const [claimEmail, setClaimEmail] = useState("");
+  const [claimPhone, setClaimPhone] = useState("");
+  const [claimRole, setClaimRole] = useState("owner");
+  const [claimWebsite, setClaimWebsite] = useState("");
+  const [claimInstagram, setClaimInstagram] = useState("");
+  const [claimInfo, setClaimInfo] = useState("");
+  const [claimLoading, setClaimLoading] = useState(false);
+  const [claimSubmitted, setClaimSubmitted] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
+
+  async function handleClaimSubmit() {
+    if (!claimName.trim() || !claimEmail.trim()) {
+      setClaimError("Name and email are required."); return;
+    }
+    setClaimError(null);
+    setClaimLoading(true);
+    try {
+      const res = await fetch(`${BASE_URL}/api/businesses/${id}/claim`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessName: business?.name ?? "",
+          ownerName: claimName.trim(),
+          email: claimEmail.trim(),
+          phone: claimPhone.trim() || null,
+          role: claimRole,
+          website: claimWebsite.trim() || null,
+          instagramHandle: claimInstagram.replace("@", "").trim() || null,
+          additionalInfo: claimInfo.trim() || null,
+        }),
+      });
+      if (res.ok) {
+        setClaimSubmitted(true);
+      } else {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        setClaimError(body.error ?? "Something went wrong. Please try again.");
+      }
+    } catch {
+      setClaimError("Unable to submit. Check your connection and try again.");
+    } finally {
+      setClaimLoading(false);
+    }
+  }
 
   const isSaved = savedPlaces?.businessIds.includes(id);
 
@@ -660,6 +706,136 @@ export default function BusinessDetail() {
             </div>
           </div>
 
+        </div>
+      </div>
+
+      {/* Claim this business */}
+      <div className="max-w-6xl mx-auto px-4 pb-16">
+        <div className="border border-[#2B1507]/10 rounded-2xl overflow-hidden">
+          <button
+            className="w-full flex items-center gap-3 px-6 py-4 bg-[#FAF6EF] hover:bg-[#F5EBD8] transition-colors text-left"
+            onClick={() => { if (!claimSubmitted) setClaimOpen(o => !o); }}
+          >
+            <div className="w-8 h-8 rounded-full bg-[#CA922B]/10 flex items-center justify-center flex-shrink-0">
+              <Shield className="w-4 h-4 text-[#CA922B]" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-[#2B1507] text-sm">Is this your business?</p>
+              <p className="text-[#3A1F0E]/60 text-xs">
+                {claimSubmitted ? "Claim submitted — we'll be in touch within 2–3 business days." : "Claim this listing to manage your profile, respond to reviews, and get verified."}
+              </p>
+            </div>
+            {!claimSubmitted && (claimOpen ? <ChevronUp className="w-4 h-4 text-[#3A1F0E]/40 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-[#3A1F0E]/40 flex-shrink-0" />)}
+            {claimSubmitted && <ShieldCheck className="w-4 h-4 text-green-600 flex-shrink-0" />}
+          </button>
+
+          {claimOpen && !claimSubmitted && (
+            <div className="px-6 py-5 border-t border-[#2B1507]/10 bg-white space-y-4">
+              <div className="bg-[#CA922B]/8 border border-[#CA922B]/20 rounded-xl p-3 flex gap-2 items-start">
+                <ShieldCheck className="w-4 h-4 text-[#CA922B] flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-[#3A1F0E]/70 leading-relaxed">
+                  Once approved, you'll get an email with a link to log in and manage your listing. Our team reviews all claims within 2–3 business days.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-[#2B1507] mb-1.5">Your name *</label>
+                  <input
+                    type="text"
+                    value={claimName}
+                    onChange={e => setClaimName(e.target.value)}
+                    placeholder="Full name"
+                    className="w-full border border-[#2B1507]/15 rounded-lg px-3 py-2.5 text-sm text-[#2B1507] placeholder:text-[#3A1F0E]/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/40 bg-[#FAF6EF]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#2B1507] mb-1.5">Email address *</label>
+                  <input
+                    type="email"
+                    value={claimEmail}
+                    onChange={e => setClaimEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className="w-full border border-[#2B1507]/15 rounded-lg px-3 py-2.5 text-sm text-[#2B1507] placeholder:text-[#3A1F0E]/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/40 bg-[#FAF6EF]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#2B1507] mb-1.5">Phone (optional)</label>
+                  <input
+                    type="tel"
+                    value={claimPhone}
+                    onChange={e => setClaimPhone(e.target.value)}
+                    placeholder="(555) 000-0000"
+                    className="w-full border border-[#2B1507]/15 rounded-lg px-3 py-2.5 text-sm text-[#2B1507] placeholder:text-[#3A1F0E]/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/40 bg-[#FAF6EF]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#2B1507] mb-1.5">Website (optional)</label>
+                  <input
+                    type="url"
+                    value={claimWebsite}
+                    onChange={e => setClaimWebsite(e.target.value)}
+                    placeholder="https://yourbusiness.com"
+                    className="w-full border border-[#2B1507]/15 rounded-lg px-3 py-2.5 text-sm text-[#2B1507] placeholder:text-[#3A1F0E]/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/40 bg-[#FAF6EF]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#2B1507] mb-1.5">Instagram (optional)</label>
+                  <input
+                    type="text"
+                    value={claimInstagram}
+                    onChange={e => setClaimInstagram(e.target.value)}
+                    placeholder="@yourbusiness"
+                    className="w-full border border-[#2B1507]/15 rounded-lg px-3 py-2.5 text-sm text-[#2B1507] placeholder:text-[#3A1F0E]/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/40 bg-[#FAF6EF]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#2B1507] mb-1.5">Your role</label>
+                  <select
+                    value={claimRole}
+                    onChange={e => setClaimRole(e.target.value)}
+                    className="w-full border border-[#2B1507]/15 rounded-lg px-3 py-2.5 text-sm text-[#2B1507] focus:outline-none focus:ring-2 focus:ring-[#CA922B]/40 bg-[#FAF6EF]"
+                  >
+                    <option value="owner">Owner</option>
+                    <option value="co-owner">Co-owner</option>
+                    <option value="manager">Manager</option>
+                    <option value="authorized_rep">Authorized Rep</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#2B1507] mb-1.5">Anything else? (optional)</label>
+                <Textarea
+                  value={claimInfo}
+                  onChange={e => setClaimInfo(e.target.value)}
+                  placeholder="Any details that help verify your ownership…"
+                  className="resize-none bg-[#FAF6EF] border-[#2B1507]/15 text-[#2B1507] placeholder:text-[#3A1F0E]/40 focus-visible:ring-[#CA922B]/40"
+                  rows={3}
+                />
+              </div>
+
+              {claimError && (
+                <p className="text-red-600 text-xs font-medium">{claimError}</p>
+              )}
+
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={handleClaimSubmit}
+                  disabled={claimLoading || !claimName.trim() || !claimEmail.trim()}
+                  className="bg-[#CA922B] hover:bg-[#B07A20] text-white rounded-xl px-6 py-2.5 text-sm font-semibold"
+                >
+                  {claimLoading ? "Submitting…" : "Submit Claim"}
+                </Button>
+                <button
+                  onClick={() => { setClaimOpen(false); setClaimError(null); }}
+                  className="text-sm text-[#3A1F0E]/50 hover:text-[#3A1F0E] transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

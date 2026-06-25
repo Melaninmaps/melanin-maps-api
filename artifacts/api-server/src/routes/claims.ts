@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessClaimsTable } from "@workspace/db";
+import { db, businessClaimsTable, businessesTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
+import { sendClaimReceived, sendClaimApproved } from "../lib/email.js";
 
 const router: IRouter = Router();
 
@@ -10,6 +11,17 @@ router.post("/businesses/:id/claim", async (req: Request, res: Response) => {
   if (!ownerName || !email || typeof ownerName !== "string" || typeof email !== "string") {
     res.status(400).json({ error: "ownerName and email are required" }); return;
   }
+
+  // Prevent claiming an already-claimed business
+  const [existing] = await db
+    .select({ id: businessesTable.id, submittedById: businessesTable.submittedById })
+    .from(businessesTable)
+    .where(eq(businessesTable.id, businessId))
+    .limit(1);
+  if (existing?.submittedById) {
+    res.status(409).json({ error: "This business has already been claimed by a verified owner." }); return;
+  }
+
   try {
     const [claim] = await db.insert(businessClaimsTable).values({
       businessId,
@@ -24,6 +36,12 @@ router.post("/businesses/:id/claim", async (req: Request, res: Response) => {
       additionalInfo: typeof additionalInfo === "string" ? additionalInfo : null,
       status: "pending",
     }).returning();
+
+    // Fire-and-forget: confirmation to claimant + alert to admin
+    const bName = (typeof businessName === "string" ? businessName : existing?.id) ?? "your business";
+    sendClaimReceived(email, ownerName, bName).catch(() => {});
+    sendClaimReceived("hello@mappingwithmelanin.com", `Admin — new claim from ${ownerName}`, `${bName} (${email})`).catch(() => {});
+
     res.status(201).json({ claim });
   } catch (err) {
     req.log.error({ err }, "Failed to submit business claim");
@@ -64,6 +82,19 @@ router.patch("/admin/claims/:id", async (req: Request, res: Response) => {
       .where(eq(businessClaimsTable.id, id))
       .returning();
     if (!claim) { res.status(404).json({ error: "Claim not found" }); return; }
+
+    // When approved: link the business to this user + notify owner
+    if (status === "approved" && claim.businessId) {
+      if (claim.userId) {
+        db.update(businessesTable)
+          .set({ submittedById: claim.userId })
+          .where(eq(businessesTable.id, claim.businessId))
+          .catch(() => {});
+      }
+      const bName = claim.businessName ?? "your business";
+      sendClaimApproved(claim.email, claim.ownerName, bName).catch(() => {});
+    }
+
     res.json({ claim });
   } catch (err) {
     req.log.error({ err }, "Failed to update claim");
