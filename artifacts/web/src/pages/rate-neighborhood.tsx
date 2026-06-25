@@ -23,18 +23,11 @@ const ATMOSPHERES = [
 const ATMOSPHERE_SCORES: Record<string, number> = {
   very_welcoming: 5, mostly_welcoming: 4, neutral: 3, slightly_unwelcoming: 2, uncomfortable: 1,
 };
-const POLICE_VISIBILITY_OPTIONS = [
-  { id: "very_visible", label: "Very visible" },
-  { id: "moderately_visible", label: "Moderately visible" },
-  { id: "occasionally_visible", label: "Occasionally visible" },
-  { id: "rarely_visible", label: "Rarely visible" },
-  { id: "not_observed", label: "Not observed" },
-];
-const POLICE_IMPACT_OPTIONS = [
-  { id: "increased", label: "Increased my sense of safety" },
-  { id: "no_impact", label: "Had no impact" },
-  { id: "decreased", label: "Decreased my sense of safety" },
-  { id: "unsure", label: "Unsure" },
+const CULTURAL_CONNECTION_OPTIONS = [
+  { id: "yes", label: "Yes, very much so", emoji: "✊🏾" },
+  { id: "somewhat", label: "Somewhat", emoji: "🙂" },
+  { id: "not_particularly", label: "Not particularly", emoji: "😐" },
+  { id: "no", label: "No", emoji: "😕" },
 ];
 const ACCESSIBILITY_FEATURES = [
   "Wheelchair accessible sidewalks", "Good street lighting", "Accessible public transit",
@@ -95,14 +88,13 @@ function Chip({ label, selected, onClick, multi = false }: {
   );
 }
 
-function computeScores(daytime: number, nighttime: number, walkability: number, transit: number, atmosphereScore: number) {
+function computeScores(daytime: number, nighttime: number, atmosphereScore: number) {
   const s = (v: number) => (v / 5) * 100;
   const safety = daytime && nighttime
-    ? Math.round(s(daytime) * 0.3 + s(nighttime) * 0.4 + s(walkability || 0) * 0.2 + s(transit || 0) * 0.1)
+    ? Math.round(s(daytime) * 0.5 + s(nighttime) * 0.5)
     : 0;
   const community = atmosphereScore ? Math.round(s(atmosphereScore)) : 0;
-  const walk = walkability ? Math.round(s(walkability) * 0.7 + s(transit || 0) * 0.3) : 0;
-  return { safety, community, walk };
+  return { safety, community };
 }
 
 export default function RateNeighborhood() {
@@ -114,11 +106,8 @@ export default function RateNeighborhood() {
   const [visitFreq, setVisitFreq] = useState("");
   const [daytimeSafety, setDaytimeSafety] = useState(0);
   const [nighttimeSafety, setNighttimeSafety] = useState(0);
-  const [walkability, setWalkability] = useState(0);
-  const [transitSafety, setTransitSafety] = useState(0);
   const [atmosphere, setAtmosphere] = useState("");
-  const [policeVisibility, setPoliceVisibility] = useState("");
-  const [policeImpact, setPoliceImpact] = useState("");
+  const [culturallyConnected, setCulturallyConnected] = useState("");
   const [accessibility, setAccessibility] = useState<string[]>([]);
   const [tips, setTips] = useState<string[]>([]);
   const [comments, setComments] = useState("");
@@ -127,7 +116,7 @@ export default function RateNeighborhood() {
   const [error, setError] = useState("");
 
   const atmObj = ATMOSPHERES.find((a) => a.id === atmosphere);
-  const scores = computeScores(daytimeSafety, nighttimeSafety, walkability, transitSafety, ATMOSPHERE_SCORES[atmosphere] ?? 0);
+  const scores = computeScores(daytimeSafety, nighttimeSafety, ATMOSPHERE_SCORES[atmosphere] ?? 0);
 
   const canNext1 = city.length > 0 && visitPurpose.length > 0;
   const canNext2 = daytimeSafety > 0 && nighttimeSafety > 0;
@@ -149,9 +138,8 @@ export default function RateNeighborhood() {
           city, neighborhood: neighborhood || undefined,
           visitPurpose, visitFreq: visitFreq || undefined,
           daytimeSafety, nighttimeSafety,
-          walkability: walkability || undefined,
-          transitSafety: transitSafety || undefined,
-          atmosphere, policeVisibility, policeImpact,
+          atmosphere,
+          culturallyConnected: culturallyConnected || undefined,
           accessibility, tips,
           comments: comments || undefined,
         }),
@@ -181,11 +169,10 @@ export default function RateNeighborhood() {
           <p className="text-[#3A1F0E]/70 mb-8">
             Thank you for helping the community make safer, more informed decisions.
           </p>
-          <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-2 gap-4 mb-8">
             {[
               { label: "Safety Score", val: scores.safety },
               { label: "Community", val: scores.community },
-              { label: "Walkability", val: scores.walk },
             ].map((s) => (
               <div key={s.label} className="bg-white rounded-2xl p-4 border border-[#CA922B]/20">
                 <div className="text-2xl font-serif font-bold text-[#CA922B]">{s.val || "—"}</div>
@@ -198,7 +185,7 @@ export default function RateNeighborhood() {
               <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-11">View Safety Scores</Button>
             </Link>
             <Button variant="outline" className="rounded-full border-[#3A1F0E]/20 text-[#3A1F0E] px-8 h-11"
-              onClick={() => { setSubmitted(false); setStep(1); setCity(""); setNeighborhood(""); setVisitPurpose(""); setVisitFreq(""); setDaytimeSafety(0); setNighttimeSafety(0); setWalkability(0); setTransitSafety(0); setAtmosphere(""); setPoliceVisibility(""); setPoliceImpact(""); setAccessibility([]); setTips([]); setComments(""); }}>
+              onClick={() => { setSubmitted(false); setStep(1); setCity(""); setNeighborhood(""); setVisitPurpose(""); setVisitFreq(""); setDaytimeSafety(0); setNighttimeSafety(0); setAtmosphere(""); setCulturallyConnected(""); setAccessibility([]); setTips([]); setComments(""); }}>
               Rate Another
             </Button>
           </div>
@@ -319,28 +306,16 @@ export default function RateNeighborhood() {
               </div>
 
               {[
-                { label: "Daytime safety", val: daytimeSafety, set: setDaytimeSafety, weight: "30% of Safety Score" },
-                { label: "Nighttime safety", val: nighttimeSafety, set: setNighttimeSafety, weight: "40% of Safety Score" },
-                { label: "Walkability", val: walkability, set: setWalkability, weight: "20% of Safety Score", optional: true },
-                { label: "Public transit safety", val: transitSafety, set: setTransitSafety, weight: "10% of Safety Score", optional: true },
+                { label: "Daytime safety", val: daytimeSafety, set: setDaytimeSafety },
+                { label: "Nighttime safety", val: nighttimeSafety, set: setNighttimeSafety },
               ].map((item) => (
                 <div key={item.label} className="p-5 rounded-2xl border border-[#3A1F0E]/8 bg-[#FAF6EF]">
                   <div className="flex justify-between items-start mb-4">
-                    <span className="font-bold text-[#3A1F0E] text-sm">
-                      {item.label}{item.optional && <span className="font-normal text-[#3A1F0E]/50"> (optional)</span>}
-                    </span>
-                    <span className="text-xs text-[#CA922B] font-medium">{item.weight}</span>
+                    <span className="font-bold text-[#3A1F0E] text-sm">{item.label}</span>
                   </div>
                   <ScaleRating value={item.val} onChange={item.set} lowLabel="Unsafe" highLabel="Very Safe" />
                 </div>
               ))}
-
-              {daytimeSafety > 0 && nighttimeSafety > 0 && (
-                <div className="bg-[#CA922B]/10 border border-[#CA922B]/25 rounded-2xl p-4 flex items-center justify-between">
-                  <span className="text-sm text-[#3A1F0E]/70 font-medium">Safety Score Preview</span>
-                  <span className="text-2xl font-serif font-bold text-[#CA922B]">{scores.safety}<span className="text-base text-[#3A1F0E]/40">/100</span></span>
-                </div>
-              )}
             </div>
           )}
 
@@ -349,7 +324,7 @@ export default function RateNeighborhood() {
             <div className="space-y-8">
               <div>
                 <h2 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-1">🏘️ Community Experience</h2>
-                <p className="text-[#3A1F0E]/60 text-sm">Atmosphere is required — accessibility is optional</p>
+                <p className="text-[#3A1F0E]/60 text-sm">Atmosphere is required — cultural connection and accessibility are optional</p>
               </div>
 
               <div>
@@ -362,6 +337,23 @@ export default function RateNeighborhood() {
                       }`}>
                       <span className="font-medium text-[#3A1F0E]">{a.emoji} {a.label}</span>
                       {atmosphere === a.id && <CheckCircle className="w-5 h-5 text-[#CA922B]" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-[#3A1F0E] mb-3">
+                  Did this place feel culturally connected? <span className="font-normal text-[#3A1F0E]/50">(optional)</span>
+                </label>
+                <div className="space-y-2">
+                  {CULTURAL_CONNECTION_OPTIONS.map((opt) => (
+                    <button key={opt.id} type="button" onClick={() => setCulturallyConnected(opt.id)}
+                      className={`w-full flex items-center justify-between px-5 py-4 rounded-xl border-2 transition-all text-left ${
+                        culturallyConnected === opt.id ? "border-[#CA922B] bg-[#CA922B]/8" : "border-[#3A1F0E]/10 bg-white hover:border-[#CA922B]/40"
+                      }`}>
+                      <span className="font-medium text-[#3A1F0E]">{opt.emoji} {opt.label}</span>
+                      {culturallyConnected === opt.id && <CheckCircle className="w-5 h-5 text-[#CA922B]" />}
                     </button>
                   ))}
                 </div>
