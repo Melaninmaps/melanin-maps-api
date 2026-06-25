@@ -9,9 +9,11 @@ import {
   kinfolkSessionsTable,
   kinfolkFeedbackTable,
   savedPlacesTable,
+  businessesTable,
+  businessIdentityTable,
   type SessionMessage,
 } from "@workspace/db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, ilike } from "drizzle-orm";
 import { storage } from "../storage";
 
 const router: IRouter = Router();
@@ -43,6 +45,26 @@ function getCityVoice(destination: string): CityVoice | null {
 }
 
 // ─── Build personalized system prompt ─────────────────────────────────────────
+type BusinessCatalogEntry = {
+  name: string;
+  category: string;
+  city: string;
+  description: string;
+  verified: boolean;
+  tags: string[];
+  story?: string | null;
+  missionStatement?: string | null;
+  whyStarted?: string | null;
+  whatCustomersShouldKnow?: string | null;
+  ownershipBadges?: string[] | null;
+  communityValues?: string[] | null;
+  audiencesServed?: string[] | null;
+  vibes?: string[] | null;
+  accessibilityFeatures?: string[] | null;
+  communityInitiatives?: string[] | null;
+  growthGoals?: string[] | null;
+};
+
 function buildSystemPrompt(opts: {
   prefs: typeof userPreferencesTable.$inferSelect | null;
   likedSpots: string[];
@@ -50,8 +72,9 @@ function buildSystemPrompt(opts: {
   savedPlaces: string[];
   destination?: string | null;
   neighborVoice: boolean;
+  businessCatalog?: BusinessCatalogEntry[];
 }): string {
-  const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, neighborVoice } = opts;
+  const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, neighborVoice, businessCatalog } = opts;
 
   const cityVoice = destination ? getCityVoice(destination) : null;
   const voiceInstructions = !neighborVoice
@@ -126,7 +149,29 @@ Return EXACTLY this JSON format (no markdown, no extra text — pure valid JSON)
 If you're asking a question or don't have enough info yet, set "recommendations" to null.
 "followUpSuggestions" should always be 3 short, natural things the user might say next (e.g., "More food spots", "What's the nightlife like?", "Tell me about the neighborhoods").
 Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 local insights.
-Only recommend real Minority-owned or culturally Minority spots — no tourist traps, no chains.`;
+Only recommend real Minority-owned or culturally Minority spots — no tourist traps, no chains.${businessCatalog?.length ? `
+
+VERIFIED PLATFORM BUSINESSES${destination ? ` IN ${destination.toUpperCase()}` : ""} — PRIORITIZE THESE:
+These are real, verified Black-owned businesses listed on Mapping With Melanin™. When they match the user's vibe or needs, recommend them by name and tell their story authentically. Weave in their mission, values, and personality — not just their category.
+
+${businessCatalog.map(b => {
+  const lines: string[] = [`• ${b.name} | ${b.category}${b.verified ? " ✓ Verified" : ""}`];
+  if (b.description) lines.push(`  "${b.description.slice(0, 180)}"`);
+  if (b.story) lines.push(`  Story: ${b.story.slice(0, 200)}`);
+  if (b.missionStatement) lines.push(`  Mission: ${b.missionStatement.slice(0, 150)}`);
+  if (b.whyStarted) lines.push(`  Why they started: ${b.whyStarted.slice(0, 150)}`);
+  if (b.whatCustomersShouldKnow) lines.push(`  FYI: ${b.whatCustomersShouldKnow}`);
+  if (b.vibes?.length) lines.push(`  Vibe: ${b.vibes.join(", ")}`);
+  if (b.ownershipBadges?.length) lines.push(`  Owned by: ${b.ownershipBadges.join(", ")}`);
+  if (b.communityValues?.length) lines.push(`  Values: ${b.communityValues.join(", ")}`);
+  if (b.audiencesServed?.length) lines.push(`  Great for: ${b.audiencesServed.join(", ")}`);
+  if (b.accessibilityFeatures?.length) lines.push(`  Accessible: ${b.accessibilityFeatures.join(", ")}`);
+  if (b.communityInitiatives?.length) lines.push(`  Gives back: ${b.communityInitiatives.join(", ")}`);
+  if (b.tags?.length) lines.push(`  Tags: ${b.tags.slice(0, 6).join(", ")}`);
+  return lines.join("\n");
+}).join("\n\n")}
+
+When you mention any of these businesses, be specific: use their actual name, share their story, and explain WHY they'd resonate with this particular user based on their preferences and vibe.` : ""}`;
 }
 
 // ─── GET /api/kinfolk/preferences ─────────────────────────────────────────────
@@ -357,8 +402,43 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Detect destination from message or session
     const destination = currentSession?.destination ?? null;
 
+    // Fetch platform business catalog for this destination (with identity enrichment)
+    let businessCatalog: BusinessCatalogEntry[] = [];
+    if (destination) {
+      try {
+        const bizRows = await db
+          .select({
+            name: businessesTable.name,
+            category: businessesTable.category,
+            city: businessesTable.city,
+            description: businessesTable.description,
+            verified: businessesTable.verified,
+            tags: businessesTable.tags,
+            story: businessIdentityTable.businessStory,
+            missionStatement: businessIdentityTable.missionStatement,
+            whyStarted: businessIdentityTable.whyStarted,
+            whatCustomersShouldKnow: businessIdentityTable.whatCustomersShouldKnow,
+            ownershipBadges: businessIdentityTable.ownershipBadges,
+            communityValues: businessIdentityTable.communityValues,
+            audiencesServed: businessIdentityTable.audiencesServed,
+            vibes: businessIdentityTable.vibes,
+            accessibilityFeatures: businessIdentityTable.accessibilityFeatures,
+            communityInitiatives: businessIdentityTable.communityInitiatives,
+            growthGoals: businessIdentityTable.growthGoals,
+          })
+          .from(businessesTable)
+          .leftJoin(businessIdentityTable, eq(businessIdentityTable.businessId, businessesTable.id))
+          .where(and(
+            ilike(businessesTable.city, `%${destination}%`),
+            eq(businessesTable.status, "active"),
+          ))
+          .limit(25);
+        businessCatalog = bizRows;
+      } catch { /* non-critical — proceed without catalog */ }
+    }
+
     // Build system prompt
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, neighborVoice });
+    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, neighborVoice, businessCatalog });
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages
@@ -478,16 +558,46 @@ router.post("/kinfolk/business-action-plan", async (req: Request, res: Response)
     reviews?: Array<{ rating: number; content: string | null }>;
   };
 
+  // Fetch the owner's business identity for personalized advice
+  let identityContext = "";
+  try {
+    const [ownerBiz] = await db
+      .select({ id: businessesTable.id })
+      .from(businessesTable)
+      .where(eq(businessesTable.submittedById, req.user.id))
+      .limit(1);
+    if (ownerBiz) {
+      const [identity] = await db
+        .select()
+        .from(businessIdentityTable)
+        .where(eq(businessIdentityTable.businessId, ownerBiz.id))
+        .limit(1);
+      if (identity) {
+        const parts: string[] = [];
+        if (identity.missionStatement) parts.push(`Mission: ${identity.missionStatement}`);
+        if (identity.businessStory) parts.push(`Story: ${identity.businessStory.slice(0, 300)}`);
+        if (identity.communityValues?.length) parts.push(`Core values: ${identity.communityValues.join(", ")}`);
+        if (identity.audiencesServed?.length) parts.push(`Serves: ${identity.audiencesServed.join(", ")}`);
+        if (identity.vibes?.length) parts.push(`Business vibe: ${identity.vibes.join(", ")}`);
+        if (identity.growthGoals?.length) parts.push(`Growth goals: ${identity.growthGoals.join(", ")}`);
+        if (identity.accessibilityFeatures?.length) parts.push(`Current accessibility: ${identity.accessibilityFeatures.join(", ")}`);
+        if (identity.communityInitiatives?.length) parts.push(`Community commitments: ${identity.communityInitiatives.join(", ")}`);
+        if (identity.isHiring) parts.push("Currently hiring");
+        if (parts.length) identityContext = `\nBUSINESS IDENTITY (owner-defined):\n${parts.join("\n")}`;
+      }
+    }
+  } catch { /* non-critical */ }
+
   const reviewsText = reviews?.length
     ? reviews.map((r) => `- Rating: ${r.rating}/5 | Feedback: ${r.content ?? "(no written feedback)"}`).join("\n")
     : "No community reviews yet.";
 
-  const prompt = `You are an expert Black business advisor helping "${businessName ?? "a business"}" (category: ${businessCategory ?? "General"}, city: ${businessCity ?? "Unknown"}) build an improvement action plan.
+  const prompt = `You are an expert Black business advisor helping "${businessName ?? "a business"}" (category: ${businessCategory ?? "General"}, city: ${businessCity ?? "Unknown"}) build an improvement action plan.${identityContext}
 
 COMMUNITY FEEDBACK FROM REVIEWS:
 ${reviewsText}
 
-Analyze the feedback and generate a practical, budget-conscious action plan. If no reviews mention specific issues, generate proactive improvements relevant to the business category and community expectations.
+Analyze the feedback and generate a practical, budget-conscious action plan that honors the business's mission, values, and growth goals. If no reviews mention specific issues, generate proactive improvements relevant to the business category, community expectations, and the owner's stated goals.
 
 Return EXACTLY this JSON (no markdown, pure valid JSON):
 {
@@ -538,6 +648,34 @@ router.post("/kinfolk/expansion-analysis", async (req: Request, res: Response) =
     savesCount?: number;
   };
 
+  // Fetch the owner's business identity for personalized expansion advice
+  let expansionIdentityContext = "";
+  try {
+    const [ownerBiz] = await db
+      .select({ id: businessesTable.id })
+      .from(businessesTable)
+      .where(eq(businessesTable.submittedById, req.user.id))
+      .limit(1);
+    if (ownerBiz) {
+      const [identity] = await db
+        .select()
+        .from(businessIdentityTable)
+        .where(eq(businessIdentityTable.businessId, ownerBiz.id))
+        .limit(1);
+      if (identity) {
+        const parts: string[] = [];
+        if (identity.missionStatement) parts.push(`Mission: ${identity.missionStatement}`);
+        if (identity.communityValues?.length) parts.push(`Core values: ${identity.communityValues.join(", ")}`);
+        if (identity.audiencesServed?.length) parts.push(`Serves: ${identity.audiencesServed.join(", ")}`);
+        if (identity.vibes?.length) parts.push(`Business vibe: ${identity.vibes.join(", ")}`);
+        if (identity.growthGoals?.length) parts.push(`Owner-stated growth goals: ${identity.growthGoals.join(", ")}`);
+        if (identity.ownershipBadges?.length) parts.push(`Identity: ${identity.ownershipBadges.join(", ")}`);
+        if (identity.communityInitiatives?.length) parts.push(`Community commitments: ${identity.communityInitiatives.join(", ")}`);
+        if (parts.length) expansionIdentityContext = `\nBUSINESS IDENTITY (owner-defined):\n${parts.join("\n")}`;
+      }
+    }
+  } catch { /* non-critical */ }
+
   // Fetch platform survey data for context
   let surveyContext = "";
   try {
@@ -567,7 +705,7 @@ router.post("/kinfolk/expansion-analysis", async (req: Request, res: Response) =
     if (citySummary) surveyContext = `Platform community safety data by city: ${citySummary}`;
   } catch { /* non-critical */ }
 
-  const prompt = `You are a business expansion strategist advising a Black-owned ${businessCategory ?? "business"} called "${businessName ?? "this business"}" currently based in ${businessCity ?? "their city"}.
+  const prompt = `You are a business expansion strategist advising a Black-owned ${businessCategory ?? "business"} called "${businessName ?? "this business"}" currently based in ${businessCity ?? "their city"}.${expansionIdentityContext}
 
 CURRENT PERFORMANCE:
 - Average rating: ${avgRating?.toFixed(1) ?? "N/A"}/5
