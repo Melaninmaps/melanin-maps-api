@@ -67,6 +67,11 @@ export default function LifeJourneyScreen() {
   const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [smartMatches, setSmartMatches] = useState<{
+    matches: Array<{ category: string; fromCity: string; savedCount: number; matches: Array<{ name: string; category: string; city: string; verified: boolean }> }>;
+    message: string | null;
+    destinationCity?: string;
+  } | null>(null);
 
   const [selectedType, setSelectedType] = useState<string>("");
   const [city, setCity] = useState("");
@@ -107,6 +112,21 @@ export default function LifeJourneyScreen() {
 
   useEffect(() => { void loadData(); }, [loadData]);
 
+  const loadSmartMatches = useCallback(async (journeyId: string) => {
+    try {
+      const apiBase = getApiBase();
+      const token = await getToken();
+      if (!token) return;
+      const res = await fetch(`${apiBase}/api/journeys/${journeyId}/smart-matches`, {
+        headers: authHeaders(token),
+      });
+      if (res.ok) {
+        const data = await res.json() as { matches: typeof smartMatches extends null ? never : NonNullable<typeof smartMatches>["matches"]; message: string | null; destinationCity?: string };
+        setSmartMatches(data);
+      }
+    } catch { /* non-critical */ }
+  }, []);
+
   const createJourney = async () => {
     if (!selectedType) { Alert.alert("Pick a journey type first"); return; }
     setCreating(true);
@@ -123,6 +143,7 @@ export default function LifeJourneyScreen() {
       setJourneys((prev) => [d.journey, ...prev]);
       setActiveJourney(d.journey);
       setView("detail");
+      void loadSmartMatches(d.journey.id);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
       Alert.alert("Couldn't create journey", "Something went wrong. Please try again.");
@@ -290,6 +311,49 @@ export default function LifeJourneyScreen() {
             </View>
           )}
 
+          {smartMatches && smartMatches.matches.length > 0 && (
+            <View style={[styles.smartMatchSection, { backgroundColor: colors.card, borderColor: "#7C3AED30" }]}>
+              <View style={styles.smartMatchHeader}>
+                <Text style={styles.smartMatchIcon}>🔗</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.smartMatchTitle, { color: colors.foreground }]}>Smart Match™</Text>
+                  <Text style={[styles.smartMatchSub, { color: colors.mutedForeground }]}>
+                    Based on what you loved before — now in {smartMatches.destinationCity}
+                  </Text>
+                </View>
+              </View>
+              {smartMatches.matches.map((bridge) => (
+                <View key={bridge.category} style={[styles.smartMatchBridge, { borderTopColor: colors.border }]}>
+                  <View style={styles.smartMatchCatRow}>
+                    <Text style={[styles.smartMatchCat, { color: "#7C3AED" }]}>{bridge.category}</Text>
+                    <Text style={[styles.smartMatchFrom, { color: colors.mutedForeground }]}>
+                      {bridge.savedCount} saved in {bridge.fromCity}
+                    </Text>
+                  </View>
+                  {bridge.matches.slice(0, 3).map((biz) => (
+                    <View key={biz.name} style={styles.smartMatchBiz}>
+                      <Text style={[styles.smartMatchBizName, { color: colors.foreground }]}>{biz.name}</Text>
+                      {biz.verified && (
+                        <View style={[styles.verifiedPill, { backgroundColor: "#DCFCE7" }]}>
+                          <Text style={{ fontSize: 9, color: "#16A34A", fontWeight: "700" }}>✓ Verified</Text>
+                        </View>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              ))}
+              <TouchableOpacity
+                style={[styles.smartMatchCta, { backgroundColor: "#7C3AED15", borderColor: "#7C3AED30" }]}
+                onPress={() => router.push("/travel" as any)}
+                activeOpacity={0.85}
+              >
+                <Text style={{ fontSize: 13, color: "#7C3AED", fontWeight: "600" }}>
+                  Ask KinfolkAI™ to tell me more about these →
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <View style={[styles.progressCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.progressHeader}>
               <Text style={[styles.progressLabel, { color: colors.mutedForeground }]}>Overall Progress</Text>
@@ -443,7 +507,7 @@ export default function LifeJourneyScreen() {
                 <TouchableOpacity
                   key={journey.id}
                   style={[styles.journeyCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => { setActiveJourney(journey); setView("detail"); }}
+                  onPress={() => { setActiveJourney(journey); setView("detail"); void loadSmartMatches(journey.id); }}
                   activeOpacity={0.85}
                 >
                   <View style={styles.journeyCardHeader}>
@@ -538,6 +602,19 @@ const styles = StyleSheet.create({
   kinfolkBtnIcon: { width: 36, height: 36, borderRadius: 18, justifyContent: "center", alignItems: "center" },
   kinfolkBtnTitle: { fontSize: 14, fontWeight: "600" },
   kinfolkBtnSub: { fontSize: 12, marginTop: 1 },
+  smartMatchSection: { borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 12 },
+  smartMatchHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
+  smartMatchIcon: { fontSize: 22 },
+  smartMatchTitle: { fontSize: 15, fontWeight: "700" },
+  smartMatchSub: { fontSize: 12, marginTop: 2 },
+  smartMatchBridge: { borderTopWidth: 1, paddingTop: 10, marginTop: 10 },
+  smartMatchCatRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
+  smartMatchCat: { fontSize: 13, fontWeight: "700" },
+  smartMatchFrom: { fontSize: 11 },
+  smartMatchBiz: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 3 },
+  smartMatchBizName: { fontSize: 13, flex: 1 },
+  verifiedPill: { borderRadius: 4, paddingHorizontal: 5, paddingVertical: 2 },
+  smartMatchCta: { marginTop: 12, borderRadius: 8, borderWidth: 1, padding: 10, alignItems: "center" },
   aiContextCard: { flexDirection: "row", borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 12, gap: 8, alignItems: "flex-start" },
   aiContextEmoji: { fontSize: 16 },
   aiContextText: { fontSize: 13, lineHeight: 19, flex: 1 },

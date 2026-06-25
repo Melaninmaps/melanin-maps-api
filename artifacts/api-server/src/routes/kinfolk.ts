@@ -67,6 +67,13 @@ type BusinessCatalogEntry = {
   growthGoals?: string[] | null;
 };
 
+type CrossCityMatch = {
+  category: string;
+  fromCity: string;
+  savedCount: number;
+  matches: Array<{ name: string; category: string; city: string; verified: boolean }>;
+};
+
 function buildSystemPrompt(opts: {
   prefs: typeof userPreferencesTable.$inferSelect | null;
   likedSpots: string[];
@@ -76,8 +83,9 @@ function buildSystemPrompt(opts: {
   neighborVoice: boolean;
   businessCatalog?: BusinessCatalogEntry[];
   activeJourney?: { title: string; city?: string | null; journeyType: string; phases: JourneyPhase[]; aiContext?: string | null } | null;
+  crossCityBridge?: CrossCityMatch[] | null;
 }): string {
-  const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, neighborVoice, businessCatalog, activeJourney } = opts;
+  const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, neighborVoice, businessCatalog, activeJourney, crossCityBridge } = opts;
 
   const cityVoice = destination ? getCityVoice(destination) : null;
   const voiceInstructions = !neighborVoice
@@ -121,11 +129,22 @@ Active phase: ${activeJourney.phases.find((p) => p.status === "active")?.title ?
 IMPORTANT: When they ask about any topic related to their journey, connect it back. Reference their journey naturally. Suggest next steps. Help them make progress. This is their guide — make every conversation feel connected to where they're going.`
     : "";
 
+  const crossCitySection = crossCityBridge?.length
+    ? `\nCROSS-CITY PREFERENCE BRIDGE — BE PROACTIVE WITH THIS:
+This user is heading to ${activeJourney?.city ?? "a new city"}. We matched their saved categories from previous cities to Black-owned businesses there:
+
+${crossCityBridge.map((bridge) =>
+  `• ${bridge.category} (they saved ${bridge.savedCount} in ${bridge.fromCity}):\n${bridge.matches.map((m) => `  - ${m.name}${m.verified ? " ✓ Verified" : ""}`).join("\n")}`
+).join("\n\n")}
+
+CRITICAL INSTRUCTION: Don't wait for them to ask. Proactively say something like — "Since you were feeling ${crossCityBridge[0]?.category} spots in ${crossCityBridge[0]?.fromCity}, I already found you some great ones in ${activeJourney?.city}." Make the connection feel magical, like a friend who remembered exactly what you loved. Reference their past city naturally. This is the feature that makes the platform feel like it truly knows them.`
+    : "";
+
   return `You are KinfolkAI™ — a conversational travel companion built by and for the Minority community. You are not a search engine. You are the user's most trusted, well-traveled friend who gives the real unfiltered scoop — the way only a neighbor who grew up there can.
 
 You have memory. You know this person. You learn from every interaction. You get more personalized every time they talk to you.
 
-${profileSection}${likedSection}${dislikedSection}${savedSection}${journeySection}
+${profileSection}${likedSection}${dislikedSection}${savedSection}${journeySection}${crossCitySection}
 
 CONVERSATION STYLE:
 - Be warm, conversational, like their most well-traveled friend who's been everywhere
@@ -475,8 +494,51 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-critical */ }
     }
 
+    // Build cross-city preference bridge (when user has an active journey with a destination)
+    let crossCityBridge: CrossCityMatch[] | null = null;
+    if (req.user?.id && activeJourney?.city) {
+      try {
+        const { pool } = await import("@workspace/db");
+        const fbRows = await pool.query<{ category: string; city: string; cnt: string }>(
+          `SELECT category, city, COUNT(*) as cnt
+           FROM kinfolk_feedback
+           WHERE user_id = $1
+             AND reaction = 'like'
+             AND category IS NOT NULL
+             AND city IS NOT NULL
+             AND city NOT ILIKE $2
+           GROUP BY category, city
+           ORDER BY cnt DESC
+           LIMIT 20`,
+          [req.user.id, `%${activeJourney.city}%`],
+        );
+        if (fbRows.rows.length > 0) {
+          const catMap = new Map<string, { category: string; fromCity: string; savedCount: number }>();
+          for (const row of fbRows.rows) {
+            const key = row.category.toLowerCase();
+            if (!catMap.has(key)) catMap.set(key, { category: row.category, fromCity: row.city, savedCount: 0 });
+            catMap.get(key)!.savedCount += parseInt(row.cnt, 10);
+          }
+          const topCats = [...catMap.values()].slice(0, 5);
+          const bridges = await Promise.all(
+            topCats.map(async ({ category, fromCity, savedCount }) => {
+              const bizRows = await pool.query<{ name: string; category: string; city: string; verified: boolean }>(
+                `SELECT name, category, city, verified FROM businesses
+                 WHERE status = 'active' AND city ILIKE $1 AND category ILIKE $2
+                 ORDER BY verified DESC, name ASC LIMIT 3`,
+                [`%${activeJourney.city}%`, `%${category}%`],
+              );
+              return { category, fromCity, savedCount, matches: bizRows.rows };
+            }),
+          );
+          crossCityBridge = bridges.filter((b) => b.matches.length > 0);
+          if (crossCityBridge.length === 0) crossCityBridge = null;
+        }
+      } catch { /* non-critical */ }
+    }
+
     // Build system prompt
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, neighborVoice, businessCatalog, activeJourney });
+    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, neighborVoice, businessCatalog, activeJourney, crossCityBridge });
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages

@@ -301,6 +301,78 @@ router.delete("/journeys/:id", async (req: Request, res: Response) => {
   }
 });
 
+router.get("/journeys/:id/smart-matches", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const id = String(req.params.id);
+
+  try {
+    const [journey] = await db
+      .select()
+      .from(lifeJourneysTable)
+      .where(and(eq(lifeJourneysTable.id, id), eq(lifeJourneysTable.userId, req.user.id)))
+      .limit(1);
+    if (!journey) { res.status(404).json({ error: "Journey not found" }); return; }
+    if (!journey.city) { res.json({ matches: [], message: null }); return; }
+
+    const { pool } = await import("@workspace/db");
+
+    const feedback = await pool.query<{ business_name: string; category: string; city: string; count: string }>(
+      `SELECT business_name, category, city, COUNT(*) as count
+       FROM kinfolk_feedback
+       WHERE user_id = $1
+         AND reaction = 'like'
+         AND category IS NOT NULL
+         AND city IS NOT NULL
+         AND city NOT ILIKE $2
+       GROUP BY business_name, category, city
+       ORDER BY count DESC
+       LIMIT 30`,
+      [req.user.id, `%${journey.city}%`],
+    );
+
+    if (feedback.rows.length === 0) {
+      res.json({ matches: [], message: null });
+      return;
+    }
+
+    const categoryMap = new Map<string, { category: string; fromCity: string; savedCount: number }>();
+    for (const row of feedback.rows) {
+      const key = row.category.toLowerCase();
+      if (!categoryMap.has(key)) {
+        categoryMap.set(key, { category: row.category, fromCity: row.city, savedCount: 0 });
+      }
+      categoryMap.get(key)!.savedCount++;
+    }
+
+    const topCategories = [...categoryMap.values()].slice(0, 6);
+    const bridges = await Promise.all(
+      topCategories.map(async ({ category, fromCity, savedCount }) => {
+        const matches = await pool.query<{ id: string; name: string; category: string; city: string; verified: boolean }>(
+          `SELECT id, name, category, city, verified
+           FROM businesses
+           WHERE status = 'active'
+             AND city ILIKE $1
+             AND category ILIKE $2
+           ORDER BY verified DESC, name ASC
+           LIMIT 4`,
+          [`%${journey.city}%`, `%${category}%`],
+        );
+        return { category, fromCity, savedCount, matches: matches.rows };
+      }),
+    );
+
+    const withMatches = bridges.filter((b) => b.matches.length > 0);
+    const message = withMatches.length > 0
+      ? `We found ${withMatches.reduce((sum, b) => sum + b.matches.length, 0)} businesses in ${journey.city} across ${withMatches.length} categories you already love.`
+      : `We're still growing in ${journey.city} — check back soon or ask KinfolkAI™ for recommendations.`;
+
+    res.json({ matches: withMatches, message, destinationCity: journey.city });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch smart matches");
+    res.status(500).json({ error: "Failed to fetch smart matches" });
+  }
+});
+
 router.get("/journeys/types/list", (_req, res) => {
   res.json({
     types: [
