@@ -38,6 +38,8 @@ interface MyBusiness {
   feedbackOptIn?: boolean;
   sellerAgreementAcceptedAt?: string | null;
   phone?: string | null;
+  foundingBusiness?: boolean;
+  foundingNumber?: number | null;
 }
 
 interface ReviewRow {
@@ -983,6 +985,43 @@ export default function BusinessDashboardScreen() {
 
         {activeTab === "products" && (
           <>
+            {/* Founding Business Program card */}
+            {business?.foundingBusiness && (
+              <View style={[styles.addrForm, { backgroundColor: "#1A0F00", borderColor: "#C9922B40", marginBottom: 12 }]}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                  <Text style={{ fontSize: 22 }}>⭐</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 16, color: "#C9922B" }}>
+                      Founding Business{business.foundingNumber ? ` #${business.foundingNumber}` : ""}
+                    </Text>
+                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(201,146,43,0.7)" }}>
+                      of 500 Founding Members
+                    </Text>
+                  </View>
+                  <View style={{ backgroundColor: "#C9922B20", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1, borderColor: "#C9922B40" }}>
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 10, color: "#C9922B" }}>FOUNDING</Text>
+                  </View>
+                </View>
+                {[
+                  { icon: "tag" as const, text: "3% marketplace rate — locked in for life" },
+                  { icon: "trending-up" as const, text: "Priority placement in search results" },
+                  { icon: "zap" as const, text: "Early access to new features" },
+                  { icon: "globe" as const, text: "Recognition on mappingwithmelanin.com" },
+                  { icon: "smartphone" as const, text: "Featured in the app's Founding Businesses section" },
+                ].map((item) => (
+                  <View key={item.text} style={{ flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 6 }}>
+                    <Feather name={item.icon} size={13} color="#C9922B" style={{ marginTop: 2 }} />
+                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.75)", flex: 1, lineHeight: 18 }}>
+                      {item.text}
+                    </Text>
+                  </View>
+                ))}
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "rgba(201,146,43,0.5)", marginTop: 6, lineHeight: 16 }}>
+                  Thank you for building with us from the beginning.
+                </Text>
+              </View>
+            )}
+
             {/* Seller setup requirements checklist — shown until fully set up */}
             {(!business?.verified || !sellerAgreementAccepted || !connectStatus?.onboarded) && (
               <View style={[styles.addrForm, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 12 }]}>

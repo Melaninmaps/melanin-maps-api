@@ -43,6 +43,8 @@ export const businessesTable = pgTable("businesses", {
   returnPolicy: text("return_policy"),
   sellerAgreementAcceptedAt: timestamp("seller_agreement_accepted_at", { withTimezone: true }),
   marketplaceTier: varchar("marketplace_tier", { length: 20 }).notNull().default("free"),
+  foundingBusiness: boolean("founding_business").notNull().default(false),
+  foundingNumber: integer("founding_number"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

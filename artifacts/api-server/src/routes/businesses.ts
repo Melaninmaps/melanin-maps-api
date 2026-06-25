@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, businessesTable, businessProfileViewsTable, userSettingsTable } from "@workspace/db";
-import { eq, and, or, ilike } from "drizzle-orm";
+import { eq, and, or, ilike, desc, sql } from "drizzle-orm";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 
 const router: IRouter = Router();
@@ -41,12 +41,31 @@ router.get("/businesses", async (req: Request, res: Response) => {
       .select()
       .from(businessesTable)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(
+        desc(businessesTable.foundingBusiness),
+        desc(businessesTable.confidenceScore),
+      )
       .limit(200);
 
     res.json({ businesses, total: businesses.length });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch businesses");
     res.status(500).json({ error: "Failed to fetch businesses" });
+  }
+});
+
+router.get("/businesses/founding/stats", async (req: Request, res: Response) => {
+  try {
+    const [row] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(businessesTable)
+      .where(eq(businessesTable.foundingBusiness, true));
+    const count = row?.count ?? 0;
+    const spots = 500;
+    res.json({ count, spots, remaining: Math.max(0, spots - count), isFull: count >= spots });
+  } catch (err) {
+    req.log.error({ err }, "Failed to get founding stats");
+    res.status(500).json({ error: "Failed to get founding stats" });
   }
 });
 
@@ -332,6 +351,48 @@ router.patch("/businesses/:id/policy", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to update return policy");
     res.status(500).json({ error: "Failed to update policy" });
+  }
+});
+
+router.patch("/admin/businesses/:id/founding-status", async (req: Request, res: Response) => {
+  try {
+    if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }
+    const id = String(req.params.id);
+    const { founding } = req.body as { founding?: boolean };
+    if (typeof founding !== "boolean") {
+      res.status(400).json({ error: "founding must be true or false" }); return;
+    }
+
+    let foundingNumber: number | null = null;
+    if (founding) {
+      const [maxRow] = await db
+        .select({ max: sql<number>`coalesce(max(founding_number), 0)::int` })
+        .from(businessesTable);
+      foundingNumber = (maxRow?.max ?? 0) + 1;
+    }
+
+    const [biz] = await db
+      .update(businessesTable)
+      .set({
+        foundingBusiness: founding,
+        foundingNumber: founding ? foundingNumber : null,
+        marketplaceTier: founding ? "premium" : undefined,
+        updatedAt: new Date(),
+      })
+      .where(eq(businessesTable.id, id))
+      .returning({
+        id: businessesTable.id,
+        name: businessesTable.name,
+        foundingBusiness: businessesTable.foundingBusiness,
+        foundingNumber: businessesTable.foundingNumber,
+        marketplaceTier: businessesTable.marketplaceTier,
+      });
+
+    if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
+    res.json(biz);
+  } catch (err) {
+    req.log.error({ err }, "Failed to update founding status");
+    res.status(500).json({ error: "Failed to update founding status" });
   }
 });
 

@@ -39,6 +39,8 @@ export interface Business {
   recommendationRate?: number;
   reviews?: Review[];
   feedbackOptIn?: boolean;
+  foundingBusiness?: boolean;
+  foundingNumber?: number;
 }
 
 export interface Event {

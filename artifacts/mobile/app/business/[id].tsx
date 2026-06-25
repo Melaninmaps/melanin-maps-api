@@ -250,6 +250,14 @@ export default function BusinessDetailScreen() {
                 )}
               </View>
               <View style={styles.badgeRow}>
+                {business.foundingBusiness && (
+                  <View style={styles.foundingBadge}>
+                    <Text style={styles.foundingBadgeStar}>⭐</Text>
+                    <Text style={styles.foundingBadgeText}>
+                      Founding Business{business.foundingNumber ? ` #${business.foundingNumber}` : ""}
+                    </Text>
+                  </View>
+                )}
                 {business.blackOwned && <BlackOwnedBadge size="md" />}
                 <OwnershipBadges
                   designations={business.ownershipDesignations}
@@ -570,6 +578,13 @@ const styles = StyleSheet.create({
   name: { fontFamily: "Inter_700Bold", fontSize: 22 },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" },
   badgeRow: { flexDirection: "row", gap: 6, marginTop: 8, flexWrap: "wrap" },
+  foundingBadge: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    backgroundColor: "#C9922B18", borderWidth: 1, borderColor: "#C9922B50",
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20,
+  },
+  foundingBadgeStar: { fontSize: 12 },
+  foundingBadgeText: { fontFamily: "Inter_700Bold", fontSize: 11, color: "#C9922B" },
   minorityDisclaimer: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, marginTop: 4, fontStyle: "italic" },
   category: { fontFamily: "Inter_500Medium", fontSize: 13 },
   price: { fontFamily: "Inter_400Regular", fontSize: 13 },
