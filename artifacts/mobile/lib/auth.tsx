@@ -16,6 +16,8 @@ interface User {
   profileImageUrl: string | null;
   approved: boolean;
   dateOfBirth?: string | null;
+  industry?: string | null;
+  jobTitle?: string | null;
 }
 
 interface AuthContextValue {

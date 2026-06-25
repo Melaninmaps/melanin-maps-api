@@ -76,12 +76,14 @@ router.patch("/users/me", async (req: Request, res: Response) => {
   }
 
   try {
-    const { firstName, lastName, profileImageUrl } = req.body as Record<string, unknown>;
+    const { firstName, lastName, profileImageUrl, industry, jobTitle } = req.body as Record<string, unknown>;
 
     const updates: Partial<typeof usersTable.$inferInsert> = {};
     if (typeof firstName === "string") updates.firstName = firstName.trim() || null;
     if (typeof lastName === "string") updates.lastName = lastName.trim() || null;
     if (typeof profileImageUrl === "string") updates.profileImageUrl = profileImageUrl.trim() || null;
+    if (typeof industry === "string") updates.industry = industry.trim() || null;
+    if (typeof jobTitle === "string") updates.jobTitle = jobTitle.trim() || null;
 
     if (Object.keys(updates).length === 0) {
       res.status(400).json({ error: "No valid fields to update" });

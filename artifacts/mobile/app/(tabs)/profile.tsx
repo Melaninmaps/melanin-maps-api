@@ -6,10 +6,14 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -42,6 +46,28 @@ const SETTINGS = [
   { icon: "credit-card" as const, label: "Billing & Invoices", sub: "Manage subscription & history", route: "/billing" as const },
 ];
 
+const INDUSTRIES = [
+  "Technology & Software",
+  "Healthcare & Wellness",
+  "Finance & Banking",
+  "Real Estate",
+  "Food & Beverage",
+  "Beauty & Grooming",
+  "Fashion & Retail",
+  "Entertainment & Media",
+  "Education & Training",
+  "Legal & Consulting",
+  "Construction & Trades",
+  "Transportation & Logistics",
+  "Arts & Culture",
+  "Nonprofit & Advocacy",
+  "Sports & Fitness",
+  "Travel & Hospitality",
+  "Marketing & PR",
+  "Music & Events",
+  "Other",
+];
+
 const ADMIN_EMAILS = (process.env.EXPO_PUBLIC_ADMIN_EMAILS ?? "")
   .split(",")
   .map((e) => e.trim())
@@ -62,6 +88,47 @@ export default function ProfileScreen() {
   const isAdminUser = !!(user?.email && ADMIN_EMAILS.includes(user.email));
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
   const [showRedemption, setShowRedemption] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showIndustryPicker, setShowIndustryPicker] = useState(false);
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
+  const [editIndustry, setEditIndustry] = useState("");
+  const [editJobTitle, setEditJobTitle] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const openEditModal = () => {
+    setEditFirstName(user?.firstName ?? "");
+    setEditLastName(user?.lastName ?? "");
+    setEditIndustry(user?.industry ?? "");
+    setEditJobTitle(user?.jobTitle ?? "");
+    setShowEditModal(true);
+  };
+
+  const saveProfile = async () => {
+    setIsSaving(true);
+    try {
+      const token = await (await import("expo-secure-store")).getItemAsync("auth_session_token");
+      await fetch("/api/users/me", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          firstName: editFirstName,
+          lastName: editLastName,
+          industry: editIndustry,
+          jobTitle: editJobTitle,
+        }),
+      });
+      setShowEditModal(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      // silently fail — user can retry
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const pickProfileImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -164,6 +231,11 @@ export default function ProfileScreen() {
               <Text style={[styles.name, { color: colors.foreground }]}>
                 {[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Community Member"}
               </Text>
+              {user?.jobTitle || user?.industry ? (
+                <Text style={[styles.industryLine, { color: colors.mutedForeground }]}>
+                  {[user.jobTitle, user.industry].filter(Boolean).join(" · ")}
+                </Text>
+              ) : null}
               {user?.email ? (
                 <Text style={[styles.email, { color: colors.mutedForeground }]}>{user.email}</Text>
               ) : null}
@@ -176,7 +248,7 @@ export default function ProfileScreen() {
                 </View>
               ) : null}
             </View>
-            <TouchableOpacity style={[styles.editBtn, { borderColor: colors.border }]} onPress={pickProfileImage}>
+            <TouchableOpacity style={[styles.editBtn, { borderColor: colors.border }]} onPress={openEditModal}>
               <Feather name="edit-2" size={15} color={colors.primary} />
             </TouchableOpacity>
           </View>
@@ -257,6 +329,82 @@ export default function ProfileScreen() {
       )}
 
       <PointsRedemptionModal visible={showRedemption} onClose={() => setShowRedemption(false)} />
+
+      <Modal visible={showEditModal} animationType="slide" transparent presentationStyle="overFullScreen" onRequestClose={() => setShowEditModal(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowEditModal(false)} />
+          <View style={[styles.modalSheet, { backgroundColor: colors.background }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <TouchableOpacity onPress={() => setShowEditModal(false)} style={styles.modalCancel}>
+                <Text style={[styles.modalCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={[styles.modalTitle, { color: colors.foreground }]}>Edit Profile</Text>
+              <TouchableOpacity onPress={saveProfile} disabled={isSaving} style={styles.modalSave}>
+                {isSaving ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Text style={[styles.modalSaveText, { color: colors.primary }]}>Save</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {showIndustryPicker ? (
+              <ScrollView style={styles.industryList} showsVerticalScrollIndicator={false}>
+                <TouchableOpacity style={[styles.industryOption, { borderBottomColor: colors.border }]} onPress={() => { setEditIndustry(""); setShowIndustryPicker(false); }}>
+                  <Text style={[styles.industryOptionText, { color: colors.mutedForeground }]}>No industry</Text>
+                  {!editIndustry ? <Feather name="check" size={16} color={colors.primary} /> : null}
+                </TouchableOpacity>
+                {INDUSTRIES.map((ind) => (
+                  <TouchableOpacity key={ind} style={[styles.industryOption, { borderBottomColor: colors.border }]} onPress={() => { setEditIndustry(ind); setShowIndustryPicker(false); }}>
+                    <Text style={[styles.industryOptionText, { color: colors.foreground }]}>{ind}</Text>
+                    {editIndustry === ind ? <Feather name="check" size={16} color={colors.primary} /> : null}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : (
+              <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>First Name</Text>
+                <TextInput
+                  style={[styles.fieldInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                  value={editFirstName}
+                  onChangeText={setEditFirstName}
+                  placeholder="First name"
+                  placeholderTextColor={colors.mutedForeground}
+                  autoCapitalize="words"
+                />
+
+                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Last Name</Text>
+                <TextInput
+                  style={[styles.fieldInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                  value={editLastName}
+                  onChangeText={setEditLastName}
+                  placeholder="Last name"
+                  placeholderTextColor={colors.mutedForeground}
+                  autoCapitalize="words"
+                />
+
+                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Job Title <Text style={{ color: colors.mutedForeground + "88" }}>(optional)</Text></Text>
+                <TextInput
+                  style={[styles.fieldInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                  value={editJobTitle}
+                  onChangeText={setEditJobTitle}
+                  placeholder="e.g. Founder, Software Engineer"
+                  placeholderTextColor={colors.mutedForeground}
+                  autoCapitalize="words"
+                />
+
+                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Industry <Text style={{ color: colors.mutedForeground + "88" }}>(optional)</Text></Text>
+                <TouchableOpacity style={[styles.fieldInput, styles.fieldPicker, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => setShowIndustryPicker(true)}>
+                  <Text style={[styles.fieldPickerText, { color: editIndustry ? colors.foreground : colors.mutedForeground }]}>
+                    {editIndustry || "Select your industry"}
+                  </Text>
+                  <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              </ScrollView>
+            )}
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {isAuthenticated && reviewCount === 0 && savedIds.length === 0 && pointsTotal === 0 && (
         <View style={[styles.gettingStartedCard, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.foreground }]}>
@@ -953,5 +1101,90 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     fontSize: 12,
     marginTop: 1,
+  },
+  industryLine: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    marginTop: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: "90%",
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  modalCancel: {
+    minWidth: 60,
+  },
+  modalCancelText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 15,
+  },
+  modalTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 17,
+  },
+  modalSave: {
+    minWidth: 60,
+    alignItems: "flex-end",
+  },
+  modalSaveText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+  },
+  modalBody: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  fieldLabel: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 13,
+    marginBottom: 6,
+    marginTop: 16,
+  },
+  fieldInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontFamily: "Inter_400Regular",
+    fontSize: 15,
+  },
+  fieldPicker: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  fieldPickerText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 15,
+  },
+  industryList: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  industryOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  industryOptionText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 15,
   },
 });

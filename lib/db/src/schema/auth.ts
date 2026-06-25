@@ -29,6 +29,8 @@ export const usersTable = pgTable("users", {
   foundingMemberNumber: integer("founding_member_number"),
   referralCode: varchar("referral_code").unique(),
   referralCount: integer("referral_count").notNull().default(0),
+  industry: varchar("industry", { length: 100 }),
+  jobTitle: varchar("job_title", { length: 150 }),
   dateOfBirth: timestamp("date_of_birth", { withTimezone: false }),
   kinfolkQueryMonth: varchar("kinfolk_query_month", { length: 7 }),
   kinfolkQueriesThisMonth: integer("kinfolk_queries_this_month").notNull().default(0),
