@@ -106,6 +106,14 @@ export default function BusinessOwnerHome() {
       route: "/business-owner/identity",
     },
     {
+      id: "broadcasts",
+      icon: "send",
+      label: "Send Broadcast",
+      sub: "Notify followers — events, offers, updates & emergency alerts",
+      color: "#1A6B4A",
+      route: "/business-owner/broadcasts",
+    },
+    {
       id: "edit",
       icon: "edit-2",
       label: "Edit Business Profile",
