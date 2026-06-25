@@ -189,12 +189,18 @@ export default function BroadcastsScreen() {
                     <Text style={[styles.quotaTier, { color: colors.mutedForeground }]}>{TIER_LABELS[quota.tier] ?? quota.tier}</Text>
                   </View>
                   <View style={styles.quotaNumbers}>
-                    <Text style={[styles.quotaUsed, { color: quotaColor }]}>{quota.remaining}</Text>
-                    <Text style={[styles.quotaOf, { color: colors.mutedForeground }]}>/ {quota.limit} left</Text>
+                    {quota.tier === "enterprise" ? (
+                      <Text style={[styles.quotaUsed, { color: "#2D7A4F" }]}>∞</Text>
+                    ) : (
+                      <Text style={[styles.quotaUsed, { color: quotaColor }]}>{quota.remaining}</Text>
+                    )}
+                    <Text style={[styles.quotaOf, { color: colors.mutedForeground }]}>
+                      {quota.tier === "enterprise" ? "Unlimited" : `/ ${quota.limit} left`}
+                    </Text>
                   </View>
                 </View>
                 <View style={[styles.quotaTrack, { backgroundColor: colors.border }]}>
-                  <View style={[styles.quotaFill, { width: `${Math.round((quota.used / quota.limit) * 100)}%` as any, backgroundColor: quotaColor }]} />
+                  <View style={[styles.quotaFill, { width: quota.tier === "enterprise" ? "8%" : `${Math.round((quota.used / quota.limit) * 100)}%` as any, backgroundColor: quotaColor }]} />
                 </View>
                 {quota.remaining === 0 && (
                   <Text style={[styles.quotaHint, { color: "#D9534F" }]}>
@@ -293,7 +299,7 @@ export default function BroadcastsScreen() {
                       <View style={styles.stat}>
                         <Feather name="users" size={13} color={colors.mutedForeground} />
                         <Text style={[styles.statVal, { color: colors.foreground }]}>{b.recipientCount}</Text>
-                        <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Reached</Text>
+                        <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Eligible</Text>
                       </View>
                       <View style={styles.stat}>
                         <Feather name="bell" size={13} color={colors.mutedForeground} />
@@ -301,9 +307,11 @@ export default function BroadcastsScreen() {
                         <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Delivered</Text>
                       </View>
                       <View style={styles.stat}>
-                        <Feather name="eye" size={13} color={colors.mutedForeground} />
-                        <Text style={[styles.statVal, { color: colors.foreground }]}>{b.viewCount}</Text>
-                        <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Views</Text>
+                        <Feather name="percent" size={13} color={colors.mutedForeground} />
+                        <Text style={[styles.statVal, { color: colors.foreground }]}>
+                          {b.recipientCount > 0 ? `${Math.round((b.deliveredCount / b.recipientCount) * 100)}%` : "—"}
+                        </Text>
+                        <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Reach rate</Text>
                       </View>
                     </View>
                   </View>

@@ -4,6 +4,7 @@ import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   Linking,
   Platform,
@@ -240,12 +241,31 @@ export default function BusinessDetailScreen() {
           <TouchableOpacity
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              const becomingSaved = !saved;
               toggleSave(business.id);
+              if (becomingSaved) {
+                setTimeout(() => Alert.alert(
+                  "Saved! 🔖",
+                  `Customize what updates you get from ${business.name}?`,
+                  [
+                    { text: "Not now", style: "cancel" },
+                    { text: "Set up alerts →", onPress: () => router.push({ pathname: "/notification-prefs", params: { businessId: business.id, businessName: business.name } }) },
+                  ]
+                ), 400);
+              }
             }}
-            style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
+            style={[styles.iconBtn, { backgroundColor: saved ? "rgba(201,146,43,0.5)" : "rgba(0,0,0,0.45)" }]}
           >
             <Feather name="bookmark" size={20} color={saved ? "#C9922B" : "#FFFFFF"} />
           </TouchableOpacity>
+          {saved && (
+            <TouchableOpacity
+              onPress={() => router.push({ pathname: "/notification-prefs", params: { businessId: business.id, businessName: business.name } })}
+              style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
+            >
+              <Feather name="bell" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 

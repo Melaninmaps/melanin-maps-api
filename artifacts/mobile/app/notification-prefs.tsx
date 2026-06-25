@@ -164,7 +164,6 @@ export default function NotificationPrefsScreen() {
           Saving a business doesn't automatically subscribe you to everything. Choose exactly what you want to hear about.
         </Text>
 
-        {/* Notification Types */}
         <Text style={[styles.sectionLabel, { color: colors.foreground }]}>What would you like to hear about?</Text>
         {TYPE_OPTIONS.map(opt => {
           const active = prefs.enabledTypes.includes(opt.id);
@@ -187,7 +186,6 @@ export default function NotificationPrefsScreen() {
           );
         })}
 
-        {/* Frequency */}
         <Text style={[styles.sectionLabel, { color: colors.foreground, marginTop: 24 }]}>How often?</Text>
         {FREQUENCY_OPTIONS.map(opt => (
           <TouchableOpacity
@@ -203,7 +201,6 @@ export default function NotificationPrefsScreen() {
           </TouchableOpacity>
         ))}
 
-        {/* Pause */}
         <Text style={[styles.sectionLabel, { color: colors.foreground, marginTop: 24 }]}>
           {isPaused ? `⏸ Paused until ${pausedUntilFormatted}` : "Pause notifications"}
         </Text>

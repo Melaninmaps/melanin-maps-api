@@ -91,10 +91,18 @@ export default function BusinessDetailScreen() {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             toggleSave(business.id);
           }}
-          style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
+          style={[styles.iconBtn, { backgroundColor: saved ? "rgba(201,146,43,0.5)" : "rgba(0,0,0,0.45)" }]}
         >
           <Feather name="bookmark" size={20} color={saved ? "#C9922B" : "#FFFFFF"} />
         </TouchableOpacity>
+        {saved && (
+          <TouchableOpacity
+            onPress={() => router.push({ pathname: "/notification-prefs", params: { businessId: business.id, businessName: business.name } })}
+            style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
+          >
+            <Feather name="bell" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 30 }}>

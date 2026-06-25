@@ -544,14 +544,23 @@ export default function ProfileScreen() {
           </View>
         ) : (
           savedBusinesses.map((b) => (
-            <BusinessCard
-              key={b.id}
-              business={b}
-              onPress={() => router.push({ pathname: "/business/[id]", params: { id: b.id } })}
-              isSaved={isSaved(b.id)}
-              onToggleSave={() => toggleSave(b.id)}
-              warningCount={isWarned(b.name, b.city)}
-            />
+            <View key={b.id}>
+              <BusinessCard
+                business={b}
+                onPress={() => router.push({ pathname: "/business/[id]", params: { id: b.id } })}
+                isSaved={isSaved(b.id)}
+                onToggleSave={() => toggleSave(b.id)}
+                warningCount={isWarned(b.name, b.city)}
+              />
+              <TouchableOpacity
+                style={[styles.alertsRow, { borderColor: colors.border, backgroundColor: colors.card }]}
+                onPress={() => router.push({ pathname: "/notification-prefs", params: { businessId: b.id, businessName: b.name } })}
+              >
+                <Feather name="bell" size={13} color={colors.primary} />
+                <Text style={[styles.alertsRowTxt, { color: colors.primary }]}>Manage alerts from {b.name}</Text>
+                <Feather name="chevron-right" size={13} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
           ))
         )}
       </View>
@@ -897,6 +906,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderStyle: "dashed",
     gap: 8,
+  },
+  alertsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    marginTop: -2,
+    marginBottom: 8,
+  },
+  alertsRowTxt: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "600",
   },
   emptyText: {
     fontFamily: "Inter_600SemiBold",
