@@ -30,7 +30,7 @@ import { useGroups, type Group } from "@/hooks/useGroups";
 import { useAuth } from "@/lib/auth";
 import { UpgradeModal } from "@/components/UpgradeModal";
 
-const TABS = ["Feed", "Events", "Groups", "Resources", "Alerts", "Recommendations"];
+const TABS = ["Feed", "Videos", "Events", "Groups", "Resources", "Alerts", "Recommendations"];
 
 const CATEGORY_OPTIONS = [
   { value: "general", label: "Discussion" },
@@ -343,7 +343,87 @@ export default function CommunityScreen() {
         ))}
       </ScrollView>
 
-      {activeTab === "Events" ? (
+      {activeTab === "Videos" ? (
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: bottomPad + 40 }} showsVerticalScrollIndicator={false}>
+          {/* Hero entry card */}
+          <TouchableOpacity
+            style={[styles.videosHero, { backgroundColor: "#1A3B2B" }]}
+            activeOpacity={0.88}
+            onPress={() => router.push("/travel-videos")}
+          >
+            <View style={styles.videosHeroTop}>
+              <Text style={{ fontSize: 32 }}>🎥</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.videosHeroTitle}>Travel Videos</Text>
+                <Text style={styles.videosHeroSub}>
+                  Authentic stories from the community — not polished ads
+                </Text>
+              </View>
+              <Feather name="arrow-right" size={20} color="#C9922B" />
+            </View>
+            <View style={styles.videosDestRow}>
+              {["🇧🇷 Brazil", "🌆 Atlanta", "🇬🇭 Accra", "🗽 Harlem", "🇯🇲 Jamaica"].map((d) => (
+                <View key={d} style={styles.videosDestChip}>
+                  <Text style={styles.videosDestTxt}>{d}</Text>
+                </View>
+              ))}
+            </View>
+          </TouchableOpacity>
+
+          {/* Free vs Premium split */}
+          <View style={{ gap: 10 }}>
+            <Text style={[styles.videosSectionTitle, { color: colors.foreground }]}>What you can do</Text>
+            <View style={[styles.videosTierCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.videosTierHeader}>
+                <Text style={{ fontSize: 16 }}>👥</Text>
+                <Text style={[styles.videosTierName, { color: colors.foreground }]}>Community Member</Text>
+                <View style={[styles.videosFreeTag, { backgroundColor: colors.secondary }]}>
+                  <Text style={[styles.videosFreeTagTxt, { color: colors.mutedForeground }]}>Free</Text>
+                </View>
+              </View>
+              {["Upload up to 5 travel videos", "Upload photos", "Create posts & share travel experiences", "Appear in destination search results"].map((f, i) => (
+                <View key={i} style={styles.videosPerkRow}>
+                  <Feather name="check" size={13} color={colors.success} />
+                  <Text style={[styles.videosPerkTxt, { color: colors.mutedForeground }]}>{f}</Text>
+                </View>
+              ))}
+            </View>
+            <View style={[styles.videosTierCard, { backgroundColor: "#1A3B2B", borderColor: "#2D7A4F44" }]}>
+              <View style={styles.videosTierHeader}>
+                <Text style={{ fontSize: 16 }}>⭐</Text>
+                <Text style={[styles.videosTierName, { color: "#fff" }]}>Community Premium</Text>
+                <View style={[styles.videosPremiumTag, { backgroundColor: "#C9922B22", borderColor: "#C9922B44" }]}>
+                  <Text style={[styles.videosFreeTagTxt, { color: "#C9922B" }]}>$7.99/mo</Text>
+                </View>
+              </View>
+              {["Unlimited video uploads", "Longer videos (up to 10 min)", "Featured travel guides", "Creator analytics — views, likes, saves", "AI-generated captions & hashtags", "Destination collections", "Creator badge", "Priority placement in destination searches", "Eligible for future creator partnerships"].map((f, i) => (
+                <View key={i} style={styles.videosPerkRow}>
+                  <Feather name="check-circle" size={13} color="#C9922B" />
+                  <Text style={[styles.videosPerkTxt, { color: "#ffffffbb" }]}>{f}</Text>
+                </View>
+              ))}
+              <TouchableOpacity
+                style={[styles.videosUpgradeBtn, { backgroundColor: "#C9922B" }]}
+                onPress={() => router.push("/membership")}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.videosUpgradeTxt}>Start 90-day Free Trial</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* CTA to full screen */}
+          <TouchableOpacity
+            style={[styles.videosExploreBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/travel-videos")}
+            activeOpacity={0.8}
+          >
+            <Feather name="film" size={16} color={colors.primary} />
+            <Text style={[styles.videosExploreTxt, { color: colors.primary }]}>Browse all travel videos</Text>
+            <Feather name="arrow-right" size={16} color={colors.primary} />
+          </TouchableOpacity>
+        </ScrollView>
+      ) : activeTab === "Events" ? (
         <View style={{ flex: 1 }}>
           <View style={[styles.categoryScroll, { borderBottomColor: colors.border }]}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}>
@@ -898,4 +978,27 @@ const styles = StyleSheet.create({
   resCardDot: { width: 10, height: 10, borderRadius: 5, flexShrink: 0 },
   resCardName: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 14, lineHeight: 20 },
   resCardSub: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  videosHero: { borderRadius: 18, padding: 18, gap: 14 },
+  videosHeroTop: { flexDirection: "row", alignItems: "center", gap: 12 },
+  videosHeroTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#fff", marginBottom: 3 },
+  videosHeroSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.75)" },
+  videosDestRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  videosDestChip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.12)" },
+  videosDestTxt: { fontSize: 12, fontFamily: "Inter_500Medium", color: "#fff" },
+  videosSectionTitle: { fontSize: 15, fontFamily: "Inter_700Bold", marginBottom: 2 },
+  videosTierCard: { borderRadius: 14, borderWidth: 1, padding: 16, gap: 10 },
+  videosTierHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
+  videosTierName: { fontSize: 14, fontFamily: "Inter_700Bold", flex: 1 },
+  videosFreeTag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
+  videosFreeTagTxt: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  videosPremiumTag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, borderWidth: 1 },
+  videosPerkRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  videosPerkTxt: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
+  videosUpgradeBtn: { alignItems: "center", paddingVertical: 12, borderRadius: 10, marginTop: 4 },
+  videosUpgradeTxt: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" },
+  videosExploreBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    borderRadius: 12, borderWidth: 1, paddingVertical: 14,
+  },
+  videosExploreTxt: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
 });
