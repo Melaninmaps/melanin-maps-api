@@ -20,6 +20,8 @@ export interface WishlistItem {
   category: string | null;
   city: string | null;
   neighborhood: string | null;
+  country: string | null;
+  destinationType: string | null;
   description: string | null;
   mustTry: string | null;
   sessionId: string | null;
@@ -53,6 +55,8 @@ export function useWishlist() {
     category?: string | null;
     city?: string | null;
     neighborhood?: string | null;
+    country?: string | null;
+    destinationType?: string | null;
     description?: string | null;
     mustTry?: string | null;
     sessionId?: string | null;

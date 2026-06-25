@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  Platform, TextInput, Alert, ActivityIndicator,
+  Platform, TextInput, Alert, ActivityIndicator, Modal,
+  KeyboardAvoidingView, ScrollView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -29,15 +30,121 @@ function getCategoryColor(cat: string | null): string {
   return GOLD;
 }
 
-function groupByCity(items: WishlistItem[]): Array<{ city: string; items: WishlistItem[] }> {
+function groupItems(items: WishlistItem[]): Array<{ label: string; icon: "location" | "globe-outline"; items: WishlistItem[] }> {
   const map = new Map<string, WishlistItem[]>();
   for (const item of items) {
-    const key = item.city ?? "Unknown City";
+    let key: string;
+    if (item.destinationType === "destination") {
+      key = item.country ? `📍 ${item.country}` : item.city ? `📍 ${item.city}` : "📍 Destinations";
+    } else {
+      key = item.city ?? "Unknown City";
+    }
     const group = map.get(key) ?? [];
     group.push(item);
     map.set(key, group);
   }
-  return Array.from(map.entries()).map(([city, items]) => ({ city, items }));
+  return Array.from(map.entries()).map(([label, grpItems]) => ({
+    label,
+    icon: label.startsWith("📍") ? "globe-outline" : "location",
+    items: grpItems,
+  }));
+}
+
+function AddDestinationModal({
+  visible, onClose, onSave, colors,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onSave: (name: string, city: string, country: string) => void;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const [name, setName] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const reset = () => { setName(""); setCity(""); setCountry(""); setSaving(false); };
+
+  const handleSave = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    await onSave(name.trim(), city.trim(), country.trim());
+    reset();
+    onClose();
+  };
+
+  const handleClose = () => { reset(); onClose(); };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
+      <KeyboardAvoidingView style={modalStyles.overlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <TouchableOpacity style={modalStyles.backdrop} activeOpacity={1} onPress={handleClose} />
+        <View style={[modalStyles.sheet, { backgroundColor: colors.background }]}>
+          <View style={[modalStyles.handle, { backgroundColor: colors.border }]} />
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <Text style={[modalStyles.title, { color: colors.foreground }]}>Add a Destination</Text>
+            <Text style={[modalStyles.sub, { color: colors.mutedForeground }]}>
+              Save a city, state, region, or country you'd love to visit
+            </Text>
+
+            <Text style={[modalStyles.label, { color: colors.foreground }]}>
+              Destination name <Text style={{ color: colors.destructive }}>*</Text>
+            </Text>
+            <TextInput
+              style={[modalStyles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              placeholder="e.g. Lagos, Accra, New Orleans, Tokyo"
+              placeholderTextColor={colors.mutedForeground}
+              value={name}
+              onChangeText={setName}
+              autoFocus
+            />
+
+            <Text style={[modalStyles.label, { color: colors.foreground }]}>
+              City & State <Text style={[modalStyles.optional, { color: colors.mutedForeground }]}>(optional)</Text>
+            </Text>
+            <TextInput
+              style={[modalStyles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              placeholder="e.g. Atlanta, GA"
+              placeholderTextColor={colors.mutedForeground}
+              value={city}
+              onChangeText={setCity}
+            />
+
+            <Text style={[modalStyles.label, { color: colors.foreground }]}>
+              Country <Text style={[modalStyles.optional, { color: colors.mutedForeground }]}>(optional)</Text>
+            </Text>
+            <TextInput
+              style={[modalStyles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              placeholder="e.g. Ghana, Nigeria, Japan, USA"
+              placeholderTextColor={colors.mutedForeground}
+              value={country}
+              onChangeText={setCountry}
+            />
+
+            <View style={[modalStyles.hint, { backgroundColor: colors.secondary }]}>
+              <Ionicons name="globe-outline" size={14} color={colors.mutedForeground} />
+              <Text style={[modalStyles.hintText, { color: colors.mutedForeground }]}>
+                Destinations are grouped separately from businesses in your list
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={[modalStyles.saveBtn, { backgroundColor: name.trim() ? colors.primary : colors.muted }]}
+              onPress={handleSave}
+              disabled={!name.trim() || saving}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="bookmark" size={16} color={name.trim() ? colors.primaryForeground : colors.mutedForeground} />
+              <Text style={[modalStyles.saveBtnText, { color: name.trim() ? colors.primaryForeground : colors.mutedForeground }]}>
+                {saving ? "Saving…" : "Save Destination"}
+              </Text>
+            </TouchableOpacity>
+            <View style={{ height: 16 }} />
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
 }
 
 function WishlistCard({
@@ -51,10 +158,11 @@ function WishlistCard({
 }) {
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesText, setNotesText] = useState(item.notes ?? "");
-  const catColor = getCategoryColor(item.category);
+  const isDestination = item.destinationType === "destination";
+  const catColor = isDestination ? colors.primary : getCategoryColor(item.category);
 
   return (
-    <View style={[cardStyles.card, { backgroundColor: colors.card, borderColor: warningCount >= 3 ? "#7C2D1240" : colors.border }]}>
+    <View style={[cardStyles.card, { backgroundColor: colors.card, borderColor: warningCount >= 3 ? "#7C2D1240" : isDestination ? colors.primary + "40" : colors.border }]}>
       {warningCount >= 3 && (
         <View style={cardStyles.warningBanner}>
           <Feather name="alert-octagon" size={12} color="#7C2D12" />
@@ -62,12 +170,17 @@ function WishlistCard({
         </View>
       )}
       <View style={cardStyles.cardTop}>
-        {item.category && (
+        {isDestination ? (
+          <View style={[cardStyles.badge, { backgroundColor: colors.primary + "18" }]}>
+            <Ionicons name="globe-outline" size={11} color={colors.primary} />
+            <Text style={[cardStyles.badgeText, { color: colors.primary }]}>Destination</Text>
+          </View>
+        ) : item.category ? (
           <View style={[cardStyles.badge, { backgroundColor: catColor + "18" }]}>
             <Text style={[cardStyles.badgeText, { color: catColor }]}>{item.category}</Text>
           </View>
-        )}
-        {item.neighborhood && (
+        ) : null}
+        {!isDestination && item.neighborhood && (
           <Text style={[cardStyles.hood, { color: colors.mutedForeground }]}>
             <Ionicons name="location-outline" size={11} /> {item.neighborhood}
           </Text>
@@ -83,7 +196,16 @@ function WishlistCard({
 
       <Text style={[cardStyles.name, { color: colors.text }]}>{item.businessName}</Text>
 
-      {item.mustTry && (
+      {isDestination && (item.city || item.country) && (
+        <View style={cardStyles.locationRow}>
+          <Ionicons name="location-outline" size={13} color={colors.mutedForeground} />
+          <Text style={[cardStyles.locationText, { color: colors.mutedForeground }]}>
+            {[item.city, item.country].filter(Boolean).join(" · ")}
+          </Text>
+        </View>
+      )}
+
+      {!isDestination && item.mustTry && (
         <View style={[cardStyles.mustTry, { backgroundColor: GOLD + "12", borderColor: GOLD + "30" }]}>
           <Ionicons name="star" size={12} color={GOLD} />
           <Text style={[cardStyles.mustTryText, { color: colors.text }]}>
@@ -136,11 +258,13 @@ function WishlistCard({
 const cardStyles = StyleSheet.create({
   card: { borderRadius: 16, borderWidth: 1, padding: 14, marginBottom: 12 },
   cardTop: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
-  badge: { borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
+  badge: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
   badgeText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   hood: { fontFamily: "Inter_400Regular", fontSize: 11, flex: 1 },
-  deleteBtn: { padding: 2 },
-  name: { fontFamily: "Inter_700Bold", fontSize: 16, marginBottom: 8 },
+  deleteBtn: { padding: 2, marginLeft: "auto" },
+  name: { fontFamily: "Inter_700Bold", fontSize: 16, marginBottom: 6 },
+  locationRow: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 8 },
+  locationText: { fontFamily: "Inter_400Regular", fontSize: 12 },
   mustTry: { flexDirection: "row", alignItems: "flex-start", gap: 6, borderRadius: 8, borderWidth: 1, padding: 8, marginBottom: 8 },
   mustTryText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
   desc: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, marginBottom: 8 },
@@ -160,17 +284,34 @@ const cardStyles = StyleSheet.create({
   warningText: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#7C2D12", flex: 1 },
 });
 
+const modalStyles = StyleSheet.create({
+  overlay: { flex: 1, justifyContent: "flex-end" },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.5)" },
+  sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, maxHeight: "90%" },
+  handle: { width: 36, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 20 },
+  title: { fontFamily: "Inter_700Bold", fontSize: 20, marginBottom: 4 },
+  sub: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 20, marginBottom: 24 },
+  label: { fontFamily: "Inter_600SemiBold", fontSize: 14, marginBottom: 8 },
+  optional: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, fontFamily: "Inter_400Regular", marginBottom: 20 },
+  hint: { flexDirection: "row", alignItems: "flex-start", gap: 8, borderRadius: 10, padding: 12, marginBottom: 24 },
+  hintText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, flex: 1 },
+  saveBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 16, borderRadius: 14 },
+  saveBtnText: { fontFamily: "Inter_700Bold", fontSize: 16 },
+});
+
 export default function WishlistScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const { items, isLoading, load, removeItem, updateNotes } = useWishlist();
+  const { items, isLoading, load, addItem, removeItem, updateNotes } = useWishlist();
   const { isWarned } = useSpaceWarnings();
+  const [addDestModalOpen, setAddDestModalOpen] = useState(false);
 
   useEffect(() => { void load(); }, [load]);
 
   const handleDelete = useCallback((id: string) => {
-    Alert.alert("Remove from wishlist?", "This spot will be removed from your Trips I'd Love list.", [
+    Alert.alert("Remove from list?", "This will be removed from your Trips I'd Love list.", [
       { text: "Cancel", style: "cancel" },
       { text: "Remove", style: "destructive", onPress: () => { void removeItem(id); } },
     ]);
@@ -180,7 +321,23 @@ export default function WishlistScreen() {
     void updateNotes(id, notes);
   }, [updateNotes]);
 
-  const groups = groupByCity(items);
+  const handleAddDestination = useCallback(async (name: string, city: string, country: string) => {
+    await addItem({
+      businessName: name,
+      city: city || null,
+      country: country || null,
+      destinationType: "destination",
+    });
+  }, [addItem]);
+
+  const groups = groupItems(items);
+  const businessCount = items.filter((i) => i.destinationType !== "destination").length;
+  const destCount = items.filter((i) => i.destinationType === "destination").length;
+
+  const subtitle = [
+    businessCount > 0 && `${businessCount} spot${businessCount !== 1 ? "s" : ""}`,
+    destCount > 0 && `${destCount} destination${destCount !== 1 ? "s" : ""}`,
+  ].filter(Boolean).join(" · ") || "Nothing saved yet";
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -190,14 +347,21 @@ export default function WishlistScreen() {
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Trips I'd Love</Text>
-          <Text style={styles.headerSub}>{items.length} spot{items.length !== 1 ? "s" : ""} saved</Text>
+          <Text style={styles.headerSub}>{subtitle}</Text>
         </View>
         <TouchableOpacity
+          onPress={() => setAddDestModalOpen(true)}
+          style={[styles.headerBtn, { backgroundColor: "#ffffff22" }]}
+        >
+          <Ionicons name="globe-outline" size={15} color="#fff" />
+          <Text style={styles.headerBtnText}>Add Place</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           onPress={() => router.push("/travel" as any)}
-          style={[styles.kinfolkBtn, { backgroundColor: "#ffffff22" }]}
+          style={[styles.headerBtn, { backgroundColor: "#ffffff22" }]}
         >
           <Ionicons name="sparkles" size={15} color="#fff" />
-          <Text style={styles.kinfolkBtnText}>KinfolkAI</Text>
+          <Text style={styles.headerBtnText}>KinfolkAI</Text>
         </TouchableOpacity>
       </View>
 
@@ -212,29 +376,40 @@ export default function WishlistScreen() {
           </View>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>Nothing saved yet</Text>
           <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-            When KinfolkAI recommends a spot you'd love to visit, tap the bookmark icon to save it here.
+            Save businesses from KinfolkAI™ or add any city, country, or destination you'd love to visit.
           </Text>
-          <TouchableOpacity
-            style={[styles.emptyBtn, { backgroundColor: colors.primary }]}
-            onPress={() => router.push("/travel" as any)}
-          >
-            <Ionicons name="sparkles" size={16} color="#fff" />
-            <Text style={styles.emptyBtnText}>Ask KinfolkAI™</Text>
-          </TouchableOpacity>
+          <View style={styles.emptyBtns}>
+            <TouchableOpacity
+              style={[styles.emptyBtn, { backgroundColor: colors.primary }]}
+              onPress={() => setAddDestModalOpen(true)}
+            >
+              <Ionicons name="globe-outline" size={16} color="#fff" />
+              <Text style={styles.emptyBtnText}>Add a Place</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.emptyBtn, { backgroundColor: colors.secondary }]}
+              onPress={() => router.push("/travel" as any)}
+            >
+              <Ionicons name="sparkles" size={16} color={colors.primary} />
+              <Text style={[styles.emptyBtnText, { color: colors.primary }]}>Ask KinfolkAI™</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       ) : (
         <FlatList
           data={groups}
-          keyExtractor={(g) => g.city}
+          keyExtractor={(g) => g.label}
           contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item: group }) => (
             <View>
               <View style={styles.cityHeader}>
-                <Ionicons name="location" size={15} color={colors.primary} />
-                <Text style={[styles.cityName, { color: colors.text }]}>{group.city}</Text>
+                <Ionicons name={group.icon} size={15} color={colors.primary} />
+                <Text style={[styles.cityName, { color: colors.text }]}>
+                  {group.label.replace(/^📍 /, "")}
+                </Text>
                 <Text style={[styles.cityCount, { color: colors.mutedForeground }]}>
-                  {group.items.length} spot{group.items.length !== 1 ? "s" : ""}
+                  {group.items.length} {group.icon === "globe-outline" ? "destination" : "spot"}{group.items.length !== 1 ? "s" : ""}
                 </Text>
               </View>
               {group.items.map((item) => (
@@ -246,28 +421,48 @@ export default function WishlistScreen() {
               ))}
             </View>
           )}
+          ListFooterComponent={() => (
+            <TouchableOpacity
+              style={[styles.addDestBtn, { borderColor: colors.primary + "40", backgroundColor: colors.primary + "08" }]}
+              onPress={() => setAddDestModalOpen(true)}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
+              <Text style={[styles.addDestBtnText, { color: colors.primary }]}>Add a destination</Text>
+            </TouchableOpacity>
+          )}
         />
       )}
+
+      <AddDestinationModal
+        visible={addDestModalOpen}
+        onClose={() => setAddDestModalOpen(false)}
+        onSave={handleAddDestination}
+        colors={colors}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, paddingBottom: 14 },
+  header: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, paddingBottom: 14 },
   backBtn: { padding: 4 },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 20, color: "#fff" },
   headerSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: "#ffffff99" },
-  kinfolkBtn: { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
-  kinfolkBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" },
+  headerBtn: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 7 },
+  headerBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#fff" },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
   emptyIcon: { width: 88, height: 88, borderRadius: 44, alignItems: "center", justifyContent: "center", marginBottom: 20 },
   emptyTitle: { fontFamily: "Inter_700Bold", fontSize: 22, marginBottom: 10, textAlign: "center" },
   emptySub: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 22, textAlign: "center", marginBottom: 28 },
-  emptyBtn: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 14, paddingHorizontal: 24, paddingVertical: 14 },
-  emptyBtnText: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#fff" },
+  emptyBtns: { flexDirection: "row", gap: 12 },
+  emptyBtn: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 14, paddingHorizontal: 20, paddingVertical: 14 },
+  emptyBtnText: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#fff" },
   cityHeader: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10, marginTop: 4 },
   cityName: { fontFamily: "Inter_700Bold", fontSize: 16, flex: 1 },
   cityCount: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  addDestBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1.5, borderStyle: "dashed", borderRadius: 14, paddingVertical: 14, marginTop: 8 },
+  addDestBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
 });

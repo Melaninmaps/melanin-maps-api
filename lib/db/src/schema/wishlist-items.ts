@@ -10,6 +10,8 @@ export const wishlistItemsTable = pgTable("wishlist_items", {
   category: varchar("category", { length: 100 }),
   city: varchar("city", { length: 100 }),
   neighborhood: varchar("neighborhood", { length: 100 }),
+  country: varchar("country", { length: 100 }),
+  destinationType: varchar("destination_type", { length: 30 }).default("business"),
   description: text("description"),
   mustTry: text("must_try"),
   sessionId: varchar("session_id"),
