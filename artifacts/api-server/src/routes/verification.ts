@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { db, verificationRequestsTable, businessClaimsTable, businessesTable } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
 import { objectStorageClient } from "../lib/objectStorage";
+import { createVerificationEnvelope } from "../lib/docusign";
 
 const router: IRouter = Router();
 
@@ -149,6 +150,24 @@ router.post("/verification/submit", async (req: any, res: Response): Promise<voi
       certificationNumber: certificationNumber?.trim() || null,
     }).returning();
     res.status(201).json({ request, verificationLevel });
+
+    // Async: send verification certification via DocuSign — non-fatal if it fails
+    if (req.user?.id && submitterEmail) {
+      void (async () => {
+        try {
+          const domain = process.env.REPLIT_DOMAINS?.split(",")[0] ?? "";
+          await createVerificationEnvelope({
+            businessName: businessName.trim(),
+            ownerName: ownerName.trim(),
+            signerEmail: submitterEmail.trim(),
+            clientUserId: req.user!.id,
+            returnUrl: `https://${domain}/api/docusign/signed?type=verification`,
+          });
+        } catch (dsErr) {
+          req.log?.error?.({ dsErr }, "DocuSign verification cert async trigger failed — non-fatal");
+        }
+      })();
+    }
   } catch (err: any) {
     req.log.error({ err }, "Failed to submit verification request");
     res.status(500).json({ error: "Failed to submit verification request" });

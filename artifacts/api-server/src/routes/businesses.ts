@@ -1,7 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable, businessProfileViewsTable, userSettingsTable } from "@workspace/db";
+import { db, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable } from "@workspace/db";
 import { eq, and, or, ilike, desc, sql } from "drizzle-orm";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
+import { createFoundingAgreementEnvelope } from "../lib/docusign";
 
 const router: IRouter = Router();
 
@@ -392,6 +393,36 @@ router.patch("/admin/businesses/:id/founding-status", async (req: Request, res: 
 
     if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
     res.json(biz);
+
+    // Async: send founding agreement via DocuSign when founding is granted
+    if (founding && biz.foundingNumber) {
+      void (async () => {
+        try {
+          const [fullBiz] = await db
+            .select({ submittedById: businessesTable.submittedById })
+            .from(businessesTable).where(eq(businessesTable.id, biz.id)).limit(1);
+          if (!fullBiz?.submittedById) return;
+          const [owner] = await db
+            .select({ email: usersTable.email, firstName: usersTable.firstName, lastName: usersTable.lastName })
+            .from(usersTable).where(eq(usersTable.id, fullBiz.submittedById)).limit(1);
+          if (!owner?.email) return;
+          const ownerName = [owner.firstName, owner.lastName].filter(Boolean).join(" ") || owner.email;
+          const domain = process.env.REPLIT_DOMAINS?.split(",")[0] ?? "";
+          const returnUrl = `https://${domain}/api/docusign/signed?type=founding_agreement&businessId=${biz.id}`;
+          await createFoundingAgreementEnvelope({
+            businessId: biz.id,
+            businessName: biz.name,
+            ownerName,
+            foundingNumber: biz.foundingNumber!,
+            signerEmail: owner.email,
+            clientUserId: fullBiz.submittedById,
+            returnUrl,
+          });
+        } catch (dsErr) {
+          req.log.error({ dsErr }, "DocuSign founding agreement async trigger failed — non-fatal");
+        }
+      })();
+    }
   } catch (err) {
     req.log.error({ err }, "Failed to update founding status");
     res.status(500).json({ error: "Failed to update founding status" });

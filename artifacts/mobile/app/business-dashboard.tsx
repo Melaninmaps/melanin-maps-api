@@ -184,6 +184,7 @@ export default function BusinessDashboardScreen() {
   const [policyResult, setPolicyResult] = useState<"success" | "error" | null>(null);
   const [sellerAgreementAccepted, setSellerAgreementAccepted] = useState(false);
   const [showAgreementModal, setShowAgreementModal] = useState(false);
+  const [dsSigningLoading, setDsSigningLoading] = useState(false);
   const [marketplaceTier, setMarketplaceTier] = useState<Record<string, unknown> | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
@@ -1097,12 +1098,46 @@ export default function BusinessDashboardScreen() {
                   Before listing products, review and accept the Marketplace Seller Agreement. It covers your responsibilities for product quality, fulfillment, taxes, and customer service.
                 </Text>
                 <TouchableOpacity
-                  style={[styles.paywallBtn, { backgroundColor: "#3B1F0E" }]}
+                  style={[styles.paywallBtn, { backgroundColor: "#3B1F0E" }, dsSigningLoading && { opacity: 0.6 }]}
                   activeOpacity={0.85}
+                  disabled={dsSigningLoading}
+                  onPress={async () => {
+                    if (!business?.id) return;
+                    setDsSigningLoading(true);
+                    try {
+                      const token = await SecureStore.getItemAsync("auth_session_token");
+                      const resp = await fetch(`${getApiBase()}/api/docusign/seller-agreement`, {
+                        method: "POST",
+                        headers: { Authorization: `Bearer ${token ?? ""}`, "Content-Type": "application/json" },
+                        body: JSON.stringify({ businessId: business.id }),
+                      });
+                      const data = await resp.json();
+                      if (data.alreadySigned) { setSellerAgreementAccepted(true); return; }
+                      if (data.signingUrl) {
+                        await Linking.openURL(data.signingUrl);
+                      } else {
+                        Alert.alert("Error", data.error ?? "Could not open agreement. Please try again.");
+                      }
+                    } catch {
+                      Alert.alert("Error", "Could not start signing. Please check your connection and try again.");
+                    } finally {
+                      setDsSigningLoading(false);
+                    }
+                  }}
+                >
+                  {dsSigningLoading
+                    ? <ActivityIndicator size="small" color="#fff" />
+                    : <Feather name="external-link" size={15} color="#FFF" />}
+                  <Text style={styles.paywallBtnTxt}>{dsSigningLoading ? "Opening…" : "Sign with DocuSign"}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={{ alignSelf: "center", marginTop: 10, paddingVertical: 6 }}
+                  activeOpacity={0.7}
                   onPress={() => setShowAgreementModal(true)}
                 >
-                  <Feather name="file-text" size={15} color="#FFF" />
-                  <Text style={styles.paywallBtnTxt}>Review & Accept Agreement</Text>
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "#3B1F0E88", textDecorationLine: "underline" }}>
+                    Review & accept in-app instead
+                  </Text>
                 </TouchableOpacity>
               </View>
             ) : !connectStatus?.onboarded ? (
