@@ -164,7 +164,7 @@ export function VideoDetailModal({ visible, video, onClose }: Props) {
                 <View style={[styles.policyBar, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                   <Feather name="shield" size={13} color={colors.mutedForeground} />
                   <Text style={[styles.policyTxt, { color: colors.mutedForeground }]}>
-                    This is community content. Businesses cannot remove videos — they may respond publicly, report to our moderation team, or request a formal review.
+                    This is community content. Businesses cannot pay to remove or suppress videos. They may respond publicly, report to our moderation team, or request a formal review.
                   </Text>
                 </View>
 
