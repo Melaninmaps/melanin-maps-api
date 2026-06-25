@@ -5,7 +5,27 @@ import { getUncachableStripeClient } from "../stripeClient";
 
 const router: IRouter = Router();
 
-const PLATFORM_FEE_PERCENT = 0.05;
+/**
+ * Tiered platform fee on each transaction:
+ *   < $25       → 3%
+ *   $25–$250    → 6%
+ *   > $250      → 5%
+ *
+ * priceInCents — full transaction total (unit price × quantity) in cents
+ * returns the fee amount in cents, rounded to the nearest cent
+ */
+function platformFee(totalCents: number): number {
+  const totalDollars = totalCents / 100;
+  let rate: number;
+  if (totalDollars < 25) {
+    rate = 0.03;
+  } else if (totalDollars <= 250) {
+    rate = 0.06;
+  } else {
+    rate = 0.05;
+  }
+  return Math.round(totalCents * rate);
+}
 
 async function requireBusinessOwner(req: Request, res: Response, businessId: string): Promise<typeof businessesTable.$inferSelect | null> {
   if (!req.user?.id) {
@@ -289,7 +309,7 @@ router.post("/connect/listings/:id/checkout", async (req: Request, res: Response
   try {
     const stripe = await getUncachableStripeClient();
     const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(",")[0]}`;
-    const applicationFeeAmount = Math.round(listing.priceInCents * quantity * PLATFORM_FEE_PERCENT);
+    const applicationFeeAmount = platformFee(listing.priceInCents * quantity);
 
     const session = await stripe.checkout.sessions.create(
       {
