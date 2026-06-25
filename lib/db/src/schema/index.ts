@@ -48,3 +48,4 @@ export * from "./business-promotions";
 export * from "./trip-journals";
 export * from "./plate-passes";
 export * from "./community-lists";
+export * from "./challenge-applications";

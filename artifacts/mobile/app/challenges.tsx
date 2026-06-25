@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
+import { BusinessChallengeApplyModal } from "@/components/BusinessChallengeApplyModal";
 
 type Challenge = {
   id: string;
@@ -93,6 +94,7 @@ export default function ChallengesScreen() {
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   const [challenges, setChallenges] = useState(MOCK_CHALLENGES);
+  const [applyModal, setApplyModal] = useState<{ challengeId: string; challengeName: string } | null>(null);
 
   const handleJoin = (id: string) => {
     if (!isAuthenticated) { router.push("/login" as never); return; }
@@ -183,9 +185,39 @@ export default function ChallengesScreen() {
               </Text>
               {!ch.joined && <Feather name="arrow-right" size={16} color="#FFF" />}
             </TouchableOpacity>
+
+            {/* Business owner CTA */}
+            <TouchableOpacity
+              style={[styles.bizApplyBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+              onPress={() => {
+                if (!isAuthenticated) { router.push("/login" as never); return; }
+                if (Platform.OS !== "web") Haptics.selectionAsync();
+                setApplyModal({ challengeId: ch.id, challengeName: ch.title });
+              }}
+              activeOpacity={0.8}
+            >
+              <Feather name="briefcase" size={13} color={colors.mutedForeground} />
+              <Text style={[styles.bizApplyTxt, { color: colors.mutedForeground }]}>Own a business? Register it for this challenge</Text>
+              <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
+            </TouchableOpacity>
           </View>
         ))}
+
+        {/* Info card */}
+        <View style={[styles.infoCard, { backgroundColor: "#3B1F0E" }]}>
+          <Text style={styles.infoEmoji}>💡</Text>
+          <Text style={styles.infoTxt}>Business registrations are reviewed by the Mapping with Melanin™ team before approval. You'll be notified by email within 2–3 business days.</Text>
+        </View>
       </ScrollView>
+
+      {applyModal && (
+        <BusinessChallengeApplyModal
+          visible={!!applyModal}
+          challengeId={applyModal.challengeId}
+          challengeName={applyModal.challengeName}
+          onClose={() => setApplyModal(null)}
+        />
+      )}
     </View>
   );
 }
@@ -222,4 +254,9 @@ const styles = StyleSheet.create({
   rewardTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   joinBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 13, borderRadius: 12 },
   joinBtnTxt: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  bizApplyBtn: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
+  bizApplyTxt: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular" },
+  infoCard: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderRadius: 14, padding: 14 },
+  infoEmoji: { fontSize: 18, marginTop: 1 },
+  infoTxt: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.8)", lineHeight: 18 },
 });

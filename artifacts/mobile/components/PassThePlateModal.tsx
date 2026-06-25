@@ -17,6 +17,21 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
 
+const AUTH_TOKEN_KEY = "auth_session_token";
+
+async function getToken(): Promise<string | null> {
+  try {
+    if (Platform.OS === "web") return null;
+    const { getItemAsync } = await import("expo-secure-store");
+    return await getItemAsync(AUTH_TOKEN_KEY);
+  } catch { return null; }
+}
+
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
+
 type ShareType = { id: string; emoji: string; label: string; sub: string };
 
 const SHARE_TYPES: ShareType[] = [
@@ -61,11 +76,15 @@ export function PassThePlateModal({ visible, businessId, businessName, onClose, 
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSaving(true);
     try {
+      const token = await getToken();
+      const apiBase = getApiBase();
+      const authHeaders: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) authHeaders["Authorization"] = `Bearer ${token}`;
       await Promise.all(
         selected.map((shareType) =>
-          fetch("/api/plate-passes", {
+          fetch(`${apiBase}/api/plate-passes`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: authHeaders,
             body: JSON.stringify({ businessId, shareType, message: message.trim() || null }),
           })
         )

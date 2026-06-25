@@ -1,6 +1,19 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
+
+const AUTH_TOKEN_KEY = "auth_session_token";
+async function getToken(): Promise<string | null> {
+  try {
+    if (Platform.OS === "web") return null;
+    const { getItemAsync } = await import("expo-secure-store");
+    return await getItemAsync(AUTH_TOKEN_KEY);
+  } catch { return null; }
+}
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
 import {
   FlatList,
   Platform,
@@ -68,9 +81,9 @@ export default function CommunityListsScreen() {
 
   const categories = ["All", "Food", "Culture", "Travel", "Family", "Wellness"];
 
-  const load = useCallback(async (silent = false) => {
+  const load = useCallback(async (_silent = false) => {
     try {
-      const res = await fetch("/api/lists");
+      const res = await fetch(`${getApiBase()}/api/lists`);
       if (res.ok) {
         const data = await res.json() as { lists: CommunityList[] };
         if (data.lists.length > 0) setLists(data.lists);
@@ -85,7 +98,12 @@ export default function CommunityListsScreen() {
   const handleSave = async (id: number) => {
     if (!isAuthenticated) { router.push("/login" as never); return; }
     setSaved(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-    try { await fetch(`/api/lists/${id}/save`, { method: "POST" }); } catch {}
+    try {
+      const token = await getToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      await fetch(`${getApiBase()}/api/lists/${id}/save`, { method: "POST", headers });
+    } catch {}
   };
 
   const filtered = activeCategory === "All" ? lists : lists.filter(l => l.category === activeCategory);

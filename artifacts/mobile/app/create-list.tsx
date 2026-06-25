@@ -2,6 +2,19 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
+
+const AUTH_TOKEN_KEY = "auth_session_token";
+async function getToken(): Promise<string | null> {
+  try {
+    if (Platform.OS === "web") return null;
+    const { getItemAsync } = await import("expo-secure-store");
+    return await getItemAsync(AUTH_TOKEN_KEY);
+  } catch { return null; }
+}
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
 import {
   Alert,
   Platform,
@@ -40,9 +53,12 @@ export default function CreateListScreen() {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSaving(true);
     try {
-      const res = await fetch("/api/lists", {
+      const token = await getToken();
+      const authHeaders: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) authHeaders["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${getApiBase()}/api/lists`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders,
         body: JSON.stringify({ title: title.trim(), description: description.trim() || null, category: category || null, coverEmoji: emoji, isPublic }),
       });
       if (res.ok) {

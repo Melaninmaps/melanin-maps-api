@@ -201,12 +201,17 @@ function VideoTile({
         <Text style={[styles.tileTitle, { color: colors.foreground }]} numberOfLines={2}>
           {video.title}
         </Text>
-        <View style={styles.tileCreatorRow}>
+        <TouchableOpacity
+          style={styles.tileCreatorRow}
+          onPress={() => router.push({ pathname: "/creator-profile", params: { handle: video.creatorHandle } } as never)}
+          activeOpacity={0.7}
+        >
           <View style={[styles.creatorDot, { backgroundColor: video.thumbColor }]} />
           <Text style={[styles.tileCreator, { color: colors.mutedForeground }]} numberOfLines={1}>
             {video.creator}
           </Text>
-        </View>
+          <Feather name="chevron-right" size={11} color={colors.mutedForeground} />
+        </TouchableOpacity>
         <View style={styles.tileStats}>
           <Feather name="eye" size={11} color={colors.mutedForeground} />
           <Text style={[styles.tileStat, { color: colors.mutedForeground }]}>{video.views}</Text>

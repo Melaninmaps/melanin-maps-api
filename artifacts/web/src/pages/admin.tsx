@@ -53,7 +53,24 @@ type AdminBusiness = {
   } | null;
 };
 
-type Tab = "waitlist" | "users" | "businesses" | "members" | "reviews" | "reports";
+type Tab = "waitlist" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges";
+
+type ChallengeApplicationRow = {
+  id: number;
+  businessId: string;
+  businessName: string;
+  businessCity: string | null;
+  businessCategory: string | null;
+  challengeId: string;
+  challengeName: string;
+  ownerName: string | null;
+  ownerEmail: string | null;
+  message: string | null;
+  status: string;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  appliedAt: string;
+};
 
 type AdminReview = {
   id: string;
@@ -217,6 +234,7 @@ export default function Admin() {
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [reports, setReports] = useState<ContentReportRow[]>([]);
+  const [challengeApps, setChallengeApps] = useState<ChallengeApplicationRow[]>([]);
   const [memberSearch, setMemberSearch] = useState("");
   const [editingMember, setEditingMember] = useState<string | null>(null);
   const [memberEdit, setMemberEdit] = useState<{ memberType?: string; foundingMemberNumber?: string; trialEndsAt?: string }>({});
@@ -280,9 +298,16 @@ export default function Admin() {
       .catch(() => {});
   }, []);
 
+  const loadChallengeApps = useCallback(() => {
+    return fetch(`${BASE}api/admin/challenge-applications`, { credentials: "include" })
+      .then(r => r.json())
+      .then(data => { setChallengeApps(data.applications ?? []); setLastRefreshed(new Date()); })
+      .catch(() => {});
+  }, []);
+
   const refreshAll = useCallback(() => {
-    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses(), loadMembers(), loadReviews(), loadReports()]);
-  }, [loadWaitlist, loadUsers, loadBusinesses, loadMembers, loadReviews, loadReports]);
+    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses(), loadMembers(), loadReviews(), loadReports(), loadChallengeApps()]);
+  }, [loadWaitlist, loadUsers, loadBusinesses, loadMembers, loadReviews, loadReports, loadChallengeApps]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -664,6 +689,18 @@ export default function Admin() {
               {reports.filter(r => r.status === "pending").length > 0 && (
                 <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">
                   {reports.filter(r => r.status === "pending").length} pending
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setTab("challenges")}
+              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "challenges" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
+            >
+              <Award className="w-4 h-4" />
+              Challenges
+              {challengeApps.filter(a => a.status === "pending").length > 0 && (
+                <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                  {challengeApps.filter(a => a.status === "pending").length} pending
                 </span>
               )}
             </button>
@@ -1430,6 +1467,166 @@ export default function Admin() {
                                 <Check className="w-3 h-3" />
                               </Button>
                             </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Challenges tab ─────────────────────────────────────────────── */}
+        {tab === "challenges" && (
+          <div className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-[#3A1F0E]">Business Challenge Applications</h2>
+                <p className="text-[#3A1F0E]/60 text-sm mt-0.5">Review businesses applying to be featured in community challenges</p>
+              </div>
+              <div className="flex gap-2 text-sm">
+                <span className="px-2 py-1 bg-amber-100 text-amber-700 font-bold rounded-lg">{challengeApps.filter(a => a.status === "pending").length} pending</span>
+                <span className="px-2 py-1 bg-green-100 text-green-700 font-bold rounded-lg">{challengeApps.filter(a => a.status === "approved").length} approved</span>
+                <span className="px-2 py-1 bg-red-100 text-red-700 font-bold rounded-lg">{challengeApps.filter(a => a.status === "rejected").length} rejected</span>
+              </div>
+            </div>
+
+            {challengeApps.length === 0 ? (
+              <div className="text-center py-16 text-[#3A1F0E]/40">
+                <Award className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="font-semibold">No applications yet</p>
+                <p className="text-sm mt-1">When businesses apply to join challenges, they'll appear here.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-[#E8D5B7]">
+                <table className="w-full text-sm">
+                  <thead className="bg-[#FAF6EF] border-b border-[#E8D5B7]">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-bold text-[#3A1F0E]/70">Business</th>
+                      <th className="px-4 py-3 text-left font-bold text-[#3A1F0E]/70">Challenge</th>
+                      <th className="px-4 py-3 text-left font-bold text-[#3A1F0E]/70">Contact</th>
+                      <th className="px-4 py-3 text-left font-bold text-[#3A1F0E]/70">Message</th>
+                      <th className="px-4 py-3 text-left font-bold text-[#3A1F0E]/70">Status</th>
+                      <th className="px-4 py-3 text-left font-bold text-[#3A1F0E]/70">Applied</th>
+                      <th className="px-4 py-3 text-left font-bold text-[#3A1F0E]/70">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E8D5B7]/60">
+                    {challengeApps.map((app) => (
+                      <tr key={app.id} className="hover:bg-[#FAF6EF]/50 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-[#3A1F0E]">{app.businessName}</div>
+                          {(app.businessCity || app.businessCategory) && (
+                            <div className="text-[#3A1F0E]/50 text-xs mt-0.5">
+                              {[app.businessCategory, app.businessCity].filter(Boolean).join(" · ")}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#CA922B]/10 text-[#CA922B] text-xs font-bold">
+                            🏆 {app.challengeName}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {app.ownerName && <div className="text-[#3A1F0E] text-xs font-medium">{app.ownerName}</div>}
+                          {app.ownerEmail && (
+                            <a href={`mailto:${app.ownerEmail}`} className="text-blue-600 hover:underline text-xs">{app.ownerEmail}</a>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 max-w-[200px]">
+                          {app.message ? (
+                            <p className="text-[#3A1F0E]/70 text-xs line-clamp-2">{app.message}</p>
+                          ) : (
+                            <span className="text-[#3A1F0E]/30 text-xs italic">No message</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {app.status === "approved" && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                              <Check className="w-3 h-3" /> Approved
+                            </span>
+                          )}
+                          {app.status === "rejected" && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold">
+                              <X className="w-3 h-3" /> Rejected
+                            </span>
+                          )}
+                          {app.status === "pending" && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
+                              <Clock className="w-3 h-3" /> Pending
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-[#3A1F0E]/50 text-xs whitespace-nowrap">
+                          {new Date(app.appliedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </td>
+                        <td className="px-4 py-3">
+                          {app.status === "pending" && (
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={updating === String(app.id) + "-reject"}
+                                onClick={async () => {
+                                  setUpdating(String(app.id) + "-reject");
+                                  await fetch(`${BASE}api/admin/challenge-applications/${app.id}`, {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    credentials: "include",
+                                    body: JSON.stringify({ status: "rejected" }),
+                                  });
+                                  setChallengeApps(prev => prev.map(a => a.id === app.id ? { ...a, status: "rejected" } : a));
+                                  setUpdating(null);
+                                }}
+                                className="h-7 px-2 rounded-full text-xs border-[#3A1F0E]/20 text-[#3A1F0E]/60 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                title="Reject"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                disabled={updating === String(app.id) + "-approve"}
+                                onClick={async () => {
+                                  setUpdating(String(app.id) + "-approve");
+                                  await fetch(`${BASE}api/admin/challenge-applications/${app.id}`, {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    credentials: "include",
+                                    body: JSON.stringify({ status: "approved" }),
+                                  });
+                                  setChallengeApps(prev => prev.map(a => a.id === app.id ? { ...a, status: "approved" } : a));
+                                  setUpdating(null);
+                                }}
+                                className="h-7 px-2 rounded-full text-xs bg-green-600 hover:bg-green-700 text-white"
+                                title="Approve"
+                              >
+                                <Check className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          )}
+                          {app.status !== "pending" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={updating === String(app.id) + "-reset"}
+                              onClick={async () => {
+                                setUpdating(String(app.id) + "-reset");
+                                await fetch(`${BASE}api/admin/challenge-applications/${app.id}`, {
+                                  method: "PATCH",
+                                  headers: { "Content-Type": "application/json" },
+                                  credentials: "include",
+                                  body: JSON.stringify({ status: "pending" }),
+                                });
+                                setChallengeApps(prev => prev.map(a => a.id === app.id ? { ...a, status: "pending" } : a));
+                                setUpdating(null);
+                              }}
+                              className="h-7 px-2 rounded-full text-xs border-[#3A1F0E]/20 text-[#3A1F0E]/60"
+                              title="Reset to pending"
+                            >
+                              Reset
+                            </Button>
                           )}
                         </td>
                       </tr>
