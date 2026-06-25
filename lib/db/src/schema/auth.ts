@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, index, integer, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, numeric, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const sessionsTable = pgTable(
@@ -34,6 +34,12 @@ export const usersTable = pgTable("users", {
   dateOfBirth: timestamp("date_of_birth", { withTimezone: false }),
   kinfolkQueryMonth: varchar("kinfolk_query_month", { length: 7 }),
   kinfolkQueriesThisMonth: integer("kinfolk_queries_this_month").notNull().default(0),
+  trustLevel: integer("trust_level").notNull().default(1),
+  reputationScore: integer("reputation_score").notNull().default(0),
+  identityVerified: boolean("identity_verified").notNull().default(false),
+  identityVerifiedAt: timestamp("identity_verified_at", { withTimezone: true }),
+  policyViolationsCount: integer("policy_violations_count").notNull().default(0),
+  helpfulReviewsCount: integer("helpful_reviews_count").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

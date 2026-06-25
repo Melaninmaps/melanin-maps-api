@@ -32,6 +32,7 @@ import { useSpaceWarnings } from "@/hooks/useSpaceWarnings";
 import { BadgeSection } from "@/components/BadgeSection";
 import { MilestoneSection } from "@/components/MilestoneSection";
 import { PointsRedemptionModal } from "@/components/PointsRedemptionModal";
+import { TrustLevelCard } from "@/components/TrustBadge";
 
 const SETTINGS = [
   { icon: "map" as const, label: "Trip Planner", sub: "Chat with KinfolkAI™ for travel picks", route: "/travel" as const },
@@ -101,6 +102,16 @@ export default function ProfileScreen() {
   const [allTopics, setAllTopics] = useState<{ id: string; label: string; emoji: string; description: string }[]>([]);
   const [myTopicIds, setMyTopicIds] = useState<string[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
+  const [trustData, setTrustData] = useState<{
+    trustLevel: 1 | 2 | 3 | 4;
+    reputationScore: number;
+    helpfulReviewsCount: number;
+    progress: {
+      current: { label: string; description: string; badge: string };
+      next: { label: string } | null;
+      requirements: { label: string; met: boolean }[];
+    };
+  } | null>(null);
 
   const getApiBase = () =>
     process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
@@ -188,7 +199,32 @@ export default function ProfileScreen() {
     } catch { /* silent */ } finally { setTopicsLoading(false); }
   }, [isAuthenticated]);
 
+  const loadTrust = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const apiBase = getApiBase();
+      const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
+      const res = await fetch(`${apiBase}/api/users/me/trust`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        const d = await res.json() as {
+          trustLevel: 1 | 2 | 3 | 4;
+          reputationScore: number;
+          helpfulReviewsCount: number;
+          progress: {
+            current: { label: string; description: string; badge: string };
+            next: { label: string } | null;
+            requirements: { label: string; met: boolean }[];
+          };
+        };
+        setTrustData(d);
+      }
+    } catch { /* silent */ }
+  }, [isAuthenticated]);
+
   useEffect(() => { void loadTopics(); }, [loadTopics]);
+  useEffect(() => { void loadTrust(); }, [loadTrust]);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -377,6 +413,18 @@ export default function ProfileScreen() {
 
       {isAuthenticated && (
         <BadgeSection savedCount={savedIds.length} isEarlyTester={false} />
+      )}
+
+      {isAuthenticated && trustData && (
+        <View style={{ paddingHorizontal: 16, marginBottom: 4 }}>
+          <TrustLevelCard
+            trustLevel={trustData.trustLevel}
+            reputationScore={trustData.reputationScore}
+            helpfulReviewsCount={trustData.helpfulReviewsCount}
+            progress={trustData.progress}
+            onVerifyPress={() => router.push("/trust-verification" as any)}
+          />
+        </View>
       )}
 
       {isAuthenticated && (

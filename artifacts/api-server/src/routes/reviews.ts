@@ -1,5 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable, usersTable, mentorshipProfilesTable } from "@workspace/db";
+import { computeTrustLevel, getReviewWeight } from "@workspace/db/trust";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { sendPushToUser, sendPushToUsersWithSavedBusiness, sendThreeStarAlert } from "../lib/pushNotifications";
 import { reviewLimiter } from "../middleware/rateLimiter";
@@ -195,6 +196,23 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
     : null;
   const cleanPlatform = typeof socialPlatform === "string" ? socialPlatform : null;
 
+  const [userRow] = await db
+    .select({
+      trustLevel: usersTable.trustLevel,
+      identityVerified: usersTable.identityVerified,
+      identityVerifiedAt: usersTable.identityVerifiedAt,
+      policyViolationsCount: usersTable.policyViolationsCount,
+      helpfulReviewsCount: usersTable.helpfulReviewsCount,
+      reputationScore: usersTable.reputationScore,
+      createdAt: usersTable.createdAt,
+    })
+    .from(usersTable)
+    .where(eq(usersTable.id, req.user.id))
+    .limit(1);
+
+  const trustLevel = userRow ? (computeTrustLevel(userRow) as 1 | 2 | 3 | 4) : 1;
+  const reviewWeight = getReviewWeight(trustLevel, false, false);
+
   try {
     const [review] = await db
       .insert(reviewsTable)
@@ -218,6 +236,7 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
         communitySupport: typeof communitySupport === "number" && !nonMinorityOwned ? communitySupport : null,
         website: typeof website === "string" && website.trim() ? website.trim() : null,
         location: typeof location === "string" && location.trim() ? location.trim() : null,
+        weight: String(reviewWeight),
       })
       .returning();
 

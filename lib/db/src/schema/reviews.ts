@@ -1,4 +1,4 @@
-import { boolean, integer, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, integer, numeric, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -21,6 +21,10 @@ export const reviewsTable = pgTable("reviews", {
   communitySupport: integer("community_support"),
   website: varchar("website", { length: 500 }),
   location: varchar("location", { length: 255 }),
+  weight: numeric("weight", { precision: 4, scale: 2 }).notNull().default("1.00"),
+  helpfulVotes: integer("helpful_votes").notNull().default(0),
+  verifiedPurchase: boolean("verified_purchase").notNull().default(false),
+  verifiedCheckin: boolean("verified_checkin").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
