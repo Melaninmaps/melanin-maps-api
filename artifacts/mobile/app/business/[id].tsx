@@ -38,6 +38,7 @@ import { BusinessStoriesSection } from "@/components/BusinessStoriesSection";
 import { BusinessListingsSection } from "@/components/BusinessListingsSection";
 import { BusinessMilestonesSection } from "@/components/BusinessMilestonesSection";
 import { CircleTrustedSection } from "@/components/CircleTrustedSection";
+import { CommunityConfidenceScore } from "@/components/CommunityConfidenceScore";
 import { KnowBeforeYouGoSection } from "@/components/KnowBeforeYouGoSection";
 import { PassThePlateModal } from "@/components/PassThePlateModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
@@ -370,6 +371,8 @@ export default function BusinessDetailScreen() {
               ))}
             </View>
           )}
+
+          <CommunityConfidenceScore business={business} />
 
           <BusinessMilestonesSection business={business} />
 
