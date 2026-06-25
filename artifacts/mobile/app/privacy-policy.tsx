@@ -84,7 +84,7 @@ const SECTIONS = [
     items: [
       { label: "How We Protect Your Data", body: "We use industry-standard encryption (TLS in transit, AES-256 at rest) to protect your data. Auth tokens are stored in your device's Secure Enclave (iOS) or Keystore (Android) — never in plain-text storage." },
       { label: "Breach Notification", body: "In the event of a data breach that affects your personal information, we will notify you within 72 hours of discovery and provide clear guidance on steps to protect yourself." },
-      { label: "Your Responsibility", body: "Keep your password confidential and log out of shared devices. Contact us immediately at security@mappingwithmelanin.com if you suspect unauthorized access to your account." },
+      { label: "Your Responsibility", body: "Keep your password confidential and log out of shared devices. Contact us immediately at hello@mappingwithmelanin.com if you suspect unauthorized access to your account." },
     ],
   },
 ];
@@ -149,7 +149,7 @@ export default function PrivacyPolicyScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.contactTitle, { color: colors.foreground }]}>Privacy Questions?</Text>
             <Text style={[styles.contactBody, { color: colors.mutedForeground }]}>
-              Email privacy@mappingwithmelanin.com or use the Contact Us screen in Settings. We aim to respond within 48 hours.
+              Email hello@mappingwithmelanin.com or use the Contact Us screen in Settings. We aim to respond within 48 hours.
             </Text>
           </View>
         </View>

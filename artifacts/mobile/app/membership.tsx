@@ -246,11 +246,11 @@ export default function MembershipScreen() {
     if (plan.id === "free") return;
     if (plan.id === "biz_free") { router.push("/list-business"); return; }
     if (plan.id === "legacy_partner") {
-      await Linking.openURL("mailto:sales@melaninmaps.app?subject=Legacy%20Partner%20Plan%20Inquiry%20%E2%80%94%20Mapping%20with%20Melanin");
+      await Linking.openURL("mailto:hello@mappingwithmelanin.com?subject=Legacy%20Partner%20Plan%20Inquiry%20%E2%80%94%20Mapping%20with%20Melanin");
       return;
     }
     if (plan.id === "enterprise_business") {
-      await Linking.openURL("mailto:sales@melaninmaps.app?subject=Enterprise%20Partner%20Inquiry%20%E2%80%94%20Mapping%20with%20Melanin");
+      await Linking.openURL("mailto:hello@mappingwithmelanin.com?subject=Enterprise%20Partner%20Inquiry%20%E2%80%94%20Mapping%20with%20Melanin");
       return;
     }
 

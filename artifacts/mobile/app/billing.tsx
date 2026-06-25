@@ -144,8 +144,8 @@ export default function BillingScreen() {
                 id: "email",
                 icon: "mail" as const,
                 label: "Email Support",
-                sub: "billing@mappingwithmelanin.com",
-                onPress: () => Linking.openURL("mailto:billing@mappingwithmelanin.com"),
+                sub: "hello@mappingwithmelanin.com",
+                onPress: () => Linking.openURL("mailto:hello@mappingwithmelanin.com?subject=Billing%20Support%20%E2%80%94%20Mapping%20with%20Melanin"),
               },
               {
                 id: "contact",

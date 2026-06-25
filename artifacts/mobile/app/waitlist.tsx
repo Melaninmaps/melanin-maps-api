@@ -18,7 +18,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
-const REFERRAL_URL = "https://melaninmaps.app/waitlist?ref=";
+const REFERRAL_URL = "https://mappingwithmelanin.com/waitlist?ref=";
 const SHARE_PLATFORMS = [
   { id: "twitter", label: "X / Twitter", icon: "twitter" as const, color: "#000" },
   { id: "facebook", label: "Facebook", icon: "facebook" as const, color: "#1877F2" },

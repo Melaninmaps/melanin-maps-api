@@ -74,7 +74,10 @@ export default function BusinessDetailScreen() {
   };
 
   const handleWebsite = () => {
-    if (business.website) Linking.openURL(`https://${business.website}`);
+    if (business.website) {
+      const url = /^https?:\/\//i.test(business.website) ? business.website : `https://${business.website}`;
+      Linking.openURL(url);
+    }
   };
 
   return (

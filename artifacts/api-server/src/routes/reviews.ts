@@ -34,7 +34,7 @@ async function sendVideoReviewNotification(opts: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "KinfolkAI <noreply@mappingwithmelanin.com>",
+      from: "Mapping With Melanin™ <hello@send.mappingwithmelanin.com>",
       to: ["hello@mappingwithmelanin.com"],
       subject: `New Video Review: ${opts.businessName} — ${opts.rating}★`,
       html: `
@@ -86,7 +86,7 @@ async function sendInviteNotification(opts: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "KinfolkAI <noreply@mappingwithmelanin.com>",
+      from: "Mapping With Melanin™ <hello@send.mappingwithmelanin.com>",
       to: ["hello@mappingwithmelanin.com"],
       subject: `New Business Invite: ${opts.socialHandle} on ${platform}`,
       html: `

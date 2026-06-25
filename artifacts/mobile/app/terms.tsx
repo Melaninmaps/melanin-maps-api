@@ -181,7 +181,7 @@ export default function TermsScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.contactTitle, { color: colors.foreground }]}>Questions About These Terms?</Text>
             <Text style={[styles.contactBody, { color: colors.mutedForeground }]}>
-              Email us at legal@mappingwithmelanin.com or use the Contact Us screen in Settings.
+              Email us at hello@mappingwithmelanin.com or use the Contact Us screen in Settings.
             </Text>
           </View>
         </View>
