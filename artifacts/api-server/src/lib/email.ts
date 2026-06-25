@@ -1140,3 +1140,86 @@ export async function sendClaimApproved(to: string, ownerName: string, businessN
     `,
   });
 }
+
+export async function sendBusinessSubmissionAlert(data: {
+  ownerName: string;
+  ownerEmail: string;
+  businessName: string;
+  category?: string;
+  city?: string;
+  website?: string;
+  instagram?: string;
+  facebook?: string;
+  tiktok?: string;
+  twitter?: string;
+  message: string;
+}) {
+  if (!resend) { log("business submission alert"); return; }
+  const socials = [
+    data.instagram ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700;width:130px">Instagram</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.instagram}</td></tr>` : "",
+    data.facebook  ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Facebook</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.facebook}</td></tr>` : "",
+    data.tiktok    ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">TikTok</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.tiktok}</td></tr>` : "",
+    data.twitter   ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">X / Twitter</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.twitter}</td></tr>` : "",
+  ].filter(Boolean).join("");
+  await resend.emails.send({
+    from: FROM,
+    to: "hello@mappingwithmelanin.com",
+    replyTo: data.ownerEmail,
+    subject: `🏪 New Business Submission: ${data.businessName}${data.city ? ` — ${data.city}` : ""}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:24px" />
+        <h2 style="font-size:22px;color:#2B1507;font-weight:700;margin:0 0 20px">New Business Submission</h2>
+        <div style="background:#fff;border-radius:12px;padding:24px;margin-bottom:20px;border:1px solid rgba(58,31,14,0.1)">
+          <table style="width:100%;border-collapse:collapse">
+            <tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700;width:130px">Business</td><td style="padding:6px 0;color:#2B1507;font-size:16px;font-weight:700">${data.businessName}</td></tr>
+            <tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Owner</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.ownerName}</td></tr>
+            <tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Email</td><td style="padding:6px 0;font-size:14px"><a href="mailto:${data.ownerEmail}" style="color:#CA922B">${data.ownerEmail}</a></td></tr>
+            ${data.category ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Category</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.category}</td></tr>` : ""}
+            ${data.city ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">City</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.city}</td></tr>` : ""}
+            ${data.website ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Website</td><td style="padding:6px 0;font-size:14px"><a href="${data.website}" style="color:#CA922B">${data.website}</a></td></tr>` : ""}
+            ${socials}
+          </table>
+        </div>
+        ${data.message ? `<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid rgba(58,31,14,0.1);margin-bottom:20px"><p style="color:#3A1F0E;font-size:13px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:1px">About the business</p><p style="color:#3A1F0E;font-size:14px;line-height:1.6;margin:0">${data.message}</p></div>` : ""}
+        <div style="background:#2B1507;border-radius:12px;padding:16px">
+          <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.8">Reply to this email to contact the owner directly.</p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+export async function sendNominationAlert(data: {
+  nominationName: string;
+  nominationCategory?: string;
+  nominationSocialLink?: string;
+  city?: string;
+  neighborhood?: string;
+}) {
+  if (!resend) { log("nomination alert"); return; }
+  await resend.emails.send({
+    from: FROM,
+    to: "hello@mappingwithmelanin.com",
+    subject: `✊🏾 New Business Nomination: ${data.nominationName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:24px" />
+        <h2 style="font-size:22px;color:#2B1507;font-weight:700;margin:0 0 8px">Community Nomination</h2>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 20px">A community member nominated a business not yet on MWM.</p>
+        <div style="background:#fff;border-radius:12px;padding:24px;border:1px solid rgba(58,31,14,0.1);margin-bottom:20px">
+          <table style="width:100%;border-collapse:collapse">
+            <tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700;width:140px">Business</td><td style="padding:6px 0;color:#2B1507;font-size:16px;font-weight:700">${data.nominationName}</td></tr>
+            ${data.nominationCategory ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Category</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.nominationCategory}</td></tr>` : ""}
+            ${(data.city || data.neighborhood) ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Location</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.neighborhood ? `${data.neighborhood}, ` : ""}${data.city ?? ""}</td></tr>` : ""}
+            ${data.nominationSocialLink ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Social / Website</td><td style="padding:6px 0;font-size:14px"><a href="${data.nominationSocialLink}" style="color:#CA922B">${data.nominationSocialLink}</a></td></tr>` : ""}
+          </table>
+        </div>
+        <div style="background:#2B1507;border-radius:12px;padding:16px">
+          <p style="color:#CA922B;font-size:14px;font-weight:700;margin:0 0 4px">Action needed</p>
+          <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.8">Reach out to onboard or archive this nomination in the admin panel.</p>
+        </div>
+      </div>
+    `,
+  });
+}

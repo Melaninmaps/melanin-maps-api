@@ -1,16 +1,24 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, contactMessagesTable } from "@workspace/db";
+import { sendBusinessSubmissionAlert } from "../lib/email.js";
 
 const router: IRouter = Router();
 
 router.post("/contact", async (req: Request, res: Response) => {
   try {
-    const { formType, name, email, subject, message } = req.body as {
+    const { formType, name, email, subject, message, category, city, website, instagram, facebook, tiktok, twitter } = req.body as {
       formType?: string;
       name?: string;
       email?: string;
       subject?: string;
       message?: string;
+      category?: string;
+      city?: string;
+      website?: string;
+      instagram?: string;
+      facebook?: string;
+      tiktok?: string;
+      twitter?: string;
     };
 
     if (!formType || !name?.trim() || !email?.includes("@") || !message || message.trim().length < 20) {
@@ -25,6 +33,23 @@ router.post("/contact", async (req: Request, res: Response) => {
       subject: subject?.trim() ?? null,
       message: message.trim(),
     });
+
+    if (formType === "business-submission") {
+      const businessName = subject?.replace(/^Business Submission:\s*/i, "").split("—")[0]?.trim() ?? name.trim();
+      sendBusinessSubmissionAlert({
+        ownerName: name.trim(),
+        ownerEmail: email.toLowerCase().trim(),
+        businessName,
+        category,
+        city,
+        website,
+        instagram,
+        facebook,
+        tiktok,
+        twitter,
+        message: message.trim(),
+      }).catch(() => {});
+    }
 
     res.status(201).json({ success: true });
   } catch (err) {
