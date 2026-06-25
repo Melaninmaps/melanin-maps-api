@@ -15,6 +15,50 @@ const PLATFORM_LABELS: Record<string, string> = {
   facebook: "Facebook",
 };
 
+async function sendVideoReviewNotification(opts: {
+  businessName: string;
+  reviewerName: string;
+  reviewId: string;
+  videoUrl: string;
+  rating: number;
+}) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: "KinfolkAI <noreply@mappingwithmelanin.com>",
+      to: ["hello@mappingwithmelanin.com"],
+      subject: `New Video Review: ${opts.businessName} — ${opts.rating}★`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+          <h2 style="color: #3B1F0E;">🎥 New Review with Video Link</h2>
+          <p>A community member just submitted a review with a video link on <strong>Mapping With Melanin</strong>.</p>
+
+          <div style="background: #FBF7F0; border: 1px solid #E8D5B7; border-radius: 12px; padding: 20px; margin: 20px 0;">
+            <p style="margin: 0 0 8px;"><strong>Business:</strong> ${opts.businessName}</p>
+            <p style="margin: 0 0 8px;"><strong>Reviewer:</strong> ${opts.reviewerName}</p>
+            <p style="margin: 0 0 8px;"><strong>Rating:</strong> ${"★".repeat(opts.rating)}${"☆".repeat(5 - opts.rating)}</p>
+            <p style="margin: 0 0 8px;"><strong>Review ID:</strong> ${opts.reviewId}</p>
+          </div>
+
+          <a href="${opts.videoUrl}"
+             style="display: inline-block; background: #3B1F0E; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 8px;">
+            Watch Video
+          </a>
+
+          <p style="color: #888; font-size: 12px; margin-top: 32px;">Mapping With Melanin™ — Community Discovery Platform</p>
+        </div>
+      `,
+    }),
+  });
+}
+
 async function sendInviteNotification(opts: {
   businessName: string;
   socialHandle: string;
@@ -169,6 +213,20 @@ router.post("/reviews", reviewLimiter, requireMembership("navigator"), async (re
         trialEndDate: newInvite.trialEndDate,
       }).catch((err) => {
         req.log.warn({ err }, "Failed to send invite notification email");
+      });
+    }
+
+    const reviewerName = [req.user.firstName, req.user.lastName].filter(Boolean).join(" ") || "Community Member";
+
+    if (review.videoUrl) {
+      sendVideoReviewNotification({
+        businessName: typeof businessName === "string" && businessName ? businessName : String(businessId),
+        reviewerName,
+        reviewId: review.id,
+        videoUrl: review.videoUrl,
+        rating: ratingNum,
+      }).catch((err) => {
+        req.log.warn({ err }, "Failed to send video review notification email");
       });
     }
 
