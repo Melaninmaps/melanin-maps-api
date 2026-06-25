@@ -85,12 +85,14 @@ router.patch("/admin/claims/:id", async (req: Request, res: Response) => {
 
     // When approved: link the business to this user + notify owner
     if (status === "approved" && claim.businessId) {
-      if (claim.userId) {
-        db.update(businessesTable)
-          .set({ submittedById: claim.userId })
-          .where(eq(businessesTable.id, claim.businessId))
-          .catch(() => {});
-      }
+      db.update(businessesTable)
+        .set({
+          verified: true,
+          status: "active",
+          ...(claim.userId ? { submittedById: claim.userId } : {}),
+        })
+        .where(eq(businessesTable.id, claim.businessId))
+        .catch(() => {});
       const bName = claim.businessName ?? "your business";
       sendClaimApproved(claim.email, claim.ownerName, bName).catch(() => {});
     }

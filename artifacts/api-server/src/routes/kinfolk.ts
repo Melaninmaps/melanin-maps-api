@@ -572,7 +572,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     // Call AI
     const completion = await openai.chat.completions.create({
-      model: "gpt-5.1",
+      model: "gpt-4o",
       max_completion_tokens: 8192,
       messages: aiMessages,
     });
