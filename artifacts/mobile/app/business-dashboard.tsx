@@ -304,12 +304,17 @@ export default function BusinessDashboardScreen() {
         const token = await SecureStore.getItemAsync("auth_session_token");
         const base = getApiBase();
         if (!token || !base) return;
-        const res = await fetch(`${base}/api/businesses/${business.id}/marketplace-tier`, {
+        const res = await fetch(`${base}/api/marketplace-fees/my`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const data = await res.json() as { tier: string; label: string; feePercent: number };
-          setMarketplaceTier(data);
+          const data = await res.json() as {
+            fee: number; feePercent: string; source: string; reason: string;
+            tier: string; tierLabel: string; isLocked: boolean;
+            lockedUntil: string | null; promotionEligible: boolean;
+            promotionExpirationDate: string | null; membershipRenewalDate: string | null;
+          };
+          setMarketplaceTier(data as unknown as Record<string, unknown>);
         }
       } catch {}
     })();
@@ -597,6 +602,70 @@ export default function BusinessDashboardScreen() {
                 </View>
               ))}
             </View>
+
+            {/* ── Marketplace Fee Card ─────────────────────────────────── */}
+            {marketplaceTier && (() => {
+              const fee = marketplaceTier as unknown as {
+                feePercent: string; source: string; reason: string;
+                tierLabel: string; isLocked: boolean; lockedUntil: string | null;
+                promotionEligible: boolean; promotionExpirationDate: string | null;
+              };
+              const sourceColor =
+                fee.source === "founding_program" ? "#2D7A4F" :
+                fee.source === "promotional"       ? "#C9922B" : "#442A19";
+              const sourceIcon: "award" | "tag" | "grid" =
+                fee.source === "founding_program" ? "award" :
+                fee.source === "promotional"       ? "tag" : "grid";
+              const sourceLabel =
+                fee.source === "founding_program" ? "Founding Business Rate" :
+                fee.source === "promotional"       ? "Promotional Rate" : "Standard Rate";
+              return (
+                <View style={[styles.promoteCard, { backgroundColor: colors.card, borderColor: sourceColor + "40", padding: 0, overflow: "hidden" }]}>
+                  <View style={{ backgroundColor: sourceColor + "12", padding: 14, flexDirection: "row", alignItems: "center", gap: 12 }}>
+                    <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: sourceColor + "20", alignItems: "center", justifyContent: "center" }}>
+                      <Text style={{ fontFamily: "Inter_700Bold", fontSize: 18, color: sourceColor }}>{fee.feePercent}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: "Inter_700Bold", fontSize: 16, color: colors.foreground }}>Marketplace Fee</Text>
+                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground }}>{fee.tierLabel} tier · applied at checkout</Text>
+                    </View>
+                    <View style={{ alignItems: "center", paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, backgroundColor: sourceColor + "18", flexDirection: "row", gap: 5 }}>
+                      <Feather name={sourceIcon} size={12} color={sourceColor} />
+                      <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: sourceColor }}>{sourceLabel}</Text>
+                    </View>
+                  </View>
+                  <View style={{ padding: 14, gap: 8 }}>
+                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, lineHeight: 18 }}>{fee.reason}</Text>
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                      {fee.isLocked && (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: "#2D7A4F18" }}>
+                          <Feather name="lock" size={11} color="#2D7A4F" />
+                          <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: "#2D7A4F" }}>
+                            {fee.lockedUntil ? `Locked until ${new Date(fee.lockedUntil).toLocaleDateString()}` : "Lifetime Rate Lock"}
+                          </Text>
+                        </View>
+                      )}
+                      {!fee.isLocked && fee.source === "promotional" && (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: "#C9922B18" }}>
+                          <Feather name="clock" size={11} color="#C9922B" />
+                          <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: "#C9922B" }}>
+                            {fee.promotionExpirationDate
+                              ? `Promo expires ${new Date(fee.promotionExpirationDate).toLocaleDateString()}`
+                              : "Active Promotion"}
+                          </Text>
+                        </View>
+                      )}
+                      {!fee.isLocked && fee.source === "standard" && fee.promotionEligible && (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: colors.secondary }}>
+                          <Feather name="zap" size={11} color={colors.mutedForeground} />
+                          <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.mutedForeground }}>Promo eligible</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                </View>
+              );
+            })()}
 
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Quick Actions</Text>
             <View style={styles.actionsGrid}>

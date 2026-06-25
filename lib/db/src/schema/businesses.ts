@@ -47,6 +47,15 @@ export const businessesTable = pgTable("businesses", {
   foundingNumber: integer("founding_number"),
   foundingGrantedAt: timestamp("founding_granted_at", { withTimezone: true }),
   businessTrialStartedAt: timestamp("business_trial_started_at", { withTimezone: true }),
+  // ── Marketplace Fee Engine ────────────────────────────────────────────────
+  businessStatus: varchar("business_status", { length: 20 }).notNull().default("community"), // community | growth | premium
+  marketplaceFeeLocked: boolean("marketplace_fee_locked").notNull().default(false),
+  lockedFee: numeric("locked_fee", { precision: 5, scale: 4 }),
+  lockedUntil: timestamp("locked_until", { withTimezone: true }), // null = lifetime
+  feeSource: varchar("fee_source", { length: 30 }), // founding_program | promotional | standard
+  promotionEligible: boolean("promotion_eligible").notNull().default(true),
+  promotionExpirationDate: timestamp("promotion_expiration_date", { withTimezone: true }),
+  membershipRenewalDate: timestamp("membership_renewal_date", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

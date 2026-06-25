@@ -33,6 +33,7 @@ const ADMIN_TABS = [
   { id: "email", label: "Email", icon: "mail" as const },
   { id: "surveys", label: "Surveys", icon: "clipboard" as const },
   { id: "users", label: "Users", icon: "users" as const },
+  { id: "marketplace", label: "Marketplace", icon: "percent" as const },
   { id: "settings", label: "Settings", icon: "settings" as const },
 ];
 
@@ -1322,6 +1323,345 @@ function InvitesTab() {
   );
 }
 
+// ── Marketplace Fee Config Tab ────────────────────────────────────────────────
+type FeeConfigRow = {
+  id?: string;
+  tier: string;
+  tierLabel: string;
+  standardFee: string;
+  promotionalFee: string;
+  foundingFee: string;
+  promoActive: boolean;
+  promoStartDate?: string | null;
+  promoEndDate?: string | null;
+  promoDescription?: string | null;
+  notes?: string | null;
+};
+
+type EditingFee = {
+  tier: string;
+  field: "standardFee" | "promotionalFee" | "foundingFee" | "promo";
+  value: string;
+  promoActive?: boolean;
+  promoDescription?: string;
+  promoStart?: string;
+  promoEnd?: string;
+};
+
+const TIER_COLORS: Record<string, string> = {
+  community: "#2D7A4F",
+  growth: "#C9922B",
+  premium: "#442A19",
+};
+
+function MarketplaceTab() {
+  const colors = useColors();
+  const [configs, setConfigs] = React.useState<FeeConfigRow[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [editing, setEditing] = React.useState<EditingFee | null>(null);
+  const [saving, setSaving] = React.useState(false);
+  const [saveResult, setSaveResult] = React.useState<"ok" | "err" | null>(null);
+  const [showFoundingWarning, setShowFoundingWarning] = React.useState(false);
+  const [pendingFoundingEdit, setPendingFoundingEdit] = React.useState<{ tier: string; value: string } | null>(null);
+
+  const loadConfigs = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const base = getApiBase();
+      const res = await fetch(`${base}/api/marketplace-fees/config`, {
+        headers: { Authorization: `Bearer ${token ?? ""}` },
+      });
+      if (res.ok) {
+        const data = await res.json() as { configs: FeeConfigRow[] };
+        setConfigs(data.configs ?? []);
+      }
+    } catch {} finally { setLoading(false); }
+  }, []);
+
+  React.useEffect(() => { void loadConfigs(); }, [loadConfigs]);
+
+  const pct = (v: string) => `${Math.round(Number(v) * 100)}%`;
+
+  async function saveFeeEdit(e: EditingFee) {
+    if (saving) return;
+    setSaving(true);
+    setSaveResult(null);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const base = getApiBase();
+      let url: string;
+      let body: Record<string, unknown>;
+      if (e.field === "foundingFee") {
+        url = `${base}/api/marketplace-fees/config/${e.tier}/founding`;
+        body = { foundingFee: Number(e.value) };
+      } else if (e.field === "promo") {
+        url = `${base}/api/marketplace-fees/config/${e.tier}`;
+        body = {
+          promoActive: e.promoActive,
+          promoDescription: e.promoDescription,
+          promoStartDate: e.promoStart || null,
+          promoEndDate: e.promoEnd || null,
+        };
+      } else {
+        url = `${base}/api/marketplace-fees/config/${e.tier}`;
+        body = { [e.field]: Number(e.value) };
+      }
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token ?? ""}` },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        setSaveResult("ok");
+        setEditing(null);
+        await loadConfigs();
+      } else {
+        setSaveResult("err");
+      }
+    } catch { setSaveResult("err"); } finally { setSaving(false); }
+  }
+
+  if (loading) {
+    return (
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+        <ActivityIndicator color={colors.primary} style={{ marginTop: 32 }} />
+      </ScrollView>
+    );
+  }
+
+  const tiers = ["community", "growth", "premium"] as const;
+
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+      <SectionLabel title="Marketplace Fee Configuration" />
+      <Text style={[adminStyles.activityText, { color: colors.mutedForeground, marginBottom: 8 }]}>
+        Fees are applied at checkout. Priority: Founding (locked) › Promotional › Standard.
+      </Text>
+
+      {tiers.map((tier) => {
+        const cfg = configs.find((c) => c.tier === tier);
+        if (!cfg) return null;
+        const color = TIER_COLORS[tier] ?? colors.primary;
+        const isEditingStd = editing?.tier === tier && editing.field === "standardFee";
+        const isEditingPro = editing?.tier === tier && editing.field === "promotionalFee";
+        const isEditingFound = editing?.tier === tier && editing.field === "foundingFee";
+        const isEditingPromo = editing?.tier === tier && editing.field === "promo";
+
+        return (
+          <View key={tier} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 8 }]}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <View style={[adminStyles.actionIcon, { backgroundColor: color + "18", width: 34, height: 34, borderRadius: 9 }]}>
+                <Feather name="percent" size={15} color={color} />
+              </View>
+              <Text style={[adminStyles.actionLabel, { color: colors.foreground, flex: 1 }]}>{cfg.tierLabel} Tier</Text>
+              <View style={[adminStyles.statusBadge, { backgroundColor: cfg.promoActive ? "#2D7A4F18" : colors.secondary }]}>
+                <Text style={[adminStyles.statusBadgeText, { color: cfg.promoActive ? "#2D7A4F" : colors.mutedForeground }]}>
+                  {cfg.promoActive ? "Promo On" : "Promo Off"}
+                </Text>
+              </View>
+            </View>
+
+            {/* Standard Fee Row */}
+            <View style={[adminStyles.metricRow, { borderColor: colors.border, backgroundColor: colors.background, marginBottom: 6 }]}>
+              <View style={[adminStyles.metricIcon, { backgroundColor: "#44444418" }]}>
+                <Feather name="grid" size={14} color={colors.mutedForeground} />
+              </View>
+              <Text style={[adminStyles.metricLabel, { color: colors.foreground }]}>Standard Fee</Text>
+              {isEditingStd ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <TextInput
+                    style={[adminStyles.searchPlaceholder, { borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, width: 70, color: colors.foreground }]}
+                    value={editing.value}
+                    onChangeText={(v) => setEditing({ ...editing, value: v })}
+                    keyboardType="decimal-pad"
+                    placeholder="e.g. 0.08"
+                    placeholderTextColor={colors.mutedForeground}
+                  />
+                  <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={() => saveFeeEdit(editing!)} disabled={saving}>
+                    <Text style={[adminStyles.smallBtnText, { color: "#FFF" }]}>{saving ? "…" : "Save"}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setEditing(null)}>
+                    <Feather name="x" size={16} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", gap: 6 }} onPress={() => setEditing({ tier, field: "standardFee", value: cfg.standardFee })}>
+                  <Text style={[adminStyles.metricValue, { color: color }]}>{pct(cfg.standardFee)}</Text>
+                  <Feather name="edit-2" size={13} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Promotional Fee Row */}
+            <View style={[adminStyles.metricRow, { borderColor: colors.border, backgroundColor: colors.background, marginBottom: 6 }]}>
+              <View style={[adminStyles.metricIcon, { backgroundColor: "#C9922B18" }]}>
+                <Feather name="tag" size={14} color="#C9922B" />
+              </View>
+              <Text style={[adminStyles.metricLabel, { color: colors.foreground }]}>Promotional Fee</Text>
+              {isEditingPro ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <TextInput
+                    style={[adminStyles.searchPlaceholder, { borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, width: 70, color: colors.foreground }]}
+                    value={editing.value}
+                    onChangeText={(v) => setEditing({ ...editing, value: v })}
+                    keyboardType="decimal-pad"
+                    placeholder="e.g. 0.06"
+                    placeholderTextColor={colors.mutedForeground}
+                  />
+                  <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={() => saveFeeEdit(editing!)} disabled={saving}>
+                    <Text style={[adminStyles.smallBtnText, { color: "#FFF" }]}>{saving ? "…" : "Save"}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setEditing(null)}>
+                    <Feather name="x" size={16} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", gap: 6 }} onPress={() => setEditing({ tier, field: "promotionalFee", value: cfg.promotionalFee })}>
+                  <Text style={[adminStyles.metricValue, { color: "#C9922B" }]}>{pct(cfg.promotionalFee)}</Text>
+                  <Feather name="edit-2" size={13} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Founding Fee Row */}
+            <View style={[adminStyles.metricRow, { borderColor: colors.border, backgroundColor: "#2D7A4F08", marginBottom: 6 }]}>
+              <View style={[adminStyles.metricIcon, { backgroundColor: "#2D7A4F18" }]}>
+                <Feather name="award" size={14} color="#2D7A4F" />
+              </View>
+              <Text style={[adminStyles.metricLabel, { color: colors.foreground }]}>Founding Fee</Text>
+              {isEditingFound ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <TextInput
+                    style={[adminStyles.searchPlaceholder, { borderWidth: 1, borderColor: "#2D7A4F60", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, width: 70, color: colors.foreground }]}
+                    value={editing.value}
+                    onChangeText={(v) => setEditing({ ...editing, value: v })}
+                    keyboardType="decimal-pad"
+                    placeholder="e.g. 0.04"
+                    placeholderTextColor={colors.mutedForeground}
+                  />
+                  <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F", borderColor: "#2D7A4F" }]} onPress={() => saveFeeEdit(editing!)} disabled={saving}>
+                    <Text style={[adminStyles.smallBtnText, { color: "#FFF" }]}>{saving ? "…" : "Save"}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setEditing(null)}>
+                    <Feather name="x" size={16} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+                  onPress={() => { setPendingFoundingEdit({ tier, value: cfg.foundingFee }); setShowFoundingWarning(true); }}
+                >
+                  <Text style={[adminStyles.metricValue, { color: "#2D7A4F" }]}>{pct(cfg.foundingFee)}</Text>
+                  <Feather name="lock" size={13} color="#2D7A4F" />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Promo Toggle */}
+            {isEditingPromo ? (
+              <View style={[adminStyles.alertBanner, { borderColor: "#C9922B40", backgroundColor: "#C9922B08", flexDirection: "column", alignItems: "flex-start", gap: 8 }]}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Switch
+                    value={editing.promoActive ?? false}
+                    onValueChange={(v) => setEditing({ ...editing, promoActive: v })}
+                    trackColor={{ true: "#2D7A4F", false: colors.border }}
+                  />
+                  <Text style={[adminStyles.actionLabel, { color: colors.foreground }]}>Promotion Active</Text>
+                </View>
+                <TextInput
+                  style={[adminStyles.searchPlaceholder, { borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, color: colors.foreground, width: "100%" }]}
+                  value={editing.promoDescription ?? ""}
+                  onChangeText={(v) => setEditing({ ...editing, promoDescription: v })}
+                  placeholder="Promotion label (e.g. Launch Week 10% Off)"
+                  placeholderTextColor={colors.mutedForeground}
+                />
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.primary, borderColor: colors.primary, flex: 1, justifyContent: "center" }]} onPress={() => saveFeeEdit(editing!)} disabled={saving}>
+                    <Text style={[adminStyles.smallBtnText, { color: "#FFF", textAlign: "center" }]}>{saving ? "Saving…" : "Save Promo"}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[adminStyles.smallBtn, { borderColor: colors.border }]} onPress={() => setEditing(null)}>
+                    <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={[adminStyles.alertBanner, { borderColor: cfg.promoActive ? "#2D7A4F40" : colors.border, backgroundColor: cfg.promoActive ? "#2D7A4F08" : colors.background }]}
+                onPress={() => setEditing({ tier, field: "promo", value: "", promoActive: cfg.promoActive, promoDescription: cfg.promoDescription ?? "", promoStart: cfg.promoStartDate ?? "", promoEnd: cfg.promoEndDate ?? "" })}
+              >
+                <Feather name={cfg.promoActive ? "zap" : "zap-off"} size={16} color={cfg.promoActive ? "#2D7A4F" : colors.mutedForeground} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[adminStyles.alertText, { color: cfg.promoActive ? "#2D7A4F" : colors.mutedForeground }]}>
+                    {cfg.promoActive ? "Promotion Active" : "No Active Promotion"}
+                  </Text>
+                  {cfg.promoDescription ? (
+                    <Text style={[adminStyles.actionSub, { color: colors.mutedForeground }]}>{cfg.promoDescription}</Text>
+                  ) : null}
+                </View>
+                <Feather name="edit-2" size={14} color={colors.mutedForeground} />
+              </TouchableOpacity>
+            )}
+
+            {saveResult && editing === null && (
+              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: saveResult === "ok" ? "#2D7A4F" : "#DC2626", marginTop: 6 }}>
+                {saveResult === "ok" ? "✓ Saved successfully" : "✗ Save failed — check permissions"}
+              </Text>
+            )}
+          </View>
+        );
+      })}
+
+      {/* Founding Fee Warning Modal */}
+      <Modal visible={showFoundingWarning} transparent animationType="fade" onRequestClose={() => setShowFoundingWarning(false)}>
+        <View style={{ flex: 1, backgroundColor: "#00000060", justifyContent: "center", alignItems: "center", padding: 24 }}>
+          <View style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: "#DC262640", width: "100%" }]}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              <Feather name="alert-triangle" size={20} color="#DC2626" />
+              <Text style={[adminStyles.actionLabel, { color: "#DC2626" }]}>Founding Fee Change</Text>
+            </View>
+            <Text style={[adminStyles.activityText, { color: colors.foreground, marginBottom: 14 }]}>
+              Changing the founding fee affects all Founding Businesses whose rate has not yet been individually locked. This action requires super-admin permission and is recorded in the audit log.{"\n\n"}Enter the new rate as a decimal (e.g. 0.04 = 4%):
+            </Text>
+            <TextInput
+              style={[adminStyles.searchPlaceholder, { borderWidth: 1, borderColor: "#DC262640", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, color: colors.foreground, marginBottom: 12 }]}
+              value={pendingFoundingEdit?.value ?? ""}
+              onChangeText={(v) => setPendingFoundingEdit((p) => p ? { ...p, value: v } : null)}
+              keyboardType="decimal-pad"
+              placeholder="e.g. 0.04"
+              placeholderTextColor={colors.mutedForeground}
+            />
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <TouchableOpacity
+                style={[adminStyles.smallBtn, { flex: 1, justifyContent: "center", backgroundColor: "#DC2626", borderColor: "#DC2626" }]}
+                onPress={() => {
+                  if (!pendingFoundingEdit) return;
+                  setShowFoundingWarning(false);
+                  setEditing({ tier: pendingFoundingEdit.tier, field: "foundingFee", value: pendingFoundingEdit.value });
+                  void saveFeeEdit({ tier: pendingFoundingEdit.tier, field: "foundingFee", value: pendingFoundingEdit.value });
+                }}
+                disabled={saving}
+              >
+                <Text style={[adminStyles.smallBtnText, { color: "#FFF", textAlign: "center" }]}>{saving ? "Saving…" : "Confirm Change"}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[adminStyles.smallBtn, { borderColor: colors.border }]} onPress={() => { setShowFoundingWarning(false); setPendingFoundingEdit(null); }}>
+                <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <SectionLabel title="Per-Business Fee Audit" />
+      <View style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={[adminStyles.activityText, { color: colors.mutedForeground }]}>
+          To audit or override a specific business's fee (tier, lock, promotion eligibility), navigate to the Businesses tab, open the business record, and use the Marketplace Profile section.
+        </Text>
+      </View>
+    </ScrollView>
+  );
+}
+
 const TAB_COMPONENTS: Record<string, React.FC> = {
   overview: OverviewTab,
   invites: InvitesTab,
@@ -1334,6 +1674,7 @@ const TAB_COMPONENTS: Record<string, React.FC> = {
   email: EmailTab,
   surveys: SurveysTab,
   users: UsersTab,
+  marketplace: MarketplaceTab,
   settings: SettingsTab,
 };
 
