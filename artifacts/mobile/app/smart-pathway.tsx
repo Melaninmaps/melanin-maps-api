@@ -4,6 +4,7 @@ import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useState } from "react";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import {
   ActivityIndicator,
   Alert,
@@ -70,6 +71,7 @@ export default function SmartPathwayScreen() {
   const [pathway, setPathway] = useState<PathwayData | null>(null);
   const [loading, setLoading] = useState(true);
   const [pins, setPins] = useState<PinData[]>([]);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const loadPathway = useCallback(async () => {
     if (!pinId) return;
@@ -77,6 +79,7 @@ export default function SmartPathwayScreen() {
     try {
       const h = await authHeaders();
       const res = await fetch(`${getApiBase()}/api/smart-pathways/pins/${pinId}/pathway`, { headers: h });
+      if (res.status === 403) { setShowUpgrade(true); return; }
       if (res.ok) setPathway(await res.json() as PathwayData);
     } catch { /**/ } finally { setLoading(false); }
   }, [pinId]);
@@ -138,6 +141,7 @@ export default function SmartPathwayScreen() {
   const iColor = intent.color;
 
   return (
+    <>
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 10, backgroundColor: iColor + "12", borderBottomColor: iColor + "30" }]}>
@@ -408,6 +412,14 @@ export default function SmartPathwayScreen() {
 
       </ScrollView>
     </View>
+
+    <UpgradeModal
+      visible={showUpgrade}
+      onClose={() => { setShowUpgrade(false); router.canGoBack() ? router.back() : router.replace("/(tabs)/map" as never); }}
+      feature="Smart Pathways™"
+      reason="Smart Pathways™ builds personalized relocation, travel, and safety plans on your behalf — that's premium intelligence."
+    />
+    </>
   );
 }
 

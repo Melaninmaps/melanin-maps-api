@@ -5,6 +5,7 @@ import { businessesTable } from "@workspace/db";
 import { eventsTable } from "@workspace/db";
 import { neighborhoodSurveysTable } from "@workspace/db";
 import { neighborhoodPinsTable, INTENTS, type IntentId } from "@workspace/db";
+import { requireMembership } from "../middleware/requireMembership";
 
 const router = Router();
 
@@ -142,7 +143,7 @@ router.get("/smart-pathways/pins", async (req: Request, res: Response) => {
 });
 
 // ─── POST /api/smart-pathways/pins ───────────────────────────────────────────
-router.post("/smart-pathways/pins", async (req: Request, res: Response) => {
+router.post("/smart-pathways/pins", requireMembership("navigator"), async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
 
   const { label, city, state, latitude, longitude, intentId, notes } = req.body as {
@@ -213,7 +214,7 @@ router.delete("/smart-pathways/pins/:id", async (req: Request, res: Response) =>
 });
 
 // ─── GET /api/smart-pathways/pins/:id/pathway ────────────────────────────────
-router.get("/smart-pathways/pins/:id/pathway", async (req: Request, res: Response) => {
+router.get("/smart-pathways/pins/:id/pathway", requireMembership("navigator"), async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
 
   const [pin] = await db
@@ -232,7 +233,7 @@ router.get("/smart-pathways/pins/:id/pathway", async (req: Request, res: Respons
 });
 
 // ─── GET /api/smart-pathways/compare?pin1=:id&pin2=:id ───────────────────────
-router.get("/smart-pathways/compare", async (req: Request, res: Response) => {
+router.get("/smart-pathways/compare", requireMembership("navigator"), async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
 
   const { pin1: pin1Id, pin2: pin2Id } = req.query as { pin1?: string; pin2?: string };

@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import {
   ActivityIndicator,
   Platform,
@@ -82,6 +83,7 @@ export default function CompareNeighborhoodsScreen() {
 
   const [data, setData] = useState<CompareData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -93,6 +95,7 @@ export default function CompareNeighborhoodsScreen() {
           `${getApiBase()}/api/smart-pathways/compare?pin1=${pin1Id}&pin2=${pin2Id}`,
           { headers: h }
         );
+        if (res.status === 403) { setShowUpgrade(true); setLoading(false); return; }
         if (res.ok) setData(await res.json() as CompareData);
       } catch { /**/ } finally { setLoading(false); }
     })();
@@ -130,6 +133,7 @@ export default function CompareNeighborhoodsScreen() {
   const { pin1, pin2, comparison, kinfolkPrompts } = data;
 
   return (
+    <>
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 10, borderBottomColor: colors.border }]}>
@@ -258,6 +262,14 @@ export default function CompareNeighborhoodsScreen() {
 
       </ScrollView>
     </View>
+
+    <UpgradeModal
+      visible={showUpgrade}
+      onClose={() => { setShowUpgrade(false); router.canGoBack() ? router.back() : router.replace("/(tabs)/map" as never); }}
+      feature="Neighborhood Comparison"
+      reason="Side-by-side neighborhood intelligence is a premium feature — it does significant analytical work on your behalf."
+    />
+    </>
   );
 }
 

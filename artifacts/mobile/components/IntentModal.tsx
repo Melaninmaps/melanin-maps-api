@@ -15,6 +15,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useMembership } from "@/hooks/useMembership";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 export type IntentId =
   | "moving" | "visiting" | "safety" | "trip"
@@ -62,6 +64,9 @@ export function IntentModal({ visible, location, onClose, onSaved }: Props) {
   const [selectedIntent, setSelectedIntent] = useState<IntentId | null>(null);
   const [customLabel, setCustomLabel] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
+  const { subscription } = useMembership();
 
   const handleSelect = async (intentId: IntentId) => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -70,6 +75,12 @@ export function IntentModal({ visible, location, onClose, onSaved }: Props) {
 
   const handleSave = async () => {
     if (!selectedIntent) { Alert.alert("Choose an intent", "Tell us what you're trying to do here."); return; }
+
+    if (!subscription) {
+      setShowUpgrade(true);
+      return;
+    }
+
     setSaving(true);
     try {
       const token = await getToken();
@@ -105,6 +116,7 @@ export function IntentModal({ visible, location, onClose, onSaved }: Props) {
   const intent = INTENTS.find(i => i.id === selectedIntent);
 
   return (
+    <>
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={[styles.root, { backgroundColor: colors.background, paddingBottom: insets.bottom + 16 }]}>
         {/* Header */}
@@ -196,6 +208,14 @@ export function IntentModal({ visible, location, onClose, onSaved }: Props) {
         </View>
       </View>
     </Modal>
+
+    <UpgradeModal
+      visible={showUpgrade}
+      onClose={() => setShowUpgrade(false)}
+      feature="Smart Pathways™"
+      reason="Smart Pathways™ builds personalized relocation, travel, and safety plans on your behalf — that's premium intelligence."
+    />
+    </>
   );
 }
 
