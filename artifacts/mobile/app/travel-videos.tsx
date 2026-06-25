@@ -85,7 +85,11 @@ const MOCK_VIDEOS: VideoCard[] = [
       responder: "Dooky Chase's Restaurant",
       role: "Owner",
       date: "June 14, 2026",
-      text: "Thank you for visiting and capturing the spirit of Treme so beautifully. The 45-minute wait you mentioned was during our annual Juneteenth dinner — we were operating at capacity with a packed house. We hope you'll come back on a regular evening when we can give you the full, unhurried experience we're known for.",
+      text: "Thank you for visiting and capturing the spirit of Treme so beautifully. The 45-minute wait you mentioned was during our annual Juneteenth dinner — we were operating at capacity with a packed house. We've since added two additional front-of-house staff and hope you'll consider visiting us again.",
+    },
+    issueResolved: {
+      resolvedDate: "June 22, 2026",
+      creatorFollowUp: "Went back last week — completely different experience. No wait, the staff was attentive, and the food was outstanding. The owner genuinely listened. This is what accountability looks like. 🙏🏿",
     },
   },
   {
@@ -209,7 +213,13 @@ function VideoTile({
           <Feather name="heart" size={11} color={colors.mutedForeground} />
           <Text style={[styles.tileStat, { color: colors.mutedForeground }]}>{video.likes}</Text>
         </View>
-        {video.businessResponse && (
+        {video.issueResolved && (
+          <View style={[styles.resolvedBadge]}>
+            <Feather name="check-circle" size={10} color="#fff" />
+            <Text style={styles.resolvedBadgeTxt}>Issue Resolved</Text>
+          </View>
+        )}
+        {!video.issueResolved && video.businessResponse && (
           <View style={[styles.responseBadge, { backgroundColor: colors.primary + "18" }]}>
             <Feather name="briefcase" size={10} color={colors.primary} />
             <Text style={[styles.responseBadgeTxt, { color: colors.primary }]}>Business responded</Text>
@@ -610,6 +620,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6, marginTop: 4, alignSelf: "flex-start",
   },
   responseBadgeTxt: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
+  resolvedBadge: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6, marginTop: 4, alignSelf: "flex-start",
+    backgroundColor: "#2D7A4F",
+  },
+  resolvedBadgeTxt: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#fff" },
   contentPolicyBanner: {
     flexDirection: "row", alignItems: "flex-start", gap: 10,
     margin: 16, padding: 14, borderRadius: 12, borderWidth: 1,

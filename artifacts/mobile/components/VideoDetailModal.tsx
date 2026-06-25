@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useColors } from "@/hooks/useColors";
 import { VideoReportModal } from "@/components/VideoReportModal";
+import { ReviewRequestModal } from "@/components/ReviewRequestModal";
 
 export interface VideoItem {
   id: string;
@@ -33,6 +34,10 @@ export interface VideoItem {
     text: string;
     date: string;
   };
+  issueResolved?: {
+    resolvedDate: string;
+    creatorFollowUp: string;
+  };
 }
 
 interface Props {
@@ -45,9 +50,11 @@ export function VideoDetailModal({ visible, video, onClose }: Props) {
   const colors = useColors();
   const [liked, setLiked] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [showReviewRequest, setShowReviewRequest] = useState(false);
   const [showResponseForm, setShowResponseForm] = useState(false);
   const [responseText, setResponseText] = useState("");
   const [responseSubmitted, setResponseSubmitted] = useState(false);
+  const [markedResolved, setMarkedResolved] = useState(false);
 
   if (!video) return null;
 
@@ -67,9 +74,12 @@ export function VideoDetailModal({ visible, video, onClose }: Props) {
     setShowResponseForm(false);
     setResponseText("");
     setResponseSubmitted(false);
+    setMarkedResolved(false);
     setLiked(false);
     onClose();
   };
+
+  const isResolved = !!(video.issueResolved || markedResolved);
 
   return (
     <>
@@ -154,13 +164,43 @@ export function VideoDetailModal({ visible, video, onClose }: Props) {
                 <View style={[styles.policyBar, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                   <Feather name="shield" size={13} color={colors.mutedForeground} />
                   <Text style={[styles.policyTxt, { color: colors.mutedForeground }]}>
-                    This is community content. Businesses cannot remove videos — they may respond publicly or report to our moderation team.
+                    This is community content. Businesses cannot remove videos — they may respond publicly, report to our moderation team, or request a formal review.
                   </Text>
                 </View>
 
-                {/* Business Response — existing */}
+                {/* ── Issue Resolved Banner ── */}
+                {isResolved && (
+                  <View style={styles.resolvedBanner}>
+                    <View style={styles.resolvedBannerTop}>
+                      <View style={styles.resolvedIconWrap}>
+                        <Feather name="check-circle" size={18} color="#fff" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.resolvedTitle}>Issue Resolved</Text>
+                        <Text style={styles.resolvedDate}>
+                          {video.issueResolved?.resolvedDate ?? "Recently"}
+                        </Text>
+                      </View>
+                    </View>
+                    {(video.issueResolved?.creatorFollowUp || markedResolved) && (
+                      <View style={styles.resolvedFollowUp}>
+                        <Feather name="message-circle" size={12} color="#2D7A4F" />
+                        <Text style={styles.resolvedFollowUpTxt}>
+                          {markedResolved && !video.issueResolved
+                            ? "The business acknowledged this feedback and took action. The creator marked this issue as resolved."
+                            : video.issueResolved?.creatorFollowUp}
+                        </Text>
+                      </View>
+                    )}
+                    <Text style={styles.resolvedNote}>
+                      This badge means the creator returned, saw the business's response, and confirmed the issue was addressed.
+                    </Text>
+                  </View>
+                )}
+
+                {/* Business Response card */}
                 {(video.businessResponse || responseSubmitted) && (
-                  <View style={[styles.responseCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={[styles.responseCard, { backgroundColor: colors.card, borderColor: isResolved ? "#2D7A4F40" : colors.border }]}>
                     <View style={styles.responseHeader}>
                       <View style={[styles.responseIcon, { backgroundColor: colors.primary + "18" }]}>
                         <Feather name="briefcase" size={14} color={colors.primary} />
@@ -186,6 +226,22 @@ export function VideoDetailModal({ visible, video, onClose }: Props) {
                         ? responseText
                         : video.businessResponse?.text}
                     </Text>
+
+                    {/* Mark as Resolved — shown when there's a response but not yet resolved */}
+                    {(video.businessResponse || responseSubmitted) && !isResolved && (
+                      <TouchableOpacity
+                        style={styles.markResolvedBtn}
+                        onPress={() => {
+                          if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                          setMarkedResolved(true);
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Feather name="check-circle" size={14} color="#2D7A4F" />
+                        <Text style={styles.markResolvedTxt}>Mark as Resolved — the business addressed my concern</Text>
+                      </TouchableOpacity>
+                    )}
+
                     <View style={[styles.responseFooter, { borderTopColor: colors.border }]}>
                       <Feather name="info" size={11} color={colors.mutedForeground} />
                       <Text style={[styles.responseFooterTxt, { color: colors.mutedForeground }]}>
@@ -195,18 +251,52 @@ export function VideoDetailModal({ visible, video, onClose }: Props) {
                   </View>
                 )}
 
-                {/* Add Business Response CTA — mock: any user can "demo" this */}
-                {!responseSubmitted && !video.businessResponse && !showResponseForm && (
+                {/* Business actions row — Request Review */}
+                {(video.businessResponse || responseSubmitted) && (
                   <TouchableOpacity
-                    style={[styles.addResponseBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
-                    onPress={() => setShowResponseForm(true)}
+                    style={[styles.reviewRequestBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+                    onPress={() => setShowReviewRequest(true)}
                     activeOpacity={0.8}
                   >
-                    <Feather name="message-square" size={16} color={colors.primary} />
-                    <Text style={[styles.addResponseTxt, { color: colors.primary }]}>
-                      Add a Business Response
-                    </Text>
+                    <Feather name="search" size={15} color={colors.mutedForeground} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.reviewRequestLabel, { color: colors.foreground }]}>Request a Moderation Review</Text>
+                      <Text style={[styles.reviewRequestSub, { color: colors.mutedForeground }]}>
+                        If you believe this video violates our policies, request a human review.
+                      </Text>
+                    </View>
+                    <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
                   </TouchableOpacity>
+                )}
+
+                {/* Add Business Response CTA */}
+                {!responseSubmitted && !video.businessResponse && !showResponseForm && (
+                  <View style={styles.businessActionsCol}>
+                    <TouchableOpacity
+                      style={[styles.addResponseBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+                      onPress={() => setShowResponseForm(true)}
+                      activeOpacity={0.8}
+                    >
+                      <Feather name="message-square" size={16} color={colors.primary} />
+                      <Text style={[styles.addResponseTxt, { color: colors.primary }]}>
+                        Add a Business Response
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.reviewRequestBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+                      onPress={() => setShowReviewRequest(true)}
+                      activeOpacity={0.8}
+                    >
+                      <Feather name="search" size={15} color={colors.mutedForeground} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.reviewRequestLabel, { color: colors.foreground }]}>Request a Moderation Review</Text>
+                        <Text style={[styles.reviewRequestSub, { color: colors.mutedForeground }]}>
+                          If you believe this video violates our policies, request a human review.
+                        </Text>
+                      </View>
+                      <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+                    </TouchableOpacity>
+                  </View>
                 )}
 
                 {/* Response form */}
@@ -260,6 +350,12 @@ export function VideoDetailModal({ visible, video, onClose }: Props) {
         visible={showReport}
         videoTitle={video.title}
         onClose={() => setShowReport(false)}
+      />
+
+      <ReviewRequestModal
+        visible={showReviewRequest}
+        videoTitle={video.title}
+        onClose={() => setShowReviewRequest(false)}
       />
     </>
   );
@@ -350,4 +446,41 @@ const styles = StyleSheet.create({
     flex: 2, borderRadius: 10, alignItems: "center", paddingVertical: 12,
   },
   responseFormSubmitTxt: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  resolvedBanner: {
+    borderRadius: 14, backgroundColor: "#2D7A4F", padding: 14, gap: 10,
+  },
+  resolvedBannerTop: { flexDirection: "row", alignItems: "center", gap: 10 },
+  resolvedIconWrap: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center",
+  },
+  resolvedTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#fff" },
+  resolvedDate: { fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.75)" },
+  resolvedFollowUp: {
+    flexDirection: "row", alignItems: "flex-start", gap: 8,
+    backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 10, padding: 10,
+  },
+  resolvedFollowUpTxt: {
+    flex: 1, fontSize: 13, fontFamily: "Inter_400Regular",
+    color: "#fff", lineHeight: 19, fontStyle: "italic",
+  },
+  resolvedNote: {
+    fontSize: 11, fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.65)", lineHeight: 16,
+  },
+  markResolvedBtn: {
+    flexDirection: "row", alignItems: "flex-start", gap: 8,
+    backgroundColor: "#2D7A4F12", borderRadius: 10, padding: 10, marginTop: 4,
+  },
+  markResolvedTxt: {
+    flex: 1, fontSize: 13, fontFamily: "Inter_500Medium",
+    color: "#2D7A4F", lineHeight: 18,
+  },
+  businessActionsCol: { gap: 10 },
+  reviewRequestBtn: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    borderWidth: 1, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14,
+  },
+  reviewRequestLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  reviewRequestSub: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
 });
