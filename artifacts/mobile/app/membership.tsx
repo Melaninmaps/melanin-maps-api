@@ -18,7 +18,7 @@ import { useColors } from "@/hooks/useColors";
 import { useMembership } from "@/hooks/useMembership";
 
 type Billing = "monthly" | "annual";
-type Audience = "consumer" | "business";
+type Audience = "consumer" | "business" | "creator";
 
 interface Plan {
   id: string;
@@ -283,53 +283,59 @@ export default function MembershipScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      {/* Consumer / Business toggle */}
+      {/* Consumer / Business / Creator toggle */}
       <View style={[styles.audienceToggle, { backgroundColor: colors.secondary }]}>
-        {(["consumer", "business"] as Audience[]).map((a) => (
+        {([
+          { id: "consumer", label: "Personal", icon: "user" },
+          { id: "business", label: "Business", icon: "briefcase" },
+          { id: "creator", label: "Creator", icon: "film" },
+        ] as { id: Audience; label: string; icon: string }[]).map((a) => (
           <TouchableOpacity
-            key={a}
-            style={[styles.audienceOption, audience === a && { backgroundColor: colors.card }]}
+            key={a.id}
+            style={[styles.audienceOption, audience === a.id && { backgroundColor: colors.card }]}
             onPress={() => {
-              setAudience(a);
+              setAudience(a.id);
               if (Platform.OS !== "web") Haptics.selectionAsync();
             }}
             activeOpacity={0.75}
           >
             <Feather
-              name={a === "consumer" ? "user" : "briefcase"}
-              size={14}
-              color={audience === a ? colors.primary : colors.mutedForeground}
+              name={a.icon as any}
+              size={13}
+              color={audience === a.id ? colors.primary : colors.mutedForeground}
             />
-            <Text style={[styles.audienceTxt, { color: audience === a ? colors.foreground : colors.mutedForeground }]}>
-              {a === "consumer" ? "Personal" : "Business"}
+            <Text style={[styles.audienceTxt, { color: audience === a.id ? colors.foreground : colors.mutedForeground }]}>
+              {a.label}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* Billing toggle */}
-      <View style={[styles.billingToggle, { backgroundColor: colors.secondary }]}>
-        {(["monthly", "annual"] as Billing[]).map((b) => (
-          <TouchableOpacity
-            key={b}
-            style={[styles.billingOption, billing === b && { backgroundColor: colors.card }]}
-            onPress={() => {
-              setBilling(b);
-              if (Platform.OS !== "web") Haptics.selectionAsync();
-            }}
-            activeOpacity={0.75}
-          >
-            <Text style={[styles.billingTxt, { color: billing === b ? colors.foreground : colors.mutedForeground }]}>
-              {b === "monthly" ? "Monthly" : "Annual"}
-            </Text>
-            {b === "annual" && (
-              <View style={[styles.savingsBadge, { backgroundColor: colors.success }]}>
-                <Text style={[styles.savingsTxt, { color: colors.successForeground }]}>Save 17%</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        ))}
-      </View>
+      {/* Billing toggle — hidden for creator tab */}
+      {audience !== "creator" && (
+        <View style={[styles.billingToggle, { backgroundColor: colors.secondary }]}>
+          {(["monthly", "annual"] as Billing[]).map((b) => (
+            <TouchableOpacity
+              key={b}
+              style={[styles.billingOption, billing === b && { backgroundColor: colors.card }]}
+              onPress={() => {
+                setBilling(b);
+                if (Platform.OS !== "web") Haptics.selectionAsync();
+              }}
+              activeOpacity={0.75}
+            >
+              <Text style={[styles.billingTxt, { color: billing === b ? colors.foreground : colors.mutedForeground }]}>
+                {b === "monthly" ? "Monthly" : "Annual"}
+              </Text>
+              {b === "annual" && (
+                <View style={[styles.savingsBadge, { backgroundColor: colors.success }]}>
+                  <Text style={[styles.savingsTxt, { color: colors.successForeground }]}>Save 17%</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {subscription && (
         <TouchableOpacity
@@ -379,7 +385,99 @@ export default function MembershipScreen() {
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 24 }]}
         showsVerticalScrollIndicator={false}
       >
-        {plans.map((plan) => {
+        {/* ── Creator Program ── */}
+        {audience === "creator" && (
+          <>
+            {/* Hero */}
+            <View style={[styles.creatorHero, { backgroundColor: "#1A3B2B" }]}>
+              <Text style={styles.creatorHeroEmoji}>🎥</Text>
+              <Text style={styles.creatorHeroTitle}>Creator Program</Text>
+              <Text style={styles.creatorHeroSub}>
+                A third side of the Mapping With Melanin™ marketplace — alongside Community Members and Businesses.
+              </Text>
+            </View>
+
+            {/* What creators do */}
+            <View style={[styles.creatorCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.creatorCardTitle, { color: colors.foreground }]}>Why Creators Matter</Text>
+              <Text style={[styles.creatorCardBody, { color: colors.mutedForeground }]}>
+                Authentic community videos are what will help this platform rank in search, keep people engaged, and build the kind of trust that no marketing budget can buy.
+              </Text>
+              <Text style={[styles.creatorCardBody, { color: colors.mutedForeground }]}>
+                We don't hide travel videos behind a paywall — community content belongs to everyone. We monetize the{" "}
+                <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>tools</Text>
+                , not the ability to contribute.
+              </Text>
+            </View>
+
+            {/* Program perks */}
+            <View style={[styles.creatorCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.creatorPerksHeader}>
+                <Text style={{ fontSize: 18 }}>🏅</Text>
+                <Text style={[styles.creatorCardTitle, { color: colors.foreground }]}>Selected Creators Receive</Text>
+              </View>
+              {[
+                { icon: "✅", label: "Verified Creator badge", detail: "A trusted signal on every video and your profile." },
+                { icon: "📌", label: "Featured placement", detail: "Your content surfaces first in destination searches." },
+                { icon: "🎉", label: "Invitations to events", detail: "Early access and press credentials at partner events." },
+                { icon: "🤝", label: "Business partnerships", detail: "Match with local businesses for collaborative content." },
+                { icon: "💰", label: "Future revenue-sharing", detail: "First in line when monetization launches." },
+                { icon: "📊", label: "Creator analytics", detail: "Views, likes, saves, profile visits, and follower growth." },
+              ].map((p, i) => (
+                <View key={i} style={styles.creatorPerkRow}>
+                  <Text style={{ fontSize: 18, lineHeight: 24 }}>{p.icon}</Text>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={[styles.creatorPerkLabel, { color: colors.foreground }]}>{p.label}</Text>
+                    <Text style={[styles.creatorPerkDetail, { color: colors.mutedForeground }]}>{p.detail}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            {/* Who qualifies */}
+            <View style={[styles.creatorCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.creatorCardTitle, { color: colors.foreground }]}>Who Qualifies</Text>
+              {[
+                "Share authentic travel experiences from a Black perspective",
+                "Upload at least 3 videos showing real destinations, businesses, or communities",
+                "Engage with the community — responses, likes, and discussions",
+                "Maintain content that aligns with community standards",
+              ].map((q, i) => (
+                <View key={i} style={styles.creatorQualRow}>
+                  <Feather name="check-circle" size={14} color={colors.primary} />
+                  <Text style={[styles.creatorQualTxt, { color: colors.mutedForeground }]}>{q}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Show Me the Vibe callout */}
+            <View style={[styles.creatorVibeCard, { backgroundColor: "#3B1F0E" }]}>
+              <Text style={{ fontSize: 22 }}>🎬</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.creatorVibeTitle}>Power the "Show Me the Vibe" feature</Text>
+                <Text style={styles.creatorVibeSub}>
+                  When someone searches a city or business, your videos become the first thing they see — authentic community experiences instead of polished ads.
+                </Text>
+              </View>
+            </View>
+
+            {/* Apply CTA */}
+            <TouchableOpacity
+              style={[styles.ctaBtn, { backgroundColor: colors.primary }]}
+              onPress={() => router.push("/waitlist")}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.ctaTxt, { color: "#fff" }]}>Apply for the Creator Program</Text>
+            </TouchableOpacity>
+
+            <Text style={[styles.creatorNote, { color: colors.mutedForeground }]}>
+              The Creator Program is invite-based during our launch phase. Community Premium members are reviewed first for acceptance.
+            </Text>
+          </>
+        )}
+
+        {/* ── Standard plans ── */}
+        {audience !== "creator" && plans.map((plan) => {
           const isHighlight = plan.bg !== null;
           const loading = checkoutLoading && checkoutPlanId === (plan.stripeKey ?? plan.name);
           const subscribed = isSubscribed(plan);
@@ -599,17 +697,19 @@ export default function MembershipScreen() {
           </View>
         )}
 
-        <View style={[styles.guaranteeBox, { backgroundColor: colors.secondary }]}>
-          <Feather name="shield" size={20} color={colors.success} />
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.guaranteeTitle, { color: colors.foreground }]}>
-              90-day free trial + money-back guarantee
-            </Text>
-            <Text style={[styles.guaranteeSub, { color: colors.mutedForeground }]}>
-              Cancel anytime. No questions asked. No credit card required to start.
-            </Text>
+        {audience !== "creator" && (
+          <View style={[styles.guaranteeBox, { backgroundColor: colors.secondary }]}>
+            <Feather name="shield" size={20} color={colors.success} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.guaranteeTitle, { color: colors.foreground }]}>
+                90-day free trial + money-back guarantee
+              </Text>
+              <Text style={[styles.guaranteeSub, { color: colors.mutedForeground }]}>
+                Cancel anytime. No questions asked. No credit card required to start.
+              </Text>
+            </View>
           </View>
-        </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -733,4 +833,23 @@ const styles = StyleSheet.create({
   },
   guaranteeTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", marginBottom: 3 },
   guaranteeSub: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  creatorHero: {
+    borderRadius: 18, padding: 22, gap: 10, alignItems: "center",
+  },
+  creatorHeroEmoji: { fontSize: 40 },
+  creatorHeroTitle: { fontSize: 22, fontFamily: "Inter_700Bold", color: "#fff", textAlign: "center" },
+  creatorHeroSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.8)", textAlign: "center", lineHeight: 19 },
+  creatorCard: { borderRadius: 16, padding: 18, gap: 12, borderWidth: 1 },
+  creatorCardTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  creatorCardBody: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20 },
+  creatorPerksHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  creatorPerkRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  creatorPerkLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  creatorPerkDetail: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
+  creatorQualRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  creatorQualTxt: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
+  creatorVibeCard: { borderRadius: 14, padding: 16, flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  creatorVibeTitle: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff", marginBottom: 4 },
+  creatorVibeSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.8)", lineHeight: 17 },
+  creatorNote: { fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 18, marginTop: 4 },
 });

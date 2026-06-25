@@ -361,6 +361,22 @@ export default function BusinessDetailScreen() {
           <BusinessStoriesSection stories={stories} />
           <BusinessListingsSection businessId={id ?? ""} businessName={business.name} returnPolicy={(business as any).returnPolicy} />
 
+          {/* Show Me the Vibe */}
+          <TouchableOpacity
+            style={[styles.vibeCard, { backgroundColor: "#1A3B2B" }]}
+            activeOpacity={0.85}
+            onPress={() => router.push("/travel-videos")}
+          >
+            <Text style={styles.vibeCardEmoji}>🎥</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.vibeCardTitle}>Show Me the Vibe</Text>
+              <Text style={styles.vibeCardSub}>
+                Watch community videos from real visitors — the food, the feel, the atmosphere.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color="#C9922B" />
+          </TouchableOpacity>
+
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Location</Text>
           <View style={[styles.mapWrap, { borderColor: colors.border }]}>
             <BusinessMapView
@@ -777,4 +793,11 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontStyle: "italic",
   },
+  vibeCard: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    borderRadius: 14, padding: 16, marginBottom: 16,
+  },
+  vibeCardEmoji: { fontSize: 26 },
+  vibeCardTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#fff", marginBottom: 3 },
+  vibeCardSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.78)" },
 });
