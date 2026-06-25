@@ -20,18 +20,21 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
 const CATEGORIES = [
-  "Food",
-  "Beauty",
-  "Retail",
-  "Tech",
-  "Health",
-  "Legal",
-  "Finance",
-  "Arts",
-  "Fitness",
-  "Travel",
-  "Media",
-  "Education",
+  "Food & Beverage",
+  "Shopping & Retail",
+  "Beauty & Personal Care",
+  "Health & Wellness",
+  "Professional Services",
+  "Home Services",
+  "Automotive",
+  "Real Estate & Housing",
+  "Technology",
+  "Creative Services",
+  "Events & Entertainment",
+  "Travel & Hospitality",
+  "Family & Education",
+  "Pet Services",
+  "Community & Nonprofit",
 ];
 
 const PRICE_RANGES = ["$", "$$", "$$$", "$$$$"];

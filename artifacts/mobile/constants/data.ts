@@ -4,7 +4,7 @@ export const BUSINESSES: Business[] = [
   {
     id: "1",
     name: "Sweet Auburn BBQ",
-    category: "Food",
+    category: "Food & Beverage",
     subcategory: "Barbecue",
     address: "656 N Highland Ave NE",
     city: "Atlanta",
@@ -38,7 +38,7 @@ export const BUSINESSES: Business[] = [
   {
     id: "2",
     name: "Essence Beauty Lounge",
-    category: "Beauty",
+    category: "Beauty & Personal Care",
     subcategory: "Salon & Spa",
     address: "3412 Westheimer Rd",
     city: "Houston",
@@ -71,7 +71,7 @@ export const BUSINESSES: Business[] = [
   {
     id: "3",
     name: "Harambee Tech Hub",
-    category: "Tech",
+    category: "Technology",
     subcategory: "Coworking & Education",
     address: "1401 S Wabash Ave",
     city: "Chicago",
@@ -103,7 +103,7 @@ export const BUSINESSES: Business[] = [
   {
     id: "4",
     name: "Roots & Culture Bookstore",
-    category: "Retail",
+    category: "Shopping & Retail",
     subcategory: "Books & Media",
     address: "2124 Georgia Ave NW",
     city: "Washington",
@@ -136,7 +136,7 @@ export const BUSINESSES: Business[] = [
   {
     id: "5",
     name: "Ujima Wellness Center",
-    category: "Health",
+    category: "Health & Wellness",
     subcategory: "Holistic Health",
     address: "789 Malcolm X Blvd",
     city: "New York",
@@ -168,7 +168,7 @@ export const BUSINESSES: Business[] = [
   {
     id: "6",
     name: "Carter & Associates Law",
-    category: "Legal",
+    category: "Professional Services",
     subcategory: "Business & Civil Rights",
     address: "5050 Wilshire Blvd",
     city: "Los Angeles",
@@ -200,7 +200,7 @@ export const BUSINESSES: Business[] = [
   {
     id: "7",
     name: "Kingdom Cuts Barbershop",
-    category: "Beauty",
+    category: "Beauty & Personal Care",
     subcategory: "Barbershop",
     address: "1807 Peachtree Rd NE",
     city: "Atlanta",
@@ -232,7 +232,7 @@ export const BUSINESSES: Business[] = [
   {
     id: "8",
     name: "Melanin Money Financial",
-    category: "Finance",
+    category: "Professional Services",
     subcategory: "Financial Planning",
     address: "3200 Main St",
     city: "Houston",
@@ -427,6 +427,23 @@ export const ALERTS: AlertItem[] = [
   },
 ];
 
-export const CATEGORIES = ["All", "Food", "Beauty", "Retail", "Tech", "Health", "Legal", "Finance"];
+export const CATEGORIES = [
+  "All",
+  "Food & Beverage",
+  "Shopping & Retail",
+  "Beauty & Personal Care",
+  "Health & Wellness",
+  "Professional Services",
+  "Home Services",
+  "Automotive",
+  "Real Estate & Housing",
+  "Technology",
+  "Creative Services",
+  "Events & Entertainment",
+  "Travel & Hospitality",
+  "Family & Education",
+  "Pet Services",
+  "Community & Nonprofit",
+];
 
 export const EVENT_CATEGORIES = ["All", "Cultural", "Business", "Beauty", "Finance", "Music", "Food", "Wellness"];
