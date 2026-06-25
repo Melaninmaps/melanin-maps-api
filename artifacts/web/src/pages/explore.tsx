@@ -10,7 +10,6 @@ const OWNERSHIP_OPTIONS = [
   { id: "veteran-owned", label: "Veteran-Owned", emoji: "🎖️", color: "#1D4ED8" },
   { id: "lgbtq-owned", label: "LGBTQIA+-Owned", emoji: "🏳️‍🌈", color: "#DC2626" },
   { id: "hispanic-owned", label: "Hispanic/Latino-Owned", emoji: "🤝🏾", color: "#2D7A4F" },
-  { id: "asian-owned", label: "Asian-Owned", emoji: "🌏", color: "#0891B2" },
   { id: "indigenous-owned", label: "Indigenous-Owned", emoji: "🌿", color: "#5E4B1A" },
   { id: "disability-owned", label: "Disability-Owned", emoji: "♿", color: "#4B5563" },
   { id: "immigrant-owned", label: "Immigrant-Owned", emoji: "🌍", color: "#6D28D9" },

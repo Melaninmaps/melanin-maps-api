@@ -64,7 +64,6 @@ const DESIGNATIONS: Designation[] = [
   { id: "black",      label: "Black / African American",    emoji: "✊🏾", keywords: [] },
   { id: "latino",     label: "Latino / Hispanic",           emoji: "🌎", keywords: [] },
   { id: "indigenous", label: "Indigenous / Native American", emoji: "🦅", keywords: [] },
-  { id: "aapi",       label: "Asian American / AAPI",       emoji: "🌸", keywords: [] },
   { id: "mena",       label: "Middle Eastern / Arab",       emoji: "🌙", keywords: [] },
   { id: "multiracial",label: "Multiracial / Biracial",      emoji: "🌈", keywords: [] },
 ];

@@ -146,7 +146,7 @@ export default function Businesses() {
             ))}
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-            {["Minority-Owned", "Hispanic-Owned", "Asian-Owned", "Women-Owned", "Veteran-Owned", "LGBTQ+-Owned", "Indigenous-Owned", "Immigrant-Owned", "Disability-Owned"].map((c, i) => (
+            {["Minority-Owned", "Hispanic-Owned", "Women-Owned", "Veteran-Owned", "LGBTQ+-Owned", "Indigenous-Owned", "Immigrant-Owned", "Disability-Owned"].map((c, i) => (
               <button key={i} className={`px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-bold transition-colors ${i === 0 ? 'bg-[#CA922B]/10 text-[#CA922B] border border-[#CA922B]/30' : 'bg-white border border-[#3A1F0E]/10 text-[#3A1F0E] hover:border-[#CA922B]'}`}>
                 {c}
               </button>
