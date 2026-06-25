@@ -613,24 +613,17 @@ export default function MembershipScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.foundingName, { color: colors.foreground }]}>Founding Business Program</Text>
                 <View style={[styles.foundingBadge, { backgroundColor: "#C9A84C22" }]}>
-                  <Text style={[styles.foundingBadgeTxt, { color: "#C9A84C" }]}>First 500 verified businesses · First 6 months after launch</Text>
+                  <Text style={[styles.foundingBadgeTxt, { color: "#C9A84C" }]}>First 500 verified businesses · Exclusively during launch</Text>
                 </View>
               </View>
             </View>
+
+            <Text style={[styles.featureTxt, { color: colors.mutedForeground, marginBottom: 14, lineHeight: 20 }]}>
+              Our Founding Businesses receive exclusive introductory marketplace rates as a thank you for believing in Mapping with Melanin™ from the beginning. As we continue investing in AI, community tools, safety features, and platform innovation, standard rates will apply to businesses joining after the Founding Program closes.
+            </Text>
+
             <View style={styles.featureList}>
-              {[
-                "Six months of Premium Business membership",
-                "Founding Business badge on your profile",
-                "Early access to new features",
-                "Recognition as an early supporter",
-                "Opportunities to be featured in launch marketing",
-              ].map((f, i) => (
-                <View key={i} style={styles.featureRow}>
-                  <Text style={{ fontSize: 14 }}>⭐</Text>
-                  <Text style={[styles.featureTxt, { color: colors.foreground }]}>{f}</Text>
-                </View>
-              ))}
-              <View style={[styles.featureRow, { flexDirection: "column", alignItems: "flex-start", gap: 6, marginTop: 4 }]}>
+              <View style={[styles.featureRow, { flexDirection: "column", alignItems: "flex-start", gap: 6, marginBottom: 4 }]}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                   <Text style={{ fontSize: 14 }}>🔒</Text>
                   <Text style={[styles.featureTxt, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>Marketplace fee locked for 3 years:</Text>
@@ -646,7 +639,21 @@ export default function MembershipScreen() {
                   </View>
                 ))}
               </View>
+              {[
+                "Founding Business badge on your profile and listing",
+                "Six months of Premium Business membership — AI tools, analytics & priority placement",
+                "Priority onboarding with our team",
+                "Early access to every new feature before public release",
+                "Recognition on mappingwithmelanin.com as an early supporter",
+                "Opportunities to be featured in launch marketing and press",
+              ].map((f, i) => (
+                <View key={i} style={styles.featureRow}>
+                  <Text style={{ fontSize: 14 }}>⭐</Text>
+                  <Text style={[styles.featureTxt, { color: colors.foreground }]}>{f}</Text>
+                </View>
+              ))}
             </View>
+
             <TouchableOpacity
               style={[styles.ctaBtn, { backgroundColor: "#C9A84C22", borderWidth: 1.5, borderColor: "#C9A84C" }]}
               onPress={() => router.push("/list-business")}
@@ -665,7 +672,7 @@ export default function MembershipScreen() {
               <Text style={[styles.feeTableTitle, { color: colors.foreground }]}>Marketplace Fees</Text>
             </View>
             <Text style={[styles.feeNote, { color: colors.mutedForeground, marginBottom: 10 }]}>
-              Every purchase helps fund community discovery, business growth tools, safety features, and continued investment in Black-owned businesses.
+              Standard rates apply to businesses joining after the Founding Program closes. Every transaction helps fund AI, community tools, safety intelligence, verification, and continued investment in Black-owned businesses.
             </Text>
             {[
               { name: "Community Business", fee: "10%" },

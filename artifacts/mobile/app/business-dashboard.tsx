@@ -1106,12 +1106,16 @@ export default function BusinessDashboardScreen() {
                     <Text style={{ fontFamily: "Inter_700Bold", fontSize: 10, color: "#C9922B" }}>FOUNDING</Text>
                   </View>
                 </View>
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.6)", marginBottom: 10, lineHeight: 18 }}>
+                  Thank you for believing in Mapping with Melanin™ from the beginning. Your exclusive introductory rates are locked in as a reward for your early support.
+                </Text>
                 {[
-                  { icon: "zap" as const, text: "6 months of Premium features — AI tools, enhanced analytics, priority placement" },
-                  { icon: "tag" as const, text: "3% marketplace rate locked in for 3 years, then your standard tier rate" },
-                  { icon: "award" as const, text: "Founding Business badge on your profile and listing" },
-                  { icon: "trending-up" as const, text: "Priority consideration for new features and partnerships" },
-                  { icon: "globe" as const, text: "Recognition on mappingwithmelanin.com and early access to future tools" },
+                  { icon: "lock" as const,       text: "Marketplace fees locked for 3 years — Community 6% · Growth 5% · Premium 3%" },
+                  { icon: "award" as const,       text: "Founding Business badge on your profile and listing" },
+                  { icon: "zap" as const,         text: "6 months of Premium Business membership — AI tools, enhanced analytics, priority placement" },
+                  { icon: "users" as const,       text: "Priority onboarding with our team" },
+                  { icon: "trending-up" as const, text: "Early access to every new feature before public release" },
+                  { icon: "globe" as const,       text: "Recognition on mappingwithmelanin.com and featured in launch marketing" },
                 ].map((item) => (
                   <View key={item.text} style={{ flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 6 }}>
                     <Feather name={item.icon} size={13} color="#C9922B" style={{ marginTop: 2 }} />
@@ -1120,9 +1124,6 @@ export default function BusinessDashboardScreen() {
                     </Text>
                   </View>
                 ))}
-                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "rgba(201,146,43,0.5)", marginTop: 6, lineHeight: 16 }}>
-                  Thank you for building with us from the beginning.
-                </Text>
               </View>
             )}
 
