@@ -12,6 +12,9 @@ export const businessListingsTable = pgTable("business_listings", {
   currency: varchar("currency", { length: 10 }).notNull().default("usd"),
   imageUrl: varchar("image_url", { length: 512 }),
   category: varchar("category", { length: 100 }),
+  listingType: varchar("listing_type", {
+    enum: ["physical", "digital", "event_ticket", "gift_card", "service"],
+  }),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

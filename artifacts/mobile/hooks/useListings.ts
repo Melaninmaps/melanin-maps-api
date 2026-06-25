@@ -12,6 +12,16 @@ async function getToken(): Promise<string | null> {
   try { return await SecureStore.getItemAsync(AUTH_TOKEN_KEY); } catch { return null; }
 }
 
+export const LISTING_TYPES = [
+  { value: "physical",     label: "Physical Product", icon: "package" },
+  { value: "digital",      label: "Digital Product",  icon: "download" },
+  { value: "event_ticket", label: "Event Ticket",     icon: "calendar" },
+  { value: "gift_card",    label: "Gift Card",        icon: "gift" },
+  { value: "service",      label: "Service",          icon: "tool" },
+] as const;
+
+export type ListingType = typeof LISTING_TYPES[number]["value"];
+
 export interface Listing {
   id: string;
   businessId: string;
@@ -23,6 +33,7 @@ export interface Listing {
   currency: string;
   imageUrl: string | null;
   category: string | null;
+  listingType: ListingType | null;
   active: boolean;
   createdAt: string;
 }
@@ -135,6 +146,7 @@ export function useOwnerListings(businessId: string) {
     priceInCents: number;
     imageUrl?: string;
     category?: string;
+    listingType?: ListingType;
   }): Promise<Listing | null> => {
     try {
       const base = getApiBaseUrl();

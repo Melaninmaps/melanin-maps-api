@@ -118,12 +118,19 @@ router.get("/connect/onboard-refresh", async (req: Request, res: Response) => {
   res.redirect(`mappingwithmelanin://connect/onboard-refresh?businessId=${businessId}`);
 });
 
+const VALID_LISTING_TYPES = ["physical", "digital", "event_ticket", "gift_card", "service"] as const;
+type ListingType = typeof VALID_LISTING_TYPES[number];
+
 router.post("/connect/listings", async (req: Request, res: Response) => {
-  const { businessId, name, description, priceInCents, imageUrl, category } =
-    req.body as { businessId?: string; name?: string; description?: string; priceInCents?: number; imageUrl?: string; category?: string };
+  const { businessId, name, description, priceInCents, imageUrl, category, listingType } =
+    req.body as { businessId?: string; name?: string; description?: string; priceInCents?: number; imageUrl?: string; category?: string; listingType?: string };
 
   if (!businessId || !name || !priceInCents) {
     res.status(400).json({ error: "businessId, name, and priceInCents are required" });
+    return;
+  }
+  if (!listingType || !VALID_LISTING_TYPES.includes(listingType as ListingType)) {
+    res.status(400).json({ error: "listingType is required. Valid values: physical, digital, event_ticket, gift_card, service" });
     return;
   }
 
@@ -143,7 +150,7 @@ router.post("/connect/listings", async (req: Request, res: Response) => {
         name,
         description: description ?? undefined,
         images: imageUrl ? [imageUrl] : undefined,
-        metadata: { businessId, businessName: biz.name, category: category ?? "" },
+        metadata: { businessId, businessName: biz.name, category: category ?? "", listingType: listingType ?? "" },
       },
       { stripeAccount: biz.stripeConnectAccountId },
     );
@@ -165,6 +172,7 @@ router.post("/connect/listings", async (req: Request, res: Response) => {
         currency: "usd",
         imageUrl: imageUrl ?? null,
         category: category ?? null,
+        listingType: (listingType as ListingType) ?? null,
         active: true,
       })
       .returning();
@@ -217,8 +225,8 @@ router.patch("/connect/listings/:id", async (req: Request, res: Response) => {
   const biz = await requireBusinessOwner(req, res, existing.businessId);
   if (!biz) return;
 
-  const { name, description, priceInCents, imageUrl, category, active } =
-    req.body as { name?: string; description?: string; priceInCents?: number; imageUrl?: string; category?: string; active?: boolean };
+  const { name, description, priceInCents, imageUrl, category, active, listingType } =
+    req.body as { name?: string; description?: string; priceInCents?: number; imageUrl?: string; category?: string; active?: boolean; listingType?: string };
 
   try {
     const stripe = await getUncachableStripeClient();
@@ -254,6 +262,7 @@ router.patch("/connect/listings/:id", async (req: Request, res: Response) => {
     if (imageUrl !== undefined) updates.imageUrl = imageUrl;
     if (category !== undefined) updates.category = category;
     if (active !== undefined) updates.active = active;
+    if (listingType !== undefined && VALID_LISTING_TYPES.includes(listingType as ListingType)) updates.listingType = listingType as ListingType;
     if (newPriceId !== existing.stripePriceId) updates.stripePriceId = newPriceId ?? undefined;
 
     const [updated] = await db.update(businessListingsTable).set(updates).where(eq(businessListingsTable.id, id)).returning();

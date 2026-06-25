@@ -18,7 +18,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-import { useOwnerListings, type Listing } from "@/hooks/useListings";
+import { useOwnerListings, LISTING_TYPES, type Listing, type ListingType } from "@/hooks/useListings";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -186,6 +186,7 @@ export default function BusinessDashboardScreen() {
   const { listings, connectStatus, loading: listingsLoading, startOnboarding, createListing, toggleActive, deleteListing } =
     useOwnerListings(business?.id ?? "");
   const [showNewListing, setShowNewListing] = useState(false);
+  const [newListingType, setNewListingType] = useState<ListingType | null>(null);
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newPrice, setNewPrice] = useState("");
@@ -931,6 +932,23 @@ export default function BusinessDashboardScreen() {
 
                 {showNewListing && (
                   <View style={[styles.newListingForm, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Text style={[styles.formLabel, { color: colors.foreground }]}>Listing Type <Text style={{ color: "#C9922B" }}>*</Text></Text>
+                    <View style={styles.typeChips}>
+                      {LISTING_TYPES.map((t) => {
+                        const selected = newListingType === t.value;
+                        return (
+                          <TouchableOpacity
+                            key={t.value}
+                            style={[styles.typeChip, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? colors.primary + "15" : colors.background }]}
+                            onPress={() => setNewListingType(t.value)}
+                            activeOpacity={0.75}
+                          >
+                            <Feather name={t.icon as any} size={13} color={selected ? colors.primary : colors.mutedForeground} />
+                            <Text style={[styles.typeChipTxt, { color: selected ? colors.primary : colors.mutedForeground }]}>{t.label}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
                     <Text style={[styles.formLabel, { color: colors.foreground }]}>Product / Service Name</Text>
                     <TextInput
                       style={[styles.formInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
@@ -967,9 +985,10 @@ export default function BusinessDashboardScreen() {
                       keyboardType="decimal-pad"
                     />
                     <TouchableOpacity
-                      style={[styles.saveBtn, { backgroundColor: colors.primary }, savingListing && { opacity: 0.6 }]}
-                      disabled={savingListing || !newName.trim() || !newPrice.trim()}
+                      style={[styles.saveBtn, { backgroundColor: colors.primary }, (savingListing || !newListingType) && { opacity: 0.6 }]}
+                      disabled={savingListing || !newName.trim() || !newPrice.trim() || !newListingType}
                       onPress={async () => {
+                        if (!newListingType) { Alert.alert("Select a listing type before saving."); return; }
                         const cents = Math.round(parseFloat(newPrice) * 100);
                         if (isNaN(cents) || cents <= 0) { Alert.alert("Invalid price"); return; }
                         setSavingListing(true);
@@ -978,11 +997,12 @@ export default function BusinessDashboardScreen() {
                           description: newDesc.trim() || undefined,
                           priceInCents: cents,
                           category: newCategory.trim() || undefined,
+                          listingType: newListingType,
                         });
                         setSavingListing(false);
                         if (result) {
                           setShowNewListing(false);
-                          setNewName(""); setNewDesc(""); setNewPrice(""); setNewCategory("");
+                          setNewListingType(null); setNewName(""); setNewDesc(""); setNewPrice(""); setNewCategory("");
                         } else {
                           Alert.alert("Error", "Failed to create listing. Please try again.");
                         }
@@ -1010,7 +1030,18 @@ export default function BusinessDashboardScreen() {
                   <View key={l.id} style={[styles.listingRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.listingName, { color: colors.foreground }]}>{l.name}</Text>
-                      {l.category ? <Text style={[styles.listingCat, { color: colors.mutedForeground }]}>{l.category}</Text> : null}
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                        {l.listingType ? (() => {
+                          const t = LISTING_TYPES.find((x) => x.value === l.listingType);
+                          return t ? (
+                            <View style={[styles.typeTag, { backgroundColor: colors.primary + "12" }]}>
+                              <Feather name={t.icon as any} size={10} color={colors.primary} />
+                              <Text style={[styles.typeTagTxt, { color: colors.primary }]}>{t.label}</Text>
+                            </View>
+                          ) : null;
+                        })() : null}
+                        {l.category ? <Text style={[styles.listingCat, { color: colors.mutedForeground }]}>{l.category}</Text> : null}
+                      </View>
                       <Text style={[styles.listingPrice, { color: colors.primary }]}>
                         ${(l.priceInCents / 100).toFixed(2)}
                       </Text>
@@ -1552,6 +1583,11 @@ const styles = StyleSheet.create({
   addBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8 },
   addBtnTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#FFF" },
   newListingForm: { borderWidth: 1, borderRadius: 16, padding: 16, marginBottom: 16, gap: 4 },
+  typeChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 4, marginTop: 4 },
+  typeChip: { flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1.5, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6 },
+  typeChipTxt: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  typeTag: { flexDirection: "row", alignItems: "center", gap: 3, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  typeTagTxt: { fontSize: 10, fontFamily: "Inter_500Medium" },
   formLabel: { fontSize: 12, fontFamily: "Inter_500Medium", marginBottom: 4, marginTop: 8 },
   formInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 14 },
   formTextArea: { minHeight: 72, textAlignVertical: "top" },
