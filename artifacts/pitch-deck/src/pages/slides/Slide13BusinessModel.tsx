@@ -76,9 +76,9 @@ export default function Slide13BusinessModel() {
         <div style={{ marginTop: "4vh", border: "1px solid rgba(212,175,55,0.2)", background: "rgba(212,175,55,0.03)", padding: "1.5vh 2vw", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ fontSize: "1vw", letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(212,175,55,0.6)" }}>Marketplace Fee Schedule</div>
           {[
-            { tier: "Community", std: "10%", founding: "6%" },
-            { tier: "Growth", std: "8%", founding: "5%" },
-            { tier: "Premium", std: "6%", founding: "3%" },
+            { tier: "Community", std: "10%", founding: "9%" },
+            { tier: "Growth", std: "8%", founding: "7%" },
+            { tier: "Premium", std: "6%", founding: "5%" },
             { tier: "Enterprise", std: "4%", founding: "4%" },
           ].map((f, i) => (
             <div key={i} style={{ textAlign: "center" }}>

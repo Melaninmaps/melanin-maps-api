@@ -113,7 +113,7 @@ export default function Slide12Membership() {
           <div style={{ fontSize: "1vw", letterSpacing: "0.3em", textTransform: "uppercase", color: "#D4AF37", flexShrink: 0 }}>🔒 Founding Business Program</div>
           <div style={{ width: "1px", height: "2.5vh", background: "rgba(212,175,55,0.3)" }} />
           <div style={{ fontSize: "1.05vw", color: "rgba(255,255,255,0.6)", flex: 1 }}>
-            First 500 businesses lock their marketplace fee for 3 years — Community 6% · Growth 5% · Premium 3%
+            First 500 businesses lock their marketplace fee for 3 years — Community 9% · Growth 7% · Premium 5%
           </div>
           <div style={{ fontSize: "1.05vw", color: "#D4AF37", flexShrink: 0 }}>Enterprise from $199/mo · 4% fee</div>
         </div>

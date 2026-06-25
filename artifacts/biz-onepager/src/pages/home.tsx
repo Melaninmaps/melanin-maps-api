@@ -393,7 +393,7 @@ export default function Home() {
               <div className="text-2xl">🔒</div>
               <div className="flex-1 text-center sm:text-left">
                 <div className="font-bold text-foreground mb-1">Founding Business Program — First 500 Only</div>
-                <div className="text-sm text-foreground/60">Lock your marketplace fee for 3 years: Community 6% · Growth 5% · Premium 3%</div>
+                <div className="text-sm text-foreground/60">Lock your marketplace fee for 3 years: Community 9% · Growth 7% · Premium 5%</div>
               </div>
               <Button variant="outline" className="border-primary/30 text-primary hover:bg-primary/5 print:hidden shrink-0">
                 Apply Now

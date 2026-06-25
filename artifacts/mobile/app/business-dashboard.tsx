@@ -1201,7 +1201,7 @@ export default function BusinessDashboardScreen() {
                   Thank you for believing in Mapping with Melanin™ from the beginning. Your exclusive introductory rates are locked in as a reward for your early support.
                 </Text>
                 {[
-                  { icon: "lock" as const,       text: "Marketplace fees locked for 3 years — Community 6% · Growth 5% · Premium 3%" },
+                  { icon: "lock" as const,       text: "Marketplace fees locked for 3 years — Community 9% · Growth 7% · Premium 5%" },
                   { icon: "award" as const,       text: "Founding Business badge on your profile and listing" },
                   { icon: "zap" as const,         text: "6 months of Premium Business membership — AI tools, enhanced analytics, priority placement" },
                   { icon: "users" as const,       text: "Priority onboarding with our team" },

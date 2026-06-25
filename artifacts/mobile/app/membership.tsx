@@ -641,9 +641,9 @@ export default function MembershipScreen() {
                   <Text style={[styles.featureTxt, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>Marketplace fee locked for 3 years:</Text>
                 </View>
                 {[
-                  { tier: "Community Business", fee: "6%" },
-                  { tier: "Growth Business",    fee: "5%" },
-                  { tier: "Premium Business",   fee: "3%" },
+                  { tier: "Community Business", fee: "9%" },
+                  { tier: "Growth Business",    fee: "7%" },
+                  { tier: "Premium Business",   fee: "5%" },
                 ].map((row, i) => (
                   <View key={i} style={{ flexDirection: "row", justifyContent: "space-between", width: "100%", paddingLeft: 22 }}>
                     <Text style={[styles.featureTxt, { color: colors.mutedForeground }]}>{row.tier}</Text>
@@ -702,7 +702,7 @@ export default function MembershipScreen() {
                 Transactions under $25 are capped at 5% regardless of tier. Transactions over $250 are capped at 6%.
               </Text>
               <Text style={[styles.feeNote, { color: "#C9A84C" }]}>
-                🔒 Founding Businesses lock in reduced rates for 3 years: Community 6% · Growth 5% · Premium 3%
+                🔒 Founding Businesses lock in reduced rates for 3 years: Community 9% · Growth 7% · Premium 5%
               </Text>
             </View>
           </View>

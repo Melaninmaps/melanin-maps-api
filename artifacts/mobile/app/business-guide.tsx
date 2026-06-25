@@ -20,7 +20,7 @@ const TIERS = [
       "Perfect for new businesses, side hustles, and startups that want to establish an online presence.",
     color: "#8B7355",
     bg: null as string | null,
-    fee: { standard: "10%", founding: "6%" },
+    fee: { standard: "10%", founding: "9%" },
     goal: "Get discovered and start building your customer base.",
     sections: [
       {
@@ -50,7 +50,7 @@ const TIERS = [
       "Perfect for businesses that want to actively attract more customers and understand how they're performing.",
     color: "#CA922B",
     bg: "#3B1F0E" as string | null,
-    fee: { standard: "8%", founding: "5%" },
+    fee: { standard: "8%", founding: "7%" },
     goal: "Grow faster with better visibility, insights, and marketing tools.",
     sections: [
       {
@@ -99,7 +99,7 @@ const TIERS = [
       "Perfect for established businesses, franchises, multi-location businesses, and companies that want every available growth tool.",
     color: "#CA922B",
     bg: "#1A0A00" as string | null,
-    fee: { standard: "6%", founding: "3%" },
+    fee: { standard: "6%", founding: "5%" },
     goal: "Scale efficiently using premium tools and lower transaction costs.",
     sections: [
       {
@@ -159,7 +159,7 @@ const COMPARISON_ROWS: { label: string; community: string; growth: string; premi
   { label: "Broadcasts",      community: "2/month",          growth: "8/month",             premium: "20/month" },
   { label: "Visibility",      community: "Standard",         growth: "Priority",            premium: "Maximum" },
   { label: "Fee (standard)",  community: "10%",              growth: "8%",                  premium: "6%" },
-  { label: "Fee (founding)",  community: "6%",               growth: "5%",                  premium: "3%" },
+  { label: "Fee (founding)",  community: "9%",               growth: "7%",                  premium: "5%" },
   { label: "AI Tools",        community: "—",                growth: "Marketing AI",        premium: "Business consultant" },
   { label: "Health Score™",   community: "—",                growth: "—",                   premium: "✓ Premium" },
 ];

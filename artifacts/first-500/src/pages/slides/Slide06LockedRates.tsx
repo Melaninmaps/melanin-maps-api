@@ -22,15 +22,15 @@ export default function Slide06LockedRates() {
         </div>
         <div className="flex justify-between items-center border-b border-surface pb-[1.8vh] mb-[1.8vh]" style={{ borderBottomColor: 'rgba(201,168,76,0.25)' }}>
           <span className="font-body text-muted text-[2.8vw]">Community Business</span>
-          <span className="font-display font-bold text-primary text-[3.8vw]">6%</span>
+          <span className="font-display font-bold text-primary text-[3.8vw]">9%</span>
         </div>
         <div className="flex justify-between items-center border-b pb-[1.8vh] mb-[1.8vh]" style={{ borderBottomColor: 'rgba(201,168,76,0.25)' }}>
           <span className="font-body text-muted text-[2.8vw]">Growth Business</span>
-          <span className="font-display font-bold text-primary text-[3.8vw]">5%</span>
+          <span className="font-display font-bold text-primary text-[3.8vw]">7%</span>
         </div>
         <div className="flex justify-between items-center">
           <span className="font-body text-muted text-[2.8vw]">Premium Business</span>
-          <span className="font-display font-bold text-primary text-[3.8vw]">3%</span>
+          <span className="font-display font-bold text-primary text-[3.8vw]">5%</span>
         </div>
       </div>
 

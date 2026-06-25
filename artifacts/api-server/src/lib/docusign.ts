@@ -144,9 +144,9 @@ function foundingAgreementHtml(businessName: string, ownerName: string, founding
 <table style="width:100%;border-collapse:collapse;margin:12px 0">
 <thead><tr style="background:#fffbf0"><th style="text-align:left;padding:8px;border:1px solid #c9922b">Membership Tier</th><th style="text-align:center;padding:8px;border:1px solid #c9922b">Standard Fee</th><th style="text-align:center;padding:8px;border:1px solid #c9922b">Founding Locked Fee</th></tr></thead>
 <tbody>
-<tr><td style="padding:8px;border:1px solid #ddd">Community Business</td><td style="text-align:center;padding:8px;border:1px solid #ddd">10%</td><td style="text-align:center;padding:8px;border:1px solid #ddd;font-weight:bold;color:#8a6200">6%</td></tr>
-<tr style="background:#fafafa"><td style="padding:8px;border:1px solid #ddd">Growth Business</td><td style="text-align:center;padding:8px;border:1px solid #ddd">8%</td><td style="text-align:center;padding:8px;border:1px solid #ddd;font-weight:bold;color:#8a6200">5%</td></tr>
-<tr><td style="padding:8px;border:1px solid #ddd">Premium Business</td><td style="text-align:center;padding:8px;border:1px solid #ddd">6%</td><td style="text-align:center;padding:8px;border:1px solid #ddd;font-weight:bold;color:#8a6200">3%</td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd">Community Business</td><td style="text-align:center;padding:8px;border:1px solid #ddd">10%</td><td style="text-align:center;padding:8px;border:1px solid #ddd;font-weight:bold;color:#8a6200">9%</td></tr>
+<tr style="background:#fafafa"><td style="padding:8px;border:1px solid #ddd">Growth Business</td><td style="text-align:center;padding:8px;border:1px solid #ddd">8%</td><td style="text-align:center;padding:8px;border:1px solid #ddd;font-weight:bold;color:#8a6200">7%</td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd">Premium Business</td><td style="text-align:center;padding:8px;border:1px solid #ddd">6%</td><td style="text-align:center;padding:8px;border:1px solid #ddd;font-weight:bold;color:#8a6200">5%</td></tr>
 </tbody></table>
 <p style="font-size:0.9em;color:#555">The locked rate applicable to ${businessName} is determined by the membership tier active at the time this agreement is executed.</p>
 

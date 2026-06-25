@@ -32,9 +32,9 @@ const DEFAULT_CONFIGS: Array<{
   promotionalFee: string;
   foundingFee: string;
 }> = [
-  { tier: "community", tierLabel: "Community", standardFee: "0.1000", promotionalFee: "0.0700", foundingFee: "0.0500" },
-  { tier: "growth",    tierLabel: "Growth",    standardFee: "0.0800", promotionalFee: "0.0550", foundingFee: "0.0400" },
-  { tier: "premium",  tierLabel: "Premium",   standardFee: "0.0600", promotionalFee: "0.0400", foundingFee: "0.0300" },
+  { tier: "community", tierLabel: "Community", standardFee: "0.1000", promotionalFee: "0.0700", foundingFee: "0.0900" },
+  { tier: "growth",    tierLabel: "Growth",    standardFee: "0.0800", promotionalFee: "0.0550", foundingFee: "0.0700" },
+  { tier: "premium",  tierLabel: "Premium",   standardFee: "0.0600", promotionalFee: "0.0400", foundingFee: "0.0500" },
 ];
 
 export interface FeeCalculation {
