@@ -1,9 +1,10 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { sendPushToUser, sendPushToUsersWithSavedBusiness } from "../lib/pushNotifications";
 import { reviewLimiter } from "../middleware/rateLimiter";
 import { requireMembership } from "../middleware/requireMembership";
+import { requireTrust } from "../middleware/requireTrust";
 import { checkContent, redactForLog } from "../lib/contentFilter";
 
 const router: IRouter = Router();
@@ -134,7 +135,7 @@ router.get("/reviews", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/reviews", reviewLimiter, requireMembership("navigator"), async (req: Request, res: Response) => {
+router.post("/reviews", reviewLimiter, requireTrust, requireMembership("navigator"), async (req: Request, res: Response) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -145,6 +146,16 @@ router.post("/reviews", reviewLimiter, requireMembership("navigator"), async (re
   const ratingNum = Number(rating);
   if (!businessId || !rating || isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
     res.status(400).json({ error: "businessId required; rating must be a number 1–5" });
+    return;
+  }
+
+  const existing = await db
+    .select({ id: reviewsTable.id })
+    .from(reviewsTable)
+    .where(and(eq(reviewsTable.userId, req.user.id), eq(reviewsTable.businessId, businessId as string)))
+    .limit(1);
+  if (existing.length > 0) {
+    res.status(409).json({ error: "You have already reviewed this business.", code: "DUPLICATE_REVIEW" });
     return;
   }
 

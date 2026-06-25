@@ -30,12 +30,16 @@ function getCategoryColor(cat: string | null): string {
   return GOLD;
 }
 
-function groupItems(items: WishlistItem[]): Array<{ label: string; icon: "location" | "globe-outline"; items: WishlistItem[] }> {
+type GroupIcon = "location" | "globe-outline" | "briefcase-outline";
+
+function groupItems(items: WishlistItem[]): Array<{ label: string; icon: GroupIcon; items: WishlistItem[] }> {
   const map = new Map<string, WishlistItem[]>();
   for (const item of items) {
     let key: string;
     if (item.destinationType === "destination") {
-      key = item.country ? `📍 ${item.country}` : item.city ? `📍 ${item.city}` : "📍 Destinations";
+      key = item.country ? `🌍 ${item.country}` : item.city ? `🌍 ${item.city}` : "🌍 Destinations";
+    } else if (item.destinationType === "employer") {
+      key = "💼 Companies";
     } else {
       key = item.city ?? "Unknown City";
     }
@@ -45,7 +49,7 @@ function groupItems(items: WishlistItem[]): Array<{ label: string; icon: "locati
   }
   return Array.from(map.entries()).map(([label, grpItems]) => ({
     label,
-    icon: label.startsWith("📍") ? "globe-outline" : "location",
+    icon: (label.startsWith("🌍") ? "globe-outline" : label.startsWith("💼") ? "briefcase-outline" : "location") as GroupIcon,
     items: grpItems,
   }));
 }
@@ -147,6 +151,172 @@ function AddDestinationModal({
   );
 }
 
+const EMPLOYER_GREEN = "#2D7A4F";
+
+function AddEmployerModal({
+  visible, onClose, onSave, colors,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onSave: (name: string, industry: string, city: string, country: string) => void;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const [name, setName] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const reset = () => { setName(""); setIndustry(""); setCity(""); setCountry(""); setSaving(false); };
+
+  const handleSave = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    await onSave(name.trim(), industry.trim(), city.trim(), country.trim());
+    reset();
+    onClose();
+  };
+
+  const handleClose = () => { reset(); onClose(); };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
+      <KeyboardAvoidingView style={modalStyles.overlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <TouchableOpacity style={modalStyles.backdrop} activeOpacity={1} onPress={handleClose} />
+        <View style={[modalStyles.sheet, { backgroundColor: colors.background }]}>
+          <View style={[modalStyles.handle, { backgroundColor: colors.border }]} />
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <Text style={[modalStyles.title, { color: colors.foreground }]}>Save an Employer</Text>
+            <Text style={[modalStyles.sub, { color: colors.mutedForeground }]}>
+              Track companies and organizations you'd love to work for
+            </Text>
+
+            <Text style={[modalStyles.label, { color: colors.foreground }]}>
+              Company / Organization <Text style={{ color: colors.destructive }}>*</Text>
+            </Text>
+            <TextInput
+              style={[modalStyles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              placeholder="e.g. Essence Communications, Howard University, BET"
+              placeholderTextColor={colors.mutedForeground}
+              value={name}
+              onChangeText={setName}
+              autoFocus
+            />
+
+            <Text style={[modalStyles.label, { color: colors.foreground }]}>
+              Industry / Role of Interest <Text style={[modalStyles.optional, { color: colors.mutedForeground }]}>(optional)</Text>
+            </Text>
+            <TextInput
+              style={[modalStyles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              placeholder="e.g. Marketing, Engineering, Creative Director"
+              placeholderTextColor={colors.mutedForeground}
+              value={industry}
+              onChangeText={setIndustry}
+            />
+
+            <Text style={[modalStyles.label, { color: colors.foreground }]}>
+              City & State <Text style={[modalStyles.optional, { color: colors.mutedForeground }]}>(optional)</Text>
+            </Text>
+            <TextInput
+              style={[modalStyles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              placeholder="e.g. Atlanta, GA"
+              placeholderTextColor={colors.mutedForeground}
+              value={city}
+              onChangeText={setCity}
+            />
+
+            <Text style={[modalStyles.label, { color: colors.foreground }]}>
+              Country <Text style={[modalStyles.optional, { color: colors.mutedForeground }]}>(optional)</Text>
+            </Text>
+            <TextInput
+              style={[modalStyles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              placeholder="e.g. USA, Nigeria, UK"
+              placeholderTextColor={colors.mutedForeground}
+              value={country}
+              onChangeText={setCountry}
+            />
+
+            <View style={[modalStyles.hint, { backgroundColor: colors.secondary }]}>
+              <Ionicons name="briefcase-outline" size={14} color={colors.mutedForeground} />
+              <Text style={[modalStyles.hintText, { color: colors.mutedForeground }]}>
+                Employers are grouped separately in your list. Add notes to track your thoughts.
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={[modalStyles.saveBtn, { backgroundColor: name.trim() ? EMPLOYER_GREEN : colors.muted }]}
+              onPress={handleSave}
+              disabled={!name.trim() || saving}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="briefcase-outline" size={16} color={name.trim() ? "#fff" : colors.mutedForeground} />
+              <Text style={[modalStyles.saveBtnText, { color: name.trim() ? "#fff" : colors.mutedForeground }]}>
+                {saving ? "Saving…" : "Save Employer"}
+              </Text>
+            </TouchableOpacity>
+            <View style={{ height: 16 }} />
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+function TypePickerModal({
+  visible, onClose, onPickDestination, onPickEmployer, colors,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onPickDestination: () => void;
+  onPickEmployer: () => void;
+  colors: ReturnType<typeof useColors>;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableOpacity style={modalStyles.overlay} activeOpacity={1} onPress={onClose}>
+        <TouchableOpacity style={modalStyles.backdrop} activeOpacity={1} onPress={onClose} />
+        <View style={[typePickerStyles.sheet, { backgroundColor: colors.background }]}>
+          <View style={[modalStyles.handle, { backgroundColor: colors.border }]} />
+          <Text style={[typePickerStyles.title, { color: colors.foreground }]}>What would you like to save?</Text>
+          <TouchableOpacity
+            style={[typePickerStyles.option, { backgroundColor: colors.card, borderColor: colors.primary + "40" }]}
+            onPress={() => { onClose(); onPickDestination(); }}
+            activeOpacity={0.85}
+          >
+            <View style={[typePickerStyles.optionIcon, { backgroundColor: colors.primary + "18" }]}>
+              <Ionicons name="globe-outline" size={24} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[typePickerStyles.optionTitle, { color: colors.foreground }]}>Destination</Text>
+              <Text style={[typePickerStyles.optionSub, { color: colors.mutedForeground }]}>
+                A city, region, or country you'd love to visit
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[typePickerStyles.option, { backgroundColor: colors.card, borderColor: EMPLOYER_GREEN + "40" }]}
+            onPress={() => { onClose(); onPickEmployer(); }}
+            activeOpacity={0.85}
+          >
+            <View style={[typePickerStyles.optionIcon, { backgroundColor: EMPLOYER_GREEN + "18" }]}>
+              <Ionicons name="briefcase-outline" size={24} color={EMPLOYER_GREEN} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[typePickerStyles.optionTitle, { color: colors.foreground }]}>Employer</Text>
+              <Text style={[typePickerStyles.optionSub, { color: colors.mutedForeground }]}>
+                A company or organization you want to work for
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+          <View style={{ height: 16 }} />
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+
 function WishlistCard({
   item, onDelete, onNotesSave, colors, warningCount = 0,
 }: {
@@ -159,10 +329,19 @@ function WishlistCard({
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesText, setNotesText] = useState(item.notes ?? "");
   const isDestination = item.destinationType === "destination";
-  const catColor = isDestination ? colors.primary : getCategoryColor(item.category);
+  const isEmployer = item.destinationType === "employer";
+  const catColor = isDestination ? colors.primary : isEmployer ? EMPLOYER_GREEN : getCategoryColor(item.category);
+
+  const borderColor = warningCount >= 3
+    ? "#7C2D1240"
+    : isDestination
+    ? colors.primary + "40"
+    : isEmployer
+    ? EMPLOYER_GREEN + "40"
+    : colors.border;
 
   return (
-    <View style={[cardStyles.card, { backgroundColor: colors.card, borderColor: warningCount >= 3 ? "#7C2D1240" : isDestination ? colors.primary + "40" : colors.border }]}>
+    <View style={[cardStyles.card, { backgroundColor: colors.card, borderColor }]}>
       {warningCount >= 3 && (
         <View style={cardStyles.warningBanner}>
           <Feather name="alert-octagon" size={12} color="#7C2D12" />
@@ -175,12 +354,17 @@ function WishlistCard({
             <Ionicons name="globe-outline" size={11} color={colors.primary} />
             <Text style={[cardStyles.badgeText, { color: colors.primary }]}>Destination</Text>
           </View>
+        ) : isEmployer ? (
+          <View style={[cardStyles.badge, { backgroundColor: EMPLOYER_GREEN + "18" }]}>
+            <Ionicons name="briefcase-outline" size={11} color={EMPLOYER_GREEN} />
+            <Text style={[cardStyles.badgeText, { color: EMPLOYER_GREEN }]}>Employer</Text>
+          </View>
         ) : item.category ? (
           <View style={[cardStyles.badge, { backgroundColor: catColor + "18" }]}>
             <Text style={[cardStyles.badgeText, { color: catColor }]}>{item.category}</Text>
           </View>
         ) : null}
-        {!isDestination && item.neighborhood && (
+        {!isDestination && !isEmployer && item.neighborhood && (
           <Text style={[cardStyles.hood, { color: colors.mutedForeground }]}>
             <Ionicons name="location-outline" size={11} /> {item.neighborhood}
           </Text>
@@ -196,7 +380,7 @@ function WishlistCard({
 
       <Text style={[cardStyles.name, { color: colors.text }]}>{item.businessName}</Text>
 
-      {isDestination && (item.city || item.country) && (
+      {(isDestination || isEmployer) && (item.city || item.country) && (
         <View style={cardStyles.locationRow}>
           <Ionicons name="location-outline" size={13} color={colors.mutedForeground} />
           <Text style={[cardStyles.locationText, { color: colors.mutedForeground }]}>
@@ -205,7 +389,14 @@ function WishlistCard({
         </View>
       )}
 
-      {!isDestination && item.mustTry && (
+      {isEmployer && item.category && (
+        <View style={cardStyles.locationRow}>
+          <Ionicons name="briefcase-outline" size={13} color={EMPLOYER_GREEN} />
+          <Text style={[cardStyles.locationText, { color: EMPLOYER_GREEN }]}>{item.category}</Text>
+        </View>
+      )}
+
+      {!isDestination && !isEmployer && item.mustTry && (
         <View style={[cardStyles.mustTry, { backgroundColor: GOLD + "12", borderColor: GOLD + "30" }]}>
           <Ionicons name="star" size={12} color={GOLD} />
           <Text style={[cardStyles.mustTryText, { color: colors.text }]}>
@@ -306,12 +497,14 @@ export default function WishlistScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const { items, isLoading, load, addItem, removeItem, updateNotes } = useWishlist();
   const { isWarned } = useSpaceWarnings();
+  const [typePickerOpen, setTypePickerOpen] = useState(false);
   const [addDestModalOpen, setAddDestModalOpen] = useState(false);
+  const [addEmployerModalOpen, setAddEmployerModalOpen] = useState(false);
 
   useEffect(() => { void load(); }, [load]);
 
   const handleDelete = useCallback((id: string) => {
-    Alert.alert("Remove from list?", "This will be removed from your Trips I'd Love list.", [
+    Alert.alert("Remove from list?", "This will be removed from your saved spaces.", [
       { text: "Cancel", style: "cancel" },
       { text: "Remove", style: "destructive", onPress: () => { void removeItem(id); } },
     ]);
@@ -322,22 +515,39 @@ export default function WishlistScreen() {
   }, [updateNotes]);
 
   const handleAddDestination = useCallback(async (name: string, city: string, country: string) => {
+    await addItem({ businessName: name, city: city || null, country: country || null, destinationType: "destination" });
+  }, [addItem]);
+
+  const handleAddEmployer = useCallback(async (name: string, industry: string, city: string, country: string) => {
     await addItem({
       businessName: name,
+      category: industry || null,
       city: city || null,
       country: country || null,
-      destinationType: "destination",
+      destinationType: "employer",
     });
   }, [addItem]);
 
   const groups = groupItems(items);
-  const businessCount = items.filter((i) => i.destinationType !== "destination").length;
+  const businessCount = items.filter((i) => !i.destinationType || i.destinationType === "business").length;
   const destCount = items.filter((i) => i.destinationType === "destination").length;
+  const employerCount = items.filter((i) => i.destinationType === "employer").length;
 
   const subtitle = [
     businessCount > 0 && `${businessCount} spot${businessCount !== 1 ? "s" : ""}`,
     destCount > 0 && `${destCount} destination${destCount !== 1 ? "s" : ""}`,
+    employerCount > 0 && `${employerCount} employer${employerCount !== 1 ? "s" : ""}`,
   ].filter(Boolean).join(" · ") || "Nothing saved yet";
+
+  const groupIconColor = (icon: GroupIcon) =>
+    icon === "globe-outline" ? colors.primary : icon === "briefcase-outline" ? EMPLOYER_GREEN : colors.primary;
+
+  const groupSuffix = (icon: GroupIcon, count: number) => {
+    const word = icon === "globe-outline" ? "destination" : icon === "briefcase-outline" ? "company" : "spot";
+    return `${count} ${word}${count !== 1 ? "s" : ""}`;
+  };
+
+  const stripEmoji = (label: string) => label.replace(/^[🌍💼📍]\s*/, "");
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -350,11 +560,11 @@ export default function WishlistScreen() {
           <Text style={styles.headerSub}>{subtitle}</Text>
         </View>
         <TouchableOpacity
-          onPress={() => setAddDestModalOpen(true)}
+          onPress={() => setTypePickerOpen(true)}
           style={[styles.headerBtn, { backgroundColor: "#ffffff22" }]}
         >
-          <Ionicons name="globe-outline" size={15} color="#fff" />
-          <Text style={styles.headerBtnText}>Add Place</Text>
+          <Ionicons name="add-circle-outline" size={15} color="#fff" />
+          <Text style={styles.headerBtnText}>Add</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => router.push("/travel" as any)}
@@ -376,15 +586,15 @@ export default function WishlistScreen() {
           </View>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>Nothing saved yet</Text>
           <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-            Save businesses from KinfolkAI™ or add any city, country, or destination you'd love to visit.
+            Save businesses, destinations, and employers you'd love to explore or work for.
           </Text>
           <View style={styles.emptyBtns}>
             <TouchableOpacity
               style={[styles.emptyBtn, { backgroundColor: colors.primary }]}
-              onPress={() => setAddDestModalOpen(true)}
+              onPress={() => setTypePickerOpen(true)}
             >
-              <Ionicons name="globe-outline" size={16} color="#fff" />
-              <Text style={styles.emptyBtnText}>Add a Place</Text>
+              <Ionicons name="add-circle-outline" size={16} color="#fff" />
+              <Text style={styles.emptyBtnText}>Add a Space</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.emptyBtn, { backgroundColor: colors.secondary }]}
@@ -404,12 +614,10 @@ export default function WishlistScreen() {
           renderItem={({ item: group }) => (
             <View>
               <View style={styles.cityHeader}>
-                <Ionicons name={group.icon} size={15} color={colors.primary} />
-                <Text style={[styles.cityName, { color: colors.text }]}>
-                  {group.label.replace(/^📍 /, "")}
-                </Text>
+                <Ionicons name={group.icon} size={15} color={groupIconColor(group.icon)} />
+                <Text style={[styles.cityName, { color: colors.text }]}>{stripEmoji(group.label)}</Text>
                 <Text style={[styles.cityCount, { color: colors.mutedForeground }]}>
-                  {group.items.length} {group.icon === "globe-outline" ? "destination" : "spot"}{group.items.length !== 1 ? "s" : ""}
+                  {groupSuffix(group.icon, group.items.length)}
                 </Text>
               </View>
               {group.items.map((item) => (
@@ -424,25 +632,47 @@ export default function WishlistScreen() {
           ListFooterComponent={() => (
             <TouchableOpacity
               style={[styles.addDestBtn, { borderColor: colors.primary + "40", backgroundColor: colors.primary + "08" }]}
-              onPress={() => setAddDestModalOpen(true)}
+              onPress={() => setTypePickerOpen(true)}
               activeOpacity={0.75}
             >
               <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
-              <Text style={[styles.addDestBtnText, { color: colors.primary }]}>Add a destination</Text>
+              <Text style={[styles.addDestBtnText, { color: colors.primary }]}>Add a space</Text>
             </TouchableOpacity>
           )}
         />
       )}
 
+      <TypePickerModal
+        visible={typePickerOpen}
+        onClose={() => setTypePickerOpen(false)}
+        onPickDestination={() => setAddDestModalOpen(true)}
+        onPickEmployer={() => setAddEmployerModalOpen(true)}
+        colors={colors}
+      />
       <AddDestinationModal
         visible={addDestModalOpen}
         onClose={() => setAddDestModalOpen(false)}
         onSave={handleAddDestination}
         colors={colors}
       />
+      <AddEmployerModal
+        visible={addEmployerModalOpen}
+        onClose={() => setAddEmployerModalOpen(false)}
+        onSave={handleAddEmployer}
+        colors={colors}
+      />
     </View>
   );
 }
+
+const typePickerStyles = StyleSheet.create({
+  sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, marginTop: "auto" },
+  title: { fontFamily: "Inter_700Bold", fontSize: 18, marginBottom: 20, textAlign: "center" },
+  option: { flexDirection: "row", alignItems: "center", gap: 14, borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 12 },
+  optionIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  optionTitle: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 2 },
+  optionSub: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+});
 
 const styles = StyleSheet.create({
   root: { flex: 1 },

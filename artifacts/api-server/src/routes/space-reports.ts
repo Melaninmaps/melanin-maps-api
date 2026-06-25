@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, spaceReportsTable } from "@workspace/db";
 import { desc, eq, sql } from "drizzle-orm";
 import { reportLimiter } from "../middleware/rateLimiter";
+import { requireTrust } from "../middleware/requireTrust";
 
 const router: IRouter = Router();
 
@@ -9,7 +10,7 @@ const VALID_CATEGORIES = ["restaurant", "store", "venue", "entertainment", "hote
 const VALID_CONCERNS = ["racial_profiling", "hostile_staff", "unsafe_environment", "discrimination", "price_gouging", "other"] as const;
 const WARNING_THRESHOLD = 3;
 
-router.post("/space-reports", reportLimiter, async (req: any, res: Response): Promise<void> => {
+router.post("/space-reports", reportLimiter, requireTrust, async (req: any, res: Response): Promise<void> => {
   if (!req.user) { res.status(401).json({ error: "Authentication required" }); return; }
 
   const { spaceName, address, city, category, concernTypes, description, isAnonymous } = req.body as {

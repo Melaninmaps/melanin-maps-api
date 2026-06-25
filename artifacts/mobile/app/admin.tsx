@@ -351,7 +351,7 @@ function UsersTab() {
               }}
             >
               <Text style={[adminStyles.statusBadgeText, { color: u.approved ? "#2D7A4F" : "#C9922B" }]}>
-                {u.approved ? "✓ Approved" : "Pending"}
+                {u.approved ? "✓ Active" : "⊘ Suspended"}
               </Text>
             </TouchableOpacity>
             <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>
