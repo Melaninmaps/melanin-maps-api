@@ -297,6 +297,7 @@ Return ONLY a JSON object with this exact shape:
       content: articleData.content,
       category: dueTopic.category,
       subcategory: articleData.subcategory ?? null,
+      topicId: dueTopic.id,
       tier: dueTopic.tier ?? "free",
       authorName: "Mapping With Melanin Editorial",
       authorBadge: "AI-Assisted",

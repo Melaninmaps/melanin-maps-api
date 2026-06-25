@@ -1,4 +1,4 @@
-import { boolean, integer, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 export const knowledgeArticlesTable = pgTable("knowledge_articles", {
@@ -9,6 +9,7 @@ export const knowledgeArticlesTable = pgTable("knowledge_articles", {
   content: text("content").notNull(),
   category: varchar("category", { length: 50 }).notNull(),
   subcategory: varchar("subcategory", { length: 100 }),
+  topicId: varchar("topic_id", { length: 100 }),
   tier: varchar("tier", { length: 20 }).notNull().default("free"),
   authorId: varchar("author_id", { length: 100 }),
   authorName: varchar("author_name", { length: 150 }).notNull().default("Editorial"),
@@ -67,3 +68,22 @@ export const knowledgeTopicsTable = pgTable("knowledge_topics", {
   enabled: boolean("enabled").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const userTopicFollowsTable = pgTable("user_topic_follows", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id", { length: 100 }).notNull(),
+  topicId: varchar("topic_id", { length: 100 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("user_topic_follows_unique").on(table.userId, table.topicId),
+]);
+
+export const knowledgeArticleReadsTable = pgTable("knowledge_article_reads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id", { length: 100 }).notNull(),
+  articleId: varchar("article_id", { length: 100 }).notNull(),
+  topicId: varchar("topic_id", { length: 100 }),
+  readAt: timestamp("read_at").notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("knowledge_article_reads_unique").on(table.userId, table.articleId),
+]);

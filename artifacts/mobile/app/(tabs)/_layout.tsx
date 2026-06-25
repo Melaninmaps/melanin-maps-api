@@ -4,10 +4,16 @@ import { Tabs } from "expo-router";
 import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
 import { Feather } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Platform, StyleSheet, View, useColorScheme } from "react-native";
+import * as SecureStore from "expo-secure-store";
 
 import { useColors } from "@/hooks/useColors";
+
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
 
 function NativeTabLayout() {
   return (
@@ -42,6 +48,24 @@ function ClassicTabLayout() {
   const isDark = colorScheme === "dark";
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
+  const [libraryBadge, setLibraryBadge] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    async function fetchBadge() {
+      try {
+        const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
+        if (!token) return;
+        const res = await fetch(`${getApiBase()}/api/knowledge/feed/count`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json() as { count: number };
+          setLibraryBadge(data.count > 0 ? data.count : undefined);
+        }
+      } catch { /* silent */ }
+    }
+    fetchBadge();
+  }, []);
 
   return (
     <Tabs
@@ -118,6 +142,7 @@ function ClassicTabLayout() {
         name="library"
         options={{
           title: "Library",
+          tabBarBadge: libraryBadge,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="books.vertical" tintColor={color} size={24} />

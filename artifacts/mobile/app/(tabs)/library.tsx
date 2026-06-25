@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -31,47 +30,40 @@ async function authHeaders(): Promise<Record<string, string>> {
   return t ? { Authorization: `Bearer ${t}` } : {};
 }
 
-const CATEGORIES = [
-  { id: "health",     label: "Health",     emoji: "🩺", color: "#DC2626" },
-  { id: "travel",     label: "Travel",     emoji: "✈️", color: "#2563EB" },
-  { id: "relocation", label: "Relocation", emoji: "🏡", color: "#16A34A" },
-  { id: "careers",    label: "Careers",    emoji: "💼", color: "#059669" },
-  { id: "money",      label: "Money",      emoji: "💰", color: "#D97706" },
-  { id: "history",    label: "History",    emoji: "🏛️",  color: "#7C3AED" },
-  { id: "education",  label: "Education",  emoji: "🎓", color: "#0891B2" },
-  { id: "food",       label: "Food",       emoji: "👨🏾‍🍳", color: "#EA580C" },
-  { id: "culture",    label: "Culture",    emoji: "🎉", color: "#DB2777" },
-  { id: "wellness",   label: "Wellness",   emoji: "🧠", color: "#6D28D9" },
-];
+const CATEGORY_META: Record<string, { emoji: string; color: string; label: string }> = {
+  health:     { emoji: "🩺", color: "#DC2626", label: "Health" },
+  travel:     { emoji: "✈️", color: "#2563EB", label: "Travel" },
+  relocation: { emoji: "🏡", color: "#16A34A", label: "Relocation" },
+  careers:    { emoji: "💼", color: "#059669", label: "Careers" },
+  money:      { emoji: "💰", color: "#D97706", label: "Money" },
+  history:    { emoji: "🏛️", color: "#7C3AED", label: "History" },
+  education:  { emoji: "🎓", color: "#0891B2", label: "Education" },
+  food:       { emoji: "🍽️", color: "#EA580C", label: "Food" },
+  culture:    { emoji: "🎉", color: "#DB2777", label: "Culture" },
+  wellness:   { emoji: "🧠", color: "#6D28D9", label: "Wellness" },
+};
 
-const SAMPLE_ARTICLES = [
-  { id: "s1", title: "5 Signs You Should See a Primary Care Physician", summary: "Knowing when to make that appointment could save your life.", category: "health", tier: "free", readTimeMinutes: 3, authorName: "Editorial", authorBadge: null, imageUrl: null, publishedAt: new Date().toISOString() },
-  { id: "s2", title: "Best Neighborhoods in Atlanta for Black Families", summary: "A community guide to Atlanta's most welcoming areas.", category: "relocation", tier: "free", readTimeMinutes: 5, authorName: "Editorial", authorBadge: null, imageUrl: null, publishedAt: new Date().toISOString() },
-  { id: "s3", title: "Things to Do in Brazil — A Cultural Travel Guide", summary: "Discover Afro-Brazilian culture, food, and community.", category: "travel", tier: "free", readTimeMinutes: 6, authorName: "Community Writer", authorBadge: null, imageUrl: null, publishedAt: new Date().toISOString() },
-  { id: "s4", title: "Women's Preventive Care Guide by Age", summary: "A comprehensive roadmap to proactive health at every stage of life.", category: "health", tier: "premium", readTimeMinutes: 8, authorName: "Dr. Aisha M.", authorBadge: "✅ Verified Physician", imageUrl: null, publishedAt: new Date().toISOString() },
-  { id: "s5", title: "Complete Atlanta Relocation Guide", summary: "Cost comparisons, schools, community resources, safety trends, and moving checklist.", category: "relocation", tier: "premium", readTimeMinutes: 12, authorName: "Editorial", authorBadge: null, imageUrl: null, publishedAt: new Date().toISOString() },
-  { id: "s6", title: "The Importance of Annual Physicals", summary: "What happens at a physical and why you shouldn't skip it.", category: "health", tier: "free", readTimeMinutes: 4, authorName: "Dr. Aisha M.", authorBadge: "✅ Verified Physician", imageUrl: null, publishedAt: new Date().toISOString() },
-  { id: "s7", title: "Building Generational Wealth Through Real Estate", summary: "How to start investing in property with limited capital.", category: "money", tier: "free", readTimeMinutes: 7, authorName: "Editorial", authorBadge: null, imageUrl: null, publishedAt: new Date().toISOString() },
-  { id: "s8", title: "Mental Health Resource Guide by State", summary: "A comprehensive directory of Black therapists and mental health resources.", category: "wellness", tier: "premium", readTimeMinutes: 10, authorName: "Editorial", authorBadge: null, imageUrl: null, publishedAt: new Date().toISOString() },
-];
+interface Topic {
+  id: string;
+  topicName: string;
+  category: string;
+  description?: string | null;
+  isFollowing?: boolean;
+  newCount?: number;
+}
 
-const SAMPLE_EXPERTS = [
-  { id: "e1", displayName: "Dr. Aisha Matthews", specialty: "Internal Medicine", badge: "✅ Verified Physician", bio: "Board-certified internist with 15 years of experience in preventive care.", followCount: 842, articleCount: 12, avatarUrl: null },
-  { id: "e2", displayName: "James L. Carter, Esq.", specialty: "Civil Rights & Employment Law", badge: "✅ Verified Attorney", bio: "Specializing in employment discrimination and civil rights litigation.", followCount: 614, articleCount: 8, avatarUrl: null },
-  { id: "e3", displayName: "Tasha R. Williams, CFP", specialty: "Financial Planning", badge: "✅ Verified Financial Advisor", bio: "Helping Black families build wealth and navigate financial planning.", followCount: 1103, articleCount: 15, avatarUrl: null },
-];
-
-interface Article {
+interface FeedArticle {
   id: string;
   title: string;
   summary: string;
   category: string;
+  topicId?: string | null;
   tier: string;
   readTimeMinutes: number | null;
   authorName: string;
   authorBadge?: string | null;
-  imageUrl?: string | null;
   publishedAt: string;
+  isRead?: boolean;
 }
 
 interface Expert {
@@ -82,8 +74,15 @@ interface Expert {
   bio?: string | null;
   followCount?: number | null;
   articleCount?: number | null;
-  avatarUrl?: string | null;
 }
+
+const SAMPLE_EXPERTS: Expert[] = [
+  { id: "e1", displayName: "Dr. Aisha Matthews", specialty: "Internal Medicine", badge: "Verified Physician", bio: "Board-certified internist with 15 years of experience in preventive care.", followCount: 842, articleCount: 12 },
+  { id: "e2", displayName: "James L. Carter, Esq.", specialty: "Civil Rights & Employment Law", badge: "Verified Attorney", bio: "Specializing in employment discrimination and civil rights litigation.", followCount: 614, articleCount: 8 },
+  { id: "e3", displayName: "Tasha R. Williams, CFP", specialty: "Financial Planning", badge: "Verified Financial Advisor", bio: "Helping Black families build wealth and navigate financial planning.", followCount: 1103, articleCount: 15 },
+];
+
+type Tab = "library" | "browse";
 
 export default function LibraryScreen() {
   const colors = useColors();
@@ -91,300 +90,543 @@ export default function LibraryScreen() {
   const router = useRouter();
   const { subscription } = useMembership();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const isPremium = !!subscription;
 
-  const [articles, setArticles] = useState<Article[]>(SAMPLE_ARTICLES);
+  const [activeTab, setActiveTab] = useState<Tab>("library");
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [feed, setFeed] = useState<FeedArticle[]>([]);
   const [experts, setExperts] = useState<Expert[]>(SAMPLE_EXPERTS);
-  const [loading, setLoading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const [newCount, setNewCount] = useState(0);
+  const [followCount, setFollowCount] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [feedLoading, setFeedLoading] = useState(false);
+  const [topicSearch, setTopicSearch] = useState("");
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState("");
 
-  const loadArticles = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const h = await authHeaders();
-      const params = new URLSearchParams({ limit: "40" });
-      if (selectedCategory) params.set("category", selectedCategory);
-      if (search) params.set("search", search);
-      const res = await fetch(`${getApiBase()}/api/knowledge/articles?${params}`, { headers: h });
-      if (res.ok) {
-        const data = await res.json() as { articles: Article[] };
-        if (data.articles.length > 0) setArticles(data.articles);
-      }
-    } catch { /* keep sample data */ } finally { setLoading(false); }
-  }, [selectedCategory, search]);
+      const hasAuth = Object.keys(h).length > 0;
+      setIsAuthenticated(hasAuth);
 
-  const loadExperts = useCallback(async () => {
-    try {
-      const res = await fetch(`${getApiBase()}/api/knowledge/experts`);
-      if (res.ok) {
-        const data = await res.json() as { experts: Expert[] };
+      const [topicsRes, expertsRes] = await Promise.all([
+        fetch(`${getApiBase()}/api/knowledge/topics`, { headers: h }),
+        fetch(`${getApiBase()}/api/knowledge/experts`),
+      ]);
+
+      if (topicsRes.ok) {
+        const data = await topicsRes.json() as { topics: Topic[]; followCount: number };
+        setTopics(data.topics);
+        setFollowCount(data.followCount ?? 0);
+      }
+      if (expertsRes.ok) {
+        const data = await expertsRes.json() as { experts: Expert[] };
         if (data.experts.length > 0) setExperts(data.experts);
       }
-    } catch { /* keep sample data */ }
+
+      if (hasAuth) {
+        setFeedLoading(true);
+        const feedRes = await fetch(`${getApiBase()}/api/knowledge/feed`, { headers: h });
+        if (feedRes.ok) {
+          const data = await feedRes.json() as { articles: FeedArticle[]; newCount: number };
+          setFeed(data.articles);
+          setNewCount(data.newCount);
+        }
+        setFeedLoading(false);
+      }
+    } catch { /* silent */ } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { loadArticles(); }, [loadArticles]);
-  useEffect(() => { loadExperts(); }, [loadExperts]);
+  useEffect(() => { loadData(); }, [loadData]);
 
-  const filtered = useMemo(() => {
-    let list = articles;
-    if (selectedCategory) list = list.filter(a => a.category === selectedCategory);
-    if (search) list = list.filter(a => a.title.toLowerCase().includes(search.toLowerCase()) || a.summary.toLowerCase().includes(search.toLowerCase()));
-    return list;
-  }, [articles, selectedCategory, search]);
+  const followedTopics = useMemo(() => topics.filter((t) => t.isFollowing), [topics]);
+  const unfollowedTopics = useMemo(() => topics.filter((t) => !t.isFollowing), [topics]);
 
-  const featured = useMemo(() => filtered.slice(0, 4), [filtered]);
-  const catInfo = (id: string) => CATEGORIES.find(c => c.id === id) ?? { emoji: "📚", color: "#6B7280", label: id };
+  const filteredTopics = useMemo(() => {
+    const q = topicSearch.toLowerCase();
+    return q
+      ? topics.filter((t) => t.topicName.toLowerCase().includes(q) || t.category.toLowerCase().includes(q))
+      : topics;
+  }, [topics, topicSearch]);
 
-  function openArticle(article: Article) {
-    if (article.tier === "premium" && !subscription) {
+  async function toggleFollow(topic: Topic) {
+    if (!isAuthenticated) { router.push("/login" as never); return; }
+    const willFollow = !topic.isFollowing;
+    if (willFollow && !isPremium && followCount >= 10) {
+      setUpgradeReason("Upgrade to Knowledge+ to follow unlimited topics. Free accounts can follow up to 10.");
       setShowUpgrade(true);
       return;
     }
+
+    setTopics((prev) => prev.map((t) => t.id === topic.id ? { ...t, isFollowing: willFollow } : t));
+    setFollowCount((c) => c + (willFollow ? 1 : -1));
+
+    try {
+      const h = await authHeaders();
+      const method = topic.isFollowing ? "DELETE" : "POST";
+      const res = await fetch(`${getApiBase()}/api/knowledge/topics/${topic.id}/follow`, { method, headers: h });
+      if (res.status === 403) {
+        setTopics((prev) => prev.map((t) => t.id === topic.id ? { ...t, isFollowing: topic.isFollowing } : t));
+        setFollowCount((c) => c - (willFollow ? 1 : -1));
+        setUpgradeReason("Upgrade to Knowledge+ to follow unlimited topics.");
+        setShowUpgrade(true);
+      }
+    } catch {
+      setTopics((prev) => prev.map((t) => t.id === topic.id ? { ...t, isFollowing: topic.isFollowing } : t));
+      setFollowCount((c) => c - (willFollow ? 1 : -1));
+    }
+  }
+
+  async function openArticle(article: FeedArticle) {
+    if (article.tier === "premium" && !isPremium) {
+      setUpgradeReason("Knowledge+ unlocks exclusive expert guides and premium articles.");
+      setShowUpgrade(true);
+      return;
+    }
+    const h = await authHeaders();
+    if (Object.keys(h).length > 0) {
+      fetch(`${getApiBase()}/api/knowledge/articles/${article.id}/read`, { method: "POST", headers: h }).catch(() => {});
+    }
+    setFeed((prev) => prev.map((a) => a.id === article.id ? { ...a, isRead: true } : a));
+    setNewCount((c) => Math.max(0, c - (article.isRead ? 0 : 1)));
     router.push({ pathname: "/library-article", params: { articleId: article.id } } as never);
+  }
+
+  function openTopic(topic: Topic) {
+    router.push({ pathname: "/library-topic", params: { topicId: topic.id } } as never);
   }
 
   function openExpert(expert: Expert) {
     router.push({ pathname: "/library-expert", params: { expertId: expert.id } } as never);
   }
 
-  const isPremium = !!subscription;
+  const hasFollows = followedTopics.length > 0;
+  const unreadFeed = feed.filter((a) => !a.isRead);
+  const readFeed = feed.filter((a) => a.isRead);
 
   return (
     <>
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 10, borderBottomColor: colors.border, backgroundColor: colors.card }]}>
-        <View style={styles.headerTop}>
-          <View>
-            <Text style={[styles.headerTitle, { color: colors.foreground }]}>📚 Library</Text>
-            <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>Knowledge for the community</Text>
-          </View>
-          {isPremium && (
-            <View style={[styles.kPlusBadge, { backgroundColor: "#CA922B18" }]}>
-              <Text style={{ fontSize: 11, fontWeight: "800", color: "#CA922B" }}>K+</Text>
-            </View>
-          )}
-        </View>
-        <View style={[styles.searchBar, { backgroundColor: colors.background, borderColor: colors.border }]}>
-          <Feather name="search" size={15} color={colors.mutedForeground} />
-          <TextInput
-            style={[styles.searchInput, { color: colors.foreground }]}
-            placeholder="Search articles…"
-            placeholderTextColor={colors.mutedForeground}
-            value={search}
-            onChangeText={setSearch}
-          />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch("")}>
-              <Feather name="x" size={14} color={colors.mutedForeground} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
-        {/* Knowledge+ banner for free users */}
-        {!isPremium && (
-          <TouchableOpacity
-            style={[styles.kPlusBanner, { backgroundColor: "#CA922B12", borderColor: "#CA922B30" }]}
-            onPress={() => setShowUpgrade(true)}
-            activeOpacity={0.8}
-          >
-            <View style={styles.kPlusBannerLeft}>
-              <Text style={[styles.kPlusLabel, { color: "#CA922B" }]}>⭐ Knowledge+</Text>
-              <Text style={[styles.kPlusSub, { color: colors.mutedForeground }]}>
-                Exclusive guides, expert Q&As, AI-powered learning & personalized resources
+      <View style={[styles.root, { backgroundColor: colors.background }]}>
+        {/* Header */}
+        <View style={[styles.header, { paddingTop: topPad + 10, borderBottomColor: colors.border, backgroundColor: colors.card }]}>
+          <View style={styles.headerTop}>
+            <View>
+              <Text style={[styles.headerTitle, { color: colors.foreground }]}>My Knowledge</Text>
+              <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>
+                {hasFollows && isAuthenticated
+                  ? `${followedTopics.length} topic${followedTopics.length !== 1 ? "s" : ""} followed${!isPremium ? ` · ${10 - followCount} free slots left` : ""}`
+                  : "Your personalized learning library"}
               </Text>
             </View>
-            <Feather name="chevron-right" size={16} color="#CA922B" />
-          </TouchableOpacity>
-        )}
+            {isPremium && (
+              <View style={[styles.kPlusBadge, { backgroundColor: "#CA922B18" }]}>
+                <Text style={{ fontSize: 11, fontWeight: "800", color: "#CA922B" }}>K+</Text>
+              </View>
+            )}
+          </View>
 
-        {/* Categories grid */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Browse by Topic</Text>
-          <View style={styles.categoryGrid}>
-            {CATEGORIES.map(cat => {
-              const active = selectedCategory === cat.id;
-              return (
-                <TouchableOpacity
-                  key={cat.id}
-                  style={[
-                    styles.catCard,
-                    { backgroundColor: active ? cat.color : colors.card, borderColor: active ? cat.color : colors.border },
-                  ]}
-                  onPress={() => setSelectedCategory(active ? null : cat.id)}
-                  activeOpacity={0.75}
-                >
-                  <Text style={styles.catEmoji}>{cat.emoji}</Text>
-                  <Text style={[styles.catLabel, { color: active ? "#fff" : colors.foreground }]} numberOfLines={1}>
-                    {cat.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+          {/* Tab switcher */}
+          <View style={[styles.tabRow, { backgroundColor: colors.background }]}>
+            <TouchableOpacity
+              style={[styles.tabBtn, activeTab === "library" && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
+              onPress={() => setActiveTab("library")}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.tabTxt, { color: activeTab === "library" ? colors.primary : colors.mutedForeground }]}>
+                My Library
+                {newCount > 0 && (
+                  <Text style={{ color: "#CA922B", fontWeight: "800" }}>  {newCount} new</Text>
+                )}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabBtn, activeTab === "browse" && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
+              onPress={() => setActiveTab("browse")}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.tabTxt, { color: activeTab === "browse" ? colors.primary : colors.mutedForeground }]}>
+                Browse Topics
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Articles */}
-        <View style={styles.section}>
-          <View style={styles.sectionRow}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              {selectedCategory ? `${catInfo(selectedCategory).emoji} ${catInfo(selectedCategory).label}` : "Featured Articles"}
-            </Text>
-            {loading && <ActivityIndicator size="small" color={colors.primary} />}
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
+        ) : activeTab === "library" ? (
 
-          {filtered.length === 0 ? (
-            <View style={styles.empty}>
-              <Text style={{ fontSize: 32 }}>📖</Text>
-              <Text style={[{ color: colors.mutedForeground, marginTop: 8, fontSize: 14 }]}>No articles found</Text>
-            </View>
-          ) : (
-            filtered.map(article => {
-              const cat = catInfo(article.category);
-              const isPremiumArticle = article.tier === "premium";
-              return (
+          /* ── MY LIBRARY TAB ── */
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
+            {!isAuthenticated ? (
+              <View style={styles.signInPrompt}>
+                <Text style={{ fontSize: 32, marginBottom: 12 }}>📚</Text>
+                <Text style={[styles.promptTitle, { color: colors.foreground }]}>Sign in to build your library</Text>
+                <Text style={[styles.promptSub, { color: colors.mutedForeground }]}>
+                  Follow topics and get a personalized weekly reading list — no spam, just new articles waiting when you're ready.
+                </Text>
                 <TouchableOpacity
-                  key={article.id}
-                  style={[styles.articleCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => openArticle(article)}
-                  activeOpacity={0.75}
+                  style={[styles.signInBtn, { backgroundColor: colors.primary }]}
+                  onPress={() => router.push("/login" as never)}
+                  activeOpacity={0.8}
                 >
-                  <View style={styles.articleCardTop}>
-                    <View style={[styles.catPill, { backgroundColor: cat.color + "18" }]}>
-                      <Text style={[styles.catPillTxt, { color: cat.color }]}>{cat.emoji} {cat.label}</Text>
-                    </View>
-                    {isPremiumArticle && (
-                      <View style={[styles.premiumPill, { backgroundColor: "#CA922B18" }]}>
-                        <Text style={[styles.premiumPillTxt, { color: "#CA922B" }]}>⭐ K+</Text>
+                  <Text style={styles.signInTxt}>Sign In</Text>
+                </TouchableOpacity>
+              </View>
+            ) : !hasFollows ? (
+              /* No follows yet */
+              <View style={styles.signInPrompt}>
+                <Text style={{ fontSize: 36, marginBottom: 12 }}>✦</Text>
+                <Text style={[styles.promptTitle, { color: colors.foreground }]}>Start building your library</Text>
+                <Text style={[styles.promptSub, { color: colors.mutedForeground }]}>
+                  Follow topics you care about. Every week, new articles appear — waiting whenever you're ready to read.
+                </Text>
+                <TouchableOpacity
+                  style={[styles.signInBtn, { backgroundColor: colors.primary }]}
+                  onPress={() => setActiveTab("browse")}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.signInTxt}>Browse Topics</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                {/* Following pills */}
+                <View style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Following</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll} contentContainerStyle={styles.pillRow}>
+                    {followedTopics.map((topic) => {
+                      const meta = CATEGORY_META[topic.category] ?? { emoji: "📖", color: "#6B7280", label: topic.category };
+                      return (
+                        <TouchableOpacity
+                          key={topic.id}
+                          style={[styles.followingPill, { backgroundColor: meta.color + "15", borderColor: meta.color + "40" }]}
+                          onPress={() => openTopic(topic)}
+                          activeOpacity={0.75}
+                        >
+                          <Text style={[styles.pillName, { color: meta.color }]} numberOfLines={1}>
+                            {meta.emoji} {topic.topicName.split("—")[0].trim()}
+                          </Text>
+                          {(topic.newCount ?? 0) > 0 && (
+                            <View style={[styles.newBadge, { backgroundColor: meta.color }]}>
+                              <Text style={styles.newBadgeTxt}>{topic.newCount}</Text>
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                    <TouchableOpacity
+                      style={[styles.followingPill, { backgroundColor: colors.card, borderColor: colors.border, borderStyle: "dashed" }]}
+                      onPress={() => setActiveTab("browse")}
+                      activeOpacity={0.75}
+                    >
+                      <Feather name="plus" size={13} color={colors.mutedForeground} />
+                      <Text style={[styles.pillName, { color: colors.mutedForeground }]}>Add topic</Text>
+                    </TouchableOpacity>
+                  </ScrollView>
+                </View>
+
+                {/* New This Week */}
+                {feedLoading ? (
+                  <View style={styles.sectionLoading}>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  </View>
+                ) : unreadFeed.length > 0 ? (
+                  <View style={styles.section}>
+                    <View style={styles.sectionRow}>
+                      <Text style={[styles.sectionTitle, { color: colors.foreground }]}>New This Week</Text>
+                      <View style={[styles.countBadge, { backgroundColor: "#CA922B18" }]}>
+                        <Text style={[styles.countBadgeTxt, { color: "#CA922B" }]}>{unreadFeed.length}</Text>
                       </View>
-                    )}
-                  </View>
-                  <Text style={[styles.articleTitle, { color: colors.foreground }]} numberOfLines={2}>
-                    {article.title}
-                  </Text>
-                  <Text style={[styles.articleSummary, { color: colors.mutedForeground }]} numberOfLines={2}>
-                    {article.summary}
-                  </Text>
-                  <View style={styles.articleMeta}>
-                    {article.authorBadge ? (
-                      <Text style={[styles.authorBadge, { color: "#16A34A" }]}>{article.authorBadge}</Text>
-                    ) : (
-                      <Text style={[styles.authorName, { color: colors.mutedForeground }]}>{article.authorName}</Text>
-                    )}
-                    <Text style={[styles.readTime, { color: colors.mutedForeground }]}>
-                      {article.readTimeMinutes ?? 4} min read
-                    </Text>
-                  </View>
-                  {isPremiumArticle && !isPremium && (
-                    <View style={[styles.lockedBar, { backgroundColor: "#CA922B10", borderColor: "#CA922B30" }]}>
-                      <Feather name="lock" size={12} color="#CA922B" />
-                      <Text style={[styles.lockedTxt, { color: "#CA922B" }]}>Knowledge+ — Upgrade to read in full</Text>
                     </View>
-                  )}
+                    {unreadFeed.map((article) => {
+                      const meta = CATEGORY_META[article.category] ?? { emoji: "📖", color: "#6B7280", label: article.category };
+                      return (
+                        <TouchableOpacity
+                          key={article.id}
+                          style={[styles.feedCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                          onPress={() => openArticle(article)}
+                          activeOpacity={0.75}
+                        >
+                          <View style={styles.feedCardTop}>
+                            <View style={[styles.catDot, { backgroundColor: meta.color }]} />
+                            <Text style={[styles.catLabel, { color: meta.color }]}>{meta.label}</Text>
+                            {article.tier === "premium" && (
+                              <View style={[styles.kPillSmall, { backgroundColor: "#CA922B18" }]}>
+                                <Text style={[styles.kPillTxt, { color: "#CA922B" }]}>K+</Text>
+                              </View>
+                            )}
+                          </View>
+                          <Text style={[styles.feedTitle, { color: colors.foreground }]} numberOfLines={2}>
+                            {article.title}
+                          </Text>
+                          <Text style={[styles.feedSummary, { color: colors.mutedForeground }]} numberOfLines={2}>
+                            {article.summary}
+                          </Text>
+                          <View style={styles.feedMeta}>
+                            <Text style={[styles.feedMetaTxt, { color: colors.mutedForeground }]}>{article.authorName}</Text>
+                            <Text style={[styles.feedMetaTxt, { color: colors.mutedForeground }]}>{article.readTimeMinutes ?? 4} min read</Text>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                ) : (
+                  <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: colors.foreground }]}>New This Week</Text>
+                    <View style={[styles.emptyFeed, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                      <Text style={[styles.emptyFeedTxt, { color: colors.mutedForeground }]}>
+                        No new articles this week yet. Check back Monday — your library updates weekly.
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* Already read this week */}
+                {readFeed.length > 0 && (
+                  <View style={[styles.section, { opacity: 0.7 }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>Already Read</Text>
+                    {readFeed.map((article) => {
+                      const meta = CATEGORY_META[article.category] ?? { emoji: "📖", color: "#6B7280", label: article.category };
+                      return (
+                        <TouchableOpacity
+                          key={article.id}
+                          style={[styles.feedCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                          onPress={() => openArticle(article)}
+                          activeOpacity={0.75}
+                        >
+                          <View style={styles.feedCardTop}>
+                            <View style={[styles.catDot, { backgroundColor: meta.color }]} />
+                            <Text style={[styles.catLabel, { color: meta.color }]}>{meta.label}</Text>
+                          </View>
+                          <Text style={[styles.feedTitle, { color: colors.foreground }]} numberOfLines={1}>
+                            {article.title}
+                          </Text>
+                          <Text style={[styles.feedMetaTxt, { color: colors.mutedForeground }]}>
+                            {article.readTimeMinutes ?? 4} min read
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+
+                {/* Experts */}
+                <View style={[styles.section, { marginBottom: Platform.OS === "web" ? 100 : insets.bottom + 100 }]}>
+                  <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Community Experts</Text>
+                  {experts.map((expert) => (
+                    <TouchableOpacity
+                      key={expert.id}
+                      style={[styles.expertCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                      onPress={() => openExpert(expert)}
+                      activeOpacity={0.75}
+                    >
+                      <View style={[styles.expertAvatar, { backgroundColor: "#CA922B18" }]}>
+                        <Text style={{ fontSize: 20 }}>👤</Text>
+                      </View>
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={[styles.expertName, { color: colors.foreground }]} numberOfLines={1}>
+                          {expert.displayName}
+                        </Text>
+                        <Text style={[styles.expertBadge, { color: "#16A34A" }]}>{expert.badge}</Text>
+                        <Text style={[styles.expertSpecialty, { color: colors.mutedForeground }]} numberOfLines={1}>
+                          {expert.specialty}
+                        </Text>
+                        <Text style={[styles.expertStats, { color: colors.mutedForeground }]}>
+                          {expert.followCount ?? 0} followers · {expert.articleCount ?? 0} articles
+                        </Text>
+                      </View>
+                      <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
+          </ScrollView>
+
+        ) : (
+
+          /* ── BROWSE TOPICS TAB ── */
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
+            {/* Search */}
+            <View style={[styles.browseSearch, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="search" size={15} color={colors.mutedForeground} />
+              <TextInput
+                style={[styles.searchInput, { color: colors.foreground }]}
+                placeholder="Search topics…"
+                placeholderTextColor={colors.mutedForeground}
+                value={topicSearch}
+                onChangeText={setTopicSearch}
+              />
+              {topicSearch.length > 0 && (
+                <TouchableOpacity onPress={() => setTopicSearch("")}>
+                  <Feather name="x" size={14} color={colors.mutedForeground} />
                 </TouchableOpacity>
-              );
-            })
-          )}
-        </View>
+              )}
+            </View>
 
-        {/* Community Experts */}
-        {!selectedCategory && (
-          <View style={[styles.section, { marginBottom: Platform.OS === "web" ? 100 : insets.bottom + 100 }]}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Community Experts</Text>
-            <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>
-              Verified professionals publishing trusted educational content
-            </Text>
-            {experts.map(expert => (
+            {/* Free limit notice */}
+            {!isPremium && isAuthenticated && (
               <TouchableOpacity
-                key={expert.id}
-                style={[styles.expertCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                onPress={() => openExpert(expert)}
-                activeOpacity={0.75}
+                style={[styles.limitBanner, { backgroundColor: "#CA922B08", borderColor: "#CA922B25" }]}
+                onPress={() => { setUpgradeReason("Upgrade to Knowledge+ to follow unlimited topics."); setShowUpgrade(true); }}
+                activeOpacity={0.8}
               >
-                <View style={[styles.expertAvatar, { backgroundColor: "#CA922B18" }]}>
-                  <Text style={{ fontSize: 20 }}>👤</Text>
-                </View>
-                <View style={{ flex: 1, gap: 2 }}>
-                  <View style={styles.expertNameRow}>
-                    <Text style={[styles.expertName, { color: colors.foreground }]} numberOfLines={1}>
-                      {expert.displayName}
-                    </Text>
-                  </View>
-                  <Text style={[styles.expertBadge, { color: "#16A34A" }]}>{expert.badge}</Text>
-                  <Text style={[styles.expertSpecialty, { color: colors.mutedForeground }]} numberOfLines={1}>
-                    {expert.specialty}
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.limitTitle, { color: "#CA922B" }]}>
+                    {followCount}/10 topics followed
                   </Text>
-                  <View style={styles.expertStats}>
-                    <Text style={[styles.expertStat, { color: colors.mutedForeground }]}>
-                      {expert.followCount ?? 0} followers · {expert.articleCount ?? 0} articles
-                    </Text>
-                  </View>
+                  <Text style={[styles.limitSub, { color: colors.mutedForeground }]}>
+                    Upgrade to Knowledge+ for unlimited topic follows
+                  </Text>
                 </View>
-                <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+                <Feather name="chevron-right" size={15} color="#CA922B" />
               </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </ScrollView>
-    </View>
+            )}
 
-    <UpgradeModal
-      visible={showUpgrade}
-      onClose={() => setShowUpgrade(false)}
-      feature="Knowledge+"
-      reason="Knowledge+ unlocks exclusive expert guides, AI-powered learning, and comprehensive resource libraries."
-    />
+            {/* Following section */}
+            {followedTopics.length > 0 && (
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Following</Text>
+                {followedTopics.map((topic) => {
+                  const meta = CATEGORY_META[topic.category] ?? { emoji: "📖", color: "#6B7280", label: topic.category };
+                  return (
+                    <View key={topic.id} style={[styles.topicRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                      <TouchableOpacity style={styles.topicRowLeft} onPress={() => openTopic(topic)} activeOpacity={0.75}>
+                        <View style={[styles.topicEmoji, { backgroundColor: meta.color + "18" }]}>
+                          <Text style={{ fontSize: 20 }}>{meta.emoji}</Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.topicName, { color: colors.foreground }]} numberOfLines={2}>
+                            {topic.topicName}
+                          </Text>
+                          <Text style={[styles.topicCategory, { color: meta.color }]}>{meta.label}</Text>
+                        </View>
+                        {(topic.newCount ?? 0) > 0 && (
+                          <View style={[styles.newBadge, { backgroundColor: meta.color }]}>
+                            <Text style={styles.newBadgeTxt}>{topic.newCount} new</Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.followToggle, { backgroundColor: meta.color, borderColor: meta.color }]}
+                        onPress={() => toggleFollow(topic)}
+                        activeOpacity={0.75}
+                      >
+                        <Text style={styles.followToggleTxt}>Following</Text>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+            {/* All / unfollow topics */}
+            <View style={[styles.section, { marginBottom: Platform.OS === "web" ? 100 : insets.bottom + 100 }]}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+                {followedTopics.length > 0 ? "Discover More" : "All Topics"}
+              </Text>
+              {(topicSearch ? filteredTopics : unfollowedTopics).map((topic) => {
+                const meta = CATEGORY_META[topic.category] ?? { emoji: "📖", color: "#6B7280", label: topic.category };
+                return (
+                  <View key={topic.id} style={[styles.topicRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <TouchableOpacity style={styles.topicRowLeft} onPress={() => openTopic(topic)} activeOpacity={0.75}>
+                      <View style={[styles.topicEmoji, { backgroundColor: meta.color + "18" }]}>
+                        <Text style={{ fontSize: 20 }}>{meta.emoji}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.topicName, { color: colors.foreground }]} numberOfLines={2}>
+                          {topic.topicName}
+                        </Text>
+                        <Text style={[styles.topicCategory, { color: meta.color }]}>{meta.label}</Text>
+                      </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.followToggle, { backgroundColor: "transparent", borderColor: meta.color }]}
+                      onPress={() => toggleFollow(topic)}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={[styles.followToggleTxt, { color: meta.color }]}>Follow</Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+            </View>
+          </ScrollView>
+        )}
+      </View>
+
+      <UpgradeModal
+        visible={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        feature="Knowledge+"
+        reason={upgradeReason || "Knowledge+ unlocks unlimited topic follows, exclusive expert guides, and AI-powered learning."}
+      />
     </>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: { borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 12, gap: 10 },
-  headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  header: { borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 0, gap: 10 },
+  headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingBottom: 10 },
   headerTitle: { fontSize: 22, fontWeight: "800" },
   headerSub: { fontSize: 12, marginTop: 1 },
   kPlusBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  searchBar: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, borderWidth: 1 },
-  searchInput: { flex: 1, fontSize: 14 },
+  tabRow: { flexDirection: "row", borderTopWidth: 0 },
+  tabBtn: { flex: 1, paddingVertical: 12, alignItems: "center", borderBottomWidth: 2, borderBottomColor: "transparent" },
+  tabTxt: { fontSize: 13, fontWeight: "700" },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
   scroll: { flex: 1 },
-  kPlusBanner: { margin: 14, borderRadius: 14, borderWidth: 1, padding: 14, flexDirection: "row", alignItems: "center", gap: 10 },
-  kPlusBannerLeft: { flex: 1, gap: 3 },
-  kPlusLabel: { fontSize: 14, fontWeight: "800" },
-  kPlusSub: { fontSize: 12, lineHeight: 17 },
-  section: { paddingHorizontal: 14, paddingTop: 16, gap: 10 },
-  sectionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  section: { paddingHorizontal: 14, paddingTop: 18, gap: 10 },
+  sectionRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   sectionTitle: { fontSize: 16, fontWeight: "800" },
-  sectionSub: { fontSize: 12, lineHeight: 17, marginTop: -6 },
-  categoryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  catCard: { width: "30.5%", borderRadius: 12, borderWidth: 1, paddingVertical: 10, paddingHorizontal: 8, alignItems: "center", gap: 4 },
-  catEmoji: { fontSize: 22 },
-  catLabel: { fontSize: 11, fontWeight: "700", textAlign: "center" },
-  articleCard: { borderRadius: 14, borderWidth: 1, padding: 14, gap: 6 },
-  articleCardTop: { flexDirection: "row", gap: 6 },
-  catPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  catPillTxt: { fontSize: 11, fontWeight: "700" },
-  premiumPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  premiumPillTxt: { fontSize: 11, fontWeight: "800" },
-  articleTitle: { fontSize: 15, fontWeight: "700", lineHeight: 20 },
-  articleSummary: { fontSize: 13, lineHeight: 18 },
-  articleMeta: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 2 },
-  authorBadge: { fontSize: 11, fontWeight: "700" },
-  authorName: { fontSize: 11 },
-  readTime: { fontSize: 11 },
-  lockedBar: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 8, borderWidth: 1 },
-  lockedTxt: { fontSize: 12, fontWeight: "600" },
-  empty: { alignItems: "center", paddingVertical: 30 },
+  sectionLoading: { paddingVertical: 24, alignItems: "center" },
+  countBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
+  countBadgeTxt: { fontSize: 12, fontWeight: "800" },
+  pillScroll: { marginTop: 4 },
+  pillRow: { flexDirection: "row", gap: 8, paddingRight: 16 },
+  followingPill: { flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, maxWidth: 180 },
+  pillName: { fontSize: 13, fontWeight: "700" },
+  newBadge: { borderRadius: 10, paddingHorizontal: 6, paddingVertical: 1 },
+  newBadgeTxt: { fontSize: 11, fontWeight: "800", color: "#fff" },
+  signInPrompt: { margin: 24, padding: 24, alignItems: "center", gap: 8 },
+  promptTitle: { fontSize: 18, fontWeight: "800", textAlign: "center" },
+  promptSub: { fontSize: 13, lineHeight: 19, textAlign: "center" },
+  signInBtn: { marginTop: 8, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 12 },
+  signInTxt: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  feedCard: { borderRadius: 14, borderWidth: 1, padding: 14, gap: 6 },
+  feedCardTop: { flexDirection: "row", alignItems: "center", gap: 6 },
+  catDot: { width: 7, height: 7, borderRadius: 4 },
+  catLabel: { fontSize: 11, fontWeight: "700" },
+  kPillSmall: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5 },
+  kPillTxt: { fontSize: 10, fontWeight: "800" },
+  feedTitle: { fontSize: 15, fontWeight: "700", lineHeight: 20 },
+  feedSummary: { fontSize: 13, lineHeight: 18 },
+  feedMeta: { flexDirection: "row", justifyContent: "space-between", marginTop: 2 },
+  feedMetaTxt: { fontSize: 11 },
+  emptyFeed: { borderRadius: 12, borderWidth: 1, padding: 18 },
+  emptyFeedTxt: { fontSize: 13, lineHeight: 19, textAlign: "center" },
+  browseSearch: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, borderWidth: 1, margin: 14 },
+  searchInput: { flex: 1, fontSize: 14 },
+  limitBanner: { marginHorizontal: 14, marginBottom: 4, flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 12, borderWidth: 1 },
+  limitTitle: { fontSize: 13, fontWeight: "700" },
+  limitSub: { fontSize: 11, lineHeight: 16, marginTop: 1 },
+  topicRow: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 14, borderWidth: 1 },
+  topicRowLeft: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10 },
+  topicEmoji: { width: 42, height: 42, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  topicName: { fontSize: 13, fontWeight: "700", lineHeight: 18 },
+  topicCategory: { fontSize: 11, fontWeight: "600", marginTop: 1 },
+  followToggle: { borderWidth: 1.5, borderRadius: 18, paddingHorizontal: 12, paddingVertical: 5 },
+  followToggleTxt: { fontSize: 12, fontWeight: "700", color: "#fff" },
   expertCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 14, borderWidth: 1 },
   expertAvatar: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
-  expertNameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-  expertName: { fontSize: 14, fontWeight: "700", flex: 1 },
+  expertName: { fontSize: 14, fontWeight: "700" },
   expertBadge: { fontSize: 11, fontWeight: "700" },
   expertSpecialty: { fontSize: 12 },
-  expertStats: { flexDirection: "row", gap: 8 },
-  expertStat: { fontSize: 11 },
+  expertStats: { fontSize: 11, marginTop: 1 },
 });

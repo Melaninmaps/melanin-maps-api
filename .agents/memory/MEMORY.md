@@ -9,5 +9,6 @@
 - [Safety incidents route conflict](safety-incidents-route.md) — moderation.ts had a duplicate POST /reports handler registered before reports.ts; always check for duplicate route handlers when a new route silently doesn't run.
 - [pool.query over db.execute for raw SQL](pool-query-pattern.md) — Drizzle db.execute(sql`...`) can silently fail in esbuild bundles; use pool.query(sqlString, params[]) directly for raw parameterized queries. pool is exported from @workspace/db.
 - [pino-pretty swallows async logs](pino-pretty-debug.md) — pino-pretty worker-thread transport drops logger.info/error calls made during request handling in dev; use file-based appendFileSync debugging to trace async execution paths.
+- [API route path convention](api-route-paths.md) — routes/index.ts router mounts at app.use("/api", router); route handlers must NOT include /api prefix (use "/knowledge/..." not "/api/knowledge/...").
 - [DocuSign integration](docusign-integration.md) — JWT auth lib + 3 document types (seller/founding/verification) + routes + DB table. Requires one-time admin consent before JWT auth works.
 - [Business Growth Tools](growth-tools.md) — business_promotions table, 5 placement types, dynamic Stripe checkout (no pre-configured price IDs needed), search annotation, Grow tab in business dashboard.
