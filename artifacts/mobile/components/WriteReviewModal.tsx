@@ -37,7 +37,7 @@ interface Props {
   businessName: string;
   businessId?: string;
   onClose: () => void;
-  onSubmit: (rating: number, text: string, wouldReturn: boolean, socialHandle?: string, socialPlatform?: string, videoUrl?: string, nonMinorityOwned?: boolean, communitySupport?: number, website?: string, location?: string, isAnonymous?: boolean, volunteerAsMentor?: boolean) => void;
+  onSubmit: (rating: number, text: string, wouldReturn: boolean, socialHandle?: string, socialPlatform?: string, videoUrl?: string, nonMinorityOwned?: boolean, communitySupport?: number, website?: string, location?: string, isAnonymous?: boolean, volunteerAsMentor?: boolean, nowHiringUrl?: string) => void;
 }
 
 export function WriteReviewModal({ visible, businessName, businessId, onClose, onSubmit }: Props) {
@@ -55,6 +55,7 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [recommendsAsEmployer, setRecommendsAsEmployer] = useState<boolean | null>(null);
   const [volunteerAsMentor, setVolunteerAsMentor] = useState(false);
+  const [nowHiringUrl, setNowHiringUrl] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [inviteSent, setInviteSent] = useState(false);
   const [volunteeredAsMentor, setVolunteeredAsMentor] = useState(false);
@@ -73,6 +74,7 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
     setIsAnonymous(false);
     setRecommendsAsEmployer(null);
     setVolunteerAsMentor(false);
+    setNowHiringUrl("");
     setSubmitted(false);
     setInviteSent(false);
     setVolunteeredAsMentor(false);
@@ -90,10 +92,11 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
     const hasInvite = cleanHandle.length > 0 && socialPlatform !== null;
     const cleanVideoUrl = videoLink.trim() && isValidVideoUrl(videoLink) ? videoLink.trim() : undefined;
     const willMentor = nonMinorityOwned && recommendsAsEmployer === true && !isAnonymous && volunteerAsMentor;
+    const cleanNowHiring = nonMinorityOwned && recommendsAsEmployer === true && nowHiringUrl.trim() ? nowHiringUrl.trim() : undefined;
     setInviteSent(hasInvite);
     setVolunteeredAsMentor(willMentor);
     setSubmitted(true);
-    onSubmit(rating, text, wouldReturn, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl, nonMinorityOwned, communitySupport > 0 && !nonMinorityOwned ? communitySupport : undefined, website.trim() || undefined, location.trim() || undefined, nonMinorityOwned ? isAnonymous : undefined, willMentor || undefined);
+    onSubmit(rating, text, wouldReturn, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl, nonMinorityOwned, communitySupport > 0 && !nonMinorityOwned ? communitySupport : undefined, website.trim() || undefined, location.trim() || undefined, nonMinorityOwned ? isAnonymous : undefined, willMentor || undefined, cleanNowHiring);
     setTimeout(() => {
       reset();
       onClose();
@@ -434,6 +437,36 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
                       <Text style={[styles.yesNoText, { color: recommendsAsEmployer === false ? "#DC2626" : colors.foreground }]}>No</Text>
                     </TouchableOpacity>
                   </View>
+
+                  {/* Now Hiring URL */}
+                  {recommendsAsEmployer === true && (
+                    <>
+                      <Text style={[styles.label, { color: colors.foreground, marginTop: 16, marginBottom: 6 }]}>
+                        Now Hiring link <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text>
+                      </Text>
+                      <Text style={[styles.anonHint, { color: colors.mutedForeground, marginBottom: 6 }]}>
+                        Link directly to their careers page or job listing so candidates can apply
+                      </Text>
+                      <View style={[styles.handleInputRow, { borderColor: nowHiringUrl ? "#2D7A4F" : colors.border, backgroundColor: colors.background }]}>
+                        <Ionicons name="briefcase-outline" size={15} color={nowHiringUrl ? "#2D7A4F" : colors.mutedForeground} />
+                        <TextInput
+                          style={[styles.handleInput, { color: colors.foreground }]}
+                          placeholder="https://careers.example.com/jobs"
+                          placeholderTextColor={colors.mutedForeground}
+                          value={nowHiringUrl}
+                          onChangeText={setNowHiringUrl}
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                          keyboardType="url"
+                        />
+                        {nowHiringUrl.length > 0 && (
+                          <TouchableOpacity onPress={() => setNowHiringUrl("")}>
+                            <Ionicons name="close-circle" size={16} color={colors.mutedForeground} />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </>
+                  )}
 
                   {/* Mentor volunteer — only if employer recommended + posting as verified */}
                   {recommendsAsEmployer === true && !isAnonymous && (

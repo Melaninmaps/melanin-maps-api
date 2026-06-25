@@ -128,7 +128,7 @@ export default function BusinessDetailScreen() {
 
   const allReviews: Array<{
     id: string; author: string; initials: string; color: string;
-    rating: number; text: string; timeAgo: string; wouldReturnAlone?: boolean; videoUrl?: string;
+    rating: number; text: string; timeAgo: string; wouldReturnAlone?: boolean; videoUrl?: string; nowHiringUrl?: string;
   }> = [
     ...apiReviews.map((r) => ({
       id: r.id,
@@ -140,6 +140,7 @@ export default function BusinessDetailScreen() {
       timeAgo: new Date(r.createdAt).toLocaleDateString(),
       wouldReturnAlone: r.wouldReturnAlone ?? undefined,
       videoUrl: r.videoUrl ?? undefined,
+      nowHiringUrl: r.nowHiringUrl ?? undefined,
     })),
     ...(business.reviews ?? []),
   ];
@@ -179,9 +180,10 @@ export default function BusinessDetailScreen() {
     location?: string,
     isAnonymous?: boolean,
     volunteerAsMentor?: boolean,
+    nowHiringUrl?: string,
   ) => {
     try {
-      const pts = await submitReview(rating, text, wouldReturn, socialHandle, socialPlatform, business.name, videoUrl, nonMinorityOwned, communitySupport, website, location, isAnonymous, volunteerAsMentor);
+      const pts = await submitReview(rating, text, wouldReturn, socialHandle, socialPlatform, business.name, videoUrl, nonMinorityOwned, communitySupport, website, location, isAnonymous, volunteerAsMentor, nowHiringUrl);
       if (pts != null) {
         addLocal(pts);
         showPointsToast(`+${pts} pts — thanks for your review!`);
@@ -425,6 +427,16 @@ export default function BusinessDetailScreen() {
                   >
                     <Feather name="play-circle" size={14} color={colors.primary} />
                     <Text style={[styles.videoLinkText, { color: colors.primary }]}>Watch Video</Text>
+                  </TouchableOpacity>
+                ) : null}
+                {rev.nowHiringUrl ? (
+                  <TouchableOpacity
+                    style={[styles.videoLink, { backgroundColor: "#2D7A4F12", borderColor: "#2D7A4F33" }]}
+                    onPress={() => Linking.openURL(rev.nowHiringUrl!)}
+                    activeOpacity={0.75}
+                  >
+                    <Feather name="briefcase" size={14} color="#2D7A4F" />
+                    <Text style={[styles.videoLinkText, { color: "#2D7A4F" }]}>Now Hiring — Apply</Text>
                   </TouchableOpacity>
                 ) : null}
               </View>

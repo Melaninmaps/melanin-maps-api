@@ -162,7 +162,7 @@ router.post("/reviews", reviewLimiter, requireTrust, requireMembership("navigato
     res.status(401).json({ error: "Authentication required" });
     return;
   }
-  const { businessId, rating, text, wouldReturnAlone, socialHandle, socialPlatform, businessName, videoUrl, nonMinorityOwned, communitySupport, website, location, isAnonymous, recommendsAsEmployer, volunteerAsMentor } =
+  const { businessId, rating, text, wouldReturnAlone, socialHandle, socialPlatform, businessName, videoUrl, nonMinorityOwned, communitySupport, website, location, isAnonymous, recommendsAsEmployer, volunteerAsMentor, nowHiringUrl } =
     req.body as Record<string, unknown>;
 
   const ratingNum = Number(rating);
@@ -214,6 +214,7 @@ router.post("/reviews", reviewLimiter, requireTrust, requireMembership("navigato
         videoUrl: typeof videoUrl === "string" && videoUrl.trim() ? videoUrl.trim() : null,
         nonMinorityOwned: nonMinorityOwned === true,
         recommendsAsEmployer: nonMinorityOwned === true && recommendsAsEmployer === true,
+        nowHiringUrl: nonMinorityOwned === true && recommendsAsEmployer === true && typeof nowHiringUrl === "string" && nowHiringUrl.trim() ? nowHiringUrl.trim() : null,
         communitySupport: typeof communitySupport === "number" && !nonMinorityOwned ? communitySupport : null,
         website: typeof website === "string" && website.trim() ? website.trim() : null,
         location: typeof location === "string" && location.trim() ? location.trim() : null,

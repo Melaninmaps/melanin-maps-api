@@ -24,6 +24,7 @@ export interface ApiReview {
   socialHandle: string | null;
   socialPlatform: string | null;
   videoUrl: string | null;
+  nowHiringUrl: string | null;
   createdAt: string;
 }
 
@@ -62,6 +63,7 @@ export function useReviews(businessId: string) {
       location?: string,
       isAnonymous?: boolean,
       volunteerAsMentor?: boolean,
+      nowHiringUrl?: string,
     ): Promise<number | null> => {
       const token = await getToken();
       const apiBase = getApiBase();
@@ -88,6 +90,7 @@ export function useReviews(businessId: string) {
             location: location || null,
             isAnonymous: isAnonymous ?? false,
             volunteerAsMentor: volunteerAsMentor ?? false,
+            nowHiringUrl: nowHiringUrl || null,
           }),
         });
         if (res.ok) {

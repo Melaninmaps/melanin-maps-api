@@ -17,6 +17,7 @@ export const reviewsTable = pgTable("reviews", {
   nonMinorityOwned: boolean("non_minority_owned").default(false),
   isAnonymous: boolean("is_anonymous").notNull().default(false),
   recommendsAsEmployer: boolean("recommends_as_employer").default(false),
+  nowHiringUrl: varchar("now_hiring_url", { length: 500 }),
   communitySupport: integer("community_support"),
   website: varchar("website", { length: 500 }),
   location: varchar("location", { length: 255 }),
