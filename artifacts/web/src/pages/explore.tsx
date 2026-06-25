@@ -2,6 +2,7 @@ import { useListBusinesses } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { MapPin, Search, Grid, Map as MapIcon, Star, X } from "lucide-react";
 import { useState } from "react";
+import { Link } from "wouter";
 
 const OWNERSHIP_OPTIONS = [
   { id: "minority-owned", label: "Minority-Owned", emoji: "✊🏾", color: "#3A1F0E" },
@@ -323,9 +324,15 @@ export default function Explore() {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button className="flex-1 rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white">View Details</Button>
-                    <Button variant="outline" className="rounded-full border-gray-200">Review</Button>
-                    <Button variant="outline" className="rounded-full border-gray-200">Report</Button>
+                    <Link href={`/businesses/${b.id}`} className="flex-1">
+                      <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white">View Details</Button>
+                    </Link>
+                    <Link href={`/businesses/${b.id}`}>
+                      <Button variant="outline" className="rounded-full border-gray-200">Review</Button>
+                    </Link>
+                    <Link href="/contact">
+                      <Button variant="outline" className="rounded-full border-gray-200">Report</Button>
+                    </Link>
                   </div>
                 </div>
               </div>

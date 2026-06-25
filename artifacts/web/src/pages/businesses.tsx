@@ -104,8 +104,8 @@ export default function Businesses() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-14 text-lg">Browse Directory →</Button>
-            <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-14 text-lg bg-transparent">List Your Business</Button>
+            <a href="#directory"><Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-14 text-lg">Browse Directory →</Button></a>
+            <Link href="/for-business-owners"><Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-14 text-lg bg-transparent">List Your Business</Button></Link>
           </div>
         </div>
       </section>
@@ -131,9 +131,9 @@ export default function Businesses() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" className="rounded-full border-gray-300">Submit a Business</Button>
+            <Link href="/for-business-owners"><Button variant="outline" className="rounded-full border-gray-300">Submit a Business</Button></Link>
             <Link href="/rate-neighborhood"><Button variant="outline" className="rounded-full border-gray-300">Rate a Neighborhood</Button></Link>
-            <Button className="rounded-full bg-[#2B1507] text-white"><MapPin className="w-4 h-4 mr-2"/> Near Me</Button>
+            <Link href="/map"><Button className="rounded-full bg-[#2B1507] text-white"><MapPin className="w-4 h-4 mr-2"/> Near Me</Button></Link>
           </div>
         </div>
 
@@ -155,9 +155,9 @@ export default function Businesses() {
         </div>
 
         {/* Business listing grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+        <div id="directory" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
           {BUSINESSES.map((biz, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-[#3A1F0E]/8 overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <Link key={i} href="/explore" className="block bg-white rounded-2xl border border-[#3A1F0E]/8 overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
               <div className="relative h-48 overflow-hidden">
                 <img src={biz.img} alt={biz.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute top-3 left-3 flex gap-2">
@@ -179,7 +179,7 @@ export default function Businesses() {
                   ))}
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
@@ -197,9 +197,9 @@ export default function Businesses() {
               <div className="flex items-center gap-2 font-bold text-[#3A1F0E]"><CheckCircle className="w-5 h-5 text-[#CA922B]"/> Map Discovery</div>
             </div>
             <div className="flex flex-wrap gap-4">
-              <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Submit a Business</Button>
-              <Button variant="outline" className="rounded-full border-[#2B1507] text-[#2B1507] px-8 h-12">Apply for Early Access</Button>
-              <Button variant="ghost" className="rounded-full text-[#3A1F0E]/60 hover:text-[#CA922B]">Share the directory</Button>
+              <Link href="/for-business-owners"><Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Submit a Business</Button></Link>
+              <Link href="/for-business-owners"><Button variant="outline" className="rounded-full border-[#2B1507] text-[#2B1507] px-8 h-12">Apply for Early Access</Button></Link>
+              <Button variant="ghost" className="rounded-full text-[#3A1F0E]/60 hover:text-[#CA922B]" onClick={() => { if (navigator.share) { navigator.share({ title: "Mapping With Melanin Directory", url: window.location.href }); } else { navigator.clipboard?.writeText(window.location.href); } }}>Share the directory</Button>
             </div>
           </div>
           <div className="w-full md:w-1/3 bg-white p-8 rounded-2xl shadow-lg border border-[#3A1F0E]/5 transform rotate-2">

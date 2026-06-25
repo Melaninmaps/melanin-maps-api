@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListSurveys, useCreateSurvey, useGetCurrentAuthUser } from "@workspace/api-client-react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -141,9 +142,11 @@ export default function Safety() {
           </div>
 
           <div className="text-center mt-12">
-            <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-12">
-              View All Destinations
-            </Button>
+            <Link href="/businesses">
+              <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-12">
+                View All Destinations
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
