@@ -11,13 +11,13 @@ const DEFAULT_CHANNELS = [
   { slug: "relocation", label: "Relocation", icon: "🏡", description: "Moving guides, neighborhood comparisons, and settling-in resources", color: "#CA922B", sortOrder: 3 },
   { slug: "business", label: "Business & Entrepreneurship", icon: "🚀", description: "Business building, funding, legal, and growth strategies", color: "#7C3AED", sortOrder: 4 },
   { slug: "finance", label: "Finance & Wealth", icon: "💰", description: "Personal finance, investing, credit, and wealth building", color: "#0EA5E9", sortOrder: 5 },
-  { slug: "parenting", label: "Parenting & Family", icon: "👶", description: "Raising children, family resources, childcare, and education", color: "#F97316", sortOrder: 6 },
+  { slug: "parenting", label: "Parenting & Family", icon: "👶🏾", description: "Raising children, family resources, childcare, and education", color: "#F97316", sortOrder: 6 },
   { slug: "education", label: "Education", icon: "🎓", description: "College guides, scholarships, tutoring, and continuing education", color: "#EC4899", sortOrder: 7 },
   { slug: "culture", label: "Culture & History", icon: "🎭", description: "Cultural events, history, arts, and community storytelling", color: "#8B5CF6", sortOrder: 8 },
   { slug: "food", label: "Food & Dining", icon: "🍽️", description: "Restaurant reviews, recipes, food culture, and culinary events", color: "#EF4444", sortOrder: 9 },
   { slug: "law", label: "Legal & Rights", icon: "⚖️", description: "Know your rights, legal resources, and community advocacy", color: "#64748B", sortOrder: 10 },
   { slug: "safety", label: "Safety & Community", icon: "🛡️", description: "Community safety insights, resources, and neighborhood guides", color: "#DC2626", sortOrder: 11 },
-  { slug: "spirituality", label: "Faith & Spirituality", icon: "🙏", description: "Houses of worship, spiritual wellness, and community gatherings", color: "#A16207", sortOrder: 12 },
+  { slug: "spirituality", label: "Faith & Spirituality", icon: "🙏🏾", description: "Houses of worship, spiritual wellness, and community gatherings", color: "#A16207", sortOrder: 12 },
 ];
 
 router.get("/channels", async (_req: Request, res: Response) => {

@@ -272,7 +272,7 @@ export default function Features() {
                     { type: "Journey", icon: "🗺️", title: "Continue Phase 3 — 2 steps remaining", color: "#CA922B" },
                     { type: "Smart Match", icon: "🔗", title: "3 salons found in Houston matching your Atlanta saves", color: "#7C3AED" },
                     { type: "Business", icon: "🏦", title: "Community-recommended mortgage lenders near you", color: "#16A34A" },
-                    { type: "Discovery", icon: "💆", title: "Have you found a healthcare provider in Houston yet?", color: "#0EA5E9" },
+                    { type: "Discovery", icon: "💆🏾", title: "Have you found a healthcare provider in Houston yet?", color: "#0EA5E9" },
                   ].map(({ type, icon, title, color }) => (
                     <div key={type} className="flex items-center gap-3 bg-white/3 rounded-xl p-3 border border-white/5">
                       <span className="text-lg">{icon}</span>

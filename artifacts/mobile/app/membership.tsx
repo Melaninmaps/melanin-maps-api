@@ -399,7 +399,7 @@ export default function MembershipScreen() {
       {audience === "business" && (
         <View style={[styles.promiseCard, { backgroundColor: colors.card, borderColor: colors.primary + "44" }]}>
           <View style={styles.promiseHeader}>
-            <Text style={{ fontSize: 20 }}>🤝</Text>
+            <Text style={{ fontSize: 20 }}>🤝🏾</Text>
             <Text style={[styles.promiseTitle, { color: colors.foreground }]}>
               Business Success Promise
             </Text>
@@ -462,7 +462,7 @@ export default function MembershipScreen() {
                 { icon: "✅", label: "Verified Creator badge", detail: "A trusted signal on every video and your profile." },
                 { icon: "📌", label: "Featured placement", detail: "Your content surfaces first in destination searches." },
                 { icon: "🎉", label: "Invitations to events", detail: "Early access and press credentials at partner events." },
-                { icon: "🤝", label: "Business partnerships", detail: "Match with local businesses for collaborative content." },
+                { icon: "🤝🏾", label: "Business partnerships", detail: "Match with local businesses for collaborative content." },
                 { icon: "💰", label: "Future revenue-sharing", detail: "First in line when monetization launches." },
                 { icon: "📊", label: "Creator analytics", detail: "Views, likes, saves, profile visits, and follower growth." },
               ].map((p, i) => (

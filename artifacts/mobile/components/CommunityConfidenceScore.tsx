@@ -68,7 +68,7 @@ function buildScores(business: BusinessLike): { lines: ScoreLine[]; aggregate: n
 
   const lines: ScoreLine[] = [
     { emoji: "🛡", label: "Safety",                  score: safetyScore  },
-    { emoji: "🤝", label: "Welcoming Atmosphere",    score: welcomeScore  },
+    { emoji: "🤝🏾", label: "Welcoming Atmosphere",    score: welcomeScore  },
     { emoji: "👨🏾‍👩🏾‍👧", label: "Community Recommendation", score: commRecScore  },
     { emoji: "⭐", label: "Overall Experience",      score: overallScore  },
   ];

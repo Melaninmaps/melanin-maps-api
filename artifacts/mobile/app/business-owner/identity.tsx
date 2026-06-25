@@ -47,7 +47,7 @@ const ACCESSIBILITY = [
   "Parking Available", "Public Transit Nearby",
 ];
 const VIBES = [
-  "☕ Cozy", "🎉 Lively", "💼 Professional", "👨‍👩‍👧 Family Friendly",
+  "☕ Cozy", "🎉 Lively", "💼 Professional", "👨🏾‍👩🏾‍👧🏾 Family Friendly",
   "🎶 Great Music", "💕 Romantic", "🏃 Quick Stop", "📚 Quiet",
   "🎨 Creative", "🌿 Relaxed", "💎 Luxury", "🏙 Trendy",
 ];

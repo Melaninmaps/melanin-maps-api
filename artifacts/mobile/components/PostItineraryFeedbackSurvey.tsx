@@ -156,7 +156,7 @@ export function PostItineraryFeedbackSurvey({ visible, destination, onClose, onS
                 </Text>
                 {data.overallRating >= 4 && (
                   <View style={[styles.sharePrompt, { backgroundColor: "#C4622D10", borderColor: "#C4622D30" }]}>
-                    <Text style={{ fontSize: 20 }}>🙌</Text>
+                    <Text style={{ fontSize: 20 }}>🙌🏾</Text>
                     <Text style={[styles.shareText, { color: colors.foreground }]}>
                       Glad you loved it! Share this itinerary with your community.
                     </Text>

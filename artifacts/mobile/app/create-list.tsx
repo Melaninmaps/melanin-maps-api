@@ -29,7 +29,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
 
-const EMOJIS = ["📍", "☕", "🍽️", "📚", "💅🏾", "🛍️", "✈️", "👨‍👩‍👧", "🌙", "🎷", "💼", "🏪", "🤎", "🌿", "🎁", "🏋🏾", "🎭", "🌸"];
+const EMOJIS = ["📍", "☕", "🍽️", "📚", "💅🏾", "🛍️", "✈️", "👨🏾‍👩🏾‍👧🏾", "🌙", "🎷", "💼", "🏪", "🤎", "🌿", "🎁", "🏋🏾", "🎭", "🌸"];
 const CATEGORIES = ["Food", "Culture", "Travel", "Family", "Wellness", "Shopping", "Nightlife", "Professional"];
 
 export default function CreateListScreen() {

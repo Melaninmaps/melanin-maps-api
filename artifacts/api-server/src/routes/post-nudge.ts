@@ -41,7 +41,7 @@ function buildSuggestedCaption(category: string, businessName: string): string {
     ],
     "Beauty": [
       `Slots are open this week — book now and glow up with us. ✨ #BlackOwned`,
-      `Your glow is calling. Come through and let us take care of you. 💅`,
+      `Your glow is calling. Come through and let us take care of you. 💅🏾`,
     ],
     "Retail": [
       `New arrivals just dropped — come see what's fresh in the store. 🛍️ #ShopBlack`,

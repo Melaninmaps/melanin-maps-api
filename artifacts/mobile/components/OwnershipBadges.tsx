@@ -46,7 +46,7 @@ const BADGE_CONFIG: Record<OwnershipType, BadgeConfig> = {
   },
   "disability-owned": {
     label: "Disability Owned",
-    emoji: "🤝",
+    emoji: "🤝🏾",
     bg: "#0A3228",
     accent: "#4DB8A0",
   },

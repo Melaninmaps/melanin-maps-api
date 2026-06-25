@@ -33,17 +33,17 @@ const TRAVEL_STYLES = [
   { id: "foodie", label: "Foodie", emoji: "🍽️", sub: "Food & culinary" },
   { id: "cultural", label: "Cultural", emoji: "🎭", sub: "Arts & history" },
   { id: "nightlife", label: "Night Owl", emoji: "🌙", sub: "Bars & clubs" },
-  { id: "wellness", label: "Wellness", emoji: "🧘", sub: "Spas & fitness" },
+  { id: "wellness", label: "Wellness", emoji: "🧘🏾", sub: "Spas & fitness" },
   { id: "shopaholic", label: "Shopper", emoji: "🛍️", sub: "Retail & markets" },
 ];
 
 const CITIES = ["Atlanta", "Houston", "Chicago", "Los Angeles", "New York", "DC", "Detroit", "New Orleans", "Miami", "Baltimore", "Philadelphia", "Charlotte"];
 
 const GROUP_TYPES = [
-  { id: "solo", label: "Solo", emoji: "🧍" },
-  { id: "couple", label: "Couple", emoji: "👫" },
-  { id: "friends", label: "Friend Group", emoji: "👯" },
-  { id: "family", label: "Family", emoji: "👨‍👩‍👧" },
+  { id: "solo", label: "Solo", emoji: "🧍🏾" },
+  { id: "couple", label: "Couple", emoji: "👫🏾" },
+  { id: "friends", label: "Friend Group", emoji: "👯🏾" },
+  { id: "family", label: "Family", emoji: "👨🏾‍👩🏾‍👧🏾" },
   { id: "business", label: "Business", emoji: "💼" },
 ];
 

@@ -39,7 +39,7 @@ const EXAMPLE_QUERIES = [
   { label: "🍽️ Best food spots", q: "Black-owned restaurants near me" },
   { label: "🚀 Start a business", q: "I want to start a business" },
   { label: "✂️ Salon and barber", q: "hair salon and barber shop" },
-  { label: "👶 New parent resources", q: "I just had a baby" },
+  { label: "👶🏾 New parent resources", q: "I just had a baby" },
   { label: "💰 Financial advisor", q: "I need financial advice" },
   { label: "🎓 College resources", q: "college student looking for resources" },
 ];

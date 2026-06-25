@@ -35,7 +35,7 @@ const BADGE_CATEGORIES: { id: BadgeDef["tier"]; label: string; emoji: string }[]
   { id: "trust",      label: "Trust & Safety",             emoji: "🛡️" },
   { id: "business",   label: "Business Support",           emoji: "🏪" },
   { id: "travel",     label: "Travel & Exploration",       emoji: "✈️" },
-  { id: "community",  label: "Community & Social",         emoji: "🤝" },
+  { id: "community",  label: "Community & Social",         emoji: "🤝🏾" },
   { id: "events",     label: "Events",                     emoji: "🎉" },
   { id: "premium",    label: "Premium & Special",          emoji: "💎" },
   { id: "legacy",     label: "Legacy Tier",                emoji: "👑" },
@@ -754,7 +754,7 @@ export default function Profile() {
                 { label: "Membership", href: "/membership", emoji: "💎" },
                 { label: "Billing & Invoices", href: "/billing", emoji: "📄" },
                 { label: "Partner Deals", href: "/affiliate", emoji: "🏷️" },
-                { label: "Mentorship", href: "/mentorship", emoji: "🤝" },
+                { label: "Mentorship", href: "/mentorship", emoji: "🤝🏾" },
               ] as const).map(({ label, href, emoji }) => (
                 <Link key={href} href={href}>
                   <div className="bg-white rounded-2xl p-4 border border-[#3A1F0E]/5 shadow-sm text-center hover:border-[#CA922B]/30 hover:shadow-md transition-all cursor-pointer group">

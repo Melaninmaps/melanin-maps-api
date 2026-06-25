@@ -808,7 +808,7 @@ export default function Membership() {
               { label: "Business Growth", trial: "30-day free trial", price: "$19.99/month after", icon: "📈" },
               { label: "Business Premium", trial: "30-day free trial", price: "$49.99/month after", icon: "⭐" },
               { label: "Business Enterprise", trial: "30-day free trial", price: "$149.99/month after", icon: "🏛" },
-              { label: "Founding Business (first 250)", trial: "12 months free", price: "Intro rate after", icon: "🤝" },
+              { label: "Founding Business (first 250)", trial: "12 months free", price: "Intro rate after", icon: "🤝🏾" },
             ].map((row, i) => (
               <div key={i} className="flex items-center justify-between py-3 border-b border-[#3A1F0E]/8 last:border-0">
                 <div className="flex items-center gap-3">

@@ -496,13 +496,13 @@ export default function BusinessDetailScreen() {
                     <RatingStars rating={rev.rating} showCount={false} size={11} showLabel />
                     {rev.wouldReturnAlone === true && (
                       <View style={styles.returnAlone}>
-                        <Text style={{ fontSize: 11 }}>👍</Text>
+                        <Text style={{ fontSize: 11 }}>👍🏾</Text>
                         <Text style={[styles.returnAloneText, { color: "#2D7A4F" }]}>Would return</Text>
                       </View>
                     )}
                     {rev.wouldReturnAlone === false && (
                       <View style={styles.returnAlone}>
-                        <Text style={{ fontSize: 11 }}>👎</Text>
+                        <Text style={{ fontSize: 11 }}>👎🏾</Text>
                         <Text style={[styles.returnAloneText, { color: "#DC2626" }]}>Wouldn't return</Text>
                       </View>
                     )}

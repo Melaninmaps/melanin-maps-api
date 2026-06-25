@@ -59,7 +59,7 @@ export default function DashboardScreen() {
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.greeting, { color: colors.mutedForeground }]}>Welcome back 👋</Text>
+          <Text style={[styles.greeting, { color: colors.mutedForeground }]}>Welcome back 👋🏾</Text>
           <Text style={[styles.name, { color: colors.foreground }]}>{firstName}</Text>
         </View>
         <TouchableOpacity

@@ -195,7 +195,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
     ],
   },
   {
-    emoji: "👶",
+    emoji: "👶🏾",
     name: "Family & Education",
     liveAtLaunch: false,
     subcategories: [

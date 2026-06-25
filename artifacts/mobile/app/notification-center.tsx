@@ -42,7 +42,7 @@ const NOTIFS: Notif[] = [
   {
     id: "n3", type: "business", icon: "shopping-bag", color: "#C9922B",
     title: "Sweet Auburn BBQ replied to your review",
-    body: "\"Thank you for the kind words! Come back and try our new weekend specials 🙌\"",
+    body: "\"Thank you for the kind words! Come back and try our new weekend specials 🙌🏾\"",
     time: "3h ago", read: false, group: "Today",
   },
   {

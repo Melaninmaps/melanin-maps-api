@@ -15,14 +15,14 @@ const CATEGORIES = [
   { id: "Food & Drink", emoji: "🍽" },
   { id: "Music & Live Events", emoji: "🎵" },
   { id: "Culture & Art", emoji: "🎨" },
-  { id: "Beauty & Wellness", emoji: "💆" },
+  { id: "Beauty & Wellness", emoji: "💆🏾" },
   { id: "History", emoji: "📚" },
   { id: "Nightlife", emoji: "🌙" },
   { id: "Outdoors", emoji: "🌿" },
   { id: "Family-Friendly", emoji: "👨‍👩‍👧" },
   { id: "Shopping", emoji: "🛍" },
   { id: "Coffee", emoji: "☕" },
-  { id: "Spiritual", emoji: "🙏" },
+  { id: "Spiritual", emoji: "🙏🏾" },
   { id: "Sports", emoji: "⚽" },
 ];
 
@@ -30,22 +30,22 @@ const BUDGET_OPTIONS = [
   { id: "budget", label: "Budget-friendly", desc: "Hidden gems that don't break the bank", emoji: "💵" },
   { id: "mid", label: "Mid-range", desc: "Good vibes at a fair price", emoji: "💳" },
   { id: "luxury", label: "Luxury", desc: "The full experience, no limits", emoji: "✨" },
-  { id: "any", label: "It depends", desc: "Mix it up based on the vibe", emoji: "🤷" },
+  { id: "any", label: "It depends", desc: "Mix it up based on the vibe", emoji: "🤷🏾" },
 ];
 
 const TRIP_STYLE_OPTIONS = [
-  { id: "solo", label: "Solo traveler", emoji: "🧍" },
+  { id: "solo", label: "Solo traveler", emoji: "🧍🏾" },
   { id: "couple", label: "Couples getaway", emoji: "💑" },
-  { id: "family", label: "Family trip", emoji: "👨‍👩‍👧‍👦" },
+  { id: "family", label: "Family trip", emoji: "👨🏾‍👩🏾‍👧🏾‍👦🏾" },
   { id: "group", label: "Friend group", emoji: "👥" },
   { id: "business", label: "Work trip", emoji: "💼" },
-  { id: "spiritual", label: "Spiritual journey", emoji: "🙏" },
+  { id: "spiritual", label: "Spiritual journey", emoji: "🙏🏾" },
 ];
 
 const COMPANION_OPTIONS = [
-  { id: "solo", label: "Just me", emoji: "🧍" },
+  { id: "solo", label: "Just me", emoji: "🧍🏾" },
   { id: "partner", label: "Me & my partner", emoji: "💑" },
-  { id: "family", label: "The whole family", emoji: "👨‍👩‍👧‍👦" },
+  { id: "family", label: "The whole family", emoji: "👨🏾‍👩🏾‍👧🏾‍👦🏾" },
   { id: "friends", label: "The crew", emoji: "👥" },
 ];
 
@@ -113,7 +113,7 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
               <View style={[styles.iconWrap, { backgroundColor: colors.primary + "18" }]}>
                 <Ionicons name="sparkles" size={44} color={colors.primary} />
               </View>
-              <Text style={[styles.heading, { color: colors.text }]}>Hey, kinfolk 👋</Text>
+              <Text style={[styles.heading, { color: colors.text }]}>Hey, kinfolk 👋🏾</Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
                 I'm KinfolkAI™ — your personal Black travel companion. Let me learn your taste so every recommendation feels like it was made just for you.
               </Text>

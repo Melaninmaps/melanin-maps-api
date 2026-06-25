@@ -181,7 +181,7 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
                   }]}
                   onPress={() => setWouldReturn("yes")}
                 >
-                  <Text style={{ fontSize: 16 }}>👍</Text>
+                  <Text style={{ fontSize: 16 }}>👍🏾</Text>
                   <Text style={[styles.yesNoText, { color: wouldReturn === "yes" ? "#2D7A4F" : colors.foreground }]}>Yes</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -201,7 +201,7 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
                   }]}
                   onPress={() => setWouldReturn("no")}
                 >
-                  <Text style={{ fontSize: 16 }}>👎</Text>
+                  <Text style={{ fontSize: 16 }}>👎🏾</Text>
                   <Text style={[styles.yesNoText, { color: wouldReturn === "no" ? "#DC2626" : colors.foreground }]}>No</Text>
                 </TouchableOpacity>
               </View>

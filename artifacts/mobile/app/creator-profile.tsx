@@ -71,10 +71,10 @@ const CREATOR_DB: Record<string, CreatorData> = {
     bio: "Ghana-born, Houston-raised. I document the African diaspora experience through food, business, and community — one city at a time.",
     cities: 55, videos: 210, followers: 9800,
     coverColor: "#5B2333", emoji: "🎬",
-    badges: ["🏆 Verified Creator", "🍴 Culinary", "🤝 Community Builder"],
+    badges: ["🏆 Verified Creator", "🍴 Culinary", "🤝🏾 Community Builder"],
     recentVideos: [
       { title: "Houston's best Afro-Caribbean restaurants", city: "Houston, TX", views: "41K", emoji: "🍲" },
-      { title: "Finding community in Chicago's South Side", city: "Chicago, IL", views: "38K", emoji: "🤝" },
+      { title: "Finding community in Chicago's South Side", city: "Chicago, IL", views: "38K", emoji: "🤝🏾" },
       { title: "minority-owned wellness spots in LA", city: "Los Angeles, CA", views: "26K", emoji: "🧘🏾" },
       { title: "The real Wakanda: visiting Accra in 2024", city: "Accra, Ghana", views: "84K", emoji: "🌟" },
     ],

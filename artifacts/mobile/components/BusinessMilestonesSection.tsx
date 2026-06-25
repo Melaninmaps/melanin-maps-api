@@ -35,7 +35,7 @@ function computeMilestones(b: BusinessLike): Milestone[] {
     out.push({ emoji: "⭐", label: "Community Favorite", bg: "#C9922B20", text: "#C9922B" });
   }
   if (b.verified) {
-    out.push({ emoji: "🤝", label: "Responsive Owner", bg: "#2D7A4F20", text: "#2D7A4F" });
+    out.push({ emoji: "🤝🏾", label: "Responsive Owner", bg: "#2D7A4F20", text: "#2D7A4F" });
   }
   if (rc >= 100) {
     out.push({ emoji: "🏛", label: "Community Landmark", bg: "#3B1F0E20", text: "#3B1F0E" });

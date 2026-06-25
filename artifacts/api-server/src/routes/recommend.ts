@@ -23,30 +23,30 @@ const JOURNEY_ADJACENT_NEEDS: Record<string, Array<{ question: string; category:
     { question: "Do you have a moving company booked?", category: "Moving", icon: "🚚" },
     { question: "Have you set up a local bank account?", category: "Finance", icon: "🏦" },
     { question: "Found a salon or barber you can trust?", category: "Beauty", icon: "✂️" },
-    { question: "Connected with community groups or a place of worship?", category: "Community", icon: "🤝" },
+    { question: "Connected with community groups or a place of worship?", category: "Community", icon: "🤝🏾" },
   ],
   "new-baby": [
-    { question: "Do you have a pediatrician lined up?", category: "Healthcare", icon: "👶" },
-    { question: "Have you looked into postpartum mental health support?", category: "Wellness", icon: "💆" },
+    { question: "Do you have a pediatrician lined up?", category: "Healthcare", icon: "👶🏾" },
+    { question: "Have you looked into postpartum mental health support?", category: "Wellness", icon: "💆🏾" },
     { question: "Found a childcare or daycare provider?", category: "Childcare", icon: "🏫" },
-    { question: "Connected with a new parent group in your area?", category: "Community", icon: "🤝" },
+    { question: "Connected with a new parent group in your area?", category: "Community", icon: "🤝🏾" },
   ],
   "starting-business": [
     { question: "Do you have a business attorney or legal advisor?", category: "Legal", icon: "⚖️" },
     { question: "Have you set up a business banking account?", category: "Finance", icon: "🏦" },
-    { question: "Do you have a mental health support system in place?", category: "Wellness", icon: "💆" },
+    { question: "Do you have a mental health support system in place?", category: "Wellness", icon: "💆🏾" },
     { question: "Found a coworking space or office?", category: "Coworking", icon: "💻" },
   ],
   "new-to-city": [
     { question: "Have you set up a primary care doctor?", category: "Healthcare", icon: "🏥" },
-    { question: "Found a gym or wellness spot?", category: "Fitness", icon: "💪" },
+    { question: "Found a gym or wellness spot?", category: "Fitness", icon: "💪🏾" },
     { question: "Connected with local professional networks?", category: "Networking", icon: "💼" },
     { question: "Found a place of worship or community group?", category: "Community", icon: "⛪" },
   ],
   "career-change": [
     { question: "Do you have a financial safety plan for the transition?", category: "Finance", icon: "💰" },
     { question: "Have you considered a career coach or mentor?", category: "Coaching", icon: "🎯" },
-    { question: "Do you have mental health support during this change?", category: "Wellness", icon: "💆" },
+    { question: "Do you have mental health support during this change?", category: "Wellness", icon: "💆🏾" },
   ],
   "getting-married": [
     { question: "Have you looked into estate planning or legal name change?", category: "Legal", icon: "⚖️" },
@@ -54,7 +54,7 @@ const JOURNEY_ADJACENT_NEEDS: Record<string, Array<{ question: string; category:
   ],
   retirement: [
     { question: "Do you have a healthcare coverage plan for retirement?", category: "Healthcare", icon: "🏥" },
-    { question: "Have you connected with senior community groups?", category: "Community", icon: "🤝" },
+    { question: "Have you connected with senior community groups?", category: "Community", icon: "🤝🏾" },
   ],
 };
 

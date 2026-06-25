@@ -71,12 +71,12 @@ export default function DiscoverScreen() {
   const VIBES: { label: string; emoji: string; categories: string[] }[] = [
     { label: "Soul Food", emoji: "🍽️", categories: ["Food", "Restaurant"] },
     { label: "Hair & Beauty", emoji: "💈", categories: ["Beauty", "Hair"] },
-    { label: "Wellness", emoji: "💆", categories: ["Health", "Wellness"] },
+    { label: "Wellness", emoji: "💆🏾", categories: ["Health", "Wellness"] },
     { label: "Art & Culture", emoji: "🎨", categories: ["Arts", "Culture", "Gallery"] },
     { label: "Late Night", emoji: "🌙", categories: ["Entertainment", "Nightlife", "Bar"] },
     { label: "Shopping", emoji: "🛍️", categories: ["Retail", "Shop"] },
     { label: "Date Night", emoji: "💑", categories: ["Restaurant", "Food", "Entertainment"] },
-    { label: "Family", emoji: "👨‍👩‍👧", categories: ["Food", "Entertainment", "Health"] },
+    { label: "Family", emoji: "👨🏾‍👩🏾‍👧🏾", categories: ["Food", "Entertainment", "Health"] },
   ];
 
   const filtered = businesses.filter((b) => {
@@ -126,7 +126,7 @@ export default function DiscoverScreen() {
               style={styles.logoImg}
               contentFit="contain"
             />
-            <Text style={styles.greeting}>Good morning 👋</Text>
+            <Text style={styles.greeting}>Good morning 👋🏾</Text>
           </View>
           <TouchableOpacity style={styles.notifBtn} activeOpacity={0.8} onPress={() => router.push("/messages")}>
             <Feather name="bell" size={20} color="#FFFFFF" />
