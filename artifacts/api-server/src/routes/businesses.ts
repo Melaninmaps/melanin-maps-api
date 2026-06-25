@@ -124,10 +124,12 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
 
   const VALID_CATEGORIES = [
     "Food & Beverage", "Shopping & Retail", "Beauty & Personal Care",
-    "Health & Wellness", "Professional Services", "Home Services",
-    "Automotive", "Real Estate & Housing", "Technology", "Creative Services",
+    "Health & Wellness", "Home & Real Estate", "Home Improvement",
+    "Automotive", "Professional Services", "Technology", "Creative Services",
     "Events & Entertainment", "Travel & Hospitality", "Family & Education",
-    "Pet Services", "Community & Nonprofit",
+    "Pet Services", "Community & Nonprofits", "Government & Public Resources",
+    "Black Professionals", "Online & Mobile Businesses",
+    "Home Services", "Real Estate & Housing", "Community & Nonprofit",
   ];
 
   const { name, category, subcategory, description, phone, website, hours } = req.body as {

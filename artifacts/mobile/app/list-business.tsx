@@ -765,34 +765,40 @@ export default function ListBusinessScreen() {
 
       {!isSuccess && (
         <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: bottomPad + 16 }]}>
-          {step > 1 && (
-            <TouchableOpacity
-              style={[styles.backFooterBtn, { backgroundColor: colors.secondary }]}
-              onPress={goBack}
-              activeOpacity={0.8}
-            >
-              <Feather name="arrow-left" size={18} color={colors.foreground} />
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={[
-              styles.nextBtn,
-              { backgroundColor: canProceed() ? colors.primary : colors.muted },
-              step === 1 && { marginLeft: 0 },
-            ]}
-            onPress={isLastForm ? () => { void handleSubmit(); } : goNext}
-            activeOpacity={0.85}
-            disabled={!canProceed()}
-          >
-            <Text style={[styles.nextBtnText, { color: canProceed() ? colors.primaryForeground : colors.mutedForeground }]}>
-              {isLastForm ? "Submit Listing" : "Continue"}
+          {step === 1 && !canProceed() && form.name.trim().length > 0 && (
+            <Text style={[styles.footerHint, { color: colors.mutedForeground }]}>
+              Select a live category (✓) to continue
             </Text>
-            <Feather
-              name={isLastForm ? "send" : "arrow-right"}
-              size={16}
-              color={canProceed() ? colors.primaryForeground : colors.mutedForeground}
-            />
-          </TouchableOpacity>
+          )}
+          <View style={styles.footerBtns}>
+            {step > 1 && (
+              <TouchableOpacity
+                style={[styles.backFooterBtn, { backgroundColor: colors.secondary }]}
+                onPress={goBack}
+                activeOpacity={0.8}
+              >
+                <Feather name="arrow-left" size={18} color={colors.foreground} />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={[
+                styles.nextBtn,
+                { backgroundColor: canProceed() ? colors.primary : colors.muted },
+              ]}
+              onPress={isLastForm ? () => { void handleSubmit(); } : goNext}
+              activeOpacity={0.85}
+              disabled={!canProceed()}
+            >
+              <Text style={[styles.nextBtnText, { color: canProceed() ? colors.primaryForeground : colors.mutedForeground }]}>
+                {isLastForm ? "Submit Listing" : "Continue"}
+              </Text>
+              <Feather
+                name={isLastForm ? "send" : "arrow-right"}
+                size={16}
+                color={canProceed() ? colors.primaryForeground : colors.mutedForeground}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>
@@ -836,10 +842,19 @@ const styles = StyleSheet.create({
   reviewNoticeTitle: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginBottom: 4 },
   reviewNoticeText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18 },
   footer: {
-    flexDirection: "row",
+    flexDirection: "column",
     paddingHorizontal: 20,
     paddingTop: 12,
     borderTopWidth: 1,
+    gap: 8,
+  },
+  footerHint: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    textAlign: "center",
+  },
+  footerBtns: {
+    flexDirection: "row",
     gap: 12,
   },
   backFooterBtn: {

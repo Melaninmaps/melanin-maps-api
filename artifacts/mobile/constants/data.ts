@@ -434,16 +434,19 @@ export const CATEGORIES = [
   "Beauty & Personal Care",
   "Health & Wellness",
   "Professional Services",
-  "Home Services",
-  "Automotive",
-  "Real Estate & Housing",
   "Technology",
   "Creative Services",
   "Events & Entertainment",
+  "Home & Real Estate",
+  "Home Improvement",
+  "Automotive",
   "Travel & Hospitality",
   "Family & Education",
   "Pet Services",
-  "Community & Nonprofit",
+  "Community & Nonprofits",
+  "Government & Public Resources",
+  "Black Professionals",
+  "Online & Mobile Businesses",
 ];
 
 export const EVENT_CATEGORIES = ["All", "Cultural", "Business", "Beauty", "Finance", "Music", "Food", "Wellness"];

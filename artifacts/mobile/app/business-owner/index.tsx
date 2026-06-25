@@ -65,6 +65,7 @@ export default function BusinessOwnerHome() {
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ views: 0, saves: 0, reviews: 0 });
+  const [analyticsLocked, setAnalyticsLocked] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -81,6 +82,8 @@ export default function BusinessOwnerHome() {
             const aData = await aRes.json() as { analytics?: { metrics?: { views30d?: number; saves?: number; reviews?: number } } };
             const m = aData.analytics?.metrics;
             if (m) setStats({ views: m.views30d ?? 0, saves: m.saves ?? 0, reviews: m.reviews ?? 0 });
+          } else if (aRes.status === 403) {
+            setAnalyticsLocked(true);
           }
         }
       }
@@ -234,19 +237,30 @@ export default function BusinessOwnerHome() {
               </View>
 
               {/* Quick stats */}
-              <View style={styles.statsRow}>
-                {[
-                  { label: "Views", value: String(stats.views), icon: "eye" as const },
-                  { label: "Saves", value: String(stats.saves), icon: "bookmark" as const },
-                  { label: "Reviews", value: String(stats.reviews), icon: "star" as const },
-                ].map((s) => (
-                  <View key={s.label} style={styles.statCell}>
-                    <Feather name={s.icon} size={13} color="rgba(255,255,255,0.6)" />
-                    <Text style={styles.statNum}>{s.value}</Text>
-                    <Text style={styles.statLabel}>{s.label}</Text>
-                  </View>
-                ))}
-              </View>
+              {analyticsLocked ? (
+                <TouchableOpacity
+                  style={styles.lockedStats}
+                  activeOpacity={0.8}
+                  onPress={() => router.push("/upgrade" as never)}
+                >
+                  <Feather name="lock" size={13} color="rgba(201,146,43,0.8)" />
+                  <Text style={styles.lockedStatsTxt}>Upgrade to Navigator to see views, saves & reviews</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.statsRow}>
+                  {[
+                    { label: "Views", value: String(stats.views), icon: "eye" as const },
+                    { label: "Saves", value: String(stats.saves), icon: "bookmark" as const },
+                    { label: "Reviews", value: String(stats.reviews), icon: "star" as const },
+                  ].map((s) => (
+                    <View key={s.label} style={styles.statCell}>
+                      <Feather name={s.icon} size={13} color="rgba(255,255,255,0.6)" />
+                      <Text style={styles.statNum}>{s.value}</Text>
+                      <Text style={styles.statLabel}>{s.label}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
 
             {/* Sections */}
@@ -320,6 +334,8 @@ const styles = StyleSheet.create({
   statCell: { flex: 1, alignItems: "center", gap: 3 },
   statNum: { fontSize: 20, fontFamily: "Inter_700Bold", color: "#FFF" },
   statLabel: { fontSize: 11, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.55)" },
+  lockedStats: { flexDirection: "row", alignItems: "center", gap: 6, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.1)", paddingTop: 12, paddingHorizontal: 4 },
+  lockedStatsTxt: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(201,146,43,0.9)" },
   sectionsCard: { borderRadius: 16, borderWidth: 1, overflow: "hidden" },
   sectionRow: { flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 14 },
   sectionIcon: { width: 40, height: 40, borderRadius: 11, alignItems: "center", justifyContent: "center", flexShrink: 0 },

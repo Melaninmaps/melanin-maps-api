@@ -3,6 +3,18 @@ import { db } from "@workspace/db";
 import { categoryWaitlist } from "@workspace/db/schema";
 import { desc } from "drizzle-orm";
 
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
+  .split(",")
+  .map((e) => e.trim())
+  .filter(Boolean);
+
+function isAdmin(req: Request): boolean {
+  const user = (req as any).user;
+  if (!user?.email) return false;
+  if (ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(user.email)) return true;
+  return user.role === "admin";
+}
+
 const router = Router();
 
 router.post("/category-waitlist", async (req: Request, res: Response) => {
@@ -42,9 +54,8 @@ router.post("/category-waitlist", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/admin/category-waitlist", async (req: any, res: Response) => {
-  const isAdmin = req.user?.role === "admin" || req.user?.isAdmin;
-  if (!isAdmin) { res.status(403).json({ error: "Forbidden" }); return; }
+router.get("/admin/category-waitlist", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
 
   try {
     const entries = await db
