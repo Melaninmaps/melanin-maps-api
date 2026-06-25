@@ -54,3 +54,4 @@ export * from "./business-nominations";
 export * from "./business-identity";
 export * from "./business-broadcasts";
 export * from "./community-health";
+export * from "./journal-insights";
