@@ -37,7 +37,7 @@ function computeScores(
   return { safety, community, walk };
 }
 
-router.post("/surveys", surveyLimiter, requireTrust, requireMembership("navigator"), async (req: Request, res: Response) => {
+router.post("/surveys", surveyLimiter, requireTrust, async (req: Request, res: Response) => {
   const {
     city,
     neighborhood,

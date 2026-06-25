@@ -2,6 +2,7 @@ import React from "react";
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Linking } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { useRouter } from "expo-router";
 
 type Props = {
   visible: boolean;
@@ -10,20 +11,22 @@ type Props = {
 };
 
 const PERKS = [
-  "Unlimited saved favorites & personalized recommendations",
-  "Enhanced safety insights & neighborhood ratings",
-  "Advanced filters by safety score, rating & category",
-  "Community-sourced safety reports for your destinations",
-  "KinfolkAI Assistant — personalized travel guidance (Trailblazer)",
-  "Premium travel itineraries tailored to your style (Trailblazer)",
+  "AI-powered travel assistance — KinfolkAI personal guide",
+  "Advanced trip planning & unlimited itineraries",
+  "Personalized business recommendations",
+  "Premium relocation insights for any city",
+  "Advanced safety alerts & neighborhood intelligence",
+  "Exclusive member events, groups & Premium discounts",
+  "Priority customer support + Premium member badge",
 ];
 
 export function UpgradeModal({ visible, onClose, feature }: Props) {
   const colors = useColors();
+  const router = useRouter();
 
   function openMembership() {
     onClose();
-    Linking.openURL("https://mappingwithmelanin.com/membership");
+    router.push("/membership");
   }
 
   return (
@@ -31,23 +34,20 @@ export function UpgradeModal({ visible, onClose, feature }: Props) {
       <View style={styles.overlay}>
         <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
         <View style={[styles.sheet, { backgroundColor: colors.card }]}>
-          {/* Handle */}
           <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-          {/* Header */}
           <View style={styles.header}>
             <View style={styles.iconBadge}>
-              <Feather name="star" size={22} color="#CA922B" />
+              <Text style={{ fontSize: 26 }}>⭐</Text>
             </View>
-            <Text style={[styles.title, { color: colors.text }]}>
-              {feature ? `${feature} is Premium` : "Upgrade to Premium"}
+            <Text style={[styles.title, { color: colors.foreground }]}>
+              {feature ? `${feature} is Premium` : "Upgrade to Community Premium"}
             </Text>
             <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-              Start your free trial — no credit card required until your trial ends.
+              Start your 90-day free trial — no credit card required until your trial ends.
             </Text>
           </View>
 
-          {/* Perks */}
           <View style={styles.perks}>
             {PERKS.map((perk, i) => (
               <View key={i} style={styles.perkRow}>
@@ -57,19 +57,18 @@ export function UpgradeModal({ visible, onClose, feature }: Props) {
             ))}
           </View>
 
-          {/* Trial badge */}
-          <View style={[styles.trialBadge, { backgroundColor: "#CA922B18" }]}>
-            <Feather name="clock" size={13} color="#CA922B" />
-            <Text style={styles.trialText}>14-day free trial for individual members</Text>
+          <View style={[styles.trialBadge, { backgroundColor: "#2D7A4F18" }]}>
+            <Text style={{ fontSize: 14 }}>🎁</Text>
+            <Text style={[styles.trialText, { color: "#2D7A4F" }]}>
+              Launch Offer — 90-day free trial for new Premium members
+            </Text>
           </View>
 
-          {/* CTA */}
           <TouchableOpacity style={styles.cta} onPress={openMembership} activeOpacity={0.85}>
             <Text style={styles.ctaText}>View Plans &amp; Start Free Trial</Text>
             <Feather name="arrow-right" size={16} color="#fff" />
           </TouchableOpacity>
 
-          {/* Dismiss */}
           <TouchableOpacity style={styles.dismiss} onPress={onClose}>
             <Text style={[styles.dismissText, { color: colors.mutedForeground }]}>Not right now</Text>
           </TouchableOpacity>
@@ -100,7 +99,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 20,
   },
   iconBadge: {
     width: 56,
@@ -145,7 +144,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   trialText: {
-    color: "#CA922B",
     fontSize: 13,
     fontWeight: "600",
     flex: 1,

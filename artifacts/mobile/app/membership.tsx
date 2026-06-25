@@ -24,6 +24,7 @@ interface Plan {
   id: string;
   emoji: string;
   name: string;
+  stripeKey?: string;
   tagline: string;
   badge: string | null;
   monthlyPrice: number;
@@ -38,63 +39,57 @@ interface Plan {
 const CONSUMER_PLANS: Plan[] = [
   {
     id: "free",
-    emoji: "🧭",
-    name: "Explorer",
-    tagline: "For users discovering the platform",
+    emoji: "👥",
+    name: "Community Member",
+    tagline: "Perfect for discovering businesses and connecting with the community",
     badge: null,
     monthlyPrice: 0,
     annualTotal: 0,
     color: "#8B7355",
     bg: null,
     features: [
-      "Business search & maps",
-      "Reviews & community feed",
-      "Event discovery",
-      "Basic recommendations",
+      "Search and discover businesses",
+      "Interactive map",
+      "Business reviews and ratings",
+      "Leave reviews",
+      "Neighborhood safety surveys",
+      "Employer reviews",
+      "Community feed",
+      "Join groups",
+      "RSVP to public events",
+      "Save favorite businesses",
+      "Basic itinerary & trip planning",
+      "Report safety concerns",
+      "Basic messaging",
+      "Melanin Points rewards",
     ],
     cta: "Current Plan",
     ctaActive: false,
   },
   {
     id: "navigator",
-    emoji: "🌍",
-    name: "Navigator",
-    tagline: "For active users who want deeper insights",
-    badge: "Most Popular",
+    emoji: "⭐",
+    name: "Community Premium",
+    stripeKey: "Navigator",
+    tagline: "AI-powered travel, deeper insights, and exclusive perks",
+    badge: "Recommended",
     monthlyPrice: 7.99,
     annualTotal: 79,
     color: "#3B1F0E",
     bg: "#3B1F0E",
     features: [
-      "Everything in Explorer",
-      "Unlimited favorites",
-      "Advanced filters",
-      "Enhanced safety insights",
-      "Neighborhood ratings",
+      "Everything in Community Member",
+      "AI-powered travel assistance (KinfolkAI)",
+      "Advanced trip planning",
+      "Unlimited itineraries",
       "Personalized recommendations",
-      "Enhanced event discovery",
-    ],
-    cta: "Start Free Trial",
-    ctaActive: true,
-  },
-  {
-    id: "trailblazer",
-    emoji: "👑",
-    name: "Trailblazer",
-    tagline: "For power users and frequent travelers",
-    badge: "All Access",
-    monthlyPrice: 14.99,
-    annualTotal: 149,
-    color: "#1A0A00",
-    bg: "#1A0A00",
-    features: [
-      "Everything in Navigator",
-      "Cultural Compass™ AI Assistant",
-      "Advanced relocation insights",
-      "Premium travel itineraries",
-      "Priority support",
+      "Premium relocation insights",
+      "Advanced safety alerts",
+      "Priority customer support",
+      "Premium member badge",
       "Early access to new features",
-      "Exclusive partner discounts",
+      "Exclusive member events and groups",
+      "Premium discounts with participating businesses",
     ],
     cta: "Start Free Trial",
     ctaActive: true,
@@ -104,20 +99,27 @@ const CONSUMER_PLANS: Plan[] = [
 const BUSINESS_PLANS: Plan[] = [
   {
     id: "biz_free",
-    emoji: "📍",
-    name: "Community Listing",
-    tagline: "For businesses joining the community",
-    badge: null,
+    emoji: "🏢",
+    name: "Community Business",
+    tagline: "For businesses joining the Mapping With Melanin community",
+    badge: "6% Marketplace Fee",
     monthlyPrice: 0,
     annualTotal: 0,
     color: "#8B7355",
     bg: null,
     features: [
-      "Business profile & map placement",
-      "Appear in search results",
+      "Business profile",
+      "Business verification eligibility",
+      "Search listing",
+      "Business map placement",
+      "Business hours & contact information",
+      "Photos",
       "Receive & respond to reviews",
-      "Basic business information",
-      "Community visibility",
+      "Basic analytics",
+      "Basic messaging",
+      "Event creation",
+      "Sell products and services",
+      "Marketplace access",
     ],
     cta: "List Your Business",
     ctaActive: true,
@@ -126,14 +128,15 @@ const BUSINESS_PLANS: Plan[] = [
     id: "growth_partner",
     emoji: "🚀",
     name: "Growth Partner",
-    tagline: "For growing businesses",
+    stripeKey: "Growth Partner",
+    tagline: "For growing businesses ready to scale",
     badge: "Popular",
     monthlyPrice: 24.99,
     annualTotal: 249,
     color: "#3B1F0E",
     bg: "#3B1F0E",
     features: [
-      "Everything in Community Listing",
+      "Everything in Community Business",
       "Verification eligibility",
       "Enhanced profile & more photos",
       "Business analytics",
@@ -148,7 +151,8 @@ const BUSINESS_PLANS: Plan[] = [
     id: "community_leader",
     emoji: "⭐",
     name: "Community Leader",
-    tagline: "For established businesses",
+    stripeKey: "Community Leader",
+    tagline: "For established businesses with deeper community roots",
     badge: "Best Value",
     monthlyPrice: 69.99,
     annualTotal: 699,
@@ -170,6 +174,7 @@ const BUSINESS_PLANS: Plan[] = [
     id: "legacy_partner",
     emoji: "🏆",
     name: "Legacy Partner",
+    stripeKey: "Legacy Partner",
     tagline: "For organizations, franchises & multi-location businesses",
     badge: "Full Suite",
     monthlyPrice: 199.99,
@@ -212,7 +217,7 @@ export default function MembershipScreen() {
       return;
     }
 
-    const result = await initiateCheckout(plan.name, billing);
+    const result = await initiateCheckout(plan.stripeKey ?? plan.name, billing);
 
     if (result === "no_auth") {
       Alert.alert(
@@ -248,7 +253,7 @@ export default function MembershipScreen() {
   };
 
   const isSubscribed = (plan: Plan) =>
-    subscription !== null && subscription.productName === plan.name;
+    subscription !== null && subscription.productName === (plan.stripeKey ?? plan.name);
 
   const getCtaLabel = (plan: Plan) => {
     if (plan.id === "free") return plan.cta;
@@ -337,13 +342,23 @@ export default function MembershipScreen() {
         </TouchableOpacity>
       )}
 
+      {/* Launch offer banner — consumer only */}
+      {audience === "consumer" && (
+        <View style={[styles.launchBanner, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F44" }]}>
+          <Text style={{ fontSize: 16 }}>🎁</Text>
+          <Text style={[styles.launchTxt, { color: "#2D7A4F" }]}>
+            Launch Offer — 90-day free Premium trial, no credit card required
+          </Text>
+        </View>
+      )}
+
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 24 }]}
         showsVerticalScrollIndicator={false}
       >
         {plans.map((plan) => {
           const isHighlight = plan.bg !== null;
-          const loading = checkoutLoading && checkoutPlanId === plan.name;
+          const loading = checkoutLoading && checkoutPlanId === (plan.stripeKey ?? plan.name);
           const subscribed = isSubscribed(plan);
           return (
             <View
@@ -358,7 +373,7 @@ export default function MembershipScreen() {
               ]}
             >
               {plan.badge && (
-                <View style={[styles.planBadge, { backgroundColor: "rgba(255,255,255,0.22)" }]}>
+                <View style={[styles.planBadge, { backgroundColor: plan.id === "biz_free" ? colors.secondary : "rgba(255,255,255,0.22)" }]}>
                   <Text style={[styles.planBadgeTxt, { color: isHighlight ? "#FFF" : plan.color }]}>
                     {plan.badge}
                   </Text>
@@ -471,10 +486,10 @@ export default function MembershipScreen() {
           <Feather name="shield" size={20} color={colors.success} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.guaranteeTitle, { color: colors.foreground }]}>
-              14-day free trial + money-back guarantee
+              90-day free trial + money-back guarantee
             </Text>
             <Text style={[styles.guaranteeSub, { color: colors.mutedForeground }]}>
-              Cancel anytime. No questions asked.
+              Cancel anytime. No questions asked. No credit card required to start.
             </Text>
           </View>
         </View>
@@ -504,7 +519,7 @@ const styles = StyleSheet.create({
   audienceTxt: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   billingToggle: {
     flexDirection: "row", marginHorizontal: 20, borderRadius: 12,
-    padding: 4, marginBottom: 20,
+    padding: 4, marginBottom: 12,
   },
   billingOption: {
     flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
@@ -515,10 +530,16 @@ const styles = StyleSheet.create({
   savingsTxt: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   manageBar: {
     flexDirection: "row", alignItems: "center", gap: 10,
-    marginHorizontal: 20, marginBottom: 14, padding: 12, borderRadius: 12,
+    marginHorizontal: 20, marginBottom: 10, padding: 12, borderRadius: 12,
   },
   manageTxt: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular" },
   manageLink: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  launchBanner: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    marginHorizontal: 20, marginBottom: 14, padding: 12, borderRadius: 12,
+    borderWidth: 1,
+  },
+  launchTxt: { flex: 1, fontSize: 13, fontFamily: "Inter_600SemiBold", lineHeight: 18 },
   scroll: { paddingHorizontal: 20, gap: 16 },
   planCard: { borderRadius: 20, padding: 22, gap: 18 },
   planBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },

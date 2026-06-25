@@ -20,9 +20,9 @@ router.get("/stripe/subscription", async (req: any, res): Promise<void> => {
 });
 
 const TRIAL_DAYS: Record<string, number> = {
-  individual: 14,
-  navigator: 14,
-  trailblazer: 14,
+  individual: 90,
+  navigator: 90,
+  trailblazer: 90,
   business: 30,
   founding: 90,
   beta: 365,
