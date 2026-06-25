@@ -39,6 +39,7 @@ export const businessesTable = pgTable("businesses", {
   promotedUntil: timestamp("promoted_until", { withTimezone: true }),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   submittedById: varchar("submitted_by_id"),
+  stripeConnectAccountId: varchar("stripe_connect_account_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

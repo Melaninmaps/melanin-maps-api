@@ -1,4 +1,4 @@
-import { db, pushTokensTable, savedPlacesTable, businessesTable, notificationsTable, businessProfileViewsTable } from "@workspace/db";
+import { db, pushTokensTable, savedPlacesTable, businessesTable, notificationsTable, businessProfileViewsTable, reviewsTable } from "@workspace/db";
 import { eq, inArray, ilike, gte, and } from "drizzle-orm";
 import { logger } from "./logger";
 
@@ -72,6 +72,66 @@ export async function sendPushToUsersWithSavedBusiness(
     }
   } catch (err) {
     logger.warn({ err }, "[push] Failed to send push notifications to savers");
+  }
+}
+
+export async function sendThreeStarAlert(
+  businessId: string,
+  businessName: string,
+  direction: "rose" | "dropped",
+  excludeUserId?: string,
+): Promise<void> {
+  try {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const [savedRows, recentReviewers] = await Promise.all([
+      db.select({ userId: savedPlacesTable.userId }).from(savedPlacesTable).where(eq(savedPlacesTable.businessId, businessId)),
+      db
+        .select({ userId: reviewsTable.userId })
+        .from(reviewsTable)
+        .where(and(eq(reviewsTable.businessId, businessId), gte(reviewsTable.createdAt, sevenDaysAgo))),
+    ]);
+
+    const userIdSet = new Set<string>();
+    for (const r of savedRows) if (r.userId) userIdSet.add(r.userId);
+    for (const r of recentReviewers) if (r.userId) userIdSet.add(r.userId);
+    if (excludeUserId) userIdSet.delete(excludeUserId);
+    const userIds = [...userIdSet];
+
+    if (userIds.length === 0) return;
+
+    const isDropped = direction === "dropped";
+    const message: PushMessage = {
+      title: isDropped
+        ? `⚠️ ${businessName} has dropped to 3 stars`
+        : `📈 ${businessName} is back up to 3 stars`,
+      body: isDropped
+        ? "Your community may need your support — consider leaving a review."
+        : "Things are looking up! Check it out and show some love.",
+      data: { businessId, type: "three_star_alert" },
+    };
+
+    const tokens = await db
+      .select({ token: pushTokensTable.token })
+      .from(pushTokensTable)
+      .where(inArray(pushTokensTable.userId, userIds));
+
+    for (const row of tokens) {
+      if (row.token) await sendToToken(row.token, message);
+    }
+
+    await db.insert(notificationsTable).values(
+      userIds.map((userId) => ({
+        userId,
+        type: "system" as const,
+        title: message.title,
+        body: message.body,
+      })),
+    );
+
+    logger.info({ businessId, direction, notified: userIds.length }, "[push] 3-star alert sent");
+  } catch (err) {
+    logger.warn({ err }, "[push] Failed to send 3-star alert");
   }
 }
 

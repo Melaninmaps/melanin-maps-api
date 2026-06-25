@@ -56,6 +56,7 @@ import promoteRouter from "./promote";
 import postNudgeRouter from "./post-nudge";
 import userSettingsRouter from "./user-settings";
 import spaceReportsRouter from "./space-reports";
+import connectRouter from "./connect";
 
 const router: IRouter = Router();
 
@@ -115,6 +116,7 @@ router.use(promoteRouter);
 router.use(postNudgeRouter);
 router.use(userSettingsRouter);
 router.use(spaceReportsRouter);
+router.use(connectRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

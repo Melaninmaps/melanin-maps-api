@@ -35,6 +35,7 @@ import { useDeals } from "@/hooks/useDeals";
 import { useStories } from "@/hooks/useStories";
 import { FlashDealsSection } from "@/components/FlashDealsSection";
 import { BusinessStoriesSection } from "@/components/BusinessStoriesSection";
+import { BusinessListingsSection } from "@/components/BusinessListingsSection";
 import { UpgradeModal } from "@/components/UpgradeModal";
 
 const CATEGORY_IMAGES: Record<string, any> = {
@@ -346,6 +347,7 @@ export default function BusinessDetailScreen() {
 
           <FlashDealsSection deals={deals} />
           <BusinessStoriesSection stories={stories} />
+          <BusinessListingsSection businessId={id ?? ""} businessName={business.name} />
 
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Location</Text>
           <View style={[styles.mapWrap, { borderColor: colors.border }]}>

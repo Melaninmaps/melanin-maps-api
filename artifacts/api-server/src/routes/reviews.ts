@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable, usersTable } from "@workspace/db";
 import { eq, desc, and, sql } from "drizzle-orm";
-import { sendPushToUser, sendPushToUsersWithSavedBusiness } from "../lib/pushNotifications";
+import { sendPushToUser, sendPushToUsersWithSavedBusiness, sendThreeStarAlert } from "../lib/pushNotifications";
 import { reviewLimiter } from "../middleware/rateLimiter";
 import { requireMembership } from "../middleware/requireMembership";
 import { requireTrust } from "../middleware/requireTrust";
@@ -268,10 +268,35 @@ router.post("/reviews", reviewLimiter, requireTrust, requireMembership("navigato
     }
 
     const [biz] = await db
-      .select({ submittedById: businessesTable.submittedById, name: businessesTable.name })
+      .select({ submittedById: businessesTable.submittedById, name: businessesTable.name, rating: businessesTable.rating })
       .from(businessesTable)
       .where(eq(businessesTable.id, businessId as string))
       .limit(1);
+
+    const [aggRow] = await db
+      .select({
+        avg: sql<string>`AVG(${reviewsTable.rating})`,
+        count: sql<string>`COUNT(*)`,
+      })
+      .from(reviewsTable)
+      .where(eq(reviewsTable.businessId, businessId as string));
+
+    if (aggRow) {
+      const newAvg = parseFloat(aggRow.avg ?? "0");
+      const newCount = parseInt(aggRow.count ?? "0", 10);
+      await db
+        .update(businessesTable)
+        .set({ rating: String(newAvg.toFixed(1)), reviewCount: newCount })
+        .where(eq(businessesTable.id, businessId as string));
+
+      const oldAvg = parseFloat(String(biz?.rating ?? "0"));
+      const wasThreeStar = oldAvg >= 2.5 && oldAvg < 3.5;
+      const isNowThreeStar = newAvg >= 2.5 && newAvg < 3.5;
+      if (!wasThreeStar && isNowThreeStar && biz?.name) {
+        const direction = oldAvg >= 3.5 ? "dropped" : "rose";
+        sendThreeStarAlert(businessId as string, biz.name, direction, req.user.id).catch(() => {});
+      }
+    }
 
     if (biz?.submittedById && biz.submittedById !== req.user.id) {
       sendPushToUser(biz.submittedById, { title: "New Review ⭐", body: `Someone left a ${ratingNum}-star review for ${biz.name ?? "your business"}.`, data: { screen: "business", id: businessId } }).catch(() => {});

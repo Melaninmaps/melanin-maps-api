@@ -5,7 +5,9 @@ import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -16,6 +18,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useOwnerListings, type Listing } from "@/hooks/useListings";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -159,7 +162,7 @@ export default function BusinessDashboardScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "insights">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "insights" | "products">("overview");
   const { business, reviews, loading } = useMyBusiness();
   const [feedbackOptIn, setFeedbackOptIn] = useState<boolean>(false);
   const [togglingFeedback, setTogglingFeedback] = useState(false);
@@ -179,6 +182,16 @@ export default function BusinessDashboardScreen() {
   const [actionPlanLoading, setActionPlanLoading] = useState(false);
   const [expansionData, setExpansionData] = useState<ExpansionData | null>(null);
   const [expansionLoading, setExpansionLoading] = useState(false);
+
+  const { listings, connectStatus, loading: listingsLoading, startOnboarding, createListing, toggleActive, deleteListing } =
+    useOwnerListings(business?.id ?? "");
+  const [showNewListing, setShowNewListing] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newPrice, setNewPrice] = useState("");
+  const [newCategory, setNewCategory] = useState("");
+  const [savingListing, setSavingListing] = useState(false);
+  const [onboarding, setOnboarding] = useState(false);
 
   React.useEffect(() => {
     if (business?.feedbackOptIn !== undefined) setFeedbackOptIn(business.feedbackOptIn);
@@ -392,7 +405,7 @@ export default function BusinessDashboardScreen() {
       </View>
 
       <View style={[styles.tabs, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        {(["overview", "reviews", "insights"] as const).map((t) => (
+        {(["overview", "reviews", "insights", "products"] as const).map((t) => (
           <TouchableOpacity
             key={t}
             style={[styles.tab, activeTab === t && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
@@ -853,6 +866,161 @@ export default function BusinessDashboardScreen() {
                 </View>
               )}
             </View>
+          </>
+        )}
+
+        {activeTab === "products" && (
+          <>
+            {!connectStatus?.onboarded ? (
+              <View style={[styles.paywallCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={[styles.paywallIcon, { backgroundColor: colors.primary + "18" }]}>
+                  <Feather name="shopping-bag" size={32} color={colors.primary} />
+                </View>
+                <Text style={[styles.paywallTitle, { color: colors.foreground }]}>Start Selling In-App</Text>
+                <Text style={[styles.paywallBody, { color: colors.mutedForeground }]}>
+                  Connect your Stripe account to list products and services. Customers can buy directly from your business profile, and funds are deposited to your bank.
+                </Text>
+                <TouchableOpacity
+                  style={[styles.paywallBtn, { backgroundColor: colors.primary }, onboarding && { opacity: 0.6 }]}
+                  disabled={onboarding}
+                  activeOpacity={0.85}
+                  onPress={async () => {
+                    setOnboarding(true);
+                    try {
+                      const url = await startOnboarding();
+                      if (url) await Linking.openURL(url);
+                      else Alert.alert("Error", "Could not start onboarding. Please try again.");
+                    } finally { setOnboarding(false); }
+                  }}
+                >
+                  {onboarding ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="arrow-right" size={15} color="#FFF" />}
+                  <Text style={styles.paywallBtnTxt}>{onboarding ? "Opening…" : "Connect with Stripe"}</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                <View style={styles.sectionHeader}>
+                  <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Your Listings</Text>
+                  <TouchableOpacity
+                    style={[styles.addBtn, { backgroundColor: colors.primary }]}
+                    onPress={() => setShowNewListing((v) => !v)}
+                    activeOpacity={0.8}
+                  >
+                    <Feather name={showNewListing ? "x" : "plus"} size={14} color="#FFF" />
+                    <Text style={styles.addBtnTxt}>{showNewListing ? "Cancel" : "Add Listing"}</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {showNewListing && (
+                  <View style={[styles.newListingForm, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Text style={[styles.formLabel, { color: colors.foreground }]}>Product / Service Name</Text>
+                    <TextInput
+                      style={[styles.formInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+                      value={newName}
+                      onChangeText={setNewName}
+                      placeholder="e.g. Braids Appointment"
+                      placeholderTextColor={colors.mutedForeground}
+                    />
+                    <Text style={[styles.formLabel, { color: colors.foreground }]}>Description (optional)</Text>
+                    <TextInput
+                      style={[styles.formInput, styles.formTextArea, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+                      value={newDesc}
+                      onChangeText={setNewDesc}
+                      placeholder="Brief description…"
+                      placeholderTextColor={colors.mutedForeground}
+                      multiline
+                      numberOfLines={3}
+                    />
+                    <Text style={[styles.formLabel, { color: colors.foreground }]}>Category (optional)</Text>
+                    <TextInput
+                      style={[styles.formInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+                      value={newCategory}
+                      onChangeText={setNewCategory}
+                      placeholder="e.g. Hair, Food, Apparel"
+                      placeholderTextColor={colors.mutedForeground}
+                    />
+                    <Text style={[styles.formLabel, { color: colors.foreground }]}>Price (USD)</Text>
+                    <TextInput
+                      style={[styles.formInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+                      value={newPrice}
+                      onChangeText={setNewPrice}
+                      placeholder="e.g. 45.00"
+                      placeholderTextColor={colors.mutedForeground}
+                      keyboardType="decimal-pad"
+                    />
+                    <TouchableOpacity
+                      style={[styles.saveBtn, { backgroundColor: colors.primary }, savingListing && { opacity: 0.6 }]}
+                      disabled={savingListing || !newName.trim() || !newPrice.trim()}
+                      onPress={async () => {
+                        const cents = Math.round(parseFloat(newPrice) * 100);
+                        if (isNaN(cents) || cents <= 0) { Alert.alert("Invalid price"); return; }
+                        setSavingListing(true);
+                        const result = await createListing({
+                          name: newName.trim(),
+                          description: newDesc.trim() || undefined,
+                          priceInCents: cents,
+                          category: newCategory.trim() || undefined,
+                        });
+                        setSavingListing(false);
+                        if (result) {
+                          setShowNewListing(false);
+                          setNewName(""); setNewDesc(""); setNewPrice(""); setNewCategory("");
+                        } else {
+                          Alert.alert("Error", "Failed to create listing. Please try again.");
+                        }
+                      }}
+                      activeOpacity={0.85}
+                    >
+                      {savingListing ? <ActivityIndicator size="small" color="#fff" /> : null}
+                      <Text style={styles.saveBtnTxt}>{savingListing ? "Saving…" : "Save Listing"}</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {listingsLoading ? (
+                  <View style={styles.centered}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                  </View>
+                ) : listings.length === 0 ? (
+                  <View style={[styles.noReviews, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Feather name="shopping-bag" size={24} color={colors.muted} />
+                    <Text style={[styles.noReviewsTxt, { color: colors.mutedForeground }]}>
+                      No listings yet. Tap "Add Listing" to create your first product or service.
+                    </Text>
+                  </View>
+                ) : listings.map((l: Listing) => (
+                  <View key={l.id} style={[styles.listingRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.listingName, { color: colors.foreground }]}>{l.name}</Text>
+                      {l.category ? <Text style={[styles.listingCat, { color: colors.mutedForeground }]}>{l.category}</Text> : null}
+                      <Text style={[styles.listingPrice, { color: colors.primary }]}>
+                        ${(l.priceInCents / 100).toFixed(2)}
+                      </Text>
+                    </View>
+                    <View style={styles.listingActions}>
+                      <TouchableOpacity
+                        style={[styles.toggleBtn, { backgroundColor: l.active ? "#2D7A4F18" : colors.muted + "30" }]}
+                        onPress={() => void toggleActive(l.id, !l.active)}
+                      >
+                        <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: l.active ? "#2D7A4F" : colors.mutedForeground }}>
+                          {l.active ? "Active" : "Hidden"}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          Alert.alert("Delete listing?", `"${l.name}" will be removed.`, [
+                            { text: "Cancel", style: "cancel" },
+                            { text: "Delete", style: "destructive", onPress: () => void deleteListing(l.id) },
+                          ]);
+                        }}
+                      >
+                        <Feather name="trash-2" size={16} color={colors.mutedForeground} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </>
+            )}
           </>
         )}
 
@@ -1363,4 +1531,18 @@ const styles = StyleSheet.create({
   addrAlertText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1, lineHeight: 17 },
   addrSaveBtn: { borderRadius: 12, paddingVertical: 13, alignItems: "center", marginTop: 8 },
   addrSaveBtnText: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#FFFFFF" },
+  addBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8 },
+  addBtnTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#FFF" },
+  newListingForm: { borderWidth: 1, borderRadius: 16, padding: 16, marginBottom: 16, gap: 4 },
+  formLabel: { fontSize: 12, fontFamily: "Inter_500Medium", marginBottom: 4, marginTop: 8 },
+  formInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 14 },
+  formTextArea: { minHeight: 72, textAlignVertical: "top" },
+  saveBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 12, paddingVertical: 13, marginTop: 8 },
+  saveBtnTxt: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#FFF" },
+  listingRow: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 10, gap: 12 },
+  listingName: { fontSize: 15, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
+  listingCat: { fontSize: 12, fontFamily: "Inter_400Regular", marginBottom: 4 },
+  listingPrice: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  listingActions: { flexDirection: "row", alignItems: "center", gap: 12 },
+  toggleBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
 });

@@ -39,3 +39,4 @@ export * from "./location-shares";
 export * from "./meetup-verifications";
 export * from "./user-settings";
 export * from "./space-reports";
+export * from "./business-listings";
