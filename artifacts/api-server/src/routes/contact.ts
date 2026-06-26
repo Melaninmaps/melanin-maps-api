@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, contactMessagesTable } from "@workspace/db";
-import { sendBusinessSubmissionAlert } from "../lib/email.js";
+import { sendBusinessSubmissionAlert, sendContactAlert } from "../lib/email.js";
 
 const router: IRouter = Router();
 
@@ -47,6 +47,14 @@ router.post("/contact", async (req: Request, res: Response) => {
         facebook,
         tiktok,
         twitter,
+        message: message.trim(),
+      }).catch(() => {});
+    } else {
+      sendContactAlert({
+        formType,
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        subject: subject?.trim() ?? null,
         message: message.trim(),
       }).catch(() => {});
     }

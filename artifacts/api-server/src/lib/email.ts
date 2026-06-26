@@ -1190,6 +1190,66 @@ export async function sendBusinessSubmissionAlert(data: {
   });
 }
 
+export async function sendContactAlert(data: {
+  formType: string;
+  name: string;
+  email: string;
+  subject?: string | null;
+  message: string;
+}) {
+  if (!resend) { log("contact alert"); return; }
+
+  const TYPE_META: Record<string, { emoji: string; label: string; urgency: boolean; color: string }> = {
+    general:     { emoji: "📬", label: "General Question",       urgency: false, color: "#2B1507" },
+    safety:      { emoji: "🚨", label: "Safety Concern",         urgency: true,  color: "#DC2626" },
+    business:    { emoji: "🏪", label: "Business Support",       urgency: false, color: "#CA922B" },
+    bug:         { emoji: "🐛", label: "Bug Report",             urgency: false, color: "#1D4ED8" },
+    partnership: { emoji: "🤝", label: "Partnership Inquiry",    urgency: false, color: "#2D7A4F" },
+    media:       { emoji: "📰", label: "Press / Media",          urgency: false, color: "#7B2D8B" },
+    complaint:   { emoji: "⚠️",  label: "Complaint",              urgency: true,  color: "#DC2626" },
+    other:       { emoji: "📋", label: "Other",                  urgency: false, color: "#3A1F0E" },
+  };
+
+  const meta = TYPE_META[data.formType] ?? TYPE_META.other;
+  const urgentBanner = meta.urgency
+    ? `<div style="background:#DC2626;border-radius:8px;padding:12px 16px;margin-bottom:20px">
+        <p style="color:#fff;font-size:13px;font-weight:700;margin:0;letter-spacing:1px">⚠️ URGENT — respond within 24 hours</p>
+       </div>`
+    : "";
+
+  await resend.emails.send({
+    from: FROM,
+    to: "hello@mappingwithmelanin.com",
+    replyTo: data.email,
+    subject: `${meta.emoji} [${meta.label}] ${data.subject?.trim() || data.name} — Contact Form`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:24px" />
+        <h2 style="font-size:22px;color:${meta.color};font-weight:700;margin:0 0 8px">${meta.emoji} ${meta.label}</h2>
+        <p style="color:#3A1F0E;font-size:14px;margin:0 0 20px;opacity:0.7">New message via the in-app contact form</p>
+        ${urgentBanner}
+        <div style="background:#fff;border-radius:12px;padding:24px;border:1px solid rgba(58,31,14,0.1);margin-bottom:20px">
+          <table style="width:100%;border-collapse:collapse">
+            <tr><td style="padding:7px 0;color:#3A1F0E;font-size:13px;font-weight:700;width:100px">From</td><td style="padding:7px 0;color:#2B1507;font-size:15px;font-weight:700">${data.name}</td></tr>
+            <tr><td style="padding:7px 0;color:#3A1F0E;font-size:13px;font-weight:700">Email</td><td style="padding:7px 0;font-size:14px"><a href="mailto:${data.email}" style="color:#CA922B">${data.email}</a></td></tr>
+            ${data.subject ? `<tr><td style="padding:7px 0;color:#3A1F0E;font-size:13px;font-weight:700">Subject</td><td style="padding:7px 0;color:#3A1F0E;font-size:14px">${data.subject}</td></tr>` : ""}
+            <tr><td style="padding:7px 0;color:#3A1F0E;font-size:13px;font-weight:700">Type</td><td style="padding:7px 0"><span style="display:inline-block;background:${meta.color}18;color:${meta.color};font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px">${meta.label}</span></td></tr>
+          </table>
+        </div>
+        <div style="background:#fff;border-radius:12px;padding:20px;border:1px solid rgba(58,31,14,0.1);margin-bottom:20px">
+          <p style="color:#3A1F0E;font-size:13px;font-weight:700;margin:0 0 10px;text-transform:uppercase;letter-spacing:1px">Message</p>
+          <p style="color:#2B1507;font-size:15px;line-height:1.7;margin:0;white-space:pre-wrap">${data.message.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+        </div>
+        <div style="background:#2B1507;border-radius:12px;padding:16px">
+          <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.8">
+            Reply to this email to respond directly to <strong style="color:#CA922B">${data.email}</strong>.
+          </p>
+        </div>
+      </div>
+    `,
+  });
+}
+
 function detectOutreachMethod(url: string): { platform: string; method: "dm" | "email"; instruction: string } {
   const u = url.toLowerCase();
   if (u.includes("instagram.com")) return { platform: "Instagram", method: "dm", instruction: "Send a DM on Instagram" };
