@@ -115,20 +115,29 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
-          <div id="mobile-nav-menu" role="navigation" aria-label="Mobile navigation" className="xl:hidden bg-[#2B1507] border-t border-white/10 px-4 py-4 flex flex-col gap-4 absolute w-full shadow-lg">
+          <div
+            id="mobile-nav-menu"
+            role="navigation"
+            aria-label="Mobile navigation"
+            className="xl:hidden bg-[#2B1507] border-t border-white/10 px-5 py-5 flex flex-col gap-1 absolute w-full shadow-xl z-40 max-h-[80dvh] overflow-y-auto"
+          >
             {navItems.map((item) => (
               <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)}>
-                <span className={`block text-base font-medium cursor-pointer hover:text-[#CA922B] ${item.featured ? "text-[#F5EBD8] font-semibold" : "text-[#F5EBD8]"}`}>{item.label}</span>
+                <span className={`block py-3 text-[15px] font-medium cursor-pointer hover:text-[#CA922B] border-b border-white/5 transition-colors ${item.featured ? "text-[#CA922B] font-semibold" : "text-[#F5EBD8]"}`}>
+                  {item.label}
+                </span>
               </Link>
             ))}
-            <div className="pt-4 border-t border-white/10 flex flex-col gap-4">
+            <div className="pt-4 mt-2 flex flex-col gap-3">
               {auth?.user ? (
                 <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
-                  <span className="block text-base font-medium text-[#F5EBD8] cursor-pointer">Profile</span>
+                  <span className="block text-[15px] font-medium text-[#F5EBD8] cursor-pointer py-2">Profile</span>
                 </Link>
               ) : (
                 <a href="/#waitlist-form" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white font-semibold">Join the Waitlist</Button>
+                  <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white font-semibold py-3 text-base">
+                    Join the Waitlist
+                  </Button>
                 </a>
               )}
             </div>
@@ -200,8 +209,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* KinfolkAI Widget — hidden on auth/payment-critical pages */}
       {!["/login", "/signup", "/membership"].includes(location) && (
         <Link href="/travel">
-          <div className="fixed bottom-6 right-6 z-50">
-            <div className="bg-[#2B1507] border border-[#CA922B]/30 shadow-2xl rounded-2xl p-4 flex flex-col gap-2 cursor-pointer hover:shadow-[0_10px_40px_rgba(202,146,43,0.15)] transition-all">
+          <div className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-50">
+            {/* Full widget on sm+ screens */}
+            <div className="hidden sm:flex bg-[#2B1507] border border-[#CA922B]/30 shadow-2xl rounded-2xl p-4 flex-col gap-2 cursor-pointer hover:shadow-[0_10px_40px_rgba(202,146,43,0.15)] transition-all">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#CA922B]/20 flex items-center justify-center">
                   <MessageSquare className="w-5 h-5 text-[#CA922B]" />
@@ -211,6 +221,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <div className="text-[#F5EBD8]/70 text-xs">Plan your next trip</div>
                 </div>
               </div>
+            </div>
+            {/* Compact icon-only button on mobile */}
+            <div className="sm:hidden w-12 h-12 rounded-full bg-[#2B1507] border border-[#CA922B]/40 shadow-xl flex items-center justify-center cursor-pointer">
+              <MessageSquare className="w-5 h-5 text-[#CA922B]" />
             </div>
           </div>
         </Link>

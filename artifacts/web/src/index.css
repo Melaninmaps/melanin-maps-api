@@ -296,6 +296,22 @@
 }
 
 @layer utilities {
+  /* ─── Scrollbar hiding ─── */
+  .no-scrollbar::-webkit-scrollbar,
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar,
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* ─── Safe bottom padding for mobile browsers ─── */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   input[type="search"]::-webkit-search-cancel-button {
     @apply hidden;
   }

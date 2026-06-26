@@ -107,12 +107,12 @@ export default function Community() {
             </div>
           </div>
           
-          <div className="flex justify-center gap-8 mb-12 border-b border-[#3A1F0E]/10 pb-4">
+          <div className="flex justify-center gap-6 sm:gap-10 mb-12 border-b border-[#3A1F0E]/10 pb-4">
             {(["Groups", "Events", "Travel"] as Tab[]).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`font-bold pb-4 -mb-[18px] transition-colors ${activeTab === tab ? "text-[#3A1F0E] border-b-2 border-[#CA922B]" : "text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
+                className={`font-bold text-sm sm:text-base pb-4 -mb-[18px] transition-colors min-w-[64px] ${activeTab === tab ? "text-[#3A1F0E] border-b-2 border-[#CA922B]" : "text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
               >
                 {tab}
               </button>
