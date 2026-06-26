@@ -1436,8 +1436,9 @@ export async function sendBusinessResponseInvitation(
   if (!resend) { log("business response invitation"); return; }
   await resend.emails.send({
     from: "Mapping With Melanin™ Community Trust & Safety <hello@send.mappingwithmelanin.com>",
+    replyTo: "communitycare@mappingwithmelanin.com",
     to,
-    subject: `Community Report Notification — ${businessName}`,
+    subject: `Community Care — Community Report Notification | ${businessName}`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
 
@@ -1501,9 +1502,9 @@ export async function sendBusinessResponseInvitation(
 
         <div style="border-top:1px solid #E8DDD0;padding-top:20px">
           <p style="color:#6B5744;font-size:12px;margin:0;line-height:1.6">
-            If you believe you received this notification in error, or have questions about this process, please contact us at
-            <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B;text-decoration:none">hello@mappingwithmelanin.com</a>.
-            Do not reply directly to this email.
+            If you believe you received this notification in error, or have questions about this process, please contact our Community Care team at
+            <a href="mailto:communitycare@mappingwithmelanin.com" style="color:#CA922B;text-decoration:none">communitycare@mappingwithmelanin.com</a>.
+            Replies to this email are routed to our Community Care team.
           </p>
         </div>
 
