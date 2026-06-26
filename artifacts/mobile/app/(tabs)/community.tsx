@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AlertBanner } from "@/components/AlertBanner";
+import { BusinessMentionPicker } from "@/components/BusinessMentionPicker";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import { EventCard } from "@/components/EventCard";
 import { ALERTS, EVENT_CATEGORIES } from "@/constants/data";
@@ -27,6 +28,7 @@ import type { CommunityPost } from "@/constants/types";
 import { useColors } from "@/hooks/useColors";
 import { useEvents } from "@/hooks/useEvents";
 import { useGroups, type Group } from "@/hooks/useGroups";
+import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
 import { UpgradeModal } from "@/components/UpgradeModal";
 
@@ -182,6 +184,26 @@ export default function CommunityScreen() {
   const [groupCreateCity, setGroupCreateCity] = useState("");
   const [groupCreateSubmitting, setGroupCreateSubmitting] = useState(false);
   const inputRef = useRef<TextInput>(null);
+
+  const { businesses } = useBusinesses();
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+
+  const handlePostTextChange = (t: string) => {
+    setNewPostText(t);
+    const match = t.match(/@(\w*)$/);
+    if (match) {
+      setMentionQuery(match[1]);
+    } else {
+      setMentionQuery(null);
+    }
+  };
+
+  const handleMentionSelect = (businessName: string) => {
+    const updated = newPostText.replace(/@(\w*)$/, `@${businessName} `);
+    setNewPostText(updated);
+    setMentionQuery(null);
+    inputRef.current?.focus();
+  };
 
   const { groups, isLoading: groupsLoading, refetch: refetchGroups, join, leave } = useGroups();
   const [eventsCategory, setEventsCategory] = useState("All");
@@ -921,17 +943,41 @@ export default function CommunityScreen() {
               ))}
             </View>
 
+            {mentionQuery !== null && (
+              <BusinessMentionPicker
+                query={mentionQuery}
+                businesses={businesses}
+                onSelect={handleMentionSelect}
+              />
+            )}
+
             <TextInput
               ref={inputRef}
               style={[styles.composeInput, { color: colors.foreground }]}
               placeholder="Share something with the community…"
               placeholderTextColor={colors.mutedForeground}
               value={newPostText}
-              onChangeText={setNewPostText}
+              onChangeText={handlePostTextChange}
               multiline
               maxLength={500}
             />
-            <Text style={[styles.charCount, { color: colors.mutedForeground }]}>{newPostText.length}/500</Text>
+
+            <View style={styles.composeToolbar}>
+              <TouchableOpacity
+                style={[styles.mentionBtn, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }]}
+                onPress={() => {
+                  const next = newPostText.endsWith(" ") || newPostText === "" ? newPostText + "@" : newPostText + " @";
+                  setNewPostText(next);
+                  setMentionQuery("");
+                  inputRef.current?.focus();
+                }}
+                activeOpacity={0.7}
+              >
+                <Feather name="at-sign" size={14} color={colors.primary} />
+                <Text style={[styles.mentionBtnText, { color: colors.primary }]}>Tag a business</Text>
+              </TouchableOpacity>
+              <Text style={[styles.charCount, { color: colors.mutedForeground }]}>{newPostText.length}/500</Text>
+            </View>
           </View>
         </View>
       </Modal>
@@ -1034,7 +1080,28 @@ const styles = StyleSheet.create({
     minHeight: 120,
     textAlignVertical: "top",
   },
-  charCount: { fontFamily: "Inter_400Regular", fontSize: 12, textAlign: "right", paddingHorizontal: 20, paddingBottom: 8 },
+  charCount: { fontFamily: "Inter_400Regular", fontSize: 12, textAlign: "right", paddingBottom: 8 },
+  composeToolbar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 4,
+    paddingTop: 4,
+  },
+  mentionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  mentionBtnText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
+  },
   resSpacesCard: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14, borderWidth: 1.5, padding: 14 },
   resSpacesIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
   resSpacesTitle: { fontFamily: "Inter_700Bold", fontSize: 15 },
