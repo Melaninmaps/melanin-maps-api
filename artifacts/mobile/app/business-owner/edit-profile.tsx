@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -27,51 +28,58 @@ function getApiBase(): string {
 
 async function getToken(): Promise<string | null> {
   try {
-    if (Platform.OS === "web") return null;
+    if ((Platform.OS as string) === "web") return null;
     return await SecureStore.getItemAsync("auth_session_token");
   } catch { return null; }
 }
 
+function getVideoPlatform(url: string): { label: string; icon: string } {
+  const u = url.toLowerCase();
+  if (u.includes("youtube.com") || u.includes("youtu.be")) return { label: "YouTube", icon: "▶" };
+  if (u.includes("tiktok.com")) return { label: "TikTok", icon: "♪" };
+  if (u.includes("instagram.com")) return { label: "Instagram", icon: "◈" };
+  if (u.includes("facebook.com") || u.includes("fb.watch")) return { label: "Facebook", icon: "f" };
+  if (u.includes("vimeo.com")) return { label: "Vimeo", icon: "▶" };
+  return { label: "Video", icon: "▶" };
+}
+
 const HOURS_OPTIONS = [
-  "Mon–Fri 9am–5pm",
-  "Mon–Fri 9am–9pm",
-  "Mon–Sat 10am–8pm",
-  "Mon–Sun 10am–10pm",
-  "Mon–Sun 8am–6pm",
-  "By Appointment",
-  "Custom",
+  "Mon–Fri 9am–5pm", "Mon–Fri 9am–9pm", "Mon–Sat 10am–8pm",
+  "Mon–Sun 10am–10pm", "Mon–Sun 8am–6pm", "By Appointment", "Custom",
 ];
 
 type FormState = {
-  name: string;
-  category: string;
-  subcategory: string;
-  description: string;
-  phone: string;
-  website: string;
-  hours: string;
+  name: string; category: string; subcategory: string; description: string;
+  phone: string; website: string; hours: string;
+  instagram: string; tiktok: string; facebook: string; twitter: string; youtube: string;
+};
+
+const EMPTY_FORM: FormState = {
+  name: "", category: "", subcategory: "", description: "",
+  phone: "", website: "", hours: "",
+  instagram: "", tiktok: "", facebook: "", twitter: "", youtube: "",
 };
 
 export default function EditBusinessProfile() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+  const topPad = (Platform.OS as string) === "web" ? 67 : insets.top;
+  const bottomPad = (Platform.OS as string) === "web" ? 34 : insets.bottom;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
   const [showHours, setShowHours] = useState(false);
-  const [form, setForm] = useState<FormState>({
-    name: "", category: "", subcategory: "", description: "", phone: "", website: "", hours: "",
-  });
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [original, setOriginal] = useState<FormState | null>(null);
 
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [videos, setVideos] = useState<string[]>([]);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   const update = (key: keyof FormState) => (val: string) =>
     setForm(prev => ({ ...prev, [key]: val }));
@@ -83,22 +91,21 @@ export default function EditBusinessProfile() {
       if (token) headers["Authorization"] = `Bearer ${token}`;
       const res = await fetch(`${getApiBase()}/api/businesses/mine`, { headers });
       if (res.ok) {
-        const data = await res.json() as { business: (FormState & { id: string; imageUrl?: string; photos?: string[] }) | null };
+        const data = await res.json() as { business: (FormState & { id: string; imageUrl?: string; photos?: string[]; videos?: string[] }) | null };
         if (data.business) {
+          const b = data.business;
           const f: FormState = {
-            name: data.business.name ?? "",
-            category: data.business.category ?? "",
-            subcategory: data.business.subcategory ?? "",
-            description: data.business.description ?? "",
-            phone: data.business.phone ?? "",
-            website: data.business.website ?? "",
-            hours: data.business.hours ?? "",
+            name: b.name ?? "", category: b.category ?? "", subcategory: b.subcategory ?? "",
+            description: b.description ?? "", phone: b.phone ?? "", website: b.website ?? "", hours: b.hours ?? "",
+            instagram: b.instagram ?? "", tiktok: b.tiktok ?? "", facebook: b.facebook ?? "",
+            twitter: b.twitter ?? "", youtube: b.youtube ?? "",
           };
           setForm(f);
           setOriginal(f);
-          setBusinessId(data.business.id);
-          setPhotos(data.business.photos ?? []);
-          setCoverUrl(data.business.imageUrl ?? null);
+          setBusinessId(b.id);
+          setPhotos(b.photos ?? []);
+          setCoverUrl(b.imageUrl ?? null);
+          setVideos(b.videos ?? []);
         }
       }
     } catch { }
@@ -110,144 +117,149 @@ export default function EditBusinessProfile() {
   const isDirty = original !== null && JSON.stringify(form) !== JSON.stringify(original);
 
   const handleSave = async () => {
-    if (!form.name.trim()) {
-      Alert.alert("Business name required", "Please enter your business name.");
-      return;
-    }
-    if (!form.category) {
-      Alert.alert("Category required", "Please select a business category.");
-      return;
-    }
-    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (!form.name.trim()) { Alert.alert("Business name required", "Please enter your business name."); return; }
+    if (!form.category) { Alert.alert("Category required", "Please select a business category."); return; }
+    if ((Platform.OS as string) !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSaving(true);
     try {
       const token = await getToken();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
       const res = await fetch(`${getApiBase()}/api/businesses/mine/profile`, {
-        method: "PATCH",
-        headers,
+        method: "PATCH", headers,
         body: JSON.stringify({
-          name: form.name.trim(),
-          category: form.category,
+          name: form.name.trim(), category: form.category,
           subcategory: form.subcategory || form.category,
           description: form.description.trim(),
-          phone: form.phone.trim() || null,
-          website: form.website.trim() || null,
+          phone: form.phone.trim() || null, website: form.website.trim() || null,
           hours: form.hours.trim() || null,
+          instagram: form.instagram.trim() || null, tiktok: form.tiktok.trim() || null,
+          facebook: form.facebook.trim() || null, twitter: form.twitter.trim() || null,
+          youtube: form.youtube.trim() || null,
         }),
       });
       if (!res.ok) throw new Error("Save failed");
-      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setOriginal({ ...form });
-      Alert.alert("Changes saved!", "Your business profile has been updated.", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
+      Alert.alert("Changes saved!", "Your business profile has been updated.", [{ text: "OK", onPress: () => router.back() }]);
     } catch {
       Alert.alert("Save failed", "Something went wrong. Please try again.");
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
+  // ── Photos ─────────────────────────────────────────────────────────────────
   const handleAddPhoto = async () => {
-    if ((Platform.OS as string) === "web") {
-      Alert.alert("Not supported", "Photo upload is available on the mobile app.");
-      return;
-    }
+    if ((Platform.OS as string) === "web") { Alert.alert("Not supported", "Photo upload is available on the mobile app."); return; }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission needed", "Allow access to your photo library to upload business photos.");
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      quality: 0.85,
-    });
+    if (status !== "granted") { Alert.alert("Permission needed", "Allow access to your photo library to upload business photos."); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, quality: 0.85 });
     if (result.canceled || !result.assets.length) return;
-
     const asset = result.assets[0];
     setUploadingPhoto(true);
     try {
       const token = await getToken();
       const formData = new FormData();
-      formData.append("photo", {
-        uri: asset.uri,
-        type: asset.mimeType ?? "image/jpeg",
-        name: "photo.jpg",
-      } as unknown as Blob);
-
+      formData.append("photo", { uri: asset.uri, type: asset.mimeType ?? "image/jpeg", name: "photo.jpg" } as unknown as Blob);
       const res = await fetch(`${getApiBase()}/api/businesses/mine/photos`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
+        method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: formData,
       });
-      if (!res.ok) {
-        const err = await res.json() as { error?: string };
-        throw new Error(err.error ?? "Upload failed");
-      }
+      if (!res.ok) { const e = await res.json() as { error?: string }; throw new Error(e.error ?? "Upload failed"); }
       const data = await res.json() as { url: string; photos: string[]; imageUrl: string };
-      setPhotos(data.photos);
-      setCoverUrl(data.imageUrl);
-      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setPhotos(data.photos); setCoverUrl(data.imageUrl);
+      if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
       Alert.alert("Upload failed", err instanceof Error ? err.message : "Please try again.");
-    } finally {
-      setUploadingPhoto(false);
-    }
+    } finally { setUploadingPhoto(false); }
   };
 
   const handleSetCover = async (url: string) => {
     if (url === coverUrl) return;
-    try {
-      const token = await getToken();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${getApiBase()}/api/businesses/mine/photos/cover`, {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({ url }),
-      });
-      if (!res.ok) throw new Error("Failed");
-      setCoverUrl(url);
-      if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {
-      Alert.alert("Error", "Could not set cover photo.");
-    }
+    const token = await getToken();
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${getApiBase()}/api/businesses/mine/photos/cover`, { method: "PATCH", headers, body: JSON.stringify({ url }) });
+    if (res.ok) { setCoverUrl(url); if ((Platform.OS as string) !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }
   };
 
   const handleDeletePhoto = (url: string) => {
-    Alert.alert(
-      "Remove photo",
-      "Are you sure you want to remove this photo?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const token = await getToken();
-              const headers: Record<string, string> = { "Content-Type": "application/json" };
-              if (token) headers["Authorization"] = `Bearer ${token}`;
-              const res = await fetch(`${getApiBase()}/api/businesses/mine/photos`, {
-                method: "DELETE",
-                headers,
-                body: JSON.stringify({ url }),
-              });
-              if (!res.ok) throw new Error("Failed");
-              const data = await res.json() as { photos: string[]; imageUrl: string | null };
-              setPhotos(data.photos);
-              setCoverUrl(data.imageUrl);
-            } catch {
-              Alert.alert("Error", "Could not remove photo.");
-            }
-          },
-        },
-      ]
+    Alert.alert("Remove photo", "Are you sure?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Remove", style: "destructive", onPress: async () => {
+        const token = await getToken();
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const res = await fetch(`${getApiBase()}/api/businesses/mine/photos`, { method: "DELETE", headers, body: JSON.stringify({ url }) });
+        if (res.ok) { const d = await res.json() as { photos: string[]; imageUrl: string | null }; setPhotos(d.photos); setCoverUrl(d.imageUrl); }
+      }},
+    ]);
+  };
+
+  // ── Videos ─────────────────────────────────────────────────────────────────
+  const handleUploadVideo = async () => {
+    if ((Platform.OS as string) === "web") { Alert.alert("Not supported", "Video upload is available on the mobile app."); return; }
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") { Alert.alert("Permission needed", "Allow access to your library to upload videos."); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["videos"], quality: 1 });
+    if (result.canceled || !result.assets.length) return;
+    const asset = result.assets[0];
+    setUploadingVideo(true);
+    try {
+      const token = await getToken();
+      const formData = new FormData();
+      const ext = asset.uri.split(".").pop() ?? "mp4";
+      formData.append("video", { uri: asset.uri, type: `video/${ext}`, name: `video.${ext}` } as unknown as Blob);
+      const res = await fetch(`${getApiBase()}/api/businesses/mine/videos`, {
+        method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: formData,
+      });
+      if (!res.ok) { const e = await res.json() as { error?: string }; throw new Error(e.error ?? "Upload failed"); }
+      const data = await res.json() as { url: string; videos: string[] };
+      setVideos(data.videos);
+      if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err) {
+      Alert.alert("Upload failed", err instanceof Error ? err.message : "Please try again.");
+    } finally { setUploadingVideo(false); }
+  };
+
+  const handleAddVideoLink = () => {
+    Alert.prompt(
+      "Add Video Link",
+      "Paste a YouTube, TikTok, Instagram, Facebook, or Vimeo link",
+      async (url) => {
+        if (!url?.trim()) return;
+        const token = await getToken();
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        try {
+          const res = await fetch(`${getApiBase()}/api/businesses/mine/videos/link`, {
+            method: "POST", headers, body: JSON.stringify({ url: url.trim() }),
+          });
+          if (!res.ok) { const e = await res.json() as { error?: string }; throw new Error(e.error ?? "Failed"); }
+          const data = await res.json() as { videos: string[] };
+          setVideos(data.videos);
+        } catch (err) {
+          Alert.alert("Error", err instanceof Error ? err.message : "Could not add link.");
+        }
+      },
+      "plain-text", "", "url"
     );
   };
+
+  const handleDeleteVideo = (url: string) => {
+    Alert.alert("Remove video", "Remove this video from your profile?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Remove", style: "destructive", onPress: async () => {
+        const token = await getToken();
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const res = await fetch(`${getApiBase()}/api/businesses/mine/videos`, { method: "DELETE", headers, body: JSON.stringify({ url }) });
+        if (res.ok) { const d = await res.json() as { videos: string[] }; setVideos(d.videos); }
+      }},
+    ]);
+  };
+
+  if (loading) {
+    return <View style={[styles.root, { backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }]}><ActivityIndicator color={colors.primary} /></View>;
+  }
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -258,8 +270,7 @@ export default function EditBusinessProfile() {
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Edit Business Profile</Text>
         <TouchableOpacity
           style={[styles.saveBtn, { backgroundColor: isDirty ? colors.primary : colors.secondary, opacity: saving ? 0.7 : 1 }]}
-          onPress={handleSave}
-          disabled={saving || !isDirty}
+          onPress={handleSave} disabled={saving || !isDirty}
         >
           <Text style={[styles.saveBtnTxt, { color: isDirty ? "#FFF" : colors.mutedForeground }]}>
             {saving ? "Saving…" : "Save"}
@@ -267,104 +278,138 @@ export default function EditBusinessProfile() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Photos */}
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+
+        {/* ── Photos ── */}
         <View style={styles.group}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={[styles.groupLabel, { color: colors.foreground }]}>Business Photos</Text>
-              <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>
-                Tap a photo to set it as your cover image. Long press to remove.
-              </Text>
+              <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>Tap to set cover · Long press to remove</Text>
             </View>
-            <Text style={[{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-              {photos.length}/10
-            </Text>
+            <Text style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>{photos.length}/10</Text>
           </View>
-
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }} contentContainerStyle={{ gap: 10 }}>
             {photos.map((url) => {
               const isCover = url === coverUrl;
               return (
-                <TouchableOpacity
-                  key={url}
-                  onPress={() => handleSetCover(url)}
-                  onLongPress={() => handleDeletePhoto(url)}
-                  activeOpacity={0.8}
-                  style={[styles.photoThumb, { borderColor: isCover ? colors.primary : colors.border, borderWidth: isCover ? 2.5 : 1 }]}
-                >
+                <TouchableOpacity key={url} onPress={() => handleSetCover(url)} onLongPress={() => handleDeletePhoto(url)} activeOpacity={0.8}
+                  style={[styles.photoThumb, { borderColor: isCover ? colors.primary : colors.border, borderWidth: isCover ? 2.5 : 1 }]}>
                   <Image source={{ uri: url }} style={styles.photoThumbImg} />
-                  {isCover && (
-                    <View style={[styles.coverBadge, { backgroundColor: colors.primary }]}>
-                      <Feather name="star" size={10} color="#fff" />
-                      <Text style={styles.coverBadgeTxt}>Cover</Text>
-                    </View>
-                  )}
+                  {isCover && <View style={[styles.coverBadge, { backgroundColor: colors.primary }]}><Feather name="star" size={10} color="#fff" /><Text style={styles.coverBadgeTxt}>Cover</Text></View>}
                 </TouchableOpacity>
               );
             })}
-
             {photos.length < 10 && (
-              <TouchableOpacity
-                onPress={handleAddPhoto}
-                disabled={uploadingPhoto}
-                style={[styles.addPhotoBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
-                activeOpacity={0.75}
-              >
-                {uploadingPhoto
-                  ? <ActivityIndicator size="small" color={colors.primary} />
-                  : <>
-                      <Feather name="plus" size={22} color={colors.primary} />
-                      <Text style={[styles.addPhotoTxt, { color: colors.primary }]}>Add</Text>
-                    </>
-                }
+              <TouchableOpacity onPress={handleAddPhoto} disabled={uploadingPhoto}
+                style={[styles.addMediaBtn, { borderColor: colors.border, backgroundColor: colors.card }]} activeOpacity={0.75}>
+                {uploadingPhoto ? <ActivityIndicator size="small" color={colors.primary} /> : <><Feather name="camera" size={20} color={colors.primary} /><Text style={[styles.addMediaTxt, { color: colors.primary }]}>Add</Text></>}
               </TouchableOpacity>
             )}
           </ScrollView>
-
           {photos.length === 0 && !uploadingPhoto && (
-            <TouchableOpacity
-              onPress={handleAddPhoto}
-              style={[styles.emptyPhotos, { borderColor: colors.border, backgroundColor: colors.card }]}
-              activeOpacity={0.8}
-            >
-              <Feather name="camera" size={28} color={colors.mutedForeground} />
-              <Text style={[styles.emptyPhotosTxt, { color: colors.foreground }]}>Add your first photo</Text>
-              <Text style={[styles.emptyPhotosHelper, { color: colors.mutedForeground }]}>
-                Great photos help customers find and trust your business
-              </Text>
+            <TouchableOpacity onPress={handleAddPhoto} style={[styles.emptySlot, { borderColor: colors.border, backgroundColor: colors.card }]} activeOpacity={0.8}>
+              <Feather name="camera" size={26} color={colors.mutedForeground} />
+              <Text style={[styles.emptySlotTxt, { color: colors.foreground }]}>Add your first photo</Text>
+              <Text style={[styles.emptySlotHelper, { color: colors.mutedForeground }]}>Great photos help customers find and trust your business</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        {/* Business Name */}
+        {/* ── Videos ── */}
         <View style={styles.group}>
-          <Text style={[styles.groupLabel, { color: colors.foreground }]}>Business Name <Text style={{ color: "#DC2626" }}>*</Text></Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-            placeholder="Your business name"
-            placeholderTextColor={colors.mutedForeground}
-            value={form.name}
-            onChangeText={update("name")}
-            autoCapitalize="words"
-          />
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.groupLabel, { color: colors.foreground }]}>Promo Videos</Text>
+              <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>Upload a clip or link YouTube, TikTok, Instagram, or Facebook</Text>
+            </View>
+            <Text style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>{videos.length}/5</Text>
+          </View>
+
+          {videos.map((url) => {
+            const { label, icon } = getVideoPlatform(url);
+            const isUploaded = url.includes("storage.googleapis.com");
+            return (
+              <View key={url} style={[styles.videoRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={[styles.videoBadge, { backgroundColor: colors.primary + "18" }]}>
+                  <Text style={{ fontSize: 14, color: colors.primary }}>{icon}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.videoLabel, { color: colors.foreground }]}>{isUploaded ? "Uploaded video" : label}</Text>
+                  <Text style={[styles.videoUrl, { color: colors.mutedForeground }]} numberOfLines={1}>{url}</Text>
+                </View>
+                <TouchableOpacity onPress={() => { if (!isUploaded) Linking.openURL(url).catch(() => {}); }} style={{ marginRight: 4 }}>
+                  {!isUploaded && <Feather name="external-link" size={16} color={colors.mutedForeground} />}
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleDeleteVideo(url)}>
+                  <Feather name="trash-2" size={16} color="#DC2626" />
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+
+          {videos.length < 5 && (
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 4 }}>
+              <TouchableOpacity onPress={handleUploadVideo} disabled={uploadingVideo}
+                style={[styles.videoAddBtn, { backgroundColor: colors.card, borderColor: colors.border, flex: 1 }]} activeOpacity={0.8}>
+                {uploadingVideo ? <ActivityIndicator size="small" color={colors.primary} /> : <><Feather name="upload" size={16} color={colors.primary} /><Text style={[styles.videoAddTxt, { color: colors.primary }]}>Upload Video</Text></>}
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleAddVideoLink}
+                style={[styles.videoAddBtn, { backgroundColor: colors.card, borderColor: colors.border, flex: 1 }]} activeOpacity={0.8}>
+                <Feather name="link" size={16} color={colors.primary} />
+                <Text style={[styles.videoAddTxt, { color: colors.primary }]}>Add Link</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
-        {/* Category */}
+        {/* ── Social Media ── */}
+        <View style={styles.group}>
+          <Text style={[styles.groupLabel, { color: colors.foreground }]}>Social Media</Text>
+          <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>These appear on your business profile and help customers follow you</Text>
+          {([
+            { key: "instagram" as const, icon: "◈", label: "Instagram", placeholder: "https://instagram.com/yourbusiness" },
+            { key: "tiktok" as const, icon: "♪", label: "TikTok", placeholder: "https://tiktok.com/@yourbusiness" },
+            { key: "facebook" as const, icon: "f", label: "Facebook", placeholder: "https://facebook.com/yourbusiness" },
+            { key: "twitter" as const, icon: "𝕏", label: "X / Twitter", placeholder: "https://x.com/yourbusiness" },
+            { key: "youtube" as const, icon: "▶", label: "YouTube", placeholder: "https://youtube.com/@yourchannel" },
+          ] as const).map(({ key, icon, label, placeholder }) => (
+            <View key={key} style={[styles.socialRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.socialIcon, { backgroundColor: colors.primary + "15" }]}>
+                <Text style={{ fontSize: 14, color: colors.primary, fontFamily: "Inter_700Bold" }}>{icon}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_600SemiBold", marginBottom: 2 }}>{label}</Text>
+                <TextInput
+                  style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.foreground, padding: 0 }}
+                  placeholder={placeholder}
+                  placeholderTextColor={colors.mutedForeground}
+                  value={form[key]}
+                  onChangeText={update(key)}
+                  keyboardType="url"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+              {form[key] ? <TouchableOpacity onPress={() => update(key)("")}><Feather name="x" size={14} color={colors.mutedForeground} /></TouchableOpacity> : null}
+            </View>
+          ))}
+        </View>
+
+        {/* ── Business Name ── */}
+        <View style={styles.group}>
+          <Text style={[styles.groupLabel, { color: colors.foreground }]}>Business Name <Text style={{ color: "#DC2626" }}>*</Text></Text>
+          <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+            placeholder="Your business name" placeholderTextColor={colors.mutedForeground}
+            value={form.name} onChangeText={update("name")} autoCapitalize="words" />
+        </View>
+
+        {/* ── Category ── */}
         <View style={styles.group}>
           <Text style={[styles.groupLabel, { color: colors.foreground }]}>Business Category <Text style={{ color: "#DC2626" }}>*</Text></Text>
-          <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>
-            This is how your business is classified and discovered on the map.
-          </Text>
-          <TouchableOpacity
-            style={[styles.selectBtn, { backgroundColor: colors.card, borderColor: form.category ? colors.primary : colors.border }]}
-            onPress={() => { setShowCategories(v => !v); setShowHours(false); }}
-            activeOpacity={0.8}
-          >
+          <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>How your business is classified and discovered on the map.</Text>
+          <TouchableOpacity style={[styles.selectBtn, { backgroundColor: colors.card, borderColor: form.category ? colors.primary : colors.border }]}
+            onPress={() => { setShowCategories(v => !v); setShowHours(false); }} activeOpacity={0.8}>
             <Text style={[styles.selectBtnTxt, { color: form.category ? colors.foreground : colors.mutedForeground }]}>
               {form.category ? `${CATEGORY_GROUPS.find(g => g.name === form.category)?.emoji ?? ""} ${form.category}` : "Select a category"}
             </Text>
@@ -373,28 +418,13 @@ export default function EditBusinessProfile() {
           {showCategories && (
             <View style={[styles.picker, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {CATEGORY_GROUPS.map((group) => (
-                <TouchableOpacity
-                  key={group.name}
-                  style={[
-                    styles.pickerOption,
-                    form.category === group.name && { backgroundColor: colors.primary + "18" },
-                  ]}
-                  onPress={() => {
-                    if (Platform.OS !== "web") Haptics.selectionAsync();
-                    update("category")(group.name);
-                    setShowCategories(false);
-                  }}
-                  activeOpacity={0.7}
-                >
+                <TouchableOpacity key={group.name} style={[styles.pickerOption, form.category === group.name && { backgroundColor: colors.primary + "18" }]}
+                  onPress={() => { if ((Platform.OS as string) !== "web") Haptics.selectionAsync(); update("category")(group.name); setShowCategories(false); }} activeOpacity={0.7}>
                   <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8 }}>
                     <Text style={{ fontSize: 16 }}>{group.emoji}</Text>
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.pickerOptionTxt, { color: form.category === group.name ? colors.primary : colors.foreground, fontFamily: form.category === group.name ? "Inter_700Bold" : "Inter_400Regular" }]}>
-                        {group.name}
-                      </Text>
-                      {!group.liveAtLaunch && (
-                        <Text style={{ fontSize: 10, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>Coming soon</Text>
-                      )}
+                      <Text style={[styles.pickerOptionTxt, { color: form.category === group.name ? colors.primary : colors.foreground, fontFamily: form.category === group.name ? "Inter_700Bold" : "Inter_400Regular" }]}>{group.name}</Text>
+                      {!group.liveAtLaunch && <Text style={{ fontSize: 10, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>Coming soon</Text>}
                     </View>
                   </View>
                   {form.category === group.name && <Feather name="check" size={14} color={colors.primary} />}
@@ -407,27 +437,11 @@ export default function EditBusinessProfile() {
               <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>Subcategory (optional)</Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                 {(getCategoryGroup(form.category)?.subcategories ?? []).map((sub) => {
-                  const isSubSelected = form.subcategory === sub.name;
+                  const sel = form.subcategory === sub.name;
                   return (
-                    <TouchableOpacity
-                      key={sub.name}
-                      onPress={() => {
-                        if (Platform.OS !== "web") Haptics.selectionAsync();
-                        update("subcategory")(isSubSelected ? "" : sub.name);
-                      }}
-                      style={{
-                        paddingHorizontal: 12,
-                        paddingVertical: 6,
-                        borderRadius: 16,
-                        borderWidth: 1,
-                        backgroundColor: isSubSelected ? colors.primary + "15" : colors.background,
-                        borderColor: isSubSelected ? colors.primary : colors.border,
-                      }}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={{ fontSize: 12, fontFamily: isSubSelected ? "Inter_600SemiBold" : "Inter_400Regular", color: isSubSelected ? colors.primary : colors.foreground }}>
-                        {sub.name}
-                      </Text>
+                    <TouchableOpacity key={sub.name} onPress={() => { if ((Platform.OS as string) !== "web") Haptics.selectionAsync(); update("subcategory")(sel ? "" : sub.name); }}
+                      style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, backgroundColor: sel ? colors.primary + "15" : colors.background, borderColor: sel ? colors.primary : colors.border }} activeOpacity={0.8}>
+                      <Text style={{ fontSize: 12, fontFamily: sel ? "Inter_600SemiBold" : "Inter_400Regular", color: sel ? colors.primary : colors.foreground }}>{sub.name}</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -436,100 +450,61 @@ export default function EditBusinessProfile() {
           )}
         </View>
 
-        {/* Description */}
+        {/* ── Description ── */}
         <View style={styles.group}>
           <Text style={[styles.groupLabel, { color: colors.foreground }]}>About Your Business</Text>
-          <TextInput
-            style={[styles.textArea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+          <TextInput style={[styles.textArea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
             placeholder="Describe what makes your business special — products, services, story, community focus…"
-            placeholderTextColor={colors.mutedForeground}
-            value={form.description}
-            onChangeText={(t) => t.length <= 500 && update("description")(t)}
-            multiline
-            textAlignVertical="top"
-          />
+            placeholderTextColor={colors.mutedForeground} value={form.description}
+            onChangeText={(t) => t.length <= 500 && update("description")(t)} multiline textAlignVertical="top" />
           <Text style={[styles.charCount, { color: colors.mutedForeground }]}>{form.description.length}/500</Text>
         </View>
 
-        {/* Phone */}
+        {/* ── Phone ── */}
         <View style={styles.group}>
           <Text style={[styles.groupLabel, { color: colors.foreground }]}>Phone Number</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-            placeholder="+1 (404) 555-0100"
-            placeholderTextColor={colors.mutedForeground}
-            value={form.phone}
-            onChangeText={update("phone")}
-            keyboardType="phone-pad"
-          />
+          <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+            placeholder="+1 (404) 555-0100" placeholderTextColor={colors.mutedForeground}
+            value={form.phone} onChangeText={update("phone")} keyboardType="phone-pad" />
         </View>
 
-        {/* Website */}
+        {/* ── Website ── */}
         <View style={styles.group}>
           <Text style={[styles.groupLabel, { color: colors.foreground }]}>Website</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-            placeholder="https://yourbusiness.com"
-            placeholderTextColor={colors.mutedForeground}
-            value={form.website}
-            onChangeText={update("website")}
-            keyboardType="url"
-            autoCapitalize="none"
-          />
+          <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+            placeholder="https://yourbusiness.com" placeholderTextColor={colors.mutedForeground}
+            value={form.website} onChangeText={update("website")} keyboardType="url" autoCapitalize="none" />
         </View>
 
-        {/* Hours */}
+        {/* ── Hours ── */}
         <View style={styles.group}>
           <Text style={[styles.groupLabel, { color: colors.foreground }]}>Business Hours</Text>
-          <TouchableOpacity
-            style={[styles.selectBtn, { backgroundColor: colors.card, borderColor: form.hours ? colors.primary : colors.border }]}
-            onPress={() => { setShowHours(v => !v); setShowCategories(false); }}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.selectBtnTxt, { color: form.hours ? colors.foreground : colors.mutedForeground }]}>
-              {form.hours || "Select hours"}
-            </Text>
+          <TouchableOpacity style={[styles.selectBtn, { backgroundColor: colors.card, borderColor: form.hours ? colors.primary : colors.border }]}
+            onPress={() => { setShowHours(v => !v); setShowCategories(false); }} activeOpacity={0.8}>
+            <Text style={[styles.selectBtnTxt, { color: form.hours ? colors.foreground : colors.mutedForeground }]}>{form.hours || "Select hours"}</Text>
             <Feather name={showHours ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
           {showHours && (
             <View style={[styles.picker, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {HOURS_OPTIONS.map((h) => (
-                <TouchableOpacity
-                  key={h}
-                  style={[styles.pickerOption, form.hours === h && { backgroundColor: colors.primary + "18" }]}
-                  onPress={() => {
-                    if (Platform.OS !== "web") Haptics.selectionAsync();
-                    update("hours")(h);
-                    setShowHours(false);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.pickerOptionTxt, { color: form.hours === h ? colors.primary : colors.foreground, fontFamily: form.hours === h ? "Inter_700Bold" : "Inter_400Regular" }]}>
-                    {h}
-                  </Text>
+                <TouchableOpacity key={h} style={[styles.pickerOption, form.hours === h && { backgroundColor: colors.primary + "18" }]}
+                  onPress={() => { if ((Platform.OS as string) !== "web") Haptics.selectionAsync(); update("hours")(h); setShowHours(false); }} activeOpacity={0.7}>
+                  <Text style={[styles.pickerOptionTxt, { color: form.hours === h ? colors.primary : colors.foreground, fontFamily: form.hours === h ? "Inter_700Bold" : "Inter_400Regular" }]}>{h}</Text>
                   {form.hours === h && <Feather name="check" size={14} color={colors.primary} />}
                 </TouchableOpacity>
               ))}
             </View>
           )}
           {form.hours === "Custom" && (
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground, marginTop: 8 }]}
-              placeholder="e.g. Tue–Sun 11am–9pm, Closed Mon"
-              placeholderTextColor={colors.mutedForeground}
-              value={form.hours === "Custom" ? "" : form.hours}
-              onChangeText={update("hours")}
-            />
+            <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground, marginTop: 8 }]}
+              placeholder="e.g. Tue–Sun 11am–9pm, Closed Mon" placeholderTextColor={colors.mutedForeground}
+              value={form.hours === "Custom" ? "" : form.hours} onChangeText={update("hours")} />
           )}
         </View>
 
-        {/* Save footer */}
-        <TouchableOpacity
-          style={[styles.saveFooterBtn, { backgroundColor: isDirty ? colors.primary : colors.secondary, opacity: saving ? 0.7 : 1 }]}
-          onPress={handleSave}
-          disabled={saving || !isDirty}
-          activeOpacity={0.85}
-        >
+        {/* ── Save footer ── */}
+        <TouchableOpacity style={[styles.saveFooterBtn, { backgroundColor: isDirty ? colors.primary : colors.secondary, opacity: saving ? 0.7 : 1 }]}
+          onPress={handleSave} disabled={saving || !isDirty} activeOpacity={0.85}>
           <Feather name="check" size={16} color={isDirty ? "#FFF" : colors.mutedForeground} />
           <Text style={[styles.saveFooterTxt, { color: isDirty ? "#FFF" : colors.mutedForeground }]}>
             {saving ? "Saving changes…" : isDirty ? "Save Changes" : "No changes to save"}
@@ -561,13 +536,24 @@ const styles = StyleSheet.create({
   pickerOptionTxt: { fontSize: 14, flex: 1 },
   saveFooterBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 15, borderRadius: 14 },
   saveFooterTxt: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  photoThumb: { width: 90, height: 90, borderRadius: 12, overflow: "hidden", position: "relative" },
+  // Photos
+  photoThumb: { width: 90, height: 90, borderRadius: 12, overflow: "hidden" },
   photoThumbImg: { width: "100%", height: "100%" },
   coverBadge: { position: "absolute", bottom: 4, left: 4, flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
   coverBadgeTxt: { fontSize: 9, color: "#fff", fontFamily: "Inter_700Bold" },
-  addPhotoBtn: { width: 90, height: 90, borderRadius: 12, borderWidth: 1.5, borderStyle: "dashed", alignItems: "center", justifyContent: "center", gap: 4 },
-  addPhotoTxt: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  emptyPhotos: { borderWidth: 1.5, borderStyle: "dashed", borderRadius: 14, padding: 28, alignItems: "center", gap: 8, marginTop: 4 },
-  emptyPhotosTxt: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  emptyPhotosHelper: { fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 18 },
+  addMediaBtn: { width: 90, height: 90, borderRadius: 12, borderWidth: 1.5, borderStyle: "dashed", alignItems: "center", justifyContent: "center", gap: 4 },
+  addMediaTxt: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  emptySlot: { borderWidth: 1.5, borderStyle: "dashed", borderRadius: 14, padding: 24, alignItems: "center", gap: 8, marginTop: 4 },
+  emptySlotTxt: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  emptySlotHelper: { fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 18 },
+  // Videos
+  videoRow: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 6 },
+  videoBadge: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  videoLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  videoUrl: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
+  videoAddBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1, borderRadius: 12, paddingVertical: 13 },
+  videoAddTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  // Social
+  socialRow: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 6 },
+  socialIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
 });

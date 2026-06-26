@@ -17,6 +17,14 @@ const photoUpload = multer({
   },
 });
 
+const videoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 200 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    cb(null, file.mimetype.startsWith("video/"));
+  },
+});
+
 const router: IRouter = Router();
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
@@ -145,9 +153,11 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
     "Home Services", "Real Estate & Housing", "Community & Nonprofit",
   ];
 
-  const { name, category, subcategory, description, phone, website, hours } = req.body as {
+  const { name, category, subcategory, description, phone, website, hours, instagram, tiktok, facebook, twitter, youtube } = req.body as {
     name?: string; category?: string; subcategory?: string; description?: string;
     phone?: string | null; website?: string | null; hours?: string | null;
+    instagram?: string | null; tiktok?: string | null; facebook?: string | null;
+    twitter?: string | null; youtube?: string | null;
   };
 
   if (category && !VALID_CATEGORIES.includes(category)) {
@@ -161,6 +171,11 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
   if (phone !== undefined) updates.phone = phone?.trim() || null;
   if (website !== undefined) updates.website = website?.trim() || null;
   if (hours !== undefined) updates.hours = hours?.trim() || null;
+  if (instagram !== undefined) updates.instagram = instagram?.trim() || null;
+  if (tiktok !== undefined) updates.tiktok = tiktok?.trim() || null;
+  if (facebook !== undefined) updates.facebook = facebook?.trim() || null;
+  if (twitter !== undefined) updates.twitter = twitter?.trim() || null;
+  if (youtube !== undefined) updates.youtube = youtube?.trim() || null;
 
   try {
     const [updated] = await db
@@ -295,6 +310,132 @@ router.patch("/businesses/mine/photos/cover", async (req: any, res: Response) =>
   } catch (err) {
     req.log.error({ err }, "Failed to set cover photo");
     res.status(500).json({ error: "Failed to set cover photo" });
+  }
+});
+
+router.post("/businesses/mine/videos", videoUpload.single("video"), async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!req.file) { res.status(400).json({ error: "No video provided" }); return; }
+
+  try {
+    const [business] = await db
+      .select({ id: businessesTable.id, videos: businessesTable.videos })
+      .from(businessesTable)
+      .where(eq(businessesTable.submittedById, String(userId)));
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const currentVideos = (business.videos as string[]) ?? [];
+    if (currentVideos.length >= 5) {
+      res.status(400).json({ error: "Maximum of 5 videos allowed" }); return;
+    }
+
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (!bucketId) { res.status(500).json({ error: "Object storage not configured" }); return; }
+
+    const { originalname, mimetype, buffer } = req.file;
+    const ext = originalname.split(".").pop()?.toLowerCase() ?? "mp4";
+    const safeExt = ["mp4", "mov", "avi", "webm", "mkv", "m4v"].includes(ext) ? ext : "mp4";
+    const objectKey = `business-videos/${business.id}/${randomUUID()}.${safeExt}`;
+
+    const bucket = objectStorageClient.bucket(bucketId);
+    const gcsFile = bucket.file(objectKey);
+    await gcsFile.save(buffer, { contentType: mimetype });
+    await gcsFile.makePublic();
+
+    const videoUrl = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
+    const updatedVideos = [...currentVideos, videoUrl];
+
+    const [updated] = await db
+      .update(businessesTable)
+      .set({ videos: updatedVideos, updatedAt: new Date() })
+      .where(eq(businessesTable.id, business.id))
+      .returning();
+
+    res.status(201).json({ url: videoUrl, videos: updated.videos });
+  } catch (err) {
+    req.log.error({ err }, "Failed to upload business video");
+    res.status(500).json({ error: "Failed to upload video" });
+  }
+});
+
+router.post("/businesses/mine/videos/link", async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const { url } = req.body as { url?: string };
+  if (!url?.trim()) { res.status(400).json({ error: "url is required" }); return; }
+
+  const ALLOWED_HOSTS = ["youtube.com", "youtu.be", "tiktok.com", "instagram.com", "facebook.com", "fb.watch", "vimeo.com"];
+  try {
+    const hostname = new URL(url).hostname.replace("www.", "");
+    if (!ALLOWED_HOSTS.some((h) => hostname.includes(h))) {
+      res.status(400).json({ error: "Only YouTube, TikTok, Instagram, Facebook, and Vimeo links are accepted" }); return;
+    }
+  } catch {
+    res.status(400).json({ error: "Invalid URL" }); return;
+  }
+
+  try {
+    const [business] = await db
+      .select({ id: businessesTable.id, videos: businessesTable.videos })
+      .from(businessesTable)
+      .where(eq(businessesTable.submittedById, String(userId)));
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const currentVideos = (business.videos as string[]) ?? [];
+    if (currentVideos.length >= 5) {
+      res.status(400).json({ error: "Maximum of 5 videos allowed" }); return;
+    }
+    if (currentVideos.includes(url.trim())) {
+      res.status(409).json({ error: "This link is already added" }); return;
+    }
+
+    const [updated] = await db
+      .update(businessesTable)
+      .set({ videos: [...currentVideos, url.trim()], updatedAt: new Date() })
+      .where(eq(businessesTable.id, business.id))
+      .returning();
+
+    res.status(201).json({ url: url.trim(), videos: updated.videos });
+  } catch (err) {
+    req.log.error({ err }, "Failed to add video link");
+    res.status(500).json({ error: "Failed to add link" });
+  }
+});
+
+router.delete("/businesses/mine/videos", async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const { url } = req.body as { url?: string };
+  if (!url) { res.status(400).json({ error: "url is required" }); return; }
+
+  try {
+    const [business] = await db
+      .select({ id: businessesTable.id, videos: businessesTable.videos })
+      .from(businessesTable)
+      .where(eq(businessesTable.submittedById, String(userId)));
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const updatedVideos = ((business.videos as string[]) ?? []).filter((v) => v !== url);
+
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (bucketId && url.includes(`storage.googleapis.com/${bucketId}/`)) {
+      const objectKey = url.split(`storage.googleapis.com/${bucketId}/`)[1];
+      if (objectKey) objectStorageClient.bucket(bucketId).file(objectKey).delete().catch(() => {});
+    }
+
+    const [updated] = await db
+      .update(businessesTable)
+      .set({ videos: updatedVideos, updatedAt: new Date() })
+      .where(eq(businessesTable.id, business.id))
+      .returning();
+
+    res.json({ videos: updated.videos });
+  } catch (err) {
+    req.log.error({ err }, "Failed to delete video");
+    res.status(500).json({ error: "Failed to delete video" });
   }
 });
 
