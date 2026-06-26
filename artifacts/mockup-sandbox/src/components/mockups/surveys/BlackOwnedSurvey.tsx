@@ -105,7 +105,7 @@ export function BlackOwnedSurvey() {
   const canNext = () => {
     if (step === 0) return data.wouldRecommend > 0;
     if (step === 1) return data.feltWelcomed > 0 && data.culturallyInclusive > 0 && data.staffReflects > 0;
-    if (step === 2) return data.timeOfDay !== "" && data.groupType !== "" && data.incidentOccurred !== null;
+    if (step === 2) return data.timeOfDay !== "" && data.groupType !== "";
     return true;
   };
 
@@ -223,11 +223,6 @@ export function BlackOwnedSurvey() {
               <p style={{ color: TEXT, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Who were you with?</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
                 {GROUPS.map((g) => <Chip key={g} label={g} selected={data.groupType === g} onSelect={() => setData({ ...data, groupType: g })} />)}
-              </div>
-              <p style={{ color: TEXT, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Did any incident occur?</p>
-              <div style={{ display: "flex", gap: 10 }}>
-                <YesNoChip label="No" active={data.incidentOccurred === false} onSelect={() => setData({ ...data, incidentOccurred: false })} color={GREEN} />
-                <YesNoChip label="Yes" active={data.incidentOccurred === true} onSelect={() => setData({ ...data, incidentOccurred: true })} color="#DC2626" />
               </div>
             </div>
           ) : (
