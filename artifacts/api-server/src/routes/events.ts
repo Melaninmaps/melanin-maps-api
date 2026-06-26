@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, eventsTable, savedCommunityLocationsTable, notificationsTable } from "@workspace/db";
-import { eq, desc, and, ilike, or } from "drizzle-orm";
+import { eq, desc, and, ilike, or, gte, sql } from "drizzle-orm";
+import { getUserTier } from "../middleware/requireMembership";
 
 const router: IRouter = Router();
 
@@ -70,6 +71,34 @@ router.post("/events", async (req: Request, res: Response) => {
     if (!req.user?.id) {
       res.status(401).json({ error: "Authentication required" });
       return;
+    }
+
+    // Tier gate: free users cannot create public events; explorer+ limited to 2/month
+    const tier = await getUserTier(req.user.id);
+    if (tier === "free") {
+      res.status(403).json({
+        error: "Creating public events requires an Explorer+ or higher membership.",
+        code: "TIER_LIMIT_REACHED",
+        upgradeUrl: "/membership",
+      });
+      return;
+    }
+    if (tier === "navigator") {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(eventsTable)
+        .where(and(eq(eventsTable.createdById, req.user.id), gte(eventsTable.createdAt, startOfMonth)));
+      if (count >= 2) {
+        res.status(403).json({
+          error: "Explorer+ members can create up to 2 events per month. Upgrade to Navigator for unlimited events.",
+          code: "TIER_LIMIT_REACHED",
+          upgradeUrl: "/membership",
+        });
+        return;
+      }
     }
 
     const {

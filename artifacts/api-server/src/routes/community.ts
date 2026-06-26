@@ -1,7 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, communityPostsTable } from "@workspace/db";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { storage } from "../storage";
+import { getUserTier } from "../middleware/requireMembership";
 import { checkContent, redactForLog } from "../lib/contentFilter";
 import { scanForFamily } from "../lib/familyFilter";
 
@@ -29,6 +30,27 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       res.status(401).json({ error: "Authentication required" });
       return;
     }
+
+    // Tier limit: free members can post 5 times per month
+    const tier = await getUserTier(req.user.id);
+    if (tier === "free") {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(communityPostsTable)
+        .where(and(eq(communityPostsTable.authorId, req.user.id), gte(communityPostsTable.createdAt, startOfMonth)));
+      if (count >= 5) {
+        res.status(403).json({
+          error: "Community Members can post up to 5 times per month. Upgrade to Explorer+ for unlimited posts.",
+          code: "TIER_LIMIT_REACHED",
+          upgradeUrl: "/membership",
+        });
+        return;
+      }
+    }
+
     const { content, category = "general" } = req.body as { content?: string; category?: string };
     if (!content?.trim()) {
       res.status(400).json({ error: "content is required" });

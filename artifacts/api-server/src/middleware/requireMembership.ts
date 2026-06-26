@@ -1,7 +1,19 @@
 import type { Request, Response, NextFunction } from "express";
 import { storage } from "../storage";
 
+// Internal tier identifiers — map to display names:
+//   "free"        → Community Member (Free)
+//   "navigator"   → Explorer+
+//   "trailblazer" → Navigator (top tier)
 export type MembershipTier = "free" | "navigator" | "trailblazer";
+
+export const TIER_DISPLAY: Record<MembershipTier, string> = {
+  free: "Community Member",
+  navigator: "Explorer+",
+  trailblazer: "Navigator",
+};
+
+export const TIER_RANK: Record<MembershipTier, number> = { free: 0, navigator: 1, trailblazer: 2 };
 
 function getTier(user: Awaited<ReturnType<typeof storage.getUser>>): MembershipTier {
   if (!user) return "free";
@@ -27,6 +39,12 @@ function getTier(user: Awaited<ReturnType<typeof storage.getUser>>): MembershipT
   return "free";
 }
 
+/** Resolves the membership tier for any user ID. Use in route handlers for soft limit checks. */
+export async function getUserTier(userId: string): Promise<MembershipTier> {
+  const user = await storage.getUser(userId);
+  return getTier(user);
+}
+
 export function requireMembership(minTier: "navigator" | "trailblazer" = "navigator") {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const userId = (req as any).user?.id;
@@ -41,16 +59,17 @@ export function requireMembership(minTier: "navigator" | "trailblazer" = "naviga
     const user = await storage.getUser(userId);
     const tier = getTier(user);
 
-    const tierRank: Record<MembershipTier, number> = { free: 0, navigator: 1, trailblazer: 2 };
-    if (tierRank[tier] < tierRank[minTier]) {
+    if (TIER_RANK[tier] < TIER_RANK[minTier]) {
       res.status(403).json({
         error: minTier === "trailblazer"
-          ? "This feature requires a Trailblazer membership."
-          : "This feature requires a Navigator or higher membership.",
+          ? "This feature requires a Navigator membership."
+          : "This feature requires an Explorer+ or higher membership.",
         code: "MEMBERSHIP_REQUIRED",
         upgradeUrl: "/membership",
         currentTier: tier,
+        currentTierDisplay: TIER_DISPLAY[tier],
         requiredTier: minTier,
+        requiredTierDisplay: TIER_DISPLAY[minTier],
       });
       return;
     }

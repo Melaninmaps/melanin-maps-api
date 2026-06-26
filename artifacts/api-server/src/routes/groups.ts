@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { groups, groupMembers, groupInvites, groupItineraries, groupSuggestions } from "@workspace/db/schema";
 import { userPreferencesTable, usersTable } from "@workspace/db/schema";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
+import { getUserTier } from "../middleware/requireMembership";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import type { GroupItineraryContent } from "@workspace/db/schema";
 
@@ -121,6 +122,33 @@ router.get("/groups/:id", async (req: Request, res: Response) => {
 router.post("/groups", async (req: Request, res: Response) => {
   if (!requireAuth(req, res)) return;
   try {
+    const userId = req.user!.id;
+
+    // Tier gate: free users cannot create groups; explorer+ limited to 2
+    const tier = await getUserTier(userId);
+    if (tier === "free") {
+      res.status(403).json({
+        error: "Creating groups requires an Explorer+ or higher membership.",
+        code: "TIER_LIMIT_REACHED",
+        upgradeUrl: "/membership",
+      });
+      return;
+    }
+    if (tier === "navigator") {
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(groups)
+        .where(eq(groups.createdBy, userId));
+      if (count >= 2) {
+        res.status(403).json({
+          error: "Explorer+ members can create up to 2 groups. Upgrade to Navigator for unlimited groups.",
+          code: "TIER_LIMIT_REACHED",
+          upgradeUrl: "/membership",
+        });
+        return;
+      }
+    }
+
     const { name, description, category, city, state, isPrivate, maxMembers } = req.body as {
       name?: string;
       description?: string;
@@ -133,7 +161,6 @@ router.post("/groups", async (req: Request, res: Response) => {
 
     if (!name?.trim()) { res.status(400).json({ error: "name is required" }); return; }
 
-    const userId = req.user!.id;
     const cap = Math.min(Math.max(Number(maxMembers) || 8, 2), 8);
 
     const [group] = await db
@@ -483,6 +510,26 @@ router.post("/groups/:id/join", async (req: Request, res: Response) => {
     if (group.isPrivate) {
       res.status(403).json({ error: "This group requires an invitation to join" });
       return;
+    }
+
+    // Tier gate: free=5 groups, explorer+=25 groups, navigator=unlimited
+    const joinTier = await getUserTier(userId);
+    const joinLimit: Record<string, number> = { free: 5, navigator: 25 };
+    if (joinTier in joinLimit) {
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(groupMembers)
+        .where(eq(groupMembers.userId, userId));
+      const limit = joinLimit[joinTier];
+      if (count >= limit) {
+        const nextTier = joinTier === "free" ? "Explorer+" : "Navigator";
+        res.status(403).json({
+          error: `You've reached the ${limit}-group limit for your plan. Upgrade to ${nextTier} to join more groups.`,
+          code: "TIER_LIMIT_REACHED",
+          upgradeUrl: "/membership",
+        });
+        return;
+      }
     }
 
     if (group.isAgeRestricted) {
