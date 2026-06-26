@@ -80,6 +80,9 @@ export default function EditBusinessProfile() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [videos, setVideos] = useState<string[]>([]);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [addLinkVisible, setAddLinkVisible] = useState(false);
+  const [addLinkText, setAddLinkText] = useState("");
+  const [addingLink, setAddingLink] = useState(false);
 
   const update = (key: keyof FormState) => (val: string) =>
     setForm(prev => ({ ...prev, [key]: val }));
@@ -220,28 +223,28 @@ export default function EditBusinessProfile() {
     } finally { setUploadingVideo(false); }
   };
 
-  const handleAddVideoLink = () => {
-    Alert.prompt(
-      "Add Video Link",
-      "Paste a YouTube, TikTok, Instagram, Facebook, or Vimeo link",
-      async (url) => {
-        if (!url?.trim()) return;
-        const token = await getToken();
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-        try {
-          const res = await fetch(`${getApiBase()}/api/businesses/mine/videos/link`, {
-            method: "POST", headers, body: JSON.stringify({ url: url.trim() }),
-          });
-          if (!res.ok) { const e = await res.json() as { error?: string }; throw new Error(e.error ?? "Failed"); }
-          const data = await res.json() as { videos: string[] };
-          setVideos(data.videos);
-        } catch (err) {
-          Alert.alert("Error", err instanceof Error ? err.message : "Could not add link.");
-        }
-      },
-      "plain-text", "", "url"
-    );
+  const handleAddVideoLink = async () => {
+    const url = addLinkText.trim();
+    if (!url) return;
+    setAddingLink(true);
+    const token = await getToken();
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    try {
+      const res = await fetch(`${getApiBase()}/api/businesses/mine/videos/link`, {
+        method: "POST", headers, body: JSON.stringify({ url }),
+      });
+      if (!res.ok) { const e = await res.json() as { error?: string }; throw new Error(e.error ?? "Failed"); }
+      const data = await res.json() as { videos: string[] };
+      setVideos(data.videos);
+      setAddLinkText("");
+      setAddLinkVisible(false);
+      if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err) {
+      Alert.alert("Error", err instanceof Error ? err.message : "Could not add link.");
+    } finally {
+      setAddingLink(false);
+    }
   };
 
   const handleDeleteVideo = (url: string) => {
@@ -349,16 +352,43 @@ export default function EditBusinessProfile() {
           })}
 
           {videos.length < 5 && (
-            <View style={{ flexDirection: "row", gap: 10, marginTop: 4 }}>
-              <TouchableOpacity onPress={handleUploadVideo} disabled={uploadingVideo}
-                style={[styles.videoAddBtn, { backgroundColor: colors.card, borderColor: colors.border, flex: 1 }]} activeOpacity={0.8}>
-                {uploadingVideo ? <ActivityIndicator size="small" color={colors.primary} /> : <><Feather name="upload" size={16} color={colors.primary} /><Text style={[styles.videoAddTxt, { color: colors.primary }]}>Upload Video</Text></>}
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleAddVideoLink}
-                style={[styles.videoAddBtn, { backgroundColor: colors.card, borderColor: colors.border, flex: 1 }]} activeOpacity={0.8}>
-                <Feather name="link" size={16} color={colors.primary} />
-                <Text style={[styles.videoAddTxt, { color: colors.primary }]}>Add Link</Text>
-              </TouchableOpacity>
+            <View style={{ gap: 8, marginTop: 4 }}>
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <TouchableOpacity onPress={handleUploadVideo} disabled={uploadingVideo}
+                  style={[styles.videoAddBtn, { backgroundColor: colors.card, borderColor: colors.border, flex: 1 }]} activeOpacity={0.8}>
+                  {uploadingVideo ? <ActivityIndicator size="small" color={colors.primary} /> : <><Feather name="upload" size={16} color={colors.primary} /><Text style={[styles.videoAddTxt, { color: colors.primary }]}>Upload Video</Text></>}
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setAddLinkVisible(v => !v)}
+                  style={[styles.videoAddBtn, { backgroundColor: addLinkVisible ? colors.primary + "15" : colors.card, borderColor: addLinkVisible ? colors.primary : colors.border, flex: 1 }]} activeOpacity={0.8}>
+                  <Feather name="link" size={16} color={colors.primary} />
+                  <Text style={[styles.videoAddTxt, { color: colors.primary }]}>Add Link</Text>
+                </TouchableOpacity>
+              </View>
+              {addLinkVisible && (
+                <View style={[styles.addLinkBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <TextInput
+                    style={[styles.addLinkInput, { color: colors.foreground, borderColor: colors.border }]}
+                    placeholder="https://youtube.com/watch?v=..."
+                    placeholderTextColor={colors.mutedForeground}
+                    value={addLinkText}
+                    onChangeText={setAddLinkText}
+                    keyboardType="url"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoFocus
+                  />
+                  <View style={{ flexDirection: "row", gap: 8 }}>
+                    <TouchableOpacity onPress={() => { setAddLinkVisible(false); setAddLinkText(""); }}
+                      style={[styles.linkActionBtn, { backgroundColor: colors.secondary, flex: 1 }]} activeOpacity={0.8}>
+                      <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground }}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleAddVideoLink} disabled={!addLinkText.trim() || addingLink}
+                      style={[styles.linkActionBtn, { backgroundColor: colors.primary, flex: 1, opacity: !addLinkText.trim() || addingLink ? 0.6 : 1 }]} activeOpacity={0.8}>
+                      {addingLink ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Add</Text>}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
             </View>
           )}
         </View>
@@ -553,6 +583,9 @@ const styles = StyleSheet.create({
   videoUrl: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
   videoAddBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1, borderRadius: 12, paddingVertical: 13 },
   videoAddTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  addLinkBox: { borderWidth: 1, borderRadius: 12, padding: 12, gap: 10 },
+  addLinkInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, fontFamily: "Inter_400Regular" },
+  linkActionBtn: { alignItems: "center", justifyContent: "center", paddingVertical: 10, borderRadius: 10 },
   // Social
   socialRow: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 6 },
   socialIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
