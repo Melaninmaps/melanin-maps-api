@@ -418,7 +418,7 @@ export default function DiscoverScreen() {
           </View>
         ) : nearby.length > 0 ? (
           <View style={styles.section}>
-            <SectionHeader title="Near You" subtitle="Swipe left to save" />
+            <SectionHeader title="Near You" subtitle="Swipe ← skip  ·  → save" />
             {nearby.map((b) => (
               <View key={b.id}>
                 <SwipeableBusinessCard

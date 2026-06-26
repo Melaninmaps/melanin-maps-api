@@ -36,8 +36,12 @@ export default function EventsScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.foreground }]}>Events</Text>
-        <TouchableOpacity style={[styles.filterBtn, { backgroundColor: colors.secondary }]}>
-          <Feather name="sliders" size={16} color={colors.foreground} />
+        <TouchableOpacity
+          style={[styles.filterBtn, { backgroundColor: colors.secondary }]}
+          onPress={() => router.push("/smart-search" as never)}
+        >
+          <Feather name="sliders" size={15} color={colors.foreground} />
+          <Text style={[styles.filterBtnText, { color: colors.foreground }]}>Filter</Text>
         </TouchableOpacity>
       </View>
 
@@ -132,11 +136,16 @@ const styles = StyleSheet.create({
     fontSize: 26,
   },
   filterBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  filterBtnText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
   },
   timeFilterRow: {
     flexDirection: "row",

@@ -316,7 +316,7 @@ export default function ProfileScreen() {
                 </View>
               )}
               <View style={[styles.avatarOverlay, { backgroundColor: colors.primary }]}>
-                <Feather name="camera" size={10} color="#FFFFFF" />
+                <Feather name="camera" size={14} color="#FFFFFF" />
               </View>
             </TouchableOpacity>
             <View style={styles.profileInfo}>
@@ -960,14 +960,14 @@ const styles = StyleSheet.create({
   },
   avatarOverlay: {
     position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    bottom: -2,
+    right: -2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: "#FFFFFF",
   },
   avatarInitials: {

@@ -508,6 +508,30 @@ export default function CommunityScreen() {
             )}
           />
 
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={[styles.composeBar, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 4 }]}
+            onPress={() => {
+              if (!isAuthenticated) {
+                setUpgradeFeature("Community Groups");
+                setShowUpgrade(true);
+                return;
+              }
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowCreateGroup(true);
+            }}
+          >
+            <View style={[styles.composeBarAvatar, { backgroundColor: colors.primary + "18" }]}>
+              <Feather name="users" size={15} color={colors.primary} />
+            </View>
+            <Text style={[styles.composeBarPlaceholder, { color: colors.mutedForeground }]}>
+              Start a new group for your community
+            </Text>
+            <View style={[styles.composeBarAtBadge, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "25" }]}>
+              <Feather name="plus" size={13} color={colors.primary} />
+            </View>
+          </TouchableOpacity>
+
           <FlatList
             data={filteredGroups}
             keyExtractor={(g) => String(g.id)}
