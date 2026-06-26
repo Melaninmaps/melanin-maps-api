@@ -1,8 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, waitlistTable, usersTable } from "@workspace/db";
-import { count, desc, eq, isNotNull, sql } from "drizzle-orm";
+import { db, waitlistTable, usersTable, businessRecommendationsTable, pointsLedgerTable } from "@workspace/db";
+import { count, desc, eq, ilike, isNotNull, sql } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
-import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification } from "../lib/email";
+import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -447,6 +447,106 @@ router.post("/admin/send-welcome-to", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to send targeted welcome emails");
     res.status(500).json({ error: "Failed to send targeted welcome emails" });
+  }
+});
+
+// ── Public: recommend a business ─────────────────────────────────────────────
+
+router.post("/waitlist/recommend-business", waitlistLimiter, async (req: Request, res: Response) => {
+  const { businessName, website, city, state, category, note, businessEmail } = req.body as {
+    businessName?: string; website?: string; city?: string; state?: string;
+    category?: string; note?: string; businessEmail?: string;
+  };
+
+  if (!businessName?.trim()) {
+    res.status(400).json({ error: "Business name is required" }); return;
+  }
+
+  const uid = req.user?.id ?? null;
+  const recommenderEmail = (req.user as any)?.email ?? null;
+
+  try {
+    const [rec] = await db.insert(businessRecommendationsTable).values({
+      recommenderUserId: uid,
+      recommenderEmail,
+      businessName: businessName.trim(),
+      website: website?.trim() || null,
+      city: city?.trim() || null,
+      state: state?.trim().toUpperCase() || null,
+      category: category?.trim() || null,
+      note: note?.trim() || null,
+      businessEmail: businessEmail?.trim().toLowerCase() || null,
+    }).returning();
+
+    // Count total recommendations for this business (case-insensitive)
+    const [{ total }] = await db
+      .select({ total: count() })
+      .from(businessRecommendationsTable)
+      .where(ilike(businessRecommendationsTable.businessName, businessName.trim()));
+    const recommendationCount = Number(total);
+
+    // Award Community Builder Points if authenticated
+    let pointsEarned = 0;
+    if (uid) {
+      pointsEarned = 20;
+      await db.insert(pointsLedgerTable).values({
+        userId: uid,
+        action: "business_recommendation",
+        points: pointsEarned,
+        entityId: rec.id,
+      });
+      await db.update(businessRecommendationsTable)
+        .set({ pointsAwarded: true })
+        .where(eq(businessRecommendationsTable.id, rec.id));
+    }
+
+    // Send invite email to business (async, don't block response)
+    if (businessEmail?.trim()) {
+      const waitlistLink = `https://mappingwithmelanin.com/waitlist?source=recommended&business=${encodeURIComponent(businessName.trim())}`;
+      sendBusinessRecommendationInvite(
+        businessEmail.trim().toLowerCase(),
+        businessName.trim(),
+        recommendationCount,
+        waitlistLink,
+      ).catch((err: unknown) => req.log.error({ err }, "Failed to send business recommendation invite"));
+      await db.update(businessRecommendationsTable)
+        .set({ emailSentAt: new Date() })
+        .where(eq(businessRecommendationsTable.id, rec.id));
+    }
+
+    res.status(201).json({ success: true, recommendationCount, pointsEarned });
+  } catch (err) {
+    req.log.error({ err }, "Failed to save business recommendation");
+    res.status(500).json({ error: "Failed to save recommendation" });
+  }
+});
+
+// ── Admin: list business recommendations ─────────────────────────────────────
+
+router.get("/admin/business-recommendations", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const recs = await db
+      .select()
+      .from(businessRecommendationsTable)
+      .orderBy(desc(businessRecommendationsTable.createdAt));
+
+    // Group by normalized business name for counts
+    const countMap: Record<string, number> = {};
+    for (const r of recs) {
+      const key = r.businessName.toLowerCase();
+      countMap[key] = (countMap[key] ?? 0) + 1;
+    }
+
+    const enriched = recs.map((r) => ({
+      ...r,
+      totalRecommendations: countMap[r.businessName.toLowerCase()] ?? 1,
+    }));
+
+    res.json({ recommendations: enriched, total: recs.length });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch business recommendations");
+    res.status(500).json({ error: "Failed to fetch recommendations" });
   }
 });
 

@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   Share,
@@ -14,9 +15,11 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/lib/auth";
 
 const REFERRAL_URL = "https://mappingwithmelanin.com/waitlist?ref=";
 const SHARE_PLATFORMS = [
@@ -33,10 +36,233 @@ const BENEFITS = [
   { icon: "users", label: "10K+ Members", desc: "Join a global community of travelers, entrepreneurs, and creators" },
 ];
 
+const BIZ_CATEGORIES = [
+  "Restaurant", "Café", "Retail", "Beauty & Wellness", "Health & Fitness", "Arts & Culture",
+  "Entertainment", "Professional Services", "Tech", "Home Services", "Food & Beverage", "Other",
+];
+
+function getApiBase() {
+  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+}
+
+function RecommendModal({
+  visible, onClose, isAuthenticated,
+}: { visible: boolean; onClose: () => void; isAuthenticated: boolean }) {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const [bizName, setBizName] = useState("");
+  const [website, setWebsite] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [category, setCategory] = useState("");
+  const [note, setNote] = useState("");
+  const [bizEmail, setBizEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  const [result, setResult] = useState<{ recommendationCount: number; pointsEarned: number } | null>(null);
+
+  const reset = () => {
+    setBizName(""); setWebsite(""); setCity(""); setState("");
+    setCategory(""); setNote(""); setBizEmail("");
+    setDone(false); setResult(null);
+  };
+
+  const handleClose = () => { reset(); onClose(); };
+
+  const handleSubmit = async () => {
+    if (!bizName.trim()) return;
+    setLoading(true);
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const res = await fetch(`${getApiBase()}/api/waitlist/recommend-business`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessName: bizName.trim(),
+          website: website.trim() || undefined,
+          city: city.trim() || undefined,
+          state: state.trim() || undefined,
+          category: category || undefined,
+          note: note.trim() || undefined,
+          businessEmail: bizEmail.trim() || undefined,
+        }),
+      });
+      const data = await res.json() as { recommendationCount?: number; pointsEarned?: number };
+      setResult({ recommendationCount: data.recommendationCount ?? 1, pointsEarned: data.pointsEarned ?? 0 });
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {}
+    finally { setLoading(false); setDone(true); }
+  };
+
+  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
+      <KeyboardAvoidingView style={s.modalOverlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={handleClose} />
+        <View style={[s.modalSheet, { backgroundColor: colors.background, paddingBottom: bottomPad + 16 }]}>
+          <View style={[s.modalHandle, { backgroundColor: colors.border }]} />
+
+          {!done ? (
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <Text style={[s.modalTitle, { color: colors.foreground }]}>Help a Business Join 🤎</Text>
+              <Text style={[s.modalSub, { color: colors.mutedForeground }]}>
+                Know a minority-owned business you'd love to see on Mapping with Melanin™? Help us grow our community by recommending a business you believe others should discover.
+              </Text>
+
+              <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Business Name <Text style={{ color: colors.destructive }}>*</Text></Text>
+              <TextInput
+                style={[s.input, { backgroundColor: colors.card, borderColor: bizName.trim() ? colors.border : (!bizName ? colors.border : colors.destructive), color: colors.foreground }]}
+                value={bizName} onChangeText={setBizName}
+                placeholder="e.g. Sweet Auburn Bistro"
+                placeholderTextColor={colors.mutedForeground}
+                autoCapitalize="words"
+              />
+
+              <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Website or Social Media</Text>
+              <TextInput
+                style={[s.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                value={website} onChangeText={setWebsite}
+                placeholder="https://... or @handle"
+                placeholderTextColor={colors.mutedForeground}
+                keyboardType="url" autoCapitalize="none" autoCorrect={false}
+              />
+
+              <View style={s.rowFields}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>City</Text>
+                  <TextInput
+                    style={[s.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                    value={city} onChangeText={setCity}
+                    placeholder="Atlanta" placeholderTextColor={colors.mutedForeground}
+                    autoCapitalize="words"
+                  />
+                </View>
+                <View style={{ width: 80 }}>
+                  <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>State</Text>
+                  <TextInput
+                    style={[s.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                    value={state} onChangeText={(t) => setState(t.toUpperCase())}
+                    placeholder="GA" placeholderTextColor={colors.mutedForeground}
+                    autoCapitalize="characters" maxLength={2}
+                  />
+                </View>
+              </View>
+
+              <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Category</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+                {BIZ_CATEGORIES.map((c) => (
+                  <TouchableOpacity
+                    key={c}
+                    style={[s.chip, { backgroundColor: category === c ? colors.primary : colors.card, borderColor: category === c ? colors.primary : colors.border }]}
+                    onPress={() => setCategory(category === c ? "" : c)}
+                  >
+                    <Text style={[s.chipText, { color: category === c ? "#FFFFFF" : colors.foreground }]}>{c}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Why should this business join? <Text style={{ color: colors.mutedForeground + "80" }}>(optional)</Text></Text>
+              <TextInput
+                style={[s.input, s.textarea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                value={note} onChangeText={setNote}
+                placeholder="Share why this business matters to you and the community…"
+                placeholderTextColor={colors.mutedForeground}
+                multiline maxLength={300}
+              />
+
+              <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>
+                Business Email <Text style={{ color: colors.mutedForeground + "80" }}>(so we can invite them)</Text>
+              </Text>
+              <TextInput
+                style={[s.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                value={bizEmail} onChangeText={setBizEmail}
+                placeholder="hello@theirbusiness.com"
+                placeholderTextColor={colors.mutedForeground}
+                keyboardType="email-address" autoCapitalize="none"
+              />
+
+              {isAuthenticated && (
+                <View style={[s.pointsHint, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "25" }]}>
+                  <Text style={{ fontSize: 18 }}>🤎</Text>
+                  <Text style={[s.pointsHintText, { color: colors.primary }]}>You'll earn <Text style={{ fontFamily: "Inter_700Bold" }}>20 Community Builder Points</Text> for this recommendation.</Text>
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={[s.submitBtn, { backgroundColor: bizName.trim().length >= 2 ? colors.primary : colors.muted, opacity: bizName.trim().length >= 2 ? 1 : 0.5 }]}
+                onPress={handleSubmit}
+                disabled={!bizName.trim() || loading}
+                activeOpacity={0.85}
+              >
+                {loading ? <ActivityIndicator size="small" color="#FFFFFF" /> : (
+                  <Text style={s.submitBtnText}>Recommend This Business →</Text>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
+          ) : (
+            <View style={s.doneWrap}>
+              <Text style={{ fontSize: 52, textAlign: "center" }}>🤎</Text>
+              <Text style={[s.doneTitle, { color: colors.foreground }]}>Thank you!</Text>
+              <Text style={[s.doneSub, { color: colors.mutedForeground }]}>
+                Your recommendation for <Text style={{ fontFamily: "Inter_700Bold", color: colors.foreground }}>{bizName}</Text> has been received.
+              </Text>
+
+              {(result?.recommendationCount ?? 0) >= 2 && (
+                <View style={[s.countCard, { backgroundColor: colors.primary, borderRadius: 16, padding: 20, alignItems: "center", gap: 4 }]}>
+                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 28, color: "#FFFFFF" }}>
+                    {result!.recommendationCount}
+                  </Text>
+                  <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 14, color: "rgba(255,255,255,0.9)" }}>
+                    community members have recommended this business
+                  </Text>
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 4, textAlign: "center" }}>
+                    That's not just an invitation — that's demand. "Our community is already looking for you."
+                  </Text>
+                </View>
+              )}
+
+              {(result?.pointsEarned ?? 0) > 0 && (
+                <View style={[s.pointsBadge, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }]}>
+                  <Text style={{ fontSize: 20 }}>🤎</Text>
+                  <Text style={[s.pointsBadgeText, { color: colors.primary }]}>
+                    +{result!.pointsEarned} Community Builder Points earned!
+                  </Text>
+                </View>
+              )}
+
+              <View style={[s.badgeHint, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={{ fontSize: 20 }}>🏆</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.badgeHintTitle, { color: colors.foreground }]}>Community Recommended Badge</Text>
+                  <Text style={[s.badgeHintSub, { color: colors.mutedForeground }]}>
+                    When this business joins, they'll display a badge showing the community recommended them — not Mapping with Melanin™. Because the community did.
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[s.submitBtn, { backgroundColor: colors.primary }]}
+                onPress={() => { reset(); setBizName(""); }}
+              >
+                <Text style={s.submitBtnText}>Recommend Another Business</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleClose} style={{ alignItems: "center", paddingVertical: 12 }}>
+                <Text style={[s.doneLink, { color: colors.mutedForeground }]}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
 export default function WaitlistScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -50,6 +276,7 @@ export default function WaitlistScreen() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [position, setPosition] = useState(Math.floor(Math.random() * 800) + 200);
+  const [showRecommend, setShowRecommend] = useState(false);
 
   const referralCode = email.replace(/[@.]/g, "").toUpperCase().slice(0, 8) || "MELANIN";
   const referralLink = REFERRAL_URL + referralCode;
@@ -63,7 +290,7 @@ export default function WaitlistScreen() {
     setLoading(true);
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const apiBase = getApiBase();
       const code = email.replace(/[@.]/g, "").toUpperCase().slice(0, 8);
       const res = await fetch(`${apiBase}/api/waitlist`, {
         method: "POST",
@@ -190,7 +417,6 @@ export default function WaitlistScreen() {
                 autoCapitalize="none"
               />
 
-              {/* Business owner toggle */}
               <TouchableOpacity
                 style={[styles.toggleRow, { backgroundColor: colors.card, borderColor: isBusinessOwner ? colors.primary + "60" : colors.border }]}
                 onPress={() => { setIsBusinessOwner((v) => !v); setWebsiteUrl(""); }}
@@ -205,7 +431,6 @@ export default function WaitlistScreen() {
                 </View>
               </TouchableOpacity>
 
-              {/* Website / social URL — required for business owners */}
               {isBusinessOwner && (
                 <>
                   <Text style={[styles.formLabel, { color: colors.foreground }]}>
@@ -249,6 +474,9 @@ export default function WaitlistScreen() {
                 No spam. Unsubscribe anytime. Your data is never sold.{"\n"}We don't sell your attention—we help our community discover great businesses.
               </Text>
             </View>
+
+            {/* Who are we missing? */}
+            <RecommendBanner colors={colors} onPress={() => setShowRecommend(true)} />
           </>
         ) : (
           <>
@@ -296,6 +524,9 @@ export default function WaitlistScreen() {
               </View>
             </View>
 
+            {/* Who are we missing? — after signup too */}
+            <RecommendBanner colors={colors} onPress={() => setShowRecommend(true)} />
+
             <TouchableOpacity
               style={[styles.doneBtn, { backgroundColor: colors.primary }]}
               onPress={() => router.replace("/(tabs)")}
@@ -305,7 +536,37 @@ export default function WaitlistScreen() {
           </>
         )}
       </ScrollView>
+
+      <RecommendModal
+        visible={showRecommend}
+        onClose={() => setShowRecommend(false)}
+        isAuthenticated={isAuthenticated}
+      />
     </KeyboardAvoidingView>
+  );
+}
+
+function RecommendBanner({ colors, onPress }: { colors: ReturnType<typeof useColors>; onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      style={[styles.recommendBanner, { backgroundColor: colors.card, borderColor: colors.primary + "40" }]}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+      <View style={[styles.recommendBannerIcon, { backgroundColor: colors.primary + "15" }]}>
+        <Text style={{ fontSize: 26 }}>🔍</Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.recommendBannerTitle, { color: colors.foreground }]}>Who are we missing?</Text>
+        <Text style={[styles.recommendBannerSub, { color: colors.mutedForeground }]}>
+          Mapping with Melanin™ is built by the community. Help us discover businesses that deserve to be seen, celebrated, and supported.
+        </Text>
+      </View>
+      <View style={[styles.recommendBannerBtn, { backgroundColor: colors.primary }]}>
+        <Text style={styles.recommendBannerBtnText}>Recommend</Text>
+        <Text style={{ fontSize: 14 }}>🤎</Text>
+      </View>
+    </TouchableOpacity>
   );
 }
 
@@ -358,4 +619,44 @@ const styles = StyleSheet.create({
   shareBtnTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   doneBtn: { alignItems: "center", paddingVertical: 17, borderRadius: 16 },
   doneBtnTxt: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
+  recommendBanner: {
+    borderRadius: 20, borderWidth: 2, padding: 18, gap: 12,
+    borderStyle: "dashed",
+  },
+  recommendBannerIcon: { width: 52, height: 52, borderRadius: 16, alignItems: "center", justifyContent: "center", alignSelf: "center" },
+  recommendBannerTitle: { fontFamily: "Inter_700Bold", fontSize: 17, marginBottom: 4 },
+  recommendBannerSub: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20 },
+  recommendBannerBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 8, paddingVertical: 14, borderRadius: 14, marginTop: 4,
+  },
+  recommendBannerBtnText: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF" },
+});
+
+const s = StyleSheet.create({
+  modalOverlay: { flex: 1, justifyContent: "flex-end" },
+  modalSheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, gap: 12, maxHeight: "92%" },
+  modalHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 4 },
+  modalTitle: { fontFamily: "Inter_700Bold", fontSize: 22 },
+  modalSub: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 22, marginBottom: 4 },
+  fieldLabel: { fontFamily: "Inter_500Medium", fontSize: 12, marginBottom: -4 },
+  input: { borderWidth: 1, borderRadius: 12, padding: 13, fontSize: 15, fontFamily: "Inter_400Regular" },
+  textarea: { height: 80, textAlignVertical: "top", paddingTop: 12 },
+  rowFields: { flexDirection: "row", gap: 10 },
+  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
+  chipText: { fontFamily: "Inter_500Medium", fontSize: 13 },
+  pointsHint: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, borderWidth: 1, padding: 12 },
+  pointsHintText: { fontFamily: "Inter_500Medium", fontSize: 13, flex: 1, lineHeight: 18 },
+  submitBtn: { paddingVertical: 16, borderRadius: 16, alignItems: "center", justifyContent: "center", marginTop: 4 },
+  submitBtnText: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF" },
+  doneWrap: { alignItems: "center", gap: 16, paddingVertical: 8 },
+  doneTitle: { fontFamily: "Inter_700Bold", fontSize: 26 },
+  doneSub: { fontFamily: "Inter_400Regular", fontSize: 15, textAlign: "center", lineHeight: 22 },
+  countCard: {},
+  pointsBadge: { flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderRadius: 12, padding: 12, width: "100%" },
+  pointsBadgeText: { fontFamily: "Inter_700Bold", fontSize: 14, flex: 1 },
+  badgeHint: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderWidth: 1, borderRadius: 14, padding: 14, width: "100%" },
+  badgeHintTitle: { fontFamily: "Inter_700Bold", fontSize: 14, marginBottom: 4 },
+  badgeHintSub: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  doneLink: { fontFamily: "Inter_500Medium", fontSize: 15 },
 });
