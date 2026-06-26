@@ -7,6 +7,7 @@ import {
   Alert,
   Animated,
   Linking,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -14,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { getCaptionsForBusiness } from "@/constants/captions";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlackOwnedBadge } from "@/components/BlackOwnedBadge";
 import { BusinessTimeBadges } from "@/components/BusinessTimeBadges";
@@ -70,6 +72,10 @@ export default function BusinessDetailScreen() {
   const [checkInDone, setCheckInDone] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [pointsToast, setPointsToast] = useState<string | null>(null);
+  const [topCaptions, setTopCaptions] = useState<Array<{ caption: string; count: number }>>([]);
+  const [captionSheetOpen, setCaptionSheetOpen] = useState(false);
+  const [pendingCaptions, setPendingCaptions] = useState<string[]>([]);
+  const [captionSubmitting, setCaptionSubmitting] = useState(false);
   const toastOpacity = useRef(new Animated.Value(0)).current;
   const [passThePlateOpen, setPassThePlateOpen] = useState(false);
   const [platePassCount, setPlatePassCount] = useState(0);
@@ -96,6 +102,39 @@ export default function BusinessDetailScreen() {
       } catch {}
     })();
   }, [id]);
+  const fetchCaptions = () => {
+    if (!id) return;
+    const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+    fetch(`${base}/api/captions/${id}`)
+      .then(r => r.ok ? r.json() : { captions: [] })
+      .then((d: { captions?: Array<{ caption: string; count: number }> }) => {
+        if (d?.captions) setTopCaptions(d.captions);
+      })
+      .catch(() => {});
+  };
+
+  const submitCaptionVotes = async () => {
+    if (!id || pendingCaptions.length === 0) return;
+    setCaptionSubmitting(true);
+    try {
+      const { getItemAsync } = await import("expo-secure-store");
+      const token = await getItemAsync("auth_session_token");
+      const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      await fetch(`${base}/api/captions/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ captions: pendingCaptions }),
+      });
+      setCaptionSheetOpen(false);
+      setPendingCaptions([]);
+      fetchCaptions();
+    } catch {} finally {
+      setCaptionSubmitting(false);
+    }
+  };
+
+  useEffect(() => { fetchCaptions(); }, [id]);
+
   useEffect(() => {
     if (!id) return;
     fetch(`/api/plate-passes/${id}/count`)
@@ -363,6 +402,45 @@ export default function BusinessDetailScreen() {
             </View>
           )}
 
+          {/* Community Captions */}
+          {(topCaptions.length > 0 || business) && (
+            <View style={[styles.captionSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.captionHeader}>
+                <Text style={[styles.captionTitle, { color: colors.foreground }]}>🤎 Community Says</Text>
+                <TouchableOpacity
+                  style={[styles.addCaptionBtn, { borderColor: colors.primary, backgroundColor: colors.primary + "10" }]}
+                  onPress={() => { setPendingCaptions([]); setCaptionSheetOpen(true); }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.addCaptionBtnText, { color: colors.primary }]}>+ Add Yours</Text>
+                </TouchableOpacity>
+              </View>
+              {topCaptions.length === 0 ? (
+                <Text style={[styles.captionEmpty, { color: colors.mutedForeground }]}>
+                  Be the first to add a community caption for this business.
+                </Text>
+              ) : (
+                <View style={styles.captionBadgeWrap}>
+                  {topCaptions.slice(0, 12).map((c) => (
+                    <TouchableOpacity
+                      key={c.caption}
+                      style={[styles.captionBadge, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "25" }]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setCaptionSheetOpen(true);
+                        setPendingCaptions([c.caption]);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.captionBadgeCount, { color: colors.primary }]}>{c.count}</Text>
+                      <Text style={[styles.captionBadgeText, { color: colors.foreground }]}>said "{c.caption}"</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
           {/* Info card */}
           <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
             {business.hours && (
@@ -622,9 +700,60 @@ export default function BusinessDetailScreen() {
       <WriteReviewModal
         visible={reviewModalOpen}
         businessName={business.name}
+        businessId={id}
+        businessCategory={business.category}
         onClose={() => setReviewModalOpen(false)}
         onSubmit={handleReviewSubmit}
       />
+
+      {/* Caption Voting Sheet */}
+      <Modal visible={captionSheetOpen} transparent animationType="slide" onRequestClose={() => setCaptionSheetOpen(false)}>
+        <View style={styles.captionOverlay}>
+          <TouchableOpacity style={styles.captionBackdrop} activeOpacity={1} onPress={() => setCaptionSheetOpen(false)} />
+          <View style={[styles.captionSheet, { backgroundColor: colors.background }]}>
+            <View style={[styles.captionHandle, { backgroundColor: colors.border }]} />
+            <Text style={[styles.captionSheetTitle, { color: colors.foreground }]}>What stands out?</Text>
+            <Text style={[styles.captionSheetSub, { color: colors.mutedForeground }]}>Tap all that apply — your picks show up on this profile</Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.captionChipWrap}>
+                {getCaptionsForBusiness(business.category ?? "").map((caption) => {
+                  const active = pendingCaptions.includes(caption);
+                  return (
+                    <TouchableOpacity
+                      key={caption}
+                      style={[styles.captionVoteChip, {
+                        borderColor: active ? colors.primary : colors.border,
+                        backgroundColor: active ? colors.primary + "15" : colors.card,
+                      }]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setPendingCaptions(prev => prev.includes(caption) ? prev.filter(c => c !== caption) : [...prev, caption]);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      {active && <Feather name="check" size={12} color={colors.primary} />}
+                      <Text style={[styles.captionVoteChipText, { color: active ? colors.primary : colors.foreground }]}>{caption}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </ScrollView>
+            <TouchableOpacity
+              style={[styles.captionSubmitBtn, {
+                backgroundColor: pendingCaptions.length > 0 ? colors.primary : colors.muted,
+                opacity: captionSubmitting ? 0.7 : 1,
+              }]}
+              onPress={() => { void submitCaptionVotes(); }}
+              disabled={pendingCaptions.length === 0 || captionSubmitting}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.captionSubmitText, { color: pendingCaptions.length > 0 ? "#FBF7F0" : colors.mutedForeground }]}>
+                {pendingCaptions.length === 0 ? "Select at least one" : `Add ${pendingCaptions.length} Caption${pendingCaptions.length > 1 ? "s" : ""}`}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       <ClaimBusinessModal
         visible={claimModalOpen}
         businessId={id ?? ""}
@@ -906,4 +1035,25 @@ const styles = StyleSheet.create({
   plateTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#FFFFFF", marginBottom: 3 },
   plateSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.75)" },
   plateArrowWrap: { width: 24, alignItems: "center" },
+  captionSection: { marginHorizontal: 16, marginBottom: 16, borderRadius: 16, borderWidth: 1, padding: 16 },
+  captionHeader: { flexDirection: "row" as const, alignItems: "center" as const, justifyContent: "space-between" as const, marginBottom: 12 },
+  captionTitle: { fontFamily: "Inter_700Bold", fontSize: 15 },
+  addCaptionBtn: { borderWidth: 1.5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
+  addCaptionBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  captionEmpty: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
+  captionBadgeWrap: { flexDirection: "row" as const, flexWrap: "wrap" as const, gap: 8 },
+  captionBadge: { flexDirection: "row" as const, alignItems: "center" as const, gap: 5, borderWidth: 1, borderRadius: 24, paddingHorizontal: 12, paddingVertical: 7 },
+  captionBadgeCount: { fontFamily: "Inter_700Bold", fontSize: 13 },
+  captionBadgeText: { fontFamily: "Inter_500Medium", fontSize: 12 },
+  captionOverlay: { flex: 1, justifyContent: "flex-end" as const },
+  captionBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)" },
+  captionSheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingBottom: 32, paddingTop: 12, maxHeight: "75%" as const },
+  captionHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center" as const, marginBottom: 16 },
+  captionSheetTitle: { fontFamily: "Inter_700Bold", fontSize: 18, marginBottom: 6 },
+  captionSheetSub: { fontFamily: "Inter_400Regular", fontSize: 13, marginBottom: 16, lineHeight: 19 },
+  captionChipWrap: { flexDirection: "row" as const, flexWrap: "wrap" as const, gap: 8, paddingBottom: 16 },
+  captionVoteChip: { flexDirection: "row" as const, alignItems: "center" as const, gap: 6, borderWidth: 1.5, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
+  captionVoteChipText: { fontFamily: "Inter_500Medium", fontSize: 13 },
+  captionSubmitBtn: { marginTop: 8, paddingVertical: 16, borderRadius: 14, alignItems: "center" as const },
+  captionSubmitText: { fontFamily: "Inter_700Bold", fontSize: 16 },
 });

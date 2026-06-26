@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { useColors } from "@/hooks/useColors";
 import { COMMUNITY_RATINGS } from "@/components/RatingStars";
+import { getCaptionsForBusiness } from "@/constants/captions";
 
 const PLATFORMS = [
   { id: "instagram", label: "Instagram", icon: "logo-instagram" },
@@ -37,11 +38,12 @@ interface Props {
   visible: boolean;
   businessName: string;
   businessId?: string;
+  businessCategory?: string;
   onClose: () => void;
   onSubmit: (rating: number, text: string, wouldReturn: boolean | null, socialHandle?: string, socialPlatform?: string, videoUrl?: string, nonMinorityOwned?: boolean, communitySupport?: number, website?: string, location?: string, isAnonymous?: boolean, volunteerAsMentor?: boolean, nowHiringUrl?: string) => void;
 }
 
-export function WriteReviewModal({ visible, businessName, businessId, onClose, onSubmit }: Props) {
+export function WriteReviewModal({ visible, businessName, businessId, businessCategory, onClose, onSubmit }: Props) {
   const colors = useColors();
   const [rating, setRating] = useState(0);
   const [text, setText] = useState("");
@@ -57,6 +59,7 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
   const [recommendsAsEmployer, setRecommendsAsEmployer] = useState<boolean | null>(null);
   const [volunteerAsMentor, setVolunteerAsMentor] = useState(false);
   const [nowHiringUrl, setNowHiringUrl] = useState("");
+  const [selectedCaptions, setSelectedCaptions] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [inviteSent, setInviteSent] = useState(false);
   const [volunteeredAsMentor, setVolunteeredAsMentor] = useState(false);
@@ -76,9 +79,29 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
     setRecommendsAsEmployer(null);
     setVolunteerAsMentor(false);
     setNowHiringUrl("");
+    setSelectedCaptions([]);
     setSubmitted(false);
     setInviteSent(false);
     setVolunteeredAsMentor(false);
+  };
+
+  const submitCaptions = (captions: string[]) => {
+    if (!businessId || captions.length === 0) return;
+    void (async () => {
+      try {
+        const { getItemAsync } = await import("expo-secure-store");
+        const token = await getItemAsync("auth_session_token");
+        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        await fetch(`${base}/api/captions/${businessId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ captions }),
+        });
+      } catch {}
+    })();
   };
 
   const handleClose = () => {
@@ -99,6 +122,7 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
     setVolunteeredAsMentor(willMentor);
     setSubmitted(true);
     onSubmit(rating, text, wouldReturnBool, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl, nonMinorityOwned, communitySupport > 0 && !nonMinorityOwned ? communitySupport : undefined, website.trim() || undefined, location.trim() || undefined, nonMinorityOwned ? isAnonymous : undefined, willMentor || undefined, cleanNowHiring);
+    submitCaptions(selectedCaptions);
     setTimeout(() => {
       reset();
       onClose();
@@ -223,6 +247,45 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
                 value={text}
                 onChangeText={setText}
               />
+
+              {/* Community Captions */}
+              {getCaptionsForBusiness(businessCategory ?? "", recommendsAsEmployer === true).length > 0 && (
+                <>
+                  <Text style={[styles.label, { color: colors.foreground }]}>
+                    What stands out?{" "}
+                    <Text style={{ color: colors.mutedForeground }}>(optional)</Text>
+                  </Text>
+                  <Text style={[styles.supportSub, { color: colors.mutedForeground }]}>
+                    Tap all that apply — your picks show up on the business profile
+                  </Text>
+                  <View style={styles.captionWrap}>
+                    {getCaptionsForBusiness(businessCategory ?? "", recommendsAsEmployer === true).map((caption) => {
+                      const active = selectedCaptions.includes(caption);
+                      return (
+                        <TouchableOpacity
+                          key={caption}
+                          style={[styles.captionChip, {
+                            borderColor: active ? colors.primary : colors.border,
+                            backgroundColor: active ? colors.primary + "15" : colors.card,
+                          }]}
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setSelectedCaptions(prev =>
+                              prev.includes(caption) ? prev.filter(c => c !== caption) : [...prev, caption]
+                            );
+                          }}
+                          activeOpacity={0.7}
+                        >
+                          {active && <Feather name="check" size={11} color={colors.primary} />}
+                          <Text style={[styles.captionChipText, { color: active ? colors.primary : colors.foreground }]}>
+                            {caption}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </>
+              )}
 
               {!nonMinorityOwned && (
                 <>
@@ -700,6 +763,25 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: "Inter_400Regular",
     fontSize: 14,
+  },
+  captionWrap: {
+    flexDirection: "row" as const,
+    flexWrap: "wrap" as const,
+    gap: 8,
+    marginBottom: 20,
+  },
+  captionChip: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 5,
+    borderWidth: 1.5,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  captionChipText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
   },
   supportSub: {
     fontFamily: "Inter_400Regular",

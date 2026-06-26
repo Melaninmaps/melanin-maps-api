@@ -65,3 +65,4 @@ export * from "./entity-connections";
 export * from "./community-signals";
 export * from "./notifications";
 export * from "./knowledge-channels";
+export * from "./business-captions";
