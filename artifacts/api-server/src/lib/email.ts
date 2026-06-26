@@ -1431,80 +1431,82 @@ export async function sendBusinessResponseInvitation(
   to: string,
   businessName: string,
   responseUrl: string,
-  reportCategory: string,
+  _reportCategory: string,
 ) {
-  const categoryLabels: Record<string, string> = {
-    safety: "Safety or Conduct Concern",
-    discrimination: "Discrimination Concern",
-    sundown: "Community Safety Warning",
-  };
-  const categoryLabel = categoryLabels[reportCategory] ?? "Community Concern";
-
   if (!resend) { log("business response invitation"); return; }
   await resend.emails.send({
-    from: FROM,
+    from: "Mapping With Melanin™ Community Trust & Safety <hello@send.mappingwithmelanin.com>",
     to,
-    subject: `Community Concern Notification — ${businessName}`,
+    subject: `Community Report Notification — ${businessName}`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:32px">
-          <div style="background:#2B1507;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px">🗺️</div>
+
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:36px">
+          <div style="background:#2B1507;border-radius:8px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🗺️</div>
           <div>
-            <p style="color:#2B1507;font-size:14px;font-weight:800;margin:0">Mapping With Melanin™</p>
-            <p style="color:#6B5744;font-size:11px;margin:0">Community Accountability Portal</p>
+            <p style="color:#2B1507;font-size:15px;font-weight:800;margin:0;line-height:1.2">Mapping With Melanin™</p>
+            <p style="color:#6B5744;font-size:12px;margin:2px 0 0">Community Trust &amp; Safety Team</p>
           </div>
         </div>
 
-        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 16px">Hello,</p>
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 20px">Hello,</p>
 
-        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 20px">
-          A community member has submitted a <strong>${categoryLabel}</strong> involving <strong>${businessName}</strong> through the Mapping With Melanin™ platform.
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 20px">
+          We're reaching out because a verified member of the Mapping with Melanin™ community submitted a report describing an experience at your business that involves a safety or conduct concern.
         </p>
 
-        <div style="background:#FFFFFF;border:1px solid #E8DDD0;border-radius:12px;padding:20px 24px;margin:0 0 24px">
-          <p style="color:#6B5744;font-size:12px;font-weight:600;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.05em">This is not a penalty or a conclusion.</p>
-          <p style="color:#3A1F0E;font-size:15px;line-height:1.7;margin:0">
-            It is an opportunity. Community members who submit serious concerns deserve to know that businesses had a fair chance to respond — and that the platform values accountability on all sides.
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 20px">
+          As part of our commitment to fairness, transparency, and community trust, we review reports for compliance with our Community Guidelines before taking any action. This notification does <strong>not</strong> mean that Mapping with Melanin™ has verified the accuracy of the report or reached any conclusions. It simply means a report meeting our submission guidelines has been received.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 20px">
+          Although your business is not currently a participating business on our platform, we believe organizations should have an opportunity to be aware of concerns shared by members of the community and, if they choose, provide additional context or describe any actions taken to address the matter.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 28px">
+          If you would like to respond, you may do so using the secure link below.
+        </p>
+
+        <div style="background:#2B1507;border-radius:14px;padding:28px 32px;margin:0 0 32px;text-align:center">
+          <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 6px;letter-spacing:0.02em">Respond to This Report</p>
+          <p style="color:#CA922B;font-size:12px;margin:0 0 20px;opacity:0.9">Secure link — unique to this report, valid for 30 days</p>
+          <a href="${responseUrl}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:15px 36px;border-radius:50px;text-decoration:none;letter-spacing:0.01em">
+            Submit Your Response →
+          </a>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 12px">When responding, you may:</p>
+        <ul style="color:#3A1F0E;font-size:15px;line-height:2;margin:0 0 28px;padding-left:22px">
+          <li>Share your perspective regarding the reported incident.</li>
+          <li>Clarify any factual information you believe is inaccurate.</li>
+          <li>Explain any corrective actions or policy changes.</li>
+          <li>Provide additional information that may help our moderation team better understand the situation.</li>
+        </ul>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 20px">
+          Our moderation team reviews both community reports and business responses before determining how information will be presented on the platform.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 32px">
+          Our goal is not to discourage businesses or create unnecessary conflict. Our mission is to encourage transparency, accountability, and constructive dialogue while helping community members make informed decisions.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 32px">Thank you for taking the time to review this notification.</p>
+
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">Sincerely,</p>
+        <p style="color:#2B1507;font-size:16px;font-weight:700;margin:0 0 8px">The Mapping with Melanin™ Community Trust &amp; Safety Team</p>
+        <p style="color:#6B5744;font-size:13px;font-style:italic;margin:0 0 24px;line-height:1.6">
+          "Building stronger communities through transparency, accountability, and meaningful dialogue."
+        </p>
+
+        <div style="border-top:1px solid #E8DDD0;padding-top:20px">
+          <p style="color:#6B5744;font-size:12px;margin:0;line-height:1.6">
+            If you believe you received this notification in error, or have questions about this process, please contact us at
+            <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B;text-decoration:none">hello@mappingwithmelanin.com</a>.
+            Do not reply directly to this email.
           </p>
         </div>
 
-        <p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 16px">Using the secure link below, you may:</p>
-        <ul style="color:#3A1F0E;font-size:15px;line-height:2;margin:0 0 24px;padding-left:20px">
-          <li>Submit a statement explaining your perspective</li>
-          <li>Describe corrective actions you have taken or plan to take</li>
-          <li>Share how you intend to rebuild community trust</li>
-          <li>Dispute any specific factual inaccuracies in the report</li>
-        </ul>
-
-        <p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 24px">
-          Your response will be reviewed by our moderation team and published alongside the community concern — giving the public a complete picture rather than a one-sided account.
-        </p>
-
-        <div style="background:#2B1507;border-radius:12px;padding:24px;margin:0 0 28px;text-align:center">
-          <p style="color:#F5EBD8;font-size:15px;font-weight:600;margin:0 0 16px">Submit your response using this secure link:</p>
-          <a href="${responseUrl}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:14px 32px;border-radius:50px;text-decoration:none">
-            Submit Your Response →
-          </a>
-          <p style="color:#CA922B;font-size:12px;margin:14px 0 0;opacity:0.8">This link is valid for 30 days and is unique to this report.</p>
-        </div>
-
-        <div style="background:#FFFFFF;border:1px solid #E8DDD0;border-radius:12px;padding:16px 20px;margin:0 0 24px">
-          <p style="color:#2B1507;font-size:13px;font-weight:700;margin:0 0 10px">What happens after you respond</p>
-          <ul style="color:#6B5744;font-size:13px;line-height:1.9;margin:0;padding-left:18px">
-            <li>Our moderation team reviews your response</li>
-            <li>Your response is published alongside the community concern</li>
-            <li>The original reporter may update their concern if the issue is resolved</li>
-            <li>The full history remains visible to the community</li>
-          </ul>
-        </div>
-
-        <p style="color:#6B5744;font-size:13px;line-height:1.6;margin:0 0 24px">
-          If you believe you received this notification in error, or have questions about this process, please contact us at
-          <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a>.
-        </p>
-
-        <p style="color:#2B1507;font-size:14px;font-weight:700;margin:0 0 4px">The Mapping With Melanin™ Team</p>
-        <p style="color:#6B5744;font-size:13px;margin:0;opacity:0.7">Melanin Maps LLC</p>
       </div>
     `,
   });
