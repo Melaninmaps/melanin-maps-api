@@ -233,29 +233,38 @@ export function WriteReviewModal({ visible, businessName, businessId, onClose, o
                   <Text style={[styles.supportSub, { color: colors.mutedForeground }]}>
                     How strongly would you recommend the community show up for this business?
                   </Text>
-                  <View style={styles.stars}>
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <TouchableOpacity
-                        key={s}
-                        onPress={() => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          setCommunitySupport(communitySupport === s ? 0 : s);
-                        }}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      >
-                        <Text style={{ fontSize: 30, opacity: s <= communitySupport ? 1 : 0.25 }}>🤎</Text>
-                      </TouchableOpacity>
-                    ))}
+                  <View style={styles.ratingCards}>
+                    {[
+                      { level: 1, hearts: "🤎", label: "Worth checking out" },
+                      { level: 2, hearts: "🤎🤎", label: "Solid spot — spread the word" },
+                      { level: 3, hearts: "🤎🤎🤎", label: "Strong community pick!" },
+                      { level: 4, hearts: "🤎🤎🤎🤎", label: "A must-visit — go now!" },
+                      { level: 5, hearts: "🔥", label: "Drop everything and support!" },
+                    ].map((s) => {
+                      const selected = communitySupport === s.level;
+                      return (
+                        <TouchableOpacity
+                          key={s.level}
+                          style={[styles.ratingCard, {
+                            borderColor: selected ? colors.primary : colors.border,
+                            backgroundColor: selected ? colors.primary + "12" : colors.card,
+                          }]}
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setCommunitySupport(communitySupport === s.level ? 0 : s.level);
+                          }}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.ratingCardEmoji}>{s.hearts}</Text>
+                          <Text style={[styles.ratingCardLabel, {
+                            color: selected ? colors.primary : colors.foreground,
+                            fontFamily: selected ? "Inter_700Bold" : "Inter_600SemiBold",
+                          }]}>{s.label}</Text>
+                          {selected && <Feather name="check-circle" size={16} color={colors.primary} />}
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
-                  {communitySupport > 0 && (
-                    <Text style={[styles.supportHint, { color: colors.primary }]}>
-                      {communitySupport === 1 && "Worth checking out"}
-                      {communitySupport === 2 && "Solid spot — spread the word"}
-                      {communitySupport === 3 && "Strong community pick!"}
-                      {communitySupport === 4 && "A must-visit — go now!"}
-                      {communitySupport === 5 && "🔥 Drop everything and support this business!"}
-                    </Text>
-                  )}
                 </>
               )}
 
