@@ -484,6 +484,8 @@ export default function BusinessDetailScreen() {
                   <TouchableOpacity
                     style={[styles.socialBtn, { backgroundColor: "#E1306C18", borderColor: "#E1306C30" }]}
                     onPress={() => handleSocialLink(business.instagram!, "https://instagram.com/")}
+                    accessibilityLabel={`View ${business.name} on Instagram`}
+                    accessibilityRole="link"
                   >
                     <Feather name="instagram" size={15} color="#E1306C" />
                     <Text style={[styles.socialBtnText, { color: "#E1306C" }]}>Instagram</Text>
@@ -493,6 +495,8 @@ export default function BusinessDetailScreen() {
                   <TouchableOpacity
                     style={[styles.socialBtn, { backgroundColor: "#00000015", borderColor: "#00000025" }]}
                     onPress={() => handleSocialLink(business.tiktok!, "https://tiktok.com/@")}
+                    accessibilityLabel={`View ${business.name} on TikTok`}
+                    accessibilityRole="link"
                   >
                     <Feather name="music" size={15} color={colors.foreground} />
                     <Text style={[styles.socialBtnText, { color: colors.foreground }]}>TikTok</Text>
@@ -502,6 +506,8 @@ export default function BusinessDetailScreen() {
                   <TouchableOpacity
                     style={[styles.socialBtn, { backgroundColor: "#1DA1F218", borderColor: "#1DA1F230" }]}
                     onPress={() => handleSocialLink(business.twitter!, "https://x.com/")}
+                    accessibilityLabel={`View ${business.name} on X / Twitter`}
+                    accessibilityRole="link"
                   >
                     <Feather name="twitter" size={15} color="#1DA1F2" />
                     <Text style={[styles.socialBtnText, { color: "#1DA1F2" }]}>X / Twitter</Text>
@@ -511,6 +517,8 @@ export default function BusinessDetailScreen() {
                   <TouchableOpacity
                     style={[styles.socialBtn, { backgroundColor: "#1877F218", borderColor: "#1877F230" }]}
                     onPress={() => handleSocialLink(business.facebook!, "https://facebook.com/")}
+                    accessibilityLabel={`View ${business.name} on Facebook`}
+                    accessibilityRole="link"
                   >
                     <Feather name="facebook" size={15} color="#1877F2" />
                     <Text style={[styles.socialBtnText, { color: "#1877F2" }]}>Facebook</Text>
@@ -520,6 +528,8 @@ export default function BusinessDetailScreen() {
                   <TouchableOpacity
                     style={[styles.socialBtn, { backgroundColor: "#FF000015", borderColor: "#FF000025" }]}
                     onPress={() => handleSocialLink(business.youtube!, "https://youtube.com/@")}
+                    accessibilityLabel={`View ${business.name} on YouTube`}
+                    accessibilityRole="link"
                   >
                     <Feather name="youtube" size={15} color="#FF0000" />
                     <Text style={[styles.socialBtnText, { color: "#FF0000" }]}>YouTube</Text>

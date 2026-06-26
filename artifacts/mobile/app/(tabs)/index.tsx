@@ -33,11 +33,21 @@ import { useAlerts } from "@/hooks/useAlerts";
 import { type FilterState } from "@/components/ScoreFilterPanel";
 import { useSpaces } from "@/hooks/useSpaces";
 import { useDismissedBusinesses } from "@/hooks/useDismissedBusinesses";
+import { useAuth } from "@/lib/auth";
+
+function getTimeGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  if (h < 21) return "Good evening";
+  return "Good night";
+}
 
 export default function DiscoverScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { user } = useAuth();
   const { isSaved, toggleSave } = useFavorites();
 
   const [search, setSearch] = useState("");
@@ -126,7 +136,7 @@ export default function DiscoverScreen() {
               style={styles.logoImg}
               contentFit="contain"
             />
-            <Text style={styles.greeting}>Good morning 👋🏾</Text>
+            <Text style={styles.greeting}>{getTimeGreeting()}{user?.firstName ? `, ${user.firstName}` : ""} 👋🏾</Text>
           </View>
           <TouchableOpacity style={styles.notifBtn} activeOpacity={0.8} onPress={() => router.push("/messages")}>
             <Feather name="bell" size={20} color="#FFFFFF" />

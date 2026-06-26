@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Platform,
   ScrollView,
@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import * as SecureStore from "expo-secure-store";
+import { useAuth } from "@/lib/auth";
 
 type NotifType = "all" | "safety" | "events" | "business" | "community" | "weather" | "travel";
 
@@ -123,10 +125,51 @@ const TABS: { id: NotifType; label: string }[] = [
   { id: "community", label: "Community" },
 ];
 
+const ICON_MAP: Record<string, Notif["icon"]> = {
+  safety: "shield", events: "calendar", business: "shopping-bag",
+  community: "message-circle", weather: "cloud-rain", travel: "navigation",
+};
+const COLOR_MAP: Record<string, string> = {
+  safety: "#3B1F0E", events: "#2D7A4F", business: "#C9922B",
+  community: "#7B4F2E", weather: "#1D4ED8", travel: "#7C3AED",
+};
+
+function getTimeGroup(createdAt: string): Notif["group"] {
+  const diff = Date.now() - new Date(createdAt).getTime();
+  if (diff < 86_400_000) return "Today";
+  if (diff < 604_800_000) return "This Week";
+  return "Earlier";
+}
+
+function getRelativeTime(createdAt: string): string {
+  const diff = Math.floor((Date.now() - new Date(createdAt).getTime()) / 1000);
+  if (diff < 60) return "Just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+  return new Date(createdAt).toLocaleDateString();
+}
+
+function mapApiRow(row: Record<string, unknown>): Notif {
+  const type = (row.type as string) in ICON_MAP ? (row.type as Notif["type"]) : "community";
+  return {
+    id: String(row.id),
+    type,
+    icon: ICON_MAP[type] ?? "bell",
+    color: COLOR_MAP[type] ?? "#7B4F2E",
+    title: String(row.title ?? ""),
+    body: String(row.body ?? ""),
+    time: getRelativeTime(String(row.createdAt ?? row.created_at ?? "")),
+    read: Boolean(row.read),
+    group: getTimeGroup(String(row.createdAt ?? row.created_at ?? new Date().toISOString())),
+  };
+}
+
 export default function NotificationCenterScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -134,13 +177,60 @@ export default function NotificationCenterScreen() {
   const [activeTab, setActiveTab] = useState<NotifType>("all");
   const [notifs, setNotifs] = useState<Notif[]>(NOTIFS);
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    async function load() {
+      try {
+        const token = Platform.OS !== "web"
+          ? await SecureStore.getItemAsync("auth_session_token")
+          : null;
+        if (!token) return;
+        const res = await fetch("/api/notifications", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const rows: Record<string, unknown>[] = data?.notifications ?? [];
+        if (rows.length > 0) setNotifs(rows.map(mapApiRow));
+      } catch {
+        // keep demo data on error
+      }
+    }
+    load();
+  }, [isAuthenticated]);
+
   const filtered = activeTab === "all" ? notifs : notifs.filter((n) => n.type === activeTab);
   const unreadCount = notifs.filter((n) => !n.read).length;
 
   const groups = ["Today", "This Week", "Earlier"] as const;
 
-  const markAllRead = () => setNotifs((ns) => ns.map((n) => ({ ...n, read: true })));
-  const markRead = (id: string) => setNotifs((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  const markAllRead = async () => {
+    setNotifs((ns) => ns.map((n) => ({ ...n, read: true })));
+    try {
+      const token = Platform.OS !== "web"
+        ? await SecureStore.getItemAsync("auth_session_token")
+        : null;
+      if (!token) return;
+      fetch("/api/notifications/mark-all-read", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    } catch { /* ignore */ }
+  };
+
+  const markRead = async (id: string) => {
+    setNotifs((ns) => ns.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    try {
+      const token = Platform.OS !== "web"
+        ? await SecureStore.getItemAsync("auth_session_token")
+        : null;
+      if (!token) return;
+      fetch(`/api/notifications/${id}/read`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    } catch { /* ignore */ }
+  };
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>

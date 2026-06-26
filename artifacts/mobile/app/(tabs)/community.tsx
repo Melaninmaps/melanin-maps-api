@@ -351,12 +351,16 @@ export default function CommunityScreen() {
         showsHorizontalScrollIndicator={false}
         style={[styles.tabRow, { borderBottomColor: colors.border }]}
         contentContainerStyle={{ flexDirection: "row" }}
+        accessibilityRole="tablist"
       >
         {TABS.map((tab) => (
           <TouchableOpacity
             key={tab}
             onPress={() => setActiveTab(tab)}
             style={[styles.tabBtn, activeTab === tab && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: activeTab === tab }}
+            accessibilityLabel={tab}
           >
             <Text style={[styles.tabText, { color: activeTab === tab ? colors.primary : colors.mutedForeground }]}>
               {tab}
