@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { MapPin, ArrowRight, Shield, Search, Sparkles, Users, Building2, Globe, BookOpen, Facebook, Linkedin, Instagram, Link2, UserPlus, MessageSquare } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { RotatingQuoteBanner } from "@/components/RotatingQuoteBanner";
 
 const BASE = import.meta.env.BASE_URL;
 const SITE_URL = "https://mappingwithmelanin.com";
@@ -420,6 +421,8 @@ export default function Home() {
 
       <WaveDivider fromBg="#2B1507" toBg="#FAF6EF" />
 
+      <RotatingQuoteBanner variant="cream" />
+
       {/* ── REFERRAL CTA ── */}
       <section className="py-20 bg-[#FAF6EF]">
         <div className="container mx-auto px-4 max-w-4xl text-center">
@@ -468,6 +471,8 @@ export default function Home() {
       </section>
 
       <WaveDivider fromBg="#2B1507" toBg="white" />
+
+      <RotatingQuoteBanner variant="light" />
 
       {/* ── COMMUNITY VOICES ── */}
       <section className="py-24 bg-white">
@@ -522,6 +527,8 @@ export default function Home() {
       </section>
 
       <WaveDivider fromBg="white" toBg="#2B1507" flip />
+
+      <RotatingQuoteBanner variant="dark" />
 
       {/* ── APP COMING SOON ── */}
       <section className="py-24 bg-[#2B1507] text-white overflow-hidden">

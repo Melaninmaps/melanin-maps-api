@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Check, ArrowRight } from "lucide-react";
+import { RotatingQuoteBanner } from "@/components/RotatingQuoteBanner";
 
 function WaveDivider({ fromBg, toBg, flip = false }: { fromBg: string; toBg: string; flip?: boolean }) {
   const d = flip
@@ -103,6 +104,8 @@ export default function About() {
       </section>
 
       <WaveDivider fromBg="white" toBg="#FAF6EF" />
+
+      <RotatingQuoteBanner variant="cream" />
 
       {/* The Problem */}
       <section className="py-24 bg-[#FAF6EF]">
