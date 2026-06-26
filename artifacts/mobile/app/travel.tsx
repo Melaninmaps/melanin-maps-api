@@ -72,6 +72,40 @@ const WELCOME_CHIPS = [
   "Would my community like this city?",
 ];
 
+// ─── Kinfolk Voices™ constants ────────────────────────────────────────────────
+const KINFOLK_VOICES = [
+  { id: "community", icon: "🤎", label: "Community", desc: "Warm, supportive, conversational", requiresPaid: false },
+  { id: "home", icon: "🏠", label: "Home", desc: "Your personal comfort style", requiresPaid: true },
+  { id: "local", icon: "🌎", label: "Local", desc: "City expressions & neighborhood names", requiresPaid: true },
+  { id: "professional", icon: "💼", label: "Pro", desc: "Clear, neutral, business-ready", requiresPaid: true },
+] as const;
+
+const COMM_STYLES = [
+  { id: "friendly", label: "Friendly", example: "\"I found a few spots I think you'll love!\"" },
+  { id: "community", label: "Community", example: "\"The community really enjoys this one.\"" },
+  { id: "professional", label: "Professional", example: "\"Here are three options matching your criteria.\"" },
+  { id: "conversational", label: "Conversational", example: "\"ok so there's this spot you gotta check out...\"" },
+];
+
+const EMOJI_LEVELS = [
+  { id: "none", label: "None" },
+  { id: "some", label: "A little ✨" },
+  { id: "lots", label: "Lots 🎉🔥" },
+];
+
+const HUMOR_LEVELS = [
+  { id: "off", label: "Just the facts" },
+  { id: "light", label: "Light warmth" },
+  { id: "playful", label: "Playful — let's have fun" },
+];
+
+const CULTURAL_INTERESTS_LIST = [
+  "Black History", "Soul Food", "Music & Jazz", "Natural Hair",
+  "HBCUs", "Faith-Based", "Family Travel", "Solo Exploration",
+  "Art & Culture", "Entrepreneurship", "Nightlife", "Blues & Gospel",
+  "Caribbean Culture", "African Heritage", "Wellness", "Local Events",
+];
+
 // ─── Sub-component: Business Card ────────────────────────────────────────────
 function BusinessCard({
   biz, messageId, city, feedback, onFeedback, wishlistItemId, onWishlist,
@@ -589,11 +623,19 @@ function TasteProfileSheet({
   colors: ReturnType<typeof useColors>;
 }) {
   const { preferences, update } = useUserPreferences();
+  const { subscription } = useMembership();
+  const isPaid = !!subscription;
+
   const [favCats, setFavCats] = useState<string[]>(preferences?.favoriteCategories ?? []);
   const [avoidCats, setAvoidCats] = useState<string[]>(preferences?.avoidCategories ?? []);
   const [budget, setBudget] = useState(preferences?.budgetRange ?? "any");
   const [tripStyles, setTripStyles] = useState<string[]>(preferences?.tripStyle ?? []);
   const [companion, setCompanion] = useState(preferences?.travelCompanion ?? "solo");
+  const [commStyle, setCommStyle] = useState(preferences?.communicationStyle ?? "friendly");
+  const [emojiLvl, setEmojiLvl] = useState(preferences?.emojiLevel ?? "some");
+  const [humor, setHumor] = useState(preferences?.humorLevel ?? "light");
+  const [culturalInt, setCulturalInt] = useState<string[]>((preferences?.culturalInterests ?? []) as string[]);
+  const [kbyg, setKbyg] = useState(preferences?.knowBeforeYouGo !== false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -603,6 +645,11 @@ function TasteProfileSheet({
       setBudget(preferences.budgetRange ?? "any");
       setTripStyles(preferences.tripStyle ?? []);
       setCompanion(preferences.travelCompanion ?? "solo");
+      setCommStyle(preferences.communicationStyle ?? "friendly");
+      setEmojiLvl(preferences.emojiLevel ?? "some");
+      setHumor(preferences.humorLevel ?? "light");
+      setCulturalInt((preferences.culturalInterests ?? []) as string[]);
+      setKbyg(preferences.knowBeforeYouGo !== false);
     }
   }, [preferences, visible]);
 
@@ -612,7 +659,18 @@ function TasteProfileSheet({
 
   async function handleSave() {
     setSaving(true);
-    await update({ favoriteCategories: favCats, avoidCategories: avoidCats, budgetRange: budget, tripStyle: tripStyles, travelCompanion: companion });
+    await update({
+      favoriteCategories: favCats,
+      avoidCategories: avoidCats,
+      budgetRange: budget,
+      tripStyle: tripStyles,
+      travelCompanion: companion,
+      communicationStyle: commStyle,
+      emojiLevel: emojiLvl,
+      humorLevel: humor,
+      culturalInterests: culturalInt,
+      knowBeforeYouGo: kbyg,
+    });
     setSaving(false);
     onClose();
   }
@@ -634,6 +692,7 @@ function TasteProfileSheet({
             </Text>
           </View>
 
+          {/* ── Travel Preferences ───────────────────────────────────────── */}
           <Text style={[tpStyles.sectionLabel, { color: colors.text }]}>What do you love?</Text>
           <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>KinfolkAI will prioritize these in recommendations</Text>
           <View style={tpStyles.chips}>
@@ -689,6 +748,98 @@ function TasteProfileSheet({
               </TouchableOpacity>
             ))}
           </View>
+
+          {/* ── Kinfolk Voices™ — Home Mode Customization ────────────────── */}
+          <View style={[tpStyles.voicesDivider, { borderTopColor: colors.border }]} />
+          <View style={[tpStyles.voicesHeader, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "25" }]}>
+            <Text style={tpStyles.voicesHeaderIcon}>🏠</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[tpStyles.voicesHeaderTitle, { color: colors.text }]}>Kinfolk Voices™ — Home Mode</Text>
+              <Text style={[tpStyles.voicesHeaderSub, { color: colors.mutedForeground }]}>
+                {isPaid
+                  ? "Customize how KinfolkAI sounds when you tap 🏠 Home in the chat"
+                  : "Upgrade to Explorer+ to personalize your Home voice and unlock all 4 Kinfolk Voices™"}
+              </Text>
+            </View>
+          </View>
+
+          {isPaid ? (
+            <>
+              <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Communication style</Text>
+              <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>How should KinfolkAI talk to you when Home mode is active?</Text>
+              <View style={{ gap: 8 }}>
+                {COMM_STYLES.map((cs) => {
+                  const sel = commStyle === cs.id;
+                  return (
+                    <TouchableOpacity
+                      key={cs.id}
+                      style={[tpStyles.commCard, { backgroundColor: sel ? colors.primary + "12" : colors.card, borderColor: sel ? colors.primary : colors.border }]}
+                      onPress={() => setCommStyle(cs.id)}
+                    >
+                      <View style={tpStyles.commCardTop}>
+                        <Text style={[tpStyles.commCardLabel, { color: colors.text }]}>{cs.label}</Text>
+                        {sel && <Ionicons name="checkmark-circle" size={16} color={colors.primary} />}
+                      </View>
+                      <Text style={[tpStyles.commCardExample, { color: colors.mutedForeground }]}>{cs.example}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Emoji level</Text>
+              <View style={tpStyles.optionRow}>
+                {EMOJI_LEVELS.map((e) => (
+                  <TouchableOpacity key={e.id} style={[tpStyles.optionBtn, { backgroundColor: emojiLvl === e.id ? colors.primary : colors.card, borderColor: emojiLvl === e.id ? colors.primary : colors.border }]} onPress={() => setEmojiLvl(e.id)}>
+                    <Text style={[tpStyles.optionText, { color: emojiLvl === e.id ? "#fff" : colors.text }]}>{e.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 16 }]}>Humor</Text>
+              <View style={tpStyles.optionRow}>
+                {HUMOR_LEVELS.map((h) => (
+                  <TouchableOpacity key={h.id} style={[tpStyles.optionBtn, { backgroundColor: humor === h.id ? colors.primary : colors.card, borderColor: humor === h.id ? colors.primary : colors.border }]} onPress={() => setHumor(h.id)}>
+                    <Text style={[tpStyles.optionText, { color: humor === h.id ? "#fff" : colors.text }]}>{h.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Cultural interests</Text>
+              <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>KinfolkAI weaves these into recommendations when relevant</Text>
+              <View style={tpStyles.chips}>
+                {CULTURAL_INTERESTS_LIST.map((c) => {
+                  const sel = culturalInt.includes(c);
+                  return (
+                    <TouchableOpacity key={c} style={[tpStyles.chip, { backgroundColor: sel ? colors.primary + "18" : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(culturalInt, c, setCulturalInt)}>
+                      <Text style={[tpStyles.chipText, { color: sel ? colors.primary : colors.text }]}>{c}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <View style={[tpStyles.kbygRow, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 20 }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[tpStyles.kbygTitle, { color: colors.text }]}>📍 Know Before You Go</Text>
+                  <Text style={[tpStyles.kbygDesc, { color: colors.mutedForeground }]}>KinfolkAI adds atmosphere, parking, best time, and a community insider tip to each place recommendation</Text>
+                </View>
+                <Switch
+                  value={kbyg}
+                  onValueChange={setKbyg}
+                  trackColor={{ false: colors.border, true: colors.primary }}
+                  thumbColor="#fff"
+                />
+              </View>
+            </>
+          ) : (
+            <TouchableOpacity
+              style={[tpStyles.upgradeBtn, { backgroundColor: GOLD + "18", borderColor: GOLD + "40" }]}
+              onPress={onClose}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="star" size={16} color={GOLD} />
+              <Text style={[tpStyles.upgradeBtnText, { color: GOLD }]}>Upgrade to Explorer+ to personalize your Home voice</Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
 
         {onRetakeQuiz && (
@@ -715,7 +866,7 @@ const tpStyles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 20, borderBottomWidth: 1 },
   title: { fontFamily: "Inter_700Bold", fontSize: 20 },
-  scroll: { padding: 20, paddingBottom: 24 },
+  scroll: { padding: 20, paddingBottom: 36 },
   profileBadge: { flexDirection: "row", alignItems: "flex-start", gap: 8, borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 20 },
   profileBadgeText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, flex: 1 },
   sectionLabel: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 4 },
@@ -726,6 +877,20 @@ const tpStyles = StyleSheet.create({
   optionRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   optionBtn: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 },
   optionText: { fontFamily: "Inter_400Regular", fontSize: 13 },
+  voicesDivider: { borderTopWidth: 1, marginTop: 28, marginBottom: 20 },
+  voicesHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 4 },
+  voicesHeaderIcon: { fontSize: 22, marginTop: 2 },
+  voicesHeaderTitle: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 4 },
+  voicesHeaderSub: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  commCard: { borderRadius: 12, borderWidth: 1, padding: 12 },
+  commCardTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
+  commCardLabel: { fontFamily: "Inter_700Bold", fontSize: 14 },
+  commCardExample: { fontFamily: "Inter_400Regular", fontSize: 12, fontStyle: "italic" },
+  kbygRow: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 12, borderWidth: 1, padding: 14 },
+  kbygTitle: { fontFamily: "Inter_700Bold", fontSize: 14, marginBottom: 4 },
+  kbygDesc: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 16 },
+  upgradeBtn: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, borderWidth: 1, padding: 14, marginTop: 16 },
+  upgradeBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13, flex: 1 },
   retakeBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginHorizontal: 20, marginBottom: 12, paddingVertical: 12, borderRadius: 10, borderWidth: 1 },
   retakeBtnText: { fontFamily: "Inter_400Regular", fontSize: 13 },
   footer: { padding: 16, borderTopWidth: 1 },
@@ -1093,10 +1258,9 @@ export default function TravelScreen() {
   const { subscription } = useMembership();
 
   const [inputText, setInputText] = useState("");
-  const [neighborVoice, setNeighborVoice] = useState(true);
+  const [voiceMode, setVoiceMode] = useState<"community" | "home" | "local" | "professional">("community");
   const [showProfile, setShowProfile] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [showVoiceToggle, setShowVoiceToggle] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
@@ -1128,8 +1292,8 @@ export default function TravelScreen() {
       return;
     }
     setInputText("");
-    await sendMessage(msg, { neighborVoice });
-  }, [inputText, neighborVoice, sendMessage, isAuthenticated, subscription]);
+    await sendMessage(msg, { voiceMode });
+  }, [inputText, voiceMode, sendMessage, isAuthenticated, subscription]);
 
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);
@@ -1192,8 +1356,8 @@ export default function TravelScreen() {
       .map((b, i) => `${i + 1}. ${b.name} (${b.category}${b.neighborhood ? `, ${b.neighborhood}` : ""}) — ${b.description}. Must try: ${b.mustTry}`)
       .join("\n");
     const prompt = `Compare these ${selected.length} spots and tell me which is the best fit for me based on my taste profile and everything I've rated:\n\n${list}\n\nPick one winner and explain why it's the right call for me.`;
-    await sendMessage(prompt, { neighborVoice });
-  }, [compareSelected, sendMessage, neighborVoice]);
+    await sendMessage(prompt, { voiceMode });
+  }, [compareSelected, sendMessage, voiceMode]);
 
   const hasProfile = preferences && (
     (preferences.favoriteCategories?.length ?? 0) > 0 ||
@@ -1350,31 +1514,38 @@ export default function TravelScreen() {
           </View>
         )}
 
-        {/* Voice toggle (collapsible) */}
-        {showVoiceToggle && (
-          <View style={[styles.voiceRow, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-            <Ionicons
-              name={neighborVoice ? "chatbubble-ellipses" : "chatbubble-outline"}
-              size={15} color={neighborVoice ? colors.primary : colors.mutedForeground}
-            />
-            <Text style={[styles.voiceLabel, { color: colors.text }]}>Neighbor Voice</Text>
-            <Text style={[styles.voiceSub, { color: colors.mutedForeground }]}>
-              {neighborVoice ? "City slang on" : "Standard language"}
-            </Text>
-            <Switch
-              value={neighborVoice}
-              onValueChange={setNeighborVoice}
-              trackColor={{ false: colors.border, true: colors.primary + "66" }}
-              thumbColor={neighborVoice ? colors.primary : colors.mutedForeground}
-            />
-          </View>
-        )}
+        {/* Kinfolk Voices™ mode selector */}
+        <View style={[styles.voicesBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+          <Text style={[styles.voicesBarLabel, { color: colors.mutedForeground }]}>Kinfolk Voices™</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.voicesPills}>
+            {KINFOLK_VOICES.map((v) => {
+              const isActive = voiceMode === v.id;
+              const locked = v.requiresPaid && (!isAuthenticated || !subscription);
+              return (
+                <TouchableOpacity
+                  key={v.id}
+                  style={[
+                    styles.voicePill,
+                    { backgroundColor: isActive ? colors.primary : colors.background, borderColor: isActive ? colors.primary : colors.border },
+                    locked && { opacity: 0.55 },
+                  ]}
+                  onPress={() => {
+                    if (locked) { setShowUpgrade(true); return; }
+                    setVoiceMode(v.id);
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.voicePillIcon}>{v.icon}</Text>
+                  <Text style={[styles.voicePillLabel, { color: isActive ? "#fff" : colors.text }]}>{v.label}</Text>
+                  {locked && <Ionicons name="lock-closed" size={9} color={isActive ? "#ffffff99" : colors.mutedForeground} />}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
 
         {/* Input row */}
         <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: insets.bottom + 8 }]}>
-          <TouchableOpacity style={styles.voiceToggleBtn} onPress={() => setShowVoiceToggle((p) => !p)}>
-            <Ionicons name="chatbubble-ellipses-outline" size={20} color={showVoiceToggle ? colors.primary : colors.mutedForeground} />
-          </TouchableOpacity>
           <TextInput
             style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
             placeholder="Ask KinfolkAI anything…"
@@ -1450,11 +1621,13 @@ const styles = StyleSheet.create({
   compareBarText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 13 },
   compareGoBtn: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8 },
   compareGoBtnText: { fontFamily: "Inter_700Bold", fontSize: 13 },
-  voiceRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1 },
-  voiceLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
-  voiceSub: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
+  voicesBar: { flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 14, paddingRight: 8, paddingVertical: 8, borderTopWidth: 1 },
+  voicesBarLabel: { fontFamily: "Inter_600SemiBold", fontSize: 10, letterSpacing: 0.4, textTransform: "uppercase" },
+  voicesPills: { flexDirection: "row", gap: 6, paddingVertical: 2 },
+  voicePill: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 20, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
+  voicePillIcon: { fontSize: 13 },
+  voicePillLabel: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   inputWrapper: { flexDirection: "row", alignItems: "flex-end", gap: 8, paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1 },
-  voiceToggleBtn: { paddingBottom: 10 },
   input: { flex: 1, borderRadius: 22, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 14, maxHeight: 120, lineHeight: 20 },
   sendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 2 },
 });

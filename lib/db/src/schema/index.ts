@@ -69,3 +69,4 @@ export * from "./knowledge-channels";
 export * from "./business-captions";
 export * from "./business-search-inquiries";
 export * from "./business-response-links";
+export * from "./business-improvement-plans";

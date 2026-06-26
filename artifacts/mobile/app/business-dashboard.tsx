@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useOwnerListings, LISTING_TYPES, type Listing, type ListingType } from "@/hooks/useListings";
 import { SellerAgreementModal } from "@/components/SellerAgreementModal";
+import { BusinessImprovementPlanModal } from "@/components/BusinessImprovementPlanModal";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -227,6 +228,7 @@ export default function BusinessDashboardScreen() {
   const [showAgreementModal, setShowAgreementModal] = useState(false);
   const [dsSigningLoading, setDsSigningLoading] = useState(false);
   const [dsEnvelopeId, setDsEnvelopeId] = useState<string | null>(null);
+  const [showImprovementModal, setShowImprovementModal] = useState(false);
   const [marketplaceTier, setMarketplaceTier] = useState<Record<string, unknown> | null>(null);
   const [feeLoading, setFeeLoading] = useState(false);
   const [feeError, setFeeError] = useState(false);
@@ -1174,6 +1176,31 @@ export default function BusinessDashboardScreen() {
                   </TouchableOpacity>
                 </View>
               )}
+            </View>
+
+            {/* Find Trusted Providers */}
+            <View style={[styles.aiPlanCard, { backgroundColor: "#0D2318", borderColor: "#2D7A4F30", marginTop: 14 }]}>
+              <View style={styles.aiPlanHeader}>
+                <View style={[styles.aiPlanBadge, { backgroundColor: "#2D7A4F" }]}>
+                  <Feather name="users" size={11} color="#FFF" />
+                  <Text style={styles.aiPlanBadgeText}>KinfolkAI™</Text>
+                </View>
+                <Text style={[styles.aiPlanTitle, { color: "#FFF" }]}>Find Trusted Providers</Text>
+                <Text style={[styles.aiPlanSub, { color: "rgba(255,255,255,0.55)" }]}>
+                  Get a custom improvement roadmap with Black- and minority-owned providers sourced right from the Mapping With Melanin™ platform.
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.aiPlanBtn, { backgroundColor: "#2D7A4F" }]}
+                onPress={() => {
+                  setShowImprovementModal(true);
+                  if (Platform.OS !== "web") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                }}
+                activeOpacity={0.85}
+              >
+                <Feather name="search" size={15} color="#FFF" />
+                <Text style={styles.aiPlanBtnText}>Find Community Providers</Text>
+              </TouchableOpacity>
             </View>
           </>
         )}
@@ -2292,16 +2319,26 @@ export default function BusinessDashboardScreen() {
       </ScrollView>
 
       {business && (
-        <SellerAgreementModal
-          visible={showAgreementModal}
-          businessId={business.id}
-          businessName={business.name}
-          onAccepted={() => {
-            setSellerAgreementAccepted(true);
-            setShowAgreementModal(false);
-          }}
-          onClose={() => setShowAgreementModal(false)}
-        />
+        <>
+          <SellerAgreementModal
+            visible={showAgreementModal}
+            businessId={business.id}
+            businessName={business.name}
+            onAccepted={() => {
+              setSellerAgreementAccepted(true);
+              setShowAgreementModal(false);
+            }}
+            onClose={() => setShowAgreementModal(false)}
+          />
+          <BusinessImprovementPlanModal
+            visible={showImprovementModal}
+            onClose={() => setShowImprovementModal(false)}
+            businessId={business.id}
+            businessName={business.name}
+            businessCategory={business.category}
+            businessCity={business.city}
+          />
+        </>
       )}
     </View>
   );

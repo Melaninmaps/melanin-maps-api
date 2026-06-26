@@ -76,7 +76,7 @@ export function useKinfolk() {
 
   const sendMessage = useCallback(async (
     text: string,
-    opts?: { vibes?: string[]; neighborVoice?: boolean },
+    opts?: { vibes?: string[]; voiceMode?: string },
   ): Promise<void> => {
     const token = await getToken();
     const apiBase = getApiBase();
@@ -101,7 +101,7 @@ export function useKinfolk() {
           sessionId,
           message: text,
           vibes: opts?.vibes ?? [],
-          neighborVoice: opts?.neighborVoice ?? true,
+          voiceMode: opts?.voiceMode ?? "community",
         }),
       });
 

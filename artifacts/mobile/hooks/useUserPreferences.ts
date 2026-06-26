@@ -22,6 +22,13 @@ export interface UserPreferences {
   tripStyle: string[];
   travelCompanion: string;
   dietaryNotes: string | null;
+  communicationStyle: string;
+  personalityMode: string;
+  emojiLevel: string;
+  humorLevel: string;
+  culturalInterests: string[];
+  knowBeforeYouGo: boolean;
+  regionalFlavor: string;
 }
 
 const DEFAULT_PREFS: Omit<UserPreferences, "userId"> = {
@@ -32,6 +39,13 @@ const DEFAULT_PREFS: Omit<UserPreferences, "userId"> = {
   tripStyle: [],
   travelCompanion: "solo",
   dietaryNotes: null,
+  communicationStyle: "friendly",
+  personalityMode: "neighborhood_guide",
+  emojiLevel: "some",
+  humorLevel: "light",
+  culturalInterests: [],
+  knowBeforeYouGo: true,
+  regionalFlavor: "standard",
 };
 
 export function useUserPreferences() {

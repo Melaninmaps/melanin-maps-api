@@ -46,6 +46,150 @@ function getCityVoice(destination: string): CityVoice | null {
   return null;
 }
 
+// ─── City Local Terms (Kinfolk Voices™ — Local Guide mode) ────────────────────
+type CityLocalData = {
+  terms: Array<{ term: string; meaning: string; note?: string }>;
+  transit: string[];
+  nicknames: string[];
+};
+
+const CITY_LOCAL_TERMS: Record<string, CityLocalData> = {
+  "new york": {
+    terms: [
+      { term: "bodega", meaning: "corner convenience store — a neighborhood institution" },
+      { term: "chopped cheese", meaning: "NYC-specific sandwich (beef, cheese, onions on a hero roll) — distinct from a Philly cheesesteak", note: "If a user asks for a chopped cheese outside NYC, clarify: 'Chopped cheese is a NYC thing. In Philly, the closest equivalent is a cheesesteak — want me to find one?'" },
+      { term: "the train", meaning: "the subway — locals rarely say 'subway'" },
+      { term: "deadass", meaning: "seriously, for real" },
+      { term: "the city", meaning: "Manhattan specifically, even to Bronx and Brooklyn residents" },
+      { term: "hero", meaning: "what NYC calls a sub or hoagie" },
+    ],
+    transit: ["the A/C/E", "the 2/3", "the L train", "the 4/5/6", "the Q"],
+    nicknames: ["BK (Brooklyn)", "the Bronx", "Harlem", "LES (Lower East Side)", "Bed-Stuy", "Fort Greene", "the Heights"],
+  },
+  "philadelphia": {
+    terms: [
+      { term: "jawn", meaning: "Philly's most versatile word — any person, place, or thing" },
+      { term: "hoagie", meaning: "what most cities call a sub or hero — Philly's term" },
+      { term: "water ice", meaning: "a Philly frozen dessert — denser and different from Italian ice" },
+      { term: "iight", meaning: "alright, okay" },
+      { term: "cheesesteak", meaning: "a Philly original — thinly sliced beef and cheese on a long roll; NOT the same as a NYC chopped cheese", note: "If a user in Philly asks for a chopped cheese, say: 'Chopped cheese is a NYC bodega thing — here in Philly, a cheesesteak is the local equivalent. Want me to find a great one?'" },
+    ],
+    transit: ["SEPTA", "the El (Market-Frankford Line)", "BSL", "PATCO to Jersey"],
+    nicknames: ["South Philly", "West Philly", "Fishtown", "Brewerytown", "Kensington", "the Main Line"],
+  },
+  "new orleans": {
+    terms: [
+      { term: "lagniappe", meaning: "a little something extra, given freely — a NOLA cultural value" },
+      { term: "neutral ground", meaning: "the grass median strip in a boulevard — only NOLA calls it this" },
+      { term: "making groceries", meaning: "going grocery shopping" },
+      { term: "where y'at", meaning: "the classic NOLA greeting — 'How are you?'" },
+      { term: "po' boy", meaning: "a local sandwich on French bread — shrimp, oyster, roast beef and more" },
+      { term: "second line", meaning: "a parade tradition following jazz funerals or celebrations — a cultural cornerstone" },
+    ],
+    transit: ["the streetcar", "St. Charles line", "Canal line"],
+    nicknames: ["the Tremé", "the Marigny", "the Garden District", "Mid-City", "the 7th Ward", "Uptown", "the 9th Ward"],
+  },
+  "atlanta": {
+    terms: [
+      { term: "ITP", meaning: "Inside the Perimeter (I-285) — generally Atlanta proper" },
+      { term: "OTP", meaning: "Outside the Perimeter — suburbs, sometimes said with an Atlanta side-eye" },
+      { term: "the BeltLine", meaning: "a 22-mile urban trail connecting neighborhoods — THE place to walk, eat, and experience Atlanta" },
+      { term: "285", meaning: "I-285, the highway encircling Atlanta — constant geographic reference" },
+      { term: "ATLien", meaning: "a proud Atlanta native (from OutKast's classic album)" },
+    ],
+    transit: ["MARTA", "the Gold Line", "the Red Line", "the Green Line"],
+    nicknames: ["Old Fourth Ward", "East Atlanta Village (EAV)", "the West End", "College Park", "Bankhead", "Mechanicsville", "Vine City"],
+  },
+  "chicago": {
+    terms: [
+      { term: "gym shoes", meaning: "what Chicago calls sneakers" },
+      { term: "pop", meaning: "soda / soft drink — never say 'soda' in Chicago" },
+      { term: "the L", meaning: "the CTA elevated train system" },
+      { term: "Jewels", meaning: "the Jewel-Osco grocery chain — always called 'Jewels'" },
+      { term: "the lakefront", meaning: "Lake Michigan shoreline — the geographic and social heart of the city" },
+    ],
+    transit: ["the L", "the Red Line", "the Blue Line", "the Green Line", "CTA"],
+    nicknames: ["Bronzeville", "Wicker Park", "Pilsen", "Hyde Park", "Chatham", "the South Side", "Chatham", "Bronzeville"],
+  },
+  "houston": {
+    terms: [
+      { term: "trill", meaning: "true + real — a Houston cultural value, popularized by UGK" },
+      { term: "third coast", meaning: "Houston and the Gulf Coast — a distinct regional identity" },
+      { term: "screwed music", meaning: "the slowed-down chopped-and-screwed sound invented by DJ Screw in H-Town" },
+      { term: "the Bayou City", meaning: "Houston's nickname, referencing Buffalo Bayou" },
+    ],
+    transit: ["Metro", "METRORail (Red Line)", "park and ride"],
+    nicknames: ["Third Ward", "Fifth Ward", "EaDo (East Downtown)", "the Heights", "Montrose", "Sunnyside"],
+  },
+  "dc": {
+    terms: [
+      { term: "go-go", meaning: "DC's original percussion-heavy music genre — essential cultural identity, not just music" },
+      { term: "junt", meaning: "DC's variant of jawn — refers to any person, place, or thing" },
+      { term: "bama", meaning: "someone unfashionable or out of touch — a DC-specific term" },
+      { term: "the District", meaning: "locals call it 'the District', not just DC" },
+      { term: "DMV", meaning: "DC-Maryland-Virginia — the full metro region, used as a collective identity" },
+    ],
+    transit: ["the Metro", "the Red Line", "the Green Line", "Circulator", "WMATA"],
+    nicknames: ["U Street", "the Hill (Capitol Hill)", "Columbia Heights", "Anacostia", "Congress Heights", "NoMa", "Deanwood"],
+  },
+  "miami": {
+    terms: [
+      { term: "305", meaning: "Miami's original area code — worn as a badge of pride" },
+      { term: "Magic City", meaning: "Miami's nickname" },
+      { term: "calle ocho", meaning: "8th Street in Little Havana — the cultural heart of Cuban Miami" },
+      { term: "the Gables", meaning: "Coral Gables shorthand" },
+    ],
+    transit: ["Metrorail", "Metromover", "Tri-Rail", "the Brightline"],
+    nicknames: ["Wynwood", "Overtown", "Liberty City", "Little Haiti", "Little Havana", "the MiMo District", "Opa-locka"],
+  },
+  "detroit": {
+    terms: [
+      { term: "coney", meaning: "a Detroit-style hot dog with chili, mustard, and onions — a true Detroit institution" },
+      { term: "party store", meaning: "what Detroit calls a convenience store" },
+      { term: "313", meaning: "Detroit's area code — used as a badge of local pride" },
+      { term: "Motown", meaning: "both the legendary record label AND a nickname for Detroit itself" },
+    ],
+    transit: ["the QLINE", "SMART bus", "DDOT"],
+    nicknames: ["Corktown", "Eastern Market", "New Center", "Midtown", "Black Bottom (historic)", "Paradise Valley (historic)", "Boston-Edison"],
+  },
+  "baltimore": {
+    terms: [
+      { term: "hon", meaning: "a term of endearment unique to Baltimore — 'How ya doin, hon?'" },
+      { term: "pit beef", meaning: "Baltimore's signature beef sandwich, served roadside" },
+      { term: "B-More", meaning: "Baltimore shorthand" },
+      { term: "Charm City", meaning: "Baltimore's nickname" },
+    ],
+    transit: ["MTA", "the Light Rail", "the Metro SubwayLink"],
+    nicknames: ["Pigtown", "Hampden", "Fells Point", "Federal Hill", "Cherry Hill", "Upton", "Penn North"],
+  },
+  "memphis": {
+    terms: [
+      { term: "901", meaning: "Memphis area code — a mark of local pride" },
+      { term: "the Bluff City", meaning: "Memphis's nickname, for the bluffs above the Mississippi River" },
+      { term: "Beale Street", meaning: "the historic heart of Memphis blues — a must-experience, not just a tourist stop" },
+    ],
+    transit: ["MATA", "the trolley (Riverfront Loop)"],
+    nicknames: ["Midtown", "South Memphis", "Cooper-Young", "Orange Mound", "the Heights (Binghampton)"],
+  },
+  "los angeles": {
+    terms: [
+      { term: "the 405", meaning: "I-405 — the most infamous freeway in LA; 'take the 405' is a reflex" },
+      { term: "the valley", meaning: "San Fernando Valley, north of the Santa Monica Mountains" },
+      { term: "Crenshaw", meaning: "both a boulevard and a neighborhood carrying deep Black cultural history" },
+    ],
+    transit: ["the Metro", "the Blue Line (A Line)", "the Purple Line (D Line)", "Metro Rail"],
+    nicknames: ["Leimert Park", "Inglewood", "Crenshaw", "Compton", "South Central", "the Valley", "Watts", "View Park"],
+  },
+};
+
+function getCityLocalTerms(destination: string): CityLocalData | null {
+  const lower = destination.toLowerCase();
+  for (const [city, data] of Object.entries(CITY_LOCAL_TERMS)) {
+    if (lower.includes(city)) return data;
+  }
+  return null;
+}
+
 // ─── Build personalized system prompt ─────────────────────────────────────────
 type BusinessCatalogEntry = {
   name: string;
@@ -80,40 +224,128 @@ function buildSystemPrompt(opts: {
   dislikedSpots: string[];
   savedPlaces: string[];
   destination?: string | null;
-  neighborVoice: boolean;
+  voiceMode?: string;
   businessCatalog?: BusinessCatalogEntry[];
   activeJourney?: { title: string; city?: string | null; journeyType: string; phases: JourneyPhase[]; aiContext?: string | null } | null;
   crossCityBridge?: CrossCityMatch[] | null;
 }): string {
-  const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, neighborVoice, businessCatalog, activeJourney, crossCityBridge } = opts;
+  const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
 
   const cityVoice = destination ? getCityVoice(destination) : null;
-  const voiceInstructions = !neighborVoice
-    ? "Write in a clear, warm, and informative tone. Community-focused but universally accessible. No regional slang."
-    : cityVoice
-      ? `${cityVoice.writingGuidance}\n\nAuthentic slang (use 2-4 naturally): ${cityVoice.slang.join(", ")}\n\nCultural touchstones: ${cityVoice.culturalTouchstones.join(", ")}`
-      : "Write like the user's most well-traveled friend — warm, direct, real. Like their auntie who knows everybody. Short sentences. Personal. Never sound like a brochure.";
+  const localTerms = destination ? getCityLocalTerms(destination) : null;
+  const kbyg = prefs?.knowBeforeYouGo !== false;
+
+  // ── Kinfolk Voices™ — 4 emotional voice modes ─────────────────────────────
+  let voiceInstructions = "";
+
+  if (voiceMode === "professional") {
+    voiceInstructions = `KINFOLK VOICES™ — PROFESSIONAL MODE:
+Respond in a clear, structured, business-appropriate tone. Lead with facts. Use bullet points when listing options. No slang, no casual phrasing. Warm professionalism — helpful, never cold or robotic. Efficient and organized.`;
+
+  } else if (voiceMode === "local") {
+    const localVoice = cityVoice
+      ? `${cityVoice.writingGuidance}
+
+AUTHENTIC LOCAL LANGUAGE — Weave in 2-4 of these naturally:
+Slang: ${cityVoice.slang.join(", ")}
+Community phrases: ${cityVoice.phrases.join(", ")}
+Cultural touchstones: ${cityVoice.culturalTouchstones.join(", ")}`
+      : "Speak as someone who knows this city inside and out — the real spots, the real names, the way locals actually talk.";
+
+    const localLang = localTerms ? `
+
+LOCAL VOCABULARY — Know these and use them accurately:
+${localTerms.terms.map((t) => `• "${t.term}": ${t.meaning}${t.note ? `\n  IMPORTANT: ${t.note}` : ""}`).join("\n")}
+
+Transit locals use: ${localTerms.transit.join(", ")}
+Neighborhood names: ${localTerms.nicknames.join(", ")}
+
+ACCURACY RULE: Local terms are city-specific — NEVER confuse them across cities. If a user asks for something from another city, acknowledge it warmly and offer the local equivalent. Introduce unfamiliar terms with "locals call it..." or "you might hear people say..." — educational and welcoming, never corrective.` : "";
+
+    voiceInstructions = `KINFOLK VOICES™ — LOCAL GUIDE MODE:
+${localVoice}${localLang}`;
+
+  } else if (voiceMode === "home") {
+    const commStyle = (prefs?.communicationStyle ?? "friendly") as string;
+    const emojiLvl = (prefs?.emojiLevel ?? "some") as string;
+    const humorLvl = (prefs?.humorLevel ?? "light") as string;
+    const culturalCtx = (prefs?.culturalInterests ?? []) as string[];
+
+    const commStyleText: Record<string, string> = {
+      professional: "Lead with facts and structure. Precise but warm. Example: \"Here are three options that match your criteria.\"",
+      community: "Frame everything through community. Example: \"The community really enjoys this one — regulars come back every week.\"",
+      conversational: "Fully relaxed and casual. Write like texting a close friend. Short sentences, contractions, informal phrasing.",
+      friendly: "Warm, enthusiastic, personal. Example: \"I found a few spots I think you'll love!\"",
+    };
+
+    const emojiText: Record<string, string> = {
+      none: "Use NO emojis whatsoever.",
+      lots: "Use emojis freely — 3-5 per message.",
+      some: "Use 1-2 emojis per message where they add warmth.",
+    };
+
+    const humorText: Record<string, string> = {
+      off: "Keep responses purely informative — zero humor.",
+      playful: "Be playfully funny when it fits naturally. Personality, wit, light humor — make them smile.",
+      light: "Occasional warmth and wit is welcome, but keep it natural.",
+    };
+
+    const culturalText = culturalCtx.length
+      ? `\nCULTURAL AFFINITIES (weave naturally when relevant): ${culturalCtx.join(", ")}`
+      : "";
+
+    voiceInstructions = `KINFOLK VOICES™ — HOME MODE (this user's personal comfort style):
+${commStyleText[commStyle] ?? commStyleText.friendly}
+EMOJI: ${emojiText[emojiLvl] ?? emojiText.some}
+HUMOR: ${humorText[humorLvl] ?? humorText.light}${culturalText}
+
+This is the user's "take me home" experience — the communication style they chose because it brings them comfort. Make every response feel like talking to someone who truly knows them.`;
+
+  } else {
+    // community (default — always available)
+    voiceInstructions = `KINFOLK VOICES™ — COMMUNITY MODE:
+Warm. Supportive. Conversational. Speak like someone who genuinely wants to help — a friend who's been where they are. Acknowledge emotional context when it surfaces before diving into recommendations. Celebrate wins. Support through challenges. Never robotic or transactional.
+
+When someone is struggling or facing something hard, acknowledge it first: "I hear you — let's work through this together." The emotional connection is as important as the information.`;
+  }
+
+  // ── Know Before You Go ───────────────────────────────────────────────────
+  const kbygInstructions = kbyg ? `
+
+KNOW BEFORE YOU GO — When recommending a specific business, include this in each business object:
+"knowBeforeYouGo": {
+  "atmosphere": "one sentence on the vibe and welcome factor",
+  "parking": "honest note on parking situation",
+  "greatFor": "who this place is especially great for",
+  "bestTime": "when to go for the best experience",
+  "communityInsight": "one thing a first-timer wouldn't know but locals do"
+}` : "";
+
+  // ── User profile & history ───────────────────────────────────────────────
+  const culturalLine = (prefs?.culturalInterests as string[] | null)?.length
+    ? `\n- Cultural interests: ${(prefs!.culturalInterests as string[]).join(", ")}`
+    : "";
 
   const profileSection = prefs ? `
-ABOUT THIS USER (their taste profile — use this to personalize everything):
+ABOUT THIS USER (their taste profile — personalize everything around this):
 - Favorite categories: ${prefs.favoriteCategories?.length ? prefs.favoriteCategories.join(", ") : "not set yet"}
-- Favorite cities they love: ${prefs.favoriteCities?.length ? prefs.favoriteCities.join(", ") : "not set yet"}
-- Categories to avoid: ${prefs.avoidCategories?.length ? prefs.avoidCategories.join(", ") : "none"}
-- Budget range: ${prefs.budgetRange ?? "any"}
+- Favorite cities: ${prefs.favoriteCities?.length ? prefs.favoriteCities.join(", ") : "not set yet"}
+- Avoid: ${prefs.avoidCategories?.length ? prefs.avoidCategories.join(", ") : "none"}
+- Budget: ${prefs.budgetRange ?? "any"}
 - How they travel: ${prefs.tripStyle?.length ? prefs.tripStyle.join(", ") : "not specified"}
 - Who they travel with: ${prefs.travelCompanion ?? "solo"}
-${prefs.dietaryNotes ? `- Dietary notes: ${prefs.dietaryNotes}` : ""}` : "USER PROFILE: New user — no preferences captured yet. Ask them what they're into!";
+${prefs.dietaryNotes ? `- Dietary notes: ${prefs.dietaryNotes}` : ""}${culturalLine}` : "USER PROFILE: New user — no preferences captured yet. Ask them what they're into!";
 
   const likedSection = likedSpots.length
-    ? `\nSPOTS THEY'VE LOVED (thumbs up — recommend similar):\n${likedSpots.map((s) => `- ${s}`).join("\n")}`
+    ? `\nSPOTS THEY'VE LOVED (recommend similar):\n${likedSpots.map((s) => `- ${s}`).join("\n")}`
     : "";
 
   const dislikedSection = dislikedSpots.length
-    ? `\nSPOTS THEY'VE PASSED ON (thumbs down — avoid similar):\n${dislikedSpots.map((s) => `- ${s}`).join("\n")}`
+    ? `\nSPOTS THEY'VE PASSED ON (avoid similar):\n${dislikedSpots.map((s) => `- ${s}`).join("\n")}`
     : "";
 
   const savedSection = savedPlaces.length
-    ? `\nTHEIR SAVED PLACES (they already love these):\n${savedPlaces.map((s) => `- ${s}`).join("\n")}`
+    ? `\nTHEIR SAVED PLACES:\n${savedPlaces.map((s) => `- ${s}`).join("\n")}`
     : "";
 
   const journeySection = activeJourney
@@ -137,7 +369,7 @@ ${crossCityBridge.map((bridge) =>
   `• ${bridge.category} (they saved ${bridge.savedCount} in ${bridge.fromCity}):\n${bridge.matches.map((m) => `  - ${m.name}${m.verified ? " ✓ Verified" : ""}`).join("\n")}`
 ).join("\n\n")}
 
-CRITICAL INSTRUCTION: Don't wait for them to ask. Proactively say something like — "Since you were feeling ${crossCityBridge[0]?.category} spots in ${crossCityBridge[0]?.fromCity}, I already found you some great ones in ${activeJourney?.city}." Make the connection feel magical, like a friend who remembered exactly what you loved. Reference their past city naturally. This is the feature that makes the platform feel like it truly knows them.`
+CRITICAL INSTRUCTION: Don't wait for them to ask. Proactively say something like — "Since you were feeling ${crossCityBridge[0]?.category} spots in ${crossCityBridge[0]?.fromCity}, I already found you some great ones in ${activeJourney?.city}." Make the connection feel magical, like a friend who remembered exactly what you loved.`
     : "";
 
   return `You are KinfolkAI™ — a conversational travel companion built by and for the Minority community. You are not a search engine. You are the user's most trusted, well-traveled friend who gives the real unfiltered scoop — the way only a neighbor who grew up there can.
@@ -158,20 +390,18 @@ What to probe by situation:
 - They're new to a city → probe: places of worship, professional networking, healthcare setup, financial services, fitness/wellness
 - General rule: healthcare, financial wellness, community connection, mental health support, legal help, childcare, and transportation are categories people almost always need but rarely think to ask about
 
-The magic is in HOW you ask — not "do you need X?" but "One thing a lot of people in your position forget until it's urgent — have you thought about finding a doctor you actually trust in the new city? I know some great ones." Make it feel like a friend leaning in, not a form to fill out.
+The magic is in HOW you ask — make it feel like a friend leaning in, not a form to fill out.
 
 CONVERSATION STYLE:
 - Be warm, conversational, like their most well-traveled friend who's been everywhere
 - Ask follow-up questions when you need more info — "Are you going solo or with the crew?" "What's your budget like?" "More food or more nightlife?"
 - Reference their history when relevant: "Since you've been feeling that Atlanta energy..." or "Based on what you love, you'd be right at home in..."
 - Before diving into recommendations, make sure you have a destination and some sense of their vibe
-- If they ask a general question, answer it conversationally first, then offer to dive deeper
 - NEVER sound like a travel brochure. ZERO use of words like "boasts", "features", "renowned", "visitors will enjoy"
 - ZERO profanity. Authenticity comes from rhythm, warmth, and cultural knowledge — not curse words
 - Use "you" and "your" constantly — make it personal and direct
 
-VOICE INSTRUCTIONS:
-${voiceInstructions}
+${voiceInstructions}${kbygInstructions}
 
 WHEN GIVING STRUCTURED RECOMMENDATIONS:
 Return EXACTLY this JSON format (no markdown, no extra text — pure valid JSON):
@@ -181,7 +411,7 @@ Return EXACTLY this JSON format (no markdown, no extra text — pure valid JSON)
     "destination": "city name",
     "summary": "1-2 sentences capturing the vibe",
     "businesses": [
-      { "name": "...", "category": "...", "description": "...", "neighborhood": "...", "mustTry": "..." }
+      { "name": "...", "category": "...", "description": "...", "neighborhood": "...", "mustTry": "..."${kbyg ? `, "knowBeforeYouGo": { "atmosphere": "...", "parking": "...", "greatFor": "...", "bestTime": "...", "communityInsight": "..." }` : ""} }
     ],
     "neighborhoods": [
       { "name": "...", "vibe": "...", "highlights": ["..."], "safetyNote": "..." }
@@ -242,7 +472,10 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
 // ─── PUT /api/kinfolk/preferences ─────────────────────────────────────────────
 router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
-  const { favoriteCategories, favoriteCities, avoidCategories, budgetRange, tripStyle, travelCompanion, dietaryNotes } = req.body as Record<string, unknown>;
+  const {
+    favoriteCategories, favoriteCities, avoidCategories, budgetRange, tripStyle, travelCompanion, dietaryNotes,
+    communicationStyle, emojiLevel, humorLevel, culturalInterests, knowBeforeYouGo, regionalFlavor,
+  } = req.body as Record<string, unknown>;
   try {
     const [prefs] = await db
       .insert(userPreferencesTable)
@@ -255,6 +488,12 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
         tripStyle: Array.isArray(tripStyle) ? tripStyle as string[] : undefined,
         travelCompanion: typeof travelCompanion === "string" ? travelCompanion : undefined,
         dietaryNotes: typeof dietaryNotes === "string" ? dietaryNotes : undefined,
+        communicationStyle: typeof communicationStyle === "string" ? communicationStyle : undefined,
+        emojiLevel: typeof emojiLevel === "string" ? emojiLevel : undefined,
+        humorLevel: typeof humorLevel === "string" ? humorLevel : undefined,
+        culturalInterests: Array.isArray(culturalInterests) ? culturalInterests as string[] : undefined,
+        knowBeforeYouGo: typeof knowBeforeYouGo === "boolean" ? knowBeforeYouGo : undefined,
+        regionalFlavor: typeof regionalFlavor === "string" ? regionalFlavor : undefined,
       })
       .onConflictDoUpdate({
         target: userPreferencesTable.userId,
@@ -266,6 +505,12 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           ...(Array.isArray(tripStyle) && { tripStyle: tripStyle as string[] }),
           ...(typeof travelCompanion === "string" && { travelCompanion }),
           ...(dietaryNotes !== undefined && { dietaryNotes: typeof dietaryNotes === "string" ? dietaryNotes : null }),
+          ...(typeof communicationStyle === "string" && { communicationStyle }),
+          ...(typeof emojiLevel === "string" && { emojiLevel }),
+          ...(typeof humorLevel === "string" && { humorLevel }),
+          ...(Array.isArray(culturalInterests) && { culturalInterests: culturalInterests as string[] }),
+          ...(typeof knowBeforeYouGo === "boolean" && { knowBeforeYouGo }),
+          ...(typeof regionalFlavor === "string" && { regionalFlavor }),
           updatedAt: new Date(),
         },
       })
@@ -346,11 +591,11 @@ router.get("/kinfolk/sessions/:id", async (req: Request, res: Response) => {
 const FREE_MONTHLY_LIMIT = 3;
 
 router.post("/kinfolk/chat", async (req: Request, res: Response) => {
-  const { sessionId, message, vibes = [], neighborVoice = true } = req.body as {
+  const { sessionId, message, vibes = [], voiceMode = "community" } = req.body as {
     sessionId?: string;
     message: string;
     vibes?: string[];
-    neighborVoice?: boolean;
+    voiceMode?: string;
   };
 
   if (!message?.trim()) {
@@ -552,7 +797,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }
 
     // Build system prompt
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, neighborVoice, businessCatalog, activeJourney, crossCityBridge });
+    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, businessCatalog, activeJourney, crossCityBridge });
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages
