@@ -60,6 +60,29 @@ function CheckRow({ label, checked, onToggle }: { label: string; checked: boolea
   );
 }
 
+const SERIOUS_INCIDENT_TYPES = [
+  "Felt unsafe", "Harassment by another customer", "Threatening behavior",
+  "Physical altercation", "Security concern", "I believe I may have experienced discrimination",
+];
+
+const GEN_ROUTING_INFO = {
+  private: {
+    icon: "🔒", label: "Private first — 72-hour response window",
+    color: "#4ADE80", bg: "#2D7A4F12", border: "#2D7A4F35",
+    body: "Your report goes privately to the business first. They have 72 hours to respond, apologize, or make it right. You'll be notified and can then choose to post it publicly, keep it private, or mark it resolved.",
+  },
+  moderation: {
+    icon: "📋", label: "Moderation review — community guidelines apply",
+    color: "#FCD34D", bg: "#D9770612", border: "#D9770635",
+    body: "Your report goes to our moderation team first — not instantly public. If it follows community guidelines, it can be posted. The business is notified and can respond publicly, but does not get the private resolution window.",
+  },
+  priority: {
+    icon: "⚠️", label: "Priority moderation review",
+    color: "#C4B5FD", bg: "#7C3AED12", border: "#7C3AED35",
+    body: "This type of incident goes to moderation immediately for review, regardless of your selection above. The business can still respond publicly, but the platform reviews it before anything posts.",
+  },
+};
+
 const INCIDENT_CATEGORIES = [
   {
     group: "Customer Service",
@@ -107,6 +130,7 @@ interface SurveyData {
   reportedToBusiness: string;
   issueResolved: string;
   wouldReturn: string;
+  businessWantsResponse: string;
   incidentDescription: string;
   evidenceLinks: string;
   comments: string;
@@ -117,7 +141,7 @@ const EMPTY: SurveyData = {
   overallSafety: 0, returnAlone: 0, wouldRecommend: 0,
   timeOfDay: "", groupType: "", incidentOccurred: null,
   incidentCategories: [], incidentParties: [], incidentSeverity: "",
-  reportedToBusiness: "", issueResolved: "", wouldReturn: "",
+  reportedToBusiness: "", issueResolved: "", wouldReturn: "", businessWantsResponse: "",
   incidentDescription: "", evidenceLinks: "",
   comments: "", categoryRatings: {},
 };
@@ -145,6 +169,9 @@ export function GeneralSurvey() {
   const reset = () => { setStep(0); setSubmitted(false); setData({ ...EMPTY }); };
 
   const descLen = data.incidentDescription.length;
+  const isSeriousIncident = SERIOUS_INCIDENT_TYPES.some(t => data.incidentCategories.includes(t));
+  const genRoutingKey: keyof typeof GEN_ROUTING_INFO | "" = isSeriousIncident ? "priority" : data.businessWantsResponse === "Yes" ? "private" : data.businessWantsResponse === "No" ? "moderation" : "";
+  const genRouting = genRoutingKey ? GEN_ROUTING_INFO[genRoutingKey] : null;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#0D0704", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', system-ui, sans-serif", padding: "16px" }}>
@@ -221,7 +248,7 @@ export function GeneralSurvey() {
 
               <p style={{ color: TEXT, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Did an incident occur during your visit?</p>
               <div style={{ display: "flex", gap: 10, marginBottom: data.incidentOccurred ? 20 : 4 }}>
-                <YesNoChip label="No" active={data.incidentOccurred === false} onSelect={() => setData({ ...data, incidentOccurred: false, incidentCategories: [], incidentParties: [], incidentSeverity: "", reportedToBusiness: "", issueResolved: "", wouldReturn: "", incidentDescription: "", evidenceLinks: "" })} color={GREEN} />
+                <YesNoChip label="No" active={data.incidentOccurred === false} onSelect={() => setData({ ...data, incidentOccurred: false, incidentCategories: [], incidentParties: [], incidentSeverity: "", reportedToBusiness: "", issueResolved: "", wouldReturn: "", businessWantsResponse: "", incidentDescription: "", evidenceLinks: "" })} color={GREEN} />
                 <YesNoChip label="Yes" active={data.incidentOccurred === true} onSelect={() => setData({ ...data, incidentOccurred: true })} color={RED} />
               </div>
 
@@ -297,6 +324,40 @@ export function GeneralSurvey() {
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
                     {RETURN_OPTS.map((o) => <Chip key={o} label={o} selected={data.wouldReturn === o} onSelect={() => setData({ ...data, wouldReturn: o })} color={o === "Yes" ? GREEN : o === "No" ? RED : PRIMARY} />)}
                   </div>
+
+                  {/* Would you like the business to respond first? */}
+                  <div style={{ height: 1, backgroundColor: BORDER, margin: "8px 0 16px" }} />
+                  <p style={{ color: TEXT, fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Would you like the business to have an opportunity to respond before your report becomes public?</p>
+                  <p style={{ color: MUTED, fontSize: 11, marginBottom: 10, lineHeight: 1.5 }}>Your choice determines how this report is handled — see the explanation below.</p>
+                  <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                    {["Yes", "No"].map((o) => (
+                      <button key={o} onClick={() => setData({ ...data, businessWantsResponse: o })}
+                        style={{ flex: 1, padding: "10px 0", borderRadius: 14, border: `1px solid ${data.businessWantsResponse === o ? (o === "Yes" ? GREEN : RED) : BORDER}`, backgroundColor: data.businessWantsResponse === o ? (o === "Yes" ? GREEN : RED) : CARD, color: data.businessWantsResponse === o ? TEXT : MUTED, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                        {o}
+                      </button>
+                    ))}
+                  </div>
+
+                  {genRouting ? (
+                    <div style={{ backgroundColor: genRouting.bg, border: `1px solid ${genRouting.border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 18, display: "flex", gap: 10, alignItems: "flex-start" }}>
+                      <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>{genRouting.icon}</span>
+                      <div>
+                        <p style={{ color: genRouting.color, fontSize: 12, fontWeight: 700, margin: "0 0 5px" }}>{genRouting.label}</p>
+                        <p style={{ color: genRouting.color, fontSize: 11, margin: 0, lineHeight: 1.65, opacity: 0.9 }}>{genRouting.body}</p>
+                        {isSeriousIncident && data.businessWantsResponse !== "" && (
+                          <p style={{ color: genRouting.color, fontSize: 11, margin: "6px 0 0", fontWeight: 600, opacity: 0.85 }}>
+                            Your selection above is noted, but safety or discrimination incidents are always reviewed by the platform first.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ backgroundColor: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: "10px 14px", marginBottom: 18 }}>
+                      <p style={{ color: MUTED, fontSize: 11, margin: 0, lineHeight: 1.6 }}>
+                        Select Yes or No above to see exactly how your report will be handled before you submit.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Description */}
                   <div style={{ height: 1, backgroundColor: BORDER, margin: "8px 0 16px" }} />

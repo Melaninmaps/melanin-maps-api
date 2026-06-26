@@ -28,6 +28,26 @@ const IMPROVEMENTS = [
   "Expanded menu", "Additional staff", "Extended hours", "Nothing — they were great!",
 ];
 
+const SAFETY_TYPES = ["Safety concern"];
+
+const ROUTING_INFO = {
+  private: {
+    icon: "🔒", label: "Private first — 72-hour response window",
+    color: "#4ADE80", bg: "#2D7A4F12", border: "#2D7A4F35",
+    body: "Your feedback goes privately to the business first. They have 72 hours to respond, apologize, or make it right. You'll be notified and can then choose to post it publicly, keep it private, or mark it resolved.",
+  },
+  moderation: {
+    icon: "📋", label: "Moderation review — community guidelines apply",
+    color: "#FCD34D", bg: "#D9770612", border: "#D9770635",
+    body: "Your feedback goes to our moderation team first — not instantly public. If it follows community guidelines, it can be posted. The business is notified and can respond publicly, but does not get the private resolution window.",
+  },
+  priority: {
+    icon: "⚠️", label: "Priority moderation review",
+    color: "#C4B5FD", bg: "#7C3AED12", border: "#7C3AED35",
+    body: "This type of concern goes to moderation immediately for review, regardless of your selection above. The business can still respond publicly, but the platform reviews it before anything posts.",
+  },
+};
+
 const RECOMMEND_OPTS = ["Definitely", "Probably", "Maybe", "Probably Not", "Definitely Not"];
 const RETURN_OPTS = ["Absolutely", "Yes", "Maybe", "Probably Not", "No"];
 const CONCERN_LEVELS = ["No concerns", "Minor concern", "Significant concern"];
@@ -121,6 +141,9 @@ export function BlackOwnedSurvey() {
   const reset = () => { setStep(0); setSubmitted(false); setData({ ...EMPTY }); };
 
   const charLen = data.whatHappened.length;
+  const isSafetyConcern = SAFETY_TYPES.some(t => data.concernTypes.includes(t));
+  const routingKey: keyof typeof ROUTING_INFO | "" = isSafetyConcern ? "priority" : data.businessResponse === "Yes" ? "private" : data.businessResponse === "No" ? "moderation" : "";
+  const routing = routingKey ? ROUTING_INFO[routingKey] : null;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#0D0704", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', system-ui, sans-serif", padding: "16px" }}>
@@ -153,9 +176,9 @@ export function BlackOwnedSurvey() {
 
           {/* ── SUBMITTED ── */}
           {submitted ? (
-            <div style={{ textAlign: "center", padding: "32px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+            <div style={{ textAlign: "center", padding: "28px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
               <div style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: GREEN + "25", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36 }}>✅</div>
-              <p style={{ color: TEXT, fontSize: 24, fontWeight: 800, margin: 0 }}>Thank You!</p>
+              <p style={{ color: TEXT, fontSize: 24, fontWeight: 800, margin: 0 }}>Check-In Submitted</p>
               <p style={{ color: GOLD, fontSize: 13, fontWeight: 600, margin: 0 }}>Soul Food Kitchen</p>
               {data.captions.length > 0 && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center", maxWidth: 280 }}>
@@ -164,6 +187,22 @@ export function BlackOwnedSurvey() {
                   ))}
                 </div>
               )}
+
+              {/* Routing outcome — only shown if a concern was reported */}
+              {hasConcern && routingKey && (
+                <div style={{ width: "100%", maxWidth: 300, backgroundColor: routing!.bg, border: `1px solid ${routing!.border}`, borderRadius: 12, padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start", textAlign: "left" }}>
+                  <span style={{ fontSize: 18, flexShrink: 0 }}>{routing!.icon}</span>
+                  <div>
+                    <p style={{ color: routing!.color, fontSize: 12, fontWeight: 700, margin: "0 0 4px" }}>{routing!.label}</p>
+                    <p style={{ color: routing!.color, fontSize: 11, margin: 0, lineHeight: 1.6, opacity: 0.85 }}>
+                      {routingKey === "private" && "The business has 72 hours to respond. You'll be notified when they do."}
+                      {routingKey === "moderation" && "Our team will review your concern before it's posted publicly."}
+                      {routingKey === "priority" && "Our team is reviewing this now. The business will be notified after review."}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, margin: 0, maxWidth: 280 }}>
                 Your voice helps our community find, celebrate, and support Black-owned businesses. Every check-in matters.
               </p>
@@ -171,7 +210,7 @@ export function BlackOwnedSurvey() {
                 <span style={{ fontSize: 14 }}>🏆</span>
                 <span style={{ color: PRIMARY, fontSize: 13, fontWeight: 600 }}>+15 community points earned</span>
               </div>
-              <button onClick={reset} style={{ marginTop: 8, padding: "12px 40px", borderRadius: 14, backgroundColor: GREEN, border: "none", color: TEXT, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>Done</button>
+              <button onClick={reset} style={{ marginTop: 4, padding: "12px 40px", borderRadius: 14, backgroundColor: GREEN, border: "none", color: TEXT, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>Done</button>
             </div>
 
           ) : step === 0 ? (
@@ -278,8 +317,9 @@ export function BlackOwnedSurvey() {
               <div style={{ height: 1, backgroundColor: BORDER, margin: "16px 0" }} />
 
               {/* Business response */}
-              <p style={{ color: TEXT, fontSize: 14, fontWeight: 700, marginBottom: 6 }}>Would you like the business to have an opportunity to respond before your concern becomes public?</p>
-              <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
+              <p style={{ color: TEXT, fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Would you like the business to have an opportunity to respond before your concern becomes public?</p>
+              <p style={{ color: MUTED, fontSize: 11, marginBottom: 10, lineHeight: 1.5 }}>Your choice determines how this concern is handled — see the explanation below.</p>
+              <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
                 {["Yes", "No"].map((o) => (
                   <button key={o} onClick={() => setData({ ...data, businessResponse: o })}
                     style={{ flex: 1, padding: "10px 0", borderRadius: 14, border: `1px solid ${data.businessResponse === o ? (o === "Yes" ? GREEN : RED) : BORDER}`, backgroundColor: data.businessResponse === o ? (o === "Yes" ? GREEN : RED) : CARD, color: data.businessResponse === o ? TEXT : MUTED, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
@@ -287,6 +327,29 @@ export function BlackOwnedSurvey() {
                   </button>
                 ))}
               </div>
+
+              {/* Routing info card — shown once a choice is made, or always for safety concerns */}
+              {routing && (
+                <div style={{ backgroundColor: routing.bg, border: `1px solid ${routing.border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 18, display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>{routing.icon}</span>
+                  <div>
+                    <p style={{ color: routing.color, fontSize: 12, fontWeight: 700, margin: "0 0 5px" }}>{routing.label}</p>
+                    <p style={{ color: routing.color, fontSize: 11, margin: 0, lineHeight: 1.65, opacity: 0.9 }}>{routing.body}</p>
+                    {isSafetyConcern && data.businessResponse !== "" && (
+                      <p style={{ color: routing.color, fontSize: 11, margin: "6px 0 0", fontWeight: 600, opacity: 0.85 }}>
+                        Your selection above is noted, but safety-related concerns are always reviewed by the platform first.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+              {!routing && (
+                <div style={{ backgroundColor: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: "10px 14px", marginBottom: 18 }}>
+                  <p style={{ color: MUTED, fontSize: 11, margin: 0, lineHeight: 1.6 }}>
+                    Select Yes or No above to see exactly how your concern will be handled before you submit.
+                  </p>
+                </div>
+              )}
 
               {/* Description */}
               <p style={{ color: TEXT, fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Tell us what happened.</p>
