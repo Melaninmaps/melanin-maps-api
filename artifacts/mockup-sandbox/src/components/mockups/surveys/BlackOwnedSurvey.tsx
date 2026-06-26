@@ -144,21 +144,6 @@ export function BlackOwnedSurvey() {
           <div style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: PRIMARY + "22", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>✊🏾</div>
         </div>
 
-        {/* Black-owned badge */}
-        <div style={{
-          margin: "12px 20px 0",
-          padding: "8px 14px",
-          borderRadius: 12,
-          background: `linear-gradient(135deg, ${PRIMARY}22, ${PRIMARY_GOLD}18)`,
-          border: `1px solid ${PRIMARY}33`,
-          display: "flex", alignItems: "center", gap: 8,
-        }}>
-          <span style={{ fontSize: 16 }}>🖤</span>
-          <p style={{ color: PRIMARY_GOLD, fontSize: 12, fontWeight: 600, margin: 0 }}>
-            This survey includes community experience questions for Black-owned businesses
-          </p>
-        </div>
-
         {/* Step bar */}
         {!submitted && (
           <div style={{ display: "flex", alignItems: "center", padding: "14px 24px 10px", gap: 4 }}>
@@ -184,7 +169,7 @@ export function BlackOwnedSurvey() {
               <p style={{ color: TEXT, fontSize: 24, fontWeight: 800, margin: 0 }}>Thank You!</p>
               <p style={{ color: PRIMARY_GOLD, fontSize: 13, fontWeight: 600, margin: 0 }}>Soul Food Kitchen</p>
               <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-                Your review helps our community find and support Black-owned businesses with confidence. Every voice matters. 🖤
+                Your review helps our community find and support minority-owned businesses with confidence. Every voice matters.
               </p>
               <div style={{
                 display: "flex", alignItems: "center", gap: 6,
@@ -212,15 +197,15 @@ export function BlackOwnedSurvey() {
           ) : step === 1 ? (
             <div>
               <p style={{ color: TEXT, fontSize: 20, fontWeight: 800, marginBottom: 4 }}>Community Experience</p>
-              <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, marginBottom: 4 }}>As a Black customer, how did this business make you feel?</p>
+              <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, marginBottom: 4 }}>As a minority customer, how did this business make you feel?</p>
               <div style={{ backgroundColor: PRIMARY + "10", border: `1px solid ${PRIMARY}25`, borderRadius: 12, padding: "8px 12px", marginBottom: 16, display: "flex", gap: 8, alignItems: "flex-start" }}>
                 <span style={{ fontSize: 14, marginTop: 1 }}>✊🏾</span>
                 <p style={{ color: PRIMARY_GOLD, fontSize: 11, fontWeight: 500, margin: 0, lineHeight: 1.5 }}>
-                  These questions help our community understand which businesses truly celebrate and affirm Black culture.
+                  These questions help our community understand which businesses truly celebrate and affirm minority communities.
                 </p>
               </div>
               <div style={{ backgroundColor: CARD, borderRadius: 16, padding: 16, border: `1px solid ${BORDER}` }}>
-                <StarRow label="Did you feel welcomed & affirmed as a Black customer?" value={data.feltWelcomed} onChange={(v) => setData({ ...data, feltWelcomed: v })} />
+                <StarRow label="Did you feel welcomed & affirmed as a minority customer?" value={data.feltWelcomed} onChange={(v) => setData({ ...data, feltWelcomed: v })} />
                 <div style={{ height: 1, backgroundColor: BORDER, margin: "4px 0 18px" }} />
                 <StarRow label="Was the space culturally inclusive & representative?" value={data.culturallyInclusive} onChange={(v) => setData({ ...data, culturallyInclusive: v })} />
                 <div style={{ height: 1, backgroundColor: BORDER, margin: "4px 0 18px" }} />
