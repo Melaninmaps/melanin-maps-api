@@ -95,7 +95,7 @@ export function GeneralSurvey() {
   });
 
   const canNext = () => {
-    if (step === 0) return data.overallSafety > 0 && data.returnAlone > 0 && data.wouldRecommend > 0;
+    if (step === 0) return data.wouldRecommend > 0;
     if (step === 1) return data.timeOfDay !== "" && data.groupType !== "" && data.incidentOccurred !== null;
     return true;
   };
@@ -200,10 +200,6 @@ export function GeneralSurvey() {
               <p style={{ color: TEXT, fontSize: 20, fontWeight: 800, marginBottom: 4 }}>How safe did you feel?</p>
               <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, marginBottom: 16 }}>Rate your safety experience at this business</p>
               <div style={{ backgroundColor: CARD, borderRadius: 16, padding: 16, border: `1px solid ${BORDER}` }}>
-                <StarRow label="Overall Safety" value={data.overallSafety} onChange={(v) => setData({ ...data, overallSafety: v })} />
-                <div style={{ height: 1, backgroundColor: BORDER, margin: "4px 0 18px" }} />
-                <StarRow label="Comfortable returning alone?" value={data.returnAlone} onChange={(v) => setData({ ...data, returnAlone: v })} />
-                <div style={{ height: 1, backgroundColor: BORDER, margin: "4px 0 18px" }} />
                 <StarRow label="Would recommend to others?" value={data.wouldRecommend} onChange={(v) => setData({ ...data, wouldRecommend: v })} />
               </div>
             </div>
