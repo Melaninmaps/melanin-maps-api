@@ -184,6 +184,7 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
         <SafetyExperienceSurvey
           visible={showSafetySurvey}
           businessName={business.name}
+          businessCategory={business.category}
           onClose={() => setShowSafetySurvey(false)}
         />
       </>
@@ -283,6 +284,7 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
       <SafetyExperienceSurvey
         visible={showSafetySurvey}
         businessName={business.name}
+        businessCategory={business.category}
         onClose={() => setShowSafetySurvey(false)}
       />
     </>

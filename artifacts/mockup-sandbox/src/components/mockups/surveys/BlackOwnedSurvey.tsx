@@ -34,16 +34,15 @@ function StarRow({ label, value, onChange }: { label: string; value: number; onC
   );
 }
 
-function Chip({ label, selected, onSelect, danger }: { label: string; selected: boolean; onSelect: () => void; danger?: boolean }) {
-  const activeColor = danger ? "#DC2626" : PRIMARY;
+function Chip({ label, selected, onSelect }: { label: string; selected: boolean; onSelect: () => void }) {
   return (
     <button
       onClick={onSelect}
       style={{
         padding: "8px 16px",
         borderRadius: 20,
-        border: `1px solid ${selected ? activeColor : BORDER}`,
-        backgroundColor: selected ? activeColor : CARD,
+        border: `1px solid ${selected ? PRIMARY : BORDER}`,
+        backgroundColor: selected ? PRIMARY : CARD,
         color: selected ? TEXT : MUTED,
         fontSize: 13,
         fontWeight: 500,
@@ -57,28 +56,17 @@ function Chip({ label, selected, onSelect, danger }: { label: string; selected: 
   );
 }
 
-function YesNoChip({ label, active, onSelect, color }: { label: string; active: boolean; onSelect: () => void; color: string }) {
-  return (
-    <button
-      onClick={onSelect}
-      style={{
-        flex: 1, padding: "10px 0", borderRadius: 14,
-        border: `1px solid ${active ? color : BORDER}`,
-        backgroundColor: active ? color : CARD,
-        color: active ? TEXT : MUTED,
-        fontSize: 14, fontWeight: 600, cursor: "pointer",
-        fontFamily: "inherit",
-      }}
-    >
-      {label}
-    </button>
-  );
-}
-
 const TIMES = ["Morning", "Afternoon", "Evening", "Night"];
 const GROUPS = ["Solo", "With Partner", "With Friends", "With Family", "With Kids"];
 
-const STEPS = ["Safety Ratings", "Cultural Experience", "Visit Context", "Comments"];
+const CATEGORY_QUESTIONS = [
+  { label: "Easy to talk to", key: "easyToTalkTo" },
+  { label: "Listened to my concerns", key: "listenedToConcerns" },
+  { label: "Clean & professional environment", key: "cleanEnvironment" },
+  { label: "Respectful of my time", key: "respectfulOfTime" },
+];
+
+const STEPS = ["Safety Ratings", "Cultural Experience", "Visit Context", "Comments", "Healthcare Experience"];
 
 interface SurveyData {
   overallSafety: number;
@@ -91,16 +79,20 @@ interface SurveyData {
   groupType: string;
   incidentOccurred: boolean | null;
   comments: string;
+  categoryRatings: Record<string, number>;
 }
+
+const EMPTY: SurveyData = {
+  overallSafety: 0, returnAlone: 0, wouldRecommend: 0,
+  feltWelcomed: 0, culturallyInclusive: 0, staffReflects: 0,
+  timeOfDay: "", groupType: "", incidentOccurred: null, comments: "",
+  categoryRatings: {},
+};
 
 export function BlackOwnedSurvey() {
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
-  const [data, setData] = useState<SurveyData>({
-    overallSafety: 0, returnAlone: 0, wouldRecommend: 0,
-    feltWelcomed: 0, culturallyInclusive: 0, staffReflects: 0,
-    timeOfDay: "", groupType: "", incidentOccurred: null, comments: "",
-  });
+  const [data, setData] = useState<SurveyData>({ ...EMPTY });
 
   const canNext = () => {
     if (step === 0) return data.wouldRecommend > 0;
@@ -114,7 +106,7 @@ export function BlackOwnedSurvey() {
     setSubmitted(true);
   };
 
-  const reset = () => { setStep(0); setSubmitted(false); setData({ overallSafety: 0, returnAlone: 0, wouldRecommend: 0, feltWelcomed: 0, culturallyInclusive: 0, staffReflects: 0, timeOfDay: "", groupType: "", incidentOccurred: null, comments: "" }); };
+  const reset = () => { setStep(0); setSubmitted(false); setData({ ...EMPTY }); };
 
   return (
     <div style={{
@@ -225,7 +217,7 @@ export function BlackOwnedSurvey() {
                 {GROUPS.map((g) => <Chip key={g} label={g} selected={data.groupType === g} onSelect={() => setData({ ...data, groupType: g })} />)}
               </div>
             </div>
-          ) : (
+          ) : step === 3 ? (
             <div>
               <p style={{ color: TEXT, fontSize: 20, fontWeight: 800, marginBottom: 4 }}>Anything else to share?</p>
               <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, marginBottom: 16 }}>Optional — your comments help future visitors feel confident</p>
@@ -240,6 +232,29 @@ export function BlackOwnedSurvey() {
                   fontFamily: "inherit", outline: "none",
                 }}
               />
+            </div>
+          ) : (
+            <div>
+              <p style={{ color: TEXT, fontSize: 20, fontWeight: 800, marginBottom: 4 }}>Healthcare Experience</p>
+              <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, marginBottom: 4 }}>Optional — rate specific aspects of your visit</p>
+              <div style={{ backgroundColor: PRIMARY + "08", border: `1px solid ${PRIMARY}20`, borderRadius: 12, padding: "8px 12px", marginBottom: 16, display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <span style={{ fontSize: 14, marginTop: 1 }}>⭐</span>
+                <p style={{ color: MUTED, fontSize: 11, fontWeight: 500, margin: 0, lineHeight: 1.5 }}>
+                  These questions are tailored to healthcare visits. Skip any you'd rather not answer — all are optional.
+                </p>
+              </div>
+              <div style={{ backgroundColor: CARD, borderRadius: 16, padding: 16, border: `1px solid ${BORDER}` }}>
+                {CATEGORY_QUESTIONS.map((q, i) => (
+                  <div key={q.key}>
+                    {i > 0 && <div style={{ height: 1, backgroundColor: BORDER, margin: "4px 0 18px" }} />}
+                    <StarRow
+                      label={q.label}
+                      value={data.categoryRatings[q.key] ?? 0}
+                      onChange={(v) => setData({ ...data, categoryRatings: { ...data.categoryRatings, [q.key]: v } })}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

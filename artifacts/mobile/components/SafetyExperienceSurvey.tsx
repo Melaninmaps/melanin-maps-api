@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { getCategoryRatingQuestions, getCategoryExperienceLabel } from "@/lib/categoryQuestions";
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useState } from "react";
 import {
@@ -18,6 +19,7 @@ import { useColors } from "@/hooks/useColors";
 interface Props {
   visible: boolean;
   businessName: string;
+  businessCategory?: string;
   onClose: () => void;
   onSubmit?: (data: SafetySurveyData) => void;
 }
@@ -30,6 +32,7 @@ export interface SafetySurveyData {
   groupType: string;
   incidentOccurred: boolean;
   comments: string;
+  categoryRatings: Record<string, number>;
 }
 
 const TIMES = ["Morning", "Afternoon", "Evening", "Night"];
@@ -55,7 +58,7 @@ function StarRow({ label, value, onChange }: { label: string; value: number; onC
   );
 }
 
-export function SafetyExperienceSurvey({ visible, businessName, onClose, onSubmit }: Props) {
+export function SafetyExperienceSurvey({ visible, businessName, businessCategory, onClose, onSubmit }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
@@ -67,12 +70,13 @@ export function SafetyExperienceSurvey({ visible, businessName, onClose, onSubmi
     groupType: "",
     incidentOccurred: false,
     comments: "",
+    categoryRatings: {},
   });
   const [submitted, setSubmitted] = useState(false);
 
   const reset = () => {
     setStep(0);
-    setData({ overallSafety: 0, returnAlone: 0, wouldRecommend: 0, timeOfDay: "", groupType: "", incidentOccurred: false, comments: "" });
+    setData({ overallSafety: 0, returnAlone: 0, wouldRecommend: 0, timeOfDay: "", groupType: "", incidentOccurred: false, comments: "", categoryRatings: {} });
     setSubmitted(false);
   };
 
@@ -92,12 +96,14 @@ export function SafetyExperienceSurvey({ visible, businessName, onClose, onSubmi
 
   const handleNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (step < 2) { setStep(step + 1); return; }
+    if (step < 3) { setStep(step + 1); return; }
     setSubmitted(true);
     onSubmit?.(data);
   };
 
-  const STEPS = ["Safety Ratings", "Visit Context", "Comments"];
+  const categoryQuestions = getCategoryRatingQuestions(businessCategory);
+  const categoryLabel = getCategoryExperienceLabel(businessCategory);
+  const STEPS = ["Safety Ratings", "Visit Context", "Comments", categoryLabel];
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
@@ -220,7 +226,7 @@ export function SafetyExperienceSurvey({ visible, businessName, onClose, onSubmi
                   ))}
                 </View>
               </View>
-            ) : (
+            ) : step === 2 ? (
               <View style={styles.stepContent}>
                 <Text style={[styles.stepTitle, { color: colors.foreground }]}>Anything else to share?</Text>
                 <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
@@ -236,6 +242,25 @@ export function SafetyExperienceSurvey({ visible, businessName, onClose, onSubmi
                   onChangeText={(t) => setData({ ...data, comments: t })}
                   textAlignVertical="top"
                 />
+              </View>
+            ) : (
+              <View style={styles.stepContent}>
+                <Text style={[styles.stepTitle, { color: colors.foreground }]}>{categoryLabel}</Text>
+                <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
+                  Optional — rate specific aspects of your visit
+                </Text>
+                <View style={[styles.ratingCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  {categoryQuestions.map((q, i) => (
+                    <View key={q.key}>
+                      {i > 0 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
+                      <StarRow
+                        label={q.label}
+                        value={data.categoryRatings[q.key] ?? 0}
+                        onChange={(v) => setData({ ...data, categoryRatings: { ...data.categoryRatings, [q.key]: v } })}
+                      />
+                    </View>
+                  ))}
+                </View>
               </View>
             )}
           </ScrollView>
@@ -253,9 +278,9 @@ export function SafetyExperienceSurvey({ visible, businessName, onClose, onSubmi
                 disabled={!canNext()}
               >
                 <Text style={[styles.nextBtnText, { color: canNext() ? "#FBF7F0" : colors.mutedForeground }]}>
-                  {step === 2 ? "Submit" : "Next"}
+                  {step === 3 ? "Submit" : "Next"}
                 </Text>
-                {step < 2 && <Feather name="arrow-right" size={16} color={canNext() ? "#FBF7F0" : colors.mutedForeground} />}
+                {step < 3 && <Feather name="arrow-right" size={16} color={canNext() ? "#FBF7F0" : colors.mutedForeground} />}
               </TouchableOpacity>
             </View>
           )}

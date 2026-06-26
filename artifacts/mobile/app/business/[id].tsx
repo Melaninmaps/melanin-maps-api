@@ -46,6 +46,7 @@ import { CommunityConfidenceScore } from "@/components/CommunityConfidenceScore"
 import { KnowBeforeYouGoSection } from "@/components/KnowBeforeYouGoSection";
 import { PassThePlateModal } from "@/components/PassThePlateModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { SafetyExperienceSurvey } from "@/components/SafetyExperienceSurvey";
 
 const CATEGORY_IMAGES: Record<string, any> = {
   Food: require("@/assets/images/bento-businesses.jpg"),
@@ -80,6 +81,7 @@ export default function BusinessDetailScreen() {
   const toastOpacity = useRef(new Animated.Value(0)).current;
   const [passThePlateOpen, setPassThePlateOpen] = useState(false);
   const [platePassCount, setPlatePassCount] = useState(0);
+  const [showSafetySurvey, setShowSafetySurvey] = useState(false);
 
   const { reviews: apiReviews, submitReview } = useReviews(id ?? "");
   const { hasCheckedIn, checkIn } = useCheckins();
@@ -412,6 +414,25 @@ export default function BusinessDetailScreen() {
               </View>
             </View>
           )}
+
+          {/* Rate Safety Experience */}
+          <TouchableOpacity
+            style={[styles.rateSafetyBanner, { backgroundColor: "#2D7A4F10", borderColor: "#2D7A4F30" }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setShowSafetySurvey(true);
+            }}
+            activeOpacity={0.8}
+          >
+            <View style={styles.rateSafetyIconWrap}>
+              <Feather name="shield" size={20} color="#2D7A4F" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.rateSafetyTitle, { color: colors.foreground }]}>Rate Your Safety Experience</Text>
+              <Text style={[styles.rateSafetySub, { color: colors.mutedForeground }]}>Help the community know what to expect</Text>
+            </View>
+            <Feather name="chevron-right" size={16} color="#2D7A4F" />
+          </TouchableOpacity>
 
           {/* Community Captions */}
           {(topCaptions.length > 0 || business) && (
@@ -776,6 +797,13 @@ export default function BusinessDetailScreen() {
         onSubmit={handleReviewSubmit}
       />
 
+      <SafetyExperienceSurvey
+        visible={showSafetySurvey}
+        businessName={business.name}
+        businessCategory={business.category}
+        onClose={() => setShowSafetySurvey(false)}
+      />
+
       {/* Caption Voting Sheet */}
       <Modal visible={captionSheetOpen} transparent animationType="slide" onRequestClose={() => setCaptionSheetOpen(false)}>
         <View style={styles.captionOverlay}>
@@ -904,6 +932,31 @@ const styles = StyleSheet.create({
   minorityDisclaimer: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, marginTop: 4, fontStyle: "italic" },
   category: { fontFamily: "Inter_500Medium", fontSize: 13 },
   price: { fontFamily: "Inter_400Regular", fontSize: 13 },
+  rateSafetyBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+  },
+  rateSafetyIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#2D7A4F18",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  rateSafetyTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+  },
+  rateSafetySub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    marginTop: 2,
+  },
   safetyCard: {
     borderRadius: 12,
     borderWidth: 1,
