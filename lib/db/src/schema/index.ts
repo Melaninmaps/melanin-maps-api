@@ -1,4 +1,5 @@
 export * from "./auth";
+export * from "./community-boundaries";
 export * from "./smart-pathways";
 export * from "./knowledge";
 export * from "./businesses";

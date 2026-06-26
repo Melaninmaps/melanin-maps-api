@@ -46,6 +46,16 @@ export const safetyReportsTable = pgTable("safety_reports", {
   targetName: varchar("target_name", { length: 255 }).notNull(),
   description: text("description"),
   severity: varchar("severity", { length: 20 }).notNull().default("medium"),
+  routingType: varchar("routing_type", { length: 20 }).notNull().default("moderation"),
+  businessResponseRequested: boolean("business_response_requested").notNull().default(false),
+  businessResponseDeadline: timestamp("business_response_deadline", { withTimezone: true }),
+  businessResponseText: text("business_response_text"),
+  autoEscalated: boolean("auto_escalated").notNull().default(false),
+  incidentCategories: jsonb("incident_categories").$type<string[]>().notNull().default([]),
+  incidentParties: jsonb("incident_parties").$type<string[]>().notNull().default([]),
+  incidentSeverity: varchar("incident_severity", { length: 20 }),
+  incidentDescription: text("incident_description"),
+  evidenceLinks: text("evidence_links"),
   status: varchar("status", { length: 20 }).notNull().default("pending"),
   moderatorNotes: text("moderator_notes"),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
@@ -75,9 +85,12 @@ export const SAFETY_REPORT_CATEGORIES = [
 
 export const SAFETY_REPORT_SEVERITIES = ["low", "medium", "high", "critical"] as const;
 
+export const ROUTING_TYPES = ["private", "moderation", "priority"] as const;
+
 export const insertSafetyReportSchema = createInsertSchema(safetyReportsTable, {
   category: z.enum(SAFETY_REPORT_CATEGORIES),
   severity: z.enum(SAFETY_REPORT_SEVERITIES).default("medium"),
+  routingType: z.enum(ROUTING_TYPES).default("moderation"),
 }).omit({
   id: true,
   createdAt: true,
@@ -85,6 +98,8 @@ export const insertSafetyReportSchema = createInsertSchema(safetyReportsTable, {
   moderatorNotes: true,
   reviewedAt: true,
   reviewedBy: true,
+  businessResponseDeadline: true,
+  autoEscalated: true,
 });
 
 export const selectSafetyReportSchema = createSelectSchema(safetyReportsTable);

@@ -14,8 +14,19 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
+
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
+
+async function getToken(): Promise<string | null> {
+  try { return await SecureStore.getItemAsync("auth_session_token"); }
+  catch { return null; }
+}
 
 const COVER_EMOJIS = ["✈️", "🗺️", "🌍", "🎒", "🏝️", "🏙️", "🌃", "🎷", "🍑", "✊🏾", "🇧🇷", "🇬🇭", "🚗", "📸", "💃🏾", "🙏🏾"];
 
@@ -58,9 +69,10 @@ export default function CreateJournalScreen() {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSaving(true);
     try {
-      const res = await fetch("/api/journals", {
+      const token = await getToken();
+      const res = await fetch(`${getApiBase()}/api/journals`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ title: title.trim(), description: description.trim(), cities, coverEmoji, isPublic }),
       });
       if (res.ok) {

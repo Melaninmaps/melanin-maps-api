@@ -95,6 +95,12 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
     description,
     severity,
     isAnonymous,
+    businessResponseRequested,
+    incidentCategories,
+    incidentParties,
+    incidentSeverity,
+    incidentDescription,
+    evidenceLinks,
   } = req.body as Record<string, unknown>;
 
   if (!category || !VALID_CATEGORIES.includes(category as typeof VALID_CATEGORIES[number])) {
@@ -135,6 +141,18 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
         targetName: (targetName as string).trim(),
         description: typeof description === "string" ? description.slice(0, 2000) : null,
         severity: resolvedSeverity,
+        routingType: (category === "safety" || category === "discrimination" || category === "sundown")
+          ? "priority"
+          : businessResponseRequested === true ? "private" : "moderation",
+        businessResponseRequested: businessResponseRequested === true,
+        businessResponseDeadline: businessResponseRequested === true
+          ? new Date(Date.now() + 72 * 60 * 60 * 1000)
+          : null,
+        incidentCategories: Array.isArray(incidentCategories) ? incidentCategories as string[] : [],
+        incidentParties: Array.isArray(incidentParties) ? incidentParties as string[] : [],
+        incidentSeverity: typeof incidentSeverity === "string" ? incidentSeverity : null,
+        incidentDescription: typeof incidentDescription === "string" ? incidentDescription.slice(0, 2000) : null,
+        evidenceLinks: typeof evidenceLinks === "string" ? evidenceLinks : null,
         status: "pending",
       })
       .returning();

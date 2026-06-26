@@ -15,6 +15,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
 
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
+
 type Journal = {
   id: number;
   title: string;
@@ -116,7 +121,7 @@ export default function JournalsScreen() {
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const res = await fetch("/api/journals");
+      const res = await fetch(`${getApiBase()}/api/journals`);
       if (res.ok) {
         const data = await res.json() as { journals: Journal[] };
         if (data.journals.length > 0) setJournals(data.journals);
@@ -138,7 +143,7 @@ export default function JournalsScreen() {
       return next;
     });
     try {
-      await fetch(`/api/journals/${id}/save`, { method: "POST" });
+      await fetch(`${getApiBase()}/api/journals/${id}/save`, { method: "POST" });
     } catch {}
   };
 

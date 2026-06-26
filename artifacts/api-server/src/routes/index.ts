@@ -83,6 +83,7 @@ import notificationsHubRouter from "./notifications-hub";
 import knowledgeChannelsRouter from "./knowledge-channels";
 import { recommendRouter } from "./recommend";
 import captionsRouter from "./captions";
+import communityBoundariesRouter from "./community-boundaries";
 
 const router: IRouter = Router();
 
@@ -169,6 +170,7 @@ router.use(notificationsHubRouter);
 router.use(knowledgeChannelsRouter);
 router.use(recommendRouter);
 router.use(captionsRouter);
+router.use(communityBoundariesRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");
