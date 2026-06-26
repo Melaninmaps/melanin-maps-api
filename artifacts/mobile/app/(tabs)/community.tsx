@@ -777,13 +777,43 @@ export default function CommunityScreen() {
             contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100 }]}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
             ListHeaderComponent={
-              activeTab === "Alerts" && alerts.length > 0 ? (
-                <View style={styles.alertSection}>
-                  {alerts.map((a) => (
-                    <AlertBanner key={a.id} alert={a} onDismiss={() => setAlerts((prev) => prev.filter((x) => x.id !== a.id))} />
-                  ))}
-                </View>
-              ) : null
+              <>
+                {/* Always-visible compose bar */}
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={[styles.composeBar, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => {
+                    if (!isAuthenticated) {
+                      setUpgradeFeature("Community Posts");
+                      setShowUpgrade(true);
+                      return;
+                    }
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setShowCompose(true);
+                    setTimeout(() => inputRef.current?.focus(), 150);
+                  }}
+                >
+                  <View style={[styles.composeBarAvatar, { backgroundColor: colors.primary + "18" }]}>
+                    <Feather name="edit-3" size={15} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.composeBarPlaceholder, { color: colors.mutedForeground }]}>
+                    Share something… type{" "}
+                    <Text style={{ fontFamily: "Inter_700Bold", color: colors.primary }}>@</Text>
+                    {" "}to tag a business
+                  </Text>
+                  <View style={[styles.composeBarAtBadge, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "25" }]}>
+                    <Feather name="at-sign" size={13} color={colors.primary} />
+                  </View>
+                </TouchableOpacity>
+
+                {activeTab === "Alerts" && alerts.length > 0 && (
+                  <View style={styles.alertSection}>
+                    {alerts.map((a) => (
+                      <AlertBanner key={a.id} alert={a} onDismiss={() => setAlerts((prev) => prev.filter((x) => x.id !== a.id))} />
+                    ))}
+                  </View>
+                )}
+              </>
             }
             ListEmptyComponent={
               <View style={styles.empty}>
@@ -954,7 +984,7 @@ export default function CommunityScreen() {
             <TextInput
               ref={inputRef}
               style={[styles.composeInput, { color: colors.foreground }]}
-              placeholder="Share something with the community…"
+              placeholder="What's on your mind? Type @ to tag a business…"
               placeholderTextColor={colors.mutedForeground}
               value={newPostText}
               onChangeText={handlePostTextChange}
@@ -1101,6 +1131,37 @@ const styles = StyleSheet.create({
   mentionBtnText: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 12,
+  },
+  composeBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 10,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 10,
+  },
+  composeBarAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  composeBarPlaceholder: {
+    flex: 1,
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+  },
+  composeBarAtBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
   },
   resSpacesCard: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14, borderWidth: 1.5, padding: 14 },
   resSpacesIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
