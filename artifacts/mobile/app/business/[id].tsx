@@ -142,9 +142,17 @@ export default function BusinessDetailScreen() {
   const saved = isSaved(business.id);
   const alreadyCheckedIn = hasCheckedIn(business.id) || checkInDone;
 
+  const COMMUNITY_SUPPORT_LABELS: Record<number, string> = {
+    1: "Worth checking out",
+    2: "Solid spot — spread the word",
+    3: "Strong community pick!",
+    4: "A must-visit — go now!",
+    5: "🔥 Drop everything and support this business!",
+  };
+
   const allReviews: Array<{
     id: string; author: string; initials: string; color: string;
-    rating: number; text: string; timeAgo: string; wouldReturnAlone?: boolean; videoUrl?: string; nowHiringUrl?: string;
+    rating: number; text: string; timeAgo: string; wouldReturnAlone?: boolean; videoUrl?: string; nowHiringUrl?: string; communitySupport?: number;
   }> = [
     ...apiReviews.map((r) => ({
       id: r.id,
@@ -157,6 +165,7 @@ export default function BusinessDetailScreen() {
       wouldReturnAlone: r.wouldReturnAlone ?? undefined,
       videoUrl: r.videoUrl ?? undefined,
       nowHiringUrl: r.nowHiringUrl ?? undefined,
+      communitySupport: (r as any).communitySupport ?? undefined,
     })),
     ...(business.reviews ?? []),
   ];
@@ -322,7 +331,7 @@ export default function BusinessDetailScreen() {
             <ConfidenceScoreBadge score={business.confidenceScore} size="lg" showLabel />
           </View>
 
-          <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={14} />
+          <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={14} showLabel />
 
           {/* Safety stats */}
           {(business.wouldReturnAlone != null || business.safetyRating != null) && (
@@ -517,6 +526,13 @@ export default function BusinessDetailScreen() {
                     )}
                   </View>
                 </View>
+                {rev.communitySupport != null && COMMUNITY_SUPPORT_LABELS[rev.communitySupport] && (
+                  <View style={[styles.supportPill, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
+                    <Text style={[styles.supportPillText, { color: colors.primary }]}>
+                      🤎 {COMMUNITY_SUPPORT_LABELS[rev.communitySupport]}
+                    </Text>
+                  </View>
+                )}
                 {rev.text ? (
                   <Text style={[styles.reviewText, { color: colors.foreground }]}>{rev.text}</Text>
                 ) : null}
@@ -790,6 +806,8 @@ const styles = StyleSheet.create({
   reviewRight: { alignItems: "flex-end", gap: 4 },
   returnAlone: { flexDirection: "row", alignItems: "center", gap: 4 },
   returnAloneText: { fontFamily: "Inter_500Medium", fontSize: 10 },
+  supportPill: { alignSelf: "flex-start" as const, borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 4 },
+  supportPillText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   reviewText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20 },
   videoLink: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, marginTop: 8 },
   videoLinkText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },

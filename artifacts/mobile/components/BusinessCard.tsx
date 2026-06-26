@@ -141,7 +141,7 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
                 </View>
               )}
             </View>
-            <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={11} />
+            <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={11} showLabel />
             {(() => {
               const vibe = getVibeMatch(business.category);
               if (!vibe) return null;
@@ -243,7 +243,7 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
             )}
             <ConfidenceScoreBadge score={business.confidenceScore} size="md" showLabel />
           </View>
-          <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={12} />
+          <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={12} showLabel />
           {(() => {
             const vibe = getVibeMatch(business.category);
             if (!vibe) return null;
