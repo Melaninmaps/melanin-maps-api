@@ -1,10 +1,13 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -15,7 +18,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-import { CATEGORY_GROUPS, getCategoryGroup, isLiveCategory } from "@/constants/categories";
+import { CATEGORY_GROUPS, getCategoryGroup } from "@/constants/categories";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -28,7 +31,6 @@ async function getToken(): Promise<string | null> {
     return await SecureStore.getItemAsync("auth_session_token");
   } catch { return null; }
 }
-
 
 const HOURS_OPTIONS = [
   "Mon–Fri 9am–5pm",
@@ -66,6 +68,11 @@ export default function EditBusinessProfile() {
   });
   const [original, setOriginal] = useState<FormState | null>(null);
 
+  const [businessId, setBusinessId] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
   const update = (key: keyof FormState) => (val: string) =>
     setForm(prev => ({ ...prev, [key]: val }));
 
@@ -76,12 +83,12 @@ export default function EditBusinessProfile() {
       if (token) headers["Authorization"] = `Bearer ${token}`;
       const res = await fetch(`${getApiBase()}/api/businesses/mine`, { headers });
       if (res.ok) {
-        const data = await res.json() as { business: FormState & { id: string } | null };
+        const data = await res.json() as { business: (FormState & { id: string; imageUrl?: string; photos?: string[] }) | null };
         if (data.business) {
           const f: FormState = {
             name: data.business.name ?? "",
             category: data.business.category ?? "",
-            subcategory: (data.business as FormState & { id: string; subcategory?: string }).subcategory ?? "",
+            subcategory: data.business.subcategory ?? "",
             description: data.business.description ?? "",
             phone: data.business.phone ?? "",
             website: data.business.website ?? "",
@@ -89,6 +96,9 @@ export default function EditBusinessProfile() {
           };
           setForm(f);
           setOriginal(f);
+          setBusinessId(data.business.id);
+          setPhotos(data.business.photos ?? []);
+          setCoverUrl(data.business.imageUrl ?? null);
         }
       }
     } catch { }
@@ -140,6 +150,105 @@ export default function EditBusinessProfile() {
     }
   };
 
+  const handleAddPhoto = async () => {
+    if ((Platform.OS as string) === "web") {
+      Alert.alert("Not supported", "Photo upload is available on the mobile app.");
+      return;
+    }
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission needed", "Allow access to your photo library to upload business photos.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      quality: 0.85,
+    });
+    if (result.canceled || !result.assets.length) return;
+
+    const asset = result.assets[0];
+    setUploadingPhoto(true);
+    try {
+      const token = await getToken();
+      const formData = new FormData();
+      formData.append("photo", {
+        uri: asset.uri,
+        type: asset.mimeType ?? "image/jpeg",
+        name: "photo.jpg",
+      } as unknown as Blob);
+
+      const res = await fetch(`${getApiBase()}/api/businesses/mine/photos`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json() as { error?: string };
+        throw new Error(err.error ?? "Upload failed");
+      }
+      const data = await res.json() as { url: string; photos: string[]; imageUrl: string };
+      setPhotos(data.photos);
+      setCoverUrl(data.imageUrl);
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err) {
+      Alert.alert("Upload failed", err instanceof Error ? err.message : "Please try again.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleSetCover = async (url: string) => {
+    if (url === coverUrl) return;
+    try {
+      const token = await getToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${getApiBase()}/api/businesses/mine/photos/cover`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ url }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setCoverUrl(url);
+      if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      Alert.alert("Error", "Could not set cover photo.");
+    }
+  };
+
+  const handleDeletePhoto = (url: string) => {
+    Alert.alert(
+      "Remove photo",
+      "Are you sure you want to remove this photo?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const token = await getToken();
+              const headers: Record<string, string> = { "Content-Type": "application/json" };
+              if (token) headers["Authorization"] = `Bearer ${token}`;
+              const res = await fetch(`${getApiBase()}/api/businesses/mine/photos`, {
+                method: "DELETE",
+                headers,
+                body: JSON.stringify({ url }),
+              });
+              if (!res.ok) throw new Error("Failed");
+              const data = await res.json() as { photos: string[]; imageUrl: string | null };
+              setPhotos(data.photos);
+              setCoverUrl(data.imageUrl);
+            } catch {
+              Alert.alert("Error", "Could not remove photo.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
@@ -163,6 +272,75 @@ export default function EditBusinessProfile() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Photos */}
+        <View style={styles.group}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <View>
+              <Text style={[styles.groupLabel, { color: colors.foreground }]}>Business Photos</Text>
+              <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>
+                Tap a photo to set it as your cover image. Long press to remove.
+              </Text>
+            </View>
+            <Text style={[{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+              {photos.length}/10
+            </Text>
+          </View>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }} contentContainerStyle={{ gap: 10 }}>
+            {photos.map((url) => {
+              const isCover = url === coverUrl;
+              return (
+                <TouchableOpacity
+                  key={url}
+                  onPress={() => handleSetCover(url)}
+                  onLongPress={() => handleDeletePhoto(url)}
+                  activeOpacity={0.8}
+                  style={[styles.photoThumb, { borderColor: isCover ? colors.primary : colors.border, borderWidth: isCover ? 2.5 : 1 }]}
+                >
+                  <Image source={{ uri: url }} style={styles.photoThumbImg} />
+                  {isCover && (
+                    <View style={[styles.coverBadge, { backgroundColor: colors.primary }]}>
+                      <Feather name="star" size={10} color="#fff" />
+                      <Text style={styles.coverBadgeTxt}>Cover</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+
+            {photos.length < 10 && (
+              <TouchableOpacity
+                onPress={handleAddPhoto}
+                disabled={uploadingPhoto}
+                style={[styles.addPhotoBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+                activeOpacity={0.75}
+              >
+                {uploadingPhoto
+                  ? <ActivityIndicator size="small" color={colors.primary} />
+                  : <>
+                      <Feather name="plus" size={22} color={colors.primary} />
+                      <Text style={[styles.addPhotoTxt, { color: colors.primary }]}>Add</Text>
+                    </>
+                }
+              </TouchableOpacity>
+            )}
+          </ScrollView>
+
+          {photos.length === 0 && !uploadingPhoto && (
+            <TouchableOpacity
+              onPress={handleAddPhoto}
+              style={[styles.emptyPhotos, { borderColor: colors.border, backgroundColor: colors.card }]}
+              activeOpacity={0.8}
+            >
+              <Feather name="camera" size={28} color={colors.mutedForeground} />
+              <Text style={[styles.emptyPhotosTxt, { color: colors.foreground }]}>Add your first photo</Text>
+              <Text style={[styles.emptyPhotosHelper, { color: colors.mutedForeground }]}>
+                Great photos help customers find and trust your business
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* Business Name */}
         <View style={styles.group}>
           <Text style={[styles.groupLabel, { color: colors.foreground }]}>Business Name <Text style={{ color: "#DC2626" }}>*</Text></Text>
@@ -224,7 +402,6 @@ export default function EditBusinessProfile() {
               ))}
             </View>
           )}
-          {/* Subcategory picker */}
           {form.category && (
             <View style={{ marginTop: 10, gap: 6 }}>
               <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>Subcategory (optional)</Text>
@@ -384,4 +561,13 @@ const styles = StyleSheet.create({
   pickerOptionTxt: { fontSize: 14, flex: 1 },
   saveFooterBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 15, borderRadius: 14 },
   saveFooterTxt: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  photoThumb: { width: 90, height: 90, borderRadius: 12, overflow: "hidden", position: "relative" },
+  photoThumbImg: { width: "100%", height: "100%" },
+  coverBadge: { position: "absolute", bottom: 4, left: 4, flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
+  coverBadgeTxt: { fontSize: 9, color: "#fff", fontFamily: "Inter_700Bold" },
+  addPhotoBtn: { width: 90, height: 90, borderRadius: 12, borderWidth: 1.5, borderStyle: "dashed", alignItems: "center", justifyContent: "center", gap: 4 },
+  addPhotoTxt: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  emptyPhotos: { borderWidth: 1.5, borderStyle: "dashed", borderRadius: 14, padding: 28, alignItems: "center", gap: 8, marginTop: 4 },
+  emptyPhotosTxt: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  emptyPhotosHelper: { fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 18 },
 });

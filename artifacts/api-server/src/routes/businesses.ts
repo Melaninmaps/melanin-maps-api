@@ -1,9 +1,21 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import multer from "multer";
+import { randomUUID } from "crypto";
 import { db, pool, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable } from "@workspace/db";
 import { eq, and, or, ilike, desc, sql, gt, count } from "drizzle-orm";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
 import { sendFoundingWelcomeEmail } from "../lib/email";
+import { objectStorageClient } from "../lib/objectStorage";
+
+const photoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
+    cb(null, allowed.includes(file.mimetype));
+  },
+});
 
 const router: IRouter = Router();
 
@@ -161,6 +173,128 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to update business profile");
     res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
+router.post("/businesses/mine/photos", photoUpload.single("photo"), async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!req.file) { res.status(400).json({ error: "No photo provided" }); return; }
+
+  try {
+    const [business] = await db
+      .select({ id: businessesTable.id, photos: businessesTable.photos, imageUrl: businessesTable.imageUrl })
+      .from(businessesTable)
+      .where(eq(businessesTable.submittedById, String(userId)));
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const currentPhotos = (business.photos as string[]) ?? [];
+    if (currentPhotos.length >= 10) {
+      res.status(400).json({ error: "Maximum of 10 photos allowed" }); return;
+    }
+
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (!bucketId) { res.status(500).json({ error: "Object storage not configured" }); return; }
+
+    const { originalname, mimetype, buffer } = req.file;
+    const ext = originalname.split(".").pop()?.toLowerCase() ?? "jpg";
+    const safeExt = ["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(ext) ? ext : "jpg";
+    const objectKey = `business-photos/${business.id}/${randomUUID()}.${safeExt}`;
+
+    const bucket = objectStorageClient.bucket(bucketId);
+    const gcsFile = bucket.file(objectKey);
+    await gcsFile.save(buffer, { contentType: mimetype });
+    await gcsFile.makePublic();
+
+    const photoUrl = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
+    const updatedPhotos = [...currentPhotos, photoUrl];
+    const isFirst = currentPhotos.length === 0;
+
+    const [updated] = await db
+      .update(businessesTable)
+      .set({
+        photos: updatedPhotos,
+        ...(isFirst ? { imageUrl: photoUrl } : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(businessesTable.id, business.id))
+      .returning();
+
+    res.status(201).json({ url: photoUrl, photos: updated.photos, imageUrl: updated.imageUrl });
+  } catch (err) {
+    req.log.error({ err }, "Failed to upload business photo");
+    res.status(500).json({ error: "Failed to upload photo" });
+  }
+});
+
+router.delete("/businesses/mine/photos", async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const { url } = req.body as { url?: string };
+  if (!url) { res.status(400).json({ error: "photo url is required" }); return; }
+
+  try {
+    const [business] = await db
+      .select({ id: businessesTable.id, photos: businessesTable.photos, imageUrl: businessesTable.imageUrl })
+      .from(businessesTable)
+      .where(eq(businessesTable.submittedById, String(userId)));
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const currentPhotos = (business.photos as string[]) ?? [];
+    const updatedPhotos = currentPhotos.filter((p) => p !== url);
+    const newImageUrl = business.imageUrl === url ? (updatedPhotos[0] ?? null) : business.imageUrl;
+
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (bucketId && url.includes(`storage.googleapis.com/${bucketId}/`)) {
+      const objectKey = url.split(`storage.googleapis.com/${bucketId}/`)[1];
+      if (objectKey) {
+        objectStorageClient.bucket(bucketId).file(objectKey).delete().catch(() => {});
+      }
+    }
+
+    const [updated] = await db
+      .update(businessesTable)
+      .set({ photos: updatedPhotos, imageUrl: newImageUrl, updatedAt: new Date() })
+      .where(eq(businessesTable.id, business.id))
+      .returning();
+
+    res.json({ photos: updated.photos, imageUrl: updated.imageUrl });
+  } catch (err) {
+    req.log.error({ err }, "Failed to delete business photo");
+    res.status(500).json({ error: "Failed to delete photo" });
+  }
+});
+
+router.patch("/businesses/mine/photos/cover", async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const { url } = req.body as { url?: string };
+  if (!url) { res.status(400).json({ error: "photo url is required" }); return; }
+
+  try {
+    const [business] = await db
+      .select({ id: businessesTable.id, photos: businessesTable.photos })
+      .from(businessesTable)
+      .where(eq(businessesTable.submittedById, String(userId)));
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const currentPhotos = (business.photos as string[]) ?? [];
+    if (!currentPhotos.includes(url)) {
+      res.status(400).json({ error: "Photo not found in your gallery" }); return;
+    }
+
+    const [updated] = await db
+      .update(businessesTable)
+      .set({ imageUrl: url, updatedAt: new Date() })
+      .where(eq(businessesTable.id, business.id))
+      .returning();
+
+    res.json({ imageUrl: updated.imageUrl });
+  } catch (err) {
+    req.log.error({ err }, "Failed to set cover photo");
+    res.status(500).json({ error: "Failed to set cover photo" });
   }
 });
 
