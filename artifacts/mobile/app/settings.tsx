@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
-  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -125,7 +124,7 @@ export default function SettingsScreen() {
       return;
     }
     if (row.id === "billing") {
-      Linking.openURL("https://mappingwithmelanin.com/billing");
+      router.push("/billing");
       return;
     }
     if (row.id === "signout") {

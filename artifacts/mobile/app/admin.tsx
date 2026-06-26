@@ -929,23 +929,47 @@ function ContentTab() {
   );
 }
 
-function SettingsTab() {
+function SettingsInfoRow({ icon, label, sub, color }: { icon: any; label: string; sub: string; color: string }) {
   const colors = useColors();
   return (
+    <View style={[adminStyles.actionRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={[adminStyles.actionIcon, { backgroundColor: color + "18" }]}>
+        <Feather name={icon} size={17} color={color} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[adminStyles.actionLabel, { color: colors.foreground }]}>{label}</Text>
+        <Text style={[adminStyles.actionSub, { color: colors.mutedForeground }]}>{sub}</Text>
+      </View>
+      <Feather name="lock" size={14} color={colors.mutedForeground} />
+    </View>
+  );
+}
+
+function SettingsTab() {
+  const colors = useColors();
+  const setTab = useContext(AdminNavContext);
+  return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+      <View style={[adminStyles.alertBanner, { backgroundColor: "#1D4ED818", borderColor: "#1D4ED830", marginBottom: 16 }]}>
+        <Feather name="info" size={14} color="#1D4ED8" />
+        <Text style={[adminStyles.alertText, { color: "#1D4ED8", flex: 1 }]}>
+          Settings are managed via server configuration. Contact engineering to change these values.
+        </Text>
+      </View>
+
       <SectionLabel title="App Configuration" />
-      <ActionRow icon="sliders" label="Confidence Score Weights" sub="Adjust how scores are calculated" color="#3B1F0E" />
-      <ActionRow icon="shield" label="Trust & Safety Rules" sub="Content moderation thresholds" color="#DC2626" />
-      <ActionRow icon="award" label="Verification Criteria" sub="Set requirements for verified badge" color="#C9922B" />
-      <ActionRow icon="gift" label="Referral Rewards" sub="Configure referral tiers and rewards" color="#2D7A4F" />
+      <SettingsInfoRow icon="sliders" label="Confidence Score Weights" sub="Adjust how scores are calculated" color="#3B1F0E" />
+      <SettingsInfoRow icon="shield" label="Trust & Safety Rules" sub="Content moderation thresholds" color="#DC2626" />
+      <SettingsInfoRow icon="award" label="Verification Criteria" sub="Set requirements for verified badge" color="#C9922B" />
+      <ActionRow icon="gift" label="Referral Rewards" sub="Configure referral tiers and rewards" color="#2D7A4F" onPress={() => setTab("referrals")} />
 
       <SectionLabel title="Access Control" />
-      <ActionRow icon="lock" label="Admin Roles" sub="Manage moderator and admin access" color="#7B2D8B" />
-      <ActionRow icon="key" label="API Keys" sub="Manage third-party integrations" color="#1D4ED8" />
+      <ActionRow icon="lock" label="Admin Roles" sub="Manage moderator and admin access" color="#7B2D8B" onPress={() => setTab("users")} />
+      <SettingsInfoRow icon="key" label="API Keys" sub="Manage third-party integrations" color="#1D4ED8" />
 
       <SectionLabel title="Data & Privacy" />
-      <ActionRow icon="database" label="Data Export" sub="Export platform data and analytics" color="#C9922B" />
-      <ActionRow icon="trash-2" label="Data Retention" sub="Configure data retention policies" color="#DC2626" />
+      <SettingsInfoRow icon="database" label="Data Export" sub="Export platform data and analytics" color="#C9922B" />
+      <SettingsInfoRow icon="trash-2" label="Data Retention" sub="Configure data retention policies" color="#DC2626" />
     </ScrollView>
   );
 }

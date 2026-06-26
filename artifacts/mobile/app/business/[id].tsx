@@ -583,7 +583,7 @@ export default function BusinessDetailScreen() {
                     <Text style={[styles.reviewTime, { color: colors.mutedForeground }]}>{rev.timeAgo}</Text>
                   </View>
                   <View style={styles.reviewRight}>
-                    <RatingStars rating={rev.rating} showCount={false} size={11} showLabel />
+                    <RatingStars rating={rev.rating} showCount={false} size={13} showLabel />
                     {rev.wouldReturnAlone === true && (
                       <View style={styles.returnAlone}>
                         <Text style={{ fontSize: 11 }}>👍🏾</Text>

@@ -130,7 +130,7 @@ export default function SafetyHubScreen() {
     { id: "report", icon: "flag" as const, title: "Anonymous Report", desc: "Report unsafe content or behavior without revealing your identity.", color: "#DC2626", route: "/report-safety" },
     { id: "space", icon: "alert-octagon" as const, title: "Report an Unsafe Space", desc: "Flag a non-minority-owned business or venue that treated you unfairly or felt unsafe.", color: "#7C2D12", route: "/report-space" },
     { id: "family", icon: "eye" as const, title: "Under-18 Content Shield", desc: "All messages and posts from users under 18 are automatically scanned and filtered for harmful content.", color: "#CA922B", route: null },
-    { id: "survey", icon: "star" as const, title: "Neighborhood Safety", desc: "Share and read community safety reports for any neighborhood.", color: "#0891B2", route: "/(tabs)/safety" },
+    { id: "survey", icon: "star" as const, title: "Neighborhood Safety", desc: "Share and read community safety reports for any neighborhood.", color: "#0891B2", route: "/neighborhood-survey" },
   ];
 
   return (

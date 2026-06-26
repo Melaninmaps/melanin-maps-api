@@ -18,6 +18,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/lib/auth";
 
 const API_BASE = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
 
@@ -129,6 +130,7 @@ const toggleS = StyleSheet.create({
 
 export default function ReportSafetyScreen() {
   const colors = useColors();
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -265,7 +267,7 @@ export default function ReportSafetyScreen() {
                 { icon: selectedType?.icon ?? "shield", label: "Type", value: selectedType?.label ?? "", color: selectedType?.color ?? colors.primary },
                 { icon: "alert-triangle", label: "Severity", value: selectedSeverity.label, color: selectedSeverity.color },
                 { icon: "map-pin", label: "Location", value: form.neighborhood ? `${form.neighborhood}, ${form.city}` : form.city, color: colors.primary },
-                { icon: "user", label: "Submitted", value: form.isAnonymous ? "Anonymously" : "As Jordan Davis", color: colors.mutedForeground },
+                { icon: "user", label: "Submitted", value: form.isAnonymous ? "Anonymously" : `As ${[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "You"}`, color: colors.mutedForeground },
               ].map((row) => (
                 <View key={row.label} style={styles.summaryRow}>
                   <Feather name={row.icon as any} size={15} color={row.color} />
