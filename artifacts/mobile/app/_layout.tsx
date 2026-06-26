@@ -22,6 +22,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
+import { Alert } from "react-native";
+import { FRESH_LOGIN_KEY, getBiometricCapabilities, isBiometricsEnabled, enableBiometrics } from "@/hooks/useBiometrics";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -124,6 +126,37 @@ try {
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+
+function BiometricEnrollmentPrompt() {
+  const { isAuthenticated } = useAuth();
+  const shownRef = useRef(false);
+
+  useEffect(() => {
+    if (!isAuthenticated || shownRef.current || (Platform.OS as string) === "web") return;
+    shownRef.current = true;
+    void (async () => {
+      try {
+        const freshLogin = await SecureStore.getItemAsync(FRESH_LOGIN_KEY);
+        if (freshLogin !== "1") return;
+        await SecureStore.deleteItemAsync(FRESH_LOGIN_KEY);
+        const alreadyEnabled = await isBiometricsEnabled();
+        if (alreadyEnabled) return;
+        const { isSupported, label } = await getBiometricCapabilities();
+        if (!isSupported) return;
+        Alert.alert(
+          `Enable ${label}?`,
+          `Sign in faster next time using ${label} — no password needed.`,
+          [
+            { text: "Not Now", style: "cancel" },
+            { text: `Enable ${label}`, onPress: () => { void enableBiometrics(label); } },
+          ]
+        );
+      } catch { }
+    })();
+  }, [isAuthenticated]);
+
+  return null;
+}
 
 function OnboardingChecker() {
   const router = useRouter();
@@ -510,6 +543,7 @@ export default function RootLayout() {
                   <ApprovalChecker />
                   <DobChecker />
                   <SessionExpiryWatcher />
+                  <BiometricEnrollmentPrompt />
                   <PushNotificationRegistrar />
                   <RootLayoutNav />
                   <AIChatWidget />

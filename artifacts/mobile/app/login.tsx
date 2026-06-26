@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -16,18 +16,57 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
+import {
+  getBiometricCapabilities,
+  isBiometricsEnabled,
+  hasStoredToken,
+  authenticateWithBiometrics,
+} from "@/hooks/useBiometrics";
 
 export default function LoginScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, refreshUser } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [biometricLabel, setBiometricLabel] = useState<string | null>(null);
+  const [biometricLoading, setBiometricLoading] = useState(false);
+
+  useEffect(() => {
+    if ((Platform.OS as string) === "web") return;
+    void (async () => {
+      const [enabled, hasToken, { isSupported, label }] = await Promise.all([
+        isBiometricsEnabled(),
+        hasStoredToken(),
+        getBiometricCapabilities(),
+      ]);
+      if (enabled && hasToken && isSupported) setBiometricLabel(label);
+    })();
+  }, []);
+
+  const handleBiometricLogin = async () => {
+    if (!biometricLabel) return;
+    setBiometricLoading(true);
+    if ((Platform.OS as string) !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      const ok = await authenticateWithBiometrics(biometricLabel);
+      if (ok) {
+        await refreshUser();
+        router.replace("/(tabs)");
+      } else {
+        setError(`${biometricLabel} failed. Please sign in with your account.`);
+      }
+    } catch {
+      setError("Biometric authentication failed. Please sign in below.");
+    } finally {
+      setBiometricLoading(false);
+    }
+  };
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -69,6 +108,24 @@ export default function LoginScreen() {
             Sign in to your Mapping With Melanin account
           </Text>
         </View>
+
+        {biometricLabel && (
+          <TouchableOpacity
+            style={[styles.biometricBtn, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "40" }]}
+            onPress={handleBiometricLogin}
+            disabled={biometricLoading}
+            activeOpacity={0.85}
+          >
+            <Feather
+              name={biometricLabel === "Face ID" || biometricLabel === "Face Recognition" ? "aperture" : "lock"}
+              size={20}
+              color={colors.primary}
+            />
+            <Text style={[styles.biometricTxt, { color: colors.primary }]}>
+              {biometricLoading ? "Verifying…" : `Sign in with ${biometricLabel}`}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         <View style={styles.socialRow}>
           <TouchableOpacity
@@ -173,6 +230,8 @@ const styles = StyleSheet.create({
   logo: { width: 80, height: 80, marginBottom: 20 },
   title: { fontSize: 28, fontFamily: "Inter_700Bold", marginBottom: 8 },
   sub: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 22 },
+  biometricBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 16, borderRadius: 14, borderWidth: 1, marginBottom: 16 },
+  biometricTxt: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   socialRow: { flexDirection: "row", gap: 12, marginBottom: 24 },
   socialBtn: {
     flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",

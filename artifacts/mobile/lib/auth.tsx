@@ -140,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await exchangeRes.json();
         if (data.token) {
           await SecureStore.setItemAsync(AUTH_TOKEN_KEY, data.token);
+          await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
           setIsLoading(true);
           await fetchUser();
         }

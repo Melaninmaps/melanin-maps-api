@@ -3,7 +3,8 @@ import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useBiometricSettings } from "@/hooks/useBiometrics";
 import {
   ActivityIndicator,
   Alert,
@@ -13,6 +14,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -89,6 +91,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { savedIds, isSaved, toggleSave } = useFavorites();
   const { user, isLoading, isAuthenticated, login, logout, refreshUser } = useAuth();
+  const { isSupported: biometricSupported, isEnabled: biometricEnabled, label: biometricLabel, toggle: toggleBiometric } = useBiometricSettings();
   const isAdminUser = !!(user?.email && ADMIN_EMAILS.includes(user.email));
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
   const [showRedemption, setShowRedemption] = useState(false);
@@ -784,6 +787,47 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       )}
 
+      {isAuthenticated && biometricSupported && (
+        <View style={[styles.biometricRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.biometricIconWrap, { backgroundColor: colors.primary + "15" }]}>
+            <Feather
+              name={biometricLabel === "Face ID" || biometricLabel === "Face Recognition" ? "aperture" : "lock"}
+              size={18}
+              color={colors.primary}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.biometricTitle, { color: colors.foreground }]}>
+              {biometricLabel} Login
+            </Text>
+            <Text style={[styles.biometricSub, { color: colors.mutedForeground }]}>
+              {biometricEnabled ? `Use ${biometricLabel} to sign in faster` : `Enable quick sign-in with ${biometricLabel}`}
+            </Text>
+          </View>
+          <Switch
+            value={biometricEnabled}
+            onValueChange={async (value) => {
+              if (!value) {
+                Alert.alert(
+                  `Disable ${biometricLabel}?`,
+                  "You'll need to sign in with your account next time.",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "Disable", style: "destructive", onPress: () => { void toggleBiometric(false); } },
+                  ]
+                );
+              } else {
+                const ok = await toggleBiometric(true);
+                if (!ok) Alert.alert("Not verified", `${biometricLabel} was not confirmed. Try again.`);
+              }
+            }}
+            trackColor={{ false: colors.border, true: colors.primary + "80" }}
+            thumbColor={biometricEnabled ? colors.primary : colors.mutedForeground}
+            ios_backgroundColor={colors.border}
+          />
+        </View>
+      )}
+
       {isAuthenticated && (
         <TouchableOpacity
           style={[styles.signOutBtn, { borderColor: colors.destructive + "40" }]}
@@ -1256,6 +1300,32 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
     fontSize: 14,
     flex: 1,
+  },
+  biometricRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  biometricIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  biometricTitle: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+  },
+  biometricSub: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    marginTop: 2,
   },
   signOutBtn: {
     flexDirection: "row",
