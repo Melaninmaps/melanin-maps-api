@@ -339,7 +339,7 @@ export default function BusinessResponse() {
 
           <p style={{ color: mutedText, fontSize: 12, textAlign: "center" as const, lineHeight: 1.6, maxWidth: 480, alignSelf: "center" }}>
             This link expires on {linkData.expiresAt ? new Date(linkData.expiresAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "—"}.
-            Questions? Contact <a href="mailto:hello@mappingwithmelanin.com" style={{ color: gold }}>hello@mappingwithmelanin.com</a>
+            Questions? Contact our Community Bridge Team at <a href="mailto:communitycare@mappingwithmelanin.com" style={{ color: gold }}>communitycare@mappingwithmelanin.com</a>
           </p>
         </div>
       )}
