@@ -87,6 +87,7 @@ import communityBoundariesRouter from "./community-boundaries";
 import businessResponseRouter from "./business-response";
 import businessImprovementRouter from "./business-improvement";
 import communityAppreciationRouter from "./community-appreciation";
+import circlesRouter from "./circles";
 
 const router: IRouter = Router();
 
@@ -177,6 +178,7 @@ router.use(communityBoundariesRouter);
 router.use(businessResponseRouter);
 router.use(businessImprovementRouter);
 router.use(communityAppreciationRouter);
+router.use(circlesRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

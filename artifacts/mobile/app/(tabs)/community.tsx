@@ -34,7 +34,7 @@ import { UpgradeModal } from "@/components/UpgradeModal";
 import { BrandQuoteBanner } from "@/components/BrandQuoteBanner";
 import { getDailyQuoteText } from "@/constants/brandQuotes";
 
-const TABS = ["Feed", "Videos", "Events", "Groups", "Resources", "Alerts", "Recommendations"];
+const TABS = ["Feed", "Videos", "Events", "Circles ⭐", "Groups", "Resources", "Alerts", "Recommendations"];
 
 const CATEGORY_OPTIONS = [
   { value: "general", label: "Discussion" },
@@ -486,6 +486,8 @@ export default function CommunityScreen() {
             )}
           />
         </View>
+      ) : activeTab === "Circles ⭐" ? (
+        <CirclesTab colors={colors} router={router} isAuthenticated={isAuthenticated} bottomPad={bottomPad} />
       ) : activeTab === "Groups" ? (
         <View style={{ flex: 1 }}>
           {/* Category filter */}
@@ -1041,6 +1043,116 @@ export default function CommunityScreen() {
           </View>
         </View>
       </Modal>
+    </View>
+  );
+}
+
+type Circle = {
+  id: number; name: string; type: string; privacy: string; emoji: string;
+  hostUserId: string; description: string | null; memberCount: number; city: string | null;
+};
+
+function CirclesTab({ colors, router, isAuthenticated, bottomPad }: {
+  colors: ReturnType<typeof useColors>;
+  router: ReturnType<typeof useRouter>;
+  isAuthenticated: boolean;
+  bottomPad: number;
+}) {
+  const [circles, setCircles] = React.useState<Circle[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  const load = React.useCallback(async () => {
+    if (!isAuthenticated) { setLoading(false); return; }
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const r = await fetch(`${getApiBase()}/api/circles`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      if (r.ok) { const d = await r.json() as { circles: Circle[] }; setCircles(d.circles); }
+    } catch {}
+    finally { setLoading(false); }
+  }, [isAuthenticated]);
+
+  React.useEffect(() => { void load(); }, [load]);
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10, gap: 10 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <View>
+            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: colors.foreground }}>Kinfolk Circles ⭐</Text>
+            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, marginTop: 2 }}>Your private groups for planning together</Text>
+          </View>
+          {isAuthenticated && (
+            <TouchableOpacity
+              style={{ backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 12, flexDirection: "row", alignItems: "center", gap: 6 }}
+              onPress={() => router.push("/circles/create" as any)}
+              activeOpacity={0.85}
+            >
+              <Feather name="plus" size={15} color="#FFFFFF" />
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: "#FFFFFF" }}>New Circle</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        <View style={{ backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 10, padding: 10, flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
+          <Feather name="shield" size={13} color={colors.primary} style={{ marginTop: 2 }} />
+          <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, flex: 1, lineHeight: 16 }}>
+            <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>Your privacy is protected. </Text>
+            Circles only share what you choose to share inside the group — saved businesses, suggestions, events, and locations. Your personal profile, reviews, search history, messages, employer activity, and health searches are never shared.
+          </Text>
+        </View>
+      </View>
+
+      {loading ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : !isAuthenticated ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 12 }}>
+          <Text style={{ fontSize: 40 }}>✨</Text>
+          <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: colors.foreground, textAlign: "center" }}>Sign in to join Kinfolk Circles</Text>
+          <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, textAlign: "center", lineHeight: 20 }}>Plan outings with friends, family, and your community — all in one private space.</Text>
+        </View>
+      ) : circles.length === 0 ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 12 }}>
+          <Text style={{ fontSize: 44 }}>⭐</Text>
+          <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: colors.foreground, textAlign: "center" }}>Start your first Circle</Text>
+          <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, textAlign: "center", lineHeight: 20 }}>
+            Create a private Circle for your crew, or a community Circle for your city. Kinfolk helps everyone plan the perfect day together.
+          </Text>
+          <TouchableOpacity
+            style={{ backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 13, borderRadius: 14, marginTop: 6 }}
+            onPress={() => router.push("/circles/create" as any)}
+            activeOpacity={0.85}
+          >
+            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF" }}>Create a Circle</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={circles}
+          keyExtractor={(c) => String(c.id)}
+          contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: bottomPad + 100 }}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={{ backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 18, padding: 16, flexDirection: "row", alignItems: "center", gap: 14 }}
+              onPress={() => router.push({ pathname: "/circles/[id]", params: { id: String(item.id) } } as any)}
+              activeOpacity={0.8}
+            >
+              <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: colors.primary + "15", alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ fontSize: 26 }}>{item.emoji ?? "✨"}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: colors.foreground }}>{item.name}</Text>
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, marginTop: 2 }}>
+                  {item.memberCount ?? 1} {(item.memberCount ?? 1) === 1 ? "member" : "members"} · {item.type === "private" ? "🔒 Private" : "🌐 Community"}
+                </Text>
+                {item.city ? <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 1 }}>📍 {item.city}</Text> : null}
+              </View>
+              <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          )}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />}
+        />
+      )}
     </View>
   );
 }
