@@ -34,7 +34,7 @@ import { UpgradeModal } from "@/components/UpgradeModal";
 import { BrandQuoteBanner } from "@/components/BrandQuoteBanner";
 import { getDailyQuoteText } from "@/constants/brandQuotes";
 
-const TABS = ["Feed", "Videos", "Events", "Circles ⭐", "Groups", "Resources", "Alerts", "Recommendations"];
+const TABS = ["Feed", "Videos", "Events", "Circles ⭐", "Requests 🙋", "Collections 📚", "Challenges 🏆", "Groups", "Resources", "Alerts", "Recommendations"];
 
 const CATEGORY_OPTIONS = [
   { value: "general", label: "Discussion" },
@@ -801,6 +801,12 @@ export default function CommunityScreen() {
             </TouchableOpacity>
           ))}
         </ScrollView>
+      ) : activeTab === "Requests 🙋" ? (
+        <RequestsTab colors={colors} router={router} isAuthenticated={isAuthenticated} bottomPad={bottomPad} />
+      ) : activeTab === "Collections 📚" ? (
+        <CollectionsTab colors={colors} router={router} isAuthenticated={isAuthenticated} bottomPad={bottomPad} />
+      ) : activeTab === "Challenges 🏆" ? (
+        <ChallengesTab colors={colors} router={router} isAuthenticated={isAuthenticated} bottomPad={bottomPad} />
       ) : (
         <>
           <FlatList
@@ -1344,3 +1350,742 @@ const styles = StyleSheet.create({
   },
   videosExploreTxt: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
 });
+
+// ─── REQUEST CATEGORIES ───────────────────────────────────────────────────────
+const REQUEST_CATEGORIES = [
+  "Restaurant", "Healthcare", "Beauty & Hair", "Legal Services", "Financial Services",
+  "Education", "Childcare", "Home Services", "Retail", "Fitness & Wellness",
+  "Mental Health", "Disability Access", "Technology", "Arts & Culture", "Other",
+];
+
+const HELP_OFFER_TYPES = [
+  { id: "restaurant_recs", label: "Restaurant Recommendations", emoji: "🍽️" },
+  { id: "neighborhood_advice", label: "Neighborhood Advice", emoji: "🏘️" },
+  { id: "school_info", label: "School Information", emoji: "🎓" },
+  { id: "healthcare", label: "Healthcare Suggestions", emoji: "🏥" },
+  { id: "networking", label: "Networking", emoji: "🤝" },
+  { id: "moving_tips", label: "Moving Tips", emoji: "🏠" },
+  { id: "business_recs", label: "Business Recommendations", emoji: "🛍️" },
+  { id: "general_guidance", label: "General Guidance", emoji: "🤎" },
+];
+
+type CommunityRequest = {
+  id: string; userId: string; title: string; category: string;
+  city: string | null; state: string | null; description: string | null;
+  upvotes: number; helperCount: number; status: string; createdAt: string;
+};
+
+// ─── REQUESTS TAB ─────────────────────────────────────────────────────────────
+function RequestsTab({ colors, router: _router, isAuthenticated, bottomPad }: {
+  colors: ReturnType<typeof useColors>;
+  router: ReturnType<typeof useRouter>;
+  isAuthenticated: boolean;
+  bottomPad: number;
+}) {
+  const [requests, setRequests] = React.useState<CommunityRequest[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [showPost, setShowPost] = React.useState(false);
+  const [showHelp, setShowHelp] = React.useState<CommunityRequest | null>(null);
+  const [selectedOffers, setSelectedOffers] = React.useState<string[]>([]);
+  const [helpMsg, setHelpMsg] = React.useState("");
+  const [postTitle, setPostTitle] = React.useState("");
+  const [postCategory, setPostCategory] = React.useState("");
+  const [postCity, setPostCity] = React.useState("");
+  const [postState, setPostState] = React.useState("");
+  const [postDesc, setPostDesc] = React.useState("");
+  const [submitting, setSubmitting] = React.useState(false);
+  const [upvotedIds, setUpvotedIds] = React.useState<Set<string>>(new Set());
+
+  const load = React.useCallback(async () => {
+    try {
+      const r = await fetch(`${getApiBase()}/api/community-requests`);
+      if (r.ok) { const d = await r.json() as { requests: CommunityRequest[] }; setRequests(d.requests); }
+    } catch {}
+    finally { setLoading(false); setRefreshing(false); }
+  }, []);
+
+  React.useEffect(() => { void load(); }, [load]);
+
+  const handleUpvote = async (req: CommunityRequest) => {
+    if (!isAuthenticated) return;
+    if (upvotedIds.has(req.id)) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setUpvotedIds(prev => new Set([...prev, req.id]));
+    setRequests(prev => prev.map(r => r.id === req.id ? { ...r, upvotes: r.upvotes + 1 } : r));
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      await fetch(`${getApiBase()}/api/community-requests/${req.id}/upvote`, {
+        method: "POST", headers: { Authorization: `Bearer ${token ?? ""}` },
+      });
+    } catch {}
+  };
+
+  const handlePostRequest = async () => {
+    if (!postTitle.trim() || !postCategory) return;
+    setSubmitting(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const r = await fetch(`${getApiBase()}/api/community-requests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token ?? ""}` },
+        body: JSON.stringify({ title: postTitle.trim(), category: postCategory, city: postCity.trim() || undefined, state: postState.trim() || undefined, description: postDesc.trim() || undefined }),
+      });
+      if (r.ok) {
+        const d = await r.json() as { request: CommunityRequest };
+        setRequests(prev => [d.request, ...prev]);
+        setShowPost(false);
+        setPostTitle(""); setPostCategory(""); setPostCity(""); setPostState(""); setPostDesc("");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch {}
+    finally { setSubmitting(false); }
+  };
+
+  const handleHelp = async () => {
+    if (!showHelp || selectedOffers.length === 0) return;
+    setSubmitting(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      await fetch(`${getApiBase()}/api/community-requests/${showHelp.id}/help`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token ?? ""}` },
+        body: JSON.stringify({ offerTypes: selectedOffers, message: helpMsg.trim() || undefined }),
+      });
+      setRequests(prev => prev.map(r => r.id === showHelp.id ? { ...r, helperCount: r.helperCount + 1 } : r));
+      setShowHelp(null); setSelectedOffers([]); setHelpMsg("");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {}
+    finally { setSubmitting(false); }
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      {/* Header */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10, gap: 8 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <View>
+            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: colors.foreground }}>Community Requests 🙋</Text>
+            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, marginTop: 2 }}>
+              What does your community need? Ask and businesses will listen.
+            </Text>
+          </View>
+          {isAuthenticated && (
+            <TouchableOpacity
+              style={{ backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 12 }}
+              onPress={() => setShowPost(true)}
+              activeOpacity={0.85}
+            >
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: "#FFFFFF" }}>+ Request</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        <View style={{ backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 10, padding: 10 }}>
+          <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, lineHeight: 17 }}>
+            <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>Businesses are listening. </Text>
+            Your requests become real demand signals — helping businesses decide where to expand, what to offer, and how to serve this community.
+          </Text>
+        </View>
+      </View>
+
+      {loading ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={requests}
+          keyExtractor={r => r.id}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(); }} tintColor={colors.primary} />}
+          contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: bottomPad + 100 }}
+          ListEmptyComponent={
+            <View style={{ alignItems: "center", justifyContent: "center", gap: 12, paddingTop: 60 }}>
+              <Text style={{ fontSize: 44 }}>🙋</Text>
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: colors.foreground, textAlign: "center" }}>No requests yet</Text>
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, textAlign: "center", lineHeight: 20, paddingHorizontal: 20 }}>
+                Be the first to ask for something your community needs. Your voice could shape what opens next.
+              </Text>
+              {isAuthenticated && (
+                <TouchableOpacity
+                  style={{ backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14 }}
+                  onPress={() => setShowPost(true)}
+                >
+                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF" }}>Post a Request</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          }
+          renderItem={({ item: req }) => (
+            <View style={{ backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 18, padding: 16, gap: 10 }}>
+              <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
+                <View style={{ flex: 1, gap: 4 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <View style={{ backgroundColor: colors.primary + "15", borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 }}>
+                      <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: colors.primary }}>{req.category}</Text>
+                    </View>
+                    {req.status === "fulfilled" && (
+                      <View style={{ backgroundColor: colors.success + "20", borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 }}>
+                        <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: colors.success }}>✓ Fulfilled</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 16, color: colors.foreground, lineHeight: 22 }}>{req.title}</Text>
+                  {req.description && (
+                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, lineHeight: 20 }}>{req.description}</Text>
+                  )}
+                  {(req.city ?? req.state) && (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                      <Feather name="map-pin" size={12} color={colors.mutedForeground} />
+                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground }}>
+                        {[req.city, req.state].filter(Boolean).join(", ")}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                {/* Upvote */}
+                <TouchableOpacity
+                  style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: upvotedIds.has(req.id) ? colors.primary : colors.secondary, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 9 }}
+                  onPress={() => void handleUpvote(req)}
+                  disabled={!isAuthenticated}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ fontSize: 14 }}>🙌</Text>
+                  <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: upvotedIds.has(req.id) ? "#FFFFFF" : colors.foreground }}>
+                    {req.upvotes} {req.upvotes === 1 ? "Support" : "Supports"}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* I Can Help */}
+                <TouchableOpacity
+                  style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: colors.card, borderColor: colors.primary + "50", borderWidth: 1.5, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 9, flex: 1 }}
+                  onPress={() => {
+                    if (!isAuthenticated) return;
+                    setShowHelp(req); setSelectedOffers([]); setHelpMsg("");
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  disabled={!isAuthenticated}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ fontSize: 14 }}>🤎</Text>
+                  <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: colors.primary }}>
+                    {req.helperCount > 0 ? `${req.helperCount} Can Help` : "I Can Help"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        />
+      )}
+
+      {/* FAB */}
+      {isAuthenticated && (
+        <TouchableOpacity
+          style={{ position: "absolute", right: 20, bottom: bottomPad + 90, backgroundColor: colors.primary, width: 56, height: 56, borderRadius: 28, alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 8 }}
+          onPress={() => setShowPost(true)}
+          activeOpacity={0.85}
+        >
+          <Feather name="plus" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      )}
+
+      {/* Post Request Modal */}
+      <Modal visible={showPost} animationType="slide" transparent onRequestClose={() => setShowPost(false)}>
+        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <View style={{ backgroundColor: colors.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, gap: 12, maxHeight: "90%" }}>
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: "center", marginBottom: 4 }} />
+            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 20, color: colors.foreground }}>What does your community need?</Text>
+            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground }}>Your request becomes a demand signal. Businesses will see it.</Text>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ flex: 1 }}>
+              <View style={{ gap: 12 }}>
+                <TextInput
+                  style={{ backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 14, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground }}
+                  placeholder={`"We need a Black-owned pediatrician in this area."`}
+                  placeholderTextColor={colors.mutedForeground}
+                  value={postTitle}
+                  onChangeText={setPostTitle}
+                  maxLength={120}
+                />
+                <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: colors.mutedForeground }}>Category</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                  {REQUEST_CATEGORIES.map(c => (
+                    <TouchableOpacity
+                      key={c}
+                      style={{ paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, borderWidth: 1, backgroundColor: postCategory === c ? colors.primary : colors.card, borderColor: postCategory === c ? colors.primary : colors.border }}
+                      onPress={() => setPostCategory(c === postCategory ? "" : c)}
+                    >
+                      <Text style={{ fontFamily: "Inter_500Medium", fontSize: 13, color: postCategory === c ? "#FFFFFF" : colors.foreground }}>{c}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                <View style={{ flexDirection: "row", gap: 10 }}>
+                  <TextInput
+                    style={{ flex: 1, backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 14, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground }}
+                    placeholder="City" placeholderTextColor={colors.mutedForeground}
+                    value={postCity} onChangeText={setPostCity}
+                  />
+                  <TextInput
+                    style={{ width: 80, backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 14, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground }}
+                    placeholder="ST" placeholderTextColor={colors.mutedForeground}
+                    value={postState} onChangeText={t => setPostState(t.toUpperCase())}
+                    maxLength={2} autoCapitalize="characters"
+                  />
+                </View>
+                <TextInput
+                  style={{ backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 14, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, minHeight: 80, textAlignVertical: "top" }}
+                  placeholder="Add more context (optional)…"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={postDesc} onChangeText={setPostDesc}
+                  multiline maxLength={300}
+                />
+                <TouchableOpacity
+                  style={{ backgroundColor: postTitle.trim() && postCategory ? colors.primary : colors.muted, paddingVertical: 16, borderRadius: 16, alignItems: "center" }}
+                  onPress={() => void handlePostRequest()}
+                  disabled={!postTitle.trim() || !postCategory || submitting}
+                  activeOpacity={0.85}
+                >
+                  {submitting ? <ActivityIndicator size="small" color="#FFF" /> : (
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF" }}>Post Request →</Text>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowPost(false)} style={{ alignItems: "center", paddingVertical: 12 }}>
+                  <Text style={{ fontFamily: "Inter_500Medium", fontSize: 14, color: colors.mutedForeground }}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* I Can Help Modal */}
+      <Modal visible={!!showHelp} animationType="slide" transparent onRequestClose={() => setShowHelp(null)}>
+        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <View style={{ backgroundColor: colors.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, gap: 12, maxHeight: "85%" }}>
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: "center", marginBottom: 4 }} />
+            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 20, color: colors.foreground }}>🤎 I Can Help</Text>
+            {showHelp && (
+              <View style={{ backgroundColor: colors.primary + "12", borderRadius: 12, padding: 12 }}>
+                <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 14, color: colors.foreground }}>{showHelp.title}</Text>
+              </View>
+            )}
+            <Text style={{ fontFamily: "Inter_500Medium", fontSize: 13, color: colors.mutedForeground }}>How can you help? Select all that apply.</Text>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <View style={{ gap: 10 }}>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                  {HELP_OFFER_TYPES.map(t => {
+                    const selected = selectedOffers.includes(t.id);
+                    return (
+                      <TouchableOpacity
+                        key={t.id}
+                        style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderWidth: 1.5, backgroundColor: selected ? colors.primary : colors.card, borderColor: selected ? colors.primary : colors.border }}
+                        onPress={() => {
+                          setSelectedOffers(prev => selected ? prev.filter(x => x !== t.id) : [...prev, t.id]);
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        }}
+                      >
+                        <Text style={{ fontSize: 16 }}>{t.emoji}</Text>
+                        <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: selected ? "#FFFFFF" : colors.foreground }}>{t.label}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                <TextInput
+                  style={{ backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 14, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, minHeight: 80, textAlignVertical: "top" }}
+                  placeholder="Add a message (optional) — introduce yourself, share your experience…"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={helpMsg} onChangeText={setHelpMsg}
+                  multiline maxLength={300}
+                />
+                <View style={{ backgroundColor: colors.primary + "12", borderColor: colors.primary + "25", borderWidth: 1, borderRadius: 12, padding: 12, flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Text style={{ fontSize: 16 }}>🤎</Text>
+                  <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: colors.primary, flex: 1 }}>You'll earn 15 Community Points for helping. That's mentorship made visible.</Text>
+                </View>
+                <TouchableOpacity
+                  style={{ backgroundColor: selectedOffers.length > 0 ? colors.primary : colors.muted, paddingVertical: 16, borderRadius: 16, alignItems: "center" }}
+                  onPress={() => void handleHelp()}
+                  disabled={selectedOffers.length === 0 || submitting}
+                  activeOpacity={0.85}
+                >
+                  {submitting ? <ActivityIndicator size="small" color="#FFF" /> : (
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF" }}>Offer Help →</Text>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowHelp(null)} style={{ alignItems: "center", paddingVertical: 10 }}>
+                  <Text style={{ fontFamily: "Inter_500Medium", fontSize: 14, color: colors.mutedForeground }}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+// ─── COLLECTIONS TAB ──────────────────────────────────────────────────────────
+type CollectionItem = {
+  id: number; title: string; description: string | null; category: string | null;
+  coverEmoji: string | null; savedCount: number; createdAt: string;
+  authorFirstName: string | null; authorLastName: string | null;
+};
+
+const COLLECTION_PRESETS = [
+  { emoji: "💕", label: "Best Date Night" },
+  { emoji: "✊🏾", label: "Black History Stops" },
+  { emoji: "👨‍👩‍👧", label: "Kid Friendly" },
+  { emoji: "🌙", label: "Solo Travel" },
+  { emoji: "💎", label: "Hidden Gems" },
+  { emoji: "☔", label: "Rainy Day" },
+  { emoji: "💇🏾‍♀️", label: "Natural Hair" },
+  { emoji: "☕", label: "Black-Owned Coffee" },
+  { emoji: "🍽️", label: "Sunday Brunch" },
+  { emoji: "🎨", label: "Arts & Culture" },
+];
+
+function CollectionsTab({ colors, isAuthenticated, bottomPad }: {
+  colors: ReturnType<typeof useColors>;
+  router: ReturnType<typeof useRouter>;
+  isAuthenticated: boolean;
+  bottomPad: number;
+}) {
+  const [collections, setCollections] = React.useState<CollectionItem[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [showCreate, setShowCreate] = React.useState(false);
+  const [newTitle, setNewTitle] = React.useState("");
+  const [newEmoji, setNewEmoji] = React.useState("📍");
+  const [newDesc, setNewDesc] = React.useState("");
+  const [submitting, setSubmitting] = React.useState(false);
+
+  const load = React.useCallback(async () => {
+    try {
+      const r = await fetch(`${getApiBase()}/api/lists`);
+      if (r.ok) { const d = await r.json() as { lists: CollectionItem[] }; setCollections(d.lists); }
+    } catch {}
+    finally { setLoading(false); setRefreshing(false); }
+  }, []);
+
+  React.useEffect(() => { void load(); }, [load]);
+
+  const handleCreate = async () => {
+    if (!newTitle.trim()) return;
+    setSubmitting(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const r = await fetch(`${getApiBase()}/api/lists`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token ?? ""}` },
+        body: JSON.stringify({ title: newTitle.trim(), description: newDesc.trim() || undefined, coverEmoji: newEmoji, isPublic: true }),
+      });
+      if (r.ok) {
+        const d = await r.json() as { list: CollectionItem };
+        setCollections(prev => [d.list, ...prev]);
+        setShowCreate(false); setNewTitle(""); setNewEmoji("📍"); setNewDesc("");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch {}
+    finally { setSubmitting(false); }
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10, gap: 8 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <View>
+            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: colors.foreground }}>Community Collections 📚</Text>
+            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, marginTop: 2 }}>
+              Curated by the community, for the community.
+            </Text>
+          </View>
+          {isAuthenticated && (
+            <TouchableOpacity
+              style={{ backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 12 }}
+              onPress={() => setShowCreate(true)}
+              activeOpacity={0.85}
+            >
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: "#FFFFFF" }}>+ Create</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+          {COLLECTION_PRESETS.map(p => (
+            <TouchableOpacity
+              key={p.label}
+              style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}
+              onPress={() => { if (isAuthenticated) { setNewTitle(p.label); setNewEmoji(p.emoji); setShowCreate(true); } }}
+              activeOpacity={0.8}
+            >
+              <Text style={{ fontSize: 15 }}>{p.emoji}</Text>
+              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: colors.foreground }}>{p.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {loading ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={collections}
+          keyExtractor={c => String(c.id)}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(); }} tintColor={colors.primary} />}
+          numColumns={2}
+          contentContainerStyle={{ padding: 12, gap: 12, paddingBottom: bottomPad + 100 }}
+          columnWrapperStyle={{ gap: 12 }}
+          ListEmptyComponent={
+            <View style={{ alignItems: "center", justifyContent: "center", gap: 12, paddingTop: 60, paddingHorizontal: 24 }}>
+              <Text style={{ fontSize: 44 }}>📚</Text>
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: colors.foreground, textAlign: "center" }}>No collections yet</Text>
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, textAlign: "center", lineHeight: 20 }}>
+                Build the first collection — "Hidden Gems," "Best Date Night," or whatever your community needs to know.
+              </Text>
+              {isAuthenticated && (
+                <TouchableOpacity
+                  style={{ backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14 }}
+                  onPress={() => setShowCreate(true)}
+                >
+                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF" }}>Create First Collection</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          }
+          renderItem={({ item: col }) => (
+            <View style={{ flex: 1, backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 18, padding: 16, gap: 8, minHeight: 140 }}>
+              <Text style={{ fontSize: 36 }}>{col.coverEmoji ?? "📍"}</Text>
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: colors.foreground, lineHeight: 20 }}>{col.title}</Text>
+              {col.description && (
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, lineHeight: 17 }} numberOfLines={2}>{col.description}</Text>
+              )}
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }}>
+                by {[col.authorFirstName, col.authorLastName].filter(Boolean).join(" ") || "Community"}
+              </Text>
+            </View>
+          )}
+        />
+      )}
+
+      <Modal visible={showCreate} animationType="slide" transparent onRequestClose={() => setShowCreate(false)}>
+        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <View style={{ backgroundColor: colors.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, gap: 14, maxHeight: "80%" }}>
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: "center" }} />
+            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 20, color: colors.foreground }}>Create a Collection</Text>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <View style={{ gap: 12 }}>
+                <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: colors.mutedForeground }}>Pick an emoji</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+                  {["📍","💕","✊🏾","👨‍👩‍👧","🌙","💎","☔","💇🏾‍♀️","☕","🎨","🏛️","🌍","🎉","🍽️","🛍️"].map(e => (
+                    <TouchableOpacity
+                      key={e}
+                      style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: newEmoji === e ? colors.primary + "20" : colors.card, borderWidth: newEmoji === e ? 2 : 1, borderColor: newEmoji === e ? colors.primary : colors.border }}
+                      onPress={() => setNewEmoji(e)}
+                    >
+                      <Text style={{ fontSize: 22 }}>{e}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                <TextInput
+                  style={{ backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 14, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground }}
+                  placeholder="Collection name (e.g. Hidden Gems)"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={newTitle} onChangeText={setNewTitle} maxLength={80}
+                />
+                <TextInput
+                  style={{ backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 14, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground, minHeight: 70, textAlignVertical: "top" }}
+                  placeholder="What's this collection about? (optional)"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={newDesc} onChangeText={setNewDesc} multiline maxLength={200}
+                />
+                <TouchableOpacity
+                  style={{ backgroundColor: newTitle.trim() ? colors.primary : colors.muted, paddingVertical: 16, borderRadius: 16, alignItems: "center" }}
+                  onPress={() => void handleCreate()}
+                  disabled={!newTitle.trim() || submitting}
+                  activeOpacity={0.85}
+                >
+                  {submitting ? <ActivityIndicator size="small" color="#FFF" /> : (
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF" }}>Create Collection →</Text>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowCreate(false)} style={{ alignItems: "center", paddingVertical: 10 }}>
+                  <Text style={{ fontFamily: "Inter_500Medium", fontSize: 14, color: colors.mutedForeground }}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+// ─── CHALLENGES TAB ───────────────────────────────────────────────────────────
+type CommunityChallenge = {
+  id: string; title: string; description: string; icon: string;
+  challengeType: string; targetCount: number; pointsReward: number;
+  completionCount: number; startDate: string | null; endDate: string | null;
+};
+type ChallengeProgressEntry = { progress: number; completedAt: string | null };
+
+function ChallengesTab({ colors, isAuthenticated, bottomPad }: {
+  colors: ReturnType<typeof useColors>;
+  router: ReturnType<typeof useRouter>;
+  isAuthenticated: boolean;
+  bottomPad: number;
+}) {
+  const [challenges, setChallenges] = React.useState<CommunityChallenge[]>([]);
+  const [progress, setProgress] = React.useState<Record<string, ChallengeProgressEntry>>({});
+  const [loading, setLoading] = React.useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [logging, setLogging] = React.useState<string | null>(null);
+  const [justEarned, setJustEarned] = React.useState<{ pts: number; id: string } | null>(null);
+
+  const load = React.useCallback(async () => {
+    try {
+      const token = isAuthenticated ? await SecureStore.getItemAsync("auth_session_token") : null;
+      const r = await fetch(`${getApiBase()}/api/community-challenges`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (r.ok) {
+        const d = await r.json() as { challenges: CommunityChallenge[]; progress: Record<string, ChallengeProgressEntry> };
+        setChallenges(d.challenges);
+        setProgress(d.progress ?? {});
+      }
+    } catch {}
+    finally { setLoading(false); setRefreshing(false); }
+  }, [isAuthenticated]);
+
+  React.useEffect(() => { void load(); }, [load]);
+
+  const handleLogProgress = async (challenge: CommunityChallenge) => {
+    if (!isAuthenticated || logging) return;
+    setLogging(challenge.id);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const r = await fetch(`${getApiBase()}/api/community-challenges/${challenge.id}/progress`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token ?? ""}` },
+      });
+      if (r.ok) {
+        const d = await r.json() as { progress: number; completed: boolean; pointsEarned: number };
+        setProgress(prev => ({ ...prev, [challenge.id]: { progress: d.progress, completedAt: d.completed ? new Date().toISOString() : null } }));
+        if (d.completed) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          setJustEarned({ pts: d.pointsEarned, id: challenge.id });
+          setTimeout(() => setJustEarned(null), 3500);
+        }
+      }
+    } catch {}
+    finally { setLogging(null); }
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10, gap: 6 }}>
+        <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: colors.foreground }}>Community Challenges 🏆</Text>
+        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground }}>
+          Monthly challenges that build connection, support local businesses, and earn you Community Points.
+        </Text>
+      </View>
+
+      {/* Points earned toast */}
+      {justEarned && (
+        <View style={{ position: "absolute", top: 70, left: 20, right: 20, zIndex: 99, backgroundColor: colors.primary, borderRadius: 14, padding: 14, flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <Text style={{ fontSize: 22 }}>🎉</Text>
+          <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF" }}>Challenge complete! +{justEarned.pts} points earned</Text>
+        </View>
+      )}
+
+      {loading ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={challenges}
+          keyExtractor={c => c.id}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(); }} tintColor={colors.primary} />}
+          contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: bottomPad + 100 }}
+          ListEmptyComponent={
+            <View style={{ alignItems: "center", paddingTop: 60, gap: 12 }}>
+              <Text style={{ fontSize: 44 }}>🏆</Text>
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: colors.foreground }}>Challenges coming soon</Text>
+            </View>
+          }
+          renderItem={({ item: challenge }) => {
+            const prog = progress[challenge.id];
+            const done = !!prog?.completedAt;
+            const currentProgress = prog?.progress ?? 0;
+            const pct = Math.min(1, currentProgress / challenge.targetCount);
+
+            return (
+              <View style={{ backgroundColor: done ? colors.success + "10" : colors.card, borderColor: done ? colors.success + "40" : colors.border, borderWidth: 1.5, borderRadius: 20, padding: 18, gap: 12 }}>
+                <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
+                  <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: done ? colors.success + "20" : colors.primary + "12", alignItems: "center", justifyContent: "center" }}>
+                    <Text style={{ fontSize: 26 }}>{challenge.icon}</Text>
+                  </View>
+                  <View style={{ flex: 1, gap: 4 }}>
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 16, color: done ? colors.success : colors.foreground }}>{challenge.title}</Text>
+                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, lineHeight: 19 }}>{challenge.description}</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4 }}>
+                      <View style={{ backgroundColor: colors.primary + "15", borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 }}>
+                        <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: colors.primary }}>🤎 {challenge.pointsReward} pts</Text>
+                      </View>
+                      {challenge.completionCount > 0 && (
+                        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground }}>{challenge.completionCount} completed</Text>
+                      )}
+                    </View>
+                  </View>
+                </View>
+
+                {/* Progress bar */}
+                {challenge.targetCount > 1 && (
+                  <View style={{ gap: 6 }}>
+                    <View style={{ height: 8, backgroundColor: colors.secondary, borderRadius: 4, overflow: "hidden" }}>
+                      <View style={{ height: "100%", width: `${pct * 100}%`, backgroundColor: done ? colors.success : colors.primary, borderRadius: 4 }} />
+                    </View>
+                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground }}>
+                      {currentProgress} / {challenge.targetCount}
+                    </Text>
+                  </View>
+                )}
+
+                {done ? (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: colors.success + "15", borderRadius: 12, padding: 12 }}>
+                    <Feather name="check-circle" size={16} color={colors.success} />
+                    <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: colors.success }}>Challenge complete! Well done.</Text>
+                  </View>
+                ) : isAuthenticated ? (
+                  <TouchableOpacity
+                    style={{ backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 14, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8 }}
+                    onPress={() => void handleLogProgress(challenge)}
+                    disabled={logging === challenge.id}
+                    activeOpacity={0.85}
+                  >
+                    {logging === challenge.id ? (
+                      <ActivityIndicator size="small" color="#FFF" />
+                    ) : (
+                      <>
+                        <Feather name="check" size={16} color="#FFFFFF" />
+                        <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: "#FFFFFF" }}>
+                          {currentProgress > 0 ? "Log Progress" : "Mark as Done"}
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                ) : (
+                  <View style={{ backgroundColor: colors.secondary, borderRadius: 14, padding: 12, alignItems: "center" }}>
+                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground }}>Sign in to track your progress</Text>
+                  </View>
+                )}
+              </View>
+            );
+          }}
+        />
+      )}
+    </View>
+  );
+}

@@ -88,6 +88,10 @@ import businessResponseRouter from "./business-response";
 import businessImprovementRouter from "./business-improvement";
 import communityAppreciationRouter from "./community-appreciation";
 import circlesRouter from "./circles";
+import communityRequestsRouter from "./community-requests";
+import userAchievementsRouter from "./user-achievements";
+import communitySaysRouter from "./community-says";
+import communityChallengesNewRouter from "./community-challenges-new";
 
 const router: IRouter = Router();
 
@@ -179,6 +183,10 @@ router.use(businessResponseRouter);
 router.use(businessImprovementRouter);
 router.use(communityAppreciationRouter);
 router.use(circlesRouter);
+router.use(communityRequestsRouter);
+router.use(userAchievementsRouter);
+router.use(communitySaysRouter);
+router.use(communityChallengesNewRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");
