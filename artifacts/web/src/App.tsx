@@ -45,6 +45,7 @@ import ReferralRedirect from "@/pages/referral-redirect";
 import Resources from "@/pages/resources";
 import SharedTrip from "@/pages/shared-trip";
 import DeleteAccount from "@/pages/delete-account";
+import BusinessResponse from "@/pages/business-response";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { data: auth, isLoading } = useGetCurrentAuthUser();
@@ -174,6 +175,7 @@ function Router() {
         <Layout><RateNeighborhood /></Layout>
       </Route>
       <Route path="/r/:code" component={ReferralRedirect} />
+      <Route path="/business-response/:token" component={BusinessResponse} />
       <Route path="/resources">
         <Layout><Resources /></Layout>
       </Route>

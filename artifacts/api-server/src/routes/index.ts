@@ -84,6 +84,7 @@ import knowledgeChannelsRouter from "./knowledge-channels";
 import { recommendRouter } from "./recommend";
 import captionsRouter from "./captions";
 import communityBoundariesRouter from "./community-boundaries";
+import businessResponseRouter from "./business-response";
 
 const router: IRouter = Router();
 
@@ -171,6 +172,7 @@ router.use(knowledgeChannelsRouter);
 router.use(recommendRouter);
 router.use(captionsRouter);
 router.use(communityBoundariesRouter);
+router.use(businessResponseRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");
