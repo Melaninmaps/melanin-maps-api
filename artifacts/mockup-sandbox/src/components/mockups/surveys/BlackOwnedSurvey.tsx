@@ -117,19 +117,24 @@ export function BlackOwnedSurvey() {
   const [submitted, setSubmitted] = useState(false);
   const [data, setData] = useState<SurveyData>({ ...EMPTY });
 
+  const isSignificant = data.concernLevel === "Significant concern";
   const hasConcern = data.concernLevel === "Minor concern" || data.concernLevel === "Significant concern";
 
-  const STEPS = hasConcern
-    ? ["Rate & Recommend", "Community Captions", "Concern Details", "How to Earn 5 Stars"]
-    : ["Rate & Recommend", "Community Captions", "How to Earn 5 Stars"];
+  // Significant concern skips Community Captions and goes straight to Concern Details
+  const STEPS = isSignificant
+    ? ["Rate & Recommend", "Concern Details", "How to Earn 5 Stars"]
+    : hasConcern
+      ? ["Rate & Recommend", "Community Captions", "Concern Details", "How to Earn 5 Stars"]
+      : ["Rate & Recommend", "Community Captions", "How to Earn 5 Stars"];
 
-  const isConcernStep = hasConcern && step === 2;
+  const showCaptions = !isSignificant && step === 1;
+  const showConcernDetails = hasConcern && (isSignificant ? step === 1 : step === 2);
   const isImprovementStep = step === STEPS.length - 1 && step > 0;
 
   const canNext = () => {
     if (step === 0) return data.overallRating > 0 && data.recommend !== "" && data.wouldReturn !== "" && data.concernLevel !== "";
-    if (step === 1) return data.captions.length > 0;
-    if (isConcernStep) return data.concernTypes.length > 0 && data.businessResponse !== "" && data.whatHappened.length > 0;
+    if (showCaptions) return data.captions.length > 0;
+    if (showConcernDetails) return data.concernTypes.length > 0 && data.businessResponse !== "" && data.whatHappened.length > 0;
     return true;
   };
 
@@ -269,8 +274,8 @@ export function BlackOwnedSurvey() {
               )}
             </div>
 
-          ) : step === 1 ? (
-            /* ── STEP 1: COMMUNITY CAPTIONS ── */
+          ) : showCaptions ? (
+            /* ── STEP 1: COMMUNITY CAPTIONS (skipped for Significant concern) ── */
             <div>
               <p style={{ color: TEXT, fontSize: 20, fontWeight: 800, marginBottom: 4 }}>Community Captions</p>
               <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, marginBottom: 4 }}>Choose up to 3 that describe this business</p>
@@ -293,8 +298,8 @@ export function BlackOwnedSurvey() {
               </div>
             </div>
 
-          ) : isConcernStep ? (
-            /* ── STEP 2 (concern path): CONCERN DETAILS ── */
+          ) : showConcernDetails ? (
+            /* ── CONCERN DETAILS (step 1 for Significant, step 2 for Minor) ── */
             <div>
               <p style={{ color: TEXT, fontSize: 20, fontWeight: 800, marginBottom: 4 }}>Tell us what happened</p>
               <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, marginBottom: 14 }}>This stays between you and the business until you decide otherwise</p>
