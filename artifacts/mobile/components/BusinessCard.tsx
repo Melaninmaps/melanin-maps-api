@@ -36,6 +36,24 @@ function getOpenStatus(hours?: string | null): { open: boolean; label: string } 
   return { open: isOpen, label: isOpen ? "Open" : "Closed" };
 }
 
+const VIBES: { label: string; emoji: string; categories: string[] }[] = [
+  { label: "Soul Food", emoji: "🍽️", categories: ["food", "restaurant", "bbq", "barbecue", "soul", "seafood", "southern"] },
+  { label: "Hair & Beauty", emoji: "💈", categories: ["beauty", "hair", "barber", "salon", "nail", "spa", "cosmetic"] },
+  { label: "Wellness", emoji: "💆🏾", categories: ["health", "wellness", "fitness", "gym", "yoga", "medical", "therapy"] },
+  { label: "Art & Culture", emoji: "🎨", categories: ["art", "culture", "gallery", "museum", "creative", "studio"] },
+  { label: "Late Night", emoji: "🌙", categories: ["nightlife", "bar", "lounge", "club", "entertainment", "comedy"] },
+  { label: "Shopping", emoji: "🛍️", categories: ["retail", "shop", "boutique", "clothing", "apparel", "accessories"] },
+  { label: "Professional", emoji: "💼", categories: ["legal", "finance", "tech", "consulting", "accounting", "real estate"] },
+  { label: "Family", emoji: "👨🏾‍👩🏾‍👧🏾", categories: ["childcare", "education", "tutoring", "family", "daycare"] },
+];
+
+function getVibeMatch(category?: string): { label: string; emoji: string } | null {
+  if (!category) return null;
+  const cat = category.toLowerCase();
+  const match = VIBES.find((v) => v.categories.some((c) => cat.includes(c) || c.includes(cat)));
+  return match ?? null;
+}
+
 const CATEGORY_IMAGES: Record<string, any> = {
   Food: require("@/assets/images/bento-businesses.jpg"),
   Beauty: require("@/assets/images/bento-nightlife.jpg"),
@@ -124,6 +142,16 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
               )}
             </View>
             <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={11} />
+            {(() => {
+              const vibe = getVibeMatch(business.category);
+              if (!vibe) return null;
+              return (
+                <View style={styles.vibePill}>
+                  <Text style={styles.vibeEmoji}>{vibe.emoji}</Text>
+                  <Text style={styles.vibeText}>{vibe.label}</Text>
+                </View>
+              );
+            })()}
             <View style={styles.hBottom}>
               <Text style={[styles.hLocation, { color: colors.mutedForeground }]} numberOfLines={1}>
                 {business.city}, {business.state}
@@ -216,6 +244,16 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
             <ConfidenceScoreBadge score={business.confidenceScore} size="md" showLabel />
           </View>
           <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={12} />
+          {(() => {
+            const vibe = getVibeMatch(business.category);
+            if (!vibe) return null;
+            return (
+              <View style={styles.vibePill}>
+                <Text style={styles.vibeEmoji}>{vibe.emoji}</Text>
+                <Text style={styles.vibeText}>{vibe.label}</Text>
+              </View>
+            );
+          })()}
           <Text style={[styles.vLocation, { color: colors.mutedForeground }]} numberOfLines={1}>
             {business.address}, {business.city}
             {business.priceRange ? ` · ${business.priceRange}` : ""}
@@ -401,6 +439,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     flexWrap: "wrap",
+  },
+  vibePill: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    alignSelf: "flex-start" as const,
+    backgroundColor: "#2D7A4F18",
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: "#2D7A4F30",
+    gap: 4,
+    marginTop: 2,
+  },
+  vibeEmoji: { fontSize: 11 },
+  vibeText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 10,
+    color: "#2D7A4F",
   },
   featuredPill: {
     backgroundColor: "#CA922B18",
