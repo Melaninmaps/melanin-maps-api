@@ -22,6 +22,8 @@ import { useColors } from "@/hooks/useColors";
 import { useOwnerListings, LISTING_TYPES, type Listing, type ListingType } from "@/hooks/useListings";
 import { SellerAgreementModal } from "@/components/SellerAgreementModal";
 import { BusinessImprovementPlanModal } from "@/components/BusinessImprovementPlanModal";
+import { BrandQuoteBanner } from "@/components/BrandQuoteBanner";
+import { getDailyQuoteText } from "@/constants/brandQuotes";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -1025,7 +1027,7 @@ export default function BusinessDashboardScreen() {
               <View style={[styles.noReviews, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Feather name="star" size={24} color={colors.muted} />
                 <Text style={[styles.noReviewsTxt, { color: colors.mutedForeground }]}>
-                  No reviews yet. Once customers leave reviews they'll appear here.
+                  {getDailyQuoteText("growth", 2)}
                 </Text>
               </View>
             ) : reviews.map((r, i) => (
@@ -1062,7 +1064,7 @@ export default function BusinessDashboardScreen() {
             <View style={[styles.taglineBanner, { backgroundColor: colors.primary + "0D", borderColor: colors.primary + "20" }]}>
               <Feather name="shield" size={14} color={colors.primary} style={{ marginTop: 1, flexShrink: 0 }} />
               <Text style={[styles.taglineText, { color: colors.primary }]}>
-                Every business has the right to respond. Every customer has the right to be heard. Every concern deserves the opportunity for resolution.
+                {getDailyQuoteText("growth", 1)}
               </Text>
             </View>
 
@@ -1072,7 +1074,7 @@ export default function BusinessDashboardScreen() {
               <View style={[styles.noReviews, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Feather name="star" size={24} color={colors.muted} />
                 <Text style={[styles.noReviewsTxt, { color: colors.mutedForeground }]}>
-                  No reviews yet. Once customers leave reviews they'll appear here.
+                  {getDailyQuoteText("growth", 2)}
                 </Text>
               </View>
             ) : reviews.map((r, i) => (

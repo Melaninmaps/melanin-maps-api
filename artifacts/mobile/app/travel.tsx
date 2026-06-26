@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getDailyQuoteText } from "@/constants/brandQuotes";
 import {
   ActivityIndicator,
   Alert,
@@ -551,7 +552,7 @@ function WelcomeScreen({
       </View>
       <Text style={[wsStyles.title, { color: colors.text }]}>Hey, I'm KinfolkAI™</Text>
       <Text style={[wsStyles.sub, { color: colors.mutedForeground }]}>
-        Your AI travel companion for trusted businesses, community safety intel, and real city knowledge — from people who actually live there.
+        {getDailyQuoteText("kinfolk")}
       </Text>
 
       {/* Trip Journals shortcut */}
@@ -563,7 +564,7 @@ function WelcomeScreen({
         <Text style={wsStyles.journalEmoji}>🗺️</Text>
         <View style={{ flex: 1 }}>
           <Text style={wsStyles.journalTitle}>Trip Journals</Text>
-          <Text style={wsStyles.journalSub}>Community travel guides from people who look like you</Text>
+          <Text style={wsStyles.journalSub}>{getDailyQuoteText("diaspora", 2)}</Text>
         </View>
         <Ionicons name="arrow-forward" size={16} color="#C9922B" />
       </TouchableOpacity>

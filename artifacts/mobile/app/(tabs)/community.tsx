@@ -31,6 +31,8 @@ import { useGroups, type Group } from "@/hooks/useGroups";
 import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { BrandQuoteBanner } from "@/components/BrandQuoteBanner";
+import { getDailyQuoteText } from "@/constants/brandQuotes";
 
 const TABS = ["Feed", "Videos", "Events", "Groups", "Resources", "Alerts", "Recommendations"];
 
@@ -382,7 +384,7 @@ export default function CommunityScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.videosHeroTitle}>Travel Videos</Text>
                 <Text style={styles.videosHeroSub}>
-                  Authentic stories from the community — not polished ads
+                  {getDailyQuoteText("travel", 1)}
                 </Text>
               </View>
               <Feather name="arrow-right" size={20} color="#C9922B" />

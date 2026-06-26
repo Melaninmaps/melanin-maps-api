@@ -35,6 +35,8 @@ import { BadgeSection } from "@/components/BadgeSection";
 import { MilestoneSection } from "@/components/MilestoneSection";
 import { PointsRedemptionModal } from "@/components/PointsRedemptionModal";
 import { TrustLevelCard } from "@/components/TrustBadge";
+import { BrandQuoteBanner } from "@/components/BrandQuoteBanner";
+import { getDailyQuoteText } from "@/constants/brandQuotes";
 
 const SETTINGS = [
   { icon: "map" as const, label: "Trip Planner", sub: "Chat with KinfolkAI™ for travel picks", route: "/travel" as const },
@@ -276,7 +278,7 @@ export default function ProfileScreen() {
             Connect With a Global Community
           </Text>
           <Text style={[styles.signInSub, { color: colors.mutedForeground }]}>
-            Mapping with Melanin™ connects people to trusted businesses, meaningful relationships, and thriving communities. Sign in to save favorites, leave reviews, and connect.
+            {getDailyQuoteText("home")}
           </Text>
           <TouchableOpacity
             style={[styles.signInBtn, { backgroundColor: colors.primary }]}
@@ -383,9 +385,7 @@ export default function ProfileScreen() {
                 ))}
               </View>
               <Text style={[styles.newUserTitle, { color: colors.foreground }]}>Built for Connection</Text>
-              <Text style={[styles.newUserSub, { color: colors.mutedForeground }]}>
-                Every feature on Mapping with Melanin is designed to bring people together — locally and globally.
-              </Text>
+              <BrandQuoteBanner category="community" variant="strip" style={{ marginTop: 4 }} />
             </View>
           ) : (
             <View style={styles.statsRow}>

@@ -25,7 +25,9 @@ import { OnboardingPreferenceSurvey } from "@/components/OnboardingPreferenceSur
 import { ScoreFilterPanel } from "@/components/ScoreFilterPanel";
 import { SearchBar } from "@/components/SearchBar";
 import { SectionHeader } from "@/components/SectionHeader";
+import { BrandQuoteBanner } from "@/components/BrandQuoteBanner";
 import { CATEGORIES } from "@/constants/data";
+import { getDailyQuoteText } from "@/constants/brandQuotes";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
@@ -239,7 +241,7 @@ export default function DiscoverScreen() {
               colors={["transparent", "rgba(0,0,0,0.65)"]}
               style={styles.heroOverlay}
             >
-              <Text style={styles.heroLabel}>SAFETY-FIRST COMMUNITY INTELLIGENCE</Text>
+              <Text style={styles.heroLabel}>{getDailyQuoteText("mission", 0).toUpperCase()}</Text>
               <Text style={styles.heroTitle}>Map Your Life.{"\n"}Connect Deeper.{"\n"}Live With Purpose.</Text>
               <TouchableOpacity style={styles.heroCta} activeOpacity={0.85} onPress={() => router.push("/(tabs)/map")}>
                 <Text style={styles.heroCtaText}>Explore Near You</Text>
@@ -269,6 +271,14 @@ export default function DiscoverScreen() {
           ))}
         </View>
 
+        {/* Brand quote strip */}
+        <BrandQuoteBanner
+          category="community"
+          offset={1}
+          variant="card"
+          style={{ marginHorizontal: 20, marginBottom: 20 }}
+        />
+
         {/* AI Travel banner */}
         <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 24 }]}>
           <TouchableOpacity
@@ -280,7 +290,7 @@ export default function DiscoverScreen() {
               <Text style={styles.travelBannerEyebrow}>✨ KINFOLKAI™</Text>
               <Text style={styles.travelBannerTitle}>Plan Your Next Trip</Text>
               <Text style={styles.travelBannerSub}>
-                minority-owned spots, safe neighborhoods & events
+                {getDailyQuoteText("kinfolk", 0)}
               </Text>
             </View>
             <View style={styles.travelBannerRight}>
