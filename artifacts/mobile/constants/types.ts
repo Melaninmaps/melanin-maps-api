@@ -30,6 +30,11 @@ export interface Business {
   hours?: string;
   priceRange?: string;
   imageUrl?: string;
+  instagram?: string;
+  tiktok?: string;
+  twitter?: string;
+  facebook?: string;
+  youtube?: string;
   confidenceScore: number;
   blackOwned: boolean;
   ownershipDesignations: string[];

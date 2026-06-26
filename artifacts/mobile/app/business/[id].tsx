@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
+import * as WebBrowser from "expo-web-browser";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -225,8 +226,18 @@ export default function BusinessDetailScreen() {
   const handleWebsite = () => {
     if (business.website) {
       const url = /^https?:\/\//i.test(business.website) ? business.website : `https://${business.website}`;
-      Linking.openURL(url);
+      WebBrowser.openBrowserAsync(url);
     }
+  };
+
+  const handleSocialLink = (raw: string, baseUrl?: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const url = /^https?:\/\//i.test(raw)
+      ? raw
+      : baseUrl
+      ? `${baseUrl}${raw.replace(/^@/, "")}`
+      : `https://${raw}`;
+    WebBrowser.openBrowserAsync(url);
   };
 
   const handleShare = () => {
@@ -466,6 +477,55 @@ export default function BusinessDetailScreen() {
                 <Feather name="globe" size={16} color={colors.primary} />
                 <Text style={[styles.infoText, { color: colors.primary }]}>{business.website}</Text>
               </TouchableOpacity>
+            )}
+            {(business.instagram || business.tiktok || business.twitter || business.facebook || business.youtube) && (
+              <View style={styles.socialLinksRow}>
+                {business.instagram && (
+                  <TouchableOpacity
+                    style={[styles.socialBtn, { backgroundColor: "#E1306C18", borderColor: "#E1306C30" }]}
+                    onPress={() => handleSocialLink(business.instagram!, "https://instagram.com/")}
+                  >
+                    <Feather name="instagram" size={15} color="#E1306C" />
+                    <Text style={[styles.socialBtnText, { color: "#E1306C" }]}>Instagram</Text>
+                  </TouchableOpacity>
+                )}
+                {business.tiktok && (
+                  <TouchableOpacity
+                    style={[styles.socialBtn, { backgroundColor: "#00000015", borderColor: "#00000025" }]}
+                    onPress={() => handleSocialLink(business.tiktok!, "https://tiktok.com/@")}
+                  >
+                    <Feather name="music" size={15} color={colors.foreground} />
+                    <Text style={[styles.socialBtnText, { color: colors.foreground }]}>TikTok</Text>
+                  </TouchableOpacity>
+                )}
+                {business.twitter && (
+                  <TouchableOpacity
+                    style={[styles.socialBtn, { backgroundColor: "#1DA1F218", borderColor: "#1DA1F230" }]}
+                    onPress={() => handleSocialLink(business.twitter!, "https://x.com/")}
+                  >
+                    <Feather name="twitter" size={15} color="#1DA1F2" />
+                    <Text style={[styles.socialBtnText, { color: "#1DA1F2" }]}>X / Twitter</Text>
+                  </TouchableOpacity>
+                )}
+                {business.facebook && (
+                  <TouchableOpacity
+                    style={[styles.socialBtn, { backgroundColor: "#1877F218", borderColor: "#1877F230" }]}
+                    onPress={() => handleSocialLink(business.facebook!, "https://facebook.com/")}
+                  >
+                    <Feather name="facebook" size={15} color="#1877F2" />
+                    <Text style={[styles.socialBtnText, { color: "#1877F2" }]}>Facebook</Text>
+                  </TouchableOpacity>
+                )}
+                {business.youtube && (
+                  <TouchableOpacity
+                    style={[styles.socialBtn, { backgroundColor: "#FF000015", borderColor: "#FF000025" }]}
+                    onPress={() => handleSocialLink(business.youtube!, "https://youtube.com/@")}
+                  >
+                    <Feather name="youtube" size={15} color="#FF0000" />
+                    <Text style={[styles.socialBtnText, { color: "#FF0000" }]}>YouTube</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             )}
           </View>
 
@@ -882,6 +942,9 @@ const styles = StyleSheet.create({
   },
   infoRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   infoText: { fontFamily: "Inter_400Regular", fontSize: 14, flex: 1, lineHeight: 20 },
+  socialLinksRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
+  socialBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
+  socialBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   sectionTitle: { fontFamily: "Inter_700Bold", fontSize: 17 },
   description: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 22 },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 8 },

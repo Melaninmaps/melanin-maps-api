@@ -1317,16 +1317,17 @@ export async function sendSearchInquiryAlert(data: {
   if (!resend) { log("search inquiry alert"); return; }
 
   const locationLine = [data.city, data.state].filter(Boolean).join(", ");
+  const claimLink = `https://mappingwithmelanin.com/for-business-owners?utm_source=search-invite&business=${encodeURIComponent(data.businessName)}`;
 
   await resend.emails.send({
     from: FROM,
     to: "hello@mappingwithmelanin.com",
-    subject: `🔍 Business Search Miss: "${data.businessName}"`,
+    subject: `🔍 Community Search Alert: Someone searched for "${data.businessName}"`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
         <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:24px" />
-        <h2 style="font-size:22px;color:#2B1507;font-weight:700;margin:0 0 8px">Someone searched for a business we don't have yet</h2>
-        <p style="color:#3A1F0E;font-size:15px;margin:0 0 20px">A community member searched for the following business and found no results — this is an opportunity to reach out and invite them to join.</p>
+        <h2 style="font-size:22px;color:#2B1507;font-weight:700;margin:0 0 8px">Community Search Alert</h2>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 20px">A community member searched for the following business and found no results. Send them the invite email below.</p>
         <div style="background:#fff;border-radius:12px;padding:24px;border:1px solid rgba(58,31,14,0.1);margin-bottom:20px">
           <table style="width:100%;border-collapse:collapse">
             <tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700;width:140px">Business</td><td style="padding:6px 0;color:#2B1507;font-size:16px;font-weight:700">${data.businessName}</td></tr>
@@ -1337,11 +1338,90 @@ export async function sendSearchInquiryAlert(data: {
             ${data.contactHandle ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Contact Handle</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.contactHandle}</td></tr>` : ""}
           </table>
         </div>
-        <div style="background:#2B1507;border-radius:12px;padding:20px">
-          <p style="color:#CA922B;font-size:14px;font-weight:700;margin:0 0 6px">Next step</p>
-          <p style="color:#F5EBD8;font-size:14px;margin:0 0 4px;font-weight:600">Reach out and invite this business to join Mapping With Melanin</p>
-          <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Let them know someone from our community is already looking for them — that's a powerful invitation.</p>
+        <div style="background:#2B1507;border-radius:12px;padding:20px;margin-bottom:20px">
+          <p style="color:#CA922B;font-size:14px;font-weight:700;margin:0 0 6px">Invite link to share with them</p>
+          <a href="${claimLink}" style="color:#F5EBD8;font-size:14px;word-break:break-all">${claimLink}</a>
         </div>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.7;margin:0">Someone in our community wanted to find <strong>${data.businessName}</strong> — that's the most powerful invitation there is.</p>
+      </div>
+    `,
+  });
+
+  if (data.contactEmail) {
+    await sendBusinessSearchInvite(data.contactEmail, data.businessName, claimLink);
+  }
+}
+
+export async function sendBusinessSearchInvite(to: string, businessName: string, claimLink: string) {
+  if (!resend) { log("business search invite"); return; }
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Someone in our community searched for ${businessName} — and we found you`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 16px">Hello,</p>
+
+        <p style="color:#CA922B;font-size:20px;font-weight:700;line-height:1.4;margin:0 0 20px">Great news!</p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          A member of the Mapping with Melanin™ community recently searched for your business by name because they wanted to support you—but we couldn't find your business on our platform.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          We didn't want that opportunity to end with a "No Results Found" message.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          Instead, we wanted to let you know that someone is already looking for what you offer.
+        </p>
+
+        <div style="border-left:4px solid #CA922B;padding-left:20px;margin:0 0 28px">
+          <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0">
+            Mapping with Melanin™ is a community-driven platform that helps people discover and support minority-owned businesses while providing trusted travel, relocation, community, and business resources.
+          </p>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          Because your business was searched by name, we'd love to invite you to claim your business profile.
+        </p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:28px;margin:0 0 28px">
+          <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 16px">By joining, you'll be able to:</p>
+          <ul style="color:#F5EBD8;font-size:15px;line-height:2;margin:0;padding-left:20px">
+            <li>Connect with people already searching for your business</li>
+            <li>Increase your visibility within our growing community</li>
+            <li>Share your website, social media, and business story</li>
+            <li>Receive meaningful community feedback and recognition</li>
+            <li>Reach new supporters while staying connected with your loyal customers</li>
+          </ul>
+        </div>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;line-height:1.6;margin:0 0 8px">
+          The best part? This invitation wasn't randomly generated.
+        </p>
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 28px">
+          Someone in our community wanted to find <strong style="color:#2B1507">${businessName}</strong>.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          We hope you'll join us and become part of a platform built to celebrate, support, and strengthen minority-owned businesses.
+        </p>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;margin:0 0 16px">Claim Your Business:</p>
+        <a href="${claimLink}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:16px 36px;border-radius:50px;text-decoration:none;margin-bottom:32px">
+          Claim Your Business Profile →
+        </a>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          We look forward to welcoming you.
+        </p>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;margin:0 0 4px">The Mapping with Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:14px;font-style:italic;margin:0 0 4px;opacity:0.8">"Helping communities discover businesses they're searching for—and helping businesses discover the communities searching for them."</p>
+        <p style="color:#3A1F0E;font-size:13px;margin:0;opacity:0.6">Melanin Maps LLC</p>
       </div>
     `,
   });

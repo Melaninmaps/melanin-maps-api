@@ -53,6 +53,11 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
     hours: b.hours as string | undefined,
     priceRange: b.priceRange as string | undefined,
     imageUrl: b.imageUrl as string | undefined,
+    instagram: b.instagram as string | undefined,
+    tiktok: b.tiktok as string | undefined,
+    twitter: b.twitter as string | undefined,
+    facebook: b.facebook as string | undefined,
+    youtube: b.youtube as string | undefined,
     foundingBusiness: b.foundingBusiness as boolean | undefined,
     foundingNumber: b.foundingNumber as number | undefined,
   };
