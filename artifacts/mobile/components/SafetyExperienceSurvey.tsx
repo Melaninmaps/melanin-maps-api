@@ -89,7 +89,7 @@ export function SafetyExperienceSurvey({ visible, businessName, businessCategory
   }, [submitted]);
 
   const canNext = () => {
-    if (step === 0) return data.overallSafety > 0 && data.returnAlone > 0 && data.wouldRecommend > 0;
+    if (step === 0) return data.overallSafety > 0 && data.returnAlone > 0 && (!isEmployer || data.wouldRecommend > 0);
     if (step === 1) return data.timeOfDay !== "" && data.groupType !== "";
     return true;
   };
@@ -104,6 +104,13 @@ export function SafetyExperienceSurvey({ visible, businessName, businessCategory
   const categoryQuestions = getCategoryRatingQuestions(businessCategory);
   const categoryLabel = getCategoryExperienceLabel(businessCategory);
   const STEPS = ["Safety Ratings", "Visit Context", "Comments", categoryLabel];
+
+  const isEmployer = (() => {
+    const cat = (businessCategory ?? "").toLowerCase();
+    return cat.includes("staffing") || cat.includes("employment") || cat.includes("recruiting") ||
+      cat.includes("temp agency") || cat.includes("job placement") || cat.includes("workforce") ||
+      cat.includes("hr ") || cat.includes("human resources") || cat.includes("hiring");
+  })();
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
@@ -165,8 +172,12 @@ export function SafetyExperienceSurvey({ visible, businessName, businessCategory
                   <StarRow label="Overall Safety" value={data.overallSafety} onChange={(v) => setData({ ...data, overallSafety: v })} />
                   <View style={[styles.divider, { backgroundColor: colors.border }]} />
                   <StarRow label="Comfortable returning alone?" value={data.returnAlone} onChange={(v) => setData({ ...data, returnAlone: v })} />
-                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                  <StarRow label="Would recommend to others?" value={data.wouldRecommend} onChange={(v) => setData({ ...data, wouldRecommend: v })} />
+                  {isEmployer && (
+                    <>
+                      <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                      <StarRow label="Would recommend to others?" value={data.wouldRecommend} onChange={(v) => setData({ ...data, wouldRecommend: v })} />
+                    </>
+                  )}
                 </View>
               </View>
             ) : step === 1 ? (

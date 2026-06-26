@@ -105,7 +105,7 @@ export function GeneralSurvey() {
   const [data, setData] = useState<SurveyData>({ ...EMPTY });
 
   const canNext = () => {
-    if (step === 0) return data.overallSafety > 0 && data.returnAlone > 0 && data.wouldRecommend > 0;
+    if (step === 0) return data.overallSafety > 0 && data.returnAlone > 0;
     if (step === 1) return data.timeOfDay !== "" && data.groupType !== "" && data.incidentOccurred !== null;
     return true;
   };
@@ -213,8 +213,6 @@ export function GeneralSurvey() {
                 <StarRow label="Overall Safety" value={data.overallSafety} onChange={(v) => setData({ ...data, overallSafety: v })} />
                 <div style={{ height: 1, backgroundColor: BORDER, margin: "4px 0 18px" }} />
                 <StarRow label="Comfortable returning alone?" value={data.returnAlone} onChange={(v) => setData({ ...data, returnAlone: v })} />
-                <div style={{ height: 1, backgroundColor: BORDER, margin: "4px 0 18px" }} />
-                <StarRow label="Would recommend to others?" value={data.wouldRecommend} onChange={(v) => setData({ ...data, wouldRecommend: v })} />
               </div>
             </div>
           ) : step === 1 ? (
