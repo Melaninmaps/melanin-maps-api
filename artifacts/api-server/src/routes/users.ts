@@ -2,6 +2,8 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq, ilike, or, and, ne } from "drizzle-orm";
 
+const USERNAME_RE = /^[a-z0-9_]{3,30}$/;
+
 const router: IRouter = Router();
 
 router.get("/users/me", async (req: Request, res: Response) => {
@@ -33,6 +35,29 @@ router.get("/users/me", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch user profile");
     res.status(500).json({ error: "Failed to fetch profile" });
+  }
+});
+
+router.get("/users/check-username/:username", async (req: Request, res: Response) => {
+  const raw = String(req.params.username ?? "").trim().toLowerCase().replace(/^@/, "");
+  if (!USERNAME_RE.test(raw)) {
+    res.json({ available: false, reason: "Username must be 3–30 characters: letters, numbers, underscores only." });
+    return;
+  }
+  try {
+    const [existing] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.username, raw))
+      .limit(1);
+    if (existing && req.user?.id && existing.id === req.user.id) {
+      res.json({ available: true });
+    } else {
+      res.json({ available: !existing });
+    }
+  } catch (err) {
+    req.log.error({ err }, "Failed to check username");
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -83,7 +108,7 @@ router.patch("/users/me", async (req: Request, res: Response) => {
   }
 
   try {
-    const { firstName, lastName, profileImageUrl, industry, jobTitle } = req.body as Record<string, unknown>;
+    const { firstName, lastName, profileImageUrl, industry, jobTitle, username } = req.body as Record<string, unknown>;
 
     const updates: Partial<typeof usersTable.$inferInsert> = {};
     if (typeof firstName === "string") updates.firstName = firstName.trim() || null;
@@ -91,6 +116,26 @@ router.patch("/users/me", async (req: Request, res: Response) => {
     if (typeof profileImageUrl === "string") updates.profileImageUrl = profileImageUrl.trim() || null;
     if (typeof industry === "string") updates.industry = industry.trim() || null;
     if (typeof jobTitle === "string") updates.jobTitle = jobTitle.trim() || null;
+    if (typeof username === "string") {
+      const clean = username.trim().toLowerCase().replace(/^@/, "");
+      if (clean === "") {
+        updates.username = null;
+      } else if (!USERNAME_RE.test(clean)) {
+        res.status(400).json({ error: "Username must be 3–30 characters: letters, numbers, underscores only." });
+        return;
+      } else {
+        const [existing] = await db
+          .select({ id: usersTable.id })
+          .from(usersTable)
+          .where(and(eq(usersTable.username, clean), ne(usersTable.id, req.user.id)))
+          .limit(1);
+        if (existing) {
+          res.status(409).json({ error: "That username is already taken." });
+          return;
+        }
+        updates.username = clean;
+      }
+    }
 
     if (Object.keys(updates).length === 0) {
       res.status(400).json({ error: "No valid fields to update" });

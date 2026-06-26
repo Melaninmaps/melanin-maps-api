@@ -3,14 +3,16 @@ import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   ScrollView,
   Share,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -38,6 +40,11 @@ export default function ReferralScreen() {
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralCount, setReferralCount] = useState(0);
   const [loadingEntry, setLoadingEntry] = useState(true);
+  const [editingCode, setEditingCode] = useState(false);
+  const [customInput, setCustomInput] = useState("");
+  const [codeCheck, setCodeCheck] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
+  const [savingCode, setSavingCode] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const fetchEntry = async () => {
@@ -81,6 +88,51 @@ export default function ReferralScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const checkCode = (raw: string) => {
+    const val = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    setCustomInput(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (val.length < 4) { setCodeCheck(val.length === 0 ? "idle" : "invalid"); return; }
+    if (val.length > 20) { setCodeCheck("invalid"); return; }
+    setCodeCheck("checking");
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const apiBase = getApiBase();
+        const res = await fetch(`${apiBase}/api/referrals/check-code/${val}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const data = await res.json() as { available: boolean };
+        setCodeCheck(data.available ? "available" : "taken");
+      } catch { setCodeCheck("idle"); }
+    }, 550);
+  };
+
+  const saveCustomCode = async () => {
+    const clean = customInput.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (codeCheck !== "available" || clean.length < 4) return;
+    setSavingCode(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const apiBase = getApiBase();
+      const res = await fetch(`${apiBase}/api/referrals/my-code`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ code: clean }),
+      });
+      const data = await res.json() as { referralCode?: string; error?: string };
+      if (!res.ok) { Alert.alert("Couldn't save", data.error ?? "Try a different code."); return; }
+      if (data.referralCode) {
+        setReferralCode(data.referralCode);
+        setEditingCode(false);
+        setCustomInput("");
+        setCodeCheck("idle");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch { Alert.alert("Couldn't save", "Something went wrong. Please try again."); }
+    finally { setSavingCode(false); }
   };
 
   const handleShare = async () => {
@@ -147,6 +199,59 @@ export default function ReferralScreen() {
             <Feather name="share-2" size={18} color="#FFFFFF" />
             <Text style={styles.shareBtnText}>Share Invite Link</Text>
           </TouchableOpacity>
+
+          {!editingCode ? (
+            <TouchableOpacity
+              style={[styles.customizeBtn, { borderColor: colors.border }]}
+              onPress={() => { setEditingCode(true); setCustomInput(""); setCodeCheck("idle"); }}
+              activeOpacity={0.7}
+            >
+              <Feather name="edit-2" size={13} color={colors.mutedForeground} />
+              <Text style={[styles.customizeBtnText, { color: colors.mutedForeground }]}>Customize your code</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={[styles.customizePanel, { borderColor: colors.border, backgroundColor: colors.secondary }]}>
+              <Text style={[styles.customizePanelLabel, { color: colors.foreground }]}>Create your own code</Text>
+              <Text style={[styles.customizePanelSub, { color: colors.mutedForeground }]}>4–20 letters and numbers, no spaces. Must be unique.</Text>
+              <View style={styles.customizeInputRow}>
+                <TextInput
+                  style={[
+                    styles.customizeInput,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: codeCheck === "available" ? "#2D7A4F" : codeCheck === "taken" || codeCheck === "invalid" ? "#DC2626" : colors.border,
+                      color: colors.foreground,
+                    },
+                  ]}
+                  value={customInput}
+                  onChangeText={checkCode}
+                  placeholder="e.g. MAPWITHTEI"
+                  placeholderTextColor={colors.mutedForeground}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  maxLength={20}
+                />
+                {codeCheck === "checking" && <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 8 }} />}
+                {codeCheck === "available" && <Feather name="check-circle" size={20} color="#2D7A4F" style={{ marginLeft: 8 }} />}
+                {(codeCheck === "taken" || codeCheck === "invalid") && <Feather name="x-circle" size={20} color="#DC2626" style={{ marginLeft: 8 }} />}
+              </View>
+              {codeCheck === "available" && <Text style={styles.codeAvailableText}>✓ That code is available!</Text>}
+              {codeCheck === "taken" && <Text style={styles.codeTakenText}>That code is already taken.</Text>}
+              {codeCheck === "invalid" && customInput.length > 0 && <Text style={styles.codeTakenText}>4–20 letters and numbers only.</Text>}
+              <View style={styles.customizePanelBtns}>
+                <TouchableOpacity style={[styles.cancelCodeBtn, { borderColor: colors.border }]} onPress={() => { setEditingCode(false); setCodeCheck("idle"); setCustomInput(""); }}>
+                  <Text style={[styles.cancelCodeText, { color: colors.mutedForeground }]}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.saveCodeBtn, { backgroundColor: codeCheck === "available" ? colors.primary : colors.muted, opacity: codeCheck === "available" ? 1 : 0.5 }]}
+                  onPress={saveCustomCode}
+                  disabled={codeCheck !== "available" || savingCode}
+                >
+                  {savingCode ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.saveCodeText}>Save Code</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Progress */}
@@ -397,4 +502,41 @@ const styles = StyleSheet.create({
   howStep: { width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 },
   howStepText: { fontFamily: "Inter_700Bold", fontSize: 12, color: "#FFFFFF" },
   howText: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1, lineHeight: 20 },
+  customizeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderStyle: "dashed",
+  },
+  customizeBtnText: { fontFamily: "Inter_500Medium", fontSize: 13 },
+  customizePanel: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+    gap: 8,
+  },
+  customizePanelLabel: { fontFamily: "Inter_700Bold", fontSize: 14 },
+  customizePanelSub: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  customizeInputRow: { flexDirection: "row", alignItems: "center" },
+  customizeInput: {
+    flex: 1,
+    height: 46,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    paddingHorizontal: 14,
+    fontFamily: "Inter_700Bold",
+    fontSize: 16,
+    letterSpacing: 1.5,
+  },
+  codeAvailableText: { fontFamily: "Inter_500Medium", fontSize: 12, color: "#2D7A4F" },
+  codeTakenText: { fontFamily: "Inter_500Medium", fontSize: 12, color: "#DC2626" },
+  customizePanelBtns: { flexDirection: "row", gap: 10, marginTop: 4 },
+  cancelCodeBtn: { flex: 1, paddingVertical: 11, borderRadius: 10, borderWidth: 1, alignItems: "center" },
+  cancelCodeText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  saveCodeBtn: { flex: 1, paddingVertical: 11, borderRadius: 10, alignItems: "center" },
+  saveCodeText: { fontFamily: "Inter_700Bold", fontSize: 13, color: "#FFFFFF" },
 });

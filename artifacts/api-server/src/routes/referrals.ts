@@ -53,6 +53,53 @@ router.get("/referrals/my-code", async (req: any, res): Promise<void> => {
   }
 });
 
+router.get("/referrals/check-code/:code", async (req: any, res): Promise<void> => {
+  const code = (req.params.code ?? "").toUpperCase().replace(/\s/g, "");
+  if (!/^[A-Z0-9]{4,20}$/.test(code)) {
+    res.json({ available: false, reason: "Code must be 4–20 letters and numbers only." });
+    return;
+  }
+  try {
+    const [existing] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.referralCode, code)).limit(1);
+    const isOwn = req.user?.id && existing?.id === req.user.id;
+    res.json({ available: !existing || isOwn });
+  } catch (err: any) {
+    req.log.error({ err }, "Failed to check referral code");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.put("/referrals/my-code", async (req: any, res): Promise<void> => {
+  if (!req.user) { res.status(401).json({ error: "Authentication required" }); return; }
+  const { code } = req.body as { code?: string };
+  if (!code) { res.status(400).json({ error: "code is required" }); return; }
+  const clean = code.toUpperCase().replace(/\s/g, "");
+  if (!/^[A-Z0-9]{4,20}$/.test(clean)) {
+    res.status(400).json({ error: "Code must be 4–20 letters and numbers only." });
+    return;
+  }
+  try {
+    const [existing] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.referralCode, clean)).limit(1);
+    if (existing && existing.id !== req.user.id) {
+      res.status(409).json({ error: "That code is already taken. Try a different one." });
+      return;
+    }
+    const [updated] = await db
+      .update(usersTable)
+      .set({ referralCode: clean })
+      .where(eq(usersTable.id, req.user.id))
+      .returning();
+    res.json({
+      referralCode: updated.referralCode,
+      referralCount: updated.referralCount ?? 0,
+      referralUrl: `https://mappingwithmelanin.com/r/${updated.referralCode}`,
+    });
+  } catch (err: any) {
+    req.log.error({ err }, "Failed to set custom referral code");
+    res.status(500).json({ error: "Failed to update referral code" });
+  }
+});
+
 router.post("/referrals/track", async (req: any, res): Promise<void> => {
   const { code } = req.body as { code?: string };
   if (!code) { res.status(400).json({ error: "code is required" }); return; }

@@ -103,6 +103,9 @@ export default function ProfileScreen() {
   const [editLastName, setEditLastName] = useState("");
   const [editIndustry, setEditIndustry] = useState("");
   const [editJobTitle, setEditJobTitle] = useState("");
+  const [editUsername, setEditUsername] = useState("");
+  const [usernameCheck, setUsernameCheck] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
+  const usernameDebounce = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [allTopics, setAllTopics] = useState<{ id: string; label: string; emoji: string; description: string }[]>([]);
   const [myTopicIds, setMyTopicIds] = useState<string[]>([]);
@@ -131,8 +134,31 @@ export default function ProfileScreen() {
     setEditLastName(user?.lastName ?? "");
     setEditIndustry(user?.industry ?? "");
     setEditJobTitle(user?.jobTitle ?? "");
+    setEditUsername((user as any)?.username ?? "");
+    setUsernameCheck("idle");
     setShowIndustryPicker(false);
     setShowEditModal(true);
+  };
+
+  const checkUsername = (raw: string) => {
+    const val = raw.toLowerCase().replace(/[^a-z0-9_]/g, "");
+    setEditUsername(val);
+    if (usernameDebounce.current) clearTimeout(usernameDebounce.current);
+    if (val === (user as any)?.username) { setUsernameCheck("idle"); return; }
+    if (val.length === 0) { setUsernameCheck("idle"); return; }
+    if (val.length < 3 || val.length > 30) { setUsernameCheck("invalid"); return; }
+    setUsernameCheck("checking");
+    usernameDebounce.current = setTimeout(async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const apiBase = getApiBase();
+        const res = await fetch(`${apiBase}/api/users/check-username/${val}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const data = await res.json() as { available: boolean };
+        setUsernameCheck(data.available ? "available" : "taken");
+      } catch { setUsernameCheck("idle"); }
+    }, 500);
   };
 
   const saveProfile = async () => {
@@ -151,9 +177,14 @@ export default function ProfileScreen() {
           lastName: editLastName,
           industry: editIndustry,
           jobTitle: editJobTitle,
+          username: editUsername || null,
         }),
       });
-      if (!res.ok) throw new Error("Save failed");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        Alert.alert("Couldn't save", err.error ?? "Something went wrong. Please try again.");
+        return;
+      }
       closeEditModal();
       await refreshUser();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -325,6 +356,9 @@ export default function ProfileScreen() {
               <Text style={[styles.name, { color: colors.foreground }]}>
                 {[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Community Member"}
               </Text>
+              {(user as any)?.username ? (
+                <Text style={[styles.username, { color: colors.primary }]}>@{(user as any).username}</Text>
+              ) : null}
               {user?.jobTitle || user?.industry ? (
                 <Text style={[styles.industryLine, { color: colors.mutedForeground }]}>
                   {[user.jobTitle, user.industry].filter(Boolean).join(" · ")}
@@ -537,6 +571,35 @@ export default function ProfileScreen() {
               </ScrollView>
             ) : (
               <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Username <Text style={{ color: colors.mutedForeground + "88" }}>(optional)</Text></Text>
+                <View style={{ position: "relative" }}>
+                  <TextInput
+                    style={[
+                      styles.fieldInput,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: usernameCheck === "available" ? "#2D7A4F" : usernameCheck === "taken" || usernameCheck === "invalid" ? "#DC2626" : colors.border,
+                        color: colors.foreground,
+                        paddingLeft: 30,
+                      },
+                    ]}
+                    value={editUsername}
+                    onChangeText={checkUsername}
+                    placeholder="yourhandle"
+                    placeholderTextColor={colors.mutedForeground}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    maxLength={30}
+                  />
+                  <Text style={{ position: "absolute", left: 12, top: 13, color: colors.mutedForeground, fontFamily: "Inter_500Medium", fontSize: 15 }}>@</Text>
+                  {usernameCheck === "checking" && <ActivityIndicator size="small" color={colors.primary} style={{ position: "absolute", right: 12, top: 13 }} />}
+                  {usernameCheck === "available" && <Feather name="check-circle" size={18} color="#2D7A4F" style={{ position: "absolute", right: 12, top: 13 }} />}
+                  {(usernameCheck === "taken" || usernameCheck === "invalid") && <Feather name="x-circle" size={18} color="#DC2626" style={{ position: "absolute", right: 12, top: 13 }} />}
+                </View>
+                {usernameCheck === "available" && <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "#2D7A4F", marginTop: -6 }}>✓ Available</Text>}
+                {usernameCheck === "taken" && <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "#DC2626", marginTop: -6 }}>That username is taken.</Text>}
+                {usernameCheck === "invalid" && editUsername.length > 0 && <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "#DC2626", marginTop: -6 }}>3–30 characters: letters, numbers, underscores only.</Text>}
+
                 <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>First Name</Text>
                 <TextInput
                   style={[styles.fieldInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
@@ -982,6 +1045,11 @@ const styles = StyleSheet.create({
   name: {
     fontFamily: "Inter_700Bold",
     fontSize: 18,
+  },
+  username: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    marginTop: 1,
   },
   email: {
     fontFamily: "Inter_400Regular",

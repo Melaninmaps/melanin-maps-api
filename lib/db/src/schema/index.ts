@@ -70,3 +70,5 @@ export * from "./business-captions";
 export * from "./business-search-inquiries";
 export * from "./business-response-links";
 export * from "./business-improvement-plans";
+export * from "./community-appreciations";
+export * from "./business-badges";

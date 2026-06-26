@@ -15,6 +15,7 @@ import {
 import { useColors } from "@/hooks/useColors";
 import { COMMUNITY_RATINGS } from "@/components/RatingStars";
 import { getCaptionsForBusiness } from "@/constants/captions";
+import { CommunityAppreciationFlow } from "@/components/CommunityAppreciationFlow";
 
 const PLATFORMS = [
   { id: "instagram", label: "Instagram", icon: "logo-instagram" },
@@ -60,7 +61,8 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
   const [volunteerAsMentor, setVolunteerAsMentor] = useState(false);
   const [nowHiringUrl, setNowHiringUrl] = useState("");
   const [selectedCaptions, setSelectedCaptions] = useState<string[]>([]);
-  const [submitted, setSubmitted] = useState(false);
+  const [phase, setPhase] = useState<"form" | "success" | "appreciation">("form");
+  const [capturedText, setCapturedText] = useState("");
   const [inviteSent, setInviteSent] = useState(false);
   const [volunteeredAsMentor, setVolunteeredAsMentor] = useState(false);
 
@@ -80,7 +82,8 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
     setVolunteerAsMentor(false);
     setNowHiringUrl("");
     setSelectedCaptions([]);
-    setSubmitted(false);
+    setPhase("form");
+    setCapturedText("");
     setInviteSent(false);
     setVolunteeredAsMentor(false);
   };
@@ -120,13 +123,15 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
     const wouldReturnBool = wouldReturn === "yes" ? true : wouldReturn === "no" ? false : null;
     setInviteSent(hasInvite);
     setVolunteeredAsMentor(willMentor);
-    setSubmitted(true);
+    setCapturedText(text);
+    setPhase("success");
     onSubmit(rating, text, wouldReturnBool, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl, nonMinorityOwned, communitySupport > 0 && !nonMinorityOwned ? communitySupport : undefined, website.trim() || undefined, location.trim() || undefined, nonMinorityOwned ? isAnonymous : undefined, willMentor || undefined, cleanNowHiring);
     submitCaptions(selectedCaptions);
-    setTimeout(() => {
-      reset();
-      onClose();
-    }, 2200);
+    if (wouldReturn === "yes" && businessId) {
+      setTimeout(() => setPhase("appreciation"), 1600);
+    } else {
+      setTimeout(() => { reset(); onClose(); }, 2200);
+    }
   };
 
   return (
@@ -139,7 +144,15 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
         <View style={[styles.sheet, { backgroundColor: colors.background }]}>
           <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-          {submitted ? (
+          {phase === "appreciation" && businessId ? (
+            <CommunityAppreciationFlow
+              businessId={businessId}
+              businessName={businessName}
+              reviewId=""
+              reviewText={capturedText}
+              onDone={() => { reset(); onClose(); }}
+            />
+          ) : phase === "success" ? (
             <View style={styles.successWrap}>
               <View style={[styles.successIcon, { backgroundColor: "#2D7A4F18" }]}>
                 <Feather name="check-circle" size={40} color="#2D7A4F" />

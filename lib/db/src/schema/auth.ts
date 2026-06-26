@@ -27,6 +27,7 @@ export const usersTable = pgTable("users", {
   memberType: varchar("member_type", { enum: ["individual", "navigator", "trailblazer", "business", "founding", "beta", "business_referral"] }).default("individual"),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
   foundingMemberNumber: integer("founding_member_number"),
+  username: varchar("username", { length: 30 }).unique(),
   referralCode: varchar("referral_code").unique(),
   referralCount: integer("referral_count").notNull().default(0),
   industry: varchar("industry", { length: 100 }),
