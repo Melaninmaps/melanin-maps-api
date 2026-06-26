@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import * as SecureStore from "expo-secure-store";
 
 const CITIES = [
   "Atlanta", "Houston", "Chicago", "Washington DC", "New York",
@@ -55,7 +56,15 @@ const VISITOR_TIPS = [
   "Active street life", "Quiet and residential",
 ];
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
+
+const CULTURALLY_CONNECTED_OPTIONS = [
+  { id: "very_connected", label: "Very connected — felt right at home" },
+  { id: "somewhat_connected", label: "Somewhat connected" },
+  { id: "neutral", label: "Neutral" },
+  { id: "somewhat_disconnected", label: "Somewhat disconnected" },
+  { id: "not_connected", label: "Not culturally connected" },
+];
 
 function ScaleRating({ value, onChange, color, lowLabel, highLabel }: {
   value: number; onChange: (v: number) => void; color: string; lowLabel: string; highLabel: string;
@@ -136,6 +145,11 @@ export default function NeighborhoodSurveyScreen() {
   const [accessibility, setAccessibility] = useState<string[]>([]);
   const [tips, setTips] = useState<string[]>([]);
   const [comments, setComments] = useState("");
+  const [communityRating, setCommunityRating] = useState(0);
+  const [culturallyConnected, setCulturallyConnected] = useState("");
+  const [nominationName, setNominationName] = useState("");
+  const [nominationCategory, setNominationCategory] = useState("");
+  const [nominationSocialLink, setNominationSocialLink] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
   const atmosphereObj = ATMOSPHERES.find((a) => a.id === atmosphere);
@@ -143,7 +157,7 @@ export default function NeighborhoodSurveyScreen() {
 
   const canNext1 = city.length > 0 && visitPurpose.length > 0;
   const canNext2 = daytimeSafety > 0 && nighttimeSafety > 0;
-  const canNext3 = atmosphere.length > 0 && policeVisibility.length > 0 && policeImpact.length > 0;
+  const canNext3 = atmosphere.length > 0;
   const canGoNext = step === 1 ? canNext1 : step === 2 ? canNext2 : step === 3 ? canNext3 : true;
 
   const next = () => setStep((s) => s + 1);
@@ -155,9 +169,13 @@ export default function NeighborhoodSurveyScreen() {
     const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
 
     try {
+      const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       await fetch(`${apiBase}/api/surveys`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           city,
           neighborhood: neighborhood || undefined,
@@ -168,8 +186,15 @@ export default function NeighborhoodSurveyScreen() {
           walkability: walkability || undefined,
           transitSafety: transitSafety || undefined,
           atmosphere,
-          policeVisibility,
-          policeImpact,
+          policeVisibility: policeVisibility || undefined,
+          policeImpact: policeImpact || undefined,
+          communityRating: communityRating || undefined,
+          culturallyConnected: culturallyConnected || undefined,
+          nomination: nominationName ? {
+            name: nominationName,
+            category: nominationCategory || undefined,
+            socialLink: nominationSocialLink || undefined,
+          } : undefined,
           accessibility,
           tips,
           comments: comments || undefined,
@@ -346,7 +371,7 @@ export default function NeighborhoodSurveyScreen() {
           <View style={styles.stepContent}>
             <Text style={[styles.stepTitle, { color: colors.foreground }]}>🏘️ Community Experience</Text>
             <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-              Atmosphere and both police questions are required
+              Atmosphere is required — police and community questions are optional
             </Text>
 
             <View style={styles.qBlock}>
@@ -413,6 +438,35 @@ export default function NeighborhoodSurveyScreen() {
             </View>
 
             <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>Cultural connection <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text></Text>
+              <Text style={[{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginTop: -4 }]}>How culturally connected did you feel in this neighborhood?</Text>
+              <View style={{ gap: 8 }}>
+                {CULTURALLY_CONNECTED_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.id}
+                    style={[
+                      styles.atmosphereCard,
+                      { backgroundColor: culturallyConnected === opt.id ? colors.primary + "12" : colors.card, borderColor: culturallyConnected === opt.id ? colors.primary : colors.border },
+                    ]}
+                    onPress={() => { setCulturallyConnected(opt.id); if (Platform.OS !== "web") Haptics.selectionAsync(); }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.atmosphereTxt, { color: colors.foreground }]}>{opt.label}</Text>
+                    {culturallyConnected === opt.id && <Feather name="check-circle" size={18} color={colors.primary} />}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.qBlock}>
+              <View style={styles.qLabelRow}>
+                <Text style={[styles.qLabel, { color: colors.foreground }]}>Community vibe <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text></Text>
+              </View>
+              <Text style={[{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginTop: -4 }]}>Rate the overall community feel (1 = poor, 5 = excellent)</Text>
+              <ScaleRating value={communityRating} onChange={setCommunityRating} color={colors.primary} lowLabel="Poor" highLabel="Excellent" />
+            </View>
+
+            <View style={styles.qBlock}>
               <Text style={[styles.qLabel, { color: colors.foreground }]}>Accessibility features noticed <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text></Text>
               <View style={styles.chips}>
                 {ACCESSIBILITY_FEATURES.map((f) => (
@@ -464,6 +518,58 @@ export default function NeighborhoodSurveyScreen() {
               <Feather name="eye-off" size={16} color={colors.mutedForeground} />
               <Text style={[styles.anonTxt, { color: colors.mutedForeground }]}>
                 Surveys are always shared anonymously with the community
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Step 5 — Nominate a Business */}
+        {step === 5 && (
+          <View style={styles.stepContent}>
+            <Text style={[styles.stepTitle, { color: colors.foreground }]}>🏆 Nominate a Business</Text>
+            <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
+              Know a Black-owned business in this area? Help us find and verify it — everything here is optional.
+            </Text>
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>Business name <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text></Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                placeholder="e.g. Trap Kitchen, The Fat Shallot…"
+                placeholderTextColor={colors.mutedForeground}
+                value={nominationName}
+                onChangeText={setNominationName}
+              />
+            </View>
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>Category <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text></Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                placeholder="e.g. Restaurant, Barbershop, Boutique…"
+                placeholderTextColor={colors.mutedForeground}
+                value={nominationCategory}
+                onChangeText={setNominationCategory}
+              />
+            </View>
+
+            <View style={styles.qBlock}>
+              <Text style={[styles.qLabel, { color: colors.foreground }]}>Instagram / website <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text></Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                placeholder="@handle or https://…"
+                placeholderTextColor={colors.mutedForeground}
+                value={nominationSocialLink}
+                onChangeText={setNominationSocialLink}
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+            </View>
+
+            <View style={[styles.anonRow, { backgroundColor: colors.secondary }]}>
+              <Feather name="heart" size={16} color={colors.primary} />
+              <Text style={[styles.anonTxt, { color: colors.mutedForeground }]}>
+                Nominations are reviewed by our team and help us grow the community map.
               </Text>
             </View>
           </View>
