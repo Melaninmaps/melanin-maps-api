@@ -134,7 +134,12 @@ export default function DiscoverScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.searchWrap}>
-          <SearchBar value={search} onChangeText={setSearch} />
+          <SearchBar
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search businesses, events..."
+            onFocus={() => router.push("/business-search")}
+          />
         </View>
         <ScrollView
           horizontal

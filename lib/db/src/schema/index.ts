@@ -66,3 +66,4 @@ export * from "./community-signals";
 export * from "./notifications";
 export * from "./knowledge-channels";
 export * from "./business-captions";
+export * from "./business-search-inquiries";

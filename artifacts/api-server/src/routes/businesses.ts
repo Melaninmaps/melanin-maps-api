@@ -1,11 +1,11 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { db, pool, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable } from "@workspace/db";
+import { db, pool, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable } from "@workspace/db";
 import { eq, and, or, ilike, desc, sql, gt, count } from "drizzle-orm";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
-import { sendFoundingWelcomeEmail } from "../lib/email";
+import { sendFoundingWelcomeEmail, sendSearchInquiryAlert } from "../lib/email";
 import { objectStorageClient } from "../lib/objectStorage";
 
 const photoUpload = multer({
@@ -40,7 +40,7 @@ function isAdmin(req: Request): boolean {
 
 router.get("/businesses", async (req: Request, res: Response) => {
   try {
-    const { category, search } = req.query;
+    const { category, search, state, handle } = req.query;
 
     const conditions = [];
 
@@ -55,6 +55,22 @@ router.get("/businesses", async (req: Request, res: Response) => {
           ilike(businessesTable.city, `%${search}%`),
           ilike(businessesTable.category, `%${search}%`),
           ilike(businessesTable.description, `%${search}%`),
+        ),
+      );
+    }
+
+    if (state && typeof state === "string") {
+      conditions.push(ilike(businessesTable.state, `%${state}%`));
+    }
+
+    if (handle && typeof handle === "string") {
+      const h = handle.replace(/^@/, "");
+      conditions.push(
+        or(
+          ilike(businessesTable.instagram, `%${h}%`),
+          ilike(businessesTable.tiktok, `%${h}%`),
+          ilike(businessesTable.twitter, `%${h}%`),
+          ilike(businessesTable.facebook, `%${h}%`),
         ),
       );
     }
@@ -102,6 +118,47 @@ router.get("/businesses", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch businesses");
     res.status(500).json({ error: "Failed to fetch businesses" });
+  }
+});
+
+router.post("/businesses/search-inquiry", async (req: any, res: Response) => {
+  try {
+    const { businessName, city, state, handle, category, contactEmail, contactHandle, notes } = req.body as {
+      businessName: string;
+      city?: string;
+      state?: string;
+      handle?: string;
+      category?: string;
+      contactEmail?: string;
+      contactHandle?: string;
+      notes?: string;
+    };
+
+    if (!businessName?.trim()) {
+      res.status(400).json({ error: "businessName is required" });
+      return;
+    }
+
+    const searcherUserId = req.user?.id ?? null;
+
+    await db.insert(businessSearchInquiriesTable).values({
+      businessName: businessName.trim(),
+      city: city?.trim() || null,
+      state: state?.trim() || null,
+      handle: handle?.trim() || null,
+      category: category?.trim() || null,
+      contactEmail: contactEmail?.trim() || null,
+      contactHandle: contactHandle?.trim() || null,
+      searcherUserId,
+      notes: notes?.trim() || null,
+    });
+
+    await sendSearchInquiryAlert({ businessName, city, state, handle, category, contactEmail, contactHandle });
+
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to save search inquiry");
+    res.status(500).json({ error: "Failed to save search inquiry" });
   }
 });
 

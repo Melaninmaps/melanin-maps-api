@@ -1304,3 +1304,45 @@ export async function sendNominationAlert(data: {
     `,
   });
 }
+
+export async function sendSearchInquiryAlert(data: {
+  businessName: string;
+  city?: string;
+  state?: string;
+  handle?: string;
+  category?: string;
+  contactEmail?: string;
+  contactHandle?: string;
+}) {
+  if (!resend) { log("search inquiry alert"); return; }
+
+  const locationLine = [data.city, data.state].filter(Boolean).join(", ");
+
+  await resend.emails.send({
+    from: FROM,
+    to: "hello@mappingwithmelanin.com",
+    subject: `🔍 Business Search Miss: "${data.businessName}"`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:24px" />
+        <h2 style="font-size:22px;color:#2B1507;font-weight:700;margin:0 0 8px">Someone searched for a business we don't have yet</h2>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 20px">A community member searched for the following business and found no results — this is an opportunity to reach out and invite them to join.</p>
+        <div style="background:#fff;border-radius:12px;padding:24px;border:1px solid rgba(58,31,14,0.1);margin-bottom:20px">
+          <table style="width:100%;border-collapse:collapse">
+            <tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700;width:140px">Business</td><td style="padding:6px 0;color:#2B1507;font-size:16px;font-weight:700">${data.businessName}</td></tr>
+            ${locationLine ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Location</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${locationLine}</td></tr>` : ""}
+            ${data.category ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Category</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.category}</td></tr>` : ""}
+            ${data.handle ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Social</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.handle}</td></tr>` : ""}
+            ${data.contactEmail ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Contact Email</td><td style="padding:6px 0;font-size:14px"><a href="mailto:${data.contactEmail}" style="color:#CA922B">${data.contactEmail}</a></td></tr>` : ""}
+            ${data.contactHandle ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Contact Handle</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.contactHandle}</td></tr>` : ""}
+          </table>
+        </div>
+        <div style="background:#2B1507;border-radius:12px;padding:20px">
+          <p style="color:#CA922B;font-size:14px;font-weight:700;margin:0 0 6px">Next step</p>
+          <p style="color:#F5EBD8;font-size:14px;margin:0 0 4px;font-weight:600">Reach out and invite this business to join Mapping With Melanin</p>
+          <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Let them know someone from our community is already looking for them — that's a powerful invitation.</p>
+        </div>
+      </div>
+    `,
+  });
+}

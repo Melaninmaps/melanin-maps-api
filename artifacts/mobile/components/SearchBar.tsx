@@ -8,9 +8,11 @@ interface Props {
   onChangeText: (text: string) => void;
   placeholder?: string;
   onSubmit?: () => void;
+  onFocus?: () => void;
+  autoFocus?: boolean;
 }
 
-export function SearchBar({ value, onChangeText, placeholder = "Search businesses, events...", onSubmit }: Props) {
+export function SearchBar({ value, onChangeText, placeholder = "Search businesses, events...", onSubmit, onFocus, autoFocus }: Props) {
   const colors = useColors();
 
   return (
@@ -24,6 +26,8 @@ export function SearchBar({ value, onChangeText, placeholder = "Search businesse
         style={[styles.input, { color: colors.foreground }]}
         returnKeyType="search"
         onSubmitEditing={onSubmit}
+        onFocus={onFocus}
+        autoFocus={autoFocus}
       />
       {value.length > 0 && (
         <TouchableOpacity onPress={() => onChangeText("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
