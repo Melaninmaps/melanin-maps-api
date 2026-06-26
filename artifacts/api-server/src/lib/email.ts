@@ -12,6 +12,7 @@ export async function sendWelcomeEmail(to: string, firstName: string | null) {
   const name = firstName ?? "there";
   await resend.emails.send({
     from: FROM,
+    replyTo: "hello@mappingwithmelanin.com",
     to,
     subject: "Welcome to Mapping With Melanin™ 🗺️✊🏾",
     html: `
@@ -97,6 +98,7 @@ export async function sendWaitlistConfirmation(to: string, position: number, ref
   await resend.emails.send({
     from: FROM,
     to,
+    replyTo: "founders@mappingwithmelanin.com",
     subject: "You're in — Welcome to the Mapping with Melanin™ Waitlist",
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
@@ -191,6 +193,7 @@ export async function sendReferralNudge(
   await resend.emails.send({
     from: FROM,
     to,
+    replyTo: "hello@mappingwithmelanin.com",
     subject: `You're #${position} on the Mapping with Melanin™ waitlist 📍`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
@@ -243,6 +246,7 @@ export async function sendBusinessOutreach(to: string, businessName: string, cla
   await resend.emails.send({
     from: FROM,
     to,
+    replyTo: "business@mappingwithmelanin.com",
     subject: `Your business was recommended on Mapping with Melanin™ — Claim Your Profile`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
@@ -304,6 +308,7 @@ export async function sendApprovalNotification(to: string, firstName: string | n
   await resend.emails.send({
     from: FROM,
     to,
+    replyTo: "hello@mappingwithmelanin.com",
     subject: "You're approved — Welcome to Mapping With Melanin™ 🗺️",
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
@@ -355,6 +360,7 @@ export async function sendTrialStarted(
   await resend.emails.send({
     from: FROM,
     to,
+    replyTo: "hello@mappingwithmelanin.com",
     subject: `Your ${trialDays}-day free trial has started — welcome to Mapping with Melanin™ 🎉`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
@@ -427,6 +433,7 @@ export async function sendTrialEndingSoon(
   await resend.emails.send({
     from: FROM,
     to,
+    replyTo: "hello@mappingwithmelanin.com",
     subject: `Your free trial ends in ${daysLeft} day${daysLeft !== 1 ? "s" : ""} — keep your access to Mapping with Melanin™`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
@@ -486,6 +493,7 @@ export async function sendTrialExpired(
   await resend.emails.send({
     from: FROM,
     to,
+    replyTo: "hello@mappingwithmelanin.com",
     subject: `Your Mapping with Melanin™ trial has ended — here's how to continue`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
@@ -549,6 +557,7 @@ export async function sendMembershipCancelled(
   await resend.emails.send({
     from: FROM,
     to,
+    replyTo: "hello@mappingwithmelanin.com",
     subject: `Your Mapping with Melanin™ membership has been cancelled`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
@@ -604,6 +613,7 @@ export async function sendCheckinOverdueEmail(
   await resend.emails.send({
     from: "Mapping With Melanin Safety <safety@send.mappingwithmelanin.com>",
     to,
+    replyTo: "safety@mappingwithmelanin.com",
     subject: `⚠️ Safety Alert: ${memberName} hasn't checked in`,
     html: `
       <div style="max-width:600px;margin:0 auto;font-family:Georgia,serif;background:#FEFCF8;padding:0;border-radius:16px;overflow:hidden;border:1px solid rgba(43,21,7,0.1)">
@@ -655,6 +665,7 @@ export async function sendWeeklyDigest(
   await resend.emails.send({
     from: FROM,
     to,
+    replyTo: "hello@mappingwithmelanin.com",
     subject: `Your weekly minority-owned business digest — ${weekLabel}`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
@@ -708,6 +719,7 @@ export async function sendFoundingWelcomeEmail(
   await resend.emails.send({
     from: FROM,
     to,
+    replyTo: "founders@mappingwithmelanin.com",
     subject: "🎉 Welcome! You're Officially a Founding Business with Mapping with Melanin™",
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:0;border-radius:16px;overflow:hidden">
@@ -889,6 +901,7 @@ export async function sendFoundingAnniversaryEmail(
   await resend.emails.send({
     from: FROM,
     to,
+    replyTo: "founders@mappingwithmelanin.com",
     subject: `🎂 Happy ${ordinalSuffix(yearsActive)} Founding Anniversary, ${businessName}!`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:0;border-radius:16px;overflow:hidden">
@@ -1019,6 +1032,7 @@ export async function sendClaimReceived(to: string, ownerName: string, businessN
   await resend.emails.send({
     from: FROM,
     to,
+    replyTo: "business@mappingwithmelanin.com",
     subject: `We received your claim for ${businessName}`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
@@ -1078,6 +1092,7 @@ export async function sendClaimApproved(to: string, ownerName: string, businessN
   await resend.emails.send({
     from: FROM,
     to,
+    replyTo: "business@mappingwithmelanin.com",
     subject: `You're approved! Manage ${businessName} on Mapping With Melanin™`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
@@ -1357,6 +1372,7 @@ export async function sendBusinessSearchInvite(to: string, businessName: string,
   await resend.emails.send({
     from: FROM,
     to,
+    replyTo: "business@mappingwithmelanin.com",
     subject: `Someone in our community searched for ${businessName} — and we found you`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
@@ -1435,10 +1451,10 @@ export async function sendBusinessResponseInvitation(
 ) {
   if (!resend) { log("business response invitation"); return; }
   await resend.emails.send({
-    from: "Mapping With Melanin™ Community Trust & Safety <hello@send.mappingwithmelanin.com>",
+    from: "Mapping With Melanin™ Community Bridge Team <hello@send.mappingwithmelanin.com>",
     replyTo: "communitycare@mappingwithmelanin.com",
     to,
-    subject: `Community Care — Community Report Notification | ${businessName}`,
+    subject: `Community Bridge — Community Report Notification | ${businessName}`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
 
@@ -1446,7 +1462,7 @@ export async function sendBusinessResponseInvitation(
           <div style="background:#2B1507;border-radius:8px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🗺️</div>
           <div>
             <p style="color:#2B1507;font-size:15px;font-weight:800;margin:0;line-height:1.2">Mapping With Melanin™</p>
-            <p style="color:#6B5744;font-size:12px;margin:2px 0 0">Community Trust &amp; Safety Team</p>
+            <p style="color:#6B5744;font-size:12px;margin:2px 0 0">Community Bridge Team</p>
           </div>
         </div>
 
@@ -1495,16 +1511,16 @@ export async function sendBusinessResponseInvitation(
         <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 32px">Thank you for taking the time to review this notification.</p>
 
         <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">Sincerely,</p>
-        <p style="color:#2B1507;font-size:16px;font-weight:700;margin:0 0 8px">The Mapping with Melanin™ Community Trust &amp; Safety Team</p>
+        <p style="color:#2B1507;font-size:16px;font-weight:700;margin:0 0 8px">The Mapping with Melanin™ Community Bridge Team</p>
         <p style="color:#6B5744;font-size:13px;font-style:italic;margin:0 0 24px;line-height:1.6">
           "Building stronger communities through transparency, accountability, and meaningful dialogue."
         </p>
 
         <div style="border-top:1px solid #E8DDD0;padding-top:20px">
           <p style="color:#6B5744;font-size:12px;margin:0;line-height:1.6">
-            If you believe you received this notification in error, or have questions about this process, please contact our Community Care team at
+            If you believe you received this notification in error, or have questions about this process, please contact our Community Bridge Team at
             <a href="mailto:communitycare@mappingwithmelanin.com" style="color:#CA922B;text-decoration:none">communitycare@mappingwithmelanin.com</a>.
-            Replies to this email are routed to our Community Care team.
+            Replies to this email are routed to our Community Bridge Team.
           </p>
         </div>
 
