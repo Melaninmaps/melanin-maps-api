@@ -361,9 +361,21 @@ router.get("/admin/reviews", async (req: Request, res: Response) => {
   const { businessId } = req.query;
   try {
     const rows = businessId && typeof businessId === "string"
-      ? await db.select().from(reviewsTable).where(eq(reviewsTable.businessId, businessId)).orderBy(desc(reviewsTable.createdAt)).limit(200)
-      : await db.select().from(reviewsTable).orderBy(desc(reviewsTable.createdAt)).limit(200);
-    res.json({ reviews: rows });
+      ? await db
+          .select({ review: reviewsTable, businessName: businessesTable.name })
+          .from(reviewsTable)
+          .leftJoin(businessesTable, eq(reviewsTable.businessId, businessesTable.id))
+          .where(eq(reviewsTable.businessId, businessId))
+          .orderBy(desc(reviewsTable.createdAt))
+          .limit(200)
+      : await db
+          .select({ review: reviewsTable, businessName: businessesTable.name })
+          .from(reviewsTable)
+          .leftJoin(businessesTable, eq(reviewsTable.businessId, businessesTable.id))
+          .orderBy(desc(reviewsTable.createdAt))
+          .limit(200);
+    const reviews = rows.map((r) => ({ ...r.review, businessName: r.businessName ?? r.review.businessId }));
+    res.json({ reviews });
   } catch (err: any) {
     req.log.error({ err }, "Failed to fetch admin reviews");
     res.status(500).json({ error: "Failed to fetch reviews" });

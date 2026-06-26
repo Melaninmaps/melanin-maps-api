@@ -28,6 +28,8 @@ const ADMIN_TABS = [
   { id: "invites", label: "Invites", icon: "send" as const },
   { id: "reports", label: "Safety Reports", icon: "flag" as const },
   { id: "reviews", label: "Reviews", icon: "star" as const },
+  { id: "content-reports", label: "Content Reports", icon: "alert-circle" as const },
+  { id: "captions", label: "Captions", icon: "message-circle" as const },
   { id: "claims", label: "Claims", icon: "check-square" as const },
   { id: "submissions", label: "Submissions", icon: "inbox" as const },
   { id: "referrals", label: "Referrals", icon: "share-2" as const },
@@ -395,6 +397,7 @@ interface AdminUser {
   firstName: string | null;
   lastName: string | null;
   approved: boolean;
+  role: string | null;
   createdAt: string;
 }
 
@@ -445,13 +448,27 @@ function useAdminUsers() {
     }
   }, [load]);
 
-  return { users, loading, error, refetch: load, setApproved };
+  const deleteUser = React.useCallback(async (userId: string) => {
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      await fetch(`${getApiBase()}/api/admin/users/${userId}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+    } catch {
+      load();
+    }
+  }, [load]);
+
+  return { users, loading, error, refetch: load, setApproved, deleteUser };
 }
 
 function UsersTab() {
   const colors = useColors();
   const [search, setSearchText] = React.useState("");
-  const { users, loading, error, refetch, setApproved } = useAdminUsers();
+  const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(null);
+  const { users, loading, error, refetch, setApproved, deleteUser } = useAdminUsers();
 
   const filtered = users.filter((u) => {
     if (!search) return true;
@@ -483,6 +500,7 @@ function UsersTab() {
   }
 
   const AVATAR_COLORS = ["#3B1F0E", "#2D7A4F", "#C9922B", "#1D4ED8", "#7B2D8B", "#DC2626"];
+  const roleColor = (r: string | null) => r === "admin" ? "#DC2626" : r === "tester" ? "#1D4ED8" : colors.mutedForeground;
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
@@ -524,42 +542,50 @@ function UsersTab() {
       )}
 
       {!loading && !error && filtered.map((u, i) => (
-        <View key={u.id} style={[adminStyles.bizRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={[adminStyles.bizAvatar, { backgroundColor: AVATAR_COLORS[i % AVATAR_COLORS.length] }]}>
-            <Text style={adminStyles.bizAvatarText}>{initials(u)}</Text>
+        <View key={u.id} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 8 }]}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 }}>
+            <View style={[adminStyles.bizAvatar, { backgroundColor: AVATAR_COLORS[i % AVATAR_COLORS.length] }]}>
+              <Text style={adminStyles.bizAvatarText}>{initials(u)}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[adminStyles.bizName, { color: colors.foreground }]} numberOfLines={1}>
+                {displayName(u)}
+              </Text>
+              <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]} numberOfLines={1}>
+                {u.email ?? "No email"}
+              </Text>
+            </View>
+            <View style={{ alignItems: "flex-end", gap: 3 }}>
+              {u.role && u.role !== "user" && (
+                <View style={[adminStyles.statusBadge, { backgroundColor: roleColor(u.role) + "18" }]}>
+                  <Text style={[adminStyles.statusBadgeText, { color: roleColor(u.role) }]}>{u.role}</Text>
+                </View>
+              )}
+              <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>
+                {joinedLabel(u.createdAt)}
+              </Text>
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[adminStyles.bizName, { color: colors.foreground }]} numberOfLines={1}>
-              {displayName(u)}
-            </Text>
-            <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]} numberOfLines={1}>
-              {u.email ?? "No email"}
-            </Text>
-          </View>
-          <View style={{ alignItems: "flex-end", gap: 6 }}>
+          <View style={{ flexDirection: "row", gap: 8 }}>
             <TouchableOpacity
-              style={[
-                adminStyles.statusBadge,
-                {
-                  backgroundColor: u.approved ? "#2D7A4F18" : "#C9922B18",
-                  borderWidth: 1,
-                  borderColor: u.approved ? "#2D7A4F30" : "#C9922B30",
-                  paddingHorizontal: 10,
-                  paddingVertical: 5,
-                },
-              ]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setApproved(u.id, !u.approved);
-              }}
+              style={[adminStyles.smallBtn, {
+                flex: 1,
+                justifyContent: "center",
+                backgroundColor: u.approved ? "#C9922B18" : "#2D7A4F18",
+                borderColor: u.approved ? "#C9922B30" : "#2D7A4F30",
+              }]}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setApproved(u.id, !u.approved); }}
             >
-              <Text style={[adminStyles.statusBadgeText, { color: u.approved ? "#2D7A4F" : "#C9922B" }]}>
-                {u.approved ? "✓ Active" : "⊘ Suspended"}
+              <Text style={[adminStyles.smallBtnText, { color: u.approved ? "#C9922B" : "#2D7A4F", textAlign: "center" }]}>
+                {u.approved ? "Suspend" : "Activate"}
               </Text>
             </TouchableOpacity>
-            <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>
-              Joined {joinedLabel(u.createdAt)}
-            </Text>
+            <TouchableOpacity
+              style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setConfirmDeleteId(u.id); }}
+            >
+              <Feather name="trash-2" size={13} color="#DC2626" />
+            </TouchableOpacity>
           </View>
         </View>
       ))}
@@ -572,6 +598,31 @@ function UsersTab() {
           </Text>
         </View>
       )}
+
+      <Modal visible={confirmDeleteId !== null} transparent animationType="fade" onRequestClose={() => setConfirmDeleteId(null)}>
+        <View style={{ flex: 1, backgroundColor: "#00000060", justifyContent: "center", alignItems: "center", padding: 24 }}>
+          <View style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: "#DC262640", width: "100%" }]}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              <Feather name="alert-triangle" size={18} color="#DC2626" />
+              <Text style={[adminStyles.actionLabel, { color: "#DC2626" }]}>Delete User Account?</Text>
+            </View>
+            <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginBottom: 16 }]}>
+              This permanently deletes the account and all associated data. This action cannot be undone.
+            </Text>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <TouchableOpacity
+                style={[adminStyles.smallBtn, { flex: 1, justifyContent: "center", backgroundColor: "#DC2626", borderColor: "#DC2626" }]}
+                onPress={() => { if (confirmDeleteId) deleteUser(confirmDeleteId); setConfirmDeleteId(null); }}
+              >
+                <Text style={[adminStyles.smallBtnText, { color: "#FFF", textAlign: "center" }]}>Delete Account</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[adminStyles.smallBtn, { borderColor: colors.border }]} onPress={() => setConfirmDeleteId(null)}>
+                <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -649,40 +700,138 @@ function ReportsTab() {
   );
 }
 
+interface AdminReview {
+  id: string;
+  businessId: string;
+  businessName: string;
+  userId: string | null;
+  authorName: string | null;
+  rating: number | null;
+  text: string | null;
+  createdAt: string;
+}
+
+function useAdminReviews() {
+  const [reviews, setReviews] = React.useState<AdminReview[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/admin/reviews`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setReviews(data.reviews ?? []);
+    } catch (e: any) {
+      setError(e.message ?? "Failed to load reviews");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => { load(); }, [load]);
+
+  const deleteReview = React.useCallback(async (id: string) => {
+    setReviews((prev) => prev.filter((r) => r.id !== id));
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      await fetch(`${getApiBase()}/api/admin/reviews/${id}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+    } catch {
+      load();
+    }
+  }, [load]);
+
+  return { reviews, loading, error, refetch: load, deleteReview };
+}
+
 function ReviewsTab() {
   const colors = useColors();
-  const reviews = [
-    { author: "Simone W.", biz: "Sweet Auburn BBQ", text: "Absolutely amazing! The quality exceeded expectations.", rating: 5, status: "approved", time: "3 days ago" },
-    { author: "Marcus T.", biz: "Kingdom Cuts", text: "This review contains possible inappropriate language...", rating: 1, status: "flagged", time: "5h ago" },
-    { author: "Aisha B.", biz: "Essence Beauty", text: "Best salon ever! So proud to support.", rating: 5, status: "approved", time: "1 week ago" },
-    { author: "Unknown", biz: "New Listing Co.", text: "Perfect place totally legit buy now visit today!!!!", rating: 5, status: "flagged", time: "2h ago" },
-  ];
+  const { reviews, loading, error, refetch, deleteReview } = useAdminReviews();
+  const [confirmDelete, setConfirmDelete] = React.useState<string | null>(null);
+
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
-      {reviews.map((r, i) => (
-        <View key={i} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: r.status === "flagged" ? "#DC262640" : colors.border }]}>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
-            <View style={[adminStyles.statusBadge, { backgroundColor: r.status === "flagged" ? "#DC262618" : "#2D7A4F18" }]}>
-              <Text style={[adminStyles.statusBadgeText, { color: r.status === "flagged" ? "#DC2626" : "#2D7A4F" }]}>
-                {r.status}
-              </Text>
-            </View>
-            <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>
-              {"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}
+      {loading && (
+        <View style={{ alignItems: "center", paddingVertical: 40 }}>
+          <ActivityIndicator color={colors.primary} />
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginTop: 10 }]}>Loading reviews…</Text>
+        </View>
+      )}
+      {!loading && error && (
+        <View style={{ alignItems: "center", paddingVertical: 32 }}>
+          <Text style={[adminStyles.bizName, { color: "#DC2626", marginBottom: 8 }]}>Failed to load</Text>
+          <TouchableOpacity onPress={refetch}>
+            <Text style={[adminStyles.bizCity, { color: colors.primary }]}>Tap to retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {!loading && !error && reviews.length === 0 && (
+        <View style={{ alignItems: "center", paddingVertical: 40 }}>
+          <Feather name="star" size={32} color={colors.muted} />
+          <Text style={[adminStyles.bizName, { color: colors.mutedForeground, marginTop: 10 }]}>No reviews yet</Text>
+        </View>
+      )}
+      {reviews.map((r) => (
+        <View key={r.id} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+            <Text style={[adminStyles.bizName, { color: colors.foreground, flex: 1 }]} numberOfLines={1}>
+              {r.authorName ?? "Anonymous"}
+            </Text>
+            <Text style={[adminStyles.scoreText, { color: "#C9922B" }]}>
+              {"★".repeat(r.rating ?? 0)}{"☆".repeat(5 - (r.rating ?? 0))}
             </Text>
           </View>
-          <Text style={[adminStyles.bizName, { color: colors.foreground, marginBottom: 2 }]}>{r.author} → {r.biz}</Text>
-          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginBottom: 8 }]}>"{r.text}"</Text>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30" }]}>
-              <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>Approve</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}>
+          <Text style={[adminStyles.bizCity, { color: colors.primary, marginBottom: 4 }]} numberOfLines={1}>
+            {r.businessName}
+          </Text>
+          {r.text ? (
+            <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginBottom: 8, fontStyle: "italic" }]} numberOfLines={3}>
+              "{r.text}"
+            </Text>
+          ) : null}
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>
+              {new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            </Text>
+            <TouchableOpacity
+              style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}
+              onPress={() => setConfirmDelete(r.id)}
+            >
               <Text style={[adminStyles.smallBtnText, { color: "#DC2626" }]}>Remove</Text>
             </TouchableOpacity>
           </View>
         </View>
       ))}
+
+      <Modal visible={confirmDelete !== null} transparent animationType="fade" onRequestClose={() => setConfirmDelete(null)}>
+        <View style={{ flex: 1, backgroundColor: "#00000060", justifyContent: "center", alignItems: "center", padding: 24 }}>
+          <View style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: "#DC262640", width: "100%" }]}>
+            <Text style={[adminStyles.actionLabel, { color: colors.foreground, marginBottom: 8 }]}>Remove Review?</Text>
+            <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginBottom: 16 }]}>
+              This permanently deletes the review and cannot be undone.
+            </Text>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <TouchableOpacity
+                style={[adminStyles.smallBtn, { flex: 1, justifyContent: "center", backgroundColor: "#DC2626", borderColor: "#DC2626" }]}
+                onPress={() => { if (confirmDelete) deleteReview(confirmDelete); setConfirmDelete(null); }}
+              >
+                <Text style={[adminStyles.smallBtnText, { color: "#FFF", textAlign: "center" }]}>Delete</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[adminStyles.smallBtn, { borderColor: colors.border }]} onPress={() => setConfirmDelete(null)}>
+                <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -1786,11 +1935,280 @@ function MarketplaceTab() {
   );
 }
 
+interface AdminCaptionRow {
+  businessId: string;
+  businessName: string | null;
+  caption: string;
+  count: number;
+}
+
+function useAdminCaptions() {
+  const [captions, setCaptions] = React.useState<AdminCaptionRow[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/admin/captions`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json();
+      setCaptions(data.captions ?? []);
+    } catch {
+      setCaptions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => { load(); }, [load]);
+
+  const removeCaption = React.useCallback(async (businessId: string, caption: string) => {
+    setCaptions((prev) => prev.filter((c) => !(c.businessId === businessId && c.caption === caption)));
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      await fetch(`${getApiBase()}/api/admin/captions`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ businessId, caption }),
+      });
+    } catch {
+      load();
+    }
+  }, [load]);
+
+  return { captions, loading, refetch: load, removeCaption };
+}
+
+function CaptionsTab() {
+  const colors = useColors();
+  const { captions, loading, refetch, removeCaption } = useAdminCaptions();
+  const [confirmRemove, setConfirmRemove] = React.useState<{ businessId: string; caption: string } | null>(null);
+
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+      <SectionLabel title="Community Captions" />
+      <View style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 12 }]}>
+        <Text style={[adminStyles.activityText, { color: colors.mutedForeground }]}>
+          Community-submitted captions ranked by votes. Remove any that are inappropriate or off-brand.
+        </Text>
+      </View>
+
+      {loading && (
+        <View style={{ alignItems: "center", paddingVertical: 40 }}>
+          <ActivityIndicator color={colors.primary} />
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginTop: 10 }]}>Loading captions…</Text>
+        </View>
+      )}
+
+      {!loading && captions.length === 0 && (
+        <View style={{ alignItems: "center", paddingVertical: 40 }}>
+          <Feather name="message-circle" size={32} color={colors.muted} />
+          <Text style={[adminStyles.bizName, { color: colors.mutedForeground, marginTop: 10 }]}>No community captions yet</Text>
+        </View>
+      )}
+
+      {captions.map((c, i) => (
+        <View key={i} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={[adminStyles.bizName, { color: colors.foreground }]} numberOfLines={2}>"{c.caption}"</Text>
+              <Text style={[adminStyles.bizCity, { color: colors.primary, marginTop: 2 }]} numberOfLines={1}>
+                {c.businessName ?? c.businessId}
+              </Text>
+            </View>
+            <View style={[adminStyles.statusBadge, { backgroundColor: "#2D7A4F18", marginLeft: 8 }]}>
+              <Text style={[adminStyles.statusBadgeText, { color: "#2D7A4F" }]}>
+                {c.count} {c.count === 1 ? "vote" : "votes"}
+              </Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630", alignSelf: "flex-end", marginTop: 6 }]}
+            onPress={() => setConfirmRemove({ businessId: c.businessId, caption: c.caption })}
+          >
+            <Text style={[adminStyles.smallBtnText, { color: "#DC2626" }]}>Remove All Votes</Text>
+          </TouchableOpacity>
+        </View>
+      ))}
+
+      <Modal visible={confirmRemove !== null} transparent animationType="fade" onRequestClose={() => setConfirmRemove(null)}>
+        <View style={{ flex: 1, backgroundColor: "#00000060", justifyContent: "center", alignItems: "center", padding: 24 }}>
+          <View style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: "#DC262640", width: "100%" }]}>
+            <Text style={[adminStyles.actionLabel, { color: colors.foreground, marginBottom: 8 }]}>Remove Caption?</Text>
+            <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginBottom: 6 }]}>
+              This removes all community votes for:
+            </Text>
+            <Text style={[adminStyles.bizName, { color: colors.foreground, fontStyle: "italic", marginBottom: 16 }]}>
+              "{confirmRemove?.caption}"
+            </Text>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <TouchableOpacity
+                style={[adminStyles.smallBtn, { flex: 1, justifyContent: "center", backgroundColor: "#DC2626", borderColor: "#DC2626" }]}
+                onPress={() => {
+                  if (confirmRemove) removeCaption(confirmRemove.businessId, confirmRemove.caption);
+                  setConfirmRemove(null);
+                }}
+              >
+                <Text style={[adminStyles.smallBtnText, { color: "#FFF", textAlign: "center" }]}>Remove</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[adminStyles.smallBtn, { borderColor: colors.border }]} onPress={() => setConfirmRemove(null)}>
+                <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </ScrollView>
+  );
+}
+
+interface ContentReport {
+  id: string;
+  reporterUserId: string | null;
+  targetType: string;
+  targetId: string;
+  reason: string;
+  status: string;
+  details: string | null;
+  createdAt: string;
+}
+
+function useContentReports() {
+  const [reports, setReports] = React.useState<ContentReport[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/admin/content-reports`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json();
+      setReports(data.reports ?? []);
+    } catch {
+      setReports([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => { load(); }, [load]);
+
+  const updateStatus = React.useCallback(async (id: string, status: string) => {
+    setReports((prev) => prev.map((r) => r.id === id ? { ...r, status } : r));
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      await fetch(`${getApiBase()}/api/admin/content-reports/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ status }),
+      });
+    } catch {
+      load();
+    }
+  }, [load]);
+
+  return { reports, loading, refetch: load, updateStatus };
+}
+
+function ContentReportsTab() {
+  const colors = useColors();
+  const { reports, loading, updateStatus } = useContentReports();
+  const pending = reports.filter((r) => r.status === "pending");
+  const resolved = reports.filter((r) => r.status !== "pending");
+
+  const statusColor = (s: string) => {
+    if (s === "actioned") return "#DC2626";
+    if (s === "dismissed") return colors.mutedForeground;
+    if (s === "reviewed") return "#2D7A4F";
+    return "#C9922B";
+  };
+
+  function ReportCard({ r }: { r: ContentReport }) {
+    const isPending = r.status === "pending";
+    return (
+      <View style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: isPending ? "#C9922B40" : colors.border, marginBottom: 10 }]}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+          <View style={[adminStyles.statusBadge, { backgroundColor: statusColor(r.status) + "18" }]}>
+            <Text style={[adminStyles.statusBadgeText, { color: statusColor(r.status) }]}>{r.status}</Text>
+          </View>
+          <View style={[adminStyles.statusBadge, { backgroundColor: colors.secondary }]}>
+            <Text style={[adminStyles.statusBadgeText, { color: colors.mutedForeground }]}>{r.targetType}</Text>
+          </View>
+        </View>
+        <Text style={[adminStyles.bizName, { color: colors.foreground, marginBottom: 2 }]}>{r.reason}</Text>
+        {r.details ? (
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginBottom: 8 }]} numberOfLines={2}>{r.details}</Text>
+        ) : null}
+        <Text style={[adminStyles.scoreText, { color: colors.mutedForeground, marginBottom: isPending ? 10 : 0 }]}>
+          {new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+        </Text>
+        {isPending && (
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <TouchableOpacity
+              style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}
+              onPress={() => updateStatus(r.id, "actioned")}
+            >
+              <Text style={[adminStyles.smallBtnText, { color: "#DC2626" }]}>Action</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30" }]}
+              onPress={() => updateStatus(r.id, "dismissed")}
+            >
+              <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>Dismiss</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[adminStyles.smallBtn, { borderColor: colors.border }]}
+              onPress={() => updateStatus(r.id, "reviewed")}
+            >
+              <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Mark Reviewed</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+      {loading && (
+        <View style={{ alignItems: "center", paddingVertical: 40 }}>
+          <ActivityIndicator color={colors.primary} />
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginTop: 10 }]}>Loading reports…</Text>
+        </View>
+      )}
+      {!loading && reports.length === 0 && (
+        <View style={{ alignItems: "center", paddingVertical: 40 }}>
+          <Feather name="check-circle" size={32} color={colors.muted} />
+          <Text style={[adminStyles.bizName, { color: colors.mutedForeground, marginTop: 10 }]}>No content reports</Text>
+        </View>
+      )}
+      {pending.length > 0 && (
+        <>
+          <SectionLabel title={`Pending (${pending.length})`} />
+          {pending.map((r) => <ReportCard key={r.id} r={r} />)}
+        </>
+      )}
+      {resolved.length > 0 && (
+        <>
+          <SectionLabel title="Resolved" />
+          {resolved.map((r) => <ReportCard key={r.id} r={r} />)}
+        </>
+      )}
+    </ScrollView>
+  );
+}
+
 const TAB_COMPONENTS: Record<string, React.FC> = {
   overview: OverviewTab,
   invites: InvitesTab,
   reports: ReportsTab,
   reviews: ReviewsTab,
+  "content-reports": ContentReportsTab,
+  captions: CaptionsTab,
   claims: ClaimsTab,
   submissions: SubmissionsTab,
   referrals: ReferralsTab,
