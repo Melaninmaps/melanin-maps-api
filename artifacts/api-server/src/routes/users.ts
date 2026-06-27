@@ -108,7 +108,7 @@ router.patch("/users/me", async (req: Request, res: Response) => {
   }
 
   try {
-    const { firstName, lastName, profileImageUrl, industry, jobTitle, username } = req.body as Record<string, unknown>;
+    const { firstName, lastName, profileImageUrl, industry, jobTitle, username, bio } = req.body as Record<string, unknown>;
 
     const updates: Partial<typeof usersTable.$inferInsert> = {};
     if (typeof firstName === "string") updates.firstName = firstName.trim() || null;
@@ -116,6 +116,7 @@ router.patch("/users/me", async (req: Request, res: Response) => {
     if (typeof profileImageUrl === "string") updates.profileImageUrl = profileImageUrl.trim() || null;
     if (typeof industry === "string") updates.industry = industry.trim() || null;
     if (typeof jobTitle === "string") updates.jobTitle = jobTitle.trim() || null;
+    if (typeof bio === "string") updates.bio = bio.trim().slice(0, 300) || null;
     if (typeof username === "string") {
       const clean = username.trim().toLowerCase().replace(/^@/, "");
       if (clean === "") {
@@ -345,6 +346,28 @@ router.delete("/profile-tags/:id", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "DELETE /api/profile-tags/:id error");
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/users/me", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  try {
+    const [deleted] = await db
+      .delete(usersTable)
+      .where(eq(usersTable.id, req.user.id))
+      .returning({ id: usersTable.id });
+    if (!deleted) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    req.log.info({ deletedUserId: deleted.id }, "User self-deleted account");
+    res.json({ deleted: true });
+  } catch (err) {
+    req.log.error({ err }, "DELETE /api/users/me error");
+    res.status(500).json({ error: "Failed to delete account" });
   }
 });
 

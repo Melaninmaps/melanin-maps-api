@@ -98,7 +98,7 @@ export default function SettingsScreen() {
         { id: "videopolicy", icon: "video", label: "Video Content Policy", sub: "Who controls what · no pay-to-remove", route: "/community-standards" },
         { id: "safetyinfo", icon: "shield", label: "Our Safety Philosophy", route: "/safety-info" },
         { id: "licenses", icon: "code", label: "Open Source Licenses", route: null, sub: "React Native, Expo, and more" },
-        { id: "version", icon: "info", label: "Version", value: "1.0.0", route: null },
+        { id: "version", icon: "info", label: "Version", value: "1.0.1", route: null },
       ],
     },
   ];
@@ -133,16 +133,32 @@ export default function SettingsScreen() {
       return;
     }
     if (row.id === "delete") {
-      if (Platform.OS !== "web") {
-        Alert.alert(
-          "Delete Account",
-          "This will permanently delete all your data. This cannot be undone.",
-          [
-            { text: "Cancel", style: "cancel" },
-            { text: "Delete", style: "destructive", onPress: () => router.replace("/login") },
-          ]
-        );
-      }
+      Alert.alert(
+        "Delete Account",
+        "This will permanently delete your account and all your data. This cannot be undone.",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete Forever",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                const SecureStore = await import("expo-secure-store");
+                const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
+                const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+                await fetch(`${apiBase}/api/users/me`, {
+                  method: "DELETE",
+                  headers: token ? { Authorization: `Bearer ${token}` } : {},
+                });
+              } catch { /* best effort */ }
+              finally {
+                await logout();
+                router.replace("/onboarding");
+              }
+            },
+          },
+        ]
+      );
       return;
     }
     if (row.route) router.push(row.route as never);

@@ -158,6 +158,7 @@ export default function ProfileScreen() {
   const [showIndustryPicker, setShowIndustryPicker] = useState(false);
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
+  const [editBio, setEditBio] = useState("");
   const [editIndustry, setEditIndustry] = useState("");
   const [editJobTitle, setEditJobTitle] = useState("");
   const [editUsername, setEditUsername] = useState("");
@@ -190,6 +191,7 @@ export default function ProfileScreen() {
   const openEditModal = () => {
     setEditFirstName(user?.firstName ?? "");
     setEditLastName(user?.lastName ?? "");
+    setEditBio((user as any)?.bio ?? "");
     setEditIndustry(user?.industry ?? "");
     setEditJobTitle(user?.jobTitle ?? "");
     setEditUsername((user as any)?.username ?? "");
@@ -233,6 +235,7 @@ export default function ProfileScreen() {
         body: JSON.stringify({
           firstName: editFirstName,
           lastName: editLastName,
+          bio: editBio,
           industry: editIndustry,
           jobTitle: editJobTitle,
           username: editUsername || null,
@@ -422,6 +425,9 @@ export default function ProfileScreen() {
                 <Text style={[styles.industryLine, { color: colors.mutedForeground }]}>
                   {[user.jobTitle, user.industry].filter(Boolean).join(" · ")}
                 </Text>
+              ) : null}
+              {(user as any)?.bio ? (
+                <Text style={[styles.bio, { color: colors.mutedForeground }]} numberOfLines={2}>{(user as any).bio}</Text>
               ) : null}
               {user?.email ? (
                 <Text style={[styles.email, { color: colors.mutedForeground }]}>{user.email}</Text>
@@ -700,6 +706,18 @@ export default function ProfileScreen() {
                   placeholderTextColor={colors.mutedForeground}
                   autoCapitalize="words"
                 />
+
+                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Bio <Text style={{ color: colors.mutedForeground + "88" }}>(optional)</Text></Text>
+                <TextInput
+                  style={[styles.fieldInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground, height: 80, textAlignVertical: "top", paddingTop: 10 }]}
+                  value={editBio}
+                  onChangeText={(t) => setEditBio(t.slice(0, 300))}
+                  placeholder="Tell the community a little about yourself…"
+                  placeholderTextColor={colors.mutedForeground}
+                  multiline
+                  maxLength={300}
+                />
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, textAlign: "right", marginTop: -10, marginBottom: 6 }}>{editBio.length}/300</Text>
 
                 <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Job Title <Text style={{ color: colors.mutedForeground + "88" }}>(optional)</Text></Text>
                 <TextInput
@@ -1145,6 +1163,12 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 13,
     marginTop: 1,
+  },
+  bio: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 2,
   },
   email: {
     fontFamily: "Inter_400Regular",

@@ -9,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -23,19 +22,26 @@ import {
   authenticateWithBiometrics,
 } from "@/hooks/useBiometrics";
 
+const BENEFITS = [
+  { icon: "map-pin" as const, text: "Discover Black-owned businesses near you" },
+  { icon: "shield" as const, text: "Community-powered safety ratings" },
+  { icon: "users" as const, text: "Connect with a global community" },
+  { icon: "star" as const, text: "Save favorites, leave reviews, earn points" },
+];
+
 export default function LoginScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { login, refreshUser } = useAuth();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [biometricLabel, setBiometricLabel] = useState<string | null>(null);
   const [biometricLoading, setBiometricLoading] = useState(false);
+
+  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   useEffect(() => {
     if ((Platform.OS as string) === "web") return;
@@ -62,26 +68,20 @@ export default function LoginScreen() {
         setError(`${biometricLabel} failed. Please sign in with your account.`);
       }
     } catch {
-      setError("Biometric authentication failed. Please sign in below.");
+      setError("Biometric authentication failed. Please try again.");
     } finally {
       setBiometricLoading(false);
     }
   };
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
-  const valid = email.includes("@") && password.length >= 6;
-
-  const handleLogin = async () => {
-    if (!valid) return;
+  const handleSignIn = async () => {
     setError("");
     setLoading(true);
-    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if ((Platform.OS as string) !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       await login();
-      router.replace("/(tabs)");
     } catch {
-      setError("Invalid email or password. Please try again.");
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -97,19 +97,26 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/onboarding")}>
+        <TouchableOpacity
+          style={styles.back}
+          onPress={() => router.canGoBack() ? router.back() : router.replace("/onboarding")}
+        >
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
 
         <View style={styles.header}>
-          <Image source={require("@/assets/images/logo.png")} style={styles.logo} contentFit="contain" />
+          <Image
+            source={require("@/assets/images/logo.png")}
+            style={styles.logo}
+            contentFit="contain"
+          />
           <Text style={[styles.title, { color: colors.foreground }]}>Welcome back</Text>
           <Text style={[styles.sub, { color: colors.mutedForeground }]}>
             Sign in to your Mapping With Melanin account
           </Text>
         </View>
 
-        {biometricLabel && (
+        {biometricLabel ? (
           <TouchableOpacity
             style={[styles.biometricBtn, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "40" }]}
             onPress={handleBiometricLogin}
@@ -125,96 +132,46 @@ export default function LoginScreen() {
               {biometricLoading ? "Verifying…" : `Sign in with ${biometricLabel}`}
             </Text>
           </TouchableOpacity>
+        ) : null}
+
+        <View style={[styles.benefitsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          {BENEFITS.map((b, i) => (
+            <View key={i} style={styles.benefitRow}>
+              <View style={[styles.benefitIcon, { backgroundColor: "#CA922B18" }]}>
+                <Feather name={b.icon} size={15} color="#CA922B" />
+              </View>
+              <Text style={[styles.benefitText, { color: colors.mutedForeground }]}>{b.text}</Text>
+            </View>
+          ))}
+        </View>
+
+        {!!error && (
+          <View style={[styles.errorBox, { backgroundColor: "#FEE2E2" }]}>
+            <Feather name="alert-circle" size={15} color="#DC2626" />
+            <Text style={styles.errorTxt}>{error}</Text>
+          </View>
         )}
 
-        <View style={styles.socialRow}>
-          <TouchableOpacity
-            style={[styles.socialBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => login()}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.socialIcon}>🌐</Text>
-            <Text style={[styles.socialLabel, { color: colors.foreground }]}>Google</Text>
-          </TouchableOpacity>
-          {Platform.OS === "ios" && (
-            <TouchableOpacity
-              style={[styles.socialBtn, { backgroundColor: colors.foreground, borderColor: colors.foreground }]}
-              onPress={() => login()}
-              activeOpacity={0.8}
-            >
-              <Feather name="smartphone" size={18} color="#FFF" />
-              <Text style={[styles.socialLabel, { color: "#FFF" }]}>Apple</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        <TouchableOpacity
+          style={[styles.signInBtn, { backgroundColor: colors.primary, opacity: loading ? 0.7 : 1 }]}
+          onPress={handleSignIn}
+          disabled={loading}
+          activeOpacity={0.85}
+        >
+          <Feather name="log-in" size={18} color="#FFFFFF" />
+          <Text style={styles.signInTxt}>
+            {loading ? "Opening sign in…" : "Sign In"}
+          </Text>
+        </TouchableOpacity>
 
-        <View style={styles.divRow}>
-          <View style={[styles.divLine, { backgroundColor: colors.border }]} />
-          <Text style={[styles.divTxt, { color: colors.mutedForeground }]}>or continue with email</Text>
-          <View style={[styles.divLine, { backgroundColor: colors.border }]} />
-        </View>
-
-        <View style={styles.form}>
-          <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.foreground }]}>Email</Text>
-            <View style={[styles.inputRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Feather name="mail" size={18} color={colors.mutedForeground} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, { color: colors.foreground }]}
-                placeholder="you@example.com"
-                placeholderTextColor={colors.mutedForeground}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-          </View>
-
-          <View style={styles.field}>
-            <View style={styles.labelRow}>
-              <Text style={[styles.label, { color: colors.foreground }]}>Password</Text>
-            </View>
-            <View style={[styles.inputRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Feather name="lock" size={18} color={colors.mutedForeground} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, { color: colors.foreground }]}
-                placeholder="••••••••"
-                placeholderTextColor={colors.mutedForeground}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPass}
-              />
-              <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eye}>
-                <Feather name={showPass ? "eye-off" : "eye"} size={18} color={colors.mutedForeground} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {!!error && (
-            <View style={[styles.errorBox, { backgroundColor: "#FEE2E2" }]}>
-              <Feather name="alert-circle" size={15} color={colors.destructive} />
-              <Text style={[styles.errorTxt, { color: colors.destructive }]}>{error}</Text>
-            </View>
-          )}
-
-          <TouchableOpacity
-            style={[styles.loginBtn, { backgroundColor: valid ? colors.primary : colors.muted }]}
-            onPress={handleLogin}
-            disabled={!valid || loading}
-            activeOpacity={0.85}
-          >
-            <Text style={[styles.loginTxt, { color: valid ? colors.primaryForeground : colors.mutedForeground }]}>
-              {loading ? "Signing in…" : "Sign In"}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={[styles.note, { color: colors.mutedForeground }]}>
+          By signing in you agree to our Terms of Service and Privacy Policy.
+        </Text>
 
         <View style={styles.signupRow}>
-          <Text style={[styles.signupTxt, { color: colors.mutedForeground }]}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => router.replace("/waitlist")}>
-            <Text style={[styles.signupLink, { color: colors.primary }]}>Join waitlist</Text>
+          <Text style={[styles.signupTxt, { color: colors.mutedForeground }]}>New here? </Text>
+          <TouchableOpacity onPress={() => router.replace("/signup")}>
+            <Text style={[styles.signupLink, { color: colors.primary }]}>Create your free account</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -226,39 +183,37 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { paddingHorizontal: 24, flexGrow: 1 },
   back: { marginBottom: 8, width: 40, height: 40, alignItems: "flex-start", justifyContent: "center" },
-  header: { alignItems: "center", marginBottom: 32 },
+  header: { alignItems: "center", marginBottom: 28 },
   logo: { width: 80, height: 80, marginBottom: 20 },
   title: { fontSize: 28, fontFamily: "Inter_700Bold", marginBottom: 8 },
   sub: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 22 },
-  biometricBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 16, borderRadius: 14, borderWidth: 1, marginBottom: 16 },
+  biometricBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 10, paddingVertical: 16, borderRadius: 14, borderWidth: 1, marginBottom: 16,
+  },
   biometricTxt: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  socialRow: { flexDirection: "row", gap: 12, marginBottom: 24 },
-  socialBtn: {
-    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 8, paddingVertical: 14, borderRadius: 12, borderWidth: 1,
+  benefitsCard: {
+    borderRadius: 16, borderWidth: 1, padding: 18, gap: 12, marginBottom: 24,
   },
-  socialIcon: { fontSize: 18 },
-  socialLabel: { fontSize: 15, fontFamily: "Inter_500Medium" },
-  divRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 24 },
-  divLine: { flex: 1, height: 1 },
-  divTxt: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  form: { gap: 16, marginBottom: 28 },
-  field: { gap: 8 },
-  label: { fontSize: 14, fontFamily: "Inter_500Medium" },
-  labelRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  forgotLink: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  inputRow: {
-    flexDirection: "row", alignItems: "center", borderWidth: 1,
-    borderRadius: 12, paddingHorizontal: 14, height: 52,
+  benefitRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  benefitIcon: {
+    width: 32, height: 32, borderRadius: 8, alignItems: "center", justifyContent: "center",
   },
-  inputIcon: { marginRight: 10 },
-  input: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular" },
-  eye: { padding: 4 },
-  errorBox: { flexDirection: "row", alignItems: "center", gap: 8, padding: 12, borderRadius: 10 },
-  errorTxt: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
-  loginBtn: { alignItems: "center", justifyContent: "center", paddingVertical: 17, borderRadius: 14, marginTop: 4 },
-  loginTxt: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
+  benefitText: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1, lineHeight: 18 },
+  errorBox: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    padding: 12, borderRadius: 10, marginBottom: 16,
+  },
+  errorTxt: { color: "#DC2626", fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
+  signInBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 10, paddingVertical: 18, borderRadius: 14, marginBottom: 16,
+    shadowColor: "#CA922B", shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 10, elevation: 4,
+  },
+  signInTxt: { color: "#FFFFFF", fontSize: 16, fontFamily: "Inter_700Bold" },
+  note: { fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 18, marginBottom: 20 },
   signupRow: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
   signupTxt: { fontSize: 14, fontFamily: "Inter_400Regular" },
-  signupLink: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  signupLink: { fontSize: 14, fontFamily: "Inter_700Bold" },
 });
