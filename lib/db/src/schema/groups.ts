@@ -13,6 +13,7 @@ export const groups = pgTable("groups", {
   state: text("state"),
   imageUrl: text("image_url"),
   isAgeRestricted: boolean("is_age_restricted").notNull().default(false),
+  audiencePreferences: jsonb("audience_preferences").$type<string[]>().default([]),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

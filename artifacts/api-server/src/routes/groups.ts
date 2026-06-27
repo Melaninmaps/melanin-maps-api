@@ -25,18 +25,34 @@ router.get("/groups", async (req: Request, res: Response) => {
       .orderBy(desc(groups.memberCount), desc(groups.createdAt));
 
     let memberGroupIds = new Set<number>();
+    let userAudiencePrefs: string[] = [];
     if (req.isAuthenticated()) {
       const memberships = await db
         .select({ groupId: groupMembers.groupId })
         .from(groupMembers)
         .where(eq(groupMembers.userId, req.user.id));
       memberGroupIds = new Set(memberships.map((m) => m.groupId));
+
+      const [prefs] = await db
+        .select({ preferredOwnershipTypes: userPreferencesTable.preferredOwnershipTypes })
+        .from(userPreferencesTable)
+        .where(eq(userPreferencesTable.userId, req.user.id))
+        .limit(1);
+      userAudiencePrefs = (prefs?.preferredOwnershipTypes as string[] | null) ?? [];
     }
 
-    const result = rows.map((g) => ({
-      ...g,
-      isMember: memberGroupIds.has(g.id),
-    }));
+    const result = rows
+      .filter((g) => {
+        // If the group has audience requirements, only show to matching users (or unauthenticated users see all)
+        const aud = (g.audiencePreferences as string[] | null) ?? [];
+        if (aud.length === 0) return true; // no restriction
+        if (userAudiencePrefs.length === 0) return true; // user hasn't set preference — still show all
+        return aud.some((a) => userAudiencePrefs.includes(a));
+      })
+      .map((g) => ({
+        ...g,
+        isMember: memberGroupIds.has(g.id),
+      }));
 
     res.json({ groups: result });
   } catch (err) {
@@ -149,7 +165,7 @@ router.post("/groups", async (req: Request, res: Response) => {
       }
     }
 
-    const { name, description, category, city, state, isPrivate, maxMembers } = req.body as {
+    const { name, description, category, city, state, isPrivate, maxMembers, audiencePreferences } = req.body as {
       name?: string;
       description?: string;
       category?: string;
@@ -157,11 +173,13 @@ router.post("/groups", async (req: Request, res: Response) => {
       state?: string;
       isPrivate?: boolean;
       maxMembers?: number;
+      audiencePreferences?: string[];
     };
 
     if (!name?.trim()) { res.status(400).json({ error: "name is required" }); return; }
 
     const cap = Math.min(Math.max(Number(maxMembers) || 8, 2), 8);
+    const audience = Array.isArray(audiencePreferences) ? audiencePreferences.filter(Boolean).slice(0, 6) : [];
 
     const [group] = await db
       .insert(groups)
@@ -175,6 +193,7 @@ router.post("/groups", async (req: Request, res: Response) => {
         createdBy: userId,
         memberCount: 1,
         maxMembers: cap,
+        audiencePreferences: audience,
       })
       .returning();
 
@@ -201,12 +220,13 @@ router.patch("/groups/:id/settings", async (req: Request, res: Response) => {
       .limit(1);
     if (!admin) { res.status(403).json({ error: "Only group admins can update settings" }); return; }
 
-    const { isAgeRestricted, isPrivate, name, description, maxMembers } = req.body as {
+    const { isAgeRestricted, isPrivate, name, description, maxMembers, audiencePreferences } = req.body as {
       isAgeRestricted?: boolean;
       isPrivate?: boolean;
       name?: string;
       description?: string;
       maxMembers?: number;
+      audiencePreferences?: string[];
     };
 
     const updates: Record<string, unknown> = { updatedAt: new Date() };
@@ -215,6 +235,7 @@ router.patch("/groups/:id/settings", async (req: Request, res: Response) => {
     if (name?.trim()) updates.name = name.trim();
     if (description !== undefined) updates.description = description.trim() || null;
     if (maxMembers !== undefined) updates.maxMembers = Math.min(Math.max(Number(maxMembers) || 8, 2), 8);
+    if (Array.isArray(audiencePreferences)) updates.audiencePreferences = audiencePreferences.filter(Boolean).slice(0, 6);
 
     const [updated] = await db.update(groups).set(updates).where(eq(groups.id, groupId)).returning();
     res.json({ group: updated });
@@ -665,6 +686,75 @@ router.post("/groups/:id/suggestions/:suggId/upvote", async (req: Request, res: 
     res.json({ suggestion: updated });
   } catch (err) {
     req.log.error({ err }, "POST /api/groups/:id/suggestions/:suggId/upvote error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ── Member role management (admin-only) ─────────────────────────────── */
+router.patch("/groups/:id/members/:userId/role", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const groupId = parseInt(String(req.params.id), 10);
+    const targetUserId = String(req.params.userId);
+    if (isNaN(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
+    const actorId = req.user!.id;
+
+    const [actor] = await db
+      .select({ role: groupMembers.role })
+      .from(groupMembers)
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, actorId)))
+      .limit(1);
+    if (!actor || actor.role !== "admin") { res.status(403).json({ error: "Only group admins can change member roles" }); return; }
+    if (targetUserId === actorId) { res.status(400).json({ error: "Cannot change your own role" }); return; }
+
+    const { role } = req.body as { role?: string };
+    const validRoles = ["member", "admin"];
+    if (!role || !validRoles.includes(role)) { res.status(400).json({ error: "role must be 'member' or 'admin'" }); return; }
+
+    const [updated] = await db
+      .update(groupMembers)
+      .set({ role })
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, targetUserId)))
+      .returning();
+
+    if (!updated) { res.status(404).json({ error: "Member not found in this group" }); return; }
+    res.json({ member: updated });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /api/groups/:id/members/:userId/role error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/groups/:id/members/:userId", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const groupId = parseInt(String(req.params.id), 10);
+    const targetUserId = String(req.params.userId);
+    if (isNaN(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
+    const actorId = req.user!.id;
+
+    const [actor] = await db
+      .select({ role: groupMembers.role })
+      .from(groupMembers)
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, actorId)))
+      .limit(1);
+    if (!actor || actor.role !== "admin") { res.status(403).json({ error: "Only group admins can remove members" }); return; }
+    if (targetUserId === actorId) { res.status(400).json({ error: "Cannot remove yourself — use Leave instead" }); return; }
+
+    const deleted = await db
+      .delete(groupMembers)
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, targetUserId)))
+      .returning();
+
+    if (deleted.length === 0) { res.status(404).json({ error: "Member not found" }); return; }
+
+    await db.update(groups)
+      .set({ memberCount: sql`greatest(${groups.memberCount} - 1, 0)`, updatedAt: new Date() })
+      .where(eq(groups.id, groupId));
+
+    res.json({ removed: true });
+  } catch (err) {
+    req.log.error({ err }, "DELETE /api/groups/:id/members/:userId error");
     res.status(500).json({ error: "Internal server error" });
   }
 });

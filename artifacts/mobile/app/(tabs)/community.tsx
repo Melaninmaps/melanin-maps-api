@@ -12,6 +12,7 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -203,6 +204,8 @@ export default function CommunityScreen() {
   const [groupCreateDesc, setGroupCreateDesc] = useState("");
   const [groupCreateCategory, setGroupCreateCategory] = useState("social");
   const [groupCreateCity, setGroupCreateCity] = useState("");
+  const [groupCreateAudience, setGroupCreateAudience] = useState<string[]>([]);
+  const [groupCreatePrivate, setGroupCreatePrivate] = useState(false);
   const [groupCreateSubmitting, setGroupCreateSubmitting] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
@@ -276,6 +279,8 @@ export default function CommunityScreen() {
           description: groupCreateDesc.trim() || undefined,
           category: groupCreateCategory,
           city: groupCreateCity.trim() || undefined,
+          isPrivate: groupCreatePrivate,
+          audiencePreferences: groupCreateAudience.length > 0 ? groupCreateAudience : undefined,
         }),
       });
       if (res.ok) {
@@ -284,6 +289,8 @@ export default function CommunityScreen() {
         setGroupCreateDesc("");
         setGroupCreateCategory("social");
         setGroupCreateCity("");
+        setGroupCreateAudience([]);
+        setGroupCreatePrivate(false);
         void refetchGroups();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -1024,6 +1031,60 @@ export default function CommunityScreen() {
                     </Text>
                   </TouchableOpacity>
                 ))}
+              </View>
+
+              {/* Privacy toggle */}
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 14, color: colors.foreground }}>🔒 Private Group</Text>
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, marginTop: 2 }}>Members join by invite only</Text>
+                </View>
+                <Switch
+                  value={groupCreatePrivate}
+                  onValueChange={setGroupCreatePrivate}
+                  trackColor={{ false: colors.border, true: colors.primary }}
+                  thumbColor="#FFF"
+                />
+              </View>
+
+              {/* Audience preference */}
+              <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+                <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 14, color: colors.foreground, marginBottom: 6 }}>Community audience (optional)</Text>
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, marginBottom: 10 }}>
+                  Select which communities this group is primarily for. Only users with a matching preference will see it first — all minorities are welcome.
+                </Text>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                  {[
+                    { key: "Black / African American", emoji: "🤎" },
+                    { key: "Hispanic / Latino", emoji: "🧡" },
+                    { key: "Native American / Indigenous", emoji: "🌿" },
+                    { key: "Asian / Pacific Islander", emoji: "🌸" },
+                    { key: "Middle Eastern / North African", emoji: "🌙" },
+                    { key: "Multiracial", emoji: "🌈" },
+                  ].map((ci) => {
+                    const isSelected = groupCreateAudience.includes(ci.key);
+                    return (
+                      <TouchableOpacity
+                        key={ci.key}
+                        style={{
+                          flexDirection: "row", alignItems: "center", gap: 5,
+                          paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5,
+                          backgroundColor: isSelected ? colors.primary + "15" : colors.card,
+                          borderColor: isSelected ? colors.primary : colors.border,
+                        }}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setGroupCreateAudience((prev) => isSelected ? prev.filter((x) => x !== ci.key) : [...prev, ci.key]);
+                        }}
+                      >
+                        <Text style={{ fontSize: 14 }}>{ci.emoji}</Text>
+                        <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: isSelected ? colors.primary : colors.mutedForeground }}>
+                          {ci.key.split(" / ")[0]}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
               </View>
             </ScrollView>
           </View>

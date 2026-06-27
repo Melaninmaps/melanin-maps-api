@@ -22,10 +22,12 @@ export interface Group {
   maxMembers: number;
   isPrivate: boolean;
   isAgeRestricted: boolean;
+  audiencePreferences: string[] | null;
   city: string | null;
   state: string | null;
   createdAt: string;
   isMember: boolean;
+  createdBy: string | null;
 }
 
 export function useGroups() {

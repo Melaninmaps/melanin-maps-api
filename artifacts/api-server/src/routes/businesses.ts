@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { db, pool, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable } from "@workspace/db";
+import { db, pool, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable } from "@workspace/db";
 import { eq, and, or, ilike, desc, sql, gt, count } from "drizzle-orm";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
@@ -40,7 +40,7 @@ function isAdmin(req: Request): boolean {
 
 router.get("/businesses", async (req: Request, res: Response) => {
   try {
-    const { category, search, state, handle } = req.query;
+    const { category, search, state, handle, culturalPreference } = req.query;
 
     const conditions = [];
 
@@ -100,15 +100,38 @@ router.get("/businesses", async (req: Request, res: Response) => {
       );
     const promotedIdToType = new Map(activePromos.map((p) => [p.businessId, p.type]));
 
+    // Load caller's cultural preference to boost matching businesses
+    let callerPrefs: string[] = [];
+    if (culturalPreference && typeof culturalPreference === "string") {
+      callerPrefs = [culturalPreference];
+    } else if (req.user?.id) {
+      try {
+        const [prefs] = await db
+          .select({ preferredOwnershipTypes: userPreferencesTable.preferredOwnershipTypes })
+          .from(userPreferencesTable)
+          .where(eq(userPreferencesTable.userId, req.user.id))
+          .limit(1);
+        callerPrefs = (prefs?.preferredOwnershipTypes as string[] | null) ?? [];
+      } catch { /* silent — non-fatal */ }
+    }
+
+    const matchesPref = (b: { ownershipDesignations: string[] }) =>
+      callerPrefs.length > 0 &&
+      callerPrefs.some((p) => (b.ownershipDesignations ?? []).includes(p));
+
     const annotated = businesses
       .map((b) => ({
         ...b,
         featured: b.featured || promotedIdToType.has(b.id),
         promotionType: promotedIdToType.get(b.id) ?? null,
+        culturalMatch: matchesPref(b as any),
       }))
       .sort((a, b) => {
         if (a.featured && !b.featured) return -1;
         if (!a.featured && b.featured) return 1;
+        // Within same tier, prefer cultural match
+        if (a.culturalMatch && !b.culturalMatch) return -1;
+        if (!a.culturalMatch && b.culturalMatch) return 1;
         if (b.foundingBusiness !== a.foundingBusiness) return b.foundingBusiness ? 1 : -1;
         return (b.confidenceScore ?? 0) - (a.confidenceScore ?? 0);
       });
