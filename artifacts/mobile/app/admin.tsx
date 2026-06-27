@@ -38,6 +38,7 @@ const ADMIN_TABS = [
   { id: "surveys", label: "Surveys", icon: "clipboard" as const },
   { id: "users", label: "Users", icon: "users" as const },
   { id: "marketplace", label: "Marketplace", icon: "percent" as const },
+  { id: "topics", label: "Topics Library", icon: "book-open" as const },
   { id: "settings", label: "Settings", icon: "settings" as const },
 ];
 
@@ -2226,6 +2227,321 @@ function ContentReportsTab() {
   );
 }
 
+function TopicsTab() {
+  const colors = useColors();
+  const [topics, setTopics] = useState<any[]>([]);
+  const [issues, setIssues] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [seedingIssues, setSeedingIssues] = useState(false);
+  const [topicSearch, setTopicSearch] = useState("");
+  const [issueSearch, setIssueSearch] = useState("");
+  const [activeSection, setActiveSection] = useState<"topics" | "issues">("topics");
+  const [seedResult, setSeedResult] = useState<string>("");
+  const [showAddTopic, setShowAddTopic] = useState(false);
+  const [showAddIssue, setShowAddIssue] = useState(false);
+  const [newTopicName, setNewTopicName] = useState("");
+  const [newTopicCategory, setNewTopicCategory] = useState("community_culture");
+  const [newTopicDesc, setNewTopicDesc] = useState("");
+  const [newIssueName, setNewIssueName] = useState("");
+  const [newIssueDesc, setNewIssueDesc] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function loadTopics() {
+    setLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const [tr, ir] = await Promise.all([
+        fetch(`${getApiBase()}/api/admin/topics`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${getApiBase()}/api/admin/topics/issues`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      if (tr.ok) { const d = await tr.json(); setTopics(d.topics ?? []); }
+      if (ir.ok) { const d = await ir.json(); setIssues(d.issues ?? []); }
+    } catch { /* silent */ } finally { setLoading(false); }
+  }
+
+  useEffect(() => { loadTopics(); }, []);
+
+  async function seedTopics() {
+    setSeeding(true);
+    setSeedResult("");
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/admin/topics/seed`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const d = await res.json();
+        setSeedResult(`✓ ${d.inserted} topics added, ${d.skipped} already existed.`);
+        await loadTopics();
+      } else {
+        setSeedResult("Seed failed.");
+      }
+    } catch { setSeedResult("Network error."); } finally { setSeeding(false); }
+  }
+
+  async function seedIssues() {
+    setSeedingIssues(true);
+    setSeedResult("");
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/admin/topics/issues/seed`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const d = await res.json();
+        setSeedResult(`✓ ${d.inserted} issues added, ${d.skipped} already existed.`);
+        await loadTopics();
+      } else {
+        setSeedResult("Seed failed.");
+      }
+    } catch { setSeedResult("Network error."); } finally { setSeedingIssues(false); }
+  }
+
+  async function toggleTopicEnabled(id: string, enabled: boolean) {
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      await fetch(`${getApiBase()}/api/admin/topics/${id}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled }),
+      });
+      setTopics((prev) => prev.map((t) => t.id === id ? { ...t, enabled } : t));
+    } catch { /* silent */ }
+  }
+
+  async function toggleIssueActive(id: string, isActive: boolean) {
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      await fetch(`${getApiBase()}/api/admin/topics/issues/${id}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive }),
+      });
+      setIssues((prev) => prev.map((i) => i.id === id ? { ...i, isActive } : i));
+    } catch { /* silent */ }
+  }
+
+  async function createTopic() {
+    if (!newTopicName.trim()) return;
+    setSaving(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/admin/topics`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ topicName: newTopicName, category: newTopicCategory, description: newTopicDesc }),
+      });
+      if (res.ok) {
+        setNewTopicName(""); setNewTopicDesc(""); setShowAddTopic(false);
+        await loadTopics();
+      }
+    } catch { /* silent */ } finally { setSaving(false); }
+  }
+
+  async function createIssue() {
+    if (!newIssueName.trim()) return;
+    setSaving(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/admin/topics/issues`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newIssueName, description: newIssueDesc }),
+      });
+      if (res.ok) {
+        setNewIssueName(""); setNewIssueDesc(""); setShowAddIssue(false);
+        await loadTopics();
+      }
+    } catch { /* silent */ } finally { setSaving(false); }
+  }
+
+  const filteredTopics = topics.filter((t) => !topicSearch || t.topicName.toLowerCase().includes(topicSearch.toLowerCase()) || t.category.toLowerCase().includes(topicSearch.toLowerCase()));
+  const filteredIssues = issues.filter((i) => !issueSearch || i.name.toLowerCase().includes(issueSearch.toLowerCase()));
+
+  const PRIORITY_COLORS: Record<string, string> = { breaking: "#DC2626", standard: "#2563EB", digest: "#16A34A", immediate: "#D97706" };
+
+  return (
+    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+      {/* Header */}
+      <View style={{ backgroundColor: colors.card, borderBottomWidth: 1, borderColor: colors.border, padding: 16 }}>
+        <Text style={{ fontSize: 17, fontWeight: "800", color: colors.foreground }}>Topic Library Console</Text>
+        <Text style={[{ fontSize: 12, color: colors.mutedForeground, marginTop: 2 }]}>
+          {topics.length} topics · {topics.filter((t) => t.enabled).length} enabled · {issues.length} issues
+        </Text>
+      </View>
+
+      {/* Section switcher */}
+      <View style={{ flexDirection: "row", padding: 12, gap: 8 }}>
+        <TouchableOpacity
+          style={[{ flex: 1, padding: 10, borderRadius: 10, borderWidth: 1, alignItems: "center" }, { borderColor: activeSection === "topics" ? colors.primary : colors.border, backgroundColor: activeSection === "topics" ? colors.primary + "15" : colors.card }]}
+          onPress={() => setActiveSection("topics")}
+        >
+          <Text style={{ fontSize: 13, fontWeight: "700", color: activeSection === "topics" ? colors.primary : colors.mutedForeground }}>Topics ({topics.length})</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[{ flex: 1, padding: 10, borderRadius: 10, borderWidth: 1, alignItems: "center" }, { borderColor: activeSection === "issues" ? "#3B82F6" : colors.border, backgroundColor: activeSection === "issues" ? "#3B82F615" : colors.card }]}
+          onPress={() => setActiveSection("issues")}
+        >
+          <Text style={{ fontSize: 13, fontWeight: "700", color: activeSection === "issues" ? "#3B82F6" : colors.mutedForeground }}>Issues ({issues.length})</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Seed banner */}
+      {seedResult.length > 0 && (
+        <View style={{ marginHorizontal: 12, marginBottom: 8, padding: 10, borderRadius: 10, backgroundColor: "#16A34A15", borderWidth: 1, borderColor: "#16A34A30" }}>
+          <Text style={{ fontSize: 13, color: "#16A34A", fontWeight: "700" }}>{seedResult}</Text>
+        </View>
+      )}
+
+      {activeSection === "topics" ? (
+        <>
+          {/* Topic Actions */}
+          <View style={{ flexDirection: "row", gap: 8, paddingHorizontal: 12, marginBottom: 8 }}>
+            <TouchableOpacity
+              style={{ flex: 1, padding: 10, borderRadius: 10, backgroundColor: "#CA922B15", borderWidth: 1, borderColor: "#CA922B30", alignItems: "center" }}
+              onPress={seedTopics}
+              disabled={seeding}
+            >
+              {seeding ? <ActivityIndicator size="small" color="#CA922B" /> : <Text style={{ fontSize: 12, fontWeight: "700", color: "#CA922B" }}>⚡ Seed All Topics</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ flex: 1, padding: 10, borderRadius: 10, backgroundColor: colors.primary + "15", borderWidth: 1, borderColor: colors.primary + "30", alignItems: "center" }}
+              onPress={() => setShowAddTopic(true)}
+            >
+              <Text style={{ fontSize: 12, fontWeight: "700", color: colors.primary }}>+ Add Topic</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Search */}
+          <View style={[{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, borderWidth: 1, margin: 12, marginTop: 0 }, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Feather name="search" size={14} color={colors.mutedForeground} />
+            <TextInput style={{ flex: 1, fontSize: 13, color: colors.foreground }} placeholder="Search topics…" placeholderTextColor={colors.mutedForeground} value={topicSearch} onChangeText={setTopicSearch} />
+          </View>
+
+          {loading ? (
+            <View style={{ padding: 40, alignItems: "center" }}><ActivityIndicator size="large" color={colors.primary} /></View>
+          ) : (
+            filteredTopics.map((t) => (
+              <View key={t.id} style={[{ flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderBottomWidth: 1 }, { borderBottomColor: colors.border }]}>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                    <Text style={{ fontSize: 13, fontWeight: "700", color: colors.foreground }}>{t.topicName}</Text>
+                    <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5, backgroundColor: (PRIORITY_COLORS[t.notificationPriority] ?? "#6B7280") + "20" }}>
+                      <Text style={{ fontSize: 10, fontWeight: "700", color: PRIORITY_COLORS[t.notificationPriority] ?? "#6B7280" }}>{t.notificationPriority}</Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 1 }}>{t.category} · {t.followCount ?? 0} followers</Text>
+                </View>
+                <TouchableOpacity
+                  style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: t.enabled ? "#16A34A" : colors.border, backgroundColor: t.enabled ? "#16A34A15" : "transparent" }}
+                  onPress={() => toggleTopicEnabled(t.id, !t.enabled)}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: "700", color: t.enabled ? "#16A34A" : colors.mutedForeground }}>{t.enabled ? "Active" : "Off"}</Text>
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+
+          {/* Add Topic Modal */}
+          <Modal visible={showAddTopic} animationType="slide" presentationStyle="pageSheet">
+            <View style={[{ flex: 1, padding: 20 }, { backgroundColor: colors.background }]}>
+              <Text style={{ fontSize: 18, fontWeight: "800", color: colors.foreground, marginBottom: 16 }}>Add New Topic</Text>
+              <Text style={{ fontSize: 13, color: colors.mutedForeground, marginBottom: 4 }}>Topic Name</Text>
+              <TextInput style={[{ borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 12, fontSize: 14 }, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.card }]} value={newTopicName} onChangeText={setNewTopicName} placeholder="e.g., Black Mental Health" placeholderTextColor={colors.mutedForeground} />
+              <Text style={{ fontSize: 13, color: colors.mutedForeground, marginBottom: 4 }}>Category</Text>
+              <TextInput style={[{ borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 12, fontSize: 14 }, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.card }]} value={newTopicCategory} onChangeText={setNewTopicCategory} placeholder="e.g., health" placeholderTextColor={colors.mutedForeground} />
+              <Text style={{ fontSize: 13, color: colors.mutedForeground, marginBottom: 4 }}>Description</Text>
+              <TextInput style={[{ borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 20, fontSize: 14, height: 80, textAlignVertical: "top" }, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.card }]} value={newTopicDesc} onChangeText={setNewTopicDesc} placeholder="Brief description…" placeholderTextColor={colors.mutedForeground} multiline />
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <TouchableOpacity style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: "center" }} onPress={() => setShowAddTopic(false)}>
+                  <Text style={{ color: colors.mutedForeground, fontWeight: "700" }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{ flex: 2, padding: 12, borderRadius: 10, backgroundColor: colors.primary, alignItems: "center" }} onPress={createTopic} disabled={saving}>
+                  {saving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ color: "#fff", fontWeight: "700" }}>Create Topic</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        </>
+      ) : (
+        <>
+          {/* Issues Actions */}
+          <View style={{ flexDirection: "row", gap: 8, paddingHorizontal: 12, marginBottom: 8 }}>
+            <TouchableOpacity
+              style={{ flex: 1, padding: 10, borderRadius: 10, backgroundColor: "#3B82F615", borderWidth: 1, borderColor: "#3B82F630", alignItems: "center" }}
+              onPress={seedIssues}
+              disabled={seedingIssues}
+            >
+              {seedingIssues ? <ActivityIndicator size="small" color="#3B82F6" /> : <Text style={{ fontSize: 12, fontWeight: "700", color: "#3B82F6" }}>⚡ Seed All Issues</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ flex: 1, padding: 10, borderRadius: 10, backgroundColor: "#3B82F615", borderWidth: 1, borderColor: "#3B82F630", alignItems: "center" }}
+              onPress={() => setShowAddIssue(true)}
+            >
+              <Text style={{ fontSize: 12, fontWeight: "700", color: "#3B82F6" }}>+ Add Issue</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Search */}
+          <View style={[{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, borderWidth: 1, margin: 12, marginTop: 0 }, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Feather name="search" size={14} color={colors.mutedForeground} />
+            <TextInput style={{ flex: 1, fontSize: 13, color: colors.foreground }} placeholder="Search issues…" placeholderTextColor={colors.mutedForeground} value={issueSearch} onChangeText={setIssueSearch} />
+          </View>
+
+          {loading ? (
+            <View style={{ padding: 40, alignItems: "center" }}><ActivityIndicator size="large" color="#3B82F6" /></View>
+          ) : filteredIssues.length === 0 ? (
+            <View style={{ padding: 32, alignItems: "center" }}>
+              <Text style={{ fontSize: 24, marginBottom: 8 }}>📌</Text>
+              <Text style={{ fontSize: 14, color: colors.mutedForeground, textAlign: "center" }}>No issues yet. Tap "Seed All Issues" to populate the default list.</Text>
+            </View>
+          ) : (
+            filteredIssues.map((issue) => (
+              <View key={issue.id} style={[{ flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderBottomWidth: 1 }, { borderBottomColor: colors.border }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontWeight: "700", color: colors.foreground }}>{issue.name}</Text>
+                  {issue.description && <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 1 }} numberOfLines={2}>{issue.description}</Text>}
+                  <Text style={{ fontSize: 10, color: colors.mutedForeground, marginTop: 2 }}>{issue.followCount ?? 0} followers</Text>
+                </View>
+                <TouchableOpacity
+                  style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: issue.isActive ? "#16A34A" : colors.border, backgroundColor: issue.isActive ? "#16A34A15" : "transparent" }}
+                  onPress={() => toggleIssueActive(issue.id, !issue.isActive)}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: "700", color: issue.isActive ? "#16A34A" : colors.mutedForeground }}>{issue.isActive ? "Active" : "Off"}</Text>
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+
+          {/* Add Issue Modal */}
+          <Modal visible={showAddIssue} animationType="slide" presentationStyle="pageSheet">
+            <View style={[{ flex: 1, padding: 20 }, { backgroundColor: colors.background }]}>
+              <Text style={{ fontSize: 18, fontWeight: "800", color: colors.foreground, marginBottom: 16 }}>Add New Issue</Text>
+              <Text style={{ fontSize: 13, color: colors.mutedForeground, marginBottom: 4 }}>Issue Name</Text>
+              <TextInput style={[{ borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 12, fontSize: 14 }, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.card }]} value={newIssueName} onChangeText={setNewIssueName} placeholder="e.g., Affordable Housing Crisis" placeholderTextColor={colors.mutedForeground} />
+              <Text style={{ fontSize: 13, color: colors.mutedForeground, marginBottom: 4 }}>Description</Text>
+              <TextInput style={[{ borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 20, fontSize: 14, height: 80, textAlignVertical: "top" }, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.card }]} value={newIssueDesc} onChangeText={setNewIssueDesc} placeholder="What should users watch for?" placeholderTextColor={colors.mutedForeground} multiline />
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <TouchableOpacity style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: "center" }} onPress={() => setShowAddIssue(false)}>
+                  <Text style={{ color: colors.mutedForeground, fontWeight: "700" }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{ flex: 2, padding: 12, borderRadius: 10, backgroundColor: "#3B82F6", alignItems: "center" }} onPress={createIssue} disabled={saving}>
+                  {saving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ color: "#fff", fontWeight: "700" }}>Create Issue</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        </>
+      )}
+
+      <View style={{ height: 100 }} />
+    </ScrollView>
+  );
+}
+
 const TAB_COMPONENTS: Record<string, React.FC> = {
   overview: OverviewTab,
   invites: InvitesTab,
@@ -2241,6 +2557,7 @@ const TAB_COMPONENTS: Record<string, React.FC> = {
   surveys: SurveysTab,
   users: UsersTab,
   marketplace: MarketplaceTab,
+  topics: TopicsTab,
   settings: SettingsTab,
 };
 

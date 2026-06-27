@@ -1,5 +1,6 @@
-import { boolean, integer, pgTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { usersTable } from "./auth";
 
 export const knowledgeArticlesTable = pgTable("knowledge_articles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -61,7 +62,12 @@ export const knowledgeTopicsTable = pgTable("knowledge_topics", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   topicName: varchar("topic_name", { length: 200 }).notNull(),
   category: varchar("category", { length: 50 }).notNull(),
+  parentCategory: varchar("parent_category", { length: 50 }),
   description: text("description"),
+  keywords: text("keywords").array(),
+  synonyms: text("synonyms").array(),
+  trustedSources: jsonb("trusted_sources"),
+  notificationPriority: varchar("notification_priority", { length: 20 }).notNull().default("standard"),
   tier: varchar("tier", { length: 20 }).notNull().default("free"),
   searchFrequencyDays: integer("search_frequency_days").notNull().default(7),
   lastSearchedAt: timestamp("last_searched_at"),
@@ -86,4 +92,33 @@ export const knowledgeArticleReadsTable = pgTable("knowledge_article_reads", {
   readAt: timestamp("read_at").notNull().defaultNow(),
 }, (table) => [
   uniqueIndex("knowledge_article_reads_unique").on(table.userId, table.articleId),
+]);
+
+export const userDeliveryPreferencesTable = pgTable("user_delivery_preferences", {
+  userId: varchar("user_id").primaryKey().references(() => usersTable.id, { onDelete: "cascade" }),
+  digestMode: varchar("digest_mode", { length: 30 }).notNull().default("weekly"),
+  scope: varchar("scope", { length: 20 }).notNull().default("all"),
+  includeSavedCities: boolean("include_saved_cities").notNull().default(false),
+  includeSavedBusinesses: boolean("include_saved_businesses").notNull().default(false),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const topicIssuesTable = pgTable("topic_issues", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 50 }),
+  keywords: text("keywords").array(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const userIssueFollowsTable = pgTable("user_issue_follows", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id", { length: 100 }).notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  issueId: varchar("issue_id", { length: 100 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("user_issue_follows_unique").on(table.userId, table.issueId),
 ]);

@@ -31,16 +31,31 @@ async function authHeaders(): Promise<Record<string, string>> {
 }
 
 const CATEGORY_META: Record<string, { emoji: string; color: string; label: string }> = {
-  health:     { emoji: "🩺", color: "#DC2626", label: "Health" },
-  travel:     { emoji: "✈️", color: "#2563EB", label: "Travel" },
-  relocation: { emoji: "🏡", color: "#16A34A", label: "Relocation" },
-  careers:    { emoji: "💼", color: "#059669", label: "Careers" },
-  money:      { emoji: "💰", color: "#D97706", label: "Money" },
-  history:    { emoji: "🏛️", color: "#7C3AED", label: "History" },
-  education:  { emoji: "🎓", color: "#0891B2", label: "Education" },
-  food:       { emoji: "🍽️", color: "#EA580C", label: "Food" },
-  culture:    { emoji: "🎉", color: "#DB2777", label: "Culture" },
-  wellness:   { emoji: "🧠", color: "#6D28D9", label: "Wellness" },
+  health:             { emoji: "🩺", color: "#DC2626", label: "Health" },
+  travel:             { emoji: "✈️", color: "#2563EB", label: "Travel" },
+  relocation:         { emoji: "🏡", color: "#16A34A", label: "Relocation" },
+  careers:            { emoji: "💼", color: "#059669", label: "Careers" },
+  money:              { emoji: "💰", color: "#D97706", label: "Money" },
+  history:            { emoji: "🏛️", color: "#7C3AED", label: "History" },
+  education:          { emoji: "🎓", color: "#0891B2", label: "Education" },
+  food:               { emoji: "🍽️", color: "#EA580C", label: "Food" },
+  culture:            { emoji: "🎉", color: "#DB2777", label: "Culture" },
+  wellness:           { emoji: "🧠", color: "#6D28D9", label: "Wellness" },
+  community_culture:  { emoji: "✊🏾", color: "#9333EA", label: "Community" },
+  safety:             { emoji: "🛡️", color: "#DC2626", label: "Safety" },
+  business:           { emoji: "📈", color: "#059669", label: "Business" },
+  employment:         { emoji: "💼", color: "#0891B2", label: "Employment" },
+  financial:          { emoji: "💵", color: "#D97706", label: "Finance" },
+  family:             { emoji: "👨‍👩‍👧", color: "#16A34A", label: "Family" },
+  entertainment:      { emoji: "🎬", color: "#EC4899", label: "Entertainment" },
+  technology:         { emoji: "💻", color: "#3B82F6", label: "Technology" },
+  environment:        { emoji: "🌱", color: "#22C55E", label: "Environment" },
+  giving:             { emoji: "🤝", color: "#CA922B", label: "Giving Back" },
+  government:         { emoji: "⚖️", color: "#6B7280", label: "Government" },
+  platform:           { emoji: "✦", color: "#CA922B", label: "MWM Updates" },
+  food_lifestyle:     { emoji: "🍽️", color: "#EA580C", label: "Food & Lifestyle" },
+  health_wellness:    { emoji: "💪", color: "#DC2626", label: "Health & Wellness" },
+  financial_wellness: { emoji: "💰", color: "#D97706", label: "Financial Wellness" },
 };
 
 interface Topic {
@@ -76,13 +91,42 @@ interface Expert {
   articleCount?: number | null;
 }
 
+interface Issue {
+  id: string;
+  name: string;
+  description?: string | null;
+  category?: string | null;
+  isFollowing?: boolean;
+}
+
+interface DeliveryPrefs {
+  digestMode: string;
+  scope: string;
+  includeSavedCities: boolean;
+  includeSavedBusinesses: boolean;
+}
+
 const SAMPLE_EXPERTS: Expert[] = [
   { id: "e1", displayName: "Dr. Aisha Matthews", specialty: "Internal Medicine", badge: "Verified Physician", bio: "Board-certified internist with 15 years of experience in preventive care.", followCount: 842, articleCount: 12 },
   { id: "e2", displayName: "James L. Carter, Esq.", specialty: "Civil Rights & Employment Law", badge: "Verified Attorney", bio: "Specializing in employment discrimination and civil rights litigation.", followCount: 614, articleCount: 8 },
   { id: "e3", displayName: "Tasha R. Williams, CFP", specialty: "Financial Planning", badge: "Verified Financial Advisor", bio: "Helping Black families build wealth and navigate financial planning.", followCount: 1103, articleCount: 15 },
 ];
 
-type Tab = "library" | "browse";
+const DIGEST_MODES = [
+  { id: "daily", label: "Daily Digest", desc: "One summary every morning" },
+  { id: "weekly", label: "Weekly Roundup", desc: "Best of the week, every Monday" },
+  { id: "breaking", label: "Breaking Only", desc: "Only urgent alerts & alerts" },
+  { id: "immediate", label: "All Updates", desc: "Notify me as they happen" },
+];
+
+const SCOPE_MODES = [
+  { id: "local", label: "Local", emoji: "📍" },
+  { id: "national", label: "National", emoji: "🇺🇸" },
+  { id: "global", label: "Global", emoji: "🌍" },
+  { id: "all", label: "All", emoji: "∞" },
+];
+
+type Tab = "library" | "browse" | "issues";
 
 export default function LibraryScreen() {
   const colors = useColors();
@@ -96,11 +140,21 @@ export default function LibraryScreen() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [feed, setFeed] = useState<FeedArticle[]>([]);
   const [experts, setExperts] = useState<Expert[]>(SAMPLE_EXPERTS);
+  const [issues, setIssues] = useState<Issue[]>([]);
+  const [digestText, setDigestText] = useState<string>("");
+  const [deliveryPrefs, setDeliveryPrefs] = useState<DeliveryPrefs>({
+    digestMode: "weekly",
+    scope: "all",
+    includeSavedCities: false,
+    includeSavedBusinesses: false,
+  });
   const [newCount, setNewCount] = useState(0);
   const [followCount, setFollowCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [feedLoading, setFeedLoading] = useState(false);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+  const [issueSearch, setIssueSearch] = useState("");
   const [topicSearch, setTopicSearch] = useState("");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState("");
@@ -112,9 +166,10 @@ export default function LibraryScreen() {
       const hasAuth = Object.keys(h).length > 0;
       setIsAuthenticated(hasAuth);
 
-      const [topicsRes, expertsRes] = await Promise.all([
+      const [topicsRes, expertsRes, issuesRes] = await Promise.all([
         fetch(`${getApiBase()}/api/knowledge/topics`, { headers: h }),
         fetch(`${getApiBase()}/api/knowledge/experts`),
+        fetch(`${getApiBase()}/api/knowledge/issues`, { headers: h }),
       ]);
 
       if (topicsRes.ok) {
@@ -126,8 +181,20 @@ export default function LibraryScreen() {
         const data = await expertsRes.json() as { experts: Expert[] };
         if (data.experts.length > 0) setExperts(data.experts);
       }
+      if (issuesRes.ok) {
+        const data = await issuesRes.json() as { issues: Issue[] };
+        setIssues(data.issues);
+      }
 
       if (hasAuth) {
+        const [prefRes] = await Promise.all([
+          fetch(`${getApiBase()}/api/knowledge/delivery-preferences`, { headers: h }),
+        ]);
+        if (prefRes.ok) {
+          const data = await prefRes.json() as { preferences: DeliveryPrefs };
+          setDeliveryPrefs(data.preferences);
+        }
+
         setFeedLoading(true);
         const feedRes = await fetch(`${getApiBase()}/api/knowledge/feed`, { headers: h });
         if (feedRes.ok) {
@@ -136,6 +203,12 @@ export default function LibraryScreen() {
           setNewCount(data.newCount);
         }
         setFeedLoading(false);
+
+        const digestRes = await fetch(`${getApiBase()}/api/knowledge/digest`, { headers: h });
+        if (digestRes.ok) {
+          const data = await digestRes.json() as { digest: string | null };
+          if (data.digest) setDigestText(data.digest);
+        }
       }
     } catch { /* silent */ } finally { setLoading(false); }
   }, []);
@@ -151,6 +224,15 @@ export default function LibraryScreen() {
       ? topics.filter((t) => t.topicName.toLowerCase().includes(q) || t.category.toLowerCase().includes(q))
       : topics;
   }, [topics, topicSearch]);
+
+  const filteredIssues = useMemo(() => {
+    const q = issueSearch.toLowerCase();
+    return q
+      ? issues.filter((i) => i.name.toLowerCase().includes(q) || (i.description ?? "").toLowerCase().includes(q))
+      : issues;
+  }, [issues, issueSearch]);
+
+  const followingIssues = useMemo(() => issues.filter((i) => i.isFollowing), [issues]);
 
   async function toggleFollow(topic: Topic) {
     if (!isAuthenticated) { router.push("/login" as never); return; }
@@ -178,6 +260,34 @@ export default function LibraryScreen() {
       setTopics((prev) => prev.map((t) => t.id === topic.id ? { ...t, isFollowing: topic.isFollowing } : t));
       setFollowCount((c) => c - (willFollow ? 1 : -1));
     }
+  }
+
+  async function toggleIssueFollow(issue: Issue) {
+    if (!isAuthenticated) { router.push("/login" as never); return; }
+    const willFollow = !issue.isFollowing;
+    setIssues((prev) => prev.map((i) => i.id === issue.id ? { ...i, isFollowing: willFollow } : i));
+    try {
+      const h = await authHeaders();
+      const method = issue.isFollowing ? "DELETE" : "POST";
+      await fetch(`${getApiBase()}/api/knowledge/issues/${issue.id}/follow`, { method, headers: h });
+    } catch {
+      setIssues((prev) => prev.map((i) => i.id === issue.id ? { ...i, isFollowing: issue.isFollowing } : i));
+    }
+  }
+
+  async function saveDeliveryPrefs(updated: Partial<DeliveryPrefs>) {
+    if (!isAuthenticated) { router.push("/login" as never); return; }
+    const next = { ...deliveryPrefs, ...updated };
+    setDeliveryPrefs(next);
+    setSavingPrefs(true);
+    try {
+      const h = await authHeaders();
+      await fetch(`${getApiBase()}/api/knowledge/delivery-preferences`, {
+        method: "PUT",
+        headers: { ...h, "Content-Type": "application/json" },
+        body: JSON.stringify(next),
+      });
+    } catch { /* silent */ } finally { setSavingPrefs(false); }
   }
 
   async function openArticle(article: FeedArticle) {
@@ -217,7 +327,7 @@ export default function LibraryScreen() {
               <Text style={[styles.headerTitle, { color: colors.foreground }]}>My Knowledge</Text>
               <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>
                 {hasFollows && isAuthenticated
-                  ? `${followedTopics.length} topic${followedTopics.length !== 1 ? "s" : ""} followed${!isPremium ? ` · ${10 - followCount} free slots left` : ""}`
+                  ? `${followedTopics.length} topic${followedTopics.length !== 1 ? "s" : ""}${followingIssues.length > 0 ? ` · ${followingIssues.length} issue${followingIssues.length !== 1 ? "s" : ""}` : ""}${!isPremium ? ` · ${10 - followCount} free slots left` : ""}`
                   : "Your personalized learning library"}
               </Text>
             </View>
@@ -230,27 +340,25 @@ export default function LibraryScreen() {
 
           {/* Tab switcher */}
           <View style={[styles.tabRow, { backgroundColor: colors.background }]}>
-            <TouchableOpacity
-              style={[styles.tabBtn, activeTab === "library" && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
-              onPress={() => setActiveTab("library")}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.tabTxt, { color: activeTab === "library" ? colors.primary : colors.mutedForeground }]}>
-                My Library
-                {newCount > 0 && (
-                  <Text style={{ color: "#CA922B", fontWeight: "800" }}>  {newCount} new</Text>
-                )}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tabBtn, activeTab === "browse" && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
-              onPress={() => setActiveTab("browse")}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.tabTxt, { color: activeTab === "browse" ? colors.primary : colors.mutedForeground }]}>
-                Browse Topics
-              </Text>
-            </TouchableOpacity>
+            {(["library", "browse", "issues"] as Tab[]).map((tab) => {
+              const labels: Record<Tab, string> = {
+                library: `My Library${newCount > 0 ? ` (${newCount})` : ""}`,
+                browse: "Browse Topics",
+                issues: `Issues${followingIssues.length > 0 ? ` · ${followingIssues.length}` : ""}`,
+              };
+              return (
+                <TouchableOpacity
+                  key={tab}
+                  style={[styles.tabBtn, activeTab === tab && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
+                  onPress={() => setActiveTab(tab)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.tabTxt, { color: activeTab === tab ? colors.primary : colors.mutedForeground }]}>
+                    {labels[tab]}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
@@ -278,7 +386,6 @@ export default function LibraryScreen() {
                 </TouchableOpacity>
               </View>
             ) : !hasFollows ? (
-              /* No follows yet */
               <View style={styles.signInPrompt}>
                 <Text style={{ fontSize: 36, marginBottom: 12 }}>✦</Text>
                 <Text style={[styles.promptTitle, { color: colors.foreground }]}>Start building your library</Text>
@@ -295,6 +402,20 @@ export default function LibraryScreen() {
               </View>
             ) : (
               <>
+                {/* KinfolkAI Digest Banner */}
+                {digestText.length > 0 && (
+                  <View style={[styles.digestCard, { backgroundColor: "#CA922B08", borderColor: "#CA922B30" }]}>
+                    <View style={styles.digestRow}>
+                      <Text style={{ fontSize: 18 }}>✦</Text>
+                      <Text style={[styles.digestLabel, { color: "#CA922B" }]}>KinfolkAI Digest</Text>
+                      <View style={[styles.digestBadge, { backgroundColor: "#CA922B18" }]}>
+                        <Text style={{ fontSize: 10, fontWeight: "800", color: "#CA922B" }}>PERSONALIZED</Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.digestTxt, { color: colors.foreground }]}>{digestText}</Text>
+                  </View>
+                )}
+
                 {/* Following pills */}
                 <View style={styles.section}>
                   <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Following</Text>
@@ -319,6 +440,18 @@ export default function LibraryScreen() {
                         </TouchableOpacity>
                       );
                     })}
+                    {followingIssues.length > 0 && followingIssues.map((issue) => (
+                      <TouchableOpacity
+                        key={`issue-${issue.id}`}
+                        style={[styles.followingPill, { backgroundColor: "#3B82F615", borderColor: "#3B82F640" }]}
+                        onPress={() => setActiveTab("issues")}
+                        activeOpacity={0.75}
+                      >
+                        <Text style={[styles.pillName, { color: "#3B82F6" }]} numberOfLines={1}>
+                          📌 {issue.name.split(" ").slice(0, 3).join(" ")}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
                     <TouchableOpacity
                       style={[styles.followingPill, { backgroundColor: colors.card, borderColor: colors.border, borderStyle: "dashed" }]}
                       onPress={() => setActiveTab("browse")}
@@ -328,6 +461,94 @@ export default function LibraryScreen() {
                       <Text style={[styles.pillName, { color: colors.mutedForeground }]}>Add topic</Text>
                     </TouchableOpacity>
                   </ScrollView>
+                </View>
+
+                {/* Smart Delivery Preferences */}
+                <View style={[styles.section]}>
+                  <View style={styles.sectionRow}>
+                    <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Smart Delivery</Text>
+                    {savingPrefs && <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 6 }} />}
+                  </View>
+                  <Text style={[styles.deliverySub, { color: colors.mutedForeground }]}>
+                    Instead of multiple notifications, KinfolkAI batches your topics into one smart summary.
+                  </Text>
+
+                  {/* Digest mode */}
+                  <Text style={[styles.prefLabel, { color: colors.foreground }]}>Notification Frequency</Text>
+                  <View style={styles.prefRow}>
+                    {DIGEST_MODES.map((mode) => {
+                      const active = deliveryPrefs.digestMode === mode.id;
+                      return (
+                        <TouchableOpacity
+                          key={mode.id}
+                          style={[
+                            styles.prefChip,
+                            { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary + "15" : colors.card },
+                          ]}
+                          onPress={() => saveDeliveryPrefs({ digestMode: mode.id })}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={[styles.prefChipTitle, { color: active ? colors.primary : colors.foreground }]}>{mode.label}</Text>
+                          <Text style={[styles.prefChipDesc, { color: colors.mutedForeground }]}>{mode.desc}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+
+                  {/* Scope */}
+                  <Text style={[styles.prefLabel, { color: colors.foreground }]}>Content Scope</Text>
+                  <View style={styles.scopeRow}>
+                    {SCOPE_MODES.map((s) => {
+                      const active = deliveryPrefs.scope === s.id;
+                      return (
+                        <TouchableOpacity
+                          key={s.id}
+                          style={[
+                            styles.scopeChip,
+                            { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary + "15" : colors.card },
+                          ]}
+                          onPress={() => saveDeliveryPrefs({ scope: s.id })}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={{ fontSize: 16 }}>{s.emoji}</Text>
+                          <Text style={[styles.scopeLabel, { color: active ? colors.primary : colors.foreground }]}>{s.label}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+
+                  {/* Toggles */}
+                  <View style={[styles.prefToggleRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.prefToggleTitle, { color: colors.foreground }]}>Notify from saved cities</Text>
+                      <Text style={[styles.prefToggleDesc, { color: colors.mutedForeground }]}>Include news from cities you've saved</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[
+                        styles.toggle,
+                        { backgroundColor: deliveryPrefs.includeSavedCities ? colors.primary : colors.border },
+                      ]}
+                      onPress={() => saveDeliveryPrefs({ includeSavedCities: !deliveryPrefs.includeSavedCities })}
+                    >
+                      <View style={[styles.toggleKnob, { left: deliveryPrefs.includeSavedCities ? 18 : 2 }]} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={[styles.prefToggleRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.prefToggleTitle, { color: colors.foreground }]}>Notify from saved businesses</Text>
+                      <Text style={[styles.prefToggleDesc, { color: colors.mutedForeground }]}>Updates from Black-owned businesses you've saved</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[
+                        styles.toggle,
+                        { backgroundColor: deliveryPrefs.includeSavedBusinesses ? colors.primary : colors.border },
+                      ]}
+                      onPress={() => saveDeliveryPrefs({ includeSavedBusinesses: !deliveryPrefs.includeSavedBusinesses })}
+                    >
+                      <View style={[styles.toggleKnob, { left: deliveryPrefs.includeSavedBusinesses ? 18 : 2 }]} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 {/* New This Week */}
@@ -386,7 +607,7 @@ export default function LibraryScreen() {
                   </View>
                 )}
 
-                {/* Already read this week */}
+                {/* Already read */}
                 {readFeed.length > 0 && (
                   <View style={[styles.section, { opacity: 0.7 }]}>
                     <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>Already Read</Text>
@@ -446,6 +667,113 @@ export default function LibraryScreen() {
                 </View>
               </>
             )}
+          </ScrollView>
+
+        ) : activeTab === "issues" ? (
+
+          /* ── ISSUES TAB ── */
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
+            <View style={[styles.issueHeader, { backgroundColor: "#3B82F608", borderColor: "#3B82F620" }]}>
+              <Text style={{ fontSize: 24 }}>📌</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.issueHeaderTitle, { color: colors.foreground }]}>Follow an Issue</Text>
+                <Text style={[styles.issueHeaderDesc, { color: colors.mutedForeground }]}>
+                  Track ongoing policy debates and social issues. Get notified only when meaningful developments happen — not every headline.
+                </Text>
+              </View>
+            </View>
+
+            {!isAuthenticated && (
+              <View style={styles.signInPrompt}>
+                <Text style={[styles.promptTitle, { color: colors.foreground }]}>Sign in to follow issues</Text>
+                <TouchableOpacity style={[styles.signInBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/login" as never)}>
+                  <Text style={styles.signInTxt}>Sign In</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Search */}
+            <View style={[styles.browseSearch, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="search" size={15} color={colors.mutedForeground} />
+              <TextInput
+                style={[styles.searchInput, { color: colors.foreground }]}
+                placeholder="Search issues…"
+                placeholderTextColor={colors.mutedForeground}
+                value={issueSearch}
+                onChangeText={setIssueSearch}
+              />
+              {issueSearch.length > 0 && (
+                <TouchableOpacity onPress={() => setIssueSearch("")}>
+                  <Feather name="x" size={14} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {followingIssues.length > 0 && !issueSearch && (
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Following</Text>
+                {followingIssues.map((issue) => (
+                  <View key={issue.id} style={[styles.issueRow, { backgroundColor: colors.card, borderColor: "#3B82F640" }]}>
+                    <View style={styles.issueRowLeft}>
+                      <View style={[styles.issueIcon, { backgroundColor: "#3B82F615" }]}>
+                        <Text style={{ fontSize: 18 }}>📌</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.topicName, { color: colors.foreground }]} numberOfLines={2}>{issue.name}</Text>
+                        {issue.description && (
+                          <Text style={[styles.topicCategory, { color: colors.mutedForeground }]} numberOfLines={2}>{issue.description}</Text>
+                        )}
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.followToggle, { backgroundColor: "#3B82F6", borderColor: "#3B82F6" }]}
+                      onPress={() => toggleIssueFollow(issue)}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={styles.followToggleTxt}>Following</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            <View style={[styles.section, { marginBottom: Platform.OS === "web" ? 100 : insets.bottom + 100 }]}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+                {issueSearch ? "Search Results" : followingIssues.length > 0 ? "More Issues" : "All Issues"}
+              </Text>
+              {filteredIssues.filter((i) => !i.isFollowing || !!issueSearch).length === 0 ? (
+                <View style={[styles.emptyFeed, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Text style={[styles.emptyFeedTxt, { color: colors.mutedForeground }]}>
+                    {issues.length === 0 ? "Issues are being loaded. Check back soon." : "No matching issues found."}
+                  </Text>
+                </View>
+              ) : (
+                filteredIssues.filter((i) => !i.isFollowing || !!issueSearch).map((issue) => (
+                  <View key={issue.id} style={[styles.issueRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <View style={styles.issueRowLeft}>
+                      <View style={[styles.issueIcon, { backgroundColor: colors.background }]}>
+                        <Text style={{ fontSize: 18 }}>📰</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.topicName, { color: colors.foreground }]} numberOfLines={2}>{issue.name}</Text>
+                        {issue.description && (
+                          <Text style={[styles.topicCategory, { color: colors.mutedForeground }]} numberOfLines={2}>{issue.description}</Text>
+                        )}
+                      </View>
+                    </View>
+                    {isAuthenticated && (
+                      <TouchableOpacity
+                        style={[styles.followToggle, { backgroundColor: "transparent", borderColor: "#3B82F6" }]}
+                        onPress={() => toggleIssueFollow(issue)}
+                        activeOpacity={0.75}
+                      >
+                        <Text style={[styles.followToggleTxt, { color: "#3B82F6" }]}>Follow</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                ))
+              )}
+            </View>
           </ScrollView>
 
         ) : (
@@ -525,7 +853,7 @@ export default function LibraryScreen() {
               </View>
             )}
 
-            {/* All / unfollow topics */}
+            {/* All / undiscovered topics */}
             <View style={[styles.section, { marginBottom: Platform.OS === "web" ? 100 : insets.bottom + 100 }]}>
               <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
                 {followedTopics.length > 0 ? "Discover More" : "All Topics"}
@@ -579,7 +907,7 @@ const styles = StyleSheet.create({
   kPlusBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   tabRow: { flexDirection: "row", borderTopWidth: 0 },
   tabBtn: { flex: 1, paddingVertical: 12, alignItems: "center", borderBottomWidth: 2, borderBottomColor: "transparent" },
-  tabTxt: { fontSize: 13, fontWeight: "700" },
+  tabTxt: { fontSize: 12, fontWeight: "700" },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
   scroll: { flex: 1 },
   section: { paddingHorizontal: 14, paddingTop: 18, gap: 10 },
@@ -629,4 +957,29 @@ const styles = StyleSheet.create({
   expertBadge: { fontSize: 11, fontWeight: "700" },
   expertSpecialty: { fontSize: 12 },
   expertStats: { fontSize: 11, marginTop: 1 },
+  digestCard: { margin: 14, borderRadius: 14, borderWidth: 1, padding: 14, gap: 8 },
+  digestRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  digestLabel: { fontSize: 13, fontWeight: "800", flex: 1 },
+  digestBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  digestTxt: { fontSize: 14, lineHeight: 21 },
+  deliverySub: { fontSize: 12, lineHeight: 18 },
+  prefLabel: { fontSize: 13, fontWeight: "700", marginTop: 4 },
+  prefRow: { gap: 8 },
+  prefChip: { borderWidth: 1.5, borderRadius: 12, padding: 10, gap: 2 },
+  prefChipTitle: { fontSize: 13, fontWeight: "700" },
+  prefChipDesc: { fontSize: 11 },
+  scopeRow: { flexDirection: "row", gap: 8 },
+  scopeChip: { flex: 1, borderWidth: 1.5, borderRadius: 10, padding: 8, alignItems: "center", gap: 3 },
+  scopeLabel: { fontSize: 11, fontWeight: "700" },
+  prefToggleRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 12, borderWidth: 1 },
+  prefToggleTitle: { fontSize: 13, fontWeight: "700" },
+  prefToggleDesc: { fontSize: 11, marginTop: 1 },
+  toggle: { width: 40, height: 24, borderRadius: 12, justifyContent: "center" },
+  toggleKnob: { width: 20, height: 20, borderRadius: 10, backgroundColor: "#fff", position: "absolute" },
+  issueHeader: { flexDirection: "row", alignItems: "flex-start", gap: 12, margin: 14, padding: 14, borderRadius: 14, borderWidth: 1 },
+  issueHeaderTitle: { fontSize: 16, fontWeight: "800", marginBottom: 4 },
+  issueHeaderDesc: { fontSize: 12, lineHeight: 18 },
+  issueRow: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 14, borderWidth: 1 },
+  issueRowLeft: { flex: 1, flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  issueIcon: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
 });

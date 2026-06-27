@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessInvitesTable, businessesTable, usersTable } from "@workspace/db";
-import { eq, desc, sql } from "drizzle-orm";
+import { db, businessInvitesTable, businessesTable, usersTable, knowledgeTopicsTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable } from "@workspace/db";
+import { eq, desc, sql, count } from "drizzle-orm";
 import { sendBusinessOutreach } from "../lib/email";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
@@ -279,4 +279,367 @@ router.post("/admin/bootstrap", async (req: Request, res: Response) => {
   }
 });
 
+// ─── ADMIN: Topic Library Management ─────────────────────────────────────────
+
+const SEED_TOPICS: Array<{ topicName: string; category: string; description: string; keywords: string[]; notificationPriority: string; trustedSources: object }> = [
+  // Community & Culture
+  { topicName: "Black History", category: "community_culture", description: "African American history, civil rights milestones, and cultural heritage.", keywords: ["black history", "civil rights", "african american heritage", "freedom movement"], notificationPriority: "standard", trustedSources: [{ name: "Equal Justice Initiative", domain: "eji.org" }, { name: "NAACP", domain: "naacp.org" }, { name: "Smithsonian", domain: "nmaahc.si.edu" }] },
+  { topicName: "African Diaspora", category: "community_culture", description: "Communities, culture, and connections across the African diaspora worldwide.", keywords: ["diaspora", "pan-african", "africa", "global black community"], notificationPriority: "standard", trustedSources: [{ name: "The Root", domain: "theroot.com" }, { name: "African Union", domain: "au.int" }] },
+  { topicName: "Caribbean Communities", category: "community_culture", description: "Caribbean culture, diaspora experiences, news, and community updates.", keywords: ["caribbean", "jamaican", "haitian", "trinidadian", "barbadian"], notificationPriority: "standard", trustedSources: [{ name: "Caribbean Journal", domain: "caribjournal.com" }] },
+  { topicName: "Civil Rights & Social Justice", category: "community_culture", description: "Ongoing civil rights struggles, social justice legislation, and community organizing.", keywords: ["civil rights", "social justice", "equity", "systemic racism", "discrimination"], notificationPriority: "breaking", trustedSources: [{ name: "NAACP", domain: "naacp.org" }, { name: "ACLU", domain: "aclu.org" }, { name: "Urban League", domain: "nul.org" }] },
+  { topicName: "Voting Rights & Civic Engagement", category: "community_culture", description: "Voting rights protection, elections, and tools for civic participation.", keywords: ["voting rights", "elections", "civic engagement", "ballot access", "democracy"], notificationPriority: "breaking", trustedSources: [{ name: "NAACP Legal Defense Fund", domain: "naacpldf.org" }, { name: "ACLU", domain: "aclu.org" }] },
+  { topicName: "Faith & Spirituality", category: "community_culture", description: "The role of faith communities in Black life, church news, and spiritual wellness.", keywords: ["faith", "church", "spirituality", "religion", "gospel", "prayer"], notificationPriority: "digest", trustedSources: [{ name: "The Root", domain: "theroot.com" }, { name: "Essence", domain: "essence.com" }] },
+  { topicName: "Women's Issues", category: "community_culture", description: "Issues affecting Black women — policy, wellness, representation, and advocacy.", keywords: ["black women", "women's rights", "feminism", "gender equity", "womanism"], notificationPriority: "standard", trustedSources: [{ name: "Essence", domain: "essence.com" }, { name: "Black Women's Health Imperative", domain: "bwhi.org" }] },
+  { topicName: "LGBTQ+ Community", category: "community_culture", description: "LGBTQ+ rights, representation, and community news in Black spaces.", keywords: ["lgbtq", "queer", "transgender", "gay rights", "pride"], notificationPriority: "standard", trustedSources: [{ name: "The Advocate", domain: "advocate.com" }, { name: "NAACP", domain: "naacp.org" }] },
+  { topicName: "Veterans & Military Families", category: "community_culture", description: "Resources, benefits, and advocacy for Black veterans and military families.", keywords: ["veterans", "military", "va benefits", "military families", "service members"], notificationPriority: "standard", trustedSources: [{ name: "VA.gov", domain: "va.gov" }, { name: "Black Veterans Project", domain: "blackveteransproject.org" }] },
+  { topicName: "Immigration & Community", category: "community_culture", description: "Immigration policy affecting communities of color — updates, rights, and resources.", keywords: ["immigration", "deportation", "daca", "immigrant rights", "asylum"], notificationPriority: "breaking", trustedSources: [{ name: "ACLU", domain: "aclu.org" }, { name: "USCIS", domain: "uscis.gov" }] },
+
+  // Safety
+  { topicName: "Travel Safety Advisories", category: "safety", description: "Real-time travel safety alerts, State Department advisories, and community reports.", keywords: ["travel safety", "travel advisory", "safety abroad", "do not travel"], notificationPriority: "breaking", trustedSources: [{ name: "US State Department", domain: "travel.state.gov" }, { name: "CDC Travel Health", domain: "wwwnc.cdc.gov" }] },
+  { topicName: "Neighborhood Safety", category: "safety", description: "Community safety reports, crime trends, and neighborhood watch updates.", keywords: ["neighborhood safety", "crime prevention", "community safety", "local crime"], notificationPriority: "breaking", trustedSources: [{ name: "FBI Crime Data", domain: "fbi.gov" }, { name: "NAACP", domain: "naacp.org" }] },
+  { topicName: "Emergency Preparedness", category: "safety", description: "Disaster readiness, evacuation planning, and emergency resources.", keywords: ["emergency preparedness", "disaster kit", "evacuation", "shelter", "fema"], notificationPriority: "breaking", trustedSources: [{ name: "FEMA", domain: "fema.gov" }, { name: "Ready.gov", domain: "ready.gov" }] },
+  { topicName: "Public Health Alerts", category: "safety", description: "Outbreaks, public health emergencies, and community health notices.", keywords: ["public health", "outbreak", "disease alert", "health emergency"], notificationPriority: "breaking", trustedSources: [{ name: "CDC", domain: "cdc.gov" }, { name: "WHO", domain: "who.int" }] },
+  { topicName: "Food Safety & Recalls", category: "safety", description: "FDA and USDA food recalls, contamination warnings, and consumer alerts.", keywords: ["food recall", "food safety", "contamination", "fda recall", "usda recall"], notificationPriority: "breaking", trustedSources: [{ name: "FDA", domain: "fda.gov" }, { name: "USDA FSIS", domain: "fsis.usda.gov" }] },
+  { topicName: "Consumer Product Recalls", category: "safety", description: "CPSC recalls for household products, vehicles, electronics, and children's items.", keywords: ["product recall", "cpsc recall", "consumer safety", "vehicle recall"], notificationPriority: "breaking", trustedSources: [{ name: "CPSC", domain: "cpsc.gov" }, { name: "NHTSA", domain: "nhtsa.gov" }] },
+  { topicName: "Cybersecurity & Digital Safety", category: "safety", description: "Identity theft alerts, scam warnings, and tips to protect yourself online.", keywords: ["cybersecurity", "identity theft", "scams", "phishing", "data breach"], notificationPriority: "breaking", trustedSources: [{ name: "FTC Consumer Info", domain: "consumer.ftc.gov" }, { name: "CISA", domain: "cisa.gov" }] },
+
+  // Travel
+  { topicName: "Black Travel Experiences", category: "travel", description: "Travel stories, tips, and destination guides by and for the Black travel community.", keywords: ["black travel", "travel while black", "black travelers", "inclusive travel"], notificationPriority: "digest", trustedSources: [{ name: "Travel Noire", domain: "travelnoire.com" }, { name: "Black Travel Alliance", domain: "blacktravelalliance.com" }] },
+  { topicName: "International Travel", category: "travel", description: "Destinations, visa guides, and travel tips for international adventures.", keywords: ["international travel", "passport", "visa", "abroad", "world travel"], notificationPriority: "digest", trustedSources: [{ name: "US State Department", domain: "travel.state.gov" }, { name: "Lonely Planet", domain: "lonelyplanet.com" }] },
+  { topicName: "Domestic Road Trips", category: "travel", description: "Road trip itineraries, driving routes, and hidden gems across the United States.", keywords: ["road trip", "road trip usa", "driving routes", "national highway"], notificationPriority: "digest", trustedSources: [{ name: "National Park Service", domain: "nps.gov" }, { name: "Roadtrippers", domain: "roadtrippers.com" }] },
+  { topicName: "Travel Deals & Discounts", category: "travel", description: "Flight deals, hotel discounts, and travel package savings.", keywords: ["travel deals", "cheap flights", "hotel discounts", "travel savings", "airfare deals"], notificationPriority: "immediate", trustedSources: [{ name: "Google Flights", domain: "google.com/flights" }, { name: "The Points Guy", domain: "thepointsguy.com" }] },
+  { topicName: "National Parks & Outdoors", category: "travel", description: "Exploring America's national parks, hiking trails, and outdoor adventures.", keywords: ["national parks", "hiking", "camping", "outdoors", "nature"], notificationPriority: "digest", trustedSources: [{ name: "National Park Service", domain: "nps.gov" }, { name: "AllTrails", domain: "alltrails.com" }] },
+  { topicName: "Solo Travel", category: "travel", description: "Resources, safety tips, and inspiration for solo travelers.", keywords: ["solo travel", "traveling alone", "solo adventures", "independent travel"], notificationPriority: "digest", trustedSources: [{ name: "Lonely Planet", domain: "lonelyplanet.com" }] },
+  { topicName: "Family Travel", category: "travel", description: "Kid-friendly destinations, family travel tips, and budget-conscious family getaways.", keywords: ["family travel", "travel with kids", "family vacation", "child-friendly travel"], notificationPriority: "digest", trustedSources: [{ name: "Family Vacation Critic", domain: "familyvacationcritic.com" }] },
+  { topicName: "Passport & Visa Updates", category: "travel", description: "Passport processing times, visa policy changes, and international entry requirements.", keywords: ["passport renewal", "visa application", "travel documents", "entry requirements"], notificationPriority: "standard", trustedSources: [{ name: "US State Department", domain: "travel.state.gov" }, { name: "USCIS", domain: "uscis.gov" }] },
+  { topicName: "Accessible Travel", category: "travel", description: "Travel resources and destination guides for travelers with disabilities.", keywords: ["accessible travel", "wheelchair travel", "disability travel", "ada travel"], notificationPriority: "digest", trustedSources: [{ name: "Disabled Travelers", domain: "disabledtravelers.com" }] },
+
+  // Relocation
+  { topicName: "Best Cities to Relocate", category: "relocation", description: "Data-driven city comparisons for Black families considering relocation.", keywords: ["relocation cities", "where to move", "best cities 2024", "black-friendly cities"], notificationPriority: "digest", trustedSources: [{ name: "Livability", domain: "livability.com" }, { name: "US Census Bureau", domain: "census.gov" }] },
+  { topicName: "Housing Market Trends", category: "relocation", description: "Real estate market data, homebuying trends, and mortgage rate updates.", keywords: ["housing market", "real estate", "home prices", "mortgage rates", "homebuying"], notificationPriority: "standard", trustedSources: [{ name: "Zillow Research", domain: "zillow.com/research" }, { name: "Realtor.com", domain: "realtor.com" }, { name: "Federal Reserve", domain: "federalreserve.gov" }] },
+  { topicName: "School Ratings & Education Quality", category: "relocation", description: "School district ratings, public school quality, and education resources by city.", keywords: ["school ratings", "public schools", "school district", "education quality"], notificationPriority: "digest", trustedSources: [{ name: "GreatSchools", domain: "greatschools.org" }, { name: "US Dept of Education", domain: "ed.gov" }] },
+  { topicName: "Cost of Living Comparisons", category: "relocation", description: "Cost of living data, salary comparison tools, and affordability indexes.", keywords: ["cost of living", "affordability", "salary comparison", "living expenses"], notificationPriority: "digest", trustedSources: [{ name: "NerdWallet", domain: "nerdwallet.com" }, { name: "Bureau of Labor Statistics", domain: "bls.gov" }] },
+  { topicName: "Moving Tips & Resources", category: "relocation", description: "Moving checklists, company reviews, and practical relocation advice.", keywords: ["moving tips", "relocation guide", "moving checklist", "moving company"], notificationPriority: "digest", trustedSources: [{ name: "Moving.com", domain: "moving.com" }] },
+
+  // Business
+  { topicName: "Black Entrepreneurship", category: "business", description: "Stories, resources, and community support for Black-owned business owners.", keywords: ["black business", "black entrepreneurship", "minority business", "black owned"], notificationPriority: "standard", trustedSources: [{ name: "Black Enterprise", domain: "blackenterprise.com" }, { name: "National Minority Supplier Development Council", domain: "nmsdc.org" }] },
+  { topicName: "Minority Business Grants & Funding", category: "business", description: "Grants, loans, and funding opportunities specifically for minority-owned businesses.", keywords: ["minority grants", "small business grants", "funding opportunities", "minority funding"], notificationPriority: "standard", trustedSources: [{ name: "SBA", domain: "sba.gov" }, { name: "SCORE", domain: "score.org" }, { name: "Grants.gov", domain: "grants.gov" }] },
+  { topicName: "Women-Owned Business Resources", category: "business", description: "Resources, certifications, and funding for women-owned businesses.", keywords: ["women business owner", "wbe certification", "women entrepreneur", "women business grants"], notificationPriority: "standard", trustedSources: [{ name: "SBA Women's Business Centers", domain: "sba.gov" }, { name: "SCORE", domain: "score.org" }] },
+  { topicName: "SBA Loans & Programs", category: "business", description: "SBA loan programs, application processes, and program updates.", keywords: ["sba loan", "small business loan", "7a loan", "sba programs", "business financing"], notificationPriority: "standard", trustedSources: [{ name: "SBA", domain: "sba.gov" }] },
+  { topicName: "Government Contracts & Procurement", category: "business", description: "Federal and state contracting opportunities for minority-owned businesses.", keywords: ["government contracts", "procurement", "federal contracting", "8a certification", "sam.gov"], notificationPriority: "standard", trustedSources: [{ name: "SAM.gov", domain: "sam.gov" }, { name: "SBA", domain: "sba.gov" }] },
+  { topicName: "Startup Funding & Venture Capital", category: "business", description: "VC funding, angel investing, and startup ecosystem news for founders of color.", keywords: ["startup funding", "venture capital", "angel investor", "seed funding", "black founders"], notificationPriority: "standard", trustedSources: [{ name: "TechCrunch", domain: "techcrunch.com" }, { name: "Black VC", domain: "blackvc.com" }] },
+  { topicName: "Business Certifications", category: "business", description: "MBE, WBE, 8(a), and other certifications that open doors for minority businesses.", keywords: ["mbe certification", "wbe certification", "8a program", "minority certification", "dbe certification"], notificationPriority: "digest", trustedSources: [{ name: "SBA", domain: "sba.gov" }, { name: "NMSDC", domain: "nmsdc.org" }] },
+  { topicName: "Marketing & Branding for Small Business", category: "business", description: "Marketing strategy, brand building, and digital marketing for small business owners.", keywords: ["small business marketing", "branding", "social media marketing", "digital marketing"], notificationPriority: "digest", trustedSources: [{ name: "HBR", domain: "hbr.org" }, { name: "Inc.", domain: "inc.com" }] },
+  { topicName: "E-commerce & Online Selling", category: "business", description: "E-commerce tools, platforms, and strategies for selling online.", keywords: ["ecommerce", "online store", "shopify", "amazon seller", "online sales"], notificationPriority: "digest", trustedSources: [{ name: "Shopify Blog", domain: "shopify.com/blog" }] },
+  { topicName: "AI for Small Business", category: "business", description: "How artificial intelligence tools can help small and minority-owned businesses grow.", keywords: ["ai tools", "chatgpt business", "automation", "ai marketing", "small business ai"], notificationPriority: "standard", trustedSources: [{ name: "HBR", domain: "hbr.org" }, { name: "MIT Technology Review", domain: "technologyreview.com" }] },
+
+  // Employment
+  { topicName: "Job Market Trends", category: "employment", description: "Employment data, hiring trends, and labor market news.", keywords: ["job market", "unemployment rate", "hiring trends", "labor market", "jobs report"], notificationPriority: "standard", trustedSources: [{ name: "Bureau of Labor Statistics", domain: "bls.gov" }, { name: "Department of Labor", domain: "dol.gov" }] },
+  { topicName: "Career Development", category: "employment", description: "Career growth strategies, skill building, and professional advancement resources.", keywords: ["career development", "professional growth", "career advice", "skill building", "advancement"], notificationPriority: "digest", trustedSources: [{ name: "HBR", domain: "hbr.org" }, { name: "LinkedIn", domain: "linkedin.com" }] },
+  { topicName: "Remote Work & Flexibility", category: "employment", description: "Remote job opportunities, work-from-home policies, and flexible work trends.", keywords: ["remote work", "work from home", "hybrid work", "remote jobs", "flexible work"], notificationPriority: "standard", trustedSources: [{ name: "HBR", domain: "hbr.org" }, { name: "FlexJobs", domain: "flexjobs.com" }] },
+  { topicName: "Workplace Discrimination & Rights", category: "employment", description: "Employment discrimination laws, EEOC updates, and worker rights resources.", keywords: ["workplace discrimination", "eeoc", "employment discrimination", "labor rights", "hostile workplace"], notificationPriority: "breaking", trustedSources: [{ name: "EEOC", domain: "eeoc.gov" }, { name: "ACLU", domain: "aclu.org" }, { name: "Department of Labor", domain: "dol.gov" }] },
+  { topicName: "Salary Negotiation", category: "employment", description: "Pay equity data, negotiation tactics, and compensation benchmarking.", keywords: ["salary negotiation", "pay equity", "compensation", "wage gap", "salary data"], notificationPriority: "digest", trustedSources: [{ name: "Glassdoor", domain: "glassdoor.com" }, { name: "PayScale", domain: "payscale.com" }] },
+  { topicName: "Trade Skills & Apprenticeships", category: "employment", description: "Trade job opportunities, apprenticeship programs, and vocational career paths.", keywords: ["trade skills", "apprenticeship", "vocational training", "electrician", "plumber"], notificationPriority: "standard", trustedSources: [{ name: "Department of Labor Apprenticeship", domain: "apprenticeship.gov" }] },
+  { topicName: "Leadership & Executive Growth", category: "employment", description: "Resources for Black professionals in leadership and executive roles.", keywords: ["executive leadership", "c-suite", "black executives", "leadership development", "corporate diversity"], notificationPriority: "digest", trustedSources: [{ name: "HBR", domain: "hbr.org" }, { name: "Black Enterprise", domain: "blackenterprise.com" }] },
+
+  // Education
+  { topicName: "Scholarships & Grants", category: "education", description: "Scholarship opportunities for Black students at all levels of education.", keywords: ["scholarship", "college scholarship", "black scholarships", "minority scholarships", "grants for students"], notificationPriority: "standard", trustedSources: [{ name: "UNCF", domain: "uncf.org" }, { name: "Fastweb", domain: "fastweb.com" }, { name: "Scholarships.com", domain: "scholarships.com" }] },
+  { topicName: "HBCUs", category: "education", description: "News, rankings, and advocacy for Historically Black Colleges and Universities.", keywords: ["hbcu", "historically black college", "black colleges", "hbcu funding", "hbcu rankings"], notificationPriority: "standard", trustedSources: [{ name: "HBCU Digest", domain: "hbcudigest.com" }, { name: "UNCF", domain: "uncf.org" }, { name: "US Dept of Education", domain: "ed.gov" }] },
+  { topicName: "Student Loan Information", category: "education", description: "Student loan policy updates, repayment options, and forgiveness programs.", keywords: ["student loans", "loan forgiveness", "fafsa", "loan repayment", "pslf"], notificationPriority: "breaking", trustedSources: [{ name: "Federal Student Aid", domain: "studentaid.gov" }, { name: "CFPB", domain: "consumerfinance.gov" }] },
+  { topicName: "STEM Education", category: "education", description: "STEM opportunities, programs, and advocacy for Black students in science and technology.", keywords: ["stem education", "black in stem", "stem scholarships", "coding bootcamp", "stem programs"], notificationPriority: "standard", trustedSources: [{ name: "NSF", domain: "nsf.gov" }, { name: "Code.org", domain: "code.org" }] },
+  { topicName: "K–12 Education", category: "education", description: "Public school policy, curriculum news, and resources for K-12 students and parents.", keywords: ["k-12 education", "public school", "school funding", "education policy", "school choice"], notificationPriority: "standard", trustedSources: [{ name: "US Dept of Education", domain: "ed.gov" }, { name: "EducationWeek", domain: "edweek.org" }] },
+  { topicName: "Education Policy", category: "education", description: "Federal and state education policy changes affecting Black students and communities.", keywords: ["education policy", "school funding", "no child left behind", "education reform"], notificationPriority: "breaking", trustedSources: [{ name: "US Dept of Education", domain: "ed.gov" }, { name: "Education Trust", domain: "edtrust.org" }] },
+
+  // Financial Wellness
+  { topicName: "Building Wealth & Investing", category: "financial", description: "Investment strategies, portfolio building, and wealth creation for beginners and beyond.", keywords: ["investing", "stocks", "etf", "wealth building", "portfolio", "compound interest"], notificationPriority: "standard", trustedSources: [{ name: "Investopedia", domain: "investopedia.com" }, { name: "SEC Investor Education", domain: "investor.gov" }] },
+  { topicName: "Black Homeownership", category: "financial", description: "Homebuying resources, down payment assistance programs, and fair housing rights for Black families.", keywords: ["black homeownership", "first time homebuyer", "down payment assistance", "fair housing", "mortgage"], notificationPriority: "standard", trustedSources: [{ name: "HUD", domain: "hud.gov" }, { name: "Consumer Financial Protection Bureau", domain: "consumerfinance.gov" }] },
+  { topicName: "Credit Health", category: "financial", description: "Credit score improvement, debt management, and credit rights.", keywords: ["credit score", "credit repair", "credit report", "debt management", "credit card"], notificationPriority: "standard", trustedSources: [{ name: "CFPB", domain: "consumerfinance.gov" }, { name: "NerdWallet", domain: "nerdwallet.com" }] },
+  { topicName: "Tax Tips & Filing", category: "financial", description: "Tax filing tips, deductions, credits, and IRS updates for individuals and business owners.", keywords: ["tax filing", "irs", "tax deductions", "tax credit", "tax refund"], notificationPriority: "standard", trustedSources: [{ name: "IRS", domain: "irs.gov" }, { name: "TurboTax", domain: "turbotax.intuit.com" }] },
+  { topicName: "Retirement Planning", category: "financial", description: "Retirement savings strategies, 401k tips, Social Security, and retirement income planning.", keywords: ["retirement", "401k", "ira", "social security", "retirement savings"], notificationPriority: "digest", trustedSources: [{ name: "Social Security Administration", domain: "ssa.gov" }, { name: "AARP", domain: "aarp.org" }] },
+  { topicName: "Estate Planning & Generational Wealth", category: "financial", description: "Wills, trusts, and strategies for building lasting generational wealth.", keywords: ["estate planning", "will", "trust", "generational wealth", "inheritance", "beneficiary"], notificationPriority: "digest", trustedSources: [{ name: "CFPB", domain: "consumerfinance.gov" }, { name: "Nolo", domain: "nolo.com" }] },
+  { topicName: "Personal Finance & Budgeting", category: "financial", description: "Budgeting tools, saving strategies, and practical personal finance tips.", keywords: ["budgeting", "personal finance", "saving money", "financial planning", "50/30/20 rule"], notificationPriority: "digest", trustedSources: [{ name: "CFPB", domain: "consumerfinance.gov" }, { name: "NerdWallet", domain: "nerdwallet.com" }] },
+
+  // Health & Wellness
+  { topicName: "Black Mental Health", category: "health", description: "Mental health resources, therapy access, and destigmatizing mental wellness in Black communities.", keywords: ["black mental health", "therapy", "mental wellness", "depression", "anxiety", "ptsd"], notificationPriority: "standard", trustedSources: [{ name: "SAMHSA", domain: "samhsa.gov" }, { name: "Therapy for Black Girls", domain: "therapyforblackgirls.com" }, { name: "National Alliance on Mental Illness", domain: "nami.org" }] },
+  { topicName: "Black Women's Health", category: "health", description: "Health research, advocacy, and resources specific to Black women's wellness.", keywords: ["black women health", "women's health", "maternal health", "fibroids", "breast cancer"], notificationPriority: "standard", trustedSources: [{ name: "Black Women's Health Imperative", domain: "bwhi.org" }, { name: "Office on Women's Health", domain: "womenshealth.gov" }] },
+  { topicName: "Black Men's Health", category: "health", description: "Health topics, screenings, and resources focused on Black men's wellness.", keywords: ["black men health", "prostate cancer", "hypertension", "men's health", "preventive care"], notificationPriority: "standard", trustedSources: [{ name: "CDC", domain: "cdc.gov" }, { name: "100 Black Men", domain: "100blackmen.org" }] },
+  { topicName: "Maternal Health & Infant Mortality", category: "health", description: "Black maternal mortality crisis, advocacy, and resources for Black mothers.", keywords: ["maternal mortality", "black maternal health", "infant mortality", "birth equity", "obstetric racism"], notificationPriority: "breaking", trustedSources: [{ name: "CDC", domain: "cdc.gov" }, { name: "Black Mamas Matter Alliance", domain: "blackmamasmatter.org" }] },
+  { topicName: "Health Equity & Disparities", category: "health", description: "Research and advocacy on racial health disparities and healthcare equity.", keywords: ["health equity", "health disparities", "racial health gap", "healthcare access", "social determinants"], notificationPriority: "standard", trustedSources: [{ name: "Office of Minority Health", domain: "minorityhealth.hhs.gov" }, { name: "CDC", domain: "cdc.gov" }, { name: "NIH", domain: "nih.gov" }] },
+  { topicName: "Chronic Disease Management", category: "health", description: "Diabetes, hypertension, heart disease — management resources for conditions disproportionately affecting Black communities.", keywords: ["diabetes", "hypertension", "heart disease", "chronic illness", "sickle cell"], notificationPriority: "standard", trustedSources: [{ name: "ADA", domain: "diabetes.org" }, { name: "CDC", domain: "cdc.gov" }, { name: "NIH", domain: "nih.gov" }] },
+  { topicName: "Nutrition & Healthy Eating", category: "health", description: "Culturally relevant nutrition information, healthy recipes, and food-as-medicine resources.", keywords: ["nutrition", "healthy eating", "plant-based", "soul food healthy", "food as medicine"], notificationPriority: "digest", trustedSources: [{ name: "USDA MyPlate", domain: "myplate.gov" }, { name: "NIH", domain: "nih.gov" }] },
+  { topicName: "Fitness & Physical Activity", category: "health", description: "Workout motivation, fitness programs, and physical wellness resources.", keywords: ["fitness", "exercise", "workout", "gym", "physical activity", "strength training"], notificationPriority: "digest", trustedSources: [{ name: "CDC Physical Activity", domain: "cdc.gov" }, { name: "American College of Sports Medicine", domain: "acsm.org" }] },
+  { topicName: "Vaccines & Immunizations", category: "health", description: "Vaccine updates, schedules, and addressing vaccine hesitancy in Black communities.", keywords: ["vaccines", "immunization", "flu shot", "covid vaccine", "vaccine hesitancy"], notificationPriority: "standard", trustedSources: [{ name: "CDC Vaccines", domain: "cdc.gov" }, { name: "NIH", domain: "nih.gov" }] },
+  { topicName: "Health Insurance & Coverage", category: "health", description: "Navigating health insurance options, ACA marketplace, Medicaid, and coverage resources.", keywords: ["health insurance", "aca", "medicaid", "marketplace insurance", "open enrollment"], notificationPriority: "standard", trustedSources: [{ name: "Healthcare.gov", domain: "healthcare.gov" }, { name: "Medicaid.gov", domain: "medicaid.gov" }] },
+
+  // Family
+  { topicName: "Black Parenting", category: "family", description: "Raising Black children with cultural pride, resources for Black parents, and family wellness.", keywords: ["black parenting", "raising black children", "parenting tips", "black families", "fatherhood"], notificationPriority: "digest", trustedSources: [{ name: "Essence", domain: "essence.com" }, { name: "National Black Child Development Institute", domain: "nbcdi.org" }] },
+  { topicName: "Childcare Resources", category: "family", description: "Childcare access, subsidies, early childhood education, and daycare quality.", keywords: ["childcare", "daycare", "childcare subsidy", "early childhood", "preschool"], notificationPriority: "standard", trustedSources: [{ name: "Child Care.gov", domain: "childcare.gov" }, { name: "Head Start", domain: "acf.hhs.gov" }] },
+  { topicName: "Senior Care & Elder Support", category: "family", description: "Resources for Black families caring for aging parents and elders.", keywords: ["senior care", "elder care", "aging parents", "assisted living", "medicare"], notificationPriority: "standard", trustedSources: [{ name: "AARP", domain: "aarp.org" }, { name: "Medicare.gov", domain: "medicare.gov" }] },
+  { topicName: "Adoption & Foster Care", category: "family", description: "Adoption process, foster care resources, and advocacy for Black children in the system.", keywords: ["adoption", "foster care", "black children adoption", "foster to adopt"], notificationPriority: "standard", trustedSources: [{ name: "Child Welfare Information Gateway", domain: "childwelfare.gov" }] },
+  { topicName: "Family Activities & Events", category: "family", description: "Family-friendly events, activities, and community gatherings near you.", keywords: ["family activities", "family events", "things to do with kids", "family outings"], notificationPriority: "digest", trustedSources: [{ name: "PBS Kids", domain: "pbs.org" }] },
+
+  // Food & Lifestyle
+  { topicName: "Black-Owned Restaurants", category: "food", description: "Discover and support Black-owned restaurants, food trucks, and catering businesses.", keywords: ["black-owned restaurant", "black chef", "soul food", "black food business", "minority restaurant"], notificationPriority: "digest", trustedSources: [{ name: "Yelp", domain: "yelp.com" }, { name: "Black Owned Everything", domain: "blackownedeverything.com" }] },
+  { topicName: "Soul Food & Cultural Recipes", category: "food", description: "Traditional and reimagined recipes celebrating African American and African culinary heritage.", keywords: ["soul food", "recipes", "black cooking", "african cuisine", "collard greens", "cornbread"], notificationPriority: "digest", trustedSources: [{ name: "Food52", domain: "food52.com" }, { name: "Bon Appétit", domain: "bonappetit.com" }] },
+  { topicName: "Food Deserts & Access", category: "food", description: "Advocacy and solutions for food access in underserved Black communities.", keywords: ["food desert", "food insecurity", "food access", "food apartheid", "grocery gap"], notificationPriority: "standard", trustedSources: [{ name: "USDA ERS", domain: "ers.usda.gov" }, { name: "Urban Institute", domain: "urban.org" }] },
+  { topicName: "Plant-Based & Vegan Living", category: "food", description: "Plant-based eating, veganism, and healthy lifestyle choices in Black community context.", keywords: ["vegan", "plant-based", "vegetarian", "meatless", "whole foods"], notificationPriority: "digest", trustedSources: [{ name: "PCRM", domain: "pcrm.org" }] },
+  { topicName: "Natural Hair & Beauty", category: "food", description: "Natural hair care, beauty trends, and Black-owned beauty product recommendations.", keywords: ["natural hair", "locs", "afro", "black beauty", "protective styles", "hair care"], notificationPriority: "digest", trustedSources: [{ name: "Essence Beauty", domain: "essence.com" }, { name: "Naturally Curly", domain: "naturallycurly.com" }] },
+  { topicName: "Fashion & Style", category: "food", description: "Black fashion designers, style trends, and culturally inspired clothing.", keywords: ["black fashion", "fashion trends", "black designers", "style", "black fashion week"], notificationPriority: "digest", trustedSources: [{ name: "Essence Style", domain: "essence.com" }, { name: "Vogue", domain: "vogue.com" }] },
+  { topicName: "Farmers Markets & Local Food", category: "food", description: "Support for local agriculture, community gardens, and farmers market access.", keywords: ["farmers market", "local food", "community garden", "urban farming", "local produce"], notificationPriority: "digest", trustedSources: [{ name: "USDA Agricultural Marketing Service", domain: "ams.usda.gov" }] },
+
+  // Entertainment
+  { topicName: "Black Cinema & Film", category: "entertainment", description: "Black filmmakers, movies celebrating Black culture, and film festival news.", keywords: ["black cinema", "black movies", "black filmmakers", "black actors", "afrofuturism"], notificationPriority: "digest", trustedSources: [{ name: "The Root", domain: "theroot.com" }, { name: "Essence Entertainment", domain: "essence.com" }] },
+  { topicName: "Music (R&B, Hip-Hop, Gospel, Jazz)", category: "entertainment", description: "Music news, album releases, and artist stories across genres rooted in Black culture.", keywords: ["hip-hop", "r&b", "gospel", "jazz", "soul music", "music news"], notificationPriority: "standard", trustedSources: [{ name: "Pitchfork", domain: "pitchfork.com" }, { name: "Essence", domain: "essence.com" }] },
+  { topicName: "Black Authors & Literature", category: "entertainment", description: "Books by Black authors, literary awards, and reading recommendations.", keywords: ["black authors", "black books", "toni morrison", "black literature", "reading recommendations"], notificationPriority: "digest", trustedSources: [{ name: "Kirkus Reviews", domain: "kirkusreviews.com" }, { name: "African American Literature Book Club", domain: "aalbc.com" }] },
+  { topicName: "Black Sports Excellence", category: "entertainment", description: "Black athletes, sports news, and stories of excellence and advocacy in sports.", keywords: ["black athletes", "sports news", "nba", "nfl", "track and field", "tennis"], notificationPriority: "standard", trustedSources: [{ name: "ESPN", domain: "espn.com" }, { name: "The Undefeated", domain: "theundefeated.com" }] },
+  { topicName: "Podcasts", category: "entertainment", description: "Must-listen podcasts by and for Black communities — news, culture, comedy, and more.", keywords: ["black podcasts", "podcasting", "podcast recommendations", "black creators podcast"], notificationPriority: "digest", trustedSources: [{ name: "Spotify", domain: "spotify.com" }, { name: "Apple Podcasts", domain: "podcasts.apple.com" }] },
+  { topicName: "Theater & Performing Arts", category: "entertainment", description: "Broadway, Black theater companies, and performing arts celebrations.", keywords: ["black theater", "broadway", "performing arts", "dance", "spoken word"], notificationPriority: "digest", trustedSources: [{ name: "Broadway.com", domain: "broadway.com" }] },
+
+  // Technology
+  { topicName: "AI & Machine Learning", category: "technology", description: "Artificial intelligence news, tools, and equity considerations.", keywords: ["artificial intelligence", "machine learning", "ai tools", "chatgpt", "automation"], notificationPriority: "standard", trustedSources: [{ name: "MIT Technology Review", domain: "technologyreview.com" }, { name: "Wired", domain: "wired.com" }] },
+  { topicName: "Black Tech Innovators", category: "technology", description: "Stories of Black founders, tech professionals, and innovators shaping the industry.", keywords: ["black tech", "black engineers", "black founders", "diversity in tech", "black silicon valley"], notificationPriority: "standard", trustedSources: [{ name: "Built In", domain: "builtin.com" }, { name: "Black Tech Week", domain: "blacktechweek.com" }] },
+  { topicName: "Digital Privacy & Safety", category: "technology", description: "Protecting your data, privacy rights, and digital safety tools.", keywords: ["digital privacy", "data protection", "privacy rights", "vpn", "data breach"], notificationPriority: "standard", trustedSources: [{ name: "EFF", domain: "eff.org" }, { name: "FTC Privacy", domain: "ftc.gov" }] },
+  { topicName: "Smart Home & Consumer Tech", category: "technology", description: "Smart home devices, gadget reviews, and consumer technology news.", keywords: ["smart home", "gadgets", "technology review", "consumer electronics", "apple", "android"], notificationPriority: "digest", trustedSources: [{ name: "The Verge", domain: "theverge.com" }, { name: "CNET", domain: "cnet.com" }] },
+  { topicName: "Electric Vehicles & Green Tech", category: "technology", description: "EV news, charging infrastructure, and green technology trends.", keywords: ["electric vehicle", "ev", "tesla", "charging station", "green technology"], notificationPriority: "digest", trustedSources: [{ name: "Electrek", domain: "electrek.co" }, { name: "DOE", domain: "energy.gov" }] },
+
+  // Environment
+  { topicName: "Climate Justice", category: "environment", description: "How climate change disproportionately impacts Black and Brown communities, and advocacy for change.", keywords: ["climate justice", "environmental racism", "climate change", "frontline communities", "green new deal"], notificationPriority: "standard", trustedSources: [{ name: "NAACP Environmental Justice", domain: "naacp.org" }, { name: "EPA Environmental Justice", domain: "epa.gov" }] },
+  { topicName: "Clean Energy & Sustainability", category: "environment", description: "Renewable energy developments, sustainability practices, and green job opportunities.", keywords: ["clean energy", "solar", "wind energy", "sustainability", "renewable energy"], notificationPriority: "standard", trustedSources: [{ name: "DOE", domain: "energy.gov" }, { name: "NRDC", domain: "nrdc.org" }] },
+  { topicName: "Water & Air Quality", category: "environment", description: "Water safety, air quality alerts, and environmental health in Black communities.", keywords: ["water quality", "air quality", "lead contamination", "clean water", "pollution"], notificationPriority: "breaking", trustedSources: [{ name: "EPA", domain: "epa.gov" }, { name: "EWG", domain: "ewg.org" }] },
+  { topicName: "Urban Gardening & Conservation", category: "environment", description: "Community gardens, urban agriculture, and conservation efforts in Black communities.", keywords: ["urban garden", "community garden", "conservation", "green space", "urban farming"], notificationPriority: "digest", trustedSources: [{ name: "USDA", domain: "usda.gov" }] },
+
+  // Community Giving
+  { topicName: "Volunteer Opportunities", category: "giving", description: "Local and national volunteer opportunities to give back to your community.", keywords: ["volunteer", "community service", "nonprofit volunteer", "giving back"], notificationPriority: "digest", trustedSources: [{ name: "VolunteerMatch", domain: "volunteermatch.org" }] },
+  { topicName: "Youth Programs & Mentorship", category: "giving", description: "Programs supporting Black youth through mentorship, education, and leadership development.", keywords: ["youth programs", "mentorship", "black youth", "after school", "youth development"], notificationPriority: "standard", trustedSources: [{ name: "100 Black Men", domain: "100blackmen.org" }, { name: "Big Brothers Big Sisters", domain: "bbbs.org" }] },
+  { topicName: "Black Philanthropy", category: "giving", description: "Giving circles, charitable foundations, and the culture of Black philanthropy.", keywords: ["black philanthropy", "giving circle", "charitable donation", "foundation", "community investment"], notificationPriority: "digest", trustedSources: [{ name: "African American Philanthropy", domain: "aafdn.org" }] },
+  { topicName: "Food & Housing Assistance", category: "giving", description: "Resources for families experiencing food insecurity and housing instability.", keywords: ["food bank", "housing assistance", "food assistance", "eviction help", "rental assistance"], notificationPriority: "standard", trustedSources: [{ name: "Feeding America", domain: "feedingamerica.org" }, { name: "HUD", domain: "hud.gov" }] },
+
+  // Government
+  { topicName: "Federal Policy News", category: "government", description: "Major federal legislation, executive orders, and policy decisions affecting Black communities.", keywords: ["federal policy", "legislation", "congress", "executive order", "white house"], notificationPriority: "breaking", trustedSources: [{ name: "Congress.gov", domain: "congress.gov" }, { name: "White House", domain: "whitehouse.gov" }, { name: "AP News", domain: "apnews.com" }] },
+  { topicName: "Supreme Court Watch", category: "government", description: "Supreme Court decisions and cases with major implications for civil rights and equality.", keywords: ["supreme court", "scotus", "court ruling", "civil rights case", "constitutional law"], notificationPriority: "breaking", trustedSources: [{ name: "SCOTUS Blog", domain: "scotusblog.com" }, { name: "NPR", domain: "npr.org" }] },
+  { topicName: "Criminal Justice Reform", category: "government", description: "Policing reform, sentencing policy, prison reform, and re-entry support news.", keywords: ["criminal justice reform", "police reform", "incarceration", "sentencing reform", "second chance"], notificationPriority: "breaking", trustedSources: [{ name: "Brennan Center", domain: "brennancenter.org" }, { name: "Equal Justice Initiative", domain: "eji.org" }] },
+  { topicName: "Housing Policy", category: "government", description: "Fair housing law, affordable housing legislation, and HUD policy updates.", keywords: ["housing policy", "fair housing", "affordable housing", "hud", "zoning laws"], notificationPriority: "standard", trustedSources: [{ name: "HUD", domain: "hud.gov" }, { name: "National Low Income Housing Coalition", domain: "nlihc.org" }] },
+  { topicName: "State & Local Legislation", category: "government", description: "State and local policy changes affecting Black communities — education, voting, policing, and more.", keywords: ["state legislation", "local government", "city council", "state law", "local policy"], notificationPriority: "standard", trustedSources: [{ name: "National Conference of State Legislatures", domain: "ncsl.org" }] },
+
+  // Mapping with Melanin Platform
+  { topicName: "MWM Platform Updates", category: "platform", description: "New features, improvements, and announcements from Mapping With Melanin™.", keywords: ["mapping with melanin", "mwm update", "new feature", "app update"], notificationPriority: "standard", trustedSources: [{ name: "Mapping With Melanin", domain: "mappingwithmelanin.com" }] },
+  { topicName: "Business Spotlights", category: "platform", description: "Featured Black-owned businesses, success stories, and spotlights from the MWM community.", keywords: ["business spotlight", "black business feature", "mwm business", "entrepreneur spotlight"], notificationPriority: "digest", trustedSources: [{ name: "Mapping With Melanin", domain: "mappingwithmelanin.com" }] },
+  { topicName: "Community Safety Alerts", category: "platform", description: "Real-time community safety alerts and Waze-style incident reports from the MWM community.", keywords: ["safety alert", "community alert", "ice activity", "police presence", "neighborhood alert"], notificationPriority: "breaking", trustedSources: [{ name: "Mapping With Melanin Community", domain: "mappingwithmelanin.com" }] },
+  { topicName: "Black Travel Guides", category: "platform", description: "Destination guides, city safety scores, and travel content from the MWM travel community.", keywords: ["black travel guide", "mwm travel", "destination guide", "city safety", "travel tips"], notificationPriority: "digest", trustedSources: [{ name: "Mapping With Melanin", domain: "mappingwithmelanin.com" }] },
+  { topicName: "Creator Spotlights", category: "platform", description: "Highlighting Black creators, influencers, and community voices in the MWM ecosystem.", keywords: ["creator spotlight", "black creators", "content creator", "community voice", "influencer"], notificationPriority: "digest", trustedSources: [{ name: "Mapping With Melanin", domain: "mappingwithmelanin.com" }] },
+];
+
+router.get("/admin/topics", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const topics = await db
+      .select({
+        id: knowledgeTopicsTable.id,
+        topicName: knowledgeTopicsTable.topicName,
+        category: knowledgeTopicsTable.category,
+        parentCategory: knowledgeTopicsTable.parentCategory,
+        description: knowledgeTopicsTable.description,
+        keywords: knowledgeTopicsTable.keywords,
+        synonyms: knowledgeTopicsTable.synonyms,
+        trustedSources: knowledgeTopicsTable.trustedSources,
+        notificationPriority: knowledgeTopicsTable.notificationPriority,
+        tier: knowledgeTopicsTable.tier,
+        enabled: knowledgeTopicsTable.enabled,
+        createdAt: knowledgeTopicsTable.createdAt,
+      })
+      .from(knowledgeTopicsTable)
+      .orderBy(knowledgeTopicsTable.category, knowledgeTopicsTable.topicName);
+
+    const followCounts = await db
+      .select({
+        topicId: userTopicFollowsTable.topicId,
+        count: count(),
+      })
+      .from(userTopicFollowsTable)
+      .groupBy(userTopicFollowsTable.topicId);
+
+    const followMap: Record<string, number> = {};
+    for (const f of followCounts) { followMap[f.topicId] = Number(f.count); }
+
+    res.json({
+      topics: topics.map((t) => ({ ...t, followCount: followMap[t.id] ?? 0 })),
+      total: topics.length,
+      enabled: topics.filter((t) => t.enabled).length,
+    });
+  } catch (err) {
+    req.log.error({ err }, "GET /admin/topics error");
+    res.status(500).json({ error: "Failed to fetch topics." });
+  }
+});
+
+router.post("/admin/topics", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const { topicName, category, description, keywords, synonyms, trustedSources, notificationPriority, tier } = req.body as Record<string, any>;
+    if (!topicName || !category) { res.status(400).json({ error: "topicName and category are required." }); return; }
+    const [topic] = await db
+      .insert(knowledgeTopicsTable)
+      .values({
+        topicName,
+        category,
+        description: description ?? null,
+        keywords: keywords ?? null,
+        synonyms: synonyms ?? null,
+        trustedSources: trustedSources ?? null,
+        notificationPriority: notificationPriority ?? "standard",
+        tier: tier ?? "free",
+        enabled: true,
+      })
+      .returning();
+    res.json({ topic });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/topics error");
+    res.status(500).json({ error: "Failed to create topic." });
+  }
+});
+
+router.put("/admin/topics/:id", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const id = String(req.params.id);
+    const { topicName, category, description, keywords, synonyms, trustedSources, notificationPriority, tier, enabled } = req.body as Record<string, any>;
+    const update: Record<string, any> = {};
+    if (topicName !== undefined) update.topicName = topicName;
+    if (category !== undefined) update.category = category;
+    if (description !== undefined) update.description = description;
+    if (keywords !== undefined) update.keywords = keywords;
+    if (synonyms !== undefined) update.synonyms = synonyms;
+    if (trustedSources !== undefined) update.trustedSources = trustedSources;
+    if (notificationPriority !== undefined) update.notificationPriority = notificationPriority;
+    if (tier !== undefined) update.tier = tier;
+    if (enabled !== undefined) update.enabled = enabled;
+    const [topic] = await db.update(knowledgeTopicsTable).set(update).where(eq(knowledgeTopicsTable.id, id)).returning();
+    res.json({ topic });
+  } catch (err) {
+    req.log.error({ err }, "PUT /admin/topics/:id error");
+    res.status(500).json({ error: "Failed to update topic." });
+  }
+});
+
+router.post("/admin/topics/seed", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    let inserted = 0;
+    let skipped = 0;
+    for (const t of SEED_TOPICS) {
+      const existing = await db
+        .select({ id: knowledgeTopicsTable.id })
+        .from(knowledgeTopicsTable)
+        .where(sql`lower(${knowledgeTopicsTable.topicName}) = lower(${t.topicName})`)
+        .limit(1);
+      if (existing.length > 0) { skipped++; continue; }
+      await db.insert(knowledgeTopicsTable).values({
+        topicName: t.topicName,
+        category: t.category,
+        description: t.description,
+        keywords: t.keywords,
+        notificationPriority: t.notificationPriority,
+        trustedSources: t.trustedSources,
+        enabled: true,
+        tier: "free",
+      });
+      inserted++;
+    }
+    res.json({ inserted, skipped, total: SEED_TOPICS.length });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/topics/seed error");
+    res.status(500).json({ error: "Seed failed." });
+  }
+});
+
+router.get("/admin/topics/issues", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const issues = await db.select().from(topicIssuesTable).orderBy(topicIssuesTable.name);
+    const followCounts = await db
+      .select({ issueId: userIssueFollowsTable.issueId, count: count() })
+      .from(userIssueFollowsTable)
+      .groupBy(userIssueFollowsTable.issueId);
+    const fm: Record<string, number> = {};
+    for (const f of followCounts) fm[f.issueId] = Number(f.count);
+    res.json({ issues: issues.map((i) => ({ ...i, followCount: fm[i.id] ?? 0 })) });
+  } catch (err) {
+    req.log.error({ err }, "GET /admin/topics/issues error");
+    res.status(500).json({ error: "Failed to fetch issues." });
+  }
+});
+
+router.post("/admin/topics/issues", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const { name, description, category, keywords } = req.body as Record<string, any>;
+    if (!name) { res.status(400).json({ error: "name is required." }); return; }
+    const [issue] = await db.insert(topicIssuesTable).values({ name, description: description ?? null, category: category ?? null, keywords: keywords ?? null, isActive: true }).returning();
+    res.json({ issue });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/topics/issues error");
+    res.status(500).json({ error: "Failed to create issue." });
+  }
+});
+
+router.put("/admin/topics/issues/:id", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const id = String(req.params.id);
+    const { name, description, category, keywords, isActive } = req.body as Record<string, any>;
+    const update: Record<string, any> = { updatedAt: new Date() };
+    if (name !== undefined) update.name = name;
+    if (description !== undefined) update.description = description;
+    if (category !== undefined) update.category = category;
+    if (keywords !== undefined) update.keywords = keywords;
+    if (isActive !== undefined) update.isActive = isActive;
+    const [issue] = await db.update(topicIssuesTable).set(update).where(eq(topicIssuesTable.id, id)).returning();
+    res.json({ issue });
+  } catch (err) {
+    req.log.error({ err }, "PUT /admin/topics/issues/:id error");
+    res.status(500).json({ error: "Failed to update issue." });
+  }
+});
+
+router.post("/admin/topics/issues/seed", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const SEED_ISSUES = [
+    { name: "Affordable Housing Crisis", description: "Tracking housing affordability, rent increases, and displacement of Black communities.", category: "government", keywords: ["affordable housing", "housing crisis", "rent", "displacement", "gentrification"] },
+    { name: "Maternal Mortality Emergency", description: "Monitoring policy and research on Black maternal mortality rates — 3x higher than white women.", category: "health", keywords: ["maternal mortality", "maternal health", "black mothers", "birth equity"] },
+    { name: "HBCU Federal Funding", description: "Ongoing efforts to secure and protect federal funding for Historically Black Colleges and Universities.", category: "education", keywords: ["hbcu funding", "federal education", "historically black colleges"] },
+    { name: "Voting Rights Legislation", description: "Federal and state bills affecting Black voter access, ID laws, and polling place access.", category: "government", keywords: ["voting rights", "voter id", "election protection", "ballot access"] },
+    { name: "Minority Business Grant Programs", description: "New and expiring SBA, state, and private grant programs for minority-owned businesses.", category: "business", keywords: ["minority grants", "small business grants", "sba programs", "black business funding"] },
+    { name: "Student Loan Forgiveness", description: "Court rulings, policy changes, and program updates on student debt relief.", category: "education", keywords: ["student loan forgiveness", "loan cancellation", "biden loan relief", "pslf"] },
+    { name: "Police Accountability Reform", description: "Legislation, court decisions, and local policy changes related to policing and accountability.", category: "government", keywords: ["police reform", "police accountability", "qualified immunity", "body cameras"] },
+    { name: "CROWN Act Legislation", description: "State and federal progress on the CROWN Act protecting natural hair from discrimination.", category: "government", keywords: ["crown act", "natural hair discrimination", "hair discrimination law"] },
+    { name: "Health Insurance Coverage Expansion", description: "Medicaid expansion, ACA enrollment, and policy changes affecting Black family coverage.", category: "health", keywords: ["health insurance", "aca", "medicaid expansion", "uninsured"] },
+    { name: "Criminal Justice Sentencing Reform", description: "State and federal efforts to reform mandatory minimums and address racial sentencing disparities.", category: "government", keywords: ["sentencing reform", "mandatory minimum", "criminal justice", "incarceration"] },
+    { name: "Minority Wealth Gap", description: "Research and policy addressing the racial wealth gap between Black and white Americans.", category: "financial", keywords: ["racial wealth gap", "wealth inequality", "economic equity", "reparations"] },
+    { name: "Reparations Legislation", description: "Federal and state reparations study commissions, bills, and movements for redress.", category: "government", keywords: ["reparations", "hr40", "slavery redress", "restorative justice"] },
+    { name: "Immigration Policy & Communities", description: "Immigration enforcement actions, DACA status, and impacts on Black immigrant communities.", category: "government", keywords: ["immigration", "daca", "deportation", "ice raids", "black immigrants"] },
+    { name: "Climate Justice & Frontline Communities", description: "Environmental policy affecting Black communities on the frontlines of climate change.", category: "environment", keywords: ["climate justice", "environmental racism", "frontline communities", "clean air"] },
+    { name: "Algorithmic Bias & AI Equity", description: "How AI systems perpetuate racial bias in hiring, lending, criminal justice, and healthcare.", category: "technology", keywords: ["algorithmic bias", "ai fairness", "facial recognition bias", "racial bias ai"] },
+    { name: "Food Desert Policy", description: "Federal and local initiatives to address food deserts in Black and underserved communities.", category: "food", keywords: ["food desert", "food policy", "grocery access", "food apartheid"] },
+    { name: "Black Homeownership Gap", description: "Policy and advocacy addressing the persistent gap in homeownership rates between Black and white Americans.", category: "financial", keywords: ["black homeownership", "homeownership gap", "fair housing", "redlining legacy"] },
+    { name: "Community Land Trust Development", description: "Efforts to use community land trusts to prevent displacement and build Black community wealth.", category: "government", keywords: ["community land trust", "clt", "affordable housing", "anti-displacement"] },
+    { name: "Minority-Owned Bank Support", category: "business", description: "Support for Black and minority depository institutions (MDIs) and community development banks.", keywords: ["minority bank", "black bank", "mdi", "community bank", "cdfi"] },
+    { name: "Federal Broadband Access Expansion", category: "technology", description: "Internet access equity programs and funding aimed at closing the digital divide in underserved communities.", keywords: ["broadband", "digital divide", "internet access", "connectivity equity"] },
+  ];
+  try {
+    let inserted = 0;
+    let skipped = 0;
+    for (const issue of SEED_ISSUES) {
+      const existing = await db.select({ id: topicIssuesTable.id }).from(topicIssuesTable).where(sql`lower(${topicIssuesTable.name}) = lower(${issue.name})`).limit(1);
+      if (existing.length > 0) { skipped++; continue; }
+      await db.insert(topicIssuesTable).values({ ...issue, isActive: true });
+      inserted++;
+    }
+    res.json({ inserted, skipped, total: SEED_ISSUES.length });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/topics/issues/seed error");
+    res.status(500).json({ error: "Seed failed." });
+  }
+});
+
 export default router;
+
