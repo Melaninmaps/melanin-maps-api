@@ -277,6 +277,8 @@ export default function WaitlistScreen() {
   const [copied, setCopied] = useState(false);
   const [position, setPosition] = useState(Math.floor(Math.random() * 800) + 200);
   const [showRecommend, setShowRecommend] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteCount, setInviteCount] = useState(0);
 
   const referralCode = email.replace(/[@.]/g, "").toUpperCase().slice(0, 8) || "MELANIN";
   const referralLink = REFERRAL_URL + referralCode;
@@ -524,6 +526,31 @@ export default function WaitlistScreen() {
               </View>
             </View>
 
+            {/* Invite a Friend to the Community */}
+            <TouchableOpacity
+              style={[styles.inviteCard, { backgroundColor: colors.card, borderColor: colors.primary + "50" }]}
+              onPress={() => setShowInvite(true)}
+              activeOpacity={0.88}
+            >
+              <View style={[styles.inviteCardIconWrap, { backgroundColor: colors.primary + "15" }]}>
+                <Text style={{ fontSize: 28 }}>🤎</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={styles.inviteCardTitleRow}>
+                  <Text style={[styles.inviteCardTitle, { color: colors.foreground }]}>Add a Friend to the Community</Text>
+                  {inviteCount > 0 && (
+                    <View style={[styles.inviteCountBadge, { backgroundColor: colors.primary }]}>
+                      <Text style={styles.inviteCountText}>{inviteCount}</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={[styles.inviteCardSub, { color: colors.mutedForeground }]}>
+                  Enter their email and they're added immediately — no link needed. A personal invite lands in their inbox from you.
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={18} color={colors.primary} />
+            </TouchableOpacity>
+
             {/* Who are we missing? — after signup too */}
             <RecommendBanner colors={colors} onPress={() => setShowRecommend(true)} />
 
@@ -542,7 +569,178 @@ export default function WaitlistScreen() {
         onClose={() => setShowRecommend(false)}
         isAuthenticated={isAuthenticated}
       />
+      <InviteFriendModal
+        visible={showInvite}
+        referralCode={referralCode}
+        onClose={(invited) => {
+          setShowInvite(false);
+          if (invited) setInviteCount((n) => n + 1);
+        }}
+      />
     </KeyboardAvoidingView>
+  );
+}
+
+function InviteFriendModal({
+  visible,
+  onClose,
+  referralCode,
+}: {
+  visible: boolean;
+  onClose: (invited: boolean) => void;
+  referralCode: string;
+}) {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const [friendName, setFriendName] = useState("");
+  const [friendEmail, setFriendEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState("");
+
+  const emailValid = friendEmail.includes("@") && friendEmail.includes(".");
+  const canSubmit = emailValid && !loading;
+
+  const reset = () => {
+    setFriendName(""); setFriendEmail(""); setDone(false); setError("");
+  };
+
+  const handleClose = (invited: boolean) => { reset(); onClose(invited); };
+
+  const handleInvite = async () => {
+    if (!canSubmit) return;
+    setLoading(true); setError("");
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const res = await fetch(`${getApiBase()}/api/waitlist/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          referralCode,
+          inviteeEmail: friendEmail.trim(),
+          inviteeName: friendName.trim() || undefined,
+          type: "friend",
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json() as { error?: string };
+        setError(body.error ?? "Something went wrong. Please try again.");
+        return;
+      }
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setDone(true);
+    } catch {
+      setError("Couldn't send the invite. Check your connection and try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={() => handleClose(done)}>
+      <KeyboardAvoidingView style={inv.overlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => handleClose(done)} />
+        <View style={[inv.sheet, { backgroundColor: colors.background, paddingBottom: bottomPad + 20 }]}>
+          <View style={[inv.handle, { backgroundColor: colors.border }]} />
+
+          {!done ? (
+            <>
+              <View style={inv.titleRow}>
+                <Text style={[inv.title, { color: colors.foreground }]}>Add a Friend to the Community 🤎</Text>
+                <TouchableOpacity onPress={() => handleClose(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Feather name="x" size={20} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              </View>
+              <Text style={[inv.sub, { color: colors.mutedForeground }]}>
+                Enter their info and we'll add them to the community waitlist and send them a personal invite from you.
+              </Text>
+
+              <Text style={[inv.label, { color: colors.mutedForeground }]}>Friend's Name <Text style={{ color: colors.mutedForeground + "80" }}>(optional)</Text></Text>
+              <TextInput
+                style={[inv.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                value={friendName}
+                onChangeText={setFriendName}
+                placeholder="e.g. Maya Johnson"
+                placeholderTextColor={colors.mutedForeground}
+                autoCapitalize="words"
+                returnKeyType="next"
+              />
+
+              <Text style={[inv.label, { color: colors.mutedForeground }]}>
+                Friend's Email <Text style={{ color: colors.destructive }}>*</Text>
+              </Text>
+              <TextInput
+                style={[inv.input, { backgroundColor: colors.card, borderColor: friendEmail && !emailValid ? colors.destructive : colors.border, color: colors.foreground }]}
+                value={friendEmail}
+                onChangeText={setFriendEmail}
+                placeholder="maya@example.com"
+                placeholderTextColor={colors.mutedForeground}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="send"
+                onSubmitEditing={handleInvite}
+              />
+
+              {!!error && (
+                <View style={[inv.errorBox, { borderColor: colors.destructive + "40", backgroundColor: colors.destructive + "10" }]}>
+                  <Feather name="alert-circle" size={14} color={colors.destructive} />
+                  <Text style={[inv.errorText, { color: colors.destructive }]}>{error}</Text>
+                </View>
+              )}
+
+              <View style={[inv.infoBox, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "25" }]}>
+                <Text style={{ fontSize: 16 }}>✉️</Text>
+                <Text style={[inv.infoText, { color: colors.primary }]}>
+                  They'll get a personal invite email from <Text style={{ fontFamily: "Inter_700Bold" }}>you</Text> — not just a generic waitlist email. And they're added to the community list immediately.
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={[inv.btn, { backgroundColor: canSubmit ? colors.primary : colors.muted, opacity: canSubmit ? 1 : 0.5 }]}
+                onPress={handleInvite}
+                disabled={!canSubmit}
+                activeOpacity={0.85}
+              >
+                {loading
+                  ? <ActivityIndicator size="small" color="#FFF" />
+                  : <Text style={inv.btnText}>Add {friendName.trim() ? friendName.trim().split(" ")[0] : "Friend"} to the Community →</Text>
+                }
+              </TouchableOpacity>
+            </>
+          ) : (
+            <View style={inv.doneWrap}>
+              <Text style={{ fontSize: 56, textAlign: "center" }}>🎉</Text>
+              <Text style={[inv.doneTitle, { color: colors.foreground }]}>
+                {friendName.trim() ? `${friendName.trim().split(" ")[0]} is in!` : "They're in!"}
+              </Text>
+              <Text style={[inv.doneSub, { color: colors.mutedForeground }]}>
+                <Text style={{ fontFamily: "Inter_700Bold", color: colors.foreground }}>
+                  {friendName.trim() || friendEmail}
+                </Text>{" "}
+                has been added to the community waitlist and sent a personal invite. They'll hear from us soon.
+              </Text>
+
+              <View style={[inv.successBadge, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
+                <Feather name="users" size={16} color={colors.primary} />
+                <Text style={[inv.successBadgeText, { color: colors.primary }]}>
+                  Your community is growing. Every person you add helps build something powerful.
+                </Text>
+              </View>
+
+              <TouchableOpacity style={[inv.btn, { backgroundColor: colors.primary }]} onPress={reset}>
+                <Text style={inv.btnText}>Invite Another Friend</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleClose(true)} style={{ alignItems: "center", paddingVertical: 14 }}>
+                <Text style={[inv.doneLink, { color: colors.mutedForeground }]}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 }
 
@@ -619,6 +817,16 @@ const styles = StyleSheet.create({
   shareBtnTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   doneBtn: { alignItems: "center", paddingVertical: 17, borderRadius: 16 },
   doneBtnTxt: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
+  inviteCard: {
+    flexDirection: "row", alignItems: "center", gap: 14, borderWidth: 2,
+    borderRadius: 20, padding: 16,
+  },
+  inviteCardIconWrap: { width: 56, height: 56, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  inviteCardTitleRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
+  inviteCardTitle: { fontFamily: "Inter_700Bold", fontSize: 15 },
+  inviteCardSub: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginTop: 3 },
+  inviteCountBadge: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center" },
+  inviteCountText: { fontFamily: "Inter_700Bold", fontSize: 12, color: "#FFF" },
   recommendBanner: {
     borderRadius: 20, borderWidth: 2, padding: 18, gap: 12,
     borderStyle: "dashed",
@@ -658,5 +866,28 @@ const s = StyleSheet.create({
   badgeHint: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderWidth: 1, borderRadius: 14, padding: 14, width: "100%" },
   badgeHintTitle: { fontFamily: "Inter_700Bold", fontSize: 14, marginBottom: 4 },
   badgeHintSub: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  doneLink: { fontFamily: "Inter_500Medium", fontSize: 15 },
+});
+
+const inv = StyleSheet.create({
+  overlay: { flex: 1, justifyContent: "flex-end" },
+  sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, gap: 14, maxHeight: "92%" },
+  handle: { width: 36, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 4 },
+  titleRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
+  title: { fontFamily: "Inter_700Bold", fontSize: 20, flex: 1 },
+  sub: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 21 },
+  label: { fontFamily: "Inter_500Medium", fontSize: 12 },
+  input: { borderWidth: 1, borderRadius: 14, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular" },
+  errorBox: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderRadius: 10, padding: 10 },
+  errorText: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
+  infoBox: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderWidth: 1, borderRadius: 12, padding: 12 },
+  infoText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, flex: 1 },
+  btn: { paddingVertical: 16, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  btnText: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFF" },
+  doneWrap: { alignItems: "center", gap: 16, paddingVertical: 8 },
+  doneTitle: { fontFamily: "Inter_700Bold", fontSize: 26, textAlign: "center" },
+  doneSub: { fontFamily: "Inter_400Regular", fontSize: 15, textAlign: "center", lineHeight: 22 },
+  successBadge: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderWidth: 1, borderRadius: 14, padding: 14, width: "100%" },
+  successBadgeText: { fontFamily: "Inter_500Medium", fontSize: 13, flex: 1, lineHeight: 19 },
   doneLink: { fontFamily: "Inter_500Medium", fontSize: 15 },
 });

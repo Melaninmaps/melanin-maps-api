@@ -657,6 +657,20 @@ router.post("/waitlist/invite", waitlistLimiter, async (req: Request, res: Respo
       const joinLink = `https://mappingwithmelanin.com/?ref=${code}&type=business&biz=${encodeURIComponent(businessName!.trim())}`;
       await sendBusinessWaitlistInvitation(cleanInvitee, businessName!.trim(), referrerName, joinLink);
     } else {
+      // Insert the friend directly onto the waitlist as a pending community member
+      // (skip if they're already on it — don't overwrite an existing entry)
+      const nameParts = cleanName ? cleanName.split(" ") : [];
+      const friendFirst = nameParts[0] ?? null;
+      const friendLast = nameParts.slice(1).join(" ") || null;
+      const friendCode = cleanInvitee.replace(/[@.]/g, "").toUpperCase().slice(0, 8);
+
+      await pool.query(
+        `INSERT INTO waitlist_signups (email, first_name, last_name, referral_code, referred_by, status, notes)
+         VALUES ($1, $2, $3, $4, $5, 'pending', 'Added directly by a community member via friend invite')
+         ON CONFLICT (email) DO NOTHING`,
+        [cleanInvitee, friendFirst, friendLast, friendCode, code]
+      );
+
       await sendFriendInvitation(cleanInvitee, cleanName, referrerName, referralLink, code);
     }
 
