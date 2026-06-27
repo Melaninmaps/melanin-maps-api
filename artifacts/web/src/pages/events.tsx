@@ -68,22 +68,19 @@ export default function Events() {
               <div key={event.id} className="bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(43,21,7,0.05)] border border-[#2B1507]/5 flex flex-col h-[480px] group relative">
                 {/* Image Header */}
                 <div className="h-[45%] relative overflow-hidden bg-[#2B1507]/10 shrink-0">
-                  {event.imageUrl ? (
-                    <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                  ) : (
-                    <div className={`w-full h-full flex items-center justify-center ${
-                      event.category === 'Finance' ? 'bg-gradient-to-br from-[#1a3a2a] to-[#2d7a4f]' :
-                      event.category === 'Beauty' ? 'bg-gradient-to-br from-[#3a1a3a] to-[#7a2d6b]' :
-                      event.category === 'Cultural' ? 'bg-gradient-to-br from-[#2B1507] to-[#CA922B]' :
-                      event.category === 'Music' ? 'bg-gradient-to-br from-[#0d1a3a] to-[#2d4a8a]' :
-                      event.category === 'Food' ? 'bg-gradient-to-br from-[#3a1a0d] to-[#8a4a1a]' :
-                      event.category === 'Wellness' ? 'bg-gradient-to-br from-[#1a2a2a] to-[#2d6b5a]' :
-                      event.category === 'Business' ? 'bg-gradient-to-br from-[#1a1a2a] to-[#3a3a6b]' :
-                      'bg-gradient-to-br from-[#2B1507] to-[#5a3a1a]'
-                    }`}>
-                      <CalendarIcon className="w-12 h-12 text-white/30" />
-                    </div>
-                  )}
+                  {(() => {
+                    const categoryImages: Record<string, string> = {
+                      Finance: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80",
+                      Beauty: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&q=80",
+                      Cultural: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80",
+                      Music: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80",
+                      Food: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
+                      Wellness: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80",
+                      Business: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&q=80",
+                    };
+                    const src = event.imageUrl || (event.category ? categoryImages[event.category] : null) || "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80";
+                    return <img src={src} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />;
+                  })()}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#2B1507]/80 to-transparent opacity-60" />
                   
                   {/* Badges */}
