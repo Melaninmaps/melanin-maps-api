@@ -752,7 +752,7 @@ export default function ListBusinessScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.reviewNoticeTitle, { color: colors.foreground }]}>Verification Process</Text>
                       <Text style={[styles.reviewNoticeText, { color: colors.mutedForeground }]}>
-                        Our team reviews every listing to ensure quality and authenticity. minority-owned businesses are eligible for our Verified badge after review.
+                        Our team reviews every listing to ensure quality and authenticity. Minority-owned businesses are eligible for our Verified badge after review.
                       </Text>
                     </View>
                   </View>

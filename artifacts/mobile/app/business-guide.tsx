@@ -28,7 +28,7 @@ const TIERS = [
         items: [
           "Business Profile & Story",
           "Business Verification",
-          "Photos & Business Videos",
+          "Photos & Video Links (YouTube, TikTok, Instagram)",
           "Marketplace Access",
           "Sell Products & Services",
           "Receive & Respond to Reviews",

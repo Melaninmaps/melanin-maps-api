@@ -190,7 +190,7 @@ function useMyBusiness() {
 }
 
 const ACTIONS = [
-  { id: "edit", icon: "edit-2" as const, label: "Edit Listing", color: "#442A19", route: "/list-business" },
+  { id: "edit", icon: "edit-2" as const, label: "Edit Listing", color: "#442A19", route: "/business-owner/edit-profile" },
   { id: "hours", icon: "clock" as const, label: "Manage Hours", color: "#CA922B", route: null },
   { id: "reviews", icon: "star" as const, label: "All Reviews", color: "#2D7A4F", route: null },
   { id: "resolution", icon: "check-circle" as const, label: "Resolution Center", color: "#2D7A4F", route: "/resolution-center" },
@@ -701,7 +701,16 @@ export default function BusinessDashboardScreen() {
                   style={[styles.actionCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                   onPress={() => {
                     if (Platform.OS !== "web") Haptics.selectionAsync();
-                    if (a.route) router.push(a.route as never);
+                    if (a.id === "hours") {
+                      router.push("/business-owner/edit-profile" as never);
+                    } else if (a.id === "reviews") {
+                      setActiveTab("reviews");
+                    } else if (a.id === "analytics") {
+                      setActiveTab("insights");
+                      void loadAnalytics();
+                    } else if (a.route) {
+                      router.push(a.route as never);
+                    }
                   }}
                   activeOpacity={0.8}
                 >
