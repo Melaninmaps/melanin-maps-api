@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   FlatList,
   Linking,
   Platform,
@@ -22,6 +23,70 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
+import { useSafetyProximity, type ProximityWarning } from "@/hooks/useSafetyProximity";
+
+const SEVERITY_COLORS: Record<string, string> = {
+  low: "#F59E0B",
+  medium: "#EF4444",
+  high: "#DC2626",
+  critical: "#7F1D1D",
+};
+
+const SEVERITY_LABELS: Record<string, string> = {
+  low: "Low Risk",
+  medium: "Community Alert",
+  high: "High Alert",
+  critical: "Critical Alert",
+};
+
+const CATEGORY_ICONS: Record<string, string> = {
+  safety: "⚠️",
+  sundown: "🚫",
+  discrimination: "🛡️",
+  business: "🏪",
+  resource: "ℹ️",
+  positive: "✅",
+};
+
+function ProximityWarningBanner({
+  warning,
+  onDismiss,
+}: {
+  warning: ProximityWarning;
+  onDismiss: () => void;
+}) {
+  const slideAnim = useRef(new Animated.Value(-80)).current;
+  const sc = SEVERITY_COLORS[warning.severity] ?? "#EF4444";
+
+  useEffect(() => {
+    Animated.spring(slideAnim, { toValue: 0, tension: 70, friction: 12, useNativeDriver: true }).start();
+  }, [slideAnim]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.proximityBanner,
+        { backgroundColor: sc, transform: [{ translateY: slideAnim }] },
+      ]}
+    >
+      <Text style={styles.proximityIcon}>{CATEGORY_ICONS[warning.category] ?? "⚠️"}</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.proximityTitle}>
+          {SEVERITY_LABELS[warning.severity] ?? "Safety Alert"} · {warning.name}
+        </Text>
+        <Text style={styles.proximityMeta}>
+          {warning.reportCount} community {warning.reportCount === 1 ? "report" : "reports"} in 7 days
+          {warning.distanceMeters < 1000
+            ? ` · ${Math.round(warning.distanceMeters)}m away`
+            : ` · ${(warning.distanceMeters / 1000).toFixed(1)}km away`}
+        </Text>
+      </View>
+      <TouchableOpacity onPress={onDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <Feather name="x" size={16} color="#fff" />
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
 
 export function MapTabView() {
   const colors = useColors();
@@ -32,11 +97,13 @@ export function MapTabView() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [warningIdx, setWarningIdx] = useState(0);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
   const { alert: geoAlert, dismissAlert } = useGeoSafeAlert();
+  const { warnings, dismissWarning } = useSafetyProximity();
 
   const { businesses } = useBusinesses();
   const filtered = businesses.filter((b) => {
@@ -48,6 +115,22 @@ export function MapTabView() {
     return matchesSearch && matchesCat;
   });
 
+  const flaggedIds = new Set(warnings.map((w) => w.targetId));
+
+  const currentWarning = warnings[warningIdx] ?? null;
+
+  const handleDismissCurrent = () => {
+    if (!currentWarning) return;
+    dismissWarning(currentWarning.targetId);
+    setWarningIdx((i) => Math.max(0, i - 1));
+  };
+
+  useEffect(() => {
+    if (warningIdx >= warnings.length && warnings.length > 0) {
+      setWarningIdx(warnings.length - 1);
+    }
+  }, [warnings.length, warningIdx]);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
@@ -57,7 +140,15 @@ export function MapTabView() {
           <Text style={[styles.mapNoticeText, { color: colors.primary }]}>Use Expo Go for interactive map</Text>
         </View>
       </View>
-      {geoAlert && (
+
+      {currentWarning && (
+        <ProximityWarningBanner
+          warning={currentWarning}
+          onDismiss={handleDismissCurrent}
+        />
+      )}
+
+      {!currentWarning && geoAlert && (
         <TouchableOpacity
           style={styles.geoAlertBanner}
           onPress={dismissAlert}
@@ -69,6 +160,29 @@ export function MapTabView() {
           </Text>
         </TouchableOpacity>
       )}
+
+      {warnings.length > 1 && (
+        <View style={[styles.warningNav, { backgroundColor: colors.secondary }]}>
+          <TouchableOpacity
+            onPress={() => setWarningIdx((i) => Math.max(0, i - 1))}
+            disabled={warningIdx === 0}
+            style={{ opacity: warningIdx === 0 ? 0.3 : 1 }}
+          >
+            <Feather name="chevron-left" size={16} color={colors.primary} />
+          </TouchableOpacity>
+          <Text style={[styles.warningNavText, { color: colors.primary }]}>
+            Alert {warningIdx + 1} of {warnings.length} nearby
+          </Text>
+          <TouchableOpacity
+            onPress={() => setWarningIdx((i) => Math.min(warnings.length - 1, i + 1))}
+            disabled={warningIdx === warnings.length - 1}
+            style={{ opacity: warningIdx === warnings.length - 1 ? 0.3 : 1 }}
+          >
+            <Feather name="chevron-right" size={16} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={styles.searchRow}>
         <SearchBar value={search} onChangeText={setSearch} />
       </View>
@@ -92,17 +206,30 @@ export function MapTabView() {
         data={filtered}
         keyExtractor={(b) => b.id}
         contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100 }]}
-        renderItem={({ item }) => (
-          <BusinessCard
-            business={item}
-            onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })}
-            isSaved={isSaved(item.id)}
-            onToggleSave={() => toggleSave(item.id)}
-          />
-        )}
+        renderItem={({ item }) => {
+          const isDangerous = flaggedIds.has(String(item.id));
+          const w = warnings.find((x) => x.targetId === String(item.id));
+          return (
+            <View>
+              {isDangerous && w && (
+                <View style={[styles.dangerBadge, { borderColor: SEVERITY_COLORS[w.severity] + "55", backgroundColor: SEVERITY_COLORS[w.severity] + "11" }]}>
+                  <Feather name="alert-triangle" size={12} color={SEVERITY_COLORS[w.severity]} />
+                  <Text style={[styles.dangerBadgeText, { color: SEVERITY_COLORS[w.severity] }]}>
+                    {SEVERITY_LABELS[w.severity]} · {w.reportCount} community {w.reportCount === 1 ? "report" : "reports"} in 7 days
+                  </Text>
+                </View>
+              )}
+              <BusinessCard
+                business={item}
+                onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })}
+                isSaved={isSaved(item.id)}
+                onToggleSave={() => toggleSave(item.id)}
+              />
+            </View>
+          );
+        }}
       />
 
-      {/* Safety Insights — gated for members */}
       <TouchableOpacity
         style={[styles.safetyBtn, { backgroundColor: colors.secondary }]}
         activeOpacity={0.85}
@@ -160,6 +287,24 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   mapNoticeText: { fontFamily: "Inter_500Medium", fontSize: 12 },
+  proximityBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  proximityIcon: { fontSize: 18 },
+  proximityTitle: { fontFamily: "Inter_700Bold", fontSize: 13, color: "#fff" },
+  proximityMeta: { fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 2 },
+  warningNav: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+  },
+  warningNavText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   geoAlertBanner: {
     flexDirection: "row",
     alignItems: "center",
@@ -179,6 +324,17 @@ const styles = StyleSheet.create({
   catRow: { flexShrink: 0 },
   catList: { paddingHorizontal: 16, gap: 8, paddingBottom: 10 },
   list: { paddingHorizontal: 16, paddingTop: 12 },
+  dangerBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 4,
+  },
+  dangerBadgeText: { fontFamily: "Inter_500Medium", fontSize: 12, flex: 1 },
   sosBtn: {
     position: "absolute",
     bottom: 100,

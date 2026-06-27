@@ -754,7 +754,7 @@ export default function RelocationPlannerScreen() {
                     <Text style={[s.bizSectionLabel, { color: colors.mutedForeground }]}>
                       🤎 Minority-Owned Recommendations
                     </Text>
-                    {(msg.businesses ?? []).map((biz, i) => (
+                    {(msg.businesses ?? []).map((biz: ReloBiz, i: number) => (
                       <ReloBizCard
                         key={`${biz.name}-${i}`}
                         biz={biz}
@@ -770,7 +770,7 @@ export default function RelocationPlannerScreen() {
                 {(msg.checklistItems ?? []).length > 0 && (
                   <View style={[s.checklistBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <Text style={[s.checklistTitle, { color: colors.text }]}>✅ Phase Checklist</Text>
-                    {(msg.checklistItems ?? []).map((item, i) => (
+                    {(msg.checklistItems ?? []).map((item: string, i: number) => (
                       <View key={i} style={s.checkItem}>
                         <View style={[s.checkDot2, { borderColor: GOLD }]} />
                         <Text style={[s.checkText, { color: colors.mutedForeground }]}>{item}</Text>
@@ -796,7 +796,7 @@ export default function RelocationPlannerScreen() {
                 {/* Suggestion chips */}
                 {(msg.proactiveSuggestions ?? []).length > 0 && (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.chipScroll}>
-                    {(msg.proactiveSuggestions ?? []).map((s2, i) => (
+                    {(msg.proactiveSuggestions ?? []).map((s2: string, i: number) => (
                       <TouchableOpacity
                         key={i}
                         style={[sugS.chip, { borderColor: colors.border, backgroundColor: colors.card }]}

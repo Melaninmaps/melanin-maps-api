@@ -371,6 +371,122 @@ router.get("/admin/safety-incidents", async (req: any, res: Response): Promise<v
   }
 });
 
+/**
+ * GET /reports/proximity-warnings
+ * Returns community danger flags within radius of a lat/lng.
+ * Triggers when 3+ reports exist for a business or area in the last 7 days.
+ */
+router.get("/reports/proximity-warnings", async (req: Request, res: Response): Promise<void> => {
+  const lat = parseFloat(req.query.lat as string);
+  const lng = parseFloat(req.query.lng as string);
+  const radius = Math.min(parseFloat((req.query.radius as string) || "500"), 5000);
+
+  if (isNaN(lat) || isNaN(lng)) {
+    res.status(400).json({ error: "lat and lng are required" });
+    return;
+  }
+
+  try {
+    // Business-linked danger reports: join safety_reports → businesses for real coordinates.
+    // Groups by business, only surfaces those with 3+ non-dismissed reports in the last 7 days.
+    const businessWarnings = await pool.query<{
+      target_id: string;
+      business_name: string;
+      category: string;
+      severity: string;
+      report_count: string;
+      latitude: string;
+      longitude: string;
+      distance_meters: string;
+    }>(
+      `SELECT
+        sr.target_id,
+        b.name AS business_name,
+        sr.category,
+        MAX(sr.severity) AS severity,
+        COUNT(*) AS report_count,
+        b.latitude::text,
+        b.longitude::text,
+        (
+          6371000 * acos(
+            LEAST(1.0,
+              cos(radians($1)) * cos(radians(b.latitude::double precision))
+              * cos(radians(b.longitude::double precision) - radians($2))
+              + sin(radians($1)) * sin(radians(b.latitude::double precision))
+            )
+          )
+        )::numeric(10,1) AS distance_meters
+      FROM safety_reports sr
+      JOIN businesses b ON sr.target_id = b.id::text
+      WHERE
+        sr.target_type = 'business'
+        AND sr.status != 'dismissed'
+        AND sr.created_at > NOW() - INTERVAL '7 days'
+      GROUP BY sr.target_id, b.name, sr.category, b.latitude, b.longitude
+      HAVING COUNT(*) >= $3
+        AND (
+          6371000 * acos(
+            LEAST(1.0,
+              cos(radians($1)) * cos(radians(b.latitude::double precision))
+              * cos(radians(b.longitude::double precision) - radians($2))
+              + sin(radians($1)) * sin(radians(b.latitude::double precision))
+            )
+          )
+        ) <= $4
+      ORDER BY distance_meters ASC
+      LIMIT 20`,
+      [lat, lng, INCIDENT_THRESHOLD, radius]
+    );
+
+    // Area-level active incidents (city/neighborhood level, no precise coordinates).
+    // Returned separately so the client can show a city-wide alert if needed.
+    const areaIncidents = await pool.query<{
+      id: string;
+      city: string;
+      neighborhood: string | null;
+      category: string;
+      severity: string;
+      report_count: string;
+    }>(
+      `SELECT id, city, neighborhood, category, severity, report_count::text
+       FROM safety_incidents
+       WHERE status = 'active'
+         AND report_count >= $1
+         AND triggered_at > NOW() - INTERVAL '7 days'
+       ORDER BY report_count DESC
+       LIMIT 10`,
+      [INCIDENT_THRESHOLD]
+    );
+
+    const warnings = businessWarnings.rows.map((r) => ({
+      type: "business" as const,
+      targetId: r.target_id,
+      name: r.business_name,
+      category: r.category,
+      severity: r.severity,
+      reportCount: parseInt(r.report_count, 10),
+      latitude: parseFloat(r.latitude),
+      longitude: parseFloat(r.longitude),
+      distanceMeters: parseFloat(r.distance_meters),
+    }));
+
+    res.json({
+      warnings,
+      areaIncidents: areaIncidents.rows.map((r) => ({
+        id: r.id,
+        city: r.city,
+        neighborhood: r.neighborhood,
+        category: r.category,
+        severity: r.severity,
+        reportCount: parseInt(r.report_count, 10),
+      })),
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch proximity warnings");
+    res.status(500).json({ error: "Failed to fetch proximity warnings" });
+  }
+});
+
 router.patch("/admin/safety-incidents/:id/resolve", async (req: any, res: Response): Promise<void> => {
   const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e: string) => e.trim()).filter(Boolean);
   if (!req.user?.email || !ADMIN_EMAILS.includes(req.user.email)) {
