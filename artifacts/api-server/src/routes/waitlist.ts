@@ -181,7 +181,7 @@ router.get("/waitlist/referral-stats/:code", async (req: Request, res: Response)
   }
 });
 
-// ── Admin: list waitlist entries ─────────────────────────────────────────────
+// ── Admin: list waitlist entries (paginated, filterable by status) ────────────
 
 router.get("/admin/waitlist", async (req: Request, res: Response) => {
   if (!isAdmin(req)) {
@@ -189,15 +189,47 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
     return;
   }
   try {
-    const entries = await db
-      .select()
+    const page = Math.max(1, parseInt(String(req.query.page ?? "1"), 10) || 1);
+    const pageSize = Math.min(200, Math.max(1, parseInt(String(req.query.pageSize ?? "50"), 10) || 50));
+    const statusFilter = String(req.query.status ?? "");
+    const allowed = ["pending", "approved", "rejected"];
+    const filterByStatus = allowed.includes(statusFilter) ? statusFilter : null;
+
+    const whereClause = filterByStatus ? eq(waitlistTable.status, filterByStatus) : undefined;
+    const offset = (page - 1) * pageSize;
+
+    const [entriesResult, totalResult, pendingResult] = await Promise.all([
+      filterByStatus
+        ? db.select().from(waitlistTable).where(whereClause!).orderBy(asc(waitlistTable.createdAt)).limit(pageSize).offset(offset)
+        : db.select().from(waitlistTable).orderBy(asc(waitlistTable.createdAt)).limit(pageSize).offset(offset),
+      filterByStatus
+        ? db.select({ total: count() }).from(waitlistTable).where(whereClause!)
+        : db.select({ total: count() }).from(waitlistTable),
+      db.select({ pending: count() }).from(waitlistTable).where(eq(waitlistTable.status, "pending")),
+    ]);
+
+    const total = Number(totalResult[0]?.total ?? 0);
+    const totalPages = Math.ceil(total / pageSize);
+
+    const allForPositions = await db
+      .select({ id: waitlistTable.id })
       .from(waitlistTable)
-      .orderBy(desc(waitlistTable.createdAt));
-    const [{ pending }] = await db
-      .select({ pending: count() })
-      .from(waitlistTable)
-      .where(eq(waitlistTable.status, "pending"));
-    res.json({ entries, pendingCount: Number(pending) });
+      .orderBy(asc(waitlistTable.createdAt));
+    const positionMap = new Map(allForPositions.map((r, i) => [r.id, i + 1]));
+
+    const entriesWithPosition = entriesResult.map((e) => ({
+      ...e,
+      position: positionMap.get(e.id) ?? null,
+    }));
+
+    res.json({
+      entries: entriesWithPosition,
+      total,
+      page,
+      pageSize,
+      totalPages,
+      pendingCount: Number(pendingResult[0]?.pending ?? 0),
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch waitlist");
     res.status(500).json({ error: "Failed to fetch waitlist" });

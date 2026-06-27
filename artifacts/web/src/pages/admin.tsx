@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Redirect } from "wouter";
-import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2, Flag, AlertTriangle } from "lucide-react";
+import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2, Flag, AlertTriangle, Trophy, CalendarDays } from "lucide-react";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+} from "recharts";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -10,6 +13,7 @@ type WaitlistEntry = {
   id: string;
   firstName: string | null;
   email: string;
+  firstName: string | null;
   city: string | null;
   state: string | null;
   isBusinessOwner: boolean;
@@ -20,6 +24,7 @@ type WaitlistEntry = {
   notes: string | null;
   approvedAt: string | null;
   createdAt: string;
+  position: number | null;
 };
 
 type AdminUser = {
@@ -52,8 +57,6 @@ type AdminBusiness = {
     createdAt: string;
   } | null;
 };
-
-type Tab = "waitlist" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist";
 
 type CategoryWaitlistEntry = {
   id: number;
@@ -118,9 +121,30 @@ type MemberRow = {
   createdAt: string;
 };
 
+type LeaderboardEntry = {
+  rank: number;
+  referralCode: string;
+  email: string;
+  name: string | null;
+  referralCount: number;
+};
+
+type MetricsData = {
+  total: number;
+  approved: number;
+  today: number;
+  week: number;
+  cities: { city: string | null; count: number }[];
+  daily: { date: string; count: number }[];
+};
+
+type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist";
+
 function statusBadge(status: string) {
-  if (status === "approved") return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><Check className="w-3 h-3" /> Approved</span>;
-  if (status === "rejected") return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold"><X className="w-3 h-3" /> Rejected</span>;
+  if (status === "approved")
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><Check className="w-3 h-3" /> Approved</span>;
+  if (status === "rejected")
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold"><X className="w-3 h-3" /> Rejected</span>;
   return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold"><Clock className="w-3 h-3" /> Pending</span>;
 }
 
@@ -235,12 +259,32 @@ function OutreachCell({ business, onSent }: { business: AdminBusiness; onSent: (
   );
 }
 
+function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: number | string; sub?: string }) {
+  return (
+    <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 p-6 flex items-start gap-4">
+      <div className="p-3 rounded-xl bg-[#CA922B]/10 text-[#CA922B] shrink-0">{icon}</div>
+      <div>
+        <div className="text-3xl font-bold text-[#3A1F0E]">{value}</div>
+        <div className="text-sm font-semibold text-[#3A1F0E]/70 mt-0.5">{label}</div>
+        {sub && <div className="text-xs text-[#3A1F0E]/40 mt-1">{sub}</div>}
+      </div>
+    </div>
+  );
+}
+
 export default function Admin() {
   const { data: auth, isLoading: authLoading } = useGetCurrentAuthUser();
   const [tab, setTab] = useState<Tab>("waitlist");
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [requireApproval, setRequireApproval] = useState(false);
+
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
+  const [waitlistTotal, setWaitlistTotal] = useState(0);
+  const [waitlistPage, setWaitlistPage] = useState(1);
+  const [waitlistTotalPages, setWaitlistTotalPages] = useState(1);
+  const [pendingWaitlistCount, setPendingWaitlistCount] = useState(0);
+  const PAGE_SIZE = 50;
+
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [businesses, setBusinesses] = useState<AdminBusiness[]>([]);
   const [members, setMembers] = useState<MemberRow[]>([]);
@@ -252,7 +296,12 @@ export default function Admin() {
   const [memberSearch, setMemberSearch] = useState("");
   const [editingMember, setEditingMember] = useState<string | null>(null);
   const [memberEdit, setMemberEdit] = useState<{ memberType?: string; foundingMemberNumber?: string; trialEndsAt?: string }>({});
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [metrics, setMetrics] = useState<MetricsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [waitlistLoading, setWaitlistLoading] = useState(false);
+  const [metricsLoading, setMetricsLoading] = useState(false);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkUpdating, setBulkUpdating] = useState(false);
@@ -265,26 +314,58 @@ export default function Admin() {
   const [bizSearch, setBizSearch] = useState("");
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
+
   useEffect(() => {
     fetch(`${BASE}api/admin/check`, { credentials: "include" })
-      .then(r => r.json())
-      .then(data => {
+      .then((r) => r.json())
+      .then((data) => {
         setIsAdmin(data.isAdmin ?? false);
         setRequireApproval(data.requireApproval ?? false);
       })
       .catch(() => setIsAdmin(false));
   }, []);
 
-  const loadWaitlist = useCallback(() => {
-    return fetch(`${BASE}api/admin/waitlist`, { credentials: "include" })
-      .then(r => r.json())
-      .then(data => { setWaitlist(data.entries ?? []); setLastRefreshed(new Date()); });
-  }, []);
+  const loadWaitlist = useCallback((page = 1, status = "all") => {
+    setWaitlistLoading(true);
+    const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+    if (status !== "all") params.set("status", status);
+    return fetch(`${BASE}api/admin/waitlist?${params}`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => {
+        setWaitlist(data.entries ?? []);
+        setWaitlistTotal(data.total ?? 0);
+        setWaitlistPage(data.page ?? 1);
+        setWaitlistTotalPages(data.totalPages ?? 1);
+        setPendingWaitlistCount(data.pendingCount ?? 0);
+      })
+      .finally(() => setWaitlistLoading(false));
+  }, [PAGE_SIZE]);
 
   const loadUsers = useCallback(() => {
     return fetch(`${BASE}api/admin/users`, { credentials: "include" })
-      .then(r => r.json())
-      .then(data => { setUsers(data.users ?? []); setLastRefreshed(new Date()); });
+      .then((r) => r.json())
+      .then((data) => {
+        setUsers(data.users ?? []);
+        setLastRefreshed(new Date());
+      });
+  }, []);
+
+  const loadLeaderboard = useCallback(() => {
+    setLeaderboardLoading(true);
+    return fetch(`${BASE}api/admin/leaderboard`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => setLeaderboard(data.leaderboard ?? []))
+      .finally(() => setLeaderboardLoading(false));
+  }, []);
+
+  const loadMetrics = useCallback(() => {
+    setMetricsLoading(true);
+    return fetch(`${BASE}api/admin/metrics`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => setMetrics(data))
+      .finally(() => setMetricsLoading(false));
   }, []);
 
   const loadBusinesses = useCallback(() => {
@@ -343,6 +424,22 @@ export default function Admin() {
     return () => { if (refreshTimer.current) clearInterval(refreshTimer.current); };
   }, [isAdmin, refreshAll]);
 
+  const handleStatusFilter = (newStatus: string) => {
+    setStatusFilter(newStatus);
+    setWaitlistPage(1);
+    loadWaitlist(1, newStatus);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    loadWaitlist(newPage, statusFilter);
+  };
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    if (tab === "leaderboard" && leaderboard.length === 0) loadLeaderboard();
+    if (tab === "metrics" && !metrics) loadMetrics();
+  }, [tab, isAdmin, leaderboard.length, metrics, loadLeaderboard, loadMetrics]);
+
   const updateWaitlist = async (id: string, status: string) => {
     setUpdating(id);
     await fetch(`${BASE}api/admin/waitlist/${id}`, {
@@ -350,7 +447,7 @@ export default function Admin() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
-    await loadWaitlist();
+    await loadWaitlist(waitlistPage, statusFilter);
     setUpdating(null);
   };
 
@@ -500,7 +597,11 @@ export default function Admin() {
   };
 
   if (authLoading || isAdmin === null) {
-    return <div className="min-h-screen bg-[#FAF6EF] flex items-center justify-center"><div className="w-8 h-8 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" /></div>;
+    return (
+      <div className="min-h-screen bg-[#FAF6EF] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
   if (!auth?.user) return <Redirect to="/login" />;
@@ -564,28 +665,52 @@ export default function Admin() {
   const emailSentCount = waitlist.filter(e => e.welcomeEmailSent).length;
   const totalWithCode = waitlist.filter(e => e.referralCode).length;
 
+  const filteredWaitlist = waitlist.filter((e) => {
+    const q = search.toLowerCase();
+    return (
+      !q ||
+      e.email.toLowerCase().includes(q) ||
+      (e.city ?? "").toLowerCase().includes(q) ||
+      (e.referralCode ?? "").toLowerCase().includes(q) ||
+      (e.referredBy ?? "").toLowerCase().includes(q)
+    );
+  });
+
+  const tabs: { id: Tab; label: string; icon: React.ReactNode; badge?: number }[] = [
+    { id: "waitlist", label: "Waitlist", icon: <Mail className="w-4 h-4" />, badge: pendingWaitlistCount || undefined },
+    { id: "leaderboard", label: "Referral Leaderboard", icon: <Trophy className="w-4 h-4" /> },
+    { id: "metrics", label: "Metrics", icon: <BarChart2 className="w-4 h-4" /> },
+    { id: "users", label: "Registered Users", icon: <Users className="w-4 h-4" />, badge: pendingUsers || undefined },
+    { id: "businesses", label: "Businesses", icon: <Store className="w-4 h-4" />, badge: contactedCount || undefined },
+    { id: "members", label: "Members", icon: <Briefcase className="w-4 h-4" />, badge: members.length || undefined },
+    { id: "reviews", label: "Reviews", icon: <Star className="w-4 h-4" />, badge: reviews.length || undefined },
+    { id: "reports", label: "Reports", icon: <Flag className="w-4 h-4" />, badge: reports.filter(r => r.status === "pending").length || undefined },
+    { id: "challenges", label: "Challenges", icon: <Award className="w-4 h-4" />, badge: challengeApps.filter(a => a.status === "pending").length || undefined },
+    { id: "category-waitlist", label: "Category Waitlist", icon: <BarChart2 className="w-4 h-4" />, badge: categoryWaitlistEntries.length || undefined },
+  ];
+
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
       {/* Header */}
       <div className="bg-[#2B1507] text-white py-8 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h1 className="text-3xl font-serif font-bold mb-1">Admin Dashboard</h1>
               <p className="text-[#F5EBD8]/60 text-sm">Mapping with Melanin™ — Internal</p>
             </div>
             <div className="flex gap-4 text-sm flex-wrap">
               <div className="bg-white/10 rounded-2xl px-4 py-3 text-center">
-                <div className="text-2xl font-bold text-[#CA922B]">{waitlist.length}</div>
-                <div className="text-[#F5EBD8]/60 text-xs uppercase tracking-wider">Total Waitlist</div>
+                <div className="text-2xl font-bold text-[#CA922B]">{waitlistTotal}</div>
+                <div className="text-[#F5EBD8]/60 text-xs uppercase tracking-wider">Waitlist</div>
               </div>
               <div className="bg-white/10 rounded-2xl px-4 py-3 text-center">
-                <div className="text-2xl font-bold text-amber-400">{pendingWaitlist}</div>
+                <div className="text-2xl font-bold text-amber-400">{pendingWaitlistCount}</div>
                 <div className="text-[#F5EBD8]/60 text-xs uppercase tracking-wider">Pending</div>
               </div>
               <div className="bg-white/10 rounded-2xl px-4 py-3 text-center">
                 <div className="text-2xl font-bold text-[#CA922B]">{users.length}</div>
-                <div className="text-[#F5EBD8]/60 text-xs uppercase tracking-wider">Registered Users</div>
+                <div className="text-[#F5EBD8]/60 text-xs uppercase tracking-wider">Users</div>
               </div>
               <div className="bg-white/10 rounded-2xl px-4 py-3 text-center">
                 <div className="text-2xl font-bold text-[#CA922B]">{businesses.length}</div>
@@ -650,97 +775,43 @@ export default function Admin() {
 
           {!requireApproval && (
             <div className="mt-4 bg-amber-500/20 border border-amber-500/40 rounded-xl px-4 py-3 text-sm text-amber-200">
-              ⚠️ <strong>Approval gating is OFF.</strong> All users can access the platform regardless of approval status. Set <code className="bg-black/20 px-1 rounded">REQUIRE_APPROVAL=true</code> in environment secrets to enable gating.
+              ⚠️ <strong>Approval gating is OFF.</strong> All users can access the platform regardless of approval status. Set{" "}
+              <code className="bg-black/20 px-1 rounded">REQUIRE_APPROVAL=true</code> in environment secrets to enable gating.
             </div>
           )}
           {requireApproval && (
             <div className="mt-4 bg-green-500/20 border border-green-500/40 rounded-xl px-4 py-3 text-sm text-green-200">
-              ✅ <strong>Approval gating is ON.</strong> Unapproved users see the pending-approval screen.
+              ✅ <strong>Approval gating is ON.</strong> Unapproved users see the pending-approval screen. Remove{" "}
+              <code className="bg-black/20 px-1 rounded">REQUIRE_APPROVAL</code> or set it to{" "}
+              <code className="bg-black/20 px-1 rounded">false</code> to disable.
             </div>
           )}
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-[#3A1F0E]/10 bg-white">
-        <div className="max-w-6xl mx-auto px-6 flex gap-0 items-center justify-between">
+      <div className="border-b border-[#3A1F0E]/10 bg-white sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-6 flex gap-0 items-center justify-between overflow-x-auto">
           <div className="flex">
-            <button
-              onClick={() => setTab("waitlist")}
-              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "waitlist" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
-            >
-              <Mail className="w-4 h-4" />
-              Waitlist
-              {pendingWaitlist > 0 && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{pendingWaitlist}</span>}
-            </button>
-            <button
-              onClick={() => setTab("users")}
-              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "users" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
-            >
-              <Users className="w-4 h-4" />
-              Registered Users
-              {pendingUsers > 0 && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{pendingUsers}</span>}
-            </button>
-            <button
-              onClick={() => setTab("businesses")}
-              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "businesses" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
-            >
-              <Store className="w-4 h-4" />
-              Businesses
-              {contactedCount > 0 && <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{contactedCount} contacted</span>}
-            </button>
-            <button
-              onClick={() => setTab("members")}
-              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "members" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
-            >
-              <Briefcase className="w-4 h-4" />
-              Members
-              {members.length > 0 && <span className="bg-[#CA922B]/20 text-[#CA922B] text-xs font-bold px-2 py-0.5 rounded-full">{members.length}</span>}
-            </button>
-            <button
-              onClick={() => setTab("reviews")}
-              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "reviews" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
-            >
-              <Star className="w-4 h-4" />
-              Reviews
-              {reviews.length > 0 && <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">{reviews.length}</span>}
-            </button>
-            <button
-              onClick={() => setTab("reports")}
-              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "reports" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
-            >
-              <Flag className="w-4 h-4" />
-              Reports
-              {reports.filter(r => r.status === "pending").length > 0 && (
-                <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">
-                  {reports.filter(r => r.status === "pending").length} pending
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setTab("challenges")}
-              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "challenges" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
-            >
-              <Award className="w-4 h-4" />
-              Challenges
-              {challengeApps.filter(a => a.status === "pending").length > 0 && (
-                <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">
-                  {challengeApps.filter(a => a.status === "pending").length} pending
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setTab("category-waitlist")}
-              className={`px-6 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${tab === "category-waitlist" ? "border-[#CA922B] text-[#3A1F0E]" : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
-            >
-              <BarChart2 className="w-4 h-4" />
-              Category Waitlist
-              {categoryWaitlistEntries.length > 0 && (
-                <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">
-                  {categoryWaitlistEntries.length}
-                </span>
-              )}
-            </button>
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`px-5 py-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
+                  tab === t.id
+                    ? "border-[#CA922B] text-[#3A1F0E]"
+                    : "border-transparent text-[#3A1F0E]/50 hover:text-[#3A1F0E]"
+                }`}
+              >
+                {t.icon}
+                {t.label}
+                {t.badge !== undefined && t.badge > 0 && (
+                  <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                    {t.badge}
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
           <div className="flex items-center gap-3 pr-2">
             <span className="text-[#3A1F0E]/30 text-xs">
@@ -1046,6 +1117,10 @@ export default function Admin() {
               )}
             </div>
           </div>
+        ) : tab === "leaderboard" ? (
+          <LeaderboardTab leaderboard={leaderboard} loading={leaderboardLoading} />
+        ) : tab === "metrics" ? (
+          <MetricsTab metrics={metrics} loading={metricsLoading} />
         ) : tab === "users" ? (
           <div>
             <h2 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4">Registered Users ({users.length})</h2>
@@ -1748,6 +1823,561 @@ export default function Admin() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function WaitlistTab({
+  waitlist,
+  totalCount,
+  page,
+  totalPages,
+  search,
+  setSearch,
+  statusFilter,
+  onStatusFilter,
+  onPageChange,
+  isLoading,
+  updating,
+  updateWaitlist,
+}: {
+  waitlist: WaitlistEntry[];
+  totalCount: number;
+  page: number;
+  totalPages: number;
+  search: string;
+  setSearch: (v: string) => void;
+  statusFilter: string;
+  onStatusFilter: (v: string) => void;
+  onPageChange: (page: number) => void;
+  isLoading: boolean;
+  updating: string | null;
+  updateWaitlist: (id: string, status: string) => void;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
+        <h2 className="text-xl font-serif font-bold text-[#3A1F0E]">
+          Waitlist Signups
+          <span className="text-base font-normal text-[#3A1F0E]/50 ml-2">
+            ({totalCount.toLocaleString()} total)
+          </span>
+        </h2>
+        <div className="flex items-center gap-3 flex-wrap">
+          <input
+            type="text"
+            placeholder="Search email, city, referral code…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border border-[#3A1F0E]/15 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#CA922B]/30 w-64"
+          />
+          <div className="flex rounded-xl overflow-hidden border border-[#3A1F0E]/15">
+            {(["all", "pending", "approved", "rejected"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => onStatusFilter(s)}
+                className={`px-3 py-2 text-xs font-bold capitalize transition-colors ${
+                  statusFilter === s
+                    ? "bg-[#CA922B] text-white"
+                    : "bg-white text-[#3A1F0E]/60 hover:bg-[#FAF6EF]"
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="w-7 h-7 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : waitlist.length === 0 ? (
+        <div className="text-center py-20 text-[#3A1F0E]/40">
+          <Mail className="w-12 h-12 mx-auto mb-4 opacity-30" />
+          <p>No entries match your filters.</p>
+        </div>
+      ) : (
+        <>
+          <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 overflow-x-auto">
+            <table className="w-full text-sm min-w-[1000px]">
+              <thead>
+                <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">#</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Name</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Email</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">City</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Type</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Referral Code</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Referred By</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Status</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Joined</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {waitlist.map((entry, i) => (
+                  <tr
+                    key={entry.id}
+                    className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}
+                  >
+                    <td className="px-4 py-3 text-[#3A1F0E]/40 text-xs font-mono">
+                      {entry.position != null ? `#${entry.position}` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-[#3A1F0E]">
+                      {entry.firstName ?? <span className="text-[#3A1F0E]/30">—</span>}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-[#3A1F0E]">
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-3.5 h-3.5 text-[#CA922B] shrink-0" />
+                        {entry.email}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-[#3A1F0E]/70">
+                      {entry.city || entry.state ? (
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-[#CA922B]" />
+                          {[entry.city, entry.state].filter(Boolean).join(", ")}
+                        </div>
+                      ) : (
+                        <span className="text-[#3A1F0E]/30">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {entry.isBusinessOwner ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-[#CA922B] font-bold">
+                          <Briefcase className="w-3 h-3" /> Business
+                        </span>
+                      ) : (
+                        <span className="text-xs text-[#3A1F0E]/40">Community</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-[#3A1F0E]/60">
+                      {entry.referralCode ?? <span className="text-[#3A1F0E]/30">—</span>}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-[#3A1F0E]/60">
+                      {entry.referredBy ?? <span className="text-[#3A1F0E]/30">—</span>}
+                    </td>
+                    <td className="px-4 py-3">{statusBadge(entry.status)}</td>
+                    <td className="px-4 py-3 text-[#3A1F0E]/50 text-xs whitespace-nowrap">
+                      {new Date(entry.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {entry.status !== "approved" && (
+                          <Button
+                            size="sm"
+                            onClick={() => updateWaitlist(entry.id, "approved")}
+                            disabled={updating === entry.id}
+                            className="h-7 px-3 rounded-full bg-green-600 hover:bg-green-700 text-white text-xs"
+                          >
+                            <Check className="w-3 h-3 mr-1" /> Approve
+                          </Button>
+                        )}
+                        {entry.status !== "rejected" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateWaitlist(entry.id, "rejected")}
+                            disabled={updating === entry.id}
+                            className="h-7 px-3 rounded-full border-red-300 text-red-600 hover:bg-red-50 text-xs"
+                          >
+                            <X className="w-3 h-3 mr-1" /> Reject
+                          </Button>
+                        )}
+                        {entry.status !== "pending" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateWaitlist(entry.id, "pending")}
+                            disabled={updating === entry.id}
+                            className="h-7 px-3 rounded-full text-xs"
+                          >
+                            Reset
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 px-1">
+              <p className="text-sm text-[#3A1F0E]/50">
+                Page {page} of {totalPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onPageChange(page - 1)}
+                  disabled={page <= 1}
+                  className="h-8 px-4 rounded-xl text-xs"
+                >
+                  ← Prev
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onPageChange(page + 1)}
+                  disabled={page >= totalPages}
+                  className="h-8 px-4 rounded-xl text-xs"
+                >
+                  Next →
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function LeaderboardTab({
+  leaderboard,
+  loading,
+}: {
+  leaderboard: LeaderboardEntry[];
+  loading: boolean;
+}) {
+  const medals = ["🥇", "🥈", "🥉"];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-6">
+        <Trophy className="w-6 h-6 text-[#CA922B]" />
+        <h2 className="text-xl font-serif font-bold text-[#3A1F0E]">Referral Leaderboard</h2>
+      </div>
+
+      {leaderboard.length === 0 ? (
+        <div className="text-center py-20 text-[#3A1F0E]/40">
+          <Trophy className="w-12 h-12 mx-auto mb-4 opacity-30" />
+          <p>No referrals recorded yet.</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
+                <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Rank</th>
+                <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Referrer</th>
+                <th className="text-left px-5 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Referral Code</th>
+                <th className="text-right px-5 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Referrals</th>
+              </tr>
+            </thead>
+            <tbody>
+              {leaderboard.map((entry, i) => (
+                <tr
+                  key={entry.referralCode}
+                  className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}
+                >
+                  <td className="px-5 py-3">
+                    <span className="text-lg leading-none">{medals[i] ?? `#${entry.rank}`}</span>
+                  </td>
+                  <td className="px-5 py-3 font-medium text-[#3A1F0E]">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-[#CA922B]/15 flex items-center justify-center text-[#CA922B] font-bold text-xs shrink-0">
+                        {(entry.name ?? entry.email)[0]?.toUpperCase() ?? "?"}
+                      </div>
+                      <div>
+                        {entry.name && <div className="text-xs font-bold text-[#3A1F0E]">{entry.name}</div>}
+                        <div className={entry.name ? "text-xs text-[#3A1F0E]/60" : ""}>{entry.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 font-mono text-xs text-[#3A1F0E]/60">{entry.referralCode}</td>
+                  <td className="px-5 py-3 text-right">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#CA922B]/10 text-[#CA922B] font-bold text-sm">
+                      <Award className="w-3.5 h-3.5" />
+                      {entry.referralCount}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MetricsTab({
+  metrics,
+  loading,
+}: {
+  metrics: MetricsData | null;
+  loading: boolean;
+}) {
+  if (loading || !metrics) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const pendingCount = metrics.total - metrics.approved;
+  const approvalRate = metrics.total > 0 ? Math.round((metrics.approved / metrics.total) * 100) : 0;
+
+  const chartData = (() => {
+    const map = new Map(metrics.daily.map((d) => [d.date, d.count]));
+    const days: { date: string; label: string; count: number }[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+      const key = d.toISOString().slice(0, 10);
+      const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      days.push({ date: key, label, count: map.get(key) ?? 0 });
+    }
+    return days;
+  })();
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <div className="flex items-center gap-3 mb-4">
+          <TrendingUp className="w-6 h-6 text-[#CA922B]" />
+          <h2 className="text-xl font-serif font-bold text-[#3A1F0E]">Key Metrics</h2>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <StatCard
+            icon={<Users className="w-5 h-5" />}
+            label="Total Signups"
+            value={metrics.total.toLocaleString()}
+            sub="All time"
+          />
+          <StatCard
+            icon={<Check className="w-5 h-5" />}
+            label="Approved"
+            value={metrics.approved.toLocaleString()}
+            sub={`${approvalRate}% approval rate`}
+          />
+          <StatCard
+            icon={<CalendarDays className="w-5 h-5" />}
+            label="Signups Today"
+            value={metrics.today.toLocaleString()}
+            sub="UTC day"
+          />
+          <StatCard
+            icon={<TrendingUp className="w-5 h-5" />}
+            label="This Week"
+            value={metrics.week.toLocaleString()}
+            sub="Last 7 days"
+          />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 p-6">
+        <div className="flex items-center gap-2 mb-5">
+          <BarChart2 className="w-5 h-5 text-[#CA922B]" />
+          <h3 className="font-bold text-[#3A1F0E]">Daily Signups — Last 30 Days</h3>
+        </div>
+        {chartData.every((d) => d.count === 0) ? (
+          <div className="text-center py-12 text-[#3A1F0E]/40 text-sm">No signups in the last 30 days.</div>
+        ) : (
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#3A1F0E10" />
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 10, fill: "#3A1F0E80" }}
+                interval={4}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                allowDecimals={false}
+                tick={{ fontSize: 10, fill: "#3A1F0E80" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: "#2B1507",
+                  border: "none",
+                  borderRadius: "8px",
+                  color: "#F5EBD8",
+                  fontSize: "12px",
+                }}
+                cursor={{ fill: "#CA922B15" }}
+                formatter={(v: number) => [v, "Signups"]}
+              />
+              <Bar dataKey="count" fill="#CA922B" radius={[4, 4, 0, 0]} maxBarSize={32} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 p-6">
+        <div className="flex items-center gap-2 mb-5">
+          <MapPin className="w-5 h-5 text-[#CA922B]" />
+          <h3 className="font-bold text-[#3A1F0E]">Top Cities by Signup Volume</h3>
+        </div>
+        {metrics.cities.length === 0 ? (
+          <div className="text-center py-8 text-[#3A1F0E]/40 text-sm">No city data available.</div>
+        ) : (
+          <div className="space-y-3">
+            {metrics.cities.map((c, i) => {
+              const maxCount = metrics.cities[0]?.count ?? 1;
+              const pct = Math.round((c.count / maxCount) * 100);
+              return (
+                <div key={c.city ?? i} className="flex items-center gap-3">
+                  <span className="w-5 text-xs text-[#3A1F0E]/40 font-bold text-right shrink-0">
+                    {i + 1}
+                  </span>
+                  <span className="w-32 text-sm font-medium text-[#3A1F0E] truncate shrink-0">
+                    {c.city ?? "Unknown"}
+                  </span>
+                  <div className="flex-1 bg-[#FAF6EF] rounded-full h-2 overflow-hidden">
+                    <div
+                      className="h-2 rounded-full bg-[#CA922B] transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="w-8 text-sm font-bold text-[#CA922B] text-right shrink-0">
+                    {c.count}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 p-5">
+          <div className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/40 mb-2">Pending Approval</div>
+          <div className="text-3xl font-bold text-amber-600">{pendingCount.toLocaleString()}</div>
+          <div className="text-xs text-[#3A1F0E]/40 mt-1">awaiting review</div>
+        </div>
+        <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 p-5">
+          <div className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/40 mb-2">Approval Rate</div>
+          <div className="text-3xl font-bold text-green-600">{approvalRate}%</div>
+          <div className="text-xs text-[#3A1F0E]/40 mt-1">of all signups approved</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UsersTab({
+  users,
+  updating,
+  updateUser,
+  updateUserRole,
+}: {
+  users: AdminUser[];
+  updating: string | null;
+  updateUser: (id: string, approved: boolean) => void;
+  updateUserRole: (id: string, role: "user" | "tester") => void;
+}) {
+  return (
+    <div>
+      <h2 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4">
+        Registered Users ({users.length})
+      </h2>
+      {users.length === 0 ? (
+        <div className="text-center py-20 text-[#3A1F0E]/40">
+          <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
+          <p>No registered users yet.</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
+                <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">User</th>
+                <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Email</th>
+                <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Access</th>
+                <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Role</th>
+                <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Joined</th>
+                <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user, i) => (
+                <tr
+                  key={user.id}
+                  className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}
+                >
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-[#CA922B]/20 flex items-center justify-center text-[#CA922B] font-bold text-sm shrink-0 overflow-hidden">
+                        {user.profileImageUrl ? (
+                          <img src={user.profileImageUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          (user.firstName?.[0] || user.email?.[0] || "?").toUpperCase()
+                        )}
+                      </div>
+                      <span className="font-medium text-[#3A1F0E]">
+                        {user.firstName || user.lastName
+                          ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim()
+                          : <span className="text-[#3A1F0E]/40">No name</span>}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-[#3A1F0E]/70">
+                    {user.email ?? <span className="text-[#3A1F0E]/30">—</span>}
+                  </td>
+                  <td className="px-4 py-3">
+                    {user.approved
+                      ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><Check className="w-3 h-3" /> Approved</span>
+                      : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold"><Clock className="w-3 h-3" /> Pending</span>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Button
+                      size="sm"
+                      onClick={() => updateUserRole(user.id, user.role === "tester" ? "user" : "tester")}
+                      disabled={updating === user.id + "-role"}
+                      className={`h-7 px-3 rounded-full text-xs ${user.role === "tester" ? "bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200" : "bg-white text-[#3A1F0E]/50 border border-[#3A1F0E]/15 hover:bg-[#FAF6EF]"}`}
+                      variant="outline"
+                    >
+                      {user.role === "tester" ? "Tester ✓" : "Tester"}
+                    </Button>
+                  </td>
+                  <td className="px-4 py-3 text-[#3A1F0E]/50 text-xs">
+                    {new Date(user.createdAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Button
+                      size="sm"
+                      onClick={() => updateUser(user.id, !user.approved)}
+                      disabled={updating === user.id}
+                      className={`h-7 px-3 rounded-full text-xs ${user.approved ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100" : "bg-green-600 hover:bg-green-700 text-white"}`}
+                      variant="outline"
+                    >
+                      {user.approved
+                        ? <><X className="w-3 h-3 mr-1" /> Revoke</>
+                        : <><Check className="w-3 h-3 mr-1" /> Approve</>}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
