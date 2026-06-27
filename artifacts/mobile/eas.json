@@ -16,7 +16,8 @@
         "gradleCommand": ":app:assembleDebug"
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "mappingwithmelanin.com"
+        "EXPO_PUBLIC_DOMAIN": "mappingwithmelanin.com",
+        "EXPO_PUBLIC_REPL_ID": "ac64a230-72f5-4194-b8b4-3ca827a772f9"
       }
     },
     "preview": {
@@ -28,7 +29,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "mappingwithmelanin.com"
+        "EXPO_PUBLIC_DOMAIN": "mappingwithmelanin.com",
+        "EXPO_PUBLIC_REPL_ID": "ac64a230-72f5-4194-b8b4-3ca827a772f9"
       }
     },
     "production": {
@@ -41,7 +43,8 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "mappingwithmelanin.com"
+        "EXPO_PUBLIC_DOMAIN": "mappingwithmelanin.com",
+        "EXPO_PUBLIC_REPL_ID": "ac64a230-72f5-4194-b8b4-3ca827a772f9"
       }
     }
   },
