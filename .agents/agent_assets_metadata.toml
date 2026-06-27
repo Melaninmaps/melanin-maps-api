@@ -113,3 +113,9 @@ id = "s39ffcsfcaoS1jZe44Cg-"
 uri = "file://screenshots/chromebook-community-hd.jpg"
 type = "image"
 title = "Screenshot 4 — Community (1920x1080)"
+
+[[outputs]]
+id = "mK64nS3qQnRGW3JmvilWM"
+uri = "file://expo-qr.png"
+type = "image"
+title = "Scan with Expo Go"
