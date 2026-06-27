@@ -7,6 +7,7 @@ Community discovery, travel, and business platform celebrating Black culture —
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
+- `pnpm run test:e2e` — run Playwright end-to-end tests (Firefox, requires dev server running)
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
 

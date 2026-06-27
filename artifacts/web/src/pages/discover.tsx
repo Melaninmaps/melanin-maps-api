@@ -262,13 +262,14 @@ export default function Discover() {
 
           <div className="w-full max-w-2xl bg-white rounded-full p-2 flex items-center shadow-lg">
             <Search className="w-5 h-5 text-muted-foreground ml-4" />
-            <Input
+            <Input 
+              data-testid="discover-search-input"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search for restaurants, services, landmarks..."
               className="border-0 focus-visible:ring-0 shadow-none text-base h-12 bg-transparent rounded-full"
             />
-            <Button onClick={scrollToResults} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Search</Button>
+            <Button data-testid="discover-search-button" onClick={scrollToResults} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Search</Button>
           </div>
 
           {/* Vibe Match chips */}
@@ -419,7 +420,8 @@ export default function Discover() {
           ) : (
             businesses.map((business) => (
               <Link key={business.id} href={`/businesses/${business.id}`}>
-                <div className="group relative bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(43,21,7,0.05)] hover:shadow-[0_8px_30px_rgba(43,21,7,0.12)] transition-all duration-300 cursor-pointer h-[420px] flex flex-col border border-[#2B1507]/5">
+                <div data-testid="business-card" className="group relative bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(43,21,7,0.05)] hover:shadow-[0_8px_30px_rgba(43,21,7,0.12)] transition-all duration-300 cursor-pointer h-[420px] flex flex-col border border-[#2B1507]/5">
+                  {/* Top Image Area */}
                   <div className="h-[60%] w-full relative overflow-hidden bg-[#2B1507]/10">
                     {business.imageUrl ? (
                       <img src={business.imageUrl} alt={business.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />

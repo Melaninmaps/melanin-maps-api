@@ -1,29 +1,39 @@
 import { test, expect } from "@playwright/test";
 
-const NAV_ROUTES = [
+const ROUTES = [
   { path: "/", label: "Home" },
   { path: "/discover", label: "Discover" },
-  { path: "/map", label: "Map" },
+  { path: "/explore", label: "Explore" },
+  { path: "/businesses", label: "Businesses" },
   { path: "/events", label: "Events" },
   { path: "/community", label: "Community" },
+  { path: "/safety", label: "Safety" },
+  { path: "/map", label: "Map" },
   { path: "/for-business-owners", label: "For Business Owners" },
+  { path: "/membership", label: "Membership" },
+  { path: "/travel", label: "KinfolkAI" },
   { path: "/privacy-policy", label: "Privacy Policy" },
   { path: "/terms", label: "Terms" },
 ];
 
-for (const { path, label } of NAV_ROUTES) {
-  test(`${label} page loads without errors`, async ({ page }) => {
+for (const route of ROUTES) {
+  test(`navigation: ${route.label} (${route.path}) loads without error page`, async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (err) => errors.push(err.message));
 
-    const response = await page.goto(path);
-    expect(response?.status()).not.toBe(404);
-    expect(response?.status()).not.toBe(500);
+    const response = await page.goto(route.path);
 
-    await expect(page.locator("body")).toBeVisible();
+    const status = response?.status() ?? 200;
+    expect(status).toBeLessThan(400);
+
+    const notFoundHeading = page.getByRole("heading", { name: /404|not found|page not found/i });
+    await expect(notFoundHeading).toHaveCount(0);
+
+    const errorHeading = page.getByRole("heading", { name: /500|server error|something went wrong/i });
+    await expect(errorHeading).toHaveCount(0);
+
     // Allow the page to settle
     await page.waitForLoadState("networkidle").catch(() => {});
-
     expect(errors.filter((e) => !e.includes("ResizeObserver"))).toHaveLength(0);
   });
 }

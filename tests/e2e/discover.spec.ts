@@ -1,97 +1,44 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Business discovery", () => {
-  test("Discover page loads and shows businesses", async ({ page }) => {
-    await page.goto("/discover");
-    await page.waitForLoadState("networkidle").catch(() => {});
-
-    await expect(page.locator("body")).toBeVisible();
-
-    // Should show some kind of business list or search
-    const hasContent = await page
-      .locator(
-        '[data-testid="business-card"], .business-card, article, [class*="card"], input[placeholder*="search" i], input[placeholder*="business" i]',
-      )
-      .first()
-      .isVisible({ timeout: 10_000 })
-      .catch(() => false);
-
-    expect(hasContent).toBeTruthy();
+  test.beforeEach(async ({ page }) => {
+    await page.goto("discover");
+    await page.waitForLoadState("networkidle");
   });
 
-  test("searching for a term filters results", async ({ page }) => {
-    await page.goto("/discover");
-    await page.waitForLoadState("networkidle").catch(() => {});
-
-    const searchInput = page
-      .locator('input[placeholder*="search" i], input[type="search"], input[placeholder*="business" i]')
-      .first();
-
-    if (!(await searchInput.isVisible({ timeout: 8_000 }).catch(() => false))) {
-      test.skip();
-      return;
-    }
-
-    await searchInput.fill("restaurant");
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(1500);
-
-    // Results should still be visible (not empty)
-    await expect(page.locator("body")).toBeVisible();
+  test("renders the discover page with search input and heading", async ({ page }) => {
+    await expect(page.getByTestId("discover-search-input")).toBeVisible();
+    await expect(page.getByRole("heading", { name: /explore with purpose/i })).toBeVisible();
   });
 
-  test("clicking a business card opens the business detail page", async ({ page }) => {
-    await page.goto("/discover");
-    await page.waitForLoadState("networkidle").catch(() => {});
+  test("shows business cards after initial load", async ({ page }) => {
+    const firstCard = page.getByTestId("business-card").first();
+    await expect(firstCard).toBeVisible({ timeout: 15_000 });
+  });
 
-    const businessCard = page
-      .locator('a[href*="/businesses/"], [data-testid="business-card"]')
-      .first();
+  test("typing in the search box and clicking Search filters results", async ({ page }) => {
+    await page.getByTestId("business-card").first().waitFor({ timeout: 15_000 });
 
-    if (!(await businessCard.isVisible({ timeout: 10_000 }).catch(() => false))) {
-      test.skip();
-      return;
-    }
+    await page.getByTestId("discover-search-input").fill("restaurant");
+    await page.getByTestId("discover-search-button").click();
 
-    await businessCard.click();
-    await page.waitForLoadState("networkidle").catch(() => {});
+    await page.waitForTimeout(500);
+    await page.waitForLoadState("networkidle");
 
-    expect(page.url()).toMatch(/\/businesses\//);
-    await expect(page.locator("h1, [data-testid='business-name']")).toBeVisible({ timeout: 10_000 });
+    const cards = page.getByTestId("business-card");
+    const emptyState = page.getByText(/no businesses found/i);
+    const cardCount = await cards.count();
+    const emptyCount = await emptyState.count();
+    expect(cardCount + emptyCount).toBeGreaterThan(0);
+  });
+
+  test("clicking a business card navigates to the detail page", async ({ page }) => {
+    const firstCard = page.getByTestId("business-card").first();
+    await expect(firstCard).toBeVisible({ timeout: 15_000 });
+    await firstCard.click();
+
+    await expect(page).toHaveURL(/businesses\//, { timeout: 15_000 });
+    await expect(page.getByTestId("business-hero")).toBeVisible({ timeout: 15_000 });
   });
 });
 
-test.describe("Business detail page", () => {
-  test("shows key business information", async ({ page }) => {
-    // Navigate via discover to get a real business ID
-    await page.goto("/discover");
-    await page.waitForLoadState("networkidle").catch(() => {});
-
-    const link = page.locator('a[href*="/businesses/"]').first();
-    if (!(await link.isVisible({ timeout: 10_000 }).catch(() => false))) {
-      test.skip();
-      return;
-    }
-
-    await link.click();
-    await page.waitForLoadState("networkidle").catch(() => {});
-
-    expect(page.url()).toMatch(/\/businesses\//);
-
-    // Verify critical elements are present
-    await expect(page.locator("h1")).toBeVisible({ timeout: 10_000 });
-
-    const hasSaveBtn = await page
-      .locator('button:has-text("Save"), button[aria-label*="save" i], [data-testid="save-button"]')
-      .isVisible()
-      .catch(() => false);
-
-    const hasShareBtn = await page
-      .locator('button:has-text("Share"), button[aria-label*="share" i]')
-      .isVisible()
-      .catch(() => false);
-
-    // At least one of save/share should be present
-    expect(hasSaveBtn || hasShareBtn).toBeTruthy();
-  });
-});

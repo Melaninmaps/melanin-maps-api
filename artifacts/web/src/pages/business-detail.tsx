@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare, Shield, ChevronDown, ChevronUp } from "lucide-react";
+import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare, Shield, ChevronDown, ChevronUp, Share2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -114,8 +114,12 @@ export default function BusinessDetail() {
   const prevMetaRef = useRef<{ title: string; ogTitle: string | null; ogDesc: string | null; ogImage: string | null }>({ title: "", ogTitle: null, ogDesc: null, ogImage: null });
 
   const { data: auth } = useGetCurrentAuthUser();
-  const { data: business, isLoading: isLoadingBusiness } = useGetBusiness(id, { query: { queryKey: ['getBusiness', id], enabled: !!id } });
-  const { data: reviews, isLoading: isLoadingReviews } = useListReviews({ businessId: id });
+  const { data: businessData, isLoading: isLoadingBusiness } = useGetBusiness(id, { query: { queryKey: ['getBusiness', id], enabled: !!id } });
+  const business = (businessData && typeof businessData === 'object' && 'business' in businessData)
+    ? (businessData as unknown as { business: typeof businessData }).business
+    : businessData;
+  const { data: reviewsData, isLoading: isLoadingReviews } = useListReviews({ businessId: id });
+  const reviews = Array.isArray(reviewsData) ? reviewsData : (reviewsData as unknown as { reviews: typeof reviewsData })?.reviews ?? [];
   const { data: savedPlaces } = useListSavedPlaces({ query: { queryKey: ['listSavedPlaces'], enabled: !!auth?.user } });
 
   const savePlace = useSavePlace();
@@ -352,7 +356,7 @@ export default function BusinessDetail() {
       )}
 
       {/* Hero Header */}
-      <div className="relative w-full h-[50vh] md:h-[60vh] bg-[#2B1507]">
+      <div data-testid="business-hero" className="relative w-full h-[50vh] md:h-[60vh] bg-[#2B1507]">
         {business.imageUrl && (
           <img src={business.imageUrl} alt={business.name} className="w-full h-full object-cover" />
         )}
@@ -362,7 +366,7 @@ export default function BusinessDetail() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="text-white max-w-3xl">
               <div className="flex flex-wrap items-center gap-3 mb-4">
-                <span className="bg-[#CA922B] text-white text-xs uppercase font-bold tracking-wider px-3 py-1 rounded-full">
+                <span data-testid="business-category" className="bg-[#CA922B] text-white text-xs uppercase font-bold tracking-wider px-3 py-1 rounded-full">
                   {business.category}
                 </span>
                 {business.confidenceScore && (
@@ -371,7 +375,7 @@ export default function BusinessDetail() {
                   </span>
                 )}
               </div>
-              <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-2">{business.name}</h1>
+              <h1 data-testid="business-name" className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-2">{business.name}</h1>
               <div className="flex items-center gap-2 text-[#F5EBD8] text-lg">
                 <MapPin size={18} />
                 <span>{business.city}, {business.state}</span>
@@ -379,6 +383,22 @@ export default function BusinessDetail() {
             </div>
             
             <div className="flex gap-3">
+              <Button
+                data-testid="business-share-btn"
+                variant="outline"
+                onClick={async () => {
+                  const url = window.location.href;
+                  if (navigator.share) {
+                    await navigator.share({ title: business.name ?? undefined, url });
+                  } else {
+                    await navigator.clipboard.writeText(url).catch(() => {});
+                    toast({ title: "Link copied to clipboard" });
+                  }
+                }}
+                className="rounded-full h-12 px-6 border-white/20 backdrop-blur-md bg-black/30 text-white hover:bg-white hover:text-[#2B1507]"
+              >
+                <Share2 className="mr-2 w-5 h-5" /> Share
+              </Button>
               <Button 
                 onClick={handleSaveToggle} 
                 variant="outline" 
@@ -631,7 +651,7 @@ export default function BusinessDetail() {
                 {business.phone && (
                   <div className="flex items-center gap-4 text-[#3A1F0E]/80 text-sm">
                     <Phone className="w-5 h-5 text-[#CA922B] shrink-0" />
-                    <a href={`tel:${business.phone}`} className="hover:text-[#CA922B]">{business.phone}</a>
+                    <a data-testid="business-call-link" href={`tel:${business.phone}`} className="hover:text-[#CA922B]">{business.phone}</a>
                   </div>
                 )}
                 

@@ -333,7 +333,7 @@ export default function Home() {
             {/* Waitlist Form */}
             <div id="waitlist-form" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 md:p-10 shadow-2xl">
               {submitted ? (
-                <div className="text-center py-6">
+                <div data-testid="waitlist-confirmation" className="text-center py-6">
                   <div className="w-16 h-16 rounded-full bg-[#CA922B]/20 flex items-center justify-center mx-auto mb-5">
                     <svg viewBox="0 0 24 24" className="w-8 h-8 text-[#CA922B]" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="20,6 9,17 4,12" /></svg>
                   </div>
@@ -372,17 +372,17 @@ export default function Home() {
                   <h2 className="text-2xl font-serif font-bold text-white mb-2">Join the Waitlist</h2>
                   <p className="text-[#F5EBD8]/60 text-sm mb-2">Free to join. No spam, ever.</p>
                   <p className="text-[#F5EBD8]/40 text-xs mb-6">We don't sell your attention—we help our community discover great businesses.</p>
-                  <form onSubmit={handleWaitlist} className="flex flex-col gap-3">
+                  <form data-testid="waitlist-form" onSubmit={handleWaitlist} className="flex flex-col gap-3">
                     <div className="grid grid-cols-2 gap-3">
                       <input type="text" placeholder="First name" value={firstName} onChange={e => setFirstName(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm" />
                       <input type="text" placeholder="Last name" value={lastName} onChange={e => setLastName(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm" />
                     </div>
-                    <input type="email" placeholder="Enter your email address" value={email} onChange={e => setEmail(e.target.value)} required
+                    <input data-testid="waitlist-email" type="email" placeholder="Enter your email address" value={email} onChange={e => setEmail(e.target.value)} required
                       className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm" />
                     <div className="grid grid-cols-2 gap-3">
-                      <input type="text" placeholder="Your city" value={city} onChange={e => setCity(e.target.value)}
+                      <input data-testid="waitlist-city" type="text" placeholder="Your city" value={city} onChange={e => setCity(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm" />
                       <input type="text" placeholder="STATE" value={state} onChange={e => setState(e.target.value.toUpperCase().slice(0, 2))} maxLength={2}
                         className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm uppercase" />
@@ -400,7 +400,7 @@ export default function Home() {
                     <input type="text" placeholder="REFERRAL CODE (OPTIONAL)" value={referredBy} onChange={e => setReferredBy(e.target.value.toUpperCase())}
                       className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm uppercase tracking-widest" />
                     <p className="text-xs text-[#F5EBD8]/40 -mt-1">Have a friend's referral code? Enter it above to move up the list.</p>
-                    <Button type="submit" disabled={submitting || !email}
+                    <Button data-testid="waitlist-submit" type="submit" disabled={submitting || !email}
                       className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-50 text-white h-12 font-bold text-base mt-1">
                       {submitting ? "Joining…" : "Join the Waitlist"}
                     </Button>
