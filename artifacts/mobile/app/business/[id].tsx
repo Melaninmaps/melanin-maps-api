@@ -89,6 +89,14 @@ export default function BusinessDetailScreen() {
   const { deals } = useDeals(id ?? "");
   const { stories } = useStories(id ?? "");
 
+  interface PinnedItem {
+    id: number; itemType: "review" | "video";
+    reviewText: string | null; reviewAuthor: string | null; reviewRating: number | null;
+    reviewInitials: string | null; reviewColor: string | null; reviewTimeAgo: string | null;
+    videoUrl: string | null; videoTitle: string | null; pinnedAt: string; expiresAt: string;
+  }
+  const [pinnedItems, setPinnedItems] = useState<PinnedItem[]>([]);
+
   const { business, isLoading } = useBusinessById(id ?? "");
 
   useEffect(() => {
@@ -102,6 +110,20 @@ export default function BusinessDetailScreen() {
           method: "POST",
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
+      } catch {}
+    })();
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    void (async () => {
+      try {
+        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const res = await fetch(`${base}/api/businesses/${id}/pinned`);
+        if (res.ok) {
+          const data = await res.json() as { pinned: PinnedItem[] };
+          setPinnedItems(data.pinned ?? []);
+        }
       } catch {}
     })();
   }, [id]);
@@ -635,6 +657,52 @@ export default function BusinessDetailScreen() {
             />
           </View>
 
+          {/* Owner's Pinned Highlights */}
+          {pinnedItems.length > 0 && (
+            <View style={[styles.pinnedSection, { borderColor: "#C9922B33", backgroundColor: "#C9922B07" }]}>
+              <View style={styles.pinnedHeader}>
+                <Text style={{ fontSize: 16 }}>📌</Text>
+                <Text style={[styles.pinnedTitle, { color: "#C9922B" }]}>Owner's Pick</Text>
+              </View>
+              {pinnedItems.map((pin) => (
+                <View key={pin.id} style={[styles.pinnedCard, { backgroundColor: colors.card, borderColor: "#C9922B25" }]}>
+                  {pin.itemType === "review" && pin.reviewText ? (
+                    <>
+                      <View style={styles.pinnedReviewTop}>
+                        <View style={[styles.pinnedAvatar, { backgroundColor: pin.reviewColor ?? "#C9922B" }]}>
+                          <Text style={styles.pinnedInitials}>{pin.reviewInitials ?? "?"}</Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.pinnedAuthor, { color: colors.foreground }]}>{pin.reviewAuthor}</Text>
+                          <Text style={[styles.pinnedTime, { color: colors.mutedForeground }]}>{pin.reviewTimeAgo}</Text>
+                        </View>
+                        {pin.reviewRating != null && (
+                          <View style={styles.pinnedStars}>
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Feather key={i} name="star" size={12} color={i < pin.reviewRating! ? "#C9922B" : colors.border} />
+                            ))}
+                          </View>
+                        )}
+                      </View>
+                      <Text style={[styles.pinnedReviewText, { color: colors.foreground }]}>"{pin.reviewText}"</Text>
+                    </>
+                  ) : pin.itemType === "video" && pin.videoUrl ? (
+                    <TouchableOpacity
+                      style={styles.pinnedVideoRow}
+                      onPress={() => Linking.openURL(pin.videoUrl!)}
+                      activeOpacity={0.75}
+                    >
+                      <Feather name="play-circle" size={22} color="#C9922B" />
+                      <Text style={[styles.pinnedVideoTitle, { color: colors.foreground }]} numberOfLines={1}>
+                        {pin.videoTitle ?? pin.videoUrl}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+              ))}
+            </View>
+          )}
+
           {/* Reviews */}
           <View style={[styles.responseTagline, { backgroundColor: colors.primary + "0D", borderColor: colors.primary + "25" }]}>
             <Feather name="shield" size={13} color={colors.primary} style={{ marginTop: 1 }} />
@@ -1128,6 +1196,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#FFFFFF",
   },
+  pinnedSection: { marginHorizontal: 20, marginBottom: 16, borderRadius: 16, borderWidth: 1, padding: 14, gap: 10 },
+  pinnedHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  pinnedTitle: { fontFamily: "Inter_700Bold", fontSize: 14, letterSpacing: 0.3 },
+  pinnedCard: { borderRadius: 12, borderWidth: 1, padding: 12, gap: 8 },
+  pinnedReviewTop: { flexDirection: "row", alignItems: "center", gap: 10 },
+  pinnedAvatar: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  pinnedInitials: { fontFamily: "Inter_700Bold", fontSize: 11, color: "#FFF" },
+  pinnedAuthor: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  pinnedTime: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 2 },
+  pinnedStars: { flexDirection: "row", gap: 2 },
+  pinnedReviewText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20, fontStyle: "italic" },
+  pinnedVideoRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  pinnedVideoTitle: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
   responseTagline: {
     flexDirection: "row",
     alignItems: "flex-start",

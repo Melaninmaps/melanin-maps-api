@@ -34,6 +34,7 @@ export * from "./notifications";
 export * from "./travel";
 export * from "./connections";
 export * from "./user-follows";
+export * from "./pinned-business-items";
 export * from "./family-safety";
 export * from "./safety-checkins";
 export * from "./safety-tips";

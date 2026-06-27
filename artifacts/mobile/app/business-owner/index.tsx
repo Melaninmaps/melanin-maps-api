@@ -138,6 +138,14 @@ export default function BusinessOwnerHome() {
       route: "/business-dashboard",
     },
     {
+      id: "pinned",
+      icon: "bookmark",
+      label: "Pinned Highlights",
+      sub: "Feature your best reviews for 90 days",
+      color: "#C9922B",
+      route: "/business-owner/pinned-highlights",
+    },
+    {
       id: "analytics",
       icon: "bar-chart-2",
       label: "Analytics & Insights",

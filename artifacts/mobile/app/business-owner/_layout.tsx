@@ -5,6 +5,7 @@ export default function BusinessOwnerLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="edit-profile" options={{ presentation: "card" }} />
+      <Stack.Screen name="pinned-highlights" options={{ presentation: "card" }} />
     </Stack>
   );
 }
