@@ -17,9 +17,11 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RatingStars } from "@/components/RatingStars";
 import { VerificationBadge } from "@/components/VerificationBadge";
+import { WriteReviewModal } from "@/components/WriteReviewModal";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinessById } from "@/hooks/useBusinesses";
+import { useReviews } from "@/hooks/useReviews";
 
 const CATEGORY_IMAGES: Record<string, any> = {
   Food: require("@/assets/images/bento-businesses.jpg"),
@@ -41,8 +43,10 @@ export default function BusinessDetailScreen() {
   const { isSaved, toggleSave } = useFavorites();
 
   const { business } = useBusinessById(id ?? "");
+  const { submitReview } = useReviews(id ?? "");
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   useEffect(() => {
@@ -214,11 +218,33 @@ export default function BusinessDetailScreen() {
         <TouchableOpacity
           style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
           activeOpacity={0.85}
-          onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
+          onPress={() => {
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setReviewModalOpen(true);
+          }}
         >
           <Text style={[styles.primaryBtnText, { color: colors.primaryForeground }]}>Write a Review</Text>
         </TouchableOpacity>
       </View>
+
+      <WriteReviewModal
+        visible={reviewModalOpen}
+        businessName={business?.name ?? ""}
+        businessId={id ?? ""}
+        businessCategory={business?.category ?? ""}
+        onClose={() => setReviewModalOpen(false)}
+        onSubmit={async (rating, text, wouldReturn, socialHandle, socialPlatform, videoUrl, nonMinorityOwned, communitySupport, website, location, isAnonymous, volunteerAsMentor, nowHiringUrl) => {
+          await submitReview(rating, text, wouldReturn, socialHandle, socialPlatform, business?.name ?? "", videoUrl, nonMinorityOwned, communitySupport, website, location, isAnonymous, volunteerAsMentor, nowHiringUrl);
+          setReviewModalOpen(false);
+          // Refresh reviews list after submit
+          if (id) {
+            fetch(`/api/reviews?businessId=${id}`)
+              .then((r) => (r.ok ? r.json() : { reviews: [] }))
+              .then((data: { reviews: ReviewRow[] }) => setReviews(data.reviews ?? []))
+              .catch(() => {});
+          }
+        }}
+      />
     </View>
   );
 }

@@ -649,7 +649,7 @@ export default function ProfileScreen() {
           <Text style={[styles.gettingStartedSub, { color: colors.mutedForeground }]}>Complete these steps to start connecting locally and globally</Text>
           {[
             { icon: "compass" as const, label: "Find a trusted business", route: "/(tabs)" as const },
-            { icon: "star" as const, label: "Leave your first review", route: "/(tabs)" as const },
+            { icon: "star" as const, label: "Leave your first review", route: "/(tabs)/index" as const },
             { icon: "shield" as const, label: "Submit a safety report", route: "/report-safety" as const },
             { icon: "users" as const, label: "Join a community group", route: "/(tabs)/community" as const },
           ].map((step, i, arr) => (
