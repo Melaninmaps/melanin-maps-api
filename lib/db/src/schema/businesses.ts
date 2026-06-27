@@ -32,6 +32,7 @@ export const businessesTable = pgTable("businesses", {
   priceRange: varchar("price_range", { length: 10 }),
   imageUrl: varchar("image_url", { length: 512 }),
   photos: jsonb("photos").$type<string[]>().notNull().default([]),
+  pendingPhotos: jsonb("pending_photos").$type<string[]>().notNull().default([]),
   videos: jsonb("videos").$type<string[]>().notNull().default([]),
   instagram: varchar("instagram", { length: 255 }),
   tiktok: varchar("tiktok", { length: 255 }),

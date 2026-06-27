@@ -438,6 +438,7 @@ router.post("/cron/founding-anniversary", async (req, res): Promise<void> => {
        FROM businesses b
        LEFT JOIN users u ON u.id = b.submitted_by_id
        WHERE b.founding_business = true
+         AND b.black_owned = true
          AND b.founding_granted_at IS NOT NULL
          AND EXTRACT(MONTH FROM b.founding_granted_at) = EXTRACT(MONTH FROM CURRENT_DATE)
          AND EXTRACT(DAY   FROM b.founding_granted_at) = EXTRACT(DAY   FROM CURRENT_DATE)

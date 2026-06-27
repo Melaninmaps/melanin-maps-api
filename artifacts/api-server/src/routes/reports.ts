@@ -1,8 +1,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, pool, safetyReportsTable, safetyIncidentsTable } from "@workspace/db";
+import { db, pool, safetyReportsTable, safetyIncidentsTable, businessesTable } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
 import { reportLimiter } from "../middleware/rateLimiter";
 import { sendPushToBusinessOwnersByCity } from "../lib/pushNotifications";
+import { sendAdminSafetyReportAlert } from "../lib/email";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
@@ -13,6 +14,44 @@ const VALID_TARGET_TYPES = ["neighborhood", "business", "area"] as const;
 
 const INCIDENT_THRESHOLD = 3;
 const INCIDENT_WINDOW_DAYS = 7;
+const SAFETY_RATING_THRESHOLD = 3;
+
+const SEVERITY_WEIGHTS: Record<string, number> = { low: 0.2, medium: 0.5, high: 1.0, critical: 2.0 };
+
+/**
+ * Recomputes and saves a business's safetyRating.
+ * countAllPending=true  → non-minority: every non-dismissed report counts immediately
+ * countAllPending=false → minority: only admin-reviewed ("reviewed"|"actioned") reports count
+ * In both cases the rating only changes once 3+ qualifying reports exist.
+ */
+async function updateBusinessSafetyRating(businessId: string, countAllPending: boolean): Promise<void> {
+  try {
+    const statusFilter = countAllPending
+      ? `target_id = $1 AND target_type = 'business' AND status != 'dismissed'`
+      : `target_id = $1 AND target_type = 'business' AND status IN ('reviewed', 'actioned')`;
+
+    const result = await pool.query<{ severity: string; count: string }>(
+      `SELECT severity, COUNT(*)::text AS count FROM safety_reports WHERE ${statusFilter} GROUP BY severity`,
+      [businessId],
+    );
+
+    let totalReports = 0;
+    let totalWeight = 0;
+    for (const row of result.rows) {
+      const n = parseInt(row.count, 10);
+      totalReports += n;
+      totalWeight += (SEVERITY_WEIGHTS[row.severity] ?? 0.5) * n;
+    }
+
+    if (totalReports < SAFETY_RATING_THRESHOLD) return;
+
+    const safetyRating = Math.max(0, 5.0 - totalWeight).toFixed(1);
+    await pool.query(`UPDATE businesses SET safety_rating = $1 WHERE id = $2`, [safetyRating, businessId]);
+    logger.info({ businessId, safetyRating, totalReports, countAllPending }, "[safety] business safety rating updated");
+  } catch (err) {
+    logger.error({ err }, "[safety] failed to update business safety rating");
+  }
+}
 
 const CATEGORY_LABELS: Record<string, string> = {
   safety: "Safety Concern",
@@ -163,6 +202,37 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
 
     await checkAndTriggerIncident(city, category as string, resolvedSeverity, neighborhood);
 
+    // Look up the targeted business (if any) to determine ownership for rating + email
+    let isMinorityOwned: boolean | null = null;
+    const resolvedTargetId = typeof targetId === "string" ? targetId : null;
+    if (resolvedTargetType === "business" && resolvedTargetId) {
+      const [biz] = await db
+        .select({ blackOwned: businessesTable.blackOwned })
+        .from(businessesTable)
+        .where(eq(businessesTable.id, resolvedTargetId))
+        .limit(1);
+      if (biz) {
+        isMinorityOwned = biz.blackOwned;
+        // Non-minority-owned: all reports count immediately — update rating if 3+ reached
+        if (!biz.blackOwned) {
+          await updateBusinessSafetyRating(resolvedTargetId, true);
+        }
+        // Minority-owned: rating only updated after admin review — no auto-update here
+      }
+    }
+
+    // Always email admin on every report
+    sendAdminSafetyReportAlert({
+      category: category as string,
+      targetType: resolvedTargetType,
+      targetName: (targetName as string).trim(),
+      severity: resolvedSeverity,
+      description: typeof description === "string" ? description.slice(0, 500) : null,
+      reporterName,
+      isMinorityOwned,
+      reportId: report.id,
+    }).catch((err) => req.log.warn({ err }, "Failed to send admin safety report alert"));
+
     res.status(201).json({
       report,
       message: "Report submitted. Thank you for keeping the community safe.",
@@ -260,6 +330,19 @@ router.patch("/admin/safety-reports/:id", async (req: any, res: Response): Promi
     if (!updated) {
       res.status(404).json({ error: "Report not found" });
       return;
+    }
+
+    // When a report targeting a minority-owned business is reviewed or actioned,
+    // recalculate their safety rating using only reviewed reports.
+    if ((status === "reviewed" || status === "actioned") && updated.targetType === "business" && updated.targetId) {
+      const [biz] = await db
+        .select({ blackOwned: businessesTable.blackOwned })
+        .from(businessesTable)
+        .where(eq(businessesTable.id, updated.targetId))
+        .limit(1);
+      if (biz?.blackOwned) {
+        await updateBusinessSafetyRating(updated.targetId, false);
+      }
     }
 
     res.json({ report: updated });

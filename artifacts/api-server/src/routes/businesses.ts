@@ -255,14 +255,15 @@ router.post("/businesses/mine/photos", photoUpload.single("photo"), async (req: 
 
   try {
     const [business] = await db
-      .select({ id: businessesTable.id, photos: businessesTable.photos, imageUrl: businessesTable.imageUrl })
+      .select({ id: businessesTable.id, photos: businessesTable.photos, pendingPhotos: businessesTable.pendingPhotos })
       .from(businessesTable)
       .where(eq(businessesTable.submittedById, String(userId)));
     if (!business) { res.status(404).json({ error: "Business not found" }); return; }
 
     const currentPhotos = (business.photos as string[]) ?? [];
-    if (currentPhotos.length >= 10) {
-      res.status(400).json({ error: "Maximum of 10 photos allowed" }); return;
+    const currentPending = (business.pendingPhotos as string[]) ?? [];
+    if (currentPhotos.length + currentPending.length >= 10) {
+      res.status(400).json({ error: "Maximum of 10 photos allowed (including those pending review)" }); return;
     }
 
     const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
@@ -271,7 +272,7 @@ router.post("/businesses/mine/photos", photoUpload.single("photo"), async (req: 
     const { originalname, mimetype, buffer } = req.file;
     const ext = originalname.split(".").pop()?.toLowerCase() ?? "jpg";
     const safeExt = ["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(ext) ? ext : "jpg";
-    const objectKey = `business-photos/${business.id}/${randomUUID()}.${safeExt}`;
+    const objectKey = `business-photos-pending/${business.id}/${randomUUID()}.${safeExt}`;
 
     const bucket = objectStorageClient.bucket(bucketId);
     const gcsFile = bucket.file(objectKey);
@@ -279,23 +280,95 @@ router.post("/businesses/mine/photos", photoUpload.single("photo"), async (req: 
     await gcsFile.makePublic();
 
     const photoUrl = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
-    const updatedPhotos = [...currentPhotos, photoUrl];
-    const isFirst = currentPhotos.length === 0;
+    const updatedPending = [...currentPending, photoUrl];
 
-    const [updated] = await db
+    await db
       .update(businessesTable)
-      .set({
-        photos: updatedPhotos,
-        ...(isFirst ? { imageUrl: photoUrl } : {}),
-        updatedAt: new Date(),
-      })
-      .where(eq(businessesTable.id, business.id))
-      .returning();
+      .set({ pendingPhotos: updatedPending, updatedAt: new Date() })
+      .where(eq(businessesTable.id, business.id));
 
-    res.status(201).json({ url: photoUrl, photos: updated.photos, imageUrl: updated.imageUrl });
+    res.status(201).json({
+      url: photoUrl,
+      pending: true,
+      message: "Photo submitted for review. It will appear on your profile once approved.",
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to upload business photo");
     res.status(500).json({ error: "Failed to upload photo" });
+  }
+});
+
+// Admin: list all businesses with photos awaiting review
+router.get("/admin/businesses/pending-photos", async (req: any, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Admin access required" }); return; }
+  try {
+    const businesses = await db
+      .select({ id: businessesTable.id, name: businessesTable.name, pendingPhotos: businessesTable.pendingPhotos, blackOwned: businessesTable.blackOwned })
+      .from(businessesTable)
+      .where(sql`jsonb_array_length(pending_photos) > 0`);
+    res.json({ businesses });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch pending photos");
+    res.status(500).json({ error: "Failed to fetch pending photos" });
+  }
+});
+
+// Admin: approve a pending photo — moves it into the live photos array
+router.post("/admin/businesses/:id/photos/approve", async (req: any, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Admin access required" }); return; }
+  const businessId = String(req.params.id);
+  const { url } = req.body as { url?: string };
+  if (!url) { res.status(400).json({ error: "url is required" }); return; }
+  try {
+    const [business] = await db
+      .select({ photos: businessesTable.photos, pendingPhotos: businessesTable.pendingPhotos, imageUrl: businessesTable.imageUrl })
+      .from(businessesTable)
+      .where(eq(businessesTable.id, businessId))
+      .limit(1);
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+    const pending = (business.pendingPhotos as string[]) ?? [];
+    if (!pending.includes(url)) { res.status(400).json({ error: "URL not found in pending photos" }); return; }
+    const approved = (business.photos as string[]) ?? [];
+    const newPending = pending.filter((p) => p !== url);
+    const newApproved = [...approved, url];
+    const isFirst = approved.length === 0;
+    const [updated] = await db
+      .update(businessesTable)
+      .set({ photos: newApproved, pendingPhotos: newPending, ...(isFirst ? { imageUrl: url } : {}), updatedAt: new Date() })
+      .where(eq(businessesTable.id, businessId))
+      .returning();
+    res.json({ photos: updated.photos, pendingPhotos: updated.pendingPhotos, imageUrl: updated.imageUrl });
+  } catch (err) {
+    req.log.error({ err }, "Failed to approve photo");
+    res.status(500).json({ error: "Failed to approve photo" });
+  }
+});
+
+// Admin: reject a pending photo — removes it from the queue and deletes from storage
+router.post("/admin/businesses/:id/photos/reject", async (req: any, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Admin access required" }); return; }
+  const businessId = String(req.params.id);
+  const { url } = req.body as { url?: string };
+  if (!url) { res.status(400).json({ error: "url is required" }); return; }
+  try {
+    const [business] = await db
+      .select({ pendingPhotos: businessesTable.pendingPhotos })
+      .from(businessesTable)
+      .where(eq(businessesTable.id, businessId))
+      .limit(1);
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+    const pending = (business.pendingPhotos as string[]) ?? [];
+    const newPending = pending.filter((p) => p !== url);
+    await db.update(businessesTable).set({ pendingPhotos: newPending, updatedAt: new Date() }).where(eq(businessesTable.id, businessId));
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (bucketId && url.includes(`storage.googleapis.com/${bucketId}/`)) {
+      const objectKey = url.split(`storage.googleapis.com/${bucketId}/`)[1];
+      if (objectKey) objectStorageClient.bucket(bucketId).file(objectKey).delete().catch(() => {});
+    }
+    res.json({ ok: true, pendingPhotos: newPending });
+  } catch (err) {
+    req.log.error({ err }, "Failed to reject photo");
+    res.status(500).json({ error: "Failed to reject photo" });
   }
 });
 

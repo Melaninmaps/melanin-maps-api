@@ -1443,6 +1443,55 @@ export async function sendBusinessSearchInvite(to: string, businessName: string,
   });
 }
 
+export async function sendAdminSafetyReportAlert({
+  category,
+  targetType,
+  targetName,
+  severity,
+  description,
+  reporterName,
+  isMinorityOwned,
+  reportId,
+}: {
+  category: string;
+  targetType: string;
+  targetName: string;
+  severity: string;
+  description: string | null;
+  reporterName: string;
+  isMinorityOwned: boolean | null;
+  reportId: string;
+}) {
+  if (!resend) { log("admin safety report alert"); return; }
+  const adminTo = process.env.ADMIN_EMAILS?.split(",").map((e) => e.trim()).filter(Boolean)[0] ?? "hello@mappingwithmelanin.com";
+  const severityColors: Record<string, string> = { low: "#CA922B", medium: "#E07A2F", high: "#C0392B", critical: "#7B241C" };
+  const ownershipLabel = isMinorityOwned === true ? "Minority-Owned (requires your review to affect score)" : isMinorityOwned === false ? "Non-Minority-Owned (score updates automatically after 3+ reports)" : "Ownership Unknown";
+  await resend.emails.send({
+    from: FROM,
+    to: adminTo,
+    replyTo: "hello@mappingwithmelanin.com",
+    subject: `[Safety Report] ${severity.toUpperCase()} — ${category} at ${targetName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <p style="color:#2B1507;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin:0 0 8px">Safety Report Alert</p>
+        <h1 style="font-size:22px;color:#2B1507;font-weight:800;margin:0 0 24px;line-height:1.3">New report submitted</h1>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+          <tr><td style="padding:8px 0;color:#6B5744;font-size:13px;width:140px">Report ID</td><td style="padding:8px 0;color:#2B1507;font-size:13px;font-family:monospace">${reportId}</td></tr>
+          <tr style="border-top:1px solid #E8DDD0"><td style="padding:8px 0;color:#6B5744;font-size:13px">Category</td><td style="padding:8px 0;color:#2B1507;font-size:13px;font-weight:700;text-transform:capitalize">${category}</td></tr>
+          <tr style="border-top:1px solid #E8DDD0"><td style="padding:8px 0;color:#6B5744;font-size:13px">Severity</td><td style="padding:8px 0;font-size:13px;font-weight:700;color:${severityColors[severity] ?? "#2B1507"};text-transform:uppercase">${severity}</td></tr>
+          <tr style="border-top:1px solid #E8DDD0"><td style="padding:8px 0;color:#6B5744;font-size:13px">Target type</td><td style="padding:8px 0;color:#2B1507;font-size:13px;text-transform:capitalize">${targetType}</td></tr>
+          <tr style="border-top:1px solid #E8DDD0"><td style="padding:8px 0;color:#6B5744;font-size:13px">Location / Name</td><td style="padding:8px 0;color:#2B1507;font-size:13px;font-weight:700">${targetName}</td></tr>
+          <tr style="border-top:1px solid #E8DDD0"><td style="padding:8px 0;color:#6B5744;font-size:13px">Reporter</td><td style="padding:8px 0;color:#2B1507;font-size:13px">${reporterName}</td></tr>
+          <tr style="border-top:1px solid #E8DDD0"><td style="padding:8px 0;color:#6B5744;font-size:13px">Ownership</td><td style="padding:8px 0;color:#2B1507;font-size:12px">${ownershipLabel}</td></tr>
+        </table>
+        ${description ? `<div style="background:#fff;border:1px solid #E8DDD0;border-radius:10px;padding:16px;margin-bottom:24px"><p style="color:#6B5744;font-size:12px;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.06em">Description</p><p style="color:#2B1507;font-size:14px;line-height:1.6;margin:0">${description}</p></div>` : ""}
+        <a href="https://mappingwithmelanin.com/admin/safety-reports" style="display:inline-block;background:#2B1507;color:#FAF6EF;font-weight:700;font-size:14px;padding:12px 28px;border-radius:50px;text-decoration:none">Review in Admin Panel →</a>
+        <p style="color:#6B5744;font-size:12px;margin:24px 0 0">Mapping With Melanin™ · Safety Moderation</p>
+      </div>
+    `,
+  });
+}
+
 export async function sendBusinessRecommendationInvite(
   to: string,
   businessName: string,
