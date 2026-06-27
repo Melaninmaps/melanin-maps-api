@@ -59,7 +59,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     emoji: "🏥",
     name: "Health & Wellness",
-    liveAtLaunch: false,
+    liveAtLaunch: true,
     subcategories: [
       { name: "Physicians" },
       { name: "Dentists" },
@@ -76,7 +76,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     emoji: "🏠",
     name: "Home & Real Estate",
-    liveAtLaunch: false,
+    liveAtLaunch: true,
     subcategories: [
       { name: "Real Estate Agents" },
       { name: "Property Management" },
@@ -91,7 +91,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     emoji: "🔨",
     name: "Home Improvement",
-    liveAtLaunch: false,
+    liveAtLaunch: true,
     subcategories: [
       { name: "Electricians" },
       { name: "Plumbers" },
@@ -108,7 +108,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     emoji: "🚗",
     name: "Automotive",
-    liveAtLaunch: false,
+    liveAtLaunch: true,
     subcategories: [
       { name: "Auto Repair" },
       { name: "Tire Shops" },
@@ -123,7 +123,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     emoji: "💼",
     name: "Professional Services",
-    liveAtLaunch: false,
+    liveAtLaunch: true,
     subcategories: [
       { name: "Attorneys" },
       { name: "Accountants" },
@@ -139,7 +139,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     emoji: "💻",
     name: "Technology",
-    liveAtLaunch: false,
+    liveAtLaunch: true,
     subcategories: [
       { name: "IT Services" },
       { name: "Software Development" },
@@ -153,7 +153,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     emoji: "📸",
     name: "Creative Services",
-    liveAtLaunch: false,
+    liveAtLaunch: true,
     subcategories: [
       { name: "Photography" },
       { name: "Videography" },
@@ -182,7 +182,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     emoji: "✈️",
     name: "Travel & Hospitality",
-    liveAtLaunch: false,
+    liveAtLaunch: true,
     subcategories: [
       { name: "Hotels" },
       { name: "Bed & Breakfasts" },
@@ -197,7 +197,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     emoji: "👶🏾",
     name: "Family & Education",
-    liveAtLaunch: false,
+    liveAtLaunch: true,
     subcategories: [
       { name: "Childcare" },
       { name: "Preschools" },
@@ -212,7 +212,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     emoji: "🐾",
     name: "Pet Services",
-    liveAtLaunch: false,
+    liveAtLaunch: true,
     subcategories: [
       { name: "Veterinarians" },
       { name: "Groomers" },
@@ -225,7 +225,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     emoji: "💒",
     name: "Community & Nonprofits",
-    liveAtLaunch: false,
+    liveAtLaunch: true,
     subcategories: [
       { name: "Churches & Faith Organizations" },
       { name: "Community Centers" },
@@ -238,7 +238,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     emoji: "🏛️",
     name: "Government & Public Resources",
-    liveAtLaunch: false,
+    liveAtLaunch: true,
     subcategories: [
       { name: "Libraries" },
       { name: "Public Parks" },
@@ -250,7 +250,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     emoji: "🎓",
     name: "Black Professionals",
-    liveAtLaunch: false,
+    liveAtLaunch: true,
     subcategories: [
       { name: "Physicians" },
       { name: "Attorneys" },
@@ -267,7 +267,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     emoji: "🌐",
     name: "Online & Mobile Businesses",
-    liveAtLaunch: false,
+    liveAtLaunch: true,
     subcategories: [
       { name: "E-commerce Stores" },
       { name: "Subscription Businesses" },

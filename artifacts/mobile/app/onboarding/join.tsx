@@ -102,10 +102,10 @@ export default function OnboardingJoin() {
         <View style={styles.finalBtns}>
           <TouchableOpacity
             style={styles.primaryBtn}
-            onPress={() => { markComplete(); router.replace("/waitlist"); }}
+            onPress={() => { markComplete(); router.replace("/signup"); }}
             activeOpacity={0.85}
           >
-            <Text style={styles.primaryBtnTxt}>Join the Waitlist</Text>
+            <Text style={styles.primaryBtnTxt}>Create Account — It's Free</Text>
             <Feather name="arrow-right" size={18} color="#1C0E06" />
           </TouchableOpacity>
 
