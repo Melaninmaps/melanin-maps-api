@@ -21,10 +21,11 @@ const ROUTES = [
   "/onboarding",
   "/onboarding/safety",
   "/onboarding/travel",
+  "/onboarding/identity",
   "/onboarding/join",
 ];
 
-const CURRENT = 3;
+const CURRENT = 4;
 
 const markComplete = () =>
   AsyncStorage.setItem("@mapping_with_melanin_onboarding_complete", "true").catch(() => {});

@@ -326,6 +326,10 @@ KNOW BEFORE YOU GO — When recommending a specific business, include this in ea
     ? `\n- Cultural interests: ${(prefs!.culturalInterests as string[]).join(", ")}`
     : "";
 
+  const ownershipLine = (prefs?.preferredOwnershipTypes as string[] | null)?.length
+    ? `\n- Preferred business types: ${(prefs!.preferredOwnershipTypes as string[]).join(", ")} — ALWAYS prioritize recommending businesses with these designations`
+    : "";
+
   const profileSection = prefs ? `
 ABOUT THIS USER (their taste profile — personalize everything around this):
 - Favorite categories: ${prefs.favoriteCategories?.length ? prefs.favoriteCategories.join(", ") : "not set yet"}
@@ -334,7 +338,7 @@ ABOUT THIS USER (their taste profile — personalize everything around this):
 - Budget: ${prefs.budgetRange ?? "any"}
 - How they travel: ${prefs.tripStyle?.length ? prefs.tripStyle.join(", ") : "not specified"}
 - Who they travel with: ${prefs.travelCompanion ?? "solo"}
-${prefs.dietaryNotes ? `- Dietary notes: ${prefs.dietaryNotes}` : ""}${culturalLine}` : "USER PROFILE: New user — no preferences captured yet. Ask them what they're into!";
+${prefs.dietaryNotes ? `- Dietary notes: ${prefs.dietaryNotes}` : ""}${culturalLine}${ownershipLine}` : "USER PROFILE: New user — no preferences captured yet. Ask them what they're into!";
 
   const likedSection = likedSpots.length
     ? `\nSPOTS THEY'VE LOVED (recommend similar):\n${likedSpots.map((s) => `- ${s}`).join("\n")}`
@@ -475,6 +479,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
   const {
     favoriteCategories, favoriteCities, avoidCategories, budgetRange, tripStyle, travelCompanion, dietaryNotes,
     communicationStyle, emojiLevel, humorLevel, culturalInterests, knowBeforeYouGo, regionalFlavor,
+    preferredOwnershipTypes,
   } = req.body as Record<string, unknown>;
   try {
     const [prefs] = await db
@@ -494,6 +499,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
         culturalInterests: Array.isArray(culturalInterests) ? culturalInterests as string[] : undefined,
         knowBeforeYouGo: typeof knowBeforeYouGo === "boolean" ? knowBeforeYouGo : undefined,
         regionalFlavor: typeof regionalFlavor === "string" ? regionalFlavor : undefined,
+        preferredOwnershipTypes: Array.isArray(preferredOwnershipTypes) ? preferredOwnershipTypes as string[] : undefined,
       })
       .onConflictDoUpdate({
         target: userPreferencesTable.userId,
@@ -511,6 +517,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           ...(Array.isArray(culturalInterests) && { culturalInterests: culturalInterests as string[] }),
           ...(typeof knowBeforeYouGo === "boolean" && { knowBeforeYouGo }),
           ...(typeof regionalFlavor === "string" && { regionalFlavor }),
+          ...(Array.isArray(preferredOwnershipTypes) && { preferredOwnershipTypes: preferredOwnershipTypes as string[] }),
           updatedAt: new Date(),
         },
       })

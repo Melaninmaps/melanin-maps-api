@@ -36,6 +36,7 @@ import { type FilterState } from "@/components/ScoreFilterPanel";
 import { useSpaces } from "@/hooks/useSpaces";
 import { useDismissedBusinesses } from "@/hooks/useDismissedBusinesses";
 import { useAuth } from "@/lib/auth";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 function getTimeGreeting(): string {
   const h = new Date().getHours();
@@ -51,6 +52,7 @@ export default function DiscoverScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { isSaved, toggleSave } = useFavorites();
+  const { preferences } = useUserPreferences();
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -63,6 +65,15 @@ export default function DiscoverScreen() {
     verifiedOnly: false,
     ownershipTypes: [],
   });
+  const [prefsBannerDismissed, setPrefsBannerDismissed] = useState(false);
+
+  // When saved preferences load, auto-apply ownership types if user hasn't set a filter yet
+  React.useEffect(() => {
+    if (preferences?.preferredOwnershipTypes?.length && filters.ownershipTypes.length === 0) {
+      setFilters((f) => ({ ...f, ownershipTypes: preferences.preferredOwnershipTypes }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preferences?.preferredOwnershipTypes?.join(",")]);
   const [showNeighborhoodSurvey, setShowNeighborhoodSurvey] = useState(false);
   const [showPrefsSurvey, setShowPrefsSurvey] = useState(false);
   const [feedbackBusiness, setFeedbackBusiness] = useState<{ id: string; name: string; feedbackOptIn?: boolean } | null>(null);
@@ -111,8 +122,34 @@ export default function DiscoverScreen() {
     return matchesScore && matchesVerified && matchesOwnership && matchesVibe;
   });
 
-  const featured = filtered.filter((b) => b.featured);
-  const nearby = filtered.filter((b) => !b.featured);
+  // Sort: preference-matched businesses first within each section
+  const savedOwnershipPrefs = preferences?.preferredOwnershipTypes ?? [];
+  const matchesPref = (b: (typeof filtered)[0]) =>
+    savedOwnershipPrefs.length === 0 ||
+    savedOwnershipPrefs.some(
+      (t) =>
+        (t === "minority-owned" && b.blackOwned) ||
+        b.ownershipDesignations?.includes(t)
+    );
+
+  const sortByPref = (list: typeof filtered) => {
+    if (savedOwnershipPrefs.length === 0) return list;
+    const matched = list.filter(matchesPref);
+    const rest = list.filter((b) => !matchesPref(b));
+    return [...matched, ...rest];
+  };
+
+  const featured = sortByPref(filtered.filter((b) => b.featured));
+  const nearby = sortByPref(filtered.filter((b) => !b.featured));
+
+  // True when the user has ownership prefs but zero businesses match them
+  const prefMatchCount = filtered.filter(matchesPref).length;
+  const showNoPrefsMatch =
+    !prefsBannerDismissed &&
+    savedOwnershipPrefs.length > 0 &&
+    prefMatchCount === 0 &&
+    filtered.length > 0 &&
+    !businessesLoading;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -465,7 +502,50 @@ export default function DiscoverScreen() {
           </View>
         ) : null}
 
-        {filtered.length === 0 && (
+        {/* No preference-matched businesses — offer to broaden */}
+        {showNoPrefsMatch && (
+          <View style={[styles.noPrefsMatch, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.noPrefsMatchTop}>
+              <Feather name="heart" size={18} color="#CA922B" />
+              <Text style={[styles.noPrefsMatchTitle, { color: colors.foreground }]}>
+                No exact preference matches
+              </Text>
+              <TouchableOpacity
+                onPress={() => setPrefsBannerDismissed(true)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Feather name="x" size={16} color={colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.noPrefsMatchSub, { color: colors.mutedForeground }]}>
+              We couldn't find businesses matching your saved preferences in this view. Would you like to explore other minority-owned businesses?
+            </Text>
+            <View style={styles.noPrefsMatchBtns}>
+              <TouchableOpacity
+                style={[styles.noPrefsBtn, { backgroundColor: "#CA922B" }]}
+                onPress={() => {
+                  setFilters((f) => ({ ...f, ownershipTypes: ["minority-owned"] }));
+                  setPrefsBannerDismissed(true);
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.noPrefsBtnTxt}>Show All Minority-Owned</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.noPrefsGhostBtn, { borderColor: colors.border }]}
+                onPress={() => {
+                  setFilters((f) => ({ ...f, ownershipTypes: [] }));
+                  setPrefsBannerDismissed(true);
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.noPrefsGhostTxt, { color: colors.mutedForeground }]}>Show Everything</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {filtered.length === 0 && !showNoPrefsMatch && (
           <View style={styles.empty}>
             <Feather name="search" size={40} color={colors.muted} />
             <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No businesses found</Text>
@@ -778,4 +858,24 @@ const styles = StyleSheet.create({
   },
   emptyTitle: { fontFamily: "Inter_600SemiBold", fontSize: 16 },
   emptyText: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center" },
+  noPrefsMatch: {
+    marginHorizontal: 20, marginVertical: 8,
+    borderRadius: 16, borderWidth: 1,
+    padding: 16, gap: 10,
+  },
+  noPrefsMatchTop: { flexDirection: "row", alignItems: "center", gap: 8 },
+  noPrefsMatchTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14, flex: 1 },
+  noPrefsMatchSub: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
+  noPrefsMatchBtns: { flexDirection: "row", gap: 10, marginTop: 4 },
+  noPrefsBtn: {
+    flex: 1, paddingVertical: 12, borderRadius: 10,
+    alignItems: "center", justifyContent: "center",
+  },
+  noPrefsBtnTxt: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#1C0E06" },
+  noPrefsGhostBtn: {
+    flex: 1, paddingVertical: 12, borderRadius: 10,
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 1,
+  },
+  noPrefsGhostTxt: { fontFamily: "Inter_500Medium", fontSize: 13 },
 });

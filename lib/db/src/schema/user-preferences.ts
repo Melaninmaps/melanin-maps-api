@@ -18,6 +18,7 @@ export const userPreferencesTable = pgTable("user_preferences", {
   culturalInterests: jsonb("cultural_interests").$type<string[]>().default([]),
   knowBeforeYouGo: boolean("know_before_you_go").default(true),
   regionalFlavor: varchar("regional_flavor", { length: 30 }).default("standard"),
+  preferredOwnershipTypes: jsonb("preferred_ownership_types").$type<string[]>().default([]),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
