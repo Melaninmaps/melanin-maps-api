@@ -1,11 +1,15 @@
 Welcome to Mapping With Melanin™ v1.0 — our first public release!
 
-• Discover thousands of Black-owned businesses across the country
-• Community-powered neighborhood safety ratings
-• KinfolkAI™ personalized travel assistant
-• Interactive map with safety overlays
-• Save your favorite places
-• Referral-based early access waitlist
+We're thrilled to launch the app that makes discovering and supporting Black-owned businesses easier than ever.
+
+• Discover — Search and filter thousands of verified Black-owned businesses across the country
+• Map — Full-screen interactive map with business pins and neighborhood safety overlays
+• KinfolkAI™ — Your personalized AI travel guide for culturally informed recommendations
+• Safety Surveys — Community-powered neighborhood safety reporting and real-time overlays
+• Business Profiles — Rich profiles with photos, hours, reviews, and one-tap actions
+• Favorites — Save your favorite places for quick offline access
+• Membership — Join and earn points for community contributions
+• Referrals — Invite friends and earn rewards via our early access waitlist
 • Dark mode support
 
-Thank you to our founding community for making this possible. Map Your Life. Connect Deeper.™
+Thank you to our founding community for making this possible. Your support fuels the movement. Map Your Life. Connect Deeper.™
