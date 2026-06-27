@@ -1,8 +1,10 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import React, { useState } from "react";
 import {
+  Alert,
   Platform,
   ScrollView,
   StyleSheet,
@@ -13,6 +15,11 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
 
 const VISIT_TIMES = ["Morning", "Afternoon", "Evening", "Late Night"];
 const GROUP_TYPES = ["Solo", "Partner", "Friends", "Family", "Work Colleagues"];
@@ -130,9 +137,60 @@ export default function WriteReviewScreen() {
 
   const cleanVideoLink = videoLink.trim() && isValidVideoUrl(videoLink) ? videoLink.trim() : undefined;
 
-  const handleSubmit = () => {
-    setSubmitted(true);
-    if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
+      const apiBase = getApiBase();
+      const res = await fetch(`${apiBase}/api/reviews`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          businessId: params.businessId,
+          businessName: params.businessName,
+          rating: safetyRating,
+          text: comments.trim() || undefined,
+          wouldReturnAlone: returnAloneRating,
+          videoUrl: cleanVideoLink,
+          safetyTips: tips.length > 0 ? tips : undefined,
+          visitTime,
+          groupType,
+          groupSize,
+          visitFrequency: visitFreq,
+          incidentOccurred,
+          incidentTypes: incidentTypes.length > 0 ? incidentTypes : undefined,
+          incidentReported: incidentReported || undefined,
+        }),
+      });
+
+      if (res.status === 409) {
+        const data = await res.json() as { error?: string };
+        Alert.alert("Already Reviewed", data.error ?? "You have already reviewed this business.");
+        setSubmitting(false);
+        return;
+      }
+
+      if (!res.ok && res.status !== 401) {
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        Alert.alert("Couldn't Submit", data.error ?? "Something went wrong. Please try again.");
+        setSubmitting(false);
+        return;
+      }
+
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setSubmitted(true);
+    } catch {
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert("No Connection", "Check your internet and try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const toggleMulti = (arr: string[], setArr: (v: string[]) => void, val: string) => {
@@ -461,11 +519,14 @@ export default function WriteReviewScreen() {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            style={[styles.nextBtn, { backgroundColor: colors.primary }]}
+            style={[styles.nextBtn, { backgroundColor: submitting ? colors.muted : colors.primary, opacity: submitting ? 0.7 : 1 }]}
             onPress={handleSubmit}
+            disabled={submitting}
           >
-            <Feather name="send" size={18} color={colors.primaryForeground} />
-            <Text style={[styles.nextTxt, { color: colors.primaryForeground }]}>Submit Survey</Text>
+            <Feather name={submitting ? "clock" : "send"} size={18} color={submitting ? colors.mutedForeground : colors.primaryForeground} />
+            <Text style={[styles.nextTxt, { color: submitting ? colors.mutedForeground : colors.primaryForeground }]}>
+              {submitting ? "Submitting…" : "Submit Survey"}
+            </Text>
           </TouchableOpacity>
         )}
       </View>

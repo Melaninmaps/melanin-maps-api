@@ -162,6 +162,34 @@ router.patch("/users/me", async (req: Request, res: Response) => {
 });
 
 /* ── Public user profile ─────────────────────────────────────────────── */
+router.patch("/users/me/privacy", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  try {
+    const { isPrivate } = req.body as { isPrivate?: unknown };
+    if (typeof isPrivate !== "boolean") {
+      res.status(400).json({ error: "isPrivate must be a boolean" });
+      return;
+    }
+    const [user] = await db
+      .update(usersTable)
+      .set({ isPrivate, updatedAt: new Date() })
+      .where(eq(usersTable.id, req.user.id))
+      .returning();
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    const { stripeCustomerId, stripeSubscriptionId, pushToken, ...safeUser } = user;
+    res.json({ user: safeUser });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /api/users/me/privacy error");
+    res.status(500).json({ error: "Failed to update privacy setting" });
+  }
+});
+
 router.get("/users/:userId/profile", async (req: Request, res: Response) => {
   try {
     const targetId = String(req.params.userId);
