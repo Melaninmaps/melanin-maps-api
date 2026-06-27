@@ -239,6 +239,27 @@ router.get("/connections/:id/safety-shares", async (req: Request, res: Response)
   }
 });
 
+router.delete("/connections/:id", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const userId = req.user!.id;
+    const connId = parseInt(String(req.params.id), 10);
+    if (isNaN(connId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+    const [conn] = await db.select().from(memberConnections).where(eq(memberConnections.id, connId)).limit(1);
+    if (!conn) { res.status(404).json({ error: "Connection not found" }); return; }
+    if (conn.requesterId !== userId && conn.recipientId !== userId) {
+      res.status(403).json({ error: "Not your connection" }); return;
+    }
+
+    await db.delete(memberConnections).where(eq(memberConnections.id, connId));
+    res.json({ removed: true });
+  } catch (err) {
+    req.log.error({ err }, "DELETE /api/connections/:id error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.delete("/connections/:id/safety-share/:shareId", async (req: Request, res: Response) => {
   if (!requireAuth(req, res)) return;
   try {

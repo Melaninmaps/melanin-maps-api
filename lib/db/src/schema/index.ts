@@ -78,5 +78,6 @@ export * from "./business-search-inquiries";
 export * from "./business-response-links";
 export * from "./business-improvement-plans";
 export * from "./community-appreciations";
+export * from "./profile-tags";
 export * from "./business-badges";
 export * from "./circles";

@@ -779,8 +779,8 @@ export default function BusinessDetailScreen() {
                     onPress={() => Linking.openURL(rev.videoUrl!)}
                     activeOpacity={0.75}
                   >
-                    <Feather name="play-circle" size={14} color={colors.primary} />
-                    <Text style={[styles.videoLinkText, { color: colors.primary }]}>Watch Video</Text>
+                    <Feather name="external-link" size={14} color={colors.primary} />
+                    <Text style={[styles.videoLinkText, { color: colors.primary }]}>View Social Post</Text>
                   </TouchableOpacity>
                 ) : null}
                 {rev.nowHiringUrl ? (

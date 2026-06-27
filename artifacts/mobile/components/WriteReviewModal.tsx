@@ -369,21 +369,21 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
                 onChangeText={setLocation}
               />
 
-              {/* Video link section */}
+              {/* Social post link section */}
               <View style={[styles.videoSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.videoHeader}>
-                  <Feather name="play-circle" size={16} color={colors.primary} />
-                  <Text style={[styles.videoTitle, { color: colors.foreground }]}>Add a Video</Text>
+                  <Feather name="link" size={16} color={colors.primary} />
+                  <Text style={[styles.videoTitle, { color: colors.foreground }]}>Link Your Social Post</Text>
                   <View style={[styles.optionalBadge, { backgroundColor: colors.primary + "18" }]}>
                     <Text style={[styles.optionalText, { color: colors.primary }]}>optional</Text>
                   </View>
                 </View>
                 <Text style={[styles.inviteDesc, { color: colors.mutedForeground }]}>
-                  Share a YouTube, TikTok, Instagram, or Facebook video link from your visit.
+                  Share a link to your Instagram, TikTok, Facebook, or YouTube post about this business. It'll appear on your profile and link back to your page.
                 </Text>
                 <TextInput
                   style={[styles.videoInput, { backgroundColor: colors.background, borderColor: videoLink && !isValidVideoUrl(videoLink) ? "#DC2626" : videoLink && isValidVideoUrl(videoLink) ? "#2D7A4F" : colors.border, color: colors.foreground }]}
-                  placeholder="https://www.tiktok.com/@user/video/..."
+                  placeholder="https://www.instagram.com/p/..."
                   placeholderTextColor={colors.mutedForeground}
                   value={videoLink}
                   onChangeText={setVideoLink}
@@ -393,7 +393,7 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
                 />
                 {videoLink.length > 0 && (
                   <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: isValidVideoUrl(videoLink) ? "#2D7A4F" : "#DC2626" }}>
-                    {isValidVideoUrl(videoLink) ? `✓ ${detectVideoPlatform(videoLink)} link detected` : "Please enter a valid YouTube, TikTok, Instagram, or Facebook URL"}
+                    {isValidVideoUrl(videoLink) ? `✓ ${detectVideoPlatform(videoLink)} post linked` : "Paste a link from Instagram, TikTok, Facebook, or YouTube"}
                   </Text>
                 )}
               </View>
