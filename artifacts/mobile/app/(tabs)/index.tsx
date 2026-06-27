@@ -592,6 +592,27 @@ export default function DiscoverScreen() {
           </View>
         )}
 
+        {/* List Your Business CTA */}
+        <TouchableOpacity
+          style={[styles.listBizBanner, { backgroundColor: colors.primary }]}
+          onPress={() => router.push("/list-business" as never)}
+          activeOpacity={0.88}
+        >
+          <View style={styles.listBizLeft}>
+            <View style={[styles.listBizIconWrap, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+              <Feather name="briefcase" size={20} color="#FFFFFF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.listBizTitle}>Own a Black-Owned Business?</Text>
+              <Text style={styles.listBizSub}>Get discovered by thousands of locals and travelers. Listing is free.</Text>
+            </View>
+          </View>
+          <View style={[styles.listBizCta, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+            <Text style={styles.listBizCtaText}>List Free</Text>
+            <Feather name="arrow-right" size={13} color="#FFFFFF" />
+          </View>
+        </TouchableOpacity>
+
         {/* Preferences shortcut */}
         <TouchableOpacity
           style={[styles.prefsRow, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -852,6 +873,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   noAlertsText: { fontFamily: "Inter_400Regular", fontSize: 13 },
+  listBizBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: 20,
+    marginTop: 12,
+    marginBottom: 4,
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
+  },
+  listBizLeft: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12 },
+  listBizIconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  listBizTitle: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#FFFFFF", marginBottom: 3 },
+  listBizSub: { fontFamily: "Inter_400Regular", fontSize: 11, color: "rgba(255,255,255,0.85)", lineHeight: 15 },
+  listBizCta: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 },
+  listBizCtaText: { fontFamily: "Inter_700Bold", fontSize: 12, color: "#FFFFFF" },
   prefsRow: {
     flexDirection: "row",
     alignItems: "center",

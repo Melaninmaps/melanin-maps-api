@@ -440,6 +440,27 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* List / manage your business — top-of-profile CTA */}
+          <TouchableOpacity
+            style={[styles.listBizBanner, { backgroundColor: colors.primary }]}
+            onPress={() => router.push("/list-business")}
+            activeOpacity={0.88}
+          >
+            <View style={styles.listBizLeft}>
+              <View style={[styles.listBizIconWrap, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+                <Feather name="briefcase" size={22} color="#FFFFFF" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.listBizTitle}>Own a Business?</Text>
+                <Text style={styles.listBizSub}>Get discovered by thousands of locals and travelers — listing is free.</Text>
+              </View>
+            </View>
+            <View style={[styles.listBizCta, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+              <Text style={styles.listBizCtaText}>List Free</Text>
+              <Feather name="arrow-right" size={14} color="#FFFFFF" />
+            </View>
+          </TouchableOpacity>
+
           {/* Profession community + mentorship quick actions */}
           {user?.industry ? (
             <View style={[styles.profActionsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
