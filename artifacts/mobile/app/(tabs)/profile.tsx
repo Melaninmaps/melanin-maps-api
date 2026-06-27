@@ -44,6 +44,7 @@ const SETTINGS = [
   { icon: "grid" as const, label: "My Dashboard", sub: "Saved places, activity & stats", route: "/dashboard" as const },
   { icon: "globe" as const, label: "Community Preference", sub: "Personalise results by cultural identity", route: "/cultural-preference" as const },
   { icon: "users" as const, label: "My Connections", sub: "Friends, requests & people you follow", route: "/connections" as const },
+  { icon: "video" as const, label: "Creator Profile", sub: "Connect your channels — send fans to where you create", route: "/creator-profile" as const },
   { icon: "settings" as const, label: "Settings", sub: "Account, notifications, privacy", route: "/settings" as const },
   { icon: "bell" as const, label: "Notifications", sub: "Manage alerts and updates", route: "/notifications-settings" as const },
   { icon: "shield" as const, label: "Privacy & Safety", sub: "Control your data and visibility", route: "/privacy" as const },

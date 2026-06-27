@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { db, pool, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable } from "@workspace/db";
+import { db, pool, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable, businessClickEventsTable } from "@workspace/db";
 import { eq, and, or, ilike, desc, sql, gt, count } from "drizzle-orm";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
@@ -233,11 +233,12 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
     "Home Services", "Real Estate & Housing", "Community & Nonprofit",
   ];
 
-  const { name, category, subcategory, description, phone, website, hours, instagram, tiktok, facebook, twitter, youtube } = req.body as {
+  const { name, category, subcategory, description, phone, website, hours, instagram, tiktok, facebook, twitter, youtube, pinterest, primarySocialPlatform } = req.body as {
     name?: string; category?: string; subcategory?: string; description?: string;
     phone?: string | null; website?: string | null; hours?: string | null;
     instagram?: string | null; tiktok?: string | null; facebook?: string | null;
     twitter?: string | null; youtube?: string | null;
+    pinterest?: string | null; primarySocialPlatform?: string | null;
   };
 
   if (category && !VALID_CATEGORIES.includes(category)) {
@@ -256,6 +257,8 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
   if (facebook !== undefined) updates.facebook = facebook?.trim() || null;
   if (twitter !== undefined) updates.twitter = twitter?.trim() || null;
   if (youtube !== undefined) updates.youtube = youtube?.trim() || null;
+  if (pinterest !== undefined) updates.pinterest = pinterest?.trim() || null;
+  if (primarySocialPlatform !== undefined) updates.primarySocialPlatform = primarySocialPlatform || null;
 
   try {
     const [updated] = await db
@@ -737,6 +740,26 @@ router.post("/businesses/:id/view", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to record business view");
     res.status(500).json({ error: "Failed to record view" });
+  }
+});
+
+router.post("/businesses/:id/click", async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const { clickType } = req.body as { clickType: string };
+    const userId = req.user?.id ?? null;
+    const VALID_TYPES = [
+      "tiktok_visit", "instagram_visit", "youtube_visit", "facebook_visit",
+      "pinterest_visit", "website_visit", "phone_call", "directions",
+    ];
+    if (!VALID_TYPES.includes(clickType)) {
+      res.status(400).json({ error: "Invalid click type" }); return;
+    }
+    await db.insert(businessClickEventsTable).values({ businessId: id, userId, clickType });
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to record business click");
+    res.status(500).json({ error: "Failed to record click" });
   }
 });
 

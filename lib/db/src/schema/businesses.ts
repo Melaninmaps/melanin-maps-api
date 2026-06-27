@@ -39,6 +39,8 @@ export const businessesTable = pgTable("businesses", {
   facebook: varchar("facebook", { length: 255 }),
   twitter: varchar("twitter", { length: 255 }),
   youtube: varchar("youtube", { length: 255 }),
+  pinterest: varchar("pinterest", { length: 255 }),
+  primarySocialPlatform: varchar("primary_social_platform", { length: 30 }),
   currentLocationSince: varchar("current_location_since", { length: 20 }),
   businessFoundedDate: varchar("business_founded_date", { length: 20 }),
   trustBadges: jsonb("trust_badges").$type<string[]>().notNull().default([]),

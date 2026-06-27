@@ -52,12 +52,14 @@ type FormState = {
   name: string; category: string; subcategory: string; description: string;
   phone: string; website: string; hours: string;
   instagram: string; tiktok: string; facebook: string; twitter: string; youtube: string;
+  pinterest: string; primarySocialPlatform: string;
 };
 
 const EMPTY_FORM: FormState = {
   name: "", category: "", subcategory: "", description: "",
   phone: "", website: "", hours: "",
   instagram: "", tiktok: "", facebook: "", twitter: "", youtube: "",
+  pinterest: "", primarySocialPlatform: "",
 };
 
 export default function EditBusinessProfile() {
@@ -102,6 +104,7 @@ export default function EditBusinessProfile() {
             description: b.description ?? "", phone: b.phone ?? "", website: b.website ?? "", hours: b.hours ?? "",
             instagram: b.instagram ?? "", tiktok: b.tiktok ?? "", facebook: b.facebook ?? "",
             twitter: b.twitter ?? "", youtube: b.youtube ?? "",
+            pinterest: (b as any).pinterest ?? "", primarySocialPlatform: (b as any).primarySocialPlatform ?? "",
           };
           setForm(f);
           setOriginal(f);
@@ -138,7 +141,8 @@ export default function EditBusinessProfile() {
           hours: form.hours.trim() || null,
           instagram: form.instagram.trim() || null, tiktok: form.tiktok.trim() || null,
           facebook: form.facebook.trim() || null, twitter: form.twitter.trim() || null,
-          youtube: form.youtube.trim() || null,
+          youtube: form.youtube.trim() || null, pinterest: form.pinterest.trim() || null,
+          primarySocialPlatform: form.primarySocialPlatform || null,
         }),
       });
       if (!res.ok) throw new Error("Save failed");
@@ -398,11 +402,12 @@ export default function EditBusinessProfile() {
           <Text style={[styles.groupLabel, { color: colors.foreground }]}>Social Media</Text>
           <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>These appear on your business profile and help customers follow you</Text>
           {([
-            { key: "instagram" as const, icon: "◈", label: "Instagram", placeholder: "https://instagram.com/yourbusiness" },
             { key: "tiktok" as const, icon: "♪", label: "TikTok", placeholder: "https://tiktok.com/@yourbusiness" },
-            { key: "facebook" as const, icon: "f", label: "Facebook", placeholder: "https://facebook.com/yourbusiness" },
-            { key: "twitter" as const, icon: "𝕏", label: "X / Twitter", placeholder: "https://x.com/yourbusiness" },
+            { key: "instagram" as const, icon: "◈", label: "Instagram", placeholder: "https://instagram.com/yourbusiness" },
             { key: "youtube" as const, icon: "▶", label: "YouTube", placeholder: "https://youtube.com/@yourchannel" },
+            { key: "facebook" as const, icon: "f", label: "Facebook", placeholder: "https://facebook.com/yourbusiness" },
+            { key: "pinterest" as const, icon: "📌", label: "Pinterest", placeholder: "https://pinterest.com/yourbusiness" },
+            { key: "twitter" as const, icon: "𝕏", label: "X / Twitter", placeholder: "https://x.com/yourbusiness" },
           ] as const).map(({ key, icon, label, placeholder }) => (
             <View key={key} style={[styles.socialRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={[styles.socialIcon, { backgroundColor: colors.primary + "15" }]}>
@@ -424,6 +429,32 @@ export default function EditBusinessProfile() {
               {form[key] ? <TouchableOpacity onPress={() => update(key)("")}><Feather name="x" size={14} color={colors.mutedForeground} /></TouchableOpacity> : null}
             </View>
           ))}
+
+          <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: colors.foreground, marginTop: 14, marginBottom: 6 }}>
+            Primary Platform
+          </Text>
+          <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, marginBottom: 8 }}>
+            Shown first on your profile — send fans where you're most active
+          </Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {(["tiktok", "instagram", "youtube", "facebook", "pinterest", "twitter"] as const).map((key) => {
+              const labels: Record<string, string> = { tiktok: "TikTok", instagram: "Instagram", youtube: "YouTube", facebook: "Facebook", pinterest: "Pinterest", twitter: "X / Twitter" };
+              const active = form.primarySocialPlatform === key;
+              const hasUrl = !!form[key].trim();
+              if (!hasUrl) return null;
+              return (
+                <TouchableOpacity
+                  key={key}
+                  style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary + "15" : colors.card }}
+                  onPress={() => update("primarySocialPlatform")(active ? "" : key)}
+                >
+                  <Text style={{ fontFamily: active ? "Inter_700Bold" : "Inter_400Regular", fontSize: 13, color: active ? colors.primary : colors.mutedForeground }}>
+                    {active ? "⭐ " : ""}{labels[key]}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         {/* ── Business Name ── */}

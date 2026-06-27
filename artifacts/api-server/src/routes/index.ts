@@ -94,6 +94,7 @@ import communitySaysRouter from "./community-says";
 import communityChallengesNewRouter from "./community-challenges-new";
 import followsRouter from "./follows";
 import pinnedRouter from "./pinned";
+import creatorProfilesRouter from "./creator-profiles";
 
 const router: IRouter = Router();
 
@@ -191,6 +192,7 @@ router.use(communitySaysRouter);
 router.use(communityChallengesNewRouter);
 router.use(followsRouter);
 router.use(pinnedRouter);
+router.use(creatorProfilesRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

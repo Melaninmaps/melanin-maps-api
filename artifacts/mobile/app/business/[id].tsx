@@ -243,19 +243,39 @@ export default function BusinessDetailScreen() {
     ]).start(() => setPointsToast(null));
   };
 
+  const trackClick = (clickType: string) => {
+    void (async () => {
+      try {
+        const { getItemAsync } = await import("expo-secure-store");
+        const token = Platform.OS !== "web" ? await getItemAsync("auth_session_token") : null;
+        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        await fetch(`${base}/api/businesses/${business.id}/click`, {
+          method: "POST", headers, body: JSON.stringify({ clickType }),
+        });
+      } catch { }
+    })();
+  };
+
   const handleCall = () => {
-    if (business.phone) Linking.openURL(`tel:${business.phone}`);
+    if (business.phone) {
+      trackClick("phone_call");
+      Linking.openURL(`tel:${business.phone}`);
+    }
   };
 
   const handleWebsite = () => {
     if (business.website) {
+      trackClick("website_visit");
       const url = /^https?:\/\//i.test(business.website) ? business.website : `https://${business.website}`;
       WebBrowser.openBrowserAsync(url);
     }
   };
 
-  const handleSocialLink = (raw: string, baseUrl?: string) => {
+  const handleSocialLink = (raw: string, baseUrl?: string, clickType?: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (clickType) trackClick(clickType);
     const url = /^https?:\/\//i.test(raw)
       ? raw
       : baseUrl
@@ -521,65 +541,65 @@ export default function BusinessDetailScreen() {
                 <Text style={[styles.infoText, { color: colors.primary }]}>{business.website}</Text>
               </TouchableOpacity>
             )}
-            {(business.instagram || business.tiktok || business.twitter || business.facebook || business.youtube) && (
-              <View style={styles.socialLinksRow}>
-                {business.instagram && (
-                  <TouchableOpacity
-                    style={[styles.socialBtn, { backgroundColor: "#E1306C18", borderColor: "#E1306C30" }]}
-                    onPress={() => handleSocialLink(business.instagram!, "https://instagram.com/")}
-                    accessibilityLabel={`View ${business.name} on Instagram`}
-                    accessibilityRole="link"
-                  >
-                    <Feather name="instagram" size={15} color="#E1306C" />
-                    <Text style={[styles.socialBtnText, { color: "#E1306C" }]}>Instagram</Text>
-                  </TouchableOpacity>
-                )}
-                {business.tiktok && (
-                  <TouchableOpacity
-                    style={[styles.socialBtn, { backgroundColor: "#00000015", borderColor: "#00000025" }]}
-                    onPress={() => handleSocialLink(business.tiktok!, "https://tiktok.com/@")}
-                    accessibilityLabel={`View ${business.name} on TikTok`}
-                    accessibilityRole="link"
-                  >
-                    <Feather name="music" size={15} color={colors.foreground} />
-                    <Text style={[styles.socialBtnText, { color: colors.foreground }]}>TikTok</Text>
-                  </TouchableOpacity>
-                )}
-                {business.twitter && (
-                  <TouchableOpacity
-                    style={[styles.socialBtn, { backgroundColor: "#1DA1F218", borderColor: "#1DA1F230" }]}
-                    onPress={() => handleSocialLink(business.twitter!, "https://x.com/")}
-                    accessibilityLabel={`View ${business.name} on X / Twitter`}
-                    accessibilityRole="link"
-                  >
-                    <Feather name="twitter" size={15} color="#1DA1F2" />
-                    <Text style={[styles.socialBtnText, { color: "#1DA1F2" }]}>X / Twitter</Text>
-                  </TouchableOpacity>
-                )}
-                {business.facebook && (
-                  <TouchableOpacity
-                    style={[styles.socialBtn, { backgroundColor: "#1877F218", borderColor: "#1877F230" }]}
-                    onPress={() => handleSocialLink(business.facebook!, "https://facebook.com/")}
-                    accessibilityLabel={`View ${business.name} on Facebook`}
-                    accessibilityRole="link"
-                  >
-                    <Feather name="facebook" size={15} color="#1877F2" />
-                    <Text style={[styles.socialBtnText, { color: "#1877F2" }]}>Facebook</Text>
-                  </TouchableOpacity>
-                )}
-                {business.youtube && (
-                  <TouchableOpacity
-                    style={[styles.socialBtn, { backgroundColor: "#FF000015", borderColor: "#FF000025" }]}
-                    onPress={() => handleSocialLink(business.youtube!, "https://youtube.com/@")}
-                    accessibilityLabel={`View ${business.name} on YouTube`}
-                    accessibilityRole="link"
-                  >
-                    <Feather name="youtube" size={15} color="#FF0000" />
-                    <Text style={[styles.socialBtnText, { color: "#FF0000" }]}>YouTube</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
+            {(business.instagram || business.tiktok || business.twitter || business.facebook || business.youtube || (business as any).pinterest) && (() => {
+              type SocialDef = { key: string; label: string; icon: keyof typeof Feather.glyphMap; color: string; bg: string; baseUrl: string; clickType: string };
+              const ALL: SocialDef[] = [
+                { key: "tiktok", label: "TikTok", icon: "music", color: colors.foreground, bg: "#00000015", baseUrl: "https://tiktok.com/@", clickType: "tiktok_visit" },
+                { key: "instagram", label: "Instagram", icon: "instagram", color: "#E1306C", bg: "#E1306C18", baseUrl: "https://instagram.com/", clickType: "instagram_visit" },
+                { key: "youtube", label: "YouTube", icon: "youtube", color: "#FF0000", bg: "#FF000015", baseUrl: "https://youtube.com/@", clickType: "youtube_visit" },
+                { key: "facebook", label: "Facebook", icon: "facebook", color: "#1877F2", bg: "#1877F218", baseUrl: "https://facebook.com/", clickType: "facebook_visit" },
+                { key: "pinterest", label: "Pinterest", icon: "bookmark", color: "#E60023", bg: "#E6002315", baseUrl: "https://pinterest.com/", clickType: "pinterest_visit" },
+                { key: "twitter", label: "X / Twitter", icon: "twitter", color: "#1DA1F2", bg: "#1DA1F218", baseUrl: "https://x.com/", clickType: "" },
+              ];
+              const biz = business as any;
+              const primary = (biz.primarySocialPlatform as string | undefined) || null;
+              const available = ALL.filter((s) => !!biz[s.key]);
+              const primaryDef = primary ? available.find((s) => s.key === primary) : null;
+              const rest = primaryDef ? available.filter((s) => s.key !== primary) : available;
+              return (
+                <View style={{ marginTop: 8 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                    <Feather name="heart" size={13} color={colors.primary} />
+                    <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: colors.primary }}>Support at the Source</Text>
+                  </View>
+                  {primaryDef && (
+                    <TouchableOpacity
+                      style={[styles.primarySocialCard, { backgroundColor: primaryDef.bg, borderColor: primaryDef.color + "40" }]}
+                      onPress={() => handleSocialLink(biz[primaryDef.key], primaryDef.baseUrl, primaryDef.clickType)}
+                      accessibilityRole="link"
+                      activeOpacity={0.8}
+                    >
+                      <View style={[styles.primarySocialIcon, { backgroundColor: primaryDef.color + "20" }]}>
+                        <Feather name={primaryDef.icon} size={22} color={primaryDef.color} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: primaryDef.color }}>Follow on {primaryDef.label}</Text>
+                        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, marginTop: 1 }}>
+                          Their preferred platform — follow & support their content
+                        </Text>
+                      </View>
+                      <Feather name="external-link" size={16} color={primaryDef.color} />
+                    </TouchableOpacity>
+                  )}
+                  {rest.length > 0 && (
+                    <View style={styles.socialLinksRow}>
+                      {rest.map((s) => (
+                        <TouchableOpacity
+                          key={s.key}
+                          style={[styles.socialBtn, { backgroundColor: s.bg, borderColor: s.color + "30" }]}
+                          onPress={() => handleSocialLink(biz[s.key], s.baseUrl, s.clickType || undefined)}
+                          accessibilityLabel={`View ${business.name} on ${s.label}`}
+                          accessibilityRole="link"
+                        >
+                          <Feather name={s.icon} size={15} color={s.color} />
+                          <Text style={[styles.socialBtnText, { color: s.color }]}>{s.label}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              );
+            })()}
           </View>
 
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>About</Text>
@@ -1073,9 +1093,11 @@ const styles = StyleSheet.create({
   },
   infoRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   infoText: { fontFamily: "Inter_400Regular", fontSize: 14, flex: 1, lineHeight: 20 },
-  socialLinksRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
+  socialLinksRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 },
   socialBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
   socialBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  primarySocialCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 16, borderWidth: 1.5, marginBottom: 10 },
+  primarySocialIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
   sectionTitle: { fontFamily: "Inter_700Bold", fontSize: 17 },
   description: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 22 },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 8 },

@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable, savedPlacesTable, reviewsTable, businessProfileViewsTable, businessSkipFeedbackTable } from "@workspace/db";
+import { db, businessesTable, savedPlacesTable, reviewsTable, businessProfileViewsTable, businessSkipFeedbackTable, businessClickEventsTable } from "@workspace/db";
 import { and, avg, count, eq, gt, inArray, ne, sql } from "drizzle-orm";
 import { requireMembership } from "../middleware/requireMembership";
 import { storage } from "../storage";
@@ -17,6 +17,17 @@ interface Suggestion {
 interface Trend {
   day: string;
   count: number;
+}
+
+interface Clicks30d {
+  tiktok: number;
+  instagram: number;
+  youtube: number;
+  facebook: number;
+  pinterest: number;
+  website: number;
+  phoneCalls: number;
+  directions: number;
 }
 
 interface AnalyticsResponse {
@@ -43,6 +54,7 @@ interface AnalyticsResponse {
   reviewsVsPeersPct: number;
   ratingVsPeersPct: number;
   viewsVsPeersPct: number;
+  clicks30d: Clicks30d;
 }
 
 function computeEngagementScore(
@@ -247,6 +259,14 @@ router.get(
         .from(businessSkipFeedbackTable)
         .where(eq(businessSkipFeedbackTable.businessId, business.id));
 
+      const clickRows = await db
+        .select({ clickType: businessClickEventsTable.clickType, cnt: count() })
+        .from(businessClickEventsTable)
+        .where(and(eq(businessClickEventsTable.businessId, business.id), gt(businessClickEventsTable.clickedAt, thirtyDaysAgo)))
+        .groupBy(businessClickEventsTable.clickType);
+      const clickMap: Record<string, number> = {};
+      for (const row of clickRows) clickMap[row.clickType] = Number(row.cnt);
+
       const peers = await db
         .select({
           id: businessesTable.id,
@@ -372,6 +392,16 @@ router.get(
         reviewsVsPeersPct: pctVsPeers(metrics.reviews, benchmarks.categoryAvgReviews),
         ratingVsPeersPct: pctVsPeers(metrics.avgRating, benchmarks.categoryAvgRating),
         viewsVsPeersPct: pctVsPeers(metrics.views30d, benchmarks.categoryAvgViews30d),
+        clicks30d: {
+          tiktok: clickMap["tiktok_visit"] ?? 0,
+          instagram: clickMap["instagram_visit"] ?? 0,
+          youtube: clickMap["youtube_visit"] ?? 0,
+          facebook: clickMap["facebook_visit"] ?? 0,
+          pinterest: clickMap["pinterest_visit"] ?? 0,
+          website: clickMap["website_visit"] ?? 0,
+          phoneCalls: clickMap["phone_call"] ?? 0,
+          directions: clickMap["directions"] ?? 0,
+        },
       };
 
       logger.info({ businessId: business.id, tier, engagementScore }, "[analytics] served");

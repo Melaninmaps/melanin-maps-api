@@ -65,6 +65,7 @@ export default function BusinessOwnerHome() {
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ views: 0, saves: 0, reviews: 0 });
+  const [clicks, setClicks] = useState<{ tiktok: number; instagram: number; youtube: number; facebook: number; pinterest: number; website: number; phoneCalls: number; directions: number } | null>(null);
   const [analyticsLocked, setAnalyticsLocked] = useState(false);
 
   const load = useCallback(async () => {
@@ -79,9 +80,10 @@ export default function BusinessOwnerHome() {
         if (data.business) {
           const aRes = await fetch(`${getApiBase()}/api/businesses/mine/analytics`, { headers });
           if (aRes.ok) {
-            const aData = await aRes.json() as { analytics?: { metrics?: { views30d?: number; saves?: number; reviews?: number } } };
-            const m = aData.analytics?.metrics;
+            const aData = await aRes.json() as { metrics?: { views30d?: number; saves?: number; reviews?: number }; clicks30d?: { tiktok: number; instagram: number; youtube: number; facebook: number; pinterest: number; website: number; phoneCalls: number; directions: number } };
+            const m = aData.metrics;
             if (m) setStats({ views: m.views30d ?? 0, saves: m.saves ?? 0, reviews: m.reviews ?? 0 });
+            if (aData.clicks30d) setClicks(aData.clicks30d);
           } else if (aRes.status === 403) {
             setAnalyticsLocked(true);
           }
@@ -271,19 +273,42 @@ export default function BusinessOwnerHome() {
                   <Text style={styles.lockedStatsTxt}>Upgrade to Navigator to see views, saves & reviews</Text>
                 </TouchableOpacity>
               ) : (
-                <View style={styles.statsRow}>
-                  {[
-                    { label: "Views", value: String(stats.views), icon: "eye" as const },
-                    { label: "Saves", value: String(stats.saves), icon: "bookmark" as const },
-                    { label: "Reviews", value: String(stats.reviews), icon: "star" as const },
-                  ].map((s) => (
-                    <View key={s.label} style={styles.statCell}>
-                      <Feather name={s.icon} size={13} color="rgba(255,255,255,0.6)" />
-                      <Text style={styles.statNum}>{s.value}</Text>
-                      <Text style={styles.statLabel}>{s.label}</Text>
+                <>
+                  <View style={styles.statsRow}>
+                    {[
+                      { label: "Views", value: String(stats.views), icon: "eye" as const },
+                      { label: "Saves", value: String(stats.saves), icon: "bookmark" as const },
+                      { label: "Reviews", value: String(stats.reviews), icon: "star" as const },
+                    ].map((s) => (
+                      <View key={s.label} style={styles.statCell}>
+                        <Feather name={s.icon} size={13} color="rgba(255,255,255,0.6)" />
+                        <Text style={styles.statNum}>{s.value}</Text>
+                        <Text style={styles.statLabel}>{s.label}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  {clicks && (clicks.tiktok + clicks.instagram + clicks.youtube + clicks.facebook + clicks.pinterest + clicks.website + clicks.phoneCalls + clicks.directions) > 0 && (
+                    <View style={styles.trafficSection}>
+                      <Text style={styles.trafficLabel}>Support at the Source — This Month</Text>
+                      <View style={styles.trafficRow}>
+                        {[
+                          { label: "TikTok", value: clicks.tiktok, icon: "♪" },
+                          { label: "Instagram", value: clicks.instagram, icon: "◈" },
+                          { label: "YouTube", value: clicks.youtube, icon: "▶" },
+                          { label: "Site", value: clicks.website, icon: "🌐" },
+                          { label: "Calls", value: clicks.phoneCalls, icon: "📞" },
+                          { label: "Directions", value: clicks.directions, icon: "🗺" },
+                        ].filter((t) => t.value > 0).map((t) => (
+                          <View key={t.label} style={styles.trafficCell}>
+                            <Text style={styles.trafficIcon}>{t.icon}</Text>
+                            <Text style={styles.trafficNum}>{t.value}</Text>
+                            <Text style={styles.trafficCellLabel}>{t.label}</Text>
+                          </View>
+                        ))}
+                      </View>
                     </View>
-                  ))}
-                </View>
+                  )}
+                </>
               )}
             </View>
 
@@ -359,6 +384,13 @@ const styles = StyleSheet.create({
   statNum: { fontSize: 20, fontFamily: "Inter_700Bold", color: "#FFF" },
   statLabel: { fontSize: 11, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.55)" },
   lockedStats: { flexDirection: "row", alignItems: "center", gap: 6, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.1)", paddingTop: 12, paddingHorizontal: 4 },
+  trafficSection: { borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.1)", paddingTop: 12, marginTop: 10 },
+  trafficLabel: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: "rgba(201,146,43,0.9)", letterSpacing: 0.5, marginBottom: 8, textTransform: "uppercase" },
+  trafficRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  trafficCell: { alignItems: "center", minWidth: 52, gap: 2 },
+  trafficIcon: { fontSize: 16 },
+  trafficNum: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#FFF" },
+  trafficCellLabel: { fontSize: 10, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.55)" },
   lockedStatsTxt: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(201,146,43,0.9)" },
   sectionsCard: { borderRadius: 16, borderWidth: 1, overflow: "hidden" },
   sectionRow: { flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 14 },
