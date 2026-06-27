@@ -79,6 +79,7 @@ export const userTopicFollowsTable = pgTable("user_topic_follows", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id", { length: 100 }).notNull(),
   topicId: varchar("topic_id", { length: 100 }).notNull(),
+  isPinnedToProfile: boolean("is_pinned_to_profile").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => [
   uniqueIndex("user_topic_follows_unique").on(table.userId, table.topicId),
@@ -118,6 +119,7 @@ export const userIssueFollowsTable = pgTable("user_issue_follows", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id", { length: 100 }).notNull().references(() => usersTable.id, { onDelete: "cascade" }),
   issueId: varchar("issue_id", { length: 100 }).notNull(),
+  isPinnedToProfile: boolean("is_pinned_to_profile").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => [
   uniqueIndex("user_issue_follows_unique").on(table.userId, table.issueId),

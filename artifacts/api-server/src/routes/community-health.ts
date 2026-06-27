@@ -22,7 +22,53 @@ router.get("/health-hub/topics/mine", async (req: Request, res: Response) => {
     .where(eq(userHealthTopicFollowsTable.userId, req.user.id))
     .limit(1);
 
-  res.json({ topicIds: row?.topicIds ?? [] });
+  res.json({ topicIds: row?.topicIds ?? [], pinnedTopicIds: row?.pinnedTopicIds ?? [] });
+});
+
+// ─── PATCH /api/health-hub/topics/mine/pin ───────────────────────────────────
+router.patch("/health-hub/topics/mine/pin", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+
+  const { topicId, pinned } = req.body as { topicId?: string; pinned?: boolean };
+  if (!topicId || typeof pinned !== "boolean") {
+    res.status(400).json({ error: "topicId and pinned (boolean) required" }); return;
+  }
+  if (!VALID_TOPIC_IDS.has(topicId as HealthTopicId)) {
+    res.status(400).json({ error: "Invalid topicId" }); return;
+  }
+
+  const [existing] = await db
+    .select()
+    .from(userHealthTopicFollowsTable)
+    .where(eq(userHealthTopicFollowsTable.userId, req.user.id))
+    .limit(1);
+
+  const currentPinned: HealthTopicId[] = (existing?.pinnedTopicIds ?? []) as HealthTopicId[];
+  const currentFollowed: HealthTopicId[] = (existing?.topicIds ?? []) as HealthTopicId[];
+
+  if (pinned && !currentFollowed.includes(topicId as HealthTopicId)) {
+    res.status(400).json({ error: "You must follow this topic before pinning it" }); return;
+  }
+
+  const nextPinned: HealthTopicId[] = pinned
+    ? [...new Set([...currentPinned, topicId as HealthTopicId])]
+    : currentPinned.filter((id) => id !== topicId);
+
+  let row;
+  if (existing) {
+    [row] = await db
+      .update(userHealthTopicFollowsTable)
+      .set({ pinnedTopicIds: nextPinned })
+      .where(eq(userHealthTopicFollowsTable.userId, req.user.id))
+      .returning();
+  } else {
+    [row] = await db
+      .insert(userHealthTopicFollowsTable)
+      .values({ userId: req.user.id, topicIds: [], pinnedTopicIds: nextPinned })
+      .returning();
+  }
+
+  res.json({ pinnedTopicIds: row?.pinnedTopicIds ?? [] });
 });
 
 // ─── PATCH /api/health-hub/topics/mine ───────────────────────────────────────

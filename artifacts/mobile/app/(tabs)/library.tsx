@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useMembership } from "@/hooks/useMembership";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { PrivacyPinModal, isSensitiveCategory } from "@/components/PrivacyPinModal";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -64,6 +65,7 @@ interface Topic {
   category: string;
   description?: string | null;
   isFollowing?: boolean;
+  isPinnedToProfile?: boolean;
   newCount?: number;
 }
 
@@ -97,6 +99,7 @@ interface Issue {
   description?: string | null;
   category?: string | null;
   isFollowing?: boolean;
+  isPinnedToProfile?: boolean;
 }
 
 interface DeliveryPrefs {
@@ -158,6 +161,13 @@ export default function LibraryScreen() {
   const [topicSearch, setTopicSearch] = useState("");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState("");
+  const [pinModal, setPinModal] = useState<{
+    visible: boolean;
+    itemName: string;
+    category: string;
+    isPinning: boolean;
+    onConfirm: () => Promise<void>;
+  }>({ visible: false, itemName: "", category: "", isPinning: true, onConfirm: async () => {} });
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -272,6 +282,38 @@ export default function LibraryScreen() {
       await fetch(`${getApiBase()}/api/knowledge/issues/${issue.id}/follow`, { method, headers: h });
     } catch {
       setIssues((prev) => prev.map((i) => i.id === issue.id ? { ...i, isFollowing: issue.isFollowing } : i));
+    }
+  }
+
+  function openPinModal(itemName: string, category: string, isPinning: boolean, onConfirm: () => Promise<void>) {
+    setPinModal({ visible: true, itemName, category, isPinning, onConfirm });
+  }
+
+  async function pinTopic(topic: Topic, pin: boolean) {
+    setTopics((prev) => prev.map((t) => t.id === topic.id ? { ...t, isPinnedToProfile: pin } : t));
+    try {
+      const h = await authHeaders();
+      await fetch(`${getApiBase()}/api/knowledge/topics/${topic.id}/follow/pin`, {
+        method: "PATCH",
+        headers: { ...h, "Content-Type": "application/json" },
+        body: JSON.stringify({ pinned: pin }),
+      });
+    } catch {
+      setTopics((prev) => prev.map((t) => t.id === topic.id ? { ...t, isPinnedToProfile: !pin } : t));
+    }
+  }
+
+  async function pinIssue(issue: Issue, pin: boolean) {
+    setIssues((prev) => prev.map((i) => i.id === issue.id ? { ...i, isPinnedToProfile: pin } : i));
+    try {
+      const h = await authHeaders();
+      await fetch(`${getApiBase()}/api/knowledge/issues/${issue.id}/follow/pin`, {
+        method: "PATCH",
+        headers: { ...h, "Content-Type": "application/json" },
+        body: JSON.stringify({ pinned: pin }),
+      });
+    } catch {
+      setIssues((prev) => prev.map((i) => i.id === issue.id ? { ...i, isPinnedToProfile: !pin } : i));
     }
   }
 
@@ -711,27 +753,50 @@ export default function LibraryScreen() {
 
             {followingIssues.length > 0 && !issueSearch && (
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Following</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                  <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Following</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: "#3B82F610", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: "#3B82F630" }}>
+                    <Feather name="lock" size={10} color="#3B82F6" />
+                    <Text style={{ fontSize: 10, color: "#3B82F6", fontWeight: "600" }}>Private by default</Text>
+                  </View>
+                </View>
                 {followingIssues.map((issue) => (
-                  <View key={issue.id} style={[styles.issueRow, { backgroundColor: colors.card, borderColor: "#3B82F640" }]}>
+                  <View key={issue.id} style={[styles.issueRow, { backgroundColor: colors.card, borderColor: issue.isPinnedToProfile ? "#3B82F650" : "#3B82F620" }]}>
                     <View style={styles.issueRowLeft}>
                       <View style={[styles.issueIcon, { backgroundColor: "#3B82F615" }]}>
-                        <Text style={{ fontSize: 18 }}>📌</Text>
+                        <Text style={{ fontSize: 18 }}>{issue.isPinnedToProfile ? "📌" : "🔒"}</Text>
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.topicName, { color: colors.foreground }]} numberOfLines={2}>{issue.name}</Text>
-                        {issue.description && (
-                          <Text style={[styles.topicCategory, { color: colors.mutedForeground }]} numberOfLines={2}>{issue.description}</Text>
-                        )}
+                        <Text style={[styles.topicCategory, { color: issue.isPinnedToProfile ? "#3B82F6" : colors.mutedForeground }]}>
+                          {issue.isPinnedToProfile ? "Pinned to profile" : "Private · tap 📌 to pin"}
+                        </Text>
                       </View>
                     </View>
-                    <TouchableOpacity
-                      style={[styles.followToggle, { backgroundColor: "#3B82F6", borderColor: "#3B82F6" }]}
-                      onPress={() => toggleIssueFollow(issue)}
-                      activeOpacity={0.75}
-                    >
-                      <Text style={styles.followToggleTxt}>Following</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: "row", gap: 6 }}>
+                      <TouchableOpacity
+                        style={[styles.followToggle, { backgroundColor: "transparent", borderColor: issue.isPinnedToProfile ? "#3B82F6" : colors.border, paddingHorizontal: 8 }]}
+                        onPress={() => {
+                          const pin = !issue.isPinnedToProfile;
+                          openPinModal(
+                            issue.name,
+                            issue.category ?? "government",
+                            pin,
+                            async () => pinIssue(issue, pin),
+                          );
+                        }}
+                        activeOpacity={0.75}
+                      >
+                        <Feather name={issue.isPinnedToProfile ? "map-pin" : "lock"} size={13} color={issue.isPinnedToProfile ? "#3B82F6" : colors.mutedForeground} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.followToggle, { backgroundColor: "#3B82F6", borderColor: "#3B82F6" }]}
+                        onPress={() => toggleIssueFollow(issue)}
+                        activeOpacity={0.75}
+                      >
+                        <Text style={styles.followToggleTxt}>Following</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 ))}
               </View>
@@ -819,11 +884,18 @@ export default function LibraryScreen() {
             {/* Following section */}
             {followedTopics.length > 0 && (
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Following</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                  <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Following</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: colors.card, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: colors.border }}>
+                    <Feather name="lock" size={10} color={colors.mutedForeground} />
+                    <Text style={{ fontSize: 10, color: colors.mutedForeground, fontWeight: "600" }}>Private by default</Text>
+                  </View>
+                </View>
                 {followedTopics.map((topic) => {
                   const meta = CATEGORY_META[topic.category] ?? { emoji: "📖", color: "#6B7280", label: topic.category };
+                  const sensitive = isSensitiveCategory(topic.category);
                   return (
-                    <View key={topic.id} style={[styles.topicRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <View key={topic.id} style={[styles.topicRow, { backgroundColor: colors.card, borderColor: topic.isPinnedToProfile ? meta.color + "50" : colors.border }]}>
                       <TouchableOpacity style={styles.topicRowLeft} onPress={() => openTopic(topic)} activeOpacity={0.75}>
                         <View style={[styles.topicEmoji, { backgroundColor: meta.color + "18" }]}>
                           <Text style={{ fontSize: 20 }}>{meta.emoji}</Text>
@@ -832,7 +904,9 @@ export default function LibraryScreen() {
                           <Text style={[styles.topicName, { color: colors.foreground }]} numberOfLines={2}>
                             {topic.topicName}
                           </Text>
-                          <Text style={[styles.topicCategory, { color: meta.color }]}>{meta.label}</Text>
+                          <Text style={[styles.topicCategory, { color: topic.isPinnedToProfile ? meta.color : colors.mutedForeground }]}>
+                            {topic.isPinnedToProfile ? "Pinned to profile" : sensitive ? "🔒 Private · health info" : "🔒 Private · tap to pin"}
+                          </Text>
                         </View>
                         {(topic.newCount ?? 0) > 0 && (
                           <View style={[styles.newBadge, { backgroundColor: meta.color }]}>
@@ -840,13 +914,30 @@ export default function LibraryScreen() {
                           </View>
                         )}
                       </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.followToggle, { backgroundColor: meta.color, borderColor: meta.color }]}
-                        onPress={() => toggleFollow(topic)}
-                        activeOpacity={0.75}
-                      >
-                        <Text style={styles.followToggleTxt}>Following</Text>
-                      </TouchableOpacity>
+                      <View style={{ flexDirection: "row", gap: 6 }}>
+                        <TouchableOpacity
+                          style={[styles.followToggle, { backgroundColor: "transparent", borderColor: topic.isPinnedToProfile ? meta.color : colors.border, paddingHorizontal: 8 }]}
+                          onPress={() => {
+                            const pin = !topic.isPinnedToProfile;
+                            openPinModal(
+                              topic.topicName,
+                              topic.category,
+                              pin,
+                              async () => pinTopic(topic, pin),
+                            );
+                          }}
+                          activeOpacity={0.75}
+                        >
+                          <Feather name={topic.isPinnedToProfile ? "map-pin" : "lock"} size={13} color={topic.isPinnedToProfile ? meta.color : colors.mutedForeground} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.followToggle, { backgroundColor: meta.color, borderColor: meta.color }]}
+                          onPress={() => toggleFollow(topic)}
+                          activeOpacity={0.75}
+                        >
+                          <Text style={styles.followToggleTxt}>Following</Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   );
                 })}
@@ -893,6 +984,18 @@ export default function LibraryScreen() {
         onClose={() => setShowUpgrade(false)}
         feature="Knowledge+"
         reason={upgradeReason || "Knowledge+ unlocks unlimited topic follows, exclusive expert guides, and AI-powered learning."}
+      />
+
+      <PrivacyPinModal
+        visible={pinModal.visible}
+        onClose={() => setPinModal((m) => ({ ...m, visible: false }))}
+        onConfirm={async () => {
+          setPinModal((m) => ({ ...m, visible: false }));
+          await pinModal.onConfirm();
+        }}
+        itemName={pinModal.itemName}
+        category={pinModal.category}
+        isPinning={pinModal.isPinning}
       />
     </>
   );

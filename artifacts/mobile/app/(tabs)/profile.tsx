@@ -166,6 +166,7 @@ export default function ProfileScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [allTopics, setAllTopics] = useState<{ id: string; label: string; emoji: string; description: string }[]>([]);
   const [myTopicIds, setMyTopicIds] = useState<string[]>([]);
+  const [pinnedTopicIds, setPinnedTopicIds] = useState<string[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(false);
   const [trustData, setTrustData] = useState<{
     trustLevel: 1 | 2 | 3 | 4;
@@ -286,8 +287,9 @@ export default function ProfileScreen() {
         setAllTopics(d.topics);
       }
       if (mineRes?.ok) {
-        const d = await mineRes.json() as { topicIds: string[] };
+        const d = await mineRes.json() as { topicIds: string[]; pinnedTopicIds?: string[] };
         setMyTopicIds(d.topicIds);
+        setPinnedTopicIds(d.pinnedTopicIds ?? []);
       }
     } catch { /* silent */ } finally { setTopicsLoading(false); }
   }, [isAuthenticated]);
@@ -735,29 +737,38 @@ export default function ProfileScreen() {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Saved Topics</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Pinned Topics</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: colors.card, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: colors.border }}>
+              <Feather name="lock" size={10} color={colors.mutedForeground} />
+              <Text style={{ fontSize: 10, color: colors.mutedForeground, fontWeight: "600" }}>Private by default</Text>
+            </View>
+          </View>
           <TouchableOpacity onPress={() => router.push("/health-hub" as never)}>
             <Text style={[styles.seeAll, { color: colors.primary }]}>Manage →</Text>
           </TouchableOpacity>
         </View>
+        <Text style={{ fontSize: 12, color: colors.mutedForeground, marginBottom: 10, lineHeight: 17 }}>
+          Only topics you choose to pin appear here. Everything else stays private in your Health Hub.
+        </Text>
         {topicsLoading ? (
           <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
-        ) : myTopicIds.length === 0 ? (
+        ) : pinnedTopicIds.length === 0 ? (
           <TouchableOpacity
             style={[styles.emptyFavorites, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push("/health-hub" as never)}
             activeOpacity={0.8}
           >
-            <Feather name="shield" size={28} color={colors.muted} />
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>No saved health topics yet</Text>
+            <Feather name="lock" size={28} color={colors.muted} />
+            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>No pinned topics yet</Text>
             <Text style={[styles.emptySubText, { color: colors.mutedForeground }]}>
-              Follow topics in the Health Hub to get curated articles from verified physicians.
+              Your Health Hub topics are private. Pin any topic to show it on your profile.
             </Text>
           </TouchableOpacity>
         ) : (
           <View style={styles.topicGrid}>
             {allTopics
-              .filter((t) => myTopicIds.includes(t.id))
+              .filter((t) => pinnedTopicIds.includes(t.id))
               .map((t) => (
                 <TouchableOpacity
                   key={t.id}
@@ -778,7 +789,7 @@ export default function ProfileScreen() {
               activeOpacity={0.75}
             >
               <Feather name="plus" size={14} color={colors.primary} />
-              <Text style={[styles.topicChipLabel, { color: colors.primary }]}>Add more</Text>
+              <Text style={[styles.topicChipLabel, { color: colors.primary }]}>Pin more</Text>
             </TouchableOpacity>
           </View>
         )}

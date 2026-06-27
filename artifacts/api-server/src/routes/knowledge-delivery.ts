@@ -142,6 +142,62 @@ router.delete("/knowledge/issues/:id/follow", async (req: Request, res: Response
   }
 });
 
+router.patch("/knowledge/topics/:id/follow/pin", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const userId = req.user!.id;
+    const topicId = String(req.params.id);
+    const { pinned } = req.body as { pinned?: boolean };
+    if (typeof pinned !== "boolean") { res.status(400).json({ error: "pinned (boolean) required" }); return; }
+
+    const [existing] = await db
+      .select({ id: userTopicFollowsTable.id })
+      .from(userTopicFollowsTable)
+      .where(and(eq(userTopicFollowsTable.userId, userId), eq(userTopicFollowsTable.topicId, topicId)))
+      .limit(1);
+
+    if (!existing) { res.status(404).json({ error: "You are not following this topic" }); return; }
+
+    await db
+      .update(userTopicFollowsTable)
+      .set({ isPinnedToProfile: pinned })
+      .where(and(eq(userTopicFollowsTable.userId, userId), eq(userTopicFollowsTable.topicId, topicId)));
+
+    res.json({ ok: true, topicId, isPinnedToProfile: pinned });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /knowledge/topics/:id/follow/pin error");
+    res.status(500).json({ error: "Failed to update pin." });
+  }
+});
+
+router.patch("/knowledge/issues/:id/follow/pin", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const userId = req.user!.id;
+    const issueId = String(req.params.id);
+    const { pinned } = req.body as { pinned?: boolean };
+    if (typeof pinned !== "boolean") { res.status(400).json({ error: "pinned (boolean) required" }); return; }
+
+    const [existing] = await db
+      .select({ id: userIssueFollowsTable.id })
+      .from(userIssueFollowsTable)
+      .where(and(eq(userIssueFollowsTable.userId, userId), eq(userIssueFollowsTable.issueId, issueId)))
+      .limit(1);
+
+    if (!existing) { res.status(404).json({ error: "You are not following this issue" }); return; }
+
+    await db
+      .update(userIssueFollowsTable)
+      .set({ isPinnedToProfile: pinned })
+      .where(and(eq(userIssueFollowsTable.userId, userId), eq(userIssueFollowsTable.issueId, issueId)));
+
+    res.json({ ok: true, issueId, isPinnedToProfile: pinned });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /knowledge/issues/:id/follow/pin error");
+    res.status(500).json({ error: "Failed to update pin." });
+  }
+});
+
 router.get("/knowledge/digest", async (req: Request, res: Response) => {
   if (!requireAuth(req, res)) return;
   try {

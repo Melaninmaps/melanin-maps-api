@@ -32,6 +32,7 @@ export const userHealthTopicFollowsTable = pgTable("user_health_topic_follows", 
   id: uuid("id").primaryKey().defaultRandom(),
   userId: varchar("user_id", { length: 255 }).notNull(),
   topicIds: jsonb("topic_ids").$type<HealthTopicId[]>().notNull().default([]),
+  pinnedTopicIds: jsonb("pinned_topic_ids").$type<HealthTopicId[]>().notNull().default([]),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 
