@@ -15,7 +15,7 @@ import {
   type SessionMessage,
   type JourneyPhase,
 } from "@workspace/db";
-import { eq, desc, and, ilike } from "drizzle-orm";
+import { eq, desc, and, ilike, or } from "drizzle-orm";
 import { storage } from "../storage";
 
 const router: IRouter = Router();
@@ -1117,6 +1117,181 @@ Include 2–4 city opportunities and 3–4 strategic insights. Focus on cities w
   } catch (err) {
     req.log.error({ err }, "Expansion analysis failed");
     res.status(500).json({ error: "Failed to generate expansion analysis" });
+  }
+});
+
+// ─── POST /kinfolk/relocation ─────────────────────────────────────────────────
+// AI-powered relocation concierge — walks through phases, proactively recommends
+// minority-owned businesses at every step of a move
+router.post("/kinfolk/relocation", async (req: Request, res: Response) => {
+  const {
+    messages = [],
+    fromCity,
+    toCity,
+    toState,
+    familySize = "solo",
+    budget = "mid",
+    homeType = "renting",
+    hasKids = false,
+    hasPets = false,
+    currentPhase = "neighborhoods",
+    needs = [],
+  } = req.body as {
+    messages?: Array<{ role: string; content: string }>;
+    fromCity?: string;
+    toCity?: string;
+    toState?: string;
+    familySize?: string;
+    budget?: string;
+    homeType?: string;
+    hasKids?: boolean;
+    hasPets?: boolean;
+    currentPhase?: string;
+    needs?: string[];
+  };
+
+  const RELOCATION_PHASES: Record<string, { title: string; icon: string; description: string; categories: string[] }> = {
+    neighborhoods: { title: "Neighborhood Research", icon: "🏘️", description: "Find the right community for your lifestyle", categories: ["Real Estate", "Community"] },
+    realtors:      { title: "Find a Realtor",        icon: "🏠", description: "Connect with Black-owned real estate agents",  categories: ["Real Estate"] },
+    mortgage:      { title: "Mortgage & Financing",   icon: "💰", description: "Get pre-approved with community lenders",      categories: ["Finance", "Banking"] },
+    movers:        { title: "Moving Companies",       icon: "🚚", description: "Book trustworthy movers",                     categories: ["Moving", "Transportation"] },
+    utilities:     { title: "Set Up Utilities",       icon: "⚡", description: "Electricity, internet, and home services",    categories: ["Home Services"] },
+    healthcare:    { title: "Find a Doctor",          icon: "🏥", description: "Primary care, specialists, and dentists",     categories: ["Healthcare", "Medical", "Health"] },
+    schools:       { title: "Schools & Education",    icon: "🎓", description: "Research schools and childcare options",      categories: ["Education", "Childcare"] },
+    salons:        { title: "Beauty & Grooming",      icon: "✂️", description: "Your go-to salon, barber, and spa",          categories: ["Beauty", "Salon", "Barbershop"] },
+    restaurants:   { title: "Restaurants & Food",     icon: "🍽️", description: "Build your regular spots",                   categories: ["Restaurant", "Food", "Café"] },
+    community:     { title: "Community & Events",     icon: "🤝🏾", description: "Find your people and local events",        categories: ["Community", "Events"] },
+    employment:    { title: "Career & Employment",    icon: "💼", description: "Job boards, networking, and local employers", categories: ["Employment", "Networking"] },
+    safety:        { title: "Safety & Security",      icon: "🛡️", description: "Understand your neighborhood safety profile", categories: ["Safety"] },
+  };
+
+  const phase = RELOCATION_PHASES[currentPhase] ?? RELOCATION_PHASES["neighborhoods"]!;
+
+  let verifiedBusinesses: Array<{
+    id: number | string; name: string; category: string; description: string;
+    city: string; verified: boolean; phone: string | null; website: string | null;
+  }> = [];
+
+  if (toCity && phase.categories.length > 0) {
+    try {
+      const catConditions = phase.categories.map(cat => ilike(businessesTable.category, `%${cat}%`));
+      verifiedBusinesses = await db
+        .select({
+          id: businessesTable.id,
+          name: businessesTable.name,
+          category: businessesTable.category,
+          description: businessesTable.description,
+          city: businessesTable.city,
+          verified: businessesTable.verified,
+          phone: businessesTable.phone,
+          website: businessesTable.website,
+        })
+        .from(businessesTable)
+        .where(and(ilike(businessesTable.city, `%${toCity}%`), or(...catConditions)))
+        .limit(6);
+    } catch { /* non-critical */ }
+  }
+
+  const isOutOfState = !!(fromCity && toState && fromCity.toLowerCase() !== (toCity ?? "").toLowerCase());
+
+  const proactiveFlags = [
+    hasKids  ? "They have children — proactively mention schools, childcare, and family-friendly neighborhoods." : "",
+    hasPets  ? "They have pets — mention pet-friendly buildings, local vets, and dog parks when relevant." : "",
+    isOutOfState ? "They're moving from out of state — proactively bring up transferring medical records, finding a new primary care doctor, and updating insurance networks." : "",
+    homeType === "buy" ? "They're buying — mention home inspectors, real estate attorneys, and the Black-owned realtor advantage." : "",
+    (needs as string[]).includes("Home Repair") ? "They flagged home repair — proactively mention minority-owned contractors and handymen." : "",
+    (needs as string[]).includes("Mental Health") ? "They flagged mental health — mention Black therapists and culturally affirming wellness providers." : "",
+  ].filter(Boolean).join("\n");
+
+  const businessCatalog = verifiedBusinesses.length > 0
+    ? `\n\nVERIFIED PLATFORM BUSINESSES IN ${toCity?.toUpperCase()} (PRIORITIZE THESE):\n` +
+      verifiedBusinesses.map(b =>
+        `• ${b.name} | ${b.category}${b.verified ? " ✓ Verified" : ""}\n  "${(b.description ?? "").slice(0, 160)}"\n  ${b.phone ? `📞 ${b.phone}` : ""}${b.website ? ` | 🌐 ${b.website}` : ""}`
+      ).join("\n\n")
+    : "";
+
+  const systemPrompt = `You are KinfolkAI's Relocation Concierge — the most trusted friend anyone could have when moving to a new city. You know Black-owned and minority-owned businesses, culturally affirming neighborhoods, community resources, and all the hidden knowledge it takes to make a new place feel like home.
+
+MOVE CONTEXT:
+- Relocating: ${fromCity ?? "current city"} → ${toCity ?? "new city"}${toState ? `, ${toState}` : ""}
+- Family: ${familySize} | Budget: ${budget} | Home plan: ${homeType}
+- Has kids: ${hasKids ? "Yes" : "No"} | Has pets: ${hasPets ? "Yes" : "No"}
+- Current focus: ${phase.icon} ${phase.title} — ${phase.description}
+- Stated needs: ${(needs as string[]).length > 0 ? (needs as string[]).join(", ") : "general relocation"}
+
+PROACTIVE CONTEXT (address these naturally throughout conversation):
+${proactiveFlags || "No special flags — guide through the standard relocation journey."}
+
+YOUR VOICE:
+- Warm and direct, like texting your most well-connected friend who has already lived in this city
+- ALWAYS center Black-owned, minority-owned, and culturally affirming businesses first
+- At each phase, mention what they will need NEXT so they stay ahead of the process
+- Reference their specific situation (family size, budget, home type) in every response
+- NEVER use travel-brochure language: no "boasts", "features", "renowned", "visitors will enjoy"
+- Use "you" constantly — make it personal and direct
+
+RETURN EXACTLY THIS JSON (no markdown fencing, no extra text):
+{
+  "reply": "2-3 sentences warm and direct, like a text from a trusted friend who has been through this",
+  "businesses": [
+    {
+      "name": "Business Name",
+      "category": "Category",
+      "description": "Why this is the right fit for their specific situation",
+      "neighborhood": "Area of city",
+      "whyForYou": "Very specific reason it matches their family size, budget, home type, etc.",
+      "phone": "phone number or null",
+      "website": "website or null",
+      "verified": true
+    }
+  ],
+  "proactiveSuggestions": ["3-4 short tap-able action chips"],
+  "insight": "One proactive thing they have not thought of yet that they will thank you for later",
+  "checklistItems": ["3-5 concrete action items for this phase"],
+  "nextPhaseHint": "1 sentence teaser for what comes after this phase"
+}
+
+Include 3-5 businesses. Mix platform-verified (from the list below) with AI knowledge.${businessCatalog}`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...(messages as Array<{ role: string; content: string }>).map(m => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        })),
+      ],
+      temperature: 0.75,
+      max_tokens: 1800,
+    });
+
+    const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
+    let parsed: Record<string, unknown>;
+    try {
+      const clean = raw.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+      parsed = JSON.parse(clean) as Record<string, unknown>;
+    } catch {
+      parsed = { reply: raw, businesses: [], proactiveSuggestions: [], insight: "", checklistItems: [], nextPhaseHint: "" };
+    }
+
+    const mentionedNames = new Set<string>(
+      ((parsed.businesses as Array<{ name: string }>) ?? []).map(b => b.name.toLowerCase())
+    );
+    const extraVerified = verifiedBusinesses
+      .filter(b => !mentionedNames.has(b.name.toLowerCase()))
+      .slice(0, 2)
+      .map(b => ({
+        id: b.id, name: b.name, category: b.category, description: b.description,
+        neighborhood: b.city, whyForYou: `Verified on Mapping With Melanin™ in ${b.city}`,
+        phone: b.phone, website: b.website, verified: b.verified, platformVerified: true,
+      }));
+
+    res.json({ ...parsed, phase: { id: currentPhase, ...phase }, extraVerified });
+  } catch (err) {
+    req.log.error({ err }, "Relocation concierge failed");
+    res.status(500).json({ error: "Failed to generate relocation guidance" });
   }
 });
 

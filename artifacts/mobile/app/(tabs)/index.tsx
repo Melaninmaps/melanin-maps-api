@@ -338,6 +338,28 @@ export default function DiscoverScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Relocation Planner banner */}
+        <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 16 }]}>
+          <TouchableOpacity
+            activeOpacity={0.88}
+            onPress={() => router.push("/relocation-planner" as any)}
+            style={[styles.travelBanner, { backgroundColor: "#1A3A2A" }]}
+          >
+            <View style={styles.travelBannerLeft}>
+              <Text style={styles.travelBannerEyebrow}>🚚 RELOCATION CONCIERGE</Text>
+              <Text style={styles.travelBannerTitle}>Plan Your Move</Text>
+              <Text style={styles.travelBannerSub}>
+                AI guides you step-by-step — realtor, movers, doctor, and more minority-owned businesses at every turn.
+              </Text>
+            </View>
+            <View style={styles.travelBannerRight}>
+              <View style={[styles.travelBannerArrow, { backgroundColor: "#C9922B" }]}>
+                <Text style={{ fontSize: 20 }}>🏠</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+
         {/* Community Spaces banner */}
         <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 12 }]}>
           <TouchableOpacity
