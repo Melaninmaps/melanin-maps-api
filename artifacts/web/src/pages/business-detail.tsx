@@ -190,7 +190,7 @@ export default function BusinessDetail() {
     fetch(`${BASE_URL}/api/stories/${id}`).then(r => r.json()).then(d => setStories(d.stories ?? [])).catch(() => {});
   }, [id]);
 
-  // Inject OG meta tags for social sharing
+  // Inject OG meta tags for social sharing (supplements server-side OG for in-SPA navigation)
   useEffect(() => {
     if (!business) return;
     const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -225,6 +225,7 @@ export default function BusinessDetail() {
       if (prev.ogImage !== null) getOrCreate("og:image").content = prev.ogImage;
     };
   }, [business, id]);
+
 
   const handleSaveToggle = () => {
     if (!auth?.user) {

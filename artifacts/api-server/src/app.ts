@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import router from "./routes";
+import webSsrRouter from "./routes/web-ssr";
 import { logger } from "./lib/logger";
 import { authMiddleware } from "./middlewares/authMiddleware";
 import { WebhookHandlers } from "./webhookHandlers";
@@ -83,6 +84,7 @@ app.use(authMiddleware);
 app.use("/api", generalLimiter);
 
 app.use("/api", router);
+app.use(webSsrRouter);
 
 app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
   const statusCode = (err as any)?.status ?? (err as any)?.statusCode ?? 500;

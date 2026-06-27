@@ -1,10 +1,11 @@
-import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
+import { Switch, Route, Router as WouterRouter, Redirect, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/layout";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
+import { useEffect } from "react";
 
 import Home from "@/pages/home";
 import About from "@/pages/about";
@@ -68,6 +69,21 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function OgRedirectHandler() {
+  const [, navigate] = useLocation();
+  useEffect(() => {
+    try {
+      const businessId = sessionStorage.getItem("_og_business_id");
+      if (businessId) {
+        sessionStorage.removeItem("_og_business_id");
+        navigate(`/businesses/${encodeURIComponent(businessId)}`, { replace: true });
+      }
+    } catch {
+    }
+  }, []);
+  return null;
+}
 
 function Router() {
   return (
@@ -190,6 +206,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <OgRedirectHandler />
           <Router />
         </WouterRouter>
         <Toaster />
