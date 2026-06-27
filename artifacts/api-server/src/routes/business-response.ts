@@ -1,105 +1,15 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, businessResponseLinksTable, safetyReportsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import crypto from "crypto";
-import { sendBusinessResponseInvitation } from "../lib/email";
 
 const router: IRouter = Router();
 
-const SAFETY_CATEGORIES = ["safety", "discrimination", "sundown"];
 const CATEGORY_LABELS: Record<string, string> = {
   safety: "Safety or Conduct Concern",
   discrimination: "Discrimination Concern",
   sundown: "Community Safety Warning",
   business: "Business Experience Concern",
 };
-const TOKEN_EXPIRY_DAYS = 30;
-
-/** POST /reports/:id/send-response-invitation
- *  Moderator/admin endpoint — generates a secure response link and emails the business.
- */
-router.post("/reports/:id/send-response-invitation", async (req: Request, res: Response): Promise<void> => {
-  if (!req.user?.id) {
-    res.status(401).json({ error: "Authentication required" });
-    return;
-  }
-
-  const reportId = req.params["id"] as string;
-  const { businessEmail, businessName } = req.body as { businessEmail?: string; businessName?: string };
-
-  if (!businessEmail || !businessName) {
-    res.status(400).json({ error: "businessEmail and businessName are required" });
-    return;
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(businessEmail)) {
-    res.status(400).json({ error: "Invalid email address" });
-    return;
-  }
-
-  try {
-    const [report] = await db
-      .select()
-      .from(safetyReportsTable)
-      .where(eq(safetyReportsTable.id, reportId))
-      .limit(1);
-
-    if (!report) {
-      res.status(404).json({ error: "Report not found" });
-      return;
-    }
-
-    if (!SAFETY_CATEGORIES.includes(report.category)) {
-      res.status(400).json({
-        error: "Response invitations are only sent for safety, discrimination, or sundown-related reports.",
-        reportCategory: report.category,
-      });
-      return;
-    }
-
-    const existing = await db
-      .select({ id: businessResponseLinksTable.id, status: businessResponseLinksTable.status })
-      .from(businessResponseLinksTable)
-      .where(eq(businessResponseLinksTable.reportId, reportId))
-      .limit(1);
-
-    if (existing.length > 0 && existing[0]!.status !== "expired") {
-      res.status(409).json({ error: "A response invitation has already been sent for this report." });
-      return;
-    }
-
-    const token = crypto.randomBytes(32).toString("hex");
-    const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
-
-    const [link] = await db
-      .insert(businessResponseLinksTable)
-      .values({
-        token,
-        reportId,
-        reportCategory: report.category,
-        businessName: businessName.trim(),
-        businessEmail: businessEmail.trim().toLowerCase(),
-        expiresAt,
-      })
-      .returning();
-
-    const domain = process.env.EXPO_PUBLIC_DOMAIN ?? "mappingwithmelanin.com";
-    const responseUrl = `https://${domain}/business-response/${token}`;
-
-    await sendBusinessResponseInvitation(businessEmail.trim(), businessName.trim(), responseUrl, report.category);
-
-    res.status(201).json({
-      message: "Response invitation sent successfully.",
-      linkId: link!.id,
-      expiresAt,
-      responseUrl,
-    });
-  } catch (err) {
-    req.log.error({ err }, "Failed to send business response invitation");
-    res.status(500).json({ error: "Failed to send invitation" });
-  }
-});
 
 /** GET /business-response/:token
  *  Public — returns form metadata for the response page.

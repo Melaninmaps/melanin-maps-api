@@ -206,10 +206,12 @@ export async function sendPushToBusinessOwnersByCity(
   message: PushMessage,
 ): Promise<void> {
   try {
+    // Only notify owners of minority-owned businesses — never alert non-minority
+    // businesses that safety reports are being filed in their area.
     const businesses = await db
       .select({ submittedById: businessesTable.submittedById, id: businessesTable.id, name: businessesTable.name })
       .from(businessesTable)
-      .where(ilike(businessesTable.city, `%${city}%`));
+      .where(and(ilike(businessesTable.city, `%${city}%`), eq(businessesTable.blackOwned, true)));
 
     const ownerIds = [...new Set(
       businesses
