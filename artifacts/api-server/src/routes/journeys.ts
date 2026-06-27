@@ -1,7 +1,15 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { db, lifeJourneysTable, businessesTable, type JourneyPhase } from "@workspace/db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, gte, count } from "drizzle-orm";
+import { getUserTier } from "../middleware/requireMembership";
+
+// Monthly journey creation limits by tier
+const JOURNEY_MONTHLY_LIMITS: Record<string, number> = {
+  free: 1,
+  navigator: 10,
+  trailblazer: Infinity,
+};
 
 const router: IRouter = Router();
 
@@ -100,6 +108,35 @@ router.post("/journeys", async (req: Request, res: Response) => {
   if (!journeyType || !JOURNEY_TEMPLATES[journeyType]) {
     res.status(400).json({ error: "Valid journeyType required", validTypes: Object.keys(JOURNEY_TEMPLATES) });
     return;
+  }
+
+  // ── Tier-based monthly journey limit ────────────────────────────────────────
+  const tier = await getUserTier(req.user.id);
+  const monthLimit = JOURNEY_MONTHLY_LIMITS[tier] ?? 1;
+  if (isFinite(monthLimit)) {
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    const [{ value: usedThisMonth }] = await db
+      .select({ value: count() })
+      .from(lifeJourneysTable)
+      .where(and(
+        eq(lifeJourneysTable.userId, req.user.id),
+        gte(lifeJourneysTable.createdAt, monthStart),
+      ));
+    if (Number(usedThisMonth) >= monthLimit) {
+      res.status(429).json({
+        error: tier === "free"
+          ? `Free members can start ${monthLimit} journey per month. Upgrade to Explorer+ for up to 10, or Navigator for unlimited.`
+          : `Explorer+ members can start ${monthLimit} journeys per month. Upgrade to Navigator for unlimited journeys.`,
+        code: "JOURNEY_LIMIT_REACHED",
+        used: Number(usedThisMonth),
+        limit: monthLimit,
+        tier,
+        upgradeUrl: "/membership",
+      });
+      return;
+    }
   }
 
   const template = JOURNEY_TEMPLATES[journeyType]!;

@@ -355,7 +355,7 @@ export default function ListBusinessScreen() {
         const err = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(err.error ?? "Submission failed");
       }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       animateToStep(TOTAL_STEPS);
     } catch (err) {
       Alert.alert("Submission Error", err instanceof Error ? err.message : "Could not submit. Please try again.");

@@ -317,6 +317,9 @@ router.post("/businesses/mine/photos", photoUpload.single("photo"), async (req: 
       url: photoUrl,
       pending: true,
       message: "Photo submitted for review. It will appear on your profile once approved.",
+      photos: currentPhotos,
+      pendingPhotos: updatedPending,
+      imageUrl: currentPhotos[0] ?? null,
     });
   } catch (err) {
     req.log.error({ err }, "Failed to upload business photo");

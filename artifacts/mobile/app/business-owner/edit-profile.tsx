@@ -78,10 +78,10 @@ export default function EditBusinessProfile() {
 
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [pendingPhotos, setPendingPhotos] = useState<string[]>([]);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [videos, setVideos] = useState<string[]>([]);
-  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [addLinkVisible, setAddLinkVisible] = useState(false);
   const [addLinkText, setAddLinkText] = useState("");
   const [addingLink, setAddingLink] = useState(false);
@@ -110,6 +110,7 @@ export default function EditBusinessProfile() {
           setOriginal(f);
           setBusinessId(b.id);
           setPhotos(b.photos ?? []);
+          setPendingPhotos((b as any).pendingPhotos ?? []);
           setCoverUrl(b.imageUrl ?? null);
           setVideos(b.videos ?? []);
         }
@@ -171,8 +172,8 @@ export default function EditBusinessProfile() {
         method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: formData,
       });
       if (!res.ok) { const e = await res.json() as { error?: string }; throw new Error(e.error ?? "Upload failed"); }
-      const data = await res.json() as { url: string; photos: string[]; imageUrl: string };
-      setPhotos(data.photos); setCoverUrl(data.imageUrl);
+      const data = await res.json() as { url: string; photos: string[]; pendingPhotos: string[]; imageUrl: string | null };
+      setPhotos(data.photos ?? photos); setPendingPhotos(data.pendingPhotos ?? []); setCoverUrl(data.imageUrl ?? coverUrl);
       if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
       Alert.alert("Upload failed", err instanceof Error ? err.message : "Please try again.");
@@ -201,32 +202,7 @@ export default function EditBusinessProfile() {
     ]);
   };
 
-  // ── Videos ─────────────────────────────────────────────────────────────────
-  const handleUploadVideo = async () => {
-    if ((Platform.OS as string) === "web") { Alert.alert("Not supported", "Video upload is available on the mobile app."); return; }
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") { Alert.alert("Permission needed", "Allow access to your library to upload videos."); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["videos"], quality: 1 });
-    if (result.canceled || !result.assets.length) return;
-    const asset = result.assets[0];
-    setUploadingVideo(true);
-    try {
-      const token = await getToken();
-      const formData = new FormData();
-      const ext = asset.uri.split(".").pop() ?? "mp4";
-      formData.append("video", { uri: asset.uri, type: `video/${ext}`, name: `video.${ext}` } as unknown as Blob);
-      const res = await fetch(`${getApiBase()}/api/businesses/mine/videos`, {
-        method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: formData,
-      });
-      if (!res.ok) { const e = await res.json() as { error?: string }; throw new Error(e.error ?? "Upload failed"); }
-      const data = await res.json() as { url: string; videos: string[] };
-      setVideos(data.videos);
-      if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (err) {
-      Alert.alert("Upload failed", err instanceof Error ? err.message : "Please try again.");
-    } finally { setUploadingVideo(false); }
-  };
-
+  // ── Videos (external links only — no file hosting) ─────────────────────────
   const handleAddVideoLink = async () => {
     const url = addLinkText.trim();
     if (!url) return;
@@ -294,7 +270,7 @@ export default function EditBusinessProfile() {
               <Text style={[styles.groupLabel, { color: colors.foreground }]}>Business Photos</Text>
               <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>Tap to set cover · Long press to remove</Text>
             </View>
-            <Text style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>{photos.length}/10</Text>
+            <Text style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>{photos.length + pendingPhotos.length}/10</Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }} contentContainerStyle={{ gap: 10 }}>
             {photos.map((url) => {
@@ -307,14 +283,31 @@ export default function EditBusinessProfile() {
                 </TouchableOpacity>
               );
             })}
-            {photos.length < 10 && (
+            {pendingPhotos.map((url) => (
+              <View key={url} style={[styles.photoThumb, { borderColor: "#CA922B", borderWidth: 1.5, opacity: 0.85 }]}>
+                <Image source={{ uri: url }} style={styles.photoThumbImg} />
+                <View style={[styles.coverBadge, { backgroundColor: "#CA922B" }]}>
+                  <Feather name="clock" size={10} color="#fff" />
+                  <Text style={styles.coverBadgeTxt}>Review</Text>
+                </View>
+              </View>
+            ))}
+            {photos.length + pendingPhotos.length < 10 && (
               <TouchableOpacity onPress={handleAddPhoto} disabled={uploadingPhoto}
                 style={[styles.addMediaBtn, { borderColor: colors.border, backgroundColor: colors.card }]} activeOpacity={0.75}>
                 {uploadingPhoto ? <ActivityIndicator size="small" color={colors.primary} /> : <><Feather name="camera" size={20} color={colors.primary} /><Text style={[styles.addMediaTxt, { color: colors.primary }]}>Add</Text></>}
               </TouchableOpacity>
             )}
           </ScrollView>
-          {photos.length === 0 && !uploadingPhoto && (
+          {pendingPhotos.length > 0 && (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 }}>
+              <Feather name="clock" size={12} color="#CA922B" />
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "#CA922B" }}>
+                {pendingPhotos.length} photo{pendingPhotos.length !== 1 ? "s" : ""} pending admin review — will appear once approved
+              </Text>
+            </View>
+          )}
+          {photos.length === 0 && pendingPhotos.length === 0 && !uploadingPhoto && (
             <TouchableOpacity onPress={handleAddPhoto} style={[styles.emptySlot, { borderColor: colors.border, backgroundColor: colors.card }]} activeOpacity={0.8}>
               <Feather name="camera" size={26} color={colors.mutedForeground} />
               <Text style={[styles.emptySlotTxt, { color: colors.foreground }]}>Add your first photo</Text>
@@ -323,30 +316,29 @@ export default function EditBusinessProfile() {
           )}
         </View>
 
-        {/* ── Videos ── */}
+        {/* ── Video Links ── */}
         <View style={styles.group}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.groupLabel, { color: colors.foreground }]}>Promo Videos</Text>
-              <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>Upload a clip or link YouTube, TikTok, Instagram, or Facebook</Text>
+              <Text style={[styles.groupLabel, { color: colors.foreground }]}>Video Links</Text>
+              <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>Link to YouTube, TikTok, Instagram, or Facebook — customers are routed directly there</Text>
             </View>
             <Text style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>{videos.length}/5</Text>
           </View>
 
           {videos.map((url) => {
             const { label, icon } = getVideoPlatform(url);
-            const isUploaded = url.includes("storage.googleapis.com");
             return (
               <View key={url} style={[styles.videoRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={[styles.videoBadge, { backgroundColor: colors.primary + "18" }]}>
                   <Text style={{ fontSize: 14, color: colors.primary }}>{icon}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.videoLabel, { color: colors.foreground }]}>{isUploaded ? "Uploaded video" : label}</Text>
+                  <Text style={[styles.videoLabel, { color: colors.foreground }]}>{label}</Text>
                   <Text style={[styles.videoUrl, { color: colors.mutedForeground }]} numberOfLines={1}>{url}</Text>
                 </View>
-                <TouchableOpacity onPress={() => { if (!isUploaded) Linking.openURL(url).catch(() => {}); }} style={{ marginRight: 4 }}>
-                  {!isUploaded && <Feather name="external-link" size={16} color={colors.mutedForeground} />}
+                <TouchableOpacity onPress={() => Linking.openURL(url).catch(() => {})} style={{ marginRight: 4 }}>
+                  <Feather name="external-link" size={16} color={colors.mutedForeground} />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleDeleteVideo(url)}>
                   <Feather name="trash-2" size={16} color="#DC2626" />
@@ -357,17 +349,11 @@ export default function EditBusinessProfile() {
 
           {videos.length < 5 && (
             <View style={{ gap: 8, marginTop: 4 }}>
-              <View style={{ flexDirection: "row", gap: 10 }}>
-                <TouchableOpacity onPress={handleUploadVideo} disabled={uploadingVideo}
-                  style={[styles.videoAddBtn, { backgroundColor: colors.card, borderColor: colors.border, flex: 1 }]} activeOpacity={0.8}>
-                  {uploadingVideo ? <ActivityIndicator size="small" color={colors.primary} /> : <><Feather name="upload" size={16} color={colors.primary} /><Text style={[styles.videoAddTxt, { color: colors.primary }]}>Upload Video</Text></>}
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setAddLinkVisible(v => !v)}
-                  style={[styles.videoAddBtn, { backgroundColor: addLinkVisible ? colors.primary + "15" : colors.card, borderColor: addLinkVisible ? colors.primary : colors.border, flex: 1 }]} activeOpacity={0.8}>
-                  <Feather name="link" size={16} color={colors.primary} />
-                  <Text style={[styles.videoAddTxt, { color: colors.primary }]}>Add Link</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity onPress={() => setAddLinkVisible(v => !v)}
+                style={[styles.videoAddBtn, { backgroundColor: addLinkVisible ? colors.primary + "15" : colors.card, borderColor: addLinkVisible ? colors.primary : colors.border }]} activeOpacity={0.8}>
+                <Feather name="link" size={16} color={colors.primary} />
+                <Text style={[styles.videoAddTxt, { color: colors.primary }]}>Add Video Link (YouTube, TikTok, Instagram…)</Text>
+              </TouchableOpacity>
               {addLinkVisible && (
                 <View style={[styles.addLinkBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <TextInput
