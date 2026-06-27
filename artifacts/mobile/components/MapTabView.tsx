@@ -1,10 +1,13 @@
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   FlatList,
   Linking,
+  Modal,
   Platform,
   StyleSheet,
   Text,
@@ -24,6 +27,7 @@ import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity, type ProximityWarning } from "@/hooks/useSafetyProximity";
+import { useActivityAlerts, ALERT_META, type AlertType } from "@/hooks/useActivityAlerts";
 
 const SEVERITY_COLORS: Record<string, string> = {
   low: "#F59E0B",
@@ -88,6 +92,14 @@ function ProximityWarningBanner({
   );
 }
 
+const ALERT_TYPES: { type: AlertType; label: string; icon: string }[] = [
+  { type: "police", label: "Police Activity", icon: "🚔" },
+  { type: "ice", label: "ICE Activity", icon: "⚠️" },
+  { type: "checkpoint", label: "Checkpoint", icon: "🛑" },
+  { type: "traffic", label: "Traffic Stop", icon: "🚦" },
+  { type: "other", label: "Other Alert", icon: "📢" },
+];
+
 export function MapTabView() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -98,11 +110,16 @@ export function MapTabView() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [warningIdx, setWarningIdx] = useState(0);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportingType, setReportingType] = useState<AlertType | null>(null);
+  const [scannerAlertIdx, setScannerAlertIdx] = useState(0);
+
+  const { alerts: activityAlerts, reportAlert, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
-  const { alert: geoAlert, dismissAlert } = useGeoSafeAlert();
+  const { alert: geoAlert, dismissAlert: dismissGeoAlert } = useGeoSafeAlert();
   const { warnings, dismissWarning } = useSafetyProximity();
 
   const { businesses } = useBusinesses();
@@ -141,6 +158,73 @@ export function MapTabView() {
         </View>
       </View>
 
+      {/* Activity Scanner — police/ICE alerts */}
+      {activityAlerts.length > 0 && (() => {
+        const a = activityAlerts[Math.min(scannerAlertIdx, activityAlerts.length - 1)];
+        if (!a) return null;
+        const meta = ALERT_META[a.type as AlertType] ?? ALERT_META.other;
+        return (
+          <View style={[styles.scannerBanner, { backgroundColor: meta.bgColor }]}>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Text style={{ fontSize: 15 }}>{meta.icon}</Text>
+                <Text style={styles.scannerTitle}>{meta.label}</Text>
+                {activityAlerts.length > 1 && (
+                  <View style={styles.alertCountBadge}>
+                    <Text style={styles.alertCountText}>{activityAlerts.length}</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.scannerMeta}>
+                {a.distanceMeters < 1000
+                  ? `${a.distanceMeters}m away`
+                  : `${(a.distanceMeters / 1000).toFixed(1)}km away`}
+                {a.confirmedCount > 0 ? ` · ${a.confirmedCount} confirmed` : ""}
+              </Text>
+            </View>
+            <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+              <TouchableOpacity
+                style={styles.scannerAction}
+                onPress={() => void confirmAlert(a.id)}
+              >
+                <Text style={{ fontSize: 12, color: "#fff", fontFamily: "Inter_600SemiBold" }}>✓ Confirm</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.scannerAction, { backgroundColor: "rgba(255,255,255,0.12)" }]}
+                onPress={() => void clearAlert(a.id)}
+              >
+                <Text style={{ fontSize: 12, color: "#fff", fontFamily: "Inter_600SemiBold" }}>✗ Clear</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => dismissAlert(a.id)}>
+                <Feather name="x" size={15} color="rgba(255,255,255,0.7)" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        );
+      })()}
+
+      {activityAlerts.length > 1 && (
+        <View style={[styles.warningNav, { backgroundColor: colors.secondary }]}>
+          <TouchableOpacity
+            onPress={() => setScannerAlertIdx((i) => Math.max(0, i - 1))}
+            disabled={scannerAlertIdx === 0}
+            style={{ opacity: scannerAlertIdx === 0 ? 0.3 : 1 }}
+          >
+            <Feather name="chevron-left" size={16} color={colors.primary} />
+          </TouchableOpacity>
+          <Text style={[styles.warningNavText, { color: colors.primary }]}>
+            Alert {scannerAlertIdx + 1} of {activityAlerts.length} nearby
+          </Text>
+          <TouchableOpacity
+            onPress={() => setScannerAlertIdx((i) => Math.min(activityAlerts.length - 1, i + 1))}
+            disabled={scannerAlertIdx === activityAlerts.length - 1}
+            style={{ opacity: scannerAlertIdx === activityAlerts.length - 1 ? 0.3 : 1 }}
+          >
+            <Feather name="chevron-right" size={16} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+      )}
+
       {currentWarning && (
         <ProximityWarningBanner
           warning={currentWarning}
@@ -151,7 +235,7 @@ export function MapTabView() {
       {!currentWarning && geoAlert && (
         <TouchableOpacity
           style={styles.geoAlertBanner}
-          onPress={dismissAlert}
+          onPress={dismissGeoAlert}
           activeOpacity={0.85}
         >
           <Feather name="alert-triangle" size={15} color="#fff" />
@@ -230,6 +314,28 @@ export function MapTabView() {
         }}
       />
 
+      {/* Report Activity FAB */}
+      <TouchableOpacity
+        style={[styles.reportBtn, { backgroundColor: "#1E3A8A" }]}
+        activeOpacity={0.85}
+        onPress={() => {
+          if (!isAuthenticated) {
+            setShowUpgrade(true);
+          } else {
+            if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setShowReportModal(true);
+          }
+        }}
+      >
+        <Text style={{ fontSize: 14 }}>🚔</Text>
+        <Text style={styles.reportBtnText}>Report Activity</Text>
+        {activityAlerts.length > 0 && (
+          <View style={styles.reportBadge}>
+            <Text style={styles.reportBadgeText}>{activityAlerts.length}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+
       <TouchableOpacity
         style={[styles.safetyBtn, { backgroundColor: colors.secondary }]}
         activeOpacity={0.85}
@@ -264,6 +370,76 @@ export function MapTabView() {
         onClose={() => setShowUpgrade(false)}
         feature="Safety Insights"
       />
+
+      {/* Report Activity Modal */}
+      <Modal
+        visible={showReportModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowReportModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalBackdrop}
+          activeOpacity={1}
+          onPress={() => { setShowReportModal(false); setReportingType(null); }}
+        />
+        <View style={[styles.modalSheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.modalHandle} />
+          <Text style={[styles.modalTitle, { color: colors.foreground }]}>Report Nearby Activity</Text>
+          <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>
+            Alert community members within 1.5km. Reports expire automatically.
+          </Text>
+          <View style={{ gap: 10, marginTop: 8 }}>
+            {ALERT_TYPES.map(({ type, label, icon }) => {
+              const meta = ALERT_META[type];
+              const active = reportingType === type;
+              return (
+                <TouchableOpacity
+                  key={type}
+                  style={[
+                    styles.reportTypeRow,
+                    {
+                      borderColor: active ? meta.color : colors.border,
+                      backgroundColor: active ? meta.color + "18" : colors.background,
+                    },
+                  ]}
+                  onPress={() => setReportingType(active ? null : type)}
+                >
+                  <Text style={{ fontSize: 20, width: 28 }}>{icon}</Text>
+                  <Text style={{ flex: 1, fontFamily: active ? "Inter_700Bold" : "Inter_400Regular", fontSize: 15, color: active ? meta.color : colors.foreground }}>{label}</Text>
+                  {active && <Feather name="check-circle" size={18} color={meta.color} />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <TouchableOpacity
+            style={[
+              styles.reportSubmitBtn,
+              { backgroundColor: reportingType ? ALERT_META[reportingType].bgColor : colors.mutedForeground },
+            ]}
+            disabled={!reportingType}
+            onPress={async () => {
+              if (!reportingType) return;
+              setShowReportModal(false);
+              const ok = await reportAlert(reportingType);
+              setReportingType(null);
+              if (Platform.OS !== "web") {
+                Haptics.notificationAsync(
+                  ok ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Error,
+                );
+              }
+              if (!ok) Alert.alert("Location Required", "Enable location access to report activity.");
+            }}
+          >
+            <Text style={styles.reportSubmitText}>
+              {reportingType ? `Report ${ALERT_META[reportingType].label}` : "Select an alert type"}
+            </Text>
+          </TouchableOpacity>
+          <Text style={[styles.reportDisclaimer, { color: colors.mutedForeground }]}>
+            Only report real, immediate activity. Alerts auto-clear after community votes or time expiry.
+          </Text>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -335,6 +511,94 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   dangerBadgeText: { fontFamily: "Inter_500Medium", fontSize: 12, flex: 1 },
+  scannerBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  scannerTitle: { fontFamily: "Inter_700Bold", fontSize: 13, color: "#fff" },
+  scannerMeta: { fontFamily: "Inter_400Regular", fontSize: 11, color: "rgba(255,255,255,0.75)", marginTop: 2 },
+  scannerAction: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.22)",
+  },
+  alertCountBadge: {
+    backgroundColor: "#EF4444",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  alertCountText: { fontFamily: "Inter_700Bold", fontSize: 11, color: "#fff" },
+  reportBtn: {
+    position: "absolute",
+    bottom: 220,
+    right: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 24,
+    shadowColor: "#1E3A8A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  reportBtnText: { fontFamily: "Inter_700Bold", fontSize: 13, color: "#fff" },
+  reportBadge: {
+    backgroundColor: "#EF4444",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  reportBadgeText: { fontFamily: "Inter_700Bold", fontSize: 11, color: "#fff" },
+  modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)" },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    padding: 20,
+    paddingBottom: 36,
+    gap: 8,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(128,128,128,0.35)",
+    alignSelf: "center",
+    marginBottom: 12,
+  },
+  modalTitle: { fontFamily: "Inter_700Bold", fontSize: 19 },
+  modalSub: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
+  reportTypeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+  },
+  reportSubmitBtn: {
+    marginTop: 6,
+    borderRadius: 16,
+    paddingVertical: 15,
+    alignItems: "center",
+  },
+  reportSubmitText: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#fff" },
+  reportDisclaimer: { fontFamily: "Inter_400Regular", fontSize: 11, textAlign: "center", lineHeight: 16, marginTop: 4 },
   sosBtn: {
     position: "absolute",
     bottom: 100,

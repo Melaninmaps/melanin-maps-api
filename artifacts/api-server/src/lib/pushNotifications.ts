@@ -1,4 +1,5 @@
 import { db, pushTokensTable, savedPlacesTable, businessesTable, notificationsTable, businessProfileViewsTable, reviewsTable } from "@workspace/db";
+import { pool } from "@workspace/db";
 import { eq, inArray, ilike, gte, and } from "drizzle-orm";
 import { logger } from "./logger";
 
@@ -186,6 +187,65 @@ export async function sendAddressUpdateNotifications(
     logger.info({ businessId, notified: userIds.length }, "[push] Address update notifications sent");
   } catch (err) {
     logger.warn({ err }, "[push] Failed to send address update notifications");
+  }
+}
+
+export async function sendAlertPushToNearbyUsers(
+  alertId: string,
+  lat: number,
+  lng: number,
+  alertType: string,
+  radiusKm: number,
+): Promise<void> {
+  const ALERT_LABELS: Record<string, string> = {
+    police: "🚔 Police Activity Nearby",
+    ice: "⚠️ ICE Activity Nearby",
+    checkpoint: "🛑 Checkpoint Reported",
+    traffic: "🚦 Traffic Stop Nearby",
+    other: "📢 Community Alert",
+  };
+  const title = ALERT_LABELS[alertType] ?? "📢 Community Alert";
+  const body = "A community member reported activity near you. Stay aware.";
+
+  try {
+    const result = await pool.query<{ token: string; user_id: string }>(
+      `SELECT pt.token, pt.user_id
+       FROM user_locations ul
+       JOIN push_tokens pt ON pt.user_id = ul.user_id
+       WHERE ul.updated_at > NOW() - INTERVAL '2 hours'
+         AND pt.token IS NOT NULL
+         AND (6371 * acos(
+           GREATEST(-1, LEAST(1,
+             cos(radians($1)) * cos(radians(ul.lat::float)) * cos(radians(ul.lng::float) - radians($2))
+             + sin(radians($1)) * sin(radians(ul.lat::float))
+           ))
+         )) < $3`,
+      [lat, lng, radiusKm],
+    );
+
+    const tokens = result.rows;
+    if (tokens.length === 0) return;
+
+    const userIds = tokens.map((r) => r.user_id);
+
+    for (const row of tokens) {
+      if (row.token) await sendToToken(row.token, { title, body, data: { alertId, type: alertType, screen: "map" } });
+    }
+
+    logger.info({ alertId, alertType, notified: tokens.length }, "[push] Community alert sent to nearby users");
+
+    if (userIds.length > 0) {
+      await db.insert(notificationsTable).values(
+        userIds.map((userId) => ({
+          userId,
+          type: "safety" as const,
+          title,
+          body,
+        })),
+      );
+    }
+  } catch (err) {
+    logger.warn({ err }, "[push] Failed to send alert push to nearby users");
   }
 }
 
