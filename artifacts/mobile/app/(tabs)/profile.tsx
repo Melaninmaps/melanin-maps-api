@@ -87,6 +87,60 @@ function getInitials(firstName?: string | null, lastName?: string | null): strin
   return (f + l).toUpperCase() || "?";
 }
 
+function PrivacyToggleCard({
+  user,
+  refreshUser,
+  colors,
+}: {
+  user: ReturnType<typeof useAuth>["user"];
+  refreshUser: () => Promise<void>;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const [saving, setSaving] = useState(false);
+  const isPrivate = !!(user as any)?.isPrivate;
+
+  const toggle = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSaving(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      await fetch(`${apiBase}/api/users/me/privacy`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ isPrivate: !isPrivate }),
+      });
+      await refreshUser();
+    } catch { /* silent */ }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <View style={[privStyles.card, { backgroundColor: colors.card, borderColor: isPrivate ? colors.primary + "40" : colors.border, shadowColor: colors.foreground }]}>
+      <View style={[privStyles.iconWrap, { backgroundColor: isPrivate ? colors.primary + "15" : colors.secondary }]}>
+        <Feather name={isPrivate ? "lock" : "unlock"} size={18} color={isPrivate ? colors.primary : colors.mutedForeground} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[privStyles.title, { color: colors.foreground }]}>Private Account</Text>
+        <Text style={[privStyles.sub, { color: colors.mutedForeground }]}>
+          {isPrivate ? "Only your followers can see your posts" : "Anyone can see your community posts"}
+        </Text>
+      </View>
+      {saving
+        ? <ActivityIndicator size="small" color={colors.primary} />
+        : <Switch value={isPrivate} onValueChange={toggle} trackColor={{ true: colors.primary, false: colors.border }} thumbColor="#FFF" />
+      }
+    </View>
+  );
+}
+
+const privStyles = StyleSheet.create({
+  card: { flexDirection: "row", alignItems: "center", marginHorizontal: 16, marginBottom: 12, borderRadius: 16, borderWidth: 1, padding: 14, gap: 12, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
+  iconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  title: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  sub: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 },
+});
+
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -409,7 +463,31 @@ export default function ProfileScreen() {
             </View>
           ) : null}
 
-          {reviewCount === 0 && savedIds.length === 0 && pointsTotal === 0 ? (
+          {/* Social stats — always shown when authenticated */}
+          <View style={styles.statsRow}>
+            {[
+              { label: "Followers", value: String((user as any)?.followersCount ?? 0) },
+              { label: "Following", value: String((user as any)?.followingCount ?? 0) },
+              { label: "Points", value: String(pointsTotal) },
+            ].map((stat, i) => (
+              <View
+                key={stat.label}
+                style={[
+                  styles.statBox,
+                  {
+                    backgroundColor: colors.card,
+                    shadowColor: colors.foreground,
+                    borderRightColor: i < 2 ? colors.border : "transparent",
+                  },
+                ]}
+              >
+                <Text style={[styles.statValue, { color: colors.primary }]}>{stat.value}</Text>
+                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{stat.label}</Text>
+              </View>
+            ))}
+          </View>
+
+          {reviewCount === 0 && savedIds.length === 0 && pointsTotal === 0 && (
             <View style={[styles.newUserBanner, { backgroundColor: colors.card, shadowColor: colors.foreground, borderColor: colors.border }]}>
               <View style={[styles.newUserIconRow]}>
                 {(["compass", "star", "award"] as const).map((icon) => (
@@ -420,29 +498,6 @@ export default function ProfileScreen() {
               </View>
               <Text style={[styles.newUserTitle, { color: colors.foreground }]}>Built for Connection</Text>
               <BrandQuoteBanner category="community" variant="strip" style={{ marginTop: 4 }} />
-            </View>
-          ) : (
-            <View style={styles.statsRow}>
-              {[
-                { label: "Reviews", value: String(reviewCount) },
-                { label: "Saved", value: String(savedIds.length) },
-                { label: "Points", value: String(pointsTotal) },
-              ].map((stat, i) => (
-                <View
-                  key={stat.label}
-                  style={[
-                    styles.statBox,
-                    {
-                      backgroundColor: colors.card,
-                      shadowColor: colors.foreground,
-                      borderRightColor: i < 2 ? colors.border : "transparent",
-                    },
-                  ]}
-                >
-                  <Text style={[styles.statValue, { color: colors.primary }]}>{stat.value}</Text>
-                  <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{stat.label}</Text>
-                </View>
-              ))}
             </View>
           )}
         </>
@@ -789,6 +844,11 @@ export default function ProfileScreen() {
         </View>
         <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
       </TouchableOpacity>
+
+      {/* Privacy toggle card */}
+      {isAuthenticated && (
+        <PrivacyToggleCard user={user} refreshUser={refreshUser} colors={colors} />
+      )}
 
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Settings</Text>

@@ -41,6 +41,10 @@ export const usersTable = pgTable("users", {
   identityVerifiedAt: timestamp("identity_verified_at", { withTimezone: true }),
   policyViolationsCount: integer("policy_violations_count").notNull().default(0),
   helpfulReviewsCount: integer("helpful_reviews_count").notNull().default(0),
+  isPrivate: boolean("is_private").notNull().default(false),
+  followersCount: integer("followers_count").notNull().default(0),
+  followingCount: integer("following_count").notNull().default(0),
+  bio: varchar("bio", { length: 300 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

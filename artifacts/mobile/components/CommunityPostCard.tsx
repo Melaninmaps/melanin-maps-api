@@ -10,6 +10,7 @@ interface Props {
   post: CommunityPost;
   onCommentPress?: () => void;
   onLikeChange?: (liked: boolean) => void;
+  onAuthorPress?: (authorId: string) => void;
 }
 
 const CATEGORY_CONFIG = {
@@ -31,7 +32,7 @@ function getApiBase(): string {
   return "";
 }
 
-export function CommunityPostCard({ post, onCommentPress, onLikeChange }: Props) {
+export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthorPress }: Props) {
   const colors = useColors();
   const [liked, setLiked] = useState(post.liked);
   const [likeCount, setLikeCount] = useState(post.likes);
@@ -106,13 +107,21 @@ export function CommunityPostCard({ post, onCommentPress, onLikeChange }: Props)
 
       {/* Post header */}
       <View style={s.header}>
-        <View style={[s.avatar, { backgroundColor: post.authorColor }]}>
+        <TouchableOpacity
+          activeOpacity={post.authorId ? 0.7 : 1}
+          onPress={() => { if (post.authorId) onAuthorPress?.(post.authorId); }}
+          style={[s.avatar, { backgroundColor: post.authorColor }]}
+        >
           <Text style={s.initials}>{post.authorInitials}</Text>
-        </View>
-        <View style={s.authorInfo}>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={s.authorInfo}
+          activeOpacity={post.authorId ? 0.7 : 1}
+          onPress={() => { if (post.authorId) onAuthorPress?.(post.authorId); }}
+        >
           <Text style={[s.author, { color: colors.foreground }]}>{post.author}</Text>
           <Text style={[s.time, { color: colors.mutedForeground }]}>{post.timeAgo}</Text>
-        </View>
+        </TouchableOpacity>
         {!isBusinessPost && (
           <View style={[s.categoryTag, { backgroundColor: categoryConfig.color + "15" }]}>
             <Feather name={categoryConfig.icon} size={11} color={categoryConfig.color} />

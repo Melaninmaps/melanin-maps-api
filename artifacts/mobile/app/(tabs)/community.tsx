@@ -23,6 +23,7 @@ import { AlertBanner } from "@/components/AlertBanner";
 import { BusinessMentionPicker } from "@/components/BusinessMentionPicker";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import { PostDetailModal } from "@/components/PostDetailModal";
+import { UserProfileModal } from "@/components/UserProfileModal";
 import { EventCard } from "@/components/EventCard";
 import { ALERTS, EVENT_CATEGORIES } from "@/constants/data";
 import type { CommunityPost } from "@/constants/types";
@@ -193,6 +194,7 @@ export default function CommunityScreen() {
   const [newPostBusinessLink, setNewPostBusinessLink] = useState("");
   const [submittingPost, setSubmittingPost] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
+  const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
   const [groupCategory, setGroupCategory] = useState("all");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<string | undefined>(undefined);
@@ -914,6 +916,7 @@ export default function CommunityScreen() {
               <CommunityPostCard
                 post={item}
                 onCommentPress={() => setSelectedPost(item)}
+                onAuthorPress={(id) => setSelectedAuthorId(id)}
               />
             )}
           />
@@ -942,6 +945,12 @@ export default function CommunityScreen() {
         post={selectedPost}
         onClose={() => setSelectedPost(null)}
         onLike={() => void loadPosts()}
+      />
+
+      <UserProfileModal
+        userId={selectedAuthorId}
+        visible={selectedAuthorId !== null}
+        onClose={() => setSelectedAuthorId(null)}
       />
 
       <UpgradeModal
