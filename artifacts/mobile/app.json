@@ -38,7 +38,6 @@
     "android": {
       "googleMapsApiKey": "${GOOGLE_MAPS_API_KEY}",
       "package": "com.melaninmaps.app",
-      "versionCode": 3,
       "intentFilters": [
         {
           "action": "VIEW",
@@ -110,7 +109,7 @@
         "expo-build-properties",
         {
           "ios": {
-            "deploymentTarget": "16.0"
+            "deploymentTarget": "16.4"
           },
           "android": {
             "compileSdkVersion": 35,
