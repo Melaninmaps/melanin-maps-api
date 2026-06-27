@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { MapPin, ArrowRight, Shield, Search, Sparkles, Users, Building2, Globe, BookOpen, Facebook, Linkedin, Instagram, Link2, UserPlus, MessageSquare } from "lucide-react";
+import { MapPin, ArrowRight, Shield, Search, Sparkles, Users, Building2, Globe, BookOpen, Facebook, Linkedin, Instagram, Link2, UserPlus, MessageSquare, Trophy, Mail, Send, Store } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { RotatingQuoteBanner } from "@/components/RotatingQuoteBanner";
 
@@ -79,6 +79,103 @@ function formatCount(n: number): string {
   return `${n}+`;
 }
 
+interface LeaderboardData {
+  builders: { rank: number; firstName: string; referralCode: string; city: string | null; state: string | null; referralCount: number }[];
+  cities: { rank: number; city: string; state: string | null; count: number }[];
+}
+
+function LeaderboardSection() {
+  const [data, setData] = useState<LeaderboardData | null>(null);
+  const [tab, setTab] = useState<"builders" | "cities">("builders");
+
+  useEffect(() => {
+    fetch(`${BASE}api/waitlist/leaderboard`)
+      .then(r => r.json())
+      .then((d: LeaderboardData) => setData(d))
+      .catch(() => {});
+  }, []);
+
+  const medals = ["🥇", "🥈", "🥉"];
+
+  return (
+    <div className="bg-white border border-[#3A1F0E]/5 rounded-3xl shadow-sm overflow-hidden">
+      <div className="flex border-b border-[#3A1F0E]/5">
+        <button
+          onClick={() => setTab("builders")}
+          className={`flex-1 py-4 text-sm font-bold tracking-wide transition-colors flex items-center justify-center gap-2 ${tab === "builders" ? "bg-[#2B1507] text-[#CA922B]" : "text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
+        >
+          <Trophy className="w-4 h-4" /> Community Builders
+        </button>
+        <button
+          onClick={() => setTab("cities")}
+          className={`flex-1 py-4 text-sm font-bold tracking-wide transition-colors flex items-center justify-center gap-2 ${tab === "cities" ? "bg-[#2B1507] text-[#CA922B]" : "text-[#3A1F0E]/50 hover:text-[#3A1F0E]"}`}
+        >
+          <MapPin className="w-4 h-4" /> Top Cities
+        </button>
+      </div>
+
+      <div className="divide-y divide-[#3A1F0E]/5">
+        {tab === "builders" ? (
+          !data ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-6 py-4">
+                <div className="w-8 h-8 rounded-full bg-[#3A1F0E]/5 animate-pulse" />
+                <div className="flex-1 h-4 rounded bg-[#3A1F0E]/5 animate-pulse" />
+                <div className="w-12 h-4 rounded bg-[#3A1F0E]/5 animate-pulse" />
+              </div>
+            ))
+          ) : data.builders.length === 0 ? (
+            <div className="py-12 text-center text-[#3A1F0E]/40 text-sm">
+              Be the first Community Builder — invite a friend!
+            </div>
+          ) : (
+            data.builders.map((b, i) => (
+              <div key={b.referralCode} className="flex items-center gap-4 px-6 py-4">
+                <span className="text-xl w-8 text-center">{medals[i] ?? `#${b.rank}`}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-[#3A1F0E] text-sm truncate">{b.firstName}</p>
+                  {b.city && <p className="text-xs text-[#3A1F0E]/50">{b.city}{b.state ? `, ${b.state}` : ""}</p>}
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="font-bold text-[#CA922B] text-sm">{b.referralCount}</p>
+                  <p className="text-[10px] text-[#3A1F0E]/40 uppercase tracking-wide">{b.referralCount === 1 ? "referral" : "referrals"}</p>
+                </div>
+              </div>
+            ))
+          )
+        ) : (
+          !data ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-6 py-4">
+                <div className="w-8 h-8 rounded-full bg-[#3A1F0E]/5 animate-pulse" />
+                <div className="flex-1 h-4 rounded bg-[#3A1F0E]/5 animate-pulse" />
+                <div className="w-12 h-4 rounded bg-[#3A1F0E]/5 animate-pulse" />
+              </div>
+            ))
+          ) : data.cities.length === 0 ? (
+            <div className="py-12 text-center text-[#3A1F0E]/40 text-sm">
+              No cities yet — be the first from yours!
+            </div>
+          ) : (
+            data.cities.map((c, i) => (
+              <div key={c.city} className="flex items-center gap-4 px-6 py-4">
+                <span className="text-xl w-8 text-center">{medals[i] ?? `#${c.rank}`}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-[#3A1F0E] text-sm truncate">{c.city}{c.state ? `, ${c.state}` : ""}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="font-bold text-[#CA922B] text-sm">{c.count}</p>
+                  <p className="text-[10px] text-[#3A1F0E]/40 uppercase tracking-wide">members</p>
+                </div>
+              </div>
+            ))
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -91,6 +188,15 @@ export default function Home() {
   const [position, setPosition] = useState<number | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referredBy, setReferredBy] = useState("");
+
+  const [inviteType, setInviteType] = useState<"friend" | "business">("friend");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteeName, setInviteeName] = useState("");
+  const [inviteBizName, setInviteBizName] = useState("");
+  const [myCode, setMyCode] = useState("");
+  const [inviteSubmitting, setInviteSubmitting] = useState(false);
+  const [inviteSent, setInviteSent] = useState(false);
+  const [inviteError, setInviteError] = useState("");
   const [waitlistStats, setWaitlistStats] = useState<WaitlistStats | null>(null);
   const referredByRef = useRef(false);
 
@@ -121,12 +227,47 @@ export default function Home() {
       });
       const data = await res.json();
       setPosition(data.position ?? null);
-      setReferralCode(data.referralCode ?? null);
+      const code = data.referralCode ?? null;
+      setReferralCode(code);
+      if (code) setMyCode(code);
       setSubmitted(true);
     } catch {
       setSubmitted(true);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInviteError("");
+    if (!inviteEmail || !myCode) return;
+    setInviteSubmitting(true);
+    try {
+      const body: Record<string, string> = {
+        referralCode: myCode.trim().toUpperCase(),
+        inviteeEmail: inviteEmail.trim(),
+        type: inviteType,
+      };
+      if (inviteeName.trim()) body.inviteeName = inviteeName.trim();
+      if (inviteType === "business" && inviteBizName.trim()) body.businessName = inviteBizName.trim();
+
+      const res = await fetch(`${BASE}api/waitlist/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) { setInviteError(data.error ?? "Something went wrong"); return; }
+      setInviteSent(true);
+      setInviteEmail("");
+      setInviteeName("");
+      setInviteBizName("");
+      setTimeout(() => setInviteSent(false), 4000);
+    } catch {
+      setInviteError("Failed to send invitation. Please try again.");
+    } finally {
+      setInviteSubmitting(false);
     }
   };
 
@@ -423,35 +564,209 @@ export default function Home() {
 
       <RotatingQuoteBanner variant="cream" />
 
-      {/* ── REFERRAL CTA ── */}
-      <section className="py-20 bg-[#FAF6EF]">
-        <div className="container mx-auto px-4 max-w-4xl text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
-            <UserPlus className="w-3.5 h-3.5 text-[#CA922B]" />
-            <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">Move Up the List</span>
+      {/* ── HELP SHAPE OUR LAUNCH ── */}
+      <section className="py-24 bg-[#FAF6EF]">
+        <div className="container mx-auto px-4 max-w-6xl">
+
+          {/* Header */}
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
+              <UserPlus className="w-3.5 h-3.5 text-[#CA922B]" />
+              <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">Help Shape Our Launch</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-6">
+              Build With Us From Day One.
+            </h2>
+            <p className="text-[#3A1F0E]/70 text-lg max-w-3xl mx-auto leading-relaxed">
+              Mapping With Melanin™ isn't just growing a waitlist — we're building a community. And you can be a part of it from the very beginning.
+            </p>
           </div>
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-6">Invite Friends. Move Up. Get In First.</h2>
-          <p className="text-[#3A1F0E]/70 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
-            Already on the waitlist? Every friend you invite moves you higher. First-in members unlock <span className="text-[#CA922B] font-bold">Founding Member</span> perks: discounted membership, early feature access, and a permanent community badge.
-          </p>
-          <div className="grid md:grid-cols-3 gap-6 mb-10">
+
+          {/* Three pillars */}
+          <div className="grid md:grid-cols-3 gap-6 mb-16">
             {[
-              { num: "1", title: "Join the Waitlist", desc: "Sign up above and grab your unique referral code." },
-              { num: "2", title: "Share With Your Network", desc: "Post your referral link on social, text friends, or drop it in a group chat." },
-              { num: "3", title: "Move to the Front", desc: "Each confirmed referral bumps you up. Top referrers unlock Founding Member status." },
-            ].map((step, i) => (
-              <div key={i} className="bg-white border border-[#3A1F0E]/5 rounded-2xl p-6 text-left shadow-sm">
-                <div className="w-10 h-10 rounded-full bg-[#CA922B] text-white font-bold flex items-center justify-center font-serif text-lg mb-4">{step.num}</div>
-                <h3 className="font-bold text-[#3A1F0E] text-lg mb-2">{step.title}</h3>
-                <p className="text-[#3A1F0E]/60 text-sm leading-relaxed">{step.desc}</p>
+              {
+                icon: Users,
+                title: "Refer Community Members",
+                desc: "Invite friends and family to join the waitlist. Help us grow the community — and move yourself up the list in the process.",
+                color: "bg-[#CA922B]/10 border-[#CA922B]/20",
+                iconColor: "text-[#CA922B]",
+              },
+              {
+                icon: Store,
+                title: "Recommend Minority-Owned Businesses",
+                desc: "Know a business that deserves more visibility? Invite them to join and become part of the movement — we'll reach out directly.",
+                color: "bg-[#2B1507]/5 border-[#2B1507]/10",
+                iconColor: "text-[#3A1F0E]",
+              },
+              {
+                icon: MapPin,
+                title: "Help Build Your City",
+                desc: "We're launching city by city, prioritizing communities showing the strongest early engagement. Help put your city on the map.",
+                color: "bg-[#CA922B]/10 border-[#CA922B]/20",
+                iconColor: "text-[#CA922B]",
+              },
+            ].map(({ icon: Icon, title, desc, color, iconColor }, i) => (
+              <div key={i} className="bg-white border border-[#3A1F0E]/5 rounded-3xl p-8 shadow-sm">
+                <div className={`w-12 h-12 rounded-full ${color} border flex items-center justify-center mb-5`}>
+                  <Icon className={`w-5 h-5 ${iconColor}`} />
+                </div>
+                <h3 className="font-bold text-[#3A1F0E] text-lg mb-3">{title}</h3>
+                <p className="text-[#3A1F0E]/60 text-sm leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
-          <a href="#waitlist-form">
-            <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-10 h-14 text-base font-bold">
-              Join & Get Your Referral Link
-            </Button>
-          </a>
+
+          {/* Founder CTA banner */}
+          <div className="bg-[#2B1507] rounded-3xl p-8 md:p-10 mb-16 flex flex-col md:flex-row items-center gap-8">
+            <div className="flex-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#CA922B]/20 border border-[#CA922B]/30 mb-4">
+                <Trophy className="w-3.5 h-3.5 text-[#CA922B]" />
+                <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">Climb the Waitlist</span>
+              </div>
+              <h3 className="text-2xl md:text-3xl font-serif font-bold text-white mb-4">
+                Every referral earns Community Builder credit.
+              </h3>
+              <p className="text-[#F5EBD8]/70 text-base leading-relaxed mb-4">
+                Members who actively help grow the community may move up the waitlist, unlock exclusive <span className="text-[#CA922B] font-bold">Founding Member</span> recognition, and gain earlier access to the platform.
+              </p>
+              <p className="text-[#F5EBD8]/50 text-sm italic">
+                Because Mapping With Melanin™ isn't being built <em>for</em> the community — it's being built <em>with</em> the community.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <a href="#waitlist-form">
+                <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-14 text-base font-bold whitespace-nowrap">
+                  Join & Get Your Code
+                </Button>
+              </a>
+            </div>
+          </div>
+
+          {/* Invite form + Leaderboard side by side */}
+          <div className="grid lg:grid-cols-2 gap-8 items-start">
+
+            {/* Invite Form */}
+            <div className="bg-white border border-[#3A1F0E]/5 rounded-3xl shadow-sm overflow-hidden">
+              <div className="bg-[#2B1507] px-8 py-6">
+                <div className="flex items-center gap-3 mb-1">
+                  <Mail className="w-5 h-5 text-[#CA922B]" />
+                  <h3 className="text-xl font-serif font-bold text-white">Send a Direct Invite</h3>
+                </div>
+                <p className="text-[#F5EBD8]/60 text-sm">They'll get a personal email from you — with your referral link attached.</p>
+              </div>
+
+              <div className="p-8">
+                {/* Type tabs */}
+                <div className="flex rounded-xl overflow-hidden border border-[#3A1F0E]/10 mb-6">
+                  <button
+                    onClick={() => setInviteType("friend")}
+                    className={`flex-1 py-2.5 text-sm font-bold flex items-center justify-center gap-1.5 transition-colors ${inviteType === "friend" ? "bg-[#CA922B] text-white" : "text-[#3A1F0E]/50 hover:bg-[#3A1F0E]/5"}`}
+                  >
+                    <Users className="w-3.5 h-3.5" /> Invite a Friend
+                  </button>
+                  <button
+                    onClick={() => setInviteType("business")}
+                    className={`flex-1 py-2.5 text-sm font-bold flex items-center justify-center gap-1.5 transition-colors ${inviteType === "business" ? "bg-[#CA922B] text-white" : "text-[#3A1F0E]/50 hover:bg-[#3A1F0E]/5"}`}
+                  >
+                    <Store className="w-3.5 h-3.5" /> Invite a Business
+                  </button>
+                </div>
+
+                {inviteSent ? (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 rounded-full bg-[#CA922B]/10 flex items-center justify-center mx-auto mb-4">
+                      <svg viewBox="0 0 24 24" className="w-8 h-8 text-[#CA922B]" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="20,6 9,17 4,12" /></svg>
+                    </div>
+                    <p className="font-bold text-[#3A1F0E] text-lg mb-1">Invitation sent!</p>
+                    <p className="text-[#3A1F0E]/60 text-sm">Your {inviteType === "business" ? "business invitation" : "invitation"} is on its way.</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleInvite} className="flex flex-col gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wider mb-1.5">Your Referral Code</label>
+                      <input
+                        type="text"
+                        placeholder={submitted && referralCode ? referralCode : "YOUR CODE (e.g. MELANIN123)"}
+                        value={myCode}
+                        onChange={e => setMyCode(e.target.value.toUpperCase())}
+                        required
+                        className="w-full px-4 py-3 rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] text-[#3A1F0E] placeholder-[#3A1F0E]/30 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/30 text-sm font-mono tracking-widest uppercase"
+                      />
+                      {!submitted && <p className="text-xs text-[#3A1F0E]/40 mt-1">Join the waitlist above to get your referral code.</p>}
+                    </div>
+
+                    {inviteType === "business" && (
+                      <div>
+                        <label className="block text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wider mb-1.5">Business Name</label>
+                        <input
+                          type="text"
+                          placeholder="Business name"
+                          value={inviteBizName}
+                          onChange={e => setInviteBizName(e.target.value)}
+                          required
+                          className="w-full px-4 py-3 rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] text-[#3A1F0E] placeholder-[#3A1F0E]/30 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/30 text-sm"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wider mb-1.5">
+                        {inviteType === "business" ? "Business Contact Email" : "Friend's Email"}
+                      </label>
+                      <input
+                        type="email"
+                        placeholder={inviteType === "business" ? "business@example.com" : "friend@example.com"}
+                        value={inviteEmail}
+                        onChange={e => setInviteEmail(e.target.value)}
+                        required
+                        className="w-full px-4 py-3 rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] text-[#3A1F0E] placeholder-[#3A1F0E]/30 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/30 text-sm"
+                      />
+                    </div>
+
+                    {inviteType === "friend" && (
+                      <div>
+                        <label className="block text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wider mb-1.5">Their Name (Optional)</label>
+                        <input
+                          type="text"
+                          placeholder="First name"
+                          value={inviteeName}
+                          onChange={e => setInviteeName(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] text-[#3A1F0E] placeholder-[#3A1F0E]/30 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/30 text-sm"
+                        />
+                      </div>
+                    )}
+
+                    {inviteError && (
+                      <p className="text-red-500 text-sm bg-red-50 rounded-lg px-4 py-3">{inviteError}</p>
+                    )}
+
+                    <Button
+                      type="submit"
+                      disabled={inviteSubmitting || !inviteEmail || !myCode || (inviteType === "business" && !inviteBizName)}
+                      className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-50 text-white h-12 font-bold text-sm mt-1 flex items-center justify-center gap-2"
+                    >
+                      <Send className="w-4 h-4" />
+                      {inviteSubmitting ? "Sending…" : inviteType === "business" ? "Send Business Invitation" : "Send Friend Invitation"}
+                    </Button>
+                  </form>
+                )}
+              </div>
+            </div>
+
+            {/* Leaderboard */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <Trophy className="w-5 h-5 text-[#CA922B]" />
+                <h3 className="text-xl font-serif font-bold text-[#3A1F0E]">Community Leaderboard</h3>
+              </div>
+              <p className="text-[#3A1F0E]/60 text-sm mb-6 leading-relaxed">
+                Top community builders and cities — updated in real time as the waitlist grows.
+              </p>
+              <LeaderboardSection />
+            </div>
+
+          </div>
         </div>
       </section>
 

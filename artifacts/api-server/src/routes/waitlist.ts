@@ -1,8 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, waitlistTable, usersTable, businessRecommendationsTable, pointsLedgerTable, businessesTable } from "@workspace/db";
+import { db, pool, waitlistTable, usersTable, businessRecommendationsTable, pointsLedgerTable, businessesTable } from "@workspace/db";
 import { count, desc, eq, ilike, isNotNull, sql } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
-import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite } from "../lib/email";
+import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite, sendFriendInvitation, sendBusinessWaitlistInvitation, sendReferralMilestoneUpdate } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -73,6 +73,44 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       .catch((err: unknown) => req.log.error({ err }, "Failed to send waitlist confirmation email"));
     sendWelcomeEmail(cleanEmail, cleanFirst)
       .catch((err: unknown) => req.log.error({ err }, "Failed to send welcome email"));
+
+    // Fire referral milestone update to the referrer when someone joins via their code
+    if (referredBy?.trim()) {
+      const referrerCode = referredBy.trim().toUpperCase();
+      (async () => {
+        try {
+          const [referrer] = await db
+            .select()
+            .from(waitlistTable)
+            .where(eq(waitlistTable.referralCode, referrerCode))
+            .limit(1);
+          if (!referrer?.email) return;
+          const [{ total: referralCount }] = await db
+            .select({ total: count() })
+            .from(waitlistTable)
+            .where(eq(waitlistTable.referredBy, referrerCode));
+          let cityTotal = 0;
+          if (referrer.city) {
+            const [{ total: ct }] = await db
+              .select({ total: count() })
+              .from(waitlistTable)
+              .where(eq(waitlistTable.city, referrer.city));
+            cityTotal = Number(ct);
+          }
+          await sendReferralMilestoneUpdate(
+            referrer.email,
+            referrer.firstName,
+            Number(referralCount),
+            cleanFirst,
+            referrer.city,
+            cityTotal,
+            referrerCode,
+          );
+        } catch (err) {
+          req.log.error({ err }, "Failed to send referral milestone update");
+        }
+      })();
+    }
 
     res.status(201).json({ success: true, position, referralCode: code });
   } catch (err) {
@@ -555,6 +593,135 @@ router.get("/admin/business-recommendations", async (req: Request, res: Response
   } catch (err) {
     req.log.error({ err }, "Failed to fetch business recommendations");
     res.status(500).json({ error: "Failed to fetch recommendations" });
+  }
+});
+
+// ── Public: send a friend or business invitation ──────────────────────────────
+
+router.post("/waitlist/invite", waitlistLimiter, async (req: Request, res: Response) => {
+  const { referralCode, inviteeEmail, inviteeName, type, businessName } = req.body as {
+    referralCode?: string;
+    inviteeEmail?: string;
+    inviteeName?: string;
+    type?: "friend" | "business";
+    businessName?: string;
+  };
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!inviteeEmail || !emailRegex.test(inviteeEmail)) {
+    res.status(400).json({ error: "Valid invitee email is required" }); return;
+  }
+  if (!referralCode?.trim()) {
+    res.status(400).json({ error: "Your referral code is required" }); return;
+  }
+  if (type === "business" && !businessName?.trim()) {
+    res.status(400).json({ error: "Business name is required" }); return;
+  }
+
+  try {
+    const code = referralCode.trim().toUpperCase();
+
+    // Look up referrer in waitlist_signups first, then users table
+    let referrerName = "A community member";
+    let referrerFirstName: string | null = null;
+
+    const [waitlistReferrer] = await db
+      .select({ firstName: waitlistTable.firstName, lastName: waitlistTable.lastName })
+      .from(waitlistTable)
+      .where(eq(waitlistTable.referralCode, code))
+      .limit(1);
+
+    if (waitlistReferrer) {
+      referrerFirstName = waitlistReferrer.firstName ?? null;
+      const parts = [waitlistReferrer.firstName, waitlistReferrer.lastName].filter(Boolean);
+      if (parts.length) referrerName = parts.join(" ");
+    } else {
+      const [userReferrer] = await db
+        .select({ firstName: usersTable.firstName, lastName: usersTable.lastName })
+        .from(usersTable)
+        .where(eq(usersTable.referralCode, code))
+        .limit(1);
+      if (!userReferrer) {
+        res.status(404).json({ error: "Referral code not found" }); return;
+      }
+      referrerFirstName = userReferrer.firstName ?? null;
+      const parts = [userReferrer.firstName, userReferrer.lastName].filter(Boolean);
+      if (parts.length) referrerName = parts.join(" ");
+    }
+
+    const referralLink = `https://mappingwithmelanin.com/?ref=${code}`;
+    const cleanInvitee = inviteeEmail.toLowerCase().trim();
+    const cleanName = inviteeName?.trim() || null;
+
+    if (type === "business") {
+      const joinLink = `https://mappingwithmelanin.com/?ref=${code}&type=business&biz=${encodeURIComponent(businessName!.trim())}`;
+      await sendBusinessWaitlistInvitation(cleanInvitee, businessName!.trim(), referrerName, joinLink);
+    } else {
+      await sendFriendInvitation(cleanInvitee, cleanName, referrerName, referralLink, code);
+    }
+
+    res.json({ success: true, referrerName: referrerFirstName ?? referrerName });
+  } catch (err) {
+    req.log.error({ err }, "Failed to send waitlist invitation");
+    res.status(500).json({ error: "Failed to send invitation" });
+  }
+});
+
+// ── Public: referral leaderboard ──────────────────────────────────────────────
+
+router.get("/waitlist/leaderboard", async (_req: Request, res: Response) => {
+  try {
+    const { rows: builderRows } = await pool.query<{
+      first_name: string | null;
+      referral_code: string;
+      city: string | null;
+      state: string | null;
+      referral_count: string;
+    }>(`
+      SELECT
+        w.first_name,
+        w.referral_code,
+        w.city,
+        w.state,
+        COUNT(r.id)::int AS referral_count
+      FROM waitlist_signups w
+      JOIN waitlist_signups r ON r.referred_by = w.referral_code
+      WHERE w.referral_code IS NOT NULL
+      GROUP BY w.first_name, w.referral_code, w.city, w.state
+      ORDER BY COUNT(r.id) DESC
+      LIMIT 10
+    `);
+
+    const builders = builderRows.map((r, i) => ({
+      rank: i + 1,
+      firstName: r.first_name ?? "Community Member",
+      referralCode: r.referral_code,
+      city: r.city,
+      state: r.state,
+      referralCount: Number(r.referral_count),
+    }));
+
+    // Top cities
+    const cityRows = await db
+      .select({ city: waitlistTable.city, state: waitlistTable.state, total: count() })
+      .from(waitlistTable)
+      .where(isNotNull(waitlistTable.city))
+      .groupBy(waitlistTable.city, waitlistTable.state)
+      .orderBy(desc(count()))
+      .limit(10);
+
+    const cities = cityRows
+      .filter(r => r.city)
+      .map((r, i) => ({
+        rank: i + 1,
+        city: r.city as string,
+        state: r.state,
+        count: Number(r.total),
+      }));
+
+    res.json({ builders, cities });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch leaderboard" });
   }
 });
 

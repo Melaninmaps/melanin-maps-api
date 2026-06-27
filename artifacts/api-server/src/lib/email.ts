@@ -1580,3 +1580,257 @@ export async function sendBusinessRecommendationInvite(
     `,
   });
 }
+
+export async function sendFriendInvitation(
+  to: string,
+  inviteeName: string | null,
+  referrerName: string,
+  referralLink: string,
+  referralCode: string,
+) {
+  if (!resend) { log("friend invitation"); return; }
+  const greet = inviteeName ? `Hi ${inviteeName},` : "Hi there,";
+  await resend.emails.send({
+    from: FROM,
+    to,
+    replyTo: "hello@mappingwithmelanin.com",
+    subject: `${referrerName} invited you to join Mapping With Melanin™`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 8px">${greet}</p>
+
+        <h1 style="font-size:28px;color:#2B1507;font-weight:700;margin:0 0 16px;line-height:1.3">
+          <span style="color:#CA922B">${referrerName}</span> personally invited you to join Mapping With Melanin™.
+        </h1>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 20px">
+          Mapping With Melanin™ isn't just growing a waitlist — we're building a community. And your friend thought you should be a part of it from the very beginning.
+        </p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:28px;margin-bottom:28px">
+          <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 16px">Here's how it works:</p>
+
+          <table style="width:100%;border-collapse:collapse">
+            <tr>
+              <td style="padding:10px 0;border-bottom:1px solid rgba(245,235,216,0.1);vertical-align:top;width:28px"><span style="font-size:20px">🤎</span></td>
+              <td style="padding:10px 0 10px 12px;border-bottom:1px solid rgba(245,235,216,0.1)">
+                <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 2px">Refer Community Members</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Invite others to join the waitlist and help grow the community.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 0;border-bottom:1px solid rgba(245,235,216,0.1);vertical-align:top;width:28px"><span style="font-size:20px">🏢</span></td>
+              <td style="padding:10px 0 10px 12px;border-bottom:1px solid rgba(245,235,216,0.1)">
+                <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 2px">Recommend Minority-Owned Businesses</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Know a business that deserves more visibility? Invite them to join and become part of the movement.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 0;vertical-align:top;width:28px"><span style="font-size:20px">📍</span></td>
+              <td style="padding:10px 0 10px 12px">
+                <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 2px">Help Build Your City</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">As we prepare for launch, we'll introduce Mapping With Melanin™ city by city — priority given to communities showing the strongest engagement.</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="background:#fff;border:1px solid rgba(58,31,14,0.08);border-radius:12px;padding:24px;margin-bottom:28px">
+          <p style="color:#2B1507;font-size:15px;font-weight:700;margin:0 0 10px">🏆 Climb the Waitlist</p>
+          <p style="color:#3A1F0E;font-size:14px;line-height:1.6;margin:0">
+            Every verified referral earns Community Builder credit. Members who actively help grow the community may move up the waitlist, unlock exclusive <strong>Founding Member</strong> recognition, and gain earlier access to the platform.
+          </p>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 8px;font-style:italic;font-weight:700">
+          Because Mapping With Melanin™ isn't being built for the community — it's being built with the community.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 28px">
+          Help us grow. Help your city connect. Help your favorite businesses get discovered.
+        </p>
+
+        <div style="text-align:center;margin-bottom:28px">
+          <a href="${referralLink}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:16px 40px;border-radius:50px;text-decoration:none">
+            Join the Waitlist →
+          </a>
+        </div>
+
+        <div style="background:#2B1507;border-radius:12px;padding:20px 24px;margin-bottom:24px">
+          <p style="color:#F5EBD8;font-size:13px;margin:0 0 6px;opacity:0.7">Your invitation link (includes ${referrerName}'s referral code)</p>
+          <a href="${referralLink}" style="color:#CA922B;font-size:14px;font-weight:700;word-break:break-all">${referralLink}</a>
+          <p style="color:#F5EBD8;font-size:12px;margin:8px 0 0;opacity:0.5">Referral code: <span style="color:#CA922B;letter-spacing:2px;font-weight:700">${referralCode}</span></p>
+        </div>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping With Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.6;margin:0">Melanin Maps LLC · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a></p>
+      </div>
+    `,
+  });
+}
+
+export async function sendBusinessWaitlistInvitation(
+  to: string,
+  businessName: string,
+  referrerName: string,
+  joinLink: string,
+) {
+  if (!resend) { log("business waitlist invitation"); return; }
+  await resend.emails.send({
+    from: FROM,
+    to,
+    replyTo: "business@mappingwithmelanin.com",
+    subject: `${referrerName} recommended your business to Mapping With Melanin™`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 8px">Hello ${businessName},</p>
+
+        <h1 style="font-size:28px;color:#2B1507;font-weight:700;margin:0 0 16px;line-height:1.3">
+          <span style="color:#CA922B">${referrerName}</span> recommended your business to Mapping With Melanin™.
+        </h1>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 20px">
+          A community member who knows your business wants to see you featured on Mapping With Melanin™ — a platform built to celebrate and connect people with trusted minority-owned businesses, cultural gems, and community destinations.
+        </p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:28px;margin-bottom:28px">
+          <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 16px">Why join the business waitlist?</p>
+          <table style="width:100%;border-collapse:collapse">
+            <tr>
+              <td style="padding:9px 0;border-bottom:1px solid rgba(245,235,216,0.1);vertical-align:top;width:28px"><span style="font-size:18px">🏪</span></td>
+              <td style="padding:9px 0 9px 12px;border-bottom:1px solid rgba(245,235,216,0.1)">
+                <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 2px">Get Discovered by Conscious Consumers</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Connect with community members actively seeking minority-owned businesses like yours.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:9px 0;border-bottom:1px solid rgba(245,235,216,0.1);vertical-align:top;width:28px"><span style="font-size:18px">🛡️</span></td>
+              <td style="padding:9px 0 9px 12px;border-bottom:1px solid rgba(245,235,216,0.1)">
+                <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 2px">Community-Verified Visibility</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Every listing is community-reviewed and authenticity-checked — earning real trust from real people.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:9px 0;vertical-align:top;width:28px"><span style="font-size:18px">📍</span></td>
+              <td style="padding:9px 0 9px 12px">
+                <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 2px">Help Build Your City's Map</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">We launch city by city — businesses on the waitlist get priority positioning when we arrive in your area.</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 28px">
+          Join the business waitlist today and be part of the platform that's being built <em>with</em> the community — not just for it.
+        </p>
+
+        <div style="text-align:center;margin-bottom:28px">
+          <a href="${joinLink}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:16px 40px;border-radius:50px;text-decoration:none">
+            Join the Business Waitlist →
+          </a>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:13px;line-height:1.6;margin:0 0 24px;opacity:0.7">
+          Questions? Reply to this email or reach us at <a href="mailto:business@mappingwithmelanin.com" style="color:#CA922B">business@mappingwithmelanin.com</a>. We'd love to hear from you.
+        </p>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping With Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.6;margin:0">Melanin Maps LLC · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a></p>
+      </div>
+    `,
+  });
+}
+
+export async function sendReferralMilestoneUpdate(
+  to: string,
+  firstName: string | null,
+  totalReferrals: number,
+  newInviteeName: string | null,
+  cityName: string | null,
+  cityTotal: number,
+  referralCode: string,
+) {
+  if (!resend) { log("referral milestone update"); return; }
+  const name = firstName ?? "there";
+  const referralLink = `https://mappingwithmelanin.com/?ref=${referralCode}`;
+  const newJoinedText = newInviteeName
+    ? `<strong>${newInviteeName}</strong> just joined the waitlist`
+    : "Someone just joined the waitlist";
+  await resend.emails.send({
+    from: FROM,
+    to,
+    replyTo: "hello@mappingwithmelanin.com",
+    subject: `Your referral is working, ${name} 🎉 — ${totalReferrals} ${totalReferrals === 1 ? "person" : "people"} joined`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 8px">Hey ${name},</p>
+
+        <h1 style="font-size:26px;color:#2B1507;font-weight:700;margin:0 0 16px;line-height:1.3">
+          Your community is growing. 🎉
+        </h1>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 20px">
+          ${newJoinedText} using your referral link. Keep it up — every person you bring in moves you closer to the front of the list.
+        </p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:28px;margin-bottom:24px">
+          <p style="color:#F5EBD8;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin:0 0 20px">Your Referral Stats</p>
+
+          <div style="display:flex;gap:16px;flex-wrap:wrap">
+            <div style="flex:1;min-width:120px;background:rgba(245,235,216,0.08);border-radius:10px;padding:16px;text-align:center">
+              <div style="color:#CA922B;font-size:36px;font-weight:700;font-family:Georgia,serif;line-height:1">${totalReferrals}</div>
+              <div style="color:#F5EBD8;font-size:13px;margin-top:6px;opacity:0.8">Total Referrals</div>
+            </div>
+            ${cityName && cityTotal > 0 ? `
+            <div style="flex:1;min-width:120px;background:rgba(245,235,216,0.08);border-radius:10px;padding:16px;text-align:center">
+              <div style="color:#CA922B;font-size:36px;font-weight:700;font-family:Georgia,serif;line-height:1">${cityTotal}</div>
+              <div style="color:#F5EBD8;font-size:13px;margin-top:6px;opacity:0.8">${cityName} Members</div>
+            </div>
+            ` : ""}
+          </div>
+        </div>
+
+        ${totalReferrals >= 5 ? `
+        <div style="background:#CA922B;border-radius:12px;padding:20px 24px;margin-bottom:24px">
+          <p style="color:#fff;font-size:15px;font-weight:700;margin:0 0 6px">🏆 You're a Community Builder!</p>
+          <p style="color:#fff;font-size:14px;line-height:1.6;margin:0;opacity:0.9">
+            With ${totalReferrals}+ referrals, you're on track for Founding Member recognition — early access, an exclusive badge, and a locked-in founding rate on membership.
+          </p>
+        </div>
+        ` : `
+        <div style="background:#fff;border:1px solid rgba(58,31,14,0.08);border-radius:12px;padding:20px 24px;margin-bottom:24px">
+          <p style="color:#2B1507;font-size:14px;font-weight:700;margin:0 0 6px">🎯 Keep Going</p>
+          <p style="color:#3A1F0E;font-size:14px;line-height:1.6;margin:0">
+            Reach <strong>5 referrals</strong> to unlock Community Builder status and move toward Founding Member recognition.
+          </p>
+        </div>
+        `}
+
+        <p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 20px">
+          Share your link to keep the momentum going:
+        </p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:20px 24px;margin-bottom:28px">
+          <a href="${referralLink}" style="color:#CA922B;font-size:15px;font-weight:700;word-break:break-all;display:block;margin-bottom:8px">${referralLink}</a>
+          <p style="color:#F5EBD8;font-size:12px;margin:0;opacity:0.5">Code: <span style="color:#CA922B;letter-spacing:2px;font-weight:700">${referralCode}</span></p>
+        </div>
+
+        <a href="${referralLink}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:50px;text-decoration:none;margin-bottom:28px">
+          Share Your Link →
+        </a>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping With Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.6;margin:0">Melanin Maps LLC · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a></p>
+      </div>
+    `,
+  });
+}
