@@ -343,7 +343,7 @@ export function MapTabView() {
           if (!isAuthenticated) {
             setShowUpgrade(true);
           } else {
-            router.push("/safety-info");
+            router.push("/safety-hub");
           }
         }}
       >

@@ -179,7 +179,7 @@ export default function DiscoverScreen() {
           </View>
           <TouchableOpacity style={styles.notifBtn} activeOpacity={0.8} onPress={() => router.push("/messages")}>
             <Feather name="bell" size={20} color="#FFFFFF" />
-            <View style={styles.notifDot} />
+            {user && <View style={styles.notifDot} />}
           </TouchableOpacity>
         </View>
         <View style={styles.searchWrap}>
@@ -190,6 +190,21 @@ export default function DiscoverScreen() {
             onFocus={() => router.push("/business-search")}
           />
         </View>
+
+        {/* AI Smart Search entry */}
+        <TouchableOpacity
+          style={styles.aiSearchBanner}
+          onPress={() => router.push("/smart-search" as never)}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.aiSearchIcon}>✨</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.aiSearchTitle}>AI Smart Search</Text>
+            <Text style={styles.aiSearchSub}>Describe what you're looking for in your own words</Text>
+          </View>
+          <Feather name="chevron-right" size={16} color="#CA922B" />
+        </TouchableOpacity>
+
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -643,7 +658,23 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#1C1A10",
   },
-  searchWrap: { paddingHorizontal: 20, marginBottom: 12 },
+  searchWrap: { paddingHorizontal: 20, marginBottom: 8 },
+  aiSearchBanner: {
+    marginHorizontal: 20,
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: "#CA922B18",
+    borderWidth: 1,
+    borderColor: "#CA922B40",
+  },
+  aiSearchIcon: { fontSize: 16 },
+  aiSearchTitle: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#CA922B" },
+  aiSearchSub: { fontFamily: "Inter_400Regular", fontSize: 11, color: "#CA922B99", marginTop: 1 },
   categoryScroll: { paddingHorizontal: 20, gap: 8 },
   scroll: { flex: 1 },
   scrollContent: { paddingTop: 20 },

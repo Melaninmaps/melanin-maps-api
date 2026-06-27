@@ -678,6 +678,36 @@ export default function LibraryScreen() {
                   </View>
                 )}
 
+                {/* Explore Community Resources */}
+                <View style={[styles.section, { paddingHorizontal: 20 }]}>
+                  <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Explore Community Resources</Text>
+                  <Text style={[styles.deliverySub, { color: colors.mutedForeground, marginBottom: 12 }]}>
+                    Tools built for every part of your life — work, travel, home, and safety.
+                  </Text>
+                  {[
+                    { emoji: "🛡️", title: "Safety Hub", desc: "Neighborhood safety intel & community reports", route: "/safety-hub", color: "#DC2626" },
+                    { emoji: "❤️", title: "Health Hub", desc: "Curated health resources for the community", route: "/health-hub", color: "#DB2777" },
+                    { emoji: "🏠", title: "Relocation Concierge", desc: "AI-guided move with minority-owned vendors", route: "/relocation-planner", color: "#2D7A4F" },
+                    { emoji: "✈️", title: "KinfolkAI Travel", desc: "Plan culturally-informed trips with AI", route: "/travel", color: "#CA922B" },
+                  ].map((item) => (
+                    <TouchableOpacity
+                      key={item.route}
+                      style={[styles.resourceCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                      onPress={() => router.push(item.route as never)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={[styles.resourceIcon, { backgroundColor: item.color + "15" }]}>
+                        <Text style={{ fontSize: 18 }}>{item.emoji}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.resourceTitle, { color: colors.foreground }]}>{item.title}</Text>
+                        <Text style={[styles.resourceDesc, { color: colors.mutedForeground }]}>{item.desc}</Text>
+                      </View>
+                      <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
                 {/* Experts */}
                 <View style={[styles.section, { marginBottom: Platform.OS === "web" ? 100 : insets.bottom + 100 }]}>
                   <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Community Experts</Text>
@@ -1054,6 +1084,10 @@ const styles = StyleSheet.create({
   topicCategory: { fontSize: 11, fontWeight: "600", marginTop: 1 },
   followToggle: { borderWidth: 1.5, borderRadius: 18, paddingHorizontal: 12, paddingVertical: 5 },
   followToggleTxt: { fontSize: 12, fontWeight: "700", color: "#fff" },
+  resourceCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 14, borderWidth: 1, marginBottom: 10 },
+  resourceIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+  resourceTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14, marginBottom: 2 },
+  resourceDesc: { fontFamily: "Inter_400Regular", fontSize: 12 },
   expertCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 14, borderWidth: 1 },
   expertAvatar: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
   expertName: { fontSize: 14, fontWeight: "700" },
