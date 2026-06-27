@@ -195,13 +195,18 @@ router.post("/admin/businesses/:id/outreach", async (req: Request, res: Response
 
   try {
     const [business] = await db
-      .select({ id: businessesTable.id, name: businessesTable.name })
+      .select({ id: businessesTable.id, name: businessesTable.name, blackOwned: businessesTable.blackOwned })
       .from(businessesTable)
       .where(eq(businessesTable.id, businessId))
       .limit(1);
 
     if (!business) {
       res.status(404).json({ error: "Business not found" });
+      return;
+    }
+
+    if (!business.blackOwned) {
+      res.status(403).json({ error: "Outreach emails are only sent to minority-owned businesses." });
       return;
     }
 

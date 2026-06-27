@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, waitlistTable, usersTable, businessRecommendationsTable, pointsLedgerTable } from "@workspace/db";
+import { db, waitlistTable, usersTable, businessRecommendationsTable, pointsLedgerTable, businessesTable } from "@workspace/db";
 import { count, desc, eq, ilike, isNotNull, sql } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
 import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite } from "../lib/email";
@@ -500,18 +500,26 @@ router.post("/waitlist/recommend-business", waitlistLimiter, async (req: Request
         .where(eq(businessRecommendationsTable.id, rec.id));
     }
 
-    // Send invite email to business (async, don't block response)
+    // Send invite email to business only if they are confirmed minority-owned in our directory
     if (businessEmail?.trim()) {
-      const waitlistLink = `https://mappingwithmelanin.com/waitlist?source=recommended&business=${encodeURIComponent(businessName.trim())}`;
-      sendBusinessRecommendationInvite(
-        businessEmail.trim().toLowerCase(),
-        businessName.trim(),
-        recommendationCount,
-        waitlistLink,
-      ).catch((err: unknown) => req.log.error({ err }, "Failed to send business recommendation invite"));
-      await db.update(businessRecommendationsTable)
-        .set({ emailSentAt: new Date() })
-        .where(eq(businessRecommendationsTable.id, rec.id));
+      const [knownBiz] = await db
+        .select({ blackOwned: businessesTable.blackOwned })
+        .from(businessesTable)
+        .where(ilike(businessesTable.name, businessName.trim()))
+        .limit(1);
+      const isMinorityOwned = knownBiz?.blackOwned ?? false;
+      if (isMinorityOwned) {
+        const waitlistLink = `https://mappingwithmelanin.com/waitlist?source=recommended&business=${encodeURIComponent(businessName.trim())}`;
+        sendBusinessRecommendationInvite(
+          businessEmail.trim().toLowerCase(),
+          businessName.trim(),
+          recommendationCount,
+          waitlistLink,
+        ).catch((err: unknown) => req.log.error({ err }, "Failed to send business recommendation invite"));
+        await db.update(businessRecommendationsTable)
+          .set({ emailSentAt: new Date() })
+          .where(eq(businessRecommendationsTable.id, rec.id));
+      }
     }
 
     res.status(201).json({ success: true, recommendationCount, pointsEarned });

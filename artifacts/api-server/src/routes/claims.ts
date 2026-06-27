@@ -14,7 +14,7 @@ router.post("/businesses/:id/claim", async (req: Request, res: Response) => {
 
   // Prevent claiming an already-claimed business
   const [existing] = await db
-    .select({ id: businessesTable.id, submittedById: businessesTable.submittedById })
+    .select({ id: businessesTable.id, submittedById: businessesTable.submittedById, blackOwned: businessesTable.blackOwned })
     .from(businessesTable)
     .where(eq(businessesTable.id, businessId))
     .limit(1);
@@ -38,8 +38,11 @@ router.post("/businesses/:id/claim", async (req: Request, res: Response) => {
     }).returning();
 
     // Fire-and-forget: confirmation to claimant + alert to admin
+    // Only send confirmation emails for minority-owned businesses
     const bName = (typeof businessName === "string" ? businessName : existing?.id) ?? "your business";
-    sendClaimReceived(email, ownerName, bName).catch(() => {});
+    if (existing?.blackOwned) {
+      sendClaimReceived(email, ownerName, bName).catch(() => {});
+    }
     sendClaimReceived("hello@mappingwithmelanin.com", `Admin — new claim from ${ownerName}`, `${bName} (${email})`).catch(() => {});
 
     res.status(201).json({ claim });
@@ -85,6 +88,11 @@ router.patch("/admin/claims/:id", async (req: Request, res: Response) => {
 
     // When approved: link the business to this user + notify owner
     if (status === "approved" && claim.businessId) {
+      const [claimedBiz] = await db
+        .select({ blackOwned: businessesTable.blackOwned })
+        .from(businessesTable)
+        .where(eq(businessesTable.id, claim.businessId))
+        .limit(1);
       db.update(businessesTable)
         .set({
           verified: true,
@@ -94,7 +102,9 @@ router.patch("/admin/claims/:id", async (req: Request, res: Response) => {
         .where(eq(businessesTable.id, claim.businessId))
         .catch(() => {});
       const bName = claim.businessName ?? "your business";
-      sendClaimApproved(claim.email, claim.ownerName, bName).catch(() => {});
+      if (claimedBiz?.blackOwned) {
+        sendClaimApproved(claim.email, claim.ownerName, bName).catch(() => {});
+      }
     }
 
     res.json({ claim });
