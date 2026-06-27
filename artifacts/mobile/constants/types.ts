@@ -46,6 +46,8 @@ export interface Business {
   feedbackOptIn?: boolean;
   foundingBusiness?: boolean;
   foundingNumber?: number;
+  introVideoUrl?: string;
+  topCaptions?: string[];
 }
 
 export interface Event {

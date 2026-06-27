@@ -1,8 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable, usersTable, mentorshipProfilesTable } from "@workspace/db";
 import { computeTrustLevel, getReviewWeight } from "@workspace/db/trust";
-import { eq, desc, and, sql } from "drizzle-orm";
-import { sendPushToUser, sendPushToUsersWithSavedBusiness, sendThreeStarAlert } from "../lib/pushNotifications";
+import { eq, desc, and, ne, gte, sql } from "drizzle-orm";
+import { sendPushToUser, sendPushToUsersWithSavedBusiness, sendThreeStarAlert, sendBuzzAlert, sendNegativeReviewAlertIfThreshold } from "../lib/pushNotifications";
 import { reviewLimiter } from "../middleware/rateLimiter";
 import { requireMembership } from "../middleware/requireMembership";
 import { requireTrust } from "../middleware/requireTrust";
@@ -145,10 +145,15 @@ router.get("/reviews", async (req: Request, res: Response) => {
     return;
   }
   try {
+    const sixMonthsAgo = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
     const reviews = await db
       .select()
       .from(reviewsTable)
-      .where(eq(reviewsTable.businessId, businessId))
+      .where(and(
+        eq(reviewsTable.businessId, businessId),
+        ne(reviewsTable.status, "pending_video"),
+        gte(reviewsTable.createdAt, sixMonthsAgo),
+      ))
       .orderBy(desc(reviewsTable.createdAt))
       .limit(50);
     res.json({ reviews });
@@ -230,6 +235,11 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
         socialHandle: cleanHandle,
         socialPlatform: cleanHandle ? cleanPlatform : null,
         videoUrl: typeof videoUrl === "string" && videoUrl.trim() ? videoUrl.trim() : null,
+        status: (typeof videoUrl === "string" && videoUrl.trim())
+          ? "pending_video"
+          : ratingNum === 5
+            ? "auto_approved"
+            : "posted",
         nonMinorityOwned: nonMinorityOwned === true,
         recommendsAsEmployer: nonMinorityOwned === true && recommendsAsEmployer === true,
         nowHiringUrl: nonMinorityOwned === true && recommendsAsEmployer === true && typeof nowHiringUrl === "string" && nowHiringUrl.trim() ? nowHiringUrl.trim() : null,
@@ -333,10 +343,23 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
         const direction = oldAvg >= 3.5 ? "dropped" : "rose";
         sendThreeStarAlert(businessId as string, biz.name, direction, req.user.id).catch(() => {});
       }
+
+      // Buzz alert: every 3rd great review (≥4★) milestone, nudge saved supporters
+      if (newCount % 3 === 0 && newAvg >= 4.0 && biz?.name) {
+        sendBuzzAlert(businessId as string, biz.name, newCount).catch(() => {});
+      }
+      // Negative review threshold: 3 low-rated (≤3★) approved reviews in 30 days → saved user alert
+      if (ratingNum <= 3 && biz?.name) {
+        sendNegativeReviewAlertIfThreshold(businessId as string, biz.name, req.user.id).catch(() => {});
+      }
     }
 
     if (biz?.submittedById && biz.submittedById !== req.user.id) {
-      sendPushToUser(biz.submittedById, { title: "New Review ⭐", body: `Someone left a ${ratingNum}-star review for ${biz.name ?? "your business"}.`, data: { screen: "business", id: businessId } }).catch(() => {});
+      const ownerTitle = ratingNum === 5 ? "🌟 Perfect 5-Star Review!" : "New Review ⭐";
+      const ownerBody = ratingNum === 5
+        ? `Your business received a perfect 5-star review on Mapping With Melanin!`
+        : `Someone left a ${ratingNum}-star review for ${biz.name ?? "your business"}.`;
+      sendPushToUser(biz.submittedById, { title: ownerTitle, body: ownerBody, data: { screen: "business", id: businessId } }).catch(() => {});
     }
     sendPushToUsersWithSavedBusiness(businessId as string, { title: "New Review", body: `A new review was posted for ${biz?.name ?? "a saved business"}.`, data: { screen: "business", id: businessId } }).catch(() => {});
 
@@ -355,6 +378,108 @@ function isAdmin(req: Request): boolean {
   if (ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(user.email)) return true;
   return user.role === "admin";
 }
+
+// ─── POST /reviews/:id/owner-response ─────────────────────────────────────────
+router.post("/reviews/:id/owner-response", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const reviewId = String(req.params.id);
+  const { response } = req.body as { response?: string };
+  if (!response?.trim()) { res.status(400).json({ error: "Response text is required" }); return; }
+
+  const filter = checkContent(response);
+  if (!filter.ok) { res.status(422).json({ error: filter.reason }); return; }
+
+  try {
+    const [review] = await db.select().from(reviewsTable).where(eq(reviewsTable.id, reviewId)).limit(1);
+    if (!review) { res.status(404).json({ error: "Review not found" }); return; }
+
+    const [biz] = await db.select({ submittedById: businessesTable.submittedById }).from(businessesTable).where(eq(businessesTable.id, review.businessId)).limit(1);
+    if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
+    if (biz.submittedById !== req.user.id && !isAdmin(req)) {
+      res.status(403).json({ error: "Only the business owner can respond to reviews" }); return;
+    }
+
+    const [updated] = await db
+      .update(reviewsTable)
+      .set({ ownerResponse: response.trim(), ownerRespondedAt: new Date() })
+      .where(eq(reviewsTable.id, reviewId))
+      .returning();
+
+    if (review.userId) {
+      sendPushToUser(review.userId, {
+        title: "Business Owner Responded 💬",
+        body: "The owner of a business you reviewed has responded to your feedback.",
+        data: { screen: "business", id: review.businessId },
+      }).catch(() => {});
+    }
+
+    res.json({ review: updated });
+  } catch (err) {
+    req.log.error({ err }, "Failed to post owner response");
+    res.status(500).json({ error: "Failed to post response" });
+  }
+});
+
+// ─── PATCH /reviews/:id — customer edits their review (allowed after owner responds) ──
+router.patch("/reviews/:id", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const reviewId = String(req.params.id);
+  const { text, rating } = req.body as { text?: string; rating?: number };
+
+  try {
+    const [review] = await db.select().from(reviewsTable).where(eq(reviewsTable.id, reviewId)).limit(1);
+    if (!review) { res.status(404).json({ error: "Review not found" }); return; }
+    if (review.userId !== req.user.id) { res.status(403).json({ error: "You can only edit your own reviews" }); return; }
+
+    if (text && typeof text === "string" && text.trim()) {
+      const filter = checkContent(text);
+      if (!filter.ok) { res.status(422).json({ error: filter.reason }); return; }
+    }
+
+    const updates: Record<string, unknown> = { customerEditedAt: new Date() };
+    if (text !== undefined) updates.text = typeof text === "string" ? text.trim() : null;
+    if (rating !== undefined) {
+      const r = Number(rating);
+      if (!isNaN(r) && r >= 1 && r <= 5) updates.rating = r;
+    }
+
+    const [updated] = await db.update(reviewsTable).set(updates).where(eq(reviewsTable.id, reviewId)).returning();
+    res.json({ review: updated });
+  } catch (err) {
+    req.log.error({ err }, "Failed to edit review");
+    res.status(500).json({ error: "Failed to edit review" });
+  }
+});
+
+// ─── POST /reviews/:id/approve-video — admin approves a pending_video review ──
+router.post("/reviews/:id/approve-video", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Admin access required" }); return; }
+  const reviewId = String(req.params.id);
+  try {
+    const [review] = await db.select().from(reviewsTable).where(eq(reviewsTable.id, reviewId)).limit(1);
+    if (!review) { res.status(404).json({ error: "Review not found" }); return; }
+    if (review.status !== "pending_video") { res.status(400).json({ error: "Review is not pending video approval" }); return; }
+
+    const [updated] = await db
+      .update(reviewsTable)
+      .set({ status: "posted" })
+      .where(eq(reviewsTable.id, reviewId))
+      .returning();
+
+    if (review.userId) {
+      sendPushToUser(review.userId, {
+        title: "Your Video Review is Live! 🎉",
+        body: "Your video review has been approved and is now visible to the community.",
+        data: { screen: "business", id: review.businessId },
+      }).catch(() => {});
+    }
+
+    res.json({ review: updated });
+  } catch (err) {
+    req.log.error({ err }, "Failed to approve video review");
+    res.status(500).json({ error: "Failed to approve review" });
+  }
+});
 
 router.get("/admin/reviews", async (req: Request, res: Response) => {
   if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }

@@ -1,6 +1,6 @@
 import { db, pushTokensTable, savedPlacesTable, businessesTable, notificationsTable, businessProfileViewsTable, reviewsTable } from "@workspace/db";
 import { pool } from "@workspace/db";
-import { eq, inArray, ilike, gte, and } from "drizzle-orm";
+import { eq, inArray, ilike, gte, lte, ne, and } from "drizzle-orm";
 import { logger } from "./logger";
 
 interface PushMessage {
@@ -304,5 +304,113 @@ export async function sendPushToBusinessOwnersByCity(
     logger.info({ city, ownerCount: ownerIds.length }, "[push] Safety incident notifications sent to business owners");
   } catch (err) {
     logger.warn({ err }, "[push] Failed to send safety incident push to business owners");
+  }
+}
+
+// ─── Buzz alert: business gets 3 great reviews milestone ──────────────────────
+export async function sendBuzzAlert(
+  businessId: string,
+  businessName: string,
+  totalReviews: number,
+): Promise<void> {
+  try {
+    const savedRows = await db
+      .select({ userId: savedPlacesTable.userId })
+      .from(savedPlacesTable)
+      .where(eq(savedPlacesTable.businessId, businessId));
+
+    const userIds = [...new Set(savedRows.map((r) => r.userId).filter((id): id is string => !!id))];
+    if (userIds.length === 0) return;
+
+    const message: PushMessage = {
+      title: `🌟 ${businessName} is buzzing!`,
+      body: `${totalReviews} community members have reviewed this place you saved — and they love it.`,
+      data: { businessId, type: "buzz_alert" },
+    };
+
+    const tokens = await db
+      .select({ token: pushTokensTable.token })
+      .from(pushTokensTable)
+      .where(inArray(pushTokensTable.userId, userIds));
+
+    for (const row of tokens) {
+      if (row.token) await sendToToken(row.token, message);
+    }
+
+    await db.insert(notificationsTable).values(
+      userIds.map((userId) => ({
+        userId,
+        type: "system" as const,
+        title: message.title,
+        body: message.body,
+      })),
+    );
+
+    logger.info({ businessId, notified: userIds.length }, "[push] Buzz alert sent");
+  } catch (err) {
+    logger.warn({ err }, "[push] Failed to send buzz alert");
+  }
+}
+
+// ─── Negative review threshold alert: 3+ low-rated reviews in 30 days ─────────
+export async function sendNegativeReviewAlertIfThreshold(
+  businessId: string,
+  businessName: string,
+  excludeUserId?: string,
+): Promise<void> {
+  try {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const recentNegative = await db
+      .select({ id: reviewsTable.id })
+      .from(reviewsTable)
+      .where(
+        and(
+          eq(reviewsTable.businessId, businessId),
+          lte(reviewsTable.rating, 3),
+          gte(reviewsTable.createdAt, thirtyDaysAgo),
+          ne(reviewsTable.status, "pending_video"),
+        ),
+      );
+
+    // Only alert at exactly the 3rd negative review (avoid spam on subsequent ones)
+    if (recentNegative.length !== 3) return;
+
+    const savedRows = await db
+      .select({ userId: savedPlacesTable.userId })
+      .from(savedPlacesTable)
+      .where(eq(savedPlacesTable.businessId, businessId));
+
+    const userIdSet = new Set(savedRows.map((r) => r.userId).filter((id): id is string => !!id));
+    if (excludeUserId) userIdSet.delete(excludeUserId);
+    const userIds = [...userIdSet];
+    if (userIds.length === 0) return;
+
+    const message: PushMessage = {
+      title: `📋 New feedback on ${businessName}`,
+      body: "The community has been sharing thoughts about a place you saved. Check what they're saying.",
+      data: { businessId, type: "negative_review_alert" },
+    };
+
+    const tokens = await db
+      .select({ token: pushTokensTable.token })
+      .from(pushTokensTable)
+      .where(inArray(pushTokensTable.userId, userIds));
+
+    for (const row of tokens) {
+      if (row.token) await sendToToken(row.token, message);
+    }
+
+    await db.insert(notificationsTable).values(
+      userIds.map((userId) => ({
+        userId,
+        type: "system" as const,
+        title: message.title,
+        body: message.body,
+      })),
+    );
+
+    logger.info({ businessId, negativeCount: recentNegative.length, notified: userIds.length }, "[push] Negative review threshold alert sent");
+  } catch (err) {
+    logger.warn({ err }, "[push] Failed to send negative review alert");
   }
 }

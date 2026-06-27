@@ -85,6 +85,13 @@ export default function EditBusinessProfile() {
   const [addLinkVisible, setAddLinkVisible] = useState(false);
   const [addLinkText, setAddLinkText] = useState("");
   const [addingLink, setAddingLink] = useState(false);
+  const [introVideoUrl, setIntroVideoUrl] = useState<string | null>(null);
+  const [uploadingIntroVideo, setUploadingIntroVideo] = useState(false);
+  type DaySchedule = { open: string; close: string } | null;
+  const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const [weeklySchedule, setWeeklySchedule] = useState<Record<string, DaySchedule>>({});
+  const [showAvailability, setShowAvailability] = useState(false);
+  const [savingSchedule, setSavingSchedule] = useState(false);
 
   const update = (key: keyof FormState) => (val: string) =>
     setForm(prev => ({ ...prev, [key]: val }));
@@ -96,7 +103,7 @@ export default function EditBusinessProfile() {
       if (token) headers["Authorization"] = `Bearer ${token}`;
       const res = await fetch(`${getApiBase()}/api/businesses/mine`, { headers });
       if (res.ok) {
-        const data = await res.json() as { business: (FormState & { id: string; imageUrl?: string; photos?: string[]; videos?: string[] }) | null };
+        const data = await res.json() as { business: (FormState & { id: string; imageUrl?: string; photos?: string[]; videos?: string[]; introVideoUrl?: string | null; weeklySchedule?: Record<string, { open: string; close: string } | null> | null; showAvailability?: boolean }) | null };
         if (data.business) {
           const b = data.business;
           const f: FormState = {
@@ -113,6 +120,9 @@ export default function EditBusinessProfile() {
           setPendingPhotos((b as any).pendingPhotos ?? []);
           setCoverUrl(b.imageUrl ?? null);
           setVideos(b.videos ?? []);
+          setIntroVideoUrl(b.introVideoUrl ?? null);
+          setWeeklySchedule((b.weeklySchedule as Record<string, { open: string; close: string } | null>) ?? {});
+          setShowAvailability(b.showAvailability ?? false);
         }
       }
     } catch { }
@@ -153,6 +163,78 @@ export default function EditBusinessProfile() {
     } catch {
       Alert.alert("Save failed", "Something went wrong. Please try again.");
     } finally { setSaving(false); }
+  };
+
+  // ── Intro video ────────────────────────────────────────────────────────────
+  const handleUploadIntroVideo = async () => {
+    if ((Platform.OS as string) === "web") { Alert.alert("Not supported", "Video upload is available on the mobile app."); return; }
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") { Alert.alert("Permission needed", "Allow access to your media library to upload a video."); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["videos"], allowsEditing: false, videoMaxDuration: 120 });
+    if (result.canceled || !result.assets.length) return;
+    const asset = result.assets[0];
+    setUploadingIntroVideo(true);
+    try {
+      const token = await getToken();
+      const formData = new FormData();
+      formData.append("video", { uri: asset.uri, type: asset.mimeType ?? "video/mp4", name: "intro.mp4" } as unknown as Blob);
+      const res = await fetch(`${getApiBase()}/api/businesses/mine/intro-video`, {
+        method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: formData,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json() as { introVideoUrl: string };
+      setIntroVideoUrl(data.introVideoUrl);
+      if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Intro video uploaded!", "Visitors will now see a 'Watch Owner Intro' button on your listing.");
+    } catch { Alert.alert("Upload failed", "Please try again."); }
+    finally { setUploadingIntroVideo(false); }
+  };
+
+  const handleDeleteIntroVideo = () => {
+    Alert.alert("Remove intro video?", "This will remove your hosted owner intro video.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Remove", style: "destructive", onPress: async () => {
+        try {
+          const token = await getToken();
+          await fetch(`${getApiBase()}/api/businesses/mine/intro-video`, {
+            method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          setIntroVideoUrl(null);
+        } catch { Alert.alert("Error", "Failed to remove intro video."); }
+      }},
+    ]);
+  };
+
+  // ── Weekly schedule ─────────────────────────────────────────────────────────
+  const handleSaveSchedule = async () => {
+    setSavingSchedule(true);
+    try {
+      const token = await getToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${getApiBase()}/api/businesses/mine/weekly-schedule`, {
+        method: "PATCH", headers,
+        body: JSON.stringify({ weeklySchedule, showAvailability }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Schedule saved!", "Your availability is now visible on your listing.");
+    } catch { Alert.alert("Save failed", "Please try again."); }
+    finally { setSavingSchedule(false); }
+  };
+
+  const toggleDay = (day: string) => {
+    setWeeklySchedule(prev => {
+      if (prev[day]) return { ...prev, [day]: null };
+      return { ...prev, [day]: { open: "9:00 AM", close: "5:00 PM" } };
+    });
+  };
+
+  const updateDayTime = (day: string, field: "open" | "close", value: string) => {
+    setWeeklySchedule(prev => ({
+      ...prev,
+      [day]: { open: "9:00 AM", close: "5:00 PM", ...(prev[day] ?? {}), [field]: value },
+    }));
   };
 
   // ── Photos ─────────────────────────────────────────────────────────────────
@@ -549,6 +631,109 @@ export default function EditBusinessProfile() {
           )}
         </View>
 
+        {/* ── Intro video ── */}
+        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Owner Intro Video</Text>
+          <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, marginBottom: 10 }}>
+            Upload a short video (up to 2 min) introducing yourself and your business. Customers will see a "Watch Owner Intro" button on your listing.
+          </Text>
+          {introVideoUrl ? (
+            <View style={{ gap: 8 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: colors.primary + "12", borderRadius: 10, padding: 10, borderWidth: 1, borderColor: colors.primary + "30" }}>
+                <Feather name="play-circle" size={16} color={colors.primary} />
+                <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: colors.primary, flex: 1 }} numberOfLines={1}>Intro video active</Text>
+              </View>
+              <TouchableOpacity onPress={handleDeleteIntroVideo} style={{ flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start" }}>
+                <Feather name="trash-2" size={13} color="#DC2626" />
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: "#DC2626" }}>Remove intro video</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.addBtn, { backgroundColor: colors.secondary, borderColor: colors.border, opacity: uploadingIntroVideo ? 0.6 : 1 }]}
+              onPress={handleUploadIntroVideo}
+              disabled={uploadingIntroVideo}
+              activeOpacity={0.8}
+            >
+              <Feather name="video" size={15} color={colors.primary} />
+              <Text style={[styles.addBtnTxt, { color: colors.primary }]}>
+                {uploadingIntroVideo ? "Uploading…" : "Upload Intro Video"}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* ── Weekly schedule ── */}
+        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+            <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Weekly Schedule</Text>
+            <TouchableOpacity
+              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+              onPress={() => setShowAvailability(v => !v)}
+              activeOpacity={0.8}
+            >
+              <View style={{ width: 36, height: 20, borderRadius: 10, backgroundColor: showAvailability ? colors.primary : colors.border, justifyContent: "center", paddingHorizontal: 2 }}>
+                <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: "#FFF", alignSelf: showAvailability ? "flex-end" : "flex-start" }} />
+              </View>
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground }}>Show on listing</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, marginBottom: 12 }}>
+            Set your hours for each day. Toggle a day on/off to mark it open or closed.
+          </Text>
+          {DAYS.map((day) => {
+            const isOpen = !!weeklySchedule[day];
+            return (
+              <View key={day} style={{ marginBottom: 10 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: isOpen ? 6 : 0 }}>
+                  <TouchableOpacity
+                    onPress={() => toggleDay(day)}
+                    style={{ width: 32, height: 18, borderRadius: 9, backgroundColor: isOpen ? colors.primary : colors.border, justifyContent: "center", paddingHorizontal: 2 }}
+                    activeOpacity={0.8}
+                  >
+                    <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: "#FFF", alignSelf: isOpen ? "flex-end" : "flex-start" }} />
+                  </TouchableOpacity>
+                  <Text style={{ fontFamily: isOpen ? "Inter_700Bold" : "Inter_400Regular", fontSize: 14, color: isOpen ? colors.foreground : colors.mutedForeground, width: 34 }}>{day}</Text>
+                  {!isOpen && <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground }}>Closed</Text>}
+                </View>
+                {isOpen && (
+                  <View style={{ flexDirection: "row", gap: 8, paddingLeft: 42 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginBottom: 2 }}>Opens</Text>
+                      <TextInput
+                        style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground, paddingVertical: 6, fontSize: 13 }]}
+                        value={weeklySchedule[day]?.open ?? "9:00 AM"}
+                        onChangeText={(v) => updateDayTime(day, "open", v)}
+                        placeholder="9:00 AM"
+                        placeholderTextColor={colors.mutedForeground}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginBottom: 2 }}>Closes</Text>
+                      <TextInput
+                        style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground, paddingVertical: 6, fontSize: 13 }]}
+                        value={weeklySchedule[day]?.close ?? "5:00 PM"}
+                        onChangeText={(v) => updateDayTime(day, "close", v)}
+                        placeholder="5:00 PM"
+                        placeholderTextColor={colors.mutedForeground}
+                      />
+                    </View>
+                  </View>
+                )}
+              </View>
+            );
+          })}
+          <TouchableOpacity
+            style={[styles.saveFooterBtn, { backgroundColor: colors.primary, marginTop: 6, opacity: savingSchedule ? 0.7 : 1 }]}
+            onPress={handleSaveSchedule}
+            disabled={savingSchedule}
+            activeOpacity={0.85}
+          >
+            <Feather name="calendar" size={15} color="#FFF" />
+            <Text style={[styles.saveFooterTxt, { color: "#FFF" }]}>{savingSchedule ? "Saving…" : "Save Schedule"}</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* ── Save footer ── */}
         <TouchableOpacity style={[styles.saveFooterBtn, { backgroundColor: isDirty ? colors.primary : colors.secondary, opacity: saving ? 0.7 : 1 }]}
           onPress={handleSave} disabled={saving || !isDirty} activeOpacity={0.85}>
@@ -606,4 +791,8 @@ const styles = StyleSheet.create({
   // Social
   socialRow: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 6 },
   socialIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  section: { borderWidth: 1, borderRadius: 16, padding: 16, marginBottom: 16 },
+  sectionLabel: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 6 },
+  addBtn: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 14 },
+  addBtnTxt: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
 });

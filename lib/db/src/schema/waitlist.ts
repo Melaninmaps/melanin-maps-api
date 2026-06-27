@@ -13,7 +13,6 @@ export const waitlistTable = pgTable("waitlist_signups", {
   status: varchar("status", { length: 20 }).notNull().default("pending"),
   referralCode: varchar("referral_code", { length: 20 }),
   referredBy: varchar("referred_by", { length: 20 }),
-  firstName: varchar("first_name", { length: 100 }),
   notes: text("notes"),
   welcomeEmailSent: boolean("welcome_email_sent").notNull().default(false),
   approvedAt: timestamp("approved_at"),

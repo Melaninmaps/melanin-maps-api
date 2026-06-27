@@ -214,23 +214,29 @@ export default function BusinessDetailScreen() {
     5: "🔥 Drop everything and support this business!",
   };
 
+  const SIX_MONTHS_MS = 180 * 24 * 60 * 60 * 1000;
   const allReviews: Array<{
     id: string; author: string; initials: string; color: string;
     rating: number; text: string; timeAgo: string; wouldReturnAlone?: boolean; videoUrl?: string; nowHiringUrl?: string; communitySupport?: number;
+    ownerResponse?: string | null; ownerRespondedAt?: string | null;
   }> = [
-    ...apiReviews.map((r) => ({
-      id: r.id,
-      author: r.authorName,
-      initials: r.authorName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??",
-      color: AVATAR_COLORS[r.authorName.charCodeAt(0) % AVATAR_COLORS.length],
-      rating: r.rating,
-      text: r.text ?? "",
-      timeAgo: new Date(r.createdAt).toLocaleDateString(),
-      wouldReturnAlone: r.wouldReturnAlone ?? undefined,
-      videoUrl: r.videoUrl ?? undefined,
-      nowHiringUrl: r.nowHiringUrl ?? undefined,
-      communitySupport: (r as any).communitySupport ?? undefined,
-    })),
+    ...apiReviews
+      .filter((r) => Date.now() - new Date(r.createdAt).getTime() < SIX_MONTHS_MS)
+      .map((r) => ({
+        id: r.id,
+        author: r.authorName,
+        initials: r.authorName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??",
+        color: AVATAR_COLORS[r.authorName.charCodeAt(0) % AVATAR_COLORS.length],
+        rating: r.rating,
+        text: r.text ?? "",
+        timeAgo: new Date(r.createdAt).toLocaleDateString(),
+        wouldReturnAlone: r.wouldReturnAlone ?? undefined,
+        videoUrl: r.videoUrl ?? undefined,
+        nowHiringUrl: r.nowHiringUrl ?? undefined,
+        communitySupport: (r as any).communitySupport ?? undefined,
+        ownerResponse: r.ownerResponse ?? null,
+        ownerRespondedAt: r.ownerRespondedAt ?? null,
+      })),
     ...(business.reviews ?? []),
   ];
 
@@ -426,6 +432,17 @@ export default function BusinessDetailScreen() {
           </View>
 
           <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={14} showLabel />
+
+          {(business as any).introVideoUrl ? (
+            <TouchableOpacity
+              style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16, marginTop: 10, alignSelf: "flex-start" }}
+              onPress={() => Linking.openURL((business as any).introVideoUrl)}
+              activeOpacity={0.85}
+            >
+              <Feather name="play-circle" size={15} color="#FFF" />
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: "#FFF" }}>Watch Owner Intro</Text>
+            </TouchableOpacity>
+          ) : null}
 
           {/* Safety stats */}
           {(business.wouldReturnAlone != null || business.safetyRating != null) && (
@@ -792,6 +809,17 @@ export default function BusinessDetailScreen() {
                 )}
                 {rev.text ? (
                   <Text style={[styles.reviewText, { color: colors.foreground }]}>{rev.text}</Text>
+                ) : null}
+                {rev.ownerResponse ? (
+                  <View style={{ backgroundColor: colors.primary + "0D", borderColor: colors.primary + "30", borderWidth: 1, borderRadius: 10, padding: 10, marginTop: 8 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 4 }}>
+                      <Feather name="shield" size={11} color={colors.primary} />
+                      <Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primary }}>Owner Response</Text>
+                    </View>
+                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.foreground, lineHeight: 19 }}>
+                      {rev.ownerResponse}
+                    </Text>
+                  </View>
                 ) : null}
                 {rev.videoUrl ? (
                   <TouchableOpacity

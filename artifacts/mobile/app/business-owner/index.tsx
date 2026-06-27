@@ -182,10 +182,10 @@ export default function BusinessOwnerHome() {
     {
       id: "view",
       icon: "eye",
-      label: "View Public Listing",
-      sub: "See how customers see your business",
+      label: "Preview My Listing",
+      sub: "See exactly how customers see your business",
       color: "#3A1F0E",
-      route: business ? `/business/${business.id}` : undefined,
+      route: "/business-owner/preview",
     },
   ];
 

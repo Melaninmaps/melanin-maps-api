@@ -13,7 +13,6 @@ type WaitlistEntry = {
   id: string;
   firstName: string | null;
   email: string;
-  firstName: string | null;
   city: string | null;
   state: string | null;
   isBusinessOwner: boolean;

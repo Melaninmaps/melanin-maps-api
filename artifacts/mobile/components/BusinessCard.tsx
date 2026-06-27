@@ -47,6 +47,16 @@ const VIBES: { label: string; emoji: string; categories: string[] }[] = [
   { label: "Family", emoji: "👨🏾‍👩🏾‍👧🏾", categories: ["childcare", "education", "tutoring", "family", "daycare"] },
 ];
 
+function getComplimentChips(business: Business): { label: string; color: string; bg: string }[] {
+  const chips: { label: string; color: string; bg: string }[] = [];
+  if (business.foundingBusiness) chips.push({ label: "🔑 Founding Member", color: "#92400E", bg: "#FEF3C720" });
+  if (business.verified) chips.push({ label: "✓ Verified", color: "#166534", bg: "#DCFCE730" });
+  if (business.rating >= 4.5 && business.reviewCount >= 5) chips.push({ label: "⭐ Community Fave", color: "#1D4ED8", bg: "#DBEAFE30" });
+  if ((business.wouldReturnAlone ?? 0) > 0.65) chips.push({ label: "👍 Would Return", color: "#6D28D9", bg: "#EDE9FE30" });
+  if ((business.recommendationRate ?? 0) > 0.8) chips.push({ label: "❤️ Top Pick", color: "#BE123C", bg: "#FFE4E620" });
+  return chips.slice(0, 2);
+}
+
 function getVibeMatch(category?: string): { label: string; emoji: string } | null {
   if (!category) return null;
   const cat = category.toLowerCase();
@@ -152,6 +162,19 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
                 </View>
               );
             })()}
+            {(() => {
+              const chips = getComplimentChips(business);
+              if (!chips.length) return null;
+              return (
+                <View style={styles.chipsRow}>
+                  {chips.map((c) => (
+                    <View key={c.label} style={[styles.chip, { backgroundColor: c.bg, borderColor: c.color + "40" }]}>
+                      <Text style={[styles.chipText, { color: c.color }]}>{c.label}</Text>
+                    </View>
+                  ))}
+                </View>
+              );
+            })()}
             <View style={styles.hBottom}>
               <Text style={[styles.hLocation, { color: colors.mutedForeground }]} numberOfLines={1}>
                 {business.city}, {business.state}
@@ -252,6 +275,19 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
               <View style={styles.vibePill}>
                 <Text style={styles.vibeEmoji}>{vibe.emoji}</Text>
                 <Text style={styles.vibeText}>{vibe.label}</Text>
+              </View>
+            );
+          })()}
+          {(() => {
+            const chips = getComplimentChips(business);
+            if (!chips.length) return null;
+            return (
+              <View style={styles.chipsRow}>
+                {chips.map((c) => (
+                  <View key={c.label} style={[styles.chip, { backgroundColor: c.bg, borderColor: c.color + "40" }]}>
+                    <Text style={[styles.chipText, { color: c.color }]}>{c.label}</Text>
+                  </View>
+                ))}
               </View>
             );
           })()}
@@ -474,6 +510,22 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: "#CA922B",
     letterSpacing: 0.2,
+  },
+  chipsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 4,
+    marginTop: 3,
+  },
+  chip: {
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  chipText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 10,
   },
   warningBanner: {
     flexDirection: "row",

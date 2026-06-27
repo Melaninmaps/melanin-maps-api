@@ -65,6 +65,12 @@ export const businessesTable = pgTable("businesses", {
   promotionEligible: boolean("promotion_eligible").notNull().default(true),
   promotionExpirationDate: timestamp("promotion_expiration_date", { withTimezone: true }),
   membershipRenewalDate: timestamp("membership_renewal_date", { withTimezone: true }),
+  // ── Owner intro video (hosted on platform, ≤ 2 min) ─────────────────────
+  introVideoUrl: varchar("intro_video_url", { length: 512 }),
+  // ── Weekly availability calendar ─────────────────────────────────────────
+  // Format: { mon: { open: "9:00 AM", close: "5:00 PM" } | null, tue: ..., ... }
+  weeklySchedule: jsonb("weekly_schedule").$type<Record<string, { open: string; close: string } | null>>(),
+  showAvailability: boolean("show_availability").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

@@ -36,6 +36,7 @@ import { useAuth } from "@/lib/auth";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { BrandQuoteBanner } from "@/components/BrandQuoteBanner";
 import { getDailyQuoteText } from "@/constants/brandQuotes";
+import { RecommendationNudge } from "@/components/RecommendationNudge";
 
 const TABS = ["Feed", "Videos", "Events", "Circles ⭐", "Requests 🙋", "Collections 📚", "Challenges 🏆", "Groups", "Resources", "Alerts", "Recommendations"];
 
@@ -2239,6 +2240,7 @@ function ChallengesTab({ colors, isAuthenticated, bottomPad }: {
           }}
         />
       )}
+      <RecommendationNudge />
     </View>
   );
 }

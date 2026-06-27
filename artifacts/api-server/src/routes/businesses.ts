@@ -127,13 +127,24 @@ router.get("/businesses", async (req: Request, res: Response) => {
         culturalMatch: matchesPref(b as any),
       }))
       .sort((a, b) => {
+        // 1. Active promotions / featured first (paid bump always wins top slot)
         if (a.featured && !b.featured) return -1;
         if (!a.featured && b.featured) return 1;
-        // Within same tier, prefer cultural match
+        // 2. Business membership tier: premium > growth > community
+        //    Even promoted businesses show real reviews — tier only affects slot order
+        const TIER_RANK: Record<string, number> = { premium: 3, growth: 2, community: 1 };
+        const aTier = TIER_RANK[(a as any).businessStatus] ?? 1;
+        const bTier = TIER_RANK[(b as any).businessStatus] ?? 1;
+        if (bTier !== aTier) return bTier - aTier;
+        // 3. Cultural preference match
         if (a.culturalMatch && !b.culturalMatch) return -1;
         if (!a.culturalMatch && b.culturalMatch) return 1;
+        // 4. Founding members
         if (b.foundingBusiness !== a.foundingBusiness) return b.foundingBusiness ? 1 : -1;
-        return (b.confidenceScore ?? 0) - (a.confidenceScore ?? 0);
+        // 5. Popularity: confidence score + rating × log(reviewCount+1) boost
+        const aScore = (a.confidenceScore ?? 0) + Number((a as any).rating ?? 0) * Math.log(Number((a as any).reviewCount ?? 0) + 1) * 0.1;
+        const bScore = (b.confidenceScore ?? 0) + Number((b as any).rating ?? 0) * Math.log(Number((b as any).reviewCount ?? 0) + 1) * 0.1;
+        return bScore - aScore;
       });
 
     const featuredCount = annotated.filter((b) => b.featured).length;
@@ -595,6 +606,93 @@ router.delete("/businesses/mine/videos", async (req: any, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to delete video");
     res.status(500).json({ error: "Failed to delete video" });
+  }
+});
+
+// ─── POST /businesses/mine/intro-video — upload hosted owner intro (≤2 min) ──
+const introVideoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 120 * 1024 * 1024 }, // 120 MB ≈ 2 min at standard quality
+  fileFilter: (_req, file, cb) => { cb(null, file.mimetype.startsWith("video/")); },
+});
+
+router.post("/businesses/mine/intro-video", introVideoUpload.single("video"), async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!req.file) { res.status(400).json({ error: "Video file is required" }); return; }
+
+  try {
+    const [business] = await db.select({ id: businessesTable.id }).from(businessesTable).where(eq(businessesTable.submittedById, String(userId)));
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (!bucketId) { res.status(500).json({ error: "Object storage not configured" }); return; }
+
+    const ext = (req.file.originalname.split(".").pop() ?? "mp4").toLowerCase();
+    const objectKey = `businesses/${business.id}/intro-video.${ext}`;
+    const file = objectStorageClient.bucket(bucketId).file(objectKey);
+    await file.save(req.file.buffer, { contentType: req.file.mimetype, resumable: false });
+
+    const introVideoUrl = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
+    const [updated] = await db
+      .update(businessesTable)
+      .set({ introVideoUrl, updatedAt: new Date() })
+      .where(eq(businessesTable.id, business.id))
+      .returning();
+
+    res.json({ introVideoUrl: updated.introVideoUrl });
+  } catch (err) {
+    req.log.error({ err }, "Failed to upload intro video");
+    res.status(500).json({ error: "Failed to upload intro video" });
+  }
+});
+
+// ─── DELETE /businesses/mine/intro-video — remove hosted intro video ──────────
+router.delete("/businesses/mine/intro-video", async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  try {
+    const [business] = await db.select({ id: businessesTable.id, introVideoUrl: businessesTable.introVideoUrl }).from(businessesTable).where(eq(businessesTable.submittedById, String(userId)));
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (bucketId && business.introVideoUrl?.includes(`storage.googleapis.com/${bucketId}/`)) {
+      const objectKey = business.introVideoUrl.split(`storage.googleapis.com/${bucketId}/`)[1];
+      if (objectKey) objectStorageClient.bucket(bucketId).file(objectKey).delete().catch(() => {});
+    }
+
+    await db.update(businessesTable).set({ introVideoUrl: null, updatedAt: new Date() }).where(eq(businessesTable.id, business.id));
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to delete intro video");
+    res.status(500).json({ error: "Failed to delete intro video" });
+  }
+});
+
+// ─── PATCH /businesses/mine/weekly-schedule — set calendar availability ────────
+router.patch("/businesses/mine/weekly-schedule", async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const { weeklySchedule, showAvailability } = req.body as {
+    weeklySchedule?: Record<string, { open: string; close: string } | null>;
+    showAvailability?: boolean;
+  };
+
+  try {
+    const [business] = await db.select({ id: businessesTable.id }).from(businessesTable).where(eq(businessesTable.submittedById, String(userId)));
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (weeklySchedule !== undefined) updates.weeklySchedule = weeklySchedule;
+    if (showAvailability !== undefined) updates.showAvailability = showAvailability;
+
+    const [updated] = await db.update(businessesTable).set(updates).where(eq(businessesTable.id, business.id)).returning();
+    res.json({ weeklySchedule: updated.weeklySchedule, showAvailability: updated.showAvailability });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update weekly schedule");
+    res.status(500).json({ error: "Failed to update schedule" });
   }
 });
 

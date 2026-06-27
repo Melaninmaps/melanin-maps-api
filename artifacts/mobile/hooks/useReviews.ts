@@ -26,6 +26,9 @@ export interface ApiReview {
   videoUrl: string | null;
   nowHiringUrl: string | null;
   createdAt: string;
+  ownerResponse: string | null;
+  ownerRespondedAt: string | null;
+  status: string | null;
 }
 
 export function useReviews(businessId: string) {

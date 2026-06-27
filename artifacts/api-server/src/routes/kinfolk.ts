@@ -11,6 +11,7 @@ import {
   savedPlacesTable,
   businessesTable,
   businessIdentityTable,
+  businessSkipFeedbackTable,
   lifeJourneysTable,
   type SessionMessage,
   type JourneyPhase,
@@ -923,7 +924,8 @@ router.post("/kinfolk/business-action-plan", async (req: Request, res: Response)
   if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
   if (!openai) return void res.status(503).json({ error: "AI service unavailable" });
 
-  const { businessName, businessCategory, businessCity, reviews } = req.body as {
+  const { businessId, businessName, businessCategory, businessCity, reviews } = req.body as {
+    businessId?: string;
     businessName?: string;
     businessCategory?: string;
     businessCity?: string;
@@ -964,10 +966,24 @@ router.post("/kinfolk/business-action-plan", async (req: Request, res: Response)
     ? reviews.map((r) => `- Rating: ${r.rating}/5 | Feedback: ${r.content ?? "(no written feedback)"}`).join("\n")
     : "No community reviews yet.";
 
+  let skipInsightsText = "";
+  if (businessId) {
+    try {
+      const skipRows = await db
+        .select({ message: businessSkipFeedbackTable.message })
+        .from(businessSkipFeedbackTable)
+        .where(eq(businessSkipFeedbackTable.businessId, businessId))
+        .limit(20);
+      if (skipRows.length > 0) {
+        skipInsightsText = `\nCOMMUNITY SKIP FEEDBACK (private, not shown publicly — people who passed on visiting shared why):\n${skipRows.map((r) => `- "${r.message}"`).join("\n")}`;
+      }
+    } catch { /* non-critical */ }
+  }
+
   const prompt = `You are an expert Black business advisor helping "${businessName ?? "a business"}" (category: ${businessCategory ?? "General"}, city: ${businessCity ?? "Unknown"}) build an improvement action plan.${identityContext}
 
 COMMUNITY FEEDBACK FROM REVIEWS:
-${reviewsText}
+${reviewsText}${skipInsightsText}
 
 Analyze the feedback and generate a practical, budget-conscious action plan that honors the business's mission, values, and growth goals. If no reviews mention specific issues, generate proactive improvements relevant to the business category, community expectations, and the owner's stated goals.
 

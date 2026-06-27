@@ -26,6 +26,16 @@ export const reviewsTable = pgTable("reviews", {
   verifiedPurchase: boolean("verified_purchase").notNull().default(false),
   verifiedCheckin: boolean("verified_checkin").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  // ── Moderation & lifecycle ────────────────────────────────────────────────
+  // posted        = live immediately (no video, not all-5★)
+  // auto_approved = all 5★, no video — posted immediately, owner alerted
+  // pending_video = has a video URL — held for admin video approval
+  status: varchar("status", { length: 30 }).notNull().default("posted"),
+  // ── Owner public response ─────────────────────────────────────────────────
+  ownerResponse: text("owner_response"),
+  ownerRespondedAt: timestamp("owner_responded_at", { withTimezone: true }),
+  // ── Customer edit after owner response ───────────────────────────────────
+  customerEditedAt: timestamp("customer_edited_at", { withTimezone: true }),
 });
 
 export const insertReviewSchema = createInsertSchema(reviewsTable).omit({

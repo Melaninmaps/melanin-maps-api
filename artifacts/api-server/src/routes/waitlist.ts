@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, waitlistTable, usersTable, businessRecommendationsTable, pointsLedgerTable, businessesTable } from "@workspace/db";
-import { and, count, desc, eq, gte, ilike, isNotNull, lt, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, isNotNull, lt, sql } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
 import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite, sendFriendInvitation, sendBusinessWaitlistInvitation, sendReferralMilestoneUpdate, sendReferralNudge } from "../lib/email";
 
@@ -398,7 +398,7 @@ router.post("/admin/send-weekly-nudge", async (req: Request, res: Response) => {
       try {
         await sendReferralNudge(
           member.email,
-          member.firstName ?? null,
+          member.firstName ?? "",
           memberPosition,
           member.referralCode,
           Number(newSignupsThisWeek),
