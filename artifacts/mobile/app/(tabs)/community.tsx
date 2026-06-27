@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AlertBanner } from "@/components/AlertBanner";
 import { BusinessMentionPicker } from "@/components/BusinessMentionPicker";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
+import { PostDetailModal } from "@/components/PostDetailModal";
 import { EventCard } from "@/components/EventCard";
 import { ALERTS, EVENT_CATEGORIES } from "@/constants/data";
 import type { CommunityPost } from "@/constants/types";
@@ -88,17 +89,30 @@ function formatTimeAgo(iso: string): string {
 }
 
 function toPostCard(raw: Record<string, unknown>): CommunityPost {
+  let mediaUrls: string[] | undefined;
+  if (raw.mediaUrls && typeof raw.mediaUrls === "string") {
+    try { mediaUrls = JSON.parse(raw.mediaUrls) as string[]; } catch { /* ignore */ }
+  }
   return {
     id: raw.id as string,
     author: (raw.authorName as string) ?? "Community Member",
     authorInitials: (raw.authorInitials as string) ?? "CM",
     authorColor: (raw.authorColor as string) ?? "#3B1F0E",
+    authorId: (raw.authorId as string) ?? undefined,
     content: raw.content as string,
     likes: (raw.upvotes as number) ?? 0,
-    comments: 0,
+    comments: (raw.commentsCount as number) ?? 0,
     timeAgo: formatTimeAgo(raw.createdAt as string),
     category: (raw.category === "recommendation" || raw.category === "alert" || raw.category === "question" ? raw.category : "discussion") as CommunityPost["category"],
+    postType: ((raw.postType as string) === "business" || (raw.postType as string) === "question" || (raw.postType as string) === "saved_place"
+      ? raw.postType as CommunityPost["postType"]
+      : "community"),
     liked: false,
+    businessId: (raw.businessId as string) ?? undefined,
+    businessName: (raw.businessName as string) ?? undefined,
+    businessLink: (raw.businessLink as string) ?? undefined,
+    mediaUrls,
+    savedPlaceId: (raw.savedPlaceId as string) ?? undefined,
   };
 }
 
@@ -175,7 +189,10 @@ export default function CommunityScreen() {
   const [showCompose, setShowCompose] = useState(false);
   const [newPostText, setNewPostText] = useState("");
   const [newPostCategory, setNewPostCategory] = useState("general");
+  const [newPostType, setNewPostType] = useState<"community" | "question" | "business">("community");
+  const [newPostBusinessLink, setNewPostBusinessLink] = useState("");
   const [submittingPost, setSubmittingPost] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [groupCategory, setGroupCategory] = useState("all");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<string | undefined>(undefined);
@@ -300,17 +317,31 @@ export default function CommunityScreen() {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ content: newPostText.trim(), category: newPostCategory }),
+        body: JSON.stringify({
+          content: newPostText.trim(),
+          category: newPostCategory,
+          postType: newPostType,
+          businessLink: newPostType === "business" && newPostBusinessLink.trim() ? newPostBusinessLink.trim() : undefined,
+        }),
       });
       if (res.ok) {
         const data = await res.json() as { post: Record<string, unknown> };
         setPosts((prev) => [toPostCard(data.post), ...prev]);
         setNewPostText("");
         setNewPostCategory("general");
+        setNewPostType("community");
+        setNewPostBusinessLink("");
         setShowCompose(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
-        Alert.alert("Error", "Could not post. Please try again.");
+        const err = await res.json() as { error?: string; code?: string };
+        if (err.code === "TIER_LIMIT_REACHED") {
+          setShowCompose(false);
+          setUpgradeFeature(newPostType === "business" ? "Business Posts" : "Unlimited Community Posts");
+          setShowUpgrade(true);
+        } else {
+          Alert.alert("Error", err.error ?? "Could not post. Please try again.");
+        }
       }
     } catch {
       Alert.alert("Error", "Could not post. Check your connection.");
@@ -879,7 +910,12 @@ export default function CommunityScreen() {
                 )}
               </View>
             }
-            renderItem={({ item }) => <CommunityPostCard post={item} />}
+            renderItem={({ item }) => (
+              <CommunityPostCard
+                post={item}
+                onCommentPress={() => setSelectedPost(item)}
+              />
+            )}
           />
 
           <TouchableOpacity
@@ -900,6 +936,13 @@ export default function CommunityScreen() {
           </TouchableOpacity>
         </>
       )}
+
+      <PostDetailModal
+        visible={selectedPost !== null}
+        post={selectedPost}
+        onClose={() => setSelectedPost(null)}
+        onLike={() => void loadPosts()}
+      />
 
       <UpgradeModal
         visible={showUpgrade}
@@ -993,6 +1036,30 @@ export default function CommunityScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* Post type selector */}
+            <View style={[styles.categoryRow, { borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: 10 }]}>
+              {([
+                { value: "community", label: "💬 Discussion", color: "#C4622D" },
+                { value: "question", label: "❓ Question", color: "#D4873A" },
+                { value: "business", label: "🏪 Business", color: "#7B2D8B" },
+              ] as const).map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[
+                    styles.filterChip,
+                    { borderColor: newPostType === opt.value ? opt.color : colors.border },
+                    newPostType === opt.value && { backgroundColor: opt.color + "18" },
+                  ]}
+                  onPress={() => { setNewPostType(opt.value); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                >
+                  <Text style={[styles.filterChipText, { color: newPostType === opt.value ? opt.color : colors.mutedForeground }]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Category chips */}
             <View style={styles.categoryRow}>
               {CATEGORY_OPTIONS.map((opt) => (
                 <TouchableOpacity
@@ -1010,6 +1077,22 @@ export default function CommunityScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+
+            {/* Business link input (only for business posts) */}
+            {newPostType === "business" && (
+              <View style={[{ paddingHorizontal: 16, paddingBottom: 8 }]}>
+                <TextInput
+                  style={[styles.composeInput, { color: colors.foreground, minHeight: 0, paddingVertical: 10, borderWidth: 1, borderColor: "#7B2D8B40", borderRadius: 10, backgroundColor: "#7B2D8B08" }]}
+                  placeholder="Business website or social link (optional)…"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={newPostBusinessLink}
+                  onChangeText={setNewPostBusinessLink}
+                  keyboardType="url"
+                  autoCapitalize="none"
+                  maxLength={250}
+                />
+              </View>
+            )}
 
             {mentionQuery !== null && (
               <BusinessMentionPicker

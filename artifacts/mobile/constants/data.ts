@@ -375,6 +375,7 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
     comments: 12,
     timeAgo: "2h ago",
     category: "recommendation",
+    postType: "community",
     liked: false,
   },
   {
@@ -387,6 +388,7 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
     comments: 24,
     timeAgo: "4h ago",
     category: "alert",
+    postType: "community",
     liked: false,
   },
   {
@@ -399,6 +401,7 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
     comments: 19,
     timeAgo: "6h ago",
     category: "question",
+    postType: "question",
     liked: false,
   },
   {
@@ -411,6 +414,7 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
     comments: 31,
     timeAgo: "1d ago",
     category: "discussion",
+    postType: "community",
     liked: true,
   },
 ];

@@ -69,18 +69,26 @@ export interface Event {
 }
 
 export type PostCategory = "discussion" | "recommendation" | "alert" | "question";
+export type PostType = "community" | "business" | "question" | "saved_place";
 
 export interface CommunityPost {
   id: string;
   author: string;
   authorInitials: string;
   authorColor: string;
+  authorId?: string;
   content: string;
   likes: number;
   comments: number;
   timeAgo: string;
   category: PostCategory;
+  postType: PostType;
   liked: boolean;
+  businessId?: string;
+  businessName?: string;
+  businessLink?: string;
+  mediaUrls?: string[];
+  savedPlaceId?: string;
 }
 
 export interface AlertItem {
