@@ -218,6 +218,7 @@ export default function Discover() {
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [openNow, setOpenNow] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
+  const [sponsoredDismissed, setSponsoredDismissed] = useState(false);
 
   const effectiveCategory = activeVibe
     ? VIBES.find(v => v.label === activeVibe)?.category ?? undefined
@@ -515,6 +516,35 @@ export default function Discover() {
           </div>
         </div>
       </div>
+
+      {/* ── Sponsored business pill — bottom-left, scales to viewport ── */}
+      {!sponsoredDismissed && (() => {
+        const sponsored = (businesses as any[]).find((b) => b.featured || b.promotionType);
+        if (!sponsored) return null;
+        return (
+          <div className="fixed bottom-5 left-4 sm:bottom-6 sm:left-6 z-40 max-w-[260px] sm:max-w-[300px]">
+            <div className="relative bg-[#2B1507] border border-[#CA922B]/40 rounded-2xl shadow-xl overflow-hidden">
+              <button
+                onClick={() => { window.location.href = `${BASE}businesses/${sponsored.id}`; }}
+                className="w-full text-left p-3 sm:p-4 group"
+              >
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span className="text-[9px] font-bold tracking-widest uppercase text-[#CA922B] bg-[#CA922B]/15 px-2 py-0.5 rounded-full">✦ Sponsored</span>
+                </div>
+                <p className="text-[#F5EBD8] font-bold text-sm leading-tight truncate group-hover:text-[#CA922B] transition-colors">{sponsored.name}</p>
+                <p className="text-[#F5EBD8]/50 text-xs mt-0.5 truncate">{sponsored.category} · {sponsored.city}</p>
+              </button>
+              <button
+                onClick={() => setSponsoredDismissed(true)}
+                className="absolute top-2 right-2 w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                aria-label="Dismiss"
+              >
+                <X size={10} className="text-[#F5EBD8]/70" />
+              </button>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

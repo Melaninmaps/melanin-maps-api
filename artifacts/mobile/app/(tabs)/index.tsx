@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  Dimensions,
   FlatList,
   Platform,
   RefreshControl,
@@ -77,6 +78,7 @@ export default function DiscoverScreen() {
   const [showNeighborhoodSurvey, setShowNeighborhoodSurvey] = useState(false);
   const [showPrefsSurvey, setShowPrefsSurvey] = useState(false);
   const [feedbackBusiness, setFeedbackBusiness] = useState<{ id: string; name: string; feedbackOptIn?: boolean } | null>(null);
+  const [sponsoredDismissed, setSponsoredDismissed] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -638,6 +640,31 @@ export default function DiscoverScreen() {
         visible={showPrefsSurvey}
         onClose={() => setShowPrefsSurvey(false)}
       />
+
+      {/* ── Sponsored business pill — bottom-left, scales to screen ── */}
+      {!sponsoredDismissed && featured.length > 0 && (() => {
+        const biz = featured[0];
+        const screenW = Dimensions.get("window").width;
+        const pillW = Math.min(screenW * 0.62, 280);
+        return (
+          <View style={[styles.sponsoredPill, { bottom: bottomPad + 100, width: pillW }]}>
+            <TouchableOpacity
+              style={styles.sponsoredInner}
+              onPress={() => router.push(`/business/${biz.id}`)}
+              activeOpacity={0.88}
+            >
+              <View style={styles.sponsoredBadge}>
+                <Text style={styles.sponsoredBadgeTxt}>✦ Sponsored</Text>
+              </View>
+              <Text style={styles.sponsoredName} numberOfLines={1}>{biz.name}</Text>
+              <Text style={styles.sponsoredCat} numberOfLines={1}>{biz.category} · {biz.city}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.sponsoredClose} onPress={() => setSponsoredDismissed(true)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Feather name="x" size={12} color="rgba(255,255,255,0.7)" />
+            </TouchableOpacity>
+          </View>
+        );
+      })()}
     </View>
   );
 }
@@ -969,4 +996,40 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   noPrefsGhostTxt: { fontFamily: "Inter_500Medium", fontSize: 13 },
+  sponsoredPill: {
+    position: "absolute",
+    left: 12,
+    backgroundColor: "#2B1507",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(202,146,43,0.4)",
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+  },
+  sponsoredInner: { padding: 12, gap: 3 },
+  sponsoredBadge: {
+    backgroundColor: "rgba(202,146,43,0.15)",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    alignSelf: "flex-start",
+  },
+  sponsoredBadgeTxt: { fontFamily: "Inter_700Bold", fontSize: 9, color: "#CA922B", letterSpacing: 1 },
+  sponsoredName: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#F5EBD8" },
+  sponsoredCat: { fontFamily: "Inter_400Regular", fontSize: 11, color: "rgba(245,235,216,0.5)" },
+  sponsoredClose: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
