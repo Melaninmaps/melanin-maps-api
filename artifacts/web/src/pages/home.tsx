@@ -278,11 +278,11 @@ export default function Home() {
       <section className="relative min-h-[50vh] md:min-h-[110vh] flex items-center pt-20 pb-32 overflow-hidden bg-[#2B1507]">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.pexels.com/photos/1486974/pexels-photo-1486974.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
-            alt="Cobblestone street"
-            className="w-full h-full object-cover object-center opacity-30"
+            src="https://images.pexels.com/photos/20628911/pexels-photo-20628911/free-photo-of-view-of-a-cobblestone-alley-between-apartment-buildings-in-an-italian-city.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
+            alt="Cobblestone street at night with businesses, street lights and puddle"
+            className="w-full h-full object-cover object-center opacity-50"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#2B1507]/80 via-[#2B1507]/60 to-[#2B1507]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#2B1507]/65 via-[#2B1507]/40 to-[#2B1507]" />
         </div>
 
         <div className="container mx-auto px-4 max-w-7xl relative z-10">
@@ -807,22 +807,22 @@ export default function Home() {
               {
                 quote: "Finally a platform that actually understands what it means to travel while Minority. The safety scores alone are worth it — I checked three cities before my last trip and felt genuinely prepared.",
                 name: "Aaliyah T.", role: "Frequent Traveler", loc: "Atlanta, GA",
-                img: "https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1"
+                img: "https://images.pexels.com/photos/4427622/pexels-photo-4427622.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1"
               },
               {
                 quote: "I've been looking for something like this for years. Being able to find Minority-owned restaurants, hotels, and shops in cities I've never visited — and know they're community-verified — is a game changer.",
                 name: "Marcus J.", role: "Digital Nomad", loc: "Houston, TX",
-                img: "https://images.pexels.com/photos/2269872/pexels-photo-2269872.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1"
+                img: "https://images.pexels.com/photos/1181391/pexels-photo-1181391.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1"
               },
               {
                 quote: "The relocation intelligence is what sold me. I was moving from Chicago to Charlotte and had no idea where to start. Mapping with Melanin gave me neighborhood insights I couldn't find anywhere else.",
                 name: "Simone R.", role: "Relocating Professional", loc: "Charlotte, NC",
-                img: "https://images.pexels.com/photos/12895422/pexels-photo-12895422.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1"
+                img: "https://images.pexels.com/photos/7446989/pexels-photo-7446989.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1"
               },
               {
                 quote: "As a business owner, being listed on this platform has been incredible. I've seen new customers specifically say they found me here because they wanted to support verified Minority-owned businesses.",
                 name: "DeShawn M.", role: "Business Owner", loc: "New Orleans, LA",
-                img: "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1"
+                img: "https://images.pexels.com/photos/9533888/pexels-photo-9533888.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1"
               }
             ].map((t, i) => (
               <div key={i} className="bg-[#FAF6EF] p-8 rounded-3xl border border-[#3A1F0E]/5">

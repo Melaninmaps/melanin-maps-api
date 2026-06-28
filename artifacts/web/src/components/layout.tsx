@@ -1,7 +1,7 @@
 import { Link, useLocation, Redirect } from "wouter";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "./ui/button";
-import { Menu, X, MessageSquare, Bell } from "lucide-react";
+import { Menu, X, MessageSquare, Bell, ChevronRight, FileText, BarChart2, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -40,8 +40,56 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/contact", label: "Contact" },
   ];
 
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#FAF6EF]">
+      {/* ── Top Announcement Banner ── */}
+      {!bannerDismissed && (
+        <div className="w-full bg-[#CA922B] text-[#2B1507] text-sm font-semibold z-[60] relative">
+          <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-1 sm:gap-4 flex-wrap">
+              <span className="font-bold hidden sm:inline shrink-0">Explore MWM™:</span>
+              <Link href="/pitch-deck">
+                <span className="flex items-center gap-1 hover:underline cursor-pointer shrink-0">
+                  <BarChart2 className="w-3.5 h-3.5" />
+                  Pitch Deck
+                  <ChevronRight className="w-3 h-3" />
+                </span>
+              </Link>
+              <Link href="/biz-onepager">
+                <span className="flex items-center gap-1 hover:underline cursor-pointer shrink-0">
+                  <FileText className="w-3.5 h-3.5" />
+                  Business One-Pager
+                  <ChevronRight className="w-3 h-3" />
+                </span>
+              </Link>
+              <Link href="/features">
+                <span className="flex items-center gap-1 hover:underline cursor-pointer shrink-0">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Platform Features
+                  <ChevronRight className="w-3 h-3" />
+                </span>
+              </Link>
+              <Link href="/for-business-owners">
+                <span className="flex items-center gap-1 hover:underline cursor-pointer shrink-0 sm:hidden md:flex">
+                  <FileText className="w-3.5 h-3.5" />
+                  List Your Business
+                  <ChevronRight className="w-3 h-3" />
+                </span>
+              </Link>
+            </div>
+            <button
+              onClick={() => setBannerDismissed(true)}
+              aria-label="Dismiss banner"
+              className="shrink-0 hover:opacity-70 transition-opacity"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Sticky Top Navbar */}
       <header className="sticky top-0 z-50 w-full bg-[#2B1507] text-[#F5EBD8] shadow-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
