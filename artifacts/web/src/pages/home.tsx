@@ -278,9 +278,9 @@ export default function Home() {
       <section className="relative min-h-[50vh] md:min-h-[110vh] flex items-center pt-20 pb-32 overflow-hidden bg-[#2B1507]">
         <div className="absolute inset-0 z-0">
           <img
-            src="/hero-cobblestone.png?v=5"
+            src="/hero-cobblestone.png?v=6"
             alt="Cobblestone street at night with businesses, street lights and puddle"
-            className="w-full h-full object-cover object-bottom opacity-70"
+            className="w-full h-full object-cover object-center opacity-75"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#2B1507]/60 via-[#2B1507]/25 to-[#2B1507]" />
         </div>
