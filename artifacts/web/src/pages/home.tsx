@@ -278,8 +278,8 @@ export default function Home() {
       <section className="relative min-h-[50vh] md:min-h-[110vh] flex items-center pt-20 pb-32 overflow-hidden bg-[#2B1507]">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
-            alt="Vibrant city street with diverse community"
+            src="https://images.pexels.com/photos/1486974/pexels-photo-1486974.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
+            alt="Cobblestone street"
             className="w-full h-full object-cover object-center opacity-30"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#2B1507]/80 via-[#2B1507]/60 to-[#2B1507]" />
