@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -113,6 +114,12 @@ export function MapTabView() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportingType, setReportingType] = useState<AlertType | null>(null);
   const [scannerAlertIdx, setScannerAlertIdx] = useState(0);
+  const [showFlaggedModal, setShowFlaggedModal] = useState(false);
+  const [flaggedBizLoading, setFlaggedBizLoading] = useState(false);
+  const [flaggedBizList, setFlaggedBizList] = useState<Array<{
+    id: string; name: string; address: string; city: string; state: string;
+    category: string; alertCount: number; distanceMiles: number;
+  }>>([]);
 
   const { alerts: activityAlerts, reportAlert, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts();
 
@@ -121,6 +128,36 @@ export function MapTabView() {
 
   const { alert: geoAlert, dismissAlert: dismissGeoAlert } = useGeoSafeAlert();
   const { warnings, dismissWarning } = useSafetyProximity();
+
+  function getApiBase() {
+    if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+    return "";
+  }
+
+  const loadFlaggedBusinesses = async () => {
+    if (Platform.OS === "web") {
+      setShowFlaggedModal(true);
+      return;
+    }
+    setFlaggedBizLoading(true);
+    setShowFlaggedModal(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setFlaggedBizLoading(false);
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const res = await fetch(
+        `${getApiBase()}/api/community-alerts/flagged-businesses?lat=${loc.coords.latitude}&lng=${loc.coords.longitude}`,
+      );
+      if (res.ok) {
+        const data = await res.json() as { businesses: typeof flaggedBizList };
+        setFlaggedBizList(data.businesses ?? []);
+      }
+    } catch { }
+    finally { setFlaggedBizLoading(false); }
+  };
 
   const { businesses } = useBusinesses();
   const filtered = businesses.filter((b) => {
@@ -353,6 +390,22 @@ export function MapTabView() {
       </TouchableOpacity>
 
       <TouchableOpacity
+        style={[styles.flaggedBtn, { backgroundColor: "#7F1D1D" }]}
+        activeOpacity={0.85}
+        onPress={() => {
+          if (!isAuthenticated) {
+            setShowUpgrade(true);
+          } else {
+            if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            void loadFlaggedBusinesses();
+          }
+        }}
+      >
+        <Text style={{ fontSize: 13 }}>🚩</Text>
+        <Text style={[styles.safetyBtnText, { color: "#FCA5A5" }]}>Flagged Nearby</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
         style={styles.sosBtn}
         activeOpacity={0.85}
         onPress={() => {
@@ -370,6 +423,78 @@ export function MapTabView() {
         onClose={() => setShowUpgrade(false)}
         feature="Safety Insights"
       />
+
+      {/* Flagged Businesses Modal */}
+      <Modal
+        visible={showFlaggedModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowFlaggedModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.flaggedSheet, { backgroundColor: colors.background }]}>
+            <View style={[styles.flaggedHeader, { borderBottomColor: colors.border }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.flaggedTitle, { color: colors.foreground }]}>🚩 Flagged Businesses</Text>
+                <Text style={[styles.flaggedSub, { color: colors.mutedForeground }]}>
+                  Non-minority-owned · 3+ community alerts · within 10 miles · last 6 months
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowFlaggedModal(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <Feather name="x" size={20} color={colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+
+            {flaggedBizLoading ? (
+              <View style={styles.flaggedCenter}>
+                <Text style={{ fontSize: 28 }}>🔍</Text>
+                <Text style={[styles.flaggedEmptyText, { color: colors.mutedForeground }]}>Scanning your area…</Text>
+              </View>
+            ) : flaggedBizList.length === 0 ? (
+              <View style={styles.flaggedCenter}>
+                <Text style={{ fontSize: 40 }}>✅</Text>
+                <Text style={[styles.flaggedEmptyText, { color: colors.foreground }]}>No flagged businesses found</Text>
+                <Text style={[styles.flaggedEmptySubtext, { color: colors.mutedForeground }]}>
+                  No non-minority-owned businesses within 10 miles have received 3+ community safety alerts in the last 6 months.
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={flaggedBizList}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={{ padding: 16, gap: 10 }}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[styles.flaggedCard, { backgroundColor: colors.card, borderColor: "#DC262640" }]}
+                    activeOpacity={0.85}
+                    onPress={() => {
+                      setShowFlaggedModal(false);
+                      router.push({ pathname: "/business/[id]", params: { id: item.id } });
+                    }}
+                  >
+                    <View style={styles.flaggedCardLeft}>
+                      <View style={[styles.flaggedAlertBadge, { backgroundColor: "#7F1D1D" }]}>
+                        <Text style={styles.flaggedAlertCount}>{item.alertCount}</Text>
+                        <Text style={styles.flaggedAlertLabel}>alerts</Text>
+                      </View>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.flaggedCardName, { color: colors.foreground }]} numberOfLines={1}>{item.name}</Text>
+                      <Text style={[styles.flaggedCardMeta, { color: colors.mutedForeground }]} numberOfLines={1}>
+                        {item.category} · {item.city}, {item.state}
+                      </Text>
+                      <Text style={[styles.flaggedCardDist, { color: colors.mutedForeground }]}>
+                        {item.distanceMiles} mi away
+                      </Text>
+                    </View>
+                    <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
 
       {/* Report Activity Modal */}
       <Modal
@@ -634,4 +759,36 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   safetyBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  flaggedBtn: {
+    position: "absolute",
+    bottom: 210,
+    right: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  modalOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" },
+  flaggedSheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: "80%", minHeight: 300 },
+  flaggedHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", padding: 20, borderBottomWidth: 1 },
+  flaggedTitle: { fontFamily: "Inter_700Bold", fontSize: 17, marginBottom: 3 },
+  flaggedSub: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 16 },
+  flaggedCenter: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 32, minHeight: 200 },
+  flaggedEmptyText: { fontFamily: "Inter_600SemiBold", fontSize: 16, textAlign: "center" },
+  flaggedEmptySubtext: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center", lineHeight: 18 },
+  flaggedCard: { flexDirection: "row", alignItems: "center", borderRadius: 14, borderWidth: 1, padding: 14, gap: 12 },
+  flaggedCardLeft: { alignItems: "center" },
+  flaggedAlertBadge: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, alignItems: "center", minWidth: 48 },
+  flaggedAlertCount: { fontFamily: "Inter_700Bold", fontSize: 18, color: "#FCA5A5" },
+  flaggedAlertLabel: { fontFamily: "Inter_400Regular", fontSize: 9, color: "#FCA5A5", letterSpacing: 0.5 },
+  flaggedCardName: { fontFamily: "Inter_600SemiBold", fontSize: 14, marginBottom: 2 },
+  flaggedCardMeta: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  flaggedCardDist: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 2 },
 });

@@ -28,7 +28,7 @@ router.get("/community-alerts/nearby", async (req: Request, res: Response) => {
   try {
     const lat = parseFloat(String(req.query.lat));
     const lng = parseFloat(String(req.query.lng));
-    const radius = Math.min(parseFloat(String(req.query.radius ?? "1.5")), 10);
+    const radius = Math.min(parseFloat(String(req.query.radius ?? "16.09")), 16.09);
 
     if (isNaN(lat) || isNaN(lng)) {
       res.status(400).json({ error: "lat and lng are required" });
@@ -125,14 +125,94 @@ router.post("/community-alerts", async (req: Request, res: Response) => {
       })
       .returning();
 
-    // ICE and police alerts reach 10 miles (16.09 km); others stay local (1.5 km)
-    const pushRadiusKm = ["ice", "police"].includes(type) ? 16.09 : 1.5;
-    await sendAlertPushToNearbyUsers(alert.id, lat, lng, type, pushRadiusKm);
+    // All alert types reach 10 miles (16.09 km)
+    await sendAlertPushToNearbyUsers(alert.id, lat, lng, type, 16.09);
 
     res.json({ alert });
   } catch (err) {
     req.log.error({ err }, "POST /community-alerts error");
     res.status(500).json({ error: "Failed to create alert." });
+  }
+});
+
+// ─── GET /community-alerts/flagged-businesses ─────────────────────────────────
+// Returns non-minority-owned businesses within 10 miles of a given location
+// that have received 3+ community alerts within 0.15 km in the last 6 months.
+router.get("/community-alerts/flagged-businesses", async (req: Request, res: Response) => {
+  try {
+    const lat = parseFloat(String(req.query.lat));
+    const lng = parseFloat(String(req.query.lng));
+    if (isNaN(lat) || isNaN(lng)) {
+      res.status(400).json({ error: "lat and lng are required" });
+      return;
+    }
+    const radiusKm = 16.09;
+    const alertWindowMonths = 6;
+    const proximityKm = 0.15; // alerts within 150m are attributed to that business
+
+    const result = await pool.query<{
+      id: string;
+      name: string;
+      address: string;
+      city: string;
+      state: string;
+      category: string;
+      latitude: string;
+      longitude: string;
+      alert_count: string;
+      distance_km: number;
+    }>(
+      `SELECT
+        b.id,
+        b.name,
+        b.address,
+        b.city,
+        b.state,
+        b.category,
+        b.latitude,
+        b.longitude,
+        COUNT(ca.id) AS alert_count,
+        (6371 * acos(GREATEST(-1, LEAST(1,
+          cos(radians($1)) * cos(radians(b.latitude::float)) * cos(radians(b.longitude::float) - radians($2))
+          + sin(radians($1)) * sin(radians(b.latitude::float))
+        )))) AS distance_km
+      FROM businesses b
+      LEFT JOIN community_alerts ca ON (
+        ca.created_at > NOW() - INTERVAL '${alertWindowMonths} months'
+        AND (6371 * acos(GREATEST(-1, LEAST(1,
+          cos(radians(b.latitude::float)) * cos(radians(ca.lat::float)) * cos(radians(ca.lng::float) - radians(b.longitude::float))
+          + sin(radians(b.latitude::float)) * sin(radians(ca.lat::float))
+        )))) < $3
+      )
+      WHERE b.black_owned = false
+        AND (6371 * acos(GREATEST(-1, LEAST(1,
+          cos(radians($1)) * cos(radians(b.latitude::float)) * cos(radians(b.longitude::float) - radians($2))
+          + sin(radians($1)) * sin(radians(b.latitude::float))
+        )))) < $4
+      GROUP BY b.id, b.name, b.address, b.city, b.state, b.category, b.latitude, b.longitude
+      HAVING COUNT(ca.id) >= 3
+      ORDER BY COUNT(ca.id) DESC, distance_km ASC
+      LIMIT 25`,
+      [lat, lng, proximityKm, radiusKm],
+    );
+
+    const businesses = result.rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      address: r.address,
+      city: r.city,
+      state: r.state,
+      category: r.category,
+      latitude: parseFloat(r.latitude),
+      longitude: parseFloat(r.longitude),
+      alertCount: parseInt(r.alert_count, 10),
+      distanceMiles: Math.round((r.distance_km / 1.609) * 10) / 10,
+    }));
+
+    res.json({ businesses, total: businesses.length });
+  } catch (err) {
+    req.log.error({ err }, "GET /community-alerts/flagged-businesses error");
+    res.status(500).json({ error: "Failed to fetch flagged businesses." });
   }
 });
 

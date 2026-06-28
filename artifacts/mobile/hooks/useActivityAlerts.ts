@@ -39,7 +39,7 @@ async function getToken(): Promise<string | null> {
 }
 
 const POLL_INTERVAL_MS = 30_000;
-const ALERT_RADIUS_KM = 1.5;
+const ALERT_RADIUS_KM = 16.09;
 
 export function useActivityAlerts() {
   const [alerts, setAlerts] = useState<ActivityAlert[]>([]);
