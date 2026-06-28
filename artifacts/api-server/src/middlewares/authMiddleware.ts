@@ -12,7 +12,9 @@ import {
 
 declare global {
   namespace Express {
-    interface User extends AuthUser {}
+    interface User extends AuthUser {
+      role: "user" | "tester" | "admin";
+    }
 
     interface Request {
       isAuthenticated(): this is AuthedRequest;

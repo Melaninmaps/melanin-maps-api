@@ -99,11 +99,22 @@ router.get("/auth/user", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) { res.json({ user: null }); return; }
   try {
     const [dbRow] = await db
-      .select({ dateOfBirth: usersTable.dateOfBirth })
+      .select({
+        dateOfBirth: usersTable.dateOfBirth,
+        role: usersTable.role,
+        approved: usersTable.approved,
+      })
       .from(usersTable)
       .where(eq(usersTable.id, req.user!.id))
       .limit(1);
-    res.json({ user: { ...req.user, dateOfBirth: dbRow?.dateOfBirth ?? null } });
+    res.json({
+      user: {
+        ...req.user,
+        dateOfBirth: dbRow?.dateOfBirth ?? null,
+        role: (dbRow?.role ?? req.user!.role) as "user" | "tester" | "admin",
+        approved: dbRow?.approved ?? req.user!.approved,
+      },
+    });
   } catch {
     res.json({ user: req.user });
   }
