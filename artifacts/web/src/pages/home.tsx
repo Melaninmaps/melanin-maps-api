@@ -280,9 +280,9 @@ export default function Home() {
           <img
             src="/hero-cobblestone.png"
             alt="Cobblestone street at night with businesses, street lights and puddle"
-            className="w-full h-full object-cover object-center opacity-50"
+            className="w-full h-full object-cover object-bottom opacity-70"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#2B1507]/65 via-[#2B1507]/40 to-[#2B1507]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#2B1507]/60 via-[#2B1507]/25 to-[#2B1507]" />
         </div>
 
         <div className="container mx-auto px-4 max-w-7xl relative z-10">
