@@ -36,6 +36,12 @@ uri = "file://attached_assets/app-icon.png"
 type = "image"
 title = "mapping-with-melanin-app-icon"
 
+[[generated]]
+id = "2zJ-oXa60adkCvPhSO6LJ"
+uri = "file://artifacts/web/public/hero-cobblestone.png"
+type = "image"
+title = "wet cobblestone alley night lantern"
+
 [[outputs]]
 id = "kU1-MXMYrBRo-HYqMfRHN"
 uri = "file://.local/outputs/Melanin-Discovery-Hub.pptx"
