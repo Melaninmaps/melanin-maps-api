@@ -6,7 +6,7 @@ import { reportLimiter } from "../middleware/rateLimiter";
 const router: IRouter = Router();
 
 const VALID_TARGET_TYPES = ["review", "survey", "business", "post", "user"] as const;
-const VALID_REASONS = ["spam", "fake", "inappropriate", "harassment", "incorrect_info", "other"] as const;
+const VALID_REASONS = ["spam", "fake", "inappropriate", "harassment", "incorrect_info", "suspicious", "other"] as const;
 
 router.post("/content-reports", reportLimiter, async (req: any, res: Response): Promise<void> => {
   if (!req.user) { res.status(401).json({ error: "Authentication required" }); return; }

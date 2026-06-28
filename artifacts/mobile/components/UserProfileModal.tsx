@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
+import { ReportButton } from "@/components/ReportButton";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -249,31 +250,42 @@ export function UserProfileModal({ userId, visible, onClose }: Props) {
                     )}
                   </View>
 
-                  {/* Follow button */}
+                  {/* Follow + Report buttons */}
                   {!isOwnProfile && isAuthenticated && (
-                    <TouchableOpacity
-                      style={[
-                        s.followBtn,
-                        isFollowing || followStatus === "pending"
-                          ? { backgroundColor: colors.secondary, borderColor: colors.border, borderWidth: 1 }
-                          : { backgroundColor: colors.primary },
-                      ]}
-                      onPress={handleFollow}
-                      disabled={followLoading}
-                      activeOpacity={0.8}
-                    >
-                      {followLoading
-                        ? <ActivityIndicator size="small" color={isFollowing ? colors.foreground : "#FFF"} />
-                        : (
-                          <>
-                            <Feather name={followBtnIcon()} size={14} color={isFollowing || followStatus === "pending" ? colors.foreground : "#FFF"} />
-                            <Text style={[s.followBtnText, { color: isFollowing || followStatus === "pending" ? colors.foreground : "#FFF" }]}>
-                              {followBtnLabel()}
-                            </Text>
-                          </>
-                        )
-                      }
-                    </TouchableOpacity>
+                    <View style={s.actionBtnRow}>
+                      <TouchableOpacity
+                        style={[
+                          s.followBtn,
+                          isFollowing || followStatus === "pending"
+                            ? { backgroundColor: colors.secondary, borderColor: colors.border, borderWidth: 1 }
+                            : { backgroundColor: colors.primary },
+                        ]}
+                        onPress={handleFollow}
+                        disabled={followLoading}
+                        activeOpacity={0.8}
+                      >
+                        {followLoading
+                          ? <ActivityIndicator size="small" color={isFollowing ? colors.foreground : "#FFF"} />
+                          : (
+                            <>
+                              <Feather name={followBtnIcon()} size={14} color={isFollowing || followStatus === "pending" ? colors.foreground : "#FFF"} />
+                              <Text style={[s.followBtnText, { color: isFollowing || followStatus === "pending" ? colors.foreground : "#FFF" }]}>
+                                {followBtnLabel()}
+                              </Text>
+                            </>
+                          )
+                        }
+                      </TouchableOpacity>
+                      <View style={[s.reportIconBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+                        <ReportButton
+                          targetType="user"
+                          targetId={userId ?? ""}
+                          targetName={profile?.username ?? profile?.firstName ?? "this user"}
+                          iconSize={17}
+                          iconColor={colors.mutedForeground}
+                        />
+                      </View>
+                    </View>
                   )}
                 </View>
 
@@ -380,7 +392,9 @@ const s = StyleSheet.create({
   bio: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 21, maxWidth: 300 },
   privateBadge: { flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, borderWidth: 1 },
   privateBadgeText: { fontFamily: "Inter_400Regular", fontSize: 11 },
-  followBtn: { flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 24, paddingVertical: 11, borderRadius: 24, marginTop: 6 },
+  actionBtnRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 6 },
+  followBtn: { flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 24, paddingVertical: 11, borderRadius: 24 },
+  reportIconBtn: { width: 42, height: 42, borderRadius: 21, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   followBtnText: { fontFamily: "Inter_700Bold", fontSize: 14 },
   statsRow: { flexDirection: "row", borderTopWidth: 1, borderBottomWidth: 1 },
   statBox: { flex: 1, alignItems: "center", paddingVertical: 16, gap: 2 },

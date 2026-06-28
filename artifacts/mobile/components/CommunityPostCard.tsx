@@ -4,6 +4,7 @@ import { Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from "rea
 import React, { useState } from "react";
 import { useColors } from "@/hooks/useColors";
 import { BusinessMiniCard, type BusinessMiniCardData } from "@/components/BusinessMiniCard";
+import { ReportButton } from "@/components/ReportButton";
 import type { CommunityPost } from "@/constants/types";
 
 interface Props {
@@ -159,6 +160,14 @@ export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthor
         <TouchableOpacity style={s.action} activeOpacity={0.7}>
           <Feather name="share-2" size={16} color={colors.mutedForeground} />
         </TouchableOpacity>
+        <View style={s.action}>
+          <ReportButton
+            targetType="post"
+            targetId={post.id}
+            targetName={post.author}
+            iconSize={16}
+          />
+        </View>
         {isBusinessPost && post.businessId && (
           <TouchableOpacity
             style={[s.viewBizBtn, { borderColor: accentColor + "40", backgroundColor: accentColor + "08" }]}

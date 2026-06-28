@@ -7,7 +7,7 @@ export const contentReportsTable = pgTable("content_reports", {
   targetType: varchar("target_type", { enum: ["review", "survey", "business", "post", "user"] }).notNull(),
   targetId: varchar("target_id").notNull(),
   reason: varchar("reason", {
-    enum: ["spam", "fake", "inappropriate", "harassment", "incorrect_info", "other"],
+    enum: ["spam", "fake", "inappropriate", "harassment", "incorrect_info", "suspicious", "other"],
   }).notNull(),
   description: text("description"),
   status: varchar("status", { enum: ["pending", "reviewed", "dismissed", "actioned"] })

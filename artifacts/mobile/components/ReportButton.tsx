@@ -21,6 +21,7 @@ function getApiBase(): string {
 }
 
 const REASONS = [
+  { value: "suspicious", label: "Suspicious behavior" },
   { value: "spam", label: "Spam or misleading" },
   { value: "fake", label: "Fake or inaccurate info" },
   { value: "inappropriate", label: "Inappropriate content" },
