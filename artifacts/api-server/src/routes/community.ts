@@ -23,15 +23,13 @@ router.get("/community/posts", async (req: Request, res: Response) => {
   try {
     const category = typeof req.query.category === "string" ? req.query.category : undefined;
     const postType = typeof req.query.postType === "string" ? req.query.postType : undefined;
+    const authorId = typeof req.query.authorId === "string" ? req.query.authorId : undefined;
     const limit = Math.min(Number(req.query.limit) || 50, 100);
     const offset = Number(req.query.offset) || 0;
 
-    const posts = await db
-      .select()
-      .from(communityPostsTable)
-      .orderBy(desc(communityPostsTable.createdAt))
-      .limit(limit)
-      .offset(offset);
+    const posts = authorId
+      ? await db.select().from(communityPostsTable).where(eq(communityPostsTable.authorId, authorId)).orderBy(desc(communityPostsTable.createdAt)).limit(limit).offset(offset)
+      : await db.select().from(communityPostsTable).orderBy(desc(communityPostsTable.createdAt)).limit(limit).offset(offset);
 
     let filtered = posts;
     if (category && category !== "all") filtered = filtered.filter((p) => p.category === category);

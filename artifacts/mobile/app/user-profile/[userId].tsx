@@ -10,7 +10,6 @@ import {
   FlatList,
   Image,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -20,6 +19,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
+import { PostDetailModal } from "@/components/PostDetailModal";
+import type { CommunityPost } from "@/constants/types";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -91,11 +92,13 @@ export default function UserProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [tags, setTags] = useState<ProfileTag[]>([]);
+  const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [selectedWallPost, setSelectedWallPost] = useState<CommunityPost | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<string | null>(null);
   const [connectionId, setConnectionId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"reviews" | "tags">("reviews");
+  const [activeTab, setActiveTab] = useState<"reviews" | "tags" | "posts">("posts");
   const [tagInput, setTagInput] = useState("");
   const [postingTag, setPostingTag] = useState(false);
 
@@ -110,11 +113,14 @@ export default function UserProfileScreen() {
     setLoading(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const res = await fetch(`${getApiBase()}/api/users/${userId}/profile`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (res.ok) {
-        const data = await res.json() as {
+      const [profileRes, postsRes] = await Promise.all([
+        fetch(`${getApiBase()}/api/users/${userId}/profile`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }),
+        fetch(`${getApiBase()}/api/community/posts?authorId=${userId}&limit=50`),
+      ]);
+      if (profileRes.ok) {
+        const data = await profileRes.json() as {
           user: UserProfile;
           reviews: ReviewItem[];
           tags: ProfileTag[];
@@ -126,6 +132,29 @@ export default function UserProfileScreen() {
         setTags(data.tags ?? []);
         setConnectionStatus(data.connectionStatus);
         setConnectionId(data.connectionId);
+      }
+      if (postsRes.ok) {
+        const data = await postsRes.json() as { posts: Array<Record<string, unknown>> };
+        const now = Date.now();
+        const mapped: CommunityPost[] = (data.posts ?? []).map((p) => {
+          const ms = now - new Date(p["createdAt"] as string).getTime();
+          const m = Math.floor(ms / 60000);
+          const timeAgo = m < 1 ? "just now" : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.floor(m / 60)}h ago` : `${Math.floor(m / 1440)}d ago`;
+          return {
+            id: p["id"] as string,
+            author: p["authorName"] as string,
+            authorInitials: p["authorInitials"] as string,
+            authorColor: p["authorColor"] as string,
+            content: p["content"] as string,
+            likes: (p["upvotes"] as number) ?? 0,
+            comments: (p["commentsCount"] as number) ?? 0,
+            timeAgo,
+            category: (p["category"] as CommunityPost["category"]) ?? "discussion",
+            postType: (p["postType"] as CommunityPost["postType"]) ?? "community",
+            liked: false,
+          };
+        });
+        setPosts(mapped);
       }
     } catch { /* silent */ }
     finally { setLoading(false); }
@@ -262,8 +291,15 @@ export default function UserProfileScreen() {
         <View style={{ width: 38 }} />
       </View>
 
+      <PostDetailModal
+        visible={selectedWallPost !== null}
+        post={selectedWallPost}
+        onClose={() => setSelectedWallPost(null)}
+        maxCommentLength={300}
+      />
+
       <FlatList
-        data={(activeTab === "reviews" ? reviews : tags) as any[]}
+        data={(activeTab === "reviews" ? reviews : activeTab === "tags" ? tags : posts) as any[]}
         keyExtractor={(item: any) => String(item.id)}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: bottomPad + 60 }}
@@ -348,6 +384,14 @@ export default function UserProfileScreen() {
             {/* Tabs */}
             <View style={[s.tabBar, { borderBottomColor: colors.border }]}>
               <TouchableOpacity
+                style={[s.tab, activeTab === "posts" && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
+                onPress={() => setActiveTab("posts")}
+              >
+                <Text style={[s.tabText, { color: activeTab === "posts" ? colors.primary : colors.mutedForeground }]}>
+                  Posts ({posts.length})
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
                 style={[s.tab, activeTab === "reviews" && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
                 onPress={() => setActiveTab("reviews")}
               >
@@ -360,7 +404,7 @@ export default function UserProfileScreen() {
                 onPress={() => setActiveTab("tags")}
               >
                 <Text style={[s.tabText, { color: activeTab === "tags" ? colors.primary : colors.mutedForeground }]}>
-                  Profile Tags ({tags.length})
+                  Tags ({tags.length})
                 </Text>
               </TouchableOpacity>
             </View>
@@ -369,11 +413,49 @@ export default function UserProfileScreen() {
         ListEmptyComponent={
           <View style={s.emptyTab}>
             <Text style={[s.emptyTabText, { color: colors.mutedForeground }]}>
-              {activeTab === "reviews" ? "No reviews posted yet." : "No profile tags yet."}
+              {activeTab === "posts" ? "No posts yet." : activeTab === "reviews" ? "No reviews posted yet." : "No profile tags yet."}
             </Text>
           </View>
         }
         renderItem={({ item }) => {
+          if (activeTab === "posts") {
+            const post = item as CommunityPost;
+            const POST_TYPE_COLORS: Record<string, string> = {
+              business: "#7B2D8B", question: "#D4873A", safety: "#DC2626", travel: "#0369A1", community: "#C4622D",
+            };
+            const typeColor = POST_TYPE_COLORS[post.postType] ?? "#C4622D";
+            return (
+              <TouchableOpacity
+                style={[s.postCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => setSelectedWallPost(post)}
+                activeOpacity={0.85}
+              >
+                <View style={s.postCardHeader}>
+                  <View style={[s.postTypePill, { backgroundColor: typeColor + "18" }]}>
+                    <Text style={[s.postTypePillText, { color: typeColor }]}>
+                      {post.postType === "business" ? "🏪" : post.postType === "question" ? "❓" : post.postType === "safety" ? "🚨" : post.postType === "travel" ? "✈️" : "💬"} {post.postType.charAt(0).toUpperCase() + post.postType.slice(1)}
+                    </Text>
+                  </View>
+                  <Text style={[s.postTime, { color: colors.mutedForeground }]}>{post.timeAgo}</Text>
+                </View>
+                <Text style={[s.postContent, { color: colors.foreground }]} numberOfLines={4}>{post.content}</Text>
+                <View style={s.postFooter}>
+                  <View style={s.postStat}>
+                    <Feather name="heart" size={13} color={colors.mutedForeground} />
+                    <Text style={[s.postStatText, { color: colors.mutedForeground }]}>{post.likes}</Text>
+                  </View>
+                  <View style={s.postStat}>
+                    <Feather name="message-circle" size={13} color={colors.mutedForeground} />
+                    <Text style={[s.postStatText, { color: colors.mutedForeground }]}>{post.comments}</Text>
+                  </View>
+                  <View style={s.postCommentHint}>
+                    <Text style={[s.postCommentHintText, { color: colors.primary }]}>Tap to comment</Text>
+                    <Feather name="chevron-right" size={13} color={colors.primary} />
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          }
           if (activeTab === "reviews") {
             const rev = item as ReviewItem;
             const platform = rev.socialPostUrl ? detectPlatform(rev.socialPostUrl) : null;
@@ -464,6 +546,17 @@ const s = StyleSheet.create({
   tabText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   emptyTab: { padding: 40, alignItems: "center" },
   emptyTabText: { fontFamily: "Inter_400Regular", fontSize: 14 },
+  postCard: { marginHorizontal: 16, marginTop: 12, borderRadius: 16, borderWidth: 1, padding: 14, gap: 10 },
+  postCardHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  postTypePill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+  postTypePillText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  postTime: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  postContent: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 22 },
+  postFooter: { flexDirection: "row", alignItems: "center", gap: 14 },
+  postStat: { flexDirection: "row", alignItems: "center", gap: 4 },
+  postStatText: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  postCommentHint: { flexDirection: "row", alignItems: "center", gap: 3, marginLeft: "auto" },
+  postCommentHintText: { fontFamily: "Inter_500Medium", fontSize: 12 },
   reviewCard: { marginHorizontal: 16, marginTop: 12, borderRadius: 16, borderWidth: 1, padding: 14 },
   reviewHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 },
   reviewDate: { fontFamily: "Inter_400Regular", fontSize: 12 },

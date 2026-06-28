@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, usersTable, profileTagsTable, reviewsTable, memberConnections } from "@workspace/db";
-import { eq, ilike, or, and, ne, desc } from "drizzle-orm";
+import { eq, ilike, or, and, ne, desc, inArray } from "drizzle-orm";
 
 const USERNAME_RE = /^[a-z0-9_]{3,30}$/;
 
@@ -368,6 +368,37 @@ router.delete("/users/me", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "DELETE /api/users/me error");
     res.status(500).json({ error: "Failed to delete account" });
+  }
+});
+
+/* POST /users/match-contacts — find registered members by email list */
+router.post("/users/match-contacts", async (req: Request, res: Response): Promise<void> => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const { emails } = req.body as { emails?: unknown };
+  if (!Array.isArray(emails) || emails.length === 0) { res.json({ matches: [] }); return; }
+  const normalized = [...new Set(
+    (emails as unknown[]).filter((e): e is string => typeof e === "string")
+      .map((e) => e.toLowerCase().trim())
+      .filter((e) => e.includes("@"))
+  )].slice(0, 500);
+  if (normalized.length === 0) { res.json({ matches: [] }); return; }
+  try {
+    const matches = await db
+      .select({
+        id: usersTable.id,
+        firstName: usersTable.firstName,
+        lastName: usersTable.lastName,
+        username: usersTable.username,
+        profileImageUrl: usersTable.profileImageUrl,
+        memberType: usersTable.memberType,
+        bio: usersTable.bio,
+      })
+      .from(usersTable)
+      .where(and(inArray(usersTable.email, normalized), ne(usersTable.id, req.user.id)));
+    res.json({ matches });
+  } catch (err) {
+    req.log.error({ err }, "POST /users/match-contacts error");
+    res.status(500).json({ error: "Server error" });
   }
 });
 

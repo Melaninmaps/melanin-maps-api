@@ -93,6 +93,12 @@
         }
       ],
       "expo-font",
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Mapping With Melanin would like to find friends who are already on the platform."
+        }
+      ],
       "expo-web-browser",
       [
         "expo-location",

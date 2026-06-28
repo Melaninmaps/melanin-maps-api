@@ -41,7 +41,7 @@ export default function SignupScreen() {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       await login();
-      router.replace("/(tabs)");
+      router.replace("/find-friends" as never);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

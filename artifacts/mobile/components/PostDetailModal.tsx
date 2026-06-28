@@ -48,6 +48,7 @@ interface Props {
   post: CommunityPost | null;
   onClose: () => void;
   onLike?: () => void;
+  maxCommentLength?: number;
 }
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string }> = {
@@ -64,7 +65,7 @@ const POST_TYPE_CONFIG: Record<string, { label: string; color: string; icon: str
   community: { label: "Community", color: "#C4622D", icon: "users" },
 };
 
-export function PostDetailModal({ visible, post, onClose, onLike }: Props) {
+export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLength = 500 }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { isAuthenticated } = useAuth();
@@ -256,13 +257,13 @@ export function PostDetailModal({ visible, post, onClose, onLike }: Props) {
                   placeholder="Add a comment…"
                   placeholderTextColor={colors.mutedForeground}
                   multiline
-                  maxLength={500}
+                  maxLength={maxCommentLength}
                   returnKeyType="send"
                   onSubmitEditing={handleSubmitComment}
                 />
                 {commentText.length > 0 && (
-                  <Text style={[m.commentCounter, { color: commentText.length >= 475 ? (commentText.length >= 495 ? "#DC2626" : "#D97706") : colors.mutedForeground }]}>
-                    {500 - commentText.length}
+                  <Text style={[m.commentCounter, { color: commentText.length >= maxCommentLength * 0.95 ? "#DC2626" : commentText.length >= maxCommentLength * 0.8 ? "#D97706" : colors.mutedForeground }]}>
+                    {maxCommentLength - commentText.length}
                   </Text>
                 )}
               </View>
