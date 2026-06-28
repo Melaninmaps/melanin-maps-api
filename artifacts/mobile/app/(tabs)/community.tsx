@@ -107,7 +107,7 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
     comments: (raw.commentsCount as number) ?? 0,
     timeAgo: formatTimeAgo(raw.createdAt as string),
     category: (raw.category === "recommendation" || raw.category === "alert" || raw.category === "question" ? raw.category : "discussion") as CommunityPost["category"],
-    postType: ((raw.postType as string) === "business" || (raw.postType as string) === "question" || (raw.postType as string) === "saved_place"
+    postType: ((raw.postType as string) === "business" || (raw.postType as string) === "question" || (raw.postType as string) === "saved_place" || (raw.postType as string) === "safety" || (raw.postType as string) === "travel"
       ? raw.postType as CommunityPost["postType"]
       : "community"),
     liked: false,
@@ -192,7 +192,14 @@ export default function CommunityScreen() {
   const [showCompose, setShowCompose] = useState(false);
   const [newPostText, setNewPostText] = useState("");
   const [newPostCategory, setNewPostCategory] = useState("general");
-  const [newPostType, setNewPostType] = useState<"community" | "question" | "business">("community");
+  const CHAR_LIMITS: Record<string, number> = {
+    community: 1000,
+    business: 1500,
+    question: 750,
+    safety: 500,
+    travel: 10000,
+  };
+  const [newPostType, setNewPostType] = useState<"community" | "question" | "business" | "safety" | "travel">("community");
   const [newPostBusinessLink, setNewPostBusinessLink] = useState("");
   const [submittingPost, setSubmittingPost] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
@@ -1113,6 +1120,8 @@ export default function CommunityScreen() {
                 { value: "community", label: "💬 Discussion", color: "#C4622D" },
                 { value: "question", label: "❓ Question", color: "#D4873A" },
                 { value: "business", label: "🏪 Business", color: "#7B2D8B" },
+                { value: "safety", label: "🚨 Safety", color: "#DC2626" },
+                { value: "travel", label: "✈️ Travel", color: "#0369A1" },
               ] as const).map((opt) => (
                 <TouchableOpacity
                   key={opt.value}
@@ -1121,7 +1130,12 @@ export default function CommunityScreen() {
                     { borderColor: newPostType === opt.value ? opt.color : colors.border },
                     newPostType === opt.value && { backgroundColor: opt.color + "18" },
                   ]}
-                  onPress={() => { setNewPostType(opt.value); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                  onPress={() => {
+                    setNewPostType(opt.value);
+                    const newLimit = CHAR_LIMITS[opt.value] ?? 1000;
+                    if (newPostText.length > newLimit) setNewPostText((t) => t.slice(0, newLimit));
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
                 >
                   <Text style={[styles.filterChipText, { color: newPostType === opt.value ? opt.color : colors.mutedForeground }]}>
                     {opt.label}
@@ -1176,12 +1190,15 @@ export default function CommunityScreen() {
             <TextInput
               ref={inputRef}
               style={[styles.composeInput, { color: colors.foreground }]}
-              placeholder="What's on your mind? Type @ to tag a business…"
+              placeholder="Let's connect deeper."
               placeholderTextColor={colors.mutedForeground}
               value={newPostText}
-              onChangeText={handlePostTextChange}
+              onChangeText={(t) => {
+                const limit = CHAR_LIMITS[newPostType] ?? 1000;
+                handlePostTextChange(t.slice(0, limit));
+              }}
               multiline
-              maxLength={500}
+              maxLength={CHAR_LIMITS[newPostType] ?? 1000}
             />
 
             <View style={styles.composeToolbar}>
@@ -1198,7 +1215,17 @@ export default function CommunityScreen() {
                 <Feather name="at-sign" size={14} color={colors.primary} />
                 <Text style={[styles.mentionBtnText, { color: colors.primary }]}>Tag a business</Text>
               </TouchableOpacity>
-              <Text style={[styles.charCount, { color: colors.mutedForeground }]}>{newPostText.length}/500</Text>
+              {(() => {
+                const limit = CHAR_LIMITS[newPostType] ?? 1000;
+                const remaining = limit - newPostText.length;
+                const pct = newPostText.length / limit;
+                const counterColor = pct >= 0.95 ? "#DC2626" : pct >= 0.8 ? "#D97706" : colors.mutedForeground;
+                return (
+                  <Text style={[styles.charCount, { color: counterColor, fontWeight: pct >= 0.8 ? "600" : "400" }]}>
+                    {remaining < 100 ? remaining : newPostText.length} / {limit.toLocaleString()}
+                  </Text>
+                );
+              })()}
             </View>
           </View>
         </View>

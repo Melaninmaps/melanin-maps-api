@@ -247,18 +247,25 @@ export function PostDetailModal({ visible, post, onClose, onLike }: Props) {
         <View style={[m.inputBar, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: bottomPad + 8 }]}>
           {isAuthenticated ? (
             <>
-              <TextInput
-                ref={inputRef}
-                style={[m.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-                value={commentText}
-                onChangeText={setCommentText}
-                placeholder="Add a comment…"
-                placeholderTextColor={colors.mutedForeground}
-                multiline
-                maxLength={500}
-                returnKeyType="send"
-                onSubmitEditing={handleSubmitComment}
-              />
+              <View style={m.inputWrap}>
+                <TextInput
+                  ref={inputRef}
+                  style={[m.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                  value={commentText}
+                  onChangeText={setCommentText}
+                  placeholder="Add a comment…"
+                  placeholderTextColor={colors.mutedForeground}
+                  multiline
+                  maxLength={500}
+                  returnKeyType="send"
+                  onSubmitEditing={handleSubmitComment}
+                />
+                {commentText.length > 0 && (
+                  <Text style={[m.commentCounter, { color: commentText.length >= 475 ? (commentText.length >= 495 ? "#DC2626" : "#D97706") : colors.mutedForeground }]}>
+                    {500 - commentText.length}
+                  </Text>
+                )}
+              </View>
               <TouchableOpacity
                 style={[m.sendBtn, { backgroundColor: commentText.trim() ? colors.primary : colors.muted, opacity: commentText.trim() ? 1 : 0.4 }]}
                 onPress={handleSubmitComment}
@@ -308,7 +315,9 @@ const m = StyleSheet.create({
   emptyComments: { alignItems: "center", gap: 10, paddingVertical: 28 },
   emptyText: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 21, maxWidth: 260 },
   inputBar: { flexDirection: "row", alignItems: "flex-end", gap: 10, paddingHorizontal: 16, paddingTop: 10, borderTopWidth: 1 },
-  input: { flex: 1, borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, fontFamily: "Inter_400Regular", maxHeight: 100 },
+  inputWrap: { flex: 1, position: "relative" },
+  commentCounter: { position: "absolute", bottom: 6, right: 8, fontSize: 11, fontFamily: "Inter_400Regular" },
+  input: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, paddingBottom: 22, fontSize: 14, fontFamily: "Inter_400Regular", maxHeight: 100 },
   sendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
   loginPrompt: { fontFamily: "Inter_400Regular", fontSize: 14, flex: 1, textAlign: "center", paddingVertical: 14 },
 });

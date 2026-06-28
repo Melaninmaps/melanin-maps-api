@@ -71,7 +71,7 @@ export interface Event {
 }
 
 export type PostCategory = "discussion" | "recommendation" | "alert" | "question";
-export type PostType = "community" | "business" | "question" | "saved_place";
+export type PostType = "community" | "business" | "question" | "safety" | "travel" | "saved_place";
 
 export interface CommunityPost {
   id: string;
