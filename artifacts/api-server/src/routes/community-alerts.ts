@@ -125,7 +125,9 @@ router.post("/community-alerts", async (req: Request, res: Response) => {
       })
       .returning();
 
-    await sendAlertPushToNearbyUsers(alert.id, lat, lng, type, 1.5);
+    // ICE and police alerts reach 10 miles (16.09 km); others stay local (1.5 km)
+    const pushRadiusKm = ["ice", "police"].includes(type) ? 16.09 : 1.5;
+    await sendAlertPushToNearbyUsers(alert.id, lat, lng, type, pushRadiusKm);
 
     res.json({ alert });
   } catch (err) {

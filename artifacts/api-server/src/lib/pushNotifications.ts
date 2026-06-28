@@ -208,7 +208,8 @@ export async function sendAlertPushToNearbyUsers(
   const body = "A community member reported activity near you. Stay aware.";
 
   try {
-    const result = await pool.query<{ token: string; user_id: string }>(
+    // Fan-out group 1: users with a recent known location within the radius
+    const locationResult = await pool.query<{ token: string; user_id: string }>(
       `SELECT pt.token, pt.user_id
        FROM user_locations ul
        JOIN push_tokens pt ON pt.user_id = ul.user_id
@@ -223,7 +224,32 @@ export async function sendAlertPushToNearbyUsers(
       [lat, lng, radiusKm],
     );
 
-    const tokens = result.rows;
+    // Fan-out group 2: users who have saved any business within the radius
+    const savedResult = await pool.query<{ token: string; user_id: string }>(
+      `SELECT DISTINCT pt.token, pt.user_id
+       FROM saved_places sp
+       JOIN businesses b ON b.id = sp.business_id
+       JOIN push_tokens pt ON pt.user_id = sp.user_id
+       WHERE pt.token IS NOT NULL
+         AND (6371 * acos(
+           GREATEST(-1, LEAST(1,
+             cos(radians($1)) * cos(radians(b.latitude::float)) * cos(radians(b.longitude::float) - radians($2))
+             + sin(radians($1)) * sin(radians(b.latitude::float))
+           ))
+         )) < $3`,
+      [lat, lng, radiusKm],
+    );
+
+    // Deduplicate by user_id — union both groups
+    const seenUserIds = new Set<string>();
+    const tokens: Array<{ token: string; user_id: string }> = [];
+    for (const row of [...locationResult.rows, ...savedResult.rows]) {
+      if (row.token && !seenUserIds.has(row.user_id)) {
+        seenUserIds.add(row.user_id);
+        tokens.push(row);
+      }
+    }
+
     if (tokens.length === 0) return;
 
     const userIds = tokens.map((r) => r.user_id);

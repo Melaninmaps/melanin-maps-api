@@ -387,7 +387,7 @@ export function MapTabView() {
           <View style={styles.modalHandle} />
           <Text style={[styles.modalTitle, { color: colors.foreground }]}>Report Nearby Activity</Text>
           <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>
-            Alert community members within 1.5km. Reports expire automatically.
+            ICE & Police alerts reach everyone within 10 miles + anyone who saved a nearby business. Other alerts reach 1.5 km. All reports expire automatically.
           </Text>
           <View style={{ gap: 10, marginTop: 8 }}>
             {ALERT_TYPES.map(({ type, label, icon }) => {
