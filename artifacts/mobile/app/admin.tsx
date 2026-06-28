@@ -1389,21 +1389,57 @@ function SubmissionsTab() {
   );
 }
 
+const REFERRAL_TIER_COLORS = ["#3B1F0E", "#2D7A4F", "#C9922B", "#1D4ED8", "#7B2D8B", "#BE123C", "#0369A1"];
+
+function getReferralTier(referrals: number): string {
+  if (referrals >= 25) return "Legend";
+  if (referrals >= 10) return "Ambassador";
+  if (referrals >= 5) return "Connector";
+  return "Starter";
+}
+
+type ReferralStats = {
+  kpi: { totalUsers: number; totalBusinesses: number; totalReferralSignups: number; totalBizByReferral: number; totalReferralCredits: number };
+  leaderboard: { id: string; name: string; code: string; referrals: number; businessesBrought: number }[];
+  dailyUsers: { day: string; total: number; byReferral: number; organic: number }[];
+  dailyBusinesses: { day: string; total: number; byReferral: number; organic: number }[];
+};
+
 function ReferralsTab() {
   const colors = useColors();
+  const [stats, setStats] = useState<ReferralStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showDaily, setShowDaily] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const res = await fetch(`${getApiBase()}/api/admin/referral-stats`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) setStats(await res.json() as ReferralStats);
+      } catch { /* silent */ }
+      finally { setLoading(false); }
+    })();
+  }, []);
+
+  if (loading) {
+    return <View style={{ padding: 40, alignItems: "center" }}><ActivityIndicator color={colors.primary} /></View>;
+  }
+
+  const kpi = stats?.kpi;
+  const leaderboard = stats?.leaderboard ?? [];
+  const dailyUsers = stats?.dailyUsers ?? [];
+  const dailyBiz = stats?.dailyBusinesses ?? [];
+
   const KPI = [
-    { label: "Total Referrals", value: "824", sub: "+47 this week", color: "#3B1F0E", icon: "share-2" as const },
-    { label: "Conversions", value: "312", sub: "38% conv. rate", color: "#2D7A4F", icon: "user-check" as const },
-    { label: "Ambassadors", value: "18", sub: "25+ referrals", color: "#C9922B", icon: "award" as const },
-    { label: "Credits Issued", value: "$840", sub: "All time", color: "#1D4ED8", icon: "dollar-sign" as const },
+    { label: "Total Users", value: String(kpi?.totalUsers ?? 0), sub: `${kpi?.totalReferralSignups ?? 0} via referral`, color: "#3B1F0E", icon: "users" as const },
+    { label: "Total Businesses", value: String(kpi?.totalBusinesses ?? 0), sub: `${kpi?.totalBizByReferral ?? 0} via referral`, color: "#2D7A4F", icon: "briefcase" as const },
+    { label: "Active Referrers", value: String(leaderboard.length), sub: "With 1+ referral", color: "#C9922B", icon: "award" as const },
+    { label: "Total Credits", value: String(kpi?.totalReferralCredits ?? 0), sub: "Across all codes", color: "#1D4ED8", icon: "share-2" as const },
   ];
-  const topReferrers = [
-    { name: "Simone W.", referrals: 38, tier: "Legend", earned: "$100", color: "#3B1F0E" },
-    { name: "Marcus T.", referrals: 29, tier: "Legend", earned: "$100", color: "#2D7A4F" },
-    { name: "Aisha B.", referrals: 17, tier: "Ambassador", earned: "$25", color: "#C9922B" },
-    { name: "Kwame A.", referrals: 12, tier: "Ambassador", earned: "$25", color: "#1D4ED8" },
-    { name: "Zara M.", referrals: 6, tier: "Connector", earned: "$5", color: "#7B2D8B" },
-  ];
+
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={adminStyles.statsGrid}>
@@ -1411,25 +1447,79 @@ function ReferralsTab() {
           <StatCard key={k.label} label={k.label} value={k.value} sub={k.sub} color={k.color} icon={k.icon} />
         ))}
       </View>
-      <SectionLabel title="Top Referrers" />
-      {topReferrers.map((r, i) => (
-        <View key={i} style={[adminStyles.bizRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={[adminStyles.bizAvatar, { backgroundColor: r.color }]}>
-            <Text style={adminStyles.bizAvatarText}>{r.name.split(" ").map((w) => w[0]).join("")}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[adminStyles.bizName, { color: colors.foreground }]}>{r.name}</Text>
-            <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{r.referrals} referrals · {r.earned} earned</Text>
-          </View>
-          <View style={[adminStyles.statusBadge, { backgroundColor: r.color + "18" }]}>
-            <Text style={[adminStyles.statusBadgeText, { color: r.color }]}>{r.tier}</Text>
-          </View>
+
+      <SectionLabel title="Leaderboard — Top Referrers" />
+      {leaderboard.length === 0 ? (
+        <View style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border, alignItems: "center", paddingVertical: 24 }]}>
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>No referrals recorded yet</Text>
         </View>
-      ))}
-      <SectionLabel title="Program Settings" />
-      <ActionRow icon="gift" label="Reward Tiers" sub="Configure tier thresholds and rewards" color="#3B1F0E" />
-      <ActionRow icon="link" label="Referral Links" sub="View and manage all referral links" color="#C9922B" />
-      <ActionRow icon="download" label="Export Data" sub="Download full referral report CSV" color="#2D7A4F" />
+      ) : leaderboard.map((r, i) => {
+        const tierColor = REFERRAL_TIER_COLORS[i % REFERRAL_TIER_COLORS.length] ?? "#3B1F0E";
+        const tier = getReferralTier(r.referrals);
+        const initials = r.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+        return (
+          <View key={r.id} style={[adminStyles.bizRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[adminStyles.bizAvatar, { backgroundColor: tierColor }]}>
+              <Text style={adminStyles.bizAvatarText}>{i + 1}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[adminStyles.bizName, { color: colors.foreground }]}>{r.name} <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 12 }}>· {r.code}</Text></Text>
+              <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>
+                {r.referrals} referral{r.referrals !== 1 ? "s" : ""}{r.businessesBrought > 0 ? ` · ${r.businessesBrought} biz` : ""}
+              </Text>
+            </View>
+            <View style={[adminStyles.statusBadge, { backgroundColor: tierColor + "18" }]}>
+              <Text style={[adminStyles.statusBadgeText, { color: tierColor }]}>{tier}</Text>
+            </View>
+          </View>
+        );
+      })}
+
+      <TouchableOpacity
+        style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 14 }}
+        onPress={() => setShowDaily((v) => !v)}
+      >
+        <Text style={[adminStyles.bizName, { color: colors.foreground }]}>Daily Report — Last 30 Days</Text>
+        <Feather name={showDaily ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
+      </TouchableOpacity>
+
+      {showDaily && (
+        <>
+          <SectionLabel title="New Users / Day" />
+          {dailyUsers.length === 0 ? (
+            <View style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border, alignItems: "center", paddingVertical: 16 }]}>
+              <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>No data yet</Text>
+            </View>
+          ) : dailyUsers.map((d) => (
+            <View key={d.day} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: "row", alignItems: "center", gap: 12 }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[adminStyles.bizName, { color: colors.foreground }]}>{d.day}</Text>
+                <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{d.total} total · {d.byReferral} via referral · {d.organic} organic</Text>
+              </View>
+              <View style={[adminStyles.statusBadge, { backgroundColor: "#2D7A4F18" }]}>
+                <Text style={[adminStyles.statusBadgeText, { color: "#2D7A4F" }]}>{d.total}</Text>
+              </View>
+            </View>
+          ))}
+
+          <SectionLabel title="New Businesses / Day" />
+          {dailyBiz.length === 0 ? (
+            <View style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border, alignItems: "center", paddingVertical: 16 }]}>
+              <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>No data yet</Text>
+            </View>
+          ) : dailyBiz.map((d) => (
+            <View key={d.day} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: "row", alignItems: "center", gap: 12 }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[adminStyles.bizName, { color: colors.foreground }]}>{d.day}</Text>
+                <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{d.total} total · {d.byReferral} via referral · {d.organic} organic</Text>
+              </View>
+              <View style={[adminStyles.statusBadge, { backgroundColor: "#C9922B18" }]}>
+                <Text style={[adminStyles.statusBadgeText, { color: "#C9922B" }]}>{d.total}</Text>
+              </View>
+            </View>
+          ))}
+        </>
+      )}
     </ScrollView>
   );
 }

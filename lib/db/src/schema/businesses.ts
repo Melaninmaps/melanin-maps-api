@@ -65,6 +65,7 @@ export const businessesTable = pgTable("businesses", {
   promotionEligible: boolean("promotion_eligible").notNull().default(true),
   promotionExpirationDate: timestamp("promotion_expiration_date", { withTimezone: true }),
   membershipRenewalDate: timestamp("membership_renewal_date", { withTimezone: true }),
+  referredByCode: varchar("referred_by_code", { length: 30 }),
   // ── Owner intro video (hosted on platform, ≤ 2 min) ─────────────────────
   introVideoUrl: varchar("intro_video_url", { length: 512 }),
   // ── Weekly availability calendar ─────────────────────────────────────────

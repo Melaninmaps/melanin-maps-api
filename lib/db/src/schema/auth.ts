@@ -30,6 +30,7 @@ export const usersTable = pgTable("users", {
   username: varchar("username", { length: 30 }).unique(),
   referralCode: varchar("referral_code").unique(),
   referralCount: integer("referral_count").notNull().default(0),
+  referredByCode: varchar("referred_by_code"),
   industry: varchar("industry", { length: 100 }),
   jobTitle: varchar("job_title", { length: 150 }),
   dateOfBirth: timestamp("date_of_birth", { withTimezone: false }),

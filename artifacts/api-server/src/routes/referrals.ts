@@ -124,6 +124,13 @@ router.post("/referrals/track", async (req: any, res): Promise<void> => {
       .set({ referralCount: sql`${usersTable.referralCount} + 1` })
       .where(eq(usersTable.id, referrer.id));
 
+    if (req.user?.id && req.user.id !== referrer.id) {
+      await db
+        .update(usersTable)
+        .set({ referredByCode: code.toUpperCase() })
+        .where(eq(usersTable.id, req.user.id));
+    }
+
     res.json({ ok: true, referrerId: referrer.id });
   } catch (err: any) {
     req.log.error({ err }, "Failed to track referral");

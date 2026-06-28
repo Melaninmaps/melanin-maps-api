@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessInvitesTable, businessesTable, usersTable, knowledgeTopicsTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable } from "@workspace/db";
+import { db, pool, businessInvitesTable, businessesTable, usersTable, knowledgeTopicsTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable } from "@workspace/db";
 import { eq, desc, sql, count } from "drizzle-orm";
 import { sendBusinessOutreach } from "../lib/email";
 
@@ -638,6 +638,91 @@ router.post("/admin/topics/issues/seed", async (req: Request, res: Response) => 
   } catch (err) {
     req.log.error({ err }, "POST /admin/topics/issues/seed error");
     res.status(500).json({ error: "Seed failed." });
+  }
+});
+
+// ─── GET /admin/referral-stats ─────────────────────────────────────────────
+router.get("/admin/referral-stats", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const [kpiRows, leaderboardRows, dailyUsersRows, dailyBizRows] = await Promise.all([
+      pool.query<{ total_users: string; total_businesses: string; total_referral_signups: string; total_biz_by_referral: string; total_referral_credits: string }>(`
+        SELECT
+          (SELECT COUNT(*)::int FROM users)                                          AS total_users,
+          (SELECT COUNT(*)::int FROM businesses)                                      AS total_businesses,
+          (SELECT COUNT(*)::int FROM users WHERE referred_by_code IS NOT NULL)        AS total_referral_signups,
+          (SELECT COUNT(*)::int FROM businesses WHERE referred_by_code IS NOT NULL)   AS total_biz_by_referral,
+          (SELECT COALESCE(SUM(referral_count), 0)::int FROM users WHERE referral_code IS NOT NULL) AS total_referral_credits
+      `),
+      pool.query<{ id: string; first_name: string | null; last_name: string | null; referral_code: string; referral_count: number; biz_count: string }>(`
+        SELECT
+          u.id,
+          u.first_name,
+          u.last_name,
+          u.referral_code,
+          u.referral_count,
+          COUNT(b.id)::int AS biz_count
+        FROM users u
+        LEFT JOIN businesses b ON b.referred_by_code = u.referral_code
+        WHERE u.referral_code IS NOT NULL AND u.referral_count > 0
+        ORDER BY u.referral_count DESC
+        LIMIT 25
+      `),
+      pool.query<{ day: string; total: string; by_referral: string }>(`
+        SELECT
+          DATE(created_at AT TIME ZONE 'UTC')::text AS day,
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (WHERE referred_by_code IS NOT NULL)::int AS by_referral
+        FROM users
+        WHERE created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY day
+        ORDER BY day DESC
+      `),
+      pool.query<{ day: string; total: string; by_referral: string }>(`
+        SELECT
+          DATE(created_at AT TIME ZONE 'UTC')::text AS day,
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (WHERE referred_by_code IS NOT NULL)::int AS by_referral
+        FROM businesses
+        WHERE created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY day
+        ORDER BY day DESC
+      `),
+    ]);
+
+    const kpi = kpiRows.rows[0];
+
+    res.json({
+      kpi: {
+        totalUsers: Number(kpi?.total_users ?? 0),
+        totalBusinesses: Number(kpi?.total_businesses ?? 0),
+        totalReferralSignups: Number(kpi?.total_referral_signups ?? 0),
+        totalBizByReferral: Number(kpi?.total_biz_by_referral ?? 0),
+        totalReferralCredits: Number(kpi?.total_referral_credits ?? 0),
+      },
+      leaderboard: leaderboardRows.rows.map((r) => ({
+        id: r.id,
+        name: [r.first_name, r.last_name].filter(Boolean).join(" ") || "Anonymous",
+        code: r.referral_code,
+        referrals: Number(r.referral_count),
+        businessesBrought: Number(r.biz_count),
+      })),
+      dailyUsers: dailyUsersRows.rows.map((r) => ({
+        day: r.day,
+        total: Number(r.total),
+        byReferral: Number(r.by_referral),
+        organic: Number(r.total) - Number(r.by_referral),
+      })),
+      dailyBusinesses: dailyBizRows.rows.map((r) => ({
+        day: r.day,
+        total: Number(r.total),
+        byReferral: Number(r.by_referral),
+        organic: Number(r.total) - Number(r.by_referral),
+      })),
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch referral stats");
+    res.status(500).json({ error: "Failed to fetch referral stats" });
   }
 });
 

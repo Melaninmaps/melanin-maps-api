@@ -775,6 +775,12 @@ router.post("/businesses", async (req: Request, res: Response) => {
           : [];
     const id = `sub_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
+    let referredByCode: string | null = null;
+    if (req.user?.id) {
+      const [submitter] = await db.select({ referredByCode: usersTable.referredByCode }).from(usersTable).where(eq(usersTable.id, req.user.id)).limit(1);
+      referredByCode = submitter?.referredByCode ?? null;
+    }
+
     const [business] = await db
       .insert(businessesTable)
       .values({
@@ -796,6 +802,7 @@ router.post("/businesses", async (req: Request, res: Response) => {
         blackOwned: isBlackOwned === true || isBlackOwned === "true",
         status: "pending",
         submittedById: req.user?.id ?? null,
+        referredByCode,
       })
       .returning();
 
