@@ -2,7 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, waitlistTable, usersTable, businessRecommendationsTable, pointsLedgerTable, businessesTable } from "@workspace/db";
 import { and, asc, count, desc, eq, gte, ilike, isNotNull, lt, sql } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
-import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite, sendFriendInvitation, sendBusinessWaitlistInvitation, sendReferralMilestoneUpdate, sendReferralNudge } from "../lib/email";
+import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite, sendFriendInvitation, sendBusinessWaitlistInvitation, sendReferralMilestoneUpdate, sendReferralNudge, sendAppLaunchBlast } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -808,6 +808,67 @@ router.get("/waitlist/leaderboard", async (_req: Request, res: Response) => {
     res.json({ builders, cities });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch leaderboard" });
+  }
+});
+
+// ── Admin: app launch blast to all waitlist members ───────────────────────────
+
+router.post("/admin/send-launch-blast", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const { iosUrl, androidUrl, onlyUnsent } = req.body as {
+      iosUrl?: string;
+      androidUrl?: string;
+      onlyUnsent?: boolean;
+    };
+    const iosLink = iosUrl || "https://apps.apple.com/app/mapping-with-melanin";
+    const androidLink = androidUrl || "https://play.google.com/store/apps/details?id=com.melaninmaps";
+
+    const { eq: drizzleEq } = await import("drizzle-orm");
+    const all = await db
+      .select()
+      .from(waitlistTable)
+      .where(onlyUnsent !== false ? drizzleEq(waitlistTable.launchEmailSent, false) : undefined)
+      .orderBy(waitlistTable.createdAt);
+
+    const totalOnList = await db.select({ total: count() }).from(waitlistTable);
+    const totalCount = Number(totalOnList[0].total);
+
+    let sent = 0;
+    let failed = 0;
+    for (let i = 0; i < all.length; i++) {
+      const entry = all[i];
+      if (!entry.email || !entry.referralCode) { failed++; continue; }
+      const position = i + 1;
+      try {
+        await sendAppLaunchBlast(
+          entry.email,
+          entry.firstName ?? "there",
+          position,
+          entry.referralCode,
+          iosLink,
+          androidLink,
+        );
+        await db.update(waitlistTable)
+          .set({ launchEmailSent: true })
+          .where(drizzleEq(waitlistTable.id, entry.id));
+        sent++;
+        if (i % 10 === 9) await new Promise(r => setTimeout(r, 500));
+      } catch {
+        failed++;
+      }
+    }
+
+    res.json({
+      sent,
+      failed,
+      skipped: totalCount - all.length,
+      total: totalCount,
+      message: `Launch blast complete — ${sent} emails sent, ${failed} failed.`,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to send launch blast");
+    res.status(500).json({ error: "Failed to send launch blast" });
   }
 });
 

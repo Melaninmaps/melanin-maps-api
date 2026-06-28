@@ -225,9 +225,20 @@ export async function sendReferralNudge(
           <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Referral code: <span style="color:#CA922B;font-weight:700;letter-spacing:3px">${referralCode}</span></p>
         </div>
 
-        <a href="${referralLink}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:14px 32px;border-radius:50px;text-decoration:none;margin-bottom:24px">
-          Share Your Link →
+        <a href="https://mappingwithmelanin.com/?ref=${referralCode}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:14px 32px;border-radius:50px;text-decoration:none;margin-bottom:24px">
+          Join at mappingwithmelanin.com →
         </a>
+
+        <div style="background:#FAF6EF;border:1px solid #CA922B33;border-radius:12px;padding:20px;margin:0 0 24px">
+          <p style="color:#2B1507;font-size:13px;font-weight:700;margin:0 0 10px;text-align:center;text-transform:uppercase;letter-spacing:1px">📱 App Coming Soon</p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            <span style="background:#2B1507;color:#F5EBD8;font-size:12px;font-weight:700;padding:8px 16px;border-radius:20px">🍎 iOS App Store</span>
+            <span style="background:#2B1507;color:#F5EBD8;font-size:12px;font-weight:700;padding:8px 16px;border-radius:20px">🤖 Google Play</span>
+          </div>
+          <p style="color:#3A1F0E;font-size:12px;text-align:center;margin:10px 0 0;opacity:0.7">
+            You'll be among the first notified the moment we go live on both stores.
+          </p>
+        </div>
 
         <p style="color:#3A1F0E;font-size:14px;line-height:1.6;margin:0 0 8px;opacity:0.7">
           We're building something special and we're grateful you're part of the journey from the beginning.
@@ -1830,6 +1841,81 @@ export async function sendReferralMilestoneUpdate(
         <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
         <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping With Melanin™ Team</p>
         <p style="color:#3A1F0E;font-size:13px;opacity:0.6;margin:0">Melanin Maps LLC · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a></p>
+      </div>
+    `,
+  });
+}
+
+// ── App launch blast ──────────────────────────────────────────────────────────
+
+export async function sendAppLaunchBlast(
+  to: string,
+  firstName: string,
+  position: number,
+  referralCode: string,
+  iosUrl: string,
+  androidUrl: string,
+) {
+  if (!resend) { log("app launch blast"); return; }
+  const name = firstName || "there";
+  const websiteUrl = `https://mappingwithmelanin.com/?ref=${referralCode}`;
+  await resend.emails.send({
+    from: FROM,
+    to,
+    replyTo: "hello@mappingwithmelanin.com",
+    subject: `🎉 The Mapping with Melanin™ app is HERE — your spot is confirmed!`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
+
+        <div style="background:#CA922B;border-radius:12px;padding:24px;text-align:center;margin-bottom:28px">
+          <p style="color:#fff;font-size:28px;font-weight:900;margin:0 0 8px;letter-spacing:-0.5px">🎉 We're LIVE!</p>
+          <p style="color:#fff;font-size:15px;margin:0;opacity:0.9">The wait is officially over.</p>
+        </div>
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 16px">Hello ${name},</p>
+
+        <p style="color:#2B1507;font-size:18px;font-weight:700;line-height:1.4;margin:0 0 16px">
+          Mapping with Melanin™ is now available for download — and your waitlist spot is confirmed.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          You were <strong style="color:#CA922B">#${position}</strong> on our waitlist. That early belief means everything to us.
+          You helped build this community before it launched — and now it's yours to explore.
+        </p>
+
+        <div style="display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap">
+          <a href="${iosUrl}" style="flex:1;min-width:200px;display:flex;align-items:center;gap:14px;background:#2B1507;border-radius:14px;padding:16px 20px;text-decoration:none">
+            <span style="font-size:28px">🍎</span>
+            <div>
+              <p style="color:#F5EBD8;font-size:11px;margin:0;opacity:0.6;text-transform:uppercase;letter-spacing:1px">Download on the</p>
+              <p style="color:#fff;font-size:18px;font-weight:800;margin:0;line-height:1.2">App Store</p>
+              <p style="color:#CA922B;font-size:11px;margin:0">iOS</p>
+            </div>
+          </a>
+          <a href="${androidUrl}" style="flex:1;min-width:200px;display:flex;align-items:center;gap:14px;background:#2B1507;border-radius:14px;padding:16px 20px;text-decoration:none">
+            <span style="font-size:28px">🤖</span>
+            <div>
+              <p style="color:#F5EBD8;font-size:11px;margin:0;opacity:0.6;text-transform:uppercase;letter-spacing:1px">Get it on</p>
+              <p style="color:#fff;font-size:18px;font-weight:800;margin:0;line-height:1.2">Google Play</p>
+              <p style="color:#CA922B;font-size:11px;margin:0">Android</p>
+            </div>
+          </a>
+        </div>
+
+        <a href="${websiteUrl}" style="display:block;text-align:center;background:#CA922B;color:#fff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:50px;text-decoration:none;margin-bottom:28px">
+          Visit mappingwithmelanin.com →
+        </a>
+
+        <div style="background:#2B1507;border-radius:12px;padding:20px 24px;margin-bottom:24px">
+          <p style="color:#CA922B;font-size:13px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:1px">Still have friends to invite?</p>
+          <p style="color:#F5EBD8;font-size:14px;margin:0 0 12px;opacity:0.8">Share your referral code — every person you bring in strengthens the community.</p>
+          <p style="color:#F5EBD8;font-size:12px;margin:0;opacity:0.6">Code: <span style="color:#CA922B;font-weight:700;letter-spacing:3px">${referralCode}</span></p>
+        </div>
+
+        <p style="color:#2B1507;font-size:15px;font-weight:700;font-style:italic;margin:16px 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:14px;margin:0 0 4px">The Mapping with Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.5;margin:0">Melanin Maps LLC</p>
       </div>
     `,
   });

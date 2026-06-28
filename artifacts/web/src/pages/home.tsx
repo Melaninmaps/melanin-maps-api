@@ -483,7 +483,7 @@ export default function Home() {
       <WaveDivider fromBg="#FAF6EF" toBg="#2B1507" flip />
 
       {/* ── WHAT WE OFFER (Teaser Cards) ── */}
-      <section className="py-24 bg-[#2B1507] text-white">
+      <section className="py-24 bg-gradient-to-b from-[#3D1F0A] to-[#2B1507] text-white">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
@@ -773,7 +773,7 @@ export default function Home() {
       <WaveDivider fromBg="#FAF6EF" toBg="#2B1507" flip />
 
       {/* ── IMPACT COUNTER ── */}
-      <section className="py-16 bg-[#2B1507]">
+      <section className="py-16 bg-gradient-to-b from-[#2B1507] to-[#3D1F0A]">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/40 bg-[#CA922B]/10 mb-4">
@@ -846,7 +846,7 @@ export default function Home() {
       <RotatingQuoteBanner variant="dark" />
 
       {/* ── APP COMING SOON ── */}
-      <section className="py-24 bg-[#2B1507] text-white overflow-hidden">
+      <section className="py-24 bg-gradient-to-b from-[#3D1F0A] to-[#2B1507] text-white overflow-hidden">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
