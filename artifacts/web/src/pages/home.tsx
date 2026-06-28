@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { MapPin, ArrowRight, Shield, Search, Sparkles, Users, Building2, Globe, BookOpen, Facebook, Linkedin, Instagram, Link2, UserPlus, MessageSquare, Trophy, Mail, Send, Store } from "lucide-react";
+import { MapPin, ArrowRight, Shield, Search, Sparkles, Users, Building2, Globe, BookOpen, Facebook, Linkedin, Instagram, Link2, UserPlus, Trophy, Mail, Send, Store } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { RotatingQuoteBanner } from "@/components/RotatingQuoteBanner";
 
@@ -275,7 +275,7 @@ export default function Home() {
     <div className="flex flex-col w-full bg-[#FAF6EF]">
 
       {/* ── HERO ── */}
-      <section className="relative min-h-[50vh] md:min-h-[110vh] flex items-center pt-20 pb-32 overflow-hidden bg-[#2B1507]">
+      <section className="relative min-h-[50vh] md:min-h-[110vh] flex items-center pb-32 overflow-hidden bg-[#2B1507]">
         <div className="absolute inset-0 z-0">
           <img
             src="/hero-cobblestone.png?v=6"
@@ -895,20 +895,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* KinfolkAI floating widget — mirrors the one in Layout since home renders outside Layout */}
-      <Link href="/travel">
-        <div className="fixed bottom-6 right-6 z-50">
-          <div className="bg-[#2B1507] border border-[#CA922B]/30 shadow-2xl rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:shadow-[0_10px_40px_rgba(202,146,43,0.15)] transition-all">
-            <div className="w-10 h-10 rounded-full bg-[#CA922B]/20 flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-[#CA922B]" />
-            </div>
-            <div>
-              <div className="text-white font-bold text-sm">KinfolkAI</div>
-              <div className="text-[#F5EBD8]/70 text-xs">Plan your next trip</div>
-            </div>
-          </div>
-        </div>
-      </Link>
 
     </div>
   );
