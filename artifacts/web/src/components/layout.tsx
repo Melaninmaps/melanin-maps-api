@@ -3,7 +3,7 @@ import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "./ui/button";
 import { Menu, X, MessageSquare, Bell, ChevronRight, FileText, BarChart2, Sparkles, Sun, Moon } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/contexts/theme";
 
 const BASE = import.meta.env.BASE_URL;
 

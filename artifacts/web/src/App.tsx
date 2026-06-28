@@ -2,7 +2,7 @@ import { Switch, Route, Router as WouterRouter, Redirect, useLocation } from "wo
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ThemeProvider } from "next-themes";
+import { ThemeProvider } from "@/contexts/theme";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/layout";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
@@ -204,7 +204,7 @@ function Router() {
 
 function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" storageKey="mwm-theme">
+    <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
