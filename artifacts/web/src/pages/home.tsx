@@ -282,6 +282,7 @@ export default function Home() {
             alt="Cobblestone street at night with businesses, street lights and puddle"
             className="w-full h-full object-cover object-center opacity-75"
           />
+          <div className="absolute inset-0 bg-black/20" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#2B1507]/60 via-[#2B1507]/25 to-[#2B1507]" />
         </div>
 
@@ -306,10 +307,10 @@ export default function Home() {
                 Live With Purpose.
               </h1>
 
-              <p className="text-lg md:text-xl text-[#F5EBD8]/80 mb-4 max-w-xl leading-relaxed">
+              <p className="text-lg md:text-xl text-[#F5EBD8]/80 font-semibold mb-4 max-w-xl leading-relaxed">
                 Mapping with Melanin™ connects people to trusted businesses, meaningful relationships, thriving communities, and new opportunities through the power of shared experiences and community-driven insights.
               </p>
-              <p className="text-base text-[#F5EBD8]/60 mb-10 max-w-xl leading-relaxed">
+              <p className="text-base text-[#F5EBD8]/60 font-semibold mb-10 max-w-xl leading-relaxed">
                 Most platforms tell you where to go. We help you understand what's really there — and direct your dollars to businesses that reflect your culture and community.
               </p>
 
@@ -339,7 +340,7 @@ export default function Home() {
                   </div>
                   <h3 className="text-2xl font-serif font-bold text-white mb-2">You're In!</h3>
                   {position && <p className="text-[#CA922B] font-bold text-lg mb-2">Position #{position.toLocaleString()}</p>}
-                  <p className="text-[#F5EBD8]/70 mb-6 text-sm">Check your email for your referral code to move up the list.</p>
+                  <p className="text-[#F5EBD8]/70 font-semibold mb-6 text-sm">Check your email for your referral code to move up the list.</p>
                   {referralCode && (
                     <div className="bg-white/5 rounded-xl p-4 mb-6 text-left">
                       <p className="text-xs font-bold text-[#CA922B] uppercase tracking-wider mb-2">Your Referral Code</p>
@@ -370,8 +371,8 @@ export default function Home() {
               ) : (
                 <>
                   <h2 className="text-2xl font-serif font-bold text-white mb-2">Join the Waitlist</h2>
-                  <p className="text-[#F5EBD8]/60 text-sm mb-2">Free to join. No spam, ever.</p>
-                  <p className="text-[#F5EBD8]/40 text-xs mb-6">We don't sell your attention—we help our community discover great businesses.</p>
+                  <p className="text-[#F5EBD8]/60 font-semibold text-sm mb-2">Free to join. No spam, ever.</p>
+                  <p className="text-[#F5EBD8]/40 font-medium text-xs mb-6">We don't sell your attention—we help our community discover great businesses.</p>
                   <form data-testid="waitlist-form" onSubmit={handleWaitlist} className="flex flex-col gap-3">
                     <div className="grid grid-cols-2 gap-3">
                       <input type="text" placeholder="First name" value={firstName} onChange={e => setFirstName(e.target.value)}
@@ -387,7 +388,7 @@ export default function Home() {
                       <input type="text" placeholder="STATE" value={state} onChange={e => setState(e.target.value.toUpperCase().slice(0, 2))} maxLength={2}
                         className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm uppercase" />
                     </div>
-                    <p className="text-xs text-[#F5EBD8]/40 -mt-1">What city and state are you from? We're testing in select locations first.</p>
+                    <p className="text-xs text-[#F5EBD8]/40 font-medium -mt-1">What city and state are you from? We're testing in select locations first.</p>
                     <label className="flex items-center gap-3 cursor-pointer">
                       <div
                         onClick={() => setIsBusinessOwner(!isBusinessOwner)}
@@ -395,18 +396,18 @@ export default function Home() {
                       >
                         <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isBusinessOwner ? "translate-x-5" : "translate-x-0"}`} />
                       </div>
-                      <span className="text-sm text-[#F5EBD8]/80">I own or operate a Minority-owned business</span>
+                      <span className="text-sm font-semibold text-[#F5EBD8]/80">I own or operate a Minority-owned business</span>
                     </label>
                     <input type="text" placeholder="REFERRAL CODE (OPTIONAL)" value={referredBy} onChange={e => setReferredBy(e.target.value.toUpperCase())}
                       className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm uppercase tracking-widest" />
-                    <p className="text-xs text-[#F5EBD8]/40 -mt-1">Have a friend's referral code? Enter it above to move up the list.</p>
+                    <p className="text-xs text-[#F5EBD8]/40 font-medium -mt-1">Have a friend's referral code? Enter it above to move up the list.</p>
                     <Button data-testid="waitlist-submit" type="submit" disabled={submitting || !email}
                       className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-50 text-white h-12 font-bold text-base mt-1">
                       {submitting ? "Joining…" : "Join the Waitlist"}
                     </Button>
                   </form>
                   <div className="mt-4 pt-4 border-t border-white/10">
-                    <p className="text-xs text-[#F5EBD8]/40 mb-2">Know someone? Refer them:</p>
+                    <p className="text-xs text-[#F5EBD8]/40 font-medium mb-2">Know someone? Refer them:</p>
                     <div className="flex gap-2">
                       {[
                         { label: "X", icon: <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63Zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>, platform: "X" },
@@ -440,19 +441,19 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div className="px-4 py-2">
               <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">{waitlistStats ? formatCount(waitlistStats.count) : "2+"} Members</div>
-              <div className="text-sm text-[#F5EBD8]/70">And growing every day</div>
+              <div className="text-sm font-semibold text-[#F5EBD8]/70">And growing every day</div>
             </div>
             <div className="px-4 py-2">
               <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">200+ Cities Covered</div>
-              <div className="text-sm text-[#F5EBD8]/70">Across the US and beyond</div>
+              <div className="text-sm font-semibold text-[#F5EBD8]/70">Across the US and beyond</div>
             </div>
             <div className="px-4 py-2">
               <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">96/100 Avg. Confidence Score</div>
-              <div className="text-sm text-[#F5EBD8]/70">For top-rated destinations</div>
+              <div className="text-sm font-semibold text-[#F5EBD8]/70">For top-rated destinations</div>
             </div>
             <div className="px-4 py-2">
               <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">100% Community-Sourced</div>
-              <div className="text-sm text-[#F5EBD8]/70">Every insight, every review</div>
+              <div className="text-sm font-semibold text-[#F5EBD8]/70">Every insight, every review</div>
             </div>
           </div>
         </div>
@@ -490,7 +491,7 @@ export default function Home() {
               <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">Explore The Platform</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4">Everything You Need in One Place</h2>
-            <p className="text-lg text-[#F5EBD8]/70 max-w-2xl mx-auto">
+            <p className="text-lg font-semibold text-[#F5EBD8]/70 max-w-2xl mx-auto">
               Discover minority-owned businesses, travel with confidence, connect with community, and make decisions with real intelligence behind every choice.
             </p>
           </div>
@@ -530,7 +531,7 @@ export default function Home() {
                   <div className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">{label}</div>
                   <div>
                     <h3 className="text-xl font-serif font-bold text-white mb-3">{title}</h3>
-                    <p className="text-[#F5EBD8]/60 text-sm leading-relaxed">{desc}</p>
+                    <p className="text-[#F5EBD8]/60 font-semibold text-sm leading-relaxed">{desc}</p>
                   </div>
                   <div className="mt-auto flex items-center gap-2 text-[#CA922B] text-sm font-bold group-hover:gap-3 transition-all">
                     {cta} <ArrowRight className="w-4 h-4" />
