@@ -1,8 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { db, pool, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable, businessClickEventsTable } from "@workspace/db";
-import { eq, and, or, ilike, desc, sql, gt, count } from "drizzle-orm";
+import { db, pool, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable, businessClickEventsTable, businessCaptionsTable } from "@workspace/db";
+import { eq, and, or, ilike, desc, sql, gt, count, inArray } from "drizzle-orm";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
 import { sendFoundingWelcomeEmail, sendSearchInquiryAlert } from "../lib/email";
@@ -148,7 +148,24 @@ router.get("/businesses", async (req: Request, res: Response) => {
       });
 
     const featuredCount = annotated.filter((b) => b.featured).length;
-    res.json({ businesses: annotated, total: annotated.length, featuredCount });
+
+    const bIds = annotated.map((b) => b.id);
+    const captionMap = new Map<string, string[]>();
+    if (bIds.length > 0) {
+      const capRows = await db
+        .select({ businessId: businessCaptionsTable.businessId, caption: businessCaptionsTable.caption })
+        .from(businessCaptionsTable)
+        .where(inArray(businessCaptionsTable.businessId, bIds))
+        .orderBy(desc(businessCaptionsTable.createdAt))
+        .limit(bIds.length * 3);
+      for (const row of capRows) {
+        const list = captionMap.get(row.businessId) ?? [];
+        if (list.length < 2) { list.push(row.caption); captionMap.set(row.businessId, list); }
+      }
+    }
+    const withCaptions = annotated.map((b) => ({ ...b, topCaptions: captionMap.get(b.id) ?? [] }));
+
+    res.json({ businesses: withCaptions, total: withCaptions.length, featuredCount });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch businesses");
     res.status(500).json({ error: "Failed to fetch businesses" });

@@ -54,7 +54,10 @@ function getComplimentChips(business: Business): { label: string; color: string;
   if (business.rating >= 4.5 && business.reviewCount >= 5) chips.push({ label: "⭐ Community Fave", color: "#1D4ED8", bg: "#DBEAFE30" });
   if ((business.wouldReturnAlone ?? 0) > 0.65) chips.push({ label: "👍 Would Return", color: "#6D28D9", bg: "#EDE9FE30" });
   if ((business.recommendationRate ?? 0) > 0.8) chips.push({ label: "❤️ Top Pick", color: "#BE123C", bg: "#FFE4E620" });
-  return chips.slice(0, 2);
+  for (const cap of (business.topCaptions ?? []).slice(0, 2)) {
+    chips.push({ label: `"${cap}"`, color: "#C4622D", bg: "#C4622D0F" });
+  }
+  return chips.slice(0, 4);
 }
 
 function getVibeMatch(category?: string): { label: string; emoji: string } | null {

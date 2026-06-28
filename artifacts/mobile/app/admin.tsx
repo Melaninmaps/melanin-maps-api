@@ -710,6 +710,8 @@ interface AdminReview {
   rating: number | null;
   text: string | null;
   createdAt: string;
+  status?: string;
+  videoUrl?: string | null;
 }
 
 function useAdminReviews() {
@@ -750,16 +752,64 @@ function useAdminReviews() {
     }
   }, [load]);
 
-  return { reviews, loading, error, refetch: load, deleteReview };
+  const approveVideo = React.useCallback(async (id: string) => {
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      await fetch(`${getApiBase()}/api/reviews/${id}/approve-video`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      setReviews((prev) => prev.map((r) => r.id === id ? { ...r, status: "posted" } : r));
+    } catch { load(); }
+  }, [load]);
+
+  return { reviews, loading, error, refetch: load, deleteReview, approveVideo };
 }
 
 function ReviewsTab() {
   const colors = useColors();
-  const { reviews, loading, error, refetch, deleteReview } = useAdminReviews();
+  const { reviews, loading, error, refetch, deleteReview, approveVideo } = useAdminReviews();
   const [confirmDelete, setConfirmDelete] = React.useState<string | null>(null);
+  const pendingVideos = reviews.filter((r) => r.status === "pending_video");
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+      {pendingVideos.length > 0 && (
+        <View style={{ marginBottom: 16 }}>
+          <Text style={[adminStyles.actionLabel, { color: colors.foreground, marginBottom: 10 }]}>
+            📹 Pending Video Reviews ({pendingVideos.length})
+          </Text>
+          {pendingVideos.map((r) => (
+            <View key={r.id} style={[adminStyles.reportCard, { backgroundColor: "#7B2D8B0A", borderColor: "#7B2D8B30" }]}>
+              <Text style={[adminStyles.bizName, { color: colors.foreground }]} numberOfLines={1}>
+                {r.authorName ?? "Anonymous"} — {r.businessName}
+              </Text>
+              <Text style={[adminStyles.scoreText, { color: "#C9922B", marginBottom: 4 }]}>
+                {"★".repeat(r.rating ?? 0)}{"☆".repeat(5 - (r.rating ?? 0))}
+              </Text>
+              {r.text ? (
+                <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, fontStyle: "italic", marginBottom: 6 }]} numberOfLines={2}>
+                  "{r.text}"
+                </Text>
+              ) : null}
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                <TouchableOpacity
+                  style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F40" }]}
+                  onPress={() => void approveVideo(r.id)}
+                >
+                  <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>✓ Approve</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}
+                  onPress={() => setConfirmDelete(r.id)}
+                >
+                  <Text style={[adminStyles.smallBtnText, { color: "#DC2626" }]}>Remove</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
       {loading && (
         <View style={{ alignItems: "center", paddingVertical: 40 }}>
           <ActivityIndicator color={colors.primary} />

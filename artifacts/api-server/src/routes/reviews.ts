@@ -155,7 +155,9 @@ router.get("/reviews", async (req: Request, res: Response) => {
       ))
       .orderBy(desc(reviewsTable.createdAt))
       .limit(50);
-    res.json({ reviews });
+    const currentUserId = req.user?.id ?? null;
+    const enriched = reviews.map((r) => ({ ...r, isOwnReview: currentUserId !== null && r.userId === currentUserId }));
+    res.json({ reviews: enriched });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch reviews");
     res.status(500).json({ error: "Failed to fetch reviews" });

@@ -68,6 +68,9 @@ export default function BusinessDetailScreen() {
   const { isSaved, toggleSave } = useFavorites();
 
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [editingInitialRating, setEditingInitialRating] = useState<number | undefined>(undefined);
+  const [editingInitialText, setEditingInitialText] = useState<string | undefined>(undefined);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [claimModalOpen, setClaimModalOpen] = useState(false);
@@ -218,7 +221,7 @@ export default function BusinessDetailScreen() {
   const allReviews: Array<{
     id: string; author: string; initials: string; color: string;
     rating: number; text: string; timeAgo: string; wouldReturnAlone?: boolean; videoUrl?: string; nowHiringUrl?: string; communitySupport?: number;
-    ownerResponse?: string | null; ownerRespondedAt?: string | null;
+    ownerResponse?: string | null; ownerRespondedAt?: string | null; isOwnReview?: boolean;
   }> = [
     ...apiReviews
       .filter((r) => Date.now() - new Date(r.createdAt).getTime() < SIX_MONTHS_MS)
@@ -236,6 +239,7 @@ export default function BusinessDetailScreen() {
         communitySupport: (r as any).communitySupport ?? undefined,
         ownerResponse: r.ownerResponse ?? null,
         ownerRespondedAt: r.ownerRespondedAt ?? null,
+        isOwnReview: (r as any).isOwnReview ?? false,
       })),
     ...(business.reviews ?? []),
   ];
@@ -310,6 +314,23 @@ export default function BusinessDetailScreen() {
     volunteerAsMentor?: boolean,
     nowHiringUrl?: string,
   ) => {
+    if (editingReviewId) {
+      try {
+        const { getItemAsync: getItem } = await import("expo-secure-store");
+        const token = Platform.OS !== "web" ? await getItem("auth_session_token") : null;
+        await fetch(`${process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : ""}/api/reviews/${editingReviewId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          body: JSON.stringify({ rating, text }),
+        });
+        showPointsToast("Review updated!");
+      } catch { /* silent */ } finally {
+        setEditingReviewId(null);
+        setEditingInitialRating(undefined);
+        setEditingInitialText(undefined);
+      }
+      return;
+    }
     try {
       const pts = await submitReview(rating, text, wouldReturn, socialHandle, socialPlatform, business.name, videoUrl, nonMinorityOwned, communitySupport, website, location, isAnonymous, volunteerAsMentor, nowHiringUrl);
       if (pts != null) {
@@ -819,6 +840,19 @@ export default function BusinessDetailScreen() {
                     <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.foreground, lineHeight: 19 }}>
                       {rev.ownerResponse}
                     </Text>
+                    {rev.isOwnReview && (
+                      <TouchableOpacity
+                        style={{ marginTop: 8, alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: colors.primary + "40", backgroundColor: colors.primary + "0A" }}
+                        onPress={() => {
+                          setEditingReviewId(rev.id);
+                          setEditingInitialRating(rev.rating);
+                          setEditingInitialText(rev.text);
+                          setReviewModalOpen(true);
+                        }}
+                      >
+                        <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: colors.primary }}>✏️ Edit my review</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 ) : null}
                 {rev.videoUrl ? (
@@ -909,7 +943,10 @@ export default function BusinessDetailScreen() {
         businessName={business.name}
         businessId={id}
         businessCategory={business.category}
-        onClose={() => setReviewModalOpen(false)}
+        reviewId={editingReviewId ?? undefined}
+        initialRating={editingInitialRating}
+        initialText={editingInitialText}
+        onClose={() => { setReviewModalOpen(false); setEditingReviewId(null); setEditingInitialRating(undefined); setEditingInitialText(undefined); }}
         onSubmit={handleReviewSubmit}
       />
 

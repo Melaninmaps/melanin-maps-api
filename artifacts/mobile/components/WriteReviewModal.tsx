@@ -40,11 +40,14 @@ interface Props {
   businessName: string;
   businessId?: string;
   businessCategory?: string;
+  reviewId?: string;
+  initialRating?: number;
+  initialText?: string;
   onClose: () => void;
   onSubmit: (rating: number, text: string, wouldReturn: boolean | null, socialHandle?: string, socialPlatform?: string, videoUrl?: string, nonMinorityOwned?: boolean, communitySupport?: number, website?: string, location?: string, isAnonymous?: boolean, volunteerAsMentor?: boolean, nowHiringUrl?: string) => void;
 }
 
-export function WriteReviewModal({ visible, businessName, businessId, businessCategory, onClose, onSubmit }: Props) {
+export function WriteReviewModal({ visible, businessName, businessId, businessCategory, reviewId, initialRating, initialText, onClose, onSubmit }: Props) {
   const colors = useColors();
   const [rating, setRating] = useState(0);
   const [text, setText] = useState("");
@@ -65,6 +68,16 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
   const [capturedText, setCapturedText] = useState("");
   const [inviteSent, setInviteSent] = useState(false);
   const [volunteeredAsMentor, setVolunteeredAsMentor] = useState(false);
+
+  const isEditMode = !!reviewId;
+
+  React.useEffect(() => {
+    if (isEditMode && visible) {
+      if (initialRating) setRating(initialRating);
+      if (initialText) setText(initialText);
+      setWouldReturn("yes");
+    }
+  }, [isEditMode, visible, initialRating, initialText]);
 
   const reset = () => {
     setRating(0);
@@ -126,6 +139,10 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
     setCapturedText(text);
     setPhase("success");
     onSubmit(rating, text, wouldReturnBool, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl, nonMinorityOwned, communitySupport > 0 && !nonMinorityOwned ? communitySupport : undefined, website.trim() || undefined, location.trim() || undefined, nonMinorityOwned ? isAnonymous : undefined, willMentor || undefined, cleanNowHiring);
+    if (isEditMode) {
+      setTimeout(() => { reset(); onClose(); }, 1400);
+      return;
+    }
     submitCaptions(selectedCaptions);
     if (wouldReturn === "yes" && businessId) {
       setTimeout(() => setPhase("appreciation"), 1600);
