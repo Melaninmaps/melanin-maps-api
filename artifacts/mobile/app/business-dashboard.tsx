@@ -246,6 +246,7 @@ export default function BusinessDashboardScreen() {
   const [growthTools, setGrowthTools] = useState<GrowthToolsData | null>(null);
   const [growthLoading, setGrowthLoading] = useState(false);
   const [growthCheckoutLoading, setGrowthCheckoutLoading] = useState<string | null>(null);
+  const [skipFeedback, setSkipFeedback] = useState<{ id: string; message: string; createdAt: string }[] | null>(null);
 
   const { listings, connectStatus, loading: listingsLoading, startOnboarding, createListing, toggleActive, deleteListing } =
     useOwnerListings(business?.id ?? "");
@@ -372,6 +373,10 @@ export default function BusinessDashboardScreen() {
       if (!res.ok) { setAnalyticsError("error"); return; }
       const data = await res.json() as AnalyticsData;
       setAnalytics(data);
+      fetch(`${base}/api/kinfolk/skip-feedback`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.ok ? r.json() : null)
+        .then((d: { feedback?: { id: string; message: string; createdAt: string }[] } | null) => { if (d?.feedback) setSkipFeedback(d.feedback); })
+        .catch(() => {});
     } catch { setAnalyticsError("error"); }
     finally { setAnalyticsLoading(false); }
   }, [analyticsLoading, analytics]);
@@ -1922,6 +1927,43 @@ export default function BusinessDashboardScreen() {
                     </>
                   )}
 
+                  {/* Community Skip Insights */}
+                  {skipFeedback !== null && (
+                    <View style={[styles.skipInsightCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                      <View style={styles.skipInsightHeader}>
+                        <View style={[styles.skipInsightIconWrap, { backgroundColor: "#CA922B18" }]}>
+                          <Feather name="skip-forward" size={15} color="#CA922B" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.skipInsightTitle, { color: colors.foreground }]}>Community Skip Insights</Text>
+                          <Text style={[styles.skipInsightSub, { color: colors.mutedForeground }]}>
+                            Private notes from people who passed on visiting — use this to improve.
+                          </Text>
+                        </View>
+                        <View style={[styles.skipInsightBadge, { backgroundColor: "#CA922B18" }]}>
+                          <Text style={[styles.skipInsightBadgeTxt, { color: "#CA922B" }]}>{skipFeedback.length}</Text>
+                        </View>
+                      </View>
+                      {skipFeedback.length === 0 ? (
+                        <Text style={[styles.skipInsightEmpty, { color: colors.mutedForeground }]}>
+                          No skip feedback yet. Enable "Direct Skip Feedback" in the overview tab to start collecting insights.
+                        </Text>
+                      ) : (
+                        skipFeedback.slice(0, 5).map((item) => (
+                          <View key={item.id} style={[styles.skipInsightRow, { borderTopColor: colors.border }]}>
+                            <Feather name="message-circle" size={13} color={colors.mutedForeground} style={{ marginTop: 2 }} />
+                            <Text style={[styles.skipInsightMsg, { color: colors.foreground }]}>{item.message}</Text>
+                          </View>
+                        ))
+                      )}
+                      {skipFeedback.length > 5 && (
+                        <Text style={[styles.skipInsightMore, { color: colors.mutedForeground }]}>
+                          +{skipFeedback.length - 5} more · Generate your Action Plan for AI analysis of all feedback
+                        </Text>
+                      )}
+                    </View>
+                  )}
+
                   {A.tier === "navigator" && (
                     <TouchableOpacity
                       style={[styles.upgradeStrip, { backgroundColor: "#3A1F0E" }]}
@@ -2511,6 +2553,17 @@ const styles = StyleSheet.create({
 
   upgradeStrip: { margin: 20, borderRadius: 14, padding: 16, flexDirection: "row", alignItems: "center", gap: 10 },
   upgradeStripTxt: { flex: 1, fontSize: 13, fontFamily: "Inter_500Medium", color: "#CA922B", lineHeight: 18 },
+  skipInsightCard: { marginHorizontal: 20, marginBottom: 16, borderRadius: 16, borderWidth: 1, padding: 16, gap: 0 },
+  skipInsightHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 12 },
+  skipInsightIconWrap: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  skipInsightTitle: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  skipInsightSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17, marginTop: 2 },
+  skipInsightBadge: { minWidth: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", paddingHorizontal: 8 },
+  skipInsightBadgeTxt: { fontSize: 13, fontFamily: "Inter_700Bold" },
+  skipInsightEmpty: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18, paddingTop: 4 },
+  skipInsightRow: { flexDirection: "row", gap: 8, alignItems: "flex-start", paddingVertical: 10, borderTopWidth: 1 },
+  skipInsightMsg: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
+  skipInsightMore: { fontSize: 12, fontFamily: "Inter_400Regular", paddingTop: 10, textAlign: "center" },
 
   healthScoreCard: { marginHorizontal: 20, marginBottom: 16, borderRadius: 16, borderWidth: 1, padding: 18, gap: 14 },
   healthScoreHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
