@@ -1345,6 +1345,30 @@ router.post("/kinfolk/sessions/:id/share", async (req: Request, res: Response) =
 });
 
 // ─── View a shared trip (public) ───────────────────────────────────────────────
+// ─── GET /kinfolk/skip-feedback — owner views why community skipped their business ──
+router.get("/kinfolk/skip-feedback", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
+  try {
+    const [ownerBiz] = await db
+      .select({ id: businessesTable.id })
+      .from(businessesTable)
+      .where(eq(businessesTable.submittedById, String(req.user.id)))
+      .limit(1);
+    if (!ownerBiz) return void res.json({ messages: [], total: 0 });
+    const rows = await db
+      .select({ message: businessSkipFeedbackTable.message })
+      .from(businessSkipFeedbackTable)
+      .where(eq(businessSkipFeedbackTable.businessId, ownerBiz.id))
+      .orderBy(desc(businessSkipFeedbackTable.createdAt))
+      .limit(25);
+    const messages = rows.map((r) => r.message).filter((m): m is string => typeof m === "string" && m.trim().length > 0);
+    res.json({ messages, total: messages.length });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch skip feedback");
+    res.status(500).json({ error: "Failed to fetch skip feedback" });
+  }
+});
+
 router.get("/kinfolk/shared/:shareId", async (req: Request, res: Response) => {
   const { shareId } = req.params as { shareId: string };
 

@@ -67,6 +67,8 @@ export default function BusinessOwnerHome() {
   const [stats, setStats] = useState({ views: 0, saves: 0, reviews: 0 });
   const [clicks, setClicks] = useState<{ tiktok: number; instagram: number; youtube: number; facebook: number; pinterest: number; website: number; phoneCalls: number; directions: number } | null>(null);
   const [analyticsLocked, setAnalyticsLocked] = useState(false);
+  const [skipInsights, setSkipInsights] = useState<string[]>([]);
+  const [skipExpanded, setSkipExpanded] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -86,6 +88,11 @@ export default function BusinessOwnerHome() {
             if (aData.clicks30d) setClicks(aData.clicks30d);
           } else if (aRes.status === 403) {
             setAnalyticsLocked(true);
+          }
+          const sRes = await fetch(`${getApiBase()}/api/kinfolk/skip-feedback`, { headers });
+          if (sRes.ok) {
+            const sData = await sRes.json() as { messages?: string[] };
+            setSkipInsights(sData.messages ?? []);
           }
         }
       }
@@ -341,6 +348,44 @@ export default function BusinessOwnerHome() {
               ))}
             </View>
 
+            {skipInsights.length > 0 && (
+              <TouchableOpacity
+                style={[styles.skipCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                activeOpacity={0.85}
+                onPress={() => setSkipExpanded((v) => !v)}
+              >
+                <View style={styles.skipHeader}>
+                  <View style={styles.skipHeaderLeft}>
+                    <View style={[styles.skipIcon, { backgroundColor: "#F59E0B18" }]}>
+                      <Feather name="eye-off" size={15} color="#F59E0B" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.skipTitle, { color: colors.foreground }]}>Community Skip Insights</Text>
+                      <Text style={[styles.skipSub, { color: colors.mutedForeground }]}>
+                        {skipInsights.length} reason{skipInsights.length !== 1 ? "s" : ""} community members passed — private to you
+                      </Text>
+                    </View>
+                  </View>
+                  <Feather name={skipExpanded ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
+                </View>
+                {skipExpanded && (
+                  <View style={[styles.skipBody, { borderTopColor: colors.border }]}>
+                    {skipInsights.slice(0, 10).map((msg, i) => (
+                      <View key={i} style={styles.skipRow}>
+                        <Feather name="message-square" size={12} color={colors.mutedForeground} style={{ marginTop: 2 }} />
+                        <Text style={[styles.skipMsg, { color: colors.foreground }]}>{msg}</Text>
+                      </View>
+                    ))}
+                    {skipInsights.length > 10 && (
+                      <Text style={[styles.skipMore, { color: colors.mutedForeground }]}>
+                        +{skipInsights.length - 10} more · Use KinfolkAI → Action Plan for full analysis
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity
               style={[styles.listAnotherBtn, { borderColor: colors.border }]}
               onPress={() => router.push("/list-business" as never)}
@@ -400,4 +445,14 @@ const styles = StyleSheet.create({
   divider: { height: 1, marginLeft: 70 },
   listAnotherBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1, borderRadius: 14, paddingVertical: 12, borderStyle: "dashed" },
   listAnotherTxt: { fontSize: 14, fontFamily: "Inter_500Medium" },
+  skipCard: { borderRadius: 16, borderWidth: 1, overflow: "hidden", marginTop: 12 },
+  skipHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 14 },
+  skipHeaderLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
+  skipIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  skipTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  skipSub: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 1 },
+  skipBody: { borderTopWidth: 1, paddingHorizontal: 14, paddingVertical: 12, gap: 8 },
+  skipRow: { flexDirection: "row", gap: 8, alignItems: "flex-start" },
+  skipMsg: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1, lineHeight: 18 },
+  skipMore: { fontFamily: "Inter_400Regular", fontSize: 12, textAlign: "center", paddingTop: 4 },
 });

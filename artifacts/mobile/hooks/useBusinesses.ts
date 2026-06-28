@@ -60,6 +60,7 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
     youtube: b.youtube as string | undefined,
     foundingBusiness: b.foundingBusiness as boolean | undefined,
     foundingNumber: b.foundingNumber as number | undefined,
+    introVideoUrl: b.introVideoUrl as string | undefined,
   };
 }
 
