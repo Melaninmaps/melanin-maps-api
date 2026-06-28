@@ -5,5 +5,7 @@ export const modules: ModuleMap = {
   "./components/mockups/hero-modes/DarkMode.tsx": () => import("../components/mockups/hero-modes/DarkMode.tsx"),
   "./components/mockups/hero-modes/LightMode.tsx": () => import("../components/mockups/hero-modes/LightMode.tsx"),
   "./components/mockups/surveys/BlackOwnedSurvey.tsx": () => import("../components/mockups/surveys/BlackOwnedSurvey.tsx"),
-  "./components/mockups/surveys/GeneralSurvey.tsx": () => import("../components/mockups/surveys/GeneralSurvey.tsx")
+  "./components/mockups/surveys/GeneralSurvey.tsx": () => import("../components/mockups/surveys/GeneralSurvey.tsx"),
+  "./components/mockups/theme-compare/DarkModeHero.tsx": () => import("../components/mockups/theme-compare/DarkModeHero.tsx"),
+  "./components/mockups/theme-compare/LightModeHero.tsx": () => import("../components/mockups/theme-compare/LightModeHero.tsx")
 };
