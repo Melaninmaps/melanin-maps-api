@@ -4,7 +4,6 @@ import { computeTrustLevel, getReviewWeight } from "@workspace/db/trust";
 import { eq, desc, and, ne, gte, sql } from "drizzle-orm";
 import { sendPushToUser, sendPushToUsersWithSavedBusiness, sendThreeStarAlert, sendBuzzAlert, sendNegativeReviewAlertIfThreshold } from "../lib/pushNotifications";
 import { reviewLimiter } from "../middleware/rateLimiter";
-import { requireMembership } from "../middleware/requireMembership";
 import { requireTrust } from "../middleware/requireTrust";
 import { checkContent, redactForLog } from "../lib/contentFilter";
 
