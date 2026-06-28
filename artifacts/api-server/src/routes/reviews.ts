@@ -484,22 +484,18 @@ router.post("/reviews/:id/approve-video", async (req: Request, res: Response) =>
 
 router.get("/admin/reviews", async (req: Request, res: Response) => {
   if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
-  const { businessId } = req.query;
+  const { businessId, status } = req.query;
   try {
-    const rows = businessId && typeof businessId === "string"
-      ? await db
-          .select({ review: reviewsTable, businessName: businessesTable.name })
-          .from(reviewsTable)
-          .leftJoin(businessesTable, eq(reviewsTable.businessId, businessesTable.id))
-          .where(eq(reviewsTable.businessId, businessId))
-          .orderBy(desc(reviewsTable.createdAt))
-          .limit(200)
-      : await db
-          .select({ review: reviewsTable, businessName: businessesTable.name })
-          .from(reviewsTable)
-          .leftJoin(businessesTable, eq(reviewsTable.businessId, businessesTable.id))
-          .orderBy(desc(reviewsTable.createdAt))
-          .limit(200);
+    const conditions = [];
+    if (businessId && typeof businessId === "string") conditions.push(eq(reviewsTable.businessId, businessId));
+    if (status && typeof status === "string") conditions.push(eq(reviewsTable.status, status as "posted" | "auto_approved" | "pending_video"));
+    const rows = await db
+      .select({ review: reviewsTable, businessName: businessesTable.name })
+      .from(reviewsTable)
+      .leftJoin(businessesTable, eq(reviewsTable.businessId, businessesTable.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(reviewsTable.createdAt))
+      .limit(200);
     const reviews = rows.map((r) => ({ ...r.review, businessName: r.businessName ?? r.review.businessId }));
     res.json({ reviews });
   } catch (err: any) {

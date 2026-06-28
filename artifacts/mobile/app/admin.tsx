@@ -93,18 +93,24 @@ function OverviewTab() {
   const { users, loading: usersLoading } = useAdminUsers();
   const userCount = usersLoading ? "…" : String(users.length);
   const [pendingBizCount, setPendingBizCount] = useState(0);
+  const [pendingVideoCount, setPendingVideoCount] = useState(0);
 
   useEffect(() => {
     void (async () => {
       try {
         const token = await SecureStore.getItemAsync("auth_session_token");
         if (!token) return;
-        const res = await fetch(`${getApiBase()}/api/admin/businesses/pending`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json() as unknown[];
+        const [bizRes, reviewRes] = await Promise.all([
+          fetch(`${getApiBase()}/api/admin/businesses/pending`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${getApiBase()}/api/admin/reviews?status=pending_video`, { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+        if (bizRes.ok) {
+          const data = await bizRes.json() as unknown[];
           setPendingBizCount(data.length);
+        }
+        if (reviewRes.ok) {
+          const data = await reviewRes.json() as { reviews?: unknown[] };
+          setPendingVideoCount((data.reviews ?? []).length);
         }
       } catch { /* non-fatal */ }
     })();
@@ -122,6 +128,7 @@ function OverviewTab() {
       <SectionLabel title="Quick Actions" />
       <ActionRow icon="check-circle" label="Approve Pending Businesses" sub={pendingBizCount > 0 ? `${pendingBizCount} submission${pendingBizCount !== 1 ? "s" : ""} awaiting review` : "No pending submissions"} color="#2D7A4F" badge={pendingBizCount} onPress={() => setTab("submissions")} />
       <ActionRow icon="flag" label="Review Reports Queue" sub={pendingCount > 0 ? `${pendingCount} report${pendingCount !== 1 ? "s" : ""} need attention` : "All clear"} color="#DC2626" badge={pendingCount} onPress={() => setTab("reports")} />
+      <ActionRow icon="video" label="Approve Video Reviews" sub={pendingVideoCount > 0 ? `${pendingVideoCount} video review${pendingVideoCount !== 1 ? "s" : ""} awaiting approval` : "No pending video reviews"} color="#7C3AED" badge={pendingVideoCount} onPress={() => setTab("reviews")} />
     </ScrollView>
   );
 }

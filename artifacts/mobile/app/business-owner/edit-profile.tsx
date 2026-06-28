@@ -53,6 +53,7 @@ type FormState = {
   phone: string; website: string; hours: string;
   instagram: string; tiktok: string; facebook: string; twitter: string; youtube: string;
   pinterest: string; primarySocialPlatform: string;
+  address: string; city: string; state: string; zip: string;
 };
 
 const EMPTY_FORM: FormState = {
@@ -60,6 +61,7 @@ const EMPTY_FORM: FormState = {
   phone: "", website: "", hours: "",
   instagram: "", tiktok: "", facebook: "", twitter: "", youtube: "",
   pinterest: "", primarySocialPlatform: "",
+  address: "", city: "", state: "", zip: "",
 };
 
 export default function EditBusinessProfile() {
@@ -112,6 +114,8 @@ export default function EditBusinessProfile() {
             instagram: b.instagram ?? "", tiktok: b.tiktok ?? "", facebook: b.facebook ?? "",
             twitter: b.twitter ?? "", youtube: b.youtube ?? "",
             pinterest: (b as any).pinterest ?? "", primarySocialPlatform: (b as any).primarySocialPlatform ?? "",
+            address: (b as any).address ?? "", city: (b as any).city ?? "",
+            state: (b as any).state ?? "", zip: (b as any).zip ?? "",
           };
           setForm(f);
           setOriginal(f);
@@ -157,6 +161,23 @@ export default function EditBusinessProfile() {
         }),
       });
       if (!res.ok) throw new Error("Save failed");
+
+      const addressChanged = original && (
+        form.address.trim() !== original.address.trim() ||
+        form.city.trim() !== original.city.trim() ||
+        form.state.trim() !== original.state.trim() ||
+        form.zip.trim() !== original.zip.trim()
+      );
+      if (addressChanged && businessId && form.address.trim() && form.city.trim() && form.state.trim()) {
+        await fetch(`${getApiBase()}/api/businesses/${businessId}/address`, {
+          method: "PATCH", headers,
+          body: JSON.stringify({
+            address: form.address.trim(), city: form.city.trim(),
+            state: form.state.trim(), zip: form.zip.trim() || undefined,
+          }),
+        });
+      }
+
       if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setOriginal({ ...form });
       Alert.alert("Changes saved!", "Your business profile has been updated.", [{ text: "OK", onPress: () => router.back() }]);
@@ -531,6 +552,50 @@ export default function EditBusinessProfile() {
           <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
             placeholder="Your business name" placeholderTextColor={colors.mutedForeground}
             value={form.name} onChangeText={update("name")} autoCapitalize="words" />
+        </View>
+
+        {/* ── Address ── */}
+        <View style={styles.group}>
+          <Text style={[styles.groupLabel, { color: colors.foreground }]}>Business Address</Text>
+          <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>
+            If you move, customers who saved your business will be notified automatically.
+          </Text>
+          <TextInput
+            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+            placeholder="Street address"
+            placeholderTextColor={colors.mutedForeground}
+            value={form.address}
+            onChangeText={update("address")}
+            autoCapitalize="words"
+          />
+          <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+            <TextInput
+              style={[styles.input, { flex: 2, backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground, marginTop: 0 }]}
+              placeholder="City"
+              placeholderTextColor={colors.mutedForeground}
+              value={form.city}
+              onChangeText={update("city")}
+              autoCapitalize="words"
+            />
+            <TextInput
+              style={[styles.input, { flex: 1, backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground, marginTop: 0 }]}
+              placeholder="State"
+              placeholderTextColor={colors.mutedForeground}
+              value={form.state}
+              onChangeText={update("state")}
+              autoCapitalize="characters"
+              maxLength={2}
+            />
+            <TextInput
+              style={[styles.input, { flex: 1, backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground, marginTop: 0 }]}
+              placeholder="ZIP"
+              placeholderTextColor={colors.mutedForeground}
+              value={form.zip}
+              onChangeText={update("zip")}
+              keyboardType="numeric"
+              maxLength={10}
+            />
+          </View>
         </View>
 
         {/* ── Category ── */}
