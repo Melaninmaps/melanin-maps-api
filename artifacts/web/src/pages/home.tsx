@@ -278,7 +278,7 @@ export default function Home() {
       <section className="relative min-h-[50vh] md:min-h-[110vh] flex items-center pt-20 pb-32 overflow-hidden bg-[#2B1507]">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.pexels.com/photos/20628911/pexels-photo-20628911/free-photo-of-view-of-a-cobblestone-alley-between-apartment-buildings-in-an-italian-city.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
+            src="https://images.pexels.com/photos/416947/pexels-photo-416947.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
             alt="Cobblestone street at night with businesses, street lights and puddle"
             className="w-full h-full object-cover object-center opacity-50"
           />
