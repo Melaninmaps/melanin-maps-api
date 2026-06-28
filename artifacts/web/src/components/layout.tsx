@@ -1,8 +1,9 @@
 import { Link, useLocation, Redirect } from "wouter";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "./ui/button";
-import { Menu, X, MessageSquare, Bell, ChevronRight, FileText, BarChart2, Sparkles } from "lucide-react";
+import { Menu, X, MessageSquare, Bell, ChevronRight, FileText, BarChart2, Sparkles, Sun, Moon } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -22,6 +23,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { data: auth } = useGetCurrentAuthUser();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const requireApproval = useRequireApproval();
+  const { theme, setTheme } = useTheme();
 
   if (requireApproval && auth?.user && auth.user.approved === false) {
     return <Redirect to="/pending-approval" />;
@@ -43,7 +45,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#FAF6EF]">
+    <div className="min-h-[100dvh] flex flex-col bg-background">
       {/* ── Top Announcement Banner ── */}
       {!bannerDismissed && (
         <div className="w-full bg-[#CA922B] text-[#2B1507] text-sm font-semibold z-[60] relative">
@@ -133,6 +135,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Auth / Right side */}
           <div className="hidden xl:flex items-center gap-4">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              aria-label="Toggle light/dark mode"
+              className="w-9 h-9 rounded-full flex items-center justify-center border border-white/20 bg-white/5 hover:bg-white/15 transition-colors text-[#F5EBD8]"
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             {auth?.user ? (
               <>
                 <Link href="/notifications">
@@ -177,6 +186,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </Link>
             ))}
             <div className="pt-4 mt-2 flex flex-col gap-3">
+              <button
+                onClick={() => { setTheme(theme === "dark" ? "light" : "dark"); setIsMobileMenuOpen(false); }}
+                className="flex items-center gap-3 py-3 text-[15px] font-medium text-[#F5EBD8] border-b border-white/5"
+              >
+                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              </button>
               {auth?.user ? (
                 <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
                   <span className="block text-[15px] font-medium text-[#F5EBD8] cursor-pointer py-2">Profile</span>
