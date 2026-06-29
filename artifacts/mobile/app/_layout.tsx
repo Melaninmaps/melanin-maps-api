@@ -15,14 +15,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack, useRouter, usePathname, type Href } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useRef } from "react";
-import { Animated, Platform, StyleSheet, View } from "react-native";
+import { Alert, Animated, Platform, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProviderWrapper } from "@/components/KeyboardProviderWrapper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
-import { Alert } from "react-native";
 
 // Crash reporter: intercept ALL unhandled JS errors before ErrorBoundary mounts
 // so we can read the actual error on next launch as an Alert.
@@ -57,6 +55,8 @@ function PushNotificationRegistrar() {
       try {
         const token = await SecureStore.getItemAsync("auth_session_token");
         if (!token) return;
+        const Notifications = await import("expo-notifications").catch(() => null);
+        if (!Notifications) return;
         const { status } = await Notifications.requestPermissionsAsync();
         if (status !== "granted") return;
         const pushToken = await Notifications.getExpoPushTokenAsync().catch(() => null);
