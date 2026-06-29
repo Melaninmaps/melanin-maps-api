@@ -21,6 +21,117 @@ import { storage } from "../storage";
 
 const router: IRouter = Router();
 
+// ─── Live Weather Integration (Open-Meteo — free, no key required) ────────────
+const WMO_CODES: Record<number, string> = {
+  0: "clear sky", 1: "mainly clear", 2: "partly cloudy", 3: "overcast",
+  45: "foggy", 48: "rime fog",
+  51: "light drizzle", 53: "moderate drizzle", 55: "dense drizzle",
+  61: "slight rain", 63: "moderate rain", 65: "heavy rain",
+  71: "slight snow", 73: "moderate snow", 75: "heavy snow", 77: "snow grains",
+  80: "rain showers", 81: "moderate rain showers", 82: "violent rain showers",
+  85: "snow showers", 86: "heavy snow showers",
+  95: "thunderstorm", 96: "thunderstorm with hail", 99: "thunderstorm with heavy hail",
+};
+
+async function fetchWeatherContext(location: string): Promise<string | null> {
+  try {
+    const geoRes = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json`,
+      { signal: AbortSignal.timeout(5000) },
+    );
+    if (!geoRes.ok) return null;
+    const geoData = await geoRes.json() as {
+      results?: Array<{ latitude: number; longitude: number; name: string; admin1?: string; timezone: string }>;
+    };
+    const place = geoData.results?.[0];
+    if (!place) return null;
+
+    const wRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}` +
+      `&current=temperature_2m,apparent_temperature,precipitation,rain,weathercode,windspeed_10m` +
+      `&hourly=temperature_2m,precipitation_probability,precipitation,weathercode` +
+      `&timezone=${encodeURIComponent(place.timezone)}&forecast_days=3` +
+      `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch`,
+      { signal: AbortSignal.timeout(5000) },
+    );
+    if (!wRes.ok) return null;
+    const wd = await wRes.json() as {
+      current: { temperature_2m: number; apparent_temperature: number; precipitation: number; rain: number; weathercode: number; windspeed_10m: number };
+      hourly: { time: string[]; temperature_2m: number[]; precipitation_probability: number[]; precipitation: number[]; weathercode: number[] };
+    };
+
+    const cur = wd.current;
+    const condition = WMO_CODES[cur.weathercode] ?? "variable conditions";
+    const cityLabel = `${place.name}${place.admin1 ? `, ${place.admin1}` : ""}`;
+
+    // Next 24h rain probability
+    const now = new Date();
+    const next24Idx = wd.hourly.time
+      .map((t, i) => ({ t: new Date(t), i }))
+      .filter(({ t }) => t > now && t <= new Date(now.getTime() + 24 * 3600000))
+      .map(({ i }) => i);
+
+    const maxRainProb = next24Idx.length ? Math.max(...next24Idx.map((i) => wd.hourly.precipitation_probability[i] ?? 0)) : 0;
+    const totalRain24h = next24Idx.reduce((s, i) => s + (wd.hourly.precipitation[i] ?? 0), 0);
+
+    const rainNote =
+      maxRainProb >= 60 ? `Rain very likely in the next 24 hours (${maxRainProb}% chance, ~${totalRain24h.toFixed(2)}" expected). Umbrella or rain jacket strongly recommended.` :
+      maxRainProb >= 35 ? `Possible rain in the next 24 hours (${maxRainProb}% chance). Light jacket or umbrella advisable.` :
+      "No significant rain expected in the next 24 hours.";
+
+    // 3-day daily summary
+    const dayMap = new Map<string, number[]>();
+    wd.hourly.time.forEach((t, i) => {
+      const d = t.slice(0, 10);
+      if (!dayMap.has(d)) dayMap.set(d, []);
+      dayMap.get(d)!.push(i);
+    });
+    const forecastLines = [...dayMap.entries()].slice(0, 3).map(([day, idxs]) => {
+      const temps = idxs.map((i) => wd.hourly.temperature_2m[i] ?? 0);
+      const prob = Math.max(...idxs.map((i) => wd.hourly.precipitation_probability[i] ?? 0));
+      const midCode = wd.hourly.weathercode[idxs[Math.floor(idxs.length / 2)] ?? 0] ?? 0;
+      const cond = WMO_CODES[midCode] ?? "variable";
+      const label = new Date(day + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+      return `${label}: ${Math.min(...temps).toFixed(0)}–${Math.max(...temps).toFixed(0)}°F, ${cond}${prob >= 30 ? `, ${prob}% rain chance` : ""}`;
+    });
+
+    return `LIVE WEATHER FOR ${cityLabel.toUpperCase()} (real data — use this, don't hedge):
+Right now: ${cur.temperature_2m.toFixed(0)}°F (feels like ${cur.apparent_temperature.toFixed(0)}°F), ${condition}, wind ${cur.windspeed_10m.toFixed(0)} mph
+${rainNote}
+3-day outlook:
+${forecastLines.join("\n")}
+
+WEATHER ADVICE RULES:
+- Give specific, actionable recommendations based on the numbers above
+- If rain ≥60%: tell them to bring an umbrella, full stop
+- If rain 35–59%: suggest a light jacket or packable rain layer
+- Reference the actual temperature (not vague "warm/cool")
+- If they're packing for a trip, account for all 3 forecast days`;
+  } catch {
+    return null;
+  }
+}
+
+function extractLocationFromMessage(msg: string, fallbacks: (string | null | undefined)[]): string | null {
+  const patterns = [
+    /(?:weather|forecast|rain|temperature|degrees|umbrella|hot|cold|snow|storm)\s+(?:in|for|at|around)\s+([A-Za-z][a-zA-Z ]{2,24}?)(?:[?.,;]|$)/i,
+    /(?:in|to|for|at|visiting|going to)\s+([A-Za-z][a-zA-Z ]{2,24}?)(?:'s)?\s+weather/i,
+    /([A-Za-z][a-zA-Z ]{2,20}?)\s+(?:weather|forecast|temperature)/i,
+  ];
+  for (const p of patterns) {
+    const m = msg.match(p);
+    if (m?.[1]?.trim()) return m[1].trim();
+  }
+  for (const f of fallbacks) {
+    if (f) return f;
+  }
+  return null;
+}
+
+function isWeatherQuery(msg: string): boolean {
+  return /\b(weather|forecast|rain|raining|umbrella|temperature|degrees|hot|cold|snow|snowing|storm|wind|windy|humid|sunny|cloudy|what to (wear|pack)|what should I (wear|bring|pack)|will it rain)\b/i.test(msg);
+}
+
 // ─── City Voice System (copied + shared from travel.ts) ───────────────────────
 type CityVoice = { slang: string[]; phrases: string[]; culturalTouchstones: string[]; writingGuidance: string };
 
@@ -229,6 +340,7 @@ function buildSystemPrompt(opts: {
   businessCatalog?: BusinessCatalogEntry[];
   activeJourney?: { title: string; city?: string | null; journeyType: string; phases: JourneyPhase[]; aiContext?: string | null } | null;
   crossCityBridge?: CrossCityMatch[] | null;
+  weatherContext?: string | null;
 }): string {
   const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
 
@@ -377,24 +489,33 @@ ${crossCityBridge.map((bridge) =>
 CRITICAL INSTRUCTION: Don't wait for them to ask. Proactively say something like — "Since you were feeling ${crossCityBridge[0]?.category} spots in ${crossCityBridge[0]?.fromCity}, I already found you some great ones in ${activeJourney?.city}." Make the connection feel magical, like a friend who remembered exactly what you loved.`
     : "";
 
-  return `You are KinfolkAI™ — a conversational travel companion built by and for the Minority community. You are not a search engine. You are the user's most trusted, well-traveled friend who gives the real unfiltered scoop — the way only a neighbor who grew up there can.
+  const weatherSection = opts.weatherContext ? `\n${opts.weatherContext}\n` : "";
 
-You have memory. You know this person. You learn from every interaction. You get more personalized every time they talk to you.
+  return `You are KinfolkAI™ — the most intuitive, knowledgeable life companion built for the Minority community. You are not a search engine and not a restricted bot. You are the user's most trusted, well-connected friend — someone who knows them, remembers everything, and genuinely helps with all of life's questions: travel, weather, community, moving, business, family, health, finances, and everything in between.
 
-${profileSection}${likedSection}${dislikedSection}${savedSection}${journeySection}${crossCitySection}
+You have memory. You know this person. You learn from every interaction. You get more useful every time they talk to you.
 
-HANDLING OUT-OF-SCOPE QUESTIONS — CHECK THIS FIRST:
-KinfolkAI is a community travel companion — not a general assistant. If someone asks about something outside your lane (weather forecasts, news, sports scores, stock prices, directions/maps, math, general trivia, etc.), handle it like this:
-- Acknowledge you can't help with that specific thing in 1 sentence
-- ONLY offer a travel/community pivot if it is genuinely and naturally connected (e.g. weather → "I can't pull live forecasts, but I can tell you what to pack for Atlanta in July"). If there is no natural connection, just acknowledge and stop — do NOT append a restaurant or business recommendation
-- Never pretend to have data you don't have (live weather, real-time traffic, current news, etc.)
-- IMPORTANT: The discovery mandate below does NOT apply to out-of-scope questions. Do not probe or redirect to businesses after an out-of-scope response.
+${profileSection}${likedSection}${dislikedSection}${savedSection}${journeySection}${crossCitySection}${weatherSection}
+WHAT YOU CAN DO — be confident about this:
+- Weather: You have live weather data when it's relevant (see LIVE WEATHER section above). Give specific, actionable advice — umbrella, what to wear, packing recommendations. Never say you can't do weather.
+- Travel & discovery: minority-owned businesses, neighborhoods, safety, culture, events, itineraries
+- Life logistics: moving to a new city, finding doctors, schools, contractors, salons, financial services
+- Community: finding your people, places of worship, networking, social groups
+- Business ownership: growth, promotions, community engagement
+- General knowledge: current events context, life advice, planning — be genuinely helpful, not restrictive
 
-DISCOVERY MANDATE — applies only to in-scope travel and community questions:
-After answering an in-scope question, surface 1-2 adjacent needs the user hasn't mentioned. Frame these as warm, curious questions — not a list or a checklist. You are the friend who thinks ahead.
+BEING GENUINELY HELPFUL:
+- Answer the actual question first, completely. Don't deflect.
+- If you don't have specific data (e.g. real-time news, stock prices), say so briefly — then be helpful anyway with what you do know
+- Weather: always use the live data provided — give temperatures, rain chance, specific packing/umbrella recommendations
+- Never pretend you can't help with something when you actually can
+
+DISCOVERY — think ahead like a great friend:
+After answering, surface 1-2 adjacent things the user probably needs but hasn't thought to ask. Frame as warm, curious questions — not a checklist.
 
 What to probe by situation:
-- They ask for a stylist → also ask: "Have you found a primary care doctor yet? And do you need any home services — repair, cleaning, organizing?"
+- They ask about weather/packing → also ask: "You heading somewhere fun? I can pull up what the vibe is like there, find spots, check what's going on."
+- They ask for a stylist → also ask: "Have you found a primary care doctor yet? And do you need home services — repair, cleaning, organizing?"
 - They ask about restaurants → also ask: "What about community? Have you found a church, mosque, or social group yet?"
 - They're moving → probe: movers, home repair, organizer, cleaning service, storage, schools, healthcare, community organizations, financial/banking setup
 - They're starting a business → probe: mental health support, accountant, insurance, coworking space, marketing help
@@ -811,8 +932,20 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-critical */ }
     }
 
+    // Fetch live weather if the user is asking about weather/packing/conditions
+    let weatherContext: string | null = null;
+    if (isWeatherQuery(message)) {
+      const weatherLoc = extractLocationFromMessage(
+        message,
+        [destination, activeJourney?.city, (prefs?.favoriteCities as string[] | null)?.[0]],
+      );
+      if (weatherLoc) {
+        weatherContext = await fetchWeatherContext(weatherLoc).catch(() => null);
+      }
+    }
+
     // Build system prompt
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, businessCatalog, activeJourney, crossCityBridge });
+    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, businessCatalog, activeJourney, crossCityBridge, weatherContext });
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages
