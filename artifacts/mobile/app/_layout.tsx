@@ -55,11 +55,11 @@ function PushNotificationRegistrar() {
       try {
         const token = await SecureStore.getItemAsync("auth_session_token");
         if (!token) return;
-        // @ts-ignore - expo-notifications removed from package.json; graceful no-op
         const Notifications = await import("expo-notifications").catch(() => null);
         if (!Notifications) return;
-        const { status } = await Notifications.requestPermissionsAsync();
-        if (status !== "granted") return;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const perms: any = await Notifications.requestPermissionsAsync();
+        if (!perms?.granted && perms?.status !== "granted") return;
         const pushToken = await Notifications.getExpoPushTokenAsync().catch(() => null);
         if (!pushToken?.data) return;
         const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
