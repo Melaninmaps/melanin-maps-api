@@ -29,6 +29,7 @@ import { useAuth } from "@/lib/auth";
 import { useMembership } from "@/hooks/useMembership";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import * as SecureStore from "expo-secure-store";
+import * as Speech from "expo-speech";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
@@ -295,6 +296,13 @@ function AiMessageBubble({
         {/* Reply text */}
         <View style={[aiStyles.bubble, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[aiStyles.bubbleText, { color: colors.text }]}>{msg.content}</Text>
+          <TouchableOpacity
+            style={aiStyles.speakBtn}
+            onPress={() => void Speech.speak(msg.content, { language: "en-US", rate: 0.95 })}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="volume-medium-outline" size={14} color={colors.mutedForeground} />
+          </TouchableOpacity>
         </View>
 
         {/* Recommendations */}
@@ -457,6 +465,7 @@ const aiStyles = StyleSheet.create({
   contentCol: { flex: 1 },
   bubble: { borderRadius: 16, borderTopLeftRadius: 4, padding: 12, borderWidth: 1, marginBottom: 8 },
   bubbleText: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 20 },
+  speakBtn: { alignSelf: "flex-end", marginTop: 6, padding: 4 },
   recsContainer: { marginBottom: 8 },
   destBar: { flexDirection: "row", alignItems: "flex-start", gap: 6, borderRadius: 12, borderWidth: 1, padding: 10, marginBottom: 8, flexWrap: "wrap" },
   destText: { fontFamily: "Inter_700Bold", fontSize: 14 },
@@ -1260,6 +1269,7 @@ export default function TravelScreen() {
 
   const [inputText, setInputText] = useState("");
   const [voiceMode, setVoiceMode] = useState<"community" | "home" | "local" | "professional">("community");
+  const [voiceOutput, setVoiceOutput] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -1284,6 +1294,14 @@ export default function TravelScreen() {
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
     }
   }, [messages.length, isLoading]);
+
+  useEffect(() => {
+    if (!voiceOutput || isLoading) return;
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== "assistant") return;
+    void Speech.stop();
+    void Speech.speak(last.content, { language: "en-US", rate: 0.95 });
+  }, [messages, isLoading, voiceOutput]);
 
   const handleSend = useCallback(async (text?: string) => {
     const msg = (text ?? inputText).trim();
@@ -1547,6 +1565,16 @@ export default function TravelScreen() {
 
         {/* Input row */}
         <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: insets.bottom + 8 }]}>
+          <TouchableOpacity
+            style={[styles.voiceOutputBtn, { backgroundColor: voiceOutput ? colors.primary : colors.background, borderColor: voiceOutput ? colors.primary : colors.border }]}
+            onPress={() => {
+              if (voiceOutput) void Speech.stop();
+              setVoiceOutput((v) => !v);
+            }}
+            activeOpacity={0.75}
+          >
+            <Ionicons name={voiceOutput ? "volume-high" : "volume-mute-outline"} size={18} color={voiceOutput ? "#fff" : colors.mutedForeground} />
+          </TouchableOpacity>
           <TextInput
             style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
             placeholder="Ask KinfolkAI anything…"
@@ -1630,5 +1658,6 @@ const styles = StyleSheet.create({
   voicePillLabel: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   inputWrapper: { flexDirection: "row", alignItems: "flex-end", gap: 8, paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1 },
   input: { flex: 1, borderRadius: 22, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 14, maxHeight: 120, lineHeight: 20 },
+  voiceOutputBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", borderWidth: 1, marginBottom: 2 },
   sendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 2 },
 });
