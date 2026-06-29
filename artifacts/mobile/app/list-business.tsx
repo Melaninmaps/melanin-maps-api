@@ -45,6 +45,9 @@ interface FormData {
   zip: string;
   phone: string;
   website: string;
+  instagram: string;
+  facebook: string;
+  tiktok: string;
   priceRange: string;
   hours: string;
   customHours: string;
@@ -64,6 +67,9 @@ const INITIAL_FORM: FormData = {
   zip: "",
   phone: "",
   website: "",
+  instagram: "",
+  facebook: "",
+  tiktok: "",
   priceRange: "",
   hours: "",
   customHours: "",
@@ -343,7 +349,10 @@ export default function ListBusinessScreen() {
           state: form.state,
           zip: form.zip,
           phone: form.phone,
-          website: form.website,
+          website: form.website || null,
+          instagram: form.instagram || null,
+          facebook: form.facebook || null,
+          tiktok: form.tiktok || null,
           priceRange: form.priceRange,
           hours: form.hours,
           customHours: form.customHours,
@@ -708,11 +717,35 @@ export default function ListBusinessScreen() {
                   />
 
                   <Field
-                    label="Website"
+                    label="Website (optional)"
                     value={form.website}
                     onChangeText={update("website")}
                     placeholder="yourwebsite.com"
                     keyboardType="url"
+                    colors={colors}
+                  />
+
+                  <Field
+                    label="Instagram (optional)"
+                    value={form.instagram}
+                    onChangeText={update("instagram")}
+                    placeholder="@yourbusiness"
+                    colors={colors}
+                  />
+
+                  <Field
+                    label="Facebook (optional)"
+                    value={form.facebook}
+                    onChangeText={update("facebook")}
+                    placeholder="facebook.com/yourbusiness"
+                    colors={colors}
+                  />
+
+                  <Field
+                    label="TikTok (optional)"
+                    value={form.tiktok}
+                    onChangeText={update("tiktok")}
+                    placeholder="@yourbusiness"
                     colors={colors}
                   />
 
