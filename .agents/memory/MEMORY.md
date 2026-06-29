@@ -18,3 +18,4 @@
 - [Launch readiness lessons](launch-readiness-lessons.md) — pre-launch checklist, 5 navigation/discoverability bugs found, version history (current: 1.0.1 / versionCode 3 / buildNumber 4).
 - [Philly launch features](philly-launch-features.md) — all 9 features shipped: reviews overhaul, compliment chips, intro video, owner response, business preview, move alerts, KinfolkAI skip wiring, recommendation nudge, ad ranking, buzz/negative alerts, weekly schedule calendar.
 - [Duplicate schema field pattern](duplicate-schema-fields.md) — waitlist.ts and admin.tsx both had duplicate firstName fields; drizzle push and TS both fail; always check schema + any hand-typed mirror types in web artifacts.
+- [Expo SDK version mismatch crash](expo-sdk-version-mismatch.md) — mismatched expo-* package versions (e.g. 56.x on SDK 54) cause NoClassDefFoundError on Android launch; Metro startup warnings are crash-level signals, not cosmetic.
