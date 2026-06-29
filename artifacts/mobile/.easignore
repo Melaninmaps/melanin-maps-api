@@ -1,0 +1,12 @@
+node_modules
+.git
+*.log
+dist
+.expo
+web-build
+android
+ios
+__tests__
+coverage
+.nyc_output
+*.map

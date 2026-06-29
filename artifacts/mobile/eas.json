@@ -26,7 +26,8 @@
         "simulator": false
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "resourceClass": "large"
       },
       "env": {
         "EXPO_PUBLIC_DOMAIN": "mappingwithmelanin.com",
