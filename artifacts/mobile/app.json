@@ -38,7 +38,7 @@
       }
     },
     "android": {
-      "googleMapsApiKey": "${GOOGLE_MAPS_API_KEY}",
+      "googleMapsApiKey": "AIzaSyD-QflBkAV_ps-8Y290jBLvWXbJyMCpmzE",
       "package": "com.melaninmaps.app",
       "intentFilters": [
         {
@@ -80,7 +80,7 @@
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.INTERNET"
       ],
-      "versionCode": 11
+      "versionCode": 12
     },
     "web": {
       "favicon": "./assets/images/icon.png"
@@ -100,6 +100,15 @@
         }
       ],
       "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#C4622D",
+          "defaultChannel": "default",
+          "sounds": []
+        }
+      ],
       [
         "expo-location",
         {

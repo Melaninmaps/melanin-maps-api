@@ -17,7 +17,7 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useRef } from "react";
 import { Animated, Platform, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { KeyboardProvider } from "react-native-keyboard-controller";
+import { KeyboardProviderWrapper } from "@/components/KeyboardProviderWrapper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import * as Notifications from "expo-notifications";
@@ -537,7 +537,7 @@ export default function RootLayout() {
           <AuthProvider>
             <SubscriptionProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
-              <KeyboardProvider>
+              <KeyboardProviderWrapper>
                 <View style={{ flex: 1 }}>
                   <OnboardingChecker />
                   <ApprovalChecker />
@@ -550,7 +550,7 @@ export default function RootLayout() {
                   <CookieConsentBanner />
                   <OfflineBanner />
                 </View>
-              </KeyboardProvider>
+              </KeyboardProviderWrapper>
             </GestureHandlerRootView>
             </SubscriptionProvider>
           </AuthProvider>
