@@ -143,3 +143,9 @@ id = "XXXSEY300zG0cf48Y5HSM"
 uri = "file://MappingWithMelanin-v1.0.3-vc29.tar.gz"
 type = "unspecified"
 title = "Mapping With Melanin v1.0.3 (versionCode 29) — extract and upload the .aab to closed testing"
+
+[[outputs]]
+id = "rgWmu9i93EN9SSvdLhG9R"
+uri = "file://MappingWithMelanin-iOS-v1.0.3-fixed.tar.gz"
+type = "unspecified"
+title = "Mapping With Melanin iOS v1.0.3 (fixed) — extract the .ipa and upload to App Store Connect"
