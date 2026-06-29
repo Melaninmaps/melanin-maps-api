@@ -518,7 +518,11 @@ export default function Admin() {
   };
 
   const exportCsv = () => {
-    window.open(`${BASE}api/admin/waitlist/export`, "_blank");
+    const params = new URLSearchParams();
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    if (search.trim()) params.set("search", search.trim());
+    const qs = params.toString();
+    window.open(`${BASE}api/admin/waitlist/export${qs ? `?${qs}` : ""}`, "_blank");
   };
 
   const sendNudgePreview = async () => {

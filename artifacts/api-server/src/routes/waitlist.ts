@@ -298,18 +298,55 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
 router.get("/admin/waitlist/export", async (req: Request, res: Response) => {
   if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
   try {
-    const entries = await db.select().from(waitlistTable).orderBy(desc(waitlistTable.createdAt));
-    const header = ["ID","First Name","Email","City","State","Business Owner","Status","Referral Code","Referred By","Approved At","Signed Up"];
-    const rows = entries.map(e => [
-      e.id, e.firstName ?? "", e.email, e.city ?? "", e.state ?? "",
-      e.isBusinessOwner ? "Yes" : "No", e.status,
-      e.referralCode ?? "", e.referredBy ?? "",
-      e.approvedAt ? new Date(e.approvedAt).toISOString() : "",
+    const statusParam = String(req.query.status ?? "");
+    const searchParam = String(req.query.search ?? "").trim().toLowerCase();
+    const allowedStatuses = ["pending", "approved", "rejected"];
+    const filterByStatus = allowedStatuses.includes(statusParam) ? statusParam : null;
+
+    // Fetch all entries ordered by signup date so position = chronological rank
+    const allEntries = await db
+      .select()
+      .from(waitlistTable)
+      .orderBy(asc(waitlistTable.createdAt));
+
+    // Build position map (1-based, signup order across entire list)
+    const positionMap = new Map(allEntries.map((e, i) => [e.id, i + 1]));
+
+    // Apply status + search filters
+    const filtered = allEntries.filter(e => {
+      if (filterByStatus && e.status !== filterByStatus) return false;
+      if (searchParam) {
+        const haystack = [e.email, e.city, e.referralCode, e.referredBy, e.firstName]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(searchParam)) return false;
+      }
+      return true;
+    });
+
+    const header = [
+      "Position", "First Name", "Email", "City", "State",
+      "Type", "Referral Code", "Referred By", "Status", "Date Joined",
+    ];
+    const rows = filtered.map(e => [
+      positionMap.get(e.id) ?? "",
+      e.firstName ?? "",
+      e.email,
+      e.city ?? "",
+      e.state ?? "",
+      e.isBusinessOwner ? "Business" : "Community",
+      e.referralCode ?? "",
+      e.referredBy ?? "",
+      e.status,
       new Date(e.createdAt).toISOString(),
     ]);
+
     const esc = (v: unknown) => `"${String(v).replace(/"/g, '""')}"`;
     const csv = [header.map(esc).join(","), ...rows.map(r => r.map(esc).join(","))].join("\n");
-    const filename = `waitlist-${new Date().toISOString().slice(0, 10)}.csv`;
+    const datePart = new Date().toISOString().slice(0, 10);
+    const suffix = filterByStatus ? `-${filterByStatus}` : searchParam ? `-filtered` : "";
+    const filename = `waitlist${suffix}-${datePart}.csv`;
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.send(csv);
