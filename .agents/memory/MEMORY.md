@@ -19,3 +19,4 @@
 - [Philly launch features](philly-launch-features.md) — all 9 features shipped: reviews overhaul, compliment chips, intro video, owner response, business preview, move alerts, KinfolkAI skip wiring, recommendation nudge, ad ranking, buzz/negative alerts, weekly schedule calendar.
 - [Duplicate schema field pattern](duplicate-schema-fields.md) — waitlist.ts and admin.tsx both had duplicate firstName fields; drizzle push and TS both fail; always check schema + any hand-typed mirror types in web artifacts.
 - [Expo SDK version mismatch crash](expo-sdk-version-mismatch.md) — mismatched expo-* package versions (e.g. 56.x on SDK 54) cause NoClassDefFoundError on Android launch; Metro startup warnings are crash-level signals, not cosmetic.
+- [Mobile auth flow](mobile-auth-flow.md) — Replit OIDC rejects custom scheme redirect URIs; server proxies the OIDC flow via /mobile-auth/init → /login → /callback → /mobile-auth/done → mappingwithmelanin://auth-complete?token=SID.

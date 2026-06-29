@@ -1,12 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
-import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import * as SecureStore from "expo-secure-store";
 
 WebBrowser.maybeCompleteAuthSession();
 
 const AUTH_TOKEN_KEY = "auth_session_token";
-const ISSUER_URL = process.env.EXPO_PUBLIC_ISSUER_URL ?? "https://replit.com/oidc";
 
 interface User {
   id: string;
@@ -47,28 +45,10 @@ function getApiBaseUrl(): string {
   return "";
 }
 
-function getClientId(): string {
-  return process.env.EXPO_PUBLIC_REPL_ID || "";
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionExpired, setSessionExpired] = useState(false);
-
-  const discovery = AuthSession.useAutoDiscovery(ISSUER_URL);
-
-  const redirectUri = AuthSession.makeRedirectUri();
-
-  const [request, response, promptAsync] = AuthSession.useAuthRequest(
-    {
-      clientId: getClientId(),
-      scopes: ["openid", "email", "profile", "offline_access"],
-      redirectUri,
-      prompt: AuthSession.Prompt.Login,
-    },
-    discovery,
-  );
 
   const fetchUser = useCallback(async () => {
     try {
@@ -89,13 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(data.user);
         setSessionExpired(false);
       } else {
-        // Token existed but was rejected — session expired
         await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
         setUser(null);
         setSessionExpired(true);
       }
     } catch {
-      // Network error — don't mark as expired, user may be offline
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -106,58 +84,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchUser();
   }, [fetchUser]);
 
-  useEffect(() => {
-    if (response?.type !== "success" || !request?.codeVerifier) return;
+  const login = useCallback(async () => {
+    try {
+      const apiBase = getApiBaseUrl();
+      const result = await WebBrowser.openAuthSessionAsync(
+        `${apiBase}/api/mobile-auth/init`,
+        "mappingwithmelanin://auth-complete",
+      );
 
-    const { code, state } = response.params;
-
-    (async () => {
-      try {
-        const apiBase = getApiBaseUrl();
-        if (!apiBase) {
-          console.error("API base URL is not configured.");
-          return;
-        }
-
-        const exchangeRes = await fetch(`${apiBase}/api/mobile-auth/token-exchange`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            code,
-            code_verifier: request.codeVerifier,
-            redirect_uri: redirectUri,
-            state,
-            nonce: (request as any).nonce,
-          }),
-        });
-
-        if (!exchangeRes.ok) {
-          console.error("Token exchange failed:", exchangeRes.status);
-          setIsLoading(false);
-          return;
-        }
-
-        const data = await exchangeRes.json();
-        if (data.token) {
-          await SecureStore.setItemAsync(AUTH_TOKEN_KEY, data.token);
+      if (result.type === "success") {
+        const url = new URL(result.url);
+        const token = url.searchParams.get("token");
+        if (token) {
+          await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
           await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
           setIsLoading(true);
           await fetchUser();
         }
-      } catch (err) {
-        console.error("Token exchange error:", err);
-        setIsLoading(false);
       }
-    })();
-  }, [response, request, redirectUri, fetchUser]);
-
-  const login = useCallback(async () => {
-    try {
-      await promptAsync();
     } catch (err) {
       console.error("Login error:", err);
     }
-  }, [promptAsync]);
+  }, [fetchUser]);
 
   const logout = useCallback(async () => {
     try {

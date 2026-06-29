@@ -234,6 +234,24 @@ router.get("/logout", async (req: Request, res: Response) => {
   res.redirect(endSessionUrl.href);
 });
 
+// ─── GET /mobile-auth/init ── Mobile entry: triggers server-side OIDC flow ──────
+// The mobile app opens this URL in a browser. The server handles the full
+// Replit OIDC PKCE flow (https redirect_uri accepted), then hands the session
+// token back to the app via the mappingwithmelanin:// custom scheme.
+router.get("/mobile-auth/init", (_req: Request, res: Response) => {
+  res.redirect("/api/login?returnTo=/api/mobile-auth/done");
+});
+
+// ─── GET /mobile-auth/done ── Called after callback; hands token to app ─────────
+router.get("/mobile-auth/done", (req: Request, res: Response) => {
+  const sid = getSessionId(req);
+  if (!sid) {
+    res.redirect("mappingwithmelanin://auth-complete?error=no_session");
+    return;
+  }
+  res.redirect(`mappingwithmelanin://auth-complete?token=${encodeURIComponent(sid)}`);
+});
+
 router.post(
   "/mobile-auth/token-exchange",
   async (req: Request, res: Response) => {
