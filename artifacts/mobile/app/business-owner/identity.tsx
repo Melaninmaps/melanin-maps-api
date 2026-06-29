@@ -29,7 +29,7 @@ async function getToken(): Promise<string | null> {
 
 // ─── Option sets ────────────────────────────────────────────────
 const OWNERSHIP_BADGES = [
-  "Black-Owned", "Woman-Owned", "Veteran-Owned", "Family-Owned",
+  "Minority-Owned", "Woman-Owned", "Veteran-Owned", "Family-Owned",
   "LGBTQ+-Owned", "Minority-Owned", "Nonprofit", "Social Enterprise",
 ];
 const COMMUNITY_VALUES = [

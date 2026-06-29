@@ -192,7 +192,7 @@ export default function CompareNeighborhoodsScreen() {
 
         {/* Comparison bars */}
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Black-Owned Businesses</Text>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Minority-Owned Businesses</Text>
           <CompareBar label="Total nearby" val1={comparison.businessCount.pin1} val2={comparison.businessCount.pin2}
             max={Math.max(comparison.businessCount.pin1, comparison.businessCount.pin2, 1)} color1={color1} color2={color2} />
           <CompareBar label="Verified" val1={comparison.verifiedCount.pin1} val2={comparison.verifiedCount.pin2}

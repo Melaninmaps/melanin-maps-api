@@ -201,6 +201,10 @@ async function downloadFile(url, outputPath) {
     const response = await fetch(url, { signal: controller.signal });
 
     if (!response.ok) {
+      const errorBody = await response.text().catch(() => "(could not read body)");
+      console.error(
+        `[Metro bundle error] HTTP ${response.status} from ${url}\n${errorBody.slice(0, 4000)}`
+      );
       throw new Error(`HTTP ${response.status}`);
     }
 

@@ -36,7 +36,7 @@ export default function Slide16Vision() {
             <div style={{ fontSize: "3vw", fontWeight: 700, color: "#FFFFFF", marginBottom: "1.5vh", lineHeight: 1.1 }}>Every Business</div>
             <div style={{ width: "3vw", height: "2px", background: "#D4AF37", marginBottom: "2vh" }} />
             <div style={{ fontSize: "2.3vw", color: "rgba(255,255,255,0.7)", lineHeight: 1.55 }}>
-              1 million verified minority-owned businesses on the platform — the most comprehensive Black business database ever created
+              1 million verified minority-owned businesses on the platform — the most comprehensive minority business database ever created
             </div>
           </div>
 

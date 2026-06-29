@@ -1783,7 +1783,7 @@ function RequestsTab({ colors, router: _router, isAuthenticated, bottomPad }: {
               <View style={{ gap: 12 }}>
                 <TextInput
                   style={{ backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 14, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular", color: colors.foreground }}
-                  placeholder={`"We need a Black-owned pediatrician in this area."`}
+                  placeholder={`"We need a minority-owned pediatrician in this area."`}
                   placeholderTextColor={colors.mutedForeground}
                   value={postTitle}
                   onChangeText={setPostTitle}
@@ -1920,7 +1920,7 @@ const COLLECTION_PRESETS = [
   { emoji: "💎", label: "Hidden Gems" },
   { emoji: "☔", label: "Rainy Day" },
   { emoji: "💇🏾‍♀️", label: "Natural Hair" },
-  { emoji: "☕", label: "Black-Owned Coffee" },
+  { emoji: "☕", label: "Minority-Owned Coffee" },
   { emoji: "🍽️", label: "Sunday Brunch" },
   { emoji: "🎨", label: "Arts & Culture" },
 ];

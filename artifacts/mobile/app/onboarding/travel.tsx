@@ -88,7 +88,7 @@ export default function OnboardingTravel() {
         </Text>
 
         <View style={styles.pillRow}>
-          <View style={styles.pill}><Text style={styles.pillText}>Black-Owned Spots</Text></View>
+          <View style={styles.pill}><Text style={styles.pillText}>Minority-Owned Spots</Text></View>
           <View style={styles.pill}><Text style={styles.pillText}>Safe Routes</Text></View>
           <View style={styles.pill}><Text style={styles.pillText}>Cultural Events</Text></View>
         </View>

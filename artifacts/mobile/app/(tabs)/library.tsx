@@ -579,7 +579,7 @@ export default function LibraryScreen() {
                   <View style={[styles.prefToggleRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.prefToggleTitle, { color: colors.foreground }]}>Notify from saved businesses</Text>
-                      <Text style={[styles.prefToggleDesc, { color: colors.mutedForeground }]}>Updates from Black-owned businesses you've saved</Text>
+                      <Text style={[styles.prefToggleDesc, { color: colors.mutedForeground }]}>Updates from minority-owned businesses you've saved</Text>
                     </View>
                     <TouchableOpacity
                       style={[

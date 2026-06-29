@@ -739,7 +739,7 @@ export default function MembershipScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.verifyTitle, { color: colors.foreground }]}>How We Verify Businesses</Text>
                 <Text style={[styles.verifySub, { color: colors.mutedForeground }]}>
-                  Our verification confirms Black ownership — so the community can discover and trust with confidence.
+                  Our verification confirms minority ownership — so the community can discover and trust with confidence.
                 </Text>
               </View>
             </View>
@@ -755,7 +755,7 @@ export default function MembershipScreen() {
                 step: "2",
                 icon: "check-square" as const,
                 label: "Ownership documentation",
-                detail: "We review proof of Black ownership — such as a business license, LLC filing, or signed attestation.",
+                detail: "We review proof of minority ownership — such as a business license, LLC filing, or signed attestation.",
               },
               {
                 step: "3",
@@ -767,7 +767,7 @@ export default function MembershipScreen() {
                 step: "4",
                 icon: "award" as const,
                 label: "Verified badge awarded",
-                detail: "Once approved, your listing displays a Verified Black-Owned badge visible to every user.",
+                detail: "Once approved, your listing displays a Verified Minority-Owned badge visible to every user.",
               },
             ].map((s, i) => (
               <View key={i} style={styles.verifyStep}>

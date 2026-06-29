@@ -605,7 +605,7 @@ export default function DiscoverScreen() {
               <Feather name="briefcase" size={20} color="#FFFFFF" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.listBizTitle}>Own a Black-Owned Business?</Text>
+              <Text style={styles.listBizTitle}>Own a Minority-Owned Business?</Text>
               <Text style={styles.listBizSub}>Get discovered by thousands of locals and travelers. Listing is free.</Text>
             </View>
           </View>

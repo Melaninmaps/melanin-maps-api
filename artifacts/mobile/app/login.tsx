@@ -23,7 +23,7 @@ import {
 } from "@/hooks/useBiometrics";
 
 const BENEFITS = [
-  { icon: "map-pin" as const, text: "Discover Black-owned businesses near you" },
+  { icon: "map-pin" as const, text: "Discover minority-owned businesses near you" },
   { icon: "shield" as const, text: "Community-powered safety ratings" },
   { icon: "users" as const, text: "Connect with a global community" },
   { icon: "star" as const, text: "Save favorites, leave reviews, earn points" },

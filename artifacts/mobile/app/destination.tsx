@@ -71,7 +71,7 @@ const DESTINATION_DATA: Record<string, {
 const SECTION_CARDS = [
   { icon: "🎥", label: "Community Videos", key: "videos", color: "#1A3B2B" },
   { icon: "📸", label: "Photos", key: "photos", color: "#2D1A6B" },
-  { icon: "🍽️", label: "Black-Owned Restaurants", key: "restaurants", color: "#3B1A0E" },
+  { icon: "🍽️", label: "Minority-Owned Restaurants", key: "restaurants", color: "#3B1A0E" },
   { icon: "🏨", label: "Hotels & Stays", key: "hotels", color: "#1A2B3B" },
   { icon: "🎉", label: "Events", key: "events", color: "#4A1A6B" },
   { icon: "👥", label: "Travel Groups", key: "groups", color: "#1A4B2B" },
