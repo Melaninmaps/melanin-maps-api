@@ -137,3 +137,9 @@ id = "LdKAqV4wXBPOontdMYp3j"
 uri = "file://MappingWithMelanin-v1.0.3-final.tar.gz"
 type = "unspecified"
 title = "Mapping With Melanin v1.0.3 — extract the .aab file inside, then upload to Play Store"
+
+[[outputs]]
+id = "XXXSEY300zG0cf48Y5HSM"
+uri = "file://MappingWithMelanin-v1.0.3-vc29.tar.gz"
+type = "unspecified"
+title = "Mapping With Melanin v1.0.3 (versionCode 29) — extract and upload the .aab to closed testing"
