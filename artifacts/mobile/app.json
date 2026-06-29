@@ -38,6 +38,7 @@
       }
     },
     "android": {
+      "newArchEnabled": false,
       "googleMapsApiKey": "AIzaSyD-QflBkAV_ps-8Y290jBLvWXbJyMCpmzE",
       "package": "com.melaninmaps.app",
       "intentFilters": [
