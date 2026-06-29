@@ -80,20 +80,13 @@
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.INTERNET"
       ],
-      "versionCode": 21
+      "versionCode": 22
     },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       "./plugins/withAndroidCrashLogger",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/icon.png",
-          "color": "#2D2D2D"
-        }
-      ],
       [
         "expo-router",
         {
