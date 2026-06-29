@@ -17,18 +17,16 @@ function addCrashLogger(src) {
     val prev = prefs.getString("msg", null)
     if (prev != null) {
       prefs.edit().remove("msg").apply()
-      android.widget.Toast.makeText(this, "PREV CRASH:\\n" + prev, android.widget.Toast.LENGTH_LONG).show()
-      val crashData = prev
-      Thread {
-        try {
-          val encoded = java.net.URLEncoder.encode(crashData, "UTF-8")
-          val conn = java.net.URL("https://mappingwithmelanin.com/api/debug/crash-report?d=" + encoded).openConnection() as java.net.HttpURLConnection
-          conn.connectTimeout = 8000
-          conn.readTimeout = 8000
-          conn.responseCode
-          conn.disconnect()
-        } catch (e: Exception) {}
-      }.start()
+      android.widget.Toast.makeText(this, "PREV CRASH: " + prev, android.widget.Toast.LENGTH_LONG).show()
+      try {
+        val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND)
+        shareIntent.type = "text/plain"
+        shareIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "MWM Crash Report")
+        shareIntent.putExtra(android.content.Intent.EXTRA_TEXT, "CRASH REPORT:\\n" + prev)
+        val chooser = android.content.Intent.createChooser(shareIntent, "Send crash report")
+        chooser.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(chooser)
+      } catch (e: Exception) {}
     }
     val h = Thread.getDefaultUncaughtExceptionHandler()
     Thread.setDefaultUncaughtExceptionHandler { _, t ->
