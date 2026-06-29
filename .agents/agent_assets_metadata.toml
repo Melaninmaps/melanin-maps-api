@@ -125,3 +125,9 @@ id = "mK64nS3qQnRGW3JmvilWM"
 uri = "file://expo-qr.png"
 type = "image"
 title = "Scan with Expo Go"
+
+[[outputs]]
+id = "TR4n8CtRUmWy4iGg2n73F"
+uri = "file://MappingWithMelanin-v1.0.3.tar.gz"
+type = "unspecified"
+title = "Mapping With Melanin v1.0.3 — Android App Bundle (extract the .aab inside)"
