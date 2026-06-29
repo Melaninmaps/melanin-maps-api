@@ -203,4 +203,10 @@ router.get("/download/mobile-build.zip", (req, res) => {
   res.download(filePath, "mobile-build.zip");
 });
 
+router.get("/debug/crash-report", (req, res) => {
+  const d = (req.query.d as string) || "";
+  req.log.error({ crash: d }, "=== ANDROID_CRASH_REPORT ===");
+  res.sendStatus(200);
+});
+
 export default router;

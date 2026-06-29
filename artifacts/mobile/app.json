@@ -80,7 +80,7 @@
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.INTERNET"
       ],
-      "versionCode": 22
+      "versionCode": 23
     },
     "web": {
       "favicon": "./assets/images/icon.png"
