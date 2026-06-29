@@ -11,8 +11,7 @@ function addCrashLogger(src) {
   const MARKER = "override fun onCreate()";
   if (!src.includes(MARKER)) return src;
 
-  const injection = `
-  // ── CRASH LOGGER ──────────────────────────────────────────────
+  const helperFn = `
   private fun installCrashLogger() {
     val prefs = getSharedPreferences("__crash_log__", 0)
     val prev = prefs.getString("msg", null)
@@ -30,15 +29,9 @@ function addCrashLogger(src) {
       h?.uncaughtException(Thread.currentThread(), t)
     }
   }
-  // ── END CRASH LOGGER ──────────────────────────────────────────
 `;
 
-  const onCreateInjection = `    installCrashLogger()\n    `;
-
   return src
-    .replace(MARKER, injection + "\n  " + MARKER)
-    .replace(
-      MARKER + " {",
-      MARKER + " {\n" + onCreateInjection
-    );
+    .replace(MARKER, helperFn + "\n  " + MARKER)
+    .replace(MARKER + " {\n", MARKER + " {\n    installCrashLogger()\n");
 }
