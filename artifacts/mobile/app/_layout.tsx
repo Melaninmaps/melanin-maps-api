@@ -23,6 +23,25 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
 import { Alert } from "react-native";
+
+// Crash reporter: intercept ALL unhandled JS errors before ErrorBoundary mounts
+// so we can read the actual error on next launch as an Alert.
+(function installCrashReporter() {
+  try {
+    const prev = (global as any).ErrorUtils?.getGlobalHandler?.();
+    (global as any).ErrorUtils?.setGlobalHandler?.((err: Error, isFatal?: boolean) => {
+      try {
+        const msg = err?.message ?? String(err);
+        const stack = (err?.stack ?? "").substring(0, 600);
+        AsyncStorage.setItem(
+          "@__crash__",
+          JSON.stringify({ msg, stack, fatal: isFatal, ts: new Date().toISOString() })
+        ).catch(() => {});
+      } catch {}
+      if (prev) prev(err, isFatal);
+    });
+  } catch {}
+})();
 import { FRESH_LOGIN_KEY, getBiometricCapabilities, isBiometricsEnabled, enableBiometrics } from "@/hooks/useBiometrics";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
