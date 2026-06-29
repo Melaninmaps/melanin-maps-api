@@ -1,19 +1,19 @@
 module.exports = {
   dependencies: {
     "react-native-purchases": {
-      platforms: {
-        android: null,
-      },
+      platforms: { android: null },
     },
     "react-native-maps": {
-      platforms: {
-        android: null,
-      },
+      platforms: { android: null },
     },
     "react-native-keyboard-controller": {
-      platforms: {
-        android: null,
-      },
+      platforms: { android: null },
+    },
+    "react-native-worklets": {
+      platforms: { android: null },
+    },
+    "react-native-reanimated": {
+      platforms: { android: null },
     },
   },
 };
