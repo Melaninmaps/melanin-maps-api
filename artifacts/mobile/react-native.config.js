@@ -5,5 +5,15 @@ module.exports = {
         android: null,
       },
     },
+    "react-native-maps": {
+      platforms: {
+        android: null,
+      },
+    },
+    "react-native-keyboard-controller": {
+      platforms: {
+        android: null,
+      },
+    },
   },
 };
