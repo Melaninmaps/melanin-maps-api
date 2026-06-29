@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "mappingwithmelanin",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "privacyPolicyUrl": "https://www.melaninmaps.com/privacy",
     "splash": {
       "image": "./assets/images/splash.png",
