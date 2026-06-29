@@ -26,7 +26,7 @@ function addCrashLogger(src) {
         .setAutoCancel(false)
         .build()
       nm.notify(8877, n)
-    } catch (_: Exception) {}
+    } catch (e: Exception) {}
   }
 
   private fun installCrashLogger() {
@@ -48,7 +48,7 @@ function addCrashLogger(src) {
           .putString("msg", t.message ?: "null")
           .putString("stk", t.stackTrace.take(6).joinToString("\\n") { it.toString() })
           .commit()
-      } catch (_: Exception) {}
+      } catch (e: Exception) {}
       h?.uncaughtException(Thread.currentThread(), t)
     }
   }
