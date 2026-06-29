@@ -100,15 +100,7 @@
         }
       ],
       "expo-web-browser",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/icon.png",
-          "color": "#C4622D",
-          "defaultChannel": "default",
-          "sounds": []
-        }
-      ],
+      "expo-notifications",
       [
         "expo-location",
         {
