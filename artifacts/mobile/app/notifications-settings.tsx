@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+// @ts-ignore - expo-notifications removed; graceful no-op
 import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
@@ -74,7 +75,7 @@ export default function NotificationsSettingsScreen() {
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   useEffect(() => {
-    Notifications.getPermissionsAsync().then(({ status }) => {
+    Notifications.getPermissionsAsync().then(({ status }: { status: string }) => {
       if (status !== "granted") setPushEnabled(false);
     }).catch(() => {});
 

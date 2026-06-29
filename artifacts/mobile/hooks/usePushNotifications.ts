@@ -18,7 +18,9 @@ export async function registerPushToken(): Promise<void> {
   if (Platform.OS === "web") return;
 
   try {
-    const Notifications = await import("expo-notifications");
+    // @ts-ignore - expo-notifications removed; graceful no-op
+    const Notifications = await import("expo-notifications").catch(() => null);
+    if (!Notifications) return;
 
     const existing = (await Notifications.getPermissionsAsync()) as PermissionResult;
     const finalStatus =

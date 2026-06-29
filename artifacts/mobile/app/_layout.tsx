@@ -55,6 +55,7 @@ function PushNotificationRegistrar() {
       try {
         const token = await SecureStore.getItemAsync("auth_session_token");
         if (!token) return;
+        // @ts-ignore - expo-notifications removed from package.json; graceful no-op
         const Notifications = await import("expo-notifications").catch(() => null);
         if (!Notifications) return;
         const { status } = await Notifications.requestPermissionsAsync();
