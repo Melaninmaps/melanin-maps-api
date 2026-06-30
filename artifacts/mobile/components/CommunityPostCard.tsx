@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useState } from "react";
 import { useColors } from "@/hooks/useColors";
 import { BusinessMiniCard, type BusinessMiniCardData } from "@/components/BusinessMiniCard";
@@ -134,6 +134,23 @@ export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthor
       {/* Content */}
       <Text style={[s.content, { color: colors.foreground }]}>{post.content}</Text>
 
+      {/* Media grid */}
+      {post.mediaUrls && post.mediaUrls.length > 0 && (
+        <View style={s.mediaGrid}>
+          {post.mediaUrls.map((url, i) => {
+            const isVideo = url.endsWith(".mp4") || url.endsWith(".mov") || url.endsWith(".webm") || url.includes("video");
+            return isVideo ? (
+              <View key={i} style={[s.mediaThumb, { backgroundColor: "#0008", justifyContent: "center", alignItems: "center" }]}>
+                <Feather name="play-circle" size={36} color="#fff" />
+                <Text style={{ color: "#fff", fontSize: 11, fontFamily: "Inter_500Medium", marginTop: 4 }}>Video</Text>
+              </View>
+            ) : (
+              <Image key={i} source={{ uri: url }} style={s.mediaThumb} resizeMode="cover" />
+            );
+          })}
+        </View>
+      )}
+
       {/* Business external link */}
       {isBusinessPost && post.businessLink && (
         <TouchableOpacity
@@ -242,6 +259,19 @@ const s = StyleSheet.create({
     lineHeight: 21,
     paddingHorizontal: 14,
     paddingBottom: 12,
+  },
+  mediaGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingBottom: 10,
+  },
+  mediaThumb: {
+    width: "31%",
+    aspectRatio: 1,
+    borderRadius: 8,
+    overflow: "hidden",
   },
   linkRow: {
     flexDirection: "row",

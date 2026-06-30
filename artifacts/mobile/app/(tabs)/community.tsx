@@ -1,6 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
+import * as ImagePicker from "expo-image-picker";
+import { Image } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -203,6 +205,8 @@ export default function CommunityScreen() {
   const [newPostBusinessLink, setNewPostBusinessLink] = useState("");
   const [newPostVisibility, setNewPostVisibility] = useState<"public" | "followers_only">("public");
   const [feedMode, setFeedMode] = useState<"everyone" | "following">("everyone");
+  const [mediaAttachments, setMediaAttachments] = useState<{ uri: string; type: "image" | "video"; uploaded?: string }[]>([]);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
   const [submittingPost, setSubmittingPost] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
@@ -325,6 +329,56 @@ export default function CommunityScreen() {
   const filteredGroups =
     groupCategory === "all" ? groups : groups.filter((g) => g.category === groupCategory);
 
+  const pickAndUploadMedia = async (kind: "image" | "video") => {
+    if (Platform.OS === "web") { Alert.alert("Not supported", "Media uploads are available on the mobile app."); return; }
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") { Alert.alert("Permission needed", "Allow access to your media library."); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: kind === "video" ? ["videos"] : ["images"],
+      allowsMultipleSelection: kind === "image",
+      selectionLimit: kind === "image" ? 5 : 1,
+      allowsEditing: kind === "video" ? false : false,
+      quality: 0.85,
+      videoMaxDuration: 120,
+    });
+    if (result.canceled || !result.assets.length) return;
+    setUploadingMedia(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const uploaded: { uri: string; type: "image" | "video"; uploaded: string }[] = [];
+      for (const asset of result.assets) {
+        const formData = new FormData();
+        const fieldName = kind === "image" ? "image" : "video";
+        const mime = asset.mimeType ?? (kind === "image" ? "image/jpeg" : "video/mp4");
+        const ext = mime.split("/")[1] ?? (kind === "image" ? "jpg" : "mp4");
+        formData.append(fieldName, { uri: asset.uri, type: mime, name: `${fieldName}.${ext}` } as unknown as Blob);
+        const res = await fetch(`${getApiBase()}/api/community/media/upload/${kind}`, {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: formData,
+        });
+        if (res.ok) {
+          const data = await res.json() as { url: string };
+          uploaded.push({ uri: asset.uri, type: kind, uploaded: data.url });
+        } else {
+          const err = await res.json() as { error?: string; code?: string };
+          if (err.code === "TIER_LIMIT_REACHED") {
+            setUpgradeFeature(kind === "video" ? "Video Posts" : "Image Posts");
+            setShowUpgrade(true);
+            return;
+          }
+          Alert.alert("Upload failed", err.error ?? "Please try again.");
+          return;
+        }
+      }
+      setMediaAttachments((prev) => [...prev, ...uploaded].slice(0, 5));
+    } catch {
+      Alert.alert("Upload failed", "Please try again.");
+    } finally {
+      setUploadingMedia(false);
+    }
+  };
+
   const submitPost = async () => {
     if (!newPostText.trim()) return;
     setSubmittingPost(true);
@@ -342,6 +396,7 @@ export default function CommunityScreen() {
           postType: newPostType,
           businessLink: newPostType === "business" && newPostBusinessLink.trim() ? newPostBusinessLink.trim() : undefined,
           visibility: newPostVisibility,
+          mediaUrls: mediaAttachments.filter((m) => m.uploaded).map((m) => m.uploaded!),
         }),
       });
       if (res.ok) {
@@ -352,6 +407,7 @@ export default function CommunityScreen() {
         setNewPostType("community");
         setNewPostBusinessLink("");
         setNewPostVisibility("public");
+        setMediaAttachments([]);
         setShowCompose(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
@@ -1252,6 +1308,34 @@ export default function CommunityScreen() {
               maxLength={CHAR_LIMITS[newPostType] ?? 1000}
             />
 
+            {/* Media preview strip */}
+            {mediaAttachments.length > 0 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal: 16, paddingBottom: 10 }} contentContainerStyle={{ gap: 8 }}>
+                {mediaAttachments.map((m, i) => (
+                  <View key={i} style={{ position: "relative" }}>
+                    {m.type === "image" ? (
+                      <Image source={{ uri: m.uri }} style={{ width: 72, height: 72, borderRadius: 8 }} resizeMode="cover" />
+                    ) : (
+                      <View style={{ width: 72, height: 72, borderRadius: 8, backgroundColor: "#0005", justifyContent: "center", alignItems: "center" }}>
+                        <Feather name="film" size={24} color="#fff" />
+                      </View>
+                    )}
+                    {!m.uploaded && (
+                      <View style={{ position: "absolute", inset: 0, borderRadius: 8, backgroundColor: "#0006", justifyContent: "center", alignItems: "center" }}>
+                        <ActivityIndicator size="small" color="#fff" />
+                      </View>
+                    )}
+                    <TouchableOpacity
+                      onPress={() => setMediaAttachments((prev) => prev.filter((_, j) => j !== i))}
+                      style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: 10, backgroundColor: "#DC2626", justifyContent: "center", alignItems: "center" }}
+                    >
+                      <Feather name="x" size={11} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+
             <View style={styles.composeToolbar}>
               <TouchableOpacity
                 style={[styles.mentionBtn, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }]}
@@ -1265,6 +1349,30 @@ export default function CommunityScreen() {
               >
                 <Feather name="at-sign" size={14} color={colors.primary} />
                 <Text style={[styles.mentionBtnText, { color: colors.primary }]}>Tag a business</Text>
+              </TouchableOpacity>
+
+              {/* Image picker button */}
+              <TouchableOpacity
+                style={[styles.mentionBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+                onPress={() => void pickAndUploadMedia("image")}
+                disabled={uploadingMedia || mediaAttachments.filter((m) => m.type === "image").length >= 5}
+                activeOpacity={0.7}
+              >
+                {uploadingMedia ? (
+                  <ActivityIndicator size={12} color={colors.mutedForeground} />
+                ) : (
+                  <Feather name="image" size={14} color={colors.mutedForeground} />
+                )}
+              </TouchableOpacity>
+
+              {/* Video picker button */}
+              <TouchableOpacity
+                style={[styles.mentionBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+                onPress={() => void pickAndUploadMedia("video")}
+                disabled={uploadingMedia || mediaAttachments.some((m) => m.type === "video")}
+                activeOpacity={0.7}
+              >
+                <Feather name="video" size={14} color={colors.mutedForeground} />
               </TouchableOpacity>
               {(() => {
                 const limit = CHAR_LIMITS[newPostType] ?? 1000;

@@ -1,12 +1,39 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import { randomUUID } from "crypto";
+import multer from "multer";
 import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool } from "@workspace/db";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
 import { checkContent, redactForLog } from "../lib/contentFilter";
 import { scanForFamily } from "../lib/familyFilter";
+import { objectStorageClient } from "../lib/objectStorage";
 
 const router: IRouter = Router();
+
+// Tier-based media limits for community posts
+const MEDIA_LIMITS: Record<string, { images: number; video: boolean }> = {
+  free:        { images: 0, video: false },
+  navigator:   { images: 3, video: false },
+  trailblazer: { images: 5, video: true  },
+};
+
+const imageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
+    cb(null, allowed.includes(file.mimetype));
+  },
+});
+
+const videoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 150 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    cb(null, file.mimetype.startsWith("video/"));
+  },
+});
 
 const AUTHOR_COLORS = ["#3B1F0E", "#2D7A4F", "#C9922B", "#7B4F2E", "#1D4ED8", "#7B2D8B"];
 
@@ -213,6 +240,60 @@ router.post("/community/posts", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to create community post");
     res.status(500).json({ error: "Failed to create post" });
+  }
+});
+
+// POST /community/media/upload/image — upload image for a community post (navigator+)
+router.post("/community/media/upload/image", imageUpload.single("image"), async (req: any, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!req.file) { res.status(400).json({ error: "No image provided" }); return; }
+  try {
+    const tier = await getUserTier(req.user.id);
+    const limits = MEDIA_LIMITS[tier] ?? MEDIA_LIMITS.free;
+    if (limits.images === 0) {
+      res.status(403).json({ error: "Image uploads require an Explorer+ membership. Upgrade to add photos to your posts.", code: "TIER_LIMIT_REACHED", upgradeUrl: "/membership" });
+      return;
+    }
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (!bucketId) { res.status(500).json({ error: "Object storage not configured" }); return; }
+    const ext = req.file.originalname.split(".").pop()?.toLowerCase() ?? "jpg";
+    const safeExt = ["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(ext) ? ext : "jpg";
+    const objectKey = `community-posts/${req.user.id}/${randomUUID()}.${safeExt}`;
+    const bucket = objectStorageClient.bucket(bucketId);
+    const gcsFile = bucket.file(objectKey);
+    await gcsFile.save(req.file.buffer, { contentType: req.file.mimetype });
+    await gcsFile.makePublic();
+    const url = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
+    res.status(201).json({ url, type: "image", maxImages: limits.images });
+  } catch (err) {
+    req.log.error({ err }, "Failed to upload community post image");
+    res.status(500).json({ error: "Failed to upload image" });
+  }
+});
+
+// POST /community/media/upload/video — upload video for a community post (trailblazer only)
+router.post("/community/media/upload/video", videoUpload.single("video"), async (req: any, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!req.file) { res.status(400).json({ error: "No video provided" }); return; }
+  try {
+    const tier = await getUserTier(req.user.id);
+    const limits = MEDIA_LIMITS[tier] ?? MEDIA_LIMITS.free;
+    if (!limits.video) {
+      res.status(403).json({ error: "Video uploads in posts require a Trailblazer membership.", code: "TIER_LIMIT_REACHED", upgradeUrl: "/membership" });
+      return;
+    }
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (!bucketId) { res.status(500).json({ error: "Object storage not configured" }); return; }
+    const objectKey = `community-posts/${req.user.id}/${randomUUID()}.mp4`;
+    const bucket = objectStorageClient.bucket(bucketId);
+    const gcsFile = bucket.file(objectKey);
+    await gcsFile.save(req.file.buffer, { contentType: req.file.mimetype });
+    await gcsFile.makePublic();
+    const url = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
+    res.status(201).json({ url, type: "video" });
+  } catch (err) {
+    req.log.error({ err }, "Failed to upload community post video");
+    res.status(500).json({ error: "Failed to upload video" });
   }
 });
 
