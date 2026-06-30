@@ -127,6 +127,7 @@ export default function SafetyHubScreen() {
     { id: "checkin", icon: "check-circle" as const, title: "Safety Check-In", desc: "Schedule a check-in. Your contact is alerted if you don't confirm.", color: "#16A34A", route: "/checkin" },
     { id: "location", icon: "map-pin" as const, title: "Location Sharing", desc: "Share your live location with a trusted contact temporarily.", color: "#2563EB", route: "/location-share" },
     { id: "meetup", icon: "users" as const, title: "Meetup Verification", desc: "Mutually verify in-person meetups with connections you trust.", color: "#7C3AED", route: "/member-connections" },
+    { id: "police", icon: "shield-off" as const, title: "Report Police or ICE", desc: "Report a police encounter, ICE activity, racial profiling, or checkpoint in your area.", color: "#991B1B", route: "/report-police" },
     { id: "report", icon: "flag" as const, title: "Anonymous Report", desc: "Report unsafe content or behavior without revealing your identity.", color: "#DC2626", route: "/report-safety" },
     { id: "space", icon: "alert-octagon" as const, title: "Report an Unsafe Space", desc: "Flag any business or venue where you experienced unsafe, discriminatory, or unwelcoming treatment.", color: "#7C2D12", route: "/report-space" },
     { id: "family", icon: "eye" as const, title: "Under-18 Content Shield", desc: "All messages and posts from users under 18 are automatically scanned and filtered for harmful content.", color: "#CA922B", route: null },
