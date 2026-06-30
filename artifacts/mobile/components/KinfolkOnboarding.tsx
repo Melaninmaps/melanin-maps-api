@@ -49,6 +49,29 @@ const COMPANION_OPTIONS = [
   { id: "friends", label: "The crew", emoji: "👥" },
 ];
 
+const LIFESTYLE_SERVICE_OPTIONS = [
+  { id: "barber", label: "Barber", emoji: "💈" },
+  { id: "loctician", label: "Loctician", emoji: "🫱🏾‍🫲🏾" },
+  { id: "natural_hair_stylist", label: "Natural Hair Stylist", emoji: "✂️" },
+  { id: "braider", label: "Braider", emoji: "🪢" },
+  { id: "nail_tech", label: "Nail Tech", emoji: "💅🏾" },
+  { id: "esthetician", label: "Esthetician / Skincare", emoji: "🧖🏾" },
+  { id: "massage_therapist", label: "Massage Therapist", emoji: "🙌🏾" },
+  { id: "personal_trainer", label: "Personal Trainer", emoji: "🏋🏾" },
+  { id: "therapist_counselor", label: "Therapist / Counselor", emoji: "🧠" },
+  { id: "chiropractor", label: "Chiropractor", emoji: "🦴" },
+  { id: "dentist", label: "Dentist", emoji: "🦷" },
+  { id: "primary_care_doctor", label: "Primary Care Doctor", emoji: "🩺" },
+  { id: "financial_advisor", label: "Financial Advisor", emoji: "📊" },
+  { id: "tax_preparer", label: "Tax Preparer", emoji: "🧾" },
+  { id: "attorney", label: "Attorney", emoji: "⚖️" },
+  { id: "realtor", label: "Realtor", emoji: "🏠" },
+  { id: "tutor", label: "Tutor / Academic Coach", emoji: "📚" },
+  { id: "life_coach", label: "Life Coach", emoji: "🌟" },
+  { id: "photographer", label: "Photographer", emoji: "📸" },
+  { id: "caterer", label: "Caterer / Personal Chef", emoji: "👨🏾‍🍳" },
+];
+
 export async function shouldShowKinfolkOnboarding(): Promise<boolean> {
   try {
     const val = await AsyncStorage.getItem(ONBOARDING_KEY);
@@ -77,6 +100,7 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
   const [budget, setBudget] = useState("any");
   const [tripStyles, setTripStyles] = useState<string[]>([]);
   const [companion, setCompanion] = useState("solo");
+  const [lifestyleServices, setLifestyleServices] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   function toggleCat(id: string) {
@@ -87,20 +111,23 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
     setTripStyles((p) => p.includes(id) ? p.filter((s) => s !== id) : [...p, id]);
   }
 
+  function toggleLifestyleService(id: string) {
+    setLifestyleServices((p) => p.includes(id) ? p.filter((s) => s !== id) : [...p, id]);
+  }
+
   async function handleFinish() {
     setSaving(true);
-    await update({ favoriteCategories: favCats, budgetRange: budget, tripStyle: tripStyles, travelCompanion: companion });
+    await update({ favoriteCategories: favCats, budgetRange: budget, tripStyle: tripStyles, travelCompanion: companion, lifestyleServices });
     await markKinfolkOnboardingDone();
     setSaving(false);
     onComplete();
   }
 
-  const totalSteps = 5;
+  const totalSteps = 6;
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <View style={[styles.root, { backgroundColor: colors.background }]}>
-        {/* Progress dots */}
         <View style={styles.progressRow}>
           {Array.from({ length: totalSteps }).map((_, i) => (
             <View key={i} style={[styles.dot, { backgroundColor: i <= step ? colors.primary : colors.border }]} />
@@ -221,7 +248,39 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
                   </TouchableOpacity>
                 ))}
               </View>
-              <View style={[styles.learnBadge, { backgroundColor: GOLD + "14", borderColor: GOLD + "30" }]}>
+            </View>
+          )}
+
+          {step === 5 && (
+            <View>
+              <Text style={[styles.heading, { color: colors.text }]}>Your go-to services 💈</Text>
+              <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
+                Tell me what you regularly use — I'll find minority-owned providers in every new city without you having to ask.
+              </Text>
+              <View style={[styles.serviceHint, { backgroundColor: GOLD + "14", borderColor: GOLD + "30" }]}>
+                <Ionicons name="sparkles" size={14} color={GOLD} />
+                <Text style={[styles.serviceHintText, { color: colors.text }]}>
+                  Going out of town for a month? I'll have your barber, nail tech, loctician — everything — already lined up.
+                </Text>
+              </View>
+              <View style={styles.catGrid}>
+                {LIFESTYLE_SERVICE_OPTIONS.map((s) => {
+                  const sel = lifestyleServices.includes(s.id);
+                  return (
+                    <TouchableOpacity
+                      key={s.id}
+                      style={[styles.catChip, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]}
+                      onPress={() => toggleLifestyleService(s.id)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.catEmoji}>{s.emoji}</Text>
+                      <Text style={[styles.catLabel, { color: sel ? "#fff" : colors.text }]}>{s.label}</Text>
+                      {sel && <Ionicons name="checkmark-circle" size={14} color="#fff" />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <View style={[styles.learnBadge, { backgroundColor: GOLD + "14", borderColor: GOLD + "30", marginTop: 20 }]}>
                 <Ionicons name="bulb-outline" size={16} color={GOLD} />
                 <Text style={[styles.learnText, { color: colors.text }]}>
                   KinfolkAI™ gets smarter every time you use it. Thumbs up a spot? I remember. Thumbs down? I won't do it again.
@@ -231,7 +290,6 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
           )}
         </ScrollView>
 
-        {/* Bottom buttons */}
         <View style={[styles.footer, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
           <View style={styles.footerRow}>
             {step > 0 ? (
@@ -278,7 +336,9 @@ const styles = StyleSheet.create({
   optionEmoji: { fontSize: 24 },
   optionLabel: { fontFamily: "Inter_600SemiBold", fontSize: 15, marginBottom: 2 },
   optionDesc: { fontFamily: "Inter_400Regular", fontSize: 12 },
-  learnBadge: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderRadius: 12, borderWidth: 1, padding: 14, marginTop: 24 },
+  serviceHint: { flexDirection: "row", alignItems: "flex-start", gap: 8, borderRadius: 10, borderWidth: 1, padding: 12, marginBottom: 12 },
+  serviceHintText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, flex: 1 },
+  learnBadge: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderRadius: 12, borderWidth: 1, padding: 14 },
   learnText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, flex: 1 },
   footer: { borderTopWidth: 1, padding: 16 },
   footerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },

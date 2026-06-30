@@ -640,7 +640,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
   const {
     favoriteCategories, favoriteCities, avoidCategories, budgetRange, tripStyle, travelCompanion, dietaryNotes,
     communicationStyle, emojiLevel, humorLevel, culturalInterests, knowBeforeYouGo, regionalFlavor,
-    preferredOwnershipTypes,
+    preferredOwnershipTypes, lifestyleServices,
   } = req.body as Record<string, unknown>;
   try {
     const [prefs] = await db
@@ -661,6 +661,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
         knowBeforeYouGo: typeof knowBeforeYouGo === "boolean" ? knowBeforeYouGo : undefined,
         regionalFlavor: typeof regionalFlavor === "string" ? regionalFlavor : undefined,
         preferredOwnershipTypes: Array.isArray(preferredOwnershipTypes) ? preferredOwnershipTypes as string[] : undefined,
+        lifestyleServices: Array.isArray(lifestyleServices) ? lifestyleServices as string[] : undefined,
       })
       .onConflictDoUpdate({
         target: userPreferencesTable.userId,
@@ -679,6 +680,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           ...(typeof knowBeforeYouGo === "boolean" && { knowBeforeYouGo }),
           ...(typeof regionalFlavor === "string" && { regionalFlavor }),
           ...(Array.isArray(preferredOwnershipTypes) && { preferredOwnershipTypes: preferredOwnershipTypes as string[] }),
+          ...(Array.isArray(lifestyleServices) && { lifestyleServices: lifestyleServices as string[] }),
           updatedAt: new Date(),
         },
       })
@@ -976,8 +978,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
-    // Build system prompt
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, businessCatalog, activeJourney, crossCityBridge, weatherContext });
+    // Build system prompt — include tier for depth-of-response rules
+    const userTier = req.user?.id
+      ? await storage.getUser(req.user.id).then((u) => u?.memberType ?? "free").catch(() => "free")
+      : "free";
+    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier });
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages

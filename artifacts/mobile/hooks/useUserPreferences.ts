@@ -32,6 +32,7 @@ export interface UserPreferences {
   knowBeforeYouGo: boolean;
   regionalFlavor: string;
   preferredOwnershipTypes: string[];
+  lifestyleServices: string[];
 }
 
 const DEFAULT_PREFS: Omit<UserPreferences, "userId"> = {
@@ -50,6 +51,7 @@ const DEFAULT_PREFS: Omit<UserPreferences, "userId"> = {
   knowBeforeYouGo: true,
   regionalFlavor: "standard",
   preferredOwnershipTypes: [],
+  lifestyleServices: [],
 };
 
 async function flushPendingOwnershipPrefs(token: string, apiBase: string): Promise<string[] | null> {
