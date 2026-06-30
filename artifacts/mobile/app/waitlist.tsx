@@ -613,12 +613,16 @@ function InviteFriendModal({
     { id: "linkedin", label: "LinkedIn" },
   ];
 
+  const [recipientType, setRecipientType] = useState<"friend" | "business">("friend");
+  const [bizName, setBizName] = useState("");
+
   const emailValid = friendEmail.includes("@") && friendEmail.includes(".");
-  const canSubmit = emailValid && !loading;
+  const canSubmit = emailValid && !loading && (recipientType === "friend" || !!bizName.trim());
 
   const reset = () => {
     setFriendName(""); setFriendEmail(""); setDone(false); setError("");
     setSocialHandle(""); setSocialName(""); setSocialDone(false); setSocialCopyMsg("");
+    setBizName("");
   };
 
   const handleClose = (invited: boolean) => { reset(); onClose(invited); };
@@ -634,8 +638,9 @@ function InviteFriendModal({
         body: JSON.stringify({
           referralCode,
           inviteeEmail: friendEmail.trim(),
-          inviteeName: friendName.trim() || undefined,
-          type: "friend",
+          inviteeName: recipientType === "friend" ? (friendName.trim() || undefined) : undefined,
+          businessName: recipientType === "business" ? bizName.trim() : undefined,
+          type: recipientType,
         }),
       });
       if (!res.ok) {
@@ -664,8 +669,9 @@ function InviteFriendModal({
           platform: socialPlatform,
           handleOrUrl: socialHandle.trim(),
           name: socialName.trim() || undefined,
-          type: "friend",
+          type: recipientType,
           referralCode: referralCode || undefined,
+          bizName: recipientType === "business" ? bizName.trim() : undefined,
         }),
       });
       const data = await res.json() as { copyMessage?: string; error?: string };
@@ -716,27 +722,47 @@ function InviteFriendModal({
 
               {tab === "email" ? (
                 <>
+                  <View style={[inv.tabRow, { borderColor: colors.border }]}>
+                    <TouchableOpacity style={[inv.tabBtn, recipientType === "friend" && { backgroundColor: colors.primary }]} onPress={() => setRecipientType("friend")} activeOpacity={0.8}>
+                      <Text style={[inv.tabBtnTxt, { color: recipientType === "friend" ? colors.primaryForeground : colors.mutedForeground }]}>Friend</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[inv.tabBtn, recipientType === "business" && { backgroundColor: colors.primary }]} onPress={() => setRecipientType("business")} activeOpacity={0.8}>
+                      <Text style={[inv.tabBtnTxt, { color: recipientType === "business" ? colors.primaryForeground : colors.mutedForeground }]}>Business</Text>
+                    </TouchableOpacity>
+                  </View>
                   <Text style={[inv.sub, { color: colors.mutedForeground }]}>
-                    We'll add them to the waitlist and send a personal invite from you.
+                    {recipientType === "business" ? "We'll send them an invite to list their business on Mapping With Melanin™." : "We'll add them to the waitlist and send a personal invite from you."}
                   </Text>
-                  <Text style={[inv.label, { color: colors.mutedForeground }]}>Friend's Name <Text style={{ color: colors.mutedForeground + "80" }}>(optional)</Text></Text>
+                  {recipientType === "business" && (
+                    <>
+                      <Text style={[inv.label, { color: colors.mutedForeground }]}>Business Name <Text style={{ color: colors.destructive }}>*</Text></Text>
+                      <TextInput
+                        style={[inv.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                        value={bizName} onChangeText={setBizName}
+                        placeholder="e.g. Sweet Auburn Bistro"
+                        placeholderTextColor={colors.mutedForeground}
+                        autoCapitalize="words" returnKeyType="next"
+                      />
+                    </>
+                  )}
+                  <Text style={[inv.label, { color: colors.mutedForeground }]}>{recipientType === "business" ? "Contact Name" : "Friend's Name"} <Text style={{ color: colors.mutedForeground + "80" }}>(optional)</Text></Text>
                   <TextInput
                     style={[inv.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
                     value={friendName}
                     onChangeText={setFriendName}
-                    placeholder="e.g. Maya Johnson"
+                    placeholder={recipientType === "business" ? "e.g. Marcus Johnson" : "e.g. Maya Johnson"}
                     placeholderTextColor={colors.mutedForeground}
                     autoCapitalize="words"
                     returnKeyType="next"
                   />
                   <Text style={[inv.label, { color: colors.mutedForeground }]}>
-                    Friend's Email <Text style={{ color: colors.destructive }}>*</Text>
+                    {recipientType === "business" ? "Business Email" : "Friend's Email"} <Text style={{ color: colors.destructive }}>*</Text>
                   </Text>
                   <TextInput
                     style={[inv.input, { backgroundColor: colors.card, borderColor: friendEmail && !emailValid ? colors.destructive : colors.border, color: colors.foreground }]}
                     value={friendEmail}
                     onChangeText={setFriendEmail}
-                    placeholder="maya@example.com"
+                    placeholder={recipientType === "business" ? "hello@theirbusiness.com" : "maya@example.com"}
                     placeholderTextColor={colors.mutedForeground}
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -753,7 +779,7 @@ function InviteFriendModal({
                   <View style={[inv.infoBox, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "25" }]}>
                     <Text style={{ fontSize: 16 }}>✉️</Text>
                     <Text style={[inv.infoText, { color: colors.primary }]}>
-                      They'll get a personal invite email from <Text style={{ fontFamily: "Inter_700Bold" }}>you</Text> — not just a generic waitlist email.
+                      They'll get a personal invite from <Text style={{ fontFamily: "Inter_700Bold" }}>you</Text> — not a generic email.
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -764,21 +790,41 @@ function InviteFriendModal({
                   >
                     {loading
                       ? <ActivityIndicator size="small" color="#FFF" />
-                      : <Text style={inv.btnText}>Add {friendName.trim() ? friendName.trim().split(" ")[0] : "Friend"} to the Community →</Text>
+                      : <Text style={inv.btnText}>{recipientType === "business" ? `Invite ${bizName.trim() ? bizName.trim().split(" ")[0] : "Business"} →` : `Add ${friendName.trim() ? friendName.trim().split(" ")[0] : "Friend"} to the Community →`}</Text>
                     }
                   </TouchableOpacity>
                 </>
               ) : (
                 <>
+                  <View style={[inv.tabRow, { borderColor: colors.border }]}>
+                    <TouchableOpacity style={[inv.tabBtn, recipientType === "friend" && { backgroundColor: colors.primary }]} onPress={() => setRecipientType("friend")} activeOpacity={0.8}>
+                      <Text style={[inv.tabBtnTxt, { color: recipientType === "friend" ? colors.primaryForeground : colors.mutedForeground }]}>Friend</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[inv.tabBtn, recipientType === "business" && { backgroundColor: colors.primary }]} onPress={() => setRecipientType("business")} activeOpacity={0.8}>
+                      <Text style={[inv.tabBtnTxt, { color: recipientType === "business" ? colors.primaryForeground : colors.mutedForeground }]}>Business</Text>
+                    </TouchableOpacity>
+                  </View>
                   <Text style={[inv.sub, { color: colors.mutedForeground }]}>
                     Enter their social handle or profile URL. We'll generate a message you can send them directly.
                   </Text>
-                  <Text style={[inv.label, { color: colors.mutedForeground }]}>Their Name <Text style={{ color: colors.mutedForeground + "80" }}>(optional)</Text></Text>
+                  {recipientType === "business" && (
+                    <>
+                      <Text style={[inv.label, { color: colors.mutedForeground }]}>Business Name <Text style={{ color: colors.destructive }}>*</Text></Text>
+                      <TextInput
+                        style={[inv.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                        value={bizName} onChangeText={setBizName}
+                        placeholder="e.g. Sweet Auburn Bistro"
+                        placeholderTextColor={colors.mutedForeground}
+                        autoCapitalize="words" returnKeyType="next"
+                      />
+                    </>
+                  )}
+                  <Text style={[inv.label, { color: colors.mutedForeground }]}>{recipientType === "business" ? "Contact Name" : "Their Name"} <Text style={{ color: colors.mutedForeground + "80" }}>(optional)</Text></Text>
                   <TextInput
                     style={[inv.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
                     value={socialName}
                     onChangeText={setSocialName}
-                    placeholder="e.g. Marcus"
+                    placeholder={recipientType === "business" ? "e.g. Marcus" : "e.g. Maya"}
                     placeholderTextColor={colors.mutedForeground}
                     autoCapitalize="words"
                     returnKeyType="next"
@@ -809,9 +855,9 @@ function InviteFriendModal({
                     onSubmitEditing={handleSocialInvite}
                   />
                   <TouchableOpacity
-                    style={[inv.btn, { backgroundColor: socialHandle.trim() ? colors.primary : colors.muted, opacity: socialHandle.trim() ? 1 : 0.5 }]}
+                    style={[inv.btn, { backgroundColor: (socialHandle.trim() && (recipientType === "friend" || !!bizName.trim())) ? colors.primary : colors.muted, opacity: (socialHandle.trim() && (recipientType === "friend" || !!bizName.trim())) ? 1 : 0.5 }]}
                     onPress={handleSocialInvite}
-                    disabled={!socialHandle.trim() || socialLoading}
+                    disabled={!socialHandle.trim() || socialLoading || (recipientType === "business" && !bizName.trim())}
                     activeOpacity={0.85}
                   >
                     {socialLoading
@@ -846,7 +892,7 @@ function InviteFriendModal({
                 <Text style={inv.btnText}>Copy Message</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[inv.btn, { backgroundColor: colors.secondary, marginTop: 4 }]} onPress={reset} activeOpacity={0.85}>
-                <Text style={[inv.btnText, { color: colors.foreground }]}>Invite Another Friend</Text>
+                <Text style={[inv.btnText, { color: colors.foreground }]}>{recipientType === "business" ? "Refer Another" : "Invite Another Friend"}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => handleClose(true)} style={{ alignItems: "center", paddingVertical: 14 }}>
                 <Text style={[inv.doneLink, { color: colors.mutedForeground }]}>Done</Text>

@@ -7,6 +7,7 @@ import { RotatingQuoteBanner } from "@/components/RotatingQuoteBanner";
 const BASE = import.meta.env.BASE_URL;
 const SITE_URL = "https://mappingwithmelanin.com";
 const SHARE_TEXT = encodeURIComponent("Join Mapping with Melanin — discover trusted businesses, travel safely, and connect with the community. 🌍✊🏾");
+const BIZ_CATEGORIES = ["Restaurant", "Café", "Retail", "Beauty & Wellness", "Health & Fitness", "Arts & Culture", "Entertainment", "Professional Services", "Tech", "Home Services", "Food & Beverage", "Other"];
 
 function openShare(platform: string) {
   const url = encodeURIComponent(SITE_URL);
@@ -208,6 +209,16 @@ export default function Home() {
   const [socialSubmitting, setSocialSubmitting] = useState(false);
   const [socialDone, setSocialDone] = useState(false);
   const [socialCopyMsg, setSocialCopyMsg] = useState("");
+  const [showRecommend, setShowRecommend] = useState(false);
+  const [recBizName, setRecBizName] = useState("");
+  const [recWebsite, setRecWebsite] = useState("");
+  const [recCity, setRecCity] = useState("");
+  const [recState, setRecState] = useState("");
+  const [recCategory, setRecCategory] = useState("");
+  const [recNote, setRecNote] = useState("");
+  const [recBizEmail, setRecBizEmail] = useState("");
+  const [recSubmitting, setRecSubmitting] = useState(false);
+  const [recDone, setRecDone] = useState(false);
 
   useEffect(() => {
     fetch(`${BASE}api/waitlist/count`)
@@ -278,6 +289,35 @@ export default function Home() {
     } finally {
       setInviteSubmitting(false);
     }
+  };
+
+  const handleRecommend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!recBizName.trim() || recSubmitting) return;
+    setRecSubmitting(true);
+    try {
+      await fetch(`${BASE}api/waitlist/recommend-business`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessName: recBizName.trim(),
+          website: recWebsite.trim() || undefined,
+          city: recCity.trim() || undefined,
+          state: recState.trim() || undefined,
+          category: recCategory || undefined,
+          note: recNote.trim() || undefined,
+          businessEmail: recBizEmail.trim() || undefined,
+        }),
+      });
+      setRecDone(true);
+    } catch {} finally { setRecSubmitting(false); }
+  };
+
+  const closeRecommend = () => {
+    setShowRecommend(false);
+    setRecDone(false);
+    setRecBizName(""); setRecWebsite(""); setRecCity(""); setRecState("");
+    setRecCategory(""); setRecNote(""); setRecBizEmail("");
   };
 
   const handleSocialRefer = async (e: React.FormEvent) => {
@@ -505,6 +545,16 @@ export default function Home() {
                       </form>
                     )}
                   </div>
+                  <button type="button" onClick={() => setShowRecommend(true)}
+                    className="mt-3 w-full flex items-center gap-3 text-left group border-t border-white/10 pt-3">
+                    <div className="w-9 h-9 rounded-full bg-[#CA922B]/15 flex items-center justify-center flex-shrink-0 group-hover:bg-[#CA922B]/25 transition-colors">
+                      <span className="text-base">🔍</span>
+                    </div>
+                    <div>
+                      <p className="text-white font-bold text-sm group-hover:text-[#CA922B] transition-colors">Who are we missing?</p>
+                      <p className="text-[#F5EBD8]/50 text-xs">Know a business that deserves to be on the map? Tell us →</p>
+                    </div>
+                  </button>
                 </div>
               ) : (
                 <>
@@ -561,6 +611,16 @@ export default function Home() {
                       ))}
                     </div>
                   </div>
+                  <button type="button" onClick={() => setShowRecommend(true)}
+                    className="mt-3 w-full flex items-center gap-3 text-left group border-t border-white/10 pt-3">
+                    <div className="w-9 h-9 rounded-full bg-[#CA922B]/15 flex items-center justify-center flex-shrink-0 group-hover:bg-[#CA922B]/25 transition-colors">
+                      <span className="text-base">🔍</span>
+                    </div>
+                    <div>
+                      <p className="text-white font-bold text-sm group-hover:text-[#CA922B] transition-colors">Who are we missing?</p>
+                      <p className="text-[#F5EBD8]/50 text-xs">Know a business that deserves to be on the map? Tell us →</p>
+                    </div>
+                  </button>
                 </>
               )}
             </div>
@@ -1034,6 +1094,79 @@ export default function Home() {
       </section>
 
 
+      {showRecommend && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeRecommend} />
+          <div className="relative w-full sm:max-w-md bg-[#1C0E06] rounded-t-3xl sm:rounded-3xl p-6 max-h-[90vh] overflow-y-auto border border-white/10 shadow-2xl">
+            <button onClick={closeRecommend} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 hover:text-white transition-colors">
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2}><path d="M18 6 6 18M6 6l12 12" /></svg>
+            </button>
+            {recDone ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 rounded-full bg-[#CA922B]/20 flex items-center justify-center mx-auto mb-4">
+                  <svg viewBox="0 0 24 24" className="w-8 h-8 text-[#CA922B]" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="20,6 9,17 4,12" /></svg>
+                </div>
+                <h3 className="text-xl font-serif font-bold text-white mb-2">Thank you!</h3>
+                <p className="text-[#F5EBD8]/60 text-sm mb-6">We'll look into adding them to the platform. Community recommendations are how we grow.</p>
+                <button onClick={closeRecommend} className="w-full py-3 rounded-full bg-[#CA922B] hover:bg-[#B38024] text-[#1C0E06] font-bold text-sm transition-colors">Done</button>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-xl font-serif font-bold text-white mb-1">Recommend a Business</h3>
+                <p className="text-[#F5EBD8]/50 text-sm mb-5">Know a Black-owned business that should be on the map? Tell us about them.</p>
+                <form onSubmit={handleRecommend} className="flex flex-col gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-[#F5EBD8]/50 uppercase tracking-wider mb-1 block">Business Name <span className="text-[#CA922B]">*</span></label>
+                    <input type="text" required value={recBizName} onChange={e => setRecBizName(e.target.value)}
+                      placeholder="e.g. Sweet Auburn Bistro"
+                      className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-[#F5EBD8]/50 uppercase tracking-wider mb-1 block">City</label>
+                      <input type="text" value={recCity} onChange={e => setRecCity(e.target.value)} placeholder="Atlanta"
+                        className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-[#F5EBD8]/50 uppercase tracking-wider mb-1 block">State</label>
+                      <input type="text" value={recState} onChange={e => setRecState(e.target.value.toUpperCase().slice(0, 2))} placeholder="GA" maxLength={2}
+                        className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm uppercase" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-[#F5EBD8]/50 uppercase tracking-wider mb-1 block">Category</label>
+                    <select value={recCategory} onChange={e => setRecCategory(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl bg-[#2B1507] border border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm">
+                      <option value="">Select a category…</option>
+                      {BIZ_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-[#F5EBD8]/50 uppercase tracking-wider mb-1 block">Website or Social</label>
+                    <input type="text" value={recWebsite} onChange={e => setRecWebsite(e.target.value)} placeholder="https:// or @handle"
+                      className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-[#F5EBD8]/50 uppercase tracking-wider mb-1 block">Business Email (optional)</label>
+                    <input type="email" value={recBizEmail} onChange={e => setRecBizEmail(e.target.value)} placeholder="owner@business.com"
+                      className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-[#F5EBD8]/50 uppercase tracking-wider mb-1 block">Why do you love them? (optional)</label>
+                    <textarea value={recNote} onChange={e => setRecNote(e.target.value)} placeholder="Tell us what makes them special…"
+                      rows={3}
+                      className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm resize-none" />
+                  </div>
+                  <button type="submit" disabled={recSubmitting || !recBizName.trim()}
+                    className="w-full py-3 rounded-full bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-40 text-[#1C0E06] font-bold text-sm transition-colors mt-1">
+                    {recSubmitting ? "Sending…" : "Submit Recommendation →"}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
