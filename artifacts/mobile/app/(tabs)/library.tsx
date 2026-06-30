@@ -17,6 +17,7 @@ import { useColors } from "@/hooks/useColors";
 import { useMembership } from "@/hooks/useMembership";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { PrivacyPinModal, isSensitiveCategory } from "@/components/PrivacyPinModal";
+import { useSearchHistory } from "@/hooks/useSearchHistory";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -225,15 +226,30 @@ export default function LibraryScreen() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  const { history: topicSearchHistory, add: addTopicHistory } = useSearchHistory("topic");
+
   const followedTopics = useMemo(() => topics.filter((t) => t.isFollowing), [topics]);
   const unfollowedTopics = useMemo(() => topics.filter((t) => !t.isFollowing), [topics]);
 
+  const recentTopicCategories = useMemo(
+    () => [...new Set(topicSearchHistory.flatMap((h) => h.categories))].slice(0, 5),
+    [topicSearchHistory],
+  );
+
   const filteredTopics = useMemo(() => {
     const q = topicSearch.toLowerCase();
-    return q
+    const base = q
       ? topics.filter((t) => t.topicName.toLowerCase().includes(q) || t.category.toLowerCase().includes(q))
       : topics;
-  }, [topics, topicSearch]);
+    if (!q && recentTopicCategories.length > 0) {
+      return [...base].sort((a, b) => {
+        const aRecent = recentTopicCategories.includes(a.category) ? 0 : 1;
+        const bRecent = recentTopicCategories.includes(b.category) ? 0 : 1;
+        return aRecent - bRecent;
+      });
+    }
+    return base;
+  }, [topics, topicSearch, recentTopicCategories]);
 
   const filteredIssues = useMemo(() => {
     const q = issueSearch.toLowerCase();
@@ -348,6 +364,7 @@ export default function LibraryScreen() {
   }
 
   function openTopic(topic: Topic) {
+    void addTopicHistory(topic.topicName, [topic.category]);
     router.push({ pathname: "/library-topic", params: { topicId: topic.id } } as never);
   }
 

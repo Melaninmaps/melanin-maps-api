@@ -1,4 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import { db, userPreferencesTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import { pool } from "@workspace/db";
 
 const router: IRouter = Router();
@@ -75,8 +77,46 @@ function detectIntent(query: string): SearchIntent {
   };
 }
 
+router.post("/search/history", async (req: Request, res: Response) => {
+  const user = (req as any).user as { id: string } | undefined;
+  if (!user?.id) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const { query, type, categories = [] } = req.body as { query: string; type: string; categories?: string[] };
+  if (!query?.trim() || !type) { res.status(400).json({ error: "query and type required" }); return; }
+  try {
+    const existing = await db.select({ searchHistory: userPreferencesTable.searchHistory })
+      .from(userPreferencesTable).where(eq(userPreferencesTable.userId, user.id));
+    const prev: Array<{ query: string; type: string; categories: string[]; ts: number }> =
+      (existing[0]?.searchHistory ?? []) as Array<{ query: string; type: string; categories: string[]; ts: number }>;
+    const deduped = prev.filter((e) => !(e.query.toLowerCase() === query.trim().toLowerCase() && e.type === type));
+    const updated = [{ query: query.trim(), type, categories, ts: Date.now() }, ...deduped].slice(0, 30);
+    await db.insert(userPreferencesTable)
+      .values({ userId: user.id, searchHistory: updated })
+      .onConflictDoUpdate({ target: userPreferencesTable.userId, set: { searchHistory: updated } });
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to save search history");
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+router.get("/search/history", async (req: Request, res: Response) => {
+  const user = (req as any).user as { id: string } | undefined;
+  if (!user?.id) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const { type } = req.query as { type?: string };
+  try {
+    const rows = await db.select({ searchHistory: userPreferencesTable.searchHistory })
+      .from(userPreferencesTable).where(eq(userPreferencesTable.userId, user.id));
+    const all = (rows[0]?.searchHistory ?? []) as Array<{ query: string; type: string; categories: string[]; ts: number }>;
+    const filtered = type ? all.filter((e) => e.type === type) : all;
+    res.json({ history: filtered });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch search history");
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
 router.get("/search/intent", async (req: Request, res: Response) => {
-  const { q, city, limit = "12" } = req.query as Record<string, string>;
+  const { q, city, limit = "12", recentCategories } = req.query as Record<string, string>;
 
   if (!q?.trim()) {
     res.status(400).json({ error: "q (query) required" });
@@ -86,14 +126,18 @@ router.get("/search/intent", async (req: Request, res: Response) => {
   const intent = detectIntent(q);
   const lim = Math.min(parseInt(limit, 10), 30);
   const results: Record<string, unknown> = {};
+  const recentCats = recentCategories
+    ? recentCategories.split(",").map((c) => c.trim()).filter(Boolean)
+    : [];
 
   try {
     if (intent.includeTypes.includes("business")) {
       const params: unknown[] = [`%${q}%`];
       let whereExtra = "";
 
-      if (intent.categories.length > 0) {
-        params.push(intent.categories);
+      const boostCats = [...new Set([...recentCats, ...intent.categories])];
+      if (boostCats.length > 0) {
+        params.push(boostCats);
         whereExtra += ` OR category = ANY($${params.length})`;
       }
       if (city) {
@@ -101,12 +145,16 @@ router.get("/search/intent", async (req: Request, res: Response) => {
         whereExtra += ` AND (city ILIKE $${params.length})`;
       }
 
+      const boostParam = boostCats.length > 0 ? boostCats : null;
+      if (boostParam) params.push(boostParam);
+      const boostIdx = boostParam ? params.length : null;
+
       const bizRows = await pool.query<{ id: string; name: string; category: string; city: string; verified: boolean; description: string }>(
         `SELECT id, name, category, city, verified, description
          FROM businesses
          WHERE status = 'active'
            AND (name ILIKE $1 OR description ILIKE $1 OR tags::text ILIKE $1${whereExtra})
-         ORDER BY verified DESC, name ASC
+         ORDER BY ${boostIdx ? `CASE WHEN category = ANY($${boostIdx}) THEN 0 ELSE 1 END,` : ""} verified DESC, name ASC
          LIMIT ${lim}`,
         params,
       );

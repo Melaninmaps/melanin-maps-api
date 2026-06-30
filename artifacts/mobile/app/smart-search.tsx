@@ -14,6 +14,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { useSearchHistory } from "@/hooks/useSearchHistory";
 
 interface Business { id: string; name: string; category: string; city: string; verified: boolean; description?: string }
 interface Event { id: string; title: string; category: string; city: string; event_date: string }
@@ -53,6 +54,7 @@ export default function SmartSearchScreen() {
   const [results, setResults] = useState<SearchResults | null>(null);
   const inputRef = useRef<TextInput>(null);
   const primaryGold = "#CA922B";
+  const { history, add: addHistory } = useSearchHistory("smart");
 
   const getApiBase = () =>
     process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
@@ -62,13 +64,17 @@ export default function SmartSearchScreen() {
     Keyboard.dismiss();
     setLoading(true);
     try {
-      const res = await fetch(`${getApiBase()}/api/search/intent?q=${encodeURIComponent(q)}`);
+      const recentCats = history.flatMap((h) => h.categories).slice(0, 10).join(",");
+      const params = new URLSearchParams({ q });
+      if (recentCats) params.set("recentCategories", recentCats);
+      const res = await fetch(`${getApiBase()}/api/search/intent?${params.toString()}`);
       if (res.ok) {
         const data = await res.json() as SearchResults;
         setResults(data);
+        void addHistory(q, data.suggestedCategories ?? []);
       }
     } catch { /* silent */ } finally { setLoading(false); }
-  }, []);
+  }, [history, addHistory]);
 
   const handleExampleTap = (q: string) => {
     setQuery(q);
@@ -125,7 +131,31 @@ export default function SmartSearchScreen() {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }} keyboardShouldPersistTaps="handled">
         {!results && !loading && (
           <>
-            <Text style={[styles.examplesTitle, { color: colors.foreground }]}>What are you looking for?</Text>
+            {history.length > 0 && (
+              <View style={styles.recentSection}>
+                <View style={styles.recentHeader}>
+                  <Feather name="clock" size={13} color={colors.mutedForeground} />
+                  <Text style={[styles.recentLabel, { color: colors.mutedForeground }]}>Recent searches</Text>
+                </View>
+                <View style={styles.examplesGrid}>
+                  {history.slice(0, 6).map((h, i) => (
+                    <TouchableOpacity
+                      key={i}
+                      style={[styles.recentChip, { backgroundColor: primaryGold + "12", borderColor: primaryGold + "35" }]}
+                      onPress={() => { setQuery(h.query); void search(h.query); }}
+                      activeOpacity={0.8}
+                    >
+                      <Feather name="rotate-ccw" size={11} color={primaryGold} />
+                      <Text style={[styles.recentChipText, { color: primaryGold }]} numberOfLines={1}>{h.query}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            <Text style={[styles.examplesTitle, { color: colors.foreground }]}>
+              {history.length > 0 ? "Try something new" : "What are you looking for?"}
+            </Text>
             <Text style={[styles.examplesSub, { color: colors.mutedForeground }]}>Try saying it naturally — I understand what you mean.</Text>
             <View style={styles.examplesGrid}>
               {EXAMPLE_QUERIES.map((ex, i) => (
@@ -307,4 +337,9 @@ const styles = StyleSheet.create({
   noResultsTitle: { fontSize: 17, fontWeight: "700", marginBottom: 8 },
   noResultsSub: { fontSize: 14, lineHeight: 20, textAlign: "center", marginBottom: 16 },
   kinfolkBtn: { borderRadius: 10, paddingHorizontal: 20, paddingVertical: 12 },
+  recentSection: { marginBottom: 20 },
+  recentHeader: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 10 },
+  recentLabel: { fontSize: 12, fontWeight: "600", letterSpacing: 0.5 },
+  recentChip: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 7 },
+  recentChipText: { fontSize: 13, fontWeight: "500", maxWidth: 160 },
 });

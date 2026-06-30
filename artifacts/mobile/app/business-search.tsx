@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
 import { CATEGORIES } from "@/constants/data";
+import { useSearchHistory } from "@/hooks/useSearchHistory";
 
 const CATEGORY_OPTIONS = CATEGORIES.filter((c) => c !== "All");
 
@@ -65,6 +66,15 @@ export default function BusinessSearchScreen() {
   const [inviteSubmitting, setInviteSubmitting] = useState(false);
   const [inviteSent, setInviteSent] = useState(false);
 
+  const { history, add: addHistory } = useSearchHistory("business");
+
+  useEffect(() => {
+    if (history.length > 0 && !category) {
+      const lastCat = history[0]?.categories?.[0];
+      if (lastCat) setCategory(lastCat);
+    }
+  }, [history]);
+
   const getApiBase = () =>
     process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
 
@@ -75,13 +85,6 @@ export default function BusinessSearchScreen() {
     setLoading(true);
     setSearched(false);
     try {
-      const params = new URLSearchParams();
-      if (name.trim()) params.set("search", name.trim());
-      if (city.trim()) params.set("search", [name.trim(), city.trim()].filter(Boolean).join(" "));
-      if (state.trim()) params.set("state", state.trim());
-      if (handle.trim()) params.set("handle", handle.trim());
-      if (category) params.set("category", category);
-
       const nameParam = name.trim();
       const cityParam = city.trim();
       const stateParam = state.trim();
@@ -106,6 +109,9 @@ export default function BusinessSearchScreen() {
       setResults(list);
       setSearched(true);
       setMode(list.length > 0 ? "results" : "invite");
+
+      const searchLabel = [nameParam, cityParam, stateParam].filter(Boolean).join(", ") || category;
+      void addHistory(searchLabel, category ? [category] : []);
     } catch {
       setResults([]);
       setSearched(true);
@@ -113,7 +119,7 @@ export default function BusinessSearchScreen() {
     } finally {
       setLoading(false);
     }
-  }, [name, city, state, handle, category]);
+  }, [name, city, state, handle, category, addHistory]);
 
   const handleSendInquiry = useCallback(async () => {
     if (!name.trim()) return;
@@ -211,6 +217,40 @@ export default function BusinessSearchScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        {!searched && history.length > 0 && (
+          <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 8 }}>
+              <Feather name="clock" size={13} color={colors.mutedForeground} />
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: colors.mutedForeground, letterSpacing: 0.5 }}>
+                RECENT SEARCHES
+              </Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
+              {history.slice(0, 6).map((h, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1, backgroundColor: primaryGold + "12", borderColor: primaryGold + "35" }}
+                  onPress={() => {
+                    if (h.categories?.[0]) setCategory(h.categories[0]);
+                    const parts = h.query.split(", ");
+                    if (parts[0]) setName(parts[0]);
+                    if (parts[1]) setCity(parts[1]);
+                    if (parts[2]) setState(parts[2]);
+                    setTimeout(() => void handleSearch(), 50);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Feather name="rotate-ccw" size={11} color={primaryGold} />
+                  <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: primaryGold }} numberOfLines={1}>
+                    {h.query}
+                    {h.categories?.[0] ? ` · ${h.categories[0]}` : ""}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         <View style={[styles.fieldsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>BUSINESS NAME</Text>
           <View style={[styles.inputRow, { borderColor: colors.border }]}>
