@@ -20,5 +20,5 @@
 - [Expo SDK version mismatch crash](expo-sdk-version-mismatch.md) — mismatched expo-* package versions (e.g. 56.x on SDK 54) cause NoClassDefFoundError on Android launch; Metro startup warnings are crash-level signals, not cosmetic.
 - [Mobile auth flow](mobile-auth-flow.md) — Replit OIDC rejects custom scheme redirect URIs; server proxies the OIDC flow via /mobile-auth/init → /login → /callback → /mobile-auth/done → mappingwithmelanin://auth-complete?token=SID.
 - [Expo pnpm monorepo Metro config](expo-pnpm-metro.md) — watchFolders+nodeModulesPaths+assert polyfill required for Metro to resolve pnpm symlinked packages.
-- [EAS production build pre-flight checklist](eas-preflight-checklist.md) — check before every production build to avoid wasted charges.
+- [EAS build archive pitfalls](eas-build-archive.md) — .easignore must be in artifacts/mobile/ (not workspace root); delete .cache/pnpm before building or EDQUOT kills the upload.
 - [Launch version state](launch-version-state.md) — current versions as of June 29 2026; Android versionCode 29 in closed testing; iOS v1.0.3 build 9 uploading to TestFlight.
