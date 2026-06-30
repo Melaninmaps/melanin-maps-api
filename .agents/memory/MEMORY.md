@@ -22,3 +22,4 @@
 - [Expo pnpm monorepo Metro config](expo-pnpm-metro.md) — watchFolders+nodeModulesPaths+assert polyfill required for Metro to resolve pnpm symlinked packages.
 - [EAS build archive pitfalls](eas-build-archive.md) — .easignore must be in artifacts/mobile/ (not workspace root); delete .cache/pnpm before building or EDQUOT kills the upload.
 - [Launch version state](launch-version-state.md) — current versions as of June 29 2026; Android versionCode 29 in closed testing; iOS v1.0.3 build 9 uploading to TestFlight.
+- [Social feed privacy architecture](social-feed-privacy.md) — GET /community/posts supports ?feed=following (SQL join user_follows+member_connections) and ?feed=everyone (excludes isPrivate authors); POST accepts visibility field; mobile has "For You/Following" toggle + compose visibility picker.

@@ -201,6 +201,8 @@ export default function CommunityScreen() {
   };
   const [newPostType, setNewPostType] = useState<"community" | "question" | "business" | "safety" | "travel">("community");
   const [newPostBusinessLink, setNewPostBusinessLink] = useState("");
+  const [newPostVisibility, setNewPostVisibility] = useState<"public" | "followers_only">("public");
+  const [feedMode, setFeedMode] = useState<"everyone" | "following">("everyone");
   const [submittingPost, setSubmittingPost] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
@@ -248,7 +250,7 @@ export default function CommunityScreen() {
   const loadPosts = useCallback(async () => {
     setLoadError(false);
     try {
-      const res = await fetch(`${getApiBase()}/api/community/posts`);
+      const res = await fetch(`${getApiBase()}/api/community/posts?feed=${feedMode}`);
       if (res.ok) {
         const data = await res.json() as { posts: Record<string, unknown>[] };
         setPosts((data.posts ?? []).map(toPostCard));
@@ -261,7 +263,7 @@ export default function CommunityScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [feedMode]);
 
   useEffect(() => { void loadPosts(); }, [loadPosts]);
 
@@ -339,6 +341,7 @@ export default function CommunityScreen() {
           category: newPostCategory,
           postType: newPostType,
           businessLink: newPostType === "business" && newPostBusinessLink.trim() ? newPostBusinessLink.trim() : undefined,
+          visibility: newPostVisibility,
         }),
       });
       if (res.ok) {
@@ -348,6 +351,7 @@ export default function CommunityScreen() {
         setNewPostCategory("general");
         setNewPostType("community");
         setNewPostBusinessLink("");
+        setNewPostVisibility("public");
         setShowCompose(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
@@ -864,6 +868,32 @@ export default function CommunityScreen() {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
             ListHeaderComponent={
               <>
+                {/* Feed mode toggle */}
+                <View style={{ flexDirection: "row", paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4, gap: 8 }}>
+                  {(["everyone", "following"] as const).map((mode) => (
+                    <TouchableOpacity
+                      key={mode}
+                      onPress={() => {
+                        setFeedMode(mode);
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      }}
+                      style={{
+                        paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20,
+                        backgroundColor: feedMode === mode ? colors.primary : colors.card,
+                        borderWidth: 1,
+                        borderColor: feedMode === mode ? colors.primary : colors.border,
+                      }}
+                    >
+                      <Text style={{
+                        fontFamily: "Inter_600SemiBold", fontSize: 13,
+                        color: feedMode === mode ? "#FFFFFF" : colors.mutedForeground,
+                      }}>
+                        {mode === "everyone" ? "For You" : "Following"}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
                 {/* Always-visible compose bar */}
                 <TouchableOpacity
                   activeOpacity={0.8}
@@ -1158,6 +1188,27 @@ export default function CommunityScreen() {
                 >
                   <Text style={[styles.filterChipText, { color: newPostCategory === opt.value ? colors.primary : colors.mutedForeground }]}>
                     {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Visibility selector */}
+            <View style={{ flexDirection: "row", paddingHorizontal: 16, paddingBottom: 10, gap: 8, alignItems: "center" }}>
+              <Feather name={newPostVisibility === "public" ? "globe" : "lock"} size={13} color={colors.mutedForeground} />
+              {(["public", "followers_only"] as const).map((v) => (
+                <TouchableOpacity
+                  key={v}
+                  onPress={() => { setNewPostVisibility(v); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                  style={{
+                    paddingHorizontal: 12, paddingVertical: 4, borderRadius: 14,
+                    borderWidth: 1,
+                    borderColor: newPostVisibility === v ? colors.primary : colors.border,
+                    backgroundColor: newPostVisibility === v ? colors.primary + "18" : "transparent",
+                  }}
+                >
+                  <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: newPostVisibility === v ? colors.primary : colors.mutedForeground }}>
+                    {v === "public" ? "🌐 Public" : "🔒 Friends Only"}
                   </Text>
                 </TouchableOpacity>
               ))}

@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, communityPostsTable, communityPostCommentsTable, businessesTable } from "@workspace/db";
+import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool } from "@workspace/db";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
@@ -24,18 +24,79 @@ router.get("/community/posts", async (req: Request, res: Response) => {
     const category = typeof req.query.category === "string" ? req.query.category : undefined;
     const postType = typeof req.query.postType === "string" ? req.query.postType : undefined;
     const authorId = typeof req.query.authorId === "string" ? req.query.authorId : undefined;
+    const feedMode = typeof req.query.feed === "string" ? req.query.feed : "everyone";
     const limit = Math.min(Number(req.query.limit) || 50, 100);
     const offset = Number(req.query.offset) || 0;
+    const viewerId: string | null = req.user?.id ?? null;
 
-    const posts = authorId
-      ? await db.select().from(communityPostsTable).where(eq(communityPostsTable.authorId, authorId)).orderBy(desc(communityPostsTable.createdAt)).limit(limit).offset(offset)
-      : await db.select().from(communityPostsTable).orderBy(desc(communityPostsTable.createdAt)).limit(limit).offset(offset);
+    type PostRow = { id: string; author_id: string | null; author_name: string; author_initials: string; author_color: string; content: string; category: string; post_type: string; business_id: string | null; business_name: string | null; business_link: string | null; media_urls: string | null; saved_place_id: string | null; visibility: string; upvotes: number; downvotes: number; comments_count: number; created_at: Date };
+
+    let rows: PostRow[];
+
+    if (authorId) {
+      // Profile wall — always use Drizzle for this simple case
+      const r = await db.select().from(communityPostsTable)
+        .where(eq(communityPostsTable.authorId, authorId))
+        .orderBy(desc(communityPostsTable.createdAt)).limit(limit).offset(offset);
+      rows = r as unknown as PostRow[];
+    } else if (feedMode === "following" && viewerId) {
+      // Following feed — posts from people you follow or are connected with
+      const result = await pool.query<PostRow>(`
+        SELECT cp.* FROM community_posts cp
+        WHERE cp.author_id IN (
+          SELECT uf.following_id FROM user_follows uf
+            WHERE uf.follower_id = $1 AND uf.status = 'accepted'
+          UNION
+          SELECT CASE WHEN mc.requester_id = $1 THEN mc.recipient_id ELSE mc.requester_id END
+            FROM member_connections mc
+            WHERE (mc.requester_id = $1 OR mc.recipient_id = $1) AND mc.status = 'accepted'
+          UNION SELECT $1
+        )
+        AND (cp.visibility = 'public' OR cp.visibility = 'followers_only')
+        ORDER BY cp.created_at DESC
+        LIMIT $2 OFFSET $3
+      `, [viewerId, limit, offset]);
+      rows = result.rows;
+    } else {
+      // Everyone feed — public posts from public accounts (+ followed private accounts)
+      const followingClause = viewerId
+        ? `OR cp.author_id IN (
+            SELECT uf.following_id FROM user_follows uf WHERE uf.follower_id = '${viewerId}' AND uf.status = 'accepted'
+            UNION
+            SELECT CASE WHEN mc.requester_id = '${viewerId}' THEN mc.recipient_id ELSE mc.requester_id END
+              FROM member_connections mc
+              WHERE (mc.requester_id = '${viewerId}' OR mc.recipient_id = '${viewerId}') AND mc.status = 'accepted'
+          )
+          OR cp.author_id = '${viewerId}'`
+        : "";
+      const result = await pool.query<PostRow>(`
+        SELECT cp.* FROM community_posts cp
+        LEFT JOIN users u ON u.id = cp.author_id
+        WHERE cp.visibility = 'public'
+          AND (
+            u.is_private = false OR u.is_private IS NULL OR cp.author_id IS NULL
+            ${followingClause}
+          )
+        ORDER BY cp.created_at DESC
+        LIMIT $1 OFFSET $2
+      `, [limit, offset]);
+      rows = result.rows;
+    }
+
+    // Map snake_case → camelCase to match existing shape
+    const posts = rows.map((r) => ({
+      id: r.id, authorId: r.author_id, authorName: r.author_name, authorInitials: r.author_initials,
+      authorColor: r.author_color, content: r.content, category: r.category, postType: r.post_type,
+      businessId: r.business_id, businessName: r.business_name, businessLink: r.business_link,
+      mediaUrls: r.media_urls, savedPlaceId: r.saved_place_id, visibility: r.visibility,
+      upvotes: r.upvotes, downvotes: r.downvotes, commentsCount: r.comments_count, createdAt: r.created_at,
+    }));
 
     let filtered = posts;
     if (category && category !== "all") filtered = filtered.filter((p) => p.category === category);
     if (postType && postType !== "all") filtered = filtered.filter((p) => p.postType === postType);
 
-    res.json({ posts: filtered, total: posts.length, offset, limit });
+    res.json({ posts: filtered, total: filtered.length, offset, limit });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch community posts");
     res.status(500).json({ error: "Failed to fetch posts" });
@@ -59,6 +120,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       businessLink,
       mediaUrls,
       savedPlaceId,
+      visibility = "public",
     } = req.body as {
       content?: string;
       category?: string;
@@ -68,6 +130,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       businessLink?: string;
       mediaUrls?: string[];
       savedPlaceId?: string;
+      visibility?: "public" | "followers_only";
     };
 
     if (!content?.trim()) {
@@ -142,6 +205,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
         businessLink: businessLink?.trim() ?? null,
         mediaUrls: mediaUrls?.length ? JSON.stringify(mediaUrls) : null,
         savedPlaceId: savedPlaceId ?? null,
+        visibility: (visibility === "followers_only" ? "followers_only" : "public") as "public" | "followers_only",
       })
       .returning();
 
