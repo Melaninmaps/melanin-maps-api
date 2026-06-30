@@ -117,16 +117,15 @@ router.get("/search/intent", async (req: Request, res: Response) => {
       const eventParams: unknown[] = [`%${q}%`];
       if (city) { eventParams.push(`%${city}%`); }
 
-      const eventRows = await pool.query<{ id: string; title: string; category: string; city: string; event_date: string }>(
-        `SELECT id, title, category, city, event_date
+      const eventRows = await pool.query<{ id: string; title: string; category: string; city: string; date: string }>(
+        `SELECT id, title, category, city, date
          FROM events
-         WHERE status = 'published'
-           AND event_date >= NOW()
+         WHERE status = 'active'
            AND (title ILIKE $1 OR description ILIKE $1 OR category ILIKE $1${city ? ` AND city ILIKE $2` : ""})
-         ORDER BY event_date ASC
+         ORDER BY date ASC
          LIMIT 6`,
         eventParams,
-      );
+      ).catch(() => ({ rows: [] }));
       results.events = eventRows.rows;
     }
 
