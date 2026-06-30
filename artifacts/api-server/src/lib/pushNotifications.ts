@@ -208,20 +208,26 @@ export async function sendAlertPushToNearbyUsers(
   const body = "A community member reported activity near you. Stay aware.";
 
   try {
-    // Fan-out group 1: users with a recent known location within the radius
+    // Fan-out group 1: users with a recent known location — filtered by per-user alert prefs + radius
     const locationResult = await pool.query<{ token: string; user_id: string }>(
       `SELECT pt.token, pt.user_id
        FROM user_locations ul
        JOIN push_tokens pt ON pt.user_id = ul.user_id
+       LEFT JOIN user_settings us ON us.user_id = ul.user_id
        WHERE ul.updated_at > NOW() - INTERVAL '2 hours'
          AND pt.token IS NOT NULL
+         AND CASE
+               WHEN $4 = 'police' THEN COALESCE(us.safety_alert_police, true)
+               WHEN $4 = 'ice'    THEN COALESCE(us.safety_alert_ice, true)
+               ELSE true
+             END = true
          AND (6371 * acos(
            GREATEST(-1, LEAST(1,
              cos(radians($1)) * cos(radians(ul.lat::float)) * cos(radians(ul.lng::float) - radians($2))
              + sin(radians($1)) * sin(radians(ul.lat::float))
            ))
-         )) < $3`,
-      [lat, lng, radiusKm],
+         )) < LEAST(COALESCE(us.safety_alert_radius_miles, 5) * 1.60934, $3)`,
+      [lat, lng, radiusKm, alertType],
     );
 
     // Fan-out group 2: users who have saved any business within the radius
@@ -230,14 +236,20 @@ export async function sendAlertPushToNearbyUsers(
        FROM saved_places sp
        JOIN businesses b ON b.id = sp.business_id
        JOIN push_tokens pt ON pt.user_id = sp.user_id
+       LEFT JOIN user_settings us ON us.user_id = sp.user_id
        WHERE pt.token IS NOT NULL
+         AND CASE
+               WHEN $4 = 'police' THEN COALESCE(us.safety_alert_police, true)
+               WHEN $4 = 'ice'    THEN COALESCE(us.safety_alert_ice, true)
+               ELSE true
+             END = true
          AND (6371 * acos(
            GREATEST(-1, LEAST(1,
              cos(radians($1)) * cos(radians(b.latitude::float)) * cos(radians(b.longitude::float) - radians($2))
              + sin(radians($1)) * sin(radians(b.latitude::float))
            ))
-         )) < $3`,
-      [lat, lng, radiusKm],
+         )) < LEAST(COALESCE(us.safety_alert_radius_miles, 5) * 1.60934, $3)`,
+      [lat, lng, radiusKm, alertType],
     );
 
     // Deduplicate by user_id — union both groups

@@ -144,6 +144,142 @@ const privStyles = StyleSheet.create({
   sub: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 },
 });
 
+const RADIUS_OPTIONS = [1, 2, 3, 5, 10] as const;
+
+function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors> }) {
+  const [alertPolice, setAlertPolice] = useState(true);
+  const [alertIce, setAlertIce] = useState(true);
+  const [radiusMiles, setRadiusMiles] = useState(5);
+  const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const res = await fetch(`${apiBase}/api/users/settings`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          const d = await res.json();
+          if (d.safetyAlertPolice !== undefined) setAlertPolice(d.safetyAlertPolice);
+          if (d.safetyAlertIce !== undefined) setAlertIce(d.safetyAlertIce);
+          if (d.safetyAlertRadiusMiles !== undefined) setRadiusMiles(d.safetyAlertRadiusMiles);
+        }
+      } catch { /* silent */ }
+      setLoaded(true);
+    })();
+  }, []);
+
+  const save = async (patch: Record<string, boolean | number>) => {
+    setSaving(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      await fetch(`${apiBase}/api/users/settings`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify(patch),
+      });
+    } catch { /* silent */ }
+    finally { setSaving(false); }
+  };
+
+  const togglePolice = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const next = !alertPolice;
+    setAlertPolice(next);
+    void save({ safetyAlertPolice: next });
+  };
+
+  const toggleIce = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const next = !alertIce;
+    setAlertIce(next);
+    void save({ safetyAlertIce: next });
+  };
+
+  const pickRadius = (r: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setRadiusMiles(r);
+    void save({ safetyAlertRadiusMiles: r });
+  };
+
+  if (!loaded) return null;
+
+  return (
+    <View style={[safetyStyles.card, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.foreground }]}>
+      <View style={[safetyStyles.header]}>
+        <View style={[safetyStyles.iconWrap, { backgroundColor: colors.primary + "15" }]}>
+          <Feather name="shield" size={18} color={colors.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[safetyStyles.title, { color: colors.foreground }]}>Safety Alerts</Text>
+          <Text style={[safetyStyles.sub, { color: colors.mutedForeground }]}>Get notified when community activity is reported near you</Text>
+        </View>
+        {saving && <ActivityIndicator size="small" color={colors.primary} />}
+      </View>
+
+      <View style={[safetyStyles.divider, { backgroundColor: colors.border }]} />
+
+      <View style={safetyStyles.row}>
+        <View style={{ flex: 1 }}>
+          <Text style={[safetyStyles.rowLabel, { color: colors.foreground }]}>Police activity</Text>
+          <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Traffic stops, checkpoints & police presence</Text>
+        </View>
+        <Switch value={alertPolice} onValueChange={togglePolice} trackColor={{ true: colors.primary, false: colors.border }} thumbColor="#FFF" />
+      </View>
+
+      <View style={safetyStyles.row}>
+        <View style={{ flex: 1 }}>
+          <Text style={[safetyStyles.rowLabel, { color: colors.foreground }]}>ICE / immigration activity</Text>
+          <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Enforcement activity reported by community</Text>
+        </View>
+        <Switch value={alertIce} onValueChange={toggleIce} trackColor={{ true: colors.primary, false: colors.border }} thumbColor="#FFF" />
+      </View>
+
+      <View style={[safetyStyles.divider, { backgroundColor: colors.border }]} />
+
+      <View style={safetyStyles.radiusSection}>
+        <Text style={[safetyStyles.rowLabel, { color: colors.foreground }]}>Alert radius</Text>
+        <View style={safetyStyles.pillRow}>
+          {RADIUS_OPTIONS.map((r) => (
+            <TouchableOpacity
+              key={r}
+              onPress={() => pickRadius(r)}
+              style={[
+                safetyStyles.pill,
+                { borderColor: colors.border, backgroundColor: r === radiusMiles ? colors.primary : "transparent" },
+              ]}
+            >
+              <Text style={[safetyStyles.pillText, { color: r === radiusMiles ? "#FFF" : colors.mutedForeground }]}>
+                {r} mi
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+const safetyStyles = StyleSheet.create({
+  card: { marginHorizontal: 16, marginBottom: 12, borderRadius: 16, borderWidth: 1, padding: 14, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
+  header: { flexDirection: "row", alignItems: "center", gap: 12 },
+  iconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  title: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  sub: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 },
+  divider: { height: 1, marginVertical: 12 },
+  row: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 },
+  rowLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  rowSub: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 2 },
+  radiusSection: { gap: 8 },
+  pillRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
+  pill: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, borderWidth: 1.5 },
+  pillText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+});
+
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -901,6 +1037,11 @@ export default function ProfileScreen() {
       {/* Privacy toggle card */}
       {isAuthenticated && (
         <PrivacyToggleCard user={user} refreshUser={refreshUser} colors={colors} />
+      )}
+
+      {/* Safety alert preferences */}
+      {isAuthenticated && (
+        <SafetyAlertPrefsCard colors={colors} />
       )}
 
       <View style={styles.section}>

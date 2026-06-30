@@ -1,4 +1,4 @@
-import { boolean, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -37,6 +37,11 @@ export const userSettingsTable = pgTable("user_settings", {
 
   // ── Business owner opt-outs ───────────────────────────────────────────────
   postNudgesEnabled: boolean("post_nudges_enabled").notNull().default(true),
+
+  // ── Safety alert preferences ─────────────────────────────────────────────
+  safetyAlertPolice: boolean("safety_alert_police").notNull().default(true),
+  safetyAlertIce: boolean("safety_alert_ice").notNull().default(true),
+  safetyAlertRadiusMiles: integer("safety_alert_radius_miles").notNull().default(5),
 
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

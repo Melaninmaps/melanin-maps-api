@@ -34,6 +34,9 @@ const DEFAULT_SETTINGS = {
   kinfolkMemoryEnabled: true,
   profileViewTrackingEnabled: true,
   postNudgesEnabled: true,
+  safetyAlertPolice: true,
+  safetyAlertIce: true,
+  safetyAlertRadiusMiles: 5,
 };
 
 // ─── GET /api/users/settings ─────────────────────────────────────────────────
@@ -64,6 +67,7 @@ type SettingsPatch = Partial<{
   showLocation: boolean; locationPrecision: "neighborhood" | "exact";
   activityStatus: boolean; usageAnalytics: boolean; personalisedSuggestions: boolean;
   kinfolkMemoryEnabled: boolean; profileViewTrackingEnabled: boolean; postNudgesEnabled: boolean;
+  safetyAlertPolice: boolean; safetyAlertIce: boolean; safetyAlertRadiusMiles: number;
 }>;
 
 function parseSettingsPatch(body: unknown): { ok: true; data: SettingsPatch } | { ok: false } {
@@ -74,6 +78,7 @@ function parseSettingsPatch(body: unknown): { ok: true; data: SettingsPatch } | 
     "notifPromotions", "notifDigest", "notifTips", "notifPostNudges", "quietHoursEnabled",
     "showLocation", "activityStatus", "usageAnalytics", "personalisedSuggestions",
     "kinfolkMemoryEnabled", "profileViewTrackingEnabled", "postNudgesEnabled",
+    "safetyAlertPolice", "safetyAlertIce",
   ] as const;
   const data: SettingsPatch = {};
   for (const k of BOOLS) {
@@ -84,6 +89,11 @@ function parseSettingsPatch(body: unknown): { ok: true; data: SettingsPatch } | 
   }
   if ("quietHoursFrom" in b) { if (typeof b.quietHoursFrom !== "string") return { ok: false }; data.quietHoursFrom = b.quietHoursFrom; }
   if ("quietHoursUntil" in b) { if (typeof b.quietHoursUntil !== "string") return { ok: false }; data.quietHoursUntil = b.quietHoursUntil; }
+  if ("safetyAlertRadiusMiles" in b) {
+    const r = Number(b.safetyAlertRadiusMiles);
+    if (!Number.isInteger(r) || r < 1 || r > 10) return { ok: false };
+    data.safetyAlertRadiusMiles = r;
+  }
   if ("profileVisibility" in b) {
     if (!["public", "community", "private"].includes(b.profileVisibility as string)) return { ok: false };
     data.profileVisibility = b.profileVisibility as "public" | "community" | "private";

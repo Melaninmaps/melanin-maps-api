@@ -220,10 +220,20 @@ router.post("/community-alerts/:id/confirm", async (req: Request, res: Response)
   if (!requireAuth(req, res)) return;
   try {
     const alertId = String(req.params.id);
-    await pool.query(
-      `UPDATE community_alerts SET confirmed_count = confirmed_count + 1 WHERE id = $1 AND is_active = true`,
+    const result = await pool.query<{ confirmed_count: number; type: string; lat: string; lng: string }>(
+      `UPDATE community_alerts
+       SET confirmed_count = confirmed_count + 1
+       WHERE id = $1 AND is_active = true
+       RETURNING confirmed_count, type, lat::text, lng::text`,
       [alertId],
     );
+    const row = result.rows[0];
+    // Fire push notifications exactly when the 3rd verification comes in
+    if (row && row.confirmed_count === 3) {
+      const lat = parseFloat(row.lat);
+      const lng = parseFloat(row.lng);
+      void sendAlertPushToNearbyUsers(alertId, lat, lng, row.type, 16.1); // 10-mile max cap in km
+    }
     res.json({ ok: true });
   } catch (err) {
     req.log.error({ err }, "POST /community-alerts/:id/confirm error");
