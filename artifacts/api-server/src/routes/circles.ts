@@ -7,10 +7,28 @@ import {
   circlePlans,
   circleVotes,
   circleAdventures,
+  userPreferencesTable,
+  savedPlacesTable,
+  businessesTable,
   type CircleItinerary,
 } from "@workspace/db/schema";
 import { eq, and, inArray, desc, sql } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { storage } from "../storage";
+
+// Tier limits for circle creation
+const CIRCLE_LIMITS: Record<string, { maxCircles: number; maxPrivateMembers: number; maxCommunityMembers: number }> = {
+  free:        { maxCircles: 1,        maxPrivateMembers: 4,  maxCommunityMembers: 0   },
+  navigator:   { maxCircles: 3,        maxPrivateMembers: 10, maxCommunityMembers: 25  },
+  trailblazer: { maxCircles: Infinity, maxPrivateMembers: 20, maxCommunityMembers: 100 },
+  founding:    { maxCircles: Infinity, maxPrivateMembers: 20, maxCommunityMembers: 100 },
+  beta:        { maxCircles: Infinity, maxPrivateMembers: 20, maxCommunityMembers: 100 },
+};
+function getTierKey(memberType: string | null | undefined): keyof typeof CIRCLE_LIMITS {
+  if (!memberType) return "free";
+  if (memberType in CIRCLE_LIMITS) return memberType as keyof typeof CIRCLE_LIMITS;
+  return "free";
+}
 
 const router = Router();
 
@@ -72,23 +90,83 @@ router.post("/circles", async (req: Request, res: Response) => {
     res.status(400).json({ error: "Circle name is required (min 2 chars)" }); return;
   }
   try {
+    // Enforce tier-based circle creation limits
+    const user = await storage.getUser(uid(req)).catch(() => null);
+    const tierKey = getTierKey(user?.memberType);
+    const limits = CIRCLE_LIMITS[tierKey];
+    const circleType = String(type ?? "private");
+
+    if (circleType === "community" && limits.maxCommunityMembers === 0) {
+      res.status(403).json({
+        error: "Community circles require a Navigator or Trailblazer membership.",
+        upgradeRequired: true,
+        tier: tierKey,
+      });
+      return;
+    }
+
+    if (isFinite(limits.maxCircles)) {
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)`.mapWith(Number) })
+        .from(kinfolkCircles).where(eq(kinfolkCircles.hostUserId, uid(req)));
+      if (count >= limits.maxCircles) {
+        res.status(403).json({
+          error: `You can host up to ${limits.maxCircles} circle${limits.maxCircles === 1 ? "" : "s"} on the ${tierKey} plan. Upgrade to create more.`,
+          upgradeRequired: true,
+          tier: tierKey,
+          limit: limits.maxCircles,
+          current: count,
+        });
+        return;
+      }
+    }
+
+    const defaultMax = circleType === "community" ? limits.maxCommunityMembers : limits.maxPrivateMembers;
+
     const [circle] = await db.insert(kinfolkCircles).values({
       name: String(name).trim(),
-      type: String(type ?? "private"),
+      type: circleType,
       privacy: String(privacy ?? "invite_only"),
       hostUserId: uid(req),
       description: description ? String(description).trim() : null,
       emoji: emoji ? String(emoji) : "✨",
-      maxMembers: typeof maxMembers === "number" ? maxMembers : (type === "community" ? 50 : 8),
+      maxMembers: typeof maxMembers === "number" ? Math.min(maxMembers, defaultMax) : defaultMax,
       city: city ? String(city) : null,
       state: state ? String(state) : null,
       planningMode: String(planningMode ?? "open"),
     }).returning();
     await db.insert(circleMembers).values({ circleId: circle.id, userId: uid(req), role: "host" });
-    res.status(201).json({ circle });
+    res.status(201).json({ circle, tier: tierKey, limits });
   } catch (err) {
     (req as any).log.error({ err }, "POST /circles error");
     res.status(500).json({ error: "Failed to create circle" });
+  }
+});
+
+// Return the requesting user's saved businesses — used by members for quick-suggest
+router.get("/circles/:id/saved-places", async (req: Request, res: Response) => {
+  if (!authed(req, res)) return;
+  const circleId = parseInt(req.params.id as string);
+  if (isNaN(circleId)) { res.status(400).json({ error: "Invalid circle id" }); return; }
+  try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
+    const saved = await db
+      .select({
+        businessId: savedPlacesTable.businessId,
+        businessName: businessesTable.name,
+        category: businessesTable.category,
+        savedAt: savedPlacesTable.createdAt,
+      })
+      .from(savedPlacesTable)
+      .leftJoin(businessesTable, eq(savedPlacesTable.businessId, businessesTable.id))
+      .where(eq(savedPlacesTable.userId, uid(req)))
+      .orderBy(desc(savedPlacesTable.createdAt))
+      .limit(50);
+    res.json({ savedPlaces: saved });
+  } catch (err) {
+    (req as any).log.error({ err }, "GET /circles/:id/saved-places error");
+    res.status(500).json({ error: "Failed to load saved places" });
   }
 });
 
@@ -327,6 +405,15 @@ router.delete("/circles/:id/suggestions/:sugId", async (req: Request, res: Respo
   }
 });
 
+type MemberPrefsContext = {
+  favoriteCategories?: string[];
+  budgetRange?: string;
+  tripStyle?: string[];
+  dietaryNotes?: string | null;
+  lifestyleServices?: string[];
+  travelCompanion?: string;
+};
+
 async function generateItinerary(
   circleName: string,
   vibe: string,
@@ -334,23 +421,45 @@ async function generateItinerary(
   availability: string[],
   suggestions: { placeName: string; placeType: string; note?: string | null }[],
   city?: string | null,
+  curatorMode?: string,
+  memberPrefs?: MemberPrefsContext | null,
 ): Promise<CircleItinerary> {
   const suggestionList = suggestions.map((s) => `- ${s.placeName} (${s.placeType})${s.note ? ": " + s.note : ""}`).join("\n");
+  const cityNote = city ? `in or near ${city}` : "";
   const budgetNote = budget === "unlimited" ? "No budget constraints" : `Budget ~$${budget} per person`;
   const availNote = availability.length ? availability.join(", ") : "flexible timing";
-  const cityNote = city ? `in or near ${city}` : "";
 
-  const prompt = `You are Kinfolk, a culturally-intelligent AI planning assistant for Black communities.
+  // Build member prefs section when planning by a member's taste
+  const memberPrefsSection = memberPrefs && curatorMode === "by_member"
+    ? `\nPLANNING BY A MEMBER'S PERSONAL TASTE — let their preferences guide every stop:
+- Favorite categories: ${memberPrefs.favoriteCategories?.join(", ") || "anything"}
+- Budget vibe: ${memberPrefs.budgetRange || "flexible"}
+- Trip style: ${memberPrefs.tripStyle?.join(", ") || "open"}
+- Dietary notes: ${memberPrefs.dietaryNotes || "none"}
+- Lifestyle services they love: ${memberPrefs.lifestyleServices?.join(", ") || "none specified"}
+Make this feel like it was planned specifically for this person. Every stop should reflect their taste.`
+    : "";
+
+  const modeInstruction = curatorMode === "random"
+    ? "SURPRISE MODE: Ignore member suggestions. Be creative and spontaneous — pick something the group would never plan themselves but will love. Make it memorable."
+    : curatorMode === "by_member"
+    ? "BY-MEMBER MODE: Use the member's personal preferences (above) as your primary guide. Only incorporate circle suggestions if they fit the member's taste."
+    : "VOTES MODE: Incorporate the top-voted member suggestions as the backbone of the plan. Build the day around what the circle actually wants.";
+
+  const prompt = `You are Kinfolk, a culturally-intelligent AI planning assistant built for Black communities.
 Build a perfect day itinerary for a circle called "${circleName}" ${cityNote}.
 
 Vibe: ${vibe}
 ${budgetNote}
 Availability: ${availNote}
+${memberPrefsSection}
 
-Member suggestions to incorporate:
-${suggestionList || "No specific suggestions — surprise them!"}
+${modeInstruction}
 
-PRIVACY REMINDER: Only shared locations and suggestions are included. Never reference personal data.
+Member circle suggestions:
+${suggestionList || "No specific suggestions."}
+
+PRIVACY REMINDER: Only shared data is referenced. Never expose personal info beyond what's provided above.
 
 Return ONLY valid JSON in this exact shape:
 {
@@ -362,14 +471,14 @@ Return ONLY valid JSON in this exact shape:
   "kinfolkNote": "One warm, culturally-resonant closing line from Kinfolk"
 }
 
-Include 5–8 stops that flow naturally. Keep times realistic. Incorporate member suggestions when they fit.`;
+Include 5–8 stops that flow naturally. Keep times realistic. Prioritize Black-owned and minority-owned businesses when possible.`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [{ role: "user", content: prompt }],
     response_format: { type: "json_object" },
-    temperature: 0.8,
-    max_tokens: 1200,
+    temperature: curatorMode === "random" ? 1.0 : 0.8,
+    max_tokens: 1400,
   });
 
   const raw = response.choices[0]?.message?.content ?? "{}";
@@ -380,23 +489,49 @@ router.post("/circles/:id/plans", async (req: Request, res: Response) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id as string);
   if (isNaN(circleId)) { res.status(400).json({ error: "Invalid circle id" }); return; }
-  const { title, planDate, vibe, budget, availabilityWindows, surpriseMe } = req.body as Record<string, unknown>;
+  const { title, planDate, vibe, budget, availabilityWindows, surpriseMe, curatorMode, curatorMemberId } = req.body as Record<string, unknown>;
   try {
     const result = await getCircleWithAuth(circleId, uid(req), res);
     if (!result) return;
     if (!result.membership) { res.status(403).json({ error: "Not a member of this circle" }); return; }
     const { circle } = result;
 
+    // Resolve the effective curator mode (surpriseMe is legacy alias for "random")
+    const resolvedCuratorMode: string = surpriseMe ? "random" : (typeof curatorMode === "string" ? curatorMode : "votes");
+
     const suggestions = await db.select().from(circleSuggestions)
       .where(eq(circleSuggestions.circleId, circleId)).orderBy(desc(circleSuggestions.upvotes)).limit(20);
 
-    const resolvedVibe = surpriseMe
-      ? ["Foodie", "Arts & Culture", "Outdoors", "Date Night", "Adventure", "Relax", "Live Music"][Math.floor(Math.random() * 7)]
-      : String(vibe ?? "Foodie");
+    // Fetch member prefs when planning by a specific member's taste
+    let memberPrefs: MemberPrefsContext | null = null;
+    if (resolvedCuratorMode === "by_member" && typeof curatorMemberId === "string" && curatorMemberId) {
+      const [prefs] = await db.select().from(userPreferencesTable)
+        .where(eq(userPreferencesTable.userId, curatorMemberId)).limit(1);
+      if (prefs) {
+        memberPrefs = {
+          favoriteCategories: prefs.favoriteCategories as string[] | undefined,
+          budgetRange: prefs.budgetRange ?? undefined,
+          tripStyle: prefs.tripStyle as string[] | undefined,
+          dietaryNotes: prefs.dietaryNotes,
+          lifestyleServices: (prefs.lifestyleServices as string[] | undefined),
+          travelCompanion: prefs.travelCompanion ?? undefined,
+        };
+      }
+    }
 
-    const resolvedTitle = surpriseMe
+    const RANDOM_VIBES = ["Foodie", "Arts & Culture", "Outdoors", "Date Night", "Adventure", "Relax", "Live Music", "Culture & History", "Nightlife", "Family"];
+    const resolvedVibe = resolvedCuratorMode === "random"
+      ? RANDOM_VIBES[Math.floor(Math.random() * RANDOM_VIBES.length)]
+      : (memberPrefs ? (memberPrefs.favoriteCategories?.[0] ?? String(vibe ?? "Foodie")) : String(vibe ?? "Foodie"));
+
+    const modeLabel: Record<string, string> = {
+      random: "🎲 Surprise",
+      by_member: "👤 Member's Taste",
+      votes: "🗳 Circle Votes",
+    };
+    const resolvedTitle = resolvedCuratorMode === "random"
       ? `${circle.emoji} Surprise Day — ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
-      : String(title ?? "Circle Plan");
+      : typeof title === "string" && title ? title : `${resolvedVibe} Day`;
 
     let itinerary: CircleItinerary;
     try {
@@ -407,6 +542,8 @@ router.post("/circles/:id/plans", async (req: Request, res: Response) => {
         Array.isArray(availabilityWindows) ? (availabilityWindows as string[]) : [],
         suggestions,
         circle.city,
+        resolvedCuratorMode,
+        memberPrefs,
       );
     } catch {
       itinerary = {
@@ -432,6 +569,8 @@ router.post("/circles/:id/plans", async (req: Request, res: Response) => {
       availabilityWindows: Array.isArray(availabilityWindows) ? availabilityWindows : [],
       itinerary,
       status: "draft",
+      curatorMode: resolvedCuratorMode,
+      curatorMemberId: typeof curatorMemberId === "string" && curatorMemberId ? curatorMemberId : null,
     }).returning();
 
     await db.update(kinfolkCircles).set({ updatedAt: new Date() }).where(eq(kinfolkCircles.id, circleId));

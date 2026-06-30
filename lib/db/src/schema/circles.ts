@@ -75,6 +75,8 @@ export const circlePlans = pgTable("circle_plans", {
   availabilityWindows: jsonb("availability_windows").$type<string[]>(),
   itinerary: jsonb("itinerary").$type<CircleItinerary>(),
   status: text("status").notNull().default("draft"),
+  curatorMode: text("curator_mode").notNull().default("votes"),
+  curatorMemberId: text("curator_member_id"),
   inCount: integer("in_count").notNull().default(0),
   maybeCount: integer("maybe_count").notNull().default(0),
   outCount: integer("out_count").notNull().default(0),
