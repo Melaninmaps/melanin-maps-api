@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, savedPlacesTable } from "@workspace/db";
-import { and, eq } from "drizzle-orm";
+import { db, savedPlacesTable, pool } from "@workspace/db";
+import { and, eq, sql } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -42,6 +42,20 @@ router.post("/saved-places", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to save place");
     res.status(500).json({ error: "Failed to save place" });
+  }
+});
+
+router.get("/saved-places/:businessId/count", async (req: Request, res: Response) => {
+  const businessId = String(req.params.businessId);
+  try {
+    const result = await pool.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM saved_places WHERE business_id = $1`,
+      [businessId],
+    );
+    res.json({ count: parseInt(result.rows[0]?.count ?? "0", 10) });
+  } catch (err) {
+    req.log.error({ err }, "Failed to get save count");
+    res.status(500).json({ error: "Failed to get save count" });
   }
 });
 

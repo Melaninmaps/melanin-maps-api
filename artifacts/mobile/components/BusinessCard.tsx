@@ -10,6 +10,7 @@ import { ConfidenceScoreBadge } from "./ConfidenceScoreBadge";
 import { RatingStars } from "./RatingStars";
 import { VerificationBadge } from "./VerificationBadge";
 import { SafetyExperienceSurvey } from "./SafetyExperienceSurvey";
+import { BusinessPreviewModal } from "./BusinessPreviewModal";
 
 function getOpenStatus(hours?: string | null): { open: boolean; label: string } | null {
   if (!hours) return null;
@@ -90,6 +91,7 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
   const colors = useColors();
   const img = CATEGORY_IMAGES[business.category] ?? CATEGORY_IMAGES["Food"];
   const [showSafetySurvey, setShowSafetySurvey] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const handleSave = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -101,16 +103,23 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
     setShowSafetySurvey(true);
   };
 
+  const handleLongPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setShowPreview(true);
+  };
+
   if (horizontal) {
     return (
       <>
         <TouchableOpacity
           onPress={onPress}
+          onLongPress={handleLongPress}
+          delayLongPress={400}
           activeOpacity={0.92}
           style={[styles.hCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}
           accessibilityRole="button"
           accessibilityLabel={`${business.name}, ${business.category} in ${business.city}`}
-          accessibilityHint="Double tap to view business details"
+          accessibilityHint="Double tap to view details, hold to preview"
         >
           <Image source={img} style={styles.hImage} contentFit="cover" />
           {business.blackOwned && (
@@ -213,6 +222,12 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
           businessCategory={business.category}
           onClose={() => setShowSafetySurvey(false)}
         />
+        <BusinessPreviewModal
+          business={business}
+          visible={showPreview}
+          onClose={() => setShowPreview(false)}
+          onViewProfile={onPress}
+        />
       </>
     );
   }
@@ -221,11 +236,13 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
     <>
       <TouchableOpacity
         onPress={onPress}
+        onLongPress={handleLongPress}
+        delayLongPress={400}
         activeOpacity={0.92}
         style={[styles.vCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}
         accessibilityRole="button"
         accessibilityLabel={`${business.name}, ${business.category} in ${business.city}`}
-        accessibilityHint="Double tap to view business details"
+        accessibilityHint="Double tap to view details, hold to preview"
       >
         <View style={styles.vImageWrap}>
           <Image source={img} style={styles.vImage} contentFit="cover" />
@@ -325,6 +342,12 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
         businessName={business.name}
         businessCategory={business.category}
         onClose={() => setShowSafetySurvey(false)}
+      />
+      <BusinessPreviewModal
+        business={business}
+        visible={showPreview}
+        onClose={() => setShowPreview(false)}
+        onViewProfile={onPress}
       />
     </>
   );
