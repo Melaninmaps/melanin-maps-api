@@ -149,3 +149,9 @@ id = "rgWmu9i93EN9SSvdLhG9R"
 uri = "file://MappingWithMelanin-iOS-v1.0.3-fixed.tar.gz"
 type = "unspecified"
 title = "Mapping With Melanin iOS v1.0.3 (fixed) — extract the .ipa and upload to App Store Connect"
+
+[[outputs]]
+id = "ty9S1s0ODAGMjeACMTOb8"
+uri = "file://.local/outputs/Mapping-With-Melanin---Founding-Member-Deck.pdf"
+type = "pdf"
+title = "Mapping With Melanin — Founding Member Deck (PDF)"
