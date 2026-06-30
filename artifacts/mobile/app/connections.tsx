@@ -40,7 +40,19 @@ interface SearchUser {
   id: string;
   firstName: string | null;
   lastName: string | null;
+  username: string | null;
   profileImageUrl: string | null;
+  bio: string | null;
+}
+
+interface Suggestion {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+  profileImageUrl: string | null;
+  bio: string | null;
+  mutualCount: number;
 }
 
 export default function ConnectionsScreen() {
@@ -56,6 +68,9 @@ export default function ConnectionsScreen() {
   const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
   const [searching, setSearching] = useState(false);
   const [actionLoading, setActionLoading] = useState<number | string | null>(null);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [requestedIds, setRequestedIds] = useState<Set<string>>(new Set());
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 24 : insets.bottom;
@@ -75,7 +90,25 @@ export default function ConnectionsScreen() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void loadConnections(); }, [loadConnections]);
+  const loadSuggestions = useCallback(async () => {
+    setLoadingSuggestions(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/users/suggestions`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        const data = await res.json() as { suggestions: Suggestion[] };
+        setSuggestions(data.suggestions ?? []);
+      }
+    } catch { /* silent */ }
+    finally { setLoadingSuggestions(false); }
+  }, []);
+
+  useEffect(() => {
+    void loadConnections();
+    void loadSuggestions();
+  }, [loadConnections, loadSuggestions]);
 
   const handleSearch = useCallback(async (q: string) => {
     setSearchQuery(q);
@@ -106,6 +139,7 @@ export default function ConnectionsScreen() {
       });
       if (res.ok || res.status === 409) {
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setRequestedIds((prev) => new Set([...prev, recipientId]));
         await loadConnections();
         setSearchQuery("");
         setSearchResults([]);
@@ -195,7 +229,7 @@ export default function ConnectionsScreen() {
         <View style={[s.searchDropdown, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {searchResults.map((u) => {
             const connected = isConnectedTo(u.id);
-            const pending = hasPendingWith(u.id);
+            const pending = hasPendingWith(u.id) || requestedIds.has(u.id);
             const isMe = u.id === myId;
             return (
               <View key={u.id} style={[s.searchRow, { borderBottomColor: colors.border }]}>
@@ -210,9 +244,14 @@ export default function ConnectionsScreen() {
                       <Feather name="user" size={14} color={colors.primary} />
                     </View>
                   )}
-                  <Text style={[s.searchName, { color: colors.foreground }]}>
-                    {[u.firstName, u.lastName].filter(Boolean).join(" ") || "Community member"}
-                  </Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[s.searchName, { color: colors.foreground }]} numberOfLines={1}>
+                      {[u.firstName, u.lastName].filter(Boolean).join(" ") || "Community member"}
+                    </Text>
+                    {u.username ? (
+                      <Text style={[s.searchHandle, { color: colors.mutedForeground }]}>@{u.username}</Text>
+                    ) : null}
+                  </View>
                 </TouchableOpacity>
                 {!isMe && !connected && !pending && (
                   <TouchableOpacity
@@ -271,6 +310,74 @@ export default function ConnectionsScreen() {
           keyExtractor={(c) => String(c.id)}
           contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: bottomPad + 20 }}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            activeTab === "all" && searchQuery.length === 0 && suggestions.length > 0 ? (
+              <View style={{ marginBottom: 20 }}>
+                <Text style={[s.sectionLabel, { color: colors.mutedForeground, marginBottom: 12 }]}>PEOPLE YOU MAY KNOW</Text>
+                {loadingSuggestions ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  suggestions.map((u) => {
+                    const connected = isConnectedTo(u.id);
+                    const pending = hasPendingWith(u.id) || requestedIds.has(u.id);
+                    return (
+                      <View key={u.id} style={[s.connectionRow, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 8 }]}>
+                        <TouchableOpacity
+                          style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}
+                          onPress={() => router.push(`/user-profile/${u.id}` as never)}
+                          activeOpacity={0.8}
+                        >
+                          {u.profileImageUrl ? (
+                            <Image source={{ uri: u.profileImageUrl }} style={s.avatar} />
+                          ) : (
+                            <View style={[s.avatar, { backgroundColor: colors.primary + "20", alignItems: "center", justifyContent: "center" }]}>
+                              <Feather name="user" size={18} color={colors.primary} />
+                            </View>
+                          )}
+                          <View style={{ flex: 1 }}>
+                            <Text style={[s.connectionName, { color: colors.foreground }]} numberOfLines={1}>
+                              {[u.firstName, u.lastName].filter(Boolean).join(" ") || "Community member"}
+                            </Text>
+                            {u.username ? (
+                              <Text style={[s.searchHandle, { color: colors.mutedForeground }]}>@{u.username}</Text>
+                            ) : u.mutualCount > 0 ? (
+                              <Text style={[s.connectionSub, { color: colors.mutedForeground }]}>
+                                {u.mutualCount} mutual {u.mutualCount === 1 ? "connection" : "connections"}
+                              </Text>
+                            ) : (
+                              <Text style={[s.connectionSub, { color: colors.mutedForeground }]}>Community member</Text>
+                            )}
+                          </View>
+                        </TouchableOpacity>
+                        {!connected && !pending ? (
+                          <TouchableOpacity
+                            style={[s.addBtn, { backgroundColor: colors.primary }]}
+                            onPress={() => void sendRequest(u.id)}
+                            disabled={actionLoading === u.id}
+                          >
+                            {actionLoading === u.id ? (
+                              <ActivityIndicator size="small" color="#FFF" />
+                            ) : (
+                              <Feather name="user-plus" size={14} color="#FFF" />
+                            )}
+                          </TouchableOpacity>
+                        ) : pending ? (
+                          <View style={[s.pendingBadge, { backgroundColor: colors.muted + "40" }]}>
+                            <Text style={[s.pendingBadgeText, { color: colors.mutedForeground }]}>Sent</Text>
+                          </View>
+                        ) : (
+                          <Feather name="check-circle" size={18} color="#2D7A4F" />
+                        )}
+                      </View>
+                    );
+                  })
+                )}
+                {accepted.length > 0 && (
+                  <Text style={[s.sectionLabel, { color: colors.mutedForeground, marginTop: 8, marginBottom: 4 }]}>YOUR CONNECTIONS</Text>
+                )}
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <View style={s.empty}>
               <Feather name={activeTab === "all" ? "users" : "inbox"} size={40} color={colors.border} />
@@ -383,6 +490,7 @@ const s = StyleSheet.create({
   searchDropdown: { position: "absolute", top: 130, left: 12, right: 12, borderRadius: 14, borderWidth: 1, zIndex: 100, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: 8 },
   searchRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1, gap: 10 },
   searchName: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  searchHandle: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 1 },
   addBtn: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
   pendingBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   pendingBadgeText: { fontFamily: "Inter_400Regular", fontSize: 12 },

@@ -68,19 +68,21 @@ router.get("/users/search", async (req: Request, res: Response) => {
   }
 
   try {
-    const q = String(req.query.q ?? "").trim();
-    if (!q || q.length < 2) {
+    const raw = String(req.query.q ?? "").trim().replace(/^@/, "");
+    if (!raw || raw.length < 2) {
       res.json({ users: [] });
       return;
     }
 
-    const pattern = `%${q}%`;
+    const pattern = `%${raw}%`;
     const results = await db
       .select({
         id: usersTable.id,
         firstName: usersTable.firstName,
         lastName: usersTable.lastName,
+        username: usersTable.username,
         profileImageUrl: usersTable.profileImageUrl,
+        bio: usersTable.bio,
       })
       .from(usersTable)
       .where(
@@ -88,15 +90,65 @@ router.get("/users/search", async (req: Request, res: Response) => {
           ne(usersTable.id, req.user.id),
           or(
             ilike(usersTable.firstName, pattern),
-            ilike(usersTable.lastName, pattern)
+            ilike(usersTable.lastName, pattern),
+            ilike(usersTable.username, pattern),
           )
         )
       )
-      .limit(15);
+      .limit(20);
 
     res.json({ users: results });
   } catch (err) {
     req.log.error({ err }, "GET /api/users/search error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/users/suggestions", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  const myId = req.user.id;
+  try {
+    const { pool } = await import("@workspace/db");
+
+    const rows = await pool.query<{
+      id: string; firstName: string | null; lastName: string | null;
+      username: string | null; profileImageUrl: string | null; bio: string | null; mutualCount: number;
+    }>(
+      `WITH my_connections AS (
+         SELECT
+           CASE WHEN requester_id = $1 THEN recipient_id ELSE requester_id END AS friend_id
+         FROM member_connections
+         WHERE (requester_id = $1 OR recipient_id = $1) AND status = 'accepted'
+       ),
+       friend_of_friend AS (
+         SELECT
+           CASE WHEN mc.requester_id = my.friend_id THEN mc.recipient_id ELSE mc.requester_id END AS suggested_id,
+           COUNT(*) AS mutual_count
+         FROM member_connections mc
+         JOIN my_connections my ON (mc.requester_id = my.friend_id OR mc.recipient_id = my.friend_id)
+         WHERE mc.status = 'accepted'
+           AND CASE WHEN mc.requester_id = my.friend_id THEN mc.recipient_id ELSE mc.requester_id END != $1
+           AND CASE WHEN mc.requester_id = my.friend_id THEN mc.recipient_id ELSE mc.requester_id END NOT IN (SELECT friend_id FROM my_connections)
+         GROUP BY suggested_id
+       )
+       SELECT u.id, u.first_name AS "firstName", u.last_name AS "lastName",
+              u.username, u.profile_image_url AS "profileImageUrl", u.bio,
+              COALESCE(fof.mutual_count, 0)::int AS "mutualCount"
+       FROM users u
+       LEFT JOIN friend_of_friend fof ON fof.suggested_id = u.id
+       WHERE u.id != $1
+         AND u.id NOT IN (SELECT friend_id FROM my_connections)
+       ORDER BY fof.mutual_count DESC NULLS LAST, u.created_at DESC
+       LIMIT 12`,
+      [myId],
+    );
+
+    res.json({ suggestions: rows.rows });
+  } catch (err) {
+    req.log.error({ err }, "GET /api/users/suggestions error");
     res.status(500).json({ error: "Internal server error" });
   }
 });

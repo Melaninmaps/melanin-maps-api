@@ -193,19 +193,31 @@ export default function DiscoverScreen() {
           />
         </View>
 
-        {/* AI Smart Search entry */}
-        <TouchableOpacity
-          style={styles.aiSearchBanner}
-          onPress={() => router.push("/smart-search" as never)}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.aiSearchIcon}>✨</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.aiSearchTitle}>AI Smart Search</Text>
-            <Text style={styles.aiSearchSub}>Describe what you're looking for in your own words</Text>
-          </View>
-          <Feather name="chevron-right" size={16} color="#CA922B" />
-        </TouchableOpacity>
+        {/* Search banners row */}
+        <View style={styles.searchBannersRow}>
+          <TouchableOpacity
+            style={[styles.searchBannerHalf, { borderColor: "#CA922B30", backgroundColor: "#CA922B08" }]}
+            onPress={() => router.push("/smart-search" as never)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.aiSearchIcon}>✨</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.aiSearchTitle}>AI Search</Text>
+              <Text style={styles.aiSearchSub}>Natural language</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.searchBannerHalf, { borderColor: "#3B82F630", backgroundColor: "#3B82F608" }]}
+            onPress={() => router.push("/connections" as never)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.aiSearchIcon}>👥</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.aiSearchTitle, { color: "#3B82F6" }]}>Find People</Text>
+              <Text style={[styles.aiSearchSub, { color: "#3B82F699" }]}>Friends & community</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
 
         <ScrollView
           horizontal
@@ -707,22 +719,25 @@ const styles = StyleSheet.create({
     borderColor: "#1C1A10",
   },
   searchWrap: { paddingHorizontal: 20, marginBottom: 8 },
-  aiSearchBanner: {
+  searchBannersRow: {
+    flexDirection: "row",
     marginHorizontal: 20,
     marginBottom: 12,
+    gap: 8,
+  },
+  searchBannerHalf: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 14,
+    gap: 8,
+    paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: "#CA922B18",
     borderWidth: 1,
-    borderColor: "#CA922B40",
   },
-  aiSearchIcon: { fontSize: 16 },
-  aiSearchTitle: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#CA922B" },
-  aiSearchSub: { fontFamily: "Inter_400Regular", fontSize: 11, color: "#CA922B99", marginTop: 1 },
+  aiSearchIcon: { fontSize: 15 },
+  aiSearchTitle: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#CA922B" },
+  aiSearchSub: { fontFamily: "Inter_400Regular", fontSize: 10, color: "#CA922B99", marginTop: 1 },
   categoryScroll: { paddingHorizontal: 20, gap: 8 },
   scroll: { flex: 1 },
   scrollContent: { paddingTop: 20 },
