@@ -55,6 +55,82 @@ const CATEGORY_ICONS: Record<string, string> = {
   positive: "✅",
 };
 
+type ActiveAlert = {
+  id: string;
+  type: string;
+  lat: number;
+  lng: number;
+  confirmedCount: number;
+  distanceKm: number;
+  description?: string | null;
+};
+
+const ALERT_TYPE_COLORS: Record<string, string> = {
+  police: "#3B82F6",
+  ice: "#DC2626",
+  checkpoint: "#F59E0B",
+  other: "#8B5CF6",
+};
+
+const ALERT_TYPE_ICONS: Record<string, string> = {
+  police: "🚔",
+  ice: "🚨",
+  checkpoint: "⛔",
+  other: "⚠️",
+};
+
+const ALERT_TYPE_LABELS: Record<string, string> = {
+  police: "Police Activity Reported",
+  ice: "ICE / Immigration Activity",
+  checkpoint: "Checkpoint Reported",
+  other: "Community Safety Alert",
+};
+
+function ActiveAlertCard({
+  alert,
+  onDismiss,
+}: {
+  alert: ActiveAlert;
+  onDismiss: () => void;
+}) {
+  const slideAnim = useRef(new Animated.Value(-120)).current;
+  const color = ALERT_TYPE_COLORS[alert.type] ?? "#EF4444";
+
+  useEffect(() => {
+    Animated.spring(slideAnim, { toValue: 0, tension: 60, friction: 10, useNativeDriver: true }).start();
+  }, [slideAnim]);
+
+  const distMi = alert.distanceKm < 0.5
+    ? "Less than 0.5 mi away"
+    : `${Math.round((alert.distanceKm / 1.609) * 10) / 10} mi away`;
+
+  return (
+    <Animated.View
+      style={[styles.warningCard, { borderLeftColor: color, transform: [{ translateY: slideAnim }] }]}
+    >
+      <View style={styles.warningTop}>
+        <View style={[styles.warningBadge, { backgroundColor: color + "22" }]}>
+          <Text style={styles.warningIcon}>{ALERT_TYPE_ICONS[alert.type] ?? "⚠️"}</Text>
+          <Text style={[styles.warningBadgeText, { color }]}>
+            {ALERT_TYPE_LABELS[alert.type] ?? "Alert"}
+          </Text>
+        </View>
+        <TouchableOpacity onPress={onDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Feather name="x" size={16} color="#9CA3AF" />
+        </TouchableOpacity>
+      </View>
+      <Text style={styles.warningName}>
+        {alert.confirmedCount} community confirmation{alert.confirmedCount !== 1 ? "s" : ""}
+      </Text>
+      <Text style={styles.warningMeta}>{distMi} · Reported by your community</Text>
+      <View style={styles.warningFooter}>
+        <Text style={[styles.warningCategory, { color }]}>Stay aware of your surroundings</Text>
+        <Text style={styles.warningTip}>Be safe 🙏🏾</Text>
+      </View>
+    </Animated.View>
+  );
+}
+
 function ProximityWarningCard({
   warning,
   onDismiss,
@@ -153,6 +229,62 @@ export function MapTabView() {
       setLocationGrantedLocal(status === "granted");
     });
   }, []);
+
+  const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+  const [communityAlertPins, setCommunityAlertPins] = useState<ActiveAlert[]>([]);
+  const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
+  const [alternatives, setAlternatives] = useState<Array<{
+    id: string; name: string; city: string; category: string;
+    latitude: number; longitude: number; distanceMiles: number;
+  }>>([]);
+
+  // Fetch active police/ICE/checkpoint pins near the user, refresh every 3 min
+  useEffect(() => {
+    if (!userLocation) return;
+    const fetchAlerts = async () => {
+      try {
+        const res = await fetch(
+          `${apiBase}/api/community-alerts/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=16`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setCommunityAlertPins(
+            (data.alerts ?? []).filter(
+              (a: ActiveAlert) => ["police", "ice", "checkpoint"].includes(a.type)
+            )
+          );
+        }
+      } catch { /**/ }
+    };
+    void fetchAlerts();
+    const interval = setInterval(fetchAlerts, 3 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [userLocation?.lat, userLocation?.lng]);
+
+  // When a non-minority business is selected, fetch nearby minority-owned alternatives
+  useEffect(() => {
+    if (!selected || selected.blackOwned) {
+      setAlternatives([]);
+      return;
+    }
+    const fetchAlts = async () => {
+      try {
+        const res = await fetch(
+          `${apiBase}/api/community-alerts/minority-alternatives?lat=${selected.latitude}&lng=${selected.longitude}&category=${encodeURIComponent(selected.category)}&radiusMiles=5`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setAlternatives(data.businesses ?? []);
+        }
+      } catch { /**/ }
+    };
+    void fetchAlts();
+  }, [selected?.id]);
+
+  // Active alerts within 1.5 km that the user hasn't dismissed
+  const visibleActiveAlerts = communityAlertPins.filter(
+    (a) => !dismissedAlertIds.has(a.id) && a.distanceKm < 1.5
+  );
 
   const { businesses } = useBusinesses();
   const filtered = businesses.filter((b) => {
@@ -262,6 +394,30 @@ export function MapTabView() {
           );
         })}
 
+        {/* Police / ICE / checkpoint alert pins with radius circles */}
+        {communityAlertPins.map((alert) => {
+          const color = ALERT_TYPE_COLORS[alert.type] ?? "#EF4444";
+          const radius = alert.type === "ice" ? 500 : 300;
+          return (
+            <React.Fragment key={alert.id}>
+              <Circle
+                center={{ latitude: alert.lat, longitude: alert.lng }}
+                radius={radius}
+                fillColor={color + "22"}
+                strokeColor={color + "88"}
+                strokeWidth={2}
+              />
+              <Marker coordinate={{ latitude: alert.lat, longitude: alert.lng }}>
+                <View style={[styles.alertPin, { backgroundColor: color + "22", borderColor: color }]}>
+                  <Text style={styles.alertPinIcon}>
+                    {ALERT_TYPE_ICONS[alert.type] ?? "⚠️"}
+                  </Text>
+                </View>
+              </Marker>
+            </React.Fragment>
+          );
+        })}
+
         {userLocation && (
           <Circle
             center={{ latitude: userLocation.lat, longitude: userLocation.lng }}
@@ -340,6 +496,26 @@ export function MapTabView() {
             <Feather name="chevron-up" size={16} color="#6B7280" />
             <Text style={styles.collapseText}>Collapse</Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Active police/ICE proximity cards — shown when user is within 1.5 km */}
+      {visibleActiveAlerts.length > 0 && !showAllWarnings && (
+        <View style={[styles.warningStack, { top: insets.top + (topWarning ? 228 : 120) }]}>
+          <ActiveAlertCard
+            alert={visibleActiveAlerts[0]}
+            onDismiss={() =>
+              setDismissedAlertIds((prev) => new Set([...prev, visibleActiveAlerts[0].id]))
+            }
+          />
+          {visibleActiveAlerts.length > 1 && (
+            <View style={styles.moreWarningsBtn}>
+              <Feather name="alert-triangle" size={13} color="#EF4444" />
+              <Text style={styles.moreWarningsText}>
+                {visibleActiveAlerts.length - 1} more active alert{visibleActiveAlerts.length > 2 ? "s" : ""} nearby
+              </Text>
+            </View>
+          )}
         </View>
       )}
 
@@ -422,6 +598,40 @@ export function MapTabView() {
             <Feather name="compass" size={14} color={colors.primary} />
             <Text style={[styles.exploreTxt, { color: colors.primary }]}>Explore this neighborhood →</Text>
           </TouchableOpacity>
+
+          {/* Minority-owned alternatives strip — shown when a non-minority business is selected */}
+          {alternatives.length > 0 && (
+            <View style={[styles.altSection, { borderTopColor: colors.border }]}>
+              <Text style={[styles.altTitle, { color: colors.foreground }]}>
+                ✨ Try a minority-owned alternative nearby
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginTop: 8 }}
+                contentContainerStyle={{ gap: 8 }}
+              >
+                {alternatives.map((alt) => (
+                  <TouchableOpacity
+                    key={alt.id}
+                    style={[styles.altChip, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "40" }]}
+                    onPress={() => {
+                      const b = businesses.find((x) => String(x.id) === alt.id);
+                      if (b) handleMarkerPress(b);
+                    }}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[styles.altChipName, { color: colors.foreground }]} numberOfLines={1}>
+                      {alt.name}
+                    </Text>
+                    <Text style={[styles.altChipMeta, { color: colors.primary }]}>
+                      {alt.distanceMiles} mi · {alt.category}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
 
           <TouchableOpacity onPress={() => setSelected(null)} style={styles.dismissBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name="x" size={16} color={colors.mutedForeground} />
@@ -544,4 +754,17 @@ const styles = StyleSheet.create({
   exploreNeighborhood: { flexDirection: "row", alignItems: "center", gap: 6, paddingTop: 12, marginTop: 10, borderTopWidth: 1 },
   exploreTxt: { fontSize: 13, fontWeight: "700" },
   dismissBtn: { position: "absolute", top: 10, right: 10 },
+  alertPin: {
+    width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center",
+    borderWidth: 2.5, shadowColor: "#000", shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.22, shadowRadius: 6, elevation: 6,
+  },
+  alertPinIcon: { fontSize: 16 },
+  altSection: { borderTopWidth: 1, marginTop: 10, paddingTop: 10 },
+  altTitle: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  altChip: {
+    borderRadius: 10, borderWidth: 1, padding: 9, minWidth: 120, maxWidth: 160,
+  },
+  altChipName: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginBottom: 2 },
+  altChipMeta: { fontFamily: "Inter_400Regular", fontSize: 11 },
 });

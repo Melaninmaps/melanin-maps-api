@@ -135,6 +135,61 @@ router.post("/community-alerts", async (req: Request, res: Response) => {
   }
 });
 
+// ─── GET /community-alerts/minority-alternatives ──────────────────────────────
+// Returns nearby black-owned businesses in the same category — used when a
+// flagged (non-minority) business is selected on the map to suggest alternatives.
+router.get("/community-alerts/minority-alternatives", async (req: Request, res: Response) => {
+  try {
+    const lat = parseFloat(String(req.query.lat));
+    const lng = parseFloat(String(req.query.lng));
+    const category = String(req.query.category ?? "");
+    const radiusMiles = Math.min(parseFloat(String(req.query.radiusMiles ?? "5")), 10);
+    const radiusKm = radiusMiles * 1.60934;
+
+    if (isNaN(lat) || isNaN(lng)) {
+      res.status(400).json({ error: "lat and lng are required" });
+      return;
+    }
+
+    const result = await pool.query<{
+      id: string; name: string; city: string; category: string;
+      latitude: string; longitude: string; rating: string; distance_km: number;
+    }>(
+      `SELECT b.id, b.name, b.city, b.category, b.latitude, b.longitude, b.rating,
+          (6371 * acos(GREATEST(-1, LEAST(1,
+            cos(radians($1)) * cos(radians(b.latitude::float)) * cos(radians(b.longitude::float) - radians($2))
+            + sin(radians($1)) * sin(radians(b.latitude::float))
+          )))) AS distance_km
+       FROM businesses b
+       WHERE b.black_owned = true
+         AND ($3 = '' OR b.category ILIKE $3)
+         AND (6371 * acos(GREATEST(-1, LEAST(1,
+           cos(radians($1)) * cos(radians(b.latitude::float)) * cos(radians(b.longitude::float) - radians($2))
+           + sin(radians($1)) * sin(radians(b.latitude::float))
+         )))) < $4
+       ORDER BY distance_km ASC
+       LIMIT 4`,
+      [lat, lng, category, radiusKm],
+    );
+
+    res.json({
+      businesses: result.rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        city: r.city,
+        category: r.category,
+        latitude: parseFloat(r.latitude),
+        longitude: parseFloat(r.longitude),
+        rating: parseFloat(r.rating),
+        distanceMiles: Math.round((r.distance_km / 1.609) * 10) / 10,
+      })),
+    });
+  } catch (err) {
+    req.log.error({ err }, "GET /community-alerts/minority-alternatives error");
+    res.status(500).json({ error: "Failed to fetch alternatives." });
+  }
+});
+
 // ─── GET /community-alerts/flagged-businesses ─────────────────────────────────
 // Returns non-minority-owned businesses within 10 miles of a given location
 // that have received 3+ community alerts within 0.15 km in the last 6 months.
