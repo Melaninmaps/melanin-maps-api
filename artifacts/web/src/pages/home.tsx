@@ -199,6 +199,15 @@ export default function Home() {
   const [inviteError, setInviteError] = useState("");
   const [waitlistStats, setWaitlistStats] = useState<WaitlistStats | null>(null);
   const referredByRef = useRef(false);
+  const [inviteTab, setInviteTab] = useState<"email" | "social">("email");
+  const [socialPlatform, setSocialPlatform] = useState("instagram");
+  const [socialHandle, setSocialHandle] = useState("");
+  const [socialName, setSocialName] = useState("");
+  const [socialReferType, setSocialReferType] = useState<"friend" | "business">("friend");
+  const [socialBizName, setSocialBizName] = useState("");
+  const [socialSubmitting, setSocialSubmitting] = useState(false);
+  const [socialDone, setSocialDone] = useState(false);
+  const [socialCopyMsg, setSocialCopyMsg] = useState("");
 
   useEffect(() => {
     fetch(`${BASE}api/waitlist/count`)
@@ -271,6 +280,35 @@ export default function Home() {
     }
   };
 
+  const handleSocialRefer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!socialHandle.trim() || socialSubmitting) return;
+    if (socialReferType === "business" && !socialBizName.trim()) return;
+    setSocialSubmitting(true);
+    try {
+      const res = await fetch(`${BASE}api/waitlist/social-refer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          platform: socialPlatform,
+          handleOrUrl: socialHandle.trim(),
+          name: socialName.trim() || undefined,
+          type: socialReferType,
+          referralCode: myCode || referralCode || undefined,
+          bizName: socialReferType === "business" ? socialBizName.trim() : undefined,
+        }),
+      });
+      const data = await res.json() as { copyMessage?: string; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Something went wrong");
+      setSocialCopyMsg(data.copyMessage ?? "");
+      setSocialDone(true);
+    } catch {
+      setSocialDone(false);
+    } finally {
+      setSocialSubmitting(false);
+    }
+  };
+
   return (
     <div className="flex flex-col w-full bg-[#FAF6EF]">
 
@@ -334,38 +372,138 @@ export default function Home() {
             {/* Waitlist Form */}
             <div id="waitlist-form" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 md:p-10 shadow-2xl">
               {submitted ? (
-                <div data-testid="waitlist-confirmation" className="text-center py-6">
-                  <div className="w-16 h-16 rounded-full bg-[#CA922B]/20 flex items-center justify-center mx-auto mb-5">
-                    <svg viewBox="0 0 24 24" className="w-8 h-8 text-[#CA922B]" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="20,6 9,17 4,12" /></svg>
+                <div data-testid="waitlist-confirmation" className="py-6">
+                  <div className="text-center mb-5">
+                    <div className="w-16 h-16 rounded-full bg-[#CA922B]/20 flex items-center justify-center mx-auto mb-4">
+                      <svg viewBox="0 0 24 24" className="w-8 h-8 text-[#CA922B]" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="20,6 9,17 4,12" /></svg>
+                    </div>
+                    <h3 className="text-2xl font-serif font-bold text-white mb-2">You're In!</h3>
+                    {position && <p className="text-[#CA922B] font-bold text-lg mb-2">Position #{position.toLocaleString()}</p>}
+                    <p className="text-[#F5EBD8]/70 font-semibold mb-4 text-sm">Check your email for your referral code to move up the list.</p>
+                    {referralCode && (
+                      <div className="bg-white/5 rounded-xl p-4 mb-4 text-left">
+                        <p className="text-xs font-bold text-[#CA922B] uppercase tracking-wider mb-2">Your Referral Code</p>
+                        <p className="text-white font-mono font-bold text-xl">{referralCode}</p>
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-3">
+                      <p className="text-[#F5EBD8]/60 text-xs font-semibold uppercase tracking-widest">Share & move up the list</p>
+                      <div className="flex gap-3 justify-center">
+                        {[
+                          { label: "X", icon: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63Zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>, platform: "X" },
+                          { label: "Facebook", icon: <Facebook className="w-4 h-4" />, platform: "Facebook" },
+                          { label: "LinkedIn", icon: <Linkedin className="w-4 h-4" />, platform: "LinkedIn" },
+                          { label: "Copy link", icon: <Link2 className="w-4 h-4" />, platform: "Copy" },
+                        ].map(({ label, icon, platform }) => (
+                          <button
+                            key={platform}
+                            onClick={() => openShare(platform)}
+                            aria-label={`Share on ${label}`}
+                            className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#CA922B]/20 border border-white/20 hover:border-[#CA922B]/40 flex items-center justify-center text-[#F5EBD8] hover:text-[#CA922B] transition-colors"
+                          >
+                            {icon}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-2xl font-serif font-bold text-white mb-2">You're In!</h3>
-                  {position && <p className="text-[#CA922B] font-bold text-lg mb-2">Position #{position.toLocaleString()}</p>}
-                  <p className="text-[#F5EBD8]/70 font-semibold mb-6 text-sm">Check your email for your referral code to move up the list.</p>
-                  {referralCode && (
-                    <div className="bg-white/5 rounded-xl p-4 mb-6 text-left">
-                      <p className="text-xs font-bold text-[#CA922B] uppercase tracking-wider mb-2">Your Referral Code</p>
-                      <p className="text-white font-mono font-bold text-xl">{referralCode}</p>
+
+                  <div className="border-t border-white/10 pt-5">
+                    <h4 className="text-sm font-bold text-white mb-1">Grow the community</h4>
+                    <p className="text-[#F5EBD8]/50 text-xs mb-3">Invite a friend or business — by email or social handle.</p>
+                    <div className="flex gap-2 mb-4">
+                      <button type="button" onClick={() => setInviteTab("email")}
+                        className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${inviteTab === "email" ? "bg-[#CA922B] text-[#1C0E06]" : "bg-white/10 text-[#F5EBD8]/60 hover:bg-white/20"}`}>
+                        ✉️ By Email
+                      </button>
+                      <button type="button" onClick={() => setInviteTab("social")}
+                        className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${inviteTab === "social" ? "bg-[#CA922B] text-[#1C0E06]" : "bg-white/10 text-[#F5EBD8]/60 hover:bg-white/20"}`}>
+                        📲 By Social
+                      </button>
                     </div>
-                  )}
-                  <div className="flex flex-col gap-3">
-                    <p className="text-[#F5EBD8]/60 text-xs font-semibold uppercase tracking-widest">Share & move up the list</p>
-                    <div className="flex gap-3 justify-center">
-                      {[
-                        { label: "X", icon: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63Zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>, platform: "X" },
-                        { label: "Facebook", icon: <Facebook className="w-4 h-4" />, platform: "Facebook" },
-                        { label: "LinkedIn", icon: <Linkedin className="w-4 h-4" />, platform: "LinkedIn" },
-                        { label: "Copy link", icon: <Link2 className="w-4 h-4" />, platform: "Copy" },
-                      ].map(({ label, icon, platform }) => (
-                        <button
-                          key={platform}
-                          onClick={() => openShare(platform)}
-                          aria-label={`Share on ${label}`}
-                          className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#CA922B]/20 border border-white/20 hover:border-[#CA922B]/40 flex items-center justify-center text-[#F5EBD8] hover:text-[#CA922B] transition-colors"
-                        >
-                          {icon}
+
+                    {inviteTab === "email" ? (
+                      <form onSubmit={handleInvite} className="flex flex-col gap-2">
+                        <div className="flex gap-2 mb-1">
+                          <button type="button" onClick={() => setInviteType("friend")}
+                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${inviteType === "friend" ? "bg-white/20 text-white" : "bg-white/5 text-[#F5EBD8]/40"}`}>
+                            Friend
+                          </button>
+                          <button type="button" onClick={() => setInviteType("business")}
+                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${inviteType === "business" ? "bg-white/20 text-white" : "bg-white/5 text-[#F5EBD8]/40"}`}>
+                            Business
+                          </button>
+                        </div>
+                        <input type="text" placeholder={inviteType === "friend" ? "Their name (optional)" : "Business name"}
+                          value={inviteType === "friend" ? inviteeName : inviteBizName}
+                          onChange={e => inviteType === "friend" ? setInviteeName(e.target.value) : setInviteBizName(e.target.value)}
+                          className="w-full px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-[#CA922B]/50 text-sm" />
+                        <input type="email" placeholder="Their email address" required value={inviteEmail}
+                          onChange={e => setInviteEmail(e.target.value)}
+                          className="w-full px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-[#CA922B]/50 text-sm" />
+                        {inviteError && <p className="text-red-400 text-xs">{inviteError}</p>}
+                        {inviteSent && <p className="text-green-400 text-xs font-semibold">✓ Invite sent!</p>}
+                        <button type="submit" disabled={inviteSubmitting || !inviteEmail || !myCode}
+                          className="w-full py-2.5 rounded-lg bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-40 text-[#1C0E06] font-bold text-sm transition-colors">
+                          {inviteSubmitting ? "Sending…" : "Send Invite"}
                         </button>
-                      ))}
-                    </div>
+                      </form>
+                    ) : (
+                      <form onSubmit={handleSocialRefer} className="flex flex-col gap-2">
+                        <div className="flex gap-2 mb-1">
+                          <button type="button" onClick={() => setSocialReferType("friend")}
+                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${socialReferType === "friend" ? "bg-white/20 text-white" : "bg-white/5 text-[#F5EBD8]/40"}`}>
+                            Friend
+                          </button>
+                          <button type="button" onClick={() => setSocialReferType("business")}
+                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${socialReferType === "business" ? "bg-white/20 text-white" : "bg-white/5 text-[#F5EBD8]/40"}`}>
+                            Business
+                          </button>
+                        </div>
+                        {socialReferType === "business" && (
+                          <input type="text" placeholder="Business name" required value={socialBizName}
+                            onChange={e => setSocialBizName(e.target.value)}
+                            className="w-full px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-[#CA922B]/50 text-sm" />
+                        )}
+                        <input type="text" placeholder="Their name (optional)" value={socialName}
+                          onChange={e => setSocialName(e.target.value)}
+                          className="w-full px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-[#CA922B]/50 text-sm" />
+                        <select value={socialPlatform} onChange={e => setSocialPlatform(e.target.value)}
+                          className="w-full px-3 py-2.5 rounded-lg bg-[#2B1507] border border-white/15 text-white focus:outline-none focus:ring-1 focus:ring-[#CA922B]/50 text-sm">
+                          <option value="instagram">Instagram</option>
+                          <option value="tiktok">TikTok</option>
+                          <option value="x">X / Twitter</option>
+                          <option value="facebook">Facebook</option>
+                          <option value="linkedin">LinkedIn</option>
+                          <option value="other">Other</option>
+                        </select>
+                        <input type="text" placeholder="@handle or profile URL" required value={socialHandle}
+                          onChange={e => setSocialHandle(e.target.value)}
+                          className="w-full px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-[#CA922B]/50 text-sm" />
+                        {socialDone && socialCopyMsg && (
+                          <div className="bg-white/5 rounded-lg p-3 border border-[#CA922B]/30">
+                            <p className="text-[#CA922B] text-xs font-bold mb-1.5">✓ Logged! Copy this to send them:</p>
+                            <p className="text-[#F5EBD8]/80 text-xs leading-relaxed mb-2">{socialCopyMsg}</p>
+                            <button type="button" onClick={() => navigator.clipboard.writeText(socialCopyMsg)}
+                              className="w-full py-1.5 rounded bg-[#CA922B]/20 hover:bg-[#CA922B]/30 text-[#CA922B] text-xs font-bold transition-colors">
+                              Copy Message
+                            </button>
+                          </div>
+                        )}
+                        {!socialDone && (
+                          <button type="submit" disabled={socialSubmitting || !socialHandle.trim() || (socialReferType === "business" && !socialBizName.trim())}
+                            className="w-full py-2.5 rounded-lg bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-40 text-[#1C0E06] font-bold text-sm transition-colors">
+                            {socialSubmitting ? "Logging…" : "Get Message to Send"}
+                          </button>
+                        )}
+                        {socialDone && (
+                          <button type="button" onClick={() => { setSocialDone(false); setSocialHandle(""); setSocialName(""); setSocialBizName(""); setSocialCopyMsg(""); }}
+                            className="w-full py-2 rounded-lg bg-white/10 hover:bg-white/20 text-[#F5EBD8]/60 text-xs font-bold transition-colors">
+                            Refer Another
+                          </button>
+                        )}
+                      </form>
+                    )}
                   </div>
                 </div>
               ) : (

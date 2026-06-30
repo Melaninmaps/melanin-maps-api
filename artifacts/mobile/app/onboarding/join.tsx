@@ -118,6 +118,15 @@ export default function OnboardingJoin() {
             <Text style={styles.ghostTxt}>I already have an account</Text>
           </TouchableOpacity>
 
+          <TouchableOpacity
+            style={styles.waitlistBtn}
+            onPress={() => { markComplete(); router.replace("/waitlist" as never); }}
+            activeOpacity={0.8}
+          >
+            <Feather name="clock" size={16} color="rgba(255,255,255,0.55)" />
+            <Text style={styles.waitlistBtnText}>Join the Waitlist</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity onPress={skip}>
             <Text style={styles.skipLink}>Explore without an account</Text>
           </TouchableOpacity>
@@ -171,5 +180,13 @@ const styles = StyleSheet.create({
   skipLink: {
     textAlign: "center", fontSize: 14, fontFamily: "Inter_400Regular",
     color: "rgba(255,255,255,0.5)", paddingVertical: 8,
+  },
+  waitlistBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 8, paddingVertical: 13,
+  },
+  waitlistBtnText: {
+    fontSize: 14, fontFamily: "Inter_500Medium",
+    color: "rgba(255,255,255,0.55)",
   },
 });

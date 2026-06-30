@@ -909,6 +909,51 @@ router.post("/admin/send-launch-blast", async (req: Request, res: Response) => {
   }
 });
 
+// ── Public: social media referral (no email needed) ──────────────────────────
+
+router.post("/waitlist/social-refer", waitlistLimiter, async (req: Request, res: Response) => {
+  const { platform, handleOrUrl, name, type, referralCode, bizName } = req.body as {
+    platform?: string;
+    handleOrUrl?: string;
+    name?: string;
+    type?: "friend" | "business";
+    referralCode?: string;
+    bizName?: string;
+  };
+
+  if (!platform?.trim() || !handleOrUrl?.trim()) {
+    res.status(400).json({ error: "Platform and handle/URL are required" });
+    return;
+  }
+  if (type === "business" && !bizName?.trim()) {
+    res.status(400).json({ error: "Business name is required" });
+    return;
+  }
+
+  const cleanPlatform = platform.trim().toLowerCase();
+  const cleanHandle = handleOrUrl.trim();
+  const cleanName = name?.trim() || null;
+  const cleanType = type === "business" ? "business" : "friend";
+  const cleanCode = referralCode?.trim().toUpperCase() || null;
+  const cleanBiz = bizName?.trim() || null;
+
+  await pool.query(
+    `INSERT INTO social_invites (platform, handle_or_url, name, type, biz_name, referral_code)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [cleanPlatform, cleanHandle, cleanName, cleanType, cleanBiz, cleanCode]
+  );
+
+  const displayName = cleanName || cleanHandle;
+  let copyMessage = "";
+  if (cleanType === "business") {
+    copyMessage = `Hey! I wanted to invite ${cleanBiz ?? displayName} to join Mapping With Melanin™ — the app connecting people to trusted Black and minority-owned businesses, safety intel, and community. It's free to list and you get discovered by thousands. Join here: https://mappingwithmelanin.com/?ref=${cleanCode ?? "JOIN"}`;
+  } else {
+    copyMessage = `Hey ${displayName}! You need to check out Mapping With Melanin™ — it's an app for discovering trusted Black-owned businesses, community safety insights, and cultural experiences. Join the community here: https://mappingwithmelanin.com/?ref=${cleanCode ?? "JOIN"}`;
+  }
+
+  res.json({ success: true, copyMessage });
+});
+
 // ── Admin: check admin status + config ───────────────────────────────────────
 
 router.get("/admin/check", (req: Request, res: Response) => {

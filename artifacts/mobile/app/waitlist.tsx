@@ -592,17 +592,33 @@ function InviteFriendModal({
 }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const [tab, setTab] = useState<"email" | "social">("email");
   const [friendName, setFriendName] = useState("");
   const [friendEmail, setFriendEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+  const [socialPlatform, setSocialPlatform] = useState("instagram");
+  const [socialHandle, setSocialHandle] = useState("");
+  const [socialName, setSocialName] = useState("");
+  const [socialLoading, setSocialLoading] = useState(false);
+  const [socialDone, setSocialDone] = useState(false);
+  const [socialCopyMsg, setSocialCopyMsg] = useState("");
+
+  const PLATFORMS = [
+    { id: "instagram", label: "Instagram" },
+    { id: "tiktok", label: "TikTok" },
+    { id: "x", label: "X / Twitter" },
+    { id: "facebook", label: "Facebook" },
+    { id: "linkedin", label: "LinkedIn" },
+  ];
 
   const emailValid = friendEmail.includes("@") && friendEmail.includes(".");
   const canSubmit = emailValid && !loading;
 
   const reset = () => {
     setFriendName(""); setFriendEmail(""); setDone(false); setError("");
+    setSocialHandle(""); setSocialName(""); setSocialDone(false); setSocialCopyMsg("");
   };
 
   const handleClose = (invited: boolean) => { reset(); onClose(invited); };
@@ -636,80 +652,206 @@ function InviteFriendModal({
     }
   };
 
+  const handleSocialInvite = async () => {
+    if (!socialHandle.trim() || socialLoading) return;
+    setSocialLoading(true);
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const res = await fetch(`${getApiBase()}/api/waitlist/social-refer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          platform: socialPlatform,
+          handleOrUrl: socialHandle.trim(),
+          name: socialName.trim() || undefined,
+          type: "friend",
+          referralCode: referralCode || undefined,
+        }),
+      });
+      const data = await res.json() as { copyMessage?: string; error?: string };
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setSocialCopyMsg(data.copyMessage ?? "");
+      setSocialDone(true);
+    } catch {
+      setSocialDone(false);
+    } finally {
+      setSocialLoading(false);
+    }
+  };
+
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={() => handleClose(done)}>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={() => handleClose(done || socialDone)}>
       <KeyboardAvoidingView style={inv.overlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => handleClose(done)} />
+        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => handleClose(done || socialDone)} />
         <View style={[inv.sheet, { backgroundColor: colors.background, paddingBottom: bottomPad + 20 }]}>
           <View style={[inv.handle, { backgroundColor: colors.border }]} />
 
-          {!done ? (
+          {!done && !socialDone ? (
             <>
               <View style={inv.titleRow}>
-                <Text style={[inv.title, { color: colors.foreground }]}>Add a Friend to the Community 🤎</Text>
+                <Text style={[inv.title, { color: colors.foreground }]}>Invite a Friend 🤎</Text>
                 <TouchableOpacity onPress={() => handleClose(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Feather name="x" size={20} color={colors.mutedForeground} />
                 </TouchableOpacity>
               </View>
-              <Text style={[inv.sub, { color: colors.mutedForeground }]}>
-                Enter their info and we'll add them to the community waitlist and send them a personal invite from you.
-              </Text>
 
-              <Text style={[inv.label, { color: colors.mutedForeground }]}>Friend's Name <Text style={{ color: colors.mutedForeground + "80" }}>(optional)</Text></Text>
-              <TextInput
-                style={[inv.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-                value={friendName}
-                onChangeText={setFriendName}
-                placeholder="e.g. Maya Johnson"
-                placeholderTextColor={colors.mutedForeground}
-                autoCapitalize="words"
-                returnKeyType="next"
-              />
-
-              <Text style={[inv.label, { color: colors.mutedForeground }]}>
-                Friend's Email <Text style={{ color: colors.destructive }}>*</Text>
-              </Text>
-              <TextInput
-                style={[inv.input, { backgroundColor: colors.card, borderColor: friendEmail && !emailValid ? colors.destructive : colors.border, color: colors.foreground }]}
-                value={friendEmail}
-                onChangeText={setFriendEmail}
-                placeholder="maya@example.com"
-                placeholderTextColor={colors.mutedForeground}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                returnKeyType="send"
-                onSubmitEditing={handleInvite}
-              />
-
-              {!!error && (
-                <View style={[inv.errorBox, { borderColor: colors.destructive + "40", backgroundColor: colors.destructive + "10" }]}>
-                  <Feather name="alert-circle" size={14} color={colors.destructive} />
-                  <Text style={[inv.errorText, { color: colors.destructive }]}>{error}</Text>
-                </View>
-              )}
-
-              <View style={[inv.infoBox, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "25" }]}>
-                <Text style={{ fontSize: 16 }}>✉️</Text>
-                <Text style={[inv.infoText, { color: colors.primary }]}>
-                  They'll get a personal invite email from <Text style={{ fontFamily: "Inter_700Bold" }}>you</Text> — not just a generic waitlist email. And they're added to the community list immediately.
-                </Text>
+              <View style={[inv.tabRow, { borderColor: colors.border }]}>
+                <TouchableOpacity
+                  style={[inv.tabBtn, tab === "email" && { backgroundColor: colors.primary }]}
+                  onPress={() => setTab("email")}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[inv.tabBtnTxt, { color: tab === "email" ? colors.primaryForeground : colors.mutedForeground }]}>✉️ By Email</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[inv.tabBtn, tab === "social" && { backgroundColor: colors.primary }]}
+                  onPress={() => setTab("social")}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[inv.tabBtnTxt, { color: tab === "social" ? colors.primaryForeground : colors.mutedForeground }]}>📲 By Social</Text>
+                </TouchableOpacity>
               </View>
 
+              {tab === "email" ? (
+                <>
+                  <Text style={[inv.sub, { color: colors.mutedForeground }]}>
+                    We'll add them to the waitlist and send a personal invite from you.
+                  </Text>
+                  <Text style={[inv.label, { color: colors.mutedForeground }]}>Friend's Name <Text style={{ color: colors.mutedForeground + "80" }}>(optional)</Text></Text>
+                  <TextInput
+                    style={[inv.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                    value={friendName}
+                    onChangeText={setFriendName}
+                    placeholder="e.g. Maya Johnson"
+                    placeholderTextColor={colors.mutedForeground}
+                    autoCapitalize="words"
+                    returnKeyType="next"
+                  />
+                  <Text style={[inv.label, { color: colors.mutedForeground }]}>
+                    Friend's Email <Text style={{ color: colors.destructive }}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={[inv.input, { backgroundColor: colors.card, borderColor: friendEmail && !emailValid ? colors.destructive : colors.border, color: colors.foreground }]}
+                    value={friendEmail}
+                    onChangeText={setFriendEmail}
+                    placeholder="maya@example.com"
+                    placeholderTextColor={colors.mutedForeground}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="send"
+                    onSubmitEditing={handleInvite}
+                  />
+                  {!!error && (
+                    <View style={[inv.errorBox, { borderColor: colors.destructive + "40", backgroundColor: colors.destructive + "10" }]}>
+                      <Feather name="alert-circle" size={14} color={colors.destructive} />
+                      <Text style={[inv.errorText, { color: colors.destructive }]}>{error}</Text>
+                    </View>
+                  )}
+                  <View style={[inv.infoBox, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "25" }]}>
+                    <Text style={{ fontSize: 16 }}>✉️</Text>
+                    <Text style={[inv.infoText, { color: colors.primary }]}>
+                      They'll get a personal invite email from <Text style={{ fontFamily: "Inter_700Bold" }}>you</Text> — not just a generic waitlist email.
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[inv.btn, { backgroundColor: canSubmit ? colors.primary : colors.muted, opacity: canSubmit ? 1 : 0.5 }]}
+                    onPress={handleInvite}
+                    disabled={!canSubmit}
+                    activeOpacity={0.85}
+                  >
+                    {loading
+                      ? <ActivityIndicator size="small" color="#FFF" />
+                      : <Text style={inv.btnText}>Add {friendName.trim() ? friendName.trim().split(" ")[0] : "Friend"} to the Community →</Text>
+                    }
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <Text style={[inv.sub, { color: colors.mutedForeground }]}>
+                    Enter their social handle or profile URL. We'll generate a message you can send them directly.
+                  </Text>
+                  <Text style={[inv.label, { color: colors.mutedForeground }]}>Their Name <Text style={{ color: colors.mutedForeground + "80" }}>(optional)</Text></Text>
+                  <TextInput
+                    style={[inv.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                    value={socialName}
+                    onChangeText={setSocialName}
+                    placeholder="e.g. Marcus"
+                    placeholderTextColor={colors.mutedForeground}
+                    autoCapitalize="words"
+                    returnKeyType="next"
+                  />
+                  <Text style={[inv.label, { color: colors.mutedForeground }]}>Platform</Text>
+                  <View style={[inv.platformRow]}>
+                    {PLATFORMS.map((p) => (
+                      <TouchableOpacity
+                        key={p.id}
+                        style={[inv.platformChip, { borderColor: socialPlatform === p.id ? colors.primary : colors.border, backgroundColor: socialPlatform === p.id ? colors.primary + "15" : colors.card }]}
+                        onPress={() => setSocialPlatform(p.id)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[inv.platformChipTxt, { color: socialPlatform === p.id ? colors.primary : colors.mutedForeground }]}>{p.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <Text style={[inv.label, { color: colors.mutedForeground }]}>Handle or Profile URL <Text style={{ color: colors.destructive }}>*</Text></Text>
+                  <TextInput
+                    style={[inv.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                    value={socialHandle}
+                    onChangeText={setSocialHandle}
+                    placeholder="@handle or https://..."
+                    placeholderTextColor={colors.mutedForeground}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="send"
+                    onSubmitEditing={handleSocialInvite}
+                  />
+                  <TouchableOpacity
+                    style={[inv.btn, { backgroundColor: socialHandle.trim() ? colors.primary : colors.muted, opacity: socialHandle.trim() ? 1 : 0.5 }]}
+                    onPress={handleSocialInvite}
+                    disabled={!socialHandle.trim() || socialLoading}
+                    activeOpacity={0.85}
+                  >
+                    {socialLoading
+                      ? <ActivityIndicator size="small" color="#FFF" />
+                      : <Text style={inv.btnText}>Get Message to Send →</Text>
+                    }
+                  </TouchableOpacity>
+                </>
+              )}
+            </>
+          ) : socialDone ? (
+            <View style={inv.doneWrap}>
+              <Text style={{ fontSize: 48, textAlign: "center" }}>📲</Text>
+              <Text style={[inv.doneTitle, { color: colors.foreground }]}>Ready to send!</Text>
+              <Text style={[inv.doneSub, { color: colors.mutedForeground }]}>
+                Copy this message and send it to{socialName.trim() ? ` ${socialName.trim()}` : " them"} on {PLATFORMS.find(p => p.id === socialPlatform)?.label ?? socialPlatform}:
+              </Text>
+              {!!socialCopyMsg && (
+                <View style={[inv.copyBox, { backgroundColor: colors.card, borderColor: colors.primary + "30" }]}>
+                  <Text style={[inv.copyText, { color: colors.foreground }]}>{socialCopyMsg}</Text>
+                </View>
+              )}
               <TouchableOpacity
-                style={[inv.btn, { backgroundColor: canSubmit ? colors.primary : colors.muted, opacity: canSubmit ? 1 : 0.5 }]}
-                onPress={handleInvite}
-                disabled={!canSubmit}
+                style={[inv.btn, { backgroundColor: colors.primary }]}
+                onPress={async () => {
+                  await Clipboard.setStringAsync(socialCopyMsg);
+                  if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                }}
                 activeOpacity={0.85}
               >
-                {loading
-                  ? <ActivityIndicator size="small" color="#FFF" />
-                  : <Text style={inv.btnText}>Add {friendName.trim() ? friendName.trim().split(" ")[0] : "Friend"} to the Community →</Text>
-                }
+                <Feather name="copy" size={16} color={colors.primaryForeground} />
+                <Text style={inv.btnText}>Copy Message</Text>
               </TouchableOpacity>
-            </>
+              <TouchableOpacity style={[inv.btn, { backgroundColor: colors.secondary, marginTop: 4 }]} onPress={reset} activeOpacity={0.85}>
+                <Text style={[inv.btnText, { color: colors.foreground }]}>Invite Another Friend</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleClose(true)} style={{ alignItems: "center", paddingVertical: 14 }}>
+                <Text style={[inv.doneLink, { color: colors.mutedForeground }]}>Done</Text>
+              </TouchableOpacity>
+            </View>
           ) : (
             <View style={inv.doneWrap}>
               <Text style={{ fontSize: 56, textAlign: "center" }}>🎉</Text>
@@ -882,7 +1024,7 @@ const inv = StyleSheet.create({
   errorText: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
   infoBox: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderWidth: 1, borderRadius: 12, padding: 12 },
   infoText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, flex: 1 },
-  btn: { paddingVertical: 16, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  btn: { paddingVertical: 16, borderRadius: 16, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8 },
   btnText: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFF" },
   doneWrap: { alignItems: "center", gap: 16, paddingVertical: 8 },
   doneTitle: { fontFamily: "Inter_700Bold", fontSize: 26, textAlign: "center" },
@@ -890,4 +1032,12 @@ const inv = StyleSheet.create({
   successBadge: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderWidth: 1, borderRadius: 14, padding: 14, width: "100%" },
   successBadgeText: { fontFamily: "Inter_500Medium", fontSize: 13, flex: 1, lineHeight: 19 },
   doneLink: { fontFamily: "Inter_500Medium", fontSize: 15 },
+  tabRow: { flexDirection: "row", gap: 8, borderRadius: 14, padding: 4, borderWidth: 1 },
+  tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: "center" },
+  tabBtnTxt: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  platformRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  platformChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
+  platformChipTxt: { fontFamily: "Inter_500Medium", fontSize: 12 },
+  copyBox: { borderWidth: 1, borderRadius: 14, padding: 14, width: "100%" },
+  copyText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20 },
 });
