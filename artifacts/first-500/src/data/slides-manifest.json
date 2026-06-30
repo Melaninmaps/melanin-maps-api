@@ -1,98 +1,154 @@
 [
   {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567801",
+    "id": "fm-0001-cover",
     "position": 1,
     "filepath": "src/pages/slides/Slide01Cover.tsx",
-    "title": "Cover — The First 500",
-    "description": "Campaign cover slide with hero 500 number and founding program tagline",
+    "title": "Welcome to the Movement — Cover",
+    "description": "Founding Business Member Program cover slide with brand terracotta/gold on deep dark background",
     "speakerNotes": ""
   },
   {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567802",
+    "id": "fm-0002-problem",
     "position": 2,
-    "filepath": "src/pages/slides/Slide02OnlyTheFirst.tsx",
-    "title": "Only the First 500",
-    "description": "Scarcity and exclusivity — only 500 verified businesses receive Founding Business status",
+    "filepath": "src/pages/slides/Slide02Problem.tsx",
+    "title": "The Problem — Black-owned businesses are hidden in plain sight",
+    "description": "Three-point problem statement introducing the platform's core mission",
     "speakerNotes": ""
   },
   {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567803",
+    "id": "fm-0003-whatismwm",
     "position": 3,
-    "filepath": "src/pages/slides/Slide03BuiltForYou.tsx",
-    "title": "Built for You",
-    "description": "Mission statement — built to help small businesses grow, not compete",
+    "filepath": "src/pages/slides/Slide03WhatIsMWM.tsx",
+    "title": "What We Built — Platform Overview",
+    "description": "Four-feature grid: Discover, KinfolkAI, Safety Intel, Community Reviews",
     "speakerNotes": ""
   },
   {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567804",
+    "id": "fm-0004-whynow",
     "position": 4,
-    "filepath": "src/pages/slides/Slide04WhyWeExist.tsx",
-    "title": "Why We Exist",
-    "description": "Purpose — making it easier to discover and support Black-owned businesses",
+    "filepath": "src/pages/slides/Slide04WhyNow.tsx",
+    "title": "Why Now — $1.7 Trillion Buying Power",
+    "description": "Big stat callout with context on Black consumer spending and platform timing",
     "speakerNotes": ""
   },
   {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567805",
+    "id": "fm-0005-wholookfor",
     "position": 5,
-    "filepath": "src/pages/slides/Slide05WhatYoullReceive.tsx",
-    "title": "What You'll Receive",
-    "description": "Section divider — six reasons to apply before the program closes",
+    "filepath": "src/pages/slides/Slide05WhoWeLookFor.tsx",
+    "title": "Who We're Looking For — Six Business Categories",
+    "description": "Six-category grid: Food, Beauty, Retail, Health, Professional, Arts",
     "speakerNotes": ""
   },
   {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567806",
+    "id": "fm-0006-whatitmeans",
     "position": 6,
-    "filepath": "src/pages/slides/Slide06LockedRates.tsx",
-    "title": "01 — Locked Marketplace Rates",
-    "description": "Founding benefit: rates locked for 3 years — Community 6%, Growth 5%, Premium 3%",
+    "filepath": "src/pages/slides/Slide06WhatItMeans.tsx",
+    "title": "What It Means to Be a Founding Member — Section Divider",
+    "description": "Terracotta full-background section intro — legacy over listing",
     "speakerNotes": ""
   },
   {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567807",
+    "id": "fm-0007-foundingbadge",
     "position": 7,
     "filepath": "src/pages/slides/Slide07FoundingBadge.tsx",
-    "title": "02 — Founding Business Badge",
-    "description": "Founding benefit: permanent badge displayed on profile and listing",
+    "title": "Benefit 01 — The Founding Member Badge",
+    "description": "Permanent key badge on profile, search, map, and community features",
     "speakerNotes": ""
   },
   {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567808",
+    "id": "fm-0008-priorityplacement",
     "position": 8,
-    "filepath": "src/pages/slides/Slide08SixMonthsPremium.tsx",
-    "title": "03 — Six Months of Premium",
-    "description": "Founding benefit: full Premium access including AI tools, analytics, and priority placement",
+    "filepath": "src/pages/slides/Slide08PriorityPlacement.tsx",
+    "title": "Benefit 02 — Priority Placement Everywhere",
+    "description": "Four priority placement surfaces: search, featured feed, map, KinfolkAI",
     "speakerNotes": ""
   },
   {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567809",
+    "id": "fm-0009-dashboard",
     "position": 9,
-    "filepath": "src/pages/slides/Slide09PriorityOnboarding.tsx",
-    "title": "04 — Priority Onboarding",
-    "description": "Founding benefit: direct team support to get listed and verified fast",
+    "filepath": "src/pages/slides/Slide09Dashboard.tsx",
+    "title": "Benefit 03 — Owner Dashboard and Tools",
+    "description": "Six-panel dashboard tool grid: profile, analytics, reviews, skip insights, broadcasts, KinfolkAI",
     "speakerNotes": ""
   },
   {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567810",
+    "id": "fm-0010-kinfolkai",
     "position": 10,
-    "filepath": "src/pages/slides/Slide10EarlyAccess.tsx",
-    "title": "05 — Early Access to New Features",
-    "description": "Founding benefit: first access to every new feature before launch",
+    "filepath": "src/pages/slides/Slide10KinfolkAI.tsx",
+    "title": "Benefit 04 — KinfolkAI Business Action Plan",
+    "description": "AI-powered growth plan covering review sentiment, skip intel, ratings trends, and actions",
     "speakerNotes": ""
   },
   {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567811",
+    "id": "fm-0011-skipinsights",
     "position": 11,
-    "filepath": "src/pages/slides/Slide11HelpShapeFuture.tsx",
-    "title": "06 — Help Shape the Future",
-    "description": "Founding benefit: feedback and voice shapes the platform's direction",
+    "filepath": "src/pages/slides/Slide11SkipInsights.tsx",
+    "title": "Benefit 05 — Community Skip Insights",
+    "description": "Private community skip reason intel — only the owner sees it",
     "speakerNotes": ""
   },
   {
-    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567812",
+    "id": "fm-0012-reviews",
     "position": 12,
-    "filepath": "src/pages/slides/Slide12AThankYou.tsx",
-    "title": "A Thank You — Closing",
-    "description": "Closing slide with thank you message and call to action",
+    "filepath": "src/pages/slides/Slide12Reviews.tsx",
+    "title": "Benefit 06 — Reviews That Build Real Trust",
+    "description": "Five review features with a mock review card showcasing owner response",
+    "speakerNotes": ""
+  },
+  {
+    "id": "fm-0013-allperks",
+    "position": 13,
+    "filepath": "src/pages/slides/Slide13AllPerks.tsx",
+    "title": "All Perks at a Glance — Summary Grid",
+    "description": "Eight-perk summary grid: badge, placement, analytics, KinfolkAI, skip, alerts, broadcasts, promotions",
+    "speakerNotes": ""
+  },
+  {
+    "id": "fm-0014-membership",
+    "position": 14,
+    "filepath": "src/pages/slides/Slide14Membership.tsx",
+    "title": "Membership Investment — Locked Rate",
+    "description": "Founding rate pricing card with locked-forever messaging",
+    "speakerNotes": ""
+  },
+  {
+    "id": "fm-0015-onboardingintro",
+    "position": 15,
+    "filepath": "src/pages/slides/Slide15OnboardingIntro.tsx",
+    "title": "Onboarding Section — Let's Get You on the Map",
+    "description": "Dark warm section intro for the onboarding part of the deck",
+    "speakerNotes": ""
+  },
+  {
+    "id": "fm-0016-howtogetlisted",
+    "position": 16,
+    "filepath": "src/pages/slides/Slide16HowToGetListed.tsx",
+    "title": "How to Get Listed — Four Steps",
+    "description": "Four-step timeline: profile, photos, community, badge live",
+    "speakerNotes": ""
+  },
+  {
+    "id": "fm-0017-optimizeprofile",
+    "position": 17,
+    "filepath": "src/pages/slides/Slide17OptimizeProfile.tsx",
+    "title": "Optimizing Your Profile — Best Practices",
+    "description": "Four profile tips with 3x saves stat callout circle",
+    "speakerNotes": ""
+  },
+  {
+    "id": "fm-0018-first30days",
+    "position": 18,
+    "filepath": "src/pages/slides/Slide18First30Days.tsx",
+    "title": "Your First 30 Days — Week by Week",
+    "description": "Four-week timeline: go live, share, reviews, KinfolkAI plan",
+    "speakerNotes": ""
+  },
+  {
+    "id": "fm-0019-cta",
+    "position": 19,
+    "filepath": "src/pages/slides/Slide19CTA.tsx",
+    "title": "Join the Movement — Call to Action",
+    "description": "Closing CTA with 500-spot urgency, brand gradient button, and mappingwithmelanin.com",
     "speakerNotes": ""
   }
 ]

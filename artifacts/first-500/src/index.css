@@ -7,6 +7,8 @@
   --color-text: var(--slide-text);
   --color-muted: var(--slide-muted);
   --color-surface: var(--slide-surface);
+  --color-gold: var(--slide-gold);
+  --color-green: var(--slide-green);
   --font-display: var(--font-display-family);
   --font-body: var(--font-body-family);
 
@@ -39,14 +41,16 @@
 }
 
 :root {
-  --slide-primary: #C9A84C;
-  --slide-accent: #F5EDD8;
-  --slide-bg: #0F0800;
-  --slide-text: #F5EDD8;
-  --slide-muted: rgba(245, 237, 216, 0.58);
-  --slide-surface: rgba(201, 168, 76, 0.08);
-  --font-display-family: "Cormorant Garamond", Georgia, serif;
-  --font-body-family: "DM Sans", system-ui, sans-serif;
+  --slide-primary: #C4622D;
+  --slide-accent: #CA922B;
+  --slide-bg: #1C0E06;
+  --slide-text: #FAF6EF;
+  --slide-muted: rgba(250, 246, 239, 0.6);
+  --slide-surface: rgba(196, 98, 45, 0.12);
+  --slide-gold: #CA922B;
+  --slide-green: #2D7A4F;
+  --font-display-family: "Playfair Display", Georgia, serif;
+  --font-body-family: "Inter", system-ui, sans-serif;
   color-scheme: dark;
 }
 
@@ -56,21 +60,4 @@ body,
   width: 100%;
   height: 100%;
   margin: 0;
-}
-
-body {
-  background: var(--slide-bg);
-  color: var(--slide-text);
-}
-
-.slide {
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-}
-
-.slide-viewer {
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
 }
