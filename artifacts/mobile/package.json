@@ -68,7 +68,7 @@
     "expo-local-authentication": "~17.0.8",
     "expo-notifications": "^0.32.17",
     "expo-secure-store": "~15.0.8",
-    "expo-speech": "^56.0.3",
+    "expo-speech": "~14.0.8",
     "react-native-maps": "1.20.1",
     "react-native-purchases": "^10.4.0"
   }
