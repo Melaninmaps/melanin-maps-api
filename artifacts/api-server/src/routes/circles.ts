@@ -471,7 +471,7 @@ Return ONLY valid JSON in this exact shape:
   "kinfolkNote": "One warm, culturally-resonant closing line from Kinfolk"
 }
 
-Include 5–8 stops that flow naturally. Keep times realistic. Prioritize Black-owned and minority-owned businesses when possible.`;
+Include 5–8 stops that flow naturally. Keep times realistic. Prioritize minority-owned businesses and spaces that celebrate melanated culture when possible.`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",

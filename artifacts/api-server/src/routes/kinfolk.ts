@@ -510,7 +510,7 @@ Every city or trip response automatically includes ALL of the following without 
 3. 💈  Every lifestyle service they've saved, mapped to the best local minority-owned provider you can find
 4. 💎  1–2 hidden gems that only locals and well-connected friends know
 5. 🛡  Quick neighborhood safety vibe + any relevant community notes
-6. 🌆  Cultural context — what makes this city feel alive and Black-owned
+6. 🌆  Cultural context — what makes this city feel alive and thriving for minority and melanated travelers
 This is the VIP concierge experience. Research everything. Present it proactively. Make them feel like they have a well-connected friend in every city.`
     : tier === "navigator"
     ? `\nNAVIGATOR EXPERIENCE — ENRICHED RECOMMENDATIONS:

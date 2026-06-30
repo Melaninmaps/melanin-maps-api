@@ -80,7 +80,7 @@ export default function CircleDetailScreen() {
   const [showSavedSheet, setShowSavedSheet] = useState(false);
   const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
   const [loadingSaved, setLoadingSaved] = useState(false);
-  const [addingSavedId, setAddingSavedId] = useState<number | null>(null);
+  const [addingSavedId, setAddingSavedId] = useState<string | null>(null);
 
   // ── Plan modal state ─────────────────────────────────────────────────────────
   const [showPlanModal, setShowPlanModal] = useState(false);
@@ -160,7 +160,7 @@ export default function CircleDetailScreen() {
   };
 
   const addSavedPlaceAsSuggestion = async (sp: SavedPlace) => {
-    setAddingSavedId(sp.id);
+    setAddingSavedId(sp.businessId);
     try {
       const headers = await authHeaders();
       const res = await fetch(`${getApiBase()}/api/circles/${id}/suggestions`, {
@@ -556,19 +556,19 @@ export default function CircleDetailScreen() {
               <ScrollView showsVerticalScrollIndicator={false}>
                 {savedPlaces.map((sp) => (
                   <TouchableOpacity
-                    key={sp.id}
+                    key={sp.businessId}
                     style={[s.savedRow, { borderBottomColor: colors.border }]}
                     onPress={() => addSavedPlaceAsSuggestion(sp)}
-                    disabled={addingSavedId === sp.id}
+                    disabled={addingSavedId === sp.businessId}
                   >
                     <View style={[s.savedIcon, { backgroundColor: colors.primary + "15" }]}>
                       <Feather name="bookmark" size={14} color={colors.primary} />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={[s.savedName, { color: colors.foreground }]}>{sp.businessName}</Text>
+                      <Text style={[s.savedName, { color: colors.foreground }]}>{sp.businessName ?? sp.businessId}</Text>
                       {sp.category ? <Text style={[s.savedCat, { color: colors.mutedForeground }]}>{sp.category}</Text> : null}
                     </View>
-                    {addingSavedId === sp.id
+                    {addingSavedId === sp.businessId
                       ? <ActivityIndicator size="small" color={colors.primary} />
                       : <Feather name="plus-circle" size={20} color={colors.primary} />
                     }
