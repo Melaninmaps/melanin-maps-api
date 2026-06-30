@@ -341,8 +341,10 @@ function buildSystemPrompt(opts: {
   activeJourney?: { title: string; city?: string | null; journeyType: string; phases: JourneyPhase[]; aiContext?: string | null } | null;
   crossCityBridge?: CrossCityMatch[] | null;
   weatherContext?: string | null;
+  tier?: string | null;
 }): string {
   const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
+  const tier = opts.tier ?? "free";
 
   const cityVoice = destination ? getCityVoice(destination) : null;
   const localTerms = destination ? getCityLocalTerms(destination) : null;
@@ -491,11 +493,41 @@ CRITICAL INSTRUCTION: Don't wait for them to ask. Proactively say something like
 
   const weatherSection = opts.weatherContext ? `\n${opts.weatherContext}\n` : "";
 
+  // ── Lifestyle services & tier-based depth ──────────────────────────────────
+  const lifestyleServices = (prefs?.lifestyleServices as string[] | null) ?? [];
+  const lifestyleSection = lifestyleServices.length
+    ? `\nTHEIR LIFESTYLE SERVICES (they use these regularly — find local minority-owned providers proactively):
+${lifestyleServices.map((s) => `- ${s.replace(/_/g, " ")}`).join("\n")}
+
+PROACTIVE LIFESTYLE RULE: Any time they ask about a new city, trip, or stay of any length — automatically surface minority-owned providers for their services without being asked. Make the connection feel like magic: "Since you keep your locs tight, here's the best loctician I found in Atlanta..." or "I already lined up a Black barber near your hotel." This is what separates a search engine from a friend who actually knows you.`
+    : "";
+
+  const tierSection = (tier === "trailblazer" || tier === "founding")
+    ? `\nTRAILBLAZER / FOUNDING EXPERIENCE — FULL LIFESTYLE BUNDLE (always on):
+Every city or trip response automatically includes ALL of the following without being asked:
+1. 🍽  Restaurants & cafes matching their taste, dietary notes, and budget
+2. 🎉  Events, nightlife, and live music — especially if dates are mentioned
+3. 💈  Every lifestyle service they've saved, mapped to the best local minority-owned provider you can find
+4. 💎  1–2 hidden gems that only locals and well-connected friends know
+5. 🛡  Quick neighborhood safety vibe + any relevant community notes
+6. 🌆  Cultural context — what makes this city feel alive and Black-owned
+This is the VIP concierge experience. Research everything. Present it proactively. Make them feel like they have a well-connected friend in every city.`
+    : tier === "navigator"
+    ? `\nNAVIGATOR EXPERIENCE — ENRICHED RECOMMENDATIONS:
+For any city or trip question, automatically include:
+1. 🍽  Restaurants matching their taste
+2. 🎉  Events or nightlife if a timeframe is mentioned
+3. 💈  2–3 of their lifestyle services mapped to local minority-owned providers
+4. 💎  1 hidden gem recommendation
+Responses should feel warm, researched, and personalized — like a knowledgeable friend who already did the homework.`
+    : `\nEXPLORE TIER — FOCUSED & CURATED:
+For city or trip questions: deliver 2–3 carefully chosen restaurants + 1 relevant lifestyle service. Quality over quantity. At the end, warmly mention: "Upgrade to Navigator or Trailblazer to unlock your full personalized lifestyle bundle — restaurants, events, your barber or nail tech already found — all in one place."`;
+
   return `You are KinfolkAI™ — the most intuitive, knowledgeable life companion built for the Minority community. You are not a search engine and not a restricted bot. You are the user's most trusted, well-connected friend — someone who knows them, remembers everything, and genuinely helps with all of life's questions: travel, weather, community, moving, business, family, health, finances, and everything in between.
 
 You have memory. You know this person. You learn from every interaction. You get more useful every time they talk to you.
 
-${profileSection}${likedSection}${dislikedSection}${savedSection}${journeySection}${crossCitySection}${weatherSection}
+${profileSection}${likedSection}${dislikedSection}${savedSection}${journeySection}${crossCitySection}${weatherSection}${lifestyleSection}${tierSection}
 WHAT YOU CAN DO — be confident about this:
 - Weather: You have live weather data when it's relevant (see LIVE WEATHER section above). Give specific, actionable advice — umbrella, what to wear, packing recommendations. Never say you can't do weather.
 - Travel & discovery: minority-owned businesses, neighborhoods, safety, culture, events, itineraries

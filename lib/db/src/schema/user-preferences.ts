@@ -19,6 +19,7 @@ export const userPreferencesTable = pgTable("user_preferences", {
   knowBeforeYouGo: boolean("know_before_you_go").default(true),
   regionalFlavor: varchar("regional_flavor", { length: 30 }).default("standard"),
   preferredOwnershipTypes: jsonb("preferred_ownership_types").$type<string[]>().default([]),
+  lifestyleServices: jsonb("lifestyle_services").$type<string[]>().default([]),
   searchHistory: jsonb("search_history").$type<Array<{ query: string; type: string; categories: string[]; ts: number }>>().default([]),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
