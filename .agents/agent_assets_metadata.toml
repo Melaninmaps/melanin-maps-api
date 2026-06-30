@@ -155,3 +155,9 @@ id = "ty9S1s0ODAGMjeACMTOb8"
 uri = "file://.local/outputs/Mapping-With-Melanin---Founding-Member-Deck.pdf"
 type = "pdf"
 title = "Mapping With Melanin — Founding Member Deck (PDF)"
+
+[[outputs]]
+id = "zR6KqqQGHtkOGJ5kSahXR"
+uri = "file://.local/outputs/Mapping-With-Melanin---Founding-Member-Deck--Minority-Owned-.pdf"
+type = "pdf"
+title = "Mapping With Melanin — Founding Member Deck (Minority-Owned) (PDF)"
