@@ -93,6 +93,8 @@ export interface CommunityPost {
   savedPlaceId?: string;
   locationTag?: string;
   locationType?: string;
+  topicTag?: string;
+  isPrivateTopic?: boolean;
 }
 
 export interface AlertItem {

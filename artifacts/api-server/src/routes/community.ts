@@ -56,7 +56,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
     const offset = Number(req.query.offset) || 0;
     const viewerId: string | null = req.user?.id ?? null;
 
-    type PostRow = { id: string; author_id: string | null; author_name: string; author_initials: string; author_color: string; content: string; category: string; post_type: string; business_id: string | null; business_name: string | null; business_link: string | null; media_urls: string | null; saved_place_id: string | null; location_tag: string | null; location_type: string | null; visibility: string; upvotes: number; downvotes: number; comments_count: number; created_at: Date };
+    type PostRow = { id: string; author_id: string | null; author_name: string; author_initials: string; author_color: string; content: string; category: string; post_type: string; business_id: string | null; business_name: string | null; business_link: string | null; media_urls: string | null; saved_place_id: string | null; location_tag: string | null; location_type: string | null; topic_tag: string | null; is_private_topic: boolean; visibility: string; upvotes: number; downvotes: number; comments_count: number; created_at: Date };
 
     let rows: PostRow[];
 
@@ -117,15 +117,18 @@ router.get("/community/posts", async (req: Request, res: Response) => {
       businessId: r.business_id, businessName: r.business_name, businessLink: r.business_link,
       mediaUrls: r.media_urls, savedPlaceId: r.saved_place_id,
       locationTag: r.location_tag, locationType: r.location_type,
+      topicTag: r.topic_tag, isPrivateTopic: r.is_private_topic,
       visibility: r.visibility,
       upvotes: r.upvotes, downvotes: r.downvotes, commentsCount: r.comments_count, createdAt: r.created_at,
     }));
 
     const locationTagFilter = typeof req.query.locationTag === "string" ? req.query.locationTag : undefined;
+    const topicTagFilter = typeof req.query.topicTag === "string" ? req.query.topicTag : undefined;
     let filtered = posts;
     if (category && category !== "all") filtered = filtered.filter((p) => p.category === category);
     if (postType && postType !== "all") filtered = filtered.filter((p) => p.postType === postType);
     if (locationTagFilter) filtered = filtered.filter((p) => (p.locationTag as string | null | undefined)?.toLowerCase() === locationTagFilter.toLowerCase());
+    if (topicTagFilter) filtered = filtered.filter((p) => (p.topicTag as string | null | undefined)?.toLowerCase() === topicTagFilter.toLowerCase());
 
     res.json({ posts: filtered, total: filtered.length, offset, limit });
   } catch (err) {
@@ -154,6 +157,8 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       visibility = "public",
       locationTag,
       locationType,
+      topicTag,
+      isPrivateTopic = false,
     } = req.body as {
       content?: string;
       category?: string;
@@ -166,6 +171,8 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       visibility?: "public" | "followers_only";
       locationTag?: string;
       locationType?: string;
+      topicTag?: string;
+      isPrivateTopic?: boolean;
     };
 
     if (!content?.trim()) {
@@ -242,7 +249,9 @@ router.post("/community/posts", async (req: Request, res: Response) => {
         savedPlaceId: savedPlaceId ?? null,
         locationTag: locationTag?.trim() || null,
         locationType: locationTag?.trim() ? (locationType ?? "city") : null,
-        visibility: (visibility === "followers_only" ? "followers_only" : "public") as "public" | "followers_only",
+        topicTag: topicTag?.trim() || null,
+        isPrivateTopic: !!isPrivateTopic,
+        visibility: (isPrivateTopic ? "followers_only" : visibility === "followers_only" ? "followers_only" : "public") as "public" | "followers_only",
       })
       .returning();
 

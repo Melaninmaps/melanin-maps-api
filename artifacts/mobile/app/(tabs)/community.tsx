@@ -120,6 +120,8 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
     savedPlaceId: (raw.savedPlaceId as string) ?? undefined,
     locationTag: (raw.locationTag as string) ?? undefined,
     locationType: (raw.locationType as string) ?? undefined,
+    topicTag: (raw.topicTag as string) ?? undefined,
+    isPrivateTopic: !!(raw.isPrivateTopic),
   };
 }
 
@@ -212,6 +214,9 @@ export default function CommunityScreen() {
   const [newPostLocationTag, setNewPostLocationTag] = useState("");
   const [newPostLocationType, setNewPostLocationType] = useState("city");
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [newPostTopicTag, setNewPostTopicTag] = useState("");
+  const [newPostIsPrivateTopic, setNewPostIsPrivateTopic] = useState(false);
+  const [showTopicPicker, setShowTopicPicker] = useState(false);
   const [submittingPost, setSubmittingPost] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
@@ -404,6 +409,8 @@ export default function CommunityScreen() {
           mediaUrls: mediaAttachments.filter((m) => m.uploaded).map((m) => m.uploaded!),
           locationTag: newPostLocationTag.trim() || undefined,
           locationType: newPostLocationTag.trim() ? newPostLocationType : undefined,
+          topicTag: newPostTopicTag.trim() || undefined,
+          isPrivateTopic: newPostTopicTag.trim() ? newPostIsPrivateTopic : undefined,
         }),
       });
       if (res.ok) {
@@ -416,6 +423,9 @@ export default function CommunityScreen() {
         setNewPostVisibility("public");
         setNewPostLocationTag("");
         setNewPostLocationType("city");
+        setNewPostTopicTag("");
+        setNewPostIsPrivateTopic(false);
+        setShowTopicPicker(false);
         setMediaAttachments([]);
         setShowCompose(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -1028,6 +1038,7 @@ export default function CommunityScreen() {
                 onCommentPress={() => setSelectedPost(item)}
                 onAuthorPress={(id) => setSelectedAuthorId(id)}
                 onLocationPress={(tag) => router.push({ pathname: "/location-feed", params: { location: tag } } as any)}
+                onTopicPress={(tag) => router.push({ pathname: "/topic-feed", params: { topic: tag.toLowerCase() } } as any)}
               />
             )}
           />
@@ -1315,6 +1326,68 @@ export default function CommunityScreen() {
                       onPress={() => { setNewPostLocationTag(loc); setShowLocationPicker(false); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
                     >
                       <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.primary }}>📍 {loc}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Topic tag */}
+            <View style={{ paddingHorizontal: 16, paddingBottom: 10 }}>
+              {newPostTopicTag ? (
+                <View style={{ gap: 8 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <Feather name="tag" size={13} color="#7B2D8B" />
+                    <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14, backgroundColor: "#7B2D8B15", borderWidth: 1, borderColor: "#7B2D8B30" }}>
+                      <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#7B2D8B" }}>🏷️ {newPostTopicTag}</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => { setNewPostTopicTag(""); setNewPostIsPrivateTopic(false); }}>
+                      <Feather name="x" size={16} color="#9CA3AF" />
+                    </TouchableOpacity>
+                  </View>
+                  <TouchableOpacity
+                    style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+                    onPress={() => setNewPostIsPrivateTopic((v) => !v)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={[{ width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, alignItems: "center", justifyContent: "center" }, newPostIsPrivateTopic ? { backgroundColor: "#7B2D8B", borderColor: "#7B2D8B" } : { borderColor: "#D1D5DB" }]}>
+                      {newPostIsPrivateTopic && <Feather name="check" size={13} color="#FFFFFF" />}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>🔒 Private topic</Text>
+                      <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>Post shared only with followers; not public search</Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={{ flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: colors.border }}
+                  onPress={() => setShowTopicPicker(true)}
+                >
+                  <Feather name="tag" size={13} color={colors.mutedForeground} />
+                  <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>Tag a topic</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Topic picker inline */}
+            {showTopicPicker && (
+              <View style={{ paddingHorizontal: 16, paddingBottom: 14 }}>
+                <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Choose a topic:</Text>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+                  {[
+                    "Health & Wellness", "Mental Health", "Relationships & Dating",
+                    "Finances & Wealth", "Pop Culture", "Travel",
+                    "Food & Dining", "Fashion & Beauty", "Black History & Culture",
+                    "Parenting & Family", "Spirituality", "Career & Business",
+                    "Community Justice", "Entertainment",
+                  ].map((t) => (
+                    <TouchableOpacity
+                      key={t}
+                      style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: "#7B2D8B50", backgroundColor: "#7B2D8B10" }}
+                      onPress={() => { setNewPostTopicTag(t); setShowTopicPicker(false); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                    >
+                      <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#7B2D8B" }}>🏷️ {t}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>

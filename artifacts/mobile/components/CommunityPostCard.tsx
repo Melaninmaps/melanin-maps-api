@@ -13,6 +13,7 @@ interface Props {
   onLikeChange?: (liked: boolean) => void;
   onAuthorPress?: (authorId: string) => void;
   onLocationPress?: (locationTag: string) => void;
+  onTopicPress?: (topicTag: string) => void;
 }
 
 const CATEGORY_CONFIG = {
@@ -34,7 +35,7 @@ function getApiBase(): string {
   return "";
 }
 
-export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthorPress, onLocationPress }: Props) {
+export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthorPress, onLocationPress, onTopicPress }: Props) {
   const colors = useColors();
   const [liked, setLiked] = useState(post.liked);
   const [likeCount, setLikeCount] = useState(post.likes);
@@ -150,6 +151,19 @@ export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthor
             );
           })}
         </View>
+      )}
+
+      {/* Topic tag badge */}
+      {post.topicTag && (
+        <TouchableOpacity
+          style={[s.topicBadge, { backgroundColor: "#7B2D8B12", borderColor: "#7B2D8B30" }]}
+          onPress={() => { if (post.topicTag) { onTopicPress?.(post.topicTag); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } }}
+          activeOpacity={onTopicPress ? 0.7 : 1}
+        >
+          {post.isPrivateTopic && <Feather name="lock" size={10} color="#7B2D8B" />}
+          <Feather name="tag" size={11} color="#7B2D8B" />
+          <Text style={s.topicBadgeText}>{post.topicTag}</Text>
+        </TouchableOpacity>
       )}
 
       {/* Location tag badge */}
@@ -315,6 +329,19 @@ const s = StyleSheet.create({
   },
   locationText: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#0369A1" },
   locationTypeBadge: { fontFamily: "Inter_400Regular", fontSize: 10, color: "#0369A190", textTransform: "capitalize" },
+  topicBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    alignSelf: "flex-start",
+    marginHorizontal: 14,
+    marginBottom: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  topicBadgeText: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#7B2D8B" },
   footer: {
     flexDirection: "row",
     alignItems: "center",
