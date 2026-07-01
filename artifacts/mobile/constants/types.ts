@@ -99,6 +99,8 @@ export interface CommunityPost {
   locationType?: string;
   topicTag?: string;
   isPrivateTopic?: boolean;
+  hasContentWarning?: boolean;
+  contentWarningType?: string;
 }
 
 export interface AlertItem {

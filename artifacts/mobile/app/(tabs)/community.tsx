@@ -122,6 +122,8 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
     locationType: (raw.locationType as string) ?? undefined,
     topicTag: (raw.topicTag as string) ?? undefined,
     isPrivateTopic: !!(raw.isPrivateTopic),
+    hasContentWarning: !!(raw.hasContentWarning),
+    contentWarningType: (raw.contentWarningType as string) ?? undefined,
   };
 }
 
@@ -209,7 +211,7 @@ export default function CommunityScreen() {
   const [newPostBusinessLink, setNewPostBusinessLink] = useState("");
   const [newPostVisibility, setNewPostVisibility] = useState<"public" | "followers_only">("public");
   const [feedMode, setFeedMode] = useState<"everyone" | "following">("everyone");
-  const [mediaAttachments, setMediaAttachments] = useState<{ uri: string; type: "image" | "video"; uploaded?: string }[]>([]);
+  const [mediaAttachments, setMediaAttachments] = useState<{ uri: string; type: "image" | "video"; uploaded?: string; isGraphic?: boolean; warningType?: string }[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [newPostLocationTag, setNewPostLocationTag] = useState("");
   const [newPostLocationType, setNewPostLocationType] = useState("city");
@@ -355,7 +357,7 @@ export default function CommunityScreen() {
     setUploadingMedia(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const uploaded: { uri: string; type: "image" | "video"; uploaded: string }[] = [];
+      const uploaded: { uri: string; type: "image" | "video"; uploaded: string; isGraphic?: boolean; warningType?: string }[] = [];
       for (const asset of result.assets) {
         const formData = new FormData();
         const fieldName = kind === "image" ? "image" : "video";
@@ -368,8 +370,8 @@ export default function CommunityScreen() {
           body: formData,
         });
         if (res.ok) {
-          const data = await res.json() as { url: string };
-          uploaded.push({ uri: asset.uri, type: kind, uploaded: data.url });
+          const data = await res.json() as { url: string; isGraphic?: boolean; warningType?: string };
+          uploaded.push({ uri: asset.uri, type: kind, uploaded: data.url, isGraphic: data.isGraphic, warningType: data.warningType });
         } else {
           const err = await res.json() as { error?: string; code?: string };
           if (err.code === "TIER_LIMIT_REACHED") {
@@ -407,6 +409,8 @@ export default function CommunityScreen() {
           businessLink: newPostType === "business" && newPostBusinessLink.trim() ? newPostBusinessLink.trim() : undefined,
           visibility: newPostVisibility,
           mediaUrls: mediaAttachments.filter((m) => m.uploaded).map((m) => m.uploaded!),
+          hasContentWarning: mediaAttachments.some((m) => m.isGraphic),
+          contentWarningType: mediaAttachments.find((m) => m.isGraphic)?.warningType ?? undefined,
           locationTag: newPostLocationTag.trim() || undefined,
           locationType: newPostLocationTag.trim() ? newPostLocationType : undefined,
           topicTag: newPostTopicTag.trim() || undefined,

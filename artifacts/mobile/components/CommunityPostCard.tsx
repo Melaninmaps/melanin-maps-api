@@ -35,6 +35,67 @@ function getApiBase(): string {
   return "";
 }
 
+const WARNING_LABELS: Record<string, string> = {
+  violence: "Graphic Violence",
+  nudity: "Explicit Content",
+  disturbing: "Disturbing Imagery",
+  other: "Sensitive Content",
+};
+
+function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType }: {
+  mediaUrls: string[];
+  hasContentWarning: boolean;
+  contentWarningType?: string;
+}) {
+  const [revealed, setRevealed] = useState(false);
+  const colors = useColors();
+
+  if (hasContentWarning && !revealed) {
+    return (
+      <TouchableOpacity
+        style={s.warningOverlay}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setRevealed(true);
+        }}
+        activeOpacity={0.85}
+      >
+        <Feather name="eye-off" size={26} color="#FFFFFF" />
+        <Text style={s.warningTitle}>
+          {WARNING_LABELS[contentWarningType ?? "other"] ?? "Sensitive Content"}
+        </Text>
+        <Text style={s.warningSubtitle}>Tap to view</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <View style={s.mediaGrid}>
+      {hasContentWarning && revealed && (
+        <TouchableOpacity
+          style={s.warningBadge}
+          onPress={() => setRevealed(false)}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+        >
+          <Feather name="eye-off" size={11} color="#FFFFFF" />
+          <Text style={s.warningBadgeText}>{WARNING_LABELS[contentWarningType ?? "other"] ?? "Sensitive Content"}</Text>
+        </TouchableOpacity>
+      )}
+      {mediaUrls.map((url, i) => {
+        const isVideo = url.endsWith(".mp4") || url.endsWith(".mov") || url.endsWith(".webm") || url.includes("video");
+        return isVideo ? (
+          <View key={i} style={[s.mediaThumb, { backgroundColor: "#0008", justifyContent: "center", alignItems: "center" }]}>
+            <Feather name="play-circle" size={36} color="#fff" />
+            <Text style={{ color: "#fff", fontSize: 11, fontFamily: "Inter_500Medium", marginTop: 4 }}>Video</Text>
+          </View>
+        ) : (
+          <Image key={i} source={{ uri: url }} style={s.mediaThumb} resizeMode="cover" />
+        );
+      })}
+    </View>
+  );
+}
+
 export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthorPress, onLocationPress, onTopicPress }: Props) {
   const colors = useColors();
   const [liked, setLiked] = useState(post.liked);
@@ -138,19 +199,11 @@ export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthor
 
       {/* Media grid */}
       {post.mediaUrls && post.mediaUrls.length > 0 && (
-        <View style={s.mediaGrid}>
-          {post.mediaUrls.map((url, i) => {
-            const isVideo = url.endsWith(".mp4") || url.endsWith(".mov") || url.endsWith(".webm") || url.includes("video");
-            return isVideo ? (
-              <View key={i} style={[s.mediaThumb, { backgroundColor: "#0008", justifyContent: "center", alignItems: "center" }]}>
-                <Feather name="play-circle" size={36} color="#fff" />
-                <Text style={{ color: "#fff", fontSize: 11, fontFamily: "Inter_500Medium", marginTop: 4 }}>Video</Text>
-              </View>
-            ) : (
-              <Image key={i} source={{ uri: url }} style={s.mediaThumb} resizeMode="cover" />
-            );
-          })}
-        </View>
+        <MediaGrid
+          mediaUrls={post.mediaUrls}
+          hasContentWarning={post.hasContentWarning ?? false}
+          contentWarningType={post.contentWarningType}
+        />
       )}
 
       {/* Topic tag badge */}
@@ -302,6 +355,45 @@ const s = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: 8,
     overflow: "hidden",
+  },
+  warningOverlay: {
+    marginHorizontal: 14,
+    marginBottom: 10,
+    height: 110,
+    borderRadius: 12,
+    backgroundColor: "#1a1a2e",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "#ffffff20",
+  },
+  warningTitle: {
+    color: "#FFFFFF",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+  },
+  warningSubtitle: {
+    color: "#FFFFFF99",
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+  },
+  warningBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#1a1a2e",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignSelf: "flex-start",
+    marginBottom: 4,
+    width: "100%",
+  },
+  warningBadgeText: {
+    color: "#FFFFFF",
+    fontFamily: "Inter_500Medium",
+    fontSize: 11,
   },
   linkRow: {
     flexDirection: "row",

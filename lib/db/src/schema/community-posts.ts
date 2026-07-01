@@ -22,6 +22,8 @@ export const communityPostsTable = pgTable("community_posts", {
   topicTag: varchar("topic_tag", { length: 100 }),
   isPrivateTopic: boolean("is_private_topic").notNull().default(false),
   visibility: varchar("visibility", { length: 20 }).notNull().default("public"),
+  hasContentWarning: boolean("has_content_warning").notNull().default(false),
+  contentWarningType: varchar("content_warning_type", { length: 30 }),
   upvotes: integer("upvotes").notNull().default(0),
   downvotes: integer("downvotes").notNull().default(0),
   commentsCount: integer("comments_count").notNull().default(0),

@@ -8,6 +8,7 @@ import { getUserTier } from "../middleware/requireMembership";
 import { checkContent, redactForLog } from "../lib/contentFilter";
 import { scanForFamily } from "../lib/familyFilter";
 import { objectStorageClient } from "../lib/objectStorage";
+import { screenImageUrl } from "../lib/contentScreen";
 
 const router: IRouter = Router();
 
@@ -159,6 +160,8 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       locationType,
       topicTag,
       isPrivateTopic = false,
+      hasContentWarning = false,
+      contentWarningType,
     } = req.body as {
       content?: string;
       category?: string;
@@ -173,6 +176,8 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       locationType?: string;
       topicTag?: string;
       isPrivateTopic?: boolean;
+      hasContentWarning?: boolean;
+      contentWarningType?: string;
     };
 
     if (!content?.trim()) {
@@ -252,6 +257,8 @@ router.post("/community/posts", async (req: Request, res: Response) => {
         topicTag: topicTag?.trim() || null,
         isPrivateTopic: !!isPrivateTopic,
         visibility: (isPrivateTopic ? "followers_only" : visibility === "followers_only" ? "followers_only" : "public") as "public" | "followers_only",
+        hasContentWarning: !!hasContentWarning,
+        contentWarningType: hasContentWarning && contentWarningType ? contentWarningType : null,
       })
       .returning();
 
@@ -283,7 +290,15 @@ router.post("/community/media/upload/image", imageUpload.single("image"), async 
     await gcsFile.save(req.file.buffer, { contentType: req.file.mimetype });
     await gcsFile.makePublic();
     const url = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
-    res.status(201).json({ url, type: "image", maxImages: limits.images });
+    const screen = await screenImageUrl(url);
+    res.status(201).json({
+      url,
+      type: "image",
+      maxImages: limits.images,
+      isGraphic: screen.isGraphic,
+      warningType: screen.warningType,
+      warningLabel: screen.warningLabel,
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to upload community post image");
     res.status(500).json({ error: "Failed to upload image" });
@@ -309,7 +324,13 @@ router.post("/community/media/upload/video", videoUpload.single("video"), async 
     await gcsFile.save(req.file.buffer, { contentType: req.file.mimetype });
     await gcsFile.makePublic();
     const url = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
-    res.status(201).json({ url, type: "video" });
+    res.status(201).json({
+      url,
+      type: "video",
+      isGraphic: true,
+      warningType: "other",
+      warningLabel: "Video Content",
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to upload community post video");
     res.status(500).json({ error: "Failed to upload video" });
