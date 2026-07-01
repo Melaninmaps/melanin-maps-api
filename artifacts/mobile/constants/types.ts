@@ -91,6 +91,8 @@ export interface CommunityPost {
   businessLink?: string;
   mediaUrls?: string[];
   savedPlaceId?: string;
+  locationTag?: string;
+  locationType?: string;
 }
 
 export interface AlertItem {

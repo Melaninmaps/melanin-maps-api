@@ -437,6 +437,20 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="location-feed"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
+        name="creator-public"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
         name="notification-center"
         options={{
           headerShown: false,

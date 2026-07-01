@@ -17,6 +17,8 @@ export const communityPostsTable = pgTable("community_posts", {
   businessLink: text("business_link"),
   mediaUrls: text("media_urls"),
   savedPlaceId: varchar("saved_place_id"),
+  locationTag: varchar("location_tag", { length: 200 }),
+  locationType: varchar("location_type", { length: 30 }),
   visibility: varchar("visibility", { length: 20 }).notNull().default("public"),
   upvotes: integer("upvotes").notNull().default(0),
   downvotes: integer("downvotes").notNull().default(0),

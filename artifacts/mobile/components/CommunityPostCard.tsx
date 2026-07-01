@@ -12,6 +12,7 @@ interface Props {
   onCommentPress?: () => void;
   onLikeChange?: (liked: boolean) => void;
   onAuthorPress?: (authorId: string) => void;
+  onLocationPress?: (locationTag: string) => void;
 }
 
 const CATEGORY_CONFIG = {
@@ -33,7 +34,7 @@ function getApiBase(): string {
   return "";
 }
 
-export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthorPress }: Props) {
+export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthorPress, onLocationPress }: Props) {
   const colors = useColors();
   const [liked, setLiked] = useState(post.liked);
   const [likeCount, setLikeCount] = useState(post.likes);
@@ -149,6 +150,21 @@ export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthor
             );
           })}
         </View>
+      )}
+
+      {/* Location tag badge */}
+      {post.locationTag && (
+        <TouchableOpacity
+          style={[s.locationBadge, { backgroundColor: "#0369A112", borderColor: "#0369A130" }]}
+          onPress={() => { if (post.locationTag) onLocationPress?.(post.locationTag); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+          activeOpacity={onLocationPress ? 0.7 : 1}
+        >
+          <Feather name="map-pin" size={11} color="#0369A1" />
+          <Text style={s.locationText}>{post.locationTag}</Text>
+          {post.locationType && post.locationType !== "city" && (
+            <Text style={s.locationTypeBadge}>{post.locationType}</Text>
+          )}
+        </TouchableOpacity>
       )}
 
       {/* Business external link */}
@@ -285,6 +301,20 @@ const s = StyleSheet.create({
     borderWidth: 1,
   },
   linkText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
+  locationBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    alignSelf: "flex-start",
+    marginHorizontal: 14,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  locationText: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#0369A1" },
+  locationTypeBadge: { fontFamily: "Inter_400Regular", fontSize: 10, color: "#0369A190", textTransform: "capitalize" },
   footer: {
     flexDirection: "row",
     alignItems: "center",

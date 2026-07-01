@@ -118,6 +118,8 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
     businessLink: (raw.businessLink as string) ?? undefined,
     mediaUrls,
     savedPlaceId: (raw.savedPlaceId as string) ?? undefined,
+    locationTag: (raw.locationTag as string) ?? undefined,
+    locationType: (raw.locationType as string) ?? undefined,
   };
 }
 
@@ -207,6 +209,9 @@ export default function CommunityScreen() {
   const [feedMode, setFeedMode] = useState<"everyone" | "following">("everyone");
   const [mediaAttachments, setMediaAttachments] = useState<{ uri: string; type: "image" | "video"; uploaded?: string }[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [newPostLocationTag, setNewPostLocationTag] = useState("");
+  const [newPostLocationType, setNewPostLocationType] = useState("city");
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [submittingPost, setSubmittingPost] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
@@ -397,6 +402,8 @@ export default function CommunityScreen() {
           businessLink: newPostType === "business" && newPostBusinessLink.trim() ? newPostBusinessLink.trim() : undefined,
           visibility: newPostVisibility,
           mediaUrls: mediaAttachments.filter((m) => m.uploaded).map((m) => m.uploaded!),
+          locationTag: newPostLocationTag.trim() || undefined,
+          locationType: newPostLocationTag.trim() ? newPostLocationType : undefined,
         }),
       });
       if (res.ok) {
@@ -407,6 +414,8 @@ export default function CommunityScreen() {
         setNewPostType("community");
         setNewPostBusinessLink("");
         setNewPostVisibility("public");
+        setNewPostLocationTag("");
+        setNewPostLocationType("city");
         setMediaAttachments([]);
         setShowCompose(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -1018,6 +1027,7 @@ export default function CommunityScreen() {
                 post={item}
                 onCommentPress={() => setSelectedPost(item)}
                 onAuthorPress={(id) => setSelectedAuthorId(id)}
+                onLocationPress={(tag) => router.push({ pathname: "/location-feed", params: { location: tag } } as any)}
               />
             )}
           />
@@ -1269,6 +1279,47 @@ export default function CommunityScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+
+            {/* Location tag */}
+            <View style={{ paddingHorizontal: 16, paddingBottom: 10 }}>
+              {newPostLocationTag ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Feather name="map-pin" size={13} color="#0369A1" />
+                  <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14, backgroundColor: "#0369A115", borderWidth: 1, borderColor: "#0369A130" }}>
+                    <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#0369A1" }}>📍 {newPostLocationTag}</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setNewPostLocationTag("")}>
+                    <Feather name="x" size={16} color="#9CA3AF" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={{ flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: colors.border }}
+                  onPress={() => setShowLocationPicker(true)}
+                >
+                  <Feather name="map-pin" size={13} color={colors.mutedForeground} />
+                  <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>Tag a location</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Location picker inline */}
+            {showLocationPicker && (
+              <View style={[{ paddingHorizontal: 16, paddingBottom: 12 }]}>
+                <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Choose a location:</Text>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+                  {["Atlanta", "Houston", "Chicago", "Washington DC", "New York", "New Orleans", "Los Angeles", "Miami", "Dallas", "Philadelphia", "Charlotte", "Baltimore", "Detroit", "Memphis", "Jamaica", "Ghana", "Nigeria", "London", "Toronto", "Fulton County", "Bronx", "Brooklyn"].map((loc) => (
+                    <TouchableOpacity
+                      key={loc}
+                      style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: colors.primary + "50", backgroundColor: colors.primary + "10" }}
+                      onPress={() => { setNewPostLocationTag(loc); setShowLocationPicker(false); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                    >
+                      <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.primary }}>📍 {loc}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
 
             {/* Business link input (only for business posts) */}
             {newPostType === "business" && (
