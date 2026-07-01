@@ -144,9 +144,15 @@ export default function MessagesScreen() {
                   activeOpacity={0.75}
                 >
                   <View style={styles.avatarWrap}>
-                    <View style={[styles.avatar, { backgroundColor: color }]}>
-                      <Text style={styles.avatarInitials}>{initials}</Text>
-                    </View>
+                    {conv.title.startsWith("🔒 Private Feedback") ? (
+                      <View style={[styles.avatar, { backgroundColor: "#7B4F2E" }]}>
+                        <Feather name="lock" size={20} color="#FFFFFF" />
+                      </View>
+                    ) : (
+                      <View style={[styles.avatar, { backgroundColor: color }]}>
+                        <Text style={styles.avatarInitials}>{initials}</Text>
+                      </View>
+                    )}
                   </View>
 
                   <View style={styles.convContent}>

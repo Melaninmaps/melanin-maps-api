@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable, businessSkipFeedbackTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, businessesTable, businessSkipFeedbackTable, conversations as convTable, messages as msgsTable } from "@workspace/db";
+import { and, eq } from "drizzle-orm";
 import { checkContent } from "../lib/contentFilter";
 import { logger } from "../lib/logger";
 
@@ -32,6 +32,55 @@ function checkBusinessFeedback(text: string): { ok: boolean; reason?: string } {
   return { ok: true };
 }
 
+async function deliverToOwnerInbox(businessId: string, ownerId: string, businessName: string, message: string): Promise<void> {
+  try {
+    const preview = message.length > 80 ? message.slice(0, 77) + "…" : message;
+    const now = new Date();
+
+    const [existing] = await db
+      .select({ id: convTable.id })
+      .from(convTable)
+      .where(
+        and(
+          eq(convTable.businessId, businessId),
+          eq(convTable.title, `🔒 Private Feedback — ${businessName}`)
+        )
+      )
+      .limit(1);
+
+    let convId: number;
+    if (existing) {
+      convId = existing.id;
+    } else {
+      const [created] = await db
+        .insert(convTable)
+        .values({
+          title: `🔒 Private Feedback — ${businessName}`,
+          participantIds: [ownerId],
+          businessId,
+          lastMessageAt: now,
+          lastMessagePreview: preview,
+        })
+        .returning({ id: convTable.id });
+      if (!created) throw new Error("Failed to create feedback conversation");
+      convId = created.id;
+    }
+
+    await db.insert(msgsTable).values({
+      conversationId: convId,
+      role: "feedback",
+      content: message,
+    });
+
+    await db
+      .update(convTable)
+      .set({ lastMessageAt: now, lastMessagePreview: preview })
+      .where(eq(convTable.id, convId));
+  } catch (err) {
+    logger.error({ err, businessId }, "[skip-feedback] failed to deliver to owner inbox");
+  }
+}
+
 router.post("/businesses/:id/skip-feedback", async (req: Request, res: Response) => {
   try {
     const businessId = String(req.params["id"]);
@@ -43,7 +92,12 @@ router.post("/businesses/:id/skip-feedback", async (req: Request, res: Response)
     }
 
     const [business] = await db
-      .select({ id: businessesTable.id, feedbackOptIn: businessesTable.feedbackOptIn })
+      .select({
+        id: businessesTable.id,
+        name: businessesTable.name,
+        feedbackOptIn: businessesTable.feedbackOptIn,
+        submittedById: businessesTable.submittedById,
+      })
       .from(businessesTable)
       .where(eq(businessesTable.id, businessId))
       .limit(1);
@@ -73,7 +127,11 @@ router.post("/businesses/:id/skip-feedback", async (req: Request, res: Response)
       wasFiltered: false,
     });
 
-    logger.info({ businessId }, "[skip-feedback] feedback submitted");
+    if (business.submittedById) {
+      await deliverToOwnerInbox(businessId, business.submittedById, business.name, message.trim());
+    }
+
+    logger.info({ businessId }, "[skip-feedback] feedback submitted and delivered to inbox");
     res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "POST /businesses/:id/skip-feedback error");
