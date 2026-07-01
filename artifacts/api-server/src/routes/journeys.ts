@@ -99,6 +99,28 @@ const JOURNEY_TEMPLATES: Record<string, { phases: Array<{ id: string; title: str
       { id: "wellness", title: "Health & Wellness", icon: "💆🏾", description: "Mental health, gym, and healthcare", categories: ["Healthcare", "Fitness"] },
     ],
   },
+  "business-growth": {
+    phases: [
+      { id: "brand-identity", title: "Brand Identity & Story", icon: "🎨", description: "Sharpen your brand, mission, and community narrative", categories: ["Marketing", "Design", "Photography"] },
+      { id: "digital-presence", title: "Digital Presence", icon: "📱", description: "Website, social media, and online visibility", categories: ["Marketing", "Technology", "Design"] },
+      { id: "customer-experience", title: "Customer Experience", icon: "⭐", description: "Turn first-timers into loyal regulars", categories: ["Business Services", "Coaching"] },
+      { id: "community-outreach", title: "Community Outreach", icon: "🤝🏾", description: "Partnerships, events, and local collaborations", categories: ["Community", "Events", "Marketing"] },
+      { id: "operations", title: "Operations & Systems", icon: "⚙️", description: "Streamline your day-to-day to free up your time", categories: ["Business Services", "Technology"] },
+      { id: "revenue-streams", title: "Revenue & Pricing", icon: "💰", description: "Diversify income and optimize pricing strategy", categories: ["Finance", "Business Services"] },
+      { id: "staff-culture", title: "Team & Culture", icon: "👥", description: "Hire well, build culture, and reduce turnover", categories: ["Employment", "Coaching"] },
+      { id: "expansion", title: "Growth & Scale", icon: "🚀", description: "Expand your footprint — second location, wholesale, or franchising", categories: ["Real Estate", "Business Services", "Finance"] },
+    ],
+  },
+  "business-repair": {
+    phases: [
+      { id: "assessment", title: "Honest Assessment", icon: "🔍", description: "Identify what's working and what needs to change", categories: ["Business Services", "Coaching"] },
+      { id: "customer-feedback", title: "Feedback & Reviews", icon: "💬", description: "Understand what customers are really saying", categories: ["Business Services"] },
+      { id: "operational-fixes", title: "Fix Operations", icon: "🔧", description: "Patch the cracks — staffing, hours, systems, inventory", categories: ["Business Services", "Technology"] },
+      { id: "facilities", title: "Facilities & Accessibility", icon: "🏗️", description: "Repairs, upgrades, ADA compliance, and curb appeal", categories: ["Contractors", "Home Services"] },
+      { id: "financial-health", title: "Financial Health", icon: "💊", description: "Cash flow, debt, renegotiating costs, and finding relief programs", categories: ["Finance", "Banking"] },
+      { id: "rebuild-trust", title: "Rebuild Community Trust", icon: "❤️🏾", description: "Re-engage your community and earn back loyalty", categories: ["Marketing", "Community"] },
+    ],
+  },
 };
 
 router.post("/journeys", async (req: Request, res: Response) => {
@@ -421,6 +443,8 @@ router.get("/journeys/types/list", (_req, res) => {
       { id: "moving", label: "Moving to a New City", icon: "🚚", description: "Find your neighborhood, home, and community" },
       { id: "new-to-city", label: "New to This City", icon: "🗺️", description: "Discover your go-to spots and people" },
       { id: "starting-business", label: "Starting a Business", icon: "🚀", description: "Launch your dream with community support" },
+      { id: "business-growth", label: "Grow My Business", icon: "📈", description: "Scale revenue, brand, and community impact — step by step", businessOnly: true },
+      { id: "business-repair", label: "Repair & Rebuild", icon: "🔧", description: "Fix what's broken and earn community trust back", businessOnly: true },
       { id: "new-baby", label: "Growing Your Family", icon: "👶🏾", description: "Prepare for parenthood with the right support" },
       { id: "getting-married", label: "Getting Married", icon: "💍", description: "Plan your celebration and first chapter together" },
       { id: "career-change", label: "Career Change", icon: "🎯", description: "Level up with a new direction" },
@@ -441,6 +465,8 @@ function generateTitle(journeyType: string, city?: string): string {
     retirement: "My Retirement Journey",
     "getting-married": "Wedding Journey",
     college: "College Life",
+    "business-growth": "My Growth Journey",
+    "business-repair": "Repair & Rebuild Plan",
   };
   return labels[journeyType] ?? "My Journey";
 }

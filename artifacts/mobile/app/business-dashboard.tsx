@@ -2522,6 +2522,59 @@ export default function BusinessDashboardScreen() {
               );
             })}
 
+            {/* KinfolkAI Growth Journey — business planning via Life Journey system */}
+            <View style={[styles.growJourneyCard, { backgroundColor: "#1A0A28", borderColor: "#7B2D8B30" }]}>
+              <View style={styles.growJourneyHeader}>
+                <View style={[styles.growJourneyIconWrap, { backgroundColor: "#7B2D8B20" }]}>
+                  <Feather name="map" size={20} color="#7B2D8B" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Text style={[styles.growJourneyTitle, { color: "#FFF" }]}>KinfolkAI™ Business Journey</Text>
+                    <View style={[styles.growJourneyBadge, { backgroundColor: "#7B2D8B" }]}>
+                      <Text style={styles.growJourneyBadgeTxt}>NEW</Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.growJourneySub, { color: "rgba(255,255,255,0.5)" }]}>
+                    Step-by-step guidance for growth or repair
+                  </Text>
+                </View>
+              </View>
+              <Text style={[styles.growJourneyBody, { color: "rgba(255,255,255,0.7)" }]}>
+                KinfolkAI™ walks you through every phase of business growth or recovery — from brand identity and operations to community outreach and financial health. Each step is personalised to your business, city, and goals.
+              </Text>
+              <View style={{ gap: 8 }}>
+                <TouchableOpacity
+                  style={[styles.growJourneyBtn, { backgroundColor: "#7B2D8B" }]}
+                  onPress={() => {
+                    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    router.push({ pathname: "/life-journey", params: { preset: "business-growth" } } as never);
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Feather name="trending-up" size={14} color="#FFF" />
+                  <Text style={styles.growJourneyBtnTxt}>Start Growth Journey</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.growJourneyBtn, { backgroundColor: "rgba(255,255,255,0.08)", borderWidth: 1, borderColor: "#7B2D8B40" }]}
+                  onPress={() => {
+                    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push({ pathname: "/life-journey", params: { preset: "business-repair" } } as never);
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Feather name="tool" size={14} color="#7B2D8B" />
+                  <Text style={[styles.growJourneyBtnTxt, { color: "#7B2D8B" }]}>Repair &amp; Rebuild Plan</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={[styles.growJourneyTierRow, { borderTopColor: "rgba(255,255,255,0.06)" }]}>
+                <Feather name="award" size={11} color="rgba(255,255,255,0.3)" />
+                <Text style={[styles.growJourneyTierTxt, { color: "rgba(255,255,255,0.3)" }]}>
+                  Navigator · 10 journeys/mo · Trailblazer · Unlimited
+                </Text>
+              </View>
+            </View>
+
             {/* AI tools */}
             <Text style={[styles.growCatalogueTitle, { color: colors.foreground, marginTop: 8 }]}>AI-Powered Tools</Text>
             <Text style={[styles.growCatalogueDesc, { color: colors.mutedForeground }]}>
@@ -2955,6 +3008,18 @@ const styles = StyleSheet.create({
   growActiveExpiry: { fontSize: 12, fontFamily: "Inter_400Regular" },
   growStatusPill: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20 },
   growStatusPillText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  growJourneyCard: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 12, gap: 12 },
+  growJourneyHeader: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  growJourneyIconWrap: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  growJourneyTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  growJourneyBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+  growJourneyBadgeTxt: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#FFF", letterSpacing: 0.5 },
+  growJourneySub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
+  growJourneyBody: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
+  growJourneyBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, paddingVertical: 11, borderRadius: 12 },
+  growJourneyBtnTxt: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#FFF" },
+  growJourneyTierRow: { flexDirection: "row", alignItems: "center", gap: 5, borderTopWidth: 1, paddingTop: 10, marginTop: 2 },
+  growJourneyTierTxt: { fontSize: 11, fontFamily: "Inter_400Regular" },
   growCatalogueTitle: { fontSize: 17, fontFamily: "Inter_700Bold", marginBottom: 4, marginTop: 8 },
   growCatalogueDesc: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18, marginBottom: 14 },
   growToolCard: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 12, gap: 10 },

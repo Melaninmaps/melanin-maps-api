@@ -15,8 +15,9 @@ import {
   savedPlacesTable,
   businessProfileViewsTable,
   marketplaceFeeConfigTable,
+  reviewsTable,
 } from "@workspace/db";
-import { and, isNotNull, lte, gt, eq, isNull, gte, inArray, or, count } from "drizzle-orm";
+import { and, isNotNull, lte, gt, eq, isNull, gte, inArray, or, count, sql } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import {
   sendTrialEndingSoon,
@@ -24,7 +25,9 @@ import {
   sendWeeklyDigest,
   sendCheckinOverdueEmail,
   sendFoundingAnniversaryEmail,
+  sendWeeklyBusinessReport,
   type FoundingAnniversaryMetrics,
+  type WeeklyBusinessReportData,
 } from "../lib/email";
 import { logger } from "../lib/logger";
 
@@ -402,6 +405,184 @@ Return ONLY a JSON object with this exact shape:
     });
   } catch (err: unknown) {
     logger.error({ err }, "Knowledge refresh cron failed");
+    res.status(500).json({ error: "Cron job failed" });
+  }
+});
+
+// ─── POST /cron/weekly-business-report ────────────────────────────────────────
+// Runs weekly. Finds Navigator/Trailblazer business owners and sends each a
+// personalised marketing report: traffic, engagement, AI marketing tip.
+router.post("/cron/weekly-business-report", async (req, res): Promise<void> => {
+  if (!verifyCronSecret(req, res)) return;
+
+  const now = new Date();
+  const sevenDaysAgo  = new Date(now.getTime() - 7  * 24 * 60 * 60 * 1000);
+  const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+  const weekLabel =
+    sevenDaysAgo.toLocaleDateString("en-US", { month: "long", day: "numeric" }) +
+    " – " +
+    now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
+  const DAY_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const HOUR_LABELS: Record<number, string> = { 0:"midnight",1:"1am",2:"2am",3:"3am",4:"4am",5:"5am",6:"6am",7:"7am",8:"8am",9:"9am",10:"10am",11:"11am",12:"noon",13:"1pm",14:"2pm",15:"3pm",16:"4pm",17:"5pm",18:"6pm",19:"7pm",20:"8pm",21:"9pm",22:"10pm",23:"11pm" };
+
+  let sent = 0;
+  let failed = 0;
+
+  try {
+    // ── 1. Find premium business owners with email ───────────────────────────
+    const { rows: bizOwners } = await pool.query<{
+      business_id: string;
+      business_name: string;
+      business_category: string;
+      business_city: string | null;
+      user_id: string;
+      email: string;
+      first_name: string | null;
+      member_type: string | null;
+    }>(`
+      SELECT b.id AS business_id, b.name AS business_name, b.category AS business_category,
+             b.city AS business_city, u.id AS user_id, u.email, u.first_name, u.member_type
+      FROM businesses b
+      JOIN users u ON u.id = b.submitted_by_id
+      WHERE u.member_type IN ('navigator','trailblazer')
+        AND u.email IS NOT NULL
+        AND b.status = 'active'
+        AND b.black_owned = true
+    `);
+
+    if (bizOwners.length === 0) {
+      res.json({ ok: true, sent: 0, failed: 0, message: "No eligible business owners found" });
+      return;
+    }
+
+    for (const owner of bizOwners) {
+      try {
+        const tier = (owner.member_type === "trailblazer" ? "trailblazer" : "navigator") as "navigator" | "trailblazer";
+
+        // ── 2. Pull this-week vs last-week metrics in parallel ───────────────
+        const [[thisViews], [lastViews], [thisSaves], [lastSaves], [thisReviews], [lastReviews]] = await Promise.all([
+          db.select({ c: count() }).from(businessProfileViewsTable)
+            .where(and(eq(businessProfileViewsTable.businessId, owner.business_id), gte(businessProfileViewsTable.viewedAt, sevenDaysAgo))),
+          db.select({ c: count() }).from(businessProfileViewsTable)
+            .where(and(eq(businessProfileViewsTable.businessId, owner.business_id), gte(businessProfileViewsTable.viewedAt, fourteenDaysAgo), lte(businessProfileViewsTable.viewedAt, sevenDaysAgo))),
+          db.select({ c: count() }).from(savedPlacesTable)
+            .where(and(eq(savedPlacesTable.businessId, owner.business_id), gte(savedPlacesTable.createdAt, sevenDaysAgo))),
+          db.select({ c: count() }).from(savedPlacesTable)
+            .where(and(eq(savedPlacesTable.businessId, owner.business_id), gte(savedPlacesTable.createdAt, fourteenDaysAgo), lte(savedPlacesTable.createdAt, sevenDaysAgo))),
+          db.select({ c: count() }).from(reviewsTable)
+            .where(and(eq(reviewsTable.businessId, owner.business_id), gte(reviewsTable.createdAt, sevenDaysAgo))),
+          db.select({ c: count() }).from(reviewsTable)
+            .where(and(eq(reviewsTable.businessId, owner.business_id), gte(reviewsTable.createdAt, fourteenDaysAgo), lte(reviewsTable.createdAt, sevenDaysAgo))),
+        ]);
+
+        const views = Number(thisViews?.c ?? 0);
+        const saves = Number(thisSaves?.c ?? 0);
+        const reviews = Number(thisReviews?.c ?? 0);
+        const prevViews = Number(lastViews?.c ?? 0);
+        const prevSaves = Number(lastSaves?.c ?? 0);
+        const prevReviews = Number(lastReviews?.c ?? 0);
+
+        const pctChange = (cur: number, prev: number) =>
+          prev === 0 ? (cur > 0 ? 100 : 0) : Math.round(((cur - prev) / prev) * 100);
+
+        // ── 3. Peak day/hour from last 30 days ─────────────────────────────
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const [peakDayRow, peakHourRow] = await Promise.all([
+          db.select({
+            dow: sql<number>`EXTRACT(DOW FROM ${businessProfileViewsTable.viewedAt})`,
+            c: count(),
+          }).from(businessProfileViewsTable)
+            .where(and(eq(businessProfileViewsTable.businessId, owner.business_id), gte(businessProfileViewsTable.viewedAt, thirtyDaysAgo)))
+            .groupBy(sql`EXTRACT(DOW FROM ${businessProfileViewsTable.viewedAt})`)
+            .orderBy(sql`count(*) DESC`)
+            .limit(1),
+          db.select({
+            hour: sql<number>`EXTRACT(HOUR FROM ${businessProfileViewsTable.viewedAt})`,
+            c: count(),
+          }).from(businessProfileViewsTable)
+            .where(and(eq(businessProfileViewsTable.businessId, owner.business_id), gte(businessProfileViewsTable.viewedAt, thirtyDaysAgo)))
+            .groupBy(sql`EXTRACT(HOUR FROM ${businessProfileViewsTable.viewedAt})`)
+            .orderBy(sql`count(*) DESC`)
+            .limit(1),
+        ]);
+
+        const peakDay = DAY_LABELS[Number(peakDayRow[0]?.dow ?? 5)] ?? "Friday";
+        const peakHour = HOUR_LABELS[Number(peakHourRow[0]?.hour ?? 12)] ?? "noon";
+
+        // ── 4. Avg rating ──────────────────────────────────────────────────
+        const [ratingRow] = await db.select({
+          avg: sql<number>`ROUND(AVG(${reviewsTable.rating})::numeric, 1)`,
+        }).from(reviewsTable).where(eq(reviewsTable.businessId, owner.business_id));
+        const avgRating = ratingRow?.avg ? Number(ratingRow.avg) : null;
+
+        // ── 5. Generate AI marketing tip ───────────────────────────────────
+        let aiMarketingTip = `Post consistently around ${peakDay} ${peakHour} when your audience is most active — even one piece of content per week during your peak window can meaningfully lift visibility.`;
+        let topActionItem: string | undefined;
+
+        if (openai) {
+          try {
+            const prompt = `You are a marketing advisor for "${owner.business_name}", a Black-owned ${owner.business_category} business${owner.business_city ? ` in ${owner.business_city}` : ""}.
+
+This week's performance:
+- Profile views: ${views} (${pctChange(views, prevViews) >= 0 ? "+" : ""}${pctChange(views, prevViews)}% vs last week)
+- Community saves: ${saves} (${pctChange(saves, prevSaves) >= 0 ? "+" : ""}${pctChange(saves, prevSaves)}% vs last week)
+- New reviews: ${reviews}${avgRating ? `, avg rating ${avgRating.toFixed(1)}★` : ""}
+- Peak engagement: ${peakDay}s around ${peakHour}
+
+Return ONLY this JSON (no markdown):
+{
+  "tip": "2-3 sentence actionable marketing tip for this week, specific to their metrics and business type. Warm, community-centered, Black business empowerment tone.",
+  "action": "One specific thing they should do THIS WEEK — under 25 words."
+}`;
+
+            const completion = await openai.chat.completions.create({
+              model: "gpt-4o-mini",
+              messages: [{ role: "user", content: prompt }],
+              temperature: 0.7,
+              max_tokens: 200,
+            });
+            const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
+            const parsed = JSON.parse(raw) as { tip?: string; action?: string };
+            if (parsed.tip) aiMarketingTip = parsed.tip;
+            if (parsed.action) topActionItem = parsed.action;
+          } catch { /* use fallback tip */ }
+        }
+
+        // ── 6. Send email ──────────────────────────────────────────────────
+        const reportData: WeeklyBusinessReportData = {
+          businessName: owner.business_name,
+          tier,
+          weekLabel,
+          views,
+          viewsChange: pctChange(views, prevViews),
+          saves,
+          savesChange: pctChange(saves, prevSaves),
+          reviews,
+          reviewsChange: pctChange(reviews, prevReviews),
+          avgRating,
+          peakDay,
+          peakHour,
+          aiMarketingTip,
+          topActionItem,
+        };
+
+        await sendWeeklyBusinessReport(owner.email, owner.first_name, reportData);
+        sent++;
+
+        // Throttle to avoid Resend rate limits
+        await new Promise((r) => setTimeout(r, 500));
+      } catch (bizErr) {
+        logger.error({ bizErr, bizId: owner.business_id }, "Weekly business report failed for owner");
+        failed++;
+      }
+    }
+
+    logger.info({ sent, failed, total: bizOwners.length }, "Weekly business report cron completed");
+    res.json({ ok: true, sent, failed, total: bizOwners.length, weekLabel });
+  } catch (err: unknown) {
+    logger.error({ err }, "Weekly business report cron failed");
     res.status(500).json({ error: "Cron job failed" });
   }
 });

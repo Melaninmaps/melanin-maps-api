@@ -10,7 +10,7 @@ import {
   StyleSheet,
   Pressable,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -58,6 +58,7 @@ interface JourneyType {
 export default function LifeJourneyScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { preset } = useLocalSearchParams<{ preset?: string }>();
   const insets = useSafeAreaInsets();
   const { isAuthenticated } = useAuth();
 
@@ -134,6 +135,21 @@ export default function LifeJourneyScreen() {
       { label: "Downsizing Help", emoji: "🏠" }, { label: "Wellness & Fitness", emoji: "💪🏾" },
       { label: "Travel Planning", emoji: "✈️" }, { label: "Hobbies & Classes", emoji: "🎨" },
     ],
+    "business-growth": [
+      { label: "Brand & Logo Design", emoji: "🎨" }, { label: "Social Media Strategy", emoji: "📱" },
+      { label: "Customer Loyalty Program", emoji: "⭐" }, { label: "Hiring & Staffing", emoji: "👥" },
+      { label: "Bookkeeper / Accountant", emoji: "📊" }, { label: "Business Coach / Mentor", emoji: "🤝🏾" },
+      { label: "Commercial Real Estate", emoji: "🏢" }, { label: "Marketing Agency", emoji: "📣" },
+      { label: "Tech & POS Systems", emoji: "💻" }, { label: "Community Events", emoji: "🎉" },
+      { label: "Press & PR", emoji: "📰" }, { label: "Supplier / Wholesale", emoji: "📦" },
+    ],
+    "business-repair": [
+      { label: "Business Coach", emoji: "🤝🏾" }, { label: "Financial Relief Programs", emoji: "💊" },
+      { label: "Contractor / Repairs", emoji: "🔧" }, { label: "Accountant / Debt Help", emoji: "📊" },
+      { label: "Customer Service Training", emoji: "💬" }, { label: "Legal Counsel", emoji: "⚖️" },
+      { label: "Marketing Reset", emoji: "🎯" }, { label: "Community Re-engagement", emoji: "❤️🏾" },
+      { label: "Mental Health / Burnout", emoji: "💆🏾" }, { label: "Staffing Fix", emoji: "👥" },
+    ],
   };
 
   const toggleNeed = (label: string) => {
@@ -176,6 +192,17 @@ export default function LifeJourneyScreen() {
   }, [isAuthenticated]);
 
   useEffect(() => { void loadData(); }, [loadData]);
+
+  // Apply preset param from business dashboard navigation
+  useEffect(() => {
+    if (preset && journeyTypes.length > 0) {
+      const match = journeyTypes.find((t) => t.id === preset);
+      if (match) {
+        setSelectedType(match.id);
+        setView("create");
+      }
+    }
+  }, [preset, journeyTypes]);
 
   const loadSmartMatches = useCallback(async (journeyId: string) => {
     try {

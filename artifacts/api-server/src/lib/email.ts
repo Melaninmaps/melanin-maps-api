@@ -1848,6 +1848,128 @@ export async function sendReferralMilestoneUpdate(
 
 // ── App launch blast ──────────────────────────────────────────────────────────
 
+// ─── Weekly Business Marketing Report ────────────────────────────────────────
+export interface WeeklyBusinessReportData {
+  businessName: string;
+  tier: "navigator" | "trailblazer";
+  weekLabel: string;
+  views: number;
+  viewsChange: number;
+  saves: number;
+  savesChange: number;
+  reviews: number;
+  reviewsChange: number;
+  avgRating: number | null;
+  peakDay: string;
+  peakHour: string;
+  aiMarketingTip: string;
+  topActionItem?: string;
+}
+
+export async function sendWeeklyBusinessReport(
+  to: string,
+  firstName: string | null,
+  data: WeeklyBusinessReportData,
+) {
+  if (!resend) { log("weekly business report"); return; }
+  const name = firstName ?? "there";
+  const tierColor = data.tier === "trailblazer" ? "#CA922B" : "#7B2D8B";
+  const tierLabel = data.tier === "trailblazer" ? "Trailblazer" : "Navigator";
+
+  function changeArrow(n: number) {
+    if (n > 0) return `<span style="color:#2D7A4F">▲ ${n}%</span>`;
+    if (n < 0) return `<span style="color:#DC2626">▼ ${Math.abs(n)}%</span>`;
+    return `<span style="color:#6B7280">—</span>`;
+  }
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    replyTo: "hello@mappingwithmelanin.com",
+    subject: `📊 Your weekly business report — ${data.businessName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:28px" />
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span style="background:${tierColor};color:#fff;font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 10px;border-radius:20px;text-transform:uppercase">${tierLabel}</span>
+          <span style="color:#6B7280;font-size:12px">${data.weekLabel}</span>
+        </div>
+
+        <h1 style="font-size:24px;color:#2B1507;font-weight:800;margin:0 0 6px">
+          Your Weekly Business Report
+        </h1>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 28px">Hey ${name} — here's how <strong>${data.businessName}</strong> performed this week.</p>
+
+        <!-- Metrics row -->
+        <table style="width:100%;border-collapse:separate;border-spacing:8px;margin-bottom:24px">
+          <tr>
+            <td style="background:#2B1507;border-radius:12px;padding:18px;text-align:center;width:33%">
+              <p style="color:#F5EBD8;font-size:28px;font-weight:800;margin:0 0 4px">${data.views.toLocaleString()}</p>
+              <p style="color:#F5EBD8;font-size:11px;margin:0 0 4px;opacity:0.6;text-transform:uppercase;letter-spacing:0.5px">Profile Views</p>
+              <p style="font-size:12px;margin:0">${changeArrow(data.viewsChange)}</p>
+            </td>
+            <td style="background:#2B1507;border-radius:12px;padding:18px;text-align:center;width:33%">
+              <p style="color:#F5EBD8;font-size:28px;font-weight:800;margin:0 0 4px">${data.saves.toLocaleString()}</p>
+              <p style="color:#F5EBD8;font-size:11px;margin:0 0 4px;opacity:0.6;text-transform:uppercase;letter-spacing:0.5px">Community Saves</p>
+              <p style="font-size:12px;margin:0">${changeArrow(data.savesChange)}</p>
+            </td>
+            <td style="background:#2B1507;border-radius:12px;padding:18px;text-align:center;width:33%">
+              <p style="color:#F5EBD8;font-size:28px;font-weight:800;margin:0 0 4px">${data.reviews.toLocaleString()}</p>
+              <p style="color:#F5EBD8;font-size:11px;margin:0 0 4px;opacity:0.6;text-transform:uppercase;letter-spacing:0.5px">New Reviews${data.avgRating ? ` · ${data.avgRating.toFixed(1)}★` : ""}</p>
+              <p style="font-size:12px;margin:0">${changeArrow(data.reviewsChange)}</p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Engagement timing -->
+        <div style="background:#fff;border-radius:12px;padding:18px 20px;margin-bottom:20px;border:1px solid #E8DDD0">
+          <p style="color:#CA922B;font-size:10px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:1px">⏰ Peak Engagement Window</p>
+          <p style="color:#2B1507;font-size:15px;font-weight:700;margin:0 0 4px">${data.peakDay} around ${data.peakHour}</p>
+          <p style="color:#6B7280;font-size:13px;margin:0">Your community is most active at this time — schedule your posts to hit before this window.</p>
+        </div>
+
+        <!-- KinfolkAI marketing tip -->
+        <div style="background:#1A0A28;border-radius:12px;padding:20px 22px;margin-bottom:20px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <span style="font-size:16px">✨</span>
+            <p style="color:${tierColor};font-size:10px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:1px">KinfolkAI™ Marketing Tip</p>
+          </div>
+          <p style="color:#F5EBD8;font-size:15px;line-height:1.6;margin:0">${data.aiMarketingTip}</p>
+        </div>
+
+        ${data.topActionItem ? `
+        <!-- Top action item -->
+        <div style="background:#0D2318;border-radius:12px;padding:18px 20px;margin-bottom:20px;border-left:4px solid #2D7A4F">
+          <p style="color:#2D7A4F;font-size:10px;font-weight:700;margin:0 0 6px;text-transform:uppercase;letter-spacing:1px">🎯 Top Action This Week</p>
+          <p style="color:#F5EBD8;font-size:14px;line-height:1.5;margin:0">${data.topActionItem}</p>
+        </div>
+        ` : ""}
+
+        <!-- CTA -->
+        <div style="text-align:center;margin-bottom:28px">
+          <a href="https://mappingwithmelanin.com" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:15px;padding:14px 36px;border-radius:50px;text-decoration:none">
+            Open Your Dashboard →
+          </a>
+        </div>
+
+        ${data.tier === "navigator" ? `
+        <div style="background:#F5EBD8;border-radius:10px;padding:16px 18px;margin-bottom:24px;text-align:center">
+          <p style="color:#2B1507;font-size:13px;font-weight:700;margin:0 0 4px">Upgrade to Trailblazer</p>
+          <p style="color:#6B7280;font-size:12px;margin:0 0 10px">Get deeper insights, skip-feedback analysis, and full AI action plans.</p>
+          <a href="https://mappingwithmelanin.com/membership" style="background:#CA922B;color:#fff;font-size:12px;font-weight:700;padding:8px 20px;border-radius:20px;text-decoration:none">Upgrade Now</a>
+        </div>
+        ` : ""}
+
+        <p style="color:#6B7280;font-size:12px;text-align:center;margin:0">
+          Mapping With Melanin™ · <a href="https://mappingwithmelanin.com" style="color:#CA922B">mappingwithmelanin.com</a><br>
+          You're receiving this because you have an active Navigator or Trailblazer membership with a business listing.
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendAppLaunchBlast(
   to: string,
   firstName: string,
