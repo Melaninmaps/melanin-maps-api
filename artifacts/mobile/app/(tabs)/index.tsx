@@ -93,6 +93,7 @@ export default function DiscoverScreen() {
   const { isDismissed, dismissBusiness } = useDismissedBusinesses();
 
   const [activeVibe, setActiveVibe] = useState<string | null>(null);
+  const [minorityExpanded, setMinorityExpanded] = useState(false);
 
   const VIBES: { label: string; emoji: string; categories: string[] }[] = [
     { label: "Soul Food", emoji: "🍽️", categories: ["Food", "Restaurant"] },
@@ -600,15 +601,74 @@ export default function DiscoverScreen() {
           </View>
         )}
 
-        {filtered.length === 0 && !showNoPrefsMatch && (
-          <View style={styles.empty}>
-            <Feather name="search" size={40} color={colors.muted} />
-            <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No businesses found</Text>
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-              We're growing every day — try a different search, category, or check back soon.
-            </Text>
-          </View>
-        )}
+        {filtered.length === 0 && !showNoPrefsMatch && (() => {
+          const hasActiveOwnershipFilter = filters.ownershipTypes.length > 0;
+          const hasOtherMinorityBiz = businesses.some(
+            (b) => !isDismissed(b.id) && (b.blackOwned || (b.ownershipDesignations && b.ownershipDesignations.length > 0))
+          );
+          const selectedLabel = hasActiveOwnershipFilter
+            ? filters.ownershipTypes[0]?.replace(/-/g, " ") ?? "filtered"
+            : "filtered";
+
+          if (hasActiveOwnershipFilter && hasOtherMinorityBiz && !minorityExpanded) {
+            return (
+              <View style={[styles.minorityOptCard, { backgroundColor: colors.card, borderColor: "#CA922B44" }]}>
+                <View style={[styles.minorityOptGold, { backgroundColor: "#CA922B" }]} />
+                <View style={{ flex: 1, padding: 14 }}>
+                  <Text style={[styles.minorityOptTitle, { color: colors.foreground }]}>
+                    No {selectedLabel} businesses found yet
+                  </Text>
+                  <Text style={[styles.minorityOptBody, { color: colors.mutedForeground }]}>
+                    We're growing every day. Would you like to explore other minority-owned businesses in the meantime?
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.minorityOptBtn, { backgroundColor: "#CA922B" }]}
+                    onPress={() => setMinorityExpanded(true)}
+                    activeOpacity={0.85}
+                  >
+                    <Feather name="compass" size={14} color="#fff" />
+                    <Text style={styles.minorityOptBtnText}>Explore Other Minority-Owned</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            );
+          }
+
+          if (hasActiveOwnershipFilter && hasOtherMinorityBiz && minorityExpanded) {
+            const expansion = businesses.filter(
+              (b) => !isDismissed(b.id) && (b.blackOwned || (b.ownershipDesignations && b.ownershipDesignations.length > 0))
+            );
+            return (
+              <View>
+                <View style={[styles.expansionHeader, { borderBottomColor: "#CA922B44" }]}>
+                  <Feather name="compass" size={15} color="#CA922B" />
+                  <Text style={[styles.expansionLabel, { color: "#CA922B" }]}>
+                    Other Minority-Owned Businesses
+                  </Text>
+                  <TouchableOpacity onPress={() => setMinorityExpanded(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Feather name="x" size={15} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                </View>
+                <Text style={[styles.expansionNote, { color: colors.mutedForeground }]}>
+                  Showing results from all minority-owned businesses — not filtered by your selected type
+                </Text>
+                {expansion.map((b) => (
+                  <BusinessCard key={b.id} business={b} onPress={() => router.push({ pathname: "/business/[id]", params: { id: b.id } } as never)} isSaved={false} onToggleSave={() => {}} />
+                ))}
+              </View>
+            );
+          }
+
+          return (
+            <View style={styles.empty}>
+              <Feather name="search" size={40} color={colors.muted} />
+              <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No businesses found</Text>
+              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+                We're growing every day — try a different search, category, or check back soon.
+              </Text>
+            </View>
+          );
+        })()}
 
         {/* List Your Business CTA */}
         <TouchableOpacity
@@ -995,6 +1055,15 @@ const styles = StyleSheet.create({
   },
   emptyTitle: { fontFamily: "Inter_600SemiBold", fontSize: 16 },
   emptyText: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center" },
+  minorityOptCard: { flexDirection: "row", marginHorizontal: 16, marginVertical: 8, borderRadius: 14, borderWidth: 1.5, overflow: "hidden" },
+  minorityOptGold: { width: 4 },
+  minorityOptTitle: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 4 },
+  minorityOptBody: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, marginBottom: 12 },
+  minorityOptBtn: { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 8, paddingVertical: 9, paddingHorizontal: 14, alignSelf: "flex-start" },
+  minorityOptBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" },
+  expansionHeader: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
+  expansionLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13, flex: 1 },
+  expansionNote: { fontFamily: "Inter_400Regular", fontSize: 12, paddingHorizontal: 16, paddingBottom: 10, paddingTop: 4 },
   noPrefsMatch: {
     marginHorizontal: 20, marginVertical: 8,
     borderRadius: 16, borderWidth: 1,

@@ -24,6 +24,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AlertBanner } from "@/components/AlertBanner";
 import { BusinessMentionPicker } from "@/components/BusinessMentionPicker";
+import { UserMentionPicker } from "@/components/UserMentionPicker";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import { PostDetailModal } from "@/components/PostDetailModal";
 import { UserProfileModal } from "@/components/UserProfileModal";
@@ -237,6 +238,7 @@ export default function CommunityScreen() {
 
   const { businesses } = useBusinesses();
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionMode, setMentionMode] = useState<"users" | "businesses">("users");
 
   const handlePostTextChange = (t: string) => {
     setNewPostText(t);
@@ -248,8 +250,8 @@ export default function CommunityScreen() {
     }
   };
 
-  const handleMentionSelect = (businessName: string) => {
-    const updated = newPostText.replace(/@(\w*)$/, `@${businessName} `);
+  const handleMentionSelect = (mention: string) => {
+    const updated = newPostText.replace(/@(\w*)$/, `@${mention} `);
     setNewPostText(updated);
     setMentionQuery(null);
     inputRef.current?.focus();
@@ -1415,11 +1417,27 @@ export default function CommunityScreen() {
             )}
 
             {mentionQuery !== null && (
-              <BusinessMentionPicker
-                query={mentionQuery}
-                businesses={businesses}
-                onSelect={handleMentionSelect}
-              />
+              <View>
+                <View style={{ flexDirection: "row", paddingHorizontal: 4, marginBottom: 4, gap: 6 }}>
+                  <TouchableOpacity
+                    onPress={() => setMentionMode("users")}
+                    style={[{ borderRadius: 8, paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1 }, mentionMode === "users" ? { backgroundColor: colors.primary, borderColor: colors.primary } : { backgroundColor: colors.secondary, borderColor: colors.border }]}
+                  >
+                    <Text style={[{ fontFamily: "Inter_600SemiBold", fontSize: 12 }, mentionMode === "users" ? { color: "#fff" } : { color: colors.mutedForeground }]}>People</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setMentionMode("businesses")}
+                    style={[{ borderRadius: 8, paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1 }, mentionMode === "businesses" ? { backgroundColor: colors.primary, borderColor: colors.primary } : { backgroundColor: colors.secondary, borderColor: colors.border }]}
+                  >
+                    <Text style={[{ fontFamily: "Inter_600SemiBold", fontSize: 12 }, mentionMode === "businesses" ? { color: "#fff" } : { color: colors.mutedForeground }]}>Businesses</Text>
+                  </TouchableOpacity>
+                </View>
+                {mentionMode === "users" ? (
+                  <UserMentionPicker query={mentionQuery} onSelect={handleMentionSelect} />
+                ) : (
+                  <BusinessMentionPicker query={mentionQuery} businesses={businesses} onSelect={handleMentionSelect} />
+                )}
+              </View>
             )}
 
             <TextInput
@@ -1470,13 +1488,14 @@ export default function CommunityScreen() {
                 onPress={() => {
                   const next = newPostText.endsWith(" ") || newPostText === "" ? newPostText + "@" : newPostText + " @";
                   setNewPostText(next);
+                  setMentionMode("users");
                   setMentionQuery("");
                   inputRef.current?.focus();
                 }}
                 activeOpacity={0.7}
               >
                 <Feather name="at-sign" size={14} color={colors.primary} />
-                <Text style={[styles.mentionBtnText, { color: colors.primary }]}>Tag a business</Text>
+                <Text style={[styles.mentionBtnText, { color: colors.primary }]}>Tag someone</Text>
               </TouchableOpacity>
 
               {/* Image picker button */}
