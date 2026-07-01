@@ -49,6 +49,7 @@ Community discovery, travel, and business platform celebrating Black culture —
 ## User preferences
 
 - Custom domain: **mappingwithmelanin.com**
+- EAS builds: always instruct the user to run `eas build` from their own terminal (never attempt to trigger builds from within Replit — git sandbox restrictions block it)
 
 ## Gotchas
 
