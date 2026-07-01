@@ -430,6 +430,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="business-insight"
+        options={{
+          headerShown: false,
+          presentation: "modal",
+        }}
+      />
+      <Stack.Screen
         name="notification-center"
         options={{
           headerShown: false,

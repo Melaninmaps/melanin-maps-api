@@ -233,6 +233,7 @@ export default function DashboardScreen() {
             {[
               { emoji: "🏘️", title: "Rate Your Neighborhood", sub: "Safety, diversity & community feel", route: "/neighborhood-survey" },
               { emoji: "💼", title: "Rate Your Employer", sub: "Inclusion, culture & pay equity", route: "/employer-survey" },
+              { emoji: "🏢", title: "Share Business Insight", sub: "Anonymous safety or employee survey for any business", route: "/business-insight" },
             ].map((s) => (
               <TouchableOpacity
                 key={s.route}

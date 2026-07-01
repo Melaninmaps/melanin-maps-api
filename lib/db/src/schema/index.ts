@@ -81,6 +81,7 @@ export * from "./community-appreciations";
 export * from "./profile-tags";
 export * from "./business-badges";
 export * from "./circles";
+export * from "./business-insight-surveys";
 export * from "./business-click-events";
 export * from "./creator-profiles";
 export * from "./community-alerts";
