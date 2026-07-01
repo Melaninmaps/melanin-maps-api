@@ -89,9 +89,12 @@ type ChallengeApplicationRow = {
 type AdminReview = {
   id: string;
   businessId: string;
+  businessName?: string;
   authorName: string | null;
   rating: number;
   text: string | null;
+  status: string;
+  nonMinorityOwned: boolean | null;
   createdAt: string;
 };
 
@@ -488,6 +491,19 @@ export default function Admin() {
     setUpdating(null);
   };
 
+  const decideReview = async (id: string, action: "approve" | "reject") => {
+    if (action === "reject" && !window.confirm("Reject and permanently remove this review?")) return;
+    setUpdating(id + "-" + action);
+    await fetch(`${BASE}api/admin/reviews/${id}/decision`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ action }),
+    });
+    await loadReviews();
+    setUpdating(null);
+  };
+
   const bulkUpdate = async (status: string) => {
     if (selected.size === 0) return;
     setBulkUpdating(true);
@@ -686,7 +702,7 @@ export default function Admin() {
     { id: "users", label: "Registered Users", icon: <Users className="w-4 h-4" />, badge: pendingUsers || undefined },
     { id: "businesses", label: "Businesses", icon: <Store className="w-4 h-4" />, badge: contactedCount || undefined },
     { id: "members", label: "Members", icon: <Briefcase className="w-4 h-4" />, badge: members.length || undefined },
-    { id: "reviews", label: "Reviews", icon: <Star className="w-4 h-4" />, badge: reviews.length || undefined },
+    { id: "reviews", label: "Reviews", icon: <Star className="w-4 h-4" />, badge: reviews.filter(r => r.status === "pending_review").length || undefined },
     { id: "reports", label: "Reports", icon: <Flag className="w-4 h-4" />, badge: reports.filter(r => r.status === "pending").length || undefined },
     { id: "challenges", label: "Challenges", icon: <Award className="w-4 h-4" />, badge: challengeApps.filter(a => a.status === "pending").length || undefined },
     { id: "category-waitlist", label: "Category Waitlist", icon: <BarChart2 className="w-4 h-4" />, badge: categoryWaitlistEntries.length || undefined },
@@ -1415,64 +1431,170 @@ export default function Admin() {
             )}
           </div>
         ) : tab === "reviews" ? (
-          <div>
-            <h2 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4">Community Reviews ({reviews.length})</h2>
-            {reviews.length === 0 ? (
-              <div className="text-center py-20 text-[#3A1F0E]/40">
-                <Star className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                <p>No reviews yet.</p>
-              </div>
-            ) : (
-              <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
-                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Author</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Business</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Rating</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Review</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Date</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {reviews.map((review, i) => (
-                      <tr key={review.id} className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}>
-                        <td className="px-4 py-3 font-medium text-[#3A1F0E]">
-                          {review.authorName ?? <span className="text-[#3A1F0E]/30">—</span>}
-                        </td>
-                        <td className="px-4 py-3 text-[#3A1F0E]/60 text-xs font-mono">{review.businessId.slice(0, 8)}…</td>
-                        <td className="px-4 py-3">
-                          <span className="inline-flex items-center gap-0.5 font-bold text-[#CA922B]">
-                            {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-[#3A1F0E]/70 max-w-xs">
-                          {review.text ? (
-                            <span className="line-clamp-2">{review.text}</span>
-                          ) : <span className="text-[#3A1F0E]/30 text-xs">No text</span>}
-                        </td>
-                        <td className="px-4 py-3 text-[#3A1F0E]/50 text-xs whitespace-nowrap">
-                          {new Date(review.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                        </td>
-                        <td className="px-4 py-3">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => deleteReview(review.id)}
-                            disabled={updating === review.id + "-del"}
-                            className="h-7 px-2 rounded-full text-xs border-red-200 text-red-600 hover:bg-red-50"
-                            title="Delete review"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+          <div className="space-y-8">
+            {/* ── Pending Moderation Queue ── */}
+            {(() => {
+              const pending = reviews.filter(r => r.status === "pending_review");
+              return (
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <h2 className="text-xl font-serif font-bold text-[#3A1F0E]">Pending Moderation Queue</h2>
+                    {pending.length > 0 && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">{pending.length} awaiting review</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-[#3A1F0E]/60 mb-4">
+                    Negative reviews (≤ 3★) for non-minority-owned businesses are held here before going public. Approve to publish, or reject to remove.
+                  </p>
+                  {pending.length === 0 ? (
+                    <div className="bg-green-50 border border-green-200 rounded-2xl px-6 py-8 text-center text-green-700">
+                      <Check className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="font-medium">Queue is clear — no reviews pending moderation.</p>
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-2xl border border-orange-200 overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-orange-100 bg-orange-50">
+                            <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-orange-700/70">Author</th>
+                            <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-orange-700/70">Business</th>
+                            <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-orange-700/70">Rating</th>
+                            <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-orange-700/70">Review</th>
+                            <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-orange-700/70">Date</th>
+                            <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-orange-700/70">Decision</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pending.map((review, i) => (
+                            <tr key={review.id} className={`border-b border-orange-50 hover:bg-orange-50/40 transition-colors ${i % 2 === 0 ? "" : "bg-orange-50/20"}`}>
+                              <td className="px-4 py-3 font-medium text-[#3A1F0E]">
+                                {review.authorName ?? <span className="text-[#3A1F0E]/30">—</span>}
+                              </td>
+                              <td className="px-4 py-3 text-[#3A1F0E]/70 text-xs max-w-[140px]">
+                                <span className="font-medium">{review.businessName ?? review.businessId.slice(0, 8) + "…"}</span>
+                                <span className="block text-[#3A1F0E]/40 mt-0.5">Non-minority-owned</span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="inline-flex items-center gap-0.5 font-bold text-red-500">
+                                  {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-[#3A1F0E]/70 max-w-xs">
+                                {review.text ? (
+                                  <span className="line-clamp-3">{review.text}</span>
+                                ) : <span className="text-[#3A1F0E]/30 text-xs">No text</span>}
+                              </td>
+                              <td className="px-4 py-3 text-[#3A1F0E]/50 text-xs whitespace-nowrap">
+                                {new Date(review.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => decideReview(review.id, "approve")}
+                                    disabled={updating === review.id + "-approve" || updating === review.id + "-reject"}
+                                    className="h-7 px-3 rounded-full text-xs bg-green-600 hover:bg-green-700 text-white"
+                                  >
+                                    {updating === review.id + "-approve" ? "…" : "Approve"}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => decideReview(review.id, "reject")}
+                                    disabled={updating === review.id + "-approve" || updating === review.id + "-reject"}
+                                    className="h-7 px-3 rounded-full text-xs border-red-200 text-red-600 hover:bg-red-50"
+                                  >
+                                    {updating === review.id + "-reject" ? "…" : "Reject"}
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* ── All Published Reviews ── */}
+            {(() => {
+              const published = reviews.filter(r => r.status !== "pending_review");
+              return (
+                <div>
+                  <h2 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4">Published Reviews ({published.length})</h2>
+                  {published.length === 0 ? (
+                    <div className="text-center py-20 text-[#3A1F0E]/40">
+                      <Star className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                      <p>No published reviews yet.</p>
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
+                            <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Author</th>
+                            <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Business</th>
+                            <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Rating</th>
+                            <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Review</th>
+                            <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Status</th>
+                            <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Date</th>
+                            <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {published.map((review, i) => (
+                            <tr key={review.id} className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}>
+                              <td className="px-4 py-3 font-medium text-[#3A1F0E]">
+                                {review.authorName ?? <span className="text-[#3A1F0E]/30">—</span>}
+                              </td>
+                              <td className="px-4 py-3 text-[#3A1F0E]/60 text-xs">
+                                {review.businessName ?? review.businessId.slice(0, 8) + "…"}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="inline-flex items-center gap-0.5 font-bold text-[#CA922B]">
+                                  {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-[#3A1F0E]/70 max-w-xs">
+                                {review.text ? (
+                                  <span className="line-clamp-2">{review.text}</span>
+                                ) : <span className="text-[#3A1F0E]/30 text-xs">No text</span>}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                                  review.status === "auto_approved" ? "bg-green-100 text-green-700" :
+                                  review.status === "pending_video" ? "bg-blue-100 text-blue-700" :
+                                  "bg-[#3A1F0E]/10 text-[#3A1F0E]/60"
+                                }`}>
+                                  {review.status === "auto_approved" ? "5★ Auto" : review.status === "pending_video" ? "Video Review" : "Posted"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-[#3A1F0E]/50 text-xs whitespace-nowrap">
+                                {new Date(review.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                              </td>
+                              <td className="px-4 py-3">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => deleteReview(review.id)}
+                                  disabled={updating === review.id + "-del"}
+                                  className="h-7 px-2 rounded-full text-xs border-red-200 text-red-600 hover:bg-red-50"
+                                  title="Delete review"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         ) : (
           <div>

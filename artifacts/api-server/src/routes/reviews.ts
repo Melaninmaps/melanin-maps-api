@@ -151,6 +151,8 @@ router.get("/reviews", async (req: Request, res: Response) => {
       .where(and(
         eq(reviewsTable.businessId, businessId),
         ne(reviewsTable.status, "pending_video"),
+        ne(reviewsTable.status, "pending_review"),
+        ne(reviewsTable.status, "rejected"),
         gte(reviewsTable.createdAt, sixMonthsAgo),
       ))
       .orderBy(desc(reviewsTable.createdAt))
@@ -219,6 +221,23 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
   const trustLevel = userRow ? (computeTrustLevel(userRow) as 1 | 2 | 3 | 4) : 1;
   const reviewWeight = getReviewWeight(trustLevel, false, false);
 
+  const [bizRow] = await db
+    .select({ blackOwned: businessesTable.blackOwned })
+    .from(businessesTable)
+    .where(eq(businessesTable.id, businessId as string))
+    .limit(1);
+
+  const isMinorityOwned = bizRow?.blackOwned === true;
+  const hasVideo = typeof videoUrl === "string" && videoUrl.trim().length > 0;
+  const isNegative = ratingNum <= 3;
+
+  function resolveStatus(): string {
+    if (hasVideo) return "pending_video";
+    if (!isMinorityOwned && isNegative) return "pending_review";
+    if (ratingNum === 5) return "auto_approved";
+    return "posted";
+  }
+
   try {
     const [review] = await db
       .insert(reviewsTable)
@@ -235,12 +254,8 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
         wouldReturnAlone: typeof wouldReturnAlone === "boolean" ? wouldReturnAlone : null,
         socialHandle: cleanHandle,
         socialPlatform: cleanHandle ? cleanPlatform : null,
-        videoUrl: typeof videoUrl === "string" && videoUrl.trim() ? videoUrl.trim() : null,
-        status: (typeof videoUrl === "string" && videoUrl.trim())
-          ? "pending_video"
-          : ratingNum === 5
-            ? "auto_approved"
-            : "posted",
+        videoUrl: hasVideo ? (videoUrl as string).trim() : null,
+        status: resolveStatus(),
         nonMinorityOwned: nonMinorityOwned === true,
         recommendsAsEmployer: nonMinorityOwned === true && recommendsAsEmployer === true,
         nowHiringUrl: nonMinorityOwned === true && recommendsAsEmployer === true && typeof nowHiringUrl === "string" && nowHiringUrl.trim() ? nowHiringUrl.trim() : null,
@@ -515,6 +530,36 @@ router.delete("/admin/reviews/:id", async (req: Request, res: Response) => {
   } catch (err: any) {
     req.log.error({ err }, "Failed to delete review");
     res.status(500).json({ error: "Failed to delete review" });
+  }
+});
+
+router.patch("/admin/reviews/:id/decision", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const id = String(req.params.id);
+  const { action } = req.body as { action?: string };
+  if (!action || !["approve", "reject"].includes(action)) {
+    res.status(400).json({ error: "action must be 'approve' or 'reject'" });
+    return;
+  }
+  try {
+    if (action === "reject") {
+      const [deleted] = await db.delete(reviewsTable).where(eq(reviewsTable.id, id)).returning({ id: reviewsTable.id });
+      if (!deleted) { res.status(404).json({ error: "Review not found" }); return; }
+      req.log.info({ reviewId: id, action: "reject", by: req.user?.id }, "Admin rejected pending review");
+      res.json({ ok: true, action: "rejected" });
+    } else {
+      const [updated] = await db
+        .update(reviewsTable)
+        .set({ status: "posted" })
+        .where(eq(reviewsTable.id, id))
+        .returning({ id: reviewsTable.id, status: reviewsTable.status });
+      if (!updated) { res.status(404).json({ error: "Review not found" }); return; }
+      req.log.info({ reviewId: id, action: "approve", by: req.user?.id }, "Admin approved pending review");
+      res.json({ ok: true, action: "approved", review: updated });
+    }
+  } catch (err: any) {
+    req.log.error({ err }, "Failed to process review decision");
+    res.status(500).json({ error: "Failed to process decision" });
   }
 });
 
