@@ -171,10 +171,19 @@ router.post("/journeys", async (req: Request, res: Response) => {
   try {
     const cityBizCatalog = city
       ? await db
-          .select({ name: businessesTable.name, category: businessesTable.category })
+          .select({
+            name: businessesTable.name,
+            category: businessesTable.category,
+            verified: businessesTable.verified,
+            phone: businessesTable.phone,
+            website: businessesTable.website,
+          })
           .from(businessesTable)
-          .where(and(eq(businessesTable.status, "active")))
-          .limit(15)
+          .where(and(
+            eq(businessesTable.status, "active"),
+            eq(businessesTable.blackOwned, true),
+          ))
+          .limit(25)
       : [];
 
     const needsContext = [
@@ -209,9 +218,10 @@ Generate a journey with personalized steps and insights for each phase. Prioriti
 Use these phase IDs and titles (in order, mark first as "active", rest as "upcoming"):
 ${template.phases.map((p) => `- id: "${p.id}", title: "${p.title}", icon: "${p.icon}"`).join("\n")}
 
-${cityBizCatalog.length ? `Platform businesses available in this area: ${cityBizCatalog.map((b) => `${b.name} (${b.category})`).join(", ")}` : ""}
+${cityBizCatalog.length ? `MINORITY-OWNED BUSINESSES ON THE PLATFORM${location ? ` IN ${location.toUpperCase()}` : ""} — PRIORITIZE THESE IN YOUR SUGGESTIONS:
+Every time you recommend an action that requires hiring someone or finding a service provider, name a specific business from this list if one fits. Weave them into steps naturally — e.g. "Contact [Business Name] for..." or "Book [Business Name] to handle your...". These are real, verified Black-owned and minority-owned businesses that match this community. ${cityBizCatalog.map((b) => `${b.name} (${b.category}${b.verified ? " ✓ Verified" : ""}${b.phone ? ` · ${b.phone}` : ""})`).join(" | ")}` : "When recommending any service or hire, encourage them to search Mapping With Melanin™ for a Black-owned or minority-owned provider first."}
 
-Each phase should have 3-5 specific, actionable steps. The aiInsight should be warm, culturally aware, and feel like a trusted friend giving real advice.`;
+Each phase should have 3-5 specific, actionable steps. When steps involve hiring, contracting, or finding a service — always name a minority-owned or Black-owned business to start with. The aiInsight should be warm, culturally aware, and feel like a trusted friend giving real advice.`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-5.1",
@@ -411,10 +421,11 @@ router.get("/journeys/:id/smart-matches", async (req: Request, res: Response) =>
     const topCategories = [...categoryMap.values()].slice(0, 6);
     const bridges = await Promise.all(
       topCategories.map(async ({ category, fromCity, savedCount }) => {
-        const matches = await pool.query<{ id: string; name: string; category: string; city: string; verified: boolean }>(
-          `SELECT id, name, category, city, verified
+        const matches = await pool.query<{ id: string; name: string; category: string; city: string; verified: boolean; black_owned: boolean }>(
+          `SELECT id, name, category, city, verified, black_owned
            FROM businesses
            WHERE status = 'active'
+             AND black_owned = true
              AND city ILIKE $1
              AND category ILIKE $2
            ORDER BY verified DESC, name ASC
