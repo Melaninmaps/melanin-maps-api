@@ -20,6 +20,7 @@ import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 const GOLD = "#C9922B";
 
@@ -37,11 +38,20 @@ interface ReloBiz {
   saved?: boolean;
 }
 
+interface LocationSuggestion {
+  area: string;
+  distanceMiles: number;
+  vibe: string;
+  why: string;
+  minorityBiz?: string;
+}
+
 interface ReloMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   businesses?: ReloBiz[];
+  locationSuggestions?: LocationSuggestion[];
   insight?: string;
   checklistItems?: string[];
   nextPhaseHint?: string;
@@ -193,6 +203,52 @@ function ReloBizCard({
   );
 }
 
+function LocationSuggestionCard({
+  suggestion,
+  onSelect,
+  colors,
+}: {
+  suggestion: LocationSuggestion;
+  onSelect: (area: string) => void;
+  colors: ReturnType<typeof useColors>;
+}) {
+  return (
+    <TouchableOpacity
+      style={[locS.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+      onPress={() => { onSelect(suggestion.area); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+      activeOpacity={0.8}
+    >
+      <View style={locS.headerRow}>
+        <View style={[locS.distBadge, { backgroundColor: GOLD + "22" }]}>
+          <Text style={[locS.distText, { color: GOLD }]}>~{suggestion.distanceMiles} mi</Text>
+        </View>
+        <Text style={[locS.areaName, { color: colors.text }]} numberOfLines={1}>{suggestion.area}</Text>
+        <Ionicons name="chevron-forward" size={14} color={colors.mutedForeground} />
+      </View>
+      <Text style={[locS.vibe, { color: GOLD }]}>{suggestion.vibe}</Text>
+      <Text style={[locS.why, { color: colors.mutedForeground }]}>{suggestion.why}</Text>
+      {suggestion.minorityBiz && (
+        <View style={[locS.bizRow, { borderTopColor: colors.border }]}>
+          <Ionicons name="storefront-outline" size={12} color="#16A34A" />
+          <Text style={[locS.bizText, { color: "#16A34A" }]}>{suggestion.minorityBiz}</Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+const locS = StyleSheet.create({
+  card:      { borderRadius: 14, borderWidth: 1.5, padding: 14, marginBottom: 8 },
+  headerRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
+  distBadge: { borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
+  distText:  { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  areaName:  { fontFamily: "Inter_700Bold", fontSize: 14, flex: 1 },
+  vibe:      { fontFamily: "Inter_600SemiBold", fontSize: 12, marginBottom: 4 },
+  why:       { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, marginBottom: 4 },
+  bizRow:    { flexDirection: "row", alignItems: "center", gap: 6, borderTopWidth: 1, paddingTop: 8, marginTop: 4 },
+  bizText:   { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
+});
+
 const bizS = StyleSheet.create({
   card:       { borderRadius: 14, borderWidth: 1.5, padding: 14, marginBottom: 10 },
   header:     { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
@@ -260,6 +316,7 @@ const phS = StyleSheet.create({
 
 export default function RelocationPlannerScreen() {
   const colors = useColors();
+  const { preferences } = useUserPreferences();
   const insets = useSafeAreaInsets();
   const flatRef = useRef<FlatList>(null);
 
@@ -279,6 +336,13 @@ export default function RelocationPlannerScreen() {
   const [teamOpen, setTeamOpen] = useState(false);
 
   const currentPhase = PHASES[currentPhaseIdx]!;
+
+  // User's stored interests — sent with every API call so KinfolkAI can tailor location + business suggestions
+  const userInterests = [
+    ...(preferences?.lifestyleServices ?? []),
+    ...(preferences?.culturalInterests ?? []),
+    ...(preferences?.favoriteCategories ?? []),
+  ];
 
   const getApiBase = () =>
     process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
@@ -325,6 +389,7 @@ export default function RelocationPlannerScreen() {
         hasPets: setup.hasPets,
         currentPhase: currentPhase.id,
         needs: setup.needs,
+        interests: userInterests,
       };
 
       const res = await fetch(`${apiBase}/api/kinfolk/relocation`, {
@@ -340,6 +405,7 @@ export default function RelocationPlannerScreen() {
       const data = await res.json() as {
         reply: string;
         businesses: ReloBiz[];
+        locationSuggestions?: LocationSuggestion[];
         proactiveSuggestions: string[];
         insight: string;
         checklistItems: string[];
@@ -358,6 +424,7 @@ export default function RelocationPlannerScreen() {
         role: "assistant",
         content: data.reply ?? "",
         businesses: allBiz,
+        locationSuggestions: data.locationSuggestions,
         insight: data.insight,
         checklistItems: data.checklistItems,
         nextPhaseHint: data.nextPhaseHint,
@@ -412,6 +479,7 @@ export default function RelocationPlannerScreen() {
         hasPets: setup.hasPets,
         currentPhase: "neighborhoods",
         needs: setup.needs,
+        interests: userInterests,
       };
 
       const res = await fetch(`${apiBase}/api/kinfolk/relocation`, {
@@ -425,9 +493,9 @@ export default function RelocationPlannerScreen() {
 
       if (!res.ok) throw new Error();
       const data = await res.json() as {
-        reply: string; businesses: ReloBiz[]; proactiveSuggestions: string[];
-        insight: string; checklistItems: string[]; nextPhaseHint: string;
-        phase: { id: string; title: string; icon: string }; extraVerified?: ReloBiz[];
+        reply: string; businesses: ReloBiz[]; locationSuggestions?: LocationSuggestion[];
+        proactiveSuggestions: string[]; insight: string; checklistItems: string[];
+        nextPhaseHint: string; phase: { id: string; title: string; icon: string }; extraVerified?: ReloBiz[];
       };
 
       const allBiz = [...(data.businesses ?? []), ...(data.extraVerified ?? [])];
@@ -436,6 +504,7 @@ export default function RelocationPlannerScreen() {
         role: "assistant",
         content: data.reply ?? "",
         businesses: allBiz,
+        locationSuggestions: data.locationSuggestions,
         insight: data.insight,
         checklistItems: data.checklistItems,
         nextPhaseHint: data.nextPhaseHint,
@@ -745,6 +814,23 @@ export default function RelocationPlannerScreen() {
                   <View style={[s.insightBox, { backgroundColor: "#7C3AED14", borderColor: "#7C3AED30" }]}>
                     <Ionicons name="bulb-outline" size={14} color="#7C3AED" />
                     <Text style={[s.insightText, { color: colors.text }]}>{msg.insight}</Text>
+                  </View>
+                )}
+
+                {/* Location suggestion cards */}
+                {(msg.locationSuggestions ?? []).length > 0 && (
+                  <View style={s.bizSection}>
+                    <Text style={[s.bizSectionLabel, { color: colors.mutedForeground }]}>
+                      📍 Areas to Explore
+                    </Text>
+                    {(msg.locationSuggestions ?? []).map((loc: LocationSuggestion, i: number) => (
+                      <LocationSuggestionCard
+                        key={`${loc.area}-${i}`}
+                        suggestion={loc}
+                        onSelect={(area) => sendMessage(`Tell me more about ${area} — what should I know before moving there?`)}
+                        colors={colors}
+                      />
+                    ))}
                   </View>
                 )}
 

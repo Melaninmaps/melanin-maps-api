@@ -1420,6 +1420,7 @@ router.post("/kinfolk/relocation", async (req: Request, res: Response) => {
     hasPets = false,
     currentPhase = "neighborhoods",
     needs = [],
+    interests = [],
   } = req.body as {
     messages?: Array<{ role: string; content: string }>;
     fromCity?: string;
@@ -1432,6 +1433,7 @@ router.post("/kinfolk/relocation", async (req: Request, res: Response) => {
     hasPets?: boolean;
     currentPhase?: string;
     needs?: string[];
+    interests?: string[];
   };
 
   const RELOCATION_PHASES: Record<string, { title: string; icon: string; description: string; categories: string[] }> = {
@@ -1451,14 +1453,51 @@ router.post("/kinfolk/relocation", async (req: Request, res: Response) => {
 
   const phase = RELOCATION_PHASES[currentPhase] ?? RELOCATION_PHASES["neighborhoods"]!;
 
+  // Load user lifestyle/interests from DB for interest-based area suggestions
+  let userLifestyleServices: string[] = [];
+  let userCulturalInterests: string[] = [];
+  let userFavoriteCategories: string[] = [];
+  if (req.user?.id) {
+    try {
+      const [prefs] = await db
+        .select({
+          lifestyleServices: userPreferencesTable.lifestyleServices,
+          culturalInterests: userPreferencesTable.culturalInterests,
+          favoriteCategories: userPreferencesTable.favoriteCategories,
+        })
+        .from(userPreferencesTable)
+        .where(eq(userPreferencesTable.userId, req.user.id))
+        .limit(1);
+      userLifestyleServices = (prefs?.lifestyleServices as string[] | null) ?? [];
+      userCulturalInterests = (prefs?.culturalInterests as string[] | null) ?? [];
+      userFavoriteCategories = (prefs?.favoriteCategories as string[] | null) ?? [];
+    } catch { /* non-critical */ }
+  }
+  const allInterests = [...new Set([
+    ...(interests as string[]),
+    ...userLifestyleServices,
+    ...userCulturalInterests,
+    ...userFavoriteCategories,
+  ])];
+
+  // Pull minority-owned businesses across ALL relocation-relevant categories at once.
+  // The AI picks which ones to surface per phase — we don't gate by currentPhase.
   let verifiedBusinesses: Array<{
     id: number | string; name: string; category: string; description: string;
     city: string; verified: boolean; phone: string | null; website: string | null;
   }> = [];
 
-  if (toCity && phase.categories.length > 0) {
+  if (toCity) {
     try {
-      const catConditions = phase.categories.map(cat => ilike(businessesTable.category, `%${cat}%`));
+      const allReloCategories = [
+        "Real Estate", "Realtor", "Moving", "Transportation", "Contractor", "Handyman",
+        "Restaurant", "Food", "Café", "Cafe", "Salon", "Barber", "Beauty",
+        "Healthcare", "Medical", "Health", "Fitness", "Gym", "Yoga", "Martial Arts",
+        "Finance", "Banking", "Community", "Childcare", "Education",
+        "Grocery", "Auto", "Home Services",
+        ...allInterests,
+      ];
+      const catConditions = allReloCategories.map(cat => ilike(businessesTable.category, `%${cat}%`));
       verifiedBusinesses = await db
         .select({
           id: businessesTable.id,
@@ -1471,8 +1510,13 @@ router.post("/kinfolk/relocation", async (req: Request, res: Response) => {
           website: businessesTable.website,
         })
         .from(businessesTable)
-        .where(and(ilike(businessesTable.city, `%${toCity}%`), or(...catConditions)))
-        .limit(6);
+        .where(and(
+          ilike(businessesTable.city, `%${toCity}%`),
+          eq(businessesTable.blackOwned, true),
+          eq(businessesTable.status, "active"),
+          or(...catConditions),
+        ))
+        .limit(20);
     } catch { /* non-critical */ }
   }
 
@@ -1487,55 +1531,91 @@ router.post("/kinfolk/relocation", async (req: Request, res: Response) => {
     (needs as string[]).includes("Mental Health") ? "They flagged mental health — mention Black therapists and culturally affirming wellness providers." : "",
   ].filter(Boolean).join("\n");
 
-  const businessCatalog = verifiedBusinesses.length > 0
-    ? `\n\nVERIFIED PLATFORM BUSINESSES IN ${toCity?.toUpperCase()} (PRIORITIZE THESE):\n` +
-      verifiedBusinesses.map(b =>
-        `• ${b.name} | ${b.category}${b.verified ? " ✓ Verified" : ""}\n  "${(b.description ?? "").slice(0, 160)}"\n  ${b.phone ? `📞 ${b.phone}` : ""}${b.website ? ` | 🌐 ${b.website}` : ""}`
-      ).join("\n\n")
+  const interestsSection = allInterests.length > 0
+    ? `\nTHEIR INTERESTS & LIFESTYLE SERVICES — use these for location AND business suggestions:
+${allInterests.map(i => `- ${i.replace(/_/g, " ")}`).join("\n")}
+Prioritize neighborhoods near good ${allInterests.slice(0, 4).join(", ")} options.`
     : "";
 
-  const systemPrompt = `You are KinfolkAI's Relocation Concierge — the most trusted friend anyone could have when moving to a new city. You know minority-owned businesses, culturally affirming neighborhoods, community resources, and all the hidden knowledge it takes to make a new place feel like home.
+  const businessCatalog = verifiedBusinesses.length > 0
+    ? `\n\nMINORITY-OWNED PLATFORM BUSINESSES IN ${toCity?.toUpperCase()} — pick the best fit per need (realtor, mover, contractor, food, salon, fitness, etc.):
+${verifiedBusinesses.map(b =>
+    `• ${b.name} | ${b.category}${b.verified ? " ✓ Verified" : ""}\n  "${(b.description ?? "").slice(0, 140)}"\n  ${b.phone ? `📞 ${b.phone}` : ""}${b.website ? ` | 🌐 ${b.website}` : ""}`
+  ).join("\n\n")}`
+    : `\n\nNo platform businesses yet for ${toCity ?? "this city"} — use your general knowledge and tell them to search Mapping With Melanin™ as new spots are added.`;
+
+  const systemPrompt = `You are KinfolkAI's Relocation Concierge — the most well-connected friend anyone could have when moving. You know minority-owned businesses, culturally affirming neighborhoods, and all the hidden knowledge that makes a new city feel like home fast.
 
 MOVE CONTEXT:
 - Relocating: ${fromCity ?? "current city"} → ${toCity ?? "new city"}${toState ? `, ${toState}` : ""}
 - Family: ${familySize} | Budget: ${budget} | Home plan: ${homeType}
 - Has kids: ${hasKids ? "Yes" : "No"} | Has pets: ${hasPets ? "Yes" : "No"}
-- Current focus: ${phase.icon} ${phase.title} — ${phase.description}
+- Current phase: ${phase.icon} ${phase.title} — ${phase.description}
 - Stated needs: ${(needs as string[]).length > 0 ? (needs as string[]).join(", ") : "general relocation"}
+${interestsSection}
 
-PROACTIVE CONTEXT (address these naturally throughout conversation):
-${proactiveFlags || "No special flags — guide through the standard relocation journey."}
+PROACTIVE CONTEXT:
+${proactiveFlags || "Standard relocation — guide warmly through all phases."}
+
+LOCATION SUGGESTION RULE — applies when on neighborhoods phase or user asks WHERE to live:
+Suggest 3-4 specific areas at different distances from ${toCity ?? "the destination city"} based on their interests and lifestyle. Use real neighborhood or suburb names. Format each as:
+- A named area 5-10 miles out → strong on [their interests], good for their budget
+- A named area 15-20 miles out → more space, still connected
+- A named area 25-35 miles out → if they want quiet or lower cost
+- Optionally a 4th area if there's a particularly strong interest match
+Base proximity suggestions on: ${allInterests.length > 0 ? allInterests.slice(0, 4).join(", ") : "good food, community, and safety"}.
+Return these as "locationSuggestions" in your JSON — each with a minority-owned business example in that area.
+
+PROACTIVE CHAINING RULE — this is what makes you feel like a real friend, not a search engine:
+After each topic naturally lead to the next thing they need, naming a minority-owned business each time:
+1. Neighborhoods → "Now you need a realtor — [minority-owned realtor name from the platform or your knowledge] works that area"
+2. Realtor found → "Do you need movers? I'd book [minority-owned moving company] now — good ones fill up fast"
+3. Movers sorted → "Once you arrive you'll need a handyman — [minority-owned contractor/handyman name] handles exactly this kind of move-in work"
+4. Home setup → "Time to build your regular spots — here are restaurants you'll love: [minority-owned restaurants in ${toCity}]"
+5. Food → Pivot to interest-based: "Since you're into [their interest], here's the best [karate gym / yoga studio / barbershop / loctician / etc.] there: [minority-owned name]"
+
+MINORITY-OWNED BUSINESS RULE:
+Every single business you name must be minority-owned or Black-owned. Pull from the PLATFORM BUSINESSES list first. If none match a need, use your general knowledge — name the business and add "Search Mapping With Melanin™ to find more like this."
 
 YOUR VOICE:
-- Warm and direct, like texting your most well-connected friend who has already lived in this city
-- ALWAYS center minority-owned and culturally affirming businesses first
-- At each phase, mention what they will need NEXT so they stay ahead of the process
-- Reference their specific situation (family size, budget, home type) in every response
-- NEVER use travel-brochure language: no "boasts", "features", "renowned", "visitors will enjoy"
-- Use "you" constantly — make it personal and direct
+- Warm and direct, like texting your most well-traveled, well-connected friend
+- Never travel-brochure language: no "boasts", "renowned", "visitors will enjoy"
+- Use "you" constantly — personal and direct
+- Always tell them what comes NEXT before they ask
 
 RETURN EXACTLY THIS JSON (no markdown fencing, no extra text):
 {
-  "reply": "2-3 sentences warm and direct, like a text from a trusted friend who has been through this",
+  "reply": "2-4 sentences warm and direct, like a text from a trusted local friend",
+  "locationSuggestions": [
+    {
+      "area": "Neighborhood or suburb name, State",
+      "distanceMiles": 8,
+      "vibe": "1 sentence on the feel",
+      "why": "Why this matches their interests and lifestyle",
+      "minorityBiz": "Name of 1 minority-owned business in this area"
+    }
+  ],
   "businesses": [
     {
       "name": "Business Name",
       "category": "Category",
-      "description": "Why this is the right fit for their specific situation",
+      "description": "Why this fits their specific move situation",
       "neighborhood": "Area of city",
-      "whyForYou": "Very specific reason it matches their family size, budget, home type, etc.",
+      "whyForYou": "Very specific reason it matches their family, budget, home type",
       "phone": "phone number or null",
       "website": "website or null",
       "verified": true
     }
   ],
-  "proactiveSuggestions": ["3-4 short tap-able action chips"],
-  "insight": "One proactive thing they have not thought of yet that they will thank you for later",
+  "proactiveSuggestions": ["Find me a Black-owned realtor", "Need movers?", "What about home repair?", "Show me restaurants near me"],
+  "insight": "1 thing they haven't thought of yet that will make a real difference — surface it before they ask",
   "checklistItems": ["3-5 concrete action items for this phase"],
-  "nextPhaseHint": "1 sentence teaser for what comes after this phase"
+  "nextPhaseHint": "1 sentence teaser for what they'll need next"
 }
 
-Include 3-5 businesses. Mix platform-verified (from the list below) with AI knowledge.${businessCatalog}`;
+Only include "locationSuggestions" when on the neighborhoods phase or user asks about where to live — otherwise omit it or set to null.
+Include 3-5 businesses from the PLATFORM LIST below. If none match, use general knowledge.
+${businessCatalog}`;
 
   try {
     const completion = await openai.chat.completions.create({
@@ -1548,16 +1628,23 @@ Include 3-5 businesses. Mix platform-verified (from the list below) with AI know
         })),
       ],
       temperature: 0.75,
-      max_tokens: 1800,
+      max_tokens: 2400,
     });
 
     const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
     let parsed: Record<string, unknown>;
     try {
-      const clean = raw.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+      // Strip markdown fences first
+      let clean = raw.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+      // If AI wrapped JSON in prose, extract the first top-level JSON object
+      const braceStart = clean.indexOf("{");
+      const braceEnd = clean.lastIndexOf("}");
+      if (braceStart > 0 && braceEnd > braceStart) {
+        clean = clean.slice(braceStart, braceEnd + 1);
+      }
       parsed = JSON.parse(clean) as Record<string, unknown>;
     } catch {
-      parsed = { reply: raw, businesses: [], proactiveSuggestions: [], insight: "", checklistItems: [], nextPhaseHint: "" };
+      parsed = { reply: raw, businesses: [], locationSuggestions: null, proactiveSuggestions: [], insight: "", checklistItems: [], nextPhaseHint: "" };
     }
 
     const mentionedNames = new Set<string>(
