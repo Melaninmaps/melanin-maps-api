@@ -210,7 +210,7 @@ router.post("/conversations/:id/messages", async (req: Request, res: Response) =
     }
     const [msg] = await db
       .insert(messagesTable)
-      .values({ conversationId: convId, role: "user", content: content.trim() })
+      .values({ conversationId: convId, role: "user", content: content.trim(), senderId: req.user!.id })
       .returning();
     await db
       .update(conversationsTable)

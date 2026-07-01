@@ -4,6 +4,7 @@ import * as SecureStore from "expo-secure-store";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -31,6 +32,9 @@ interface ConvMeta {
   id: number;
   title: string;
   participantIds: string[];
+  type?: "dm" | "business" | "ai" | null;
+  requestStatus?: "pending" | "accepted" | null;
+  requestedBy?: string | null;
 }
 
 function getApiBase(): string {
@@ -82,6 +86,8 @@ export default function ChatScreen() {
   const [text, setText] = useState("");
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
+  const [requestActing, setRequestActing] = useState(false);
+  const [pendingError, setPendingError] = useState<string | null>(null);
 
   const loadConv = useCallback(async () => {
     if (!isRealConv || !id) return;
@@ -90,21 +96,25 @@ export default function ChatScreen() {
       const token = await getToken();
       if (!token) return;
 
-      const [convRes, msgsRes] = await Promise.all([
+      const [convRes, msgsRes, meRes] = await Promise.all([
         fetch(`${apiBase}/api/conversations`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${apiBase}/api/conversations/${id}/messages`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${apiBase}/api/auth/user`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
+
+      let resolvedUserId: string | null = null;
+      if (meRes.ok) {
+        const meData = await meRes.json() as { user: { id: string } | null };
+        if (meData.user) {
+          resolvedUserId = meData.user.id;
+          setMyUserId(meData.user.id);
+        }
+      }
 
       if (convRes.ok) {
         const data = await convRes.json() as { conversations: ConvMeta[] };
         const found = data.conversations.find((c) => c.id === numericId);
         if (found) setConv(found);
-      }
-
-      const meRes = await fetch(`${apiBase}/api/auth/user`, { headers: { Authorization: `Bearer ${token}` } });
-      if (meRes.ok) {
-        const meData = await meRes.json() as { user: { id: string } | null };
-        if (meData.user) setMyUserId(meData.user.id);
       }
 
       if (msgsRes.ok) {
@@ -113,7 +123,7 @@ export default function ChatScreen() {
           data.messages.map((m) => ({
             id: String(m.id),
             text: m.content,
-            fromMe: m.role !== "feedback" && m.senderId != null && m.senderId === myUserId,
+            fromMe: m.role !== "feedback" && m.senderId != null && m.senderId === resolvedUserId,
             timeAgo: formatTimeAgo(m.createdAt),
             role: m.role,
           })),
@@ -122,12 +132,46 @@ export default function ChatScreen() {
     } catch {
       setLoadError(true);
     }
-  }, [id, isRealConv, numericId, myUserId]);
+  }, [id, isRealConv, numericId]);
 
   useEffect(() => { void loadConv(); }, [loadConv]);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  const handleAccept = async () => {
+    if (!conv || !id) return;
+    setRequestActing(true);
+    try {
+      const apiBase = getApiBase();
+      const token = await getToken();
+      const res = await fetch(`${apiBase}/api/conversations/${id}/accept`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token ?? ""}` },
+      });
+      if (res.ok) {
+        setConv((prev) => prev ? { ...prev, requestStatus: "accepted" } : prev);
+      }
+    } finally {
+      setRequestActing(false);
+    }
+  };
+
+  const handleDecline = async () => {
+    if (!conv || !id) return;
+    setRequestActing(true);
+    try {
+      const apiBase = getApiBase();
+      const token = await getToken();
+      const res = await fetch(`${apiBase}/api/conversations/${id}/decline`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token ?? ""}` },
+      });
+      if (res.ok) router.back();
+    } finally {
+      setRequestActing(false);
+    }
+  };
 
   const sendMessage = async () => {
     if (!text.trim()) return;
@@ -142,13 +186,14 @@ export default function ChatScreen() {
     setMessages((prev) => [...prev, optimistic]);
     const sent = text.trim();
     setText("");
+    setPendingError(null);
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
     if (isRealConv && id) {
       try {
         const apiBase = getApiBase();
         const token = await getToken();
-        await fetch(`${apiBase}/api/conversations/${id}/messages`, {
+        const res = await fetch(`${apiBase}/api/conversations/${id}/messages`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -156,6 +201,13 @@ export default function ChatScreen() {
           },
           body: JSON.stringify({ content: sent }),
         });
+        if (!res.ok) {
+          const body = await res.json() as { code?: string; error?: string };
+          if (body.code === "REQUEST_PENDING") {
+            setPendingError("This message request hasn't been accepted yet.");
+            setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+          }
+        }
       } catch {
         // message already shown optimistically
       }
@@ -166,6 +218,10 @@ export default function ChatScreen() {
   const convColor = isRealConv ? colorForId(numericId) : COLORS[0];
   const convInitials = getInitials(convTitle);
   const isFeedback = isFeedbackConv(convTitle);
+  const isDM = conv?.type === "dm";
+  const isPending = conv?.requestStatus === "pending";
+  const isIncomingRequest = isPending && conv?.requestedBy !== myUserId;
+  const isOutgoingRequest = isPending && conv?.requestedBy === myUserId;
 
   if (!isRealConv) {
     return (
@@ -204,22 +260,29 @@ export default function ChatScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={0}
     >
+      {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 10, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
-        <View style={[styles.headerAvatar, { backgroundColor: isFeedback ? "#7B4F2E" : convColor }]}>
+        <View style={[styles.headerAvatar, { backgroundColor: isFeedback ? "#7B4F2E" : isDM ? "#C9922B" : convColor }]}>
           {isFeedback
             ? <Feather name="lock" size={16} color="#FFFFFF" />
-            : <Text style={styles.headerAvatarText}>{convInitials}</Text>}
+            : isDM
+              ? <Feather name="user" size={16} color="#FFFFFF" />
+              : <Text style={styles.headerAvatarText}>{convInitials}</Text>}
         </View>
         <View style={styles.headerInfo}>
           <Text style={[styles.headerName, { color: colors.foreground }]}>{convTitle}</Text>
           <Text style={[styles.headerStatus, { color: colors.mutedForeground }]}>
-            {isFeedback ? "Anonymous · Private · Read only" : `${messages.length} messages`}
+            {isFeedback
+              ? "Anonymous · Private · Read only"
+              : isPending
+                ? isIncomingRequest ? "Message request" : "Pending acceptance"
+                : `${messages.length} messages`}
           </Text>
         </View>
-        {!isFeedback && (
+        {!isFeedback && !isPending && (
           <View style={styles.headerActions}>
             <TouchableOpacity style={[styles.headerBtn, { backgroundColor: colors.secondary }]}>
               <Feather name="phone" size={16} color={colors.primary} />
@@ -231,13 +294,64 @@ export default function ChatScreen() {
         )}
       </View>
 
+      {/* Feedback banner */}
       {isFeedback && (
-        <View style={[styles.feedbackBanner, { backgroundColor: "#7B4F2E18", borderBottomColor: "#7B4F2E30" }]}>
+        <View style={[styles.infoBanner, { backgroundColor: "#7B4F2E18", borderBottomColor: "#7B4F2E30" }]}>
           <Feather name="shield" size={13} color="#7B4F2E" />
-          <Text style={[styles.feedbackBannerText, { color: "#7B4F2E" }]}>
+          <Text style={[styles.infoBannerText, { color: "#7B4F2E" }]}>
             These notes are sent anonymously by community members who skipped your listing.
             They are only visible to you.
           </Text>
+        </View>
+      )}
+
+      {/* Incoming request banner */}
+      {isIncomingRequest && (
+        <View style={[styles.requestBanner, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+          <View style={[styles.requestIcon, { backgroundColor: "#C9922B18" }]}>
+            <Feather name="mail" size={18} color="#C9922B" />
+          </View>
+          <View style={styles.requestBody}>
+            <Text style={[styles.requestTitle, { color: colors.foreground }]}>Message Request</Text>
+            <Text style={[styles.requestSub, { color: colors.mutedForeground }]}>
+              This person wants to send you a message. Accept to start chatting.
+            </Text>
+            <View style={styles.requestActions}>
+              <TouchableOpacity
+                style={[styles.requestAccept, { backgroundColor: colors.primary }]}
+                onPress={() => { void handleAccept(); }}
+                disabled={requestActing}
+              >
+                {requestActing
+                  ? <ActivityIndicator size="small" color="#FFFFFF" />
+                  : <Text style={styles.requestAcceptText}>Accept</Text>}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.requestDecline, { borderColor: colors.border }]}
+                onPress={() => { void handleDecline(); }}
+                disabled={requestActing}
+              >
+                <Text style={[styles.requestDeclineText, { color: colors.mutedForeground }]}>Decline</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Outgoing pending banner */}
+      {isOutgoingRequest && (
+        <View style={[styles.infoBanner, { backgroundColor: "#C9922B10", borderBottomColor: "#C9922B30" }]}>
+          <Feather name="clock" size={13} color="#C9922B" />
+          <Text style={[styles.infoBannerText, { color: "#C9922B" }]}>
+            Your message request is waiting for a response. You can send messages once they accept.
+          </Text>
+        </View>
+      )}
+
+      {pendingError && (
+        <View style={[styles.infoBanner, { backgroundColor: "#EF444418", borderBottomColor: "#EF444430" }]}>
+          <Feather name="alert-circle" size={13} color="#EF4444" />
+          <Text style={[styles.infoBannerText, { color: "#EF4444" }]}>{pendingError}</Text>
         </View>
       )}
 
@@ -254,7 +368,11 @@ export default function ChatScreen() {
             <Text style={[{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center" }]}>
               {isFeedback
                 ? "No feedback yet.\nFeedback from users who skip your listing will appear here."
-                : "No messages yet. Say hello!"}
+                : isIncomingRequest
+                  ? "Accept the message request to start chatting."
+                  : isOutgoingRequest
+                    ? "Waiting for them to accept your request…"
+                    : "No messages yet. Say hello!"}
             </Text>
           </View>
         }
@@ -266,7 +384,7 @@ export default function ChatScreen() {
           return (
             <View style={[styles.msgWrap, item.fromMe ? styles.msgWrapMe : styles.msgWrapThem]}>
               {!item.fromMe && showAvatar && !isFeedbackMsg && (
-                <View style={[styles.themAvatar, { backgroundColor: convColor }]}>
+                <View style={[styles.themAvatar, { backgroundColor: isDM ? "#C9922B" : convColor }]}>
                   <Text style={styles.themAvatarText}>{convInitials[0]}</Text>
                 </View>
               )}
@@ -310,11 +428,20 @@ export default function ChatScreen() {
         }}
       />
 
-      {isFeedback ? (
+      {isFeedback || isIncomingRequest ? (
         <View style={[styles.readOnlyBar, { backgroundColor: colors.secondary, borderTopColor: colors.border, paddingBottom: bottomPad + 8 }]}>
-          <Feather name="lock" size={14} color={colors.mutedForeground} />
+          <Feather name={isFeedback ? "lock" : "mail"} size={14} color={colors.mutedForeground} />
           <Text style={[styles.readOnlyText, { color: colors.mutedForeground }]}>
-            Replies are not available — feedback is anonymous
+            {isFeedback
+              ? "Replies are not available — feedback is anonymous"
+              : "Accept the request to send messages"}
+          </Text>
+        </View>
+      ) : isOutgoingRequest ? (
+        <View style={[styles.readOnlyBar, { backgroundColor: colors.secondary, borderTopColor: colors.border, paddingBottom: bottomPad + 8 }]}>
+          <Feather name="clock" size={14} color="#C9922B" />
+          <Text style={[styles.readOnlyText, { color: "#C9922B" }]}>
+            Waiting for them to accept your request
           </Text>
         </View>
       ) : (
@@ -368,7 +495,7 @@ const styles = StyleSheet.create({
   headerStatus: { fontFamily: "Inter_400Regular", fontSize: 11 },
   headerActions: { flexDirection: "row", gap: 8 },
   headerBtn: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  feedbackBanner: {
+  infoBanner: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 8,
@@ -376,7 +503,44 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
   },
-  feedbackBannerText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  infoBannerText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  requestBanner: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+  },
+  requestIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  requestBody: { flex: 1, gap: 4 },
+  requestTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  requestSub: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  requestActions: { flexDirection: "row", gap: 10, marginTop: 8 },
+  requestAccept: {
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  requestAcceptText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#FFFFFF" },
+  requestDecline: {
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+  },
+  requestDeclineText: { fontFamily: "Inter_500Medium", fontSize: 13 },
   messageList: { paddingTop: 16, paddingHorizontal: 12, gap: 4 },
   emptyChat: { alignItems: "center", paddingVertical: 60, gap: 12, paddingHorizontal: 40 },
   msgWrap: { flexDirection: "row", alignItems: "flex-end", gap: 6, marginBottom: 4 },

@@ -219,6 +219,7 @@ export default function Discover() {
   const [openNow, setOpenNow] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [sponsoredDismissed, setSponsoredDismissed] = useState(false);
+  const [minorityExpanded, setMinorityExpanded] = useState(false);
 
   const effectiveCategory = activeVibe
     ? VIBES.find(v => v.label === activeVibe)?.category ?? undefined
@@ -232,6 +233,17 @@ export default function Discover() {
   const businesses = openNow
     ? (data?.businesses ?? []).filter(b => isOpenNow((b as any).hours))
     : (data?.businesses ?? []);
+
+  const hasActiveFilter = activeCategory !== "All" || activeVibe !== null;
+
+  const { data: expandData } = useListBusinesses(
+    { search: query || undefined },
+    { query: { queryKey: ['businesses-expand', query], enabled: minorityExpanded && businesses.length === 0 && hasActiveFilter } }
+  );
+
+  const expansionBusinesses = minorityExpanded && businesses.length === 0 && hasActiveFilter
+    ? (expandData?.businesses ?? [])
+    : [];
 
   const categories = [
     "All",
@@ -388,36 +400,111 @@ export default function Discover() {
               </div>
             ))
           ) : businesses.length === 0 ? (
-            <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-[#2B1507]/5 px-8">
-              <Search size={40} className="mx-auto text-[#2B1507]/20 mb-4" />
-              <h3 className="text-xl font-bold text-[#3A1F0E] mb-2">
-                {openNow ? "No businesses open right now" : "No businesses found"}
-              </h3>
-              <p className="text-[#3A1F0E]/60 text-sm mb-6 max-w-md mx-auto">
-                {openNow
-                  ? "Try turning off the 'Open Now' filter to see all businesses."
-                  : query || activeVibe || activeCategory !== "All"
-                    ? "Try removing a filter or broadening your search."
-                    : "We're adding new Minority-owned businesses every day. Know one we're missing?"}
-              </p>
-              <div className="flex flex-wrap gap-3 justify-center">
-                {(query || activeVibe || activeCategory !== "All" || openNow) && (
+            <>
+              <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-[#2B1507]/5 px-8">
+                <Search size={40} className="mx-auto text-[#2B1507]/20 mb-4" />
+                <h3 className="text-xl font-bold text-[#3A1F0E] mb-2">
+                  {openNow ? "No businesses open right now" : "No businesses found"}
+                </h3>
+                <p className="text-[#3A1F0E]/60 text-sm mb-6 max-w-md mx-auto">
+                  {openNow
+                    ? "Try turning off the 'Open Now' filter to see all businesses."
+                    : hasActiveFilter
+                      ? "No businesses match this filter yet — we're growing every day."
+                      : "We're adding new Minority-owned businesses every day. Know one we're missing?"}
+                </p>
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {(query || activeVibe || activeCategory !== "All" || openNow) && (
+                    <button
+                      onClick={() => { setQuery(""); setActiveVibe(null); setActiveCategory("All"); setOpenNow(false); setMinorityExpanded(false); }}
+                      className="px-5 py-2.5 rounded-full text-sm font-semibold bg-[#FAF6EF] border border-[#2B1507]/10 text-[#3A1F0E] hover:border-[#CA922B] hover:text-[#CA922B] transition-all"
+                    >
+                      Clear all filters
+                    </button>
+                  )}
+                  {hasActiveFilter && !openNow && !minorityExpanded && (
+                    <button
+                      onClick={() => setMinorityExpanded(true)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-[#CA922B]/10 border border-[#CA922B]/40 text-[#CA922B] hover:bg-[#CA922B]/20 transition-all"
+                    >
+                      <Compass size={14} />
+                      Explore other minority-owned businesses
+                    </button>
+                  )}
                   <button
-                    onClick={() => { setQuery(""); setActiveVibe(null); setActiveCategory("All"); setOpenNow(false); }}
-                    className="px-5 py-2.5 rounded-full text-sm font-semibold bg-[#FAF6EF] border border-[#2B1507]/10 text-[#3A1F0E] hover:border-[#CA922B] hover:text-[#CA922B] transition-all"
+                    onClick={() => setSubmitOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-semibold bg-[#CA922B] text-white hover:bg-[#B38024] transition-all"
                   >
-                    Clear all filters
+                    <PlusCircle size={14} />
+                    Submit a Business
                   </button>
-                )}
-                <button
-                  onClick={() => setSubmitOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-semibold bg-[#CA922B] text-white hover:bg-[#B38024] transition-all"
-                >
-                  <PlusCircle size={14} />
-                  Submit a Business
-                </button>
+                </div>
               </div>
-            </div>
+              {minorityExpanded && expansionBusinesses.length > 0 && (
+                <div className="col-span-full">
+                  <div className="flex items-center justify-between mb-4 px-1">
+                    <div>
+                      <h3 className="font-serif font-bold text-[#3A1F0E] text-lg">Other Minority-Owned Businesses</h3>
+                      <p className="text-[#3A1F0E]/60 text-sm">Showing results from all categories — not filtered by your selection</p>
+                    </div>
+                    <button
+                      onClick={() => setMinorityExpanded(false)}
+                      className="flex items-center gap-1.5 text-xs text-[#3A1F0E]/50 hover:text-[#CA922B] transition-colors"
+                    >
+                      <X size={13} />
+                      Dismiss
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {expansionBusinesses.map((business) => (
+                      <Link key={business.id} href={`/businesses/${business.id}`}>
+                        <div data-testid="business-card" className="group relative bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(43,21,7,0.05)] hover:shadow-[0_8px_30px_rgba(43,21,7,0.12)] transition-all duration-300 cursor-pointer h-[420px] flex flex-col border border-[#CA922B]/20">
+                          <div className="h-[60%] w-full relative overflow-hidden bg-[#2B1507]/10">
+                            {business.imageUrl ? (
+                              <img src={business.imageUrl} alt={business.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                            ) : (
+                              <div className="w-full h-full flex flex-col items-center justify-center"
+                                style={{ background: `linear-gradient(135deg, #2B1507 0%, #4A2510 50%, #2B1507 100%)` }}>
+                                <div className="w-20 h-20 rounded-full bg-[#CA922B]/20 border-2 border-[#CA922B]/40 flex items-center justify-center mb-3">
+                                  <span className="text-[#CA922B] font-serif font-bold text-4xl leading-none">
+                                    {business.name?.[0]?.toUpperCase() ?? "M"}
+                                  </span>
+                                </div>
+                                <span className="text-[#F5EBD8]/50 text-xs font-bold tracking-widest uppercase px-4 text-center line-clamp-1">{business.category}</span>
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#2B1507]/90 via-[#2B1507]/30 to-transparent" />
+                            <div className="absolute bottom-4 left-4 right-4 text-white">
+                              <h3 className="font-serif font-bold text-2xl leading-tight mb-1">{business.name}</h3>
+                              <div className="flex items-center gap-1.5 text-[#F5EBD8] text-sm">
+                                <span className="text-[#CA922B] font-medium">{business.category}</span>
+                                <span>•</span>
+                                <MapPin size={12} />
+                                <span className="line-clamp-1">{business.city}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex-1 p-5 flex flex-col justify-between">
+                            <p className="text-[#3A1F0E]/70 text-sm line-clamp-3 leading-relaxed">
+                              {business.description || "Discover this highly-rated business. Visit their profile to learn more."}
+                            </p>
+                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#2B1507]/10">
+                              {business.confidenceScore && (
+                                <div className="flex items-center gap-1.5">
+                                  <ShieldCheck size={14} className="text-[#CA922B]" />
+                                  <span className="text-xs font-bold text-[#CA922B]">{business.confidenceScore}/100</span>
+                                </div>
+                              )}
+                              <span className="text-xs font-semibold text-[#CA922B] ml-auto">View profile →</span>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             businesses.map((business) => (
               <Link key={business.id} href={`/businesses/${business.id}`}>
