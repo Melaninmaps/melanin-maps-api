@@ -54,6 +54,7 @@ type FormState = {
   instagram: string; tiktok: string; facebook: string; twitter: string; youtube: string;
   pinterest: string; primarySocialPlatform: string;
   address: string; city: string; state: string; zip: string;
+  businessTagline: string; ownerName: string; ownerBio: string; ownerStory: string;
 };
 
 const EMPTY_FORM: FormState = {
@@ -62,6 +63,7 @@ const EMPTY_FORM: FormState = {
   instagram: "", tiktok: "", facebook: "", twitter: "", youtube: "",
   pinterest: "", primarySocialPlatform: "",
   address: "", city: "", state: "", zip: "",
+  businessTagline: "", ownerName: "", ownerBio: "", ownerStory: "",
 };
 
 export default function EditBusinessProfile() {
@@ -116,6 +118,8 @@ export default function EditBusinessProfile() {
             pinterest: (b as any).pinterest ?? "", primarySocialPlatform: (b as any).primarySocialPlatform ?? "",
             address: (b as any).address ?? "", city: (b as any).city ?? "",
             state: (b as any).state ?? "", zip: (b as any).zip ?? "",
+            businessTagline: (b as any).businessTagline ?? "", ownerName: (b as any).ownerName ?? "",
+            ownerBio: (b as any).ownerBio ?? "", ownerStory: (b as any).ownerStory ?? "",
           };
           setForm(f);
           setOriginal(f);
@@ -158,6 +162,10 @@ export default function EditBusinessProfile() {
           facebook: form.facebook.trim() || null, twitter: form.twitter.trim() || null,
           youtube: form.youtube.trim() || null, pinterest: form.pinterest.trim() || null,
           primarySocialPlatform: form.primarySocialPlatform || null,
+          businessTagline: form.businessTagline.trim() || null,
+          ownerName: form.ownerName.trim() || null,
+          ownerBio: form.ownerBio.trim() || null,
+          ownerStory: form.ownerStory.trim() || null,
         }),
       });
       if (!res.ok) throw new Error("Save failed");
@@ -652,6 +660,41 @@ export default function EditBusinessProfile() {
             placeholderTextColor={colors.mutedForeground} value={form.description}
             onChangeText={(t) => t.length <= 500 && update("description")(t)} multiline textAlignVertical="top" />
           <Text style={[styles.charCount, { color: colors.mutedForeground }]}>{form.description.length}/500</Text>
+        </View>
+
+        {/* ── Business Tagline ── */}
+        <View style={styles.group}>
+          <Text style={[styles.groupLabel, { color: colors.foreground }]}>Business Tagline</Text>
+          <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>A short, punchy phrase that captures your brand's vibe</Text>
+          <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+            placeholder="e.g. Where culture meets cuisine" placeholderTextColor={colors.mutedForeground}
+            value={form.businessTagline} onChangeText={(t) => t.length <= 120 && update("businessTagline")(t)} />
+          {form.businessTagline.length > 0 && (
+            <Text style={[styles.charCount, { color: colors.mutedForeground }]}>{form.businessTagline.length}/120</Text>
+          )}
+        </View>
+
+        {/* ── About the Owner ── */}
+        <View style={styles.group}>
+          <Text style={[styles.groupLabel, { color: colors.foreground }]}>About the Owner</Text>
+          <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>Help customers connect with the person behind the business</Text>
+          <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+            placeholder="Your name (e.g. Maya Johnson)" placeholderTextColor={colors.mutedForeground}
+            value={form.ownerName} onChangeText={update("ownerName")} />
+          <TextInput style={[styles.textArea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground, marginTop: 8 }]}
+            placeholder="A short bio — your background, passions, and what drives you…"
+            placeholderTextColor={colors.mutedForeground} value={form.ownerBio}
+            onChangeText={(t) => t.length <= 300 && update("ownerBio")(t)} multiline textAlignVertical="top" />
+          {form.ownerBio.length > 0 && (
+            <Text style={[styles.charCount, { color: colors.mutedForeground }]}>{form.ownerBio.length}/300</Text>
+          )}
+          <TextInput style={[styles.textArea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground, marginTop: 8 }]}
+            placeholder="Your origin story — why you started, the journey, and what the community means to you…"
+            placeholderTextColor={colors.mutedForeground} value={form.ownerStory}
+            onChangeText={(t) => t.length <= 600 && update("ownerStory")(t)} multiline textAlignVertical="top" />
+          {form.ownerStory.length > 0 && (
+            <Text style={[styles.charCount, { color: colors.mutedForeground }]}>{form.ownerStory.length}/600</Text>
+          )}
         </View>
 
         {/* ── Phone ── */}

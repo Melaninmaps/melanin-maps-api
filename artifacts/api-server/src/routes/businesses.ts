@@ -261,12 +261,14 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
     "Home Services", "Real Estate & Housing", "Community & Nonprofit",
   ];
 
-  const { name, category, subcategory, description, phone, website, hours, instagram, tiktok, facebook, twitter, youtube, pinterest, primarySocialPlatform } = req.body as {
+  const { name, category, subcategory, description, phone, website, hours, instagram, tiktok, facebook, twitter, youtube, pinterest, primarySocialPlatform, businessTagline, ownerName, ownerBio, ownerStory } = req.body as {
     name?: string; category?: string; subcategory?: string; description?: string;
     phone?: string | null; website?: string | null; hours?: string | null;
     instagram?: string | null; tiktok?: string | null; facebook?: string | null;
     twitter?: string | null; youtube?: string | null;
     pinterest?: string | null; primarySocialPlatform?: string | null;
+    businessTagline?: string | null; ownerName?: string | null;
+    ownerBio?: string | null; ownerStory?: string | null;
   };
 
   if (category && !VALID_CATEGORIES.includes(category)) {
@@ -287,6 +289,10 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
   if (youtube !== undefined) updates.youtube = youtube?.trim() || null;
   if (pinterest !== undefined) updates.pinterest = pinterest?.trim() || null;
   if (primarySocialPlatform !== undefined) updates.primarySocialPlatform = primarySocialPlatform || null;
+  if (businessTagline !== undefined) updates.businessTagline = businessTagline?.trim() || null;
+  if (ownerName !== undefined) updates.ownerName = ownerName?.trim() || null;
+  if (ownerBio !== undefined) updates.ownerBio = ownerBio?.trim() || null;
+  if (ownerStory !== undefined) updates.ownerStory = ownerStory?.trim() || null;
 
   try {
     const [updated] = await db

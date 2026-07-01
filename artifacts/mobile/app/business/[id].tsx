@@ -410,6 +410,9 @@ export default function BusinessDetailScreen() {
           <View style={styles.titleSection}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.name, { color: colors.foreground }]}>{business.name}</Text>
+              {(business as any).businessTagline ? (
+                <Text style={[styles.taglineLine, { color: colors.primary }]}>"{(business as any).businessTagline}"</Text>
+              ) : null}
               <View style={styles.metaRow}>
                 <Text style={[styles.category, { color: colors.primary }]}>{business.category}</Text>
                 {business.verified && <VerificationBadge size="md" />}
@@ -642,6 +645,34 @@ export default function BusinessDetailScreen() {
 
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>About</Text>
           <Text style={[styles.description, { color: colors.foreground }]}>{business.description}</Text>
+
+          {((business as any).ownerName || (business as any).ownerBio || (business as any).ownerStory) && (
+            <View style={[styles.ownerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.ownerCardHeader}>
+                <View style={[styles.ownerAvatar, { backgroundColor: colors.primary + "20" }]}>
+                  <Text style={[styles.ownerAvatarText, { color: colors.primary }]}>
+                    {((business as any).ownerName ?? "Owner").split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
+                  </Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.ownerLabel, { color: colors.mutedForeground }]}>Meet the Owner</Text>
+                  {(business as any).ownerName && (
+                    <Text style={[styles.ownerName, { color: colors.foreground }]}>{(business as any).ownerName}</Text>
+                  )}
+                </View>
+              </View>
+              {(business as any).ownerBio && (
+                <Text style={[styles.ownerBio, { color: colors.foreground }]}>{(business as any).ownerBio}</Text>
+              )}
+              {(business as any).ownerStory && (
+                <>
+                  <View style={[styles.ownerStoryDivider, { backgroundColor: colors.border }]} />
+                  <Text style={[styles.ownerStoryLabel, { color: colors.mutedForeground }]}>Their Story</Text>
+                  <Text style={[styles.ownerStory, { color: colors.foreground }]}>{(business as any).ownerStory}</Text>
+                </>
+              )}
+            </View>
+          )}
 
           {business.tags.length > 0 && (
             <View style={styles.tags}>
@@ -1163,6 +1194,17 @@ const styles = StyleSheet.create({
   socialBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   primarySocialCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 16, borderWidth: 1.5, marginBottom: 10 },
   primarySocialIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  taglineLine: { fontFamily: "Inter_500Medium", fontSize: 13, fontStyle: "italic", marginTop: 2, marginBottom: 2 },
+  ownerCard: { borderRadius: 16, borderWidth: 1, padding: 16, marginTop: 16, marginBottom: 4, gap: 10 },
+  ownerCardHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
+  ownerAvatar: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center" },
+  ownerAvatarText: { fontFamily: "Inter_700Bold", fontSize: 16 },
+  ownerLabel: { fontFamily: "Inter_400Regular", fontSize: 11, marginBottom: 2 },
+  ownerName: { fontFamily: "Inter_700Bold", fontSize: 15 },
+  ownerBio: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20 },
+  ownerStoryDivider: { height: 1, marginVertical: 4 },
+  ownerStoryLabel: { fontFamily: "Inter_600SemiBold", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5 },
+  ownerStory: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20, fontStyle: "italic" },
   sectionTitle: { fontFamily: "Inter_700Bold", fontSize: 17 },
   description: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 22 },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 8 },

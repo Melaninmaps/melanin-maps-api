@@ -27,6 +27,7 @@ import { ScoreFilterPanel } from "@/components/ScoreFilterPanel";
 import { SearchBar } from "@/components/SearchBar";
 import { SectionHeader } from "@/components/SectionHeader";
 import { BrandQuoteBanner } from "@/components/BrandQuoteBanner";
+import { ForYouCard } from "@/components/ForYouCard";
 import { CATEGORIES } from "@/constants/data";
 import { getDailyQuoteText } from "@/constants/brandQuotes";
 import { useColors } from "@/hooks/useColors";
@@ -243,6 +244,9 @@ export default function DiscoverScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
+        {/* AI For You */}
+        <ForYouCard />
+
         {/* Safety alerts */}
         <View style={styles.section}>
           <View style={styles.safetyHeader}>

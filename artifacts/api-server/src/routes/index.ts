@@ -97,6 +97,7 @@ import pinnedRouter from "./pinned";
 import creatorProfilesRouter from "./creator-profiles";
 import topicBriefsRouter from "./topic-briefs";
 import communityAlertsRouter from "./community-alerts";
+import forYouRouter from "./for-you";
 import knowledgeDeliveryRouter from "./knowledge-delivery";
 import businessInsightsRouter from "./business-insights";
 
@@ -201,6 +202,7 @@ router.use(communityAlertsRouter);
 router.use(knowledgeDeliveryRouter);
 router.use(businessInsightsRouter);
 router.use(topicBriefsRouter);
+router.use(forYouRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

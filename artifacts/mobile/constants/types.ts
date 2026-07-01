@@ -48,6 +48,10 @@ export interface Business {
   foundingNumber?: number;
   introVideoUrl?: string;
   topCaptions?: string[];
+  businessTagline?: string;
+  ownerName?: string;
+  ownerBio?: string;
+  ownerStory?: string;
 }
 
 export interface Event {
