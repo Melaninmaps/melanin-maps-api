@@ -91,6 +91,11 @@ interface ActionItem {
 interface ActionPlanData {
   summary: string;
   actionItems: ActionItem[];
+  tier?: "navigator" | "trailblazer";
+  _cached?: boolean;
+  _cachedAt?: string;
+  _generatedAt?: string;
+  _dataPoints?: { reviewsAnalyzed: number; skipFeedbackIncluded: boolean };
 }
 
 interface ExpansionOpportunity {
@@ -377,9 +382,16 @@ export default function BusinessDashboardScreen() {
         .then((r) => r.ok ? r.json() : null)
         .then((d: { feedback?: { id: string; message: string; createdAt: string }[] } | null) => { if (d?.feedback) setSkipFeedback(d.feedback); })
         .catch(() => {});
+      // Load cached AI plan alongside analytics (fire-and-forget)
+      if (business?.id) {
+        fetch(`${base}/api/kinfolk/business-action-plan/${business.id}`, { headers: { Authorization: `Bearer ${token}` } })
+          .then((r) => r.ok ? r.json() : null)
+          .then((d: { plan: ActionPlanData | null } | null) => { if (d?.plan && !actionPlan) setActionPlan(d.plan); })
+          .catch(() => {});
+      }
     } catch { setAnalyticsError("error"); }
     finally { setAnalyticsLoading(false); }
-  }, [analyticsLoading, analytics]);
+  }, [analyticsLoading, analytics, business?.id, actionPlan]);
 
   const loadGrowthTools = useCallback(async () => {
     if (growthLoading || growthTools) return;
@@ -436,12 +448,19 @@ export default function BusinessDashboardScreen() {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
+          businessId: business.id,
           businessName: business.name,
           businessCategory: business.category,
           businessCity: business.city,
-          reviews: reviews.map((r) => ({ rating: r.rating, content: r.content })),
         }),
       });
+      if (res.status === 403) {
+        Alert.alert("Upgrade Required", "AI Business Insights require a Navigator or Trailblazer membership.", [
+          { text: "Cancel", style: "cancel" },
+          { text: "Upgrade", onPress: () => router.push("/membership") },
+        ]);
+        return;
+      }
       if (res.ok) setActionPlan(await res.json() as ActionPlanData);
     } catch {} finally { setActionPlanLoading(false); }
   }
@@ -1902,6 +1921,116 @@ export default function BusinessDashboardScreen() {
                     </>
                   )}
 
+                  {/* KinfolkAI Feedback Analysis — tier-gated */}
+                  <View style={[styles.aiInsightCard, { backgroundColor: "#1E0F28", borderColor: "#7B2D8B30" }]}>
+                    <View style={styles.aiInsightHeader}>
+                      <View style={[styles.aiInsightBadge, { backgroundColor: A.tier === "trailblazer" ? "#CA922B" : "#7B2D8B" }]}>
+                        <Feather name="cpu" size={10} color="#FFF" />
+                        <Text style={styles.aiInsightBadgeTxt}>KinfolkAI™</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.aiInsightTitle, { color: "#FFF" }]}>AI Feedback Analysis</Text>
+                        <Text style={[styles.aiInsightSub, { color: "rgba(255,255,255,0.5)" }]}>
+                          {A.tier === "trailblazer"
+                            ? "Full analysis — reviews + community skip feedback"
+                            : "Basic analysis — top 10 reviews · Upgrade for full depth"}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Plan exists — show summary + items */}
+                    {actionPlan && !actionPlanLoading && (
+                      <>
+                        <Text style={[styles.aiInsightSummary, { color: "rgba(255,255,255,0.82)" }]}>{actionPlan.summary}</Text>
+                        {actionPlan._dataPoints && (
+                          <View style={styles.aiInsightMeta}>
+                            <Feather name="file-text" size={11} color="#7B2D8B" />
+                            <Text style={[styles.aiInsightMetaTxt, { color: "rgba(255,255,255,0.4)" }]}>
+                              {actionPlan._dataPoints.reviewsAnalyzed} reviews analysed
+                              {actionPlan._dataPoints.skipFeedbackIncluded ? " · skip feedback included" : ""}
+                              {actionPlan._cached && actionPlan._cachedAt
+                                ? ` · last run ${Math.round((Date.now() - new Date(actionPlan._cachedAt).getTime()) / 86400000)}d ago`
+                                : ""}
+                            </Text>
+                          </View>
+                        )}
+                        {(actionPlan.actionItems ?? []).slice(0, A.tier === "trailblazer" ? 6 : 3).map((item, idx) => {
+                          const pc: Record<string, string> = { critical: "#DC2626", high: "#CA922B", medium: "#2D7A4F", low: "#6B7280" };
+                          const c = pc[item.priority] ?? "#CA922B";
+                          return (
+                            <View key={idx} style={[styles.aiInsightItem, { borderLeftColor: c }]}>
+                              <View style={styles.aiInsightItemTop}>
+                                <Text style={[styles.aiInsightIssue, { color: "#FFF" }]}>{item.issue}</Text>
+                                <View style={[styles.aiInsightPriority, { backgroundColor: c + "25" }]}>
+                                  <Text style={[styles.aiInsightPriorityTxt, { color: c }]}>{item.priority}</Text>
+                                </View>
+                              </View>
+                              <Text style={{ color: "#7B2D8B", fontFamily: "Inter_500Medium", fontSize: 11, marginBottom: 4 }}>{item.category}</Text>
+                              {item.actions.slice(0, 2).map((a, ai) => (
+                                <View key={ai} style={{ flexDirection: "row", gap: 6, marginBottom: 2 }}>
+                                  <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: 13 }}>•</Text>
+                                  <Text style={{ color: "rgba(255,255,255,0.7)", fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 }}>{a}</Text>
+                                </View>
+                              ))}
+                              <View style={{ flexDirection: "row", gap: 12, marginTop: 4 }}>
+                                <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
+                                  <Feather name="dollar-sign" size={10} color="rgba(255,255,255,0.35)" />
+                                  <Text style={{ color: "rgba(255,255,255,0.45)", fontFamily: "Inter_400Regular", fontSize: 11 }}>{item.estimatedCost}</Text>
+                                </View>
+                                <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
+                                  <Feather name="clock" size={10} color="rgba(255,255,255,0.35)" />
+                                  <Text style={{ color: "rgba(255,255,255,0.45)", fontFamily: "Inter_400Regular", fontSize: 11 }}>{item.estimatedTimeline}</Text>
+                                </View>
+                              </View>
+                            </View>
+                          );
+                        })}
+                        <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+                          <TouchableOpacity
+                            style={[styles.aiInsightBtn, { backgroundColor: "#7B2D8B" }]}
+                            onPress={() => { setActionPlan(null); void generateActionPlan(); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                            activeOpacity={0.8}
+                          >
+                            <Feather name="refresh-cw" size={12} color="#FFF" />
+                            <Text style={styles.aiInsightBtnTxt}>Regenerate</Text>
+                          </TouchableOpacity>
+                          {A.tier === "navigator" && (
+                            <TouchableOpacity
+                              style={[styles.aiInsightBtn, { backgroundColor: "#CA922B" }]}
+                              onPress={() => router.push("/membership")}
+                              activeOpacity={0.8}
+                            >
+                              <Feather name="award" size={12} color="#FFF" />
+                              <Text style={styles.aiInsightBtnTxt}>Unlock Full Analysis</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </>
+                    )}
+
+                    {/* Loading state */}
+                    {actionPlanLoading && (
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 14 }}>
+                        <ActivityIndicator color="#7B2D8B" size="small" />
+                        <Text style={{ color: "rgba(255,255,255,0.55)", fontFamily: "Inter_400Regular", fontSize: 13 }}>Analysing your feedback…</Text>
+                      </View>
+                    )}
+
+                    {/* No plan yet — generate button */}
+                    {!actionPlan && !actionPlanLoading && (
+                      <TouchableOpacity
+                        style={[styles.aiInsightBtn, { backgroundColor: "#7B2D8B", alignSelf: "flex-start", marginTop: 4 }]}
+                        onPress={() => { void generateActionPlan(); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }}
+                        activeOpacity={0.85}
+                      >
+                        <Feather name="cpu" size={13} color="#FFF" />
+                        <Text style={styles.aiInsightBtnTxt}>
+                          {A.tier === "trailblazer" ? "Generate Full Analysis" : "Generate Basic Analysis"}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
                   {/* Growth suggestions */}
                   {A.suggestions.length > 0 && (
                     <>
@@ -2626,6 +2755,23 @@ const styles = StyleSheet.create({
   aiPlanResource: { fontSize: 11, fontFamily: "Inter_400Regular", lineHeight: 17 },
   aiPlanRefresh: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10, borderRadius: 10, borderWidth: 1, marginTop: 4 },
   aiPlanRefreshText: { fontSize: 13, fontFamily: "Inter_500Medium" },
+
+  aiInsightCard: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 12, marginTop: 4 },
+  aiInsightHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  aiInsightBadge: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, alignSelf: "flex-start" },
+  aiInsightBadgeTxt: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#FFF", letterSpacing: 0.4 },
+  aiInsightTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  aiInsightSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17, marginTop: 1 },
+  aiInsightSummary: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20 },
+  aiInsightMeta: { flexDirection: "row", alignItems: "center", gap: 5 },
+  aiInsightMetaTxt: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  aiInsightItem: { borderLeftWidth: 3, borderRadius: 10, padding: 12, gap: 6, backgroundColor: "rgba(255,255,255,0.04)" },
+  aiInsightItemTop: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
+  aiInsightIssue: { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1 },
+  aiInsightPriority: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+  aiInsightPriorityTxt: { fontSize: 10, fontFamily: "Inter_700Bold", textTransform: "uppercase" },
+  aiInsightBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 9, paddingHorizontal: 14, borderRadius: 10 },
+  aiInsightBtnTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#FFF" },
 
   expansionCard: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 12, marginTop: 16 },
   expansionHeader: { gap: 6 },

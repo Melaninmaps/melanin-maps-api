@@ -13,11 +13,14 @@ import {
   businessIdentityTable,
   businessSkipFeedbackTable,
   lifeJourneysTable,
+  reviewsTable,
+  businessAiPlanCacheTable,
   type SessionMessage,
   type JourneyPhase,
 } from "@workspace/db";
 import { eq, desc, and, ilike, or } from "drizzle-orm";
 import { storage } from "../storage";
+import { getUserTier } from "../middleware/requireMembership";
 
 const router: IRouter = Router();
 
@@ -1090,20 +1093,105 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   }
 });
 
+// ─── GET /api/kinfolk/business-action-plan/:businessId — fetch cached plan ──────
+router.get("/kinfolk/business-action-plan/:businessId", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
+  try {
+    const [cached] = await db
+      .select()
+      .from(businessAiPlanCacheTable)
+      .where(eq(businessAiPlanCacheTable.businessId, String(req.params["businessId"])))
+      .orderBy(desc(businessAiPlanCacheTable.createdAt))
+      .limit(1);
+    if (!cached) return void res.json({ plan: null });
+    res.json({ plan: { ...(cached.planData as object), _cached: true, _cachedAt: cached.createdAt.toISOString(), tier: cached.tier } });
+  } catch (err) {
+    req.log.error({ err }, "GET /kinfolk/business-action-plan error");
+    res.status(500).json({ error: "Failed to load plan" });
+  }
+});
+
 // ─── POST /api/kinfolk/business-action-plan ────────────────────────────────────
 router.post("/kinfolk/business-action-plan", async (req: Request, res: Response) => {
   if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
   if (!openai) return void res.status(503).json({ error: "AI service unavailable" });
 
-  const { businessId, businessName, businessCategory, businessCity, reviews } = req.body as {
+  // ── Tier gate ───────────────────────────────────────────────────────────────
+  const tier = await getUserTier(req.user.id);
+  if (tier === "free") {
+    return void res.status(403).json({
+      error: "AI Business Insights require a Navigator or Trailblazer membership.",
+      code: "TIER_LIMIT_REACHED",
+      upgradeUrl: "/membership",
+    });
+  }
+  const isTrailblazer = tier === "trailblazer";
+  const CACHE_DAYS = isTrailblazer ? 3 : 7;
+  const MAX_ITEMS = isTrailblazer ? 6 : 3;
+
+  const { businessId, businessName, businessCategory, businessCity } = req.body as {
     businessId?: string;
     businessName?: string;
     businessCategory?: string;
     businessCity?: string;
-    reviews?: Array<{ rating: number; content: string | null }>;
   };
 
-  // Fetch the owner's business identity for personalized advice
+  // ── Check cache ─────────────────────────────────────────────────────────────
+  if (businessId) {
+    try {
+      const [cached] = await db
+        .select()
+        .from(businessAiPlanCacheTable)
+        .where(eq(businessAiPlanCacheTable.businessId, businessId))
+        .orderBy(desc(businessAiPlanCacheTable.createdAt))
+        .limit(1);
+      if (cached) {
+        const ageDays = (Date.now() - cached.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+        if (ageDays < CACHE_DAYS) {
+          return void res.json({
+            ...(cached.planData as object),
+            _cached: true,
+            _cachedAt: cached.createdAt.toISOString(),
+            tier,
+          });
+        }
+      }
+    } catch { /* non-critical */ }
+  }
+
+  // ── Fetch reviews from DB server-side ───────────────────────────────────────
+  let dbReviews: Array<{ rating: number; content: string | null }> = [];
+  if (businessId) {
+    try {
+      dbReviews = await db
+        .select({ rating: reviewsTable.rating, content: reviewsTable.text })
+        .from(reviewsTable)
+        .where(eq(reviewsTable.businessId, businessId))
+        .orderBy(desc(reviewsTable.createdAt))
+        .limit(isTrailblazer ? 30 : 10);
+    } catch { /* non-critical */ }
+  }
+
+  const reviewsText = dbReviews.length
+    ? dbReviews.map((r) => `- Rating: ${r.rating}/5 | Feedback: ${r.content ?? "(no written feedback)"}`).join("\n")
+    : "No community reviews yet.";
+
+  // ── Skip feedback (Trailblazer only) ────────────────────────────────────────
+  let skipInsightsText = "";
+  if (businessId && isTrailblazer) {
+    try {
+      const skipRows = await db
+        .select({ message: businessSkipFeedbackTable.message })
+        .from(businessSkipFeedbackTable)
+        .where(eq(businessSkipFeedbackTable.businessId, businessId))
+        .limit(20);
+      if (skipRows.length > 0) {
+        skipInsightsText = `\nCOMMUNITY SKIP FEEDBACK (private — why people passed on visiting):\n${skipRows.map((r) => `- "${r.message}"`).join("\n")}`;
+      }
+    } catch { /* non-critical */ }
+  }
+
+  // ── Business identity ───────────────────────────────────────────────────────
   let identityContext = "";
   try {
     const [ownerBiz] = await db
@@ -1133,30 +1221,14 @@ router.post("/kinfolk/business-action-plan", async (req: Request, res: Response)
     }
   } catch { /* non-critical */ }
 
-  const reviewsText = reviews?.length
-    ? reviews.map((r) => `- Rating: ${r.rating}/5 | Feedback: ${r.content ?? "(no written feedback)"}`).join("\n")
-    : "No community reviews yet.";
+  const prompt = `You are an expert Black business advisor helping "${businessName ?? "a business"}" (category: ${businessCategory ?? "General"}, city: ${businessCity ?? "Unknown"}) build a feedback-based improvement action plan.${identityContext}
 
-  let skipInsightsText = "";
-  if (businessId) {
-    try {
-      const skipRows = await db
-        .select({ message: businessSkipFeedbackTable.message })
-        .from(businessSkipFeedbackTable)
-        .where(eq(businessSkipFeedbackTable.businessId, businessId))
-        .limit(20);
-      if (skipRows.length > 0) {
-        skipInsightsText = `\nCOMMUNITY SKIP FEEDBACK (private, not shown publicly — people who passed on visiting shared why):\n${skipRows.map((r) => `- "${r.message}"`).join("\n")}`;
-      }
-    } catch { /* non-critical */ }
-  }
-
-  const prompt = `You are an expert Black business advisor helping "${businessName ?? "a business"}" (category: ${businessCategory ?? "General"}, city: ${businessCity ?? "Unknown"}) build an improvement action plan.${identityContext}
-
-COMMUNITY FEEDBACK FROM REVIEWS:
+COMMUNITY FEEDBACK FROM REVIEWS (${dbReviews.length} total):
 ${reviewsText}${skipInsightsText}
 
-Analyze the feedback and generate a practical, budget-conscious action plan that honors the business's mission, values, and growth goals. If no reviews mention specific issues, generate proactive improvements relevant to the business category, community expectations, and the owner's stated goals.
+${isTrailblazer ? "This is a Trailblazer analysis — provide deep, comprehensive insights using all available data sources." : "This is a Navigator analysis — provide concise, high-impact improvements."}
+
+Analyze all feedback and generate a practical, budget-conscious action plan that honors the business's mission, values, and community focus. If reviews are sparse, generate proactive improvements relevant to the category.
 
 Return EXACTLY this JSON (no markdown, pure valid JSON):
 {
@@ -1174,19 +1246,38 @@ Return EXACTLY this JSON (no markdown, pure valid JSON):
   ]
 }
 
-Include 3–6 action items. Prioritize accessibility (ADA compliance, wheelchair access, signage) and safety first. Be specific with dollar estimates — research realistic costs for small businesses. Keep language warm, community-centered, and practical.`;
+Include exactly ${MAX_ITEMS} action items. Prioritize accessibility (ADA compliance, wheelchair access, signage) and safety first. Be specific with dollar estimates. Keep language warm, community-centered, and practical.`;
 
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.6,
-      max_tokens: 1500,
+      max_tokens: isTrailblazer ? 2000 : 1000,
     });
 
     const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
     const parsed = JSON.parse(raw) as { summary: string; actionItems: unknown[] };
-    res.json(parsed);
+
+    const result = {
+      ...parsed,
+      tier,
+      _cached: false,
+      _generatedAt: new Date().toISOString(),
+      _dataPoints: {
+        reviewsAnalyzed: dbReviews.length,
+        skipFeedbackIncluded: isTrailblazer,
+      },
+    };
+
+    // Store in cache
+    if (businessId) {
+      db.insert(businessAiPlanCacheTable)
+        .values({ businessId, tier, planData: result })
+        .catch(() => {});
+    }
+
+    res.json(result);
   } catch (err) {
     req.log.error({ err }, "Business action plan failed");
     res.status(500).json({ error: "Failed to generate action plan" });
