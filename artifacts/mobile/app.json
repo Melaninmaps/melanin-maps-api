@@ -15,7 +15,7 @@
       "backgroundColor": "#C4622D"
     },
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "com.melaninmaps.app",
       "buildNumber": "11",
       "associatedDomains": [
