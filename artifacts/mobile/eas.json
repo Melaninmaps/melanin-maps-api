@@ -41,7 +41,8 @@
         "resourceClass": "m-medium"
       },
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "credentialsSource": "remote"
       },
       "env": {
         "EXPO_PUBLIC_DOMAIN": "www.melaninmaps.com",
