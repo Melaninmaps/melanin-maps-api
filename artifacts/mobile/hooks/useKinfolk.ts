@@ -45,12 +45,22 @@ export type TravelRecommendations = {
   localInsights: string[];
 };
 
+export type SmartPromotion = {
+  headline: string;
+  body: string;
+  businessCategory: string;
+  cta: string;
+  ctaQuery: string;
+  triggerReason: string;
+};
+
 export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
   recommendations?: TravelRecommendations | null;
   followUpSuggestions?: string[];
+  smartPromotion?: SmartPromotion | null;
   timestamp: Date;
   feedback?: Record<string, "like" | "dislike">;
   limitReached?: boolean;
@@ -111,6 +121,7 @@ export function useKinfolk() {
           reply: string;
           recommendations?: TravelRecommendations | null;
           followUpSuggestions?: string[];
+          smartPromotion?: SmartPromotion | null;
         };
 
         setSessionId(data.sessionId);
@@ -121,6 +132,7 @@ export function useKinfolk() {
           content: data.reply,
           recommendations: data.recommendations ?? null,
           followUpSuggestions: data.followUpSuggestions ?? [],
+          smartPromotion: data.smartPromotion ?? null,
           timestamp: new Date(),
           feedback: {},
         };

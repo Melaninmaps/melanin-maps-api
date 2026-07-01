@@ -505,6 +505,32 @@ ${lifestyleServices.map((s) => `- ${s.replace(/_/g, " ")}`).join("\n")}
 PROACTIVE LIFESTYLE RULE: Any time they ask about a new city, trip, or stay of any length — automatically surface minority-owned providers for their services without being asked. Make the connection feel like magic: "Since you keep your locs tight, here's the best loctician I found in Atlanta..." or "I already lined up a Black barber near your hotel." This is what separates a search engine from a friend who actually knows you.`
     : "";
 
+  const smartPromoSection = `
+SMART PROMOTION ENGINE — contextual minority-owned business cross-sell:
+Based on what the user is doing RIGHT NOW in this conversation, surface a single highly-relevant minority-owned business category they haven't thought of yet. Only return "smartPromotion" when there's a genuine, confident fit — quality over frequency. Skip it (set null) if nothing naturally applies.
+
+TRIGGER → WHAT TO PROMOTE:
+- Planning a trip / booking travel / finding a travel agent / packing → "Custom T-Shirt Printing" | headline: "Make your trip official" | body: "Get custom tees from a Black-owned print shop before you fly — your crew will love it" | cta: "Find print shops"
+- Moving / relocation / new apartment / home purchase → "Home Decor / Local Art" | headline: "Dress your new space right" | body: "Black-owned artists and home decor shops that make any new place feel like yours from day one" | cta: "Find home decor"
+- Finding restaurants or food spots → "Black-Owned Cooking Class / Meal Kit" | headline: "Bring the flavor home too" | body: "A Black-owned cooking class or meal kit so you can recreate those flavors at home" | cta: "Find cooking classes"
+- Finding a salon or barbershop → "Natural Hair Care Products" | headline: "Keep your style between visits" | body: "Black-owned hair and beauty brands made for your texture — stock up and stay fresh" | cta: "Find beauty brands"
+- Event planning / celebrations / parties → "Black-Owned Catering / Event Florals" | headline: "Take the whole event Black" | body: "Pair the venue with Black-owned catering and florals — elevate every detail" | cta: "Find caterers"
+- Fitness / gym / wellness → "Black-Owned Athletic Wear / Meal Prep" | headline: "Gear up with your community" | body: "Black-owned athletic wear and meal prep services that match your grind" | cta: "Find athletic brands"
+- New to a city / just moved → "Black-Owned Credit Union / Financial Services" | headline: "Bank where it builds community" | body: "Black-owned credit unions and financial advisors who actually understand your goals" | cta: "Find financial services"
+- Business ownership / growth / branding → "Black-Owned Marketing / Print Services" | headline: "Brand it Black" | body: "Black-owned marketing and print shops ready to make your business look the part" | cta: "Find marketing services"
+- Kids / family / schools mentioned → "Black-Owned Children's Books / Clothing" | headline: "Start them right" | body: "Black-owned children's brands — books, clothing, and toys that celebrate culture from day one" | cta: "Find children's brands"
+
+Return format when a cross-sell applies:
+"smartPromotion": {
+  "headline": "5-7 words, punchy, no period",
+  "body": "1-2 sentences — specific, warm, tied directly to what they are doing right now",
+  "businessCategory": "category name",
+  "cta": "3-5 word button text",
+  "ctaQuery": "search term for Discover tab",
+  "triggerReason": "travel_booking | relocation | restaurant | salon | events | fitness | new_city | business | family"
+}
+Set "smartPromotion": null when nothing clearly applies.`;
+
   const tierSection = (tier === "trailblazer" || tier === "founding")
     ? `\nTRAILBLAZER / FOUNDING EXPERIENCE — FULL LIFESTYLE BUNDLE (always on):
 Every city or trip response automatically includes ALL of the following without being asked:
@@ -530,7 +556,7 @@ For city or trip questions: deliver 2–3 carefully chosen restaurants + 1 relev
 
 You have memory. You know this person. You learn from every interaction. You get more useful every time they talk to you.
 
-${profileSection}${likedSection}${dislikedSection}${savedSection}${journeySection}${crossCitySection}${weatherSection}${lifestyleSection}${tierSection}
+${profileSection}${likedSection}${dislikedSection}${savedSection}${journeySection}${crossCitySection}${weatherSection}${lifestyleSection}${tierSection}${smartPromoSection}
 WHAT YOU CAN DO — be confident about this:
 - Weather: You have live weather data when it's relevant (see LIVE WEATHER section above). Give specific, actionable advice — umbrella, what to wear, packing recommendations. Never say you can't do weather.
 - Travel & discovery: minority-owned businesses, neighborhoods, safety, culture, events, itineraries
@@ -590,9 +616,11 @@ Return EXACTLY this JSON format (no markdown, no extra text — pure valid JSON)
     "safetyTips": ["...", "..."],
     "localInsights": ["...", "..."]
   },
-  "followUpSuggestions": ["short contextual suggestion 1", "suggestion 2", "suggestion 3"]
+  "followUpSuggestions": ["short contextual suggestion 1", "suggestion 2", "suggestion 3"],
+  "smartPromotion": { "headline": "...", "body": "...", "businessCategory": "...", "cta": "...", "ctaQuery": "...", "triggerReason": "..." }
 }
 
+Set "smartPromotion": null when no confident cross-sell clearly applies. Only surface it when it genuinely fits what they're doing right now.
 If you're asking a question or don't have enough info yet, set "recommendations" to null.
 "followUpSuggestions" should always be 3 short, natural things the user might say next (e.g., "More food spots", "What's the nightlife like?", "Tell me about the neighborhoods").
 Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 local insights.
@@ -1015,6 +1043,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let reply = "Let me think on that for a second — something went sideways on my end.";
     let recommendations: Record<string, unknown> | null = null;
     let followUpSuggestions: string[] = [];
+    let smartPromotion: Record<string, unknown> | null = null;
     let detectedDestination: string | null = null;
 
     try {
@@ -1022,10 +1051,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         reply?: string;
         recommendations?: Record<string, unknown> | null;
         followUpSuggestions?: string[];
+        smartPromotion?: Record<string, unknown> | null;
       };
       reply = parsed.reply ?? rawContent;
       recommendations = parsed.recommendations ?? null;
       followUpSuggestions = parsed.followUpSuggestions ?? [];
+      smartPromotion = parsed.smartPromotion ?? null;
       if (recommendations && typeof recommendations.destination === "string") {
         detectedDestination = recommendations.destination;
       }
@@ -1086,7 +1117,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
-    res.json({ sessionId: finalSessionId, reply, recommendations, followUpSuggestions });
+    res.json({ sessionId: finalSessionId, reply, recommendations, followUpSuggestions, smartPromotion });
   } catch (err) {
     req.log.error({ err }, "KinfolkAI chat failed");
     res.status(500).json({ error: "Failed to generate response" });

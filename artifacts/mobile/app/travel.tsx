@@ -21,7 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useColors } from "@/hooks/useColors";
-import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent } from "@/hooks/useKinfolk";
+import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion } from "@/hooks/useKinfolk";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useWishlist } from "@/hooks/useWishlist";
 import { KinfolkOnboarding, shouldShowKinfolkOnboarding, resetKinfolkOnboarding } from "@/components/KinfolkOnboarding";
@@ -282,6 +282,7 @@ function AiMessageBubble({
   const recs = msg.recommendations;
   const city = recs?.destination ?? "";
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [dismissedPromo, setDismissedPromo] = useState(false);
 
   const toggleSection = (s: string) => setExpandedSection((p) => (p === s ? null : s));
 
@@ -434,6 +435,16 @@ function AiMessageBubble({
           </View>
         )}
 
+        {/* Smart Promotion Card — contextual cross-sell surfaced by AI when relevant */}
+        {msg.smartPromotion && !dismissedPromo && (
+          <SmartPromotionCard
+            promo={msg.smartPromotion}
+            onCta={(query) => onQuickReply(`Find me ${query} near ${city || "me"}`)}
+            onDismiss={() => setDismissedPromo(true)}
+            colors={colors}
+          />
+        )}
+
         {/* Quick reply chips */}
         {msg.followUpSuggestions && msg.followUpSuggestions.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={aiStyles.chipsScroll}>
@@ -484,6 +495,58 @@ const aiStyles = StyleSheet.create({
   chip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 7, marginRight: 8 },
   chipText: { fontFamily: "Inter_400Regular", fontSize: 12 },
   timestamp: { fontFamily: "Inter_400Regular", fontSize: 10 },
+});
+
+// ─── Sub-component: Smart Promotion Card ─────────────────────────────────────
+function SmartPromotionCard({
+  promo,
+  onCta,
+  onDismiss,
+  colors,
+}: {
+  promo: SmartPromotion;
+  onCta: (query: string) => void;
+  onDismiss: () => void;
+  colors: ReturnType<typeof useColors>;
+}) {
+  return (
+    <View style={[spStyles.card, { backgroundColor: colors.card, borderColor: GOLD + "55" }]}>
+      <View style={[spStyles.goldBar, { backgroundColor: GOLD }]} />
+      <View style={spStyles.content}>
+        <View style={spStyles.headerRow}>
+          <View style={[spStyles.badge, { backgroundColor: GOLD + "22" }]}>
+            <Text style={[spStyles.badgeText, { color: GOLD }]}>✦ Smart Pick for You</Text>
+          </View>
+          <TouchableOpacity onPress={onDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons name="close" size={16} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        </View>
+        <Text style={[spStyles.headline, { color: colors.text }]}>{promo.headline}</Text>
+        <Text style={[spStyles.body, { color: colors.mutedForeground }]}>{promo.body}</Text>
+        <TouchableOpacity
+          style={[spStyles.ctaBtn, { backgroundColor: GOLD }]}
+          onPress={() => onCta(promo.ctaQuery)}
+          activeOpacity={0.8}
+        >
+          <Text style={spStyles.ctaText}>{promo.cta}</Text>
+          <Ionicons name="arrow-forward" size={13} color="#fff" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const spStyles = StyleSheet.create({
+  card:      { flexDirection: "row", borderRadius: 14, borderWidth: 1.5, marginTop: 6, marginBottom: 6, overflow: "hidden" },
+  goldBar:   { width: 4 },
+  content:   { flex: 1, padding: 12 },
+  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 },
+  badge:     { borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
+  badgeText: { fontFamily: "Inter_600SemiBold", fontSize: 10 },
+  headline:  { fontFamily: "Inter_700Bold", fontSize: 14, marginBottom: 4 },
+  body:      { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, marginBottom: 10 },
+  ctaBtn:    { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 14, alignSelf: "flex-start" },
+  ctaText:   { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" },
 });
 
 // ─── Sub-component: User Message ─────────────────────────────────────────────
