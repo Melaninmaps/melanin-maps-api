@@ -1,8 +1,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable, businessProfileViewsTable } from "@workspace/db";
-import { and, eq, gt, sql, count } from "drizzle-orm";
+import { db, businessesTable, businessProfileViewsTable, businessIdentityTable, reviewsTable } from "@workspace/db";
+import { and, eq, gt, sql, count, desc } from "drizzle-orm";
 import { sendPushToUser } from "../lib/pushNotifications";
 import { logger } from "../lib/logger";
+import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router: IRouter = Router();
 
@@ -212,6 +213,112 @@ router.post("/businesses/mine/post-nudge/notify", async (req: Request, res: Resp
   } catch (err) {
     req.log.error({ err }, "POST /businesses/mine/post-nudge/notify error");
     res.status(500).json({ error: "Failed to send nudge notification." });
+  }
+});
+
+// ─── GET /api/businesses/mine/post-nudge/captions ─────────────────────────────
+// Returns 3 AI-generated creative post captions personalised to the business
+router.get("/businesses/mine/post-nudge/captions", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res);
+  if (!userId) return;
+
+  try {
+    const [business] = await db
+      .select()
+      .from(businessesTable)
+      .where(eq(businessesTable.submittedById, userId))
+      .limit(1);
+
+    if (!business) {
+      res.status(404).json({ error: "No business found for your account." });
+      return;
+    }
+
+    // Pull recent review snippets for context (non-blocking if unavailable)
+    let reviewSnippets = "";
+    try {
+      const recentReviews = await db
+        .select({ rating: reviewsTable.rating, text: reviewsTable.text })
+        .from(reviewsTable)
+        .where(eq(reviewsTable.businessId, business.id))
+        .orderBy(desc(reviewsTable.createdAt))
+        .limit(5);
+      if (recentReviews.length > 0) {
+        reviewSnippets = recentReviews
+          .filter((r) => r.text)
+          .map((r) => `"${(r.text ?? "").slice(0, 120)}" (${r.rating}★)`)
+          .join("\n");
+      }
+    } catch { /* non-critical */ }
+
+    // Pull business identity for personalisation
+    let identityCtx = "";
+    try {
+      const [identity] = await db
+        .select()
+        .from(businessIdentityTable)
+        .where(eq(businessIdentityTable.businessId, business.id))
+        .limit(1);
+      if (identity) {
+        const parts: string[] = [];
+        if (identity.missionStatement) parts.push(`Mission: ${identity.missionStatement.slice(0, 150)}`);
+        if (identity.vibes?.length) parts.push(`Vibes: ${identity.vibes.join(", ")}`);
+        if (identity.communityValues?.length) parts.push(`Values: ${identity.communityValues.join(", ")}`);
+        if (identity.audiencesServed?.length) parts.push(`Serves: ${identity.audiencesServed.join(", ")}`);
+        if (parts.length) identityCtx = `\nBUSINESS IDENTITY:\n${parts.join("\n")}`;
+      }
+    } catch { /* non-critical */ }
+
+    if (!openai) {
+      // Fallback to static captions when AI is unavailable
+      const captions = [
+        buildSuggestedCaption(business.category, business.name),
+        buildSuggestedCaption(business.category, business.name),
+        buildSuggestedCaption(business.category, business.name),
+      ];
+      res.json({ captions, aiGenerated: false });
+      return;
+    }
+
+    const currentHour = new Date().getHours();
+    const timeOfDay = currentHour < 12 ? "morning" : currentHour < 17 ? "afternoon" : "evening";
+
+    const prompt = `You are a creative social media manager for "${business.name}", a Black-owned ${business.category} business in ${business.city ?? "our city"}.${identityCtx}
+
+${reviewSnippets ? `RECENT CUSTOMER FEEDBACK:\n${reviewSnippets}\n` : ""}
+Write 3 SHORT, engaging social media captions for a community post right now (${timeOfDay}). Each caption should:
+- Feel authentic, warm, and community-centered
+- Reference Black culture, excellence, and/or community love naturally (not forced)
+- Include 1–2 relevant emojis
+- End with 1–2 hashtags (#BlackOwned is encouraged, add a business-specific tag)
+- Be under 160 characters each
+- Vary in tone: one energetic/hype, one warm/inviting, one storytelling/reflective
+
+Return ONLY a JSON array of 3 strings, no markdown, no keys, just the array:
+["caption 1", "caption 2", "caption 3"]`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.85,
+      max_tokens: 300,
+    });
+
+    const raw = completion.choices[0]?.message?.content?.trim() ?? "[]";
+    let captions: string[] = [];
+    try {
+      captions = JSON.parse(raw) as string[];
+      if (!Array.isArray(captions) || captions.length === 0) throw new Error("bad parse");
+    } catch {
+      // Fallback
+      captions = [buildSuggestedCaption(business.category, business.name)];
+    }
+
+    logger.info({ businessId: business.id, count: captions.length }, "[post-nudge] AI captions generated");
+    res.json({ captions, aiGenerated: true });
+  } catch (err) {
+    req.log.error({ err }, "GET /businesses/mine/post-nudge/captions error");
+    res.status(500).json({ error: "Failed to generate captions." });
   }
 });
 

@@ -73,6 +73,11 @@ interface PostNudgeData {
   hasSufficientData: boolean;
 }
 
+interface AiCaptionsData {
+  captions: string[];
+  aiGenerated: boolean;
+}
+
 interface AnalyticsTrend {
   day: string;
   count: number;
@@ -244,6 +249,10 @@ export default function BusinessDashboardScreen() {
   const [analyticsError, setAnalyticsError] = useState<"paywall" | "error" | null>(null);
   const [nudge, setNudge] = useState<PostNudgeData | null>(null);
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
+  const [aiCaptions, setAiCaptions] = useState<string[]>([]);
+  const [aiCaptionsLoading, setAiCaptionsLoading] = useState(false);
+  const [aiCaptionsGenerated, setAiCaptionsGenerated] = useState(false);
+  const [selectedCaptionIdx, setSelectedCaptionIdx] = useState(0);
   const [actionPlan, setActionPlan] = useState<ActionPlanData | null>(null);
   const [actionPlanLoading, setActionPlanLoading] = useState(false);
   const [expansionData, setExpansionData] = useState<ExpansionData | null>(null);
@@ -436,6 +445,26 @@ export default function BusinessDashboardScreen() {
     if (activeTab === "insights") void loadAnalytics();
     if (activeTab === "grow") void loadGrowthTools();
   }, [activeTab]);
+
+  async function loadAiCaptions() {
+    if (aiCaptionsLoading) return;
+    setAiCaptionsLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const base = getApiBase();
+      if (!token || !base) return;
+      const res = await fetch(`${base}/api/businesses/mine/post-nudge/captions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json() as AiCaptionsData;
+        setAiCaptions(data.captions);
+        setAiCaptionsGenerated(data.aiGenerated);
+        setSelectedCaptionIdx(0);
+        if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch {} finally { setAiCaptionsLoading(false); }
+  }
 
   async function generateActionPlan() {
     if (!business || actionPlanLoading) return;
@@ -979,24 +1008,97 @@ export default function BusinessDashboardScreen() {
                     : `Most of your customers engage on ${nudge.topDayLabel}. Post regularly to build your audience.`}
                 </Text>
 
-                {nudge.suggestedCaption.length > 0 && (
-                  <View style={[styles.nudgeCaption, {
-                    backgroundColor: nudge.isNearPeak ? "rgba(45,122,79,0.15)" : colors.background,
-                    borderColor: nudge.isNearPeak ? "#2D7A4F40" : colors.border,
-                  }]}>
-                    <Text style={[styles.nudgeCaptionLabel, { color: nudge.isNearPeak ? "#2D7A4F" : "#CA922B" }]}>Suggested caption</Text>
-                    <Text style={[styles.nudgeCaptionText, { color: nudge.isNearPeak ? "rgba(255,255,255,0.8)" : colors.foreground }]}>
-                      {nudge.suggestedCaption}
-                    </Text>
+                {/* Caption assist section */}
+                <View style={styles.nudgeCaptionSection}>
+                  <View style={styles.nudgeCaptionSectionHeader}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.nudgeCaptionLabel, { color: nudge.isNearPeak ? "#2D7A4F" : "#CA922B" }]}>
+                        {aiCaptions.length > 0
+                          ? aiCaptionsGenerated ? "✨ AI-written captions — tap to select" : "Suggested captions — tap to select"
+                          : "Caption assist"}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => { void loadAiCaptions(); }}
+                      disabled={aiCaptionsLoading}
+                      hitSlop={8}
+                      style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+                    >
+                      {aiCaptionsLoading
+                        ? <ActivityIndicator size="small" color={nudge.isNearPeak ? "#2D7A4F" : "#CA922B"} />
+                        : <Feather name={aiCaptions.length > 0 ? "refresh-cw" : "cpu"} size={13} color={nudge.isNearPeak ? "#2D7A4F" : "#CA922B"} />
+                      }
+                      <Text style={[styles.nudgeCaptionGenBtn, { color: nudge.isNearPeak ? "#2D7A4F" : "#CA922B" }]}>
+                        {aiCaptions.length > 0 ? "Refresh" : "Generate"}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
-                )}
+
+                  {/* AI caption chips */}
+                  {aiCaptions.length > 0 && (
+                    <View style={{ gap: 6, marginTop: 6 }}>
+                      {aiCaptions.map((cap, idx) => (
+                        <TouchableOpacity
+                          key={idx}
+                          activeOpacity={0.75}
+                          onPress={() => {
+                            setSelectedCaptionIdx(idx);
+                            if (Platform.OS !== "web") Haptics.selectionAsync();
+                          }}
+                          style={[
+                            styles.nudgeCaptionChip,
+                            {
+                              borderColor: selectedCaptionIdx === idx
+                                ? (nudge.isNearPeak ? "#2D7A4F" : "#CA922B")
+                                : (nudge.isNearPeak ? "rgba(255,255,255,0.1)" : colors.border),
+                              backgroundColor: selectedCaptionIdx === idx
+                                ? (nudge.isNearPeak ? "rgba(45,122,79,0.18)" : "rgba(202,146,43,0.1)")
+                                : (nudge.isNearPeak ? "rgba(255,255,255,0.04)" : colors.background),
+                            },
+                          ]}
+                        >
+                          {selectedCaptionIdx === idx && (
+                            <Feather
+                              name="check-circle"
+                              size={13}
+                              color={nudge.isNearPeak ? "#2D7A4F" : "#CA922B"}
+                              style={{ flexShrink: 0, marginTop: 1 }}
+                            />
+                          )}
+                          <Text style={[
+                            styles.nudgeCaptionChipText,
+                            { color: nudge.isNearPeak ? "rgba(255,255,255,0.82)" : colors.foreground },
+                          ]}>
+                            {cap}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Static fallback when no AI captions loaded yet */}
+                  {aiCaptions.length === 0 && !aiCaptionsLoading && nudge.suggestedCaption.length > 0 && (
+                    <View style={[styles.nudgeCaption, {
+                      backgroundColor: nudge.isNearPeak ? "rgba(45,122,79,0.12)" : colors.background,
+                      borderColor: nudge.isNearPeak ? "#2D7A4F30" : colors.border,
+                      marginTop: 6,
+                    }]}>
+                      <Text style={[styles.nudgeCaptionText, { color: nudge.isNearPeak ? "rgba(255,255,255,0.75)" : colors.foreground }]}>
+                        {nudge.suggestedCaption}
+                      </Text>
+                    </View>
+                  )}
+                </View>
 
                 <View style={styles.nudgeActions}>
                   <TouchableOpacity
                     style={[styles.nudgePostBtn, { backgroundColor: nudge.isNearPeak ? "#2D7A4F" : colors.primary }]}
                     onPress={() => {
                       if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      router.push(`/(tabs)/community?compose=true&caption=${encodeURIComponent(nudge.suggestedCaption)}` as never);
+                      const caption = aiCaptions.length > 0
+                        ? (aiCaptions[selectedCaptionIdx] ?? nudge.suggestedCaption)
+                        : nudge.suggestedCaption;
+                      router.push(`/(tabs)/community?compose=true&caption=${encodeURIComponent(caption)}` as never);
                     }}
                     activeOpacity={0.85}
                   >
@@ -1013,6 +1115,7 @@ export default function BusinessDashboardScreen() {
                           method: "POST",
                           headers: { Authorization: `Bearer ${token ?? ""}` },
                         });
+                        if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                       } catch {}
                     }}
                     activeOpacity={0.8}
@@ -2593,6 +2696,11 @@ const styles = StyleSheet.create({
   nudgeCaption: { borderRadius: 10, borderWidth: 1, padding: 10, gap: 4 },
   nudgeCaptionLabel: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.5, textTransform: "uppercase" },
   nudgeCaptionText: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
+  nudgeCaptionSection: { gap: 2 },
+  nudgeCaptionSectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  nudgeCaptionGenBtn: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  nudgeCaptionChip: { flexDirection: "row", alignItems: "flex-start", gap: 8, borderWidth: 1, borderRadius: 10, padding: 10 },
+  nudgeCaptionChipText: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18, flex: 1 },
   nudgeActions: { flexDirection: "row", gap: 10, marginTop: 4 },
   nudgePostBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 10 },
   nudgePostBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#FFF" },
