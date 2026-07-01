@@ -1,27 +1,27 @@
 ---
 name: Launch version state
-description: Current app store submission state as of June 29, 2026 — Android and iOS build versions and track status.
+description: Current app store submission state as of July 1, 2026 — Android and iOS build versions and track status.
 ---
 
-# Launch Version State (as of June 29, 2026)
+# Launch Version State (as of July 1, 2026)
 
 ## Android
-- versionCode: 29, version: 1.0.3, buildNumber: 9
-- EAS build ID: 4daab8ec-71ce-4bbb-8963-ca1ceab93334
-- Status: Submitted to Play Store closed testing (track: Closed testing - MWM)
-- Google review in progress — expected approval July 1-2
+- versionCode in app.json: 32 (next build to use)
+- Release 30 (1.0.3): Live to closed testers now (Closed testing - MWM, 14 testers)
+- Release 31 (1.0.3): In Google review (old code, pre-new features)
+- Release 32: Needs to be built and uploaded — contains new features (DMs, @mentions, minority expansion, smart promotions)
+- 14-day closed testing clock: running, check Publishing overview for progress
+- To build: cd artifacts/mobile && eas build --platform android --profile production --no-wait
 
 ## iOS
-- version: 1.0.3, buildNumber: 9
-- EAS build ID: 2ca2b460-f370-43b3-88c4-1e5778de19cd
-- Status: IPA uploaded via Transporter, processing in TestFlight
-- Previous submission (v1.0.0) was developer-rejected (removed before Apple reviewed it)
-- Next step: install via TestFlight on device, then submit for App Store review
+- buildNumber in app.json: 11
+- Build submitted via Transporter and eas submit on Jul 1, 2026 — Waiting for Apple review (24-48 hrs)
+- TestFlight Build 9: Live to MWM Testers group now
+- Once Apple approves → goes live publicly on App Store
 
-## Key fix in both builds
-- Added `react-native-worklets/plugin` to babel.config.js
-- This was the root cause of the startup crash on real devices
-
-## Next version code to use
-- Android: 30
-- iOS buildNumber: 10
+## Key reminders
+- Android versionCode must always increase; current approved max is 31, next must be 32+
+- iOS: use Transporter on Mac to manually upload IPA (Safari downloads .ipa correctly)
+- Android: Safari renames .aab to .zip — right-click → rename → change extension to .aab before uploading to Play Console
+- EAS builds: always run from user's terminal (cd artifacts/mobile first), never from main agent
+- eas.json production android has credentialsSource: "remote" — do not remove this
