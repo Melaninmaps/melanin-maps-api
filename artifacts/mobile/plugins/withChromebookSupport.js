@@ -1,5 +1,15 @@
 const { withAndroidManifest } = require("@expo/config-plugins");
 
+const OPTIONAL_FEATURES = [
+  "android.hardware.touchscreen",
+  "android.hardware.camera",
+  "android.hardware.camera.autofocus",
+  "android.hardware.camera.flash",
+  "android.hardware.camera.front",
+  "android.hardware.telephony",
+  "android.hardware.microphone",
+];
+
 module.exports = function withChromebookSupport(config) {
   return withAndroidManifest(config, (config) => {
     const manifest = config.modResults.manifest;
@@ -8,17 +18,18 @@ module.exports = function withChromebookSupport(config) {
       manifest["uses-feature"] = [];
     }
 
-    const alreadySet = manifest["uses-feature"].some(
-      (f) => f.$?.["android:name"] === "android.hardware.touchscreen"
-    );
-
-    if (!alreadySet) {
-      manifest["uses-feature"].push({
-        $: {
-          "android:name": "android.hardware.touchscreen",
-          "android:required": "false",
-        },
-      });
+    for (const feature of OPTIONAL_FEATURES) {
+      const alreadySet = manifest["uses-feature"].some(
+        (f) => f.$?.["android:name"] === feature
+      );
+      if (!alreadySet) {
+        manifest["uses-feature"].push({
+          $: {
+            "android:name": feature,
+            "android:required": "false",
+          },
+        });
+      }
     }
 
     return config;
