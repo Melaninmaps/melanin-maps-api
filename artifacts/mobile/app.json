@@ -87,6 +87,7 @@
     },
     "plugins": [
       "./plugins/withAndroidCrashLogger",
+      "./plugins/withChromebookSupport",
       [
         "expo-router",
         {
