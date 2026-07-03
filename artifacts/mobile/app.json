@@ -80,14 +80,13 @@
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.INTERNET"
       ],
-      "versionCode": 34
+      "versionCode": 35
     },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       "./plugins/withAndroidCrashLogger",
-      "./plugins/withChromebookSupport",
       [
         "expo-router",
         {
@@ -127,7 +126,8 @@
             "minSdkVersion": 26
           }
         }
-      ]
+      ],
+      "./plugins/withChromebookSupport"
     ],
     "experiments": {
       "typedRoutes": true

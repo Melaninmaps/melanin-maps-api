@@ -2,12 +2,18 @@ const { withAndroidManifest } = require("@expo/config-plugins");
 
 const OPTIONAL_FEATURES = [
   "android.hardware.touchscreen",
+  "android.hardware.touchscreen.multitouch",
   "android.hardware.camera",
   "android.hardware.camera.autofocus",
   "android.hardware.camera.flash",
   "android.hardware.camera.front",
   "android.hardware.telephony",
   "android.hardware.microphone",
+  "android.hardware.screen.portrait",
+  "android.hardware.location",
+  "android.hardware.location.gps",
+  "android.hardware.location.network",
+  "android.hardware.wifi",
 ];
 
 module.exports = function withChromebookSupport(config) {
