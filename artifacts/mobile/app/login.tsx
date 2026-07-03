@@ -15,8 +15,10 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as AppleAuthentication from "expo-apple-authentication";
+import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
-import { useAuth } from "@/lib/auth";
+import { useAuth, getApiBaseUrl } from "@/lib/auth";
 import {
   getBiometricCapabilities,
   isBiometricsEnabled,
@@ -71,6 +73,48 @@ export default function LoginScreen() {
       setError("Biometric authentication failed. Please try again.");
     } finally {
       setBiometricLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    if (Platform.OS !== "ios") return;
+    setError("");
+    setLoading(true);
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!credential.identityToken) throw new Error("No identity token from Apple");
+      const base = getApiBaseUrl();
+      const res = await fetch(`${base}/api/auth/apple`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identityToken: credential.identityToken,
+          appleUserId: credential.user,
+          email: credential.email ?? undefined,
+          firstName: credential.fullName?.givenName ?? undefined,
+          lastName: credential.fullName?.familyName ?? undefined,
+        }),
+      });
+      const data = await res.json() as { token?: string; error?: string };
+      if (!res.ok || !data.token) {
+        setError(data.error ?? "Apple Sign-In failed. Please try again.");
+        return;
+      }
+      await SecureStore.setItemAsync("auth_session_token", data.token);
+      await refreshUser();
+      router.replace("/(tabs)");
+    } catch (err: unknown) {
+      const appleErr = err as { code?: string };
+      if (appleErr?.code !== "ERR_REQUEST_CANCELED") {
+        setError("Apple Sign-In failed. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -174,6 +218,16 @@ export default function LoginScreen() {
             {loading && !emailMode ? "Opening sign in…" : "Continue with Google"}
           </Text>
         </TouchableOpacity>
+
+        {Platform.OS === "ios" && (
+          <AppleAuthentication.AppleAuthenticationButton
+            buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+            buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+            cornerRadius={14}
+            style={styles.appleBtn}
+            onPress={handleAppleSignIn}
+          />
+        )}
 
         <View style={styles.dividerRow}>
           <View style={[styles.dividerLine, { backgroundColor: c.border }]} />
@@ -280,6 +334,7 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", justifyContent: "center",
     gap: 10, paddingVertical: 16, borderRadius: 14, borderWidth: 1, marginBottom: 12,
   },
+  appleBtn: { width: "100%", height: 52, marginBottom: 12 },
   googleTxt: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   dividerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginVertical: 16 },
   dividerLine: { flex: 1, height: 1 },

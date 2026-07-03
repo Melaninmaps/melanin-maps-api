@@ -21,6 +21,9 @@
       "associatedDomains": [
         "applinks:mappingwithmelanin.com"
       ],
+      "entitlements": {
+        "com.apple.developer.applesignin": ["Default"]
+      },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "Mapping With Melanin uses your location to show nearby minority-owned businesses and community safety information.",

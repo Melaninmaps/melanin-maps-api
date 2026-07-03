@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { getApiBaseUrl } from "@/lib/auth";
 
 export default function ForgotPasswordScreen() {
   const colors = useColors();
@@ -26,13 +27,60 @@ export default function ForgotPasswordScreen() {
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
   const valid = email.includes("@") && email.includes(".");
 
+  const [codeVal, setCodeVal] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [codeStep, setCodeStep] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [resetDone, setResetDone] = useState(false);
+
   const handleSend = async () => {
     if (!valid) return;
+    setResetError("");
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setLoading(false);
-    setSent(true);
+    try {
+      const base = getApiBaseUrl();
+      await fetch(`${base}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      setSent(true);
+      setCodeStep(true);
+    } catch {
+      setResetError("Could not connect. Please check your internet connection.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = async () => {
+    setResetError("");
+    if (codeVal.trim().length !== 6) { setResetError("Please enter the 6-digit code from your email."); return; }
+    if (newPw.length < 8) { setResetError("New password must be at least 8 characters."); return; }
+    if (newPw !== confirmPw) { setResetError("Passwords don't match."); return; }
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setLoading(true);
+    try {
+      const base = getApiBaseUrl();
+      const res = await fetch(`${base}/api/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), code: codeVal.trim(), newPassword: newPw }),
+      });
+      const data = await res.json() as { success?: boolean; error?: string };
+      if (!res.ok || !data.success) {
+        setResetError(data.error ?? "Reset failed. Please try again.");
+        return;
+      }
+      setResetDone(true);
+    } catch {
+      setResetError("Could not connect. Please check your internet connection.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,7 +101,7 @@ export default function ForgotPasswordScreen() {
               </View>
               <Text style={[styles.title, { color: colors.foreground }]}>Forgot Password?</Text>
               <Text style={[styles.sub, { color: colors.mutedForeground }]}>
-                No worries. Enter your email and we'll send you a link to reset your password.
+                No worries. Enter your email and we'll send you a 6-digit reset code.
               </Text>
             </View>
 
@@ -76,6 +124,13 @@ export default function ForgotPasswordScreen() {
                 </View>
               </View>
 
+              {!!resetError && (
+                <View style={[styles.errorBox, { backgroundColor: "#FEE2E2" }]}>
+                  <Feather name="alert-circle" size={14} color="#DC2626" />
+                  <Text style={styles.errorTxt}>{resetError}</Text>
+                </View>
+              )}
+
               <TouchableOpacity
                 style={[styles.btn, { backgroundColor: valid ? colors.primary : colors.muted }]}
                 onPress={handleSend}
@@ -83,7 +138,7 @@ export default function ForgotPasswordScreen() {
                 activeOpacity={0.85}
               >
                 <Text style={[styles.btnTxt, { color: valid ? colors.primaryForeground : colors.mutedForeground }]}>
-                  {loading ? "Sending…" : "Send Reset Link"}
+                  {loading ? "Sending…" : "Send Reset Code"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -93,30 +148,114 @@ export default function ForgotPasswordScreen() {
               <Text style={[styles.backToLoginTxt, { color: colors.primary }]}>Back to Sign In</Text>
             </TouchableOpacity>
           </>
-        ) : (
+        ) : resetDone ? (
           <View style={styles.successSection}>
-            <View style={[styles.iconWrap, { backgroundColor: colors.success + "18" }]}>
-              <Feather name="mail" size={40} color={colors.success} />
+            <View style={[styles.iconWrap, { backgroundColor: (colors.success ?? "#22C55E") + "18" }]}>
+              <Feather name="check-circle" size={40} color={colors.success ?? "#22C55E"} />
             </View>
-            <Text style={[styles.title, { color: colors.foreground }]}>Check your email</Text>
+            <Text style={[styles.title, { color: colors.foreground }]}>Password updated!</Text>
             <Text style={[styles.sub, { color: colors.mutedForeground }]}>
-              We sent a password reset link to{"\n"}
-              <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>{email}</Text>
+              Your password has been reset. Sign in with your new password.
             </Text>
-            <View style={[styles.tipBox, { backgroundColor: colors.secondary }]}>
-              <Feather name="info" size={15} color={colors.mutedForeground} />
-              <Text style={[styles.tipTxt, { color: colors.mutedForeground }]}>
-                Check your spam folder if you don't see it within a few minutes.
-              </Text>
-            </View>
             <TouchableOpacity
               style={[styles.btn, { backgroundColor: colors.primary, marginTop: 8 }]}
               onPress={() => router.replace("/login")}
               activeOpacity={0.85}
             >
-              <Text style={[styles.btnTxt, { color: colors.primaryForeground }]}>Back to Sign In</Text>
+              <Text style={[styles.btnTxt, { color: colors.primaryForeground }]}>Sign In</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setSent(false)} style={styles.retrySub}>
+          </View>
+        ) : (
+          <View style={styles.codeSection}>
+            <View style={[styles.iconWrap, { backgroundColor: colors.primary + "15" }]}>
+              <Feather name="mail" size={36} color={colors.primary} />
+            </View>
+            <Text style={[styles.title, { color: colors.foreground }]}>Check your email</Text>
+            <Text style={[styles.sub, { color: colors.mutedForeground }]}>
+              We sent a 6-digit code to{" "}
+              <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>{email}</Text>
+            </Text>
+
+            <View style={[styles.tipBox, { backgroundColor: colors.secondary, marginBottom: 20 }]}>
+              <Feather name="info" size={15} color={colors.mutedForeground} />
+              <Text style={[styles.tipTxt, { color: colors.mutedForeground }]}>
+                Check your spam folder if you don't see it. Codes expire after 15 minutes.
+              </Text>
+            </View>
+
+            <View style={styles.form}>
+              <View style={styles.field}>
+                <Text style={[styles.label, { color: colors.foreground }]}>Reset Code</Text>
+                <View style={[styles.inputRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Feather name="hash" size={18} color={colors.mutedForeground} style={styles.icon} />
+                  <TextInput
+                    style={[styles.input, { color: colors.foreground, letterSpacing: 8, fontSize: 22, fontFamily: "Inter_700Bold" }]}
+                    placeholder="123456"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={codeVal}
+                    onChangeText={(t) => setCodeVal(t.replace(/\D/g, "").slice(0, 6))}
+                    keyboardType="number-pad"
+                    autoFocus
+                    maxLength={6}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.field}>
+                <Text style={[styles.label, { color: colors.foreground }]}>New Password</Text>
+                <View style={[styles.inputRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Feather name="lock" size={18} color={colors.mutedForeground} style={styles.icon} />
+                  <TextInput
+                    style={[styles.input, { color: colors.foreground }]}
+                    placeholder="At least 8 characters"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={newPw}
+                    onChangeText={setNewPw}
+                    secureTextEntry={!showPw}
+                    autoCapitalize="none"
+                  />
+                  <TouchableOpacity onPress={() => setShowPw(!showPw)}>
+                    <Feather name={showPw ? "eye-off" : "eye"} size={18} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.field}>
+                <Text style={[styles.label, { color: colors.foreground }]}>Confirm Password</Text>
+                <View style={[styles.inputRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Feather name="lock" size={18} color={colors.mutedForeground} style={styles.icon} />
+                  <TextInput
+                    style={[styles.input, { color: colors.foreground }]}
+                    placeholder="Repeat your new password"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={confirmPw}
+                    onChangeText={setConfirmPw}
+                    secureTextEntry={!showPw}
+                    autoCapitalize="none"
+                  />
+                </View>
+              </View>
+
+              {!!resetError && (
+                <View style={[styles.errorBox, { backgroundColor: "#FEE2E2" }]}>
+                  <Feather name="alert-circle" size={14} color="#DC2626" />
+                  <Text style={styles.errorTxt}>{resetError}</Text>
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={[styles.btn, { backgroundColor: colors.primary }]}
+                onPress={handleReset}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.btnTxt, { color: colors.primaryForeground }]}>
+                  {loading ? "Resetting…" : "Reset Password"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity onPress={() => { setSent(false); setCodeStep(false); setResetError(""); }} style={styles.retrySub}>
               <Text style={[styles.retryTxt, { color: colors.mutedForeground }]}>Didn't receive it? Try again</Text>
             </TouchableOpacity>
           </View>
@@ -131,7 +270,10 @@ const styles = StyleSheet.create({
   inner: { flex: 1, paddingHorizontal: 24 },
   back: { marginBottom: 8, width: 40, height: 40, alignItems: "flex-start", justifyContent: "center" },
   topSection: { alignItems: "center", marginTop: 24, marginBottom: 36 },
+  codeSection: { alignItems: "center", gap: 12 },
   successSection: { alignItems: "center", marginTop: 60, gap: 16 },
+  errorBox: { flexDirection: "row", alignItems: "flex-start", gap: 8, padding: 12, borderRadius: 10 },
+  errorTxt: { color: "#DC2626", fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
   iconWrap: { width: 88, height: 88, borderRadius: 44, alignItems: "center", justifyContent: "center", marginBottom: 8 },
   title: { fontSize: 26, fontFamily: "Inter_700Bold", marginBottom: 10, textAlign: "center" },
   sub: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 24, color: "#8B7355" },

@@ -185,7 +185,7 @@ export default function SignupScreen() {
       await SecureStore.setItemAsync("auth_session_token", data.token);
       await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
       await refreshUser();
-      router.replace("/onboarding");
+      router.replace("/profile-setup");
     } catch {
       setError("Could not connect. Please check your internet connection.");
     } finally {

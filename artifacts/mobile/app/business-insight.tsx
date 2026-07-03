@@ -277,7 +277,7 @@ export default function BusinessInsightScreen() {
 
             <TouchableOpacity
               style={[s.ownerCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => router.push("/submit-business" as any)}
+              onPress={() => router.push("/list-business" as any)}
               activeOpacity={0.8}
             >
               <View style={[s.ownerIconWrap, { backgroundColor: colors.primary + "15" }]}>

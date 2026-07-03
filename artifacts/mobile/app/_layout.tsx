@@ -318,6 +318,14 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="profile-setup"
+        options={{
+          headerShown: false,
+          presentation: "card",
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
         name="login"
         options={{
           headerShown: false,

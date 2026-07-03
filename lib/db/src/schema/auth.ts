@@ -55,6 +55,11 @@ export const usersTable = pgTable("users", {
   showCity: boolean("show_city").notNull().default(true),
   allowDm: boolean("allow_dm").notNull().default(true),
   displayNameFormat: varchar("display_name_format", { enum: ["full", "first_only", "first_last_initial"] }).default("full"),
+  isBusinessOwner: boolean("is_business_owner").notNull().default(false),
+  isContentCreator: boolean("is_content_creator").notNull().default(false),
+  isCommunityOrganizer: boolean("is_community_organizer").notNull().default(false),
+  profileSetupComplete: boolean("profile_setup_complete").notNull().default(false),
+  appleId: varchar("apple_id").unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

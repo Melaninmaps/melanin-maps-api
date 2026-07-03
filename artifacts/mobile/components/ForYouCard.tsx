@@ -87,7 +87,7 @@ export function ForYouCard() {
               {s.category === "discover" && (
                 <TouchableOpacity
                   style={[styles.cardAction, { borderColor: accent + "40", backgroundColor: accent + "10" }]}
-                  onPress={() => router.push("/(tabs)/discover" as never)}
+                  onPress={() => router.push("/(tabs)/" as never)}
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.cardActionText, { color: accent }]}>Explore</Text>

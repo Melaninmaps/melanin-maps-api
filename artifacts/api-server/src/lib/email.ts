@@ -91,6 +91,35 @@ export async function sendWelcomeEmail(to: string, firstName: string | null) {
   });
 }
 
+export async function sendPasswordResetEmail(to: string, firstName: string | null, code: string) {
+  if (!resend) { log("password reset email"); return; }
+  const name = firstName ?? "there";
+  await resend.emails.send({
+    from: FROM,
+    replyTo: "hello@mappingwithmelanin.com",
+    to,
+    subject: "Reset your Mapping With Melanin™ password",
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
+        <h1 style="font-size:26px;color:#2B1507;font-weight:700;margin:0 0 12px;line-height:1.3">Password Reset</h1>
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          Hi ${name}, use the code below in the app to reset your password. It expires in <strong>15 minutes</strong>.
+        </p>
+        <div style="background:#2B1507;border-radius:14px;padding:32px;text-align:center;margin-bottom:28px">
+          <p style="color:#F5EBD8;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 16px">Your Reset Code</p>
+          <p style="color:#CA922B;font-size:48px;font-weight:700;letter-spacing:12px;margin:0;font-family:monospace">${code}</p>
+        </div>
+        <p style="color:#3A1F0E;font-size:14px;line-height:1.6;margin:0 0 16px;opacity:0.7">
+          If you didn't request a password reset, you can safely ignore this email. Your account is not at risk.
+        </p>
+        <p style="color:#2B1507;font-size:15px;font-weight:700;font-style:italic;margin:24px 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.6;margin:0">Melanin Maps LLC · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a></p>
+      </div>
+    `,
+  });
+}
+
 export async function sendWaitlistConfirmation(to: string, position: number, referralCode: string, firstName: string, lastName?: string) {
   if (!resend) { log("waitlist confirmation"); return; }
   const fullName = lastName ? `${firstName} ${lastName}` : firstName;

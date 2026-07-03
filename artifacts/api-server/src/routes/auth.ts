@@ -20,7 +20,8 @@ import {
   ISSUER_URL,
   type SessionData,
 } from "../lib/auth";
-import { sendWelcomeEmail } from "../lib/email";
+import jwt from "jsonwebtoken";
+import { sendWelcomeEmail, sendPasswordResetEmail } from "../lib/email";
 
 const OIDC_COOKIE_TTL = 10 * 60 * 1000;
 
@@ -568,6 +569,233 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "POST /api/auth/login-email error");
     res.status(500).json({ error: "Login failed. Please try again." });
+  }
+});
+
+// ─── POST /auth/forgot-password ───────────────────────────────────────────────
+router.post("/auth/forgot-password", async (req: Request, res: Response) => {
+  const { email } = req.body as { email?: string };
+  if (!email?.trim()) { res.status(400).json({ error: "Email is required." }); return; }
+
+  try {
+    const [user] = await db
+      .select({ id: usersTable.id, firstName: usersTable.firstName, email: usersTable.email, passwordHash: usersTable.passwordHash })
+      .from(usersTable)
+      .where(ilike(usersTable.email, email.trim()))
+      .limit(1);
+
+    // Always return success to prevent email enumeration
+    if (!user || !user.passwordHash) {
+      res.json({ success: true });
+      return;
+    }
+
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const codeHash = crypto.createHash("sha256").update(code).digest("hex");
+    const expires = new Date(Date.now() + 15 * 60 * 1000);
+
+    await db
+      .update(usersTable)
+      .set({ emailVerificationToken: codeHash, emailVerificationExpires: expires })
+      .where(eq(usersTable.id, user.id));
+
+    await sendPasswordResetEmail(user.email!, user.firstName, code);
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "POST /api/auth/forgot-password error");
+    res.status(500).json({ error: "Something went wrong. Please try again." });
+  }
+});
+
+// ─── POST /auth/reset-password ────────────────────────────────────────────────
+router.post("/auth/reset-password", async (req: Request, res: Response) => {
+  const { email, code, newPassword } = req.body as { email?: string; code?: string; newPassword?: string };
+  if (!email?.trim() || !code?.trim() || !newPassword) {
+    res.status(400).json({ error: "Email, code, and new password are required." });
+    return;
+  }
+  if (newPassword.length < 8) {
+    res.status(400).json({ error: "Password must be at least 8 characters." });
+    return;
+  }
+
+  try {
+    const [user] = await db
+      .select({
+        id: usersTable.id,
+        emailVerificationToken: usersTable.emailVerificationToken,
+        emailVerificationExpires: usersTable.emailVerificationExpires,
+      })
+      .from(usersTable)
+      .where(ilike(usersTable.email, email.trim()))
+      .limit(1);
+
+    if (!user || !user.emailVerificationToken || !user.emailVerificationExpires) {
+      res.status(400).json({ error: "Invalid or expired reset code." });
+      return;
+    }
+    if (new Date() > user.emailVerificationExpires) {
+      res.status(400).json({ error: "Reset code has expired. Please request a new one." });
+      return;
+    }
+    const codeHash = crypto.createHash("sha256").update(code.trim()).digest("hex");
+    if (codeHash !== user.emailVerificationToken) {
+      res.status(400).json({ error: "Incorrect reset code. Please check your email and try again." });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await db
+      .update(usersTable)
+      .set({ passwordHash, emailVerificationToken: null, emailVerificationExpires: null })
+      .where(eq(usersTable.id, user.id));
+
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "POST /api/auth/reset-password error");
+    res.status(500).json({ error: "Something went wrong. Please try again." });
+  }
+});
+
+// ─── POST /auth/apple ─────────────────────────────────────────────────────────
+async function verifyAppleToken(identityToken: string): Promise<{ sub: string; email?: string }> {
+  const res = await fetch("https://appleid.apple.com/auth/keys");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { keys } = await res.json() as { keys: any[] };
+
+  const [headerB64] = identityToken.split(".");
+  const header = JSON.parse(Buffer.from(headerB64, "base64url").toString()) as { kid: string };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const jwk = keys.find((k: any) => k.kid === header.kid);
+  if (!jwk) throw new Error("No matching Apple public key");
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const publicKey = crypto.createPublicKey({ key: jwk as any, format: "jwk" });
+  const pem = publicKey.export({ type: "spki", format: "pem" });
+
+  const payload = jwt.verify(identityToken, pem, {
+    algorithms: ["RS256"],
+    issuer: "https://appleid.apple.com",
+    audience: "com.melaninmaps.app",
+  }) as { sub: string; email?: string };
+
+  return payload;
+}
+
+router.post("/auth/apple", async (req: Request, res: Response) => {
+  const { identityToken, appleUserId, email, firstName, lastName } =
+    req.body as { identityToken?: string; appleUserId?: string; email?: string; firstName?: string; lastName?: string };
+
+  if (!identityToken) { res.status(400).json({ error: "identityToken is required." }); return; }
+
+  try {
+    const payload = await verifyAppleToken(identityToken);
+    const sub = payload.sub;
+    const verifiedEmail = email || payload.email;
+
+    // Find by appleId first, then by email
+    let [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.appleId, sub))
+      .limit(1);
+
+    if (!user && verifiedEmail) {
+      const [byEmail] = await db
+        .select()
+        .from(usersTable)
+        .where(ilike(usersTable.email, verifiedEmail))
+        .limit(1);
+      if (byEmail) {
+        await db.update(usersTable).set({ appleId: sub }).where(eq(usersTable.id, byEmail.id));
+        user = { ...byEmail, appleId: sub };
+      }
+    }
+
+    if (!user) {
+      const cleanFirst = firstName?.trim() || "Apple";
+      const cleanLast = lastName?.trim() || "User";
+      const baseUsername = `${cleanFirst}${cleanLast}`.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20) || "user";
+      const uniqueUsername = `${baseUsername}${String(Math.floor(Math.random() * 9000 + 1000))}`;
+
+      const [created] = await db
+        .insert(usersTable)
+        .values({
+          firstName: cleanFirst,
+          lastName: cleanLast,
+          email: verifiedEmail ?? `apple_${sub}@melaninmaps.internal`,
+          username: uniqueUsername,
+          appleId: sub,
+          approved: true,
+          agreeToTerms: true,
+        })
+        .returning();
+      user = created;
+    }
+
+    if (!user.approved) {
+      res.status(403).json({ error: "Your account is pending approval." });
+      return;
+    }
+
+    const sessionData: SessionData = {
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profileImageUrl: user.profileImageUrl,
+        approved: user.approved,
+        role: user.role as "user" | "tester" | "admin",
+      },
+      access_token: "",
+    };
+    const sid = await createSession(sessionData);
+    res.json({ token: sid });
+  } catch (err) {
+    req.log.error({ err }, "POST /api/auth/apple error");
+    res.status(500).json({ error: "Apple Sign-In failed. Please try again." });
+  }
+});
+
+// ─── PATCH /auth/user/setup ───────────────────────────────────────────────────
+router.patch("/auth/user/setup", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const userId = req.user!.id;
+    const {
+      homeCity,
+      isBusinessOwner,
+      isContentCreator,
+      isCommunityOrganizer,
+      allowDm,
+      showCity,
+      profileSetupComplete,
+    } = req.body as {
+      homeCity?: string;
+      isBusinessOwner?: boolean;
+      isContentCreator?: boolean;
+      isCommunityOrganizer?: boolean;
+      allowDm?: boolean;
+      showCity?: boolean;
+      profileSetupComplete?: boolean;
+    };
+
+    const updates: Partial<typeof usersTable.$inferInsert> = {};
+    if (homeCity !== undefined) updates.homeCity = homeCity.trim() || null;
+    if (isBusinessOwner !== undefined) updates.isBusinessOwner = isBusinessOwner;
+    if (isContentCreator !== undefined) updates.isContentCreator = isContentCreator;
+    if (isCommunityOrganizer !== undefined) updates.isCommunityOrganizer = isCommunityOrganizer;
+    if (allowDm !== undefined) updates.allowDm = allowDm;
+    if (showCity !== undefined) updates.showCity = showCity;
+    if (profileSetupComplete !== undefined) updates.profileSetupComplete = profileSetupComplete;
+
+    await db.update(usersTable).set(updates).where(eq(usersTable.id, userId));
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /api/auth/user/setup error");
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
