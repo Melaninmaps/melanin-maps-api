@@ -6,16 +6,23 @@ WebBrowser.maybeCompleteAuthSession();
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 
-interface User {
+export interface User {
   id: string;
   email: string | null;
   firstName: string | null;
   lastName: string | null;
+  username: string | null;
   profileImageUrl: string | null;
   approved: boolean;
+  role: "user" | "tester" | "admin";
+  memberType: string | null;
   dateOfBirth?: string | null;
   industry?: string | null;
   jobTitle?: string | null;
+  emailVerified?: boolean;
+  homeCity?: string | null;
+  isPrivate?: boolean;
+  bio?: string | null;
 }
 
 interface AuthContextValue {
@@ -24,6 +31,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   sessionExpired: boolean;
   login: () => Promise<void>;
+  loginWithEmail: (email: string, password: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -34,11 +42,12 @@ const AuthContext = createContext<AuthContextValue>({
   isAuthenticated: false,
   sessionExpired: false,
   login: async () => {},
+  loginWithEmail: async () => ({}),
   logout: async () => {},
   refreshUser: async () => {},
 });
 
-function getApiBaseUrl(): string {
+export function getApiBaseUrl(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) {
     return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
   }
@@ -66,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
 
       if (data.user) {
-        setUser(data.user);
+        setUser(data.user as User);
         setSessionExpired(false);
       } else {
         await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
@@ -107,6 +116,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchUser]);
 
+  const loginWithEmail = useCallback(async (email: string, password: string): Promise<{ error?: string }> => {
+    try {
+      const apiBase = getApiBaseUrl();
+      const res = await fetch(`${apiBase}/api/auth/login-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        return { error: data.error ?? "Login failed. Please try again." };
+      }
+
+      const token: string = data.token;
+      await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
+      await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
+      setIsLoading(true);
+      await fetchUser();
+      return {};
+    } catch {
+      return { error: "Could not connect. Check your internet connection." };
+    }
+  }, [fetchUser]);
+
   const logout = useCallback(async () => {
     try {
       const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
@@ -133,6 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         sessionExpired,
         login,
+        loginWithEmail,
         logout,
         refreshUser: fetchUser,
       }}

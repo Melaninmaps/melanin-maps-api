@@ -1,6 +1,8 @@
 import * as oidc from "openid-client";
 import { Router, type IRouter, type Request, type Response } from "express";
-import { eq } from "drizzle-orm";
+import { eq, ilike } from "drizzle-orm";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import {
   ExchangeMobileAuthorizationCodeBody,
   ExchangeMobileAuthorizationCodeResponse,
@@ -78,7 +80,7 @@ async function upsertUser(claims: Record<string, unknown>) {
 
   const [user] = await db
     .insert(usersTable)
-    .values({ ...userData, approved: false })
+    .values({ ...userData, approved: true })
     .onConflictDoUpdate({
       target: usersTable.id,
       set: {
@@ -103,6 +105,17 @@ router.get("/auth/user", async (req: Request, res: Response) => {
         dateOfBirth: usersTable.dateOfBirth,
         role: usersTable.role,
         approved: usersTable.approved,
+        username: usersTable.username,
+        memberType: usersTable.memberType,
+        emailVerified: usersTable.emailVerified,
+        homeCity: usersTable.homeCity,
+        isPrivate: usersTable.isPrivate,
+        bio: usersTable.bio,
+        showCity: usersTable.showCity,
+        allowDm: usersTable.allowDm,
+        displayNameFormat: usersTable.displayNameFormat,
+        trustLevel: usersTable.trustLevel,
+        reputationScore: usersTable.reputationScore,
       })
       .from(usersTable)
       .where(eq(usersTable.id, req.user!.id))
@@ -113,6 +126,17 @@ router.get("/auth/user", async (req: Request, res: Response) => {
         dateOfBirth: dbRow?.dateOfBirth ?? null,
         role: (dbRow?.role ?? req.user!.role) as "user" | "tester" | "admin",
         approved: dbRow?.approved ?? req.user!.approved,
+        username: dbRow?.username ?? null,
+        memberType: dbRow?.memberType ?? "individual",
+        emailVerified: dbRow?.emailVerified ?? false,
+        homeCity: dbRow?.homeCity ?? null,
+        isPrivate: dbRow?.isPrivate ?? false,
+        bio: dbRow?.bio ?? null,
+        showCity: dbRow?.showCity ?? true,
+        allowDm: dbRow?.allowDm ?? true,
+        displayNameFormat: dbRow?.displayNameFormat ?? "full",
+        trustLevel: dbRow?.trustLevel ?? 1,
+        reputationScore: dbRow?.reputationScore ?? 0,
       },
     });
   } catch {
@@ -347,6 +371,204 @@ router.post("/mobile-auth/logout", async (req: Request, res: Response) => {
     await deleteSession(sid);
   }
   res.json(LogoutMobileSessionResponse.parse({ success: true }));
+});
+
+// ─── GET /auth/check-username ─────────────────────────────────────────────────
+router.get("/auth/check-username", async (req: Request, res: Response) => {
+  const raw = typeof req.query.username === "string" ? req.query.username : "";
+  const username = raw.toLowerCase().trim();
+
+  if (!username || username.length < 3) {
+    res.json({ available: false, error: "At least 3 characters required" });
+    return;
+  }
+  if (username.length > 30) {
+    res.json({ available: false, error: "Username must be 30 characters or fewer" });
+    return;
+  }
+  if (!/^[a-z0-9_]+$/.test(username)) {
+    res.json({ available: false, error: "Letters, numbers, and underscores only" });
+    return;
+  }
+
+  try {
+    const [existing] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.username, username))
+      .limit(1);
+    res.json({ available: !existing });
+  } catch (err) {
+    req.log.error({ err }, "GET /api/auth/check-username error");
+    res.status(500).json({ available: false, error: "Could not check username" });
+  }
+});
+
+// ─── POST /auth/register ──────────────────────────────────────────────────────
+router.post("/auth/register", async (req: Request, res: Response) => {
+  const { firstName, lastName, email, password, username, dateOfBirth, agreeToTerms } =
+    req.body as {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      password?: string;
+      username?: string;
+      dateOfBirth?: string;
+      agreeToTerms?: boolean;
+    };
+
+  if (!firstName?.trim() || !lastName?.trim() || !email?.trim() || !password || !username?.trim()) {
+    res.status(400).json({ error: "First name, last name, email, password, and username are required." });
+    return;
+  }
+  if (!agreeToTerms) {
+    res.status(400).json({ error: "You must agree to the Terms of Service." });
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    res.status(400).json({ error: "Please enter a valid email address." });
+    return;
+  }
+  const cleanUsername = username.trim().toLowerCase();
+  if (!/^[a-z0-9_]{3,30}$/.test(cleanUsername)) {
+    res.status(400).json({ error: "Username must be 3–30 characters: letters, numbers, and underscores only." });
+    return;
+  }
+  if (password.length < 8) {
+    res.status(400).json({ error: "Password must be at least 8 characters." });
+    return;
+  }
+
+  if (dateOfBirth) {
+    const dob = new Date(dateOfBirth);
+    if (isNaN(dob.getTime())) {
+      res.status(400).json({ error: "Invalid date of birth." });
+      return;
+    }
+    const ageYears = (Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+    if (ageYears < 13) {
+      res.status(400).json({ error: "You must be at least 13 years old to use this platform." });
+      return;
+    }
+  }
+
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+
+    const [existingEmail] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(ilike(usersTable.email, cleanEmail))
+      .limit(1);
+    if (existingEmail) {
+      res.status(409).json({ error: "An account with this email already exists." });
+      return;
+    }
+
+    const [existingUsername] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.username, cleanUsername))
+      .limit(1);
+    if (existingUsername) {
+      res.status(409).json({ error: "That username is already taken." });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const referralCode = crypto.randomBytes(4).toString("hex").toUpperCase();
+
+    const [user] = await db
+      .insert(usersTable)
+      .values({
+        email: cleanEmail,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        username: cleanUsername,
+        passwordHash,
+        emailVerified: false,
+        approved: true,
+        agreeToTerms: true,
+        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+        referralCode,
+      })
+      .returning();
+
+    sendWelcomeEmail(user.email!, user.firstName).catch(() => {});
+
+    const sessionData: SessionData = {
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profileImageUrl: user.profileImageUrl,
+        approved: user.approved,
+        role: user.role as "user" | "tester" | "admin",
+      },
+      access_token: "",
+    };
+    const sid = await createSession(sessionData);
+
+    res.status(201).json({
+      token: sid,
+      user: { id: user.id, firstName: user.firstName, username: user.username },
+    });
+  } catch (err) {
+    req.log.error({ err }, "POST /api/auth/register error");
+    res.status(500).json({ error: "Registration failed. Please try again." });
+  }
+});
+
+// ─── POST /auth/login-email ───────────────────────────────────────────────────
+router.post("/auth/login-email", async (req: Request, res: Response) => {
+  const { email, password } = req.body as { email?: string; password?: string };
+
+  if (!email?.trim() || !password) {
+    res.status(400).json({ error: "Email and password are required." });
+    return;
+  }
+
+  try {
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(ilike(usersTable.email, email.trim()))
+      .limit(1);
+
+    if (!user) {
+      res.status(401).json({ error: "Invalid email or password." });
+      return;
+    }
+    if (!user.passwordHash) {
+      res.status(401).json({ error: "This account uses Google Sign-In. Please tap 'Continue with Google' to sign in." });
+      return;
+    }
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
+      res.status(401).json({ error: "Invalid email or password." });
+      return;
+    }
+
+    const sessionData: SessionData = {
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profileImageUrl: user.profileImageUrl,
+        approved: user.approved,
+        role: user.role as "user" | "tester" | "admin",
+      },
+      access_token: "",
+    };
+    const sid = await createSession(sessionData);
+    res.json({ token: sid });
+  } catch (err) {
+    req.log.error({ err }, "POST /api/auth/login-email error");
+    res.status(500).json({ error: "Login failed. Please try again." });
+  }
 });
 
 export default router;
