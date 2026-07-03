@@ -4,6 +4,7 @@ import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -94,13 +95,20 @@ interface Expert {
   articleCount?: number | null;
 }
 
-interface Issue {
+interface HappeningNowStory {
   id: string;
-  name: string;
-  description?: string | null;
-  category?: string | null;
-  isFollowing?: boolean;
-  isPinnedToProfile?: boolean;
+  title: string;
+  summary: string;
+  category: string;
+  sourceUrl?: string | null;
+  submittedBy?: string | null;
+  submitterName?: string | null;
+  status: string;
+  confirmCount: number;
+  isAdminPost: boolean;
+  hasConfirmed?: boolean;
+  isOwnStory?: boolean;
+  createdAt: string;
 }
 
 interface DeliveryPrefs {
@@ -130,7 +138,7 @@ const SCOPE_MODES = [
   { id: "all", label: "All", emoji: "∞" },
 ];
 
-type Tab = "library" | "browse" | "issues";
+type Tab = "library" | "browse" | "happeningNow";
 
 export default function LibraryScreen() {
   const colors = useColors();
@@ -144,7 +152,13 @@ export default function LibraryScreen() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [feed, setFeed] = useState<FeedArticle[]>([]);
   const [experts, setExperts] = useState<Expert[]>(SAMPLE_EXPERTS);
-  const [issues, setIssues] = useState<Issue[]>([]);
+  const [stories, setStories] = useState<HappeningNowStory[]>([]);
+  const [submitModalVisible, setSubmitModalVisible] = useState(false);
+  const [submitTitle, setSubmitTitle] = useState("");
+  const [submitSummary, setSubmitSummary] = useState("");
+  const [submitCategory, setSubmitCategory] = useState("other");
+  const [submitSourceUrl, setSubmitSourceUrl] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [digestText, setDigestText] = useState<string>("");
   const [deliveryPrefs, setDeliveryPrefs] = useState<DeliveryPrefs>({
     digestMode: "weekly",
@@ -158,7 +172,7 @@ export default function LibraryScreen() {
   const [loading, setLoading] = useState(true);
   const [feedLoading, setFeedLoading] = useState(false);
   const [savingPrefs, setSavingPrefs] = useState(false);
-  const [issueSearch, setIssueSearch] = useState("");
+  const [storySearch, setStorySearch] = useState("");
   const [topicSearch, setTopicSearch] = useState("");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState("");
@@ -177,10 +191,10 @@ export default function LibraryScreen() {
       const hasAuth = Object.keys(h).length > 0;
       setIsAuthenticated(hasAuth);
 
-      const [topicsRes, expertsRes, issuesRes] = await Promise.all([
+      const [topicsRes, expertsRes, storiesRes] = await Promise.all([
         fetch(`${getApiBase()}/api/knowledge/topics`, { headers: h }),
         fetch(`${getApiBase()}/api/knowledge/experts`),
-        fetch(`${getApiBase()}/api/knowledge/issues`, { headers: h }),
+        fetch(`${getApiBase()}/api/knowledge/happening-now`, { headers: h }),
       ]);
 
       if (topicsRes.ok) {
@@ -192,9 +206,9 @@ export default function LibraryScreen() {
         const data = await expertsRes.json() as { experts: Expert[] };
         if (data.experts.length > 0) setExperts(data.experts);
       }
-      if (issuesRes.ok) {
-        const data = await issuesRes.json() as { issues: Issue[] };
-        setIssues(data.issues);
+      if (storiesRes.ok) {
+        const data = await storiesRes.json() as { stories: HappeningNowStory[] };
+        setStories(data.stories);
       }
 
       if (hasAuth) {
@@ -251,14 +265,12 @@ export default function LibraryScreen() {
     return base;
   }, [topics, topicSearch, recentTopicCategories]);
 
-  const filteredIssues = useMemo(() => {
-    const q = issueSearch.toLowerCase();
+  const filteredStories = useMemo(() => {
+    const q = storySearch.toLowerCase();
     return q
-      ? issues.filter((i) => i.name.toLowerCase().includes(q) || (i.description ?? "").toLowerCase().includes(q))
-      : issues;
-  }, [issues, issueSearch]);
-
-  const followingIssues = useMemo(() => issues.filter((i) => i.isFollowing), [issues]);
+      ? stories.filter((s) => s.title.toLowerCase().includes(q) || s.summary.toLowerCase().includes(q))
+      : stories;
+  }, [stories, storySearch]);
 
   async function toggleFollow(topic: Topic) {
     if (!isAuthenticated) { router.push("/login" as never); return; }
@@ -288,17 +300,42 @@ export default function LibraryScreen() {
     }
   }
 
-  async function toggleIssueFollow(issue: Issue) {
+  async function confirmStory(story: HappeningNowStory) {
     if (!isAuthenticated) { router.push("/login" as never); return; }
-    const willFollow = !issue.isFollowing;
-    setIssues((prev) => prev.map((i) => i.id === issue.id ? { ...i, isFollowing: willFollow } : i));
+    if (story.isOwnStory) return;
+    const wasConfirmed = story.hasConfirmed ?? false;
+    const delta = wasConfirmed ? -1 : 1;
+    setStories((prev) => prev.map((s) => s.id === story.id
+      ? { ...s, hasConfirmed: !wasConfirmed, confirmCount: s.confirmCount + delta }
+      : s));
     try {
       const h = await authHeaders();
-      const method = issue.isFollowing ? "DELETE" : "POST";
-      await fetch(`${getApiBase()}/api/knowledge/issues/${issue.id}/follow`, { method, headers: h });
+      await fetch(`${getApiBase()}/api/knowledge/happening-now/${story.id}/confirm`, { method: "POST", headers: h });
     } catch {
-      setIssues((prev) => prev.map((i) => i.id === issue.id ? { ...i, isFollowing: issue.isFollowing } : i));
+      setStories((prev) => prev.map((s) => s.id === story.id
+        ? { ...s, hasConfirmed: wasConfirmed, confirmCount: s.confirmCount - delta }
+        : s));
     }
+  }
+
+  async function submitStory() {
+    if (!isAuthenticated) { router.push("/login" as never); return; }
+    if (!submitTitle.trim() || !submitSummary.trim()) return;
+    setSubmitting(true);
+    try {
+      const h = await authHeaders();
+      const res = await fetch(`${getApiBase()}/api/knowledge/happening-now`, {
+        method: "POST",
+        headers: { ...h, "Content-Type": "application/json" },
+        body: JSON.stringify({ title: submitTitle.trim(), summary: submitSummary.trim(), category: submitCategory, sourceUrl: submitSourceUrl.trim() || undefined }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { story: HappeningNowStory };
+        setStories((prev) => [{ ...data.story, isOwnStory: true, hasConfirmed: false }, ...prev]);
+        setSubmitModalVisible(false);
+        setSubmitTitle(""); setSubmitSummary(""); setSubmitCategory("other"); setSubmitSourceUrl("");
+      }
+    } catch { /* silent */ } finally { setSubmitting(false); }
   }
 
   function openPinModal(itemName: string, category: string, isPinning: boolean, onConfirm: () => Promise<void>) {
@@ -316,20 +353,6 @@ export default function LibraryScreen() {
       });
     } catch {
       setTopics((prev) => prev.map((t) => t.id === topic.id ? { ...t, isPinnedToProfile: !pin } : t));
-    }
-  }
-
-  async function pinIssue(issue: Issue, pin: boolean) {
-    setIssues((prev) => prev.map((i) => i.id === issue.id ? { ...i, isPinnedToProfile: pin } : i));
-    try {
-      const h = await authHeaders();
-      await fetch(`${getApiBase()}/api/knowledge/issues/${issue.id}/follow/pin`, {
-        method: "PATCH",
-        headers: { ...h, "Content-Type": "application/json" },
-        body: JSON.stringify({ pinned: pin }),
-      });
-    } catch {
-      setIssues((prev) => prev.map((i) => i.id === issue.id ? { ...i, isPinnedToProfile: !pin } : i));
     }
   }
 
@@ -386,7 +409,7 @@ export default function LibraryScreen() {
               <Text style={[styles.headerTitle, { color: colors.foreground }]}>My Knowledge</Text>
               <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>
                 {hasFollows && isAuthenticated
-                  ? `${followedTopics.length} topic${followedTopics.length !== 1 ? "s" : ""}${followingIssues.length > 0 ? ` · ${followingIssues.length} issue${followingIssues.length !== 1 ? "s" : ""}` : ""}${!isPremium ? ` · ${10 - followCount} free slots left` : ""}`
+                  ? `${followedTopics.length} topic${followedTopics.length !== 1 ? "s" : ""}${!isPremium ? ` · ${10 - followCount} free slots left` : ""}`
                   : "Your personalized learning library"}
               </Text>
             </View>
@@ -399,11 +422,12 @@ export default function LibraryScreen() {
 
           {/* Tab switcher */}
           <View style={[styles.tabRow, { backgroundColor: colors.background }]}>
-            {(["library", "browse", "issues"] as Tab[]).map((tab) => {
+            {(["library", "browse", "happeningNow"] as Tab[]).map((tab) => {
+              const pendingCount = stories.filter((s) => s.status === "pending").length;
               const labels: Record<Tab, string> = {
                 library: `My Library${newCount > 0 ? ` (${newCount})` : ""}`,
                 browse: "Browse Topics",
-                issues: `Issues${followingIssues.length > 0 ? ` · ${followingIssues.length}` : ""}`,
+                happeningNow: `Happening Now${pendingCount > 0 ? ` · ${pendingCount}` : ""}`,
               };
               return (
                 <TouchableOpacity
@@ -499,18 +523,17 @@ export default function LibraryScreen() {
                         </TouchableOpacity>
                       );
                     })}
-                    {followingIssues.length > 0 && followingIssues.map((issue) => (
+                    {stories.filter((s) => s.status === "approved").length > 0 && (
                       <TouchableOpacity
-                        key={`issue-${issue.id}`}
-                        style={[styles.followingPill, { backgroundColor: "#3B82F615", borderColor: "#3B82F640" }]}
-                        onPress={() => setActiveTab("issues")}
+                        style={[styles.followingPill, { backgroundColor: "#DC262615", borderColor: "#DC262640" }]}
+                        onPress={() => setActiveTab("happeningNow")}
                         activeOpacity={0.75}
                       >
-                        <Text style={[styles.pillName, { color: "#3B82F6" }]} numberOfLines={1}>
-                          📌 {issue.name.split(" ").slice(0, 3).join(" ")}
+                        <Text style={[styles.pillName, { color: "#DC2626" }]} numberOfLines={1}>
+                          🚨 {stories.filter((s) => s.status === "approved").length} Happening Now
                         </Text>
                       </TouchableOpacity>
-                    ))}
+                    )}
                     <TouchableOpacity
                       style={[styles.followingPill, { backgroundColor: colors.card, borderColor: colors.border, borderStyle: "dashed" }]}
                       onPress={() => setActiveTab("browse")}
@@ -758,135 +781,251 @@ export default function LibraryScreen() {
             )}
           </ScrollView>
 
-        ) : activeTab === "issues" ? (
+        ) : activeTab === "happeningNow" ? (
 
-          /* ── ISSUES TAB ── */
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
-            <View style={[styles.issueHeader, { backgroundColor: "#3B82F608", borderColor: "#3B82F620" }]}>
-              <Text style={{ fontSize: 24 }}>📌</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.issueHeaderTitle, { color: colors.foreground }]}>Follow an Issue</Text>
-                <Text style={[styles.issueHeaderDesc, { color: colors.mutedForeground }]}>
-                  Track ongoing policy debates and social issues. Get notified only when meaningful developments happen — not every headline.
-                </Text>
-              </View>
-            </View>
-
-            {!isAuthenticated && (
-              <View style={styles.signInPrompt}>
-                <Text style={[styles.promptTitle, { color: colors.foreground }]}>Sign in to follow issues</Text>
-                <TouchableOpacity style={[styles.signInBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/login" as never)}>
-                  <Text style={styles.signInTxt}>Sign In</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* Search */}
-            <View style={[styles.browseSearch, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Feather name="search" size={15} color={colors.mutedForeground} />
-              <TextInput
-                style={[styles.searchInput, { color: colors.foreground }]}
-                placeholder="Search issues…"
-                placeholderTextColor={colors.mutedForeground}
-                value={issueSearch}
-                onChangeText={setIssueSearch}
-              />
-              {issueSearch.length > 0 && (
-                <TouchableOpacity onPress={() => setIssueSearch("")}>
-                  <Feather name="x" size={14} color={colors.mutedForeground} />
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {followingIssues.length > 0 && !issueSearch && (
-              <View style={styles.section}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                  <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Following</Text>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: "#3B82F610", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: "#3B82F630" }}>
-                    <Feather name="lock" size={10} color="#3B82F6" />
-                    <Text style={{ fontSize: 10, color: "#3B82F6", fontWeight: "600" }}>Private by default</Text>
-                  </View>
-                </View>
-                {followingIssues.map((issue) => (
-                  <View key={issue.id} style={[styles.issueRow, { backgroundColor: colors.card, borderColor: issue.isPinnedToProfile ? "#3B82F650" : "#3B82F620" }]}>
-                    <View style={styles.issueRowLeft}>
-                      <View style={[styles.issueIcon, { backgroundColor: "#3B82F615" }]}>
-                        <Text style={{ fontSize: 18 }}>{issue.isPinnedToProfile ? "📌" : "🔒"}</Text>
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.topicName, { color: colors.foreground }]} numberOfLines={2}>{issue.name}</Text>
-                        <Text style={[styles.topicCategory, { color: issue.isPinnedToProfile ? "#3B82F6" : colors.mutedForeground }]}>
-                          {issue.isPinnedToProfile ? "Pinned to profile" : "Private · tap 📌 to pin"}
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={{ flexDirection: "row", gap: 6 }}>
-                      <TouchableOpacity
-                        style={[styles.followToggle, { backgroundColor: "transparent", borderColor: issue.isPinnedToProfile ? "#3B82F6" : colors.border, paddingHorizontal: 8 }]}
-                        onPress={() => {
-                          const pin = !issue.isPinnedToProfile;
-                          openPinModal(
-                            issue.name,
-                            issue.category ?? "government",
-                            pin,
-                            async () => pinIssue(issue, pin),
-                          );
-                        }}
-                        activeOpacity={0.75}
-                      >
-                        <Feather name={issue.isPinnedToProfile ? "map-pin" : "lock"} size={13} color={issue.isPinnedToProfile ? "#3B82F6" : colors.mutedForeground} />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.followToggle, { backgroundColor: "#3B82F6", borderColor: "#3B82F6" }]}
-                        onPress={() => toggleIssueFollow(issue)}
-                        activeOpacity={0.75}
-                      >
-                        <Text style={styles.followToggleTxt}>Following</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            <View style={[styles.section, { marginBottom: Platform.OS === "web" ? 100 : insets.bottom + 100 }]}>
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-                {issueSearch ? "Search Results" : followingIssues.length > 0 ? "More Issues" : "All Issues"}
-              </Text>
-              {filteredIssues.filter((i) => !i.isFollowing || !!issueSearch).length === 0 ? (
-                <View style={[styles.emptyFeed, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <Text style={[styles.emptyFeedTxt, { color: colors.mutedForeground }]}>
-                    {issues.length === 0 ? "Issues are being loaded. Check back soon." : "No matching issues found."}
+          /* ── HAPPENING NOW TAB ── */
+          <>
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
+              {/* Header */}
+              <View style={[styles.issueHeader, { backgroundColor: "#DC262608", borderColor: "#DC262620" }]}>
+                <Text style={{ fontSize: 24 }}>🚨</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.issueHeaderTitle, { color: colors.foreground }]}>Happening Now</Text>
+                  <Text style={[styles.issueHeaderDesc, { color: colors.mutedForeground }]}>
+                    Major incidents & stories impacting our communities — ICE raids, police encounters, violence against minorities, legislation, and more.
                   </Text>
                 </View>
-              ) : (
-                filteredIssues.filter((i) => !i.isFollowing || !!issueSearch).map((issue) => (
-                  <View key={issue.id} style={[styles.issueRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                    <View style={styles.issueRowLeft}>
-                      <View style={[styles.issueIcon, { backgroundColor: colors.background }]}>
-                        <Text style={{ fontSize: 18 }}>📰</Text>
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.topicName, { color: colors.foreground }]} numberOfLines={2}>{issue.name}</Text>
-                        {issue.description && (
-                          <Text style={[styles.topicCategory, { color: colors.mutedForeground }]} numberOfLines={2}>{issue.description}</Text>
-                        )}
-                      </View>
-                    </View>
-                    {isAuthenticated && (
-                      <TouchableOpacity
-                        style={[styles.followToggle, { backgroundColor: "transparent", borderColor: "#3B82F6" }]}
-                        onPress={() => toggleIssueFollow(issue)}
-                        activeOpacity={0.75}
-                      >
-                        <Text style={[styles.followToggleTxt, { color: "#3B82F6" }]}>Follow</Text>
-                      </TouchableOpacity>
-                    )}
+              </View>
+
+              {/* Report a Story CTA */}
+              <TouchableOpacity
+                style={[styles.reportBtn, { borderColor: "#DC262440", backgroundColor: "#DC262408" }]}
+                onPress={() => { if (!isAuthenticated) { router.push("/login" as never); return; } setSubmitModalVisible(true); }}
+                activeOpacity={0.8}
+              >
+                <Feather name="plus-circle" size={16} color="#DC2626" />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.reportBtnTxt, { color: "#DC2626" }]}>Report a Story</Text>
+                  <Text style={[styles.reportBtnSub, { color: colors.mutedForeground }]}>Reviewed by our team before going live</Text>
+                </View>
+                <Feather name="chevron-right" size={16} color="#DC2626" />
+              </TouchableOpacity>
+
+              {/* Search */}
+              <View style={[styles.browseSearch, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Feather name="search" size={15} color={colors.mutedForeground} />
+                <TextInput
+                  style={[styles.searchInput, { color: colors.foreground }]}
+                  placeholder="Search stories…"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={storySearch}
+                  onChangeText={setStorySearch}
+                />
+                {storySearch.length > 0 && (
+                  <TouchableOpacity onPress={() => setStorySearch("")}>
+                    <Feather name="x" size={14} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Stories */}
+              <View style={[styles.section, { marginBottom: Platform.OS === "web" ? 100 : insets.bottom + 100 }]}>
+                {filteredStories.length === 0 ? (
+                  <View style={[styles.emptyFeed, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Text style={{ fontSize: 28, marginBottom: 8, textAlign: "center" }}>📡</Text>
+                    <Text style={[styles.emptyFeedTxt, { color: colors.mutedForeground }]}>
+                      {stories.length === 0
+                        ? "No stories yet. Tap \"Report a Story\" to share something happening in your community."
+                        : "No matching stories found."}
+                    </Text>
                   </View>
-                ))
-              )}
-            </View>
-          </ScrollView>
+                ) : (
+                  filteredStories.map((story) => {
+                    const CAT_META: Record<string, { emoji: string; color: string; label: string }> = {
+                      immigration: { emoji: "🛂", color: "#DC2626", label: "Immigration / ICE" },
+                      police:      { emoji: "🚔", color: "#1D4ED8", label: "Police" },
+                      violence:    { emoji: "⚠️",  color: "#D97706", label: "Violence" },
+                      legislation: { emoji: "⚖️",  color: "#7C3AED", label: "Legislation" },
+                      community:   { emoji: "✊🏾", color: "#059669", label: "Community" },
+                      other:       { emoji: "📰", color: "#6B7280", label: "Other" },
+                    };
+                    const cat = CAT_META[story.category] ?? CAT_META.other;
+                    const diffMs = Date.now() - new Date(story.createdAt).getTime();
+                    const diffH = Math.floor(diffMs / 3600000);
+                    const timeLabel = diffH < 1 ? "Just now" : diffH < 24 ? `${diffH}h ago` : `${Math.floor(diffH / 24)}d ago`;
+                    return (
+                      <View
+                        key={story.id}
+                        style={[styles.storyCard, {
+                          backgroundColor: colors.card,
+                          borderColor: story.status === "pending" ? "#D9770640" : colors.border,
+                        }]}
+                      >
+                        {/* Badge row */}
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 5, marginBottom: 8 }}>
+                          <View style={[styles.catBadge, { backgroundColor: cat.color + "15", borderColor: cat.color + "40" }]}>
+                            <Text style={{ fontSize: 11, color: cat.color, fontWeight: "700" }}>{cat.emoji} {cat.label}</Text>
+                          </View>
+                          {story.isAdminPost && (
+                            <View style={[styles.catBadge, { backgroundColor: "#CA922B15", borderColor: "#CA922B40" }]}>
+                              <Text style={{ fontSize: 11, color: "#CA922B", fontWeight: "700" }}>✦ MWM Verified</Text>
+                            </View>
+                          )}
+                          {story.status === "pending" && (
+                            <View style={[styles.catBadge, { backgroundColor: "#D9770615", borderColor: "#D9770640" }]}>
+                              <Text style={{ fontSize: 11, color: "#D97706", fontWeight: "700" }}>⏳ Under Review</Text>
+                            </View>
+                          )}
+                        </View>
+
+                        {/* Title */}
+                        <Text style={[styles.storyTitle, { color: colors.foreground }]}>{story.title}</Text>
+
+                        {/* Summary */}
+                        <Text style={[styles.storySummary, { color: colors.mutedForeground }]} numberOfLines={4}>{story.summary}</Text>
+
+                        {/* Source link */}
+                        {!!story.sourceUrl && (
+                          <TouchableOpacity onPress={() => Linking.openURL(story.sourceUrl!)} activeOpacity={0.7} style={{ marginTop: 6 }}>
+                            <Text style={{ fontSize: 12, color: colors.primary, textDecorationLine: "underline" }} numberOfLines={1}>
+                              🔗 View source
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+
+                        {/* Footer */}
+                        <View style={styles.storyFooter}>
+                          <Text style={[styles.storyMeta, { color: colors.mutedForeground }]} numberOfLines={1}>
+                            {story.isAdminPost ? "MWM Community" : (story.submitterName ?? "Community Member")} · {timeLabel}
+                          </Text>
+                          {story.isOwnStory ? (
+                            <View style={[styles.confirmBtn, { borderColor: colors.border }]}>
+                              <Feather name="user" size={12} color={colors.mutedForeground} />
+                              <Text style={[styles.confirmBtnTxt, { color: colors.mutedForeground }]}>Your story</Text>
+                            </View>
+                          ) : (
+                            <TouchableOpacity
+                              style={[styles.confirmBtn, {
+                                backgroundColor: story.hasConfirmed ? "#05966918" : "transparent",
+                                borderColor: story.hasConfirmed ? "#059669" : colors.border,
+                              }]}
+                              onPress={() => confirmStory(story)}
+                              activeOpacity={0.8}
+                            >
+                              <Feather name="check-circle" size={13} color={story.hasConfirmed ? "#059669" : colors.mutedForeground} />
+                              <Text style={[styles.confirmBtnTxt, { color: story.hasConfirmed ? "#059669" : colors.mutedForeground }]}>
+                                {story.confirmCount > 0 ? `${story.confirmCount} ` : ""}{story.hasConfirmed ? "Confirmed" : "Confirm"}
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </View>
+                    );
+                  })
+                )}
+              </View>
+            </ScrollView>
+
+            {/* Submit Story Sheet */}
+            {submitModalVisible && (
+              <View style={[styles.modalOverlay, { backgroundColor: "rgba(0,0,0,0.55)" }]}>
+                <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={styles.modalHeader}>
+                    <Text style={[styles.modalTitle, { color: colors.foreground }]}>🚨 Report a Story</Text>
+                    <TouchableOpacity onPress={() => setSubmitModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                      <Feather name="x" size={20} color={colors.mutedForeground} />
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>
+                    Your submission will be reviewed by our team before appearing publicly.
+                  </Text>
+
+                  <Text style={[styles.modalLabel, { color: colors.foreground }]}>Headline *</Text>
+                  <TextInput
+                    style={[styles.modalInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]}
+                    placeholder="What is happening?"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={submitTitle}
+                    onChangeText={setSubmitTitle}
+                    maxLength={200}
+                  />
+
+                  <Text style={[styles.modalLabel, { color: colors.foreground }]}>Details *</Text>
+                  <TextInput
+                    style={[styles.modalInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border, height: 90, textAlignVertical: "top" }]}
+                    placeholder="Describe what is happening, who it impacts, and where…"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={submitSummary}
+                    onChangeText={setSubmitSummary}
+                    multiline
+                    numberOfLines={4}
+                  />
+
+                  <Text style={[styles.modalLabel, { color: colors.foreground }]}>Category</Text>
+                  <View style={styles.catPicker}>
+                    {(["immigration", "police", "violence", "legislation", "community", "other"] as const).map((c) => {
+                      const chipLabels: Record<string, string> = {
+                        immigration: "🛂 Immigration", police: "🚔 Police",
+                        violence: "⚠️ Violence", legislation: "⚖️ Legislation",
+                        community: "✊🏾 Community", other: "📰 Other",
+                      };
+                      const active = submitCategory === c;
+                      return (
+                        <TouchableOpacity
+                          key={c}
+                          style={[styles.catPickerChip, {
+                            borderColor: active ? "#DC2626" : colors.border,
+                            backgroundColor: active ? "#DC262615" : colors.background,
+                          }]}
+                          onPress={() => setSubmitCategory(c)}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={{ fontSize: 12, color: active ? "#DC2626" : colors.mutedForeground, fontWeight: active ? "700" : "400" }}>
+                            {chipLabels[c]}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+
+                  <Text style={[styles.modalLabel, { color: colors.foreground }]}>Source URL (optional)</Text>
+                  <TextInput
+                    style={[styles.modalInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]}
+                    placeholder="https://…"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={submitSourceUrl}
+                    onChangeText={setSubmitSourceUrl}
+                    autoCapitalize="none"
+                    keyboardType="url"
+                  />
+
+                  <View style={{ flexDirection: "row", gap: 10, marginTop: 6 }}>
+                    <TouchableOpacity
+                      style={[styles.modalCancelBtn, { borderColor: colors.border }]}
+                      onPress={() => setSubmitModalVisible(false)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={{ color: colors.mutedForeground, fontWeight: "600", fontSize: 14 }}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.modalSubmitBtn, {
+                        backgroundColor: submitTitle.trim() && submitSummary.trim() && !submitting ? "#DC2626" : colors.mutedForeground + "50",
+                        flex: 1,
+                      }]}
+                      onPress={submitStory}
+                      disabled={!submitTitle.trim() || !submitSummary.trim() || submitting}
+                      activeOpacity={0.8}
+                    >
+                      {submitting
+                        ? <ActivityIndicator size="small" color="#fff" />
+                        : <Text style={{ color: "#fff", fontWeight: "700", fontSize: 14 }}>Submit for Review</Text>
+                      }
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            )}
+          </>
 
         ) : (
 
@@ -1136,4 +1275,26 @@ const styles = StyleSheet.create({
   issueRow: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 14, borderWidth: 1 },
   issueRowLeft: { flex: 1, flexDirection: "row", alignItems: "flex-start", gap: 10 },
   issueIcon: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  reportBtn: { flexDirection: "row", alignItems: "center", gap: 10, marginHorizontal: 14, marginBottom: 10, padding: 13, borderRadius: 13, borderWidth: 1 },
+  reportBtnTxt: { fontSize: 14, fontWeight: "700" },
+  reportBtnSub: { fontSize: 11, marginTop: 1 },
+  storyCard: { borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 10 },
+  storyTitle: { fontSize: 15, fontWeight: "800", marginBottom: 6, lineHeight: 21 },
+  storySummary: { fontSize: 13, lineHeight: 19, marginBottom: 10 },
+  storyFooter: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
+  storyMeta: { fontSize: 11, flex: 1 },
+  confirmBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1 },
+  confirmBtnTxt: { fontSize: 12, fontWeight: "600" },
+  catBadge: { flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
+  modalOverlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, justifyContent: "flex-end" },
+  modalCard: { borderTopLeftRadius: 20, borderTopRightRadius: 20, borderWidth: 1, borderBottomWidth: 0, padding: 20, paddingBottom: 34, maxHeight: "92%" },
+  modalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 },
+  modalTitle: { fontSize: 17, fontWeight: "800" },
+  modalSub: { fontSize: 12, lineHeight: 17, marginBottom: 14 },
+  modalLabel: { fontSize: 13, fontWeight: "700", marginBottom: 6, marginTop: 10 },
+  modalInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14 },
+  catPicker: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  catPickerChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1 },
+  modalCancelBtn: { paddingVertical: 13, paddingHorizontal: 18, borderRadius: 12, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  modalSubmitBtn: { paddingVertical: 13, borderRadius: 12, alignItems: "center", justifyContent: "center" },
 });

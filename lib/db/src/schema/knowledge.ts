@@ -124,3 +124,28 @@ export const userIssueFollowsTable = pgTable("user_issue_follows", {
 }, (table) => [
   uniqueIndex("user_issue_follows_unique").on(table.userId, table.issueId),
 ]);
+
+export const happeningNowStoriesTable = pgTable("happening_now_stories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title", { length: 300 }).notNull(),
+  summary: text("summary").notNull(),
+  category: varchar("category", { length: 50 }).notNull().default("other"),
+  sourceUrl: varchar("source_url", { length: 500 }),
+  submittedBy: varchar("submitted_by", { length: 100 }).references(() => usersTable.id, { onDelete: "set null" }),
+  submitterName: varchar("submitter_name", { length: 150 }),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  confirmCount: integer("confirm_count").notNull().default(0),
+  isAdminPost: boolean("is_admin_post").notNull().default(false),
+  adminNote: text("admin_note"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const storyConfirmationsTable = pgTable("story_confirmations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  storyId: varchar("story_id", { length: 100 }).notNull().references(() => happeningNowStoriesTable.id, { onDelete: "cascade" }),
+  userId: varchar("user_id", { length: 100 }).notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("story_confirmations_unique").on(table.storyId, table.userId),
+]);

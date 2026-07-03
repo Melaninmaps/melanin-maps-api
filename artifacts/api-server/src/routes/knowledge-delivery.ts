@@ -1,7 +1,15 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, userDeliveryPreferencesTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable, knowledgeTopicsTable } from "@workspace/db";
-import { and, eq, inArray } from "drizzle-orm";
+import { db, userDeliveryPreferencesTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable, knowledgeTopicsTable, happeningNowStoriesTable, storyConfirmationsTable, usersTable } from "@workspace/db";
+import { and, eq, inArray, desc, or } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
+
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
+function isAdmin(req: Request): boolean {
+  const user = (req as any).user;
+  if (!user?.email) return false;
+  if (ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(user.email)) return true;
+  return user.role === "admin";
+}
 
 const router: IRouter = Router();
 
@@ -195,6 +203,177 @@ router.patch("/knowledge/issues/:id/follow/pin", async (req: Request, res: Respo
   } catch (err) {
     req.log.error({ err }, "PATCH /knowledge/issues/:id/follow/pin error");
     res.status(500).json({ error: "Failed to update pin." });
+  }
+});
+
+/* ─── Happening Now ─── */
+
+router.get("/knowledge/happening-now", async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    const rows = await db
+      .select({
+        id: happeningNowStoriesTable.id,
+        title: happeningNowStoriesTable.title,
+        summary: happeningNowStoriesTable.summary,
+        category: happeningNowStoriesTable.category,
+        sourceUrl: happeningNowStoriesTable.sourceUrl,
+        submittedBy: happeningNowStoriesTable.submittedBy,
+        submitterName: happeningNowStoriesTable.submitterName,
+        status: happeningNowStoriesTable.status,
+        confirmCount: happeningNowStoriesTable.confirmCount,
+        isAdminPost: happeningNowStoriesTable.isAdminPost,
+        createdAt: happeningNowStoriesTable.createdAt,
+      })
+      .from(happeningNowStoriesTable)
+      .where(or(eq(happeningNowStoriesTable.status, "approved"), eq(happeningNowStoriesTable.status, "pending")))
+      .orderBy(desc(happeningNowStoriesTable.createdAt))
+      .limit(50);
+
+    let confirmedIds = new Set<string>();
+    if (userId) {
+      const confs = await db
+        .select({ storyId: storyConfirmationsTable.storyId })
+        .from(storyConfirmationsTable)
+        .where(eq(storyConfirmationsTable.userId, userId));
+      confirmedIds = new Set(confs.map((c) => c.storyId));
+    }
+
+    res.json({
+      stories: rows.map((s) => ({
+        ...s,
+        hasConfirmed: confirmedIds.has(s.id),
+        isOwnStory: userId ? s.submittedBy === userId : false,
+      })),
+    });
+  } catch (err) {
+    req.log.error({ err }, "GET /knowledge/happening-now error");
+    res.status(500).json({ error: "Failed to fetch stories." });
+  }
+});
+
+router.post("/knowledge/happening-now", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const userId = req.user!.id;
+    const { title, summary, category, sourceUrl } = req.body as {
+      title?: string; summary?: string; category?: string; sourceUrl?: string;
+    };
+
+    if (!title?.trim() || !summary?.trim()) {
+      res.status(400).json({ error: "Title and summary are required." });
+      return;
+    }
+
+    const validCategories = ["immigration", "police", "violence", "legislation", "community", "other"];
+    const cat = validCategories.includes(category ?? "") ? category! : "other";
+
+    const [user] = await db
+      .select({ firstName: usersTable.firstName, lastName: usersTable.lastName, email: usersTable.email })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .limit(1);
+
+    const submitterName = user
+      ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email?.split("@")[0] || "Community Member"
+      : "Community Member";
+
+    const [story] = await db
+      .insert(happeningNowStoriesTable)
+      .values({
+        title: title.trim(),
+        summary: summary.trim(),
+        category: cat,
+        sourceUrl: sourceUrl?.trim() || null,
+        submittedBy: userId,
+        submitterName,
+        status: "pending",
+      })
+      .returning();
+
+    res.status(201).json({ story });
+  } catch (err) {
+    req.log.error({ err }, "POST /knowledge/happening-now error");
+    res.status(500).json({ error: "Failed to submit story." });
+  }
+});
+
+router.post("/knowledge/happening-now/:id/confirm", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const userId = req.user!.id;
+    const storyId = String(req.params.id);
+
+    const [story] = await db
+      .select({ id: happeningNowStoriesTable.id, submittedBy: happeningNowStoriesTable.submittedBy, confirmCount: happeningNowStoriesTable.confirmCount })
+      .from(happeningNowStoriesTable)
+      .where(eq(happeningNowStoriesTable.id, storyId))
+      .limit(1);
+
+    if (!story) { res.status(404).json({ error: "Story not found." }); return; }
+    if (story.submittedBy === userId) { res.status(400).json({ error: "Cannot confirm your own story." }); return; }
+
+    const [existing] = await db
+      .select({ id: storyConfirmationsTable.id })
+      .from(storyConfirmationsTable)
+      .where(and(eq(storyConfirmationsTable.storyId, storyId), eq(storyConfirmationsTable.userId, userId)))
+      .limit(1);
+
+    if (existing) {
+      await db.delete(storyConfirmationsTable)
+        .where(and(eq(storyConfirmationsTable.storyId, storyId), eq(storyConfirmationsTable.userId, userId)));
+      await db.update(happeningNowStoriesTable)
+        .set({ confirmCount: Math.max(0, story.confirmCount - 1) })
+        .where(eq(happeningNowStoriesTable.id, storyId));
+      res.json({ confirmed: false, confirmCount: Math.max(0, story.confirmCount - 1) });
+    } else {
+      await db.insert(storyConfirmationsTable).values({ storyId, userId }).onConflictDoNothing();
+      await db.update(happeningNowStoriesTable)
+        .set({ confirmCount: story.confirmCount + 1 })
+        .where(eq(happeningNowStoriesTable.id, storyId));
+      res.json({ confirmed: true, confirmCount: story.confirmCount + 1 });
+    }
+  } catch (err) {
+    req.log.error({ err }, "POST /knowledge/happening-now/:id/confirm error");
+    res.status(500).json({ error: "Failed to confirm story." });
+  }
+});
+
+router.patch("/knowledge/happening-now/:id/status", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const storyId = String(req.params.id);
+    const { status, adminNote } = req.body as { status?: string; adminNote?: string };
+    const validStatuses = ["approved", "rejected", "pending"];
+    if (!status || !validStatuses.includes(status)) {
+      res.status(400).json({ error: "status must be approved, rejected, or pending." });
+      return;
+    }
+
+    await db.update(happeningNowStoriesTable)
+      .set({ status, adminNote: adminNote ?? null, updatedAt: new Date() })
+      .where(eq(happeningNowStoriesTable.id, storyId));
+
+    res.json({ ok: true, storyId, status });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /knowledge/happening-now/:id/status error");
+    res.status(500).json({ error: "Failed to update story status." });
+  }
+});
+
+router.get("/knowledge/happening-now/pending", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const rows = await db
+      .select()
+      .from(happeningNowStoriesTable)
+      .where(eq(happeningNowStoriesTable.status, "pending"))
+      .orderBy(desc(happeningNowStoriesTable.createdAt));
+    res.json({ stories: rows });
+  } catch (err) {
+    req.log.error({ err }, "GET /knowledge/happening-now/pending error");
+    res.status(500).json({ error: "Failed to fetch pending stories." });
   }
 });
 
