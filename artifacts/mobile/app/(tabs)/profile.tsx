@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -292,6 +293,8 @@ export default function ProfileScreen() {
   const { isSupported: biometricSupported, isEnabled: biometricEnabled, label: biometricLabel, toggle: toggleBiometric } = useBiometricSettings();
   const isAdminUser = !!(user?.email && ADMIN_EMAILS.includes(user.email));
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
+  const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showRedemption, setShowRedemption] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showIndustryPicker, setShowIndustryPicker] = useState(false);
@@ -328,12 +331,15 @@ export default function ProfileScreen() {
   };
 
   const openEditModal = () => {
+    if (!isAuthenticated) { login(); return; }
     setEditFirstName(user?.firstName ?? "");
     setEditLastName(user?.lastName ?? "");
     setEditBio((user as any)?.bio ?? "");
     setEditIndustry(user?.industry ?? "");
     setEditJobTitle(user?.jobTitle ?? "");
     setEditUsername((user as any)?.username ?? "");
+    setLocalAvatarUri(null);
+    setUploadedAvatarUrl(null);
     setUsernameCheck("idle");
     setShowIndustryPicker(false);
     setShowEditModal(true);
@@ -365,23 +371,33 @@ export default function ProfileScreen() {
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const apiBase = getApiBase();
+      const body: Record<string, unknown> = {
+        firstName: editFirstName,
+        lastName: editLastName,
+        bio: editBio,
+        industry: editIndustry,
+        jobTitle: editJobTitle,
+        username: editUsername || null,
+      };
+      if (uploadedAvatarUrl) body.profileImageUrl = uploadedAvatarUrl;
       const res = await fetch(`${apiBase}/api/users/me`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({
-          firstName: editFirstName,
-          lastName: editLastName,
-          bio: editBio,
-          industry: editIndustry,
-          jobTitle: editJobTitle,
-          username: editUsername || null,
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
+        if (res.status === 401) {
+          closeEditModal();
+          Alert.alert("Session expired", "Please sign in again to update your profile.", [
+            { text: "Sign In", onPress: login },
+            { text: "Cancel", style: "cancel" },
+          ]);
+          return;
+        }
         Alert.alert("Couldn't save", err.error ?? "Something went wrong. Please try again.");
         return;
       }
@@ -396,16 +412,49 @@ export default function ProfileScreen() {
   };
 
   const pickProfileImage = async () => {
+    if ((Platform.OS as string) === "web") {
+      Alert.alert("Not supported", "Photo upload is available in the mobile app.");
+      return;
+    }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") return;
+    if (status !== "granted") {
+      Alert.alert(
+        "Photo access needed",
+        "To set a profile photo, allow access to your photo library in Settings.",
+        [
+          { text: "Open Settings", onPress: () => Linking.openSettings() },
+          { text: "Cancel", style: "cancel" },
+        ],
+      );
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
     });
-    if (!result.canceled && result.assets[0]) {
-      setLocalAvatarUri(result.assets[0].uri);
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    setLocalAvatarUri(asset.uri);
+    setUploadingAvatar(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const apiBase = getApiBase();
+      const formData = new FormData();
+      formData.append("avatar", { uri: asset.uri, type: asset.mimeType ?? "image/jpeg", name: "avatar.jpg" } as unknown as Blob);
+      const res = await fetch(`${apiBase}/api/users/avatar`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json() as { url: string };
+      setUploadedAvatarUrl(data.url);
+    } catch {
+      Alert.alert("Upload failed", "Couldn't upload photo. It will be saved when you tap Save.");
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -545,7 +594,7 @@ export default function ProfileScreen() {
       ) : (
         <>
           <View style={[styles.profileCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
-            <TouchableOpacity onPress={pickProfileImage} activeOpacity={0.8} style={styles.avatarWrap}>
+            <TouchableOpacity onPress={pickProfileImage} activeOpacity={0.8} style={styles.avatarWrap} disabled={uploadingAvatar}>
               {localAvatarUri || user?.profileImageUrl ? (
                 <Image
                   source={{ uri: localAvatarUri ?? user?.profileImageUrl ?? "" }}
@@ -558,7 +607,9 @@ export default function ProfileScreen() {
                 </View>
               )}
               <View style={[styles.avatarOverlay, { backgroundColor: colors.primary }]}>
-                <Feather name="camera" size={14} color="#FFFFFF" />
+                {uploadingAvatar
+                  ? <ActivityIndicator size="small" color="#FFFFFF" />
+                  : <Feather name="camera" size={14} color="#FFFFFF" />}
               </View>
             </TouchableOpacity>
             <View style={styles.profileInfo}>

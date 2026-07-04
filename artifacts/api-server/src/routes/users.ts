@@ -1,6 +1,18 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import multer from "multer";
+import { randomUUID } from "crypto";
 import { db, usersTable, profileTagsTable, reviewsTable, memberConnections } from "@workspace/db";
 import { eq, ilike, or, and, ne, desc, inArray } from "drizzle-orm";
+import { objectStorageClient } from "../lib/objectStorage";
+
+const avatarUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
+    cb(null, allowed.includes(file.mimetype));
+  },
+});
 
 const USERNAME_RE = /^[a-z0-9_]{3,30}$/;
 
@@ -468,6 +480,33 @@ router.post("/users/match-contacts", async (req: Request, res: Response): Promis
   } catch (err) {
     req.log.error({ err }, "POST /users/match-contacts error");
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ── POST /users/avatar — upload profile photo ──────────────────────────────
+router.post("/users/avatar", avatarUpload.single("avatar"), async (req: any, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!req.file) { res.status(400).json({ error: "No image provided" }); return; }
+  try {
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (!bucketId) { res.status(500).json({ error: "Storage not configured" }); return; }
+    const { originalname, mimetype, buffer } = req.file;
+    const ext = originalname.split(".").pop()?.toLowerCase() ?? "jpg";
+    const safeExt = ["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(ext) ? ext : "jpg";
+    const objectKey = `avatars/${req.user.id}/${randomUUID()}.${safeExt}`;
+    const bucket = objectStorageClient.bucket(bucketId);
+    const gcsFile = bucket.file(objectKey);
+    await gcsFile.save(buffer, { contentType: mimetype });
+    await gcsFile.makePublic();
+    const avatarUrl = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
+    await db
+      .update(usersTable)
+      .set({ profileImageUrl: avatarUrl, updatedAt: new Date() })
+      .where(eq(usersTable.id, req.user.id));
+    res.json({ url: avatarUrl });
+  } catch (err) {
+    req.log.error({ err }, "Failed to upload avatar");
+    res.status(500).json({ error: "Failed to upload photo" });
   }
 });
 
