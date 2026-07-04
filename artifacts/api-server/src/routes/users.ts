@@ -4,6 +4,16 @@ import { eq, ilike, or, and, ne, desc, inArray } from "drizzle-orm";
 
 const USERNAME_RE = /^[a-z0-9_]{3,30}$/;
 
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
+function isAdmin(req: Request): boolean {
+  const user = (req as any).user;
+  return !!(user?.email && ADMIN_EMAILS.includes(user.email));
+}
+function isReservedUsername(username: string): boolean {
+  const n = username.toLowerCase().replace(/_/g, "");
+  return ["mappingwithmelanin", "melaninmaps", "melaninmap", "melaninmapping", "mappingmelanin"].some(p => n.includes(p));
+}
+
 const router: IRouter = Router();
 
 router.get("/users/me", async (req: Request, res: Response) => {
@@ -42,6 +52,10 @@ router.get("/users/check-username/:username", async (req: Request, res: Response
   const raw = String(req.params.username ?? "").trim().toLowerCase().replace(/^@/, "");
   if (!USERNAME_RE.test(raw)) {
     res.json({ available: false, reason: "Username must be 3–30 characters: letters, numbers, underscores only." });
+    return;
+  }
+  if (isReservedUsername(raw) && !isAdmin(req)) {
+    res.json({ available: false, reason: "That username is reserved." });
     return;
   }
   try {
@@ -175,6 +189,9 @@ router.patch("/users/me", async (req: Request, res: Response) => {
         updates.username = null;
       } else if (!USERNAME_RE.test(clean)) {
         res.status(400).json({ error: "Username must be 3–30 characters: letters, numbers, underscores only." });
+        return;
+      } else if (isReservedUsername(clean) && !isAdmin(req)) {
+        res.status(400).json({ error: "That username is reserved." });
         return;
       } else {
         const [existing] = await db

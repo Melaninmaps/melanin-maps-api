@@ -9,6 +9,16 @@ import {
   LogoutMobileSessionResponse,
 } from "@workspace/api-zod";
 import { db, usersTable } from "@workspace/db";
+
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
+function isAdminReq(req: Request): boolean {
+  const user = (req as any).user;
+  return !!(user?.email && ADMIN_EMAILS.includes(user.email));
+}
+function isReservedUsername(username: string): boolean {
+  const n = username.toLowerCase().replace(/_/g, "");
+  return ["mappingwithmelanin", "melaninmaps", "melaninmap", "melaninmapping", "mappingmelanin"].some(p => n.includes(p));
+}
 import {
   clearSession,
   getOidcConfig,
@@ -391,6 +401,10 @@ router.get("/auth/check-username", async (req: Request, res: Response) => {
     res.json({ available: false, error: "Letters, numbers, and underscores only" });
     return;
   }
+  if (isReservedUsername(username) && !isAdminReq(req)) {
+    res.json({ available: false, error: "That username is reserved." });
+    return;
+  }
 
   try {
     const [existing] = await db
@@ -433,6 +447,10 @@ router.post("/auth/register", async (req: Request, res: Response) => {
   const cleanUsername = username.trim().toLowerCase();
   if (!/^[a-z0-9_]{3,30}$/.test(cleanUsername)) {
     res.status(400).json({ error: "Username must be 3–30 characters: letters, numbers, and underscores only." });
+    return;
+  }
+  if (isReservedUsername(cleanUsername)) {
+    res.status(400).json({ error: "That username is reserved." });
     return;
   }
   if (password.length < 8) {
