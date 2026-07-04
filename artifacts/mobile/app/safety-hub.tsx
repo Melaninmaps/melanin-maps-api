@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -122,7 +123,14 @@ export default function SafetyHubScreen() {
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
-  const FEATURES = [
+  const openExternal = (url: string) => {
+    Linking.canOpenURL(url).then((supported) => {
+      if (supported) Linking.openURL(url);
+      else Alert.alert("Unable to open", "Please visit nsopw.gov in your browser.");
+    });
+  };
+
+  const FEATURES: { id: string; icon: React.ComponentProps<typeof Feather>["name"]; title: string; desc: string; color: string; route: string | null; externalUrl?: string }[] = [
     { id: "tip", icon: "alert-triangle" as const, title: "Submit Safety Tip", desc: "Pin a location where violence or hate occurred. Nearby verified members are alerted to confirm.", color: "#DC2626", route: "/safety-tip" },
     { id: "checkin", icon: "check-circle" as const, title: "Safety Check-In", desc: "Schedule a check-in. Your contact is alerted if you don't confirm.", color: "#16A34A", route: "/checkin" },
     { id: "location", icon: "map-pin" as const, title: "Location Sharing", desc: "Share your live location with a trusted contact temporarily.", color: "#2563EB", route: "/location-share" },
@@ -132,6 +140,7 @@ export default function SafetyHubScreen() {
     { id: "space", icon: "alert-octagon" as const, title: "Report an Unsafe Space", desc: "Flag any business or venue where you experienced unsafe, discriminatory, or unwelcoming treatment.", color: "#7C2D12", route: "/report-space" },
     { id: "family", icon: "eye" as const, title: "Under-18 Content Shield", desc: "All messages and posts from users under 18 are automatically scanned and filtered for harmful content.", color: "#CA922B", route: null },
     { id: "survey", icon: "star" as const, title: "Neighborhood Safety", desc: "Share and read community safety reports for any neighborhood.", color: "#0891B2", route: "/neighborhood-survey" },
+    { id: "registry", icon: "search" as const, title: "Sex Offender Registry", desc: "Search the national registry to see registered offenders in any neighborhood or zip code.", color: "#4338CA", route: null, externalUrl: "https://www.nsopw.gov" },
   ];
 
   return (
@@ -221,7 +230,10 @@ export default function SafetyHubScreen() {
                 <TouchableOpacity
                   key={f.id}
                   style={[styles.featureCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => f.route && router.push(f.route as Parameters<typeof router.push>[0])}
+                  onPress={() => {
+                    if (f.externalUrl) { openExternal(f.externalUrl); return; }
+                    if (f.route) router.push(f.route as Parameters<typeof router.push>[0]);
+                  }}
                   activeOpacity={0.75}
                 >
                   <View style={[styles.featureIcon, { backgroundColor: f.color + "18" }]}>
