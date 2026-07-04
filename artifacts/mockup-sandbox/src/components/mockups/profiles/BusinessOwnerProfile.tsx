@@ -6,8 +6,7 @@ export function BusinessOwnerProfile() {
         <span className="text-white text-xs font-semibold">9:41</span>
         <div className="flex items-center gap-1.5">
           <svg width="16" height="11" viewBox="0 0 16 11"><rect x="0" y="3" width="3" height="8" rx="1" fill="white" opacity="0.4"/><rect x="4" y="2" width="3" height="9" rx="1" fill="white" opacity="0.6"/><rect x="8" y="0" width="3" height="11" rx="1" fill="white" opacity="0.8"/><rect x="12" y="0" width="3" height="11" rx="1" fill="white"/></svg>
-          <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 2.4C10.2 2.4 12.2 3.3 13.6 4.8L15 3.4C13.2 1.5 10.7 0.4 8 0.4C5.3 0.4 2.8 1.5 1 3.4L2.4 4.8C3.8 3.3 5.8 2.4 8 2.4Z" fill="white"/><path d="M8 5.6C9.5 5.6 10.8 6.2 11.8 7.2L13.2 5.8C11.8 4.5 9.9 3.6 8 3.6C6.1 3.6 4.2 4.5 2.8 5.8L4.2 7.2C5.2 6.2 6.5 5.6 8 5.6Z" fill="white"/><circle cx="8" cy="10" r="2" fill="white"/></svg>
-          <div className="flex items-center"><div className="w-6 h-3 border border-white/60 rounded-sm relative"><div className="absolute left-0.5 top-0.5 bottom-0.5 w-4 bg-white rounded-sm"/><div className="absolute -right-1 top-1 w-0.5 h-1 bg-white/60 rounded-r"/></div></div>
+          <div className="flex items-center"><div className="w-6 h-3 border border-white/60 rounded-sm relative"><div className="absolute left-0.5 top-0.5 bottom-0.5 w-4 bg-white rounded-sm"/></div></div>
         </div>
       </div>
 
@@ -26,9 +25,6 @@ export function BusinessOwnerProfile() {
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#CA922B] to-[#8B5E1A] flex items-center justify-center">
               <span className="text-white text-xl font-bold">DW</span>
             </div>
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#CA922B] flex items-center justify-center border-2 border-[#1A0A00]">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            </div>
           </div>
           <div className="flex-1 min-w-0 pt-0.5">
             <p className="text-white font-bold text-base">Deja Williams</p>
@@ -42,6 +38,38 @@ export function BusinessOwnerProfile() {
           </div>
           <div className="w-8 h-8 rounded-full border border-white/15 flex items-center justify-center">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+        </div>
+
+        {/* ── POST COMPOSER ── */}
+        <div className="mx-4 mt-3 bg-[#231200] rounded-2xl border border-white/8 p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#CA922B] to-[#8B5E1A] flex items-center justify-center shrink-0">
+              <span className="text-white text-sm font-bold">DW</span>
+            </div>
+            <div className="flex-1 bg-[#1A0A00] rounded-xl px-3 py-2.5 border border-white/10">
+              <p className="text-white/30 text-sm">Share a business update or community story…</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/8">
+            <div className="flex items-center gap-1.5">
+              <span className="text-white/40 text-[10px] font-semibold uppercase tracking-wider">Visible to:</span>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-[#CA922B]/15 border border-[#CA922B]/30">
+                <span className="text-[10px]">🌐</span>
+                <span className="text-[#CA922B] text-[10px] font-bold">Public</span>
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/5 border border-white/10">
+                <span className="text-[10px]">👥</span>
+                <span className="text-white/40 text-[10px]">Followers</span>
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/5 border border-white/10">
+                <span className="text-[10px]">🔒</span>
+                <span className="text-white/40 text-[10px]">Only Me</span>
+              </div>
+            </div>
+            <div className="bg-[#CA922B] px-3 py-1.5 rounded-full">
+              <span className="text-white text-xs font-bold">Post</span>
+            </div>
           </div>
         </div>
 
@@ -64,7 +92,6 @@ export function BusinessOwnerProfile() {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </div>
           </div>
-          {/* Quick metrics */}
           <div className="flex border-t border-[#2D7A4F]/25">
             {[{ num: "1.2k", label: "Views" }, { num: "94", label: "Saves" }, { num: "4.8★", label: "Rating" }].map((m, i) => (
               <div key={m.label} className={`flex-1 py-3 flex flex-col items-center ${i < 2 ? "border-r border-[#2D7A4F]/25" : ""}`}>
@@ -78,30 +105,58 @@ export function BusinessOwnerProfile() {
         {/* Stats */}
         <div className="mx-4 mt-3 flex bg-[#231200] rounded-2xl border border-white/8 overflow-hidden">
           {[{ label: "Followers", val: "891" }, { label: "Following", val: "114" }, { label: "Points", val: "5,620" }].map((s, i) => (
-            <div key={s.label} className={`flex-1 py-4 flex flex-col items-center ${i < 2 ? "border-r border-white/8" : ""}`}>
+            <div key={s.label} className={`flex-1 py-3 flex flex-col items-center ${i < 2 ? "border-r border-white/8" : ""}`}>
               <span className="text-[#CA922B] text-lg font-bold">{s.val}</span>
               <span className="text-white/40 text-xs mt-0.5">{s.label}</span>
             </div>
           ))}
         </div>
 
-        {/* Business owner tools */}
+        {/* My Posts */}
+        <div className="mx-4 mt-3">
+          <p className="text-white/30 text-[10px] font-bold uppercase tracking-wider mb-2 px-1">My Posts</p>
+          <div className="bg-[#231200] rounded-2xl border border-white/8 overflow-hidden">
+            {[
+              { text: "We're now open 7 days a week! Come through for Sunday brunch — new menu dropping this weekend 🍽️🤎", privacy: "🌐", privacyLabel: "Public", ago: "1h ago", likes: 61, comments: 14 },
+              { text: "Grateful for every person who's saved our spot on the map. 94 saves and counting — this community means everything.", privacy: "👥", privacyLabel: "Followers", ago: "2d ago", likes: 43, comments: 8 },
+            ].map((post, i) => (
+              <div key={i} className={`p-4 ${i < 1 ? "border-b border-white/8" : ""}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+                    <span className="text-[10px]">{post.privacy}</span>
+                    <span className="text-white/40 text-[10px]">{post.privacyLabel}</span>
+                  </div>
+                  <span className="text-white/30 text-[10px]">{post.ago}</span>
+                </div>
+                <p className="text-white/80 text-xs leading-relaxed">{post.text}</p>
+                <div className="flex items-center gap-4 mt-2.5">
+                  <div className="flex items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    <span className="text-white/40 text-[10px]">{post.likes}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span className="text-white/40 text-[10px]">{post.comments}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Business Tools */}
         <div className="mx-4 mt-3">
           <p className="text-white/30 text-[10px] font-bold uppercase tracking-wider mb-2 px-1">Business Tools</p>
           <div className="bg-[#231200] rounded-2xl border border-white/8 overflow-hidden">
             {[
-              { color: "#CA922B", label: "Business Admin", sub: "Manage listing, photos & info", icon: "briefcase" },
-              { color: "#7B5EA7", label: "Business Dashboard", sub: "Analytics, promotions & growth", icon: "bar-chart" },
-              { color: "#1E7A4E", label: "Global Recommendations", sub: "Share places you trust worldwide", icon: "globe" },
-              { color: "#CA922B", label: "Creator Profile", sub: "Connect your social channels", icon: "video" },
+              { color: "#CA922B", label: "Business Dashboard", sub: "Analytics, promotions & growth", icon: "bar-chart" },
+              { color: "#7B5EA7", label: "Global Recommendations", sub: "Share places you trust worldwide", icon: "globe" },
             ].map((item, i) => (
-              <div key={item.label} className={`flex items-center gap-3 px-4 py-3.5 ${i < 3 ? "border-b border-white/8" : ""}`}>
+              <div key={item.label} className={`flex items-center gap-3 px-4 py-3.5 ${i < 1 ? "border-b border-white/8" : ""}`}>
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: item.color + "20" }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={item.color} strokeWidth="1.8">
-                    {item.icon === "briefcase" && <><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></>}
                     {item.icon === "bar-chart" && <><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>}
                     {item.icon === "globe" && <><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></>}
-                    {item.icon === "video" && <><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></>}
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -109,30 +164,6 @@ export function BusinessOwnerProfile() {
                   <p className="text-white/40 text-xs">{item.sub}</p>
                 </div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" opacity="0.3"><path d="M9 18l6-6-6-6"/></svg>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Impact */}
-        <div className="mx-4 mt-3 bg-[#3B1F0E] rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-lg">🤎</span>
-            <div>
-              <p className="text-white font-bold text-sm">Your Impact This Month</p>
-              <p className="text-white/50 text-xs">Keep building — the community sees you</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { num: "1.2k", label: "👁️ Profile\nViews" },
-              { num: "31", label: "🏪 Businesses\nSupported" },
-              { num: "4", label: "🌍 Cities\nExplored" },
-              { num: "94", label: "❤️ Times\nSaved" },
-            ].map((cell) => (
-              <div key={cell.label} className="bg-white/7 rounded-xl p-3 text-center">
-                <p className="text-white font-bold text-xl">{cell.num}</p>
-                <p className="text-white/50 text-[10px] mt-1 whitespace-pre-line leading-tight">{cell.label}</p>
               </div>
             ))}
           </div>

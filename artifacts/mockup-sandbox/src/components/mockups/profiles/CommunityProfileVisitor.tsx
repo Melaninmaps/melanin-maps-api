@@ -6,14 +6,11 @@ export function CommunityProfileVisitor() {
         <span className="text-white text-xs font-semibold">9:41</span>
         <div className="flex items-center gap-1.5">
           <svg width="16" height="11" viewBox="0 0 16 11"><rect x="0" y="3" width="3" height="8" rx="1" fill="white" opacity="0.4"/><rect x="4" y="2" width="3" height="9" rx="1" fill="white" opacity="0.6"/><rect x="8" y="0" width="3" height="11" rx="1" fill="white" opacity="0.8"/><rect x="12" y="0" width="3" height="11" rx="1" fill="white"/></svg>
-          <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 2.4C10.2 2.4 12.2 3.3 13.6 4.8L15 3.4C13.2 1.5 10.7 0.4 8 0.4C5.3 0.4 2.8 1.5 1 3.4L2.4 4.8C3.8 3.3 5.8 2.4 8 2.4Z" fill="white"/><path d="M8 5.6C9.5 5.6 10.8 6.2 11.8 7.2L13.2 5.8C11.8 4.5 9.9 3.6 8 3.6C6.1 3.6 4.2 4.5 2.8 5.8L4.2 7.2C5.2 6.2 6.5 5.6 8 5.6Z" fill="white"/><circle cx="8" cy="10" r="2" fill="white"/></svg>
-          <div className="flex items-center gap-0.5">
-            <div className="w-6 h-3 border border-white/60 rounded-sm relative"><div className="absolute left-0.5 top-0.5 bottom-0.5 w-4 bg-white rounded-sm"/><div className="absolute -right-1 top-1 w-0.5 h-1 bg-white/60 rounded-r"/></div>
-          </div>
+          <div className="w-6 h-3 border border-white/60 rounded-sm relative"><div className="absolute left-0.5 top-0.5 bottom-0.5 w-4 bg-white rounded-sm"/></div>
         </div>
       </div>
 
-      {/* Header — back arrow + name */}
+      {/* Header — back arrow */}
       <div className="flex items-center gap-3 px-5 py-3 border-b border-white/8">
         <div className="w-9 h-9 rounded-full bg-[#2A1800] flex items-center justify-center border border-white/10">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -28,13 +25,8 @@ export function CommunityProfileVisitor() {
         {/* Profile card — no edit button */}
         <div className="mx-4 mt-4 bg-[#231200] rounded-2xl border border-white/8 p-4">
           <div className="flex items-start gap-4">
-            <div className="relative shrink-0">
-              <div className="w-16 h-16 rounded-full bg-[#CA922B] flex items-center justify-center">
-                <span className="text-white text-xl font-bold">JM</span>
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#CA922B] flex items-center justify-center border-2 border-[#1A0A00]">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              </div>
+            <div className="w-16 h-16 rounded-full bg-[#CA922B] flex items-center justify-center shrink-0">
+              <span className="text-white text-xl font-bold">JM</span>
             </div>
             <div className="flex-1 min-w-0 pt-0.5">
               <p className="text-white font-bold text-base">Jasmine Mitchell</p>
@@ -47,7 +39,6 @@ export function CommunityProfileVisitor() {
               </div>
             </div>
           </div>
-
           {/* Action buttons */}
           <div className="flex gap-2 mt-4">
             <button className="flex-1 bg-[#CA922B] rounded-xl py-2.5 flex items-center justify-center gap-1.5">
@@ -61,18 +52,55 @@ export function CommunityProfileVisitor() {
           </div>
         </div>
 
-        {/* Stats row */}
+        {/* Stats */}
         <div className="mx-4 mt-3 flex bg-[#231200] rounded-2xl border border-white/8 overflow-hidden">
           {[{ label: "Followers", val: "142" }, { label: "Following", val: "89" }, { label: "Check-ins", val: "47" }].map((s, i) => (
-            <div key={s.label} className={`flex-1 py-4 flex flex-col items-center ${i < 2 ? "border-r border-white/8" : ""}`}>
+            <div key={s.label} className={`flex-1 py-3 flex flex-col items-center ${i < 2 ? "border-r border-white/8" : ""}`}>
               <span className="text-[#CA922B] text-lg font-bold">{s.val}</span>
               <span className="text-white/40 text-xs mt-0.5">{s.label}</span>
             </div>
           ))}
         </div>
 
-        {/* Community Impact — public version */}
-        <div className="mx-4 mt-3 bg-[#3B1F0E] rounded-2xl p-4">
+        {/* Posts — only public + followers-only (you follow her) */}
+        <div className="mx-4 mt-3">
+          <p className="text-white/30 text-[10px] font-bold uppercase tracking-wider mb-2 px-1">Posts</p>
+          <div className="bg-[#231200] rounded-2xl border border-white/8 overflow-hidden">
+            {[
+              { text: "Just checked in at The Breakfast Club ATL — the chicken & waffles hit different on a Saturday 🧇🤎", privacy: "🌐", privacyLabel: "Public", ago: "2h ago", likes: 24, comments: 5 },
+              { text: "Found the most beautiful Black-owned bookshop in Inman Park today. Adding it to the map — go support them!", privacy: "👥", privacyLabel: "Followers", ago: "1d ago", likes: 38, comments: 9 },
+              // "Only Me" post is intentionally hidden here
+            ].map((post, i) => (
+              <div key={i} className={`p-4 ${i < 1 ? "border-b border-white/8" : ""}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+                    <span className="text-[10px]">{post.privacy}</span>
+                    <span className="text-white/40 text-[10px]">{post.privacyLabel}</span>
+                  </div>
+                  <span className="text-white/30 text-[10px]">{post.ago}</span>
+                </div>
+                <p className="text-white/80 text-xs leading-relaxed">{post.text}</p>
+                <div className="flex items-center gap-4 mt-2.5">
+                  <div className="flex items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    <span className="text-white/40 text-[10px]">{post.likes}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span className="text-white/40 text-[10px]">{post.comments}</span>
+                  </div>
+                  <div className="ml-auto flex items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    <span className="text-white/30 text-[10px]">Share</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Community impact */}
+        <div className="mx-4 mt-3 mb-4 bg-[#3B1F0E] rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-lg">🤎</span>
             <div>
@@ -93,42 +121,6 @@ export function CommunityProfileVisitor() {
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Recent Reviews */}
-        <div className="mx-4 mt-3">
-          <p className="text-white/30 text-[10px] font-bold uppercase tracking-wider mb-2 px-1">Recent Reviews</p>
-          <div className="bg-[#231200] rounded-2xl border border-white/8 overflow-hidden">
-            {[
-              { biz: "The Breakfast Club ATL", stars: 5, quote: "Best chicken and waffles in the city. Authentic vibes, fast service.", ago: "2d ago" },
-              { biz: "BLK Coffee Co.", stars: 4, quote: "Love the atmosphere. Oat milk lattes are 🔥", ago: "1wk ago" },
-            ].map((r, i) => (
-              <div key={r.biz} className={`px-4 py-3.5 ${i < 1 ? "border-b border-white/8" : ""}`}>
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-white text-sm font-semibold">{r.biz}</p>
-                  <span className="text-white/30 text-[10px]">{r.ago}</span>
-                </div>
-                <div className="flex gap-0.5 mb-1.5">
-                  {Array.from({ length: 5 }).map((_, si) => (
-                    <svg key={si} width="10" height="10" viewBox="0 0 24 24" fill={si < r.stars ? "#CA922B" : "none"} stroke="#CA922B" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                  ))}
-                </div>
-                <p className="text-white/50 text-xs leading-relaxed">{r.quote}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Shared circles / communities */}
-        <div className="mx-4 mt-3 mb-4 flex items-center gap-3 bg-[#CA922B]/10 border border-[#CA922B]/25 rounded-2xl p-4">
-          <div className="w-9 h-9 rounded-xl bg-[#CA922B]/20 flex items-center justify-center shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </div>
-          <div className="flex-1">
-            <p className="text-[#CA922B] font-bold text-sm">2 Shared Circles</p>
-            <p className="text-[#CA922B]/60 text-xs mt-0.5">ATL Foodies · Black Travel Collective</p>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
         </div>
       </div>
 

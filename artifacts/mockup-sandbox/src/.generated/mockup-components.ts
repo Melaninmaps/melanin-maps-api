@@ -6,6 +6,7 @@ export const modules: ModuleMap = {
   "./components/mockups/hero-modes/LightMode.tsx": () => import("../components/mockups/hero-modes/LightMode.tsx"),
   "./components/mockups/profiles/BusinessOwnerProfile.tsx": () => import("../components/mockups/profiles/BusinessOwnerProfile.tsx"),
   "./components/mockups/profiles/BusinessOwnerProfileVisitor.tsx": () => import("../components/mockups/profiles/BusinessOwnerProfileVisitor.tsx"),
+  "./components/mockups/profiles/CommunityPage.tsx": () => import("../components/mockups/profiles/CommunityPage.tsx"),
   "./components/mockups/profiles/CommunityProfile.tsx": () => import("../components/mockups/profiles/CommunityProfile.tsx"),
   "./components/mockups/profiles/CommunityProfileVisitor.tsx": () => import("../components/mockups/profiles/CommunityProfileVisitor.tsx"),
   "./components/mockups/surveys/BlackOwnedSurvey.tsx": () => import("../components/mockups/surveys/BlackOwnedSurvey.tsx"),
