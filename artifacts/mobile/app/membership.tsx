@@ -644,18 +644,8 @@ export default function MembershipScreen() {
               <View style={[styles.featureRow, { flexDirection: "column", alignItems: "flex-start", gap: 6, marginBottom: 4 }]}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                   <Text style={{ fontSize: 14 }}>🔒</Text>
-                  <Text style={[styles.featureTxt, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>1% discount off standard rates, locked for 3 years:</Text>
+                  <Text style={[styles.featureTxt, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>1% off current market rates — locked in for 3 years</Text>
                 </View>
-                {[
-                  { tier: "Community Business", fee: "9%" },
-                  { tier: "Growth Business",    fee: "7%" },
-                  { tier: "Premium Business",   fee: "5%" },
-                ].map((row, i) => (
-                  <View key={i} style={{ flexDirection: "row", justifyContent: "space-between", width: "100%", paddingLeft: 22 }}>
-                    <Text style={[styles.featureTxt, { color: colors.mutedForeground }]}>{row.tier}</Text>
-                    <Text style={[styles.featureTxt, { color: "#C9A84C", fontFamily: "Inter_700Bold" }]}>{row.fee}</Text>
-                  </View>
-                ))}
               </View>
               {[
                 "Founding Business badge on your profile and listing",
@@ -682,6 +672,34 @@ export default function MembershipScreen() {
           </View>
         )}
 
+
+        {/* Marketplace Fees table — business only */}
+        {audience === "business" && (
+          <View style={[styles.feeTable, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.feeTableHeader}>
+              <Feather name="percent" size={15} color={colors.primary} />
+              <Text style={[styles.feeTableTitle, { color: colors.foreground }]}>Marketplace Fees</Text>
+            </View>
+            <Text style={[styles.feeNote, { color: colors.mutedForeground, marginBottom: 12 }]}>
+              Fees apply only when a transaction happens inside the app. Sending traffic to your own website is always free.
+            </Text>
+            {[
+              { label: "Click-through to your website", fee: "0%" },
+              { label: "In-app bookings", fee: "10%" },
+              { label: "Product sales · $0–$25", fee: "5%" },
+              { label: "Product sales · $25.01–$250", fee: "10%" },
+              { label: "Product sales · $250.01+", fee: "10%" },
+              { label: "Event tickets", fee: "5–8%" },
+              { label: "Donations (nonprofits)", fee: "3%" },
+              { label: "Digital downloads", fee: "10%" },
+            ].map((row, i, arr) => (
+              <View key={i} style={[styles.feeRow, i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+                <Text style={[styles.feeRowName, { color: colors.foreground, flex: 1 }]}>{row.label}</Text>
+                <Text style={[styles.feeRowVal, { color: colors.primary }]}>{row.fee}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Verified Business section — business only */}
         {audience === "business" && (
