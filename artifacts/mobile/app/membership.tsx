@@ -139,7 +139,6 @@ const BUSINESS_PLANS: Plan[] = [
     name: "Community Listing",
     tagline: "Get discovered by the community — always free.",
     badge: null,
-    fee: "10% Marketplace Fee",
     monthlyPrice: 0,
     annualTotal: 0,
     color: "#8B7355",
@@ -165,7 +164,6 @@ const BUSINESS_PLANS: Plan[] = [
     stripeKey: "Growth Business",
     tagline: "More reach, more tools, more revenue.",
     badge: "Recommended",
-    fee: "8% Marketplace Fee",
     monthlyPrice: 29,
     annualTotal: 290,
     color: "#3B1F0E",
@@ -195,7 +193,6 @@ const BUSINESS_PLANS: Plan[] = [
     stripeKey: "Premium Business",
     tagline: "Advanced tools for established businesses.",
     badge: "Full Access",
-    fee: "6% Marketplace Fee",
     monthlyPrice: 79,
     annualTotal: 790,
     color: "#1A0A00",
@@ -224,7 +221,6 @@ const BUSINESS_PLANS: Plan[] = [
     name: "Enterprise Partner",
     tagline: "Built for community leaders.",
     badge: "Enterprise",
-    fee: "4% Marketplace Fee",
     monthlyPrice: 199,
     annualTotal: 1990,
     color: "#0A0A0A",
@@ -579,14 +575,6 @@ export default function MembershipScreen() {
                     Billed ${plan.annualTotal.toFixed(0)}/yr
                   </Text>
                 )}
-                {plan.fee && (
-                  <View style={[styles.feeBadge, { backgroundColor: isHighlight ? "rgba(255,255,255,0.15)" : colors.secondary }]}>
-                    <Feather name="percent" size={11} color={isHighlight ? "rgba(255,255,255,0.9)" : colors.mutedForeground} />
-                    <Text style={[styles.feeBadgeTxt, { color: isHighlight ? "rgba(255,255,255,0.9)" : colors.mutedForeground }]}>
-                      {plan.fee}
-                    </Text>
-                  </View>
-                )}
               </View>
 
               <View style={styles.featureList}>
@@ -694,37 +682,6 @@ export default function MembershipScreen() {
           </View>
         )}
 
-        {/* Marketplace Fees table — business only */}
-        {audience === "business" && (
-          <View style={[styles.feeTable, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.feeTableHeader}>
-              <Feather name="percent" size={15} color={colors.primary} />
-              <Text style={[styles.feeTableTitle, { color: colors.foreground }]}>Marketplace Fees</Text>
-            </View>
-            <Text style={[styles.feeNote, { color: colors.mutedForeground, marginBottom: 10 }]}>
-              Standard rates apply to businesses joining after the Founding Program closes. Every transaction helps fund AI, community tools, safety intelligence, verification, and continued investment in minority-owned businesses.
-            </Text>
-            {[
-              { name: "Community Business", fee: "10%" },
-              { name: "Growth Business", fee: "8%" },
-              { name: "Premium Business", fee: "6%" },
-              { name: "Enterprise Partner", fee: "4%" },
-            ].map((row, i, arr) => (
-              <View key={i} style={[styles.feeRow, i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
-                <Text style={[styles.feeRowName, { color: colors.foreground }]}>{row.name}</Text>
-                <Text style={[styles.feeRowVal, { color: colors.primary }]}>{row.fee}</Text>
-              </View>
-            ))}
-            <View style={{ marginTop: 10, gap: 4 }}>
-              <Text style={[styles.feeNote, { color: colors.mutedForeground }]}>
-                Transactions under $25 are capped at 5% regardless of tier. Transactions over $250 are capped at 6%.
-              </Text>
-              <Text style={[styles.feeNote, { color: "#C9A84C" }]}>
-                🔒 Founding Businesses save 1% for 3 years: Community 9% · Growth 7% · Premium 5%
-              </Text>
-            </View>
-          </View>
-        )}
 
         {/* Verified Business section — business only */}
         {audience === "business" && (
