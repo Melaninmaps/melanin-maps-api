@@ -474,27 +474,21 @@ router.post("/auth/register", async (req: Request, res: Response) => {
   try {
     const cleanEmail = email.trim().toLowerCase();
 
-    const [existingEmail] = await db
-      .select({ id: usersTable.id })
-      .from(usersTable)
-      .where(ilike(usersTable.email, cleanEmail))
-      .limit(1);
+    // Run email, username checks and password hash in parallel — no sequential waiting
+    const [existingEmail, existingUsername, passwordHash] = await Promise.all([
+      db.select({ id: usersTable.id }).from(usersTable).where(ilike(usersTable.email, cleanEmail)).limit(1).then(r => r[0]),
+      db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, cleanUsername)).limit(1).then(r => r[0]),
+      bcrypt.hash(password, 10),
+    ]);
+
     if (existingEmail) {
       res.status(409).json({ error: "An account with this email already exists." });
       return;
     }
-
-    const [existingUsername] = await db
-      .select({ id: usersTable.id })
-      .from(usersTable)
-      .where(eq(usersTable.username, cleanUsername))
-      .limit(1);
     if (existingUsername) {
       res.status(409).json({ error: "That username is already taken." });
       return;
     }
-
-    const passwordHash = await bcrypt.hash(password, 12);
     const referralCode = crypto.randomBytes(4).toString("hex").toUpperCase();
 
     const [user] = await db
@@ -662,7 +656,7 @@ router.post("/auth/reset-password", async (req: Request, res: Response) => {
       return;
     }
 
-    const passwordHash = await bcrypt.hash(newPassword, 12);
+    const passwordHash = await bcrypt.hash(newPassword, 10);
     await db
       .update(usersTable)
       .set({ passwordHash, emailVerificationToken: null, emailVerificationExpires: null })
