@@ -372,6 +372,28 @@ export default function DiscoverScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Global Recommendations banner */}
+        <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 16 }]}>
+          <TouchableOpacity
+            activeOpacity={0.88}
+            onPress={() => router.push("/global-recommendations" as any)}
+            style={[styles.travelBanner, { backgroundColor: "#1A2E22" }]}
+          >
+            <View style={styles.travelBannerLeft}>
+              <Text style={styles.travelBannerEyebrow}>🌍 COMMUNITY PICKS</Text>
+              <Text style={styles.travelBannerTitle}>Global Recommendations</Text>
+              <Text style={styles.travelBannerSub}>
+                Trusted places around the world — shared by our community.
+              </Text>
+            </View>
+            <View style={styles.travelBannerRight}>
+              <View style={[styles.travelBannerArrow, { backgroundColor: "#CA922B" }]}>
+                <Ionicons name="globe-outline" size={22} color="#fff" />
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+
         {/* Relocation Planner banner */}
         <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 16 }]}>
           <TouchableOpacity

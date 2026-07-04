@@ -48,6 +48,7 @@ import Resources from "@/pages/resources";
 import SharedTrip from "@/pages/shared-trip";
 import DeleteAccount from "@/pages/delete-account";
 import BusinessResponse from "@/pages/business-response";
+import GlobalRecommendations from "@/pages/global-recommendations";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { data: auth, isLoading } = useGetCurrentAuthUser();
@@ -180,6 +181,9 @@ function Router() {
       <Route path="/welcome" component={Welcome} />
       <Route path="/business-dashboard">
         <Layout><ProtectedRoute><BusinessDashboard /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/global-recommendations">
+        <Layout><GlobalRecommendations /></Layout>
       </Route>
       <Route path="/notifications">
         <Layout><ProtectedRoute><Notifications /></ProtectedRoute></Layout>

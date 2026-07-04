@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Redirect } from "wouter";
-import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2, Flag, AlertTriangle, Trophy, CalendarDays } from "lucide-react";
+import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2, Flag, AlertTriangle, Trophy, CalendarDays, Globe } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
@@ -67,6 +67,22 @@ type CategoryWaitlistEntry = {
   city: string | null;
   state: string | null;
   createdAt: string;
+};
+
+type PendingGlobalRec = {
+  id: string;
+  country: string;
+  city: string | null;
+  businessName: string;
+  website: string | null;
+  type: string;
+  reason: string | null;
+  personalConnection: string | null;
+  status: string;
+  badge: string | null;
+  createdAt: string;
+  contributorFirstName: string | null;
+  contributorHomeCity: string | null;
 };
 
 type ChallengeApplicationRow = {
@@ -140,7 +156,7 @@ type MetricsData = {
   daily: { date: string; count: number }[];
 };
 
-type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist";
+type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs";
 
 function statusBadge(status: string) {
   if (status === "approved")
@@ -318,6 +334,9 @@ export default function Admin() {
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [pendingGlobalRecs, setPendingGlobalRecs] = useState<PendingGlobalRec[]>([]);
+  const [globalRecsLoading, setGlobalRecsLoading] = useState(false);
+  const [globalRecUpdating, setGlobalRecUpdating] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`${BASE}api/admin/check`, { credentials: "include" })
@@ -413,9 +432,18 @@ export default function Admin() {
       .catch(() => {});
   }, []);
 
+  const loadPendingGlobalRecs = useCallback(() => {
+    setGlobalRecsLoading(true);
+    return fetch(`${BASE}api/global-recommendations/pending`, { credentials: "include" })
+      .then(r => r.json())
+      .then(data => { setPendingGlobalRecs(data.recommendations ?? []); setLastRefreshed(new Date()); })
+      .catch(() => {})
+      .finally(() => setGlobalRecsLoading(false));
+  }, []);
+
   const refreshAll = useCallback(() => {
-    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses(), loadMembers(), loadReviews(), loadReports(), loadChallengeApps(), loadCategoryWaitlist()]);
-  }, [loadWaitlist, loadUsers, loadBusinesses, loadMembers, loadReviews, loadReports, loadChallengeApps, loadCategoryWaitlist]);
+    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses(), loadMembers(), loadReviews(), loadReports(), loadChallengeApps(), loadCategoryWaitlist(), loadPendingGlobalRecs()]);
+  }, [loadWaitlist, loadUsers, loadBusinesses, loadMembers, loadReviews, loadReports, loadChallengeApps, loadCategoryWaitlist, loadPendingGlobalRecs]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -706,6 +734,7 @@ export default function Admin() {
     { id: "reports", label: "Reports", icon: <Flag className="w-4 h-4" />, badge: reports.filter(r => r.status === "pending").length || undefined },
     { id: "challenges", label: "Challenges", icon: <Award className="w-4 h-4" />, badge: challengeApps.filter(a => a.status === "pending").length || undefined },
     { id: "category-waitlist", label: "Category Waitlist", icon: <BarChart2 className="w-4 h-4" />, badge: categoryWaitlistEntries.length || undefined },
+    { id: "global-recs", label: "Global Recs", icon: <Globe className="w-4 h-4" />, badge: pendingGlobalRecs.filter(r => r.status === "pending").length || undefined },
   ];
 
   return (
@@ -1943,6 +1972,128 @@ export default function Admin() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Global Recs tab ─────────────────────────────────────────────── */}
+        {tab === "global-recs" && (
+          <div className="p-6 space-y-6">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h2 className="text-xl font-bold text-[#3A1F0E]">Global Recommendations Review</h2>
+                <p className="text-[#3A1F0E]/60 text-sm mt-0.5">Approve or reject community-submitted place recommendations from around the world.</p>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => { void loadPendingGlobalRecs(); }} className="gap-2">
+                <RefreshCw className="w-3.5 h-3.5" /> Refresh
+              </Button>
+            </div>
+
+            {globalRecsLoading && <div className="text-center py-12 text-[#3A1F0E]/40 text-sm">Loading…</div>}
+
+            {!globalRecsLoading && pendingGlobalRecs.length === 0 && (
+              <div className="text-center py-16 bg-white rounded-2xl border border-[#E8D5B7]">
+                <Globe className="w-10 h-10 text-[#3A1F0E]/15 mx-auto mb-3" />
+                <p className="font-bold text-[#3A1F0E]/40">No recommendations in queue</p>
+              </div>
+            )}
+
+            {!globalRecsLoading && pendingGlobalRecs.length > 0 && (
+              <div className="bg-white rounded-2xl border border-[#E8D5B7] overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[#E8D5B7] bg-[#FAF6EF]">
+                        <th className="text-left px-4 py-3 text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider">Place</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider">Location</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider">Contributor</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider">Reason</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider">Status</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider">Badge</th>
+                        <th className="px-4 py-3" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#E8D5B7]">
+                      {pendingGlobalRecs.map((rec) => (
+                        <tr key={rec.id} className="hover:bg-[#FAF6EF]/60 transition-colors">
+                          <td className="px-4 py-3">
+                            <div className="font-semibold text-[#2B1507]">{rec.businessName}</div>
+                            <div className="text-[#3A1F0E]/50 text-xs capitalize">{rec.type.replace(/_/g, " ")}</div>
+                            {rec.website && (
+                              <a href={rec.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[#CA922B] text-xs mt-0.5 hover:underline">
+                                <ExternalLink className="w-3 h-3" /> Website
+                              </a>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-[#3A1F0E]/70 text-xs">
+                            {rec.city ? `${rec.city}, ` : ""}{rec.country}
+                          </td>
+                          <td className="px-4 py-3 text-[#3A1F0E]/70 text-xs">
+                            {rec.contributorFirstName ?? "—"}
+                            {rec.contributorHomeCity && <div className="text-[#3A1F0E]/40">{rec.contributorHomeCity}</div>}
+                          </td>
+                          <td className="px-4 py-3 text-[#3A1F0E]/60 text-xs max-w-[200px]">
+                            <div className="line-clamp-2">{rec.reason ?? "—"}</div>
+                            {rec.personalConnection && <div className="text-[#3A1F0E]/40 mt-0.5 italic line-clamp-1">{rec.personalConnection}</div>}
+                          </td>
+                          <td className="px-4 py-3">{statusBadge(rec.status)}</td>
+                          <td className="px-4 py-3 text-[#3A1F0E]/50 text-xs">{rec.badge ?? "—"}</td>
+                          <td className="px-4 py-3">
+                            {rec.status === "pending" && (
+                              <div className="flex gap-2">
+                                <Button size="sm" disabled={globalRecUpdating === rec.id}
+                                  className="h-7 px-3 text-xs bg-green-600 hover:bg-green-700 text-white rounded-full gap-1"
+                                  onClick={async () => {
+                                    setGlobalRecUpdating(rec.id);
+                                    await fetch(`${BASE}api/global-recommendations/${rec.id}/status`, {
+                                      method: "PATCH", credentials: "include",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ status: "approved" }),
+                                    });
+                                    await loadPendingGlobalRecs();
+                                    setGlobalRecUpdating(null);
+                                  }}>
+                                  <Check className="w-3 h-3" /> Approve
+                                </Button>
+                                <Button size="sm" variant="outline" disabled={globalRecUpdating === rec.id}
+                                  className="h-7 px-3 text-xs text-red-600 border-red-200 hover:bg-red-50 rounded-full gap-1"
+                                  onClick={async () => {
+                                    setGlobalRecUpdating(rec.id);
+                                    await fetch(`${BASE}api/global-recommendations/${rec.id}/status`, {
+                                      method: "PATCH", credentials: "include",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ status: "rejected" }),
+                                    });
+                                    await loadPendingGlobalRecs();
+                                    setGlobalRecUpdating(null);
+                                  }}>
+                                  <X className="w-3 h-3" /> Reject
+                                </Button>
+                              </div>
+                            )}
+                            {rec.status !== "pending" && (
+                              <Button size="sm" variant="outline" disabled={globalRecUpdating === rec.id}
+                                className="h-7 px-3 text-xs rounded-full gap-1"
+                                onClick={async () => {
+                                  setGlobalRecUpdating(rec.id);
+                                  await fetch(`${BASE}api/global-recommendations/${rec.id}/status`, {
+                                    method: "PATCH", credentials: "include",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ status: "pending" }),
+                                  });
+                                  await loadPendingGlobalRecs();
+                                  setGlobalRecUpdating(null);
+                                }}>
+                                <Clock className="w-3 h-3" /> Reset
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
