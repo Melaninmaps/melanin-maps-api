@@ -16,6 +16,7 @@ export const waitlistTable = pgTable("waitlist_signups", {
   notes: text("notes"),
   welcomeEmailSent: boolean("welcome_email_sent").notNull().default(false),
   launchEmailSent: boolean("launch_email_sent").notNull().default(false),
+  betaEmailSent: boolean("beta_email_sent").notNull().default(false),
   approvedAt: timestamp("approved_at"),
   lastNudgeSentAt: timestamp("last_nudge_sent_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

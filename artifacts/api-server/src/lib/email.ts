@@ -1999,6 +1999,67 @@ export async function sendWeeklyBusinessReport(
   });
 }
 
+// ── Beta announcement blast ────────────────────────────────────────────────────
+export async function sendBetaAnnouncementBlast(
+  to: string,
+  firstName: string,
+  betaSignupUrl: string,
+) {
+  if (!resend) { log("beta announcement blast"); return; }
+  const name = firstName || "there";
+  await resend.emails.send({
+    from: FROM,
+    to,
+    replyTo: "hello@mappingwithmelanin.com",
+    subject: `🗺️ Mapping With Melanin™ is almost here — join our beta`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
+
+        <div style="background:#2B1507;border-radius:12px;padding:24px;text-align:center;margin-bottom:28px">
+          <p style="color:#CA922B;font-size:13px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:2px">Coming Soon</p>
+          <p style="color:#fff;font-size:26px;font-weight:900;margin:0;letter-spacing:-0.5px">We're in testing. 🙌🏾</p>
+        </div>
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 16px">Hey ${name},</p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          We wanted to give you a heads-up — <strong>Mapping With Melanin™ is currently in app store testing</strong>
+          and will be available for download very soon.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          In the meantime, we're looking for passionate community members to join our
+          <strong style="color:#CA922B">beta testing program</strong> — get early access, help shape the experience,
+          and be among the very first to discover Black-owned businesses and community safety intel on the app.
+        </p>
+
+        <div style="background:#F5EBD8;border-radius:12px;padding:20px 24px;margin-bottom:28px">
+          <p style="color:#2B1507;font-size:14px;font-weight:700;margin:0 0 10px">🧪 Beta testers get:</p>
+          <ul style="color:#3A1F0E;font-size:14px;line-height:1.8;margin:0;padding-left:18px">
+            <li>Early access before the public launch</li>
+            <li>Direct line to the founding team</li>
+            <li>Your feedback built into the final product</li>
+            <li>Founding Member recognition in the app</li>
+          </ul>
+        </div>
+
+        <a href="${betaSignupUrl}" style="display:block;text-align:center;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:16px 32px;border-radius:50px;text-decoration:none;margin-bottom:28px">
+          Yes, I want to be a beta tester →
+        </a>
+
+        <p style="color:#6B7280;font-size:14px;line-height:1.6;text-align:center;margin:0 0 24px">
+          Already on the waitlist? You're first in line — we'll be in touch as soon as the doors open.
+        </p>
+
+        <p style="color:#2B1507;font-size:15px;font-weight:700;font-style:italic;margin:16px 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:14px;margin:0 0 4px">The Mapping With Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.5;margin:0">Melanin Maps LLC · <a href="https://mappingwithmelanin.com" style="color:#CA922B">mappingwithmelanin.com</a></p>
+      </div>
+    `,
+  });
+}
+
 export async function sendAppLaunchBlast(
   to: string,
   firstName: string,
