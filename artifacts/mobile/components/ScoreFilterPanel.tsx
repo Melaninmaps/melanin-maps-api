@@ -19,7 +19,6 @@ const PRESET_CHIPS = [
 
 export const OWNERSHIP_OPTIONS = [
   { id: "minority-owned", label: "Black-Owned", emoji: "✊🏾", color: "#3A1F0E" },
-  { id: "black-owned", label: "Black-Owned", emoji: "✊🏾", color: "#3A1F0E" },
   { id: "women-owned", label: "Women-Owned", emoji: "👩🏾‍💼", color: "#7B2D8B" },
   { id: "veteran-owned", label: "Veteran-Owned", emoji: "🎖️", color: "#1D4ED8" },
   { id: "lgbtq-owned", label: "LGBTQIA+-Owned", emoji: "🏳️‍🌈", color: "#DC2626" },
