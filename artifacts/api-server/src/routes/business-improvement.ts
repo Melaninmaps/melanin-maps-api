@@ -14,7 +14,7 @@ const PREF_TO_DESIGNATIONS: Record<string, string[]> = {
   "lgbtq-owned": ["LGBTQ+-Owned", "LGBTQ-Owned"],
   "immigrant-owned": ["Immigrant-Owned"],
   "disability-owned": ["Disability-Owned", "Disabled-Owned"],
-  "minority-owned": ["Black-Owned", "Hispanic-Owned", "Latinx-Owned", "Asian-Owned", "Women-Owned", "LGBTQ+-Owned", "Immigrant-Owned", "Veteran-Owned"],
+  "minority-owned": ["Black-Owned", "Hispanic-Owned", "Latinx-Owned", "Women-Owned", "LGBTQ+-Owned", "Immigrant-Owned", "Veteran-Owned"],
 };
 
 // ─── Service type → category keyword mapping ─────────────────────────────────

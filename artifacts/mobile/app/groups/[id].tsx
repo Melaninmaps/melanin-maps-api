@@ -30,7 +30,6 @@ const AUDIENCE_LABELS: Record<string, string> = {
   "Black / African American": "🤎",
   "Hispanic / Latino": "🧡",
   "Native American / Indigenous": "🌿",
-  "Asian / Pacific Islander": "🌸",
   "Middle Eastern / North African": "🌙",
   "Multiracial": "🌈",
 };

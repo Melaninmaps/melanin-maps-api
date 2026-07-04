@@ -37,11 +37,6 @@ const CULTURAL_IDENTITIES = [
     sub: "First Nations, American Indian, Alaska Native, Hawaiian",
   },
   {
-    key: "Asian / Pacific Islander",
-    emoji: "🌸",
-    sub: "East Asian, South Asian, Southeast Asian, Pacific Islander",
-  },
-  {
     key: "Middle Eastern / North African",
     emoji: "🌙",
     sub: "Arab, Persian, Turkish, North African",

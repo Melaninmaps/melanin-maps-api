@@ -1179,7 +1179,6 @@ export default function CommunityScreen() {
                     { key: "Black / African American", emoji: "🤎" },
                     { key: "Hispanic / Latino", emoji: "🧡" },
                     { key: "Native American / Indigenous", emoji: "🌿" },
-                    { key: "Asian / Pacific Islander", emoji: "🌸" },
                     { key: "Middle Eastern / North African", emoji: "🌙" },
                     { key: "Multiracial", emoji: "🌈" },
                   ].map((ci) => {

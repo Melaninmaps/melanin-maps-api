@@ -21,12 +21,6 @@ export const DESIGNATIONS = [
     keywords: ["Indigenous", "Native American", "American Indian", "Alaska Native", "First Nations", "Tribal"],
   },
   {
-    id: "aapi",
-    label: "Asian American / AAPI",
-    emoji: "🌸",
-    keywords: ["Asian American", "Asian-American", "Pacific Islander", "AAPI", "Asian Pacific"],
-  },
-  {
     id: "mena",
     label: "Middle Eastern / Arab",
     emoji: "🌙",
