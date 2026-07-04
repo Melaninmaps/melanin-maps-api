@@ -970,6 +970,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    flexWrap: "wrap",
+    rowGap: 8,
     marginBottom: 12,
   },
   safetyTitleRow: { flexDirection: "row", alignItems: "center", gap: 7 },
