@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { UserProfileRole } from './userProfileRole';
 
 export interface UserProfile {
   id: string;
@@ -16,6 +17,8 @@ export interface UserProfile {
   lastName?: string | null;
   /** @nullable */
   profileImageUrl?: string | null;
+  /** The user's platform role. Determines access level and admin privileges. */
+  role?: UserProfileRole;
   /** @nullable */
   createdAt?: Date | null;
 }

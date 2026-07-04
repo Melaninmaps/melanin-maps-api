@@ -726,5 +726,80 @@ router.get("/admin/referral-stats", async (req: Request, res: Response) => {
   }
 });
 
+// ── Business leads CSV export ─────────────────────────────────────────────────
+router.get("/admin/businesses/export-csv", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const businesses = await db
+      .select({
+        id: businessesTable.id,
+        name: businessesTable.name,
+        category: businessesTable.category,
+        city: businessesTable.city,
+        state: businessesTable.state,
+        verified: businessesTable.verified,
+        blackOwned: businessesTable.blackOwned,
+        status: businessesTable.status,
+        phone: businessesTable.phone,
+        website: businessesTable.website,
+        createdAt: businessesTable.createdAt,
+      })
+      .from(businessesTable)
+      .orderBy(desc(businessesTable.createdAt))
+      .limit(2000);
+
+    const invites = await db
+      .select({
+        businessId: businessInvitesTable.businessId,
+        status: businessInvitesTable.status,
+        socialHandle: businessInvitesTable.socialHandle,
+        createdAt: businessInvitesTable.createdAt,
+      })
+      .from(businessInvitesTable)
+      .orderBy(desc(businessInvitesTable.createdAt));
+
+    const outreachByBusiness = new Map<string, typeof invites[0]>();
+    for (const inv of invites) {
+      if (inv.businessId && !outreachByBusiness.has(inv.businessId)) {
+        outreachByBusiness.set(inv.businessId, inv);
+      }
+    }
+
+    const escape = (v: unknown) => {
+      const s = String(v ?? "").replace(/"/g, '""');
+      return /[",\n\r]/.test(s) ? `"${s}"` : s;
+    };
+
+    const headers = ["Name", "Category", "City", "State", "Phone", "Website", "Verified", "Minority-Owned", "Status", "Outreach Status", "Outreach Handle", "Outreach Date", "Added Date"];
+    const rows = businesses.map((b) => {
+      const out = outreachByBusiness.get(b.id);
+      return [
+        b.name,
+        b.category,
+        b.city,
+        b.state,
+        b.phone ?? "",
+        b.website ?? "",
+        b.verified ? "Yes" : "No",
+        b.blackOwned ? "Yes" : "No",
+        b.status,
+        out?.status ?? "Not contacted",
+        out?.socialHandle ?? "",
+        out ? new Date(out.createdAt).toLocaleDateString() : "",
+        new Date(b.createdAt).toLocaleDateString(),
+      ].map(escape).join(",");
+    });
+
+    const csv = [headers.join(","), ...rows].join("\n");
+    const date = new Date().toISOString().slice(0, 10);
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="business-leads-${date}.csv"`);
+    res.send(csv);
+  } catch (err) {
+    req.log.error({ err }, "Failed to export business leads CSV");
+    res.status(500).json({ error: "Failed to export" });
+  }
+});
+
 export default router;
 

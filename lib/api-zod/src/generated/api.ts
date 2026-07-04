@@ -310,6 +310,7 @@ export const GetMyProfileResponse = zod.object({
   "firstName": zod.string().nullish(),
   "lastName": zod.string().nullish(),
   "profileImageUrl": zod.string().nullish(),
+  "role": zod.enum(['user', 'tester', 'admin']).optional().describe('The user\'s platform role. Determines access level and admin privileges.'),
   "createdAt": zod.coerce.date().nullish()
 })
 
@@ -328,6 +329,7 @@ export const UpdateMyProfileResponse = zod.object({
   "firstName": zod.string().nullish(),
   "lastName": zod.string().nullish(),
   "profileImageUrl": zod.string().nullish(),
+  "role": zod.enum(['user', 'tester', 'admin']).optional().describe('The user\'s platform role. Determines access level and admin privileges.'),
   "createdAt": zod.coerce.date().nullish()
 })
 

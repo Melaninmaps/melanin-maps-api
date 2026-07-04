@@ -997,6 +997,10 @@ components:
           type: [string, 'null']
         profileImageUrl:
           type: [string, 'null']
+        role:
+          type: string
+          enum: [user, tester, admin]
+          description: The user's platform role. Determines access level and admin privileges.
         createdAt:
           type: [string, 'null']
           format: date-time

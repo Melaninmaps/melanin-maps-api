@@ -202,6 +202,18 @@ export interface SurveyInput {
   comments?: string;
 }
 
+/**
+ * The user's platform role. Determines access level and admin privileges.
+ */
+export type UserProfileRole = typeof UserProfileRole[keyof typeof UserProfileRole];
+
+
+export const UserProfileRole = {
+  user: 'user',
+  tester: 'tester',
+  admin: 'admin',
+} as const;
+
 export interface UserProfile {
   id: string;
   /** @nullable */
@@ -212,6 +224,8 @@ export interface UserProfile {
   lastName?: string | null;
   /** @nullable */
   profileImageUrl?: string | null;
+  /** The user's platform role. Determines access level and admin privileges. */
+  role?: UserProfileRole;
   /** @nullable */
   createdAt?: string | null;
 }

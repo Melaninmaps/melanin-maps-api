@@ -50,4 +50,5 @@ export * from './travelNeighborhood';
 export * from './travelRecommendationRequest';
 export * from './travelRecommendations';
 export * from './userProfile';
+export * from './userProfileRole';
 export * from './userProfileUpdate';

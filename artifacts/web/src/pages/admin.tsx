@@ -790,6 +790,20 @@ export default function Admin() {
             )}
           </div>
 
+          {/* Auto-schedule: cron URL for external scheduler */}
+          <div className="mt-4 bg-white/10 rounded-2xl p-4 border border-white/10">
+            <div className="flex items-center gap-2 mb-2">
+              <RefreshCw className="w-4 h-4 text-[#CA922B]" />
+              <span className="text-sm font-bold text-[#F5EBD8]">Auto-Schedule Weekly Nudge</span>
+            </div>
+            <p className="text-xs text-[#F5EBD8]/50 mb-3">
+              Set <code className="bg-white/10 px-1 rounded">ADMIN_CRON_KEY</code> in environment secrets, then point any weekly cron service (GitHub Actions, Render Cron, EasyCron, etc.) at this URL:
+            </p>
+            <code className="block text-xs bg-black/30 rounded-lg px-3 py-2 text-[#CA922B] break-all select-all">
+              GET https://www.mappingwithmelanin.com/api/admin/cron-weekly-nudge?key=YOUR_ADMIN_CRON_KEY
+            </code>
+          </div>
+
           {/* Force-send waitlist welcome email to specific addresses */}
           <div className="mt-4 bg-white/10 rounded-2xl p-4 border border-white/10">
             <div className="flex items-center gap-2 mb-2">
@@ -878,6 +892,15 @@ export default function Admin() {
               >
                 <Download className="w-3.5 h-3.5" /> Export CSV
               </button>
+            )}
+            {tab === "businesses" && (
+              <a
+                href={`${BASE}api/admin/businesses/export-csv`}
+                download
+                className="flex items-center gap-1.5 text-xs font-bold text-[#CA922B] hover:text-[#B38024] transition-colors py-1 px-3 rounded-lg border border-[#CA922B]/30 hover:bg-[#CA922B]/5"
+              >
+                <Download className="w-3.5 h-3.5" /> Export Leads CSV ({businesses.length})
+              </a>
             )}
           </div>
         </div>

@@ -1,6 +1,8 @@
 import * as oidc from "openid-client";
 import { type Request, type Response, type NextFunction } from "express";
 import type { AuthUser } from "@workspace/api-zod";
+import { db, usersTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import {
   clearSession,
   getOidcConfig,
@@ -82,6 +84,23 @@ export async function authMiddleware(
     await clearSession(res, sid);
     next();
     return;
+  }
+
+  // Re-read role from DB on every request to prevent stale session roles.
+  // This ensures role changes (e.g. promoting to admin/tester) take effect
+  // immediately without requiring the user to log out and back in.
+  try {
+    const [freshUser] = await db
+      .select({ role: usersTable.role })
+      .from(usersTable)
+      .where(eq(usersTable.id, refreshed.user.id))
+      .limit(1);
+    if (freshUser && freshUser.role && freshUser.role !== refreshed.user.role) {
+      refreshed.user.role = freshUser.role as "user" | "tester" | "admin";
+      await updateSession(sid, refreshed);
+    }
+  } catch {
+    // If DB lookup fails, serve the existing session role rather than blocking the request
   }
 
   req.user = refreshed.user;

@@ -74,28 +74,43 @@ export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinesses
     setIsLoading(true);
     setError(null);
 
-    try {
-      const apiBase = getApiBaseUrl();
-      const params = new URLSearchParams();
-      if (search.length > 0) params.set("search", search);
-      if (category && category !== "All") params.set("category", category);
-      const qs = params.toString();
+    const apiBase = getApiBaseUrl();
+    const params = new URLSearchParams();
+    if (search.length > 0) params.set("search", search);
+    if (category && category !== "All") params.set("category", category);
+    const qs = params.toString();
+    const url = `${apiBase}/api/businesses${qs ? `?${qs}` : ""}`;
 
+    const tryFetch = async (): Promise<Record<string, unknown>[] | null> => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
+      const timeout = setTimeout(() => controller.abort(), 6000);
+      try {
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        return (data.businesses as Record<string, unknown>[]) ?? null;
+      } catch {
+        clearTimeout(timeout);
+        return null;
+      }
+    };
 
-      const res = await fetch(`${apiBase}/api/businesses${qs ? `?${qs}` : ""}`, {
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
+    try {
+      let businesses = await tryFetch();
+      if (!businesses) {
+        // One retry after a short delay before falling back to static data
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        businesses = await tryFetch();
+      }
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const data = await res.json();
-      const mapped = (data.businesses as Record<string, unknown>[]).map(mapApiBusinessToLocal);
-      setBusinesses(mapped.length > 0 ? mapped : BUSINESSES);
+      if (businesses && businesses.length > 0) {
+        setBusinesses(businesses.map(mapApiBusinessToLocal));
+      } else {
+        setBusinesses(BUSINESSES);
+        if (!businesses) setError("Showing cached results — tap to refresh");
+      }
     } catch {
-      // Keep static data as fallback so the screen isn't empty
       setBusinesses(BUSINESSES);
       setError("Showing cached results — tap to refresh");
     } finally {
