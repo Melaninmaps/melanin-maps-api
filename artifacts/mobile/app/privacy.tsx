@@ -227,7 +227,7 @@ export default function PrivacyScreen() {
           {([
             { key: "activityStatus" as const, icon: "activity" as const, label: "Activity Status", sub: "Show when you're active in the app" },
             { key: "usageAnalytics" as const, icon: "bar-chart" as const, label: "Usage Analytics", sub: "Help us improve the app with anonymous data" },
-            { key: "personalisedSuggestions" as const, icon: "cpu" as const, label: "Personalised Suggestions", sub: "KinfolkAI™ tailors recommendations to your activity" },
+            { key: "personalisedSuggestions" as const, icon: "cpu" as const, label: "Personalised Suggestions", sub: "Tailor app content and recommendations to your activity" },
             { key: "profileViewTrackingEnabled" as const, icon: "eye-off" as const, label: "Profile View Contribution", sub: "Count your views in business owner analytics" },
           ]).map((item, i, arr) => (
             <React.Fragment key={item.key}>
@@ -250,34 +250,19 @@ export default function PrivacyScreen() {
           ))}
         </View>
 
-        {/* KinfolkAI */}
+        {/* KinfolkAI — link to dedicated screen */}
         <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>KINFOLKAI™</Text>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={[styles.kinfolkInfo, { backgroundColor: colors.secondary }]}>
-            <Feather name="zap" size={15} color={colors.primary} />
-            <Text style={[styles.kinfolkInfoTxt, { color: colors.mutedForeground }]}>
-              KinfolkAI™ uses your chat history to improve future recommendations. You can disable this at any time.
-            </Text>
-          </View>
-          <View style={[styles.sep, { backgroundColor: colors.border }]} />
-          <View style={styles.toggleRow}>
+          <TouchableOpacity style={styles.toggleRow} onPress={() => router.push("/kinfolk-settings" as never)} activeOpacity={0.75}>
             <View style={[styles.rowIcon, { backgroundColor: colors.secondary }]}>
-              <Feather name="database" size={16} color={colors.mutedForeground} />
+              <Feather name="zap" size={16} color={colors.primary} />
             </View>
             <View style={styles.rowContent}>
-              <Text style={[styles.rowLabel, { color: colors.foreground }]}>Chat Memory</Text>
-              <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>
-                {settings.kinfolkMemoryEnabled
-                  ? "KinfolkAI™ remembers your conversations to give better advice"
-                  : "Conversations are not saved — each chat starts fresh"}
-              </Text>
+              <Text style={[styles.rowLabel, { color: colors.foreground }]}>KinfolkAI™ Settings</Text>
+              <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>AI chat memory, personalisation and data</Text>
             </View>
-            <TouchableOpacity onPress={() => update({ kinfolkMemoryEnabled: !settings.kinfolkMemoryEnabled })}>
-              <View style={[styles.sw, { backgroundColor: settings.kinfolkMemoryEnabled ? colors.primary : colors.border }]}>
-                <View style={[styles.swThumb, { transform: [{ translateX: settings.kinfolkMemoryEnabled ? 20 : 2 }] }]} />
-              </View>
-            </TouchableOpacity>
-          </View>
+            <Feather name="chevron-right" size={16} color={colors.border} />
+          </TouchableOpacity>
         </View>
 
         {/* Manage */}
@@ -350,8 +335,6 @@ const styles = StyleSheet.create({
   precisionPill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5 },
   precisionPillTxt: { fontSize: 13, fontFamily: "Inter_500Medium" },
   precisionNote: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
-  kinfolkInfo: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 14 },
-  kinfolkInfoTxt: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
   downloadBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
   downloadTxt: { fontSize: 13, fontFamily: "Inter_500Medium" },
 });
