@@ -22,6 +22,8 @@ export * from "./business-invites";
 export * from "./user-preferences";
 export * from "./kinfolk-sessions";
 export * from "./kinfolk-feedback";
+export * from "./kinfolk-task-lists";
+export * from "./kinfolk-tasks";
 export * from "./wishlist-items";
 export * from "./business-claims";
 export * from "./push-tokens";

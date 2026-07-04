@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { usePathname } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import React, { useRef, useState } from "react";
 import {
   Animated,
@@ -22,82 +23,99 @@ interface Message {
   text: string;
   fromUser: boolean;
   ts: number;
+  taskCreated?: { listName?: string; taskCount?: number; taskTitle?: string };
 }
 
-const GREETING = "Hi! I'm KinfolkAI™. Ask me anything about minority-owned spots, safe neighborhoods, itinerary ideas, or travel tips in any city.";
+interface TaskActionPayload {
+  type: "create_list" | "create_task" | "add_tasks";
+  list?: { name: string; icon?: string };
+  tasks?: Array<{ title: string; notes?: string | null; dueTimeLabel?: string | null; category?: string }>;
+  task?: { title: string; notes?: string | null; dueTimeLabel?: string | null; category?: string };
+}
 
-const CANNED: { pattern: RegExp; replies: string[] }[] = [
-  {
-    pattern: /atlanta/i,
-    replies: [
-      "Atlanta has an incredible Black culture scene! I'd recommend starting in the Old Fourth Ward, checking out Sweet Auburn Ave, and trying the Beltline trail. Sweetwater Creek State Park is great for outdoors, and there are dozens of top-rated minority-owned restaurants in West End and Cascade.",
-      "For Atlanta, the neighborhoods with the highest community safety scores are Buckhead (daytime), Midtown, and Decatur. The Old Fourth Ward has the densest cluster of minority-owned businesses on the map.",
-    ],
-  },
-  {
-    pattern: /houston/i,
-    replies: [
-      "Houston's Third Ward and Midtown have the strongest minority-owned business clusters. Check out Emancipation Park — recently renovated and historically significant. The Museum District is walkable and culturally rich.",
-    ],
-  },
-  {
-    pattern: /safe|safety|unsafe/i,
-    replies: [
-      "Safety scores on Mapping with Melanin are community-powered — collected from real visitor surveys weighting daytime safety (30%), nighttime safety (40%), walkability (20%), and transit (10%). A score above 75 is considered high confidence.",
-      "For the best safety context, look at both the business safety score and the neighborhood rating. Users can also file incident reports anonymously through any business page.",
-    ],
-  },
-  {
-    pattern: /black.?owned/i,
-    replies: [
-      "Every business on Mapping with Melanin is community-verified for Black ownership. You can filter by Black-Owned Only on the Discover tab or use the map filter. minority-owned businesses are promoted within their category tier.",
-    ],
-  },
-  {
-    pattern: /restaurant|eat|food|foodie/i,
-    replies: [
-      "Our top-rated minority-owned restaurants right now include spots in Atlanta, Houston, and New Orleans. Use the category filter on Discover to browse Restaurants, then sort by safety score. The community favorites section shows the highest-rated this week.",
-    ],
-  },
-  {
-    pattern: /hotel|stay|accommodation/i,
-    replies: [
-      "For stays, filter the Discover tab to Hotels and look for the Verified badge. I also recommend checking the neighborhood safety score for any area before booking — tap any neighborhood name on the map to see community ratings.",
-    ],
-  },
-  {
-    pattern: /itinerary|plan|trip/i,
-    replies: [
-      "For a full AI-generated itinerary, tap the '✨ KINFOLKAI™ — Plan Your Next Trip' banner on the Discover tab. Enter your destination and travel vibes and I'll generate a full day-by-day plan with minority-owned spots, safe neighborhoods, timing, and local context.",
-    ],
-  },
-  {
-    pattern: /new orleans/i,
-    replies: [
-      "New Orleans is one of the top cities on Mapping with Melanin! Tremé is the oldest African-American neighborhood in the country. I recommend hitting the Seventh Ward for local food, Esplanade Ave for culture, and the Treme neighborhood for history and live jazz.",
-    ],
-  },
-  {
-    pattern: /dc|washington/i,
-    replies: [
-      "Washington DC has incredible Black history. U Street Corridor, known as 'Black Broadway,' has the highest concentration of minority-owned businesses in our DC catalog. Shaw and Columbia Heights also score highly for community atmosphere.",
-    ],
-  },
-];
+const AUTH_TOKEN_KEY = "auth_session_token";
 
-function getReply(msg: string): string {
-  for (const { pattern, replies } of CANNED) {
-    if (pattern.test(msg)) {
-      return replies[Math.floor(Math.random() * replies.length)];
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
+
+async function getToken(): Promise<string | null> {
+  try { return await SecureStore.getItemAsync(AUTH_TOKEN_KEY); }
+  catch { return null; }
+}
+
+const GREETING = "Hi! I'm KinfolkAI™. Ask me anything about minority-owned spots, safe neighborhoods, itinerary ideas — or say things like \"make me a grocery list\" or \"remind me to pick up dry cleaning\" and I'll create tasks for you.";
+
+let sessionId: string | undefined;
+
+async function sendToKinfolk(message: string, token: string | null): Promise<{
+  reply: string;
+  taskAction?: TaskActionPayload | null;
+}> {
+  const base = getApiBase();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${base}/api/kinfolk`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ message, sessionId }),
+  });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  const data = await res.json() as { reply?: string; taskAction?: TaskActionPayload | null; sessionId?: string };
+  if (data.sessionId) sessionId = data.sessionId;
+  return { reply: data.reply ?? "Sorry, something went sideways on my end.", taskAction: data.taskAction };
+}
+
+async function handleTaskAction(action: TaskActionPayload, token: string | null): Promise<{ listName?: string; taskCount?: number; taskTitle?: string }> {
+  const base = getApiBase();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  if (action.type === "create_list" && action.list) {
+    const listRes = await fetch(`${base}/api/kinfolk/lists`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ name: action.list.name, icon: action.list.icon ?? "📋" }),
+    });
+    if (listRes.ok) {
+      const { list } = await listRes.json() as { list: { id: string } };
+      const tasks = action.tasks ?? [];
+      if (tasks.length > 0 && list?.id) {
+        await fetch(`${base}/api/kinfolk/tasks/bulk`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ listId: list.id, tasks }),
+        });
+      }
+      return { listName: action.list.name, taskCount: tasks.length };
     }
+  } else if ((action.type === "create_task" || action.type === "add_tasks") && action.tasks?.length) {
+    for (const t of action.tasks) {
+      await fetch(`${base}/api/kinfolk/tasks`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ title: t.title, notes: t.notes, dueTimeLabel: t.dueTimeLabel, category: t.category }),
+      });
+    }
+    return { taskCount: action.tasks.length, taskTitle: action.tasks[0]?.title };
+  } else if (action.type === "create_task" && action.task) {
+    await fetch(`${base}/api/kinfolk/tasks`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ title: action.task.title, notes: action.task.notes, dueTimeLabel: action.task.dueTimeLabel, category: action.task.category }),
+    });
+    return { taskTitle: action.task.title };
   }
-  return "Great question! I'm still learning about that specific topic. For the most current info, check the Discover tab for businesses, the Map tab for neighborhood safety, or browse the Community feed for recent posts and recommendations.";
+  return {};
 }
 
 export function AIChatWidget() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { id: "0", text: GREETING, fromUser: false, ts: Date.now() },
@@ -124,7 +142,7 @@ export function AIChatWidget() {
 
   if (suppressed) return null;
 
-  const send = () => {
+  const send = async () => {
     const text = input.trim();
     if (!text) return;
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -134,14 +152,40 @@ export function AIChatWidget() {
     setInput("");
     setTyping(true);
 
-    setTimeout(() => {
-      const reply: Message = { id: String(Date.now() + 1), text: getReply(text), fromUser: false, ts: Date.now() };
-      setMessages((m) => [...m, reply]);
+    try {
+      const token = await getToken();
+      const { reply, taskAction } = await sendToKinfolk(text, token);
+
+      let taskCreated: Message["taskCreated"] | undefined;
+      if (taskAction && token) {
+        try {
+          taskCreated = await handleTaskAction(taskAction, token);
+        } catch {
+          // task creation failed silently — reply still shows
+        }
+      }
+
+      const aiMsg: Message = { id: String(Date.now() + 1), text: reply, fromUser: false, ts: Date.now(), taskCreated };
+      setMessages((m) => [...m, aiMsg]);
+    } catch {
+      const errMsg: Message = {
+        id: String(Date.now() + 1),
+        text: "I'm having trouble connecting right now. Check your connection and try again.",
+        fromUser: false,
+        ts: Date.now(),
+      };
+      setMessages((m) => [...m, errMsg]);
+    } finally {
       setTyping(false);
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
-    }, 900 + Math.random() * 600);
+    }
 
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+  };
+
+  const goToTasks = () => {
+    setOpen(false);
+    router.push("/kinfolk-tasks");
   };
 
   return (
@@ -174,12 +218,18 @@ export function AIChatWidget() {
               </View>
               <View>
                 <Text style={[styles.modalTitle, { color: colors.foreground }]}>KinfolkAI™</Text>
-                <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>Powered by Gemini · Always here to help</Text>
+                <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>Ask me anything · Create lists & reminders</Text>
               </View>
             </View>
-            <TouchableOpacity onPress={() => setOpen(false)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-              <Feather name="x" size={22} color={colors.foreground} />
-            </TouchableOpacity>
+            <View style={styles.headerActions}>
+              <TouchableOpacity onPress={goToTasks} style={[styles.tasksBtn, { borderColor: colors.border }]}>
+                <Feather name="check-square" size={14} color={colors.primary} />
+                <Text style={[styles.tasksBtnTxt, { color: colors.primary }]}>My Lists</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setOpen(false)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <Feather name="x" size={22} color={colors.foreground} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <FlatList
@@ -190,28 +240,42 @@ export function AIChatWidget() {
             showsVerticalScrollIndicator={false}
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
             renderItem={({ item }) => (
-              <View style={[styles.msgRow, item.fromUser && styles.msgRowUser]}>
-                {!item.fromUser && (
-                  <View style={[styles.msgAvatar, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.msgAvatarTxt}>CC</Text>
+              <View>
+                <View style={[styles.msgRow, item.fromUser && styles.msgRowUser]}>
+                  {!item.fromUser && (
+                    <View style={[styles.msgAvatar, { backgroundColor: colors.primary }]}>
+                      <Text style={styles.msgAvatarTxt}>KA</Text>
+                    </View>
+                  )}
+                  <View style={[
+                    styles.bubble,
+                    item.fromUser
+                      ? { backgroundColor: colors.primary, borderBottomRightRadius: 4 }
+                      : { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderBottomLeftRadius: 4 },
+                  ]}>
+                    <Text style={[styles.bubbleTxt, { color: item.fromUser ? "#FFF" : colors.foreground }]}>
+                      {item.text}
+                    </Text>
                   </View>
-                )}
-                <View style={[
-                  styles.bubble,
-                  item.fromUser
-                    ? { backgroundColor: colors.primary, borderBottomRightRadius: 4 }
-                    : { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderBottomLeftRadius: 4 },
-                ]}>
-                  <Text style={[styles.bubbleTxt, { color: item.fromUser ? "#FFF" : colors.foreground }]}>
-                    {item.text}
-                  </Text>
                 </View>
+                {item.taskCreated && (
+                  <TouchableOpacity onPress={goToTasks} style={[styles.taskCreatedBadge, { backgroundColor: colors.card, borderColor: colors.primary }]}>
+                    <Feather name="check-square" size={13} color={colors.primary} />
+                    <Text style={[styles.taskCreatedTxt, { color: colors.primary }]}>
+                      {item.taskCreated.listName
+                        ? `✓ Created "${item.taskCreated.listName}" with ${item.taskCreated.taskCount ?? 0} items — tap to view`
+                        : item.taskCreated.taskTitle
+                        ? `✓ Saved "${item.taskCreated.taskTitle}" — tap to view`
+                        : `✓ ${item.taskCreated.taskCount} tasks saved — tap to view`}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
             ListFooterComponent={typing ? (
               <View style={[styles.msgRow]}>
                 <View style={[styles.msgAvatar, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.msgAvatarTxt}>CC</Text>
+                  <Text style={styles.msgAvatarTxt}>KA</Text>
                 </View>
                 <View style={[styles.bubble, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderBottomLeftRadius: 4 }]}>
                   <Text style={[styles.typingDots, { color: colors.mutedForeground }]}>●  ●  ●</Text>
@@ -223,7 +287,7 @@ export function AIChatWidget() {
           <View style={[styles.inputRow, { borderTopColor: colors.border, paddingBottom: bottomPad + 8, backgroundColor: colors.background }]}>
             <TextInput
               style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-              placeholder="Ask about cities, safety, places…"
+              placeholder="Ask about cities, safety, places, or make a list…"
               placeholderTextColor={colors.mutedForeground}
               value={input}
               onChangeText={setInput}
@@ -271,6 +335,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, paddingBottom: 14, borderBottomWidth: 1,
   },
   modalHeaderLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 12 },
+  tasksBtn: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: 20, borderWidth: 1,
+  },
+  tasksBtnTxt: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   avatarDot: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
   avatarTxt: { fontSize: 11, fontFamily: "Inter_700Bold", color: "#FFF" },
   modalTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
@@ -283,6 +354,14 @@ const styles = StyleSheet.create({
   bubble: { maxWidth: "78%", padding: 12, borderRadius: 16 },
   bubbleTxt: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 },
   typingDots: { fontSize: 10, letterSpacing: 4 },
+  taskCreatedBadge: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    marginTop: 6, marginLeft: 36,
+    paddingHorizontal: 12, paddingVertical: 7,
+    borderRadius: 12, borderWidth: 1, borderStyle: "dashed",
+    alignSelf: "flex-start",
+  },
+  taskCreatedTxt: { fontSize: 12, fontFamily: "Inter_500Medium", flexShrink: 1 },
   inputRow: {
     flexDirection: "row", alignItems: "center", gap: 10,
     paddingHorizontal: 16, paddingTop: 10, borderTopWidth: 1,

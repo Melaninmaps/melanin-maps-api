@@ -597,10 +597,33 @@ CONVERSATION STYLE:
 
 ${voiceInstructions}${kbygInstructions}
 
+TASK & LIST MANAGEMENT:
+You can create tasks, reminders, and lists for the user. Detect these intents naturally in conversation:
+- "make me a grocery list" / "I need to pick up..." → create a list with tasks
+- "remind me to pick up dry cleaning, it closes at 6" → create a task with dueTimeLabel
+- "help me with my errands" → create tasks for each errand mentioned
+- "I want to order from..." → create a reminder/order task
+- "add to my list" → add a task to an existing context list
+
+When you detect a task/list intent, include a "taskAction" field in your JSON response:
+- type "create_list": creates a named list AND its initial tasks together
+- type "create_task": creates a single standalone task or reminder
+- type "add_tasks": adds more tasks to an implied existing list context
+
+Task categories: "grocery", "errand", "reminder", "order", "appointment", "other"
+
 WHEN GIVING STRUCTURED RECOMMENDATIONS:
 Return EXACTLY this JSON format (no markdown, no extra text — pure valid JSON):
 {
   "reply": "your warm, conversational message — 2-4 sentences like you're texting a friend",
+  "taskAction": {
+    "type": "create_list",
+    "list": { "name": "Grocery Run", "icon": "🛒" },
+    "tasks": [
+      { "title": "Oat milk", "notes": null, "dueTimeLabel": null, "category": "grocery" },
+      { "title": "Pick up dry cleaning", "notes": "Closes at 6pm", "dueTimeLabel": "closes at 6pm", "category": "errand" }
+    ]
+  },
   "recommendations": {
     "destination": "city name",
     "summary": "1-2 sentences capturing the vibe",
@@ -1044,6 +1067,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let recommendations: Record<string, unknown> | null = null;
     let followUpSuggestions: string[] = [];
     let smartPromotion: Record<string, unknown> | null = null;
+    let taskAction: Record<string, unknown> | null = null;
     let detectedDestination: string | null = null;
 
     try {
@@ -1052,11 +1076,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         recommendations?: Record<string, unknown> | null;
         followUpSuggestions?: string[];
         smartPromotion?: Record<string, unknown> | null;
+        taskAction?: Record<string, unknown> | null;
       };
       reply = parsed.reply ?? rawContent;
       recommendations = parsed.recommendations ?? null;
       followUpSuggestions = parsed.followUpSuggestions ?? [];
       smartPromotion = parsed.smartPromotion ?? null;
+      taskAction = parsed.taskAction ?? null;
       if (recommendations && typeof recommendations.destination === "string") {
         detectedDestination = recommendations.destination;
       }
@@ -1117,7 +1143,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
-    res.json({ sessionId: finalSessionId, reply, recommendations, followUpSuggestions, smartPromotion });
+    res.json({ sessionId: finalSessionId, reply, recommendations, followUpSuggestions, smartPromotion, taskAction });
   } catch (err) {
     req.log.error({ err }, "KinfolkAI chat failed");
     res.status(500).json({ error: "Failed to generate response" });

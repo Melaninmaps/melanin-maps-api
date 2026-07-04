@@ -102,6 +102,7 @@ import knowledgeDeliveryRouter from "./knowledge-delivery";
 import businessInsightsRouter from "./business-insights";
 import globalRecommendationsRouter from "./global-recommendations";
 import officerWatchRouter from "./officer-watch";
+import kinfolkTasksRouter from "./kinfolk-tasks";
 
 const router: IRouter = Router();
 
@@ -128,6 +129,7 @@ router.use(usersRouter);
 router.use(groupsRouter);
 router.use(adminRouter);
 router.use(kinfolkRouter);
+router.use(kinfolkTasksRouter);
 router.use(wishlistRouter);
 router.use(claimsRouter);
 router.use(notificationsRouter);
