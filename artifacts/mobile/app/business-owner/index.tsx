@@ -194,6 +194,14 @@ export default function BusinessOwnerHome() {
       color: "#3A1F0E",
       route: "/business-owner/preview",
     },
+    {
+      id: "global",
+      icon: "globe",
+      label: "Share Global Recommendations",
+      sub: "Recommend places you know and trust around the world",
+      color: "#2D7A4F",
+      route: "/global-recommendations/add",
+    },
   ];
 
   if (!isAuthenticated) {

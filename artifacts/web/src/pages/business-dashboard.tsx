@@ -4,7 +4,8 @@ import { Link } from "wouter";
 import {
   ArrowLeft, Star, MessageSquare, Eye, Edit3, Shield, Building2,
   Users, BarChart2, ExternalLink, AlertCircle, Search, MapPin,
-  Zap, Calendar, TrendingUp, CheckCircle2, Clock, Loader2,
+  Zap, Calendar, TrendingUp, CheckCircle2, Clock, Loader2, Globe,
+  Award, Plus, Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -19,6 +20,28 @@ type PromotionType = "priority_search" | "category_featured" | "city_featured" |
 type Promotion = { id: string; type: PromotionType; status: string; endsAt?: string | null };
 type ToolConfig = { type: PromotionType; name: string; description: string; priceCents: number; priceDisplay: string; durationDays: number; icon: string; tagline: string };
 type GrowthData = { activePromotions: Promotion[]; pendingPromotions: Promotion[]; catalogue: ToolConfig[] };
+type GlobalRec = {
+  id: string; country: string; city: string | null; businessName: string;
+  website: string | null; socialMedia: string | null; type: string;
+  reason: string | null; personalConnection: string | null;
+  communities: string[]; badge: string | null; createdAt: string; status: string;
+};
+
+const BADGE_LABELS: Record<string, string> = {
+  local_insider: "Local Insider",
+  community_ambassador: "Community Ambassador",
+  global_guide: "Global Guide",
+};
+const BADGE_COLORS: Record<string, string> = {
+  local_insider: "#3A6BB5",
+  community_ambassador: "#2D7A4F",
+  global_guide: "#CA922B",
+};
+const TYPE_LABELS: Record<string, string> = {
+  restaurant: "🍽️ Restaurant", cafe: "☕ Café", hotel: "🏨 Hotel",
+  salon: "✂️ Salon", market: "🛍️ Market", attraction: "🎭 Attraction",
+  guide: "🗺️ Guide", healthcare: "🏥 Healthcare", transportation: "🚌 Transport", other: "📍 Other",
+};
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   search: Search, star: Star, "map-pin": MapPin, zap: Zap, calendar: Calendar,
@@ -64,10 +87,23 @@ export default function BusinessDashboard() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<{ id?: string; email?: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "promote">(justActivated ? "promote" : "overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "promote" | "global">(justActivated ? "promote" : "overview");
   const [growthData, setGrowthData] = useState<GrowthData | null>(null);
   const [growthLoading, setGrowthLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [globalRecs, setGlobalRecs] = useState<GlobalRec[]>([]);
+  const [globalLoading, setGlobalLoading] = useState(false);
+  const [globalBadge, setGlobalBadge] = useState<string | null>(null);
+  const [showGlobalForm, setShowGlobalForm] = useState(false);
+  const [gCountry, setGCountry] = useState("");
+  const [gCity, setGCity] = useState("");
+  const [gName, setGName] = useState("");
+  const [gWebsite, setGWebsite] = useState("");
+  const [gType, setGType] = useState("other");
+  const [gReason, setGReason] = useState("");
+  const [gConnection, setGConnection] = useState("");
+  const [gSubmitting, setGSubmitting] = useState(false);
+  const [gSuccess, setGSuccess] = useState(false);
 
   useEffect(() => {
     fetch(`${BASE}api/auth/user`, { credentials: "include" }).then((r) => r.json()).then((d) => setUser(d.user ?? null)).catch(() => {});
@@ -90,6 +126,41 @@ export default function BusinessDashboard() {
     fetch(`${BASE}api/businesses/mine/growth-tools`, { credentials: "include" })
       .then((r) => r.json()).then((d) => setGrowthData(d as GrowthData)).catch(() => {}).finally(() => setGrowthLoading(false));
   }, [activeTab, selectedId]);
+
+  useEffect(() => {
+    if (activeTab !== "global") return;
+    setGlobalLoading(true);
+    fetch(`${BASE}api/global-recommendations/mine`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((d: { recommendations?: GlobalRec[]; badge?: string }) => {
+        setGlobalRecs(d.recommendations ?? []);
+        setGlobalBadge(d.badge ?? null);
+      })
+      .catch(() => {})
+      .finally(() => setGlobalLoading(false));
+  }, [activeTab]);
+
+  async function handleGlobalSubmit() {
+    if (!gCountry.trim() || !gName.trim()) return;
+    setGSubmitting(true);
+    try {
+      const res = await fetch(`${BASE}api/global-recommendations`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ country: gCountry, city: gCity || undefined, businessName: gName, website: gWebsite || undefined, type: gType, reason: gReason || undefined, personalConnection: gConnection || undefined }),
+      });
+      const data = await res.json() as { badge?: string; error?: string };
+      if (res.ok) {
+        setGSuccess(true);
+        setGlobalBadge(data.badge ?? globalBadge);
+        setGCountry(""); setGCity(""); setGName(""); setGWebsite(""); setGType("other"); setGReason(""); setGConnection("");
+        setTimeout(() => { setGSuccess(false); setShowGlobalForm(false); setActiveTab("global"); }, 2000);
+      } else {
+        alert(data.error ?? "Could not submit. Please try again.");
+      }
+    } catch { alert("Something went wrong."); }
+    finally { setGSubmitting(false); }
+  }
 
   async function handleCheckout(type: PromotionType) {
     setCheckoutLoading(type);
@@ -196,10 +267,14 @@ export default function BusinessDashboard() {
               <div className="space-y-5">
                 {/* Tabs */}
                 <div className="flex gap-1 bg-white rounded-2xl p-1.5 border border-[#3A1F0E]/10">
-                  {(["overview", "promote"] as const).map((tab) => (
-                    <button key={tab} onClick={() => setActiveTab(tab)}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all capitalize ${activeTab === tab ? "bg-[#CA922B] text-white shadow-sm" : "text-[#3A1F0E]/60 hover:text-[#3A1F0E]"}`}>
-                      {tab === "promote" ? "✦ Promote" : "Overview"}
+                  {([
+                    { id: "overview", label: "Overview" },
+                    { id: "promote", label: "✦ Promote" },
+                    { id: "global", label: "🌍 Global" },
+                  ] as const).map((tab) => (
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id ? "bg-[#CA922B] text-white shadow-sm" : "text-[#3A1F0E]/60 hover:text-[#3A1F0E]"}`}>
+                      {tab.label}
                     </button>
                   ))}
                 </div>
@@ -417,6 +492,139 @@ export default function BusinessDashboard() {
                         <p className="text-center text-[#3A1F0E]/40 text-xs mt-6">
                           Payments are processed securely by Stripe. Promotions activate within minutes of payment.
                         </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── Global Tab ── */}
+                {activeTab === "global" && (
+                  <div className="space-y-5">
+                    {/* Hero */}
+                    <div className="bg-gradient-to-br from-[#1A2E22] to-[#2D7A4F] rounded-2xl p-6 text-white">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Globe className="w-5 h-5 text-[#CA922B]" />
+                        <span className="font-bold text-[#CA922B] text-sm uppercase tracking-wider">Global Recommendations</span>
+                      </div>
+                      <h2 className="text-2xl font-serif font-bold mb-2">Share Places You Trust</h2>
+                      <p className="text-white/60 text-sm leading-relaxed">
+                        Help travelers discover businesses and experiences you know around the world. Your knowledge matters — real recommendations from real people.
+                      </p>
+                      {globalBadge && (
+                        <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20">
+                          <Award className="w-4 h-4" style={{ color: BADGE_COLORS[globalBadge] ?? "#CA922B" }} />
+                          <span className="text-sm font-bold">{BADGE_LABELS[globalBadge] ?? globalBadge}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Add button */}
+                    {!showGlobalForm && (
+                      <button
+                        onClick={() => setShowGlobalForm(true)}
+                        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-[#2D7A4F]/40 text-[#2D7A4F] font-bold text-sm hover:border-[#2D7A4F]/70 hover:bg-[#2D7A4F]/5 transition-all"
+                      >
+                        <Plus className="w-4 h-4" /> Add a Recommendation
+                      </button>
+                    )}
+
+                    {/* Inline form */}
+                    {showGlobalForm && (
+                      <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 overflow-hidden">
+                        <div className="px-5 py-4 border-b border-[#3A1F0E]/8 flex items-center justify-between">
+                          <p className="font-bold text-[#2B1507]">New Recommendation</p>
+                          <button onClick={() => setShowGlobalForm(false)} className="text-[#3A1F0E]/40 hover:text-[#3A1F0E] text-sm">Cancel</button>
+                        </div>
+                        {gSuccess ? (
+                          <div className="flex flex-col items-center justify-center py-12 gap-3">
+                            <CheckCircle2 className="w-10 h-10 text-[#2D7A4F]" />
+                            <p className="font-bold text-[#2B1507]">Recommendation submitted!</p>
+                            <p className="text-[#3A1F0E]/50 text-sm">Under review — thank you for sharing.</p>
+                          </div>
+                        ) : (
+                          <div className="p-5 space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-1 block">Country *</label>
+                                <input value={gCountry} onChange={(e) => setGCountry(e.target.value)} placeholder="e.g. Jamaica" className="w-full border border-[#3A1F0E]/15 rounded-xl px-3 py-2.5 text-sm text-[#2B1507] focus:outline-none focus:border-[#CA922B]" />
+                              </div>
+                              <div>
+                                <label className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-1 block">City</label>
+                                <input value={gCity} onChange={(e) => setGCity(e.target.value)} placeholder="optional" className="w-full border border-[#3A1F0E]/15 rounded-xl px-3 py-2.5 text-sm text-[#2B1507] focus:outline-none focus:border-[#CA922B]" />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-1 block">Business Name *</label>
+                                <input value={gName} onChange={(e) => setGName(e.target.value)} placeholder="Name of the place" className="w-full border border-[#3A1F0E]/15 rounded-xl px-3 py-2.5 text-sm text-[#2B1507] focus:outline-none focus:border-[#CA922B]" />
+                              </div>
+                              <div>
+                                <label className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-1 block">Website</label>
+                                <input value={gWebsite} onChange={(e) => setGWebsite(e.target.value)} placeholder="optional" className="w-full border border-[#3A1F0E]/15 rounded-xl px-3 py-2.5 text-sm text-[#2B1507] focus:outline-none focus:border-[#CA922B]" />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-1 block">Type</label>
+                              <select value={gType} onChange={(e) => setGType(e.target.value)} className="w-full border border-[#3A1F0E]/15 rounded-xl px-3 py-2.5 text-sm text-[#2B1507] focus:outline-none focus:border-[#CA922B] bg-white">
+                                {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-1 block">Why do you recommend it?</label>
+                              <textarea value={gReason} onChange={(e) => setGReason(e.target.value)} placeholder="What makes it special? (optional)" rows={2} className="w-full border border-[#3A1F0E]/15 rounded-xl px-3 py-2.5 text-sm text-[#2B1507] focus:outline-none focus:border-[#CA922B] resize-none" />
+                            </div>
+                            <div>
+                              <label className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-1 block">Personal Connection</label>
+                              <input value={gConnection} onChange={(e) => setGConnection(e.target.value)} placeholder="e.g. I grew up in this neighbourhood (optional)" className="w-full border border-[#3A1F0E]/15 rounded-xl px-3 py-2.5 text-sm text-[#2B1507] focus:outline-none focus:border-[#CA922B]" />
+                            </div>
+                            <button
+                              onClick={() => void handleGlobalSubmit()}
+                              disabled={gSubmitting || !gCountry.trim() || !gName.trim()}
+                              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#2D7A4F] hover:bg-[#245E3D] text-white text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {gSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                              {gSubmitting ? "Submitting…" : "Submit for Review"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Existing recommendations */}
+                    {globalLoading && <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-[#CA922B] animate-spin" /></div>}
+
+                    {!globalLoading && globalRecs.length > 0 && (
+                      <div>
+                        <p className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-3">Your Recommendations ({globalRecs.length})</p>
+                        <div className="space-y-3">
+                          {globalRecs.map((rec) => (
+                            <div key={rec.id} className="bg-white rounded-2xl border border-[#3A1F0E]/10 p-5">
+                              <div className="flex items-start justify-between gap-3 mb-2">
+                                <div>
+                                  <p className="font-bold text-[#2B1507]">{rec.businessName}</p>
+                                  <p className="text-[#3A1F0E]/50 text-xs mt-0.5">{rec.city ? `${rec.city}, ` : ""}{rec.country} · {TYPE_LABELS[rec.type] ?? rec.type}</p>
+                                </div>
+                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0 ${rec.status === "approved" ? "bg-green-100 text-green-700" : rec.status === "rejected" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700"}`}>
+                                  {rec.status === "approved" ? "Approved" : rec.status === "rejected" ? "Not approved" : "Under review"}
+                                </span>
+                              </div>
+                              {rec.reason && <p className="text-[#3A1F0E]/60 text-sm leading-relaxed">{rec.reason}</p>}
+                              {rec.website && (
+                                <a href={rec.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[#CA922B] text-xs font-medium mt-2 hover:underline">
+                                  <ExternalLink className="w-3 h-3" /> {rec.website}
+                                </a>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {!globalLoading && globalRecs.length === 0 && !showGlobalForm && (
+                      <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 p-10 text-center">
+                        <Globe className="w-10 h-10 text-[#3A1F0E]/15 mx-auto mb-3" />
+                        <p className="font-bold text-[#2B1507] mb-1">No recommendations yet</p>
+                        <p className="text-[#3A1F0E]/50 text-sm">Share places you know and trust — help the community travel with confidence.</p>
                       </div>
                     )}
                   </div>
