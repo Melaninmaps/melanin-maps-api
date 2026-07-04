@@ -37,7 +37,7 @@ const DESIGNATIONS = [
   { id: "women-owned", emoji: "👩🏾‍💼", label: "Women-Owned", sub: "Woman-led businesses" },
   { id: "veteran-owned", emoji: "🎖️", label: "Veteran-Owned", sub: "Military veteran founders" },
   { id: "lgbtq-owned", emoji: "🏳️‍🌈", label: "LGBTQ+-Owned", sub: "LGBTQ+ led businesses" },
-  { id: "hispanic-owned", emoji: "🌮", label: "Hispanic-Owned", sub: "Latinx & Hispanic founders" },
+  { id: "hispanic-owned", emoji: "👩🏻‍💼", label: "Hispanic-Owned", sub: "Latinx & Hispanic founders" },
   { id: "indigenous-owned", emoji: "🪶", label: "Indigenous-Owned", sub: "Native-led businesses" },
   { id: "immigrant-owned", emoji: "🌍", label: "Immigrant-Owned", sub: "Immigrant entrepreneurs" },
   { id: "d9-affiliated", emoji: "🐾", label: "D9 Affiliated", sub: "Divine Nine affiliated" },
