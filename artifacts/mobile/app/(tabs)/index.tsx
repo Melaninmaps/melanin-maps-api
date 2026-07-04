@@ -2,8 +2,9 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
+  Animated,
   Dimensions,
   FlatList,
   Platform,
@@ -80,6 +81,24 @@ export default function DiscoverScreen() {
   const [showPrefsSurvey, setShowPrefsSurvey] = useState(false);
   const [feedbackBusiness, setFeedbackBusiness] = useState<{ id: string; name: string; feedbackOptIn?: boolean } | null>(null);
   const [sponsoredDismissed, setSponsoredDismissed] = useState(false);
+
+  // KinfolkAI banner hide-on-scroll
+  const kinfolkAnim = useRef(new Animated.Value(1)).current;
+  const kinfolkVisible = useRef(true);
+  const lastScrollY = useRef(0);
+
+  const handleScroll = (e: { nativeEvent: { contentOffset: { y: number } } }) => {
+    const currentY = e.nativeEvent.contentOffset.y;
+    const diff = currentY - lastScrollY.current;
+    if (diff > 10 && kinfolkVisible.current) {
+      kinfolkVisible.current = false;
+      Animated.timing(kinfolkAnim, { toValue: 0, duration: 220, useNativeDriver: false }).start();
+    } else if (diff < -10 && !kinfolkVisible.current) {
+      kinfolkVisible.current = true;
+      Animated.timing(kinfolkAnim, { toValue: 1, duration: 260, useNativeDriver: false }).start();
+    }
+    lastScrollY.current = currentY;
+  };
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -241,6 +260,8 @@ export default function DiscoverScreen() {
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 100 }]}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={handleScroll}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
@@ -350,27 +371,34 @@ export default function DiscoverScreen() {
           style={{ marginHorizontal: 20, marginBottom: 20 }}
         />
 
-        {/* AI Travel banner */}
-        <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 24 }]}>
-          <TouchableOpacity
-            activeOpacity={0.88}
-            onPress={() => router.push("/travel")}
-            style={[styles.travelBanner, { backgroundColor: colors.primary }]}
-          >
-            <View style={styles.travelBannerLeft}>
-              <Text style={styles.travelBannerEyebrow}>✨ KINFOLKAI™</Text>
-              <Text style={styles.travelBannerTitle}>Plan Your Next Trip</Text>
-              <Text style={styles.travelBannerSub}>
-                {getDailyQuoteText("kinfolk", 0)}
-              </Text>
-            </View>
-            <View style={styles.travelBannerRight}>
-              <View style={styles.travelBannerArrow}>
-                <Ionicons name="airplane" size={22} color={colors.primary} />
+        {/* AI Travel banner — hides on scroll down, reappears on scroll up */}
+        <Animated.View style={{
+          opacity: kinfolkAnim,
+          maxHeight: kinfolkAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 140] }),
+          overflow: "hidden",
+          marginBottom: kinfolkAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 24] }),
+        }}>
+          <View style={[styles.section, { paddingHorizontal: 20 }]}>
+            <TouchableOpacity
+              activeOpacity={0.88}
+              onPress={() => router.push("/travel")}
+              style={[styles.travelBanner, { backgroundColor: colors.primary }]}
+            >
+              <View style={styles.travelBannerLeft}>
+                <Text style={styles.travelBannerEyebrow}>✨ KINFOLKAI™</Text>
+                <Text style={styles.travelBannerTitle}>Plan Your Next Trip</Text>
+                <Text style={styles.travelBannerSub}>
+                  {getDailyQuoteText("kinfolk", 0)}
+                </Text>
               </View>
-            </View>
-          </TouchableOpacity>
-        </View>
+              <View style={styles.travelBannerRight}>
+                <View style={styles.travelBannerArrow}>
+                  <Ionicons name="airplane" size={22} color={colors.primary} />
+                </View>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
 
         {/* Global Recommendations banner */}
         <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 16 }]}>
