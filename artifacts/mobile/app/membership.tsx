@@ -227,6 +227,7 @@ const BUSINESS_PLANS: Plan[] = [
     bg: "#0A0A0A",
     features: [
       "Everything in Premium",
+      "1% off current marketplace rates*",
       "Dedicated account manager",
       "Custom analytics & reporting",
       "API access for integrations",
@@ -236,6 +237,7 @@ const BUSINESS_PLANS: Plan[] = [
       "Priority fraud & dispute support",
       "Quarterly business reviews",
       "Enterprise badge",
+      "* Marketplace rate discount applies to Enterprise Partners who joined after the Founding Program. Rate subject to change.",
     ],
     cta: "Contact Sales",
     ctaActive: true,
