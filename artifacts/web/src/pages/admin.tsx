@@ -326,6 +326,8 @@ export default function Admin() {
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   const [nudgeSending, setNudgeSending] = useState(false);
   const [nudgeResult, setNudgeResult] = useState<string | null>(null);
+  const [betaBlastSending, setBetaBlastSending] = useState(false);
+  const [betaBlastResult, setBetaBlastResult] = useState<string | null>(null);
   const [welcomeEmails, setWelcomeEmails] = useState("");
   const [welcomeSending, setWelcomeSending] = useState(false);
   const [welcomeResult, setWelcomeResult] = useState<string | null>(null);
@@ -620,6 +622,30 @@ export default function Admin() {
     setWelcomeSending(false);
   };
 
+  const sendBetaBlast = async () => {
+    if (!window.confirm("This will send a beta testing invitation to all waitlist members who haven't received it yet. Continue?")) return;
+    setBetaBlastSending(true);
+    setBetaBlastResult(null);
+    try {
+      const r = await fetch(`${BASE}api/admin/send-beta-blast`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ onlyUnsent: true }),
+      });
+      const data = await r.json();
+      if (data.sent !== undefined) {
+        setBetaBlastResult(`✅ Sent ${data.sent} beta invite${data.sent !== 1 ? "s" : ""} (${data.failed} failed, ${data.skipped} already sent)`);
+      } else {
+        setBetaBlastResult(`❌ ${data.error ?? "Failed"}`);
+      }
+    } catch {
+      setBetaBlastResult("❌ Network error");
+    } finally {
+      setBetaBlastSending(false);
+      setTimeout(() => setBetaBlastResult(null), 12000);
+    }
+  };
+
   const sendWeeklyNudge = async () => {
     if (!window.confirm("This will email every pending waitlist member. Continue?")) return;
     setNudgeSending(true);
@@ -787,6 +813,17 @@ export default function Admin() {
             </button>
             {nudgeResult && (
               <span className="text-sm text-[#F5EBD8]/80">{nudgeResult}</span>
+            )}
+            <button
+              onClick={sendBetaBlast}
+              disabled={betaBlastSending}
+              className="flex items-center gap-2 bg-emerald-700/80 hover:bg-emerald-700 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-colors disabled:opacity-50"
+            >
+              <Send className="w-4 h-4" />
+              {betaBlastSending ? "Sending…" : "🧪 Send Beta Invite (All)"}
+            </button>
+            {betaBlastResult && (
+              <span className="text-sm text-[#F5EBD8]/80">{betaBlastResult}</span>
             )}
           </div>
 
