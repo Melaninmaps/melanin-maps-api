@@ -1057,11 +1057,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       { role: "user" as const, content: `${message}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}` },
     ];
 
-    // Call AI
+    // Call AI — response_format json_object guarantees valid JSON every response
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       max_completion_tokens: 8192,
       messages: aiMessages,
+      response_format: { type: "json_object" },
     });
 
     const rawContent = completion.choices[0]?.message?.content ?? "{}";
