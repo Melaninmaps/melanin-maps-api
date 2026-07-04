@@ -101,6 +101,7 @@ import forYouRouter from "./for-you";
 import knowledgeDeliveryRouter from "./knowledge-delivery";
 import businessInsightsRouter from "./business-insights";
 import globalRecommendationsRouter from "./global-recommendations";
+import officerWatchRouter from "./officer-watch";
 
 const router: IRouter = Router();
 
@@ -205,6 +206,7 @@ router.use(businessInsightsRouter);
 router.use(topicBriefsRouter);
 router.use(forYouRouter);
 router.use(globalRecommendationsRouter);
+router.use(officerWatchRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

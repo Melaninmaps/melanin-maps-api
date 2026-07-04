@@ -1,5 +1,6 @@
 export * from "./auth";
 export * from "./family-circles";
+export * from "./officer-watch";
 export * from "./community-boundaries";
 export * from "./smart-pathways";
 export * from "./knowledge";

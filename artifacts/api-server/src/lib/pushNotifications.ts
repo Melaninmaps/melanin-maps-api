@@ -1,6 +1,6 @@
-import { db, pushTokensTable, savedPlacesTable, businessesTable, notificationsTable, businessProfileViewsTable, reviewsTable } from "@workspace/db";
+import { db, pushTokensTable, savedPlacesTable, businessesTable, notificationsTable, businessProfileViewsTable, reviewsTable, usersTable } from "@workspace/db";
 import { pool } from "@workspace/db";
-import { eq, inArray, ilike, gte, lte, ne, and } from "drizzle-orm";
+import { eq, inArray, ilike, isNotNull, gte, lte, ne, and, or } from "drizzle-orm";
 import { logger } from "./logger";
 
 interface PushMessage {
@@ -450,5 +450,51 @@ export async function sendNegativeReviewAlertIfThreshold(
     logger.info({ businessId, negativeCount: recentNegative.length, notified: userIds.length }, "[push] Negative review threshold alert sent");
   } catch (err) {
     logger.warn({ err }, "[push] Failed to send negative review alert");
+  }
+}
+
+// ─── Officer Watch: notify users in a city/state ───────────────────────────
+export async function sendPushToUsersInArea(
+  city: string,
+  state: string,
+  message: PushMessage,
+): Promise<number> {
+  try {
+    const matched = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(
+        or(
+          ilike(usersTable.homeCity, `%${city}%`),
+          ilike(usersTable.homeCity, `%${state}%`),
+        ),
+      );
+
+    const userIds = matched.map((u) => u.id);
+    if (userIds.length === 0) return 0;
+
+    const tokens = await db
+      .select({ token: pushTokensTable.token, userId: pushTokensTable.userId })
+      .from(pushTokensTable)
+      .where(and(inArray(pushTokensTable.userId, userIds), isNotNull(pushTokensTable.token)));
+
+    for (const row of tokens) {
+      if (row.token) await sendToToken(row.token, message);
+    }
+
+    await db.insert(notificationsTable).values(
+      userIds.map((userId) => ({
+        userId,
+        type: "safety" as const,
+        title: message.title,
+        body: message.body,
+      })),
+    );
+
+    logger.info({ city, state, userCount: userIds.length }, "[push] Officer watch area alert sent");
+    return userIds.length;
+  } catch (err) {
+    logger.warn({ err }, "[push] Failed to send officer watch area alert");
+    return 0;
   }
 }
