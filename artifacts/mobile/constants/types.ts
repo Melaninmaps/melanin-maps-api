@@ -101,6 +101,15 @@ export interface CommunityPost {
   isPrivateTopic?: boolean;
   hasContentWarning?: boolean;
   contentWarningType?: string;
+  linkUrl?: string;
+  linkTitle?: string;
+  linkDescription?: string;
+  linkDomain?: string;
+  linkFavicon?: string;
+  repostId?: string;
+  repostAuthorName?: string;
+  repostAuthorInitials?: string;
+  repostContent?: string;
 }
 
 export interface AlertItem {

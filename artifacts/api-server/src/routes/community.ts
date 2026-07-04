@@ -112,7 +112,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
     }
 
     // Map snake_case → camelCase to match existing shape
-    const posts = rows.map((r) => ({
+    const posts = rows.map((r: any) => ({
       id: r.id, authorId: r.author_id, authorName: r.author_name, authorInitials: r.author_initials,
       authorColor: r.author_color, content: r.content, category: r.category, postType: r.post_type,
       businessId: r.business_id, businessName: r.business_name, businessLink: r.business_link,
@@ -120,6 +120,15 @@ router.get("/community/posts", async (req: Request, res: Response) => {
       locationTag: r.location_tag, locationType: r.location_type,
       topicTag: r.topic_tag, isPrivateTopic: r.is_private_topic,
       visibility: r.visibility,
+      linkUrl: r.link_url ?? null,
+      linkTitle: r.link_title ?? null,
+      linkDescription: r.link_description ?? null,
+      linkDomain: r.link_domain ?? null,
+      linkFavicon: r.link_favicon ?? null,
+      repostId: r.repost_id ?? null,
+      repostAuthorName: r.repost_author_name ?? null,
+      repostAuthorInitials: r.repost_author_initials ?? null,
+      repostContent: r.repost_content ?? null,
       upvotes: r.upvotes, downvotes: r.downvotes, commentsCount: r.comments_count, createdAt: r.created_at,
     }));
 
@@ -162,6 +171,15 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       isPrivateTopic = false,
       hasContentWarning = false,
       contentWarningType,
+      linkUrl,
+      linkTitle,
+      linkDescription,
+      linkDomain,
+      linkFavicon,
+      repostId,
+      repostAuthorName,
+      repostAuthorInitials,
+      repostContent,
     } = req.body as {
       content?: string;
       category?: string;
@@ -178,6 +196,15 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       isPrivateTopic?: boolean;
       hasContentWarning?: boolean;
       contentWarningType?: string;
+      linkUrl?: string;
+      linkTitle?: string;
+      linkDescription?: string;
+      linkDomain?: string;
+      linkFavicon?: string;
+      repostId?: string;
+      repostAuthorName?: string;
+      repostAuthorInitials?: string;
+      repostContent?: string;
     };
 
     if (!content?.trim()) {
@@ -259,6 +286,15 @@ router.post("/community/posts", async (req: Request, res: Response) => {
         visibility: (isPrivateTopic ? "followers_only" : visibility === "followers_only" ? "followers_only" : "public") as "public" | "followers_only",
         hasContentWarning: !!hasContentWarning,
         contentWarningType: hasContentWarning && contentWarningType ? contentWarningType : null,
+        linkUrl: linkUrl?.trim() || null,
+        linkTitle: linkTitle?.trim() || null,
+        linkDescription: linkDescription?.trim() || null,
+        linkDomain: linkDomain?.trim() || null,
+        linkFavicon: linkFavicon?.trim() || null,
+        repostId: repostId || null,
+        repostAuthorName: repostAuthorName?.trim() || null,
+        repostAuthorInitials: repostAuthorInitials?.trim() || null,
+        repostContent: repostContent?.trim() || null,
       })
       .returning();
 

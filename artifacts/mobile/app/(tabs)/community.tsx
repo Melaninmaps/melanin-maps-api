@@ -1042,7 +1042,7 @@ export default function CommunityScreen() {
               <CommunityPostCard
                 post={item}
                 onCommentPress={() => setSelectedPost(item)}
-                onAuthorPress={(id) => setSelectedAuthorId(id)}
+                onAuthorPress={(id) => { router.push(`/user/${id}` as any); }}
                 onLocationPress={(tag) => router.push({ pathname: "/location-feed", params: { location: tag } } as any)}
                 onTopicPress={(tag) => router.push({ pathname: "/topic-feed", params: { topic: tag.toLowerCase() } } as any)}
               />

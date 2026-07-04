@@ -37,6 +37,8 @@ import { PointsRedemptionModal } from "@/components/PointsRedemptionModal";
 import { TrustLevelCard } from "@/components/TrustBadge";
 import { BrandQuoteBanner } from "@/components/BrandQuoteBanner";
 import { getDailyQuoteText } from "@/constants/brandQuotes";
+import { StatusComposer } from "@/components/StatusComposer";
+import { SavedSpotsShare } from "@/components/SavedSpotsShare";
 
 const SETTINGS = [
   { icon: "users" as const, label: "Family Circle", sub: "Invite family members at no extra cost — stay safely connected", route: "/family-circle" as const },
@@ -919,6 +921,14 @@ export default function ProfileScreen() {
         </View>
       )}
 
+      {isAuthenticated && (
+        <StatusComposer
+          authorName={[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "You"}
+          authorInitials={([user?.firstName, user?.lastName].filter(Boolean).join(" ") || "YO").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
+          authorColor="#3B1F0E"
+        />
+      )}
+
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
@@ -978,6 +988,10 @@ export default function ProfileScreen() {
           </View>
         )}
       </View>
+
+      {isAuthenticated && savedBusinesses.length > 0 && (
+        <SavedSpotsShare savedBusinesses={savedBusinesses} />
+      )}
 
       <TouchableOpacity
         style={[styles.listBizBanner, { backgroundColor: colors.primary }]}

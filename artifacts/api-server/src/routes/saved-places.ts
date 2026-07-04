@@ -3,6 +3,8 @@ import { db, savedPlacesTable, businessesTable, notificationsTable, pool } from 
 import { and, eq, sql } from "drizzle-orm";
 import { sendPushToUser } from "../lib/pushNotifications";
 
+const HEALTH_KEYWORDS = ["health", "medical", "clinic", "hospital", "pharmacy", "wellness", "mental", "therapy", "doctor", "dental", "urgent care", "rehabilitation", "counseling", "psychiatr", "addiction"];
+
 const router: IRouter = Router();
 
 function requireAuth(req: Request, res: Response): boolean {
@@ -81,6 +83,62 @@ router.get("/saved-places/:businessId/count", async (req: Request, res: Response
   } catch (err) {
     req.log.error({ err }, "Failed to get save count");
     res.status(500).json({ error: "Failed to get save count" });
+  }
+});
+
+// POST /saved-places/:businessId/toggle-public — toggle public sharing of a save
+router.post("/saved-places/:businessId/toggle-public", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  const businessId = String(req.params.businessId);
+  try {
+    const [existing] = await db
+      .select({ isPublic: savedPlacesTable.isPublic })
+      .from(savedPlacesTable)
+      .where(and(eq(savedPlacesTable.userId, req.user!.id), eq(savedPlacesTable.businessId, businessId)))
+      .limit(1);
+
+    if (!existing) {
+      res.status(404).json({ error: "Saved place not found" });
+      return;
+    }
+
+    // Check if business category is health-related
+    const [biz] = await db
+      .select({ category: businessesTable.category, name: businessesTable.name })
+      .from(businessesTable)
+      .where(eq(businessesTable.id, businessId))
+      .limit(1);
+
+    const category = (biz?.category ?? "").toLowerCase();
+    const requiresHealthConfirm = HEALTH_KEYWORDS.some((kw) => category.includes(kw));
+
+    const newIsPublic = !existing.isPublic;
+    await db
+      .update(savedPlacesTable)
+      .set({ isPublic: newIsPublic })
+      .where(and(eq(savedPlacesTable.userId, req.user!.id), eq(savedPlacesTable.businessId, businessId)));
+
+    res.json({ isPublic: newIsPublic, requiresHealthConfirm, businessName: biz?.name ?? null });
+  } catch (err) {
+    req.log.error({ err }, "Failed to toggle saved place public visibility");
+    res.status(500).json({ error: "Failed to update visibility" });
+  }
+});
+
+// GET /saved-places/public-state — returns { [businessId]: boolean } map for current user
+router.get("/saved-places/public-state", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const places = await db
+      .select({ businessId: savedPlacesTable.businessId, isPublic: savedPlacesTable.isPublic })
+      .from(savedPlacesTable)
+      .where(eq(savedPlacesTable.userId, req.user!.id));
+    const state: Record<string, boolean> = {};
+    for (const p of places) state[p.businessId] = p.isPublic;
+    res.json({ publicState: state });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch public state");
+    res.status(500).json({ error: "Failed to fetch public state" });
   }
 });
 

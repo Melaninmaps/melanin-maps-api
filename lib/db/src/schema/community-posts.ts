@@ -24,6 +24,17 @@ export const communityPostsTable = pgTable("community_posts", {
   visibility: varchar("visibility", { length: 20 }).notNull().default("public"),
   hasContentWarning: boolean("has_content_warning").notNull().default(false),
   contentWarningType: varchar("content_warning_type", { length: 30 }),
+  // Link preview fields
+  linkUrl: text("link_url"),
+  linkTitle: text("link_title"),
+  linkDescription: text("link_description"),
+  linkDomain: varchar("link_domain", { length: 200 }),
+  linkFavicon: varchar("link_favicon", { length: 10 }),
+  // Repost fields
+  repostId: varchar("repost_id"),
+  repostAuthorName: varchar("repost_author_name", { length: 100 }),
+  repostAuthorInitials: varchar("repost_author_initials", { length: 4 }),
+  repostContent: text("repost_content"),
   upvotes: integer("upvotes").notNull().default(0),
   downvotes: integer("downvotes").notNull().default(0),
   commentsCount: integer("comments_count").notNull().default(0),

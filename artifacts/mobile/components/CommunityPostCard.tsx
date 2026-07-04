@@ -14,6 +14,7 @@ interface Props {
   onAuthorPress?: (authorId: string) => void;
   onLocationPress?: (locationTag: string) => void;
   onTopicPress?: (topicTag: string) => void;
+  onRepost?: (post: CommunityPost) => void;
 }
 
 const CATEGORY_CONFIG = {
@@ -96,7 +97,67 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType }: {
   );
 }
 
-export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthorPress, onLocationPress, onTopicPress }: Props) {
+function LinkPreviewCard({ linkUrl, linkTitle, linkDescription, linkDomain, linkFavicon }: {
+  linkUrl: string;
+  linkTitle?: string | null;
+  linkDescription?: string | null;
+  linkDomain?: string | null;
+  linkFavicon?: string | null;
+}) {
+  const colors = useColors();
+  return (
+    <TouchableOpacity
+      style={[s.linkPreview, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+      onPress={() => Linking.openURL(linkUrl).catch(() => {})}
+      activeOpacity={0.8}
+    >
+      <View style={[s.linkPreviewAccent, { backgroundColor: "#C4622D" }]} />
+      <View style={s.linkPreviewBody}>
+        <View style={s.linkPreviewDomain}>
+          {linkFavicon ? (
+            <Text style={s.linkPreviewFavicon}>{linkFavicon}</Text>
+          ) : (
+            <Feather name="link" size={12} color={colors.mutedForeground} />
+          )}
+          <Text style={[s.linkPreviewDomainText, { color: colors.mutedForeground }]} numberOfLines={1}>
+            {linkDomain ?? linkUrl}
+          </Text>
+        </View>
+        {linkTitle ? (
+          <Text style={[s.linkPreviewTitle, { color: colors.foreground }]} numberOfLines={2}>{linkTitle}</Text>
+        ) : null}
+        {linkDescription ? (
+          <Text style={[s.linkPreviewDesc, { color: colors.mutedForeground }]} numberOfLines={2}>{linkDescription}</Text>
+        ) : null}
+      </View>
+      <Feather name="arrow-right" size={14} color={colors.mutedForeground} style={s.linkPreviewArrow} />
+    </TouchableOpacity>
+  );
+}
+
+function RepostBlock({ repostAuthorName, repostAuthorInitials, repostContent }: {
+  repostAuthorName?: string | null;
+  repostAuthorInitials?: string | null;
+  repostContent?: string | null;
+}) {
+  const colors = useColors();
+  const initials = repostAuthorInitials ?? (repostAuthorName?.split(" ").map((w) => w[0]).join("").slice(0, 2) ?? "?");
+  return (
+    <View style={[s.repostBlock, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+      <View style={s.repostHeader}>
+        <View style={[s.repostAvatar, { backgroundColor: "#7B4F2E" }]}>
+          <Text style={s.repostInitials}>{initials}</Text>
+        </View>
+        <Text style={[s.repostAuthor, { color: colors.mutedForeground }]}>{repostAuthorName ?? "Community Member"}</Text>
+      </View>
+      {repostContent ? (
+        <Text style={[s.repostContent, { color: colors.foreground }]} numberOfLines={4}>{repostContent}</Text>
+      ) : null}
+    </View>
+  );
+}
+
+export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthorPress, onLocationPress, onTopicPress, onRepost }: Props) {
   const colors = useColors();
   const [liked, setLiked] = useState(post.liked);
   const [likeCount, setLikeCount] = useState(post.likes);
@@ -106,6 +167,7 @@ export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthor
   const isQuestion = post.postType === "question" || post.category === "question";
   const categoryConfig = CATEGORY_CONFIG[post.category] ?? CATEGORY_CONFIG.discussion;
   const accentColor = POST_TYPE_ACCENT[post.postType ?? "community"] ?? POST_TYPE_ACCENT.community;
+  const isRepost = !!post.repostId;
 
   const handleLike = () => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -133,7 +195,16 @@ export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthor
       s.card,
       { backgroundColor: colors.card, shadowColor: colors.foreground },
       isBusinessPost && { borderLeftWidth: 3, borderLeftColor: accentColor },
+      isRepost && { borderLeftWidth: 3, borderLeftColor: "#2D7A4F" },
     ]}>
+
+      {/* Repost header banner */}
+      {isRepost && (
+        <View style={[s.repostBanner, { backgroundColor: "#2D7A4F10", borderBottomColor: "#2D7A4F25" }]}>
+          <Feather name="repeat" size={12} color="#2D7A4F" />
+          <Text style={[s.repostBannerText, { color: "#2D7A4F" }]}>{post.author} reposted</Text>
+        </View>
+      )}
 
       {/* Business post header banner */}
       {isBusinessPost && post.businessName && (
@@ -197,6 +268,30 @@ export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthor
       {/* Content */}
       <Text style={[s.content, { color: colors.foreground }]}>{post.content}</Text>
 
+      {/* Repost block — shows quoted original */}
+      {isRepost && (post.repostContent || post.repostAuthorName) && (
+        <View style={{ paddingHorizontal: 14, paddingBottom: 10 }}>
+          <RepostBlock
+            repostAuthorName={post.repostAuthorName}
+            repostAuthorInitials={post.repostAuthorInitials}
+            repostContent={post.repostContent}
+          />
+        </View>
+      )}
+
+      {/* Link preview card */}
+      {post.linkUrl && (
+        <View style={{ paddingHorizontal: 14, paddingBottom: 10 }}>
+          <LinkPreviewCard
+            linkUrl={post.linkUrl}
+            linkTitle={post.linkTitle}
+            linkDescription={post.linkDescription}
+            linkDomain={post.linkDomain}
+            linkFavicon={post.linkFavicon}
+          />
+        </View>
+      )}
+
       {/* Media grid */}
       {post.mediaUrls && post.mediaUrls.length > 0 && (
         <MediaGrid
@@ -257,6 +352,11 @@ export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthor
           <Feather name="message-circle" size={16} color={colors.mutedForeground} />
           <Text style={[s.actionText, { color: colors.mutedForeground }]}>{post.comments}</Text>
         </TouchableOpacity>
+        {onRepost && (
+          <TouchableOpacity style={s.action} activeOpacity={0.7} onPress={() => onRepost(post)}>
+            <Feather name="repeat" size={16} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={s.action} activeOpacity={0.7}>
           <Feather name="share-2" size={16} color={colors.mutedForeground} />
         </TouchableOpacity>
@@ -294,6 +394,15 @@ const s = StyleSheet.create({
     elevation: 2,
     overflow: "hidden",
   },
+  repostBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+  },
+  repostBannerText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   bizBanner: {
     flexDirection: "row",
     alignItems: "center",
@@ -343,6 +452,36 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     paddingBottom: 12,
   },
+  // Link preview
+  linkPreview: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: "hidden",
+    gap: 0,
+  },
+  linkPreviewAccent: { width: 4, alignSelf: "stretch" },
+  linkPreviewBody: { flex: 1, padding: 10, gap: 3 },
+  linkPreviewDomain: { flexDirection: "row", alignItems: "center", gap: 5 },
+  linkPreviewFavicon: { fontSize: 13 },
+  linkPreviewDomainText: { fontFamily: "Inter_400Regular", fontSize: 11, flex: 1 },
+  linkPreviewTitle: { fontFamily: "Inter_600SemiBold", fontSize: 13, lineHeight: 18 },
+  linkPreviewDesc: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  linkPreviewArrow: { marginRight: 10 },
+  // Repost block
+  repostBlock: {
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 10,
+    gap: 6,
+  },
+  repostHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  repostAvatar: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center" },
+  repostInitials: { fontFamily: "Inter_700Bold", fontSize: 9, color: "#FFFFFF" },
+  repostAuthor: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  repostContent: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
+  // Media
   mediaGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
