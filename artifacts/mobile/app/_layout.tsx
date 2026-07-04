@@ -60,7 +60,7 @@ function PushNotificationRegistrar() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const perms: any = await Notifications.requestPermissionsAsync();
         if (!perms?.granted && perms?.status !== "granted") return;
-        const pushToken = await Notifications.getExpoPushTokenAsync().catch(() => null);
+        const pushToken = await Notifications.getExpoPushTokenAsync({ projectId: "0f873107-7787-46ab-9a04-685c2a6756b1" }).catch(() => null);
         if (!pushToken?.data) return;
         const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
         if (!apiBase) return;

@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, usersTable, userFollowsTable } from "@workspace/db";
+import { db, usersTable, userFollowsTable, notificationsTable } from "@workspace/db";
 import { and, eq, sql } from "drizzle-orm";
+import { sendPushToUser } from "../lib/pushNotifications";
 
 const router: IRouter = Router();
 
@@ -98,11 +99,44 @@ router.post("/users/:id/follow", async (req: Request, res: Response) => {
 
     const status = target.isPrivate ? "pending" : "accepted";
 
+    const [follower] = await db
+      .select({ firstName: usersTable.firstName, username: usersTable.username })
+      .from(usersTable)
+      .where(eq(usersTable.id, followerId))
+      .limit(1);
+
     await db.insert(userFollowsTable).values({ followerId, followingId, status });
 
     if (status === "accepted") {
       await db.update(usersTable).set({ followersCount: sql`${usersTable.followersCount} + 1` }).where(eq(usersTable.id, followingId));
       await db.update(usersTable).set({ followingCount: sql`${usersTable.followingCount} + 1` }).where(eq(usersTable.id, followerId));
+
+      const followerName = follower?.username ?? follower?.firstName ?? "Someone";
+      sendPushToUser(followingId, {
+        title: "New follower",
+        body: `${followerName} started following you.`,
+        data: { screen: "profile", userId: followerId, type: "new_follower" },
+      }).catch(() => {});
+      db.insert(notificationsTable).values({
+        userId: followingId,
+        type: "community",
+        title: "New follower",
+        body: `${followerName} started following you.`,
+      }).catch(() => {});
+    } else {
+      // Private account — notify of pending follow request
+      const followerName = follower?.username ?? follower?.firstName ?? "Someone";
+      sendPushToUser(followingId, {
+        title: "Follow request",
+        body: `${followerName} wants to follow you.`,
+        data: { screen: "profile", userId: followerId, type: "follow_request" },
+      }).catch(() => {});
+      db.insert(notificationsTable).values({
+        userId: followingId,
+        type: "community",
+        title: "Follow request",
+        body: `${followerName} wants to follow you.`,
+      }).catch(() => {});
     }
 
     res.json({ status, message: status === "pending" ? "Follow request sent" : "Now following" });
