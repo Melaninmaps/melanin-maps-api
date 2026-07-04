@@ -181,7 +181,7 @@ export default function DiscoverScreen() {
             />
             <Text style={styles.greeting}>{getTimeGreeting()}{user?.firstName ? `, ${user.firstName}` : ""} 👋🏾</Text>
           </View>
-          <TouchableOpacity style={styles.notifBtn} activeOpacity={0.8} onPress={() => router.push("/messages")}>
+          <TouchableOpacity style={styles.notifBtn} activeOpacity={0.8} onPress={() => router.push("/notification-center")}>
             <Feather name="bell" size={20} color="#FFFFFF" />
             {user && <View style={styles.notifDot} />}
           </TouchableOpacity>

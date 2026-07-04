@@ -487,9 +487,17 @@ export default function ProfileScreen() {
     >
       <View style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.foreground }]}>Profile</Text>
-        <TouchableOpacity style={[styles.settingsBtn, { backgroundColor: colors.secondary }]} onPress={() => router.push("/settings")}>
-          <Feather name="settings" size={18} color={colors.foreground} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <TouchableOpacity
+            style={[styles.settingsBtn, { backgroundColor: colors.secondary }]}
+            onPress={() => router.push("/notification-center" as any)}
+          >
+            <Feather name="bell" size={18} color={colors.foreground} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.settingsBtn, { backgroundColor: colors.secondary }]} onPress={() => router.push("/settings")}>
+            <Feather name="settings" size={18} color={colors.foreground} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {isLoading ? (

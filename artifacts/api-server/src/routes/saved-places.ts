@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, savedPlacesTable, pool } from "@workspace/db";
+import { db, savedPlacesTable, businessesTable, notificationsTable, pool } from "@workspace/db";
 import { and, eq, sql } from "drizzle-orm";
+import { sendPushToUser } from "../lib/pushNotifications";
 
 const router: IRouter = Router();
 
@@ -39,6 +40,30 @@ router.post("/saved-places", async (req: Request, res: Response) => {
       .values({ userId: req.user!.id, businessId })
       .onConflictDoNothing();
     res.status(201).json({ saved: true });
+
+    // Notify the business owner — fire-and-forget after response sent
+    (async () => {
+      try {
+        const [biz] = await db
+          .select({ name: businessesTable.name, submittedById: businessesTable.submittedById })
+          .from(businessesTable)
+          .where(eq(businessesTable.id, businessId))
+          .limit(1);
+        const ownerId = biz?.submittedById;
+        if (!ownerId || ownerId === req.user!.id) return;
+        const title = `⭐ Someone saved ${biz.name}`;
+        const body = "A community member just added your business to their saved places.";
+        await sendPushToUser(ownerId, { title, body, data: { screen: "business-dashboard", type: "new_save" } });
+        await db.insert(notificationsTable).values({
+          userId: ownerId,
+          type: "business",
+          title,
+          body,
+          entityId: businessId,
+          entityType: "business",
+        });
+      } catch { /* non-critical */ }
+    })();
   } catch (err) {
     req.log.error({ err }, "Failed to save place");
     res.status(500).json({ error: "Failed to save place" });

@@ -184,9 +184,11 @@ export default function NotificationCenterScreen() {
         const token = Platform.OS !== "web"
           ? await SecureStore.getItemAsync("auth_session_token")
           : null;
-        if (!token) return;
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
         const res = await fetch("/api/notifications", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers,
+          credentials: Platform.OS === "web" ? "include" : "omit",
         });
         if (!res.ok) return;
         const data = await res.json();
