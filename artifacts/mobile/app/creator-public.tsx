@@ -72,7 +72,7 @@ export default function CreatorPublicScreen() {
   if (loading) {
     return (
       <View style={[s.root, { backgroundColor: colors.background, paddingTop: topPad }]}>
-        <TouchableOpacity style={s.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
+        <TouchableOpacity activeOpacity={0.85} style={s.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={s.centerState}>
@@ -85,7 +85,7 @@ export default function CreatorPublicScreen() {
   if (notFound || !profile) {
     return (
       <View style={[s.root, { backgroundColor: colors.background, paddingTop: topPad }]}>
-        <TouchableOpacity style={s.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
+        <TouchableOpacity activeOpacity={0.85} style={s.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={s.centerState}>
@@ -104,7 +104,7 @@ export default function CreatorPublicScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: bottomPad + 40 }} showsVerticalScrollIndicator={false}>
         {/* Hero header */}
         <View style={[s.hero, { paddingTop: topPad + 12, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <TouchableOpacity style={s.backInHero} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
+          <TouchableOpacity activeOpacity={0.85} style={s.backInHero} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
 

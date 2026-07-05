@@ -63,7 +63,7 @@ export default function BusinessDetailScreen() {
     return (
       <View style={[styles.notFound, { backgroundColor: colors.background }]}>
         <Text style={[styles.notFoundText, { color: colors.mutedForeground }]}>Business not found</Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()}>
           <Text style={[styles.backLink, { color: colors.primary }]}>Go back</Text>
         </TouchableOpacity>
       </View>
@@ -87,13 +87,13 @@ export default function BusinessDetailScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.backBtn, { top: Platform.OS === "web" ? 77 : insets.top + 10 }]}>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           onPress={() => router.back()}
           style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
         >
           <Feather name="arrow-left" size={20} color="#FFFFFF" />
         </TouchableOpacity>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             toggleSave(business.id);
@@ -103,7 +103,7 @@ export default function BusinessDetailScreen() {
           <Feather name="bookmark" size={20} color={saved ? "#C9922B" : "#FFFFFF"} />
         </TouchableOpacity>
         {saved && (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             onPress={() => router.push({ pathname: "/notification-prefs", params: { businessId: business.id, businessName: business.name } })}
             style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
           >
@@ -145,13 +145,13 @@ export default function BusinessDetailScreen() {
               </Text>
             </View>
             {business.phone && (
-              <TouchableOpacity style={styles.infoRow} onPress={handleCall}>
+              <TouchableOpacity activeOpacity={0.85} style={styles.infoRow} onPress={handleCall}>
                 <Feather name="phone" size={16} color={colors.primary} />
                 <Text style={[styles.infoText, { color: colors.primary }]}>{business.phone}</Text>
               </TouchableOpacity>
             )}
             {business.website && (
-              <TouchableOpacity style={styles.infoRow} onPress={handleWebsite}>
+              <TouchableOpacity activeOpacity={0.85} style={styles.infoRow} onPress={handleWebsite}>
                 <Feather name="globe" size={16} color={colors.primary} />
                 <Text style={[styles.infoText, { color: colors.primary }]}>{business.website}</Text>
               </TouchableOpacity>
@@ -183,8 +183,8 @@ export default function BusinessDetailScreen() {
           ) : (
             reviews.map((rev) => {
               const initials = (rev.authorName ?? "?").split(" ").map((n) => n[0] ?? "").join("").slice(0, 2).toUpperCase();
-              const AVATAR_COLORS = ["#3B1F0E", "#C9922B", "#2D7A4F", "#5B3FA0", "#1A5276"];
-              const avatarColor = AVATAR_COLORS[rev.id.charCodeAt(0) % AVATAR_COLORS.length] ?? "#3B1F0E";
+              const AVATAR_COLORS = ["#CA922B", "#C9922B", "#2D7A4F", "#5B3FA0", "#1A5276"];
+              const avatarColor = AVATAR_COLORS[rev.id.charCodeAt(0) % AVATAR_COLORS.length] ?? "#CA922B";
               const timeAgo = new Date(rev.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
               return (
                 <View key={rev.id} style={[styles.reviewCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>

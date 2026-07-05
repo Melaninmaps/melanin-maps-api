@@ -158,7 +158,7 @@ export default function MyCommunityScreen() {
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 8, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1, marginLeft: 14 }}>
@@ -238,23 +238,23 @@ export default function MyCommunityScreen() {
                         {[loc.neighborhood, loc.city, loc.state, loc.zipCode].filter(Boolean).join(", ")}
                       </Text>
                     </View>
-                    <TouchableOpacity onPress={() => handleDelete(loc.id, loc.label)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <TouchableOpacity activeOpacity={0.85} onPress={() => handleDelete(loc.id, loc.label)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                       <Feather name="trash-2" size={15} color={colors.mutedForeground} />
                     </TouchableOpacity>
                   </View>
                   <View style={[styles.locActions, { borderTopColor: colors.border }]}>
                     {loc.isMyComm ? (
-                      <TouchableOpacity style={styles.locActionBtn} onPress={() => handleUnset(loc.id)}>
+                      <TouchableOpacity activeOpacity={0.85} style={styles.locActionBtn} onPress={() => handleUnset(loc.id)}>
                         <Feather name="x-circle" size={14} color={colors.mutedForeground} />
                         <Text style={[styles.locActionText, { color: colors.mutedForeground }]}>Unset</Text>
                       </TouchableOpacity>
                     ) : (
-                      <TouchableOpacity style={styles.locActionBtn} onPress={() => handleSetMyComm(loc.id)}>
+                      <TouchableOpacity activeOpacity={0.85} style={styles.locActionBtn} onPress={() => handleSetMyComm(loc.id)}>
                         <Feather name="home" size={14} color="#2D7A4F" />
                         <Text style={[styles.locActionText, { color: "#2D7A4F" }]}>Set as My Community</Text>
                       </TouchableOpacity>
                     )}
-                    <TouchableOpacity style={styles.locActionBtn} onPress={() => router.push({ pathname: "/spaces", params: { q: loc.city ?? "" } } as any)}>
+                    <TouchableOpacity activeOpacity={0.85} style={styles.locActionBtn} onPress={() => router.push({ pathname: "/spaces", params: { q: loc.city ?? "" } } as any)}>
                       <Feather name="search" size={14} color={colors.primary} />
                       <Text style={[styles.locActionText, { color: colors.primary }]}>Browse spaces here</Text>
                     </TouchableOpacity>
@@ -275,16 +275,16 @@ export default function MyCommunityScreen() {
                           <Text style={[styles.locLabel, { color: colors.foreground }]}>{loc.label}</Text>
                           <Text style={[styles.locDetail, { color: colors.mutedForeground }]}>{loc.industry}</Text>
                         </View>
-                        <TouchableOpacity onPress={() => handleDelete(loc.id, loc.label)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                        <TouchableOpacity activeOpacity={0.85} onPress={() => handleDelete(loc.id, loc.label)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                           <Feather name="trash-2" size={15} color={colors.mutedForeground} />
                         </TouchableOpacity>
                       </View>
                       <View style={[styles.locActions, { borderTopColor: colors.border }]}>
-                          <TouchableOpacity style={[styles.locActionBtn, { flex: 1 }]} onPress={() => router.push({ pathname: "/mentorship", params: { industry: loc.industry ?? "" } } as any)}>
+                          <TouchableOpacity activeOpacity={0.85} style={[styles.locActionBtn, { flex: 1 }]} onPress={() => router.push({ pathname: "/mentorship", params: { industry: loc.industry ?? "" } } as any)}>
                           <Feather name="users" size={14} color="#1D4ED8" />
                           <Text style={[styles.locActionText, { color: "#1D4ED8" }]}>Browse mentors</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={[styles.locActionBtn, { flex: 1 }]} onPress={() => router.push("/spaces" as any)}>
+                        <TouchableOpacity activeOpacity={0.85} style={[styles.locActionBtn, { flex: 1 }]} onPress={() => router.push("/spaces" as any)}>
                           <Feather name="search" size={14} color={colors.primary} />
                           <Text style={[styles.locActionText, { color: colors.primary }]}>Find spaces</Text>
                         </TouchableOpacity>

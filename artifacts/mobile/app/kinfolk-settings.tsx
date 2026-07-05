@@ -100,7 +100,7 @@ export default function KinfolkSettingsScreen() {
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { paddingTop: topPad + 12 }]}>
-          <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/privacy" as never)}>
+          <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/privacy" as never)}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>KinfolkAI™</Text>
@@ -116,7 +116,7 @@ export default function KinfolkSettingsScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/privacy" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/privacy" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>KinfolkAI™</Text>
@@ -173,7 +173,7 @@ export default function KinfolkSettingsScreen() {
                   : "Conversations are not saved — each chat starts fresh"}
               </Text>
             </View>
-            <TouchableOpacity onPress={() => update({ kinfolkMemoryEnabled: !settings.kinfolkMemoryEnabled })}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => update({ kinfolkMemoryEnabled: !settings.kinfolkMemoryEnabled })}>
               <View style={[styles.sw, { backgroundColor: settings.kinfolkMemoryEnabled ? colors.primary : colors.border }]}>
                 <View style={[styles.swThumb, { transform: [{ translateX: settings.kinfolkMemoryEnabled ? 20 : 2 }] }]} />
               </View>
@@ -195,7 +195,7 @@ export default function KinfolkSettingsScreen() {
                   : "Receive general recommendations not tied to your profile"}
               </Text>
             </View>
-            <TouchableOpacity onPress={() => update({ personalisedSuggestions: !settings.personalisedSuggestions })}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => update({ personalisedSuggestions: !settings.personalisedSuggestions })}>
               <View style={[styles.sw, { backgroundColor: settings.personalisedSuggestions ? colors.primary : colors.border }]}>
                 <View style={[styles.swThumb, { transform: [{ translateX: settings.personalisedSuggestions ? 20 : 2 }] }]} />
               </View>

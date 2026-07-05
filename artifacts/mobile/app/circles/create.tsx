@@ -82,7 +82,7 @@ export default function CreateCircleScreen() {
   return (
     <KeyboardAvoidingView style={[s.container, { backgroundColor: colors.background }]} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => step > 1 ? setStep((step - 1) as any) : router.back()} style={s.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => step > 1 ? setStep((step - 1) as any) : router.back()} style={s.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[s.headerTitle, { color: colors.foreground }]}>Create a Circle</Text>
@@ -129,7 +129,7 @@ export default function CreateCircleScreen() {
               {type === "community" && <Feather name="check-circle" size={22} color={colors.primary} />}
             </TouchableOpacity>
 
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[s.nextBtn, { backgroundColor: type ? colors.primary : colors.muted, opacity: type ? 1 : 0.5 }]}
               disabled={!type}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setStep(2); }}
@@ -148,7 +148,7 @@ export default function CreateCircleScreen() {
             <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Choose an Emoji</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
               {EMOJIS.map((e) => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   key={e}
                   style={[s.emojiBtn, { backgroundColor: emoji === e ? colors.primary + "20" : colors.card, borderColor: emoji === e ? colors.primary : colors.border, borderWidth: emoji === e ? 2 : 1 }]}
                   onPress={() => setEmoji(e)}
@@ -192,7 +192,7 @@ export default function CreateCircleScreen() {
               </>
             )}
 
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[s.nextBtn, { backgroundColor: name.trim().length >= 2 ? colors.primary : colors.muted, opacity: name.trim().length >= 2 ? 1 : 0.5 }]}
               disabled={name.trim().length < 2}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setStep(3); }}
@@ -236,7 +236,7 @@ export default function CreateCircleScreen() {
               </View>
             </View>
 
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[s.nextBtn, { backgroundColor: colors.primary }]}
               onPress={handleCreate}
               disabled={saving}

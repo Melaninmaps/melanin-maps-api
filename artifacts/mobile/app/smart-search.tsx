@@ -89,7 +89,7 @@ export default function SmartSearchScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: insets.top + 12, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <View style={[styles.searchRow]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={styles.backBtn}>
             <Feather name="arrow-left" size={20} color={colors.foreground} />
           </TouchableOpacity>
           <View style={[styles.searchInputWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -106,12 +106,12 @@ export default function SmartSearchScreen() {
               autoFocus
             />
             {query.length > 0 && (
-              <TouchableOpacity onPress={() => { setQuery(""); setResults(null); }}>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => { setQuery(""); setResults(null); }}>
                 <Feather name="x" size={16} color={colors.mutedForeground} />
               </TouchableOpacity>
             )}
           </View>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.searchBtn, { backgroundColor: primaryGold, opacity: loading || !query.trim() ? 0.6 : 1 }]}
             onPress={() => void search(query)}
             disabled={loading || !query.trim()}
@@ -283,7 +283,7 @@ export default function SmartSearchScreen() {
                 <Text style={[styles.noResultsSub, { color: colors.mutedForeground }]}>
                   Try rephrasing your search or ask KinfolkAI™ directly — it knows the community.
                 </Text>
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={[styles.kinfolkBtn, { backgroundColor: primaryGold }]}
                   onPress={() => router.push("/travel" as any)}
                 >

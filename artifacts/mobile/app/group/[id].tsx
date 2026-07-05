@@ -51,7 +51,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   activism: "#DC2626",
   travel: "#2D7A4F",
   health: "#0891B2",
-  general: "#3B1F0E",
+  general: "#CA922B",
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -328,14 +328,14 @@ export default function GroupDetailScreen() {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
         <Text style={[styles.notFoundText, { color: colors.mutedForeground }]}>Group not found</Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()}>
           <Text style={[styles.backLink, { color: colors.primary }]}>Go back</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  const catColor = CATEGORY_COLORS[group.category] ?? "#3B1F0E";
+  const catColor = CATEGORY_COLORS[group.category] ?? "#CA922B";
   const catIcon = (CATEGORY_ICONS[group.category] ?? "grid") as any;
   const isFull = group.memberCount >= (group.maxMembers ?? 8);
 
@@ -343,7 +343,7 @@ export default function GroupDetailScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Hero */}
       <View style={[styles.hero, { backgroundColor: catColor, paddingTop: topPad + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Feather name="arrow-left" size={22} color="#FFFFFF" />
         </TouchableOpacity>
 
@@ -653,7 +653,7 @@ export default function GroupDetailScreen() {
                         </TouchableOpacity>
                         <Text style={[styles.suggDate, { color: colors.mutedForeground }]}>{formatDate(s.createdAt)}</Text>
                         {(s.userId === user?.id || group.isAdmin) && (
-                          <TouchableOpacity
+                          <TouchableOpacity activeOpacity={0.85}
                             onPress={() => void handleDeleteSuggestion(s.id)}
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                           >
@@ -713,7 +713,7 @@ export default function GroupDetailScreen() {
         <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.foreground }]}>Add to Bucket List</Text>
-            <TouchableOpacity onPress={() => setShowAddSugg(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => setShowAddSugg(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Feather name="x" size={22} color={colors.foreground} />
             </TouchableOpacity>
           </View>

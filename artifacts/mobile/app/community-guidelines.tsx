@@ -9,7 +9,7 @@ const SECTIONS = [
   {
     icon: "heart" as const,
     title: "Be Respectful",
-    color: "#3B1F0E",
+    color: "#CA922B",
     rules: [
       "Treat every community member with dignity, regardless of background, belief, or identity.",
       "Disagree respectfully — challenge ideas, never attack people.",
@@ -42,7 +42,7 @@ const SECTIONS = [
   {
     icon: "star" as const,
     title: "Keep It Constructive",
-    color: "#3B1F0E",
+    color: "#CA922B",
     rules: [
       "Write reviews that help people make informed decisions — specific details are more helpful than vague ratings.",
       "Focus on the experience, not on personal grievances unrelated to the visit.",
@@ -87,7 +87,7 @@ export default function CommunityGuidelinesScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Community Guidelines</Text>

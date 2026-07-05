@@ -52,7 +52,7 @@ const MOCK_CHALLENGES: Challenge[] = [
     endsIn: "18 days",
     participants: 3891,
     points: 500,
-    color: "#3B1F0E",
+    color: "#CA922B",
     badge: "👑 Community Champion",
     tasks: ["Visit 5 new businesses", "Span 2+ categories", "Invite a friend"],
     joined: true,
@@ -109,7 +109,7 @@ export default function ChallengesScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/community" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/community" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Business Challenges</Text>
@@ -117,7 +117,7 @@ export default function ChallengesScreen() {
       </View>
 
       <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
-        <View style={[styles.heroBanner, { backgroundColor: "#3B1F0E" }]}>
+        <View style={[styles.heroBanner, { backgroundColor: "#CA922B" }]}>
           <Text style={styles.heroEmoji}>🏆</Text>
           <View style={{ flex: 1 }}>
             <Text style={styles.heroTitle}>Community Campaigns</Text>
@@ -204,7 +204,7 @@ export default function ChallengesScreen() {
         ))}
 
         {/* Info card */}
-        <View style={[styles.infoCard, { backgroundColor: "#3B1F0E" }]}>
+        <View style={[styles.infoCard, { backgroundColor: "#CA922B" }]}>
           <Text style={styles.infoEmoji}>💡</Text>
           <Text style={styles.infoTxt}>Business registrations are reviewed by the Mapping with Melanin™ team before approval. You'll be notified by email within 2–3 business days.</Text>
         </View>

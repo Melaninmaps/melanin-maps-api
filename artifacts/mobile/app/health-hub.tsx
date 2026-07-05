@@ -343,7 +343,7 @@ export default function HealthHubScreen() {
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
@@ -351,7 +351,7 @@ export default function HealthHubScreen() {
           <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>Evidence-based community health</Text>
         </View>
         {hubTab === "posts" && isApprovedPhysician && (
-          <TouchableOpacity style={[styles.postBtn, { backgroundColor: colors.primary }]} onPress={() => setShowPostModal(true)}>
+          <TouchableOpacity activeOpacity={0.85} style={[styles.postBtn, { backgroundColor: colors.primary }]} onPress={() => setShowPostModal(true)}>
             <Feather name="plus" size={16} color="#FFF" />
             <Text style={styles.postBtnTxt}>Post</Text>
           </TouchableOpacity>
@@ -364,7 +364,7 @@ export default function HealthHubScreen() {
           { id: "posts" as const, icon: "shield" as const, label: "Physician Posts" },
           { id: "insights" as const, icon: "book-open" as const, label: "Journal Insights" },
         ]).map(tab => (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             key={tab.id}
             style={[styles.tabItem, hubTab === tab.id && [styles.tabItemActive, { borderBottomColor: colors.primary }]]}
             onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setHubTab(tab.id); }}
@@ -381,7 +381,7 @@ export default function HealthHubScreen() {
           {/* Topic pills */}
           <View style={styles.topicSection}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.topicScroll}>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[styles.pill, { borderColor: !selectedTopic ? colors.primary : colors.border, backgroundColor: !selectedTopic ? colors.primary : colors.card }]}
                 onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setSelectedTopic(null); }}
               >
@@ -393,7 +393,7 @@ export default function HealthHubScreen() {
                 const active = selectedTopic === t.id;
                 const following = myTopicIds.includes(t.id);
                 return (
-                  <TouchableOpacity key={t.id}
+                  <TouchableOpacity activeOpacity={0.85} key={t.id}
                     style={[styles.pill, { borderColor: active ? colors.primary : following ? colors.primary + "60" : colors.border, backgroundColor: active ? colors.primary : following ? colors.primary + "10" : colors.card }]}
                     onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setSelectedTopic(prev => prev === t.id ? null : t.id); }}
                   >
@@ -404,7 +404,7 @@ export default function HealthHubScreen() {
                 );
               })}
             </ScrollView>
-            <TouchableOpacity style={[styles.manageTopics, { borderColor: colors.border }]} onPress={() => setShowTopicPicker(true)}>
+            <TouchableOpacity activeOpacity={0.85} style={[styles.manageTopics, { borderColor: colors.border }]} onPress={() => setShowTopicPicker(true)}>
               <Feather name="bell" size={14} color={colors.primary} />
               <Text style={[styles.manageTopicsTxt, { color: colors.primary }]}>
                 {myTopicIds.length ? `Following ${myTopicIds.length} topic${myTopicIds.length !== 1 ? "s" : ""}` : "Follow topics to personalize this feed"}
@@ -435,7 +435,7 @@ export default function HealthHubScreen() {
                   {selectedTopic ? "No articles for this topic yet." : "Verified physicians haven't posted yet."}
                 </Text>
                 {!isApprovedPhysician && !isPendingPhysician && (
-                  <TouchableOpacity style={[styles.applyBtn, { borderColor: colors.primary }]} onPress={() => setShowApplyModal(true)}>
+                  <TouchableOpacity activeOpacity={0.85} style={[styles.applyBtn, { borderColor: colors.primary }]} onPress={() => setShowApplyModal(true)}>
                     <Text style={[styles.applyBtnTxt, { color: colors.primary }]}>Are you a physician? Apply to contribute →</Text>
                   </TouchableOpacity>
                 )}
@@ -463,7 +463,7 @@ export default function HealthHubScreen() {
                       const t = topics.find(x => x.id === tid);
                       if (!t) return null;
                       return (
-                        <TouchableOpacity key={tid} style={[styles.topicTag, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]} onPress={() => setSelectedTopic(tid)}>
+                        <TouchableOpacity activeOpacity={0.85} key={tid} style={[styles.topicTag, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]} onPress={() => setSelectedTopic(tid)}>
                           <Text style={styles.topicTagEmoji}>{t.emoji}</Text>
                           <Text style={[styles.topicTagTxt, { color: colors.primary }]}>{t.label}</Text>
                         </TouchableOpacity>
@@ -479,11 +479,11 @@ export default function HealthHubScreen() {
                     <Text style={[styles.postDate, { color: colors.mutedForeground }]}>{formatDate(post.createdAt)}</Text>
                   </View>
                   <View style={[styles.postActions, { borderTopColor: colors.border }]}>
-                    <TouchableOpacity style={styles.actionBtn} onPress={() => Linking.openURL(post.url.startsWith("http") ? post.url : `https://${post.url}`)}>
+                    <TouchableOpacity activeOpacity={0.85} style={styles.actionBtn} onPress={() => Linking.openURL(post.url.startsWith("http") ? post.url : `https://${post.url}`)}>
                       <Feather name="external-link" size={15} color={colors.primary} />
                       <Text style={[styles.actionTxt, { color: colors.primary }]}>Read Article</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleLike(post)}>
+                    <TouchableOpacity activeOpacity={0.85} style={styles.actionBtn} onPress={() => handleLike(post)}>
                       <Feather name="heart" size={15} color={post.liked ? "#DC2626" : colors.mutedForeground} />
                       <Text style={[styles.actionTxt, { color: post.liked ? "#DC2626" : colors.mutedForeground }]}>
                         {post.likeCount > 0 ? String(post.likeCount) : "Like"}
@@ -513,7 +513,7 @@ export default function HealthHubScreen() {
                 )}
               </View>
               {!isPendingPhysician && (
-                <TouchableOpacity style={[styles.physicianCtaBtn, { backgroundColor: "#0891B2" }]} onPress={() => setShowApplyModal(true)}>
+                <TouchableOpacity activeOpacity={0.85} style={[styles.physicianCtaBtn, { backgroundColor: "#0891B2" }]} onPress={() => setShowApplyModal(true)}>
                   <Text style={styles.physicianCtaBtnTxt}>Apply</Text>
                 </TouchableOpacity>
               )}
@@ -530,7 +530,7 @@ export default function HealthHubScreen() {
           <View style={styles.insightFilterSection}>
             <Text style={[styles.filterLabel, { color: colors.mutedForeground }]}>FILTER BY COMMUNITY</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[styles.pill, { borderColor: !selectedDesignations.length ? colors.primary : colors.border, backgroundColor: !selectedDesignations.length ? colors.primary : colors.card }]}
                 onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setSelectedDesignations([]); }}
               >
@@ -539,7 +539,7 @@ export default function HealthHubScreen() {
               {DESIGNATIONS.map(d => {
                 const active = selectedDesignations.includes(d.id);
                 return (
-                  <TouchableOpacity key={d.id}
+                  <TouchableOpacity activeOpacity={0.85} key={d.id}
                     style={[styles.pill, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.card }]}
                     onPress={() => toggleDesignation(d.id)}
                   >
@@ -554,7 +554,7 @@ export default function HealthHubScreen() {
             {/* Journal filter */}
             <Text style={[styles.filterLabel, { color: colors.mutedForeground, marginTop: 10 }]}>FILTER BY JOURNAL</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[styles.journalPill, { borderColor: !selectedJournal ? colors.primary : colors.border, backgroundColor: !selectedJournal ? colors.primary : colors.card }]}
                 onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setSelectedJournal(null); }}
               >
@@ -563,7 +563,7 @@ export default function HealthHubScreen() {
               {INSIGHT_JOURNALS.map(j => {
                 const active = selectedJournal === j.id;
                 return (
-                  <TouchableOpacity key={j.id}
+                  <TouchableOpacity activeOpacity={0.85} key={j.id}
                     style={[styles.journalPill, { borderColor: active ? j.color : colors.border, backgroundColor: active ? j.color : colors.card }]}
                     onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setSelectedJournal(prev => prev === j.id ? null : j.id); }}
                   >
@@ -590,7 +590,7 @@ export default function HealthHubScreen() {
                     : "Scanning NEJM, JAMA, Lancet and more…"}
                 </Text>
                 {insightsLoaded && (selectedDesignations.length > 0 || selectedJournal) && (
-                  <TouchableOpacity style={[styles.applyBtn, { borderColor: colors.primary }]} onPress={() => { setSelectedDesignations([]); setSelectedJournal(null); }}>
+                  <TouchableOpacity activeOpacity={0.85} style={[styles.applyBtn, { borderColor: colors.primary }]} onPress={() => { setSelectedDesignations([]); setSelectedJournal(null); }}>
                     <Text style={[styles.applyBtnTxt, { color: colors.primary }]}>Clear filters</Text>
                   </TouchableOpacity>
                 )}
@@ -654,24 +654,24 @@ export default function HealthHubScreen() {
 
                     {/* Actions */}
                     <View style={[styles.postActions, { borderTopColor: colors.border }]}>
-                      <TouchableOpacity style={styles.actionBtn} onPress={() => Linking.openURL(ins.url)}>
+                      <TouchableOpacity activeOpacity={0.85} style={styles.actionBtn} onPress={() => Linking.openURL(ins.url)}>
                         <Feather name="external-link" size={15} color={colors.primary} />
                         <Text style={[styles.actionTxt, { color: colors.primary }]}>PubMed</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.actionBtn} onPress={() => handlePin(ins)}>
+                      <TouchableOpacity activeOpacity={0.85} style={styles.actionBtn} onPress={() => handlePin(ins)}>
                         <Feather name="map-pin" size={15} color={ins.pinned ? "#F59E0B" : colors.mutedForeground} />
                         <Text style={[styles.actionTxt, { color: ins.pinned ? "#F59E0B" : colors.mutedForeground }]}>
                           {ins.pinned ? "Pinned" : "Pin"}
                         </Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.actionBtn} onPress={() => handleBookmark(ins)}>
+                      <TouchableOpacity activeOpacity={0.85} style={styles.actionBtn} onPress={() => handleBookmark(ins)}>
                         <Feather name="bookmark" size={15} color={ins.bookmarked ? colors.primary : colors.mutedForeground} />
                         <Text style={[styles.actionTxt, { color: ins.bookmarked ? colors.primary : colors.mutedForeground }]}>
                           {ins.bookmarked ? "Saved" : "Save"}
                         </Text>
                       </TouchableOpacity>
                       {isAdmin && (
-                        <TouchableOpacity style={styles.actionBtn} onPress={() => handleDelete(ins)}>
+                        <TouchableOpacity activeOpacity={0.85} style={styles.actionBtn} onPress={() => handleDelete(ins)}>
                           <Feather name="trash-2" size={15} color="#DC2626" />
                           <Text style={[styles.actionTxt, { color: "#DC2626" }]}>Delete</Text>
                         </TouchableOpacity>
@@ -744,14 +744,14 @@ export default function HealthHubScreen() {
         <View style={[styles.modal, { backgroundColor: colors.background }]}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.foreground }]}>Follow Health Topics</Text>
-            <TouchableOpacity onPress={() => setShowTopicPicker(false)}><Feather name="x" size={22} color={colors.foreground} /></TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => setShowTopicPicker(false)}><Feather name="x" size={22} color={colors.foreground} /></TouchableOpacity>
           </View>
           <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>Choose the topics you care about. Your feed will prioritize articles on these topics.</Text>
           <ScrollView contentContainerStyle={styles.topicPickerList}>
             {topics.map(t => {
               const following = myTopicIds.includes(t.id);
               return (
-                <TouchableOpacity key={t.id}
+                <TouchableOpacity activeOpacity={0.85} key={t.id}
                   style={[styles.topicPickerRow, { borderColor: following ? colors.primary : colors.border, backgroundColor: following ? colors.primary + "10" : colors.card }]}
                   onPress={() => toggleFollow(t.id)}
                 >
@@ -767,7 +767,7 @@ export default function HealthHubScreen() {
               );
             })}
           </ScrollView>
-          <TouchableOpacity style={[styles.doneBtn, { backgroundColor: colors.primary }]} onPress={() => setShowTopicPicker(false)}>
+          <TouchableOpacity activeOpacity={0.85} style={[styles.doneBtn, { backgroundColor: colors.primary }]} onPress={() => setShowTopicPicker(false)}>
             <Text style={styles.doneBtnTxt}>Done — Following {myTopicIds.length} topic{myTopicIds.length !== 1 ? "s" : ""}</Text>
           </TouchableOpacity>
         </View>
@@ -778,7 +778,7 @@ export default function HealthHubScreen() {
         <View style={[styles.modal, { backgroundColor: colors.background }]}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.foreground }]}>Share an Article</Text>
-            <TouchableOpacity onPress={() => setShowPostModal(false)}><Feather name="x" size={22} color={colors.foreground} /></TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => setShowPostModal(false)}><Feather name="x" size={22} color={colors.foreground} /></TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={styles.formScroll} keyboardShouldPersistTaps="handled">
             <Text style={[styles.formLabel, { color: colors.foreground }]}>Article Title</Text>
@@ -794,7 +794,7 @@ export default function HealthHubScreen() {
               {topics.map(t => {
                 const sel = postTopics.includes(t.id);
                 return (
-                  <TouchableOpacity key={t.id}
+                  <TouchableOpacity activeOpacity={0.85} key={t.id}
                     style={[styles.topicCheck, { borderColor: sel ? colors.primary : colors.border, backgroundColor: sel ? colors.primary + "12" : colors.card }]}
                     onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setPostTopics(prev => sel ? prev.filter(x => x !== t.id) : [...prev, t.id]); }}
                   >
@@ -806,7 +806,7 @@ export default function HealthHubScreen() {
               })}
             </View>
           </ScrollView>
-          <TouchableOpacity style={[styles.submitBtn, { backgroundColor: colors.primary, opacity: submitting ? 0.6 : 1 }]} onPress={handleSubmitPost} disabled={submitting}>
+          <TouchableOpacity activeOpacity={0.85} style={[styles.submitBtn, { backgroundColor: colors.primary, opacity: submitting ? 0.6 : 1 }]} onPress={handleSubmitPost} disabled={submitting}>
             <Feather name="send" size={16} color="#FFF" />
             <Text style={styles.submitBtnTxt}>{submitting ? "Posting…" : "Share with Community"}</Text>
           </TouchableOpacity>
@@ -818,7 +818,7 @@ export default function HealthHubScreen() {
         <View style={[styles.modal, { backgroundColor: colors.background }]}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.foreground }]}>Apply as Healthcare Provider</Text>
-            <TouchableOpacity onPress={() => setShowApplyModal(false)}><Feather name="x" size={22} color={colors.foreground} /></TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => setShowApplyModal(false)}><Feather name="x" size={22} color={colors.foreground} /></TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={styles.formScroll} keyboardShouldPersistTaps="handled">
             <Text style={[styles.applyNote, { color: colors.mutedForeground, borderColor: colors.border }]}>
@@ -829,7 +829,7 @@ export default function HealthHubScreen() {
             <Text style={[styles.formLabel, { color: colors.foreground }]}>Credentials</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
               {CREDENTIAL_OPTIONS.map(c => (
-                <TouchableOpacity key={c} style={[styles.credChip, { borderColor: applyCreds === c ? colors.primary : colors.border, backgroundColor: applyCreds === c ? colors.primary : colors.card }]} onPress={() => setApplyCreds(c)}>
+                <TouchableOpacity activeOpacity={0.85} key={c} style={[styles.credChip, { borderColor: applyCreds === c ? colors.primary : colors.border, backgroundColor: applyCreds === c ? colors.primary : colors.card }]} onPress={() => setApplyCreds(c)}>
                   <Text style={{ color: applyCreds === c ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 13 }}>{c}</Text>
                 </TouchableOpacity>
               ))}
@@ -845,7 +845,7 @@ export default function HealthHubScreen() {
             <Text style={[styles.formLabel, { color: colors.foreground }]}>Brief Bio (optional)</Text>
             <TextInput style={[styles.textArea, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]} value={applyBio} onChangeText={setApplyBio} placeholder="Tell the community about your background and why health equity matters to you…" placeholderTextColor={colors.mutedForeground} multiline numberOfLines={3} textAlignVertical="top" maxLength={500} />
           </ScrollView>
-          <TouchableOpacity style={[styles.submitBtn, { backgroundColor: "#0891B2", opacity: submitting ? 0.6 : 1 }]} onPress={handleApply} disabled={submitting}>
+          <TouchableOpacity activeOpacity={0.85} style={[styles.submitBtn, { backgroundColor: "#0891B2", opacity: submitting ? 0.6 : 1 }]} onPress={handleApply} disabled={submitting}>
             <Feather name="shield" size={16} color="#FFF" />
             <Text style={styles.submitBtnTxt}>{submitting ? "Submitting…" : "Submit Application"}</Text>
           </TouchableOpacity>

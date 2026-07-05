@@ -168,7 +168,7 @@ function ChipGrid({
         const active = selected.includes(opt);
         const atMax = max != null && selected.length >= max && !active;
         return (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             key={opt}
             style={[
               styles.chip,
@@ -195,7 +195,7 @@ function Toggle({
 }: { label: string; value: boolean; onPress: () => void }) {
   const colors = useColors();
   return (
-    <TouchableOpacity style={[styles.toggleRow, { borderColor: colors.border }]} onPress={onPress}>
+    <TouchableOpacity activeOpacity={0.85} style={[styles.toggleRow, { borderColor: colors.border }]} onPress={onPress}>
       <Text style={[styles.toggleLabel, { color: colors.foreground }]}>{label}</Text>
       <View style={[styles.togglePill, { backgroundColor: value ? colors.primary : colors.border }]}>
         <View style={[styles.toggleThumb, { transform: [{ translateX: value ? 18 : 2 }] }]} />
@@ -274,11 +274,11 @@ export default function BusinessIdentityScreen() {
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/business-owner" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/business-owner" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Business Identity</Text>
-        <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving || loading}>
+        <TouchableOpacity activeOpacity={0.85} style={[styles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving || loading}>
           <Text style={styles.saveBtnTxt}>{saving ? "Saving…" : "Save"}</Text>
         </TouchableOpacity>
       </View>
@@ -381,7 +381,7 @@ export default function BusinessIdentityScreen() {
         <ChipGrid options={GROWTH_GOALS} selected={form.growthGoals} onToggle={v => toggle("growthGoals", v)} />
 
         {/* Bottom save button */}
-        <TouchableOpacity style={[styles.bottomSave, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving || loading}>
+        <TouchableOpacity activeOpacity={0.85} style={[styles.bottomSave, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving || loading}>
           <Feather name="check" size={18} color="#FFF" />
           <Text style={styles.bottomSaveTxt}>{saving ? "Saving…" : "Save Business Identity"}</Text>
         </TouchableOpacity>

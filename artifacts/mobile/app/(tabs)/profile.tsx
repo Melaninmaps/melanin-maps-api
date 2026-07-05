@@ -249,7 +249,7 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
         <Text style={[safetyStyles.rowLabel, { color: colors.foreground }]}>Alert radius</Text>
         <View style={safetyStyles.pillRow}>
           {RADIUS_OPTIONS.map((r) => (
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               key={r}
               onPress={() => pickRadius(r)}
               style={[
@@ -540,13 +540,13 @@ export default function ProfileScreen() {
       <View style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.foreground }]}>Profile</Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.settingsBtn, { backgroundColor: colors.secondary }]}
             onPress={() => router.push("/notification-center" as any)}
           >
             <Feather name="bell" size={18} color={colors.foreground} />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.settingsBtn, { backgroundColor: colors.secondary }]} onPress={() => router.push("/settings")}>
+          <TouchableOpacity activeOpacity={0.85} style={[styles.settingsBtn, { backgroundColor: colors.secondary }]} onPress={() => router.push("/settings")}>
             <Feather name="settings" size={18} color={colors.foreground} />
           </TouchableOpacity>
         </View>
@@ -639,7 +639,7 @@ export default function ProfileScreen() {
                 </View>
               ) : null}
             </View>
-            <TouchableOpacity style={[styles.editBtn, { borderColor: colors.border }]} onPress={openEditModal}>
+            <TouchableOpacity activeOpacity={0.85} style={[styles.editBtn, { borderColor: colors.border }]} onPress={openEditModal}>
               <Feather name="edit-2" size={15} color={colors.primary} />
             </TouchableOpacity>
           </View>
@@ -762,7 +762,7 @@ export default function ProfileScreen() {
 
       {isAuthenticated && (checkInCount > 0 || reviewCount > 0 || citiesExplored > 0) && (
         <View style={{ paddingHorizontal: 16 }}>
-          <View style={[streakStyles.wrap, { backgroundColor: "#3B1F0E" }]}>
+          <View style={[streakStyles.wrap, { backgroundColor: "#CA922B" }]}>
             <View style={streakStyles.headerRow}>
               <Text style={streakStyles.headerEmoji}>🤎</Text>
               <View>
@@ -821,7 +821,7 @@ export default function ProfileScreen() {
           <Pressable style={StyleSheet.absoluteFill} onPress={closeEditModal} />
           <View style={[styles.modalSheet, { backgroundColor: colors.background }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 onPress={() => showIndustryPicker ? setShowIndustryPicker(false) : closeEditModal()}
                 style={styles.modalCancel}
               >
@@ -832,7 +832,7 @@ export default function ProfileScreen() {
               <Text style={[styles.modalTitle, { color: colors.foreground }]}>
                 {showIndustryPicker ? "Select Industry" : "Edit Profile"}
               </Text>
-              <TouchableOpacity onPress={saveProfile} disabled={isSaving || showIndustryPicker} style={styles.modalSave}>
+              <TouchableOpacity activeOpacity={0.85} onPress={saveProfile} disabled={isSaving || showIndustryPicker} style={styles.modalSave}>
                 {isSaving ? (
                   <ActivityIndicator size="small" color={colors.primary} />
                 ) : (
@@ -843,12 +843,12 @@ export default function ProfileScreen() {
 
             {showIndustryPicker ? (
               <ScrollView style={styles.industryList} showsVerticalScrollIndicator={false}>
-                <TouchableOpacity style={[styles.industryOption, { borderBottomColor: colors.border }]} onPress={() => { setEditIndustry(""); setShowIndustryPicker(false); }}>
+                <TouchableOpacity activeOpacity={0.85} style={[styles.industryOption, { borderBottomColor: colors.border }]} onPress={() => { setEditIndustry(""); setShowIndustryPicker(false); }}>
                   <Text style={[styles.industryOptionText, { color: colors.mutedForeground }]}>No industry</Text>
                   {!editIndustry ? <Feather name="check" size={16} color={colors.primary} /> : null}
                 </TouchableOpacity>
                 {INDUSTRIES.map((ind) => (
-                  <TouchableOpacity key={ind} style={[styles.industryOption, { borderBottomColor: colors.border }]} onPress={() => { setEditIndustry(ind); setShowIndustryPicker(false); }}>
+                  <TouchableOpacity activeOpacity={0.85} key={ind} style={[styles.industryOption, { borderBottomColor: colors.border }]} onPress={() => { setEditIndustry(ind); setShowIndustryPicker(false); }}>
                     <Text style={[styles.industryOptionText, { color: colors.foreground }]}>{ind}</Text>
                     {editIndustry === ind ? <Feather name="check" size={16} color={colors.primary} /> : null}
                   </TouchableOpacity>
@@ -928,7 +928,7 @@ export default function ProfileScreen() {
                 />
 
                 <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Industry <Text style={{ color: colors.mutedForeground + "88" }}>(optional)</Text></Text>
-                <TouchableOpacity style={[styles.fieldInput, styles.fieldPicker, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => setShowIndustryPicker(true)}>
+                <TouchableOpacity activeOpacity={0.85} style={[styles.fieldInput, styles.fieldPicker, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => setShowIndustryPicker(true)}>
                   <Text style={[styles.fieldPickerText, { color: editIndustry ? colors.foreground : colors.mutedForeground }]}>
                     {editIndustry || "Select your industry"}
                   </Text>
@@ -976,7 +976,7 @@ export default function ProfileScreen() {
         <StatusComposer
           authorName={[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "You"}
           authorInitials={([user?.firstName, user?.lastName].filter(Boolean).join(" ") || "YO").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
-          authorColor="#3B1F0E"
+          authorColor="#CA922B"
         />
       )}
 
@@ -989,7 +989,7 @@ export default function ProfileScreen() {
               <Text style={{ fontSize: 10, color: colors.mutedForeground, fontWeight: "600" }}>Private by default</Text>
             </View>
           </View>
-          <TouchableOpacity onPress={() => router.push("/health-hub" as never)}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.push("/health-hub" as never)}>
             <Text style={[styles.seeAll, { color: colors.primary }]}>Manage →</Text>
           </TouchableOpacity>
         </View>
@@ -1220,7 +1220,7 @@ export default function ProfileScreen() {
       )}
 
       {isAuthenticated && (
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[styles.signOutBtn, { borderColor: colors.destructive + "40" }]}
           onPress={logout}
         >

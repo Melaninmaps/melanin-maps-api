@@ -115,7 +115,7 @@ const MOCK_VIDEOS: VideoCard[] = [
     duration: "3:58",
     views: "21.0K",
     likes: "1.7K",
-    thumbColor: "#3B1F0E",
+    thumbColor: "#CA922B",
     thumbEmoji: "🗽",
     businessResponse: {
       responder: "Sylvia's Restaurant",
@@ -283,7 +283,7 @@ export default function TravelVideosScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: colors.background }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.back()}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
@@ -315,7 +315,7 @@ export default function TravelVideosScreen() {
               onChangeText={setSearch}
             />
             {search.length > 0 && (
-              <TouchableOpacity onPress={() => setSearch("")}>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => setSearch("")}>
                 <Feather name="x" size={15} color={colors.mutedForeground} />
               </TouchableOpacity>
             )}
@@ -399,7 +399,7 @@ export default function TravelVideosScreen() {
                 <Text style={[styles.limitLabel, { color: colors.foreground }]}>
                   Video uploads — {FREE_VIDEO_COUNT}/{FREE_VIDEO_LIMIT} used
                 </Text>
-                <TouchableOpacity onPress={() => setShowUpgradeModal(true)}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => setShowUpgradeModal(true)}>
                   <Text style={[styles.limitLink, { color: colors.primary }]}>Go unlimited →</Text>
                 </TouchableOpacity>
               </View>
@@ -421,7 +421,7 @@ export default function TravelVideosScreen() {
         {/* Premium creator features banner */}
         {!isPremium && activeFeedTab !== "My Videos" && (
           <TouchableOpacity
-            style={[styles.creatorBanner, { backgroundColor: "#3B1F0E" }]}
+            style={[styles.creatorBanner, { backgroundColor: "#CA922B" }]}
             onPress={() => setShowUpgradeModal(true)}
             activeOpacity={0.85}
           >

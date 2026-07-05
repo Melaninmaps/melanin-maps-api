@@ -206,7 +206,7 @@ const ACTIONS = [
   { id: "resolution", icon: "check-circle" as const, label: "Resolution Center", color: "#2D7A4F", route: "/resolution-center" },
   { id: "messages", icon: "message-circle" as const, label: "Messages", color: "#7B4F2E", route: "/messages" },
   { id: "verify", icon: "shield" as const, label: "Get Verified", color: "#442A19", route: "/business-verify" },
-  { id: "analytics", icon: "bar-chart-2" as const, label: "Analytics", color: "#3A1F0E", route: null },
+  { id: "analytics", icon: "bar-chart-2" as const, label: "Analytics", color: "#CA922B", route: null },
 ];
 
 const DEFAULT_GROWTH_CATALOGUE = [
@@ -542,7 +542,7 @@ export default function BusinessDashboardScreen() {
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.primary }]}>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={styles.backBtn}
             onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile")}
           >
@@ -564,7 +564,7 @@ export default function BusinessDashboardScreen() {
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.primary }]}>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={styles.backBtn}
             onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile")}
           >
@@ -614,7 +614,7 @@ export default function BusinessDashboardScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.primary }]}>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={styles.backBtn}
           onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile")}
         >
@@ -629,14 +629,14 @@ export default function BusinessDashboardScreen() {
             </View>
           )}
         </View>
-        <TouchableOpacity style={styles.settingsBtn} onPress={() => router.push("/settings")}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.settingsBtn} onPress={() => router.push("/settings")}>
           <Feather name="settings" size={20} color="#FFF" />
         </TouchableOpacity>
       </View>
 
       <View style={[styles.tabs, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         {(["overview", "reviews", "products", "grow", "insights"] as const).map((t) => (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             key={t}
             style={[styles.tab, activeTab === t && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
             onPress={() => {
@@ -853,7 +853,7 @@ export default function BusinessDashboardScreen() {
                   </View>
                 )}
 
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={[styles.addrSaveBtn, { backgroundColor: colors.primary, opacity: addrSaving ? 0.6 : 1 }]}
                   disabled={addrSaving}
                   onPress={async () => {
@@ -931,7 +931,7 @@ export default function BusinessDashboardScreen() {
                   </View>
                 )}
 
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={[styles.addrSaveBtn, { backgroundColor: colors.primary, opacity: policySaving ? 0.6 : 1 }]}
                   disabled={policySaving}
                   onPress={async () => {
@@ -992,7 +992,7 @@ export default function BusinessDashboardScreen() {
                     <Feather name="zap" size={11} color="#FFF" />
                     <Text style={styles.nudgeBadgeText}>KinfolkAI™</Text>
                   </View>
-                  <TouchableOpacity onPress={() => setNudgeDismissed(true)} hitSlop={8}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => setNudgeDismissed(true)} hitSlop={8}>
                     <Feather name="x" size={16} color={nudge.isNearPeak ? "rgba(255,255,255,0.4)" : colors.mutedForeground} />
                   </TouchableOpacity>
                 </View>
@@ -1018,7 +1018,7 @@ export default function BusinessDashboardScreen() {
                           : "Caption assist"}
                       </Text>
                     </View>
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       onPress={() => { void loadAiCaptions(); }}
                       disabled={aiCaptionsLoading}
                       hitSlop={8}
@@ -1235,7 +1235,7 @@ export default function BusinessDashboardScreen() {
             ))}
 
             {/* KinfolkAI Action Plan */}
-            <View style={[styles.aiPlanCard, { backgroundColor: "#3A1F0E", borderColor: "#CA922B30" }]}>
+            <View style={[styles.aiPlanCard, { backgroundColor: "#CA922B", borderColor: "#CA922B30" }]}>
               <View style={styles.aiPlanHeader}>
                 <View style={styles.aiPlanBadge}>
                   <Feather name="zap" size={11} color="#FFF" />
@@ -1450,15 +1450,15 @@ export default function BusinessDashboardScreen() {
               </View>
             ) : !sellerAgreementAccepted ? (
               <View style={[styles.paywallCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <View style={[styles.paywallIcon, { backgroundColor: "#3B1F0E18" }]}>
-                  <Feather name="file-text" size={32} color="#3B1F0E" />
+                <View style={[styles.paywallIcon, { backgroundColor: "#CA922B18" }]}>
+                  <Feather name="file-text" size={32} color="#CA922B" />
                 </View>
                 <Text style={[styles.paywallTitle, { color: colors.foreground }]}>Accept Seller Agreement</Text>
                 <Text style={[styles.paywallBody, { color: colors.mutedForeground }]}>
                   Before listing products, review and accept the Marketplace Seller Agreement. It covers your responsibilities for product quality, fulfillment, taxes, and customer service.
                 </Text>
                 <TouchableOpacity
-                  style={[styles.paywallBtn, { backgroundColor: "#3B1F0E" }, dsSigningLoading && { opacity: 0.6 }]}
+                  style={[styles.paywallBtn, { backgroundColor: "#CA922B" }, dsSigningLoading && { opacity: 0.6 }]}
                   activeOpacity={0.85}
                   disabled={dsSigningLoading}
                   onPress={async () => {
@@ -1842,7 +1842,7 @@ export default function BusinessDashboardScreen() {
                       </Text>
                     </View>
                     <View style={styles.listingActions}>
-                      <TouchableOpacity
+                      <TouchableOpacity activeOpacity={0.85}
                         style={[styles.toggleBtn, { backgroundColor: l.active ? "#2D7A4F18" : colors.muted + "30" }]}
                         onPress={() => void toggleActive(l.id, !l.active)}
                       >
@@ -1850,7 +1850,7 @@ export default function BusinessDashboardScreen() {
                           {l.active ? "Active" : "Hidden"}
                         </Text>
                       </TouchableOpacity>
-                      <TouchableOpacity
+                      <TouchableOpacity activeOpacity={0.85}
                         onPress={() => {
                           Alert.alert("Delete listing?", `"${l.name}" will be removed.`, [
                             { text: "Cancel", style: "cancel" },
@@ -1901,7 +1901,7 @@ export default function BusinessDashboardScreen() {
               <View style={styles.comingSoon}>
                 <Feather name="wifi-off" size={28} color={colors.muted} />
                 <Text style={[styles.comingSoonTxt, { color: colors.foreground }]}>Could not load analytics</Text>
-                <TouchableOpacity onPress={() => { setAnalyticsError(null); void loadAnalytics(); }}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => { setAnalyticsError(null); void loadAnalytics(); }}>
                   <Text style={[styles.retryTxt, { color: colors.primary }]}>Tap to retry</Text>
                 </TouchableOpacity>
               </View>
@@ -1917,7 +1917,7 @@ export default function BusinessDashboardScreen() {
               return (
                 <>
                   {/* Tier + Engagement Score */}
-                  <View style={[styles.scoreCard, { backgroundColor: A.tier === "trailblazer" ? "#3A1F0E" : colors.card, borderColor: A.tier === "trailblazer" ? "#CA922B50" : colors.border }]}>
+                  <View style={[styles.scoreCard, { backgroundColor: A.tier === "trailblazer" ? "#CA922B" : colors.card, borderColor: A.tier === "trailblazer" ? "#CA922B50" : colors.border }]}>
                     <View style={styles.scoreLeft}>
                       <View style={styles.scoreTierRow}>
                         <Feather name={A.tier === "trailblazer" ? "award" : "bar-chart-2"} size={14} color={A.tier === "trailblazer" ? "#CA922B" : colors.primary} />
@@ -2198,7 +2198,7 @@ export default function BusinessDashboardScreen() {
 
                   {A.tier === "navigator" && (
                     <TouchableOpacity
-                      style={[styles.upgradeStrip, { backgroundColor: "#3A1F0E" }]}
+                      style={[styles.upgradeStrip, { backgroundColor: "#CA922B" }]}
                       onPress={() => router.push("/membership")}
                       activeOpacity={0.85}
                     >

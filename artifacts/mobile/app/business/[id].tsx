@@ -58,7 +58,7 @@ const CATEGORY_IMAGES: Record<string, any> = {
   Finance: require("@/assets/images/bento-businesses.jpg"),
 };
 
-const AVATAR_COLORS = ["#3B1F0E", "#C9922B", "#2D7A4F", "#7B3F00", "#1D4ED8"];
+const AVATAR_COLORS = ["#CA922B", "#C9922B", "#2D7A4F", "#7B3F00", "#1D4ED8"];
 
 export default function BusinessDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -177,7 +177,7 @@ export default function BusinessDetailScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.backBtn, { top: Platform.OS === "web" ? 77 : insets.top + 10 }]}>
-          <TouchableOpacity onPress={() => router.back()} style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}>
             <Feather name="arrow-left" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
@@ -198,7 +198,7 @@ export default function BusinessDetailScreen() {
     return (
       <View style={[styles.notFound, { backgroundColor: colors.background }]}>
         <Text style={[styles.notFoundText, { color: colors.mutedForeground }]}>Business not found</Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()}>
           <Text style={[styles.backLink, { color: colors.primary }]}>Go back</Text>
         </TouchableOpacity>
       </View>
@@ -358,20 +358,20 @@ export default function BusinessDetailScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.backBtn, { top: Platform.OS === "web" ? 77 : insets.top + 10 }]}>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           onPress={() => router.back()}
           style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
         >
           <Feather name="arrow-left" size={20} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={styles.backBtnRight}>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             onPress={handleShare}
             style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
           >
             <Feather name="share-2" size={20} color="#FFFFFF" />
           </TouchableOpacity>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               const becomingSaved = !saved;
@@ -392,7 +392,7 @@ export default function BusinessDetailScreen() {
             <Feather name="bookmark" size={20} color={saved ? "#C9922B" : "#FFFFFF"} />
           </TouchableOpacity>
           {saved && (
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               onPress={() => router.push({ pathname: "/notification-prefs", params: { businessId: business.id, businessName: business.name } })}
               style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
             >
@@ -571,13 +571,13 @@ export default function BusinessDetailScreen() {
               </Text>
             </View>
             {business.phone && (
-              <TouchableOpacity style={styles.infoRow} onPress={handleCall}>
+              <TouchableOpacity activeOpacity={0.85} style={styles.infoRow} onPress={handleCall}>
                 <Feather name="phone" size={16} color={colors.primary} />
                 <Text style={[styles.infoText, { color: colors.primary }]}>{business.phone}</Text>
               </TouchableOpacity>
             )}
             {business.website && (
-              <TouchableOpacity style={styles.infoRow} onPress={handleWebsite}>
+              <TouchableOpacity activeOpacity={0.85} style={styles.infoRow} onPress={handleWebsite}>
                 <Feather name="globe" size={16} color={colors.primary} />
                 <Text style={[styles.infoText, { color: colors.primary }]}>{business.website}</Text>
               </TouchableOpacity>
@@ -625,7 +625,7 @@ export default function BusinessDetailScreen() {
                   {rest.length > 0 && (
                     <View style={styles.socialLinksRow}>
                       {rest.map((s) => (
-                        <TouchableOpacity
+                        <TouchableOpacity activeOpacity={0.85}
                           key={s.key}
                           style={[styles.socialBtn, { backgroundColor: s.bg, borderColor: s.color + "30" }]}
                           onPress={() => handleSocialLink(biz[s.key], s.baseUrl, s.clickType || undefined)}
@@ -698,7 +698,7 @@ export default function BusinessDetailScreen() {
 
           {/* Pass the Plate */}
           <TouchableOpacity
-            style={[styles.plateCard, { backgroundColor: "#3B1F0E", borderColor: "#C9922B55" }]}
+            style={[styles.plateCard, { backgroundColor: "#CA922B", borderColor: "#C9922B55" }]}
             activeOpacity={0.85}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -803,7 +803,7 @@ export default function BusinessDetailScreen() {
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
               Reviews ({allReviews.length})
             </Text>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.reportBtn, { borderColor: colors.border }]}
               onPress={() => setReportModalOpen(true)}
             >
@@ -872,7 +872,7 @@ export default function BusinessDetailScreen() {
                       {rev.ownerResponse}
                     </Text>
                     {rev.isOwnReview && (
-                      <TouchableOpacity
+                      <TouchableOpacity activeOpacity={0.85}
                         style={{ marginTop: 8, alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: colors.primary + "40", backgroundColor: colors.primary + "0A" }}
                         onPress={() => {
                           setEditingReviewId(rev.id);

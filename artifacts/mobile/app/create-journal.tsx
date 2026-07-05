@@ -95,7 +95,7 @@ export default function CreateJournalScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/journals" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/journals" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Create Trip Journal</Text>
@@ -123,7 +123,7 @@ export default function CreateJournalScreen() {
           <Text style={[styles.label, { color: colors.foreground }]}>Cover Emoji</Text>
           <View style={styles.emojiGrid}>
             {COVER_EMOJIS.map((e) => (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 key={e}
                 style={[
                   styles.emojiBtn,
@@ -179,14 +179,14 @@ export default function CreateJournalScreen() {
               onSubmitEditing={addCity}
               returnKeyType="done"
             />
-            <TouchableOpacity style={[styles.addBtn, { backgroundColor: colors.primary }]} onPress={addCity}>
+            <TouchableOpacity activeOpacity={0.85} style={[styles.addBtn, { backgroundColor: colors.primary }]} onPress={addCity}>
               <Feather name="plus" size={16} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
           {cities.length > 0 && (
             <View style={styles.cityTags}>
               {cities.map((c) => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   key={c}
                   style={[styles.cityTag, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "30" }]}
                   onPress={() => removeCity(c)}

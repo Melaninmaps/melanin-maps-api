@@ -205,7 +205,7 @@ export default function SignupScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <TouchableOpacity style={styles.back} onPress={handleBack}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={handleBack}>
           <Feather name="arrow-left" size={22} color={c.foreground} />
         </TouchableOpacity>
 
@@ -330,7 +330,7 @@ export default function SignupScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
-                <TouchableOpacity onPress={() => setShowPassword((v) => !v)} hitSlop={{ top: 8, bottom: 8, left: 12, right: 4 }}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => setShowPassword((v) => !v)} hitSlop={{ top: 8, bottom: 8, left: 12, right: 4 }}>
                   <Feather name={showPassword ? "eye-off" : "eye"} size={18} color={c.mutedForeground} />
                 </TouchableOpacity>
               </View>
@@ -353,7 +353,7 @@ export default function SignupScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
-                <TouchableOpacity onPress={() => setShowConfirm((v) => !v)} hitSlop={{ top: 8, bottom: 8, left: 12, right: 4 }}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => setShowConfirm((v) => !v)} hitSlop={{ top: 8, bottom: 8, left: 12, right: 4 }}>
                   <Feather name={showConfirm ? "eye-off" : "eye"} size={18} color={c.mutedForeground} />
                 </TouchableOpacity>
               </View>
@@ -455,7 +455,7 @@ export default function SignupScreen() {
 
         <View style={styles.loginRow}>
           <Text style={[styles.loginTxt, { color: c.mutedForeground }]}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => router.replace("/login")}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.replace("/login")}>
             <Text style={[styles.loginLink, { color: c.primary }]}>Sign in</Text>
           </TouchableOpacity>
         </View>

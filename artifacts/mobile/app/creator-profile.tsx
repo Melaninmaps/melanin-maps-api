@@ -143,7 +143,7 @@ export default function CreatorProfileScreen() {
     return (
       <View style={[s.root, { backgroundColor: colors.background }]}>
         <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-          <TouchableOpacity style={s.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
+          <TouchableOpacity activeOpacity={0.85} style={s.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
           <Text style={[s.headerTitle, { color: colors.foreground }]}>Creator Profile</Text>
@@ -153,7 +153,7 @@ export default function CreatorProfileScreen() {
           <Text style={{ fontSize: 32, marginBottom: 12 }}>🎥</Text>
           <Text style={[s.emptyTitle, { color: colors.foreground }]}>Sign in required</Text>
           <Text style={[s.emptySub, { color: colors.mutedForeground }]}>Log in to set up your creator profile.</Text>
-          <TouchableOpacity style={[s.saveBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/login" as never)}>
+          <TouchableOpacity activeOpacity={0.85} style={[s.saveBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/login" as never)}>
             <Text style={s.saveBtnText}>Log In</Text>
           </TouchableOpacity>
         </View>
@@ -164,7 +164,7 @@ export default function CreatorProfileScreen() {
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
       <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={s.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={s.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[s.headerTitle, { color: colors.foreground }]}>Creator Profile</Text>
@@ -234,7 +234,7 @@ export default function CreatorProfileScreen() {
               {CREATOR_CATEGORIES.map((cat) => {
                 const active = form.categories.includes(cat);
                 return (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     key={cat}
                     style={[s.chip, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary + "15" : colors.background }]}
                     onPress={() => toggleCategory(cat)}
@@ -269,7 +269,7 @@ export default function CreatorProfileScreen() {
                   />
                 </View>
                 {platformUrls[key] ? (
-                  <TouchableOpacity onPress={() => setPlatformUrls((prev) => ({ ...prev, [key]: "" }))}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => setPlatformUrls((prev) => ({ ...prev, [key]: "" }))}>
                     <Feather name="x" size={14} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 ) : null}
@@ -286,7 +286,7 @@ export default function CreatorProfileScreen() {
                   {PLATFORMS.filter((p) => platformUrls[p.key]?.trim()).map((p) => {
                     const active = form.primaryPlatform === p.key;
                     return (
-                      <TouchableOpacity
+                      <TouchableOpacity activeOpacity={0.85}
                         key={p.key}
                         style={[s.chip, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary + "15" : colors.background }]}
                         onPress={() => setForm((prev) => ({ ...prev, primaryPlatform: active ? "" : p.key }))}

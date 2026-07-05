@@ -149,7 +149,7 @@ function BusinessCard({
         <Text style={[bizStyles.hood, { color: colors.mutedForeground }]}>
           <Ionicons name="location-outline" size={11} /> {biz.neighborhood}
         </Text>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           onPress={() => compareMode ? onCompareToggle?.(biz) : onWishlist(biz, city ?? "", !wishlisted, wishlistItemId)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           style={[bizStyles.wishlistBtn, !compareMode && wishlisted && { backgroundColor: colors.primary + "18" }]}
@@ -169,14 +169,14 @@ function BusinessCard({
       </View>
       <View style={bizStyles.feedbackRow}>
         <Text style={[bizStyles.feedbackLabel, { color: colors.mutedForeground }]}>Helpful?</Text>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[bizStyles.feedbackBtn, reaction === "like" && { backgroundColor: "#16A34A22" }]}
           onPress={() => onFeedback(messageId, biz.name, biz.category, city ?? "", "like")}
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
           <Ionicons name={reaction === "like" ? "thumbs-up" : "thumbs-up-outline"} size={16} color={reaction === "like" ? "#16A34A" : colors.mutedForeground} />
         </TouchableOpacity>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[bizStyles.feedbackBtn, reaction === "dislike" && { backgroundColor: "#DC262622" }]}
           onPress={() => onFeedback(messageId, biz.name, biz.category, city ?? "", "dislike")}
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
@@ -517,7 +517,7 @@ function SmartPromotionCard({
           <View style={[spStyles.badge, { backgroundColor: GOLD + "22" }]}>
             <Text style={[spStyles.badgeText, { color: GOLD }]}>✦ Smart Pick for You</Text>
           </View>
-          <TouchableOpacity onPress={onDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity activeOpacity={0.85} onPress={onDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <Ionicons name="close" size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
         </View>
@@ -753,7 +753,7 @@ function TasteProfileSheet({
       <View style={[tpStyles.container, { backgroundColor: colors.background }]}>
         <View style={[tpStyles.header, { borderBottomColor: colors.border }]}>
           <Text style={[tpStyles.title, { color: colors.text }]}>Your Taste Profile</Text>
-          <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity activeOpacity={0.85} onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <Ionicons name="close" size={22} color={colors.text} />
           </TouchableOpacity>
         </View>
@@ -772,7 +772,7 @@ function TasteProfileSheet({
             {ALL_CATEGORIES.map((c) => {
               const sel = favCats.includes(c);
               return (
-                <TouchableOpacity key={c} style={[tpStyles.chip, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(favCats, c, setFavCats)}>
+                <TouchableOpacity activeOpacity={0.85} key={c} style={[tpStyles.chip, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(favCats, c, setFavCats)}>
                   <Text style={[tpStyles.chipText, { color: sel ? "#fff" : colors.text }]}>{c}</Text>
                 </TouchableOpacity>
               );
@@ -785,7 +785,7 @@ function TasteProfileSheet({
             {AVOID_CATEGORIES.map((c) => {
               const sel = avoidCats.includes(c);
               return (
-                <TouchableOpacity key={c} style={[tpStyles.chip, { backgroundColor: sel ? "#DC262614" : colors.card, borderColor: sel ? "#DC2626" : colors.border }]} onPress={() => toggleArr(avoidCats, c, setAvoidCats)}>
+                <TouchableOpacity activeOpacity={0.85} key={c} style={[tpStyles.chip, { backgroundColor: sel ? "#DC262614" : colors.card, borderColor: sel ? "#DC2626" : colors.border }]} onPress={() => toggleArr(avoidCats, c, setAvoidCats)}>
                   <Text style={[tpStyles.chipText, { color: sel ? "#DC2626" : colors.text }]}>{c}</Text>
                 </TouchableOpacity>
               );
@@ -795,7 +795,7 @@ function TasteProfileSheet({
           <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Budget range</Text>
           <View style={tpStyles.optionRow}>
             {BUDGET_OPTIONS.map((b) => (
-              <TouchableOpacity key={b.id} style={[tpStyles.optionBtn, { backgroundColor: budget === b.id ? colors.primary : colors.card, borderColor: budget === b.id ? colors.primary : colors.border }]} onPress={() => setBudget(b.id)}>
+              <TouchableOpacity activeOpacity={0.85} key={b.id} style={[tpStyles.optionBtn, { backgroundColor: budget === b.id ? colors.primary : colors.card, borderColor: budget === b.id ? colors.primary : colors.border }]} onPress={() => setBudget(b.id)}>
                 <Text style={[tpStyles.optionText, { color: budget === b.id ? "#fff" : colors.text }]}>{b.label}</Text>
               </TouchableOpacity>
             ))}
@@ -806,7 +806,7 @@ function TasteProfileSheet({
             {TRIP_STYLES.map((s) => {
               const sel = tripStyles.includes(s.id);
               return (
-                <TouchableOpacity key={s.id} style={[tpStyles.optionBtn, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(tripStyles, s.id, setTripStyles)}>
+                <TouchableOpacity activeOpacity={0.85} key={s.id} style={[tpStyles.optionBtn, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(tripStyles, s.id, setTripStyles)}>
                   <Text style={[tpStyles.optionText, { color: sel ? "#fff" : colors.text }]}>{s.label}</Text>
                 </TouchableOpacity>
               );
@@ -816,7 +816,7 @@ function TasteProfileSheet({
           <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Who's coming with you?</Text>
           <View style={tpStyles.optionRow}>
             {COMPANION_OPTIONS.map((c) => (
-              <TouchableOpacity key={c.id} style={[tpStyles.optionBtn, { backgroundColor: companion === c.id ? colors.primary : colors.card, borderColor: companion === c.id ? colors.primary : colors.border }]} onPress={() => setCompanion(c.id)}>
+              <TouchableOpacity activeOpacity={0.85} key={c.id} style={[tpStyles.optionBtn, { backgroundColor: companion === c.id ? colors.primary : colors.card, borderColor: companion === c.id ? colors.primary : colors.border }]} onPress={() => setCompanion(c.id)}>
                 <Text style={[tpStyles.optionText, { color: companion === c.id ? "#fff" : colors.text }]}>{c.label}</Text>
               </TouchableOpacity>
             ))}
@@ -844,7 +844,7 @@ function TasteProfileSheet({
                 {COMM_STYLES.map((cs) => {
                   const sel = commStyle === cs.id;
                   return (
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       key={cs.id}
                       style={[tpStyles.commCard, { backgroundColor: sel ? colors.primary + "12" : colors.card, borderColor: sel ? colors.primary : colors.border }]}
                       onPress={() => setCommStyle(cs.id)}
@@ -862,7 +862,7 @@ function TasteProfileSheet({
               <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Emoji level</Text>
               <View style={tpStyles.optionRow}>
                 {EMOJI_LEVELS.map((e) => (
-                  <TouchableOpacity key={e.id} style={[tpStyles.optionBtn, { backgroundColor: emojiLvl === e.id ? colors.primary : colors.card, borderColor: emojiLvl === e.id ? colors.primary : colors.border }]} onPress={() => setEmojiLvl(e.id)}>
+                  <TouchableOpacity activeOpacity={0.85} key={e.id} style={[tpStyles.optionBtn, { backgroundColor: emojiLvl === e.id ? colors.primary : colors.card, borderColor: emojiLvl === e.id ? colors.primary : colors.border }]} onPress={() => setEmojiLvl(e.id)}>
                     <Text style={[tpStyles.optionText, { color: emojiLvl === e.id ? "#fff" : colors.text }]}>{e.label}</Text>
                   </TouchableOpacity>
                 ))}
@@ -871,7 +871,7 @@ function TasteProfileSheet({
               <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 16 }]}>Humor</Text>
               <View style={tpStyles.optionRow}>
                 {HUMOR_LEVELS.map((h) => (
-                  <TouchableOpacity key={h.id} style={[tpStyles.optionBtn, { backgroundColor: humor === h.id ? colors.primary : colors.card, borderColor: humor === h.id ? colors.primary : colors.border }]} onPress={() => setHumor(h.id)}>
+                  <TouchableOpacity activeOpacity={0.85} key={h.id} style={[tpStyles.optionBtn, { backgroundColor: humor === h.id ? colors.primary : colors.card, borderColor: humor === h.id ? colors.primary : colors.border }]} onPress={() => setHumor(h.id)}>
                     <Text style={[tpStyles.optionText, { color: humor === h.id ? "#fff" : colors.text }]}>{h.label}</Text>
                   </TouchableOpacity>
                 ))}
@@ -883,7 +883,7 @@ function TasteProfileSheet({
                 {CULTURAL_INTERESTS_LIST.map((c) => {
                   const sel = culturalInt.includes(c);
                   return (
-                    <TouchableOpacity key={c} style={[tpStyles.chip, { backgroundColor: sel ? colors.primary + "18" : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(culturalInt, c, setCulturalInt)}>
+                    <TouchableOpacity activeOpacity={0.85} key={c} style={[tpStyles.chip, { backgroundColor: sel ? colors.primary + "18" : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(culturalInt, c, setCulturalInt)}>
                       <Text style={[tpStyles.chipText, { color: sel ? colors.primary : colors.text }]}>{c}</Text>
                     </TouchableOpacity>
                   );
@@ -926,7 +926,7 @@ function TasteProfileSheet({
           </TouchableOpacity>
         )}
         <View style={[tpStyles.footer, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
-          <TouchableOpacity style={[tpStyles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving}>
+          <TouchableOpacity activeOpacity={0.85} style={[tpStyles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving}>
             <Ionicons name="checkmark-circle" size={18} color="#fff" />
             <Text style={tpStyles.saveBtnText}>{saving ? "Saving…" : "Save My Profile"}</Text>
           </TouchableOpacity>
@@ -987,7 +987,7 @@ function SessionHistoryDrawer({
       <View style={[shStyles.container, { backgroundColor: colors.background }]}>
         <View style={[shStyles.header, { borderBottomColor: colors.border }]}>
           <Text style={[shStyles.title, { color: colors.text }]}>Conversation History</Text>
-          <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity activeOpacity={0.85} onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <Ionicons name="close" size={22} color={colors.text} />
           </TouchableOpacity>
         </View>
@@ -1152,7 +1152,7 @@ function FlightTrackerModal({
             <Ionicons name="airplane-outline" size={20} color={colors.primary} />
             <Text style={[ftStyles.title, { color: colors.foreground }]}>Flight Tracker</Text>
           </View>
-          <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity activeOpacity={0.85} onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <Ionicons name="close" size={22} color={colors.foreground} />
           </TouchableOpacity>
         </View>
@@ -1223,10 +1223,10 @@ function FlightTrackerModal({
                   onChangeText={setAirline}
                 />
                 <View style={ftStyles.formActions}>
-                  <TouchableOpacity style={[ftStyles.cancelBtn, { borderColor: colors.border }]} onPress={() => setShowAddForm(false)}>
+                  <TouchableOpacity activeOpacity={0.85} style={[ftStyles.cancelBtn, { borderColor: colors.border }]} onPress={() => setShowAddForm(false)}>
                     <Text style={[ftStyles.cancelBtnText, { color: colors.mutedForeground }]}>Cancel</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[ftStyles.saveFlightBtn, { backgroundColor: colors.primary }]} onPress={() => void handleAdd()} disabled={adding}>
+                  <TouchableOpacity activeOpacity={0.85} style={[ftStyles.saveFlightBtn, { backgroundColor: colors.primary }]} onPress={() => void handleAdd()} disabled={adding}>
                     <Text style={ftStyles.saveFlightBtnText}>{adding ? "Saving…" : "Save Flight"}</Text>
                   </TouchableOpacity>
                 </View>
@@ -1267,7 +1267,7 @@ function FlightTrackerModal({
                       </View>
                     )}
                   </View>
-                  <TouchableOpacity onPress={() => void handleDelete(f.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => void handleDelete(f.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                     <Ionicons name="trash-outline" size={18} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 </View>
@@ -1492,7 +1492,7 @@ export default function TravelScreen() {
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 10, backgroundColor: colors.primary }]}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.headerBtn} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
@@ -1500,35 +1500,35 @@ export default function TravelScreen() {
           <Text style={styles.headerSub}>Your personal travel companion</Text>
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.headerIconBtn, hasProfile && { backgroundColor: "#ffffff30" }]}
             onPress={() => setShowProfile(true)}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name="person-circle-outline" size={22} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.headerIconBtn, wishlistItems.length > 0 && { backgroundColor: "#ffffff25" }]}
             onPress={() => router.push("/wishlist" as any)}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name={wishlistItems.length > 0 ? "bookmark" : "bookmark-outline"} size={22} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.headerIconBtn, compareMode && { backgroundColor: "#ffffff40" }]}
             onPress={() => { setCompareMode((v) => !v); setCompareSelected([]); }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name="scale-outline" size={22} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={styles.headerIconBtn}
             onPress={() => setShowFlights(true)}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name="airplane-outline" size={22} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={styles.headerIconBtn}
             onPress={() => { void loadSessions(); setShowHistory(true); }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -1536,7 +1536,7 @@ export default function TravelScreen() {
             <Ionicons name="time-outline" size={22} color="#fff" />
           </TouchableOpacity>
           {messages.length > 0 && (
-            <TouchableOpacity style={styles.headerIconBtn} onPress={handleNewSession} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <TouchableOpacity activeOpacity={0.85} style={styles.headerIconBtn} onPress={handleNewSession} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Ionicons name="add" size={22} color="#fff" />
             </TouchableOpacity>
           )}
@@ -1584,7 +1584,7 @@ export default function TravelScreen() {
                   ? "1 of 3 selected — pick at least one more"
                   : `${compareSelected.length} of 3 selected`}
             </Text>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.compareGoBtn, { backgroundColor: compareSelected.length >= 2 ? colors.primary : colors.border }]}
               onPress={() => void handleCompare()}
               disabled={compareSelected.length < 2}

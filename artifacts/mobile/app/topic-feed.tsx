@@ -209,7 +209,7 @@ export default function TopicFeedScreen() {
     <View style={[s.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border, backgroundColor: colors.card }]}>
-        <TouchableOpacity style={s.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
+        <TouchableOpacity activeOpacity={0.85} style={s.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1, alignItems: "center" }}>

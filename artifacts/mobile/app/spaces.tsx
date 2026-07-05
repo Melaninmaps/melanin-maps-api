@@ -108,7 +108,7 @@ export default function SpacesScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1, marginLeft: 14 }}>
@@ -140,7 +140,7 @@ export default function SpacesScreen() {
             autoCapitalize="none"
           />
           {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch("")}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => setSearch("")}>
               <Ionicons name="close-circle" size={16} color={colors.mutedForeground} />
             </TouchableOpacity>
           )}
@@ -149,14 +149,14 @@ export default function SpacesScreen() {
         {/* Type filters */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
           <View style={styles.typeRow}>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.typeChip, { borderColor: !activeType ? colors.primary : colors.border, backgroundColor: !activeType ? colors.primary + "18" : colors.card }]}
               onPress={() => setActiveType(null)}
             >
               <Text style={[styles.typeChipText, { color: !activeType ? colors.primary : colors.mutedForeground }]}>All Types</Text>
             </TouchableOpacity>
             {SPACE_TYPES.map((t) => (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 key={t.id}
                 style={[styles.typeChip, { borderColor: activeType === t.id ? t.color : colors.border, backgroundColor: activeType === t.id ? t.color + "18" : colors.card }]}
                 onPress={() => setActiveType(activeType === t.id ? null : t.id)}
@@ -181,7 +181,7 @@ export default function SpacesScreen() {
           <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
             Know of a great space? Be the first to share it with the community.
           </Text>
-          <TouchableOpacity style={[styles.emptyBtn, { backgroundColor: colors.primary }]} onPress={() => setShowCreate(true)}>
+          <TouchableOpacity activeOpacity={0.85} style={[styles.emptyBtn, { backgroundColor: colors.primary }]} onPress={() => setShowCreate(true)}>
             <Text style={styles.emptyBtnText}>Post a Space</Text>
           </TouchableOpacity>
         </View>
@@ -248,7 +248,7 @@ export default function SpacesScreen() {
               <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Space Type</Text>
               <View style={styles.typeRow}>
                 {SPACE_TYPES.map((t) => (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     key={t.id}
                     style={[styles.typeChip, { flex: 1, borderColor: form.spaceType === t.id ? t.color : colors.border, backgroundColor: form.spaceType === t.id ? t.color + "18" : colors.card }]}
                     onPress={() => setForm((f) => ({ ...f, spaceType: t.id }))}

@@ -64,7 +64,7 @@ function ChipGroup({ options, value, onChange, color, colors }: {
       {options.map((opt) => {
         const on = value === opt;
         return (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             key={opt}
             onPress={() => { onChange(opt); if (Platform.OS !== "web") Haptics.selectionAsync(); }}
             style={[s.chip, { backgroundColor: on ? color : colors.secondary, borderColor: on ? color : colors.border }]}
@@ -168,7 +168,7 @@ export default function SubmitEventScreen() {
           <Text style={[s.doneSub, { color: colors.mutedForeground }]}>
             Your event is now live in the community. Members whose interests match will see it at the top of their Events feed.
           </Text>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[s.doneBtn, { backgroundColor: colors.primary }]}
             onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/community")}
           >
@@ -182,7 +182,7 @@ export default function SubmitEventScreen() {
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
       <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={s.back} onPress={() => step > 1 ? setStep(p => p - 1) : router.canGoBack() ? router.back() : router.replace("/(tabs)/community")}>
+        <TouchableOpacity activeOpacity={0.85} style={s.back} onPress={() => step > 1 ? setStep(p => p - 1) : router.canGoBack() ? router.back() : router.replace("/(tabs)/community")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={s.headerCenter}>
@@ -272,7 +272,7 @@ export default function SubmitEventScreen() {
                 {US_STATES.map((st) => {
                   const on = state === st;
                   return (
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       key={st}
                       onPress={() => { setState(st); if (Platform.OS !== "web") Haptics.selectionAsync(); }}
                       style={[s.stateChip, { backgroundColor: on ? colors.primary : colors.secondary, borderColor: on ? colors.primary : colors.border }]}
@@ -370,7 +370,7 @@ export default function SubmitEventScreen() {
 
       <View style={[s.footer, { paddingBottom: bottomPad + 16, backgroundColor: colors.background, borderTopColor: colors.border }]}>
         {step < totalSteps ? (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[s.nextBtn, { backgroundColor: canProceed() ? colors.primary : colors.muted }]}
             onPress={() => { setStep(p => p + 1); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
             disabled={!canProceed()}
@@ -379,7 +379,7 @@ export default function SubmitEventScreen() {
             <Feather name="arrow-right" size={18} color={canProceed() ? colors.primaryForeground : colors.mutedForeground} />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[s.nextBtn, { backgroundColor: colors.primary }]}
             onPress={handleSubmit}
             disabled={submitting}

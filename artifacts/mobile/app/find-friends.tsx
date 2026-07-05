@@ -194,7 +194,7 @@ export default function FindFriendsScreen() {
               See who from your life is already here
             </Text>
           </View>
-          <TouchableOpacity onPress={goToApp} hitSlop={10}>
+          <TouchableOpacity activeOpacity={0.85} onPress={goToApp} hitSlop={10}>
             <Text style={[s.skipBtn, { color: colors.mutedForeground }]}>Skip</Text>
           </TouchableOpacity>
         </View>

@@ -146,7 +146,7 @@ export default function OnboardingPreferenceSurveyScreen() {
               </>
             )}
           </View>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.doneBtn, { backgroundColor: colors.primary }]}
             onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}
           >
@@ -160,7 +160,7 @@ export default function OnboardingPreferenceSurveyScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={styles.back}
           onPress={() => step > 1 ? setStep((s) => s - 1) : router.canGoBack() ? router.back() : router.replace("/(tabs)")}
         >
@@ -328,7 +328,7 @@ export default function OnboardingPreferenceSurveyScreen() {
 
       <View style={[styles.footer, { paddingBottom: bottomPad + 16, backgroundColor: colors.background, borderTopColor: colors.border }]}>
         {step < TOTAL_STEPS ? (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.nextBtn, { backgroundColor: canGoNext ? colors.primary : colors.muted }]}
             onPress={next}
             disabled={!canGoNext}
@@ -337,7 +337,7 @@ export default function OnboardingPreferenceSurveyScreen() {
             <Feather name="arrow-right" size={18} color={canGoNext ? colors.primaryForeground : colors.mutedForeground} />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.nextBtn, { backgroundColor: canNext4 ? colors.primary : colors.muted }]}
             onPress={handleSubmit}
             disabled={!canNext4}

@@ -42,7 +42,7 @@ const REPORT_TYPES = [
     icon: "flag" as const,
     label: "Discrimination",
     desc: "Racial profiling, bias, or hostile treatment",
-    color: "#3B1F0E",
+    color: "#CA922B",
   },
   {
     id: "business",
@@ -222,7 +222,7 @@ export default function ReportSafetyScreen() {
         borderBottomColor: colors.border,
         backgroundColor: colors.background,
       }]}>
-        <TouchableOpacity onPress={goBack} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={goBack} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>

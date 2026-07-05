@@ -130,7 +130,7 @@ export default function SmartPathwayScreen() {
       <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
         <Text style={{ fontSize: 40 }}>📍</Text>
         <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Pathway not found</Text>
-        <TouchableOpacity onPress={() => router.back()} style={[styles.backBtnLarge, { borderColor: colors.border }]}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={[styles.backBtnLarge, { borderColor: colors.border }]}>
           <Text style={[{ color: colors.primary, fontWeight: "700" }]}>Go back</Text>
         </TouchableOpacity>
       </View>
@@ -145,7 +145,7 @@ export default function SmartPathwayScreen() {
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 10, backgroundColor: iColor + "12", borderBottomColor: iColor + "30" }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/map" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/map" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
@@ -160,7 +160,7 @@ export default function SmartPathwayScreen() {
           </Text>
           <Text style={[styles.pathwaySub, { color: iColor }]}>{intent.label}</Text>
         </View>
-        <TouchableOpacity onPress={handleDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={handleDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Feather name="trash-2" size={18} color={colors.mutedForeground} />
         </TouchableOpacity>
       </View>
@@ -224,7 +224,7 @@ export default function SmartPathwayScreen() {
               <View key={category} style={styles.categoryBlock}>
                 <Text style={[styles.categoryLabel, { color: colors.foreground }]}>{category}</Text>
                 {businesses.map(b => (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     key={b.id}
                     style={[styles.bizCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                     onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); router.push({ pathname: "/business/[id]", params: { id: b.id } } as never); }}
@@ -289,7 +289,7 @@ export default function SmartPathwayScreen() {
                   <Text style={[styles.safetyMetricLabel, { color: colors.mutedForeground }]}>Community Reports</Text>
                 </View>
               </View>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[styles.safetyLink, { borderTopColor: colors.border }]}
                 onPress={() => openKinfolk(`What do locals say about safety in ${pin.label}?`)}
               >
@@ -304,7 +304,7 @@ export default function SmartPathwayScreen() {
               <Text style={[styles.emptySafetyTxt, { color: colors.mutedForeground }]}>
                 No safety surveys yet for this area. Be the first to submit one.
               </Text>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[styles.surveyCta, { borderColor: "#7C3AED" }]}
                 onPress={() => router.push("/safety-survey" as never)}
               >
@@ -355,7 +355,7 @@ export default function SmartPathwayScreen() {
           </View>
           <View style={styles.promptsWrap}>
             {sections.kinfolkPrompts.map((prompt, idx) => (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 key={idx}
                 style={[styles.promptCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                 onPress={() => openKinfolk(prompt)}
@@ -379,7 +379,7 @@ export default function SmartPathwayScreen() {
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 4 }}>
               {otherPins.map(other => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   key={other.id}
                   style={[styles.comparePill, { backgroundColor: colors.card, borderColor: colors.border }]}
                   onPress={() => {
@@ -405,7 +405,7 @@ export default function SmartPathwayScreen() {
             <Text style={[styles.changeIntentTitle, { color: colors.foreground }]}>Wrong pathway?</Text>
             <Text style={[styles.changeIntentSub, { color: colors.mutedForeground }]}>You can re-pin this area with a different goal.</Text>
           </View>
-          <TouchableOpacity onPress={() => router.back()} style={[styles.changeIntentBtn, { borderColor: colors.border }]}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={[styles.changeIntentBtn, { borderColor: colors.border }]}>
             <Text style={[styles.changeIntentBtnTxt, { color: colors.foreground }]}>Change</Text>
           </TouchableOpacity>
         </View>

@@ -163,7 +163,7 @@ export default function AffiliateScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={styles.back}
           onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile")}
         >

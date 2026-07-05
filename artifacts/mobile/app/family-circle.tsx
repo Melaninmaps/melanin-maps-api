@@ -198,7 +198,7 @@ export default function FamilyCircleScreen() {
     return (
       <View style={[s.root, { backgroundColor: colors.background }]}>
         <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-          <TouchableOpacity onPress={() => router.back()} style={s.back}><Feather name="arrow-left" size={22} color={colors.foreground} /></TouchableOpacity>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={s.back}><Feather name="arrow-left" size={22} color={colors.foreground} /></TouchableOpacity>
           <Text style={[s.headerTitle, { color: colors.foreground }]}>Family Circle</Text>
         </View>
         <View style={s.centerMsg}>
@@ -213,13 +213,13 @@ export default function FamilyCircleScreen() {
     <View style={[s.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={s.back}><Feather name="arrow-left" size={22} color={colors.foreground} /></TouchableOpacity>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={s.back}><Feather name="arrow-left" size={22} color={colors.foreground} /></TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={[s.headerTitle, { color: colors.foreground }]}>Family Circle</Text>
           {circle && <Text style={[s.headerSub, { color: colors.mutedForeground }]}>{circle.name}</Text>}
         </View>
         {myRole === "owner" && circle && (
-          <TouchableOpacity style={[s.inviteBtn, { backgroundColor: colors.primary }]} onPress={() => setShowInviteForm(true)}>
+          <TouchableOpacity activeOpacity={0.85} style={[s.inviteBtn, { backgroundColor: colors.primary }]} onPress={() => setShowInviteForm(true)}>
             <Feather name="user-plus" size={14} color="#fff" />
             <Text style={s.inviteBtnText}>Invite</Text>
           </TouchableOpacity>
@@ -263,7 +263,7 @@ export default function FamilyCircleScreen() {
 
           {/* Create form */}
           {!showCreateForm ? (
-            <TouchableOpacity style={[s.createBtn, { backgroundColor: colors.primary }]} onPress={() => setShowCreateForm(true)}>
+            <TouchableOpacity activeOpacity={0.85} style={[s.createBtn, { backgroundColor: colors.primary }]} onPress={() => setShowCreateForm(true)}>
               <Feather name="plus" size={18} color="#fff" />
               <Text style={s.createBtnText}>Create Your Family Circle</Text>
             </TouchableOpacity>
@@ -278,7 +278,7 @@ export default function FamilyCircleScreen() {
                 placeholderTextColor={colors.mutedForeground}
                 maxLength={100}
               />
-              <TouchableOpacity style={[s.createBtn, { backgroundColor: colors.primary }]} onPress={createCircle} disabled={creating}>
+              <TouchableOpacity activeOpacity={0.85} style={[s.createBtn, { backgroundColor: colors.primary }]} onPress={createCircle} disabled={creating}>
                 {creating ? <ActivityIndicator size="small" color="#fff" /> : <Text style={s.createBtnText}>Create Circle</Text>}
               </TouchableOpacity>
             </View>
@@ -312,10 +312,10 @@ export default function FamilyCircleScreen() {
                 <Text style={[s.codeLabel, { color: colors.mutedForeground }]}>Your invite code</Text>
                 <Text style={[s.codeValue, { color: colors.primary }]}>{inviteCode}</Text>
               </View>
-              <TouchableOpacity style={[s.codeBtn, { borderColor: colors.border }]} onPress={copyInviteCode}>
+              <TouchableOpacity activeOpacity={0.85} style={[s.codeBtn, { borderColor: colors.border }]} onPress={copyInviteCode}>
                 <Feather name="copy" size={16} color={colors.primary} />
               </TouchableOpacity>
-              <TouchableOpacity style={[s.codeBtn, { borderColor: colors.border, marginLeft: 8 }]} onPress={shareInvite}>
+              <TouchableOpacity activeOpacity={0.85} style={[s.codeBtn, { borderColor: colors.border, marginLeft: 8 }]} onPress={shareInvite}>
                 <Feather name="share-2" size={16} color={colors.primary} />
               </TouchableOpacity>
             </View>
@@ -355,13 +355,13 @@ export default function FamilyCircleScreen() {
                     </Text>
                   </View>
                   <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-                    <View style={[s.statusPill, { backgroundColor: m.status === "pending" ? "#7A5530" + "30" : "#2D7A4F" + "20" }]}>
+                    <View style={[s.statusPill, { backgroundColor: m.status === "pending" ? "#A87A40" + "30" : "#2D7A4F" + "20" }]}>
                       <Text style={[s.statusText, { color: m.status === "pending" ? "#A87A40" : "#2D7A4F" }]}>
                         {m.status === "pending" ? "Pending" : "Active"}
                       </Text>
                     </View>
                     {myRole === "owner" && (
-                      <TouchableOpacity onPress={() => setExpandedMember(expandedMember === m.id ? null : m.id)}>
+                      <TouchableOpacity activeOpacity={0.85} onPress={() => setExpandedMember(expandedMember === m.id ? null : m.id)}>
                         <Feather name={expandedMember === m.id ? "chevron-up" : "chevron-down"} size={18} color={colors.mutedForeground} />
                       </TouchableOpacity>
                     )}
@@ -389,7 +389,7 @@ export default function FamilyCircleScreen() {
                         />
                       </View>
                     ))}
-                    <TouchableOpacity style={[s.removeBtn, { borderColor: "#DC2626" + "40" }]} onPress={() => removeMember(m.id)}>
+                    <TouchableOpacity activeOpacity={0.85} style={[s.removeBtn, { borderColor: "#DC2626" + "40" }]} onPress={() => removeMember(m.id)}>
                       <Feather name="user-x" size={14} color="#DC2626" />
                       <Text style={s.removeBtnText}>Remove from Circle</Text>
                     </TouchableOpacity>
@@ -408,14 +408,14 @@ export default function FamilyCircleScreen() {
           </View>
 
           {/* Travel with confidence marketing tagline */}
-          <View style={[s.taglineCard, { backgroundColor: "#3B1F0E" }]}>
+          <View style={[s.taglineCard, { backgroundColor: "#CA922B" }]}>
             <Text style={s.taglineEmoji}>👨‍👩‍👧‍👦</Text>
             <Text style={s.taglineTitle}>Travel with confidence — together.</Text>
             <Text style={s.taglineSub}>Whether they're heading to college, exploring a new city, or moving into their first apartment — your family stays connected.</Text>
           </View>
 
           {myRole === "member" && (
-            <TouchableOpacity style={[s.leaveBtn, { borderColor: "#DC2626" + "40" }]} onPress={leaveCircle}>
+            <TouchableOpacity activeOpacity={0.85} style={[s.leaveBtn, { borderColor: "#DC2626" + "40" }]} onPress={leaveCircle}>
               <Feather name="log-out" size={15} color="#DC2626" />
               <Text style={s.leaveBtnText}>Leave Family Circle</Text>
             </TouchableOpacity>
@@ -448,10 +448,10 @@ export default function FamilyCircleScreen() {
             We'll generate a shareable invite link. You can text, email, or share it however works best.
           </Text>
           <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
-            <TouchableOpacity style={[s.cancelBtn, { borderColor: colors.border }]} onPress={() => setShowInviteForm(false)}>
+            <TouchableOpacity activeOpacity={0.85} style={[s.cancelBtn, { borderColor: colors.border }]} onPress={() => setShowInviteForm(false)}>
               <Text style={[s.cancelBtnText, { color: colors.foreground }]}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[s.sendInviteBtn, { backgroundColor: colors.primary, flex: 1 }]} onPress={sendInvite} disabled={inviting}>
+            <TouchableOpacity activeOpacity={0.85} style={[s.sendInviteBtn, { backgroundColor: colors.primary, flex: 1 }]} onPress={sendInvite} disabled={inviting}>
               {inviting ? <ActivityIndicator size="small" color="#fff" /> : (
                 <>
                   <Feather name="send" size={15} color="#fff" />

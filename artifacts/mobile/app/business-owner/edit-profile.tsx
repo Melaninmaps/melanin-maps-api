@@ -358,11 +358,11 @@ export default function EditBusinessProfile() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/business-owner" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/business-owner" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Edit Business Profile</Text>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[styles.saveBtn, { backgroundColor: isDirty ? colors.primary : colors.secondary, opacity: saving ? 0.7 : 1 }]}
           onPress={handleSave} disabled={saving || !isDirty}
         >
@@ -448,10 +448,10 @@ export default function EditBusinessProfile() {
                   <Text style={[styles.videoLabel, { color: colors.foreground }]}>{label}</Text>
                   <Text style={[styles.videoUrl, { color: colors.mutedForeground }]} numberOfLines={1}>{url}</Text>
                 </View>
-                <TouchableOpacity onPress={() => Linking.openURL(url).catch(() => {})} style={{ marginRight: 4 }}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => Linking.openURL(url).catch(() => {})} style={{ marginRight: 4 }}>
                   <Feather name="external-link" size={16} color={colors.mutedForeground} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDeleteVideo(url)}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => handleDeleteVideo(url)}>
                   <Feather name="trash-2" size={16} color="#DC2626" />
                 </TouchableOpacity>
               </View>
@@ -523,7 +523,7 @@ export default function EditBusinessProfile() {
                   autoCorrect={false}
                 />
               </View>
-              {form[key] ? <TouchableOpacity onPress={() => update(key)("")}><Feather name="x" size={14} color={colors.mutedForeground} /></TouchableOpacity> : null}
+              {form[key] ? <TouchableOpacity activeOpacity={0.85} onPress={() => update(key)("")}><Feather name="x" size={14} color={colors.mutedForeground} /></TouchableOpacity> : null}
             </View>
           ))}
 
@@ -540,7 +540,7 @@ export default function EditBusinessProfile() {
               const hasUrl = !!form[key].trim();
               if (!hasUrl) return null;
               return (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   key={key}
                   style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary + "15" : colors.card }}
                   onPress={() => update("primarySocialPlatform")(active ? "" : key)}
@@ -751,7 +751,7 @@ export default function EditBusinessProfile() {
                 <Feather name="play-circle" size={16} color={colors.primary} />
                 <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: colors.primary, flex: 1 }} numberOfLines={1}>Intro video active</Text>
               </View>
-              <TouchableOpacity onPress={handleDeleteIntroVideo} style={{ flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start" }}>
+              <TouchableOpacity activeOpacity={0.85} onPress={handleDeleteIntroVideo} style={{ flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start" }}>
                 <Feather name="trash-2" size={13} color="#DC2626" />
                 <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: "#DC2626" }}>Remove intro video</Text>
               </TouchableOpacity>

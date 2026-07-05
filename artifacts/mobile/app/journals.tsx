@@ -163,7 +163,7 @@ export default function JournalsScreen() {
             </Text>
           )}
         </View>
-        <TouchableOpacity onPress={() => void handleSave(item.id)} hitSlop={8}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => void handleSave(item.id)} hitSlop={8}>
           <Feather
             name="bookmark"
             size={20}
@@ -196,7 +196,7 @@ export default function JournalsScreen() {
             {saved.has(item.id) ? item.savedCount + 1 : item.savedCount} saved
           </Text>
         </View>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[styles.useBtn, { backgroundColor: colors.primary + "18" }]}
           onPress={() => router.push("/create-journal" as never)}
         >
@@ -209,7 +209,7 @@ export default function JournalsScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/community" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/community" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
@@ -218,7 +218,7 @@ export default function JournalsScreen() {
             Community-created travel guides
           </Text>
         </View>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[styles.createBtn, { backgroundColor: colors.primary }]}
           onPress={() => router.push("/create-journal" as never)}
         >

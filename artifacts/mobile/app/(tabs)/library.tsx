@@ -642,7 +642,7 @@ export default function LibraryScreen() {
                       <Text style={[styles.prefToggleTitle, { color: colors.foreground }]}>Notify from saved cities</Text>
                       <Text style={[styles.prefToggleDesc, { color: colors.mutedForeground }]}>Include news from cities you've saved</Text>
                     </View>
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       style={[
                         styles.toggle,
                         { backgroundColor: deliveryPrefs.includeSavedCities ? colors.primary : colors.border },
@@ -658,7 +658,7 @@ export default function LibraryScreen() {
                       <Text style={[styles.prefToggleTitle, { color: colors.foreground }]}>Notify from saved businesses</Text>
                       <Text style={[styles.prefToggleDesc, { color: colors.mutedForeground }]}>Updates from minority-owned businesses you've saved</Text>
                     </View>
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       style={[
                         styles.toggle,
                         { backgroundColor: deliveryPrefs.includeSavedBusinesses ? colors.primary : colors.border },
@@ -859,7 +859,7 @@ export default function LibraryScreen() {
                   onChangeText={setStorySearch}
                 />
                 {storySearch.length > 0 && (
-                  <TouchableOpacity onPress={() => setStorySearch("")}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => setStorySearch("")}>
                     <Feather name="x" size={14} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 )}
@@ -969,7 +969,7 @@ export default function LibraryScreen() {
                 <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={styles.modalHeader}>
                     <Text style={[styles.modalTitle, { color: colors.foreground }]}>🚨 Report a Story</Text>
-                    <TouchableOpacity onPress={() => setSubmitModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <TouchableOpacity activeOpacity={0.85} onPress={() => setSubmitModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                       <Feather name="x" size={20} color={colors.mutedForeground} />
                     </TouchableOpacity>
                   </View>
@@ -1091,7 +1091,7 @@ export default function LibraryScreen() {
                   onSubmitEditing={() => { if (topicSearch.trim()) handleAddTopic(topicSearch); }}
                 />
                 {topicSearch.length > 0 && (
-                  <TouchableOpacity onPress={() => setTopicSearch("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => setTopicSearch("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                     <Feather name="x" size={14} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 )}

@@ -30,7 +30,7 @@ interface Notif {
 
 const NOTIFS: Notif[] = [
   {
-    id: "n1", type: "safety", icon: "shield", color: "#3B1F0E",
+    id: "n1", type: "safety", icon: "shield", color: "#CA922B",
     title: "Safety Alert — Atlanta, GA",
     body: "Community report: increased incidents near Ponce City Market. Stay aware this evening.",
     time: "10 min ago", read: false, group: "Today",
@@ -72,13 +72,13 @@ const NOTIFS: Notif[] = [
     time: "3 days ago", read: true, group: "This Week",
   },
   {
-    id: "n8", type: "community", icon: "gift", color: "#3B1F0E",
+    id: "n8", type: "community", icon: "gift", color: "#CA922B",
     title: "Referral milestone reached 🎉",
     body: "You've referred 2 friends! You're halfway to earning your $10 credit. Keep it up!",
     time: "5 days ago", read: true, group: "This Week",
   },
   {
-    id: "n9", type: "safety", icon: "shield", color: "#3B1F0E",
+    id: "n9", type: "safety", icon: "shield", color: "#CA922B",
     title: "Monthly Safety Digest",
     body: "See the community safety report for cities you follow: Atlanta, Houston, Chicago.",
     time: "1 week ago", read: true, group: "Earlier",
@@ -130,7 +130,7 @@ const ICON_MAP: Record<string, Notif["icon"]> = {
   community: "message-circle", weather: "cloud-rain", travel: "navigation",
 };
 const COLOR_MAP: Record<string, string> = {
-  safety: "#3B1F0E", events: "#2D7A4F", business: "#C9922B",
+  safety: "#CA922B", events: "#2D7A4F", business: "#C9922B",
   community: "#7B4F2E", weather: "#1D4ED8", travel: "#7C3AED",
 };
 
@@ -238,7 +238,7 @@ export default function NotificationCenterScreen() {
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={styles.back}
           onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile")}
         >
@@ -253,11 +253,11 @@ export default function NotificationCenterScreen() {
           )}
         </View>
         {unreadCount > 0 && (
-          <TouchableOpacity onPress={markAllRead}>
+          <TouchableOpacity activeOpacity={0.85} onPress={markAllRead}>
             <Text style={[styles.markAll, { color: colors.primary }]}>Mark all read</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[styles.settingsBtn, { backgroundColor: colors.secondary }]}
           onPress={() => router.push("/notifications-settings")}
         >

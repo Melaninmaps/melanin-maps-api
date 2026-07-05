@@ -73,7 +73,7 @@ function ScaleRating({ value, onChange, color, lowLabel, highLabel }: {
     <View style={{ gap: 10 }}>
       <View style={{ flexDirection: "row", gap: 8 }}>
         {[1, 2, 3, 4, 5].map((n) => (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             key={n}
             style={[
               styles.scaleBtn,
@@ -238,7 +238,7 @@ export default function NeighborhoodSurveyScreen() {
             <Text style={[styles.doneStatNum, { color: colors.primary }]}>+25</Text>
             <Text style={[styles.doneStatLabel, { color: colors.mutedForeground }]}>Community Points earned</Text>
           </View>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.doneBtn, { backgroundColor: colors.primary }]}
             onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}
           >
@@ -252,7 +252,7 @@ export default function NeighborhoodSurveyScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={styles.back}
           onPress={() => step > 1 ? setStep((s) => s - 1) : router.canGoBack() ? router.back() : router.replace("/(tabs)")}
         >
@@ -286,7 +286,7 @@ export default function NeighborhoodSurveyScreen() {
               <Text style={[styles.qLabel, { color: colors.foreground }]}>City</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }} contentContainerStyle={{ paddingHorizontal: 4, gap: 8 }}>
                 {CITIES.map((c) => (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     key={c}
                     style={[styles.cityChip, { backgroundColor: city === c ? colors.primary : colors.secondary, borderColor: city === c ? colors.primary : colors.border }]}
                     onPress={() => setCity(c)}
@@ -578,7 +578,7 @@ export default function NeighborhoodSurveyScreen() {
 
       <View style={[styles.footer, { paddingBottom: bottomPad + 16, backgroundColor: colors.background, borderTopColor: colors.border }]}>
         {step < TOTAL_STEPS ? (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.nextBtn, { backgroundColor: canGoNext ? colors.primary : colors.muted }]}
             onPress={next}
             disabled={!canGoNext}
@@ -587,7 +587,7 @@ export default function NeighborhoodSurveyScreen() {
             <Feather name="arrow-right" size={18} color={canGoNext ? colors.primaryForeground : colors.mutedForeground} />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.nextBtn, { backgroundColor: colors.primary }]}
             onPress={handleSubmit}
           >

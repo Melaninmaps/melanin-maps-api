@@ -43,14 +43,14 @@ export default function SpaceDetailScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]} numberOfLines={1}>
           Space Detail
         </Text>
         {space.listingUrl ? (
-          <TouchableOpacity onPress={() => Linking.openURL(space.listingUrl!)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => Linking.openURL(space.listingUrl!)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name="external-link" size={19} color={colors.primary} />
           </TouchableOpacity>
         ) : <View style={{ width: 24 }} />}

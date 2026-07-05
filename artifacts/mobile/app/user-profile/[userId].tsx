@@ -253,7 +253,7 @@ export default function UserProfileScreen() {
     return (
       <View style={[s.root, { backgroundColor: colors.background }]}>
         <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-          <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
+          <TouchableOpacity activeOpacity={0.85} style={s.backBtn} onPress={() => router.back()}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
           <View style={{ flex: 1 }} />
@@ -267,7 +267,7 @@ export default function UserProfileScreen() {
     return (
       <View style={[s.root, { backgroundColor: colors.background }]}>
         <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-          <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
+          <TouchableOpacity activeOpacity={0.85} style={s.backBtn} onPress={() => router.back()}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
           <View style={{ flex: 1 }} />
@@ -284,7 +284,7 @@ export default function UserProfileScreen() {
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
       <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} style={s.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[s.headerTitle, { color: colors.foreground }]} numberOfLines={1}>{displayName}</Text>
@@ -369,7 +369,7 @@ export default function UserProfileScreen() {
                   maxLength={280}
                   multiline
                 />
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={[s.tagPostBtn, { backgroundColor: tagInput.trim() ? colors.primary : colors.muted }]}
                   onPress={() => void handlePostTag()}
                   disabled={!tagInput.trim() || postingTag}
@@ -383,7 +383,7 @@ export default function UserProfileScreen() {
 
             {/* Tabs */}
             <View style={[s.tabBar, { borderBottomColor: colors.border }]}>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[s.tab, activeTab === "posts" && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
                 onPress={() => setActiveTab("posts")}
               >
@@ -391,7 +391,7 @@ export default function UserProfileScreen() {
                   Posts ({posts.length})
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[s.tab, activeTab === "reviews" && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
                 onPress={() => setActiveTab("reviews")}
               >
@@ -399,7 +399,7 @@ export default function UserProfileScreen() {
                   Reviews ({reviews.length})
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[s.tab, activeTab === "tags" && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
                 onPress={() => setActiveTab("tags")}
               >
@@ -505,7 +505,7 @@ export default function UserProfileScreen() {
                   <Text style={[s.tagAuthor, { color: colors.foreground }]}>{taggerName}</Text>
                 </TouchableOpacity>
                 {canDelete && (
-                  <TouchableOpacity onPress={() => void handleDeleteTag(tag.id)}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => void handleDeleteTag(tag.id)}>
                     <Feather name="trash-2" size={14} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 )}

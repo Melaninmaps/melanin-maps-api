@@ -46,7 +46,7 @@ const CONSUMER_PLANS: Plan[] = [
     badge: null,
     monthlyPrice: 0,
     annualTotal: 0,
-    color: "#8B7355",
+    color: "#A87A40",
     bg: null,
     features: [
       "Unlimited business searches",
@@ -77,8 +77,8 @@ const CONSUMER_PLANS: Plan[] = [
     badge: "Recommended",
     monthlyPrice: 7.99,
     annualTotal: 79,
-    color: "#3B1F0E",
-    bg: "#3B1F0E",
+    color: "#CA922B",
+    bg: "#CA922B",
     features: [
       "Everything in Community Member",
       "Up to 250 saves (businesses, locations, topics & more)",
@@ -141,7 +141,7 @@ const BUSINESS_PLANS: Plan[] = [
     badge: null,
     monthlyPrice: 0,
     annualTotal: 0,
-    color: "#8B7355",
+    color: "#A87A40",
     bg: null,
     features: [
       "Claim and manage your business profile",
@@ -166,8 +166,8 @@ const BUSINESS_PLANS: Plan[] = [
     badge: "Recommended",
     monthlyPrice: 29,
     annualTotal: 290,
-    color: "#3B1F0E",
-    bg: "#3B1F0E",
+    color: "#CA922B",
+    bg: "#CA922B",
     features: [
       "Everything in Community Listing",
       "Unlimited photos",
@@ -317,7 +317,7 @@ export default function MembershipScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={styles.back}
           onPress={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)/profile"))}
         >
@@ -509,7 +509,7 @@ export default function MembershipScreen() {
             </View>
 
             {/* Show Me the Vibe callout */}
-            <View style={[styles.creatorVibeCard, { backgroundColor: "#3B1F0E" }]}>
+            <View style={[styles.creatorVibeCard, { backgroundColor: "#CA922B" }]}>
               <Text style={{ fontSize: 22 }}>🎬</Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.creatorVibeTitle}>Power the "Show Me the Vibe" feature</Text>

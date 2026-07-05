@@ -114,14 +114,14 @@ export default function DestinationScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: colors.background }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.back()}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={[styles.headerEmoji]}>{dest.emoji}</Text>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>{dest.name}</Text>
         </View>
-        <TouchableOpacity style={[styles.shareBtn, { backgroundColor: colors.card }]}>
+        <TouchableOpacity activeOpacity={0.85} style={[styles.shareBtn, { backgroundColor: colors.card }]}>
           <Feather name="share-2" size={17} color={colors.foreground} />
         </TouchableOpacity>
       </View>
@@ -208,7 +208,7 @@ export default function DestinationScreen() {
                 <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
               </TouchableOpacity>
             ))}
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.vibeMoreBtn, { borderTopColor: colors.border }]}
               onPress={() => router.push("/travel-videos")}
             >
@@ -245,7 +245,7 @@ export default function DestinationScreen() {
           <View style={styles.safetySnapHeader}>
             <Feather name="shield" size={15} color="#2D7A4F" />
             <Text style={[styles.safetySnapTitle, { color: "#2D7A4F" }]}>Safety Snapshot</Text>
-            <TouchableOpacity onPress={() => router.push("/safety-hub")}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => router.push("/safety-hub")}>
               <Text style={[styles.safetySnapLink, { color: "#2D7A4F" }]}>Full report →</Text>
             </TouchableOpacity>
           </View>

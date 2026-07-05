@@ -197,7 +197,7 @@ export default function ConnectionsScreen() {
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
       <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} style={s.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[s.headerTitle, { color: colors.foreground }]}>My Connections</Text>
@@ -218,7 +218,7 @@ export default function ConnectionsScreen() {
         />
         {searching && <ActivityIndicator size="small" color={colors.primary} />}
         {searchQuery.length > 0 && !searching && (
-          <TouchableOpacity onPress={() => { setSearchQuery(""); setSearchResults([]); }}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => { setSearchQuery(""); setSearchResults([]); }}>
             <Feather name="x" size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
         )}
@@ -233,7 +233,7 @@ export default function ConnectionsScreen() {
             const isMe = u.id === myId;
             return (
               <View key={u.id} style={[s.searchRow, { borderBottomColor: colors.border }]}>
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}
                   onPress={() => { setSearchQuery(""); setSearchResults([]); router.push(`/user-profile/${u.id}` as never); }}
                 >
@@ -254,7 +254,7 @@ export default function ConnectionsScreen() {
                   </View>
                 </TouchableOpacity>
                 {!isMe && !connected && !pending && (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     style={[s.addBtn, { backgroundColor: colors.primary }]}
                     onPress={() => void sendRequest(u.id)}
                     disabled={actionLoading === u.id}
@@ -282,7 +282,7 @@ export default function ConnectionsScreen() {
 
       {/* Tab bar */}
       <View style={[s.tabBar, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[s.tab, activeTab === "all" && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
           onPress={() => setActiveTab("all")}
         >
@@ -290,7 +290,7 @@ export default function ConnectionsScreen() {
             Connected ({accepted.length})
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[s.tab, activeTab === "pending" && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
           onPress={() => setActiveTab("pending")}
         >
@@ -350,7 +350,7 @@ export default function ConnectionsScreen() {
                           </View>
                         </TouchableOpacity>
                         {!connected && !pending ? (
-                          <TouchableOpacity
+                          <TouchableOpacity activeOpacity={0.85}
                             style={[s.addBtn, { backgroundColor: colors.primary }]}
                             onPress={() => void sendRequest(u.id)}
                             disabled={actionLoading === u.id}
@@ -404,7 +404,7 @@ export default function ConnectionsScreen() {
                       </Text>
                       <Text style={[s.connectionSub, { color: colors.mutedForeground }]}>Waiting for response</Text>
                     </View>
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       style={[s.removeBtn, { borderColor: colors.border }]}
                       onPress={() => void removeConnection(c.id)}
                     >
@@ -442,7 +442,7 @@ export default function ConnectionsScreen() {
                 </TouchableOpacity>
                 {isPendingReceived ? (
                   <View style={{ flexDirection: "row", gap: 8 }}>
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       style={[s.acceptBtn, { backgroundColor: colors.primary }]}
                       onPress={() => void respondToRequest(conn.id, "accept")}
                       disabled={actionLoading === conn.id}
@@ -451,7 +451,7 @@ export default function ConnectionsScreen() {
                         <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#FFF" }}>Accept</Text>
                       )}
                     </TouchableOpacity>
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       style={[s.declineBtn, { borderColor: colors.border }]}
                       onPress={() => void respondToRequest(conn.id, "decline")}
                       disabled={actionLoading === conn.id}
@@ -460,7 +460,7 @@ export default function ConnectionsScreen() {
                     </TouchableOpacity>
                   </View>
                 ) : (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     style={[s.removeBtn, { borderColor: colors.border }]}
                     onPress={() => void removeConnection(conn.id)}
                     disabled={actionLoading === conn.id}

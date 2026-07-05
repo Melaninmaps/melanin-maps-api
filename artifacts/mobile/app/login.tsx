@@ -163,7 +163,7 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={styles.back}
           onPress={() => router.canGoBack() ? router.back() : router.replace("/onboarding")}
         >
@@ -273,11 +273,11 @@ export default function LoginScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
-                <TouchableOpacity onPress={() => setShowPw((v) => !v)} hitSlop={{ top: 8, bottom: 8, left: 12, right: 4 }}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => setShowPw((v) => !v)} hitSlop={{ top: 8, bottom: 8, left: 12, right: 4 }}>
                   <Feather name={showPw ? "eye-off" : "eye"} size={18} color={c.mutedForeground} />
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity onPress={() => router.push("/forgot-password" as any)} style={styles.forgotRow}>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => router.push("/forgot-password" as any)} style={styles.forgotRow}>
                 <Text style={[styles.forgotTxt, { color: c.primary }]}>Forgot password?</Text>
               </TouchableOpacity>
             </View>
@@ -294,7 +294,7 @@ export default function LoginScreen() {
               }
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => { setEmailMode(false); setError(""); }}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => { setEmailMode(false); setError(""); }}>
               <Text style={[styles.switchTxt, { color: c.mutedForeground }]}>← Back to sign-in options</Text>
             </TouchableOpacity>
           </View>
@@ -306,7 +306,7 @@ export default function LoginScreen() {
 
         <View style={styles.signupRow}>
           <Text style={[styles.signupTxt, { color: c.mutedForeground }]}>New here? </Text>
-          <TouchableOpacity onPress={() => router.replace("/signup")}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.replace("/signup")}>
             <Text style={[styles.signupLink, { color: c.primary }]}>Create your free account</Text>
           </TouchableOpacity>
         </View>

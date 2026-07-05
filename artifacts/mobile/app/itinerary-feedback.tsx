@@ -45,7 +45,7 @@ function StarRow({ value, onChange, size = 30, color, labels }: {
     <View style={{ gap: 10 }}>
       <View style={{ flexDirection: "row", gap: 8 }}>
         {[1, 2, 3, 4, 5].map((n) => (
-          <TouchableOpacity key={n} onPress={() => onChange(n)} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+          <TouchableOpacity activeOpacity={0.85} key={n} onPress={() => onChange(n)} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
             <Feather name="star" size={size} color={n <= value ? color : "#D4D0C8"} />
           </TouchableOpacity>
         ))}
@@ -132,7 +132,7 @@ export default function ItineraryFeedbackScreen() {
             <Text style={[styles.scoreNum, { color: colors.primary }]}>{score}</Text>
             <Text style={[styles.scoreLabel, { color: colors.mutedForeground }]}>Itinerary Score / 100</Text>
           </View>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.doneBtn, { backgroundColor: colors.primary }]}
             onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}
           >
@@ -146,7 +146,7 @@ export default function ItineraryFeedbackScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={styles.back}
           onPress={() => step > 1 ? setStep((s) => s - 1) : router.canGoBack() ? router.back() : router.replace("/(tabs)")}
         >
@@ -304,7 +304,7 @@ export default function ItineraryFeedbackScreen() {
 
       <View style={[styles.footer, { paddingBottom: bottomPad + 16, backgroundColor: colors.background, borderTopColor: colors.border }]}>
         {step < TOTAL_STEPS ? (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.nextBtn, { backgroundColor: canGoNext ? colors.primary : colors.muted }]}
             onPress={next}
             disabled={!canGoNext}
@@ -313,7 +313,7 @@ export default function ItineraryFeedbackScreen() {
             <Feather name="arrow-right" size={18} color={canGoNext ? colors.primaryForeground : colors.mutedForeground} />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.nextBtn, { backgroundColor: colors.primary }]}
             onPress={handleSubmit}
           >

@@ -525,7 +525,7 @@ function WishlistCard({
             <Ionicons name="location-outline" size={11} /> {item.neighborhood}
           </Text>
         )}
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           onPress={() => onDelete(item.id)}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           style={cardStyles.deleteBtn}
@@ -579,10 +579,10 @@ function WishlistCard({
             autoFocus
           />
           <View style={cardStyles.notesBtns}>
-            <TouchableOpacity onPress={() => { setEditingNotes(false); setNotesText(item.notes ?? ""); }}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => { setEditingNotes(false); setNotesText(item.notes ?? ""); }}>
               <Text style={[cardStyles.notesCancel, { color: colors.mutedForeground }]}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[cardStyles.notesSave, { backgroundColor: colors.primary }]}
               onPress={() => { onNotesSave(item.id, notesText); setEditingNotes(false); }}
             >
@@ -591,7 +591,7 @@ function WishlistCard({
           </View>
         </View>
       ) : (
-        <TouchableOpacity onPress={() => setEditingNotes(true)} style={cardStyles.notesRow}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => setEditingNotes(true)} style={cardStyles.notesRow}>
           <Ionicons name={item.notes ? "create-outline" : "add-circle-outline"} size={14} color={colors.primary} />
           <Text style={[cardStyles.notesText, { color: item.notes ? colors.text : colors.mutedForeground }]}>
             {item.notes ?? "Add notes..."}
@@ -728,21 +728,21 @@ export default function WishlistScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 10, backgroundColor: colors.primary }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.backBtn} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Trips I'd Love</Text>
           <Text style={styles.headerSub}>{subtitle}</Text>
         </View>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           onPress={() => setTypePickerOpen(true)}
           style={[styles.headerBtn, { backgroundColor: "#ffffff22" }]}
         >
           <Ionicons name="add-circle-outline" size={15} color="#fff" />
           <Text style={styles.headerBtnText}>Add</Text>
         </TouchableOpacity>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           onPress={() => router.push("/travel" as any)}
           style={[styles.headerBtn, { backgroundColor: "#ffffff22" }]}
         >
@@ -765,14 +765,14 @@ export default function WishlistScreen() {
             Save businesses, destinations, and employers you'd love to explore or work for.
           </Text>
           <View style={styles.emptyBtns}>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.emptyBtn, { backgroundColor: colors.primary }]}
               onPress={() => setTypePickerOpen(true)}
             >
               <Ionicons name="add-circle-outline" size={16} color="#fff" />
               <Text style={styles.emptyBtnText}>Add a Space</Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.emptyBtn, { backgroundColor: colors.secondary }]}
               onPress={() => router.push("/travel" as any)}
             >

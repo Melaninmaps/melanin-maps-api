@@ -56,7 +56,7 @@ interface ReviewItem {
   videoUrl: string | null;
 }
 
-const AVATAR_COLORS = ["#3B1F0E", "#C9922B", "#2D7A4F", "#7B3F00", "#1D4ED8"];
+const AVATAR_COLORS = ["#CA922B", "#C9922B", "#2D7A4F", "#7B3F00", "#1D4ED8"];
 
 export default function PinnedHighlightsScreen() {
   const colors = useColors();
@@ -165,7 +165,7 @@ export default function PinnedHighlightsScreen() {
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
       <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={s.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/business-owner" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={s.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/business-owner" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[s.headerTitle, { color: colors.foreground }]}>Pinned Highlights</Text>
@@ -209,7 +209,7 @@ export default function PinnedHighlightsScreen() {
                   <View style={[s.daysLeftBadge, { backgroundColor: daysLeftColor(item) + "15" }]}>
                     <Text style={[s.daysLeftText, { color: daysLeftColor(item) }]}>{daysLeftLabel(item)}</Text>
                   </View>
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     style={[s.unpinBtn, { borderColor: colors.border }]}
                     onPress={() => {
                       Alert.alert("Unpin this item?", "It will be removed from the top of your profile.", [
@@ -317,7 +317,7 @@ export default function PinnedHighlightsScreen() {
       <Modal visible={showPickReview} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowPickReview(false)}>
         <View style={[s.modalRoot, { backgroundColor: colors.background }]}>
           <View style={[s.modalHeader, { borderBottomColor: colors.border }]}>
-            <TouchableOpacity onPress={() => setShowPickReview(false)}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => setShowPickReview(false)}>
               <Feather name="x" size={22} color={colors.foreground} />
             </TouchableOpacity>
             <Text style={[s.modalTitle, { color: colors.foreground }]}>Choose a Review to Feature</Text>
@@ -387,13 +387,13 @@ export default function PinnedHighlightsScreen() {
               {"\n\n"}Would you like to replace it with a more recent one?
             </Text>
             <View style={s.expiryBtns}>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[s.expiryKeepBtn, { borderColor: colors.border, backgroundColor: colors.secondary }]}
                 onPress={() => setShowExpiryPrompt(null)}
               >
                 <Text style={[s.expiryKeepBtnText, { color: colors.foreground }]}>Keep it</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[s.expiryReplaceBtn, { backgroundColor: colors.primary }]}
                 onPress={() => { setShowExpiryPrompt(null); setShowPickReview(true); }}
               >

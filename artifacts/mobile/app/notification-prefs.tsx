@@ -147,13 +147,13 @@ export default function NotificationPrefsScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]} numberOfLines={1}>
           {businessName ? `${businessName} Alerts` : "Notification Preferences"}
         </Text>
-        <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving || loading}>
+        <TouchableOpacity activeOpacity={0.85} style={[styles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving || loading}>
           <Text style={styles.saveBtnTxt}>{saving ? "Saving…" : "Save"}</Text>
         </TouchableOpacity>
       </View>
@@ -169,7 +169,7 @@ export default function NotificationPrefsScreen() {
           const active = prefs.enabledTypes.includes(opt.id);
           const isEmergency = opt.id === "emergency";
           return (
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               key={opt.id}
               style={[styles.optRow, { borderColor: colors.border, backgroundColor: colors.card }]}
               onPress={() => { if (isEmergency && active) return; toggleType(opt.id); }}
@@ -188,7 +188,7 @@ export default function NotificationPrefsScreen() {
 
         <Text style={[styles.sectionLabel, { color: colors.foreground, marginTop: 24 }]}>How often?</Text>
         {FREQUENCY_OPTIONS.map(opt => (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             key={opt.id}
             style={[styles.freqRow, { borderColor: prefs.frequency === opt.id ? colors.primary : colors.border, backgroundColor: prefs.frequency === opt.id ? colors.primary + "12" : colors.card }]}
             onPress={() => setFrequency(opt.id)}
@@ -205,14 +205,14 @@ export default function NotificationPrefsScreen() {
           {isPaused ? `⏸ Paused until ${pausedUntilFormatted}` : "Pause notifications"}
         </Text>
         {isPaused ? (
-          <TouchableOpacity style={[styles.pauseBtn, { borderColor: colors.border, backgroundColor: colors.card }]} onPress={clearPause}>
+          <TouchableOpacity activeOpacity={0.85} style={[styles.pauseBtn, { borderColor: colors.border, backgroundColor: colors.card }]} onPress={clearPause}>
             <Feather name="bell" size={16} color={colors.primary} />
             <Text style={[styles.pauseBtnTxt, { color: colors.primary }]}>Resume notifications now</Text>
           </TouchableOpacity>
         ) : (
           <View style={styles.pauseOptions}>
             {PAUSE_OPTIONS.map(p => (
-              <TouchableOpacity key={p.label} style={[styles.pauseChip, { borderColor: colors.border, backgroundColor: colors.card }]} onPress={() => pauseFor(p.days)}>
+              <TouchableOpacity activeOpacity={0.85} key={p.label} style={[styles.pauseChip, { borderColor: colors.border, backgroundColor: colors.card }]} onPress={() => pauseFor(p.days)}>
                 <Feather name="pause-circle" size={14} color={colors.mutedForeground} />
                 <Text style={[styles.pauseChipTxt, { color: colors.foreground }]}>{p.label}</Text>
               </TouchableOpacity>

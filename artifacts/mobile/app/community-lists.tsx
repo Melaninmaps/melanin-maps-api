@@ -129,7 +129,7 @@ export default function CommunityListsScreen() {
               </Text>
             </View>
           </View>
-          <TouchableOpacity onPress={() => void handleSave(item.id)} hitSlop={8}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => void handleSave(item.id)} hitSlop={8}>
             <Feather name="bookmark" size={20} color={saved.has(item.id) ? colors.primary : colors.mutedForeground} />
           </TouchableOpacity>
         </View>
@@ -141,7 +141,7 @@ export default function CommunityListsScreen() {
             <Feather name="bookmark" size={13} color={colors.mutedForeground} />
             <Text style={[styles.footerTxt, { color: colors.mutedForeground }]}>{saved.has(item.id) ? item.savedCount + 1 : item.savedCount} saved</Text>
           </View>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.viewBtn, { backgroundColor: colors.primary + "18" }]}
             onPress={() => router.push("/create-list" as never)}
           >
@@ -155,14 +155,14 @@ export default function CommunityListsScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/community" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/community" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Community Lists</Text>
           <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>Curated by the community, for the community</Text>
         </View>
-        <TouchableOpacity style={[styles.createBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/create-list" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={[styles.createBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/create-list" as never)}>
           <Feather name="plus" size={16} color="#FFF" />
           <Text style={styles.createTxt}>Create</Text>
         </TouchableOpacity>
@@ -177,7 +177,7 @@ export default function CommunityListsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(true); }} tintColor={colors.primary} />}
         ListHeaderComponent={
           <View style={{ gap: 12, marginBottom: 4 }}>
-            <View style={[styles.heroBanner, { backgroundColor: "#3B1F0E" }]}>
+            <View style={[styles.heroBanner, { backgroundColor: "#CA922B" }]}>
               <Text style={styles.heroEmoji}>📋</Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.heroTitle}>People love curated lists</Text>
@@ -186,7 +186,7 @@ export default function CommunityListsScreen() {
             </View>
             <View style={styles.filterRow}>
               {categories.map(c => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   key={c}
                   style={[styles.filterChip, { backgroundColor: activeCategory === c ? colors.primary : colors.secondary, borderColor: activeCategory === c ? colors.primary : colors.border }]}
                   onPress={() => setActiveCategory(c)}

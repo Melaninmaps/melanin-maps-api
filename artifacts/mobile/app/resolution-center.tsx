@@ -129,7 +129,7 @@ function NotifyModal({ visible, resolution, onClose }: {
                     {resolution.videoTitle}
                   </Text>
                 </View>
-                <TouchableOpacity onPress={handleClose} style={nStyles.closeBtn}>
+                <TouchableOpacity activeOpacity={0.85} onPress={handleClose} style={nStyles.closeBtn}>
                   <Feather name="x" size={20} color={colors.foreground} />
                 </TouchableOpacity>
               </View>
@@ -312,7 +312,7 @@ export default function ResolutionCenterScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.back()}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>

@@ -35,7 +35,7 @@ const ROLE_COLORS: Record<string, { color: string; label: string }> = {
   both: { color: "#7B2D8B", label: "Mentor & Mentee" },
 };
 
-const AVATAR_COLORS = ["#3A1F0E", "#2D7A4F", "#CA922B", "#1D4ED8", "#7B2D8B"];
+const AVATAR_COLORS = ["#CA922B", "#2D7A4F", "#CA922B", "#1D4ED8", "#7B2D8B"];
 
 function getApiBase() {
   return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
@@ -135,7 +135,7 @@ export default function MentorshipScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.foreground }]}>Mentorship Network</Text>
@@ -157,7 +157,7 @@ export default function MentorshipScreen() {
 
       <View style={styles.filterRow}>
         {(["all", "mentor", "mentee"] as const).map((r) => (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             key={r}
             style={[styles.filterChip, { backgroundColor: roleFilter === r ? colors.primary : colors.secondary, borderColor: roleFilter === r ? colors.primary : colors.border }]}
             onPress={() => setRoleFilter(r)}

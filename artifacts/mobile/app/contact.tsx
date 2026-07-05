@@ -63,7 +63,7 @@ export default function ContactScreen() {
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-          <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
+          <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Contact Us</Text>
@@ -77,7 +77,7 @@ export default function ContactScreen() {
           <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
             We'll get back to you at {email} within 1–2 business days.
           </Text>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.doneBtn, { backgroundColor: colors.primary }]}
             onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}
           >
@@ -94,7 +94,7 @@ export default function ContactScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Contact Us</Text>

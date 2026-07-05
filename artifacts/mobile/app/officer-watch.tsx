@@ -148,7 +148,7 @@ export default function OfficerWatchScreen() {
     <View style={[s.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={s.back}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={s.back}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
@@ -160,7 +160,7 @@ export default function OfficerWatchScreen() {
       {/* Tabs */}
       <View style={[s.tabs, { borderBottomColor: colors.border }]}>
         {(["watch", "report"] as const).map((t) => (
-          <TouchableOpacity key={t} style={[s.tab, tab === t && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]} onPress={() => setTab(t)}>
+          <TouchableOpacity activeOpacity={0.85} key={t} style={[s.tab, tab === t && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]} onPress={() => setTab(t)}>
             <Text style={[s.tabText, { color: tab === t ? colors.primary : colors.mutedForeground }]}>
               {t === "watch" ? "Watch List" : "Submit a Tip"}
             </Text>
@@ -187,7 +187,7 @@ export default function OfficerWatchScreen() {
               <Text style={[s.emptySub, { color: colors.mutedForeground }]}>
                 Know about a flagged officer transferred to your area? Submit a tip — our team will verify and publish it.
               </Text>
-              <TouchableOpacity style={[s.emptyBtn, { backgroundColor: colors.primary }]} onPress={() => setTab("report")}>
+              <TouchableOpacity activeOpacity={0.85} style={[s.emptyBtn, { backgroundColor: colors.primary }]} onPress={() => setTab("report")}>
                 <Text style={s.emptyBtnText}>Submit a Tip</Text>
               </TouchableOpacity>
             </View>
@@ -224,7 +224,7 @@ export default function OfficerWatchScreen() {
 
                     {/* Source */}
                     {o.sourceUrl && (
-                      <TouchableOpacity style={[s.sourceLink, { borderColor: colors.border }]} onPress={() => openSource(o.sourceUrl!)}>
+                      <TouchableOpacity activeOpacity={0.85} style={[s.sourceLink, { borderColor: colors.border }]} onPress={() => openSource(o.sourceUrl!)}>
                         <Feather name="external-link" size={13} color={colors.primary} />
                         <Text style={[s.sourceLinkText, { color: colors.primary }]}>View Source</Text>
                       </TouchableOpacity>
@@ -245,7 +245,7 @@ export default function OfficerWatchScreen() {
                               {t.transferDate && <Text style={[s.transferDate, { color: colors.mutedForeground }]}>{t.transferDate}</Text>}
                             </View>
                             {t.sourceUrl && (
-                              <TouchableOpacity onPress={() => openSource(t.sourceUrl!)}>
+                              <TouchableOpacity activeOpacity={0.85} onPress={() => openSource(t.sourceUrl!)}>
                                 <Feather name="external-link" size={15} color={colors.primary} />
                               </TouchableOpacity>
                             )}
@@ -261,7 +261,7 @@ export default function OfficerWatchScreen() {
 
           {/* Submit a tip prompt */}
           {officers.length > 0 && (
-            <TouchableOpacity style={[s.tipPrompt, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => setTab("report")}>
+            <TouchableOpacity activeOpacity={0.85} style={[s.tipPrompt, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => setTab("report")}>
               <Feather name="alert-circle" size={16} color={colors.primary} />
               <Text style={[s.tipPromptText, { color: colors.foreground }]}>Know about a transfer not listed here? Submit a tip.</Text>
               <Feather name="arrow-right" size={16} color={colors.primary} />
@@ -295,7 +295,7 @@ export default function OfficerWatchScreen() {
             <Text style={[s.fieldLabel, { color: colors.foreground }]}>Type of Offense</Text>
             <View style={s.offenseTypes}>
               {OFFENSE_TYPES.map((ot) => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   key={ot}
                   style={[s.offensePill, { borderColor: offenseType === ot ? colors.primary : colors.border, backgroundColor: offenseType === ot ? colors.primary + "18" : colors.card }]}
                   onPress={() => setOffenseType(offenseType === ot ? "" : ot)}
@@ -323,7 +323,7 @@ export default function OfficerWatchScreen() {
           <Field label="Date of Offense" value={offenseDate} onChange={setOffenseDate} placeholder="e.g. March 2022" colors={colors} />
           <Field label="Source URL" value={sourceUrl} onChange={setSourceUrl} placeholder="News article, court record, or public document" colors={colors} keyboardType="url" autoCapitalize="none" />
 
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[s.submitBtn, { backgroundColor: colors.primary, opacity: (!isAuthenticated || submitting) ? 0.5 : 1 }]}
             onPress={submitReport}
             disabled={!isAuthenticated || submitting}

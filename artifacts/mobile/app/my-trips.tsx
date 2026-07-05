@@ -43,7 +43,7 @@ export default function MyTripsScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 16, borderBottomColor: colors.border, backgroundColor: colors.background }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={10}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={styles.backBtn} hitSlop={10}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.foreground }]}>My Saved Trips</Text>
@@ -85,7 +85,7 @@ export default function MyTripsScreen() {
                 <Text style={[styles.name, { color: colors.foreground }]}>{itin.name}</Text>
                 <Text style={[styles.date, { color: colors.mutedForeground }]}>Saved {formatDate(itin.createdAt)}</Text>
               </View>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 onPress={() => handleDelete(itin)}
                 hitSlop={8}
               >

@@ -89,7 +89,7 @@ export default function ForgotPasswordScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={[styles.inner, { paddingTop: topPad + 12, paddingBottom: bottomPad + 32 }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/login")}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/login")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
 
@@ -143,7 +143,7 @@ export default function ForgotPasswordScreen() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.backToLogin} onPress={() => router.replace("/login")}>
+            <TouchableOpacity activeOpacity={0.85} style={styles.backToLogin} onPress={() => router.replace("/login")}>
               <Feather name="arrow-left" size={14} color={colors.primary} />
               <Text style={[styles.backToLoginTxt, { color: colors.primary }]}>Back to Sign In</Text>
             </TouchableOpacity>
@@ -214,7 +214,7 @@ export default function ForgotPasswordScreen() {
                     secureTextEntry={!showPw}
                     autoCapitalize="none"
                   />
-                  <TouchableOpacity onPress={() => setShowPw(!showPw)}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => setShowPw(!showPw)}>
                     <Feather name={showPw ? "eye-off" : "eye"} size={18} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 </View>
@@ -255,7 +255,7 @@ export default function ForgotPasswordScreen() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity onPress={() => { setSent(false); setCodeStep(false); setResetError(""); }} style={styles.retrySub}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => { setSent(false); setCodeStep(false); setResetError(""); }} style={styles.retrySub}>
               <Text style={[styles.retryTxt, { color: colors.mutedForeground }]}>Didn't receive it? Try again</Text>
             </TouchableOpacity>
           </View>
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   errorTxt: { color: "#DC2626", fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
   iconWrap: { width: 88, height: 88, borderRadius: 44, alignItems: "center", justifyContent: "center", marginBottom: 8 },
   title: { fontSize: 26, fontFamily: "Inter_700Bold", marginBottom: 10, textAlign: "center" },
-  sub: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 24, color: "#8B7355" },
+  sub: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 24, color: "#A87A40" },
   form: { gap: 16 },
   field: { gap: 8 },
   label: { fontSize: 14, fontFamily: "Inter_500Medium" },

@@ -21,7 +21,7 @@ const SECTIONS = [
   {
     id: "use",
     icon: "settings" as const,
-    color: "#3B1F0E",
+    color: "#CA922B",
     title: "How We Use Your Data",
     items: [
       { label: "Providing the Service", body: "Your account data is used to authenticate you, personalize your experience, and save your preferences across sessions. We cannot operate the Platform without this data." },
@@ -56,7 +56,7 @@ const SECTIONS = [
   {
     id: "rights",
     icon: "user-check" as const,
-    color: "#3B1F0E",
+    color: "#CA922B",
     title: "Your Rights",
     items: [
       { label: "Access & Correction", body: "You may view and edit your account information at any time through your Profile and Settings screens. If you believe data about you is inaccurate, contact us and we will correct it promptly." },
@@ -99,7 +99,7 @@ export default function PrivacyPolicyScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/settings")}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/settings")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Privacy Policy</Text>

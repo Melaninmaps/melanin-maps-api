@@ -123,7 +123,7 @@ export default function CompareNeighborhoodsScreen() {
       <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
         <Text style={{ fontSize: 36 }}>⚖️</Text>
         <Text style={[{ color: colors.foreground, fontSize: 18, fontWeight: "700" }]}>Could not load comparison</Text>
-        <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { borderColor: colors.border }]}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={[styles.backBtn, { borderColor: colors.border }]}>
           <Text style={{ color: colors.primary, fontWeight: "700" }}>Go back</Text>
         </TouchableOpacity>
       </View>
@@ -137,7 +137,7 @@ export default function CompareNeighborhoodsScreen() {
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 10, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.headerBack} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/map" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.headerBack} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/map" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
@@ -243,7 +243,7 @@ export default function CompareNeighborhoodsScreen() {
             <Text style={[styles.kinfolkTitle, { color: colors.foreground }]}>Ask KinfolkAI to Compare</Text>
           </View>
           {kinfolkPrompts.map((p, i) => (
-            <TouchableOpacity key={i}
+            <TouchableOpacity activeOpacity={0.85} key={i}
               style={[styles.promptCard, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => openKinfolk(p
                 .replace("these two neighborhoods", `${pin1.label} vs ${pin2.label}`)

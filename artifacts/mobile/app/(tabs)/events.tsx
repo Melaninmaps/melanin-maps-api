@@ -36,7 +36,7 @@ export default function EventsScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.foreground }]}>Events</Text>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[styles.filterBtn, { backgroundColor: colors.secondary }]}
           onPress={() => router.push("/smart-search" as never)}
         >
@@ -54,7 +54,7 @@ export default function EventsScreen() {
 
       <View style={[styles.timeFilterRow, { borderBottomColor: colors.border }]}>
         {TIME_FILTERS.map((f) => (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             key={f}
             onPress={() => setTimeFilter(f)}
             style={[

@@ -147,7 +147,7 @@ function ReloBizCard({
             <Text style={[bizS.verText, { color: "#16A34A" }]}>Verified</Text>
           </View>
         )}
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           onPress={() => { onSave(biz); Haptics.selectionAsync(); }}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           style={[bizS.saveBtn, saved && { backgroundColor: GOLD + "22" }]}
@@ -185,7 +185,7 @@ function ReloBizCard({
         </View>
       )}
       {!saved && (
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[bizS.addBtn, { borderColor: GOLD }]}
           onPress={() => { onSave(biz); Haptics.selectionAsync(); }}
         >
@@ -537,7 +537,7 @@ export default function RelocationPlannerScreen() {
     return (
       <View style={[s.flex, { backgroundColor: colors.background }]}>
         <View style={[s.setupHeader, { paddingTop: insets.top + 8 }]}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={[s.setupTitle, { color: colors.text }]}>Relocation Planner</Text>
@@ -589,7 +589,7 @@ export default function RelocationPlannerScreen() {
               <Text style={[s.fieldLabel, { color: colors.text }]}>Timeline</Text>
               <View style={s.chipRow}>
                 {TIMELINE_OPTIONS.map(t => (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     key={t.id}
                     style={[s.chip, { borderColor: setup.timeline === t.id ? GOLD : colors.border, backgroundColor: setup.timeline === t.id ? GOLD + "18" : colors.card }]}
                     onPress={() => { setSetup(p => ({ ...p, timeline: t.id })); Haptics.selectionAsync(); }}
@@ -599,7 +599,7 @@ export default function RelocationPlannerScreen() {
                 ))}
               </View>
 
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[s.nextBtn, { backgroundColor: GOLD, opacity: setup.fromCity && setup.toCity ? 1 : 0.5 }]}
                 onPress={() => { if (setup.fromCity && setup.toCity) setSetupStep(2); }}
                 disabled={!setup.fromCity || !setup.toCity}
@@ -620,7 +620,7 @@ export default function RelocationPlannerScreen() {
               <Text style={[s.fieldLabel, { color: colors.text }]}>Who's moving?</Text>
               <View style={s.chipRow}>
                 {FAMILY_OPTIONS.map(f => (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     key={f.id}
                     style={[s.chip, { borderColor: setup.familySize === f.id ? GOLD : colors.border, backgroundColor: setup.familySize === f.id ? GOLD + "18" : colors.card }]}
                     onPress={() => { setSetup(p => ({ ...p, familySize: f.id })); Haptics.selectionAsync(); }}
@@ -633,7 +633,7 @@ export default function RelocationPlannerScreen() {
               <Text style={[s.fieldLabel, { color: colors.text }]}>Budget</Text>
               <View style={s.chipRow}>
                 {BUDGET_OPTIONS.map(b => (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     key={b.id}
                     style={[s.chip, { borderColor: setup.budget === b.id ? GOLD : colors.border, backgroundColor: setup.budget === b.id ? GOLD + "18" : colors.card }]}
                     onPress={() => { setSetup(p => ({ ...p, budget: b.id })); Haptics.selectionAsync(); }}
@@ -646,7 +646,7 @@ export default function RelocationPlannerScreen() {
               <Text style={[s.fieldLabel, { color: colors.text }]}>Home plan</Text>
               <View style={s.chipRow}>
                 {[{ id: "renting", label: "🏢 Renting" }, { id: "buy", label: "🏠 Buying" }].map(h => (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     key={h.id}
                     style={[s.chip, { borderColor: setup.homeType === h.id ? GOLD : colors.border, backgroundColor: setup.homeType === h.id ? GOLD + "18" : colors.card }]}
                     onPress={() => { setSetup(p => ({ ...p, homeType: h.id })); Haptics.selectionAsync(); }}
@@ -658,7 +658,7 @@ export default function RelocationPlannerScreen() {
 
               <View style={s.toggleRow}>
                 <Text style={[s.toggleLabel, { color: colors.text }]}>I have pets 🐾</Text>
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={[s.toggle, { backgroundColor: setup.hasPets ? GOLD : colors.border }]}
                   onPress={() => { setSetup(p => ({ ...p, hasPets: !p.hasPets })); Haptics.selectionAsync(); }}
                 >
@@ -667,10 +667,10 @@ export default function RelocationPlannerScreen() {
               </View>
 
               <View style={s.btnRow}>
-                <TouchableOpacity style={[s.backBtn, { borderColor: colors.border }]} onPress={() => setSetupStep(1)}>
+                <TouchableOpacity activeOpacity={0.85} style={[s.backBtn, { borderColor: colors.border }]} onPress={() => setSetupStep(1)}>
                   <Text style={[s.backBtnText, { color: colors.mutedForeground }]}>← Back</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[s.nextBtn, { backgroundColor: GOLD, flex: 1 }]} onPress={() => setSetupStep(3)}>
+                <TouchableOpacity activeOpacity={0.85} style={[s.nextBtn, { backgroundColor: GOLD, flex: 1 }]} onPress={() => setSetupStep(3)}>
                   <Text style={s.nextBtnText}>Next →</Text>
                 </TouchableOpacity>
               </View>
@@ -689,7 +689,7 @@ export default function RelocationPlannerScreen() {
                 {NEEDS_LIST.map(n => {
                   const sel = setup.needs.includes(n.label);
                   return (
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       key={n.label}
                       style={[s.needCard, { borderColor: sel ? GOLD : colors.border, backgroundColor: sel ? GOLD + "18" : colors.card }]}
                       onPress={() => {
@@ -720,10 +720,10 @@ export default function RelocationPlannerScreen() {
               </View>
 
               <View style={s.btnRow}>
-                <TouchableOpacity style={[s.backBtn, { borderColor: colors.border }]} onPress={() => setSetupStep(2)}>
+                <TouchableOpacity activeOpacity={0.85} style={[s.backBtn, { borderColor: colors.border }]} onPress={() => setSetupStep(2)}>
                   <Text style={[s.backBtnText, { color: colors.mutedForeground }]}>← Back</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[s.nextBtn, { backgroundColor: GOLD, flex: 1 }]} onPress={startJourney}>
+                <TouchableOpacity activeOpacity={0.85} style={[s.nextBtn, { backgroundColor: GOLD, flex: 1 }]} onPress={startJourney}>
                   <Text style={s.nextBtnText}>Start My Journey 🚀</Text>
                 </TouchableOpacity>
               </View>
@@ -739,7 +739,7 @@ export default function RelocationPlannerScreen() {
     <View style={[s.flex, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[s.chatHeader, { paddingTop: insets.top + 8, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => setView("setup")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => setView("setup")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <View style={s.headerCenter}>
@@ -750,7 +750,7 @@ export default function RelocationPlannerScreen() {
             <Text style={[s.phasePillText, { color: GOLD }]}>{currentPhase.icon} {currentPhase.title}</Text>
           </View>
         </View>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[s.teamBtn, { backgroundColor: GOLD + "22" }]}
           onPress={() => setTeamOpen(true)}
         >
@@ -872,7 +872,7 @@ export default function RelocationPlannerScreen() {
                       <Text style={{ color: GOLD }}>Up next: </Text>{msg.nextPhaseHint}
                     </Text>
                     {currentPhaseIdx < PHASES.length - 1 && (
-                      <TouchableOpacity style={[s.advanceBtn, { backgroundColor: GOLD }]} onPress={advancePhase}>
+                      <TouchableOpacity activeOpacity={0.85} style={[s.advanceBtn, { backgroundColor: GOLD }]} onPress={advancePhase}>
                         <Text style={s.advanceBtnText}>Next Phase →</Text>
                       </TouchableOpacity>
                     )}
@@ -883,7 +883,7 @@ export default function RelocationPlannerScreen() {
                 {(msg.proactiveSuggestions ?? []).length > 0 && (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.chipScroll}>
                     {(msg.proactiveSuggestions ?? []).map((s2: string, i: number) => (
-                      <TouchableOpacity
+                      <TouchableOpacity activeOpacity={0.85}
                         key={i}
                         style={[sugS.chip, { borderColor: colors.border, backgroundColor: colors.card }]}
                         onPress={() => sendMessage(s2)}
@@ -923,7 +923,7 @@ export default function RelocationPlannerScreen() {
             returnKeyType="send"
             multiline
           />
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[s.sendBtn, { backgroundColor: input.trim() ? GOLD : colors.border }]}
             onPress={() => sendMessage()}
             disabled={!input.trim() || loading}
@@ -938,7 +938,7 @@ export default function RelocationPlannerScreen() {
         <View style={[s.flex, { backgroundColor: colors.background }]}>
           <View style={[s.teamHeader, { paddingTop: insets.top + 16 }]}>
             <Text style={[s.teamTitle, { color: colors.text }]}>Your Relocation Team</Text>
-            <TouchableOpacity onPress={() => setTeamOpen(false)}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => setTeamOpen(false)}>
               <Ionicons name="close" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>

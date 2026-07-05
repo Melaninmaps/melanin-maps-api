@@ -21,7 +21,7 @@ import { useConversations, type ApiConversation, type UserSearchResult } from "@
 import { useAuth } from "@/lib/auth";
 
 const GOLD = "#CA922B";
-const AVATAR_COLORS = ["#3B1F0E", "#2D7A4F", "#C9922B", "#7B4F2E", "#1D4ED8", "#7B2D8B", "#D4873A"];
+const AVATAR_COLORS = ["#CA922B", "#2D7A4F", "#C9922B", "#7B4F2E", "#1D4ED8", "#7B2D8B", "#D4873A"];
 
 function getInitials(name: string): string {
   return name.split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
@@ -73,7 +73,7 @@ function NewDMModal({
       <View style={[dmStyles.root, { backgroundColor: colors.background }]}>
         <View style={[dmStyles.header, { borderBottomColor: colors.border }]}>
           <Text style={[dmStyles.title, { color: colors.foreground }]}>New Message</Text>
-          <TouchableOpacity onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity activeOpacity={0.85} onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name="x" size={22} color={colors.foreground} />
           </TouchableOpacity>
         </View>
@@ -89,7 +89,7 @@ function NewDMModal({
             onChangeText={(t) => { setQ(t); void runSearch(t); }}
           />
           {q.length > 0 && (
-            <TouchableOpacity onPress={() => { setQ(""); setResults([]); }}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => { setQ(""); setResults([]); }}>
               <Feather name="x" size={14} color={colors.mutedForeground} />
             </TouchableOpacity>
           )}
@@ -172,13 +172,13 @@ function PendingRequestRow({
       </View>
       {isIncoming ? (
         <View style={prStyles.actions}>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[prStyles.acceptBtn, { backgroundColor: GOLD }]}
             onPress={() => onAccept(conv.id)}
           >
             <Text style={prStyles.acceptText}>Accept</Text>
           </TouchableOpacity>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[prStyles.declineBtn, { borderColor: colors.border }]}
             onPress={() => onDecline(conv.id)}
           >
@@ -248,7 +248,7 @@ export default function MessagesScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
@@ -259,7 +259,7 @@ export default function MessagesScreen() {
             </View>
           )}
         </View>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[styles.composeBtn, { backgroundColor: colors.primary }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -286,7 +286,7 @@ export default function MessagesScreen() {
             onChangeText={setSearch}
           />
           {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch("")}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => setSearch("")}>
               <Feather name="x" size={14} color={colors.mutedForeground} />
             </TouchableOpacity>
           )}

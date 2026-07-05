@@ -171,7 +171,7 @@ export default function NominateBusinessScreen() {
       return (
         <View style={[styles.root, { backgroundColor: colors.background }]}>
           <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-            <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
               <Feather name="arrow-left" size={22} color={colors.foreground} />
             </TouchableOpacity>
             <Text style={[styles.headerTitle, { color: colors.foreground }]}>Add a Business</Text>
@@ -208,20 +208,20 @@ export default function NominateBusinessScreen() {
             )}
 
             {result.businessId ? (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[styles.doneBtn, { backgroundColor: colors.primary }]}
                 onPress={() => router.push({ pathname: "/business/[id]", params: { id: result.businessId } } as never)}
               >
                 <Text style={styles.doneBtnTxt}>View the Listing</Text>
               </TouchableOpacity>
             ) : null}
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.doneBtn, { backgroundColor: result.businessId ? "transparent" : colors.primary, borderWidth: result.businessId ? 1 : 0, borderColor: colors.border }]}
               onPress={() => { setForm(INITIAL); setResult(null); }}
             >
               <Text style={[styles.doneBtnTxt, result.businessId ? { color: colors.foreground } : {}]}>Add Another</Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.homeBtn, { borderColor: colors.border }]}
               onPress={() => router.replace("/(tabs)" as never)}
             >
@@ -236,7 +236,7 @@ export default function NominateBusinessScreen() {
       return (
         <View style={[styles.root, { backgroundColor: colors.background }]}>
           <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-            <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
               <Feather name="arrow-left" size={22} color={colors.foreground} />
             </TouchableOpacity>
             <Text style={[styles.headerTitle, { color: colors.foreground }]}>Add a Business</Text>
@@ -246,13 +246,13 @@ export default function NominateBusinessScreen() {
             <Text style={styles.successEmoji}>✅</Text>
             <Text style={[styles.successTitle, { color: colors.foreground }]}>Already in the directory!</Text>
             <Text style={[styles.successBody, { color: colors.mutedForeground }]}>{result.message}</Text>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.doneBtn, { backgroundColor: colors.primary }]}
               onPress={() => router.push({ pathname: "/business/[id]", params: { id: result.businessId } } as never)}
             >
               <Text style={styles.doneBtnTxt}>View Their Listing</Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.homeBtn, { borderColor: colors.border }]}
               onPress={() => { setForm(INITIAL); setResult(null); }}
             >
@@ -266,7 +266,7 @@ export default function NominateBusinessScreen() {
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-          <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Add a Business</Text>
@@ -276,7 +276,7 @@ export default function NominateBusinessScreen() {
           <Text style={styles.successEmoji}>🤝🏾</Text>
           <Text style={[styles.successTitle, { color: colors.foreground }]}>Already on our radar!</Text>
           <Text style={[styles.successBody, { color: colors.mutedForeground }]}>{result.message}</Text>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.doneBtn, { backgroundColor: colors.primary }]}
             onPress={() => { setForm(INITIAL); setResult(null); }}
           >
@@ -290,7 +290,7 @@ export default function NominateBusinessScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Add a Business</Text>
@@ -488,13 +488,13 @@ export default function NominateBusinessScreen() {
           <View style={[styles.modalSheet, { backgroundColor: colors.card }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <Text style={[styles.modalTitle, { color: colors.foreground }]}>Select Category</Text>
-              <TouchableOpacity onPress={() => { setForm((f) => ({ ...f, category: "" })); setShowCatPicker(false); }}>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => { setForm((f) => ({ ...f, category: "" })); setShowCatPicker(false); }}>
                 <Text style={{ color: "#C9922B", fontFamily: "Inter_600SemiBold" }}>Clear</Text>
               </TouchableOpacity>
             </View>
             <ScrollView>
               {ALL_CATEGORY_NAMES.map((name) => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   key={name}
                   style={[styles.catOption, { borderBottomColor: colors.border }, form.category === name && { backgroundColor: colors.primary + "18" }]}
                   onPress={() => { setForm((f) => ({ ...f, category: name })); setShowCatPicker(false); }}

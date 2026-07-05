@@ -146,7 +146,7 @@ export default function AddGlobalRecommendation() {
     return (
       <View style={[styles.root, { backgroundColor: c.background }]}>
         <View style={[styles.header, { paddingTop: topPad + 12 }]}>
-          <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/business-owner" as never)}>
+          <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/business-owner" as never)}>
             <Feather name="arrow-left" size={22} color={c.foreground} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: c.foreground }]}>Recommendation Sent</Text>
@@ -168,7 +168,7 @@ export default function AddGlobalRecommendation() {
               </Text>
             </View>
           )}
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.addAnother, { backgroundColor: c.primary }]}
             onPress={() => {
               setSubmitted(false);
@@ -180,7 +180,7 @@ export default function AddGlobalRecommendation() {
             <Feather name="plus" size={16} color="#fff" />
             <Text style={styles.addAnotherTxt}>Add Another Recommendation</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace("/business-owner" as never)}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.canGoBack() ? router.back() : router.replace("/business-owner" as never)}>
             <Text style={[styles.doneTxt, { color: c.mutedForeground }]}>Done</Text>
           </TouchableOpacity>
         </View>
@@ -191,7 +191,7 @@ export default function AddGlobalRecommendation() {
   return (
     <KeyboardAvoidingView style={[styles.root, { backgroundColor: c.background }]} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/business-owner" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/business-owner" as never)}>
           <Feather name="arrow-left" size={22} color={c.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: c.foreground }]}>Share a Place</Text>

@@ -66,7 +66,7 @@ function CreatorCard({ creator, onPress }: { creator: Creator; onPress: () => vo
           <Text style={s.premierText}>⭐ Premier</Text>
         </View>
       )}
-      <View style={[s.creatorAvatar, { backgroundColor: "#3B1F0E" }]}>
+      <View style={[s.creatorAvatar, { backgroundColor: "#CA922B" }]}>
         <Text style={s.creatorAvatarText}>{initials}</Text>
       </View>
       <Text style={[s.creatorName, { color: colors.foreground }]} numberOfLines={1}>{name}</Text>
@@ -146,7 +146,7 @@ export default function LocationFeedScreen() {
     <View style={[s.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={s.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
+        <TouchableOpacity activeOpacity={0.85} style={s.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={s.headerCenter}>

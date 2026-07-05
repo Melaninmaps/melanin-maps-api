@@ -39,7 +39,7 @@ export default function EventDetailScreen() {
     return (
       <View style={[styles.notFound, { backgroundColor: colors.background }]}>
         <Text style={[styles.notFoundText, { color: colors.mutedForeground }]}>Event not found</Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()}>
           <Text style={[styles.backLink, { color: colors.primary }]}>Go back</Text>
         </TouchableOpacity>
       </View>
@@ -56,13 +56,13 @@ export default function EventDetailScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.backBtn, { top: Platform.OS === "web" ? 77 : insets.top + 10 }]}>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           onPress={() => router.back()}
           style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
         >
           <Feather name="arrow-left" size={20} color="#FFFFFF" />
         </TouchableOpacity>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
         >
           <Feather name="share-2" size={18} color="#FFFFFF" />

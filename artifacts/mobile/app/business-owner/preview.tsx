@@ -59,7 +59,7 @@ export default function BusinessPreviewScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.foreground }]}>Public Preview</Text>
@@ -75,7 +75,7 @@ export default function BusinessPreviewScreen() {
         <View style={styles.center}>
           <Feather name="alert-circle" size={40} color={colors.mutedForeground} />
           <Text style={[styles.errorText, { color: colors.foreground }]}>{error}</Text>
-          <TouchableOpacity onPress={() => router.back()} style={[styles.backLink, { borderColor: colors.border }]}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={[styles.backLink, { borderColor: colors.border }]}>
             <Text style={[styles.backLinkText, { color: colors.primary }]}>Go back</Text>
           </TouchableOpacity>
         </View>

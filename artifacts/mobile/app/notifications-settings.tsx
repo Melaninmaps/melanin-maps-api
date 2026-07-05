@@ -186,7 +186,7 @@ export default function NotificationsSettingsScreen() {
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { paddingTop: topPad + 12 }]}>
-          <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/settings")}>
+          <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/settings")}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.foreground }]}>Notifications</Text>
@@ -202,7 +202,7 @@ export default function NotificationsSettingsScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/settings")}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/settings")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.foreground }]}>Notifications</Text>
@@ -292,7 +292,7 @@ export default function NotificationsSettingsScreen() {
               <Text style={[styles.rowLabel, { color: colors.foreground }]}>Enable Quiet Hours</Text>
               <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>Silence non-urgent alerts at night</Text>
             </View>
-            <TouchableOpacity onPress={() => update({ quietHoursEnabled: !settings.quietHoursEnabled })}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => update({ quietHoursEnabled: !settings.quietHoursEnabled })}>
               <View style={[styles.toggle, { backgroundColor: settings.quietHoursEnabled ? colors.primary : colors.border }]}>
                 <View style={[styles.thumb, { transform: [{ translateX: settings.quietHoursEnabled ? 20 : 2 }] }]} />
               </View>
@@ -306,7 +306,7 @@ export default function NotificationsSettingsScreen() {
                 <Text style={[styles.timeSectionLabel, { color: colors.mutedForeground }]}>From</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.timePills}>
                   {QUIET_FROM_OPTIONS.map((t) => (
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       key={t}
                       style={[styles.timePill, { backgroundColor: settings.quietHoursFrom === t ? colors.primary : colors.secondary }]}
                       onPress={() => update({ quietHoursFrom: t })}
@@ -321,7 +321,7 @@ export default function NotificationsSettingsScreen() {
                 <Text style={[styles.timeSectionLabel, { color: colors.mutedForeground }]}>Until</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.timePills}>
                   {QUIET_UNTIL_OPTIONS.map((t) => (
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       key={t}
                       style={[styles.timePill, { backgroundColor: settings.quietHoursUntil === t ? colors.primary : colors.secondary }]}
                       onPress={() => update({ quietHoursUntil: t })}

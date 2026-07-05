@@ -61,7 +61,7 @@ interface GroupMember {
 
 const CATEGORY_COLORS: Record<string, string> = {
   social: "#C9922B", professional: "#3A6BB5", travel: "#2D7A4F",
-  fitness: "#DC2626", food: "#7B2D8B", education: "#1A2F5E", general: "#3B1F0E",
+  fitness: "#DC2626", food: "#7B2D8B", education: "#1A2F5E", general: "#CA922B",
 };
 
 export default function GroupDetailScreen() {
@@ -216,13 +216,13 @@ export default function GroupDetailScreen() {
   };
 
   const isAdmin = group?.myRole === "admin";
-  const catColor = CATEGORY_COLORS[group?.category ?? "general"] ?? "#3B1F0E";
+  const catColor = CATEGORY_COLORS[group?.category ?? "general"] ?? "#CA922B";
 
   if (loading) {
     return (
       <View style={[s.root, { backgroundColor: colors.background }]}>
         <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-          <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
+          <TouchableOpacity activeOpacity={0.85} style={s.backBtn} onPress={() => router.back()}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
           <View style={{ flex: 1 }} />
@@ -238,7 +238,7 @@ export default function GroupDetailScreen() {
     return (
       <View style={[s.root, { backgroundColor: colors.background }]}>
         <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-          <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
+          <TouchableOpacity activeOpacity={0.85} style={s.backBtn} onPress={() => router.back()}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
           <Text style={[s.headerTitle, { color: colors.foreground }]}>Group</Text>
@@ -256,12 +256,12 @@ export default function GroupDetailScreen() {
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
       <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} style={s.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[s.headerTitle, { color: colors.foreground }]} numberOfLines={1}>{group.name}</Text>
         {isAdmin ? (
-          <TouchableOpacity style={s.backBtn} onPress={() => setShowSettings(true)}>
+          <TouchableOpacity activeOpacity={0.85} style={s.backBtn} onPress={() => setShowSettings(true)}>
             <Feather name="settings" size={20} color={colors.foreground} />
           </TouchableOpacity>
         ) : <View style={{ width: 38 }} />}
@@ -310,7 +310,7 @@ export default function GroupDetailScreen() {
       {/* Tab bar */}
       <View style={[s.tabBar, { borderBottomColor: colors.border }]}>
         {(["info", "members", ...(isAdmin ? ["settings"] : [])] as ("info" | "members" | "settings")[]).map((tab) => (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             key={tab}
             style={[s.tab, activeTab === tab && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
             onPress={() => setActiveTab(tab)}
@@ -394,13 +394,13 @@ export default function GroupDetailScreen() {
               )}
               {isAdmin && member.userId !== (user as any)?.id && (
                 <View style={{ flexDirection: "row", gap: 8 }}>
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     style={[s.memberActionBtn, { borderColor: colors.border }]}
                     onPress={() => void handlePromoteDemote(member)}
                   >
                     <Feather name={member.role === "admin" ? "user-minus" : "user-check"} size={14} color={colors.primary} />
                   </TouchableOpacity>
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     style={[s.memberActionBtn, { borderColor: colors.border }]}
                     onPress={() => void handleRemoveMember(member)}
                   >
@@ -416,7 +416,7 @@ export default function GroupDetailScreen() {
       {activeTab === "settings" && isAdmin && (
         <ScrollView contentContainerStyle={{ padding: 20, gap: 14, paddingBottom: bottomPad + 60 }} showsVerticalScrollIndicator={false}>
           <Text style={[s.settingsLabel, { color: colors.foreground }]}>Group name</Text>
-          <TextInput
+          <TextInput placeholderTextColor={colors.mutedForeground}
             style={[s.settingsInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card }]}
             value={editName}
             onChangeText={setEditName}
@@ -452,7 +452,7 @@ export default function GroupDetailScreen() {
             {Object.entries(AUDIENCE_LABELS).map(([key, emoji]) => {
               const isSelected = editAudience.includes(key);
               return (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   key={key}
                   style={{
                     flexDirection: "row", alignItems: "center", gap: 5,

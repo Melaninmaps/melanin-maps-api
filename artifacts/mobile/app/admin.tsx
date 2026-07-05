@@ -119,7 +119,7 @@ function OverviewTab() {
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={adminStyles.statsGrid}>
-        <StatCard label="Total Users" value={userCount} sub="Registered members" color="#3B1F0E" icon="users" />
+        <StatCard label="Total Users" value={userCount} sub="Registered members" color="#CA922B" icon="users" />
         <StatCard label="Pending" value={pendingBizCount > 0 ? String(pendingBizCount) : "—"} sub={pendingBizCount > 0 ? "Awaiting review" : "All clear"} color="#C9922B" icon="briefcase" />
         <StatCard label="Safety Reports" value={String(pendingCount)} sub={highCount > 0 ? `${highCount} high severity` : "All clear"} color="#DC2626" icon="flag" />
         <StatCard label="Users Active" value={usersLoading ? "…" : String(users.filter((u: any) => u.approved !== false).length)} sub="Approved accounts" color="#2D7A4F" icon="user-check" />
@@ -252,10 +252,10 @@ function BadgeEditModal({ biz, onClose, onSaved }: { biz: AdminBiz; onClose: () 
           {error && <Text style={badgeModalStyles.errorText}>{error}</Text>}
 
           <View style={badgeModalStyles.actions}>
-            <TouchableOpacity style={[badgeModalStyles.cancelBtn, { borderColor: colors.border }]} onPress={onClose}>
+            <TouchableOpacity activeOpacity={0.85} style={[badgeModalStyles.cancelBtn, { borderColor: colors.border }]} onPress={onClose}>
               <Text style={[badgeModalStyles.cancelText, { color: colors.mutedForeground }]}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[badgeModalStyles.saveBtn, { backgroundColor: colors.primary, opacity: saving ? 0.6 : 1 }]}
               onPress={save}
               disabled={saving}
@@ -334,7 +334,7 @@ function BusinessesTab() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: "row", gap: 8 }}>
           {STATUSES.map((s) => (
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               key={s.label}
               style={[adminStyles.filterChip, { backgroundColor: statusFilter === s.label ? colors.primary : colors.secondary, borderColor: statusFilter === s.label ? colors.primary : colors.border }]}
               onPress={() => setStatusFilter(s.label)}
@@ -507,7 +507,7 @@ function UsersTab() {
     } catch { return ""; }
   }
 
-  const AVATAR_COLORS = ["#3B1F0E", "#2D7A4F", "#C9922B", "#1D4ED8", "#7B2D8B", "#DC2626"];
+  const AVATAR_COLORS = ["#CA922B", "#2D7A4F", "#C9922B", "#1D4ED8", "#7B2D8B", "#DC2626"];
   const roleColor = (r: string | null) => r === "admin" ? "#DC2626" : r === "tester" ? "#1D4ED8" : colors.mutedForeground;
 
   return (
@@ -543,7 +543,7 @@ function UsersTab() {
       {!loading && error && (
         <View style={{ alignItems: "center", paddingVertical: 32 }}>
           <Text style={[adminStyles.bizName, { color: "#DC2626", marginBottom: 8 }]}>Failed to load</Text>
-          <TouchableOpacity onPress={refetch}>
+          <TouchableOpacity activeOpacity={0.85} onPress={refetch}>
             <Text style={[adminStyles.bizCity, { color: colors.primary }]}>Tap to retry</Text>
           </TouchableOpacity>
         </View>
@@ -575,7 +575,7 @@ function UsersTab() {
             </View>
           </View>
           <View style={{ flexDirection: "row", gap: 8 }}>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[adminStyles.smallBtn, {
                 flex: 1,
                 justifyContent: "center",
@@ -588,7 +588,7 @@ function UsersTab() {
                 {u.approved ? "Suspend" : "Activate"}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setConfirmDeleteId(u.id); }}
             >
@@ -618,13 +618,13 @@ function UsersTab() {
               This permanently deletes the account and all associated data. This action cannot be undone.
             </Text>
             <View style={{ flexDirection: "row", gap: 10 }}>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[adminStyles.smallBtn, { flex: 1, justifyContent: "center", backgroundColor: "#DC2626", borderColor: "#DC2626" }]}
                 onPress={() => { if (confirmDeleteId) deleteUser(confirmDeleteId); setConfirmDeleteId(null); }}
               >
                 <Text style={[adminStyles.smallBtnText, { color: "#FFF", textAlign: "center" }]}>Delete Account</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[adminStyles.smallBtn, { borderColor: colors.border }]} onPress={() => setConfirmDeleteId(null)}>
+              <TouchableOpacity activeOpacity={0.85} style={[adminStyles.smallBtn, { borderColor: colors.border }]} onPress={() => setConfirmDeleteId(null)}>
                 <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Cancel</Text>
               </TouchableOpacity>
             </View>
@@ -689,13 +689,13 @@ function ReportsTab() {
             </Text>
           ) : null}
           <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               onPress={() => void moderate(r.id, r.kind, "approved")}
               style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30" }]}
             >
               <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>Resolve</Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               onPress={() => void moderate(r.id, r.kind, "rejected")}
               style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}
             >
@@ -800,13 +800,13 @@ function ReviewsTab() {
                 </Text>
               ) : null}
               <View style={{ flexDirection: "row", gap: 8 }}>
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F40" }]}
                   onPress={() => void approveVideo(r.id)}
                 >
                   <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>✓ Approve</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}
                   onPress={() => setConfirmDelete(r.id)}
                 >
@@ -826,7 +826,7 @@ function ReviewsTab() {
       {!loading && error && (
         <View style={{ alignItems: "center", paddingVertical: 32 }}>
           <Text style={[adminStyles.bizName, { color: "#DC2626", marginBottom: 8 }]}>Failed to load</Text>
-          <TouchableOpacity onPress={refetch}>
+          <TouchableOpacity activeOpacity={0.85} onPress={refetch}>
             <Text style={[adminStyles.bizCity, { color: colors.primary }]}>Tap to retry</Text>
           </TouchableOpacity>
         </View>
@@ -859,7 +859,7 @@ function ReviewsTab() {
             <Text style={[adminStyles.scoreText, { color: colors.mutedForeground }]}>
               {new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
             </Text>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}
               onPress={() => setConfirmDelete(r.id)}
             >
@@ -877,13 +877,13 @@ function ReviewsTab() {
               This permanently deletes the review and cannot be undone.
             </Text>
             <View style={{ flexDirection: "row", gap: 10 }}>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[adminStyles.smallBtn, { flex: 1, justifyContent: "center", backgroundColor: "#DC2626", borderColor: "#DC2626" }]}
                 onPress={() => { if (confirmDelete) deleteReview(confirmDelete); setConfirmDelete(null); }}
               >
                 <Text style={[adminStyles.smallBtnText, { color: "#FFF", textAlign: "center" }]}>Delete</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[adminStyles.smallBtn, { borderColor: colors.border }]} onPress={() => setConfirmDelete(null)}>
+              <TouchableOpacity activeOpacity={0.85} style={[adminStyles.smallBtn, { borderColor: colors.border }]} onPress={() => setConfirmDelete(null)}>
                 <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Cancel</Text>
               </TouchableOpacity>
             </View>
@@ -916,7 +916,7 @@ function AnalyticsTab() {
       </View>
       {[
         { label: "Top Category", value: "Beauty (34%)", icon: "scissors" as const, color: "#C9922B" },
-        { label: "Top City", value: "Atlanta, GA", icon: "map-pin" as const, color: "#3B1F0E" },
+        { label: "Top City", value: "Atlanta, GA", icon: "map-pin" as const, color: "#CA922B" },
         { label: "Avg Session", value: "4m 32s", icon: "clock" as const, color: "#2D7A4F" },
         { label: "Retention Rate", value: "68%", icon: "repeat" as const, color: "#1D4ED8" },
         { label: "DAU/MAU", value: "0.42", icon: "activity" as const, color: "#7B2D8B" },
@@ -944,7 +944,7 @@ function EventsTab() {
   ];
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
-      <ActionRow icon="plus-circle" label="Create New Event" sub="Add an event to the platform" color="#3B1F0E" />
+      <ActionRow icon="plus-circle" label="Create New Event" sub="Add an event to the platform" color="#CA922B" />
       {events.map((e, i) => (
         <View key={i} style={[adminStyles.bizRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[adminStyles.bizAvatar, { backgroundColor: "#1D4ED820" }]}>
@@ -973,7 +973,7 @@ function ContentTab() {
       <SectionLabel title="Featured Content" />
       <ActionRow icon="star" label="Featured Businesses" sub="Manage which businesses appear featured" color="#C9922B" />
       <ActionRow icon="calendar" label="Featured Events" sub="Control homepage event highlights" color="#1D4ED8" />
-      <ActionRow icon="image" label="Hero Banners" sub="Edit homepage discovery banners" color="#3B1F0E" />
+      <ActionRow icon="image" label="Hero Banners" sub="Edit homepage discovery banners" color="#CA922B" />
 
       <SectionLabel title="Community Content" />
       <ActionRow icon="message-circle" label="Community Posts" sub="Moderate community discussions" color="#2D7A4F" badge={3} />
@@ -981,7 +981,7 @@ function ContentTab() {
       <ActionRow icon="book-open" label="Resource Hub" sub="Curate community resources & guides" color="#7B2D8B" />
 
       <SectionLabel title="Platform Notices" />
-      <ActionRow icon="send" label="Push Notifications" sub="Send announcements to all users" color="#3B1F0E" />
+      <ActionRow icon="send" label="Push Notifications" sub="Send announcements to all users" color="#CA922B" />
       <ActionRow icon="mail" label="Email Campaigns" sub="Community newsletters and updates" color="#1D4ED8" />
     </ScrollView>
   );
@@ -1016,7 +1016,7 @@ function SettingsTab() {
       </View>
 
       <SectionLabel title="App Configuration" />
-      <SettingsInfoRow icon="sliders" label="Confidence Score Weights" sub="Adjust how scores are calculated" color="#3B1F0E" />
+      <SettingsInfoRow icon="sliders" label="Confidence Score Weights" sub="Adjust how scores are calculated" color="#CA922B" />
       <SettingsInfoRow icon="shield" label="Trust & Safety Rules" sub="Content moderation thresholds" color="#DC2626" />
       <SettingsInfoRow icon="award" label="Verification Criteria" sub="Set requirements for verified badge" color="#C9922B" />
       <ActionRow icon="gift" label="Referral Rewards" sub="Configure referral tiers and rewards" color="#2D7A4F" onPress={() => setTab("referrals")} />
@@ -1065,7 +1065,7 @@ function SurveysTab() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
         <View style={{ flexDirection: "row", gap: 8 }}>
           {SURVEY_TYPES.map((t) => (
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               key={t}
               style={[adminStyles.filterChip, { backgroundColor: typeFilter === t ? colors.primary : colors.secondary, borderColor: typeFilter === t ? colors.primary : colors.border }]}
               onPress={() => setTypeFilter(t)}
@@ -1168,7 +1168,7 @@ function ClaimsTab() {
         <View style={[adminStyles.alertBanner, { backgroundColor: "#C9922B12", borderColor: "#C9922B30" }]}>
           <Feather name="check-square" size={15} color="#C9922B" />
           <Text style={[adminStyles.alertText, { color: "#C9922B", flex: 1 }]}>{pending} claim{pending !== 1 ? "s" : ""} awaiting review</Text>
-          <TouchableOpacity onPress={() => { setIsLoading(true); void loadClaims(); }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => { setIsLoading(true); void loadClaims(); }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name="refresh-cw" size={14} color="#C9922B" />
           </TouchableOpacity>
         </View>
@@ -1177,13 +1177,13 @@ function ClaimsTab() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }}>
           <View style={{ flexDirection: "row", gap: 8 }}>
             {STATUSES.map((s) => (
-              <TouchableOpacity key={s} style={[adminStyles.filterChip, { backgroundColor: filter === s ? colors.primary : colors.secondary, borderColor: filter === s ? colors.primary : colors.border }]} onPress={() => setFilter(s)}>
+              <TouchableOpacity activeOpacity={0.85} key={s} style={[adminStyles.filterChip, { backgroundColor: filter === s ? colors.primary : colors.secondary, borderColor: filter === s ? colors.primary : colors.border }]} onPress={() => setFilter(s)}>
                 <Text style={[adminStyles.filterChipText, { color: filter === s ? "#FFFFFF" : colors.foreground }]}>{s}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </ScrollView>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           onPress={() => { setIsLoading(true); void loadClaims(); }}
           style={[adminStyles.filterChip, { backgroundColor: colors.secondary, borderColor: colors.border, paddingHorizontal: 10 }]}
         >
@@ -1210,13 +1210,13 @@ function ClaimsTab() {
             <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>{c.email}{c.phone ? ` · ${c.phone}` : ""}</Text>
             {(c.status === "pending" || c.status == null) && (
               <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-                <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30" }]} onPress={() => void updateStatus(c.id, "approved")}>
+                <TouchableOpacity activeOpacity={0.85} style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30" }]} onPress={() => void updateStatus(c.id, "approved")}>
                   <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>Approve</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]} onPress={() => void updateStatus(c.id, "rejected")}>
+                <TouchableOpacity activeOpacity={0.85} style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]} onPress={() => void updateStatus(c.id, "rejected")}>
                   <Text style={[adminStyles.smallBtnText, { color: "#DC2626" }]}>Reject</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]} onPress={() => void updateStatus(c.id, "needs_info")}>
+                <TouchableOpacity activeOpacity={0.85} style={[adminStyles.smallBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]} onPress={() => void updateStatus(c.id, "needs_info")}>
                   <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Request Docs</Text>
                 </TouchableOpacity>
               </View>
@@ -1307,15 +1307,15 @@ function SubmissionsTab() {
         <View style={[adminStyles.alertBanner, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}>
           <Feather name="alert-circle" size={15} color="#DC2626" />
           <Text style={[adminStyles.alertText, { color: "#DC2626", flex: 1 }]}>Failed to load submissions.</Text>
-          <TouchableOpacity onPress={() => void fetchSubmissions()}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => void fetchSubmissions()}>
             <Text style={{ color: "#DC2626", fontWeight: "700", fontSize: 13 }}>Retry</Text>
           </TouchableOpacity>
         </View>
       )}
       {!loading && !error && pending > 0 && (
         <View style={[adminStyles.alertBanner, { backgroundColor: "#3B1F0E12", borderColor: "#3B1F0E30" }]}>
-          <Feather name="send" size={15} color="#3B1F0E" />
-          <Text style={[adminStyles.alertText, { color: "#3B1F0E" }]}>{pending} submission{pending !== 1 ? "s" : ""} awaiting review</Text>
+          <Feather name="send" size={15} color="#CA922B" />
+          <Text style={[adminStyles.alertText, { color: "#CA922B" }]}>{pending} submission{pending !== 1 ? "s" : ""} awaiting review</Text>
         </View>
       )}
       {!loading && !error && submissions.length === 0 && (
@@ -1330,7 +1330,7 @@ function SubmissionsTab() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
             <View style={{ flexDirection: "row", gap: 8 }}>
               {STATUSES.map((s) => (
-                <TouchableOpacity key={s} style={[adminStyles.filterChip, { backgroundColor: filter === s ? colors.primary : colors.secondary, borderColor: filter === s ? colors.primary : colors.border }]} onPress={() => setFilter(s)}>
+                <TouchableOpacity activeOpacity={0.85} key={s} style={[adminStyles.filterChip, { backgroundColor: filter === s ? colors.primary : colors.secondary, borderColor: filter === s ? colors.primary : colors.border }]} onPress={() => setFilter(s)}>
                   <Text style={[adminStyles.filterChipText, { color: filter === s ? "#FFFFFF" : colors.foreground }]}>{s}</Text>
                 </TouchableOpacity>
               ))}
@@ -1366,7 +1366,7 @@ function SubmissionsTab() {
               <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>Submitted by: {s.submittedBy}</Text>
               {s.localStatus === "pending" && (
                 <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30", opacity: actionLoadingId === s.id ? 0.6 : 1 }]}
                     onPress={() => void handleAction(s.id, "approved")}
                     disabled={actionLoadingId === s.id}
@@ -1376,7 +1376,7 @@ function SubmissionsTab() {
                       : <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>Approve</Text>
                     }
                   </TouchableOpacity>
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630", opacity: actionLoadingId === s.id ? 0.6 : 1 }]}
                     onPress={() => void handleAction(s.id, "rejected")}
                     disabled={actionLoadingId === s.id}
@@ -1396,7 +1396,7 @@ function SubmissionsTab() {
   );
 }
 
-const REFERRAL_TIER_COLORS = ["#3B1F0E", "#2D7A4F", "#C9922B", "#1D4ED8", "#7B2D8B", "#BE123C", "#0369A1"];
+const REFERRAL_TIER_COLORS = ["#CA922B", "#2D7A4F", "#C9922B", "#1D4ED8", "#7B2D8B", "#BE123C", "#0369A1"];
 
 function getReferralTier(referrals: number): string {
   if (referrals >= 25) return "Legend";
@@ -1441,7 +1441,7 @@ function ReferralsTab() {
   const dailyBiz = stats?.dailyBusinesses ?? [];
 
   const KPI = [
-    { label: "Total Users", value: String(kpi?.totalUsers ?? 0), sub: `${kpi?.totalReferralSignups ?? 0} via referral`, color: "#3B1F0E", icon: "users" as const },
+    { label: "Total Users", value: String(kpi?.totalUsers ?? 0), sub: `${kpi?.totalReferralSignups ?? 0} via referral`, color: "#CA922B", icon: "users" as const },
     { label: "Total Businesses", value: String(kpi?.totalBusinesses ?? 0), sub: `${kpi?.totalBizByReferral ?? 0} via referral`, color: "#2D7A4F", icon: "briefcase" as const },
     { label: "Active Referrers", value: String(leaderboard.length), sub: "With 1+ referral", color: "#C9922B", icon: "award" as const },
     { label: "Total Credits", value: String(kpi?.totalReferralCredits ?? 0), sub: "Across all codes", color: "#1D4ED8", icon: "share-2" as const },
@@ -1461,7 +1461,7 @@ function ReferralsTab() {
           <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>No referrals recorded yet</Text>
         </View>
       ) : leaderboard.map((r, i) => {
-        const tierColor = REFERRAL_TIER_COLORS[i % REFERRAL_TIER_COLORS.length] ?? "#3B1F0E";
+        const tierColor = REFERRAL_TIER_COLORS[i % REFERRAL_TIER_COLORS.length] ?? "#CA922B";
         const tier = getReferralTier(r.referrals);
         const initials = r.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
         return (
@@ -1482,7 +1482,7 @@ function ReferralsTab() {
         );
       })}
 
-      <TouchableOpacity
+      <TouchableOpacity activeOpacity={0.85}
         style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 14 }}
         onPress={() => setShowDaily((v) => !v)}
       >
@@ -1534,7 +1534,7 @@ function ReferralsTab() {
 function EmailTab() {
   const colors = useColors();
   const KPI = [
-    { label: "Subscribers", value: "2,841", sub: "+184 this week", color: "#3B1F0E", icon: "mail" as const },
+    { label: "Subscribers", value: "2,841", sub: "+184 this week", color: "#CA922B", icon: "mail" as const },
     { label: "Open Rate", value: "46%", sub: "+3% vs avg", color: "#2D7A4F", icon: "eye" as const },
     { label: "Click Rate", value: "18%", sub: "Industry: 11%", color: "#C9922B", icon: "mouse-pointer" as const },
     { label: "Unsubscribes", value: "12", sub: "0.4% rate", color: "#1D4ED8", icon: "user-x" as const },
@@ -1571,17 +1571,17 @@ function EmailTab() {
             <Text style={[adminStyles.bizCity, { color: "#C9922B" }]}>Click: {Math.round(d.clicked / d.sent * 100)}%</Text>
           </View>
           <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-            <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#3B1F0E18", borderColor: "#3B1F0E30" }]}>
-              <Text style={[adminStyles.smallBtnText, { color: "#3B1F0E" }]}>Trigger</Text>
+            <TouchableOpacity activeOpacity={0.85} style={[adminStyles.smallBtn, { backgroundColor: "#CA922B18", borderColor: "#3B1F0E30" }]}>
+              <Text style={[adminStyles.smallBtnText, { color: "#CA922B" }]}>Trigger</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+            <TouchableOpacity activeOpacity={0.85} style={[adminStyles.smallBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
               <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Edit</Text>
             </TouchableOpacity>
           </View>
         </View>
       ))}
       <SectionLabel title="Actions" />
-      <ActionRow icon="users" label="Subscriber List" sub="Browse and search all email subscribers" color="#3B1F0E" />
+      <ActionRow icon="users" label="Subscriber List" sub="Browse and search all email subscribers" color="#CA922B" />
       <ActionRow icon="user-minus" label="Unsubscribe Management" sub="Handle unsubscribe requests" color="#DC2626" />
       <ActionRow icon="send" label="Send Announcement" sub="One-off email to all subscribers" color="#C9922B" />
     </ScrollView>
@@ -1659,7 +1659,7 @@ function InviteCard({ invite, onUpdateStatus }: { invite: BusinessInvite; onUpda
           {actions.map((a) => {
             const m = STATUS_META[a] ?? { label: a, color: "#6B7280" };
             return (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 key={a}
                 style={[adminStyles.smallBtn, { backgroundColor: m.color + "18", borderColor: m.color + "40" }]}
                 onPress={() => {
@@ -1703,7 +1703,7 @@ function InvitesTab() {
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={adminStyles.statsGrid}>
-        <StatCard label="Total Invites"  value={String(invites.length)} sub="All time"           color="#3B1F0E" icon="send" />
+        <StatCard label="Total Invites"  value={String(invites.length)} sub="All time"           color="#CA922B" icon="send" />
         <StatCard label="Pending"         value={String(counts.pending)}   sub="Need outreach"     color="#C9922B" icon="clock" />
         <StatCard label="Contacted"       value={String(counts.contacted)} sub="Awaiting response" color="#1D4ED8" icon="message-circle" />
         <StatCard label="Accepted"        value={String(counts.accepted)}  sub="Joined platform"   color="#2D7A4F" icon="check-circle" />
@@ -1720,7 +1720,7 @@ function InvitesTab() {
 
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
         <SectionLabel title="Business Invites" />
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); void refresh(); }}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
@@ -1731,7 +1731,7 @@ function InvitesTab() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
         <View style={{ flexDirection: "row", gap: 8 }}>
           {FILTERS.map((f) => (
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               key={f}
               style={[adminStyles.filterChip, {
                 backgroundColor: filter === f ? colors.primary : colors.secondary,
@@ -1923,15 +1923,15 @@ function MarketplaceTab() {
                     placeholder="e.g. 0.08"
                     placeholderTextColor={colors.mutedForeground}
                   />
-                  <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={() => saveFeeEdit(editing!)} disabled={saving}>
+                  <TouchableOpacity activeOpacity={0.85} style={[adminStyles.smallBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={() => saveFeeEdit(editing!)} disabled={saving}>
                     <Text style={[adminStyles.smallBtnText, { color: "#FFF" }]}>{saving ? "…" : "Save"}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setEditing(null)}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => setEditing(null)}>
                     <Feather name="x" size={16} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 </View>
               ) : (
-                <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", gap: 6 }} onPress={() => setEditing({ tier, field: "standardFee", value: cfg.standardFee })}>
+                <TouchableOpacity activeOpacity={0.85} style={{ flexDirection: "row", alignItems: "center", gap: 6 }} onPress={() => setEditing({ tier, field: "standardFee", value: cfg.standardFee })}>
                   <Text style={[adminStyles.metricValue, { color: color }]}>{pct(cfg.standardFee)}</Text>
                   <Feather name="edit-2" size={13} color={colors.mutedForeground} />
                 </TouchableOpacity>
@@ -1954,15 +1954,15 @@ function MarketplaceTab() {
                     placeholder="e.g. 0.06"
                     placeholderTextColor={colors.mutedForeground}
                   />
-                  <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={() => saveFeeEdit(editing!)} disabled={saving}>
+                  <TouchableOpacity activeOpacity={0.85} style={[adminStyles.smallBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={() => saveFeeEdit(editing!)} disabled={saving}>
                     <Text style={[adminStyles.smallBtnText, { color: "#FFF" }]}>{saving ? "…" : "Save"}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setEditing(null)}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => setEditing(null)}>
                     <Feather name="x" size={16} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 </View>
               ) : (
-                <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", gap: 6 }} onPress={() => setEditing({ tier, field: "promotionalFee", value: cfg.promotionalFee })}>
+                <TouchableOpacity activeOpacity={0.85} style={{ flexDirection: "row", alignItems: "center", gap: 6 }} onPress={() => setEditing({ tier, field: "promotionalFee", value: cfg.promotionalFee })}>
                   <Text style={[adminStyles.metricValue, { color: "#C9922B" }]}>{pct(cfg.promotionalFee)}</Text>
                   <Feather name="edit-2" size={13} color={colors.mutedForeground} />
                 </TouchableOpacity>
@@ -1985,15 +1985,15 @@ function MarketplaceTab() {
                     placeholder="e.g. 0.04"
                     placeholderTextColor={colors.mutedForeground}
                   />
-                  <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F", borderColor: "#2D7A4F" }]} onPress={() => saveFeeEdit(editing!)} disabled={saving}>
+                  <TouchableOpacity activeOpacity={0.85} style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F", borderColor: "#2D7A4F" }]} onPress={() => saveFeeEdit(editing!)} disabled={saving}>
                     <Text style={[adminStyles.smallBtnText, { color: "#FFF" }]}>{saving ? "…" : "Save"}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setEditing(null)}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => setEditing(null)}>
                     <Feather name="x" size={16} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 </View>
               ) : (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
                   onPress={() => { setPendingFoundingEdit({ tier, value: cfg.foundingFee }); setShowFoundingWarning(true); }}
                 >
@@ -2022,16 +2022,16 @@ function MarketplaceTab() {
                   placeholderTextColor={colors.mutedForeground}
                 />
                 <View style={{ flexDirection: "row", gap: 8 }}>
-                  <TouchableOpacity style={[adminStyles.smallBtn, { backgroundColor: colors.primary, borderColor: colors.primary, flex: 1, justifyContent: "center" }]} onPress={() => saveFeeEdit(editing!)} disabled={saving}>
+                  <TouchableOpacity activeOpacity={0.85} style={[adminStyles.smallBtn, { backgroundColor: colors.primary, borderColor: colors.primary, flex: 1, justifyContent: "center" }]} onPress={() => saveFeeEdit(editing!)} disabled={saving}>
                     <Text style={[adminStyles.smallBtnText, { color: "#FFF", textAlign: "center" }]}>{saving ? "Saving…" : "Save Promo"}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[adminStyles.smallBtn, { borderColor: colors.border }]} onPress={() => setEditing(null)}>
+                  <TouchableOpacity activeOpacity={0.85} style={[adminStyles.smallBtn, { borderColor: colors.border }]} onPress={() => setEditing(null)}>
                     <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Cancel</Text>
                   </TouchableOpacity>
                 </View>
               </View>
             ) : (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[adminStyles.alertBanner, { borderColor: cfg.promoActive ? "#2D7A4F40" : colors.border, backgroundColor: cfg.promoActive ? "#2D7A4F08" : colors.background }]}
                 onPress={() => setEditing({ tier, field: "promo", value: "", promoActive: cfg.promoActive, promoDescription: cfg.promoDescription ?? "", promoStart: cfg.promoStartDate ?? "", promoEnd: cfg.promoEndDate ?? "" })}
               >
@@ -2077,7 +2077,7 @@ function MarketplaceTab() {
               placeholderTextColor={colors.mutedForeground}
             />
             <View style={{ flexDirection: "row", gap: 8 }}>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[adminStyles.smallBtn, { flex: 1, justifyContent: "center", backgroundColor: "#DC2626", borderColor: "#DC2626" }]}
                 onPress={() => {
                   if (!pendingFoundingEdit) return;
@@ -2089,7 +2089,7 @@ function MarketplaceTab() {
               >
                 <Text style={[adminStyles.smallBtnText, { color: "#FFF", textAlign: "center" }]}>{saving ? "Saving…" : "Confirm Change"}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[adminStyles.smallBtn, { borderColor: colors.border }]} onPress={() => { setShowFoundingWarning(false); setPendingFoundingEdit(null); }}>
+              <TouchableOpacity activeOpacity={0.85} style={[adminStyles.smallBtn, { borderColor: colors.border }]} onPress={() => { setShowFoundingWarning(false); setPendingFoundingEdit(null); }}>
                 <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Cancel</Text>
               </TouchableOpacity>
             </View>
@@ -2196,7 +2196,7 @@ function CaptionsTab() {
               </Text>
             </View>
           </View>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630", alignSelf: "flex-end", marginTop: 6 }]}
             onPress={() => setConfirmRemove({ businessId: c.businessId, caption: c.caption })}
           >
@@ -2216,7 +2216,7 @@ function CaptionsTab() {
               "{confirmRemove?.caption}"
             </Text>
             <View style={{ flexDirection: "row", gap: 10 }}>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[adminStyles.smallBtn, { flex: 1, justifyContent: "center", backgroundColor: "#DC2626", borderColor: "#DC2626" }]}
                 onPress={() => {
                   if (confirmRemove) removeCaption(confirmRemove.businessId, confirmRemove.caption);
@@ -2225,7 +2225,7 @@ function CaptionsTab() {
               >
                 <Text style={[adminStyles.smallBtnText, { color: "#FFF", textAlign: "center" }]}>Remove</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[adminStyles.smallBtn, { borderColor: colors.border }]} onPress={() => setConfirmRemove(null)}>
+              <TouchableOpacity activeOpacity={0.85} style={[adminStyles.smallBtn, { borderColor: colors.border }]} onPress={() => setConfirmRemove(null)}>
                 <Text style={[adminStyles.smallBtnText, { color: colors.foreground }]}>Cancel</Text>
               </TouchableOpacity>
             </View>
@@ -2320,19 +2320,19 @@ function ContentReportsTab() {
         </Text>
         {isPending && (
           <View style={{ flexDirection: "row", gap: 8 }}>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630" }]}
               onPress={() => updateStatus(r.id, "actioned")}
             >
               <Text style={[adminStyles.smallBtnText, { color: "#DC2626" }]}>Action</Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30" }]}
               onPress={() => updateStatus(r.id, "dismissed")}
             >
               <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>Dismiss</Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[adminStyles.smallBtn, { borderColor: colors.border }]}
               onPress={() => updateStatus(r.id, "reviewed")}
             >
@@ -2522,13 +2522,13 @@ function TopicsTab() {
 
       {/* Section switcher */}
       <View style={{ flexDirection: "row", padding: 12, gap: 8 }}>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[{ flex: 1, padding: 10, borderRadius: 10, borderWidth: 1, alignItems: "center" }, { borderColor: activeSection === "topics" ? colors.primary : colors.border, backgroundColor: activeSection === "topics" ? colors.primary + "15" : colors.card }]}
           onPress={() => setActiveSection("topics")}
         >
           <Text style={{ fontSize: 13, fontWeight: "700", color: activeSection === "topics" ? colors.primary : colors.mutedForeground }}>Topics ({topics.length})</Text>
         </TouchableOpacity>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[{ flex: 1, padding: 10, borderRadius: 10, borderWidth: 1, alignItems: "center" }, { borderColor: activeSection === "issues" ? "#3B82F6" : colors.border, backgroundColor: activeSection === "issues" ? "#3B82F615" : colors.card }]}
           onPress={() => setActiveSection("issues")}
         >
@@ -2547,14 +2547,14 @@ function TopicsTab() {
         <>
           {/* Topic Actions */}
           <View style={{ flexDirection: "row", gap: 8, paddingHorizontal: 12, marginBottom: 8 }}>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={{ flex: 1, padding: 10, borderRadius: 10, backgroundColor: "#CA922B15", borderWidth: 1, borderColor: "#CA922B30", alignItems: "center" }}
               onPress={seedTopics}
               disabled={seeding}
             >
               {seeding ? <ActivityIndicator size="small" color="#CA922B" /> : <Text style={{ fontSize: 12, fontWeight: "700", color: "#CA922B" }}>⚡ Seed All Topics</Text>}
             </TouchableOpacity>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={{ flex: 1, padding: 10, borderRadius: 10, backgroundColor: colors.primary + "15", borderWidth: 1, borderColor: colors.primary + "30", alignItems: "center" }}
               onPress={() => setShowAddTopic(true)}
             >
@@ -2582,7 +2582,7 @@ function TopicsTab() {
                   </View>
                   <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 1 }}>{t.category} · {t.followCount ?? 0} followers</Text>
                 </View>
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: t.enabled ? "#16A34A" : colors.border, backgroundColor: t.enabled ? "#16A34A15" : "transparent" }}
                   onPress={() => toggleTopicEnabled(t.id, !t.enabled)}
                 >
@@ -2603,10 +2603,10 @@ function TopicsTab() {
               <Text style={{ fontSize: 13, color: colors.mutedForeground, marginBottom: 4 }}>Description</Text>
               <TextInput style={[{ borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 20, fontSize: 14, height: 80, textAlignVertical: "top" }, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.card }]} value={newTopicDesc} onChangeText={setNewTopicDesc} placeholder="Brief description…" placeholderTextColor={colors.mutedForeground} multiline />
               <View style={{ flexDirection: "row", gap: 10 }}>
-                <TouchableOpacity style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: "center" }} onPress={() => setShowAddTopic(false)}>
+                <TouchableOpacity activeOpacity={0.85} style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: "center" }} onPress={() => setShowAddTopic(false)}>
                   <Text style={{ color: colors.mutedForeground, fontWeight: "700" }}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={{ flex: 2, padding: 12, borderRadius: 10, backgroundColor: colors.primary, alignItems: "center" }} onPress={createTopic} disabled={saving}>
+                <TouchableOpacity activeOpacity={0.85} style={{ flex: 2, padding: 12, borderRadius: 10, backgroundColor: colors.primary, alignItems: "center" }} onPress={createTopic} disabled={saving}>
                   {saving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ color: "#fff", fontWeight: "700" }}>Create Topic</Text>}
                 </TouchableOpacity>
               </View>
@@ -2617,14 +2617,14 @@ function TopicsTab() {
         <>
           {/* Issues Actions */}
           <View style={{ flexDirection: "row", gap: 8, paddingHorizontal: 12, marginBottom: 8 }}>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={{ flex: 1, padding: 10, borderRadius: 10, backgroundColor: "#3B82F615", borderWidth: 1, borderColor: "#3B82F630", alignItems: "center" }}
               onPress={seedIssues}
               disabled={seedingIssues}
             >
               {seedingIssues ? <ActivityIndicator size="small" color="#3B82F6" /> : <Text style={{ fontSize: 12, fontWeight: "700", color: "#3B82F6" }}>⚡ Seed All Issues</Text>}
             </TouchableOpacity>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={{ flex: 1, padding: 10, borderRadius: 10, backgroundColor: "#3B82F615", borderWidth: 1, borderColor: "#3B82F630", alignItems: "center" }}
               onPress={() => setShowAddIssue(true)}
             >
@@ -2653,7 +2653,7 @@ function TopicsTab() {
                   {issue.description && <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 1 }} numberOfLines={2}>{issue.description}</Text>}
                   <Text style={{ fontSize: 10, color: colors.mutedForeground, marginTop: 2 }}>{issue.followCount ?? 0} followers</Text>
                 </View>
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: issue.isActive ? "#16A34A" : colors.border, backgroundColor: issue.isActive ? "#16A34A15" : "transparent" }}
                   onPress={() => toggleIssueActive(issue.id, !issue.isActive)}
                 >
@@ -2672,10 +2672,10 @@ function TopicsTab() {
               <Text style={{ fontSize: 13, color: colors.mutedForeground, marginBottom: 4 }}>Description</Text>
               <TextInput style={[{ borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 20, fontSize: 14, height: 80, textAlignVertical: "top" }, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.card }]} value={newIssueDesc} onChangeText={setNewIssueDesc} placeholder="What should users watch for?" placeholderTextColor={colors.mutedForeground} multiline />
               <View style={{ flexDirection: "row", gap: 10 }}>
-                <TouchableOpacity style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: "center" }} onPress={() => setShowAddIssue(false)}>
+                <TouchableOpacity activeOpacity={0.85} style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: "center" }} onPress={() => setShowAddIssue(false)}>
                   <Text style={{ color: colors.mutedForeground, fontWeight: "700" }}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={{ flex: 2, padding: 12, borderRadius: 10, backgroundColor: "#3B82F6", alignItems: "center" }} onPress={createIssue} disabled={saving}>
+                <TouchableOpacity activeOpacity={0.85} style={{ flex: 2, padding: 12, borderRadius: 10, backgroundColor: "#3B82F6", alignItems: "center" }} onPress={createIssue} disabled={saving}>
                   {saving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ color: "#fff", fontWeight: "700" }}>Create Issue</Text>}
                 </TouchableOpacity>
               </View>
@@ -2723,7 +2723,7 @@ export default function AdminScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>

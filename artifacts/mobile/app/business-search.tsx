@@ -204,7 +204,7 @@ export default function BusinessSearchScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={[styles.header, { paddingTop: insets.top + 8, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Find a Business</Text>
@@ -267,7 +267,7 @@ export default function BusinessSearchScreen() {
               autoFocus
             />
             {name.length > 0 && (
-              <TouchableOpacity onPress={() => setName("")}>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => setName("")}>
                 <Feather name="x" size={15} color={colors.mutedForeground} />
               </TouchableOpacity>
             )}
@@ -320,7 +320,7 @@ export default function BusinessSearchScreen() {
               onSubmitEditing={handleSearch}
             />
             {handle.length > 0 && (
-              <TouchableOpacity onPress={() => setHandle("")}>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => setHandle("")}>
                 <Feather name="x" size={15} color={colors.mutedForeground} />
               </TouchableOpacity>
             )}
@@ -333,7 +333,7 @@ export default function BusinessSearchScreen() {
             contentContainerStyle={styles.categoryScroll}
           >
             {CATEGORY_OPTIONS.map((cat) => (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 key={cat}
                 style={[
                   styles.chip,
@@ -381,7 +381,7 @@ export default function BusinessSearchScreen() {
             {results.map((item) => (
               <React.Fragment key={item.id}>{renderBusiness({ item })}</React.Fragment>
             ))}
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.notFoundRow, { borderColor: colors.border }]}
               onPress={() => setMode("invite")}
             >
@@ -410,7 +410,7 @@ export default function BusinessSearchScreen() {
                   </Text>{" "}
                   and invite them to join the Mapping With Melanin community.
                 </Text>
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={[styles.doneBtn, { borderColor: colors.border }]}
                   onPress={() => {
                     setMode("search");

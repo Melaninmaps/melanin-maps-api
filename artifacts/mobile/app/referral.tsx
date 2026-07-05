@@ -27,7 +27,7 @@ function getApiBase(): string {
 const TIERS = [
   { label: "Pioneer", min: 0, max: 2, icon: "🌱", color: "#7B4F2E", bg: "#7B4F2E18", reward: "Community badge + early access" },
   { label: "Connector", min: 3, max: 9, icon: "🔗", color: "#C9922B", bg: "#C9922B18", reward: "$5 credit + featured profile" },
-  { label: "Ambassador", min: 10, max: 24, icon: "✨", color: "#3B1F0E", bg: "#3B1F0E18", reward: "$25 credit + Ambassador badge" },
+  { label: "Ambassador", min: 10, max: 24, icon: "✨", color: "#CA922B", bg: "#CA922B18", reward: "$25 credit + Ambassador badge" },
   { label: "Legend", min: 25, max: Infinity, icon: "👑", color: "#2D7A4F", bg: "#2D7A4F18", reward: "$100 credit + lifetime perks" },
 ];
 
@@ -149,7 +149,7 @@ export default function ReferralScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Referral Program</Text>
@@ -239,10 +239,10 @@ export default function ReferralScreen() {
               {codeCheck === "taken" && <Text style={styles.codeTakenText}>That code is already taken.</Text>}
               {codeCheck === "invalid" && customInput.length > 0 && <Text style={styles.codeTakenText}>4–20 letters and numbers only.</Text>}
               <View style={styles.customizePanelBtns}>
-                <TouchableOpacity style={[styles.cancelCodeBtn, { borderColor: colors.border }]} onPress={() => { setEditingCode(false); setCodeCheck("idle"); setCustomInput(""); }}>
+                <TouchableOpacity activeOpacity={0.85} style={[styles.cancelCodeBtn, { borderColor: colors.border }]} onPress={() => { setEditingCode(false); setCodeCheck("idle"); setCustomInput(""); }}>
                   <Text style={[styles.cancelCodeText, { color: colors.mutedForeground }]}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={[styles.saveCodeBtn, { backgroundColor: codeCheck === "available" ? colors.primary : colors.muted, opacity: codeCheck === "available" ? 1 : 0.5 }]}
                   onPress={saveCustomCode}
                   disabled={codeCheck !== "available" || savingCode}

@@ -108,7 +108,7 @@ export default function PrivacyScreen() {
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { paddingTop: topPad + 12 }]}>
-          <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/settings")}>
+          <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/settings")}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.foreground }]}>Privacy & Safety</Text>
@@ -124,7 +124,7 @@ export default function PrivacyScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/settings")}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/settings")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.foreground }]}>Privacy & Safety</Text>
@@ -183,7 +183,7 @@ export default function PrivacyScreen() {
               <Text style={[styles.rowLabel, { color: colors.foreground }]}>Show My Location</Text>
               <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>Allow location-based discovery</Text>
             </View>
-            <TouchableOpacity onPress={() => update({ showLocation: !settings.showLocation })}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => update({ showLocation: !settings.showLocation })}>
               <View style={[styles.sw, { backgroundColor: settings.showLocation ? colors.primary : colors.border }]}>
                 <View style={[styles.swThumb, { transform: [{ translateX: settings.showLocation ? 20 : 2 }] }]} />
               </View>
@@ -197,7 +197,7 @@ export default function PrivacyScreen() {
                 <Text style={[styles.precisionTitle, { color: colors.foreground }]}>Location Precision</Text>
                 <View style={styles.precisionPills}>
                   {(["neighborhood", "exact"] as LocationPrecision[]).map((p) => (
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       key={p}
                       style={[styles.precisionPill, {
                         backgroundColor: settings.locationPrecision === p ? colors.primary : colors.secondary,
@@ -239,7 +239,7 @@ export default function PrivacyScreen() {
                   <Text style={[styles.rowLabel, { color: colors.foreground }]}>{item.label}</Text>
                   <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>{item.sub}</Text>
                 </View>
-                <TouchableOpacity onPress={() => update({ [item.key]: !settings[item.key] })}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => update({ [item.key]: !settings[item.key] })}>
                   <View style={[styles.sw, { backgroundColor: settings[item.key] ? colors.primary : colors.border }]}>
                     <View style={[styles.swThumb, { transform: [{ translateX: settings[item.key] ? 20 : 2 }] }]} />
                   </View>

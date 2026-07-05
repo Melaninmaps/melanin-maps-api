@@ -175,7 +175,7 @@ export default function BusinessOwnerHome() {
       icon: "trending-up",
       label: "Growth Tools",
       sub: "Promotions, deals, and marketing options",
-      color: "#3B1F0E",
+      color: "#CA922B",
       route: "/business-dashboard",
     },
     {
@@ -191,7 +191,7 @@ export default function BusinessOwnerHome() {
       icon: "eye",
       label: "Preview My Listing",
       sub: "See exactly how customers see your business",
-      color: "#3A1F0E",
+      color: "#CA922B",
       route: "/business-owner/preview",
     },
     {
@@ -208,7 +208,7 @@ export default function BusinessOwnerHome() {
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
+          <TouchableOpacity activeOpacity={0.85} style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Business Admin</Text>
@@ -218,7 +218,7 @@ export default function BusinessOwnerHome() {
           <Text style={styles.emptyEmoji}>🔐</Text>
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Sign in required</Text>
           <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>Log in to manage your business listing.</Text>
-          <TouchableOpacity style={[styles.loginBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/login" as never)}>
+          <TouchableOpacity activeOpacity={0.85} style={[styles.loginBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/login" as never)}>
             <Text style={styles.loginBtnTxt}>Log In</Text>
           </TouchableOpacity>
         </View>
@@ -229,7 +229,7 @@ export default function BusinessOwnerHome() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Business Admin</Text>
@@ -246,7 +246,7 @@ export default function BusinessOwnerHome() {
             <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
               List your minority-owned business to get discovered by the community, collect reviews, and access growth tools.
             </Text>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.listBtn, { backgroundColor: colors.primary }]}
               onPress={() => router.push("/list-business" as never)}
             >
@@ -257,7 +257,7 @@ export default function BusinessOwnerHome() {
         ) : (
           <>
             {/* Business card */}
-            <View style={[styles.bizCard, { backgroundColor: "#3B1F0E" }]}>
+            <View style={[styles.bizCard, { backgroundColor: "#CA922B" }]}>
               <View style={styles.bizCardTop}>
                 <View style={styles.bizAvatar}>
                   <Text style={styles.bizAvatarEmoji}>🏪</Text>
@@ -394,7 +394,7 @@ export default function BusinessOwnerHome() {
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.listAnotherBtn, { borderColor: colors.border }]}
               onPress={() => router.push("/list-business" as never)}
             >

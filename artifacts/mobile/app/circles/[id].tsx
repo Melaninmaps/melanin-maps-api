@@ -272,7 +272,7 @@ export default function CircleDetailScreen() {
     <View style={[s.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={s.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={s.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1, alignItems: "center" }}>
@@ -280,7 +280,7 @@ export default function CircleDetailScreen() {
           <Text style={[s.headerTitle, { color: colors.foreground }]} numberOfLines={1}>{circle.name}</Text>
         </View>
         {isHost ? (
-          <TouchableOpacity style={s.settingsBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity activeOpacity={0.85} style={s.settingsBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name="settings" size={20} color={colors.mutedForeground} />
           </TouchableOpacity>
         ) : <View style={{ width: 38 }} />}
@@ -289,7 +289,7 @@ export default function CircleDetailScreen() {
       {/* Tab Bar */}
       <View style={[s.tabBar, { borderBottomColor: colors.border }]}>
         {TABS.map((t) => (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             key={t.key}
             style={[s.tabBtn, activeTab === t.key && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
             onPress={() => setActiveTab(t.key)}
@@ -323,7 +323,7 @@ export default function CircleDetailScreen() {
                   <Text style={[s.sugType, { color: colors.mutedForeground }]}>{sug.placeType}</Text>
                   {sug.note ? <Text style={[s.sugNote, { color: colors.mutedForeground }]}>{sug.note}</Text> : null}
                 </View>
-                <TouchableOpacity style={[s.upvoteBtn, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }]} onPress={() => upvote(sug.id)}>
+                <TouchableOpacity activeOpacity={0.85} style={[s.upvoteBtn, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }]} onPress={() => upvote(sug.id)}>
                   <Feather name="thumbs-up" size={13} color={colors.primary} />
                   <Text style={[s.upvoteCount, { color: colors.primary }]}>{sug.upvotes}</Text>
                 </TouchableOpacity>
@@ -332,14 +332,14 @@ export default function CircleDetailScreen() {
           </ScrollView>
           {/* Two-button action row */}
           <View style={[s.fabRow, { bottom: bottomPad + 20 }]}>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[s.fabSecondary, { backgroundColor: colors.card, borderColor: colors.primary }]}
               onPress={() => { void loadSavedPlaces(); setShowSavedSheet(true); }}
             >
               <Text style={{ fontSize: 16 }}>📌</Text>
               <Text style={[s.fabSecondaryText, { color: colors.primary }]}>From saved places</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[s.fab, { backgroundColor: colors.primary }]} onPress={() => setShowSuggestModal(true)}>
+            <TouchableOpacity activeOpacity={0.85} style={[s.fab, { backgroundColor: colors.primary }]} onPress={() => setShowSuggestModal(true)}>
               <Feather name="plus" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
@@ -414,7 +414,7 @@ export default function CircleDetailScreen() {
                     { v: "maybe", label: "Maybe 🤔", active: "#C9922B", bg: "#C9922B18" },
                     { v: "out", label: "Not This Time", active: "#DC2626", bg: "#DC262618" },
                   ].map(({ v, label, active, bg }) => (
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       key={v}
                       style={[s.voteBtn, { backgroundColor: myVotes[plan.id] === v ? bg : colors.secondary, borderColor: myVotes[plan.id] === v ? active : colors.border }]}
                       onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); vote(plan.id, v); }}
@@ -493,7 +493,7 @@ export default function CircleDetailScreen() {
               </View>
             ))}
           </ScrollView>
-          <TouchableOpacity style={[s.fab, { backgroundColor: colors.primary, bottom: bottomPad + 20, right: 20 }]} onPress={() => setShowAdventureModal(true)}>
+          <TouchableOpacity activeOpacity={0.85} style={[s.fab, { backgroundColor: colors.primary, bottom: bottomPad + 20, right: 20 }]} onPress={() => setShowAdventureModal(true)}>
             <Feather name="plus" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
@@ -517,7 +517,7 @@ export default function CircleDetailScreen() {
             <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Type</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
               {PLACE_TYPES.map((t) => (
-                <TouchableOpacity key={t} style={[s.chip, { backgroundColor: sugType === t ? colors.primary : colors.card, borderColor: sugType === t ? colors.primary : colors.border }]} onPress={() => setSugType(t)}>
+                <TouchableOpacity activeOpacity={0.85} key={t} style={[s.chip, { backgroundColor: sugType === t ? colors.primary : colors.card, borderColor: sugType === t ? colors.primary : colors.border }]} onPress={() => setSugType(t)}>
                   <Text style={[s.chipText, { color: sugType === t ? "#FFFFFF" : colors.foreground }]}>{t}</Text>
                 </TouchableOpacity>
               ))}
@@ -528,7 +528,7 @@ export default function CircleDetailScreen() {
               value={sugNote} onChangeText={setSugNote}
               placeholder="Why this place? Any tips?" placeholderTextColor={colors.mutedForeground}
             />
-            <TouchableOpacity style={[s.modalBtn, { backgroundColor: colors.primary }]} onPress={addSuggestion} disabled={savingSug}>
+            <TouchableOpacity activeOpacity={0.85} style={[s.modalBtn, { backgroundColor: colors.primary }]} onPress={addSuggestion} disabled={savingSug}>
               {savingSug ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={s.modalBtnText}>Add Suggestion</Text>}
             </TouchableOpacity>
           </View>
@@ -555,7 +555,7 @@ export default function CircleDetailScreen() {
             ) : (
               <ScrollView showsVerticalScrollIndicator={false}>
                 {savedPlaces.map((sp) => (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     key={sp.businessId}
                     style={[s.savedRow, { borderBottomColor: colors.border }]}
                     onPress={() => addSavedPlaceAsSuggestion(sp)}
@@ -624,7 +624,7 @@ export default function CircleDetailScreen() {
                       const selected = curatorMemberId === m.userId;
                       const label = m.userId === user?.id ? "Me (you)" : m.role === "host" ? "👑 Host" : "Member";
                       return (
-                        <TouchableOpacity
+                        <TouchableOpacity activeOpacity={0.85}
                           key={m.id}
                           style={[s.chip, {
                             backgroundColor: selected ? colors.primary : colors.card,
@@ -652,7 +652,7 @@ export default function CircleDetailScreen() {
                   <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>What's the Vibe?</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
                     {VIBES.map((v) => (
-                      <TouchableOpacity key={v} style={[s.chip, { backgroundColor: planVibe === v ? colors.primary : colors.card, borderColor: planVibe === v ? colors.primary : colors.border }]} onPress={() => setPlanVibe(v)}>
+                      <TouchableOpacity activeOpacity={0.85} key={v} style={[s.chip, { backgroundColor: planVibe === v ? colors.primary : colors.card, borderColor: planVibe === v ? colors.primary : colors.border }]} onPress={() => setPlanVibe(v)}>
                         <Text style={[s.chipText, { color: planVibe === v ? "#FFFFFF" : colors.foreground }]}>{v}</Text>
                       </TouchableOpacity>
                     ))}
@@ -664,7 +664,7 @@ export default function CircleDetailScreen() {
               <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Budget per Person</Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                 {BUDGETS.map((b) => (
-                  <TouchableOpacity key={b} style={[s.chip, { backgroundColor: planBudget === b ? colors.primary : colors.card, borderColor: planBudget === b ? colors.primary : colors.border }]} onPress={() => setPlanBudget(b)}>
+                  <TouchableOpacity activeOpacity={0.85} key={b} style={[s.chip, { backgroundColor: planBudget === b ? colors.primary : colors.card, borderColor: planBudget === b ? colors.primary : colors.border }]} onPress={() => setPlanBudget(b)}>
                     <Text style={[s.chipText, { color: planBudget === b ? "#FFFFFF" : colors.foreground }]}>{b}</Text>
                   </TouchableOpacity>
                 ))}
@@ -676,7 +676,7 @@ export default function CircleDetailScreen() {
                 {WINDOWS.map((w) => {
                   const sel = planWindows.includes(w);
                   return (
-                    <TouchableOpacity key={w} style={[s.chip, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]}
+                    <TouchableOpacity activeOpacity={0.85} key={w} style={[s.chip, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]}
                       onPress={() => setPlanWindows((prev) => sel ? prev.filter((x) => x !== w) : [...prev, w])}>
                       <Text style={[s.chipText, { color: sel ? "#FFFFFF" : colors.foreground }]}>{w}</Text>
                     </TouchableOpacity>
@@ -697,7 +697,7 @@ export default function CircleDetailScreen() {
               </Text>
             </ScrollView>
 
-            <TouchableOpacity style={[s.modalBtn, { backgroundColor: colors.primary, marginTop: 12 }]} onPress={generatePlan} disabled={generatingPlan}>
+            <TouchableOpacity activeOpacity={0.85} style={[s.modalBtn, { backgroundColor: colors.primary, marginTop: 12 }]} onPress={generatePlan} disabled={generatingPlan}>
               {generatingPlan ? (
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                   <ActivityIndicator size="small" color="#FFFFFF" />
@@ -734,7 +734,7 @@ export default function CircleDetailScreen() {
               value={advNote} onChangeText={setAdvNote}
               placeholder="Any memories from the day?" placeholderTextColor={colors.mutedForeground}
             />
-            <TouchableOpacity style={[s.modalBtn, { backgroundColor: colors.primary }]} onPress={logAdventure} disabled={savingAdv}>
+            <TouchableOpacity activeOpacity={0.85} style={[s.modalBtn, { backgroundColor: colors.primary }]} onPress={logAdventure} disabled={savingAdv}>
               {savingAdv ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={s.modalBtnText}>Save Adventure</Text>}
             </TouchableOpacity>
           </View>

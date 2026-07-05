@@ -237,11 +237,11 @@ export default function KinfolkTasksScreen() {
       <View style={[styles.header, { paddingTop: Platform.OS === "web" ? 24 : insets.top + 12, borderBottomColor: colors.border }]}>
         <View style={styles.headerLeft}>
           {view === "list" ? (
-            <TouchableOpacity onPress={goHome} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <TouchableOpacity activeOpacity={0.85} onPress={goHome} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               <Feather name="arrow-left" size={22} color={colors.foreground} />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               <Feather name="arrow-left" size={22} color={colors.foreground} />
             </TouchableOpacity>
           )}
@@ -258,11 +258,11 @@ export default function KinfolkTasksScreen() {
         </View>
         <View style={styles.headerRight}>
           {view === "list" && activeList && (
-            <TouchableOpacity onPress={() => deleteList(activeList.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => deleteList(activeList.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Feather name="trash-2" size={18} color={colors.mutedForeground} />
             </TouchableOpacity>
           )}
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.addBtn, { backgroundColor: colors.primary }]}
             onPress={() => view === "list" ? setShowNewTask(true) : setShowNewList(true)}
           >
@@ -287,7 +287,7 @@ export default function KinfolkTasksScreen() {
               <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>
                 Ask KinfolkAI™ to "make me a grocery list" or tap + to create one.
               </Text>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[styles.emptyBtn, { backgroundColor: colors.primary }]}
                 onPress={() => router.back()}
               >
@@ -346,7 +346,7 @@ export default function KinfolkTasksScreen() {
                 </View>
               )}
 
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[styles.addTaskInline, { borderColor: colors.border }]}
                 onPress={() => setShowNewTask(true)}
               >
@@ -391,7 +391,7 @@ export default function KinfolkTasksScreen() {
             );
           }}
           ListFooterComponent={
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.addTaskInline, { borderColor: colors.border, marginTop: 8 }]}
               onPress={() => setShowNewTask(true)}
             >
@@ -406,7 +406,7 @@ export default function KinfolkTasksScreen() {
         <View style={[styles.sheetContainer, { backgroundColor: colors.background, paddingTop: insets.top + 20 }]}>
           <View style={[styles.sheetHeader, { borderBottomColor: colors.border }]}>
             <Text style={[styles.sheetTitle, { color: colors.foreground }]}>New List</Text>
-            <TouchableOpacity onPress={() => setShowNewList(false)}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => setShowNewList(false)}>
               <Feather name="x" size={20} color={colors.foreground} />
             </TouchableOpacity>
           </View>
@@ -423,7 +423,7 @@ export default function KinfolkTasksScreen() {
             <Text style={[styles.sheetLabel, { color: colors.mutedForeground }]}>Choose an icon</Text>
             <View style={styles.iconGrid}>
               {ICONS.map((icon) => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   key={icon}
                   style={[styles.iconOption, { backgroundColor: newListIcon === icon ? colors.primary + "20" : colors.card, borderColor: newListIcon === icon ? colors.primary : colors.border }]}
                   onPress={() => setNewListIcon(icon)}
@@ -432,7 +432,7 @@ export default function KinfolkTasksScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.sheetBtn, { backgroundColor: newListName.trim() ? colors.primary : colors.muted }]}
               onPress={createList}
               disabled={!newListName.trim() || saving}
@@ -449,7 +449,7 @@ export default function KinfolkTasksScreen() {
             <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
               {view === "list" && activeList ? `Add to ${activeList.name}` : "New Task"}
             </Text>
-            <TouchableOpacity onPress={() => setShowNewTask(false)}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => setShowNewTask(false)}>
               <Feather name="x" size={20} color={colors.foreground} />
             </TouchableOpacity>
           </View>
@@ -472,7 +472,7 @@ export default function KinfolkTasksScreen() {
               returnKeyType="done"
               onSubmitEditing={createTask}
             />
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.sheetBtn, { backgroundColor: newTaskTitle.trim() ? colors.primary : colors.muted, marginTop: 16 }]}
               onPress={createTask}
               disabled={!newTaskTitle.trim() || saving}
@@ -517,7 +517,7 @@ function TaskRow({
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <View style={[styles.taskRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <TouchableOpacity onPress={handleToggle} style={[styles.checkbox, { borderColor: task.isCompleted ? colors.primary : colors.border, backgroundColor: task.isCompleted ? colors.primary : "transparent" }]}>
+        <TouchableOpacity activeOpacity={0.85} onPress={handleToggle} style={[styles.checkbox, { borderColor: task.isCompleted ? colors.primary : colors.border, backgroundColor: task.isCompleted ? colors.primary : "transparent" }]}>
           {task.isCompleted && <Feather name="check" size={12} color="#FFF" />}
         </TouchableOpacity>
         <View style={styles.taskBody}>
@@ -531,7 +531,7 @@ function TaskRow({
             <Text style={[styles.taskMeta, { color: colors.mutedForeground }]}>{task.notes}</Text>
           )}
         </View>
-        <TouchableOpacity onPress={handleDelete} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={handleDelete} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Feather name="minus-circle" size={16} color={colors.mutedForeground} />
         </TouchableOpacity>
       </View>

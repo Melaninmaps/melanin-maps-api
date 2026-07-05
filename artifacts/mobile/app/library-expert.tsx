@@ -195,7 +195,7 @@ export default function LibraryExpertScreen() {
       <View style={[styles.root, styles.centered, { backgroundColor: colors.background }]}>
         <Text style={{ fontSize: 36 }}>👤</Text>
         <Text style={[{ color: colors.foreground, fontSize: 17, fontWeight: "700", marginTop: 10 }]}>Expert not found</Text>
-        <TouchableOpacity onPress={() => router.back()} style={[styles.backBtnLarge, { borderColor: colors.border }]}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={[styles.backBtnLarge, { borderColor: colors.border }]}>
           <Text style={{ color: colors.primary, fontWeight: "700" }}>Go back</Text>
         </TouchableOpacity>
       </View>
@@ -206,7 +206,7 @@ export default function LibraryExpertScreen() {
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 10, borderBottomColor: colors.border, backgroundColor: colors.card }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/library" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/library" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]} numberOfLines={1}>Expert Profile</Text>

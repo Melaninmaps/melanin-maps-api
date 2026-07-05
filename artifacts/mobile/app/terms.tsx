@@ -20,7 +20,7 @@ const SECTIONS = [
   {
     id: "about",
     icon: "map" as const,
-    color: "#3B1F0E",
+    color: "#CA922B",
     title: "About the Platform",
     clauses: [
       { heading: "What We Provide", body: "Mapping with Melanin™ connects people to trusted businesses, meaningful relationships, thriving communities, and new opportunities through the power of shared experiences and community-driven insights." },
@@ -53,7 +53,7 @@ const SECTIONS = [
   {
     id: "payments",
     icon: "credit-card" as const,
-    color: "#3B1F0E",
+    color: "#CA922B",
     title: "Membership & Payments",
     clauses: [
       { heading: "Membership Plans", body: "The Platform offers free and paid membership tiers. Paid memberships are billed on a recurring basis (monthly or annually) as selected at signup. All payments are processed securely via Stripe." },
@@ -118,7 +118,7 @@ const SECTIONS = [
   {
     id: "legal",
     icon: "file-text" as const,
-    color: "#3B1F0E",
+    color: "#CA922B",
     title: "Governing Law & Disputes",
     clauses: [
       { heading: "Governing Law", body: "These Terms are governed by and construed in accordance with the laws of the United States and the state in which Mapping With Melanin™ is incorporated, without regard to conflict of law provisions." },
@@ -138,7 +138,7 @@ export default function TermsScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/settings")}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/settings")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Terms of Service</Text>

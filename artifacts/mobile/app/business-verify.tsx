@@ -249,7 +249,7 @@ export default function BusinessVerifyScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={goBack}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.backBtn} onPress={goBack}>
           <Feather name={step === 4 ? "x" : "arrow-left"} size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
@@ -438,7 +438,7 @@ export default function BusinessVerifyScreen() {
                           {docMeta?.label ?? doc.type} · {formatBytes(doc.size)}
                         </Text>
                       </View>
-                      <TouchableOpacity onPress={() => removeDoc(doc.key)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                      <TouchableOpacity activeOpacity={0.85} onPress={() => removeDoc(doc.key)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                         <Feather name="x" size={16} color={colors.mutedForeground} />
                       </TouchableOpacity>
                     </View>

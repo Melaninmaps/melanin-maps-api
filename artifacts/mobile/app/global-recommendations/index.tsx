@@ -160,7 +160,7 @@ export default function GlobalRecommendationsScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 12, backgroundColor: "#1A2E22" }]}>
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name="arrow-left" size={20} color="#fff" />
           </TouchableOpacity>
           <View style={styles.headerTitle}>
@@ -180,7 +180,7 @@ export default function GlobalRecommendationsScreen() {
             style={styles.searchInput}
           />
           {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch("")}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => setSearch("")}>
               <Feather name="x" size={14} color="rgba(255,255,255,0.5)" />
             </TouchableOpacity>
           )}
@@ -191,14 +191,14 @@ export default function GlobalRecommendationsScreen() {
       {countries.length > 0 && (
         <View style={[styles.filterSection, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               onPress={() => setSelectedCountry(null)}
               style={[styles.filterChip, selectedCountry === null && styles.filterChipActive]}
             >
               <Text style={[styles.filterChipText, selectedCountry === null && styles.filterChipTextActive]}>All</Text>
             </TouchableOpacity>
             {countries.map(c => (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 key={c}
                 onPress={() => setSelectedCountry(c === selectedCountry ? null : c)}
                 style={[styles.filterChip, selectedCountry === c && styles.filterChipActive]}
@@ -213,14 +213,14 @@ export default function GlobalRecommendationsScreen() {
       {/* Type filter */}
       <View style={[styles.filterSection, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             onPress={() => setSelectedType(null)}
             style={[styles.filterChip, styles.typeChip, selectedType === null && styles.typeChipActive]}
           >
             <Text style={[styles.filterChipText, selectedType === null && styles.typeChipTextActive]}>All types</Text>
           </TouchableOpacity>
           {Object.entries(TYPE_LABELS).map(([k, v]) => (
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               key={k}
               onPress={() => setSelectedType(k === selectedType ? null : k)}
               style={[styles.filterChip, styles.typeChip, selectedType === k && styles.typeChipActive]}

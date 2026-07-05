@@ -81,11 +81,11 @@ export default function CreateListScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/community-lists" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/community-lists" as never)}>
           <Feather name="x" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Create a List</Text>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[styles.publishBtn, { backgroundColor: canPublish ? colors.primary : colors.muted }]}
           onPress={handlePublish}
           disabled={!canPublish || saving}
@@ -98,7 +98,7 @@ export default function CreateListScreen() {
 
       <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
         {/* Live Preview */}
-        <View style={[styles.previewCard, { backgroundColor: "#3B1F0E" }]}>
+        <View style={[styles.previewCard, { backgroundColor: "#CA922B" }]}>
           <Text style={styles.previewEmoji}>{emoji}</Text>
           <Text style={styles.previewTitle} numberOfLines={2}>{title.trim() || "Your list title…"}</Text>
           {description.trim() ? <Text style={styles.previewDesc} numberOfLines={2}>{description.trim()}</Text> : null}
@@ -113,7 +113,7 @@ export default function CreateListScreen() {
           <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Cover emoji</Text>
           <View style={styles.emojiGrid}>
             {EMOJIS.map(e => (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 key={e}
                 style={[styles.emojiBtn, { backgroundColor: e === emoji ? colors.primary + "22" : colors.secondary, borderColor: e === emoji ? colors.primary : "transparent", borderWidth: e === emoji ? 2 : 0 }]}
                 onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setEmoji(e); }}
@@ -157,7 +157,7 @@ export default function CreateListScreen() {
           <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Category <Text style={[{ color: colors.mutedForeground }]}>(optional)</Text></Text>
           <View style={styles.catGrid}>
             {CATEGORIES.map(c => (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 key={c}
                 style={[styles.catChip, { backgroundColor: category === c ? colors.primary : colors.secondary, borderColor: category === c ? colors.primary : colors.border }]}
                 onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setCategory(prev => prev === c ? "" : c); }}

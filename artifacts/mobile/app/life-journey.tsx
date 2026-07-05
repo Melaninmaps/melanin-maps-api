@@ -303,7 +303,7 @@ export default function LifeJourneyScreen() {
     return (
       <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 80 }}>
         <View style={[styles.header, { paddingTop: insets.top + 16, borderBottomColor: colors.border }]}>
-          <TouchableOpacity onPress={() => setView("list")} style={styles.backBtn}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => setView("list")} style={styles.backBtn}>
             <Feather name="arrow-left" size={20} color={colors.foreground} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Start a Journey</Text>
@@ -425,7 +425,7 @@ export default function LifeJourneyScreen() {
     return (
       <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={[styles.header, { paddingTop: insets.top + 16, borderBottomColor: colors.border }]}>
-          <TouchableOpacity onPress={() => setView("list")} style={styles.backBtn}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => setView("list")} style={styles.backBtn}>
             <Feather name="arrow-left" size={20} color={colors.foreground} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.foreground }]} numberOfLines={1}>{activeJourney.title}</Text>
@@ -593,7 +593,7 @@ export default function LifeJourneyScreen() {
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 80 }}>
       <View style={[styles.header, { paddingTop: insets.top + 16, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={styles.backBtn}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Life Journey</Text>
@@ -620,7 +620,7 @@ export default function LifeJourneyScreen() {
           <>
             <View style={styles.listHeader}>
               <Text style={[styles.listTitle, { color: colors.foreground }]}>Your Journeys</Text>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[styles.newBtn, { backgroundColor: primaryGold + "20", borderColor: primaryGold + "40" }]}
                 onPress={() => setView("create")}
               >

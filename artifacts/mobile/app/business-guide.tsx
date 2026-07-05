@@ -18,7 +18,7 @@ const TIERS = [
     promise: "Be discovered.",
     tagline:
       "Perfect for new businesses, side hustles, and startups that want to establish an online presence.",
-    color: "#8B7355",
+    color: "#A87A40",
     bg: null as string | null,
     fee: { standard: "10%", founding: "9%" },
     goal: "Get discovered and start building your customer base.",
@@ -49,7 +49,7 @@ const TIERS = [
     tagline:
       "Perfect for businesses that want to actively attract more customers and understand how they're performing.",
     color: "#CA922B",
-    bg: "#3B1F0E" as string | null,
+    bg: "#CA922B" as string | null,
     fee: { standard: "8%", founding: "7%" },
     goal: "Grow faster with better visibility, insights, and marketing tools.",
     sections: [
@@ -316,7 +316,7 @@ export default function BusinessGuideScreen() {
           {/* Column headers */}
           <View style={[styles.tableRow, styles.tableHeader, { borderBottomColor: colors.border }]}>
             <Text style={[styles.tableLabel, { color: colors.mutedForeground }]} />
-            <Text style={[styles.tableColHead, { color: "#8B7355" }]}>🆓 Community</Text>
+            <Text style={[styles.tableColHead, { color: "#A87A40" }]}>🆓 Community</Text>
             <Text style={[styles.tableColHead, { color: "#CA922B" }]}>🚀 Growth</Text>
             <Text style={[styles.tableColHead, { color: "#CA922B" }]}>👑 Premium</Text>
           </View>

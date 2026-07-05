@@ -52,7 +52,7 @@ function StarRow({
   return (
     <View style={{ flexDirection: "row", gap: 6 }}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <TouchableOpacity key={n} onPress={() => onChange(n)} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+        <TouchableOpacity activeOpacity={0.85} key={n} onPress={() => onChange(n)} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
           <Feather name="star" size={size} color={n <= value ? color : emptyColor} />
         </TouchableOpacity>
       ))}
@@ -217,7 +217,7 @@ export default function WriteReviewScreen() {
             <Text style={[styles.doneStatNum, { color: colors.primary }]}>+20</Text>
             <Text style={[styles.doneStatLabel, { color: colors.mutedForeground }]}>Community Points earned</Text>
           </View>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.doneBtn, { backgroundColor: colors.primary }]}
             onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}
           >
@@ -231,7 +231,7 @@ export default function WriteReviewScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={styles.back}
           onPress={() => step > 1 ? setStep((s) => s - 1) : router.canGoBack() ? router.back() : router.replace("/(tabs)")}
         >
@@ -509,7 +509,7 @@ export default function WriteReviewScreen() {
 
       <View style={[styles.footer, { paddingBottom: bottomPad + 16, backgroundColor: colors.background, borderTopColor: colors.border }]}>
         {step < TOTAL_STEPS ? (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.nextBtn, { backgroundColor: canGoNext ? colors.primary : colors.muted }]}
             onPress={next}
             disabled={!canGoNext}
@@ -518,7 +518,7 @@ export default function WriteReviewScreen() {
             <Feather name="arrow-right" size={18} color={canGoNext ? colors.primaryForeground : colors.mutedForeground} />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.nextBtn, { backgroundColor: submitting ? colors.muted : colors.primary, opacity: submitting ? 0.7 : 1 }]}
             onPress={handleSubmit}
             disabled={submitting}

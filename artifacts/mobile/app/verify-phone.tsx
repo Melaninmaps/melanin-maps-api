@@ -81,7 +81,7 @@ export default function VerifyPhoneScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.inner, { paddingTop: topPad + 20, paddingBottom: bottomPad + 32 }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/signup")}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/signup")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
 
@@ -116,7 +116,7 @@ export default function VerifyPhoneScreen() {
           ))}
         </TouchableOpacity>
 
-        <TextInput
+        <TextInput placeholderTextColor={colors.mutedForeground}
           ref={inputRef}
           style={styles.hiddenInput}
           value={code}
@@ -140,7 +140,7 @@ export default function VerifyPhoneScreen() {
         <View style={styles.resendRow}>
           <Text style={[styles.resendInfo, { color: colors.mutedForeground }]}>Didn't get it? </Text>
           {canResend ? (
-            <TouchableOpacity onPress={handleResend}>
+            <TouchableOpacity activeOpacity={0.85} onPress={handleResend}>
               <Text style={[styles.resendLink, { color: colors.primary }]}>Resend code</Text>
             </TouchableOpacity>
           ) : (
@@ -150,7 +150,7 @@ export default function VerifyPhoneScreen() {
           )}
         </View>
 
-        <TouchableOpacity style={styles.changeNumBtn} onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.changeNumBtn} onPress={() => router.back()}>
           <Text style={[styles.changeNumTxt, { color: colors.mutedForeground }]}>Change phone number</Text>
         </TouchableOpacity>
       </View>

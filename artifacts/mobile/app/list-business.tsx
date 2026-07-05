@@ -386,7 +386,7 @@ export default function ListBusinessScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 10, borderBottomColor: colors.border, backgroundColor: colors.background }]}>
-        <TouchableOpacity onPress={goBack} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={goBack} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>
@@ -574,7 +574,7 @@ export default function ListBusinessScreen() {
                             <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, textAlign: "center" }}>
                               We'll notify you when {waitlistCat.emoji} {waitlistCat.name} launches on Mapping With Melanin.
                             </Text>
-                            <TouchableOpacity onPress={() => { setWaitlistCat(null); setWaitlistDone(false); }}>
+                            <TouchableOpacity activeOpacity={0.85} onPress={() => { setWaitlistCat(null); setWaitlistDone(false); }}>
                               <Text style={{ fontSize: 13, color: colors.primary, fontFamily: "Inter_600SemiBold", marginTop: 4 }}>
                                 Pick a different category
                               </Text>
@@ -605,7 +605,7 @@ export default function ListBusinessScreen() {
                               onChangeText={setWaitlistCity}
                               autoCapitalize="words"
                             />
-                            <TouchableOpacity
+                            <TouchableOpacity activeOpacity={0.85}
                               onPress={handleWaitlistSubmit}
                               disabled={waitlistSubmitting || !waitlistEmail.includes("@")}
                               style={{ backgroundColor: colors.primary, borderRadius: 10, paddingVertical: 11, alignItems: "center", opacity: (waitlistSubmitting || !waitlistEmail.includes("@")) ? 0.5 : 1 }}

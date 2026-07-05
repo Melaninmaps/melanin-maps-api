@@ -58,12 +58,12 @@ export default function OnboardingWelcome() {
       />
 
       <View style={[styles.topBar, { paddingTop: topPad + 8 }]}>
-        <TouchableOpacity onPress={skip} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={skip} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
         <View style={styles.dots}>
           {ROUTES.map((_, i) => (
-            <TouchableOpacity key={i} onPress={() => goTo(i)}>
+            <TouchableOpacity activeOpacity={0.85} key={i} onPress={() => goTo(i)}>
               <View style={[styles.dot, { width: i === CURRENT ? 24 : 8, opacity: i === CURRENT ? 1 : 0.4 }]} />
             </TouchableOpacity>
           ))}

@@ -188,7 +188,7 @@ export default function DiscoverScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={["#3A1F0E", "#1C0E06"]}
+        colors={["#CA922B", "#1C0E06"]}
         style={[styles.header, { paddingTop: topPad + 12 }]}
       >
         <View style={styles.headerTop}>
@@ -337,7 +337,7 @@ export default function DiscoverScreen() {
               <Text style={styles.heroTitle}>Map Your Life.{"\n"}Connect Deeper.{"\n"}Live With Purpose.</Text>
               <TouchableOpacity style={styles.heroCta} activeOpacity={0.85} onPress={() => router.push("/(tabs)/map")}>
                 <Text style={styles.heroCtaText}>Explore Near You</Text>
-                <Feather name="arrow-right" size={14} color="#3A1F0E" />
+                <Feather name="arrow-right" size={14} color="#CA922B" />
               </TouchableOpacity>
             </LinearGradient>
           </View>
@@ -616,7 +616,7 @@ export default function DiscoverScreen() {
               <Text style={[styles.noPrefsMatchTitle, { color: colors.foreground }]}>
                 No exact preference matches
               </Text>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 onPress={() => setPrefsBannerDismissed(true)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
@@ -695,7 +695,7 @@ export default function DiscoverScreen() {
                   <Text style={[styles.expansionLabel, { color: "#CA922B" }]}>
                     Other Minority-Owned Businesses
                   </Text>
-                  <TouchableOpacity onPress={() => setMinorityExpanded(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => setMinorityExpanded(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                     <Feather name="x" size={15} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 </View>
@@ -785,7 +785,7 @@ export default function DiscoverScreen() {
               <Text style={styles.sponsoredName} numberOfLines={1}>{biz.name}</Text>
               <Text style={styles.sponsoredCat} numberOfLines={1}>{biz.category} · {biz.city}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.sponsoredClose} onPress={() => setSponsoredDismissed(true)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity activeOpacity={0.85} style={styles.sponsoredClose} onPress={() => setSponsoredDismissed(true)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Feather name="x" size={12} color="rgba(255,255,255,0.7)" />
             </TouchableOpacity>
           </View>

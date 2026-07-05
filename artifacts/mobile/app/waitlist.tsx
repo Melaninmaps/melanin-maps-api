@@ -26,7 +26,7 @@ const SHARE_PLATFORMS = [
   { id: "twitter", label: "X / Twitter", icon: "twitter" as const, color: "#000" },
   { id: "facebook", label: "Facebook", icon: "facebook" as const, color: "#1877F2" },
   { id: "link", label: "Copy Link", icon: "link" as const, color: "#6B7280" },
-  { id: "share", label: "Share", icon: "share-2" as const, color: "#3B1F0E" },
+  { id: "share", label: "Share", icon: "share-2" as const, color: "#CA922B" },
 ];
 
 const BENEFITS = [
@@ -152,7 +152,7 @@ function RecommendModal({
               <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Category</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
                 {BIZ_CATEGORIES.map((c) => (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     key={c}
                     style={[s.chip, { backgroundColor: category === c ? colors.primary : colors.card, borderColor: category === c ? colors.primary : colors.border }]}
                     onPress={() => setCategory(category === c ? "" : c)}
@@ -241,13 +241,13 @@ function RecommendModal({
                 </View>
               </View>
 
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[s.submitBtn, { backgroundColor: colors.primary }]}
                 onPress={() => { reset(); setBizName(""); }}
               >
                 <Text style={s.submitBtnText}>Recommend Another Business</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleClose} style={{ alignItems: "center", paddingVertical: 12 }}>
+              <TouchableOpacity activeOpacity={0.85} onPress={handleClose} style={{ alignItems: "center", paddingVertical: 12 }}>
                 <Text style={[s.doneLink, { color: colors.mutedForeground }]}>Done</Text>
               </TouchableOpacity>
             </View>
@@ -344,7 +344,7 @@ export default function WaitlistScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={styles.back}
           onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}
         >
@@ -631,7 +631,7 @@ export default function WaitlistScreen() {
             {/* Who are we missing? — after signup too */}
             <RecommendBanner colors={colors} onPress={() => setShowRecommend(true)} />
 
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.doneBtn, { backgroundColor: colors.primary }]}
               onPress={() => router.replace("/(tabs)")}
             >
@@ -775,7 +775,7 @@ function InviteFriendModal({
             <>
               <View style={inv.titleRow}>
                 <Text style={[inv.title, { color: colors.foreground }]}>Invite a Friend 🤎</Text>
-                <TouchableOpacity onPress={() => handleClose(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => handleClose(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Feather name="x" size={20} color={colors.mutedForeground} />
                 </TouchableOpacity>
               </View>
@@ -971,7 +971,7 @@ function InviteFriendModal({
               <TouchableOpacity style={[inv.btn, { backgroundColor: colors.secondary, marginTop: 4 }]} onPress={reset} activeOpacity={0.85}>
                 <Text style={[inv.btnText, { color: colors.foreground }]}>{recipientType === "business" ? "Refer Another" : "Invite Another Friend"}</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleClose(true)} style={{ alignItems: "center", paddingVertical: 14 }}>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => handleClose(true)} style={{ alignItems: "center", paddingVertical: 14 }}>
                 <Text style={[inv.doneLink, { color: colors.mutedForeground }]}>Done</Text>
               </TouchableOpacity>
             </View>
@@ -995,10 +995,10 @@ function InviteFriendModal({
                 </Text>
               </View>
 
-              <TouchableOpacity style={[inv.btn, { backgroundColor: colors.primary }]} onPress={reset}>
+              <TouchableOpacity activeOpacity={0.85} style={[inv.btn, { backgroundColor: colors.primary }]} onPress={reset}>
                 <Text style={inv.btnText}>Invite Another Friend</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleClose(true)} style={{ alignItems: "center", paddingVertical: 14 }}>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => handleClose(true)} style={{ alignItems: "center", paddingVertical: 14 }}>
                 <Text style={[inv.doneLink, { color: colors.mutedForeground }]}>Done</Text>
               </TouchableOpacity>
             </View>

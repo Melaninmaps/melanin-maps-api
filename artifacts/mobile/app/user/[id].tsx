@@ -112,7 +112,7 @@ export default function VisitorProfileScreen() {
         id: p.id,
         author: p.authorName ?? "Community Member",
         authorInitials: p.authorInitials ?? "CM",
-        authorColor: p.authorColor ?? "#3B1F0E",
+        authorColor: p.authorColor ?? "#CA922B",
         authorId: p.authorId,
         content: p.content,
         likes: p.upvotes ?? 0,
@@ -256,7 +256,7 @@ export default function VisitorProfileScreen() {
             {/* Profile card */}
             <View style={[s.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {/* Avatar */}
-              <View style={[s.avatar, { backgroundColor: "#3B1F0E" }]}>
+              <View style={[s.avatar, { backgroundColor: "#CA922B" }]}>
                 <Text style={s.avatarInitials}>{initials}</Text>
               </View>
 

@@ -49,7 +49,7 @@ function StarRow({ value, onChange, color }: { value: number; onChange: (v: numb
   return (
     <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <TouchableOpacity key={n} onPress={() => { onChange(n); if (Platform.OS !== "web") Haptics.selectionAsync(); }}>
+        <TouchableOpacity activeOpacity={0.85} key={n} onPress={() => { onChange(n); if (Platform.OS !== "web") Haptics.selectionAsync(); }}>
           <Feather name={n <= value ? "star" : "star"} size={32}
             color={n <= value ? "#F59E0B" : "#D1D5DB"}
             style={{ opacity: n <= value ? 1 : 0.4 }}
@@ -79,7 +79,7 @@ function ChipGroup({ options, value, onChange, multi, color, colors }: {
       {options.map((opt) => {
         const on = selected.includes(opt);
         return (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             key={opt}
             onPress={() => toggle(opt)}
             style={[s.chip, { backgroundColor: on ? color : colors.secondary, borderColor: on ? color : colors.border }]}
@@ -99,7 +99,7 @@ function TriOption({ label, value, current, onChange, color, colors }: {
 }) {
   const on = current === value;
   return (
-    <TouchableOpacity
+    <TouchableOpacity activeOpacity={0.85}
       onPress={() => { onChange(value); if (Platform.OS !== "web") Haptics.selectionAsync(); }}
       style={[s.triOption, { backgroundColor: on ? color + "15" : colors.secondary, borderColor: on ? color : colors.border }]}
     >
@@ -119,7 +119,7 @@ function YesNo({ value, onChange, color, colors }: {
       {[{ label: "Yes", val: true }, { label: "No", val: false }].map(({ label, val }) => {
         const on = value === val;
         return (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             key={label}
             onPress={() => { onChange(val); if (Platform.OS !== "web") Haptics.selectionAsync(); }}
             style={[s.yesno, { backgroundColor: on ? color + "15" : colors.secondary, borderColor: on ? color : colors.border }]}
@@ -227,7 +227,7 @@ export default function BusinessInsightScreen() {
             <Feather name="lock" size={14} color={colors.mutedForeground} />
             <Text style={[s.anonTxt, { color: colors.mutedForeground }]}>100% Anonymous — your identity is never shared</Text>
           </View>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[s.doneBtn, { backgroundColor: colors.primary }]}
             onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}
           >
@@ -242,7 +242,7 @@ export default function BusinessInsightScreen() {
     <View style={[s.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={s.back} onPress={() => step > 0 ? setStep(p => p - 1) : router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
+        <TouchableOpacity activeOpacity={0.85} style={s.back} onPress={() => step > 0 ? setStep(p => p - 1) : router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={s.headerCenter}>
@@ -560,7 +560,7 @@ export default function BusinessInsightScreen() {
       {step > 0 && (
         <View style={[s.footer, { paddingBottom: bottomPad + 16, backgroundColor: colors.background, borderTopColor: colors.border }]}>
           {step < 3 ? (
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[s.nextBtn, { backgroundColor: canProceed() ? colors.primary : colors.muted }]}
               onPress={() => setStep(p => p + 1)}
               disabled={!canProceed()}
@@ -569,7 +569,7 @@ export default function BusinessInsightScreen() {
               <Feather name="arrow-right" size={18} color={canProceed() ? colors.primaryForeground : colors.mutedForeground} />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[s.nextBtn, { backgroundColor: canProceed() ? colors.primary : colors.muted }]}
               onPress={handleSubmit}
               disabled={!canProceed() || submitting}

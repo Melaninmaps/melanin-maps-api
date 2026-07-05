@@ -21,7 +21,7 @@ import { usePoints } from "@/hooks/usePoints";
 const RECENT_ACTIVITY = [
   { id: "a1", icon: "star" as const, color: "#C9922B", text: "Leave a review to earn points", time: "" },
   { id: "a2", icon: "shield" as const, color: "#2D7A4F", text: "Submit a safety report for your neighborhood", time: "" },
-  { id: "a3", icon: "calendar" as const, color: "#3B1F0E", text: "RSVP to an upcoming event", time: "" },
+  { id: "a3", icon: "calendar" as const, color: "#CA922B", text: "RSVP to an upcoming event", time: "" },
   { id: "a4", icon: "message-circle" as const, color: "#7B4F2E", text: "Share something in the community feed", time: "" },
 ];
 
@@ -62,7 +62,7 @@ export default function DashboardScreen() {
           <Text style={[styles.greeting, { color: colors.mutedForeground }]}>Welcome back 👋🏾</Text>
           <Text style={[styles.name, { color: colors.foreground }]}>{firstName}</Text>
         </View>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[styles.notifBtn, { backgroundColor: colors.secondary }]}
           onPress={() => router.push("/notification-center" as any)}
         >
@@ -104,7 +104,7 @@ export default function DashboardScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHead}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Saved Businesses</Text>
-            <TouchableOpacity onPress={() => router.push("/(tabs)")}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => router.push("/(tabs)")}>
               <Text style={[styles.seeAll, { color: colors.primary }]}>See all</Text>
             </TouchableOpacity>
           </View>
@@ -149,7 +149,7 @@ export default function DashboardScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHead}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Upcoming Events</Text>
-            <TouchableOpacity onPress={() => router.push("/(tabs)/events")}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => router.push("/(tabs)/events")}>
               <Text style={[styles.seeAll, { color: colors.primary }]}>See all</Text>
             </TouchableOpacity>
           </View>
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 20, fontFamily: "Inter_700Bold" },
   statLabel: { fontSize: 11, fontFamily: "Inter_500Medium" },
   memberCard: {
-    backgroundColor: "#3B1F0E", borderRadius: 20, padding: 20,
+    backgroundColor: "#CA922B", borderRadius: 20, padding: 20,
     flexDirection: "row", alignItems: "center", gap: 16,
   },
   memberBadge: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: "rgba(255,255,255,0.65)", letterSpacing: 0.8 },

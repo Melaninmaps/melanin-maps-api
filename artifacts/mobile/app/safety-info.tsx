@@ -10,7 +10,7 @@ const PRINCIPLES = [
     icon: "users" as const,
     title: "Community-Powered, Not Algorithm-Driven",
     body: "Every safety score on Mapping with Melanin comes from real people who visited real places. We don't infer safety from crime statistics, census data, or third-party databases — all of which carry systemic bias. Safety here means how it actually felt to be there, as a Black person, in that space.",
-    color: "#3B1F0E",
+    color: "#CA922B",
   },
   {
     icon: "eye-off" as const,
@@ -34,7 +34,7 @@ const PRINCIPLES = [
     icon: "lock" as const,
     title: "No Surveillance, No Profiling",
     body: "We will never use Mapping with Melanin data to profile communities, share location data with emergency services, or allow businesses to identify individual reviewers. Our data is for the community — not about it.",
-    color: "#3B1F0E",
+    color: "#CA922B",
   },
   {
     icon: "bar-chart-2" as const,
@@ -61,7 +61,7 @@ export default function SafetyInfoScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Our Safety Philosophy</Text>

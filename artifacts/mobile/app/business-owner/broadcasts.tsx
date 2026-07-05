@@ -162,7 +162,7 @@ export default function BroadcastsScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/business-owner" as never)}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/business-owner" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Broadcasts</Text>
@@ -172,7 +172,7 @@ export default function BroadcastsScreen() {
       {/* Tab bar */}
       <View style={[styles.tabs, { borderBottomColor: colors.border }]}>
         {(["compose", "history"] as const).map(t => (
-          <TouchableOpacity key={t} style={[styles.tab, tab === t && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]} onPress={() => setTab(t)}>
+          <TouchableOpacity activeOpacity={0.85} key={t} style={[styles.tab, tab === t && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]} onPress={() => setTab(t)}>
             <Text style={[styles.tabTxt, { color: tab === t ? colors.primary : colors.mutedForeground }]}>
               {t === "compose" ? "Compose" : "History"}
             </Text>
@@ -197,7 +197,7 @@ export default function BroadcastsScreen() {
               <Text style={[styles.gateStep, { color: colors.mutedForeground }]}>📋 Submit a verification request to our team</Text>
               <Text style={[styles.gateStep, { color: colors.mutedForeground }]}>⏱ Typical review: 2–5 business days</Text>
             </View>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.gateBtn, { backgroundColor: colors.primary }]}
               onPress={() => router.push("/business-owner/identity" as never)}
             >
@@ -243,7 +243,7 @@ export default function BroadcastsScreen() {
             {/* Type selector */}
             <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Notification Type</Text>
             {BROADCAST_TYPES.map(t => (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 key={t.id}
                 style={[styles.typeRow, { borderColor: selectedType === t.id ? colors.primary : colors.border, backgroundColor: selectedType === t.id ? colors.primary + "12" : colors.card }]}
                 onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setSelectedType(t.id); }}
@@ -289,7 +289,7 @@ export default function BroadcastsScreen() {
               </View>
             )}
 
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.85}
               style={[styles.sendBtn, { backgroundColor: isEmergency ? "#D9534F" : colors.primary, opacity: sending ? 0.6 : 1 }]}
               onPress={handleSend}
               disabled={sending}
@@ -305,7 +305,7 @@ export default function BroadcastsScreen() {
                 <Text style={{ fontSize: 48 }}>📣</Text>
                 <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No broadcasts yet</Text>
                 <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>Send your first broadcast to reach your community.</Text>
-                <TouchableOpacity style={[styles.composeBtn, { backgroundColor: colors.primary }]} onPress={() => setTab("compose")}>
+                <TouchableOpacity activeOpacity={0.85} style={[styles.composeBtn, { backgroundColor: colors.primary }]} onPress={() => setTab("compose")}>
                   <Text style={styles.composeBtnTxt}>Compose a Broadcast</Text>
                 </TouchableOpacity>
               </View>

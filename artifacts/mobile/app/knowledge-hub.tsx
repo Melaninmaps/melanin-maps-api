@@ -107,14 +107,14 @@ export default function KnowledgeHubScreen() {
     return (
       <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 80 }}>
         <View style={[styles.header, { paddingTop: insets.top + 16, borderBottomColor: colors.border }]}>
-          <TouchableOpacity onPress={() => setSelectedChannel(null)} style={styles.backBtn}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => setSelectedChannel(null)} style={styles.backBtn}>
             <Feather name="arrow-left" size={20} color={colors.foreground} />
           </TouchableOpacity>
           <View style={styles.channelHeaderInfo}>
             <Text style={styles.channelHeaderIcon}>{channel.icon}</Text>
             <Text style={[styles.channelHeaderLabel, { color: colors.foreground }]}>{channel.label}</Text>
           </View>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.followBtn, { backgroundColor: following.includes(channel.slug) ? channel.color + "20" : colors.card, borderColor: following.includes(channel.slug) ? channel.color + "60" : colors.border }]}
             onPress={() => void toggleFollow(channel.slug)}
           >
@@ -183,7 +183,7 @@ export default function KnowledgeHubScreen() {
               <Text style={styles.emptyIcon}>{channel.icon}</Text>
               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Coming soon</Text>
               <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>This channel is growing — follow it to be notified when new resources are added.</Text>
-              <TouchableOpacity style={[styles.followBtnLarge, { backgroundColor: channel.color ?? primaryGold }]} onPress={() => void toggleFollow(channel.slug)}>
+              <TouchableOpacity activeOpacity={0.85} style={[styles.followBtnLarge, { backgroundColor: channel.color ?? primaryGold }]} onPress={() => void toggleFollow(channel.slug)}>
                 <Text style={{ color: "#fff", fontWeight: "700" }}>{following.includes(channel.slug) ? "Following" : "Follow Channel"}</Text>
               </TouchableOpacity>
             </View>
@@ -201,7 +201,7 @@ export default function KnowledgeHubScreen() {
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 80 }}>
       <View style={[styles.header, { paddingTop: insets.top + 16, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={styles.backBtn}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Knowledge Hub</Text>
@@ -217,7 +217,7 @@ export default function KnowledgeHubScreen() {
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Your Channels</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }}>
               {channels.filter((c) => following.includes(c.slug)).map((ch) => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   key={ch.slug}
                   style={[styles.followedChip, { backgroundColor: (ch.color ?? primaryGold) + "15", borderColor: (ch.color ?? primaryGold) + "40" }]}
                   onPress={() => void openChannel(ch.slug)}

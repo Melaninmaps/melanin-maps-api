@@ -137,7 +137,7 @@ export default function ProfileSetupScreen() {
               />
             ))}
           </View>
-          <TouchableOpacity onPress={skip} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <TouchableOpacity activeOpacity={0.85} onPress={skip} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Text style={[styles.skipTxt, { color: c.mutedForeground }]}>Skip</Text>
           </TouchableOpacity>
         </View>

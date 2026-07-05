@@ -38,7 +38,7 @@ export default function ResetPasswordScreen() {
   if (!email || !code) {
     return (
       <View style={[styles.root, { backgroundColor: colors.background, paddingTop: topPad + 12 }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.replace("/forgot-password")}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.replace("/forgot-password")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={styles.center}>
@@ -47,7 +47,7 @@ export default function ResetPasswordScreen() {
           <Text style={[styles.sub, { color: colors.mutedForeground }]}>
             This link is missing required information. Please request a new password reset.
           </Text>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             style={[styles.btn, { backgroundColor: colors.primary, marginTop: 24 }]}
             onPress={() => router.replace("/forgot-password")}
           >
@@ -89,7 +89,7 @@ export default function ResetPasswordScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={[styles.inner, { paddingTop: topPad + 12, paddingBottom: bottomPad + 32 }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.replace("/login")}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.replace("/login")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
 
@@ -137,7 +137,7 @@ export default function ResetPasswordScreen() {
                     secureTextEntry={!showPw}
                     autoFocus
                   />
-                  <TouchableOpacity onPress={() => setShowPw((v) => !v)} style={{ padding: 4 }}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => setShowPw((v) => !v)} style={{ padding: 4 }}>
                     <Feather name={showPw ? "eye-off" : "eye"} size={18} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 </View>
@@ -176,7 +176,7 @@ export default function ResetPasswordScreen() {
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.backToLogin} onPress={() => router.replace("/forgot-password")}>
+              <TouchableOpacity activeOpacity={0.85} style={styles.backToLogin} onPress={() => router.replace("/forgot-password")}>
                 <Text style={[styles.backToLoginTxt, { color: colors.mutedForeground }]}>
                   Link expired?{" "}
                   <Text style={{ color: colors.primary }}>Request a new one</Text>

@@ -57,7 +57,7 @@ function formatTimeAgo(iso: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-const COLORS = ["#3B1F0E", "#2D7A4F", "#C9922B", "#7B4F2E", "#1D4ED8", "#7B2D8B"];
+const COLORS = ["#CA922B", "#2D7A4F", "#C9922B", "#7B4F2E", "#1D4ED8", "#7B2D8B"];
 
 function colorForId(id: number): string {
   return COLORS[id % COLORS.length] ?? COLORS[0];
@@ -230,7 +230,7 @@ export default function ChatScreen() {
         <Text style={[{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 15 }]}>
           Conversation not found
         </Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()}>
           <Text style={{ color: colors.primary, fontFamily: "Inter_500Medium" }}>Go back</Text>
         </TouchableOpacity>
       </View>
@@ -244,10 +244,10 @@ export default function ChatScreen() {
         <Text style={[{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 15, textAlign: "center" }]}>
           Couldn't load this conversation.{"\n"}Check your connection and try again.
         </Text>
-        <TouchableOpacity onPress={() => { setLoadError(false); void loadConv(); }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => { setLoadError(false); void loadConv(); }}>
           <Text style={{ color: colors.primary, fontFamily: "Inter_500Medium" }}>Retry</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()}>
           <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13 }}>Go back</Text>
         </TouchableOpacity>
       </View>
@@ -262,7 +262,7 @@ export default function ChatScreen() {
     >
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 10, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={[styles.headerAvatar, { backgroundColor: isFeedback ? "#7B4F2E" : isDM ? "#C9922B" : convColor }]}>
@@ -284,10 +284,10 @@ export default function ChatScreen() {
         </View>
         {!isFeedback && !isPending && (
           <View style={styles.headerActions}>
-            <TouchableOpacity style={[styles.headerBtn, { backgroundColor: colors.secondary }]}>
+            <TouchableOpacity activeOpacity={0.85} style={[styles.headerBtn, { backgroundColor: colors.secondary }]}>
               <Feather name="phone" size={16} color={colors.primary} />
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.headerBtn, { backgroundColor: colors.secondary }]}>
+            <TouchableOpacity activeOpacity={0.85} style={[styles.headerBtn, { backgroundColor: colors.secondary }]}>
               <Feather name="more-vertical" size={16} color={colors.foreground} />
             </TouchableOpacity>
           </View>
@@ -317,7 +317,7 @@ export default function ChatScreen() {
               This person wants to send you a message. Accept to start chatting.
             </Text>
             <View style={styles.requestActions}>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[styles.requestAccept, { backgroundColor: colors.primary }]}
                 onPress={() => { void handleAccept(); }}
                 disabled={requestActing}
@@ -326,7 +326,7 @@ export default function ChatScreen() {
                   ? <ActivityIndicator size="small" color="#FFFFFF" />
                   : <Text style={styles.requestAcceptText}>Accept</Text>}
               </TouchableOpacity>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[styles.requestDecline, { borderColor: colors.border }]}
                 onPress={() => { void handleDecline(); }}
                 disabled={requestActing}
@@ -408,7 +408,7 @@ export default function ChatScreen() {
                       ? { backgroundColor: "#7B4F2E14", borderBottomLeftRadius: 4, borderColor: "#7B4F2E30", borderWidth: 1 }
                       : { backgroundColor: colors.card, borderBottomLeftRadius: 4, borderColor: colors.border, borderWidth: 1 },
                 ]}>
-                  <Text style={[styles.bubbleText, { color: item.fromMe ? "#FFFFFF" : isFeedbackMsg ? "#3B1F0E" : colors.foreground }]}>
+                  <Text style={[styles.bubbleText, { color: item.fromMe ? "#FFFFFF" : isFeedbackMsg ? "#CA922B" : colors.foreground }]}>
                     {item.text}
                   </Text>
                 </View>
@@ -446,7 +446,7 @@ export default function ChatScreen() {
         </View>
       ) : (
         <View style={[styles.inputBar, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: bottomPad + 8 }]}>
-          <TouchableOpacity style={[styles.attachBtn, { backgroundColor: colors.secondary }]}>
+          <TouchableOpacity activeOpacity={0.85} style={[styles.attachBtn, { backgroundColor: colors.secondary }]}>
             <Feather name="paperclip" size={18} color={colors.mutedForeground} />
           </TouchableOpacity>
           <View style={[styles.inputWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -459,7 +459,7 @@ export default function ChatScreen() {
               multiline
               returnKeyType="default"
             />
-            <TouchableOpacity onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}>
               <Feather name="smile" size={18} color={colors.mutedForeground} />
             </TouchableOpacity>
           </View>

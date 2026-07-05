@@ -10,7 +10,7 @@ const STANDARDS = [
     id: "reviews",
     icon: "star" as const,
     title: "Review Standards",
-    color: "#3B1F0E",
+    color: "#CA922B",
     items: [
       { label: "Authenticity", body: "Reviews must reflect genuine firsthand experiences. Third-party accounts, secondhand reports, or hypothetical reviews are not permitted." },
       { label: "Specificity", body: "Effective reviews include specific details: what you ordered, when you visited, what made the experience notable. Vague one-liners help no one." },
@@ -60,7 +60,7 @@ const STANDARDS = [
     id: "data",
     icon: "database" as const,
     title: "Data & Privacy Standards",
-    color: "#3B1F0E",
+    color: "#CA922B",
     items: [
       { label: "Minimal collection", body: "We collect only what's necessary to provide the service: email, profile info, reviews, and survey responses. We don't sell personal data to third parties." },
       { label: "Survey anonymity", body: "All four community surveys are submitted and stored anonymously. Survey responses are aggregated before being displayed — no individual response is ever publicly attributed." },
@@ -80,7 +80,7 @@ export default function CommunityStandardsScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
+        <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Community Standards</Text>

@@ -66,7 +66,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   activism: "#DC2626",
   travel: "#2D7A4F",
   health: "#0891B2",
-  general: "#3B1F0E",
+  general: "#CA922B",
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -103,7 +103,7 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
     id: raw.id as string,
     author: (raw.authorName as string) ?? "Community Member",
     authorInitials: (raw.authorInitials as string) ?? "CM",
-    authorColor: (raw.authorColor as string) ?? "#3B1F0E",
+    authorColor: (raw.authorColor as string) ?? "#CA922B",
     authorId: (raw.authorId as string) ?? undefined,
     content: raw.content as string,
     likes: (raw.upvotes as number) ?? 0,
@@ -134,7 +134,7 @@ function GroupCard({ group, onPress, onJoinLeave }: {
   onJoinLeave: (g: Group) => void;
 }) {
   const colors = useColors();
-  const catColor = CATEGORY_COLORS[group.category] ?? "#3B1F0E";
+  const catColor = CATEGORY_COLORS[group.category] ?? "#CA922B";
   const catIcon = (CATEGORY_ICONS[group.category] ?? "grid") as any;
 
   return (
@@ -471,7 +471,7 @@ export default function CommunityScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.foreground }]}>Community</Text>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.85}
           style={[styles.searchBtn, { backgroundColor: colors.secondary }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -490,7 +490,7 @@ export default function CommunityScreen() {
         accessibilityRole="tablist"
       >
         {TABS.map((tab) => (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.85}
             key={tab}
             onPress={() => setActiveTab(tab)}
             style={[styles.tabBtn, activeTab === tab && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
@@ -590,7 +590,7 @@ export default function CommunityScreen() {
           <View style={[styles.categoryScroll, { borderBottomColor: colors.border }]}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}>
               {["Upcoming", "This Week", "This Month"].map((f) => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   key={f}
                   style={[styles.categoryChip, { backgroundColor: eventsTimeFilter === f ? colors.primary : colors.secondary, borderColor: eventsTimeFilter === f ? colors.primary : colors.border }]}
                   onPress={() => setEventsTimeFilter(f)}
@@ -674,7 +674,7 @@ export default function CommunityScreen() {
             style={[styles.categoryScroll, { borderBottomColor: colors.border }]}
             contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}
             renderItem={({ item }) => (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 style={[
                   styles.categoryChip,
                   {
@@ -823,7 +823,7 @@ export default function CommunityScreen() {
 
           {/* Community Lists card */}
           <TouchableOpacity
-            style={[styles.resSpacesCard, { backgroundColor: "#3B1F0E", borderColor: "#C9922B55" }]}
+            style={[styles.resSpacesCard, { backgroundColor: "#CA922B", borderColor: "#C9922B55" }]}
             onPress={() => router.push("/community-lists" as never)}
             activeOpacity={0.85}
           >
@@ -884,11 +884,11 @@ export default function CommunityScreen() {
             </View>
           </View>
           <View style={styles.resRow}>
-            <TouchableOpacity style={[styles.resCrisisBtn, { backgroundColor: "#DC2626" }]} onPress={() => Linking.openURL("tel:988").catch(() => {})}>
+            <TouchableOpacity activeOpacity={0.85} style={[styles.resCrisisBtn, { backgroundColor: "#DC2626" }]} onPress={() => Linking.openURL("tel:988").catch(() => {})}>
               <Feather name="phone-call" size={16} color="#FFF" />
               <Text style={styles.resCrisisBtnText}>Call / Text 988</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.resCrisisBtn, { backgroundColor: "#B91C1C" }]} onPress={() => Linking.openURL("sms:741741").catch(() => {})}>
+            <TouchableOpacity activeOpacity={0.85} style={[styles.resCrisisBtn, { backgroundColor: "#B91C1C" }]} onPress={() => Linking.openURL("sms:741741").catch(() => {})}>
               <Feather name="message-circle" size={16} color="#FFF" />
               <Text style={styles.resCrisisBtnText}>Text HOME to 741741</Text>
             </TouchableOpacity>
@@ -1022,7 +1022,7 @@ export default function CommunityScreen() {
                 {/* Feed mode toggle */}
                 <View style={{ flexDirection: "row", paddingHorizontal: 16, paddingTop: 10, paddingBottom: 4, gap: 8 }}>
                   {(["everyone", "following"] as const).map((mode) => (
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       key={mode}
                       onPress={() => {
                         setFeedMode(mode);
@@ -1065,7 +1065,7 @@ export default function CommunityScreen() {
                   {loading ? "Loading…" : loadError ? "Couldn't load posts" : "Start the conversation"}
                 </Text>
                 {!loading && loadError && (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     onPress={() => { setLoading(true); void loadPosts(); }}
                     style={[styles.retryBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
                   >
@@ -1133,11 +1133,11 @@ export default function CommunityScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.composeSheet, { backgroundColor: colors.card, paddingBottom: bottomPad + 20 }]}>
             <View style={[styles.composeHeader, { borderBottomColor: colors.border }]}>
-              <TouchableOpacity onPress={() => setShowCreateGroup(false)}>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => setShowCreateGroup(false)}>
                 <Text style={[styles.composeCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
               </TouchableOpacity>
               <Text style={[styles.composeTitle, { color: colors.foreground }]}>Start a Group</Text>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.85}
                 onPress={() => void handleCreateGroup()}
                 disabled={!groupCreateName.trim() || groupCreateSubmitting}
               >
@@ -1180,7 +1180,7 @@ export default function CommunityScreen() {
 
               <View style={styles.categoryRow}>
                 {GROUP_CATEGORIES.filter((c) => c.value !== "all").map((opt) => (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     key={opt.value}
                     style={[
                       styles.filterChip,
@@ -1226,7 +1226,7 @@ export default function CommunityScreen() {
                   ].map((ci) => {
                     const isSelected = groupCreateAudience.includes(ci.key);
                     return (
-                      <TouchableOpacity
+                      <TouchableOpacity activeOpacity={0.85}
                         key={ci.key}
                         style={{
                           flexDirection: "row", alignItems: "center", gap: 5,
@@ -1257,11 +1257,11 @@ export default function CommunityScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.composeSheet, { backgroundColor: colors.card, paddingBottom: bottomPad + 20 }]}>
             <View style={[styles.composeHeader, { borderBottomColor: colors.border }]}>
-              <TouchableOpacity onPress={() => setShowCompose(false)}>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => setShowCompose(false)}>
                 <Text style={[styles.composeCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
               </TouchableOpacity>
               <Text style={[styles.composeTitle, { color: colors.foreground }]}>New Post</Text>
-              <TouchableOpacity onPress={() => void submitPost()} disabled={!newPostText.trim() || submittingPost}>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => void submitPost()} disabled={!newPostText.trim() || submittingPost}>
                 <Text style={[styles.composePostText, { color: newPostText.trim() ? colors.primary : colors.muted }]}>
                   {submittingPost ? "Posting…" : "Post"}
                 </Text>
@@ -1277,7 +1277,7 @@ export default function CommunityScreen() {
                 { value: "safety", label: "🚨 Safety", color: "#DC2626" },
                 { value: "travel", label: "✈️ Travel", color: "#0369A1" },
               ] as const).map((opt) => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   key={opt.value}
                   style={[
                     styles.filterChip,
@@ -1301,7 +1301,7 @@ export default function CommunityScreen() {
             {/* Category chips */}
             <View style={styles.categoryRow}>
               {CATEGORY_OPTIONS.map((opt) => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   key={opt.value}
                   style={[
                     styles.filterChip,
@@ -1321,7 +1321,7 @@ export default function CommunityScreen() {
             <View style={{ flexDirection: "row", paddingHorizontal: 16, paddingBottom: 10, gap: 8, alignItems: "center" }}>
               <Feather name={newPostVisibility === "public" ? "globe" : "lock"} size={13} color={colors.mutedForeground} />
               {(["public", "followers_only"] as const).map((v) => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   key={v}
                   onPress={() => { setNewPostVisibility(v); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
                   style={{
@@ -1346,12 +1346,12 @@ export default function CommunityScreen() {
                   <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14, backgroundColor: "#0369A115", borderWidth: 1, borderColor: "#0369A130" }}>
                     <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#0369A1" }}>📍 {newPostLocationTag}</Text>
                   </View>
-                  <TouchableOpacity onPress={() => setNewPostLocationTag("")}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => setNewPostLocationTag("")}>
                     <Feather name="x" size={16} color="#9CA3AF" />
                   </TouchableOpacity>
                 </View>
               ) : (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={{ flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: colors.border }}
                   onPress={() => setShowLocationPicker(true)}
                 >
@@ -1367,7 +1367,7 @@ export default function CommunityScreen() {
                 <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Choose a location:</Text>
                 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
                   {["Atlanta", "Houston", "Chicago", "Washington DC", "New York", "New Orleans", "Los Angeles", "Miami", "Dallas", "Philadelphia", "Charlotte", "Baltimore", "Detroit", "Memphis", "Jamaica", "Ghana", "Nigeria", "London", "Toronto", "Fulton County", "Bronx", "Brooklyn"].map((loc) => (
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       key={loc}
                       style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: colors.primary + "50", backgroundColor: colors.primary + "10" }}
                       onPress={() => { setNewPostLocationTag(loc); setShowLocationPicker(false); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
@@ -1388,7 +1388,7 @@ export default function CommunityScreen() {
                     <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14, backgroundColor: "#7B2D8B15", borderWidth: 1, borderColor: "#7B2D8B30" }}>
                       <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#7B2D8B" }}>🏷️ {newPostTopicTag}</Text>
                     </View>
-                    <TouchableOpacity onPress={() => { setNewPostTopicTag(""); setNewPostIsPrivateTopic(false); }}>
+                    <TouchableOpacity activeOpacity={0.85} onPress={() => { setNewPostTopicTag(""); setNewPostIsPrivateTopic(false); }}>
                       <Feather name="x" size={16} color="#9CA3AF" />
                     </TouchableOpacity>
                   </View>
@@ -1407,7 +1407,7 @@ export default function CommunityScreen() {
                   </TouchableOpacity>
                 </View>
               ) : (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={{ flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: colors.border }}
                   onPress={() => setShowTopicPicker(true)}
                 >
@@ -1429,7 +1429,7 @@ export default function CommunityScreen() {
                     "Parenting & Family", "Spirituality", "Career & Business",
                     "Community Justice", "Entertainment",
                   ].map((t) => (
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       key={t}
                       style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: "#7B2D8B50", backgroundColor: "#7B2D8B10" }}
                       onPress={() => { setNewPostTopicTag(t); setShowTopicPicker(false); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
@@ -1460,13 +1460,13 @@ export default function CommunityScreen() {
             {mentionQuery !== null && (
               <View>
                 <View style={{ flexDirection: "row", paddingHorizontal: 4, marginBottom: 4, gap: 6 }}>
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     onPress={() => setMentionMode("users")}
                     style={[{ borderRadius: 8, paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1 }, mentionMode === "users" ? { backgroundColor: colors.primary, borderColor: colors.primary } : { backgroundColor: colors.secondary, borderColor: colors.border }]}
                   >
                     <Text style={[{ fontFamily: "Inter_600SemiBold", fontSize: 12 }, mentionMode === "users" ? { color: "#fff" } : { color: colors.mutedForeground }]}>People</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.85}
                     onPress={() => setMentionMode("businesses")}
                     style={[{ borderRadius: 8, paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1 }, mentionMode === "businesses" ? { backgroundColor: colors.primary, borderColor: colors.primary } : { backgroundColor: colors.secondary, borderColor: colors.border }]}
                   >
@@ -1512,7 +1512,7 @@ export default function CommunityScreen() {
                         <ActivityIndicator size="small" color="#fff" />
                       </View>
                     )}
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       onPress={() => setMediaAttachments((prev) => prev.filter((_, j) => j !== i))}
                       style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: 10, backgroundColor: "#DC2626", justifyContent: "center", alignItems: "center" }}
                     >
@@ -1782,7 +1782,7 @@ const styles = StyleSheet.create({
     borderRadius: 27,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#3B1F0E",
+    shadowColor: "#CA922B",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -2061,7 +2061,7 @@ function RequestsTab({ colors, router: _router, isAuthenticated, bottomPad }: {
                 Be the first to ask for something your community needs. Your voice could shape what opens next.
               </Text>
               {isAuthenticated && (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={{ backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14 }}
                   onPress={() => setShowPost(true)}
                 >
@@ -2166,7 +2166,7 @@ function RequestsTab({ colors, router: _router, isAuthenticated, bottomPad }: {
                 <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: colors.mutedForeground }}>Category</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                   {REQUEST_CATEGORIES.map(c => (
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       key={c}
                       style={{ paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, borderWidth: 1, backgroundColor: postCategory === c ? colors.primary : colors.card, borderColor: postCategory === c ? colors.primary : colors.border }}
                       onPress={() => setPostCategory(c === postCategory ? "" : c)}
@@ -2205,7 +2205,7 @@ function RequestsTab({ colors, router: _router, isAuthenticated, bottomPad }: {
                     <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF" }}>Post Request →</Text>
                   )}
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setShowPost(false)} style={{ alignItems: "center", paddingVertical: 12 }}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => setShowPost(false)} style={{ alignItems: "center", paddingVertical: 12 }}>
                   <Text style={{ fontFamily: "Inter_500Medium", fontSize: 14, color: colors.mutedForeground }}>Cancel</Text>
                 </TouchableOpacity>
               </View>
@@ -2232,7 +2232,7 @@ function RequestsTab({ colors, router: _router, isAuthenticated, bottomPad }: {
                   {HELP_OFFER_TYPES.map(t => {
                     const selected = selectedOffers.includes(t.id);
                     return (
-                      <TouchableOpacity
+                      <TouchableOpacity activeOpacity={0.85}
                         key={t.id}
                         style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderWidth: 1.5, backgroundColor: selected ? colors.primary : colors.card, borderColor: selected ? colors.primary : colors.border }}
                         onPress={() => {
@@ -2267,7 +2267,7 @@ function RequestsTab({ colors, router: _router, isAuthenticated, bottomPad }: {
                     <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF" }}>Offer Help →</Text>
                   )}
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setShowHelp(null)} style={{ alignItems: "center", paddingVertical: 10 }}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => setShowHelp(null)} style={{ alignItems: "center", paddingVertical: 10 }}>
                   <Text style={{ fontFamily: "Inter_500Medium", fontSize: 14, color: colors.mutedForeground }}>Cancel</Text>
                 </TouchableOpacity>
               </View>
@@ -2399,7 +2399,7 @@ function CollectionsTab({ colors, isAuthenticated, bottomPad }: {
                 Build the first collection — "Hidden Gems," "Best Date Night," or whatever your community needs to know.
               </Text>
               {isAuthenticated && (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.85}
                   style={{ backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14 }}
                   onPress={() => setShowCreate(true)}
                 >
@@ -2433,7 +2433,7 @@ function CollectionsTab({ colors, isAuthenticated, bottomPad }: {
                 <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: colors.mutedForeground }}>Pick an emoji</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
                   {["📍","💕","✊🏾","👨‍👩‍👧","🌙","💎","☔","💇🏾‍♀️","☕","🎨","🏛️","🌍","🎉","🍽️","🛍️"].map(e => (
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.85}
                       key={e}
                       style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: newEmoji === e ? colors.primary + "20" : colors.card, borderWidth: newEmoji === e ? 2 : 1, borderColor: newEmoji === e ? colors.primary : colors.border }}
                       onPress={() => setNewEmoji(e)}
@@ -2464,7 +2464,7 @@ function CollectionsTab({ colors, isAuthenticated, bottomPad }: {
                     <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF" }}>Create Collection →</Text>
                   )}
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setShowCreate(false)} style={{ alignItems: "center", paddingVertical: 10 }}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => setShowCreate(false)} style={{ alignItems: "center", paddingVertical: 10 }}>
                   <Text style={{ fontFamily: "Inter_500Medium", fontSize: 14, color: colors.mutedForeground }}>Cancel</Text>
                 </TouchableOpacity>
               </View>

@@ -24,7 +24,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   activism: "#DC2626",
   travel: "#2D7A4F",
   health: "#0891B2",
-  general: "#3B1F0E",
+  general: "#CA922B",
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -120,7 +120,7 @@ export default function MyInvitesScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Group Invitations</Text>
@@ -148,7 +148,7 @@ export default function MyInvitesScreen() {
           </View>
         ) : (
           invites.map((invite) => {
-            const catColor = CATEGORY_COLORS[invite.groupCategory] ?? "#3B1F0E";
+            const catColor = CATEGORY_COLORS[invite.groupCategory] ?? "#CA922B";
             const catIcon = (CATEGORY_ICONS[invite.groupCategory] ?? "grid") as any;
             const isResponding = responding === invite.id;
             return (
