@@ -65,7 +65,7 @@ const BADGE_CONFIG: Record<OwnershipType, BadgeConfig> = {
     accent: "#D47A30",
   },
   "immigrant-owned": {
-    label: "Immigrant Owned",
+    label: "Melanated Diaspora Owned",
     emoji: "🌍",
     bg: "#0A1A40",
     accent: "#C9A050",

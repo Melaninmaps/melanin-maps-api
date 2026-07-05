@@ -40,7 +40,7 @@ const DESIGNATIONS = [
   { id: "lgbtq-owned", emoji: "🏳️‍🌈", label: "LGBTQ+-Owned", sub: "LGBTQ+ led businesses" },
   { id: "hispanic-owned", emoji: "👩🏻‍💼", label: "Hispanic-Owned", sub: "Latinx & Hispanic founders" },
   { id: "indigenous-owned", emoji: "🪶", label: "Indigenous-Owned", sub: "Native-led businesses" },
-  { id: "immigrant-owned", emoji: "🌍", label: "Immigrant-Owned", sub: "Immigrant entrepreneurs" },
+  { id: "immigrant-owned", emoji: "🌍", label: "Melanated Diaspora-Owned", sub: "Melanated Diaspora entrepreneurs" },
   { id: "d9-affiliated", emoji: "🐾", label: "D9 Affiliated", sub: "Divine Nine affiliated" },
   { id: "disability-owned", emoji: "♿", label: "Disability-Owned", sub: "Disability community led" },
 ];

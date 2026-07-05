@@ -94,7 +94,7 @@ const OWNERSHIP_OPTIONS = [
   { id: "women-owned", emoji: "♀️", label: "Women-owned businesses" },
   { id: "veteran-owned", emoji: "🎖️", label: "Veteran-owned businesses" },
   { id: "lgbtq-owned", emoji: "🌈", label: "LGBTQ+-owned businesses" },
-  { id: "immigrant-owned", emoji: "🌍", label: "Immigrant-owned businesses" },
+  { id: "immigrant-owned", emoji: "🌍", label: "Melanated Diaspora-owned businesses" },
   { id: "disability-owned", emoji: "♿", label: "Disability-owned businesses" },
   { id: "local-only", emoji: "📍", label: "Local businesses only" },
 ];
