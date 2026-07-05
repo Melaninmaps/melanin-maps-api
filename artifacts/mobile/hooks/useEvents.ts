@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 import type { Event } from "@/constants/types";
 import { EVENTS } from "@/constants/data";
 
@@ -26,7 +28,18 @@ function mapApiEvent(e: Record<string, unknown>): Event {
     latitude: e.latitude != null ? parseFloat(e.latitude as string) : 0,
     longitude: e.longitude != null ? parseFloat(e.longitude as string) : 0,
     featured: Boolean(e.featured),
+    relevanceScore: typeof e.relevanceScore === "number" ? e.relevanceScore : 0,
   };
+}
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  try {
+    if (Platform.OS === "web") return {};
+    const token = await SecureStore.getItemAsync("auth_session_token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
 }
 
 interface UseEventsOptions {
@@ -56,10 +69,12 @@ export function useEvents(options: UseEventsOptions = {}) {
       if (search) params.set("search", search);
       const qs = params.toString();
 
+      const authHeaders = await getAuthHeaders();
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
       const res = await fetch(`${apiBase}/api/events${qs ? `?${qs}` : ""}`, {
         signal: controller.signal,
+        headers: authHeaders,
       });
       clearTimeout(timeout);
 

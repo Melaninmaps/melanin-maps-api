@@ -72,6 +72,7 @@ export interface Event {
   latitude: number;
   longitude: number;
   featured?: boolean;
+  relevanceScore?: number;
 }
 
 export type PostCategory = "discussion" | "recommendation" | "alert" | "question";

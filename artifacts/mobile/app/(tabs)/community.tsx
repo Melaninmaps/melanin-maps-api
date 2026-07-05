@@ -604,18 +604,59 @@ export default function CommunityScreen() {
             keyExtractor={(e) => e.id}
             contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100 }]}
             refreshControl={<RefreshControl refreshing={eventsLoading} onRefresh={refetchEvents} tintColor={colors.primary} />}
+            ListHeaderComponent={
+              <>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={[styles.composeBar, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 4, marginBottom: 8 }]}
+                  onPress={() => {
+                    if (!isAuthenticated) {
+                      setUpgradeFeature("Community Events");
+                      setShowUpgrade(true);
+                      return;
+                    }
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push("/submit-event");
+                  }}
+                >
+                  <View style={[styles.composeBarAvatar, { backgroundColor: colors.primary + "18" }]}>
+                    <Text style={{ fontSize: 16 }}>📅</Text>
+                  </View>
+                  <Text style={[styles.composeBarPlaceholder, { color: colors.mutedForeground }]}>
+                    Host an event in your community
+                  </Text>
+                  <View style={[styles.composeBarAtBadge, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "25" }]}>
+                    <Feather name="plus" size={13} color={colors.primary} />
+                  </View>
+                </TouchableOpacity>
+                {isAuthenticated && events.some(e => (e.relevanceScore ?? 0) > 0) && (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10, paddingHorizontal: 2 }}>
+                    <Text style={{ fontSize: 13 }}>✨</Text>
+                    <Text style={[{ fontFamily: "Inter_500Medium", fontSize: 12, color: colors.mutedForeground }]}>Sorted by what KinfolkAI knows you love</Text>
+                  </View>
+                )}
+              </>
+            }
             ListEmptyComponent={
               <View style={styles.empty}>
                 <Feather name="calendar" size={40} color={colors.muted} />
                 <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No events yet</Text>
-                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Because the best journeys are shared — check back soon for events near you.</Text>
+                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Because the best journeys are shared — be the first to host one!</Text>
               </View>
             }
             renderItem={({ item }) => (
-              <EventCard
-                event={item}
-                onPress={() => router.push({ pathname: "/event/[id]", params: { id: item.id } })}
-              />
+              <View>
+                {(item.relevanceScore ?? 0) > 0 && (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 4, paddingHorizontal: 4 }}>
+                    <Text style={{ fontSize: 11 }}>✨</Text>
+                    <Text style={[{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.primary }]}>Matched your interests</Text>
+                  </View>
+                )}
+                <EventCard
+                  event={item}
+                  onPress={() => router.push({ pathname: "/event/[id]", params: { id: item.id } })}
+                />
+              </View>
             )}
           />
         </View>

@@ -1,7 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, eventsTable, savedCommunityLocationsTable, notificationsTable } from "@workspace/db";
-import { eq, desc, and, ilike, or, gte, sql } from "drizzle-orm";
-import { getUserTier } from "../middleware/requireMembership";
+import { db, eventsTable, savedCommunityLocationsTable, notificationsTable, userPreferencesTable } from "@workspace/db";
+import { eq, desc, and, ilike, or } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -32,12 +31,52 @@ router.get("/events", async (req: Request, res: Response) => {
 
     conditions.push(eq(eventsTable.status, "active"));
 
-    const events = await db
+    const rawEvents = await db
       .select()
       .from(eventsTable)
       .where(and(...conditions))
       .orderBy(desc(eventsTable.createdAt))
       .limit(100);
+
+    // Personalize: score by user preferences if authenticated
+    let events: Array<typeof rawEvents[0] & { relevanceScore: number }> =
+      rawEvents.map(e => ({ ...e, relevanceScore: 0 }));
+
+    if (req.user?.id) {
+      try {
+        const [prefs] = await db
+          .select()
+          .from(userPreferencesTable)
+          .where(eq(userPreferencesTable.userId, req.user.id));
+
+        if (prefs) {
+          const favCats = [
+            ...(prefs.favoriteCategories ?? []),
+            ...(prefs.culturalInterests ?? []),
+          ].map(s => s.toLowerCase());
+          const favCities = (prefs.favoriteCities ?? []).map(s => s.toLowerCase());
+          const wantsFree = prefs.budgetRange === "budget" || prefs.budgetRange === "free";
+
+          events = events.map(e => {
+            let score = 0;
+            const eCat = e.category.toLowerCase();
+            if (favCats.some(c => eCat.includes(c) || c.includes(eCat))) score += 3;
+            const eCity = e.city.toLowerCase();
+            if (favCities.some(c => eCity.includes(c) || c.includes(eCity))) score += 2;
+            if (wantsFree && e.isFree) score += 1;
+            return { ...e, relevanceScore: score };
+          });
+
+          // Most relevant first, then newest
+          events.sort((a, b) =>
+            b.relevanceScore - a.relevanceScore ||
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          );
+        }
+      } catch (prefErr) {
+        req.log.error({ err: prefErr }, "Failed to fetch user preferences for event ranking");
+      }
+    }
 
     res.json({ events });
   } catch (err) {
@@ -71,34 +110,6 @@ router.post("/events", async (req: Request, res: Response) => {
     if (!req.user?.id) {
       res.status(401).json({ error: "Authentication required" });
       return;
-    }
-
-    // Tier gate: free users cannot create public events; explorer+ limited to 2/month
-    const tier = await getUserTier(req.user.id);
-    if (tier === "free") {
-      res.status(403).json({
-        error: "Creating public events requires an Explorer+ or higher membership.",
-        code: "TIER_LIMIT_REACHED",
-        upgradeUrl: "/membership",
-      });
-      return;
-    }
-    if (tier === "navigator") {
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-      const [{ count }] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(eventsTable)
-        .where(and(eq(eventsTable.createdById, req.user.id), gte(eventsTable.createdAt, startOfMonth)));
-      if (count >= 2) {
-        res.status(403).json({
-          error: "Explorer+ members can create up to 2 events per month. Upgrade to Navigator for unlimited events.",
-          code: "TIER_LIMIT_REACHED",
-          upgradeUrl: "/membership",
-        });
-        return;
-      }
     }
 
     const {
