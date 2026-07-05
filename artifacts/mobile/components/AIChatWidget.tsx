@@ -8,6 +8,7 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Modal,
+  PanResponder,
   Platform,
   StyleSheet,
   Text,
@@ -117,6 +118,7 @@ export function AIChatWidget() {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { id: "0", text: GREETING, fromUser: false, ts: Date.now() },
   ]);
@@ -124,6 +126,8 @@ export function AIChatWidget() {
   const [typing, setTyping] = useState(false);
   const listRef = useRef<FlatList>(null);
   const pulse = useRef(new Animated.Value(1)).current;
+  const fabTranslateY = useRef(new Animated.Value(0)).current;
+  const fabOpacity = useRef(new Animated.Value(1)).current;
 
   const suppressed = ["/onboarding", "/login", "/signup"].some((r) => pathname.startsWith(r));
 
@@ -138,7 +142,64 @@ export function AIChatWidget() {
     ).start();
   };
 
-  React.useEffect(() => { if (!suppressed) startPulse(); }, [suppressed]);
+  React.useEffect(() => { if (!suppressed && !dismissed) startPulse(); }, [suppressed, dismissed]);
+
+  const dismissPill = () => {
+    pulse.stopAnimation();
+    Animated.parallel([
+      Animated.timing(fabTranslateY, { toValue: 120, duration: 280, useNativeDriver: true }),
+      Animated.timing(fabOpacity, { toValue: 0, duration: 220, useNativeDriver: true }),
+    ]).start(() => {
+      setDismissed(true);
+      fabTranslateY.setValue(0);
+      fabOpacity.setValue(1);
+    });
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const restorePill = () => {
+    setDismissed(false);
+    fabTranslateY.setValue(80);
+    fabOpacity.setValue(0);
+    Animated.parallel([
+      Animated.spring(fabTranslateY, { toValue: 0, useNativeDriver: true, tension: 80, friction: 9 }),
+      Animated.timing(fabOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+    ]).start(() => startPulse());
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const fabPanResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) =>
+        g.dy > 6 && Math.abs(g.dy) > Math.abs(g.dx),
+      onPanResponderMove: (_, g) => {
+        if (g.dy > 0) {
+          fabTranslateY.setValue(g.dy);
+          fabOpacity.setValue(Math.max(0, 1 - g.dy / 80));
+        }
+      },
+      onPanResponderRelease: (_, g) => {
+        if (g.dy > 40) {
+          dismissPill();
+        } else {
+          Animated.parallel([
+            Animated.spring(fabTranslateY, { toValue: 0, useNativeDriver: true }),
+            Animated.timing(fabOpacity, { toValue: 1, duration: 150, useNativeDriver: true }),
+          ]).start(() => startPulse());
+        }
+      },
+    })
+  ).current;
+
+  const restorePanResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) =>
+        g.dy > 6 && Math.abs(g.dy) > Math.abs(g.dx),
+      onPanResponderRelease: (_, g) => {
+        if (g.dy > 20) restorePill();
+      },
+    })
+  ).current;
 
   if (suppressed) return null;
 
@@ -190,21 +251,47 @@ export function AIChatWidget() {
 
   return (
     <>
-      <Animated.View style={[styles.fab, { bottom: bottomPad + 96, transform: [{ scale: pulse }] }]}>
-        <TouchableOpacity
-          style={styles.fabPill}
-          onPress={() => { setOpen(true); pulse.stopAnimation(); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }}
-          activeOpacity={0.88}
+      {dismissed ? (
+        <View
+          style={[styles.restoreTab, { bottom: bottomPad + 90, backgroundColor: colors.primary }]}
+          {...restorePanResponder.panHandlers}
         >
-          <View style={[styles.fabIconWrap, { backgroundColor: colors.primary }]}>
-            <Text style={styles.fabIconTxt}>✦</Text>
-          </View>
-          <View style={styles.fabTextWrap}>
-            <Text style={styles.fabTitle}>KinfolkAI™</Text>
-            <Text style={styles.fabSub}>Ask me anything ✨</Text>
-          </View>
-        </TouchableOpacity>
-      </Animated.View>
+          <TouchableOpacity onPress={restorePill} style={styles.restoreTabInner} activeOpacity={0.85}>
+            <Text style={styles.restoreTabIcon}>✦</Text>
+            <Text style={styles.restoreTabTxt}>KA</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <Animated.View
+          style={[
+            styles.fab,
+            {
+              bottom: bottomPad + 96,
+              transform: [{ scale: pulse }, { translateY: fabTranslateY }],
+              opacity: fabOpacity,
+            },
+          ]}
+          {...fabPanResponder.panHandlers}
+        >
+          <TouchableOpacity
+            style={styles.fabPill}
+            onPress={() => {
+              setOpen(true);
+              pulse.stopAnimation();
+              if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            }}
+            activeOpacity={0.88}
+          >
+            <View style={[styles.fabIconWrap, { backgroundColor: colors.primary }]}>
+              <Text style={styles.fabIconTxt}>✦</Text>
+            </View>
+            <View style={styles.fabTextWrap}>
+              <Text style={styles.fabTitle}>KinfolkAI™</Text>
+              <Text style={styles.fabSub}>Ask me anything ✨</Text>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
 
       <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
         <KeyboardAvoidingView
@@ -333,6 +420,18 @@ const styles = StyleSheet.create({
   fabTextWrap: { gap: 1 },
   fabTitle: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#3B1F0E" },
   fabSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#8B6F4E" },
+  restoreTab: {
+    position: "absolute", right: 0, zIndex: 999,
+    borderTopLeftRadius: 12, borderBottomLeftRadius: 12,
+    shadowColor: "#000", shadowOffset: { width: -2, height: 2 },
+    shadowOpacity: 0.2, shadowRadius: 6, elevation: 8,
+  },
+  restoreTabInner: {
+    paddingVertical: 12, paddingHorizontal: 10,
+    alignItems: "center", justifyContent: "center", gap: 2,
+  },
+  restoreTabIcon: { fontSize: 14, color: "#FAF1E4" },
+  restoreTabTxt: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#FAF1E4", letterSpacing: 0.5 },
   modal: { flex: 1 },
   modalHeader: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
