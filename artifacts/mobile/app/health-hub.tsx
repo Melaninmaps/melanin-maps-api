@@ -524,6 +524,7 @@ export default function HealthHubScreen() {
 
       {/* ─── INSIGHTS TAB ──────────────────────────────────────────────────── */}
       {hubTab === "insights" && (
+        <>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 40 }}>
           {/* Designation filter */}
           <View style={styles.insightFilterSection}>
@@ -692,6 +693,50 @@ export default function HealthHubScreen() {
             </View>
           )}
         </ScrollView>
+
+        {/* ─── Wellness & Crisis Resources footer (both tabs) ──────────────── */}
+        <View style={{ paddingHorizontal: 16, paddingBottom: bottomPad + 16, paddingTop: 12, gap: 10, borderTopWidth: 1, borderTopColor: colors.border }}>
+          <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: colors.mutedForeground, marginBottom: 2 }}>
+            Mental Health & Recovery Resources
+          </Text>
+          <TouchableOpacity
+            style={[styles.wellnessLink, { backgroundColor: colors.card, borderColor: "#DC262630" }]}
+            onPress={() => router.push("/mental-health" as Parameters<typeof router.push>[0])}
+            activeOpacity={0.85}
+          >
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: "#DC262618", alignItems: "center", justifyContent: "center" }}>
+              <Feather name="heart" size={18} color="#DC2626" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: colors.foreground }}>
+                Mental Health Crisis Resources
+              </Text>
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 1 }}>
+                988 Lifeline · NAMI · Trevor Project · Black therapist referrals
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.wellnessLink, { backgroundColor: colors.card, borderColor: "#05996030" }]}
+            onPress={() => router.push("/na-aa-meetings" as Parameters<typeof router.push>[0])}
+            activeOpacity={0.85}
+          >
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: "#05996018", alignItems: "center", justifyContent: "center" }}>
+              <Feather name="map-pin" size={18} color="#059960" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: colors.foreground }}>
+                NA / AA Meetings Near You
+              </Text>
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 1 }}>
+                Narcotics Anonymous · Alcoholics Anonymous · Al-Anon · SMART Recovery
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        </View>
+        </>
       )}
 
       {/* ─── Topic Picker Modal ─── */}
@@ -917,4 +962,5 @@ const styles = StyleSheet.create({
 
   applyNote: { fontSize: 13, lineHeight: 19, padding: 12, borderRadius: 10, borderWidth: 1, marginBottom: 6 },
   credChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
+  wellnessLink: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 12, borderWidth: 1, padding: 12 },
 });
