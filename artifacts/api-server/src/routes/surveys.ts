@@ -4,6 +4,7 @@ import { eq, desc } from "drizzle-orm";
 import { surveyLimiter } from "../middleware/rateLimiter";
 import { requireTrust } from "../middleware/requireTrust";
 import { sendNominationAlert } from "../lib/email.js";
+import { sendSafetyReportPushForCity } from "../lib/pushNotifications";
 
 const router: IRouter = Router();
 
@@ -99,6 +100,9 @@ router.post("/surveys", surveyLimiter, requireTrust, async (req: Request, res: R
         neighborhood: neighborhood as string | undefined,
       }).catch(() => {});
     }
+
+    // Push alert to community members in this city about the new safety report
+    void sendSafetyReportPushForCity(city as string);
 
     res.status(201).json({ survey, scores });
   } catch (err) {

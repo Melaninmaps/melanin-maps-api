@@ -30,6 +30,7 @@ import {
   type WeeklyBusinessReportData,
 } from "../lib/email";
 import { logger } from "../lib/logger";
+import { sendPushToUser } from "../lib/pushNotifications";
 
 const router: IRouter = Router();
 
@@ -144,6 +145,14 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
           .set({ status: "overdue", notifiedAt: now })
           .where(eq(safetyCheckinsTable.id, row.id));
         notified++;
+        // Also push in-app alert to the user who set up the check-in
+        if (row.userId) {
+          void sendPushToUser(row.userId, {
+            title: "⚠️ Safety Check-In Overdue",
+            body: `Your scheduled check-in${row.location ? ` at ${row.location}` : ""} is overdue. Your trusted contact has been notified.`,
+            data: { screen: "safety-hub" },
+          });
+        }
       } catch (err) {
         logger.error({ err, id: row.id }, "Failed to send overdue checkin email");
       }

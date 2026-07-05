@@ -498,3 +498,43 @@ export async function sendPushToUsersInArea(
     return 0;
   }
 }
+
+// ─── Safety report submitted: push to app users who list that city as home ────
+export async function sendSafetyReportPushForCity(city: string): Promise<void> {
+  try {
+    const matched = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(ilike(usersTable.homeCity, `%${city}%`));
+
+    const userIds = matched.map((u) => u.id);
+    if (userIds.length === 0) return;
+
+    const tokens = await db
+      .select({ token: pushTokensTable.token, userId: pushTokensTable.userId })
+      .from(pushTokensTable)
+      .where(and(inArray(pushTokensTable.userId, userIds), isNotNull(pushTokensTable.token)));
+
+    const title = "🛡️ New Safety Report";
+    const body = `A community member submitted a new safety report for ${city}.`;
+
+    for (const row of tokens) {
+      if (row.token) await sendToToken(row.token, { title, body, data: { screen: "safety-hub", city } });
+    }
+
+    if (userIds.length > 0) {
+      await db.insert(notificationsTable).values(
+        userIds.map((userId) => ({
+          userId,
+          type: "safety" as const,
+          title,
+          body,
+        })),
+      );
+    }
+
+    logger.info({ city, notified: tokens.length }, "[push] Safety report push sent for city");
+  } catch (err) {
+    logger.warn({ err }, "[push] Failed to send safety report push for city");
+  }
+}
