@@ -791,7 +791,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-4">
             {[
-              { label: "Our Story & Mission", href: "/about", icon: BookOpen },
+              { label: "Our Story & Mission", href: "/about#mission", icon: BookOpen },
               { label: "All Platform Features", href: "/features", icon: Globe },
               { label: "For Business Owners", href: "/for-business-owners", icon: Building2 },
             ].map(({ label, href, icon: Icon }) => (

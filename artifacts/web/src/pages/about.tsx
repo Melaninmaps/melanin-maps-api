@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Check, ArrowRight } from "lucide-react";
 import { RotatingQuoteBanner } from "@/components/RotatingQuoteBanner";
+import { useEffect } from "react";
 
 function WaveDivider({ fromBg, toBg, flip = false }: { fromBg: string; toBg: string; flip?: boolean }) {
   const d = flip
@@ -34,6 +35,13 @@ function OrnamentDivider({ bg, light = false }: { bg: string; light?: boolean })
 }
 
 export default function About() {
+  useEffect(() => {
+    if (window.location.hash === "#mission") {
+      const el = document.getElementById("mission");
+      if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+    }
+  }, []);
+
   return (
     <div className="flex flex-col w-full">
       {/* Page Hero */}
@@ -48,10 +56,79 @@ export default function About() {
           <p className="text-xl text-[#F5EBD8]/80 max-w-2xl mx-auto leading-relaxed">
             Mapping with Melanin™ helps you map your life — exposing you to the real culture within your local and global communities so you can make conscious decisions on where you live, where you buy, and where you travel.
           </p>
+          <a href="#mission" className="inline-flex items-center gap-2 mt-8 text-[#CA922B] text-sm font-semibold hover:opacity-80 transition-opacity">
+            Our Mission & Vision <ArrowRight className="w-4 h-4" />
+          </a>
         </div>
       </section>
 
       <WaveDivider fromBg="#2B1507" toBg="#FAF6EF" />
+
+      {/* ── Mission & Vision ── */}
+      <section id="mission" className="bg-[#FAF6EF] py-20 px-4 scroll-mt-20">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-4">
+              <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">Why We Exist</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E]">
+              Mission & Vision
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-0 rounded-3xl overflow-hidden shadow-xl border border-[#3A1F0E]/8">
+            {/* Mission */}
+            <div className="bg-[#2B1507] text-white px-10 py-14 flex flex-col gap-6">
+              <div>
+                <span className="text-[10px] font-bold tracking-[0.25em] text-[#CA922B] uppercase block mb-3">
+                  ✦ Our Mission
+                </span>
+                <div className="w-10 h-0.5 bg-[#CA922B]/40 mb-6" />
+              </div>
+              <blockquote className="text-2xl md:text-3xl font-serif italic text-[#F5EBD8] leading-relaxed">
+                "To foster connection, economic empowerment, and belonging — helping people navigate the world with greater confidence and community support."
+              </blockquote>
+              <p className="text-[#F5EBD8]/65 text-sm leading-relaxed mt-2">
+                Every feature, every recommendation, and every community tool we build is in service of this: making it easier for Melanated and minority communities to move through the world with knowledge, pride, and power.
+              </p>
+            </div>
+
+            {/* Vision */}
+            <div className="bg-white px-10 py-14 flex flex-col gap-6">
+              <div>
+                <span className="text-[10px] font-bold tracking-[0.25em] text-[#CA922B] uppercase block mb-3">
+                  ✦ Our Vision
+                </span>
+                <div className="w-10 h-0.5 bg-[#CA922B]/40 mb-6" />
+              </div>
+              <p className="text-2xl md:text-3xl font-serif text-[#3A1F0E] leading-relaxed">
+                A world where the Melanated community navigates every dimension of life — where to live, work, travel, and spend — with trusted intelligence, cultural pride, and the economic power of a unified community behind every decision.
+              </p>
+              <p className="text-[#3A1F0E]/60 text-sm leading-relaxed mt-2">
+                We are building the trusted infrastructure that connects conscious consumers to the businesses, employers, and communities that reflect who they are — at every stage of life, in every city, across the globe.
+              </p>
+            </div>
+          </div>
+
+          {/* Core values strip */}
+          <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { emoji: "🤝", label: "Connection", sub: "Community over everything" },
+              { emoji: "💰", label: "Economic Power", sub: "Keep dollars circulating" },
+              { emoji: "🛡️", label: "Safety & Trust", sub: "Community-verified intel" },
+              { emoji: "🌍", label: "Cultural Pride", sub: "Celebrate who we are" },
+            ].map(({ emoji, label, sub }) => (
+              <div key={label} className="text-center p-6 rounded-2xl bg-white border border-[#3A1F0E]/6 shadow-sm">
+                <div className="text-3xl mb-3">{emoji}</div>
+                <div className="text-sm font-bold text-[#3A1F0E] mb-1">{label}</div>
+                <div className="text-xs text-[#3A1F0E]/55">{sub}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <OrnamentDivider bg="#FAF6EF" light />
 
       {/* Photo + Tagline */}
       <section className="py-0 bg-[#FAF6EF] overflow-hidden">
