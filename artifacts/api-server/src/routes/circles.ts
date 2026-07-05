@@ -96,9 +96,21 @@ router.post("/circles", async (req: Request, res: Response) => {
     const limits = CIRCLE_LIMITS[tierKey];
     const circleType = String(type ?? "private");
 
+    // Free users cannot create any type of circle
+    if (tierKey === "free") {
+      res.status(403).json({
+        error: "Creating Kinfolk Circles requires an Explorer+ or higher membership.",
+        code: "TIER_LIMIT_REACHED",
+        upgradeRequired: true,
+        tier: tierKey,
+      });
+      return;
+    }
+
     if (circleType === "community" && limits.maxCommunityMembers === 0) {
       res.status(403).json({
         error: "Community circles require a Navigator or Trailblazer membership.",
+        code: "TIER_LIMIT_REACHED",
         upgradeRequired: true,
         tier: tierKey,
       });
@@ -111,7 +123,8 @@ router.post("/circles", async (req: Request, res: Response) => {
         .from(kinfolkCircles).where(eq(kinfolkCircles.hostUserId, uid(req)));
       if (count >= limits.maxCircles) {
         res.status(403).json({
-          error: `You can host up to ${limits.maxCircles} circle${limits.maxCircles === 1 ? "" : "s"} on the ${tierKey} plan. Upgrade to create more.`,
+          error: `Explorer+ members can host up to ${limits.maxCircles} circle${limits.maxCircles === 1 ? "" : "s"}. Upgrade to Navigator for unlimited circles.`,
+          code: "TIER_LIMIT_REACHED",
           upgradeRequired: true,
           tier: tierKey,
           limit: limits.maxCircles,

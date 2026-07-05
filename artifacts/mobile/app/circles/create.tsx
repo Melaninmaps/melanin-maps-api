@@ -57,8 +57,22 @@ export default function CreateCircleScreen() {
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ name: name.trim(), type, privacy, description: description.trim() || undefined, emoji, city: city.trim() || undefined, maxMembers: type === "community" ? 50 : 8 }),
       });
-      const data = await res.json() as { circle?: { id: number }; error?: string };
-      if (!res.ok) { Alert.alert("Couldn't create", data.error ?? "Try again."); return; }
+      const data = await res.json() as { circle?: { id: number }; error?: string; code?: string; upgradeRequired?: boolean };
+      if (!res.ok) {
+        if (data.upgradeRequired || data.code === "TIER_LIMIT_REACHED") {
+          Alert.alert(
+            "Membership Required",
+            data.error ?? "Upgrade to Explorer+ to create Kinfolk Circles.",
+            [
+              { text: "Maybe Later", style: "cancel" },
+              { text: "View Plans", onPress: () => router.push("/membership" as any) },
+            ],
+          );
+          return;
+        }
+        Alert.alert("Couldn't create", data.error ?? "Try again.");
+        return;
+      }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace({ pathname: "/circles/[id]", params: { id: String(data.circle!.id) } } as any);
     } catch { Alert.alert("Error", "Something went wrong. Please try again."); }

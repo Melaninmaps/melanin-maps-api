@@ -191,7 +191,8 @@ export default function CommunityScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ compose?: string; caption?: string }>();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const isPaidMember = !!user && ["navigator", "trailblazer", "founding", "beta"].includes(user.memberType ?? "");
   const [activeTab, setActiveTab] = useState("Feed");
   const [refreshing, setRefreshing] = useState(false);
   const [alerts, setAlerts] = useState(ALERTS);
@@ -610,7 +611,7 @@ export default function CommunityScreen() {
                   activeOpacity={0.8}
                   style={[styles.composeBar, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 4, marginBottom: 8 }]}
                   onPress={() => {
-                    if (!isAuthenticated) {
+                    if (!isAuthenticated || !isPaidMember) {
                       setUpgradeFeature("Community Events");
                       setShowUpgrade(true);
                       return;
@@ -661,7 +662,7 @@ export default function CommunityScreen() {
           />
         </View>
       ) : activeTab === "Circles ⭐" ? (
-        <CirclesTab colors={colors} router={router} isAuthenticated={isAuthenticated} bottomPad={bottomPad} />
+        <CirclesTab colors={colors} router={router} isAuthenticated={isAuthenticated} isPaidMember={isPaidMember} bottomPad={bottomPad} />
       ) : activeTab === "Groups" ? (
         <View style={{ flex: 1 }}>
           {/* Category filter */}
@@ -1585,10 +1586,11 @@ type Circle = {
   hostUserId: string; description: string | null; memberCount: number; city: string | null;
 };
 
-function CirclesTab({ colors, router, isAuthenticated, bottomPad }: {
+function CirclesTab({ colors, router, isAuthenticated, isPaidMember, bottomPad }: {
   colors: ReturnType<typeof useColors>;
   router: ReturnType<typeof useRouter>;
   isAuthenticated: boolean;
+  isPaidMember: boolean;
   bottomPad: number;
 }) {
   const [circles, setCircles] = React.useState<Circle[]>([]);
@@ -1617,7 +1619,20 @@ function CirclesTab({ colors, router, isAuthenticated, bottomPad }: {
           {isAuthenticated && (
             <TouchableOpacity
               style={{ backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 12, flexDirection: "row", alignItems: "center", gap: 6 }}
-              onPress={() => router.push("/circles/create" as any)}
+              onPress={() => {
+                if (!isPaidMember) {
+                  Alert.alert(
+                    "Membership Required",
+                    "Creating Kinfolk Circles requires an Explorer+ or higher membership.",
+                    [
+                      { text: "Maybe Later", style: "cancel" },
+                      { text: "View Plans", onPress: () => router.push("/membership" as any) },
+                    ],
+                  );
+                  return;
+                }
+                router.push("/circles/create" as any);
+              }}
               activeOpacity={0.85}
             >
               <Feather name="plus" size={15} color="#FFFFFF" />
@@ -1653,7 +1668,20 @@ function CirclesTab({ colors, router, isAuthenticated, bottomPad }: {
           </Text>
           <TouchableOpacity
             style={{ backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 13, borderRadius: 14, marginTop: 6 }}
-            onPress={() => router.push("/circles/create" as any)}
+            onPress={() => {
+              if (!isPaidMember) {
+                Alert.alert(
+                  "Membership Required",
+                  "Creating Kinfolk Circles requires an Explorer+ or higher membership.",
+                  [
+                    { text: "Maybe Later", style: "cancel" },
+                    { text: "View Plans", onPress: () => router.push("/membership" as any) },
+                  ],
+                );
+                return;
+              }
+              router.push("/circles/create" as any);
+            }}
             activeOpacity={0.85}
           >
             <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: "#FFFFFF" }}>Create a Circle</Text>
