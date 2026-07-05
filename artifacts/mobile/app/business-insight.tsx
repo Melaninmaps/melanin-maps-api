@@ -150,6 +150,7 @@ export default function BusinessInsightScreen() {
   const [businessCity, setBusinessCity] = useState("");
   const [businessCategory, setBusinessCategory] = useState("");
   const [businessAddress, setBusinessAddress] = useState("");
+  const [ownershipType, setOwnershipType] = useState<"minority" | "non-minority" | "unsure" | "">("");
 
   // Safety survey (step 3a)
   const [safetyRating, setSafetyRating] = useState(0);
@@ -193,7 +194,11 @@ export default function BusinessInsightScreen() {
       await fetch(`${getApiBase()}/api/business-insights`, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
-        body: JSON.stringify({ businessName, businessCity, businessCategory, businessAddress, surveyType, responses }),
+        body: JSON.stringify({
+          businessName, businessCity, businessCategory, businessAddress,
+          isMinorityOwned: ownershipType === "minority" ? true : ownershipType === "non-minority" ? false : null,
+          surveyType, responses,
+        }),
       });
       setSubmitted(true);
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -361,6 +366,16 @@ export default function BusinessInsightScreen() {
                 value={businessAddress}
                 onChangeText={setBusinessAddress}
               />
+            </View>
+
+            <View style={s.qBlock}>
+              <Text style={[s.qLabel, { color: colors.foreground }]}>Is this a minority-owned business? <Text style={[{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>(optional)</Text></Text>
+              <Text style={[s.qHint, { color: colors.mutedForeground }]}>Non-minority businesses are never notified or contacted.</Text>
+              <View style={{ gap: 8, marginTop: 4 }}>
+                <TriOption label="Yes — minority-owned" value="minority" current={ownershipType} onChange={(v) => setOwnershipType(v as any)} color={colors.primary} colors={colors} />
+                <TriOption label="No — non-minority owned 🏢" value="non-minority" current={ownershipType} onChange={(v) => setOwnershipType(v as any)} color={colors.primary} colors={colors} />
+                <TriOption label="Not sure" value="unsure" current={ownershipType} onChange={(v) => setOwnershipType(v as any)} color={colors.primary} colors={colors} />
+              </View>
             </View>
           </View>
         )}

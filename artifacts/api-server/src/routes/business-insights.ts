@@ -13,6 +13,7 @@ router.post("/business-insights", async (req: Request, res: Response) => {
       businessCity,
       businessCategory,
       businessAddress,
+      isMinorityOwned,
       surveyType,
       responses,
     } = req.body as {
@@ -21,6 +22,7 @@ router.post("/business-insights", async (req: Request, res: Response) => {
       businessCity?: string;
       businessCategory?: string;
       businessAddress?: string;
+      isMinorityOwned?: boolean | null;
       surveyType: string;
       responses: Record<string, unknown>;
     };
@@ -46,7 +48,7 @@ router.post("/business-insights", async (req: Request, res: Response) => {
       businessCity: businessCity?.trim() ?? null,
       businessCategory: businessCategory?.trim() ?? null,
       businessAddress: businessAddress?.trim() ?? null,
-      isMinorityOwned: false,
+      isMinorityOwned: isMinorityOwned ?? false,
       surveyType,
       submittedByUserId,
       responses: responses as any,
