@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useState } from "react";
 import {
@@ -32,11 +32,12 @@ async function getToken(): Promise<string | null> {
 }
 
 type ResultState =
-  | { isDuplicate: false; nominationId: string }
+  | { isDuplicate: false; nominationId: string; businessId: string; isBlackOwned: boolean }
   | { isDuplicate: true; type: "already_listed"; businessId: string; message: string }
   | { isDuplicate: true; type: "already_nominated"; message: string };
 
 type Form = {
+  isBlackOwned: boolean | null;
   businessName: string;
   category: string;
   city: string;
@@ -50,6 +51,7 @@ type Form = {
 };
 
 const INITIAL: Form = {
+  isBlackOwned: null,
   businessName: "", category: "", city: "", state: "",
   phone: "", website: "", ownerName: "", ownerContact: "",
   notes: "", nominatorEmail: "",
@@ -62,20 +64,28 @@ export default function NominateBusinessScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isAuthenticated } = useAuth();
+  const params = useLocalSearchParams<{ ownership?: string }>();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  const [form, setForm] = useState<Form>(INITIAL);
+  const preselected = params.ownership === "general" ? false : params.ownership === "minority" ? true : null;
+
+  const [form, setForm] = useState<Form>({ ...INITIAL, isBlackOwned: preselected });
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<ResultState | null>(null);
   const [showCatPicker, setShowCatPicker] = useState(false);
 
-  const update = (key: keyof Form) => (val: string) => setForm((f) => ({ ...f, [key]: val }));
+  const update = (key: keyof Form) => (val: string | boolean | null) =>
+    setForm((f) => ({ ...f, [key]: val }));
 
-  const canSubmit = form.businessName.trim().length > 0 && form.city.trim().length > 0 && form.state.trim().length > 0;
+  const canSubmit =
+    form.isBlackOwned !== null &&
+    form.businessName.trim().length > 0 &&
+    form.city.trim().length > 0 &&
+    form.state.trim().length > 0;
 
   const handleSubmit = async () => {
-    if (!canSubmit || submitting) return;
+    if (!canSubmit || submitting || form.isBlackOwned === null) return;
     setSubmitting(true);
     try {
       const token = await getToken();
@@ -91,13 +101,14 @@ export default function NominateBusinessScreen() {
           state: form.state.trim(),
           phone: form.phone.trim() || undefined,
           website: form.website.trim() || undefined,
-          ownerName: form.ownerName.trim() || undefined,
-          ownerContact: form.ownerContact.trim() || undefined,
+          ownerName: form.isBlackOwned ? (form.ownerName.trim() || undefined) : undefined,
+          ownerContact: form.isBlackOwned ? (form.ownerContact.trim() || undefined) : undefined,
           notes: form.notes.trim() || undefined,
           nominatorEmail: !isAuthenticated ? form.nominatorEmail.trim() || undefined : undefined,
+          blackOwned: form.isBlackOwned,
         }),
       });
-      const data = await res.json() as ResultState & { error?: string; nomination?: { id: string } };
+      const data = await res.json() as ResultState & { error?: string; nomination?: { id: string }; businessId?: string };
       if (!res.ok) {
         Alert.alert("Error", data.error ?? "Could not submit. Please try again.");
         return;
@@ -105,7 +116,12 @@ export default function NominateBusinessScreen() {
       if (data.isDuplicate) {
         setResult(data as ResultState);
       } else {
-        setResult({ isDuplicate: false, nominationId: (data as any).nomination?.id ?? "" });
+        setResult({
+          isDuplicate: false,
+          nominationId: (data as any).nomination?.id ?? "",
+          businessId: (data as any).businessId ?? "",
+          isBlackOwned: form.isBlackOwned ?? true,
+        });
       }
     } catch {
       Alert.alert("Error", "Could not submit. Please check your connection.");
@@ -140,22 +156,28 @@ export default function NominateBusinessScreen() {
 
   if (result) {
     if (!result.isDuplicate) {
+      const isBlackOwned = result.isBlackOwned;
       return (
         <View style={[styles.root, { backgroundColor: colors.background }]}>
           <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
             <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
               <Feather name="arrow-left" size={22} color={colors.foreground} />
             </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Nominate a Business</Text>
+            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Add a Business</Text>
             <View style={{ width: 22 }} />
           </View>
           <View style={styles.successWrap}>
-            <Text style={styles.successEmoji}>🙌🏾</Text>
-            <Text style={[styles.successTitle, { color: colors.foreground }]}>Thank you for the nomination!</Text>
-            <Text style={[styles.successBody, { color: colors.mutedForeground }]}>
-              We'll reach out to <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{form.businessName}</Text> about joining our community.
+            <Text style={styles.successEmoji}>{isBlackOwned ? "🙌🏾" : "✅"}</Text>
+            <Text style={[styles.successTitle, { color: colors.foreground }]}>
+              {isBlackOwned ? "Thank you for the nomination!" : "Added to the directory!"}
             </Text>
-            {isAuthenticated && (
+            <Text style={[styles.successBody, { color: colors.mutedForeground }]}>
+              {isBlackOwned
+                ? `We'll reach out to ${form.businessName} about joining our community.`
+                : `${form.businessName} has been added to the Mapping With Melanin directory as a non-minority-owned business. The community can now find and save it.`}
+            </Text>
+
+            {isBlackOwned && !isAuthenticated && (
               <View style={[styles.referralCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Feather name="gift" size={20} color="#C9922B" />
                 <Text style={[styles.referralTitle, { color: colors.foreground }]}>You'll earn referral credit</Text>
@@ -164,11 +186,29 @@ export default function NominateBusinessScreen() {
                 </Text>
               </View>
             )}
+
+            {!isBlackOwned && (
+              <View style={[styles.designationBadge, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+                <Feather name="info" size={14} color={colors.mutedForeground} />
+                <Text style={[styles.designationTxt, { color: colors.mutedForeground }]}>
+                  Designated as Non-Minority Owned — this business will never be promoted or contacted by Mapping With Melanin.
+                </Text>
+              </View>
+            )}
+
+            {result.businessId ? (
+              <TouchableOpacity
+                style={[styles.doneBtn, { backgroundColor: colors.primary }]}
+                onPress={() => router.push({ pathname: "/business/[id]", params: { id: result.businessId } } as never)}
+              >
+                <Text style={styles.doneBtnTxt}>View the Listing</Text>
+              </TouchableOpacity>
+            ) : null}
             <TouchableOpacity
-              style={[styles.doneBtn, { backgroundColor: colors.primary }]}
+              style={[styles.doneBtn, { backgroundColor: result.businessId ? "transparent" : colors.primary, borderWidth: result.businessId ? 1 : 0, borderColor: colors.border }]}
               onPress={() => { setForm(INITIAL); setResult(null); }}
             >
-              <Text style={styles.doneBtnTxt}>Nominate Another</Text>
+              <Text style={[styles.doneBtnTxt, result.businessId ? { color: colors.foreground } : {}]}>Add Another</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.homeBtn, { borderColor: colors.border }]}
@@ -188,16 +228,16 @@ export default function NominateBusinessScreen() {
             <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
               <Feather name="arrow-left" size={22} color={colors.foreground} />
             </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Nominate a Business</Text>
+            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Add a Business</Text>
             <View style={{ width: 22 }} />
           </View>
           <View style={styles.successWrap}>
             <Text style={styles.successEmoji}>✅</Text>
-            <Text style={[styles.successTitle, { color: colors.foreground }]}>Already in our community!</Text>
+            <Text style={[styles.successTitle, { color: colors.foreground }]}>Already in the directory!</Text>
             <Text style={[styles.successBody, { color: colors.mutedForeground }]}>{result.message}</Text>
             <TouchableOpacity
               style={[styles.doneBtn, { backgroundColor: colors.primary }]}
-              onPress={() => router.push({ pathname: "/business/[id]", params: { id: (result as any).businessId } } as never)}
+              onPress={() => router.push({ pathname: "/business/[id]", params: { id: result.businessId } } as never)}
             >
               <Text style={styles.doneBtnTxt}>View Their Listing</Text>
             </TouchableOpacity>
@@ -205,7 +245,7 @@ export default function NominateBusinessScreen() {
               style={[styles.homeBtn, { borderColor: colors.border }]}
               onPress={() => { setForm(INITIAL); setResult(null); }}
             >
-              <Text style={[styles.homeBtnTxt, { color: colors.foreground }]}>Nominate a Different Business</Text>
+              <Text style={[styles.homeBtnTxt, { color: colors.foreground }]}>Add a Different Business</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -218,7 +258,7 @@ export default function NominateBusinessScreen() {
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Nominate a Business</Text>
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Add a Business</Text>
           <View style={{ width: 22 }} />
         </View>
         <View style={styles.successWrap}>
@@ -229,7 +269,7 @@ export default function NominateBusinessScreen() {
             style={[styles.doneBtn, { backgroundColor: colors.primary }]}
             onPress={() => { setForm(INITIAL); setResult(null); }}
           >
-            <Text style={styles.doneBtnTxt}>Nominate Another Business</Text>
+            <Text style={styles.doneBtnTxt}>Add Another Business</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -242,7 +282,7 @@ export default function NominateBusinessScreen() {
         <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/profile" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Nominate a Business</Text>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Add a Business</Text>
         <View style={{ width: 22 }} />
       </View>
 
@@ -252,22 +292,62 @@ export default function NominateBusinessScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={[styles.heroBanner, { backgroundColor: "#3B1F0E" }]}>
-            <Text style={styles.heroEmoji}>🏪</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.heroTitle}>Know a great minority-owned spot?</Text>
-              <Text style={styles.heroSub}>Nominate them to join our community — and earn referral credit if they list with us.</Text>
-            </View>
+
+          {/* ── Ownership type selector ──────────────────────────── */}
+          <Text style={[styles.sectionTitle, { color: colors.mutedForeground, marginTop: 4 }]}>Ownership Type</Text>
+          <View style={styles.ownershipRow}>
+            <TouchableOpacity
+              style={[
+                styles.ownershipCard,
+                { borderColor: form.isBlackOwned === true ? colors.primary : colors.border, backgroundColor: form.isBlackOwned === true ? colors.primary + "12" : colors.card },
+              ]}
+              onPress={() => update("isBlackOwned")(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={{ fontSize: 24, marginBottom: 4 }}>✊🏾</Text>
+              <Text style={[styles.ownershipLabel, { color: form.isBlackOwned === true ? colors.primary : colors.foreground }]}>
+                Black / Minority Owned
+              </Text>
+              <Text style={[styles.ownershipSub, { color: colors.mutedForeground }]}>
+                Owner will be invited to join the community
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.ownershipCard,
+                { borderColor: form.isBlackOwned === false ? colors.foreground : colors.border, backgroundColor: form.isBlackOwned === false ? colors.secondary : colors.card },
+              ]}
+              onPress={() => update("isBlackOwned")(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={{ fontSize: 24, marginBottom: 4 }}>🏢</Text>
+              <Text style={[styles.ownershipLabel, { color: colors.foreground }]}>
+                Non-Minority Owned
+              </Text>
+              <Text style={[styles.ownershipSub, { color: colors.mutedForeground }]}>
+                Added for community reference only — never promoted or contacted
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.section}>
+          {form.isBlackOwned === false && (
+            <View style={[styles.nonMinorityNotice, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+              <Feather name="info" size={14} color={colors.mutedForeground} />
+              <Text style={[styles.noticeText, { color: colors.mutedForeground }]}>
+                Non-minority-owned businesses are clearly designated in the directory. They will never receive promotional placement, outreach, or contact from Mapping With Melanin.
+              </Text>
+            </View>
+          )}
+
+          <View style={[styles.section, { marginTop: 16 }]}>
             <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>Business Details</Text>
 
             <Field
               label="Business Name *"
               value={form.businessName}
               onChangeText={update("businessName")}
-              placeholder="e.g. Soul Kitchen ATL"
+              placeholder="e.g. Corner Grocery ATL"
             />
 
             <View style={styles.fieldWrap}>
@@ -320,36 +400,47 @@ export default function NominateBusinessScreen() {
               label="Website or Social Handle"
               value={form.website}
               onChangeText={update("website")}
-              placeholder="@soulkitchenatl or soulkitchenatl.com"
+              placeholder="@businesshandle or business.com"
               autoCapitalize="none"
             />
-            <Field
-              label="Owner's Name"
-              value={form.ownerName}
-              onChangeText={update("ownerName")}
-              placeholder="Jasmine Brown"
-            />
-            <Field
-              label="Best way to reach the owner"
-              value={form.ownerContact}
-              onChangeText={update("ownerContact")}
-              placeholder="Email, Instagram, phone..."
-              autoCapitalize="none"
-            />
+
+            {form.isBlackOwned === true && (
+              <>
+                <Field
+                  label="Owner's Name"
+                  value={form.ownerName}
+                  onChangeText={update("ownerName")}
+                  placeholder="Jasmine Brown"
+                />
+                <Field
+                  label="Best way to reach the owner"
+                  value={form.ownerContact}
+                  onChangeText={update("ownerContact")}
+                  placeholder="Email, Instagram, phone..."
+                  autoCapitalize="none"
+                />
+              </>
+            )}
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>Why should they be listed?</Text>
+            <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>
+              {form.isBlackOwned === false ? "Community Note (optional)" : "Why should they be listed?"}
+            </Text>
             <Field
-              label="Your note (optional)"
+              label={form.isBlackOwned === false ? "Your note" : "Your note (optional)"}
               value={form.notes}
               onChangeText={update("notes")}
-              placeholder="Tell us what makes this business special..."
+              placeholder={
+                form.isBlackOwned === false
+                  ? "Share context about this location for the community..."
+                  : "Tell us what makes this business special..."
+              }
               multiline
             />
           </View>
 
-          {!isAuthenticated && (
+          {!isAuthenticated && form.isBlackOwned === true && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>Your Info (for referral credit)</Text>
               <Field
@@ -374,9 +465,10 @@ export default function NominateBusinessScreen() {
           >
             <Feather name={submitting ? "loader" : "send"} size={16} color={canSubmit ? "#FFF" : colors.mutedForeground} />
             <Text style={[styles.submitBtnTxt, { color: canSubmit ? "#FFF" : colors.mutedForeground }]}>
-              {submitting ? "Submitting…" : "Submit Nomination"}
+              {submitting ? "Submitting…" : form.isBlackOwned === false ? "Add to Directory" : "Submit Nomination"}
             </Text>
           </TouchableOpacity>
+
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -415,10 +507,12 @@ const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingBottom: 14, borderBottomWidth: 1 },
   headerTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
   scroll: { paddingHorizontal: 20, paddingTop: 20, gap: 8 },
-  heroBanner: { borderRadius: 16, padding: 16, flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 8 },
-  heroEmoji: { fontSize: 32 },
-  heroTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#FFF", marginBottom: 4 },
-  heroSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.75)", lineHeight: 18 },
+  ownershipRow: { flexDirection: "row", gap: 10, marginBottom: 4 },
+  ownershipCard: { flex: 1, borderRadius: 14, borderWidth: 2, padding: 14, alignItems: "center", gap: 2 },
+  ownershipLabel: { fontSize: 13, fontFamily: "Inter_700Bold", textAlign: "center" },
+  ownershipSub: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 16 },
+  nonMinorityNotice: { borderRadius: 10, borderWidth: 1, padding: 12, flexDirection: "row", gap: 8, alignItems: "flex-start", marginBottom: 4 },
+  noticeText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
   section: { gap: 4, marginBottom: 8 },
   sectionTitle: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 4, marginTop: 8 },
   fieldWrap: { marginBottom: 12 },
@@ -436,6 +530,8 @@ const styles = StyleSheet.create({
   successEmoji: { fontSize: 56, marginBottom: 4 },
   successTitle: { fontSize: 22, fontFamily: "Inter_700Bold", textAlign: "center" },
   successBody: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 22 },
+  designationBadge: { borderRadius: 10, borderWidth: 1, padding: 12, flexDirection: "row", gap: 8, alignItems: "flex-start", width: "100%" },
+  designationTxt: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
   referralCard: { borderRadius: 16, borderWidth: 1, padding: 16, width: "100%", alignItems: "center", gap: 8, marginTop: 8 },
   referralTitle: { fontSize: 14, fontFamily: "Inter_700Bold", textAlign: "center" },
   referralBody: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20 },

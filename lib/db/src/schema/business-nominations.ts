@@ -19,6 +19,7 @@ export const businessNominationsTable = pgTable("business_nominations", {
   status: varchar("status", { length: 30 }).notNull().default("pending"),
   matchedBusinessId: varchar("matched_business_id").references(() => businessesTable.id, { onDelete: "set null" }),
   referralCredited: boolean("referral_credited").notNull().default(false),
+  blackOwned: boolean("black_owned").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

@@ -273,19 +273,34 @@ export default function BusinessInsightScreen() {
               </Text>
             </View>
 
-            <Text style={[s.qLabel, { color: colors.foreground, marginTop: 8 }]}>Is this a minority-owned business?</Text>
+            <Text style={[s.qLabel, { color: colors.foreground, marginTop: 8 }]}>What would you like to do?</Text>
 
             <TouchableOpacity
               style={[s.ownerCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => router.push("/list-business" as any)}
+              onPress={() => router.push("/nominate-business?ownership=minority" as any)}
               activeOpacity={0.8}
             >
               <View style={[s.ownerIconWrap, { backgroundColor: colors.primary + "15" }]}>
                 <Text style={{ fontSize: 24 }}>✊🏾</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[s.ownerCardTitle, { color: colors.foreground }]}>Yes — Nominate It</Text>
-                <Text style={[s.ownerCardSub, { color: colors.mutedForeground }]}>Add a minority-owned business to the Mapping With Melanin™ directory</Text>
+                <Text style={[s.ownerCardTitle, { color: colors.foreground }]}>Nominate a Minority-Owned Business</Text>
+                <Text style={[s.ownerCardSub, { color: colors.mutedForeground }]}>Add a Black or minority-owned business to the Mapping With Melanin™ directory</Text>
+              </View>
+              <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[s.ownerCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => router.push("/nominate-business?ownership=general" as any)}
+              activeOpacity={0.8}
+            >
+              <View style={[s.ownerIconWrap, { backgroundColor: colors.secondary }]}>
+                <Text style={{ fontSize: 24 }}>🏢</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.ownerCardTitle, { color: colors.foreground }]}>Add a Non-Minority Business</Text>
+                <Text style={[s.ownerCardSub, { color: colors.mutedForeground }]}>Add any business to the community directory — clearly designated as non-minority, never promoted or contacted</Text>
               </View>
               <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
             </TouchableOpacity>
@@ -296,11 +311,11 @@ export default function BusinessInsightScreen() {
               activeOpacity={0.8}
             >
               <View style={[s.ownerIconWrap, { backgroundColor: colors.secondary }]}>
-                <Text style={{ fontSize: 24 }}>🏢</Text>
+                <Feather name="shield" size={22} color={colors.mutedForeground} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[s.ownerCardTitle, { color: colors.foreground }]}>No — Share My Experience</Text>
-                <Text style={[s.ownerCardSub, { color: colors.mutedForeground }]}>Submit an anonymous safety or employee survey about a non-minority-owned business</Text>
+                <Text style={[s.ownerCardTitle, { color: colors.foreground }]}>Share an Anonymous Survey</Text>
+                <Text style={[s.ownerCardSub, { color: colors.mutedForeground }]}>Submit a safety or employee experience report about any business — 100% anonymous</Text>
               </View>
               <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
             </TouchableOpacity>

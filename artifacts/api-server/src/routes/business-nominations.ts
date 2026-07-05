@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { db, businessNominationsTable, businessesTable } from "@workspace/db";
 import { eq, ilike, and, desc } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
   .split(",")
@@ -20,17 +21,19 @@ router.post("/business-nominations", async (req: Request, res: Response) => {
   const userId = (req as any).user?.id as string | undefined;
   const {
     businessName, category, city, state, phone, website,
-    ownerName, ownerContact, notes, nominatorEmail,
+    ownerName, ownerContact, notes, nominatorEmail, blackOwned,
   } = req.body as {
     businessName?: string; category?: string; city?: string; state?: string;
     phone?: string; website?: string; ownerName?: string; ownerContact?: string;
-    notes?: string; nominatorEmail?: string;
+    notes?: string; nominatorEmail?: string; blackOwned?: boolean;
   };
 
   if (!businessName?.trim() || !city?.trim() || !state?.trim()) {
     res.status(400).json({ error: "businessName, city, and state are required" });
     return;
   }
+
+  const isBlackOwned = blackOwned !== false;
 
   try {
     const [existing] = await db
@@ -47,7 +50,7 @@ router.post("/business-nominations", async (req: Request, res: Response) => {
         isDuplicate: true,
         type: "already_listed",
         businessId: existing.id,
-        message: "Great news — this business is already listed on Mapping With Melanin!",
+        message: "This business is already in the Mapping With Melanin directory!",
       });
       return;
     }
@@ -65,10 +68,43 @@ router.post("/business-nominations", async (req: Request, res: Response) => {
       res.json({
         isDuplicate: true,
         type: "already_nominated",
-        message: "Someone already nominated this business — thanks for confirming the community demand!",
+        message: "Someone already added this business — thanks for confirming the community demand!",
       });
       return;
     }
+
+    const newBusinessId = crypto.randomUUID();
+    const resolvedCategory = category?.trim() || "General";
+
+    await db
+      .insert(businessesTable)
+      .values({
+        id: newBusinessId,
+        name: businessName.trim(),
+        category: resolvedCategory,
+        subcategory: resolvedCategory,
+        address: `${city.trim()}, ${state.trim()}`,
+        city: city.trim(),
+        state: state.trim(),
+        description: notes?.trim() || "",
+        latitude: "0",
+        longitude: "0",
+        blackOwned: isBlackOwned,
+        confidenceScore: 0,
+        verified: false,
+        featured: false,
+        phone: phone?.trim() || null,
+        website: website?.trim() || null,
+        tags: [],
+        reviews: [],
+        ownershipDesignations: [],
+        verifiedDesignations: [],
+        photos: [],
+        trustBadges: [],
+        status: "active",
+        businessStatus: "community",
+        submittedById: userId ?? null,
+      });
 
     const [nomination] = await db
       .insert(businessNominationsTable)
@@ -81,13 +117,16 @@ router.post("/business-nominations", async (req: Request, res: Response) => {
         state: state.trim(),
         phone: phone?.trim() || null,
         website: website?.trim() || null,
-        ownerName: ownerName?.trim() || null,
-        ownerContact: ownerContact?.trim() || null,
+        ownerName: isBlackOwned ? (ownerName?.trim() || null) : null,
+        ownerContact: isBlackOwned ? (ownerContact?.trim() || null) : null,
         notes: notes?.trim() || null,
+        blackOwned: isBlackOwned,
+        matchedBusinessId: newBusinessId,
+        status: "verified",
       })
       .returning();
 
-    res.status(201).json({ nomination, isDuplicate: false });
+    res.status(201).json({ nomination, isDuplicate: false, businessId: newBusinessId });
   } catch (err) {
     req.log.error({ err }, "Failed to submit business nomination");
     res.status(500).json({ error: "Failed to submit nomination" });
