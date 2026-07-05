@@ -45,7 +45,7 @@ async function getToken(): Promise<string | null> {
   catch { return null; }
 }
 
-const GREETING = "Hi! I'm KinfolkAI™. Ask me anything about minority-owned spots, safe neighborhoods, itinerary ideas — or say things like \"make me a grocery list\" or \"remind me to pick up dry cleaning\" and I'll create tasks for you.";
+const GREETING = "Hi! I'm KinfolkAI™ — ask me anything.";
 
 let sessionId: string | undefined;
 
