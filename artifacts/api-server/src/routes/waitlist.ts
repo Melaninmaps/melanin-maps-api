@@ -21,7 +21,7 @@ function isAdmin(req: Request): boolean {
 
 router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) => {
   try {
-    const { email, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy } = req.body as {
+    const { email, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy, familyEmails } = req.body as {
       email?: string;
       firstName?: string;
       lastName?: string;
@@ -31,6 +31,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       websiteUrl?: string;
       referralCode?: string;
       referredBy?: string;
+      familyEmails?: string[];
     };
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -45,11 +46,24 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
     }
 
     const code = referralCode ?? email.replace(/[@.]/g, "").toUpperCase().slice(0, 8);
+    const primaryEmail = email.toLowerCase().trim();
+
+    // Validate and deduplicate family emails
+    const validFamilyEmails = Array.isArray(familyEmails)
+      ? familyEmails
+          .map(e => String(e).trim().toLowerCase())
+          .filter(e => emailRegex.test(e) && e !== primaryEmail)
+          .slice(0, 6)
+      : [];
+
+    const familyGroupId = validFamilyEmails.length > 0
+      ? `fg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+      : null;
 
     await db
       .insert(waitlistTable)
       .values({
-        email: email.toLowerCase().trim(),
+        email: primaryEmail,
         firstName: firstName?.trim() || null,
         lastName: lastName?.trim() || null,
         city: city?.trim() || null,
@@ -59,11 +73,38 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
         referralCode: code,
         referredBy: referredBy ?? null,
         status: "pending",
+        familyGroupId,
       })
       .onConflictDoNothing();
 
     const [{ total }] = await db.select({ total: count() }).from(waitlistTable);
     const position = Number(total);
+
+    // Register each family member as a separate waitlist entry, grouped by familyGroupId
+    let familyAdded = 0;
+    if (validFamilyEmails.length > 0 && familyGroupId) {
+      for (const fe of validFamilyEmails) {
+        try {
+          const feCode = fe.replace(/[@.]/g, "").toUpperCase().slice(0, 8);
+          await db
+            .insert(waitlistTable)
+            .values({
+              email: fe,
+              familyGroupId,
+              referredBy: code,
+              referralCode: feCode,
+              status: "pending",
+            })
+            .onConflictDoNothing();
+          const [{ total: feTotal }] = await db.select({ total: count() }).from(waitlistTable);
+          sendWaitlistConfirmation(fe, Number(feTotal), feCode, "there")
+            .catch((err: unknown) => req.log.error({ err, email: fe }, "Failed to send family member confirmation"));
+          familyAdded++;
+        } catch (err) {
+          req.log.error({ err, email: fe }, "Failed to register family member");
+        }
+      }
+    }
 
     const cleanEmail = email.toLowerCase().trim();
     const cleanFirst = firstName?.trim() || null;
@@ -112,7 +153,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       })();
     }
 
-    res.status(201).json({ success: true, position, referralCode: code });
+    res.status(201).json({ success: true, position, referralCode: code, familyAdded });
   } catch (err) {
     req.log.error({ err }, "Failed to join waitlist");
     res.status(500).json({ error: "Failed to join waitlist" });

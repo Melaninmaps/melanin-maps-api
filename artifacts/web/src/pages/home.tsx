@@ -189,6 +189,8 @@ export default function Home() {
   const [position, setPosition] = useState<number | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referredBy, setReferredBy] = useState("");
+  const [familyEmails, setFamilyEmails] = useState<string[]>([""]);
+  const [showFamilySection, setShowFamilySection] = useState(false);
 
   const [inviteType, setInviteType] = useState<"friend" | "business">("friend");
   const [inviteEmail, setInviteEmail] = useState("");
@@ -243,7 +245,7 @@ export default function Home() {
       const res = await fetch(`${BASE}api/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, firstName: firstName.trim() || undefined, lastName: lastName.trim() || undefined, city, state, isBusinessOwner, referredBy: referredBy.trim() || undefined }),
+        body: JSON.stringify({ email, firstName: firstName.trim() || undefined, lastName: lastName.trim() || undefined, city, state, isBusinessOwner, referredBy: referredBy.trim() || undefined, familyEmails: showFamilySection ? familyEmails.filter(e => e.trim().includes("@") && e.trim().includes(".")).map(e => e.trim().toLowerCase()) : undefined }),
       });
       const data = await res.json();
       setPosition(data.position ?? null);
@@ -589,6 +591,54 @@ export default function Home() {
                     <input type="text" placeholder="REFERRAL CODE (OPTIONAL)" value={referredBy} onChange={e => setReferredBy(e.target.value.toUpperCase())}
                       className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm uppercase tracking-widest" />
                     <p className="text-xs text-[#F5EBD8]/40 font-medium -mt-1">Have a friend's referral code? Enter it above to move up the list.</p>
+
+                    {/* Family Circle */}
+                    <button
+                      type="button"
+                      onClick={() => setShowFamilySection(v => !v)}
+                      className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-white/10 border border-white/20 hover:border-[#CA922B]/50 transition-colors text-left"
+                    >
+                      <div>
+                        <p className="text-sm font-bold text-[#F5EBD8]/90">Add a Family Circle 👨‍👩‍👧‍👦</p>
+                        <p className="text-xs text-[#F5EBD8]/50 font-medium mt-0.5">Register your household — reviewed and approved together</p>
+                      </div>
+                      <div className={`w-10 h-6 rounded-full flex items-center px-1 transition-colors flex-shrink-0 ${showFamilySection ? "bg-[#CA922B]" : "bg-white/20"}`}>
+                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showFamilySection ? "translate-x-4" : "translate-x-0"}`} />
+                      </div>
+                    </button>
+                    {showFamilySection && (
+                      <div className="flex flex-col gap-2">
+                        <p className="text-xs text-[#F5EBD8]/40 font-medium">Each address joins separately and is reviewed as one family circle. Up to 6 members.</p>
+                        {familyEmails.map((fe, i) => (
+                          <div key={i} className="flex gap-2 items-center">
+                            <input
+                              type="email"
+                              placeholder={`Family member ${i + 1} email`}
+                              value={fe}
+                              onChange={e => {
+                                const next = [...familyEmails];
+                                next[i] = e.target.value;
+                                setFamilyEmails(next);
+                              }}
+                              className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setFamilyEmails(familyEmails.filter((_, j) => j !== i))}
+                              className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 text-[#F5EBD8]/40 hover:text-[#F5EBD8]/80 transition-colors text-lg"
+                            >×</button>
+                          </div>
+                        ))}
+                        {familyEmails.length < 6 && (
+                          <button
+                            type="button"
+                            onClick={() => setFamilyEmails([...familyEmails, ""])}
+                            className="w-full px-4 py-3 rounded-xl border border-dashed border-white/20 text-[#CA922B] text-sm font-semibold hover:border-[#CA922B]/50 transition-colors"
+                          >+ Add family member</button>
+                        )}
+                      </div>
+                    )}
+
                     <Button data-testid="waitlist-submit" type="submit" disabled={submitting || !email}
                       className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-50 text-white h-12 font-bold text-base mt-1">
                       {submitting ? "Joining…" : "Join the Waitlist"}

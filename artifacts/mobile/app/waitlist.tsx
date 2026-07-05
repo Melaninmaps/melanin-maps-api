@@ -279,6 +279,9 @@ export default function WaitlistScreen() {
   const [showRecommend, setShowRecommend] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [inviteCount, setInviteCount] = useState(0);
+  const [showFamilySection, setShowFamilySection] = useState(false);
+  const [familyEmails, setFamilyEmails] = useState<string[]>([""]);
+  const [familyAdded, setFamilyAdded] = useState(0);
 
   const referralCode = email.replace(/[@.]/g, "").toUpperCase().slice(0, 8) || "MELANIN";
   const referralLink = REFERRAL_URL + referralCode;
@@ -304,11 +307,15 @@ export default function WaitlistScreen() {
           isBusinessOwner,
           websiteUrl: isBusinessOwner ? websiteUrl.trim() : undefined,
           referralCode: code,
+          familyEmails: showFamilySection
+            ? familyEmails.filter(e => e.trim().includes("@") && e.trim().includes(".")).map(e => e.trim().toLowerCase())
+            : undefined,
         }),
       });
       if (res.ok) {
-        const data = (await res.json()) as { position?: number };
+        const data = (await res.json()) as { position?: number; familyAdded?: number };
         if (data.position) setPosition(data.position);
+        if (data.familyAdded) setFamilyAdded(data.familyAdded);
       }
     } catch {}
     setLoading(false);
@@ -457,6 +464,64 @@ export default function WaitlistScreen() {
                 </>
               )}
 
+              {/* Family Circle */}
+              <TouchableOpacity
+                style={[styles.toggleRow, { backgroundColor: colors.card, borderColor: showFamilySection ? colors.primary + "60" : colors.border, marginTop: 4 }]}
+                onPress={() => setShowFamilySection(v => !v)}
+                activeOpacity={0.8}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.toggleLabel, { color: colors.foreground }]}>Add a Family Circle 👨‍👩‍👧‍👦</Text>
+                  <Text style={[styles.toggleSub, { color: colors.mutedForeground }]}>Register your household — reviewed and approved together</Text>
+                </View>
+                <View style={[styles.toggle, { backgroundColor: showFamilySection ? colors.primary : colors.muted }]}>
+                  <View style={[styles.toggleThumb, { transform: [{ translateX: showFamilySection ? 18 : 2 }] }]} />
+                </View>
+              </TouchableOpacity>
+
+              {showFamilySection && (
+                <View style={{ gap: 8, marginTop: 4 }}>
+                  <Text style={[styles.fieldHint, { color: colors.mutedForeground }]}>
+                    Each address is registered separately but reviewed as one circle. Up to 6 members.
+                  </Text>
+                  {familyEmails.map((fe, idx) => (
+                    <View key={idx} style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
+                      <TextInput
+                        style={[styles.input, { flex: 1, backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                        placeholder={`Family member ${idx + 1} email`}
+                        placeholderTextColor={colors.mutedForeground}
+                        value={fe}
+                        onChangeText={(t) => {
+                          const next = [...familyEmails];
+                          next[idx] = t;
+                          setFamilyEmails(next);
+                        }}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setFamilyEmails(familyEmails.filter((_, j) => j !== idx))}
+                        style={{ padding: 8 }}
+                        activeOpacity={0.7}
+                      >
+                        <Feather name="x" size={17} color={colors.mutedForeground} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  {familyEmails.length < 6 && (
+                    <TouchableOpacity
+                      onPress={() => setFamilyEmails([...familyEmails, ""])}
+                      style={[styles.toggleRow, { backgroundColor: colors.card, borderColor: colors.border, justifyContent: "center", gap: 8 }]}
+                      activeOpacity={0.8}
+                    >
+                      <Feather name="user-plus" size={15} color={colors.primary} />
+                      <Text style={{ fontFamily: "Inter_500Medium", fontSize: 14, color: colors.primary }}>Add family member</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+
               <TouchableOpacity
                 style={[styles.joinBtn, { backgroundColor: valid ? colors.primary : colors.muted }]}
                 onPress={handleJoin}
@@ -496,6 +561,18 @@ export default function WaitlistScreen() {
                 <Text style={[styles.positionLabel, { color: colors.mutedForeground }]}>Your waitlist position</Text>
                 <Text style={[styles.positionHint, { color: colors.mutedForeground }]}>Share your link to move up the list</Text>
               </View>
+
+              {familyAdded > 0 && (
+                <View style={[styles.positionCard, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "25", borderWidth: 1, gap: 4 }]}>
+                  <Text style={{ fontSize: 28 }}>👨‍👩‍👧‍👦</Text>
+                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: colors.foreground, textAlign: "center" }}>
+                    Family Circle Added!
+                  </Text>
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, textAlign: "center", lineHeight: 19 }}>
+                    {familyAdded} family member{familyAdded > 1 ? "s" : ""} registered. Each will receive their own confirmation email and you'll be reviewed together.
+                  </Text>
+                </View>
+              )}
             </View>
 
             <View style={styles.referralSection}>
