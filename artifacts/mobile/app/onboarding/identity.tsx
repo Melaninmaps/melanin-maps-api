@@ -14,6 +14,8 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import DiasporaFlagPicker from "@/components/DiasporaFlagPicker";
+import { getFlag, DIASPORA_COUNTRIES } from "@/constants/diaspora-countries";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -49,6 +51,7 @@ export default function OnboardingIdentity() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [diasporaCountries, setDiasporaCountries] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
@@ -76,7 +79,7 @@ export default function OnboardingIdentity() {
     try {
       await AsyncStorage.setItem(
         PENDING_OWNERSHIP_PREFS_KEY,
-        JSON.stringify(Array.from(selected))
+        JSON.stringify({ designations: Array.from(selected), diasporaCountries })
       );
     } catch {}
     setSaving(false);
@@ -139,6 +142,36 @@ export default function OnboardingIdentity() {
             );
           })}
         </View>
+
+        {selected.has("immigrant-owned") && (
+          <View style={styles.diasporaSection}>
+            <Text style={styles.diasporaSectionTitle}>🌍 Country of Origin</Text>
+            <Text style={styles.diasporaSectionSub}>
+              Where is your family from? We'll personalize your experience and connect you with businesses of your heritage.
+            </Text>
+            <DiasporaFlagPicker
+              selected={diasporaCountries}
+              onToggle={(code) =>
+                setDiasporaCountries((prev) =>
+                  prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
+                )
+              }
+              label="Select your countries of origin"
+            />
+            {diasporaCountries.length > 0 && (
+              <View style={styles.flagsChips}>
+                {diasporaCountries.map((code) => {
+                  const country = DIASPORA_COUNTRIES.find((c) => c.code === code);
+                  return (
+                    <View key={code} style={styles.flagChip}>
+                      <Text style={styles.flagChipText}>{getFlag(code)} {country?.name ?? code}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        )}
 
         {selected.size > 0 && (
           <View style={styles.selectedNote}>
@@ -229,6 +262,40 @@ const styles = StyleSheet.create({
     fontSize: 11, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.45)",
   },
   chipSubOn: { color: "rgba(202,146,43,0.7)" },
+  diasporaSection: {
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(202,146,43,0.3)",
+    padding: 16,
+    gap: 10,
+    marginBottom: 4,
+  },
+  diasporaSectionTitle: {
+    fontSize: 15,
+    fontFamily: "Inter_700Bold",
+    color: "#CA922B",
+  },
+  diasporaSectionSub: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.6)",
+    lineHeight: 18,
+  },
+  flagsChips: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 },
+  flagChip: {
+    backgroundColor: "rgba(202,146,43,0.15)",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(202,146,43,0.4)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  flagChipText: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: "#CA922B",
+  },
   selectedNote: {
     flexDirection: "row", alignItems: "center", gap: 8,
     backgroundColor: "rgba(202,146,43,0.1)", borderRadius: 12,

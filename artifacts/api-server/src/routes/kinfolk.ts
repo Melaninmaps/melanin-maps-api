@@ -697,7 +697,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
   const {
     favoriteCategories, favoriteCities, avoidCategories, budgetRange, tripStyle, travelCompanion, dietaryNotes,
     communicationStyle, emojiLevel, humorLevel, culturalInterests, knowBeforeYouGo, regionalFlavor,
-    preferredOwnershipTypes, lifestyleServices,
+    preferredOwnershipTypes, diasporaCountries, lifestyleServices,
   } = req.body as Record<string, unknown>;
   try {
     const [prefs] = await db
@@ -718,6 +718,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
         knowBeforeYouGo: typeof knowBeforeYouGo === "boolean" ? knowBeforeYouGo : undefined,
         regionalFlavor: typeof regionalFlavor === "string" ? regionalFlavor : undefined,
         preferredOwnershipTypes: Array.isArray(preferredOwnershipTypes) ? preferredOwnershipTypes as string[] : undefined,
+        diasporaCountries: Array.isArray(diasporaCountries) ? diasporaCountries as string[] : undefined,
         lifestyleServices: Array.isArray(lifestyleServices) ? lifestyleServices as string[] : undefined,
       })
       .onConflictDoUpdate({
@@ -737,6 +738,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           ...(typeof knowBeforeYouGo === "boolean" && { knowBeforeYouGo }),
           ...(typeof regionalFlavor === "string" && { regionalFlavor }),
           ...(Array.isArray(preferredOwnershipTypes) && { preferredOwnershipTypes: preferredOwnershipTypes as string[] }),
+          ...(Array.isArray(diasporaCountries) && { diasporaCountries: diasporaCountries as string[] }),
           ...(Array.isArray(lifestyleServices) && { lifestyleServices: lifestyleServices as string[] }),
           updatedAt: new Date(),
         },

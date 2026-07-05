@@ -32,6 +32,7 @@ export interface UserPreferences {
   knowBeforeYouGo: boolean;
   regionalFlavor: string;
   preferredOwnershipTypes: string[];
+  diasporaCountries: string[];
   lifestyleServices: string[];
 }
 
@@ -51,25 +52,38 @@ const DEFAULT_PREFS: Omit<UserPreferences, "userId"> = {
   knowBeforeYouGo: true,
   regionalFlavor: "standard",
   preferredOwnershipTypes: [],
+  diasporaCountries: [],
   lifestyleServices: [],
 };
 
-async function flushPendingOwnershipPrefs(token: string, apiBase: string): Promise<string[] | null> {
+interface PendingOwnershipPrefs {
+  designations: string[];
+  diasporaCountries: string[];
+}
+
+async function flushPendingOwnershipPrefs(token: string, apiBase: string): Promise<PendingOwnershipPrefs | null> {
   try {
     const raw = await AsyncStorage.getItem(PENDING_OWNERSHIP_PREFS_KEY);
     if (!raw) return null;
-    const types = JSON.parse(raw) as string[];
-    if (!Array.isArray(types) || types.length === 0) {
+    const parsed = JSON.parse(raw) as unknown;
+    // Backward-compat: old format was string[], new format is { designations, diasporaCountries }
+    const pending: PendingOwnershipPrefs = Array.isArray(parsed)
+      ? { designations: parsed as string[], diasporaCountries: [] }
+      : (parsed as PendingOwnershipPrefs);
+    if (!pending.designations?.length) {
       await AsyncStorage.removeItem(PENDING_OWNERSHIP_PREFS_KEY);
       return null;
     }
     const res = await fetch(`${apiBase}/api/kinfolk/preferences`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ preferredOwnershipTypes: types }),
+      body: JSON.stringify({
+        preferredOwnershipTypes: pending.designations,
+        diasporaCountries: pending.diasporaCountries,
+      }),
     });
     if (res.ok) await AsyncStorage.removeItem(PENDING_OWNERSHIP_PREFS_KEY);
-    return types;
+    return pending;
   } catch {
     return null;
   }
@@ -95,8 +109,12 @@ export function useUserPreferences() {
         // If the user has no ownership preferences yet, flush any draft saved during onboarding
         if (!prefs.preferredOwnershipTypes?.length) {
           const flushed = await flushPendingOwnershipPrefs(token, apiBase);
-          if (flushed && flushed.length > 0) {
-            prefs = { ...prefs, preferredOwnershipTypes: flushed };
+          if (flushed && flushed.designations.length > 0) {
+            prefs = {
+              ...prefs,
+              preferredOwnershipTypes: flushed.designations,
+              diasporaCountries: flushed.diasporaCountries,
+            };
           }
         }
 

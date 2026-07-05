@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import DiasporaFlagPicker from "@/components/DiasporaFlagPicker";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -30,7 +31,7 @@ async function getToken(): Promise<string | null> {
 // ─── Option sets ────────────────────────────────────────────────
 const OWNERSHIP_BADGES = [
   "Black-Owned", "Minority-Owned", "Woman-Owned", "Veteran-Owned", "Family-Owned",
-  "LGBTQ+-Owned", "Nonprofit", "Social Enterprise",
+  "LGBTQ+-Owned", "Nonprofit", "Social Enterprise", "Melanated Diaspora-Owned",
 ];
 const COMMUNITY_VALUES = [
   "Community", "Family", "Culture", "Education", "Health",
@@ -75,6 +76,7 @@ type Identity = {
   whyStarted?: string | null;
   whatCustomersShouldKnow?: string | null;
   ownershipBadges: string[];
+  diasporaCountries: string[];
   communityValues: string[];
   audiencesServed: string[];
   accessibilityFeatures: string[];
@@ -94,6 +96,7 @@ const EMPTY: Identity = {
   whyStarted: "",
   whatCustomersShouldKnow: "",
   ownershipBadges: [],
+  diasporaCountries: [],
   communityValues: [],
   audiencesServed: [],
   accessibilityFeatures: [],
@@ -335,6 +338,27 @@ export default function BusinessIdentityScreen() {
         <SectionHeader title="2. Ownership" subtitle="Share the badges that apply to your business. You choose what to disclose." />
         <ChipGrid options={OWNERSHIP_BADGES} selected={form.ownershipBadges} onToggle={v => toggle("ownershipBadges", v)} />
 
+        {form.ownershipBadges.includes("Melanated Diaspora-Owned") && (
+          <View style={styles.diasporaWrap}>
+            <Text style={[styles.diasporaLabel, { color: colors.foreground }]}>🌍 Countries of Origin</Text>
+            <Text style={[styles.diasporaSub, { color: colors.mutedForeground }]}>
+              Show customers which countries your heritage is rooted in.
+            </Text>
+            <DiasporaFlagPicker
+              selected={form.diasporaCountries}
+              onToggle={(code) =>
+                setForm((prev) => ({
+                  ...prev,
+                  diasporaCountries: prev.diasporaCountries.includes(code)
+                    ? prev.diasporaCountries.filter((c) => c !== code)
+                    : [...prev.diasporaCountries, code],
+                }))
+              }
+              label="Select your countries of origin"
+            />
+          </View>
+        )}
+
         {/* Section 3: Community Values */}
         <SectionHeader title="3. Community Values" subtitle="What does your business value most? Choose up to 5." />
         <ChipGrid options={COMMUNITY_VALUES} selected={form.communityValues} onToggle={v => toggle("communityValues", v)} max={5} />
@@ -442,6 +466,21 @@ const styles = StyleSheet.create({
   toggleThumb: {
     width: 20, height: 20, borderRadius: 10, backgroundColor: "#FFF",
     shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2,
+  },
+
+  diasporaWrap: {
+    marginTop: 12,
+    marginBottom: 4,
+    gap: 6,
+  },
+  diasporaLabel: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+  },
+  diasporaSub: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 17,
   },
 
   bottomSave: {
