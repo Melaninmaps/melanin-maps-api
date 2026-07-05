@@ -14,6 +14,8 @@ export interface SafetyContext {
   trend: "improving" | "stable" | "worsening";
   lastUpdated: string;
   cached?: boolean;
+  available?: boolean;
+  message?: string;
 }
 
 interface UseSafetyContextResult {
@@ -59,6 +61,10 @@ export function useSafetyContext(city: string | null): UseSafetyContextResult {
         return;
       }
       const data = (await res.json()) as SafetyContext;
+      if (data.available === false) {
+        setContext(null);
+        return;
+      }
       setContext(data);
     } catch (e) {
       setError("Could not load safety data");

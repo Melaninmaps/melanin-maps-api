@@ -165,7 +165,12 @@ router.get("/safety-context", async (req: Request, res: Response) => {
     }
 
     if (!context) {
-      res.status(502).json({ error: "Could not retrieve safety context from data source" });
+      res.status(200).json({
+        available: false,
+        city: config.label,
+        source: config.source,
+        message: "Live crime data is temporarily unavailable for this city. Check back soon.",
+      });
       return;
     }
 
