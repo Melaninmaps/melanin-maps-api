@@ -72,6 +72,9 @@ export const knowledgeTopicsTable = pgTable("knowledge_topics", {
   searchFrequencyDays: integer("search_frequency_days").notNull().default(7),
   lastSearchedAt: timestamp("last_searched_at"),
   enabled: boolean("enabled").notNull().default(true),
+  topicType: varchar("topic_type", { length: 30 }).notNull().default("general"),
+  isUserCreated: boolean("is_user_created").notNull().default(false),
+  createdByUserId: varchar("created_by_user_id", { length: 100 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

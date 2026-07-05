@@ -2,6 +2,8 @@ import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { type Request, type Response, Router } from "express";
 import { db } from "@workspace/db";
 import {
+  businessesTable,
+  communityPostsTable,
   expertFollowsTable,
   expertProfilesTable,
   knowledgeArticlesTable,
@@ -13,6 +15,111 @@ import {
 } from "@workspace/db";
 
 const router = Router();
+
+// ─── Topic Type Classifier ────────────────────────────────────────────────────
+type TopicType = "location" | "medical" | "wellness" | "education" | "business" | "community" | "hobby" | "general";
+
+function classifyTopicType(name: string): { topicType: TopicType; category: string } {
+  const lower = name.toLowerCase();
+
+  const locationWords = ["city", "town", "village", "county", "state", "country", "region", "area", "neighborhood", "district", "borough", "island", "mountains", "valley", "bay", "harbor", "port", "lake", "river", "beach"];
+  const locationCountries = ["nigeria", "ghana", "kenya", "south africa", "ethiopia", "senegal", "cameroon", "tanzania", "uganda", "rwanda", "zimbabwe", "mozambique", "angola", "jamaica", "haiti", "trinidad", "barbados", "cuba", "puerto rico", "dominican republic", "bahamas", "brazil", "colombia", "panama", "belize", "guyana", "mexico", "england", "france", "germany", "spain", "portugal", "italy", "canada", "australia", "china", "japan", "india", "united kingdom", "ivory coast", "liberia", "sierra leone", "gambia", "togo", "benin", "mali", "senegal"];
+  const usStates = ["alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut", "delaware", "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa", "kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts", "michigan", "minnesota", "mississippi", "missouri", "montana", "nebraska", "nevada", "new hampshire", "new jersey", "new mexico", "new york", "north carolina", "north dakota", "ohio", "oklahoma", "oregon", "pennsylvania", "rhode island", "south carolina", "south dakota", "tennessee", "texas", "utah", "vermont", "virginia", "washington", "west virginia", "wisconsin", "wyoming"];
+  const majorCities = ["atlanta", "new york", "los angeles", "chicago", "houston", "phoenix", "philadelphia", "san antonio", "san diego", "dallas", "san jose", "austin", "jacksonville", "charlotte", "indianapolis", "san francisco", "seattle", "denver", "washington dc", "boston", "nashville", "baltimore", "louisville", "portland", "las vegas", "milwaukee", "kansas city", "cleveland", "raleigh", "miami", "minneapolis", "detroit", "richmond", "birmingham", "montgomery", "jackson", "memphis", "new orleans", "baton rouge", "durham", "harlem", "brooklyn", "bronx", "queens", "compton", "inglewood", "oakland", "newark", "hartford", "springfield", "worcester", "savannah", "columbia", "greenville", "chattanooga", "knoxville", "mobile", "shreveport"];
+
+  if (locationWords.some(w => lower.includes(w)) || locationCountries.some(c => lower.includes(c)) || usStates.some(s => lower === s || lower.startsWith(s + " ") || lower.endsWith(" " + s)) || majorCities.some(c => lower === c || lower.includes(c))) {
+    return { topicType: "location", category: "travel" };
+  }
+
+  const medicalTerms = ["diabetes", "cancer", "postpartum", "pregnancy", "pregnant", "hypertension", "depression", "anxiety", "autism", "adhd", "hiv", "aids", "obesity", "asthma", "arthritis", "heart disease", "stroke", "dementia", "alzheimer", "sickle cell", "lupus", "fibromyalgia", "pcos", "endometriosis", "menopause", "fertility", "infertility", "thyroid", "chronic", "syndrome", "disorder", "disease", "therapy", "medication", "surgery", "diagnosis", "mental health", "bipolar", "schizophrenia", "ptsd", "trauma", "addiction", "substance", "vaccine", "clinical", "hospital", "healthcare", "health care", "prescription", "treatment", "symptom", "blood pressure", "cholesterol", "insulin", "blood sugar", "kidney disease", "liver", "anemia", "eczema", "psoriasis", "alopecia", "vitiligo"];
+  if (medicalTerms.some(t => lower.includes(t))) return { topicType: "medical", category: "health" };
+
+  const wellnessTerms = ["yoga", "meditation", "mindfulness", "fitness", "nutrition", "diet", "exercise", "workout", "self-care", "wellness", "holistic", "pilates", "crossfit", "running", "cycling", "hiking", "weight loss", "intermittent fasting", "vegan", "vegetarian", "plant-based", "keto", "gut health", "stress relief"];
+  if (wellnessTerms.some(t => lower.includes(t))) return { topicType: "wellness", category: "wellness" };
+
+  const educationTerms = ["school", "college", "university", "hbcu", "scholarship", "degree", "education", "academic", "tutoring", "stem", "coding", "bootcamp", "graduate", "undergraduate", "phd", "masters", "bachelor", "classroom", "professor", "student", "campus", "enrollment", "financial aid", "fafsa", "student loan", "literacy", "homeschool"];
+  if (educationTerms.some(t => lower.includes(t))) return { topicType: "education", category: "education" };
+
+  const businessTerms = ["startup", "entrepreneur", "investing", "investment", "finance", "financial", "stock market", "crypto", "cryptocurrency", "bitcoin", "real estate", "franchise", "side hustle", "passive income", "revenue", "profit", "business plan", "venture capital", "angel investor", "e-commerce", "ecommerce", "dropshipping", "branding", "sales", "grant", "funding", "loan", "sba", "llc", "corporation", "accounting", "budget", "retirement", "401k", "ira", "dividend", "portfolio", "wealth", "net worth", "generational wealth"];
+  if (businessTerms.some(t => lower.includes(t))) return { topicType: "business", category: "business" };
+
+  const communityTerms = ["activism", "protest", "movement", "rights", "community", "culture", "heritage", "advocacy", "justice", "equity", "diversity", "inclusion", "civil rights", "black lives", "diaspora", "african american", "caribbean", "pan-african", "afrobeats", "social justice", "policy", "legislation", "voting", "politics", "government", "election", "immigrant", "immigration", "refugee", "church", "faith", "religion", "spiritual", "gospel", "lgbtq", "queer", "trans", "feminist", "womanism"];
+  if (communityTerms.some(t => lower.includes(t))) return { topicType: "community", category: "community_culture" };
+
+  const hobbyTerms = ["vintage", "classic car", "automotive", "cooking", "recipe", "baking", "cuisine", "restaurant", "music", "musician", "fashion", "style", "outfit", "beauty", "natural hair", "skincare", "makeup", "gaming", "video game", "photography", "gardening", "plants", "crafts", "diy", "sewing", "knitting", "crochet", "book club", "poetry", "writing", "adventure", "camping", "fishing", "hunting", "basketball", "football", "baseball", "soccer", "tennis", "golf", "boxing", "mma", "dance", "ballet", "theater", "film", "movies", "anime", "sneakers", "jewelry", "watches", "collecting", "cooking", "cars"];
+  if (hobbyTerms.some(t => lower.includes(t))) return { topicType: "hobby", category: "culture" };
+
+  return { topicType: "general", category: "community_culture" };
+}
+
+// ─── POST /api/knowledge/topics/search-or-create ─────────────────────────────
+router.post("/knowledge/topics/search-or-create", async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id as string | undefined;
+  const { name } = req.body as { name?: string };
+  if (!name || !name.trim()) { res.status(400).json({ error: "Topic name required" }); return; }
+
+  const cleanName = name.trim().replace(/\s+/g, " ");
+
+  try {
+    const existing = await db
+      .select()
+      .from(knowledgeTopicsTable)
+      .where(ilike(knowledgeTopicsTable.topicName, cleanName))
+      .limit(1);
+
+    let topic = existing[0];
+    let created = false;
+
+    if (!topic) {
+      const { topicType, category } = classifyTopicType(cleanName);
+      const [newTopic] = await db
+        .insert(knowledgeTopicsTable)
+        .values({
+          topicName: cleanName,
+          category,
+          topicType,
+          isUserCreated: true,
+          createdByUserId: userId ?? null,
+          enabled: true,
+          description: `Community interest: ${cleanName}`,
+          keywords: [cleanName.toLowerCase()],
+        })
+        .returning();
+      topic = newTopic;
+      created = true;
+    }
+
+    if (userId && topic) {
+      const [alreadyFollowing] = await db
+        .select({ id: userTopicFollowsTable.id })
+        .from(userTopicFollowsTable)
+        .where(and(eq(userTopicFollowsTable.userId, userId), eq(userTopicFollowsTable.topicId, topic.id)));
+
+      if (!alreadyFollowing) {
+        const [user] = await db
+          .select({ stripeSubscriptionId: usersTable.stripeSubscriptionId })
+          .from(usersTable)
+          .where(eq(usersTable.id, userId));
+
+        if (user?.stripeSubscriptionId) {
+          await db.insert(userTopicFollowsTable).values({ userId, topicId: topic.id });
+        } else {
+          const [countRow] = await db
+            .select({ count: sql<number>`COUNT(*)` })
+            .from(userTopicFollowsTable)
+            .where(eq(userTopicFollowsTable.userId, userId));
+          if (Number(countRow?.count ?? 0) < 10) {
+            await db.insert(userTopicFollowsTable).values({ userId, topicId: topic.id });
+          }
+        }
+      }
+    }
+
+    res.json({ topic, created });
+  } catch {
+    res.status(500).json({ error: "Could not save topic" });
+  }
+});
 
 // ─── GET /knowledge/categories ───────────────────────────────────────────────
 export const KNOWLEDGE_CATEGORIES = [
@@ -512,27 +619,75 @@ router.get("/knowledge/topics/:topicId/articles", async (req: Request, res: Resp
       .where(eq(knowledgeTopicsTable.id, topicId));
     if (!topic) { res.status(404).json({ error: "Topic not found" }); return; }
 
-    const articles = await db
-      .select({
-        id: knowledgeArticlesTable.id,
-        title: knowledgeArticlesTable.title,
-        summary: knowledgeArticlesTable.summary,
-        category: knowledgeArticlesTable.category,
-        tier: knowledgeArticlesTable.tier,
-        authorName: knowledgeArticlesTable.authorName,
-        authorBadge: knowledgeArticlesTable.authorBadge,
-        imageUrl: knowledgeArticlesTable.imageUrl,
-        readTimeMinutes: knowledgeArticlesTable.readTimeMinutes,
-        publishedAt: knowledgeArticlesTable.publishedAt,
-      })
-      .from(knowledgeArticlesTable)
-      .where(
-        and(
-          eq(knowledgeArticlesTable.status, "published"),
-          eq(knowledgeArticlesTable.topicId, topicId),
-        ),
-      )
-      .orderBy(desc(knowledgeArticlesTable.publishedAt));
+    const topicName = topic.topicName;
+
+    const [articles, posts, businesses] = await Promise.all([
+      db
+        .select({
+          id: knowledgeArticlesTable.id,
+          title: knowledgeArticlesTable.title,
+          summary: knowledgeArticlesTable.summary,
+          category: knowledgeArticlesTable.category,
+          tier: knowledgeArticlesTable.tier,
+          authorName: knowledgeArticlesTable.authorName,
+          authorBadge: knowledgeArticlesTable.authorBadge,
+          imageUrl: knowledgeArticlesTable.imageUrl,
+          readTimeMinutes: knowledgeArticlesTable.readTimeMinutes,
+          publishedAt: knowledgeArticlesTable.publishedAt,
+        })
+        .from(knowledgeArticlesTable)
+        .where(and(eq(knowledgeArticlesTable.status, "published"), eq(knowledgeArticlesTable.topicId, topicId)))
+        .orderBy(desc(knowledgeArticlesTable.publishedAt))
+        .limit(30),
+
+      db
+        .select({
+          id: communityPostsTable.id,
+          content: communityPostsTable.content,
+          authorName: communityPostsTable.authorName,
+          authorInitials: communityPostsTable.authorInitials,
+          authorColor: communityPostsTable.authorColor,
+          locationTag: communityPostsTable.locationTag,
+          topicTag: communityPostsTable.topicTag,
+          businessName: communityPostsTable.businessName,
+          upvotes: communityPostsTable.upvotes,
+          commentsCount: communityPostsTable.commentsCount,
+          createdAt: communityPostsTable.createdAt,
+        })
+        .from(communityPostsTable)
+        .where(
+          and(
+            eq(communityPostsTable.visibility, "public"),
+            or(
+              ilike(communityPostsTable.content, `%${topicName}%`),
+              ilike(communityPostsTable.locationTag, `%${topicName}%`),
+              ilike(communityPostsTable.topicTag, `%${topicName}%`),
+            ),
+          ),
+        )
+        .orderBy(desc(communityPostsTable.createdAt))
+        .limit(20),
+
+      db
+        .select({
+          id: businessesTable.id,
+          name: businessesTable.name,
+          category: businessesTable.category,
+          city: businessesTable.city,
+          state: businessesTable.state,
+          address: businessesTable.address,
+        })
+        .from(businessesTable)
+        .where(
+          or(
+            ilike(businessesTable.name, `%${topicName}%`),
+            ilike(businessesTable.category, `%${topicName}%`),
+            ilike(businessesTable.city, `%${topicName}%`),
+            ilike(businessesTable.state, `%${topicName}%`),
+          ),
+        )
+        .limit(15),
+    ]);
 
     let readIds = new Set<string>();
     let isFollowing = false;
@@ -552,7 +707,7 @@ router.get("/knowledge/topics/:topicId/articles", async (req: Request, res: Resp
     }
 
     const articlesWithRead = articles.map((a) => ({ ...a, isRead: readIds.has(a.id) }));
-    res.json({ topic, articles: articlesWithRead, isFollowing });
+    res.json({ topic, articles: articlesWithRead, posts, businesses, isFollowing });
   } catch {
     res.status(500).json({ error: "Could not load topic" });
   }

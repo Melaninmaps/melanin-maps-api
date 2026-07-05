@@ -174,6 +174,7 @@ export default function LibraryScreen() {
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [storySearch, setStorySearch] = useState("");
   const [topicSearch, setTopicSearch] = useState("");
+  const [addingTopic, setAddingTopic] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState("");
   const [pinModal, setPinModal] = useState<{
@@ -394,6 +395,42 @@ export default function LibraryScreen() {
   function openExpert(expert: Expert) {
     router.push({ pathname: "/library-expert", params: { expertId: expert.id } } as never);
   }
+
+  async function handleAddTopic(name: string) {
+    if (!name.trim()) return;
+    if (!isAuthenticated) { router.push("/login" as never); return; }
+    setAddingTopic(true);
+    try {
+      const h = await authHeaders();
+      const res = await fetch(`${getApiBase()}/api/knowledge/topics/search-or-create`, {
+        method: "POST",
+        headers: { ...h, "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim() }),
+      });
+      if (res.status === 403) {
+        setUpgradeReason("Upgrade to Knowledge+ to save unlimited topics.");
+        setShowUpgrade(true);
+        return;
+      }
+      if (res.ok) {
+        const data = await res.json() as { topic: Topic; created: boolean };
+        setTopics((prev) => {
+          if (prev.find((t) => t.id === data.topic.id)) {
+            return prev.map((t) => t.id === data.topic.id ? { ...t, isFollowing: true } : t);
+          }
+          return [...prev, { ...data.topic, isFollowing: true, newCount: 0 }];
+        });
+        setFollowCount((c) => c + 1);
+        setTopicSearch("");
+        router.push({ pathname: "/library-topic", params: { topicId: data.topic.id } } as never);
+      }
+    } catch { /* silent */ } finally { setAddingTopic(false); }
+  }
+
+  const hasExactTopicMatch = useMemo(() => {
+    if (!topicSearch.trim()) return true;
+    return topics.some((t) => t.topicName.toLowerCase() === topicSearch.trim().toLowerCase());
+  }, [topics, topicSearch]);
 
   const hasFollows = followedTopics.length > 0;
   const unreadFeed = feed.filter((a) => !a.isRead);
@@ -1030,20 +1067,51 @@ export default function LibraryScreen() {
         ) : (
 
           /* ── BROWSE TOPICS TAB ── */
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
-            {/* Search */}
-            <View style={[styles.browseSearch, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Feather name="search" size={15} color={colors.mutedForeground} />
-              <TextInput
-                style={[styles.searchInput, { color: colors.foreground }]}
-                placeholder="Search topics…"
-                placeholderTextColor={colors.mutedForeground}
-                value={topicSearch}
-                onChangeText={setTopicSearch}
-              />
-              {topicSearch.length > 0 && (
-                <TouchableOpacity onPress={() => setTopicSearch("")}>
-                  <Feather name="x" size={14} color={colors.mutedForeground} />
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll} keyboardShouldPersistTaps="handled">
+            {/* Hero prompt */}
+            <View style={[styles.browseHero, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={{ fontSize: 22, marginBottom: 4 }}>🔍</Text>
+              <Text style={[styles.browseHeroTitle, { color: colors.foreground }]}>Save Any Interest</Text>
+              <Text style={[styles.browseHeroSub, { color: colors.mutedForeground }]}>
+                Search a city, country, medical topic, hobby, cultural interest — anything. We'll find community posts, businesses, and resources that match.
+              </Text>
+            </View>
+
+            {/* Search / Add bar */}
+            <View style={styles.browseSearchWrap}>
+              <View style={[styles.browseSearch, { backgroundColor: colors.card, borderColor: topicSearch.trim() ? colors.primary : colors.border }]}>
+                <Feather name="search" size={15} color={topicSearch.trim() ? colors.primary : colors.mutedForeground} />
+                <TextInput
+                  style={[styles.searchInput, { color: colors.foreground }]}
+                  placeholder="Try: Atlanta, diabetes, vintage cars, Nigeria…"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={topicSearch}
+                  onChangeText={setTopicSearch}
+                  returnKeyType="done"
+                  onSubmitEditing={() => { if (topicSearch.trim()) handleAddTopic(topicSearch); }}
+                />
+                {topicSearch.length > 0 && (
+                  <TouchableOpacity onPress={() => setTopicSearch("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Feather name="x" size={14} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Add topic button — appears when search term has no exact match */}
+              {topicSearch.trim().length >= 2 && !hasExactTopicMatch && (
+                <TouchableOpacity
+                  style={[styles.addTopicBtn, { backgroundColor: colors.primary }]}
+                  onPress={() => handleAddTopic(topicSearch)}
+                  disabled={addingTopic}
+                  activeOpacity={0.85}
+                >
+                  {addingTopic
+                    ? <ActivityIndicator size="small" color="#fff" />
+                    : <>
+                        <Feather name="plus" size={15} color="#fff" />
+                        <Text style={styles.addTopicTxt}>Save "{topicSearch.trim()}"</Text>
+                      </>
+                  }
                 </TouchableOpacity>
               )}
             </View>
@@ -1228,7 +1296,13 @@ const styles = StyleSheet.create({
   feedMetaTxt: { fontSize: 11 },
   emptyFeed: { borderRadius: 12, borderWidth: 1, padding: 18 },
   emptyFeedTxt: { fontSize: 13, lineHeight: 19, textAlign: "center" },
-  browseSearch: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, borderWidth: 1, margin: 14 },
+  browseHero: { margin: 14, marginBottom: 0, borderRadius: 14, borderWidth: 1, padding: 16, alignItems: "center" },
+  browseHeroTitle: { fontSize: 16, fontFamily: "Inter_700Bold", marginBottom: 6 },
+  browseHeroSub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19, textAlign: "center" },
+  browseSearchWrap: { paddingHorizontal: 14, marginTop: 12, gap: 10 },
+  browseSearch: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5 },
+  addTopicBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: 12, paddingVertical: 13 },
+  addTopicTxt: { color: "#fff", fontSize: 14, fontFamily: "Inter_700Bold" },
   searchInput: { flex: 1, fontSize: 14 },
   limitBanner: { marginHorizontal: 14, marginBottom: 4, flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 12, borderWidth: 1 },
   limitTitle: { fontSize: 13, fontWeight: "700" },
