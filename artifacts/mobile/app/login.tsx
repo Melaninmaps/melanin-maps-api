@@ -215,9 +215,12 @@ export default function LoginScreen() {
             <Feather name="globe" size={18} color={c.foreground} />
           )}
           <Text style={[styles.googleTxt, { color: c.foreground }]}>
-            {loading && !emailMode ? "Opening sign in…" : "Continue with Google"}
+            {loading && !emailMode ? "Opening sign in…" : "Continue with Replit"}
           </Text>
         </TouchableOpacity>
+        <Text style={[styles.replitNote, { color: c.mutedForeground }]}>
+          Requires a Replit account — use Email below if you don't have one
+        </Text>
 
         {Platform.OS === "ios" && (
           <AppleAuthentication.AppleAuthenticationButton
@@ -362,4 +365,5 @@ const styles = StyleSheet.create({
   signupRow: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
   signupTxt: { fontSize: 14, fontFamily: "Inter_400Regular" },
   signupLink: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  replitNote: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "center", marginTop: -8, marginBottom: 4 },
 });

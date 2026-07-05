@@ -202,7 +202,7 @@ router.get("/callback", async (req: Request, res: Response) => {
   const expectedState = req.cookies?.state;
 
   if (!codeVerifier || !expectedState) {
-    res.redirect("/api/login");
+    res.redirect("mappingwithmelanin://auth-complete?error=session_expired");
     return;
   }
 
@@ -219,7 +219,7 @@ router.get("/callback", async (req: Request, res: Response) => {
       idTokenExpected: true,
     });
   } catch {
-    res.redirect("/api/login");
+    res.redirect("mappingwithmelanin://auth-complete?error=auth_failed");
     return;
   }
 
