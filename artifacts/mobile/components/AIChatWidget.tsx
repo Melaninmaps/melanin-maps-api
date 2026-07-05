@@ -226,8 +226,12 @@ export function AIChatWidget() {
                 <Feather name="check-square" size={14} color={colors.primary} />
                 <Text style={[styles.tasksBtnTxt, { color: colors.primary }]}>My Lists</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setOpen(false)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-                <Feather name="x" size={22} color={colors.foreground} />
+              <TouchableOpacity
+                onPress={() => { setOpen(false); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                style={[styles.minimizeBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
+              >
+                <Feather name="chevron-down" size={20} color={colors.foreground} />
               </TouchableOpacity>
             </View>
           </View>
@@ -371,4 +375,9 @@ const styles = StyleSheet.create({
     paddingVertical: 11, fontSize: 14, fontFamily: "Inter_400Regular",
   },
   sendBtn: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
+  minimizeBtn: {
+    width: 34, height: 34, borderRadius: 17,
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 1,
+  },
 });
