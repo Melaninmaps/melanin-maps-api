@@ -52,20 +52,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-4">
             <div className="flex items-center gap-1 sm:gap-4 flex-wrap">
               <span className="font-bold hidden sm:inline shrink-0">Explore MWM™:</span>
-              <Link href="/pitch-deck">
+              <a href="/pitch-deck">
                 <span className="flex items-center gap-1 hover:underline cursor-pointer shrink-0">
                   <BarChart2 className="w-3.5 h-3.5" />
                   Pitch Deck
                   <ChevronRight className="w-3 h-3" />
                 </span>
-              </Link>
-              <Link href="/biz-onepager">
+              </a>
+              <a href="/biz-onepager">
                 <span className="flex items-center gap-1 hover:underline cursor-pointer shrink-0">
                   <FileText className="w-3.5 h-3.5" />
                   Business One-Pager
                   <ChevronRight className="w-3 h-3" />
                 </span>
-              </Link>
+              </a>
               <Link href="/features">
                 <span className="flex items-center gap-1 hover:underline cursor-pointer shrink-0">
                   <Sparkles className="w-3.5 h-3.5" />

@@ -31,6 +31,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "location.circle", selected: "location.circle.fill" }} />
         <Label>Safety</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="events">
+        <Icon sf={{ default: "calendar", selected: "calendar.fill" }} />
+        <Label>Events</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="library">
         <Icon sf={{ default: "books.vertical", selected: "books.vertical.fill" }} />
         <Label>Library</Label>

@@ -1783,24 +1783,28 @@ router.get("/kinfolk/skip-feedback", async (req: Request, res: Response) => {
 
 router.get("/kinfolk/shared/:shareId", async (req: Request, res: Response) => {
   const { shareId } = req.params as { shareId: string };
+  try {
+    const [session] = await db
+      .select()
+      .from(kinfolkSessionsTable)
+      .where(eq(kinfolkSessionsTable.shareId, shareId))
+      .limit(1);
 
-  const [session] = await db
-    .select()
-    .from(kinfolkSessionsTable)
-    .where(eq(kinfolkSessionsTable.shareId, shareId))
-    .limit(1);
+    if (!session) return void res.status(404).json({ error: "Trip not found" });
 
-  if (!session) return void res.status(404).json({ error: "Trip not found" });
+    const msgs = session.messages ?? [];
+    const lastRec = [...msgs].reverse().find(m => m.role === "assistant" && m.recommendations);
 
-  const msgs = session.messages ?? [];
-  const lastRec = [...msgs].reverse().find(m => m.role === "assistant" && m.recommendations);
-
-  return void res.json({
-    title: session.title,
-    destination: session.destination,
-    lastRecommendations: lastRec?.recommendations ?? null,
-    followUpSuggestions: lastRec?.followUpSuggestions ?? [],
-  });
+    return void res.json({
+      title: session.title,
+      destination: session.destination,
+      lastRecommendations: lastRec?.recommendations ?? null,
+      followUpSuggestions: lastRec?.followUpSuggestions ?? [],
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch shared trip");
+    res.status(500).json({ error: "Failed to fetch shared trip" });
+  }
 });
 
 export default router;
