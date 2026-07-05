@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -17,6 +18,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
+
+const WIDGET_ORDER_KEY = "@melanin_maps_safety_widget_order";
 
 function getApiBase() {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -59,6 +62,31 @@ type MeetupVerification = {
   partnerLastName: string | null;
 };
 
+const ALL_FEATURES: { id: string; icon: React.ComponentProps<typeof Feather>["name"]; title: string; desc: string; color: string; route: string | null; externalUrl?: string }[] = [
+  { id: "tip", icon: "alert-triangle", title: "Submit Safety Tip", desc: "Pin a location where violence or hate occurred. Nearby verified members are alerted to confirm.", color: "#DC2626", route: "/safety-tip" },
+  { id: "checkin", icon: "check-circle", title: "Safety Check-In", desc: "Schedule a check-in. Your contact is alerted if you don't confirm.", color: "#16A34A", route: "/checkin" },
+  { id: "location", icon: "map-pin", title: "Location Sharing", desc: "Share your live location with a trusted contact temporarily.", color: "#2563EB", route: "/location-share" },
+  { id: "meetup", icon: "users", title: "Meetup Verification", desc: "Mutually verify in-person meetups with connections you trust.", color: "#7C3AED", route: "/member-connections" },
+  { id: "police", icon: "shield-off", title: "Report Police or ICE", desc: "Report a police encounter, ICE activity, racial profiling, or checkpoint in your area.", color: "#991B1B", route: "/report-police" },
+  { id: "report", icon: "flag", title: "Anonymous Report", desc: "Report unsafe content or behavior without revealing your identity.", color: "#DC2626", route: "/report-safety" },
+  { id: "space", icon: "alert-octagon", title: "Report an Unsafe Space", desc: "Flag any business or venue where you experienced unsafe, discriminatory, or unwelcoming treatment.", color: "#7C2D12", route: "/report-space" },
+  { id: "family", icon: "eye", title: "Under-18 Content Shield", desc: "All messages and posts from users under 18 are automatically scanned and filtered for harmful content.", color: "#CA922B", route: null },
+  { id: "survey", icon: "star", title: "Neighborhood Safety", desc: "Share and read community safety reports for any neighborhood.", color: "#0891B2", route: "/neighborhood-survey" },
+  { id: "registry", icon: "search", title: "Sex Offender Registry", desc: "Search the national registry to see registered offenders in any neighborhood or zip code.", color: "#4338CA", route: null, externalUrl: "https://www.nsopw.gov" },
+  { id: "officer-watch", icon: "eye", title: "Officer Watch", desc: "Track law enforcement officers flagged for violence against minorities and their department transfers.", color: "#DC2626", route: "/officer-watch" },
+];
+
+function applyOrder(ids: string[]) {
+  const map = new Map(ALL_FEATURES.map((f) => [f.id, f]));
+  const ordered = ids.map((id) => map.get(id)).filter(Boolean) as typeof ALL_FEATURES;
+  // Append any new features not yet in saved order
+  const known = new Set(ids);
+  for (const f of ALL_FEATURES) {
+    if (!known.has(f.id)) ordered.push(f);
+  }
+  return ordered;
+}
+
 export default function SafetyHubScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -71,6 +99,19 @@ export default function SafetyHubScreen() {
   const [shares, setShares] = useState<LocationShare[]>([]);
   const [meetups, setMeetups] = useState<MeetupVerification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [features, setFeatures] = useState(ALL_FEATURES);
+
+  // Load saved widget order
+  useEffect(() => {
+    AsyncStorage.getItem(WIDGET_ORDER_KEY).then((raw) => {
+      if (!raw) return;
+      try {
+        const ids = JSON.parse(raw) as string[];
+        setFeatures(applyOrder(ids));
+      } catch {}
+    });
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -90,6 +131,23 @@ export default function SafetyHubScreen() {
   }, []);
 
   useEffect(() => { void fetchData(); }, [fetchData]);
+
+  const moveWidget = (index: number, direction: "up" | "down") => {
+    if (Platform.OS !== "web") Haptics.selectionAsync();
+    setFeatures((prev) => {
+      const next = [...prev];
+      const swapIdx = direction === "up" ? index - 1 : index + 1;
+      if (swapIdx < 0 || swapIdx >= next.length) return prev;
+      [next[index], next[swapIdx]] = [next[swapIdx], next[index]];
+      return next;
+    });
+  };
+
+  const saveOrder = async () => {
+    await AsyncStorage.setItem(WIDGET_ORDER_KEY, JSON.stringify(features.map((f) => f.id)));
+    if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setEditMode(false);
+  };
 
   const handleConfirmCheckin = async (id: number) => {
     if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -130,36 +188,42 @@ export default function SafetyHubScreen() {
     });
   };
 
-  const FEATURES: { id: string; icon: React.ComponentProps<typeof Feather>["name"]; title: string; desc: string; color: string; route: string | null; externalUrl?: string }[] = [
-    { id: "tip", icon: "alert-triangle" as const, title: "Submit Safety Tip", desc: "Pin a location where violence or hate occurred. Nearby verified members are alerted to confirm.", color: "#DC2626", route: "/safety-tip" },
-    { id: "checkin", icon: "check-circle" as const, title: "Safety Check-In", desc: "Schedule a check-in. Your contact is alerted if you don't confirm.", color: "#16A34A", route: "/checkin" },
-    { id: "location", icon: "map-pin" as const, title: "Location Sharing", desc: "Share your live location with a trusted contact temporarily.", color: "#2563EB", route: "/location-share" },
-    { id: "meetup", icon: "users" as const, title: "Meetup Verification", desc: "Mutually verify in-person meetups with connections you trust.", color: "#7C3AED", route: "/member-connections" },
-    { id: "police", icon: "shield-off" as const, title: "Report Police or ICE", desc: "Report a police encounter, ICE activity, racial profiling, or checkpoint in your area.", color: "#991B1B", route: "/report-police" },
-    { id: "report", icon: "flag" as const, title: "Anonymous Report", desc: "Report unsafe content or behavior without revealing your identity.", color: "#DC2626", route: "/report-safety" },
-    { id: "space", icon: "alert-octagon" as const, title: "Report an Unsafe Space", desc: "Flag any business or venue where you experienced unsafe, discriminatory, or unwelcoming treatment.", color: "#7C2D12", route: "/report-space" },
-    { id: "family", icon: "eye" as const, title: "Under-18 Content Shield", desc: "All messages and posts from users under 18 are automatically scanned and filtered for harmful content.", color: "#CA922B", route: null },
-    { id: "survey", icon: "star" as const, title: "Neighborhood Safety", desc: "Share and read community safety reports for any neighborhood.", color: "#0891B2", route: "/neighborhood-survey" },
-    { id: "registry", icon: "search" as const, title: "Sex Offender Registry", desc: "Search the national registry to see registered offenders in any neighborhood or zip code.", color: "#4338CA", route: null, externalUrl: "https://www.nsopw.gov" },
-    { id: "officer-watch", icon: "eye" as const, title: "Officer Watch", desc: "Track law enforcement officers flagged for violence against minorities and their department transfers.", color: "#DC2626", route: "/officer-watch" },
-  ];
-
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => { if (editMode) setEditMode(false); else router.back(); }} style={styles.backBtn} activeOpacity={0.7}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Safety Hub</Text>
-        <View style={{ width: 34 }} />
+        {editMode ? (
+          <TouchableOpacity onPress={saveOrder} style={[styles.editBtn, { backgroundColor: colors.primary ?? "#CA922B" }]} activeOpacity={0.8}>
+            <Text style={styles.editBtnText}>Done</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={() => setEditMode(true)} style={[styles.editBtn, { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }]} activeOpacity={0.8}>
+            <Feather name="sliders" size={14} color={colors.foreground} />
+            <Text style={[styles.editBtnText, { color: colors.foreground }]}>Edit</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {loading ? (
         <View style={styles.center}><ActivityIndicator size="large" color="#CA922B" /></View>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          {/* Active alerts */}
-          {(pendingCheckins.length > 0 || pendingMeetups.length > 0) && (
+
+          {/* Edit mode banner */}
+          {editMode && (
+            <View style={[styles.editBanner, { backgroundColor: "#CA922B18", borderColor: "#CA922B40" }]}>
+              <Feather name="move" size={16} color="#CA922B" />
+              <Text style={[styles.editBannerText, { color: colors.foreground }]}>
+                Use the arrows to reorder your widgets. Tap <Text style={{ fontFamily: "Inter_700Bold" }}>Done</Text> to save.
+              </Text>
+            </View>
+          )}
+
+          {/* Active alerts — always at top, not reorderable */}
+          {!editMode && (pendingCheckins.length > 0 || pendingMeetups.length > 0) && (
             <View style={styles.alertsSection}>
               {pendingCheckins.map((c) => (
                 <View key={c.id} style={[styles.alertCard, { backgroundColor: "#FEF2F2", borderColor: "#FECACA" }]}>
@@ -200,7 +264,7 @@ export default function SafetyHubScreen() {
           )}
 
           {/* Active location shares */}
-          {activeShares.length > 0 && (
+          {!editMode && activeShares.length > 0 && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Active Location Shares</Text>
               {activeShares.map((s) => (
@@ -223,37 +287,84 @@ export default function SafetyHubScreen() {
             </View>
           )}
 
-          {/* Feature grid */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Safety Features</Text>
-            <View style={styles.featureGrid}>
-              {FEATURES.map((f) => (
-                <TouchableOpacity
+          {/* Feature grid — normal mode */}
+          {!editMode && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Safety Features</Text>
+              <View style={styles.featureGrid}>
+                {features.map((f) => (
+                  <TouchableOpacity
+                    key={f.id}
+                    style={[styles.featureCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                    onPress={() => {
+                      if (f.externalUrl) { openExternal(f.externalUrl); return; }
+                      if (f.route) router.push(f.route as Parameters<typeof router.push>[0]);
+                    }}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[styles.featureIcon, { backgroundColor: f.color + "18" }]}>
+                      <Feather name={f.icon} size={22} color={f.color} />
+                    </View>
+                    <Text style={[styles.featureTitle, { color: colors.foreground }]}>{f.title}</Text>
+                    <Text style={[styles.featureDesc, { color: colors.mutedForeground }]}>{f.desc}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Feature list — edit mode */}
+          {editMode && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Safety Features</Text>
+              {features.map((f, index) => (
+                <View
                   key={f.id}
-                  style={[styles.featureCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => {
-                    if (f.externalUrl) { openExternal(f.externalUrl); return; }
-                    if (f.route) router.push(f.route as Parameters<typeof router.push>[0]);
-                  }}
-                  activeOpacity={0.75}
+                  style={[styles.editRow, { backgroundColor: colors.card, borderColor: colors.border }]}
                 >
-                  <View style={[styles.featureIcon, { backgroundColor: f.color + "18" }]}>
-                    <Feather name={f.icon} size={22} color={f.color} />
+                  {/* Colored icon */}
+                  <View style={[styles.editRowIcon, { backgroundColor: f.color + "18" }]}>
+                    <Feather name={f.icon} size={20} color={f.color} />
                   </View>
-                  <Text style={[styles.featureTitle, { color: colors.foreground }]}>{f.title}</Text>
-                  <Text style={[styles.featureDesc, { color: colors.mutedForeground }]}>{f.desc}</Text>
-                </TouchableOpacity>
+
+                  {/* Title */}
+                  <Text style={[styles.editRowTitle, { color: colors.foreground }]} numberOfLines={2}>
+                    {f.title}
+                  </Text>
+
+                  {/* Up / Down controls */}
+                  <View style={styles.editControls}>
+                    <TouchableOpacity
+                      onPress={() => moveWidget(index, "up")}
+                      disabled={index === 0}
+                      style={[styles.arrowBtn, { opacity: index === 0 ? 0.25 : 1, borderColor: colors.border }]}
+                      activeOpacity={0.7}
+                    >
+                      <Feather name="chevron-up" size={18} color={colors.foreground} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => moveWidget(index, "down")}
+                      disabled={index === features.length - 1}
+                      style={[styles.arrowBtn, { opacity: index === features.length - 1 ? 0.25 : 1, borderColor: colors.border }]}
+                      activeOpacity={0.7}
+                    >
+                      <Feather name="chevron-down" size={18} color={colors.foreground} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
               ))}
             </View>
-          </View>
+          )}
 
           {/* Community safety pledge */}
-          <View style={[styles.pledge, { backgroundColor: "#CA922B0F", borderColor: "#CA922B30" }]}>
-            <Feather name="heart" size={18} color="#CA922B" />
-            <Text style={[styles.pledgeText, { color: colors.foreground }]}>
-              Mapping With Melanin is built on trust and community care. Every safety feature here exists because our members deserved better — use them, share them, and look out for each other.
-            </Text>
-          </View>
+          {!editMode && (
+            <View style={[styles.pledge, { backgroundColor: "#CA922B0F", borderColor: "#CA922B30" }]}>
+              <Feather name="heart" size={18} color="#CA922B" />
+              <Text style={[styles.pledgeText, { color: colors.foreground }]}>
+                Mapping With Melanin is built on trust and community care. Every safety feature here exists because our members deserved better — use them, share them, and look out for each other.
+              </Text>
+            </View>
+          )}
         </ScrollView>
       )}
     </View>
@@ -265,8 +376,12 @@ const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1 },
   backBtn: { padding: 4 },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 18 },
+  editBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+  editBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   scroll: { padding: 20, gap: 24, paddingBottom: 60 },
+  editBanner: { flexDirection: "row", alignItems: "center", gap: 10, padding: 14, borderRadius: 14, borderWidth: 1 },
+  editBannerText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, flex: 1 },
   alertsSection: { gap: 10 },
   alertCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 16, borderWidth: 1 },
   alertTitle: { fontFamily: "Inter_700Bold", fontSize: 14 },
@@ -284,6 +399,11 @@ const styles = StyleSheet.create({
   featureIcon: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   featureTitle: { fontFamily: "Inter_700Bold", fontSize: 14 },
   featureDesc: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  editRow: { flexDirection: "row", alignItems: "center", gap: 14, padding: 14, borderRadius: 16, borderWidth: 1 },
+  editRowIcon: { width: 42, height: 42, borderRadius: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  editRowTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14, flex: 1, lineHeight: 19 },
+  editControls: { flexDirection: "column", gap: 4, flexShrink: 0 },
+  arrowBtn: { width: 32, height: 32, borderRadius: 8, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   pledge: { borderRadius: 16, borderWidth: 1, padding: 16, flexDirection: "row", gap: 12, alignItems: "flex-start" },
   pledgeText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, flex: 1 },
 });
