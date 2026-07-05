@@ -134,7 +134,7 @@ export default function KinfolkSettingsScreen() {
           </View>
           <Text style={[styles.heroTitle, { color: colors.foreground }]}>Meet KinfolkAI™</Text>
           <Text style={[styles.heroDesc, { color: colors.mutedForeground }]}>
-            Your personal AI guide built for the Black community — helping you discover, travel, and connect with confidence.
+            Your personal AI guide built for the community — helping you discover, travel, and connect with confidence.
           </Text>
         </View>
 

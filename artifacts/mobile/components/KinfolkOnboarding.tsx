@@ -142,7 +142,7 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
               </View>
               <Text style={[styles.heading, { color: colors.text }]}>Hey, kinfolk 👋🏾</Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
-                I'm KinfolkAI™ — your personal Black travel companion. Let me learn your taste so every recommendation feels like it was made just for you.
+                I'm KinfolkAI™ — your personal travel companion. Let me learn your taste so every recommendation feels like it was made just for you.
               </Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground, marginTop: 8 }]}>
                 Takes less than a minute. You can always update this later.
