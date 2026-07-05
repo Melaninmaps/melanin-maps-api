@@ -1661,7 +1661,7 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: "Inter_700Bold", fontSize: 26 },
   searchBtn: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  tabRow: { borderBottomWidth: 1 },
+  tabRow: { borderBottomWidth: 1, flexShrink: 0 },
   tabBtn: { alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: "transparent" },
   tabText: { fontFamily: "Inter_500Medium", fontSize: 13 },
   categoryScroll: { borderBottomWidth: 1, maxHeight: 54 },
