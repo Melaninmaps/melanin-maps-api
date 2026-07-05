@@ -133,7 +133,7 @@ export default function DiscoverScreen() {
       filters.ownershipTypes.length === 0 ||
       filters.ownershipTypes.some(
         (t) =>
-          (t === "minority-owned" && b.blackOwned) ||
+          (t === "black-owned" && b.blackOwned) ||
           (t === "minority-owned" && b.blackOwned) ||
           b.ownershipDesignations.includes(t)
       );

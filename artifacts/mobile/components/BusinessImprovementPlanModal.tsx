@@ -89,8 +89,8 @@ const ISSUE_TYPES = [
 ];
 
 const OWNERSHIP_OPTIONS = [
-  { id: "minority-owned", emoji: "✊", label: "Minority-owned businesses" },
-  { id: "black-owned", emoji: "🤎", label: "Black-owned businesses" },
+  { id: "black-owned", emoji: "✊🏾", label: "Black-owned businesses" },
+  { id: "minority-owned", emoji: "🏅", label: "Minority-owned businesses" },
   { id: "women-owned", emoji: "♀️", label: "Women-owned businesses" },
   { id: "veteran-owned", emoji: "🎖️", label: "Veteran-owned businesses" },
   { id: "lgbtq-owned", emoji: "🌈", label: "LGBTQ+-owned businesses" },

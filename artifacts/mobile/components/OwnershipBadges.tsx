@@ -3,6 +3,7 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 export type OwnershipType =
+  | "black-owned"
   | "minority-owned"
   | "women-owned"
   | "veteran-owned"
@@ -20,6 +21,12 @@ interface BadgeConfig {
 }
 
 const BADGE_CONFIG: Record<OwnershipType, BadgeConfig> = {
+  "black-owned": {
+    label: "Black Owned",
+    emoji: "✊🏾",
+    bg: "#1A0A00",
+    accent: "#CA922B",
+  },
   "minority-owned": {
     label: "Minority Owned",
     emoji: "🏅",

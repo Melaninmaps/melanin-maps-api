@@ -33,7 +33,8 @@ const markComplete = () =>
   AsyncStorage.setItem("@mapping_with_melanin_onboarding_complete", "true").catch(() => {});
 
 const DESIGNATIONS = [
-  { id: "minority-owned", emoji: "✊🏾", label: "Minority-Owned", sub: "Minority-owned businesses" },
+  { id: "black-owned", emoji: "✊🏾", label: "Black-Owned", sub: "Black-owned businesses — first & always" },
+  { id: "minority-owned", emoji: "🏅", label: "Minority-Owned", sub: "Minority-owned businesses" },
   { id: "women-owned", emoji: "👩🏾‍💼", label: "Women-Owned", sub: "Woman-led businesses" },
   { id: "veteran-owned", emoji: "🎖️", label: "Veteran-Owned", sub: "Military veteran founders" },
   { id: "lgbtq-owned", emoji: "🏳️‍🌈", label: "LGBTQ+-Owned", sub: "LGBTQ+ led businesses" },
