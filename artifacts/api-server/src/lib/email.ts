@@ -94,6 +94,8 @@ export async function sendWelcomeEmail(to: string, firstName: string | null) {
 export async function sendPasswordResetEmail(to: string, firstName: string | null, code: string) {
   if (!resend) { log("password reset email"); return; }
   const name = firstName ?? "there";
+  const encodedEmail = encodeURIComponent(to);
+  const deepLink = `mappingwithmelanin://reset-password?email=${encodedEmail}&code=${code}`;
   await resend.emails.send({
     from: FROM,
     replyTo: "hello@mappingwithmelanin.com",
@@ -103,14 +105,25 @@ export async function sendPasswordResetEmail(to: string, firstName: string | nul
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
         <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
         <h1 style="font-size:26px;color:#2B1507;font-weight:700;margin:0 0 12px;line-height:1.3">Password Reset</h1>
-        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
-          Hi ${name}, use the code below in the app to reset your password. It expires in <strong>15 minutes</strong>.
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 28px">
+          Hi ${name}, tap the button below to set a new password. The link expires in <strong>15 minutes</strong>.
         </p>
-        <div style="background:#2B1507;border-radius:14px;padding:32px;text-align:center;margin-bottom:28px">
-          <p style="color:#F5EBD8;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 16px">Your Reset Code</p>
-          <p style="color:#CA922B;font-size:48px;font-weight:700;letter-spacing:12px;margin:0;font-family:monospace">${code}</p>
+
+        <div style="text-align:center;margin-bottom:32px">
+          <a href="${deepLink}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:17px;padding:18px 44px;border-radius:50px;text-decoration:none;letter-spacing:0.3px">
+            Reset My Password →
+          </a>
         </div>
-        <p style="color:#3A1F0E;font-size:14px;line-height:1.6;margin:0 0 16px;opacity:0.7">
+
+        <div style="background:#2B1507;border-radius:14px;padding:24px 32px;text-align:center;margin-bottom:28px">
+          <p style="color:#F5EBD8;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 10px;opacity:0.7">Or enter this code manually in the app</p>
+          <p style="color:#CA922B;font-size:44px;font-weight:700;letter-spacing:12px;margin:0;font-family:monospace">${code}</p>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:13px;line-height:1.6;margin:0 0 24px;opacity:0.6">
+          Button not working? Make sure the Mapping With Melanin app is installed, then tap the button again. The code above works as a fallback inside the app.
+        </p>
+        <p style="color:#3A1F0E;font-size:13px;line-height:1.6;margin:0 0 24px;opacity:0.6">
           If you didn't request a password reset, you can safely ignore this email. Your account is not at risk.
         </p>
         <p style="color:#2B1507;font-size:15px;font-weight:700;font-style:italic;margin:24px 0 4px">Map Your Life. Connect Deeper.™</p>

@@ -362,6 +362,14 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="reset-password"
+        options={{
+          headerShown: false,
+          presentation: "card",
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
         name="membership"
         options={{
           headerShown: false,
