@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { db, businessNominationsTable, businessesTable } from "@workspace/db";
-import { eq, ilike, and, desc } from "drizzle-orm";
-import { sql } from "drizzle-orm";
+import { eq, ilike, and, desc, gte, sql } from "drizzle-orm";
+import { getUserTier } from "../middleware/requireMembership";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
   .split(",")
@@ -19,6 +19,47 @@ const router = Router();
 
 router.post("/business-nominations", async (req: Request, res: Response) => {
   const userId = (req as any).user?.id as string | undefined;
+
+  // Tier gate — requires authenticated paid member
+  if (!userId) {
+    res.status(401).json({ error: "Sign in to nominate a business." });
+    return;
+  }
+  try {
+    const tier = await getUserTier(userId);
+    if (tier === "free") {
+      res.status(403).json({
+        error: "Nominating businesses requires an Explorer+ or higher membership.",
+        code: "TIER_LIMIT_REACHED",
+        upgradeUrl: "/membership",
+      });
+      return;
+    }
+    if (tier === "navigator") {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(businessNominationsTable)
+        .where(and(
+          eq(businessNominationsTable.nominatedByUserId, userId),
+          gte(businessNominationsTable.createdAt, startOfMonth),
+        ));
+      if (count >= 3) {
+        res.status(403).json({
+          error: "Explorer+ members can nominate up to 3 businesses per month. Upgrade to Navigator for unlimited nominations.",
+          code: "TIER_LIMIT_REACHED",
+          upgradeUrl: "/membership",
+        });
+        return;
+      }
+    }
+    // Trailblazer: unlimited
+  } catch {
+    // If tier check fails, allow through — don't block on infra error
+  }
+
   const {
     businessName, category, city, state, phone, website,
     ownerName, ownerContact, notes, nominatorEmail, blackOwned,

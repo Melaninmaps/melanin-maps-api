@@ -140,7 +140,11 @@ export default function SubmitEventScreen() {
         body: JSON.stringify(body),
       });
       if (!res.ok) {
-        const err = await res.json() as { error?: string };
+        const err = await res.json() as { error?: string; code?: string };
+        if (err.code === "TIER_LIMIT_REACHED") {
+          router.push("/membership");
+          return;
+        }
         throw new Error(err.error ?? "Submission failed");
       }
       setSubmitted(true);

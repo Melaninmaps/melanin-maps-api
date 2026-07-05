@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, eventsTable, savedCommunityLocationsTable, notificationsTable, userPreferencesTable } from "@workspace/db";
-import { eq, desc, and, ilike, or } from "drizzle-orm";
+import { eq, desc, and, ilike, or, gte, sql } from "drizzle-orm";
+import { getUserTier } from "../middleware/requireMembership";
 
 const router: IRouter = Router();
 
@@ -111,6 +112,35 @@ router.post("/events", async (req: Request, res: Response) => {
       res.status(401).json({ error: "Authentication required" });
       return;
     }
+
+    // Tier gate
+    const tier = await getUserTier(req.user.id);
+    if (tier === "free") {
+      res.status(403).json({
+        error: "Hosting events requires an Explorer+ or higher membership.",
+        code: "TIER_LIMIT_REACHED",
+        upgradeUrl: "/membership",
+      });
+      return;
+    }
+    if (tier === "navigator") {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(eventsTable)
+        .where(and(eq(eventsTable.createdById, req.user.id), gte(eventsTable.createdAt, startOfMonth)));
+      if (count >= 3) {
+        res.status(403).json({
+          error: "Explorer+ members can host up to 3 events per month. Upgrade to Navigator for unlimited events.",
+          code: "TIER_LIMIT_REACHED",
+          upgradeUrl: "/membership",
+        });
+        return;
+      }
+    }
+    // Trailblazer: unlimited, no cap
 
     const {
       title, description, date, dateShort, time, location,

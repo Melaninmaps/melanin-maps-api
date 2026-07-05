@@ -108,8 +108,19 @@ export default function NominateBusinessScreen() {
           blackOwned: form.isBlackOwned,
         }),
       });
-      const data = await res.json() as ResultState & { error?: string; nomination?: { id: string }; businessId?: string };
+      const data = await res.json() as ResultState & { error?: string; code?: string; nomination?: { id: string }; businessId?: string };
       if (!res.ok) {
+        if (data.code === "TIER_LIMIT_REACHED") {
+          Alert.alert(
+            "Membership Required",
+            data.error ?? "Upgrade to Explorer+ to nominate businesses.",
+            [
+              { text: "Maybe Later", style: "cancel" },
+              { text: "View Plans", onPress: () => router.push("/membership") },
+            ],
+          );
+          return;
+        }
         Alert.alert("Error", data.error ?? "Could not submit. Please try again.");
         return;
       }
