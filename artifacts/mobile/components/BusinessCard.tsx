@@ -6,6 +6,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 import type { Business } from "@/constants/types";
 import { BlackOwnedBadge } from "./BlackOwnedBadge";
+import { NonMinorityBadge } from "./NonMinorityBadge";
 import { ConfidenceScoreBadge } from "./ConfidenceScoreBadge";
 import { RatingStars } from "./RatingStars";
 import { VerificationBadge } from "./VerificationBadge";
@@ -122,11 +123,15 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
           accessibilityHint="Double tap to view details, hold to preview"
         >
           <Image source={img} style={styles.hImage} contentFit="cover" />
-          {business.blackOwned && (
+          {business.blackOwned ? (
             <View style={styles.hBadgeOverlay}>
               <BlackOwnedBadge size="sm" />
             </View>
-          )}
+          ) : business.ownershipDesignations?.includes("non-minority-owned") ? (
+            <View style={styles.hBadgeOverlay}>
+              <NonMinorityBadge size="sm" />
+            </View>
+          ) : null}
           <View style={styles.hContent}>
             {warningCount >= 3 && (
               <View style={styles.warningBanner}>
@@ -246,11 +251,15 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
       >
         <View style={styles.vImageWrap}>
           <Image source={img} style={styles.vImage} contentFit="cover" />
-          {business.blackOwned && (
+          {business.blackOwned ? (
             <View style={styles.vBadgeOverlay}>
               <BlackOwnedBadge size="sm" />
             </View>
-          )}
+          ) : business.ownershipDesignations?.includes("non-minority-owned") ? (
+            <View style={styles.vBadgeOverlay}>
+              <NonMinorityBadge size="sm" />
+            </View>
+          ) : null}
         </View>
         <View style={styles.vContent}>
           {warningCount >= 3 && (

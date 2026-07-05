@@ -97,7 +97,7 @@ router.post("/business-nominations", async (req: Request, res: Response) => {
         website: website?.trim() || null,
         tags: [],
         reviews: [],
-        ownershipDesignations: [],
+        ownershipDesignations: isBlackOwned ? [] : ["non-minority-owned"],
         verifiedDesignations: [],
         photos: [],
         trustBadges: [],

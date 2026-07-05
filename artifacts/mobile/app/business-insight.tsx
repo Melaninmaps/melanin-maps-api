@@ -315,7 +315,7 @@ export default function BusinessInsightScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[s.ownerCardTitle, { color: colors.foreground }]}>Share an Anonymous Survey</Text>
-                <Text style={[s.ownerCardSub, { color: colors.mutedForeground }]}>Submit a safety or employee experience report about any business — 100% anonymous</Text>
+                <Text style={[s.ownerCardSub, { color: colors.mutedForeground }]}>Submit a Safety or employee experience report about any business — 100% anonymous</Text>
               </View>
               <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
             </TouchableOpacity>
