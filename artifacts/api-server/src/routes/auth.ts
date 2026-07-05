@@ -554,7 +554,7 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
       return;
     }
     if (!user.passwordHash) {
-      res.status(401).json({ error: "This account uses Google Sign-In. Please tap 'Continue with Google' to sign in." });
+      res.status(401).json({ error: "This account was created with Apple or social sign-in and doesn't have a password yet. Use 'Forgot password?' to set one, or sign in with Apple." });
       return;
     }
 
@@ -596,11 +596,13 @@ router.post("/auth/forgot-password", async (req: Request, res: Response) => {
       .where(ilike(usersTable.email, email.trim()))
       .limit(1);
 
-    // Always return success to prevent email enumeration
-    if (!user || !user.passwordHash) {
+    // Unknown email — return success to prevent enumeration
+    if (!user) {
       res.json({ success: true });
       return;
     }
+    // Account exists but has no password (Apple/OIDC signup) — still send a reset
+    // code so they can SET a password and gain email/password access going forward
 
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const codeHash = crypto.createHash("sha256").update(code).digest("hex");
