@@ -9,6 +9,7 @@ import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
 import { useColors } from "@/hooks/useColors";
+import SafetyHubIcon from "@/components/SafetyHubIcon";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -25,6 +26,10 @@ function NativeTabLayout() {
       <NativeTabs.Trigger name="map">
         <Icon sf={{ default: "map", selected: "map.fill" }} />
         <Label>Map</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="safety-hub">
+        <Icon sf={{ default: "location.circle", selected: "location.circle.fill" }} />
+        <Label>Safety</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="library">
         <Icon sf={{ default: "books.vertical", selected: "books.vertical.fill" }} />
@@ -124,6 +129,15 @@ function ClassicTabLayout() {
             ) : (
               <Feather name="map" size={22} color={color} />
             ),
+        }}
+      />
+      <Tabs.Screen
+        name="safety-hub"
+        options={{
+          title: "Safety",
+          tabBarIcon: ({ color, size }) => (
+            <SafetyHubIcon color={color} size={size ?? 24} />
+          ),
         }}
       />
       <Tabs.Screen
