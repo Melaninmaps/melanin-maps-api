@@ -949,36 +949,10 @@ export default function CommunityScreen() {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
             ListHeaderComponent={
               <>
-                {/* Feed mode toggle */}
-                <View style={{ flexDirection: "row", paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4, gap: 8 }}>
-                  {(["everyone", "following"] as const).map((mode) => (
-                    <TouchableOpacity
-                      key={mode}
-                      onPress={() => {
-                        setFeedMode(mode);
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      }}
-                      style={{
-                        paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20,
-                        backgroundColor: feedMode === mode ? colors.primary : colors.card,
-                        borderWidth: 1,
-                        borderColor: feedMode === mode ? colors.primary : colors.border,
-                      }}
-                    >
-                      <Text style={{
-                        fontFamily: "Inter_600SemiBold", fontSize: 13,
-                        color: feedMode === mode ? "#FFFFFF" : colors.mutedForeground,
-                      }}>
-                        {mode === "everyone" ? "For You" : "Following"}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-                {/* Always-visible compose bar */}
+                {/* Always-visible compose bar — shown first to prompt engagement */}
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  style={[styles.composeBar, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  style={[styles.composeBar, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 12 }]}
                   onPress={() => {
                     if (!isAuthenticated) {
                       setUpgradeFeature("Community Posts");
@@ -1002,6 +976,32 @@ export default function CommunityScreen() {
                     <Feather name="at-sign" size={13} color={colors.primary} />
                   </View>
                 </TouchableOpacity>
+
+                {/* Feed mode toggle */}
+                <View style={{ flexDirection: "row", paddingHorizontal: 16, paddingTop: 10, paddingBottom: 4, gap: 8 }}>
+                  {(["everyone", "following"] as const).map((mode) => (
+                    <TouchableOpacity
+                      key={mode}
+                      onPress={() => {
+                        setFeedMode(mode);
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      }}
+                      style={{
+                        paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20,
+                        backgroundColor: feedMode === mode ? colors.primary : colors.card,
+                        borderWidth: 1,
+                        borderColor: feedMode === mode ? colors.primary : colors.border,
+                      }}
+                    >
+                      <Text style={{
+                        fontFamily: "Inter_600SemiBold", fontSize: 13,
+                        color: feedMode === mode ? "#FFFFFF" : colors.mutedForeground,
+                      }}>
+                        {mode === "everyone" ? "For You" : "Following"}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
 
                 {activeTab === "Alerts" && alerts.length > 0 && (
                   <View style={styles.alertSection}>
