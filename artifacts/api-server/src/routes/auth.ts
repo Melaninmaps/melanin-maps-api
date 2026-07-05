@@ -127,6 +127,7 @@ router.get("/auth/user", async (req: Request, res: Response) => {
         displayNameFormat: usersTable.displayNameFormat,
         trustLevel: usersTable.trustLevel,
         reputationScore: usersTable.reputationScore,
+        profileSetupComplete: usersTable.profileSetupComplete,
       })
       .from(usersTable)
       .where(eq(usersTable.id, req.user!.id))
@@ -148,6 +149,7 @@ router.get("/auth/user", async (req: Request, res: Response) => {
         displayNameFormat: dbRow?.displayNameFormat ?? "full",
         trustLevel: dbRow?.trustLevel ?? 1,
         reputationScore: dbRow?.reputationScore ?? 0,
+        profileSetupComplete: dbRow?.profileSetupComplete ?? false,
       },
     });
   } catch {

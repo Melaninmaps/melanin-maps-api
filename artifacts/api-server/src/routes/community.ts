@@ -9,6 +9,7 @@ import { checkContent, redactForLog } from "../lib/contentFilter";
 import { scanForFamily } from "../lib/familyFilter";
 import { objectStorageClient } from "../lib/objectStorage";
 import { screenImageUrl } from "../lib/contentScreen";
+import { sendPushToUser } from "../lib/pushNotifications";
 
 const router: IRouter = Router();
 
@@ -377,6 +378,7 @@ router.post("/community/media/upload/video", videoUpload.single("video"), async 
 router.post("/community/posts/:id/vote", async (req: Request, res: Response) => {
   try {
     const id = req.params["id"] as string;
+    const voterId = req.user?.id as string | undefined;
     const { direction } = req.body as { direction: "up" | "down" };
     if (!["up", "down"].includes(direction)) {
       res.status(400).json({ error: "direction must be 'up' or 'down'" });
@@ -389,6 +391,17 @@ router.post("/community/posts/:id/vote", async (req: Request, res: Response) => 
       .where(eq(communityPostsTable.id, id))
       .returning();
     if (!post) { res.status(404).json({ error: "Post not found" }); return; }
+
+    // Send push notification to post author on upvote (but not if they liked their own post)
+    if (direction === "up" && post.authorId && post.authorId !== voterId) {
+      const preview = post.content.length > 60 ? post.content.slice(0, 60) + "…" : post.content;
+      sendPushToUser(post.authorId, {
+        title: "Someone liked your post 👍🏾",
+        body: preview,
+        data: { screen: "community", postId: id },
+      }).catch(() => {});
+    }
+
     res.json({ post });
   } catch (err) {
     req.log.error({ err }, "Failed to vote on post");
@@ -432,14 +445,28 @@ router.post("/community/posts/:id/comments", async (req: Request, res: Response)
       return;
     }
     const { name, initials, color } = await resolveAuthorInfo(req.user.id);
-    const [comment] = await db
-      .insert(communityPostCommentsTable)
-      .values({ postId, authorId: req.user.id, authorName: name, authorInitials: initials, authorColor: color, content: content.trim() })
-      .returning();
-    await db
-      .update(communityPostsTable)
-      .set({ commentsCount: sql`${communityPostsTable.commentsCount} + 1` })
-      .where(eq(communityPostsTable.id, postId));
+    const [[comment], [updatedPost]] = await Promise.all([
+      db
+        .insert(communityPostCommentsTable)
+        .values({ postId, authorId: req.user.id, authorName: name, authorInitials: initials, authorColor: color, content: content.trim() })
+        .returning(),
+      db
+        .update(communityPostsTable)
+        .set({ commentsCount: sql`${communityPostsTable.commentsCount} + 1` })
+        .where(eq(communityPostsTable.id, postId))
+        .returning({ authorId: communityPostsTable.authorId }),
+    ]);
+
+    // Notify post author when someone else comments
+    if (updatedPost?.authorId && updatedPost.authorId !== req.user.id) {
+      const preview = content.trim().length > 60 ? content.trim().slice(0, 60) + "…" : content.trim();
+      sendPushToUser(updatedPost.authorId, {
+        title: `${name} replied to your post 💬`,
+        body: preview,
+        data: { screen: "community", postId },
+      }).catch(() => {});
+    }
+
     res.status(201).json({ comment });
   } catch (err) {
     req.log.error({ err }, "Failed to add comment");

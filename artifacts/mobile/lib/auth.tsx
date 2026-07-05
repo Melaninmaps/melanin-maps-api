@@ -23,6 +23,7 @@ export interface User {
   homeCity?: string | null;
   isPrivate?: boolean;
   bio?: string | null;
+  profileSetupComplete?: boolean;
 }
 
 interface AuthContextValue {

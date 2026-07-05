@@ -75,6 +75,7 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
   const [loading, setLoading] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [commentError, setCommentError] = useState("");
   const [localLiked, setLocalLiked] = useState(false);
   const [localLikes, setLocalLikes] = useState(0);
 
@@ -119,10 +120,11 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
 
   const handleSubmitComment = async () => {
     if (!commentText.trim() || !post) return;
+    setCommentError("");
     setSubmitting(true);
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      const token = await SecureStore.getItemAsync("auth_session_token");
+      const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
       const res = await fetch(`${getApiBase()}/api/community/posts/${post.id}/comments`, {
         method: "POST",
         headers: {
@@ -136,9 +138,18 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
         setComments((prev) => [data.comment, ...prev]);
         setCommentText("");
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        const data = await res.json() as { error?: string };
+        if (res.status === 401) {
+          setCommentError("Please sign in again to post a comment.");
+        } else {
+          setCommentError(data.error ?? "Couldn't send your comment. Please try again.");
+        }
+        if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-    } catch { /* silent */ }
-    finally { setSubmitting(false); }
+    } catch {
+      setCommentError("No connection. Check your internet and try again.");
+    } finally { setSubmitting(false); }
   };
 
   if (!post) return null;
@@ -248,35 +259,45 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
         <View style={[m.inputBar, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: bottomPad + 8 }]}>
           {isAuthenticated ? (
             <>
-              <View style={m.inputWrap}>
-                <TextInput
-                  ref={inputRef}
-                  style={[m.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-                  value={commentText}
-                  onChangeText={setCommentText}
-                  placeholder="Add a comment…"
-                  placeholderTextColor={colors.mutedForeground}
-                  multiline
-                  maxLength={maxCommentLength}
-                  returnKeyType="send"
-                  onSubmitEditing={handleSubmitComment}
-                />
-                {commentText.length > 0 && (
-                  <Text style={[m.commentCounter, { color: commentText.length >= maxCommentLength * 0.95 ? "#DC2626" : commentText.length >= maxCommentLength * 0.8 ? "#D97706" : colors.mutedForeground }]}>
-                    {maxCommentLength - commentText.length}
-                  </Text>
-                )}
+              {commentError ? (
+                <View style={[m.commentErrorBanner, { backgroundColor: "#FEF2F2" }]}>
+                  <Text style={m.commentErrorTxt}>{commentError}</Text>
+                  <TouchableOpacity onPress={() => setCommentError("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Text style={[m.commentErrorTxt, { fontFamily: "Inter_700Bold" }]}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
+              <View style={[m.inputRow, { paddingBottom: bottomPad + 4 }]}>
+                <View style={m.inputWrap}>
+                  <TextInput
+                    ref={inputRef}
+                    style={[m.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                    value={commentText}
+                    onChangeText={setCommentText}
+                    placeholder="Add a comment…"
+                    placeholderTextColor={colors.mutedForeground}
+                    multiline
+                    maxLength={maxCommentLength}
+                    returnKeyType="send"
+                    onSubmitEditing={handleSubmitComment}
+                  />
+                  {commentText.length > 0 && (
+                    <Text style={[m.commentCounter, { color: commentText.length >= maxCommentLength * 0.95 ? "#DC2626" : commentText.length >= maxCommentLength * 0.8 ? "#D97706" : colors.mutedForeground }]}>
+                      {maxCommentLength - commentText.length}
+                    </Text>
+                  )}
+                </View>
+                <TouchableOpacity
+                  style={[m.sendBtn, { backgroundColor: commentText.trim() ? colors.primary : colors.muted, opacity: commentText.trim() ? 1 : 0.4 }]}
+                  onPress={handleSubmitComment}
+                  disabled={!commentText.trim() || submitting}
+                >
+                  {submitting
+                    ? <ActivityIndicator size="small" color="#FFF" />
+                    : <Feather name="send" size={16} color="#FFF" />
+                  }
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={[m.sendBtn, { backgroundColor: commentText.trim() ? colors.primary : colors.muted, opacity: commentText.trim() ? 1 : 0.4 }]}
-                onPress={handleSubmitComment}
-                disabled={!commentText.trim() || submitting}
-              >
-                {submitting
-                  ? <ActivityIndicator size="small" color="#FFF" />
-                  : <Feather name="send" size={16} color="#FFF" />
-                }
-              </TouchableOpacity>
             </>
           ) : (
             <Text style={[m.loginPrompt, { color: colors.mutedForeground }]}>Sign in to join the conversation</Text>
@@ -315,7 +336,10 @@ const m = StyleSheet.create({
   commentContent: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20 },
   emptyComments: { alignItems: "center", gap: 10, paddingVertical: 28 },
   emptyText: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 21, maxWidth: 260 },
-  inputBar: { flexDirection: "row", alignItems: "flex-end", gap: 10, paddingHorizontal: 16, paddingTop: 10, borderTopWidth: 1 },
+  commentErrorBanner: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginBottom: 6, width: "100%" },
+  commentErrorTxt: { color: "#DC2626", fontSize: 12, fontFamily: "Inter_400Regular", flex: 1 },
+  inputBar: { flexDirection: "column", paddingHorizontal: 16, paddingTop: 10, borderTopWidth: 1 },
+  inputRow: { flexDirection: "row", alignItems: "flex-end", gap: 10 },
   inputWrap: { flex: 1, position: "relative" },
   commentCounter: { position: "absolute", bottom: 6, right: 8, fontSize: 11, fontFamily: "Inter_400Regular" },
   input: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, paddingBottom: 22, fontSize: 14, fontFamily: "Inter_400Regular", maxHeight: 100 },

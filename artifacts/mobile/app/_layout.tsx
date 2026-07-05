@@ -215,13 +215,18 @@ function DobChecker() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoading, isAuthenticated } = useAuth();
-  const SKIP_PATHS = ["/onboarding", "/login", "/signup", "/dob-collection", "/pending-approval"];
+  const SKIP_PATHS = [
+    "/onboarding", "/login", "/signup", "/dob-collection",
+    "/pending-approval", "/profile-setup", "/auth-complete",
+    "/forgot-password", "/reset-password",
+  ];
 
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated || !user) return;
     if (SKIP_PATHS.some((p) => pathname.startsWith(p))) return;
-    if (!user.dateOfBirth) {
+    // Only enforce DOB collection once profile setup has been completed
+    if (user.profileSetupComplete && !user.dateOfBirth) {
       router.replace("/dob-collection" as Href);
     }
   }, [isLoading, isAuthenticated, user, pathname, router]);
