@@ -111,6 +111,9 @@ export default function MemberConnectionsScreen() {
   const [searchingWatcher, setSearchingWatcher] = useState(false);
   const [sending, setSending] = useState(false);
 
+  // Confirm state (per-meetup loading to prevent double-tap)
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
+
   // Clear modal state
   const [clearTarget, setClearTarget] = useState<MeetupVerification | null>(null);
   const [clearInput, setClearInput] = useState("");
@@ -210,17 +213,25 @@ export default function MemberConnectionsScreen() {
   };
 
   const confirmMeetup = async (id: number) => {
-    if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const token = await SecureStore.getItemAsync("auth_session_token");
-    const res = await fetch(`${getApiBase()}/api/meetups/${id}/confirm`, {
-      method: "PATCH", headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      const d = await res.json() as { verification: MeetupVerification };
-      setMeetups((prev) => prev.map((m) => m.id === id ? d.verification : m));
-    } else {
-      const d = await res.json() as { error?: string };
-      Alert.alert("Error", d.error ?? "Failed to confirm meetup.");
+    if (confirmingId !== null) return;
+    setConfirmingId(id);
+    try {
+      if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/meetups/${id}/confirm`, {
+        method: "PATCH", headers: { Authorization: `Bearer ${token}` },
+      });
+      const d = await res.json() as { verification?: MeetupVerification; error?: string };
+      if (res.ok && d.verification) {
+        setMeetups((prev) => prev.map((m) => m.id === id ? d.verification! : m));
+        if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        Alert.alert("Error", d.error ?? "Failed to confirm meetup.");
+      }
+    } catch {
+      Alert.alert("Error", "Network error. Please try again.");
+    } finally {
+      setConfirmingId(null);
     }
   };
 
@@ -346,12 +357,17 @@ export default function MemberConnectionsScreen() {
                     </View>
                   </View>
                   <TouchableOpacity
-                    style={styles.confirmBtn}
+                    style={[styles.confirmBtn, { opacity: confirmingId === m.id ? 0.6 : 1 }]}
                     onPress={() => void confirmMeetup(m.id)}
+                    disabled={confirmingId !== null}
                     activeOpacity={0.85}
                   >
-                    <Feather name="check" size={14} color="#fff" />
-                    <Text style={styles.confirmBtnText}>Confirm Meetup</Text>
+                    {confirmingId === m.id
+                      ? <ActivityIndicator size="small" color="#fff" />
+                      : <Feather name="check" size={14} color="#fff" />}
+                    <Text style={styles.confirmBtnText}>
+                      {confirmingId === m.id ? "Confirming…" : "Confirm Meetup"}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               ))}
@@ -561,7 +577,11 @@ export default function MemberConnectionsScreen() {
       <Modal visible={!!selectedConn} transparent animationType="slide" onRequestClose={resetModal}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+            >
               <View style={styles.modalHeader}>
                 <Text style={[styles.modalTitle, { color: colors.foreground }]}>Verify Meetup</Text>
                 <TouchableOpacity onPress={resetModal} activeOpacity={0.7}>
@@ -679,9 +699,9 @@ export default function MemberConnectionsScreen() {
                                 }}
                                 activeOpacity={0.7}
                               >
-                                <View style={[styles.miniAvatar, { backgroundColor: "#7C3AED18" }]}>
+                                <View style={[styles.miniAvatar, { backgroundColor: "#7C3AED18", overflow: "hidden" }]}>
                                   {u.profileImageUrl ? (
-                                    <Image source={{ uri: u.profileImageUrl }} style={styles.miniAvatar} />
+                                    <Image source={{ uri: u.profileImageUrl }} style={{ width: 30, height: 30, borderRadius: 15 }} />
                                   ) : (
                                     <Text style={styles.miniAvatarText}>
                                       {(u.firstName?.[0] ?? u.username?.[0] ?? "M").toUpperCase()}
@@ -735,7 +755,6 @@ export default function MemberConnectionsScreen() {
                       value={clearCode}
                       onChangeText={setClearCode}
                       autoCapitalize="none"
-                      secureTextEntry
                     />
                   </View>
 
@@ -796,9 +815,9 @@ export default function MemberConnectionsScreen() {
                 <Text style={[styles.centeredCancelText, { color: colors.foreground }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.centeredConfirmBtn, { opacity: clearing ? 0.6 : 1 }]}
+                style={[styles.centeredConfirmBtn, { opacity: (clearing || (clearTarget?.hasClearCode && !clearInput.trim())) ? 0.5 : 1 }]}
                 onPress={() => void clearMeetup()}
-                disabled={clearing}
+                disabled={clearing || (clearTarget?.hasClearCode ? !clearInput.trim() : false)}
                 activeOpacity={0.85}
               >
                 {clearing ? (

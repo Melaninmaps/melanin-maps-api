@@ -131,7 +131,7 @@ export default function CheckinScreen() {
         setCheckins((prev) => [d.checkin!, ...prev]);
         setShowNew(false);
         setContactName(""); setContactEmail(""); setNote(""); setLocation("");
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Alert.alert(
           "Check-In Scheduled ✓",
           `If you don't confirm your safety by ${scheduledAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}, ${contactName} will be notified.`,

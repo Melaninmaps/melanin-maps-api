@@ -106,7 +106,7 @@ export default function ReportSpaceScreen() {
   const [submitted, setSubmitted] = useState(false);
   const [locating, setLocating] = useState(false);
 
-  const handleUseLocation = async (field: "address" | "city") => {
+  const handleUseLocation = async () => {
     setLocating(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -114,12 +114,8 @@ export default function ReportSpaceScreen() {
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
       if (geo) {
-        if (field === "address") {
-          const addr = [geo.streetNumber, geo.street].filter(Boolean).join(" ");
-          setForm((f) => ({ ...f, address: addr, city: geo.city ?? f.city, state: geo.region ?? f.state }));
-        } else {
-          setForm((f) => ({ ...f, city: geo.city ?? f.city, state: geo.region ?? f.state }));
-        }
+        const addr = [geo.streetNumber, geo.street].filter(Boolean).join(" ");
+        setForm((f) => ({ ...f, address: addr, city: geo.city ?? f.city, state: geo.region ?? f.state }));
       }
     } catch { Alert.alert("Location Error", "Could not get your location. Try again."); }
     finally { setLocating(false); }
@@ -401,7 +397,7 @@ export default function ReportSpaceScreen() {
                       style={[styles.input, { flex: 1, backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
                     />
                     <TouchableOpacity
-                      onPress={() => void handleUseLocation("address")}
+                      onPress={() => void handleUseLocation()}
                       disabled={locating}
                       style={{ padding: 10, borderRadius: 10, backgroundColor: colors.primary, opacity: locating ? 0.6 : 1 }}
                     >

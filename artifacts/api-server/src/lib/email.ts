@@ -2157,8 +2157,6 @@ export async function sendMeetupSafetyWatcherEmail(
 ) {
   if (!resend) { log("meetup safety watcher email"); return; }
   const name = watcherName ?? "there";
-  const locationLine = location ? `<p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 8px"><strong>📍 Location:</strong> ${location}</p>` : "";
-  const noteLine = note ? `<p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 8px"><strong>📝 Note:</strong> ${note}</p>` : "";
   await resend.emails.send({
     from: FROM,
     replyTo: "hello@mappingwithmelanin.com",
