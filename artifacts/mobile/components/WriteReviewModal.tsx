@@ -2,6 +2,8 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -12,6 +14,7 @@ import {
   View,
   ScrollView,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { useColors } from "@/hooks/useColors";
 import { COMMUNITY_RATINGS } from "@/components/RatingStars";
 import { getCaptionsForBusiness } from "@/constants/captions";
@@ -44,7 +47,7 @@ interface Props {
   initialRating?: number;
   initialText?: string;
   onClose: () => void;
-  onSubmit: (rating: number, text: string, wouldReturn: boolean | null, socialHandle?: string, socialPlatform?: string, videoUrl?: string, nonMinorityOwned?: boolean, communitySupport?: number, website?: string, location?: string, isAnonymous?: boolean, volunteerAsMentor?: boolean, nowHiringUrl?: string) => void;
+  onSubmit: (rating: number, text: string, wouldReturn: boolean | null, socialHandle?: string, socialPlatform?: string, videoUrl?: string, nonMinorityOwned?: boolean, communitySupport?: number, website?: string, location?: string, isAnonymous?: boolean, volunteerAsMentor?: boolean, nowHiringUrl?: string, photos?: string[]) => void;
 }
 
 export function WriteReviewModal({ visible, businessName, businessId, businessCategory, reviewId, initialRating, initialText, onClose, onSubmit }: Props) {
@@ -64,6 +67,8 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
   const [volunteerAsMentor, setVolunteerAsMentor] = useState(false);
   const [nowHiringUrl, setNowHiringUrl] = useState("");
   const [selectedCaptions, setSelectedCaptions] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [phase, setPhase] = useState<"form" | "success" | "appreciation">("form");
   const [capturedText, setCapturedText] = useState("");
   const [inviteSent, setInviteSent] = useState(false);
@@ -95,10 +100,46 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
     setVolunteerAsMentor(false);
     setNowHiringUrl("");
     setSelectedCaptions([]);
+    setPhotos([]);
+    setPhotoUploading(false);
     setPhase("form");
     setCapturedText("");
     setInviteSent(false);
     setVolunteeredAsMentor(false);
+  };
+
+  const handlePickPhoto = async () => {
+    if (photos.length >= 4) return;
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (perm.status !== "granted") return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsMultipleSelection: false,
+      quality: 0.75,
+      allowsEditing: true,
+      aspect: [4, 3],
+    });
+    if (result.canceled || !result.assets?.[0]?.uri) return;
+    const asset = result.assets[0];
+    setPhotoUploading(true);
+    try {
+      const { getItemAsync } = await import("expo-secure-store");
+      const token = await getItemAsync("auth_session_token");
+      const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const formData = new FormData();
+      const ext = asset.uri.split(".").pop() ?? "jpg";
+      formData.append("photo", { uri: asset.uri, name: `photo.${ext}`, type: `image/${ext}` } as any);
+      const res = await fetch(`${base}/api/reviews/photos`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json() as { url: string };
+        setPhotos((prev) => [...prev, data.url]);
+      }
+    } catch { /* silently ignore upload failures */ }
+    finally { setPhotoUploading(false); }
   };
 
   const submitCaptions = (captions: string[]) => {
@@ -138,7 +179,7 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
     setVolunteeredAsMentor(willMentor);
     setCapturedText(text);
     setPhase("success");
-    onSubmit(rating, text, wouldReturnBool, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl, nonMinorityOwned, communitySupport > 0 && !nonMinorityOwned ? communitySupport : undefined, website.trim() || undefined, location.trim() || undefined, nonMinorityOwned ? isAnonymous : undefined, willMentor || undefined, cleanNowHiring);
+    onSubmit(rating, text, wouldReturnBool, hasInvite ? cleanHandle : undefined, hasInvite ? socialPlatform! : undefined, cleanVideoUrl, nonMinorityOwned, communitySupport > 0 && !nonMinorityOwned ? communitySupport : undefined, website.trim() || undefined, location.trim() || undefined, nonMinorityOwned ? isAnonymous : undefined, willMentor || undefined, cleanNowHiring, photos.length > 0 ? photos : undefined);
     if (isEditMode) {
       setTimeout(() => { reset(); onClose(); }, 1400);
       return;
@@ -602,6 +643,34 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
                 </View>
               )}
 
+              {/* ─── Photo picker ─────────────────────────────────────────── */}
+              <View style={{ marginBottom: 20 }}>
+                <Text style={[styles.label, { color: colors.foreground, marginBottom: 8 }]}>Photos (optional)</Text>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                  {photos.map((uri, i) => (
+                    <View key={uri} style={{ position: "relative" }}>
+                      <Image source={{ uri }} style={{ width: 72, height: 72, borderRadius: 8 }} resizeMode="cover" />
+                      <TouchableOpacity
+                        style={{ position: "absolute", top: -6, right: -6, backgroundColor: "#DC2626", borderRadius: 10, width: 20, height: 20, alignItems: "center", justifyContent: "center" }}
+                        onPress={() => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
+                      >
+                        <Text style={{ color: "#fff", fontSize: 12, lineHeight: 14 }}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  {photos.length < 4 && (
+                    <TouchableOpacity
+                      style={{ width: 72, height: 72, borderRadius: 8, borderWidth: 1.5, borderColor: colors.border, borderStyle: "dashed", alignItems: "center", justifyContent: "center", backgroundColor: colors.card }}
+                      onPress={handlePickPhoto}
+                      disabled={photoUploading}
+                      activeOpacity={0.7}
+                    >
+                      {photoUploading ? <ActivityIndicator size="small" color={colors.primary} /> : <Text style={{ fontSize: 24, color: colors.mutedForeground }}>+</Text>}
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+
               <TouchableOpacity
                 style={[
                   styles.submitBtn,
@@ -610,7 +679,7 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
                   },
                 ]}
                 onPress={handleSubmit}
-                disabled={rating === 0 || wouldReturn === null}
+                disabled={rating === 0 || wouldReturn === null || photoUploading}
                 activeOpacity={0.85}
               >
                 <Text style={styles.submitText}>

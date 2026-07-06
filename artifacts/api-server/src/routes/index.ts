@@ -111,6 +111,8 @@ import collectionsRouter from "./collections";
 import roadmapsRouter from "./roadmaps";
 import guidesRouter from "./guides";
 import travelPlannerRouter from "./travel-planner";
+import smartFillRouter from "./smart-fill";
+import wrappedRouter from "./wrapped";
 
 const router: IRouter = Router();
 
@@ -225,6 +227,8 @@ router.use(collectionsRouter);
 router.use(roadmapsRouter);
 router.use(guidesRouter);
 router.use(travelPlannerRouter);
+router.use(smartFillRouter);
+router.use(wrappedRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

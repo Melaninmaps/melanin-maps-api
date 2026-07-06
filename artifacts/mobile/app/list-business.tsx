@@ -269,6 +269,8 @@ export default function ListBusinessScreen() {
   const [waitlistCat, setWaitlistCat] = useState<CategoryGroup | null>(null);
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistCity, setWaitlistCity] = useState("");
+  const [aiFilling, setAiFilling] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
   const [waitlistDone, setWaitlistDone] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -293,6 +295,32 @@ export default function ListBusinessScreen() {
         Animated.timing(slideAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
       ]).start();
     });
+  };
+
+  const handleAiFill = async () => {
+    if (!form.name.trim() || aiFilling) return;
+    setAiFilling(true);
+    setAiSuggestion(null);
+    try {
+      const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const res = await fetch(`${apiBase}/api/businesses/smart-fill`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: form.name.trim(), city: form.city.trim() || undefined }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as { fields?: { category?: string; subcategory?: string; description?: string; hours?: string; priceRange?: string; tags?: string[] } };
+      const fields = data.fields;
+      if (!fields) return;
+      if (fields.category) update("category")(fields.category);
+      if (fields.subcategory) update("subcategory")(fields.subcategory);
+      const parts: string[] = [];
+      if (fields.priceRange) parts.push(`${fields.priceRange} price range`);
+      if (fields.hours) parts.push(fields.hours);
+      if (fields.tags?.length) parts.push(fields.tags.join(", "));
+      setAiSuggestion(parts.length ? parts.join(" · ") : "Category auto-selected!");
+    } catch { /* silent */ }
+    finally { setAiFilling(false); }
   };
 
   const goNext = () => {
@@ -467,10 +495,29 @@ export default function ListBusinessScreen() {
                   <Field
                     label="Business Name *"
                     value={form.name}
-                    onChangeText={update("name")}
+                    onChangeText={(v) => { update("name")(v); setAiSuggestion(null); }}
                     placeholder="e.g. Sweet Auburn Grille"
                     colors={colors}
                   />
+
+                  {form.name.trim().length >= 3 && (
+                    <TouchableOpacity
+                      style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: colors.primary + "18", borderWidth: 1, borderColor: colors.primary + "44", borderRadius: 10, padding: 12, marginBottom: 16 }}
+                      onPress={handleAiFill}
+                      disabled={aiFilling}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={{ fontSize: 16 }}>{aiFilling ? "⏳" : "✨"}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: colors.primary }}>
+                          {aiFilling ? "KinfolkAI is filling in details…" : "AI Fill — let KinfolkAI help"}
+                        </Text>
+                        {aiSuggestion && (
+                          <Text style={{ fontSize: 11, color: colors.mutedForeground, marginTop: 2 }} numberOfLines={2}>{aiSuggestion}</Text>
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  )}
 
                   <View style={{ marginBottom: 16 }}>
                     <Text style={[fieldStyles.label, { color: colors.foreground, marginBottom: 6 }]}>Category *</Text>

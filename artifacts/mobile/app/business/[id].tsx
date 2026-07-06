@@ -315,6 +315,7 @@ export default function BusinessDetailScreen() {
     isAnonymous?: boolean,
     volunteerAsMentor?: boolean,
     nowHiringUrl?: string,
+    photos?: string[],
   ) => {
     if (editingReviewId) {
       try {
@@ -334,7 +335,7 @@ export default function BusinessDetailScreen() {
       return;
     }
     try {
-      const pts = await submitReview(rating, text, wouldReturn, socialHandle, socialPlatform, business.name, videoUrl, nonMinorityOwned, communitySupport, website, location, isAnonymous, volunteerAsMentor, nowHiringUrl);
+      const pts = await submitReview(rating, text, wouldReturn, socialHandle, socialPlatform, business.name, videoUrl, nonMinorityOwned, communitySupport, website, location, isAnonymous, volunteerAsMentor, nowHiringUrl, photos);
       if (pts != null) {
         addLocal(pts);
         showPointsToast(`+${pts} pts — thanks for your review!`);
@@ -349,11 +350,31 @@ export default function BusinessDetailScreen() {
   const handleCheckIn = async () => {
     if (alreadyCheckedIn) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const pts = await checkIn(business.id);
-    setCheckInDone(true);
-    if (pts != null) {
-      addLocal(pts);
-      showPointsToast(`+${pts} pts — checked in!`);
+
+    let lat: number | undefined;
+    let lng: number | undefined;
+    try {
+      const Location = await import("expo-location");
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+      }
+    } catch { /* location unavailable — proceed without GPS */ }
+
+    try {
+      const result = await checkIn(business.id, lat, lng);
+      setCheckInDone(true);
+      if (result != null) {
+        addLocal(result.pointsEarned);
+        const bonus = result.verifiedLocation ? " 📍 GPS verified!" : "";
+        showPointsToast(`+${result.pointsEarned} pts — checked in!${bonus}`);
+      }
+    } catch (err: unknown) {
+      if ((err as any)?.code === "too_far") {
+        Alert.alert("Too far away 📍", (err as any).message ?? "You need to be closer to check in.");
+      }
     }
   };
 

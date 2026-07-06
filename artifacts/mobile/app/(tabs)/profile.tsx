@@ -812,6 +812,25 @@ export default function ProfileScreen() {
 
       {isAuthenticated && (
         <TouchableOpacity
+          style={[styles.hubCard, { backgroundColor: "#0A0A0A", borderColor: "#CA922B33" }]}
+          onPress={() => router.push("/melanin-wrapped" as any)}
+          activeOpacity={0.85}
+        >
+          <View style={[styles.hubIconWrap, { backgroundColor: "rgba(202,146,43,0.18)" }]}>
+            <Feather name="star" size={22} color="#CA922B" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.hubTitle, { color: "#FFFFFF" }]}>Melanin Wrapped</Text>
+            <Text style={[styles.hubSub, { color: "rgba(255,255,255,0.6)" }]}>
+              Your {new Date().getFullYear()} impact — businesses, cities &amp; community
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={18} color="rgba(255,255,255,0.4)" />
+        </TouchableOpacity>
+      )}
+
+      {isAuthenticated && (
+        <TouchableOpacity
           style={[styles.hubCard, { backgroundColor: "#1A1A2E", borderColor: "#7C3AED33" }]}
           onPress={() => router.push("/community-hub" as any)}
           activeOpacity={0.85}

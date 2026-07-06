@@ -1,4 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import multer from "multer";
 import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable, usersTable, mentorshipProfilesTable } from "@workspace/db";
 import { computeTrustLevel, getReviewWeight } from "@workspace/db/trust";
 import { eq, desc, and, ne, gte, sql } from "drizzle-orm";
@@ -6,6 +7,13 @@ import { sendPushToUser, sendPushToUsersWithSavedBusiness, sendThreeStarAlert, s
 import { reviewLimiter } from "../middleware/rateLimiter";
 import { requireTrust } from "../middleware/requireTrust";
 import { checkContent, redactForLog } from "../lib/contentFilter";
+import { objectStorageClient } from "../lib/objectStorage";
+
+const reviewPhotoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => { cb(null, file.mimetype.startsWith("image/")); },
+});
 
 const router: IRouter = Router();
 
@@ -166,12 +174,37 @@ router.get("/reviews", async (req: Request, res: Response) => {
   }
 });
 
+// ─── POST /reviews/photos — upload a review photo to GCS ─────────────────────
+router.post("/reviews/photos", reviewPhotoUpload.single("photo"), async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!req.file) { res.status(400).json({ error: "No file provided" }); return; }
+
+  const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+  if (!bucketId) { res.status(500).json({ error: "Object storage not configured" }); return; }
+
+  const { buffer, mimetype } = req.file;
+  const ext = mimetype.split("/")[1] ?? "jpg";
+  const objectKey = `reviews/${req.user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+  try {
+    const bucket = objectStorageClient.bucket(bucketId);
+    const gcsFile = bucket.file(objectKey);
+    await gcsFile.save(buffer, { contentType: mimetype });
+    await gcsFile.makePublic();
+    const url = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
+    res.json({ url });
+  } catch (err) {
+    req.log.error({ err }, "Failed to upload review photo");
+    res.status(500).json({ error: "Failed to upload photo" });
+  }
+});
+
 router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: Response) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
   }
-  const { businessId, rating, text, wouldReturnAlone, socialHandle, socialPlatform, businessName, videoUrl, nonMinorityOwned, communitySupport, website, location, isAnonymous, recommendsAsEmployer, volunteerAsMentor, nowHiringUrl } =
+  const { businessId, rating, text, wouldReturnAlone, socialHandle, socialPlatform, businessName, videoUrl, nonMinorityOwned, communitySupport, website, location, isAnonymous, recommendsAsEmployer, volunteerAsMentor, nowHiringUrl, photos } =
     req.body as Record<string, unknown>;
 
   const ratingNum = Number(rating);
@@ -262,6 +295,7 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
         communitySupport: typeof communitySupport === "number" && !nonMinorityOwned ? communitySupport : null,
         website: typeof website === "string" && website.trim() ? website.trim() : null,
         location: typeof location === "string" && location.trim() ? location.trim() : null,
+        photos: Array.isArray(photos) ? (photos as unknown[]).filter((p): p is string => typeof p === "string").slice(0, 6) : null,
         weight: String(reviewWeight),
       })
       .returning();

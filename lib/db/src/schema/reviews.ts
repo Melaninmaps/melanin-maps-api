@@ -26,6 +26,8 @@ export const reviewsTable = pgTable("reviews", {
   verifiedPurchase: boolean("verified_purchase").notNull().default(false),
   verifiedCheckin: boolean("verified_checkin").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  // ── Photos ──────────────────────────────────────────────────────────────────
+  photos: text("photos").array(),
   // ── Moderation & lifecycle ────────────────────────────────────────────────
   // posted        = live immediately (no video, not all-5★)
   // auto_approved = all 5★, no video — posted immediately, owner alerted

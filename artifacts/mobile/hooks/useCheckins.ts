@@ -13,6 +13,8 @@ async function getToken(): Promise<string | null> {
   catch { return null; }
 }
 
+export type CheckInError = { code: "too_far"; distanceMeters: number; message: string } | { code: "unknown"; message: string };
+
 export function useCheckins() {
   const [checkedInIds, setCheckedInIds] = useState<string[]>([]);
 
@@ -34,29 +36,49 @@ export function useCheckins() {
     load();
   }, []);
 
-  const checkIn = useCallback(async (businessId: string): Promise<number | null> => {
-    const token = await getToken();
-    const apiBase = getApiBase();
-    if (!token || !apiBase) return null;
-    try {
-      const res = await fetch(`${apiBase}/api/checkins`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ businessId }),
-      });
-      if (res.ok) {
-        const data = (await res.json()) as { pointsEarned: number };
-        setCheckedInIds((prev) =>
-          prev.includes(businessId) ? prev : [...prev, businessId],
-        );
-        return data.pointsEarned;
+  const checkIn = useCallback(
+    async (
+      businessId: string,
+      lat?: number,
+      lng?: number,
+    ): Promise<{ pointsEarned: number; verifiedLocation: boolean } | null> => {
+      const token = await getToken();
+      const apiBase = getApiBase();
+      if (!token || !apiBase) return null;
+      try {
+        const body: Record<string, unknown> = { businessId };
+        if (lat != null && lng != null) { body.lat = lat; body.lng = lng; }
+
+        const res = await fetch(`${apiBase}/api/checkins`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (res.ok) {
+          const data = (await res.json()) as { pointsEarned: number; verifiedLocation: boolean };
+          setCheckedInIds((prev) =>
+            prev.includes(businessId) ? prev : [...prev, businessId],
+          );
+          return data;
+        }
+
+        if (res.status === 422) {
+          const errData = (await res.json()) as { error: string; message: string; distanceMeters: number };
+          const err: CheckInError = { code: "too_far", distanceMeters: errData.distanceMeters, message: errData.message };
+          throw err;
+        }
+      } catch (e) {
+        // Re-throw typed errors; swallow network errors
+        if ((e as any)?.code === "too_far") throw e;
       }
-    } catch {}
-    return null;
-  }, []);
+      return null;
+    },
+    [],
+  );
 
   const hasCheckedIn = useCallback(
     (id: string) => checkedInIds.includes(id),
