@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import * as Linking from "expo-linking";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -154,7 +155,7 @@ export default function OpportunitiesScreen() {
             <TouchableOpacity
               key={i}
               style={[s.resourceCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => r.url ? require("expo-linking").openURL(r.url) : null}
+              onPress={() => r.url ? Linking.openURL(r.url) : undefined}
               activeOpacity={0.75}
             >
               <Text style={s.resourceEmoji}>{r.emoji}</Text>

@@ -21,7 +21,12 @@ async function authHeaders() { const t = await getToken(); return t ? { Authoriz
 interface Collection {
   id: string; title: string; description: string | null; coverEmoji: string;
   topicId: string | null; followCount: number; itemCount: number;
-  creatorName: string | null; creatorCity: string | null;
+  creatorFirstName: string | null; creatorLastName: string | null;
+  creatorCity: string | null;
+}
+function creatorDisplayName(col: Collection): string | null {
+  const n = [col.creatorFirstName, col.creatorLastName].filter(Boolean).join(" ");
+  return n || null;
 }
 
 export default function CollectionsIndexScreen() {
@@ -48,8 +53,18 @@ export default function CollectionsIndexScreen() {
         setCollections(d.collections ?? []);
       }
       if (token) {
-        // Would need /api/collections?mine=true endpoint — for now show empty
-        setMyCollections([]);
+        const meRes = await fetch(`${getApiBase()}/api/profile`, { headers: h });
+        if (meRes.ok) {
+          const me = await meRes.json() as { id?: string; user?: { id: string } };
+          const myId = me.id ?? me.user?.id;
+          if (myId) {
+            const mineRes = await fetch(`${getApiBase()}/api/collections?userId=${myId}`, { headers: h });
+            if (mineRes.ok) {
+              const md = await mineRes.json() as { collections: Collection[] };
+              setMyCollections(md.collections ?? []);
+            }
+          }
+        }
       }
     } catch { /* silent */ } finally { setLoading(false); }
   }, []);
@@ -134,7 +149,7 @@ export default function CollectionsIndexScreen() {
                   <Text style={[s.cardDesc, { color: colors.mutedForeground }]} numberOfLines={2}>{col.description}</Text>
                 )}
                 <View style={s.cardMeta}>
-                  {col.creatorName && <Text style={[s.cardMetaTxt, { color: colors.mutedForeground }]}>by {col.creatorName}</Text>}
+                  {creatorDisplayName(col) && <Text style={[s.cardMetaTxt, { color: colors.mutedForeground }]}>by {creatorDisplayName(col)}</Text>}
                   {col.creatorCity && <Text style={[s.cardMetaTxt, { color: colors.mutedForeground }]}>· {col.creatorCity}</Text>}
                   <Text style={[s.cardMetaTxt, { color: colors.mutedForeground }]}>· {col.itemCount} items</Text>
                   <Text style={[s.cardMetaTxt, { color: colors.mutedForeground }]}>· {col.followCount} followers</Text>

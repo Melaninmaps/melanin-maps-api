@@ -19,7 +19,11 @@ function getApiBase() { return process.env.EXPO_PUBLIC_DOMAIN ? `https://${proce
 async function getToken() { try { return Platform.OS === "web" ? null : await SecureStore.getItemAsync("auth_session_token"); } catch { return null; } }
 async function authHeaders() { const t = await getToken(); return t ? { Authorization: `Bearer ${t}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" }; }
 
-interface Collection { id: string; title: string; description: string | null; coverEmoji: string; isPublic: boolean; followCount: number; itemCount: number; userId: string; creatorName: string | null; creatorAvatar: string | null; creatorCity: string | null; }
+interface Collection { id: string; title: string; description: string | null; coverEmoji: string; isPublic: boolean; followCount: number; itemCount: number; userId: string; creatorFirstName: string | null; creatorLastName: string | null; creatorAvatar: string | null; creatorCity: string | null; }
+function creatorDisplayName(c: Collection): string | null {
+  const n = [c.creatorFirstName, c.creatorLastName].filter(Boolean).join(" ");
+  return n || null;
+}
 interface CollectionItem { id: string; itemType: string; itemId: string; itemName: string | null; itemEmoji: string | null; note: string | null; displayOrder: number; }
 
 const ITEM_TYPE_EMOJI: Record<string, string> = {
@@ -123,8 +127,8 @@ export default function CollectionScreen() {
           <Text style={[s.collectionDesc, { color: colors.mutedForeground }]}>{collection.description}</Text>
         )}
         <View style={s.metaRow}>
-          {collection?.creatorName && (
-            <Text style={[s.metaTxt, { color: colors.mutedForeground }]}>by {collection.creatorName}</Text>
+          {collection && creatorDisplayName(collection) && (
+            <Text style={[s.metaTxt, { color: colors.mutedForeground }]}>by {creatorDisplayName(collection)}</Text>
           )}
           {collection?.creatorCity && (
             <Text style={[s.metaTxt, { color: colors.mutedForeground }]}>· {collection.creatorCity}</Text>

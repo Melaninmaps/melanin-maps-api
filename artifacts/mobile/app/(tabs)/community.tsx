@@ -848,6 +848,60 @@ export default function CommunityScreen() {
             <Feather name="chevron-right" size={18} color="rgba(255,255,255,0.6)" />
           </TouchableOpacity>
 
+          {/* Pay It Forward Guides card */}
+          <TouchableOpacity
+            style={[styles.resSpacesCard, { backgroundColor: "#2D1B69", borderColor: "#7C3AED55" }]}
+            onPress={() => router.push("/guides" as never)}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.resSpacesIcon, { backgroundColor: "rgba(255,255,255,0.12)" }]}>
+              <Feather name="gift" size={22} color="#A78BFA" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.resSpacesTitle, { color: "#FFFFFF" }]}>Pay It Forward</Text>
+              <Text style={[styles.resSpacesSub, { color: "rgba(255,255,255,0.75)" }]}>
+                Lived-experience guides — university survival kits, health journeys, neighborhood moves &amp; more.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color="rgba(255,255,255,0.6)" />
+          </TouchableOpacity>
+
+          {/* Community Collections card */}
+          <TouchableOpacity
+            style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#CA922B33" }]}
+            onPress={() => router.push("/collections" as never)}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.resSpacesIcon, { backgroundColor: "#CA922B18" }]}>
+              <Feather name="bookmark" size={22} color="#CA922B" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.resSpacesTitle, { color: colors.foreground }]}>Community Collections</Text>
+              <Text style={[styles.resSpacesSub, { color: colors.mutedForeground }]}>
+                Curated picks from members — Moving to Atlanta, Best of Philly, Diabetes Resources &amp; more.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+
+          {/* Opportunity Center card */}
+          <TouchableOpacity
+            style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#16A34A33" }]}
+            onPress={() => router.push("/opportunities" as never)}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.resSpacesIcon, { backgroundColor: "#16A34A18" }]}>
+              <Feather name="trending-up" size={22} color="#16A34A" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.resSpacesTitle, { color: colors.foreground }]}>Opportunity Center</Text>
+              <Text style={[styles.resSpacesSub, { color: colors.mutedForeground }]}>
+                Jobs, scholarships, grants, mentorship &amp; volunteer opportunities for the community.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+
           {/* My Community card */}
           <TouchableOpacity
             style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#C9922B33" }]}

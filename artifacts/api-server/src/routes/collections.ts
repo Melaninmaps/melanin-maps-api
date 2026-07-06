@@ -26,6 +26,7 @@ router.get("/collections", async (req: Request, res: Response) => {
         creatorFirstName: usersTable.firstName,
         creatorLastName: usersTable.lastName,
         creatorAvatar: usersTable.profileImageUrl,
+        creatorCity: usersTable.homeCity,
       })
       .from(collectionsTable)
       .innerJoin(usersTable, eq(collectionsTable.userId, usersTable.id))
