@@ -26,7 +26,6 @@ import { BusinessMentionPicker } from "@/components/BusinessMentionPicker";
 import { UserMentionPicker } from "@/components/UserMentionPicker";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import { PostDetailModal } from "@/components/PostDetailModal";
-import { UserProfileModal } from "@/components/UserProfileModal";
 import { EventCard } from "@/components/EventCard";
 import type { CommunityPost } from "@/constants/types";
 import { useColors } from "@/hooks/useColors";
@@ -218,7 +217,6 @@ export default function CommunityScreen() {
   const [showTopicPicker, setShowTopicPicker] = useState(false);
   const [submittingPost, setSubmittingPost] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
-  const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
   const [editingPost, setEditingPost] = useState<CommunityPost | null>(null);
   const [editPostText, setEditPostText] = useState("");
   const [submittingEdit, setSubmittingEdit] = useState(false);
@@ -257,9 +255,28 @@ export default function CommunityScreen() {
   };
 
   const { groups, isLoading: groupsLoading, refetch: refetchGroups, join, leave } = useGroups();
-  const [eventsCategory, setEventsCategory] = useState("All");
   const [eventsTimeFilter, setEventsTimeFilter] = useState("Upcoming");
-  const { events, isLoading: eventsLoading, refetch: refetchEvents } = useEvents({ category: eventsCategory });
+  const { events, isLoading: eventsLoading, refetch: refetchEvents } = useEvents();
+
+  const filteredEvents = React.useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return events.filter((e) => {
+      if (!e.date) return true;
+      const eventDate = new Date(e.date);
+      if (eventsTimeFilter === "This Week") {
+        const weekEnd = new Date(today);
+        weekEnd.setDate(today.getDate() + 7);
+        return eventDate >= today && eventDate <= weekEnd;
+      }
+      if (eventsTimeFilter === "This Month") {
+        const monthEnd = new Date(today);
+        monthEnd.setDate(today.getDate() + 30);
+        return eventDate >= today && eventDate <= monthEnd;
+      }
+      return eventDate >= today;
+    });
+  }, [events, eventsTimeFilter]);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -567,7 +584,7 @@ export default function CommunityScreen() {
             </ScrollView>
           </View>
           <FlatList
-            data={events}
+            data={filteredEvents}
             keyExtractor={(e) => e.id}
             contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100 }]}
             refreshControl={<RefreshControl refreshing={eventsLoading} onRefresh={refetchEvents} tintColor={colors.primary} />}
@@ -607,8 +624,16 @@ export default function CommunityScreen() {
             ListEmptyComponent={
               <View style={styles.empty}>
                 <Feather name="calendar" size={40} color={colors.muted} />
-                <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No events yet</Text>
-                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Because the best journeys are shared — be the first to host one!</Text>
+                <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>
+                  {filteredEvents.length === 0 && events.length > 0
+                    ? `Nothing happening ${eventsTimeFilter === "This Week" ? "this week" : "this month"}`
+                    : "No events yet"}
+                </Text>
+                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+                  {filteredEvents.length === 0 && events.length > 0
+                    ? "Try switching to Upcoming to see all events."
+                    : "Because the best journeys are shared — be the first to host one!"}
+                </Text>
               </View>
             }
             renderItem={({ item }) => (
@@ -1073,12 +1098,6 @@ export default function CommunityScreen() {
         post={selectedPost}
         onClose={() => setSelectedPost(null)}
         onLike={() => void loadPosts()}
-      />
-
-      <UserProfileModal
-        userId={selectedAuthorId}
-        visible={selectedAuthorId !== null}
-        onClose={() => setSelectedAuthorId(null)}
       />
 
       <UpgradeModal
