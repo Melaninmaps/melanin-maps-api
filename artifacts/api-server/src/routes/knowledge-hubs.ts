@@ -269,6 +269,63 @@ router.get("/knowledge/hubs/:topicId", async (req: Request, res: Response) => {
   }
 });
 
+// ─── GET /api/knowledge/hubs/:topicId/recommendations ────────────────────────
+router.get("/knowledge/hubs/:topicId/recommendations", async (req: Request, res: Response) => {
+  const topicId = String(req.params.topicId);
+  try {
+    const [topic] = await db
+      .select({ name: knowledgeTopicsTable.canonicalName, category: knowledgeTopicsTable.category })
+      .from(knowledgeTopicsTable)
+      .where(eq(knowledgeTopicsTable.id, topicId))
+      .limit(1);
+
+    if (!topic || !openai) { res.json({ recommendations: [] }); return; }
+
+    const aiResult = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{
+        role: "system",
+        content: "You suggest related community hubs for a Black community discovery app. Return ONLY a JSON array of topic names — no explanation.",
+      }, {
+        role: "user",
+        content: `The user is viewing the "${topic.name}" hub (category: ${topic.category ?? "general"}). Suggest 6 closely related topics they would also care about. Think about adjacent concerns, related demographics, connected issues, and complementary interests. Return JSON: {"suggestions": ["Topic 1", "Topic 2", ...]}`,
+      }],
+      temperature: 0.4,
+      max_tokens: 200,
+      response_format: { type: "json_object" },
+    });
+
+    const parsed = JSON.parse(aiResult.choices[0]?.message?.content ?? "{}") as { suggestions?: string[] };
+    const suggestions = parsed.suggestions ?? [];
+
+    const matched = await Promise.all(
+      suggestions.slice(0, 6).map(async (name) => {
+        const found = await db
+          .select({
+            id: knowledgeTopicsTable.id,
+            name: knowledgeTopicsTable.topicName,
+            canonicalName: knowledgeTopicsTable.canonicalName,
+            category: knowledgeTopicsTable.category,
+            memberCount: count(userTopicFollowsTable.userId),
+          })
+          .from(knowledgeTopicsTable)
+          .leftJoin(userTopicFollowsTable, eq(userTopicFollowsTable.topicId, knowledgeTopicsTable.id))
+          .where(or(ilike(knowledgeTopicsTable.topicName, `%${name}%`), ilike(knowledgeTopicsTable.canonicalName ?? knowledgeTopicsTable.topicName, `%${name}%`)))
+          .groupBy(knowledgeTopicsTable.id)
+          .limit(1);
+
+        if (found[0]) return { ...found[0], suggestedName: name, exists: true };
+        return { id: null, name: name, canonicalName: name, category: null, memberCount: 0, suggestedName: name, exists: false };
+      })
+    );
+
+    res.json({ recommendations: matched });
+  } catch (err) {
+    req.log?.error({ err }, "GET /knowledge/hubs/:topicId/recommendations error");
+    res.json({ recommendations: [] });
+  }
+});
+
 // ─── PUT /api/knowledge/hubs/:topicId/intent ──────────────────────────────────
 // Set or update the user's personal intent/context for this hub (private)
 router.put("/knowledge/hubs/:topicId/intent", async (req: Request, res: Response) => {

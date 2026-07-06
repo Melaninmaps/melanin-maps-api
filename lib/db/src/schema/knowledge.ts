@@ -157,3 +157,29 @@ export const storyConfirmationsTable = pgTable("story_confirmations", {
 }, (table) => [
   uniqueIndex("story_confirmations_unique").on(table.storyId, table.userId),
 ]);
+
+export const userBadgesTable = pgTable("user_badges", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id", { length: 100 }).notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  topicId: varchar("topic_id", { length: 100 }),
+  badgeType: varchar("badge_type", { length: 50 }).notNull(),
+  badgeName: varchar("badge_name", { length: 200 }).notNull(),
+  badgeEmoji: varchar("badge_emoji", { length: 10 }).notNull().default("✦"),
+  description: text("description"),
+  isPublic: boolean("is_public").notNull().default(true),
+  isVerified: boolean("is_verified").notNull().default(false),
+  isVolunteered: boolean("is_volunteered").notNull().default(false),
+  yearsOfExperience: integer("years_of_experience"),
+  experienceNote: text("experience_note"),
+  earnedAt: timestamp("earned_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at"),
+});
+
+export const badgeHelpfulVotesTable = pgTable("badge_helpful_votes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  badgeId: varchar("badge_id", { length: 100 }).notNull().references(() => userBadgesTable.id, { onDelete: "cascade" }),
+  voterId: varchar("voter_id", { length: 100 }).notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("badge_helpful_votes_unique").on(table.badgeId, table.voterId),
+]);

@@ -11,6 +11,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
   Image,
@@ -78,6 +79,95 @@ const SOURCE_TYPE_LABEL: Record<string, string> = {
   industry:   "Industry",
 };
 
+type HubAction = { emoji: string; label: string; tab?: HubTab; route?: string };
+function getHubActions(topicType: string, intent: string | null): HubAction[] {
+  const always: HubAction[] = [
+    { emoji: "💬", label: "Ask Community", tab: "community" },
+    { emoji: "🎥", label: "Creator Videos", tab: "videos" },
+    { emoji: "🤝", label: "Find a Mentor", tab: "mentors" },
+    { emoji: "💼", label: "Opportunities", tab: "opportunities" },
+  ];
+  if (topicType === "location") {
+    if (intent === "visiting") return [
+      { emoji: "✈️", label: "Plan a Trip",       route: "/kinfolk" },
+      { emoji: "🍽️", label: "Find Restaurants",  tab: "places" },
+      { emoji: "🏨", label: "Find Hotels",        tab: "places" },
+      { emoji: "🛡️", label: "Safety Info",        tab: "info" },
+      { emoji: "🤝", label: "Meet a Local",       tab: "mentors" },
+      { emoji: "🎉", label: "Events",             tab: "opportunities" },
+      { emoji: "🛍️", label: "Shop Local",         tab: "places" },
+      { emoji: "📖", label: "Learn the Culture",  tab: "info" },
+      ...always,
+    ];
+    if (intent === "local") return [
+      { emoji: "💼", label: "Find Jobs",          tab: "opportunities" },
+      { emoji: "🏠", label: "Neighborhoods",      tab: "info" },
+      { emoji: "👨‍⚕️", label: "Healthcare",         tab: "places" },
+      { emoji: "🏫", label: "Schools",            tab: "places" },
+      { emoji: "✊🏾", label: "Black Businesses",  tab: "places" },
+      { emoji: "🤝", label: "Find Community",     tab: "community" },
+      ...always,
+    ];
+    if (intent === "heritage") return [
+      { emoji: "📖", label: "Cultural History",   tab: "info" },
+      { emoji: "🏛️", label: "Historical Sites",   tab: "places" },
+      { emoji: "👨‍👩‍👧", label: "Diaspora Groups",   tab: "community" },
+      { emoji: "🎉", label: "Cultural Events",    tab: "opportunities" },
+      { emoji: "🔍", label: "Trace Your Roots",   route: "/kinfolk" },
+      ...always,
+    ];
+    if (intent === "business") return [
+      { emoji: "🏢", label: "Find Offices",       tab: "places" },
+      { emoji: "💼", label: "Job Listings",       tab: "opportunities" },
+      { emoji: "📊", label: "Market Intel",       tab: "info" },
+      { emoji: "🤝", label: "Network",            tab: "mentors" },
+      ...always,
+    ];
+    return [
+      { emoji: "📍", label: "Find Businesses",    tab: "places" },
+      { emoji: "🛡️", label: "Safety Overview",    tab: "info" },
+      ...always,
+    ];
+  }
+  if (topicType === "medical" || topicType === "wellness") return [
+    { emoji: "👨‍⚕️", label: "Find a Doctor",       tab: "places" },
+    { emoji: "💬", label: "Support Groups",       tab: "community" },
+    { emoji: "🥗", label: "Healthy Recipes",      tab: "info" },
+    { emoji: "🏃", label: "Fitness Tips",         tab: "info" },
+    { emoji: "🌿", label: "Wellness Resources",   tab: "info" },
+    { emoji: "🤝", label: "Find a Mentor",        tab: "mentors" },
+    { emoji: "💊", label: "Medication Info",      tab: "info" },
+    ...always,
+  ];
+  if (topicType === "business") return [
+    { emoji: "💼", label: "Job Listings",         tab: "opportunities" },
+    { emoji: "📊", label: "Industry News",        tab: "info" },
+    { emoji: "🏢", label: "Find Offices",         tab: "places" },
+    { emoji: "🤝", label: "Professional Network", tab: "mentors" },
+    { emoji: "📈", label: "Resources",            tab: "info" },
+    ...always,
+  ];
+  if (topicType === "education") return [
+    { emoji: "🎓", label: "Programs",             tab: "places" },
+    { emoji: "💰", label: "Scholarships",         tab: "opportunities" },
+    { emoji: "📚", label: "Study Resources",      tab: "info" },
+    { emoji: "🤝", label: "Find a Mentor",        tab: "mentors" },
+    ...always,
+  ];
+  return [{ emoji: "📍", label: "Find Places", tab: "places" }, ...always];
+}
+
+interface HubExpert {
+  id: string; userId: string; badgeName: string; badgeEmoji: string;
+  badgeType: string; isVerified: boolean; yearsOfExperience: number | null;
+  experienceNote: string | null; displayName: string | null; avatarUrl: string | null;
+  city: string | null; helpfulVotes: number;
+}
+interface HubRecommendation {
+  id: string | null; name: string; canonicalName: string | null;
+  category: string | null; memberCount: number; exists: boolean;
+}
+
 interface TrustedSource { name: string; url: string; type: string; emoji: string; forCommunity?: boolean }
 interface Creator { id: string; firstName: string | null; lastName: string | null; username: string | null; profileImageUrl: string | null; homeCity: string | null }
 interface HubBusiness { id: string; name: string; category: string; city: string; state: string; blackOwned?: boolean; verified?: boolean }
@@ -129,6 +219,12 @@ export default function CommunityHubScreen() {
   const [userIntent, setUserIntent] = useState<string | null>(null);
   const [settingIntent, setSettingIntent] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [recommendations, setRecommendations] = useState<HubRecommendation[]>([]);
+  const [experts, setExperts] = useState<HubExpert[]>([]);
+  const [showVolunteerModal, setShowVolunteerModal] = useState(false);
+  const [volunteerNote, setVolunteerNote] = useState("");
+  const [volunteerYears, setVolunteerYears] = useState("");
+  const [volunteering, setVolunteering] = useState(false);
   const tabScrollRef = useRef<ScrollView>(null);
 
   const load = useCallback(async () => {
@@ -160,10 +256,38 @@ export default function CommunityHubScreen() {
     } catch { /* silent */ } finally { setBriefLoading(false); }
   }, []);
 
+  const loadExtras = useCallback(async (tid: string) => {
+    try {
+      const h = await authHeaders();
+      const [recRes, expRes] = await Promise.all([
+        fetch(`${getApiBase()}/api/knowledge/hubs/${tid}/recommendations`, { headers: h }),
+        fetch(`${getApiBase()}/api/knowledge/hubs/${tid}/experts`, { headers: h }),
+      ]);
+      if (recRes.ok) { const d = await recRes.json() as { recommendations: HubRecommendation[] }; setRecommendations(d.recommendations ?? []); }
+      if (expRes.ok) { const d = await expRes.json() as { experts: HubExpert[] }; setExperts(d.experts ?? []); }
+    } catch { /* silent */ }
+  }, []);
+
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
     if (hub?.topic.topicName) loadBrief(hub.topic.topicName);
-  }, [hub?.topic.topicName, loadBrief]);
+    if (topicId) loadExtras(topicId);
+  }, [hub?.topic.topicName, loadBrief, loadExtras, topicId]);
+
+  async function volunteerAsExpert() {
+    if (!isAuthenticated) { router.push("/login" as never); return; }
+    setVolunteering(true);
+    try {
+      const h = await authHeaders();
+      await fetch(`${getApiBase()}/api/knowledge/hubs/${topicId}/volunteer-expert`, {
+        method: "POST", headers: h,
+        body: JSON.stringify({ yearsOfExperience: volunteerYears ? Number(volunteerYears) : undefined, experienceNote: volunteerNote }),
+      });
+      setShowVolunteerModal(false);
+      if (topicId) loadExtras(topicId);
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch { /* silent */ } finally { setVolunteering(false); }
+  }
 
   async function toggleFollow() {
     if (!isAuthenticated) { router.push("/login" as never); return; }
@@ -305,6 +429,24 @@ export default function CommunityHubScreen() {
           {/* ══════════════ INFO TAB ══════════════ */}
           {activeTab === "info" && (
             <View>
+              {/* Now What? Action Chips */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsRow}>
+                {getHubActions(hub?.topic.topicType ?? "general", userIntent).map((action, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={[styles.actionChip, { backgroundColor: colors.card, borderColor: colors.border }]}
+                    onPress={() => {
+                      if (action.tab) setActiveTab(action.tab);
+                      else if (action.route) router.push(action.route as never);
+                    }}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={{ fontSize: 16 }}>{action.emoji}</Text>
+                    <Text style={[styles.actionChipTxt, { color: colors.foreground }]}>{action.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
               {/* AI Brief */}
               <View style={[styles.section, styles.briefSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.sectionHeader}>
@@ -370,6 +512,44 @@ export default function CommunityHubScreen() {
                   Live news feeds, weather, exchange rates, and travel advisories are coming soon as real-time data integrations.
                 </Text>
               </View>
+
+              {/* Related Hubs */}
+              {recommendations.length > 0 && (
+                <View style={[styles.section, { paddingHorizontal: 0 }]}>
+                  <View style={[styles.sectionHeader, { paddingHorizontal: 14 }]}>
+                    <Feather name="compass" size={14} color={colors.mutedForeground} />
+                    <Text style={[styles.sectionTitle, { color: colors.foreground }]}>People Also Explore</Text>
+                  </View>
+                  <Text style={[styles.sectionSub, { color: colors.mutedForeground, paddingHorizontal: 14 }]}>
+                    Hubs members of this community also find valuable.
+                  </Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recsRow}>
+                    {recommendations.map((rec, i) => (
+                      <TouchableOpacity
+                        key={i}
+                        style={[styles.recCard, { backgroundColor: colors.card, borderColor: rec.exists ? typeMeta.color + "40" : colors.border }]}
+                        onPress={() => rec.exists && rec.id ? router.push({ pathname: "/library-topic", params: { topicId: rec.id } } as never) : null}
+                        activeOpacity={rec.exists ? 0.75 : 1}
+                      >
+                        <Text style={[styles.recName, { color: colors.foreground }]} numberOfLines={2}>{rec.canonicalName ?? rec.name}</Text>
+                        {rec.exists && rec.memberCount > 0 && (
+                          <Text style={[styles.recMembers, { color: colors.mutedForeground }]}>{rec.memberCount} members</Text>
+                        )}
+                        {!rec.exists && (
+                          <View style={[styles.recNewBadge, { backgroundColor: typeMeta.color + "15" }]}>
+                            <Text style={[styles.recNewTxt, { color: typeMeta.color }]}>New Hub</Text>
+                          </View>
+                        )}
+                        {rec.exists && (
+                          <View style={[styles.recJoinBadge, { backgroundColor: typeMeta.color + "15" }]}>
+                            <Text style={[styles.recNewTxt, { color: typeMeta.color }]}>View Hub →</Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
             </View>
           )}
 
@@ -637,51 +817,84 @@ export default function CommunityHubScreen() {
               <View style={[styles.section, { paddingTop: 0 }]}>
                 <View style={styles.sectionHeader}>
                   <Feather name="star" size={14} color={colors.mutedForeground} />
-                  <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Mentors & Guides</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Community Experts</Text>
+                  {experts.length > 0 && <Text style={[styles.sectionMeta, { color: colors.mutedForeground }]}>{experts.length} experts</Text>}
                 </View>
                 <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>
-                  Community members who've volunteered to answer questions and guide others on this topic.
+                  People who've lived it, done it, and volunteered to help others on this topic.
                 </Text>
               </View>
 
-              {/* Mentor type examples */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mentorTypesRow}>
-                {[
-                  { emoji: "✈️", label: "Travel Mentor" },
-                  { emoji: "🏠", label: "Relocation Guide" },
-                  { emoji: "💼", label: "Career Mentor" },
-                  { emoji: "📍", label: "Local Guide" },
-                  { emoji: "📈", label: "Business Mentor" },
-                  { emoji: "🎓", label: "Student Mentor" },
-                ].map((t, i) => (
-                  <View key={i} style={[styles.mentorTypeChip, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
-                    <Text style={{ fontSize: 14 }}>{t.emoji}</Text>
-                    <Text style={[styles.mentorTypeLabel, { color: colors.foreground }]}>{t.label}</Text>
+              {/* Expert cards */}
+              {experts.map((expert) => (
+                <TouchableOpacity
+                  key={expert.id}
+                  style={[styles.expertCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => router.push({ pathname: "/profile/[id]", params: { id: expert.userId } } as never)}
+                  activeOpacity={0.75}
+                >
+                  <View style={[styles.expertAvatar, { backgroundColor: typeMeta.color + "20" }]}>
+                    {expert.avatarUrl
+                      ? <Image source={{ uri: expert.avatarUrl }} style={{ width: 46, height: 46, borderRadius: 23 }} />
+                      : <Text style={[styles.expertAvatarTxt, { color: typeMeta.color }]}>{(expert.displayName?.[0] ?? "M").toUpperCase()}</Text>}
                   </View>
-                ))}
-              </ScrollView>
+                  <View style={{ flex: 1, gap: 3 }}>
+                    <View style={styles.expertNameRow}>
+                      <Text style={[styles.expertName, { color: colors.foreground }]} numberOfLines={1}>{expert.displayName ?? "Community Expert"}</Text>
+                      {expert.isVerified && <Feather name="check-circle" size={13} color={typeMeta.color} />}
+                    </View>
+                    <View style={[styles.expertBadge, { backgroundColor: typeMeta.color + "15" }]}>
+                      <Text style={{ fontSize: 11 }}>{expert.badgeEmoji}</Text>
+                      <Text style={[styles.expertBadgeTxt, { color: typeMeta.color }]}>{expert.badgeName}</Text>
+                    </View>
+                    {expert.experienceNote && (
+                      <Text style={[styles.expertNote, { color: colors.mutedForeground }]} numberOfLines={2}>"{expert.experienceNote}"</Text>
+                    )}
+                    {expert.yearsOfExperience != null && (
+                      <Text style={[styles.expertYears, { color: colors.mutedForeground }]}>{expert.yearsOfExperience} year{expert.yearsOfExperience !== 1 ? "s" : ""} of experience</Text>
+                    )}
+                    {expert.city && (
+                      <View style={styles.expertCity}>
+                        <Feather name="map-pin" size={10} color={colors.mutedForeground} />
+                        <Text style={[styles.expertCityTxt, { color: colors.mutedForeground }]}>{expert.city}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={{ alignItems: "center", gap: 4 }}>
+                    <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+                    {expert.helpfulVotes > 0 && (
+                      <View style={styles.voteRow}>
+                        <Feather name="thumbs-up" size={10} color={colors.mutedForeground} />
+                        <Text style={[styles.voteTxt, { color: colors.mutedForeground }]}>{expert.helpfulVotes}</Text>
+                      </View>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))}
 
-              <View style={styles.emptyState}>
-                <Text style={{ fontSize: 36, marginBottom: 12 }}>🌟</Text>
-                <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Be the First Mentor</Text>
-                <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-                  Volunteer to guide others on this topic. Whether you've traveled here, work in this field, or live here — your experience is valuable.
-                </Text>
-              </View>
+              {experts.length === 0 && (
+                <View style={styles.emptyState}>
+                  <Text style={{ fontSize: 36, marginBottom: 12 }}>🌟</Text>
+                  <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Be the First Expert</Text>
+                  <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
+                    If you have lived experience with {hub?.topic.topicName ?? "this topic"}, volunteer to help others in the community.
+                  </Text>
+                </View>
+              )}
 
               <TouchableOpacity
                 style={[styles.ctaBtn, { backgroundColor: typeMeta.color, marginHorizontal: 14 }]}
-                onPress={() => router.push("/mentorship" as never)}
+                onPress={() => setShowVolunteerModal(true)}
                 activeOpacity={0.8}
               >
-                <Feather name="star" size={14} color="#fff" />
-                <Text style={styles.ctaBtnTxt}>Volunteer as a Mentor</Text>
+                <Text style={{ fontSize: 14 }}>✦</Text>
+                <Text style={styles.ctaBtnTxt}>Volunteer as an Expert</Text>
               </TouchableOpacity>
 
               <View style={[styles.infoNote, { backgroundColor: colors.secondary, borderColor: colors.border, marginTop: 16 }]}>
                 <Feather name="info" size={13} color={colors.mutedForeground} />
                 <Text style={[styles.infoNoteTxt, { color: colors.mutedForeground }]}>
-                  Example: "I've traveled to Brazil twice and can answer questions." or "I live in Philly and can help newcomers." Mentoring is voluntary and community-driven.
+                  Example: "I've lived in Tokyo for 14 years." · "I've restored 40 classic Mustangs." · "I manage Type 2 Diabetes and can help others." Expertise is voluntary and community-verified.
                 </Text>
               </View>
             </View>
@@ -726,6 +939,49 @@ export default function CommunityHubScreen() {
             </View>
             <TouchableOpacity style={styles.intentSkip} onPress={() => setShowIntentPicker(false)} activeOpacity={0.7}>
               <Text style={[styles.intentSkipTxt, { color: colors.mutedForeground }]}>Skip for now</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Volunteer as Expert Modal */}
+      <Modal visible={showVolunteerModal} transparent animationType="slide" onRequestClose={() => setShowVolunteerModal(false)}>
+        <View style={styles.intentOverlay}>
+          <View style={[styles.intentSheet, { backgroundColor: colors.card }]}>
+            <View style={styles.intentHandle} />
+            <Text style={[styles.intentTitle, { color: colors.foreground }]}>
+              Volunteer as a {hubName} Expert
+            </Text>
+            <Text style={[styles.intentSub, { color: colors.mutedForeground }]}>
+              Tell the community about your experience. This will be shown on your profile.
+            </Text>
+            <TextInput
+              style={[styles.volunteerInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+              placeholder={`e.g. "I've lived in ${hubName} for 8 years and can help with housing, healthcare, and daily life."`}
+              placeholderTextColor={colors.mutedForeground}
+              multiline
+              numberOfLines={3}
+              value={volunteerNote}
+              onChangeText={setVolunteerNote}
+            />
+            <TextInput
+              style={[styles.volunteerInputShort, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+              placeholder="Years of experience (optional)"
+              placeholderTextColor={colors.mutedForeground}
+              keyboardType="numeric"
+              value={volunteerYears}
+              onChangeText={setVolunteerYears}
+            />
+            <TouchableOpacity
+              style={[styles.ctaBtn, { backgroundColor: typeMeta.color, alignSelf: "stretch", justifyContent: "center" }]}
+              onPress={volunteerAsExpert}
+              disabled={volunteering}
+              activeOpacity={0.8}
+            >
+              {volunteering ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.ctaBtnTxt}>Submit &amp; Become an Expert</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.intentSkip} onPress={() => setShowVolunteerModal(false)} activeOpacity={0.7}>
+              <Text style={[styles.intentSkipTxt, { color: colors.mutedForeground }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -831,4 +1087,29 @@ const styles = StyleSheet.create({
   intentOptionDesc: { fontSize: 12, fontFamily: "Inter_400Regular" },
   intentSkip: { paddingVertical: 14, alignItems: "center" },
   intentSkipTxt: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  actionsRow: { paddingHorizontal: 14, paddingVertical: 12, gap: 8 },
+  actionChip: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, borderWidth: 1 },
+  actionChipTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  recsRow: { paddingHorizontal: 14, gap: 10, paddingBottom: 4 },
+  recCard: { width: 150, borderRadius: 14, borderWidth: 1.5, padding: 14, gap: 8 },
+  recName: { fontSize: 13, fontFamily: "Inter_700Bold", lineHeight: 18 },
+  recMembers: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  recNewBadge: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, alignSelf: "flex-start" },
+  recJoinBadge: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, alignSelf: "flex-start" },
+  recNewTxt: { fontSize: 10, fontFamily: "Inter_700Bold" },
+  expertCard: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginHorizontal: 14, marginBottom: 10, borderRadius: 14, borderWidth: 1, padding: 14 },
+  expertAvatar: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  expertAvatarTxt: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  expertNameRow: { flexDirection: "row", alignItems: "center", gap: 5 },
+  expertName: { fontSize: 14, fontFamily: "Inter_600SemiBold", flex: 1 },
+  expertBadge: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, alignSelf: "flex-start" },
+  expertBadgeTxt: { fontSize: 11, fontFamily: "Inter_700Bold" },
+  expertNote: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17, fontStyle: "italic" },
+  expertYears: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  expertCity: { flexDirection: "row", alignItems: "center", gap: 3 },
+  expertCityTxt: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  voteRow: { flexDirection: "row", alignItems: "center", gap: 2 },
+  voteTxt: { fontSize: 10, fontFamily: "Inter_400Regular" },
+  volunteerInput: { borderWidth: 1, borderRadius: 12, padding: 12, fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19, marginTop: 12, marginBottom: 8, minHeight: 80, textAlignVertical: "top" },
+  volunteerInputShort: { borderWidth: 1, borderRadius: 12, padding: 12, fontSize: 13, fontFamily: "Inter_400Regular", marginBottom: 14 },
 });
