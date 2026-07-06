@@ -20,6 +20,9 @@ artifacts/mockup-sandbox
 .local
 attached_assets
 .agents
+.config
+.canvas
+screenshots
 lib/api-spec
 lib/api-zod
 lib/db
