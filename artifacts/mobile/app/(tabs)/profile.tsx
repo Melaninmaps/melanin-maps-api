@@ -810,6 +810,25 @@ export default function ProfileScreen() {
 
       <PointsRedemptionModal visible={showRedemption} onClose={() => setShowRedemption(false)} />
 
+      {isAuthenticated && (
+        <TouchableOpacity
+          style={[styles.hubCard, { backgroundColor: "#1A1A2E", borderColor: "#7C3AED33" }]}
+          onPress={() => router.push("/community-hub" as any)}
+          activeOpacity={0.85}
+        >
+          <View style={[styles.hubIconWrap, { backgroundColor: "rgba(124,58,237,0.18)" }]}>
+            <Feather name="grid" size={22} color="#A78BFA" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.hubTitle, { color: "#FFFFFF" }]}>My Hub</Text>
+            <Text style={[styles.hubSub, { color: "rgba(255,255,255,0.6)" }]}>
+              Your guides, collections, roadmaps &amp; life journey — all in one place
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={18} color="rgba(255,255,255,0.4)" />
+        </TouchableOpacity>
+      )}
+
       <Modal visible={showEditModal} animationType="slide" transparent presentationStyle="overFullScreen" onRequestClose={closeEditModal}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.modalOverlay}>
           <Pressable style={StyleSheet.absoluteFill} onPress={closeEditModal} />
@@ -1812,6 +1831,34 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  hubCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 4,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+  },
+  hubIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hubTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 15,
+  },
+  hubSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    marginTop: 2,
+    lineHeight: 16,
   },
   redeemBanner: {
     flexDirection: "row",

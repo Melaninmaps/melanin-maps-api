@@ -110,6 +110,7 @@ import hubBadgesRouter from "./hub-badges";
 import collectionsRouter from "./collections";
 import roadmapsRouter from "./roadmaps";
 import guidesRouter from "./guides";
+import travelPlannerRouter from "./travel-planner";
 
 const router: IRouter = Router();
 
@@ -223,6 +224,7 @@ router.use(hubBadgesRouter);
 router.use(collectionsRouter);
 router.use(roadmapsRouter);
 router.use(guidesRouter);
+router.use(travelPlannerRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

@@ -902,6 +902,24 @@ export default function CommunityScreen() {
             <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
           </TouchableOpacity>
 
+          {/* AI Travel Planner card */}
+          <TouchableOpacity
+            style={[styles.resSpacesCard, { backgroundColor: "#1A3B2B", borderColor: "#2D7A4F55" }]}
+            onPress={() => router.push("/travel-planner" as never)}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.resSpacesIcon, { backgroundColor: "rgba(255,255,255,0.12)" }]}>
+              <Feather name="map" size={22} color="#FFFFFF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.resSpacesTitle, { color: "#FFFFFF" }]}>AI Travel Planner</Text>
+              <Text style={[styles.resSpacesSub, { color: "rgba(255,255,255,0.75)" }]}>
+                KinfolkAI builds your full itinerary — Black-owned hotels, restaurants, experiences &amp; safety context.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color="rgba(255,255,255,0.6)" />
+          </TouchableOpacity>
+
           {/* My Community card */}
           <TouchableOpacity
             style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#C9922B33" }]}

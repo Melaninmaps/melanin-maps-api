@@ -1916,6 +1916,21 @@ export default function BusinessDashboardScreen() {
 
               return (
                 <>
+                  {/* Full Intelligence Report link */}
+                  <TouchableOpacity
+                    style={[styles.intelligenceBtn, { backgroundColor: "#CA922B", marginHorizontal: 20, marginBottom: 16, borderRadius: 14 }]}
+                    onPress={() => router.push("/business-intelligence" as never)}
+                    activeOpacity={0.85}
+                  >
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+                      <Feather name="bar-chart-2" size={20} color="#fff" />
+                      <View>
+                        <Text style={{ color: "#fff", fontWeight: "700", fontSize: 14 }}>Full Intelligence Report</Text>
+                        <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 11, marginTop: 1 }}>Sentiment · Peer benchmarks · Promotion ROI</Text>
+                      </View>
+                    </View>
+                    <Feather name="chevron-right" size={18} color="#fff" />
+                  </TouchableOpacity>
                   {/* Tier + Engagement Score */}
                   <View style={[styles.scoreCard, { backgroundColor: A.tier === "trailblazer" ? "#CA922B" : colors.card, borderColor: A.tier === "trailblazer" ? "#CA922B50" : colors.border }]}>
                     <View style={styles.scoreLeft}>
@@ -2789,6 +2804,7 @@ const styles = StyleSheet.create({
 
   analyticsLoadingTxt: { marginTop: 12, fontSize: 14, fontFamily: "Inter_400Regular" },
   retryTxt: { fontSize: 14, fontFamily: "Inter_500Medium", marginTop: 8 },
+  intelligenceBtn: { flexDirection: "row", alignItems: "center", padding: 16 },
 
   paywallCard: { margin: 20, padding: 24, borderRadius: 16, borderWidth: 1, alignItems: "center", gap: 12 },
   paywallIcon: { width: 72, height: 72, borderRadius: 22, alignItems: "center", justifyContent: "center", marginBottom: 4 },
