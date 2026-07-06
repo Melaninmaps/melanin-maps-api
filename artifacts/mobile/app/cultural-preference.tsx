@@ -27,6 +27,11 @@ const CULTURAL_IDENTITIES = [
     sub: "African American, Afro-Caribbean, African diaspora",
   },
   {
+    key: "Melanated Diaspora",
+    emoji: "🌍",
+    sub: "Global African & melanated diaspora communities",
+  },
+  {
     key: "Hispanic / Latino",
     emoji: "🧡",
     sub: "Mexican, Puerto Rican, Cuban, Central & South American",
