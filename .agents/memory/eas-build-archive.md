@@ -30,4 +30,8 @@ description: Rules for avoiding disk quota and archive errors when running EAS b
 
 8. **Do NOT add `shamefully-hoist=true` to `.npmrc`.** It causes Metro to bundle from the git root using hoisted expo, which picks up the wrong `package.json` (no `main` field) and tries to resolve `expo/AppEntry.js` → `../../App` which doesn't exist. Running from `artifacts/mobile/` (rule 4) makes hoisting unnecessary.
 
+9. **Use `expo/metro-config` NOT `@expo/metro-config` in `metro.config.js`.** EAS CLI shows a cosmetic warning when it sees `expo/metro-config` ("does not extend @expo/metro-config") but `expo/metro-config` IS the correct import — it re-exports `@expo/metro-config` and is directly accessible as a dep of expo. Using `@expo/metro-config` directly fails on EAS with "Cannot find module '@expo/metro-config'" because it's a transitive dep not directly accessible in pnpm's non-hoisted layout. When EAS CLI asks "Would you like to abort?" due to this warning, say **no**.
+
+10. **EAS Gradle builds fail at `createBundleReleaseJsAndAssets` if metro.config.js has an import error.** This task runs Metro bundler as part of Gradle. If Metro config can't load, Gradle reports "Gradle build failed with unknown error" — check Run gradlew logs, not Bundle JavaScript logs, for the real error.
+
 **Why:** EAS archives the entire pnpm workspace root, runs `pnpm install` on EAS servers, then builds from `artifacts/mobile/`. Any workspace package the mobile app imports must be present in the archive.
