@@ -95,3 +95,4 @@ export * from "./business-ai-plan-cache";
 export * from "./global-recommendations";
 export * from "./collections";
 export * from "./roadmaps";
+export * from "./guides";

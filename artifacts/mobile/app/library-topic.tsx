@@ -193,7 +193,7 @@ function timeAgo(date: string): string {
 }
 
 function creatorInitials(c: Creator): string {
-  return ((c.firstName?.[0] ?? "") + (c.lastName?.[0] ?? "") || c.username?.[0] ?? "M").toUpperCase();
+  return (((c.firstName?.[0] ?? "") + (c.lastName?.[0] ?? "")) || (c.username?.[0] ?? "M")).toUpperCase();
 }
 function creatorName(c: Creator): string {
   return [c.firstName, c.lastName].filter(Boolean).join(" ") || `@${c.username ?? "member"}`;
