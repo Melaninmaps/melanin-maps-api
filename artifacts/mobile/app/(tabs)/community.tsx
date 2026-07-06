@@ -224,6 +224,9 @@ export default function CommunityScreen() {
   const [submittingPost, setSubmittingPost] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
+  const [editingPost, setEditingPost] = useState<CommunityPost | null>(null);
+  const [editPostText, setEditPostText] = useState("");
+  const [submittingEdit, setSubmittingEdit] = useState(false);
   const [groupCategory, setGroupCategory] = useState("all");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<string | undefined>(undefined);
@@ -450,6 +453,59 @@ export default function CommunityScreen() {
       Alert.alert("Error", "Could not post. Check your connection.");
     } finally {
       setSubmittingPost(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/community/posts/${postId}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        setPosts((prev) => prev.filter((p) => p.id !== postId));
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        Alert.alert("Error", "Could not delete post. Try again.");
+      }
+    } catch {
+      Alert.alert("Error", "Could not delete post. Check your connection.");
+    }
+  };
+
+  const handleEditPost = (post: CommunityPost) => {
+    setEditingPost(post);
+    setEditPostText(post.content);
+  };
+
+  const submitEdit = async () => {
+    if (!editingPost || !editPostText.trim()) return;
+    setSubmittingEdit(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/community/posts/${editingPost.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ content: editPostText.trim() }),
+      });
+      if (res.ok) {
+        const updated = editPostText.trim();
+        setPosts((prev) => prev.map((p) => p.id === editingPost.id ? { ...p, content: updated } : p));
+        setEditingPost(null);
+        setEditPostText("");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        const err = await res.json() as { error?: string };
+        Alert.alert("Error", err.error ?? "Could not update post.");
+      }
+    } catch {
+      Alert.alert("Error", "Could not update post. Check your connection.");
+    } finally {
+      setSubmittingEdit(false);
     }
   };
 
@@ -1083,10 +1139,13 @@ export default function CommunityScreen() {
             renderItem={({ item }) => (
               <CommunityPostCard
                 post={item}
+                currentUserId={user?.id}
                 onCommentPress={() => setSelectedPost(item)}
                 onAuthorPress={(id) => { router.push(`/user/${id}` as any); }}
                 onLocationPress={(tag) => router.push({ pathname: "/location-feed", params: { location: tag } } as any)}
                 onTopicPress={(tag) => router.push({ pathname: "/topic-feed", params: { topic: tag.toLowerCase() } } as any)}
+                onEdit={handleEditPost}
+                onDelete={(id) => handleDeletePost(id)}
               />
             )}
           />
@@ -1128,6 +1187,51 @@ export default function CommunityScreen() {
         onClose={() => setShowUpgrade(false)}
         feature={upgradeFeature}
       />
+
+      {/* Edit Post Modal */}
+      <Modal
+        visible={editingPost !== null}
+        animationType="slide"
+        transparent
+        presentationStyle="overFullScreen"
+        onRequestClose={() => { setEditingPost(null); setEditPostText(""); }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.composeSheet, { backgroundColor: colors.card, paddingBottom: bottomPad + 20 }]}>
+            <View style={[styles.composeHeader, { borderBottomColor: colors.border }]}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => { setEditingPost(null); setEditPostText(""); }}
+              >
+                <Text style={[styles.composeCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={[styles.composeTitle, { color: colors.foreground }]}>Edit Post</Text>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => void submitEdit()}
+                disabled={!editPostText.trim() || submittingEdit}
+              >
+                <Text style={[styles.composePostText, { color: editPostText.trim() ? colors.primary : colors.muted }]}>
+                  {submittingEdit ? "Saving…" : "Save"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              style={[styles.composeInput, { color: colors.foreground }]}
+              placeholder="What's on your mind?"
+              placeholderTextColor={colors.mutedForeground}
+              multiline
+              value={editPostText}
+              onChangeText={setEditPostText}
+              maxLength={10000}
+              autoFocus
+            />
+            <Text style={[styles.charCount, { color: editPostText.length > 900 ? "#DC2626" : colors.mutedForeground }]}>
+              {editPostText.length} / 1000
+            </Text>
+          </View>
+        </View>
+      </Modal>
 
       <Modal visible={showCreateGroup} animationType="slide" transparent presentationStyle="overFullScreen">
         <View style={styles.modalOverlay}>

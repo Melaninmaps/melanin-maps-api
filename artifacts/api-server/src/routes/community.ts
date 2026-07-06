@@ -474,6 +474,35 @@ router.post("/community/posts/:id/comments", async (req: Request, res: Response)
   }
 });
 
+// PATCH /community/posts/:id — author can edit content (text only)
+router.patch("/community/posts/:id", async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+    const postId = req.params["id"] as string;
+    const { content } = req.body as { content?: string };
+    if (!content?.trim()) { res.status(400).json({ error: "content is required" }); return; }
+    if (content.trim().length > 10000) { res.status(400).json({ error: "Post is too long" }); return; }
+
+    const filter = checkContent(content);
+    if (!filter.ok) {
+      res.status(422).json({ error: filter.reason, code: "CONTENT_POLICY_VIOLATION" });
+      return;
+    }
+
+    const [post] = await db
+      .update(communityPostsTable)
+      .set({ content: content.trim() })
+      .where(and(eq(communityPostsTable.id, postId), eq(communityPostsTable.authorId, req.user.id)))
+      .returning();
+
+    if (!post) { res.status(404).json({ error: "Post not found or not yours" }); return; }
+    res.json({ post });
+  } catch (err) {
+    req.log.error({ err }, "Failed to edit community post");
+    res.status(500).json({ error: "Failed to edit post" });
+  }
+});
+
 // DELETE /community/posts/:id
 router.delete("/community/posts/:id", async (req: Request, res: Response) => {
   try {

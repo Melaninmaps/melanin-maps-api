@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { Image, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useState } from "react";
 import { useColors } from "@/hooks/useColors";
 import { BusinessMiniCard, type BusinessMiniCardData } from "@/components/BusinessMiniCard";
@@ -9,12 +9,15 @@ import type { CommunityPost } from "@/constants/types";
 
 interface Props {
   post: CommunityPost;
+  currentUserId?: string;
   onCommentPress?: () => void;
   onLikeChange?: (liked: boolean) => void;
   onAuthorPress?: (authorId: string) => void;
   onLocationPress?: (locationTag: string) => void;
   onTopicPress?: (topicTag: string) => void;
   onRepost?: (post: CommunityPost) => void;
+  onEdit?: (post: CommunityPost) => void;
+  onDelete?: (postId: string) => void;
 }
 
 const CATEGORY_CONFIG = {
@@ -157,11 +160,34 @@ function RepostBlock({ repostAuthorName, repostAuthorInitials, repostContent }: 
   );
 }
 
-export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthorPress, onLocationPress, onTopicPress, onRepost }: Props) {
+export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeChange, onAuthorPress, onLocationPress, onTopicPress, onRepost, onEdit, onDelete }: Props) {
   const colors = useColors();
   const [liked, setLiked] = useState(post.liked);
   const [likeCount, setLikeCount] = useState(post.likes);
   const [showBizCard, setShowBizCard] = useState(false);
+
+  const isOwnPost = !!(currentUserId && post.authorId && currentUserId === post.authorId);
+
+  const handleMoreOptions = () => {
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Alert.alert(
+      "Post Options",
+      undefined,
+      [
+        { text: "Edit Post", onPress: () => onEdit?.(post) },
+        {
+          text: "Delete Post",
+          style: "destructive",
+          onPress: () =>
+            Alert.alert("Delete Post", "This can't be undone.", [
+              { text: "Cancel", style: "cancel" },
+              { text: "Delete", style: "destructive", onPress: () => onDelete?.(post.id) },
+            ]),
+        },
+        { text: "Cancel", style: "cancel" },
+      ],
+    );
+  };
 
   const isBusinessPost = post.postType === "business";
   const isQuestion = post.postType === "question" || post.category === "question";
@@ -262,6 +288,16 @@ export function CommunityPostCard({ post, onCommentPress, onLikeChange, onAuthor
             <Feather name={categoryConfig.icon} size={11} color={categoryConfig.color} />
             <Text style={[s.categoryText, { color: categoryConfig.color }]}>{categoryConfig.label}</Text>
           </View>
+        )}
+        {isOwnPost && (
+          <TouchableOpacity
+            onPress={handleMoreOptions}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={s.moreBtn}
+            activeOpacity={0.7}
+          >
+            <Feather name="more-horizontal" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
         )}
       </View>
 
@@ -591,4 +627,5 @@ const s = StyleSheet.create({
     borderWidth: 1,
   },
   viewBizText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  moreBtn: { padding: 2 },
 });
