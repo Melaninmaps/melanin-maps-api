@@ -35,3 +35,7 @@ scripts
 *.pptx
 *.mp4
 *.mov
+*.ipa
+*.aab
+*.tar.gz
+*.zip
