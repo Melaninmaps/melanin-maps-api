@@ -71,11 +71,13 @@ router.post("/businesses/:id/love-note", async (req: Request, res: Response) => 
   if (!user) { res.status(401).json({ error: "Sign in to leave a love note" }); return; }
   const businessId = String(req.params.id);
   const { note, contentLink } = req.body as { note?: string; contentLink?: string | null };
-  if (!note?.trim() || note.trim().length < 5) {
-    res.status(400).json({ error: "Comment must be at least 5 characters" }); return;
+  const trimmedNote = note?.trim() ?? "";
+  const wordCount = trimmedNote.split(/\s+/).filter(Boolean).length;
+  if (!trimmedNote || wordCount < 2) {
+    res.status(400).json({ error: "Write at least a couple of words." }); return;
   }
-  if (note.trim().length > 200) {
-    res.status(400).json({ error: "Keep your comment under 200 characters" }); return;
+  if (wordCount > 200) {
+    res.status(400).json({ error: "Keep your comment under 200 words." }); return;
   }
   const cleanLink = contentLink?.trim() || null;
   if (cleanLink && !/^https?:\/\/.+\..+/i.test(cleanLink)) {

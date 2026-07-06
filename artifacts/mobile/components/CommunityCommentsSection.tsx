@@ -19,8 +19,12 @@ import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
 
 const MAX_PICKS = 3;
-const MAX_CHARS = 200;
+const MAX_WORDS = 200;
 const URL_RE = /^https?:\/\/.+\..+/i;
+
+function wordCount(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -43,27 +47,6 @@ type LoveNote = {
 
 type Props = { businessId: string; businessName: string };
 
-function PulseHeart({ selected, disabled }: { selected: boolean; disabled: boolean }) {
-  const scale = useRef(new Animated.Value(1)).current;
-  const pulse = () => {
-    Animated.sequence([
-      Animated.spring(scale, { toValue: 1.35, useNativeDriver: true, speed: 40, bounciness: 12 }),
-      Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 4 }),
-    ]).start();
-  };
-  return (
-    <Animated.View style={{ transform: [{ scale }] }}>
-      {/* invisible trigger — parent calls pulse() */}
-      <Text
-        style={{ fontSize: 16, opacity: disabled && !selected ? 0.3 : 1 }}
-        onLayout={() => { (PulseHeart as any)._pulse = pulse; }}
-      >
-        {selected ? "❤️" : "🤍"}
-      </Text>
-    </Animated.View>
-  );
-}
-
 export default function CommunityCommentsSection({ businessId, businessName }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -71,19 +54,20 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
 
   const [notes, setNotes] = useState<LoveNote[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [writeOpen, setWriteOpen] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [linkText, setLinkText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  // selected = set of noteIds this user has picked (max MAX_PICKS)
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  // per-note scale refs for the heart bounce
   const scales = useRef<Record<string, Animated.Value>>({});
-
   const inputRef = useRef<TextInput>(null);
-  const picksLeft = MAX_PICKS - selected.size;
+
+  const picksUsed = selected.size;
+  const picksLeft = MAX_PICKS - picksUsed;
+  const words = wordCount(noteText);
+  const wordsLeft = MAX_WORDS - words;
 
   const getScale = (id: string) => {
     if (!scales.current[id]) scales.current[id] = new Animated.Value(1);
@@ -113,31 +97,23 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
 
   const handleToggle = async (noteId: string) => {
     const isSelected = selected.has(noteId);
-
-    // Enforce limit
     if (!isSelected && picksLeft <= 0) {
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
-
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     bounce(noteId);
-
-    // Optimistic UI
     setSelected(prev => {
       const next = new Set(prev);
       isSelected ? next.delete(noteId) : next.add(noteId);
       return next;
     });
     setNotes(prev =>
-      prev.map(n =>
-        n.id === noteId
-          ? { ...n, upvotes: Math.max(0, n.upvotes + (isSelected ? -1 : 1)) }
-          : n
+      prev.map(n => n.id === noteId
+        ? { ...n, upvotes: Math.max(0, n.upvotes + (isSelected ? -1 : 1)) }
+        : n
       )
     );
-
-    // Persist
     try {
       const token = await getToken();
       await fetch(`${getApiBase()}/api/love-notes/${noteId}/upvote`, {
@@ -148,8 +124,8 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
   };
 
   const handleSubmit = async () => {
-    const trimmed = noteText.trim();
-    if (trimmed.length < 5) { setSubmitError("Write at least 5 characters."); return; }
+    if (words < 2) { setSubmitError("Write at least a couple of words."); return; }
+    if (words > MAX_WORDS) { setSubmitError(`Keep your comment under ${MAX_WORDS} words.`); return; }
     if (linkText.trim() && !URL_RE.test(linkText.trim())) {
       setSubmitError("Content link must be a valid URL (https://...)"); return;
     }
@@ -160,13 +136,13 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
       const res = await fetch(`${getApiBase()}/api/businesses/${businessId}/love-note`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ note: trimmed, contentLink: linkText.trim() || null }),
+        body: JSON.stringify({ note: noteText.trim(), contentLink: linkText.trim() || null }),
       });
       const data = await res.json() as { loveNote?: LoveNote; error?: string };
       if (!res.ok || !data.loveNote) { setSubmitError(data.error ?? "Failed to post. Please try again."); return; }
       setNotes(prev => [data.loveNote!, ...prev]);
       setNoteText(""); setLinkText("");
-      setModalOpen(false);
+      setWriteOpen(false);
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch { setSubmitError("Could not connect. Please try again."); }
     finally { setSubmitting(false); }
@@ -184,75 +160,79 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
     return `${Math.floor(d / 30)}mo ago`;
   };
 
-  const charsLeft = MAX_CHARS - noteText.length;
-
   return (
     <View style={[s.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
       {/* Header */}
-      <View style={s.header}>
-        <Text style={[s.title, { color: colors.foreground }]}>💬 Community Comments</Text>
+      <Text style={[s.title, { color: colors.foreground }]}>💬 Community Comments</Text>
+      <Text style={[s.subtitle, { color: colors.mutedForeground }]}>
+        Pick what resonates, write your own — or both.
+      </Text>
+
+      {/* Two action cards */}
+      <View style={s.actionRow}>
+        {/* Pick card */}
+        <View style={[s.actionCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
+          <Text style={[s.actionEmoji]}>❤️</Text>
+          <Text style={[s.actionTitle, { color: colors.foreground }]}>Pick Favorites</Text>
+          <Text style={[s.actionSub, { color: colors.mutedForeground }]}>
+            Tap hearts below to endorse up to 3 comments
+          </Text>
+          {/* Dots */}
+          <View style={s.dotsRow}>
+            {Array.from({ length: MAX_PICKS }).map((_, i) => (
+              <View key={i} style={[s.dot, { backgroundColor: i < picksUsed ? colors.primary : colors.border }]} />
+            ))}
+            <Text style={[s.dotsLabel, { color: picksUsed > 0 ? colors.primary : colors.mutedForeground }]}>
+              {picksUsed}/{MAX_PICKS}
+            </Text>
+          </View>
+        </View>
+
+        {/* Write card */}
         <TouchableOpacity
-          activeOpacity={0.8}
-          style={[s.addBtn, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "35" }]}
+          activeOpacity={0.85}
+          style={[s.actionCard, { backgroundColor: colors.primary + "08", borderColor: colors.primary + "30" }]}
           onPress={() => {
-            setModalOpen(true);
+            setWriteOpen(true);
             setTimeout(() => inputRef.current?.focus(), 300);
           }}
         >
-          <Feather name="edit-2" size={12} color={colors.primary} />
-          <Text style={[s.addBtnText, { color: colors.primary }]}>Add Comment</Text>
+          <Text style={s.actionEmoji}>✍️</Text>
+          <Text style={[s.actionTitle, { color: colors.foreground }]}>Write a Comment</Text>
+          <Text style={[s.actionSub, { color: colors.mutedForeground }]}>
+            Share your experience in up to 200 words
+          </Text>
+          <View style={[s.writeBtn, { backgroundColor: colors.primary }]}>
+            <Feather name="edit-2" size={11} color="#FFF" />
+            <Text style={s.writeBtnText}>Write</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
+      {/* Notes list */}
       {loading ? (
         <ActivityIndicator color={colors.primary} style={{ marginVertical: 16 }} />
       ) : notes.length === 0 ? (
         <View style={s.empty}>
           <Feather name="message-circle" size={22} color={colors.muted} />
           <Text style={[s.emptyText, { color: colors.mutedForeground }]}>
-            Be the first to leave a comment about {businessName}.
+            Be the first to share your thoughts about {businessName}.
           </Text>
         </View>
       ) : (
         <>
-          {/* Pick counter */}
-          <View style={[s.picksBar, { backgroundColor: picksLeft === 0 ? colors.primary + "12" : colors.background, borderColor: colors.border }]}>
-            <View style={s.picksLeft}>
-              <Text style={[s.picksLabel, { color: colors.foreground }]}>
-                ❤️ Pick your favorites
-              </Text>
-              <Text style={[s.picksSub, { color: colors.mutedForeground }]}>
-                Tap up to 3 comments that resonate with you
-              </Text>
-            </View>
-            <View style={s.picksDots}>
-              {Array.from({ length: MAX_PICKS }).map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    s.dot,
-                    { backgroundColor: i < selected.size ? colors.primary : colors.border },
-                  ]}
-                />
-              ))}
-            </View>
-          </View>
-
           {picksLeft === 0 && (
-            <View style={[s.limitBanner, { backgroundColor: colors.primary + "0A", borderColor: colors.primary + "20" }]}>
+            <View style={[s.limitBanner, { backgroundColor: colors.primary + "0A", borderColor: colors.primary + "25" }]}>
               <Text style={[s.limitText, { color: colors.primary }]}>
-                3/3 picks used · Tap a ❤️ to swap your selection
+                3/3 picks used · Tap ❤️ to swap your selection
               </Text>
             </View>
           )}
-
-          {/* Notes list */}
           <View style={s.notesList}>
             {notes.map((n) => {
               const isSelected = selected.has(n.id);
               const isDisabled = !isSelected && picksLeft <= 0;
               const scale = getScale(n.id);
-
               return (
                 <View
                   key={n.id}
@@ -262,7 +242,7 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
                     isSelected && { backgroundColor: colors.primary + "06" },
                   ]}
                 >
-                  <Text style={[s.noteText, { color: colors.foreground, opacity: isDisabled ? 0.45 : 1 }]}>
+                  <Text style={[s.noteText, { color: colors.foreground, opacity: isDisabled ? 0.4 : 1 }]}>
                     {n.note}
                   </Text>
                   {n.contentLink && (
@@ -283,14 +263,12 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
                     <Text style={[s.noteTime, { color: colors.mutedForeground }]}>{timeAgo(n.createdAt)}</Text>
                     <TouchableOpacity
                       activeOpacity={0.7}
-                      style={[s.heartBtn, isDisabled && s.heartDisabled]}
+                      style={[s.heartBtn, isDisabled && { opacity: 0.3 }]}
                       onPress={() => handleToggle(n.id)}
                       disabled={isDisabled}
                     >
                       <Animated.View style={{ transform: [{ scale }] }}>
-                        <Text style={[s.heartEmoji, { opacity: isDisabled ? 0.3 : 1 }]}>
-                          {isSelected ? "❤️" : "🤍"}
-                        </Text>
+                        <Text style={s.heartEmoji}>{isSelected ? "❤️" : "🤍"}</Text>
                       </Animated.View>
                       <Text style={[s.upvoteCount, { color: isSelected ? colors.primary : colors.mutedForeground }]}>
                         {n.upvotes}
@@ -304,19 +282,19 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
         </>
       )}
 
-      {/* Post modal */}
+      {/* Write modal */}
       <Modal
-        visible={modalOpen}
+        visible={writeOpen}
         animationType="slide"
         transparent
-        onRequestClose={() => setModalOpen(false)}
+        onRequestClose={() => setWriteOpen(false)}
       >
-        <TouchableOpacity style={s.backdrop} activeOpacity={1} onPress={() => setModalOpen(false)} />
+        <TouchableOpacity style={s.backdrop} activeOpacity={1} onPress={() => setWriteOpen(false)} />
         <View style={[s.sheet, { backgroundColor: colors.background, paddingBottom: (Platform.OS === "ios" ? insets.bottom : 16) + 16 }]}>
           <View style={[s.sheetHandle, { backgroundColor: colors.border }]} />
-          <Text style={[s.sheetTitle, { color: colors.foreground }]}>Leave a Community Comment</Text>
+          <Text style={[s.sheetTitle, { color: colors.foreground }]}>Write a Comment</Text>
           <Text style={[s.sheetSub, { color: colors.mutedForeground }]}>
-            Share your experience, tips, or thoughts about {businessName}.
+            Share your experience, tips, or thoughts about {businessName}. Up to 200 words.
           </Text>
 
           {!isAuthenticated && (
@@ -332,16 +310,21 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
             placeholder={`What do you want the community to know about ${businessName}?`}
             placeholderTextColor={colors.mutedForeground}
             value={noteText}
-            onChangeText={t => { setNoteText(t.slice(0, MAX_CHARS)); setSubmitError(""); }}
+            onChangeText={t => { setNoteText(t); setSubmitError(""); }}
             multiline
-            numberOfLines={4}
+            numberOfLines={6}
             textAlignVertical="top"
             editable={isAuthenticated}
           />
-          <View style={s.charRow}>
-            <Text style={[s.charCount, { color: charsLeft < 20 ? "#DC2626" : colors.mutedForeground }]}>
-              {charsLeft} characters left
+          <View style={s.wordRow}>
+            <Text style={[s.wordCount, { color: wordsLeft < 20 ? "#DC2626" : colors.mutedForeground }]}>
+              {words} / {MAX_WORDS} words
             </Text>
+            {wordsLeft < 20 && (
+              <Text style={[s.wordCount, { color: wordsLeft < 0 ? "#DC2626" : "#D97706" }]}>
+                {wordsLeft < 0 ? `${Math.abs(wordsLeft)} over limit` : `${wordsLeft} left`}
+              </Text>
+            )}
           </View>
 
           <Text style={[s.fieldLabel, { color: colors.foreground }]}>Content Link (optional)</Text>
@@ -364,9 +347,9 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
           )}
 
           <TouchableOpacity
-            style={[s.submitBtn, { backgroundColor: isAuthenticated ? colors.primary : colors.muted }]}
+            style={[s.submitBtn, { backgroundColor: isAuthenticated && words >= 2 && words <= MAX_WORDS ? colors.primary : colors.muted }]}
             onPress={handleSubmit}
-            disabled={!isAuthenticated || submitting || noteText.trim().length < 5}
+            disabled={!isAuthenticated || submitting || words < 2 || words > MAX_WORDS}
             activeOpacity={0.85}
           >
             {submitting
@@ -381,45 +364,48 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
 
 const s = StyleSheet.create({
   container: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 16 },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
-  title: { fontFamily: "Inter_700Bold", fontSize: 15 },
-  addBtn: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 20, borderWidth: 1, paddingHorizontal: 11, paddingVertical: 6 },
-  addBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+
+  title: { fontFamily: "Inter_700Bold", fontSize: 16, marginBottom: 2 },
+  subtitle: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, marginBottom: 14 },
+
+  actionRow: { flexDirection: "row", gap: 10, marginBottom: 16 },
+  actionCard: { flex: 1, borderRadius: 14, borderWidth: 1, padding: 12, gap: 4 },
+  actionEmoji: { fontSize: 22, marginBottom: 2 },
+  actionTitle: { fontFamily: "Inter_700Bold", fontSize: 13 },
+  actionSub: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15 },
+  dotsRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 6 },
+  dot: { width: 9, height: 9, borderRadius: 5 },
+  dotsLabel: { fontFamily: "Inter_700Bold", fontSize: 11, marginLeft: 2 },
+  writeBtn: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, alignSelf: "flex-start", marginTop: 6 },
+  writeBtnText: { fontFamily: "Inter_700Bold", fontSize: 12, color: "#FFF" },
+
+  limitBanner: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 10, alignItems: "center" },
+  limitText: { fontFamily: "Inter_500Medium", fontSize: 12 },
+
   empty: { alignItems: "center", gap: 8, paddingVertical: 20 },
   emptyText: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center", lineHeight: 20 },
 
-  picksBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 8 },
-  picksLeft: { flex: 1, gap: 2 },
-  picksLabel: { fontFamily: "Inter_700Bold", fontSize: 13 },
-  picksSub: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15 },
-  picksDots: { flexDirection: "row", gap: 6 },
-  dot: { width: 10, height: 10, borderRadius: 5 },
-
-  limitBanner: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 8, alignItems: "center" },
-  limitText: { fontFamily: "Inter_500Medium", fontSize: 12 },
-
   notesList: { gap: 0 },
-  noteCard: { paddingVertical: 12, borderBottomWidth: 1, borderRadius: 0, paddingHorizontal: 4 },
-  noteText: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 21 },
+  noteCard: { paddingVertical: 12, borderBottomWidth: 1, paddingHorizontal: 4 },
+  noteText: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 22 },
   linkRow: { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6, marginTop: 7 },
   linkText: { fontFamily: "Inter_500Medium", fontSize: 12, flex: 1 },
   noteMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 8 },
   noteTime: { fontFamily: "Inter_400Regular", fontSize: 11 },
   heartBtn: { flexDirection: "row", alignItems: "center", gap: 5 },
-  heartDisabled: { opacity: 0.35 },
   heartEmoji: { fontSize: 15 },
   upvoteCount: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
 
   backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)" },
-  sheet: { backgroundColor: "#FFF", borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingTop: 12 },
+  sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingTop: 12 },
   sheetHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
   sheetTitle: { fontFamily: "Inter_700Bold", fontSize: 18, marginBottom: 4 },
   sheetSub: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20, marginBottom: 16 },
   authWarn: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 10, borderWidth: 1, padding: 10, marginBottom: 12 },
   authWarnText: { fontFamily: "Inter_500Medium", fontSize: 13, color: "#92400E", flex: 1 },
-  textArea: { borderRadius: 12, borderWidth: 1, padding: 12, minHeight: 100, fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 21 },
-  charRow: { alignItems: "flex-end", marginTop: 4, marginBottom: 12 },
-  charCount: { fontFamily: "Inter_400Regular", fontSize: 11 },
+  textArea: { borderRadius: 12, borderWidth: 1, padding: 12, minHeight: 130, fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 22 },
+  wordRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4, marginBottom: 14 },
+  wordCount: { fontFamily: "Inter_400Regular", fontSize: 11 },
   fieldLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginBottom: 6 },
   linkInput: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 14, marginBottom: 12 },
   errorRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 },
