@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -175,6 +175,14 @@ export default function LibraryScreen() {
   const [storySearch, setStorySearch] = useState("");
   const [topicSearch, setTopicSearch] = useState("");
   const [addingTopic, setAddingTopic] = useState(false);
+  const resolveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [resolveResult, setResolveResult] = useState<{
+    resolvedName: string;
+    entityType: string;
+    existingHubs: { id: string; topicName: string; category: string; membersCount: number }[];
+    shouldJoin: boolean;
+  } | null>(null);
+  const [resolving, setResolving] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState("");
   const [pinModal, setPinModal] = useState<{
@@ -396,6 +404,23 @@ export default function LibraryScreen() {
     router.push({ pathname: "/library-expert", params: { expertId: expert.id } } as never);
   }
 
+  async function resolveTopicQuery(name: string) {
+    if (!name.trim() || name.trim().length < 2) { setResolveResult(null); return; }
+    setResolving(true);
+    try {
+      const h = await authHeaders();
+      const res = await fetch(`${getApiBase()}/api/knowledge/hubs/resolve`, {
+        method: "POST",
+        headers: { ...h, "Content-Type": "application/json" },
+        body: JSON.stringify({ query: name.trim() }),
+      });
+      if (res.ok) {
+        const data = await res.json() as typeof resolveResult & { query: string };
+        setResolveResult(data);
+      }
+    } catch { /* silent */ } finally { setResolving(false); }
+  }
+
   async function handleAddTopic(name: string) {
     if (!name.trim()) return;
     if (!isAuthenticated) { router.push("/login" as never); return; }
@@ -422,6 +447,7 @@ export default function LibraryScreen() {
         });
         setFollowCount((c) => c + 1);
         setTopicSearch("");
+        setResolveResult(null);
         router.push({ pathname: "/library-topic", params: { topicId: data.topic.id } } as never);
       }
     } catch { /* silent */ } finally { setAddingTopic(false); }
@@ -463,7 +489,7 @@ export default function LibraryScreen() {
               const pendingCount = stories.filter((s) => s.status === "pending").length;
               const labels: Record<Tab, string> = {
                 library: `My Library${newCount > 0 ? ` (${newCount})` : ""}`,
-                browse: "Browse Topics",
+                browse: "Community Hubs",
                 happeningNow: `Happening Now${pendingCount > 0 ? ` · ${pendingCount}` : ""}`,
               };
               return (
@@ -517,7 +543,7 @@ export default function LibraryScreen() {
                   onPress={() => setActiveTab("browse")}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.signInTxt}>Browse Topics</Text>
+                  <Text style={styles.signInTxt}>Explore Community Hubs</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -1086,7 +1112,15 @@ export default function LibraryScreen() {
                   placeholder="Try: Atlanta, diabetes, vintage cars, Nigeria…"
                   placeholderTextColor={colors.mutedForeground}
                   value={topicSearch}
-                  onChangeText={setTopicSearch}
+                  onChangeText={(text) => {
+                    setTopicSearch(text);
+                    if (resolveTimer.current) clearTimeout(resolveTimer.current);
+                    if (text.trim().length >= 2) {
+                      resolveTimer.current = setTimeout(() => resolveTopicQuery(text), 700);
+                    } else {
+                      setResolveResult(null);
+                    }
+                  }}
                   returnKeyType="done"
                   onSubmitEditing={() => { if (topicSearch.trim()) handleAddTopic(topicSearch); }}
                 />
@@ -1115,6 +1149,46 @@ export default function LibraryScreen() {
                 </TouchableOpacity>
               )}
             </View>
+
+            {/* AI Disambiguation Banner — "Did you mean General Motors?" */}
+            {resolveResult && resolveResult.shouldJoin && resolveResult.existingHubs.length > 0 && (
+              <View style={[styles.disambigBanner, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.disambigHeader}>
+                  <Feather name="zap" size={13} color={colors.primary} />
+                  <Text style={[styles.disambigTitle, { color: colors.foreground }]}>
+                    Did you mean <Text style={{ fontFamily: "Inter_700Bold" }}>{resolveResult.resolvedName}</Text>?
+                  </Text>
+                  {resolving && <ActivityIndicator size="small" color={colors.mutedForeground} style={{ marginLeft: "auto" }} />}
+                </View>
+                <Text style={[styles.disambigSub, { color: colors.mutedForeground }]}>
+                  These community hubs already exist — join one instead of creating a duplicate.
+                </Text>
+                {resolveResult.existingHubs.slice(0, 3).map((hub) => {
+                  const meta = CATEGORY_META[hub.category] ?? { emoji: "✦", color: "#CA922B", label: hub.category };
+                  return (
+                    <TouchableOpacity
+                      key={hub.id}
+                      style={[styles.disambigHub, { backgroundColor: colors.background, borderColor: colors.border }]}
+                      onPress={() => {
+                        setTopicSearch("");
+                        setResolveResult(null);
+                        router.push({ pathname: "/library-topic", params: { topicId: hub.id } } as never);
+                      }}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={{ fontSize: 18 }}>{meta.emoji}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.disambigHubName, { color: colors.foreground }]}>{hub.topicName}</Text>
+                        <Text style={[styles.disambigHubMeta, { color: colors.mutedForeground }]}>
+                          {hub.membersCount > 0 ? `${hub.membersCount} member${hub.membersCount !== 1 ? "s" : ""}` : "New hub"} · {meta.label}
+                        </Text>
+                      </View>
+                      <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
 
             {/* Free limit notice */}
             {!isPremium && isAuthenticated && (
@@ -1305,6 +1379,13 @@ const styles = StyleSheet.create({
   addTopicTxt: { color: "#fff", fontSize: 14, fontFamily: "Inter_700Bold" },
   searchInput: { flex: 1, fontSize: 14 },
   limitBanner: { marginHorizontal: 14, marginBottom: 4, flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 12, borderWidth: 1 },
+  disambigBanner: { marginHorizontal: 14, marginTop: 4, borderRadius: 14, borderWidth: 1, padding: 14, gap: 8 },
+  disambigHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  disambigTitle: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
+  disambigSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
+  disambigHub: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 10, borderWidth: 1, padding: 10 },
+  disambigHubName: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  disambigHubMeta: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
   limitTitle: { fontSize: 13, fontWeight: "700" },
   limitSub: { fontSize: 11, lineHeight: 16, marginTop: 1 },
   topicRow: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 14, borderWidth: 1 },

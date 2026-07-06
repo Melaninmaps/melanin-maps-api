@@ -61,8 +61,12 @@ export const expertFollowsTable = pgTable("expert_follows", {
 export const knowledgeTopicsTable = pgTable("knowledge_topics", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   topicName: varchar("topic_name", { length: 200 }).notNull(),
+  canonicalName: varchar("canonical_name", { length: 200 }),
   category: varchar("category", { length: 50 }).notNull(),
   parentCategory: varchar("parent_category", { length: 50 }),
+  entityType: varchar("entity_type", { length: 50 }),
+  ownershipType: varchar("ownership_type", { length: 30 }),
+  isMinorityOwned: boolean("is_minority_owned"),
   description: text("description"),
   keywords: text("keywords").array(),
   synonyms: text("synonyms").array(),
@@ -83,6 +87,7 @@ export const userTopicFollowsTable = pgTable("user_topic_follows", {
   userId: varchar("user_id", { length: 100 }).notNull(),
   topicId: varchar("topic_id", { length: 100 }).notNull(),
   isPinnedToProfile: boolean("is_pinned_to_profile").notNull().default(false),
+  hubIntent: varchar("hub_intent", { length: 30 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => [
   uniqueIndex("user_topic_follows_unique").on(table.userId, table.topicId),
