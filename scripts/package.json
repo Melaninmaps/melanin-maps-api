@@ -20,7 +20,7 @@
     "stripe": "^22.2.1"
   },
   "devDependencies": {
-    "@types/node": "catalog:",
-    "tsx": "catalog:"
+    "@types/node": "^25.3.3",
+    "tsx": "^4.21.0"
   }
 }
