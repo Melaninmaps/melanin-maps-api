@@ -21,6 +21,20 @@ const originalResolveRequest = config.resolver.resolveRequest;
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   const origin = context.originModulePath || "";
+
+  // Fix for pnpm virtual store: expo/AppEntry.js imports '../../App' which
+  // can't resolve in pnpm's deeply-nested store paths.
+  // Redirect it to expo-router's qualified entry App component.
+  if (
+    moduleName === "../../App" &&
+    origin.includes("/expo/AppEntry")
+  ) {
+    return {
+      type: "sourceFile",
+      filePath: require.resolve("expo-router/build/qualified-entry"),
+    };
+  }
+
   const isContactAccessButton =
     (origin.includes("expo-contacts") && moduleName.includes("ContactAccessButton")) ||
     (typeof moduleName === "string" && moduleName.match(/expo-contacts.*ContactAccessButton/));
