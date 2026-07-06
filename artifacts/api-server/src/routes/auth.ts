@@ -493,17 +493,17 @@ router.post("/auth/register", async (req: Request, res: Response) => {
 
     // Run email, username checks and password hash in parallel — no sequential waiting
     const [existingEmail, existingUsername, passwordHash] = await Promise.all([
-      db.select({ id: usersTable.id }).from(usersTable).where(ilike(usersTable.email, cleanEmail)).limit(1).then(r => r[0]),
+      db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.email, cleanEmail)).limit(1).then(r => r[0]),
       db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, cleanUsername)).limit(1).then(r => r[0]),
       bcrypt.hash(password, 10),
     ]);
 
     if (existingEmail) {
-      res.status(409).json({ error: "An account with this email already exists." });
+      res.status(409).json({ error: "An account with this exact email address already exists. Try signing in instead, or use a different email." });
       return;
     }
     if (existingUsername) {
-      res.status(409).json({ error: "That username is already taken." });
+      res.status(409).json({ error: "That @username is already taken — please choose a different one. Your email address is fine." });
       return;
     }
     const referralCode = crypto.randomBytes(4).toString("hex").toUpperCase();
@@ -563,7 +563,7 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
     const [user] = await db
       .select()
       .from(usersTable)
-      .where(ilike(usersTable.email, email.trim()))
+      .where(eq(usersTable.email, email.trim().toLowerCase()))
       .limit(1);
 
     if (!user) {
