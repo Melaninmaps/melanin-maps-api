@@ -741,6 +741,20 @@ export default function DiscoverScreen() {
           </View>
         </TouchableOpacity>
 
+        {/* Nominate any business */}
+        <TouchableOpacity
+          style={[styles.nominateBanner, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => router.push("/nominate-business" as never)}
+          activeOpacity={0.85}
+        >
+          <Feather name="star" size={16} color={colors.primary} style={{ marginRight: 10 }} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.nominateTitle, { color: colors.foreground }]}>Know a great local spot?</Text>
+            <Text style={[styles.nominateSub, { color: colors.mutedForeground }]}>Nominate any business — minority-owned or not</Text>
+          </View>
+          <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+        </TouchableOpacity>
+
         {/* Preferences shortcut */}
         <TouchableOpacity
           style={[styles.prefsRow, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -1048,6 +1062,9 @@ const styles = StyleSheet.create({
   listBizSub: { fontFamily: "Inter_400Regular", fontSize: 11, color: "rgba(255,255,255,0.85)", lineHeight: 15 },
   listBizCta: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 },
   listBizCtaText: { fontFamily: "Inter_700Bold", fontSize: 12, color: "#FFFFFF" },
+  nominateBanner: { flexDirection: "row", alignItems: "center", marginHorizontal: 16, marginTop: 10, padding: 14, borderRadius: 14, borderWidth: 1 },
+  nominateTitle: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginBottom: 2 },
+  nominateSub: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15 },
   prefsRow: {
     flexDirection: "row",
     alignItems: "center",

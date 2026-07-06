@@ -1,8 +1,10 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   KeyboardAvoidingView,
@@ -133,6 +135,22 @@ export default function ReportPoliceScreen() {
   const [neighFocused, setNeighFocused] = useState(false);
   const [descFocused, setDescFocused] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [locating, setLocating] = useState(false);
+
+  const handleUseLocation = async () => {
+    setLocating(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") { Alert.alert("Location Access", "Enable location in Settings to use this feature."); return; }
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+      if (geo) {
+        const neigh = [geo.streetNumber, geo.street].filter(Boolean).join(" ") || geo.subregion || "";
+        setForm((f) => ({ ...f, neighborhood: neigh, city: geo.city ?? f.city, state: geo.region ?? f.state }));
+      }
+    } catch { Alert.alert("Location Error", "Could not get your location. Try again."); }
+    finally { setLocating(false); }
+  };
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -395,15 +413,26 @@ export default function ReportPoliceScreen() {
                   <View style={styles.fieldWrap}>
                     <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Neighborhood / Street</Text>
                     <Text style={[styles.fieldHint, { color: colors.mutedForeground }]}>Optional — helps narrow the location</Text>
-                    <TextInput
-                      value={form.neighborhood}
-                      onChangeText={(v) => setForm((f) => ({ ...f, neighborhood: v }))}
-                      placeholder="e.g. West Philly, Germantown Ave"
-                      placeholderTextColor={colors.mutedForeground}
-                      onFocus={() => setNeighFocused(true)}
-                      onBlur={() => setNeighFocused(false)}
-                      style={[styles.input, { backgroundColor: colors.card, borderColor: neighFocused ? colors.primary : colors.border, color: colors.foreground }]}
-                    />
+                    <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+                      <TextInput
+                        value={form.neighborhood}
+                        onChangeText={(v) => setForm((f) => ({ ...f, neighborhood: v }))}
+                        placeholder="e.g. West Philly, Germantown Ave"
+                        placeholderTextColor={colors.mutedForeground}
+                        onFocus={() => setNeighFocused(true)}
+                        onBlur={() => setNeighFocused(false)}
+                        style={[styles.input, { flex: 1, backgroundColor: colors.card, borderColor: neighFocused ? colors.primary : colors.border, color: colors.foreground }]}
+                      />
+                      <TouchableOpacity
+                        onPress={() => void handleUseLocation()}
+                        disabled={locating}
+                        style={{ padding: 10, borderRadius: 10, backgroundColor: colors.primary, opacity: locating ? 0.6 : 1 }}
+                      >
+                        {locating
+                          ? <ActivityIndicator size="small" color="#fff" />
+                          : <Feather name="navigation" size={16} color="#fff" />}
+                      </TouchableOpacity>
+                    </View>
                   </View>
 
                   <View style={styles.fieldWrap}>

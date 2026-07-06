@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -100,6 +101,7 @@ export default function MemberConnectionsScreen() {
   // Modal state
   const [selectedConn, setSelectedConn] = useState<Connection | null>(null);
   const [meetupLocation, setMeetupLocation] = useState("");
+  const [locating, setLocating] = useState(false);
   const [meetupNote, setMeetupNote] = useState("");
   const [clearCode, setClearCode] = useState("");
   const [watcherEmail, setWatcherEmail] = useState("");
@@ -580,13 +582,37 @@ export default function MemberConnectionsScreen() {
 
                   {/* Location */}
                   <Text style={[styles.modalLabel, { color: colors.foreground }]}>Location (optional)</Text>
-                  <TextInput
-                    style={[styles.modalInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
-                    placeholder="e.g. Busy Bean Coffee, Downtown Atlanta"
-                    placeholderTextColor={colors.mutedForeground}
-                    value={meetupLocation}
-                    onChangeText={setMeetupLocation}
-                  />
+                  <View style={{ flexDirection: "row", gap: 8, alignItems: "center", marginBottom: 2 }}>
+                    <TextInput
+                      style={[styles.modalInput, { flex: 1, marginBottom: 0, color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+                      placeholder="e.g. Busy Bean Coffee, Downtown Atlanta"
+                      placeholderTextColor={colors.mutedForeground}
+                      value={meetupLocation}
+                      onChangeText={setMeetupLocation}
+                    />
+                    <TouchableOpacity
+                      onPress={async () => {
+                        setLocating(true);
+                        try {
+                          const { status } = await Location.requestForegroundPermissionsAsync();
+                          if (status !== "granted") { Alert.alert("Location Access", "Enable location in Settings to use this feature."); return; }
+                          const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+                          const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+                          if (geo) {
+                            const parts = [geo.streetNumber, geo.street, geo.city, geo.region].filter(Boolean);
+                            setMeetupLocation(parts.join(", "));
+                          }
+                        } catch { Alert.alert("Location Error", "Could not get your location. Try again."); }
+                        finally { setLocating(false); }
+                      }}
+                      disabled={locating}
+                      style={{ padding: 10, borderRadius: 10, backgroundColor: "#7C3AED", opacity: locating ? 0.6 : 1 }}
+                    >
+                      {locating
+                        ? <ActivityIndicator size="small" color="#fff" />
+                        : <Feather name="navigation" size={16} color="#fff" />}
+                    </TouchableOpacity>
+                  </View>
 
                   {/* Note */}
                   <Text style={[styles.modalLabel, { color: colors.foreground }]}>Note (optional)</Text>

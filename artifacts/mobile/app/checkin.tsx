@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -73,6 +74,25 @@ export default function CheckinScreen() {
   const [note, setNote] = useState("");
   const [location, setLocation] = useState("");
   const [saving, setSaving] = useState(false);
+  const [locating, setLocating] = useState(false);
+
+  const handleUseLocation = async () => {
+    setLocating(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Location Access", "Enable location access in Settings to use this feature.");
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+      if (geo) {
+        const parts = [geo.streetNumber, geo.street, geo.city, geo.region].filter(Boolean);
+        setLocation(parts.join(", "));
+      }
+    } catch { Alert.alert("Location Error", "Could not get your location. Try again."); }
+    finally { setLocating(false); }
+  };
 
   const fetchCheckins = useCallback(async () => {
     setLoading(true);
@@ -220,13 +240,24 @@ export default function CheckinScreen() {
                 </View>
               </ScrollView>
               <Text style={[styles.formLabel, { color: colors.foreground }]}>Location (optional)</Text>
-              <TextInput
-                style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
-                placeholder="e.g. Downtown Atlanta, Midtown bar"
-                placeholderTextColor={colors.mutedForeground}
-                value={location}
-                onChangeText={setLocation}
-              />
+              <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+                <TextInput
+                  style={[styles.input, { flex: 1, color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+                  placeholder="e.g. Downtown Atlanta, Midtown bar"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={location}
+                  onChangeText={setLocation}
+                />
+                <TouchableOpacity
+                  onPress={() => void handleUseLocation()}
+                  disabled={locating}
+                  style={{ padding: 10, borderRadius: 10, backgroundColor: colors.primary, opacity: locating ? 0.6 : 1 }}
+                >
+                  {locating
+                    ? <ActivityIndicator size="small" color="#fff" />
+                    : <Feather name="navigation" size={16} color="#fff" />}
+                </TouchableOpacity>
+              </View>
               <Text style={[styles.formLabel, { color: colors.foreground }]}>Note (optional)</Text>
               <TextInput
                 style={[styles.input, styles.textArea, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
