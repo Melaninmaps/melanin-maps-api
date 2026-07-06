@@ -42,11 +42,16 @@ export default function ForgotPasswordScreen() {
     setLoading(true);
     try {
       const base = getApiBaseUrl();
-      await fetch(`${base}/api/auth/forgot-password`, {
+      const res = await fetch(`${base}/api/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim() }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        setResetError(data.error ?? "Something went wrong. Please try again.");
+        return;
+      }
       setSent(true);
       setCodeStep(true);
     } catch {

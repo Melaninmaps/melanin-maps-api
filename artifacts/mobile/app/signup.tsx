@@ -234,8 +234,20 @@ export default function SignupScreen() {
 
         {!!error && (
           <View style={[styles.errorBox, { backgroundColor: "#FEE2E2" }]}>
-            <Feather name="alert-circle" size={14} color="#DC2626" />
-            <Text style={styles.errorTxt}>{error}</Text>
+            <Feather name="alert-circle" size={14} color="#DC2626" style={{ marginTop: 1 }} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <Text style={styles.errorTxt}>{error}</Text>
+              {error.toLowerCase().includes("already exists") && (
+                <View style={{ flexDirection: "row", gap: 12 }}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => router.replace("/login")}>
+                    <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: "#DC2626", textDecorationLine: "underline" }}>Sign in</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => router.replace("/forgot-password")}>
+                    <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: "#DC2626", textDecorationLine: "underline" }}>Forgot password?</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
           </View>
         )}
 
