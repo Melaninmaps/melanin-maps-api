@@ -19,12 +19,8 @@ import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
 
 const MAX_PICKS = 3;
-const MAX_WORDS = 200;
+const MAX_CHARS = 200;
 const URL_RE = /^https?:\/\/.+\..+/i;
-
-function wordCount(text: string): number {
-  return text.trim().split(/\s+/).filter(Boolean).length;
-}
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -66,8 +62,7 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
 
   const picksUsed = selected.size;
   const picksLeft = MAX_PICKS - picksUsed;
-  const words = wordCount(noteText);
-  const wordsLeft = MAX_WORDS - words;
+  const charsLeft = MAX_CHARS - noteText.length;
 
   const getScale = (id: string) => {
     if (!scales.current[id]) scales.current[id] = new Animated.Value(1);
@@ -124,8 +119,8 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
   };
 
   const handleSubmit = async () => {
-    if (words < 2) { setSubmitError("Write at least a couple of words."); return; }
-    if (words > MAX_WORDS) { setSubmitError(`Keep your comment under ${MAX_WORDS} words.`); return; }
+    if (noteText.trim().length < 5) { setSubmitError("Write at least a few characters."); return; }
+    if (noteText.trim().length > MAX_CHARS) { setSubmitError(`Keep your comment under ${MAX_CHARS} characters.`); return; }
     if (linkText.trim() && !URL_RE.test(linkText.trim())) {
       setSubmitError("Content link must be a valid URL (https://...)"); return;
     }
@@ -294,7 +289,7 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
           <View style={[s.sheetHandle, { backgroundColor: colors.border }]} />
           <Text style={[s.sheetTitle, { color: colors.foreground }]}>Write a Comment</Text>
           <Text style={[s.sheetSub, { color: colors.mutedForeground }]}>
-            Share your experience, tips, or thoughts about {businessName}. Up to 200 words.
+            Share your experience, tips, or thoughts about {businessName}. Up to 200 characters — emojis welcome! 🤎
           </Text>
 
           {!isAuthenticated && (
@@ -310,19 +305,19 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
             placeholder={`What do you want the community to know about ${businessName}?`}
             placeholderTextColor={colors.mutedForeground}
             value={noteText}
-            onChangeText={t => { setNoteText(t); setSubmitError(""); }}
+            onChangeText={t => { setNoteText(t.slice(0, MAX_CHARS)); setSubmitError(""); }}
             multiline
             numberOfLines={6}
             textAlignVertical="top"
             editable={isAuthenticated}
           />
           <View style={s.wordRow}>
-            <Text style={[s.wordCount, { color: wordsLeft < 20 ? "#DC2626" : colors.mutedForeground }]}>
-              {words} / {MAX_WORDS} words
+            <Text style={[s.wordCount, { color: charsLeft < 20 ? "#DC2626" : colors.mutedForeground }]}>
+              {noteText.length} / {MAX_CHARS} characters
             </Text>
-            {wordsLeft < 20 && (
-              <Text style={[s.wordCount, { color: wordsLeft < 0 ? "#DC2626" : "#D97706" }]}>
-                {wordsLeft < 0 ? `${Math.abs(wordsLeft)} over limit` : `${wordsLeft} left`}
+            {charsLeft < 20 && (
+              <Text style={[s.wordCount, { color: charsLeft < 0 ? "#DC2626" : "#D97706" }]}>
+                {charsLeft < 0 ? `${Math.abs(charsLeft)} over limit` : `${charsLeft} left`}
               </Text>
             )}
           </View>
@@ -347,9 +342,9 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
           )}
 
           <TouchableOpacity
-            style={[s.submitBtn, { backgroundColor: isAuthenticated && words >= 2 && words <= MAX_WORDS ? colors.primary : colors.muted }]}
+            style={[s.submitBtn, { backgroundColor: isAuthenticated && noteText.trim().length >= 5 ? colors.primary : colors.muted }]}
             onPress={handleSubmit}
-            disabled={!isAuthenticated || submitting || words < 2 || words > MAX_WORDS}
+            disabled={!isAuthenticated || submitting || noteText.trim().length < 5}
             activeOpacity={0.85}
           >
             {submitting

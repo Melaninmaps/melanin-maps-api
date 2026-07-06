@@ -72,12 +72,11 @@ router.post("/businesses/:id/love-note", async (req: Request, res: Response) => 
   const businessId = String(req.params.id);
   const { note, contentLink } = req.body as { note?: string; contentLink?: string | null };
   const trimmedNote = note?.trim() ?? "";
-  const wordCount = trimmedNote.split(/\s+/).filter(Boolean).length;
-  if (!trimmedNote || wordCount < 2) {
-    res.status(400).json({ error: "Write at least a couple of words." }); return;
+  if (!trimmedNote || trimmedNote.length < 5) {
+    res.status(400).json({ error: "Write at least a few characters." }); return;
   }
-  if (wordCount > 200) {
-    res.status(400).json({ error: "Keep your comment under 200 words." }); return;
+  if (trimmedNote.length > 200) {
+    res.status(400).json({ error: "Keep your comment under 200 characters." }); return;
   }
   const cleanLink = contentLink?.trim() || null;
   if (cleanLink && !/^https?:\/\/.+\..+/i.test(cleanLink)) {
