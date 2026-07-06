@@ -4,10 +4,10 @@ import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Linking,
   Modal,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -17,6 +17,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
+
+const MAX_PICKS = 3;
+const MAX_CHARS = 200;
+const URL_RE = /^https?:\/\/.+\..+/i;
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -37,18 +41,34 @@ type LoveNote = {
   createdAt: string;
 };
 
-type Props = {
-  businessId: string;
-  businessName: string;
-};
+type Props = { businessId: string; businessName: string };
 
-const MAX_CHARS = 200;
-const URL_RE = /^https?:\/\/.+\..+/i;
+function PulseHeart({ selected, disabled }: { selected: boolean; disabled: boolean }) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const pulse = () => {
+    Animated.sequence([
+      Animated.spring(scale, { toValue: 1.35, useNativeDriver: true, speed: 40, bounciness: 12 }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 4 }),
+    ]).start();
+  };
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      {/* invisible trigger — parent calls pulse() */}
+      <Text
+        style={{ fontSize: 16, opacity: disabled && !selected ? 0.3 : 1 }}
+        onLayout={() => { (PulseHeart as any)._pulse = pulse; }}
+      >
+        {selected ? "❤️" : "🤍"}
+      </Text>
+    </Animated.View>
+  );
+}
 
 export default function CommunityCommentsSection({ businessId, businessName }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { isAuthenticated } = useAuth();
+
   const [notes, setNotes] = useState<LoveNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -56,8 +76,27 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
   const [linkText, setLinkText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const [upvoted, setUpvoted] = useState<Set<string>>(new Set());
+
+  // selected = set of noteIds this user has picked (max MAX_PICKS)
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  // per-note scale refs for the heart bounce
+  const scales = useRef<Record<string, Animated.Value>>({});
+
   const inputRef = useRef<TextInput>(null);
+  const picksLeft = MAX_PICKS - selected.size;
+
+  const getScale = (id: string) => {
+    if (!scales.current[id]) scales.current[id] = new Animated.Value(1);
+    return scales.current[id];
+  };
+
+  const bounce = (id: string) => {
+    const s = getScale(id);
+    Animated.sequence([
+      Animated.spring(s, { toValue: 1.4, useNativeDriver: true, speed: 50, bounciness: 14 }),
+      Animated.spring(s, { toValue: 1, useNativeDriver: true, speed: 22, bounciness: 4 }),
+    ]).start();
+  };
 
   const fetchNotes = useCallback(async () => {
     try {
@@ -71,6 +110,42 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
   }, [businessId]);
 
   useEffect(() => { void fetchNotes(); }, [fetchNotes]);
+
+  const handleToggle = async (noteId: string) => {
+    const isSelected = selected.has(noteId);
+
+    // Enforce limit
+    if (!isSelected && picksLeft <= 0) {
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      return;
+    }
+
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    bounce(noteId);
+
+    // Optimistic UI
+    setSelected(prev => {
+      const next = new Set(prev);
+      isSelected ? next.delete(noteId) : next.add(noteId);
+      return next;
+    });
+    setNotes(prev =>
+      prev.map(n =>
+        n.id === noteId
+          ? { ...n, upvotes: Math.max(0, n.upvotes + (isSelected ? -1 : 1)) }
+          : n
+      )
+    );
+
+    // Persist
+    try {
+      const token = await getToken();
+      await fetch(`${getApiBase()}/api/love-notes/${noteId}/upvote`, {
+        method: isSelected ? "DELETE" : "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+    } catch { }
+  };
 
   const handleSubmit = async () => {
     const trimmed = noteText.trim();
@@ -90,26 +165,11 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
       const data = await res.json() as { loveNote?: LoveNote; error?: string };
       if (!res.ok || !data.loveNote) { setSubmitError(data.error ?? "Failed to post. Please try again."); return; }
       setNotes(prev => [data.loveNote!, ...prev]);
-      setNoteText("");
-      setLinkText("");
+      setNoteText(""); setLinkText("");
       setModalOpen(false);
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch { setSubmitError("Could not connect. Please try again."); }
     finally { setSubmitting(false); }
-  };
-
-  const handleUpvote = async (noteId: string) => {
-    if (upvoted.has(noteId)) return;
-    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setUpvoted(prev => new Set([...prev, noteId]));
-    setNotes(prev => prev.map(n => n.id === noteId ? { ...n, upvotes: n.upvotes + 1 } : n));
-    try {
-      const token = await getToken();
-      await fetch(`${getApiBase()}/api/love-notes/${noteId}/upvote`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-    } catch { }
   };
 
   const timeAgo = (iso: string) => {
@@ -128,13 +188,13 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
 
   return (
     <View style={[s.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      {/* Header */}
       <View style={s.header}>
         <Text style={[s.title, { color: colors.foreground }]}>💬 Community Comments</Text>
         <TouchableOpacity
           activeOpacity={0.8}
           style={[s.addBtn, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "35" }]}
           onPress={() => {
-            if (!isAuthenticated) { setModalOpen(true); return; }
             setModalOpen(true);
             setTimeout(() => inputRef.current?.focus(), 300);
           }}
@@ -154,43 +214,97 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
           </Text>
         </View>
       ) : (
-        <View style={s.notesList}>
-          {notes.map((n) => (
-            <View key={n.id} style={[s.noteCard, { borderColor: colors.border }]}>
-              <Text style={[s.noteText, { color: colors.foreground }]}>{n.note}</Text>
-              {n.contentLink && (
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  style={[s.linkRow, { backgroundColor: colors.primary + "0C", borderColor: colors.primary + "25" }]}
-                  onPress={() => Linking.openURL(n.contentLink!).catch(() => {})}
-                >
-                  <Feather name="link" size={12} color={colors.primary} />
-                  <Text style={[s.linkText, { color: colors.primary }]} numberOfLines={1}>
-                    {n.contentLink.replace(/^https?:\/\//, "").slice(0, 50)}
-                    {n.contentLink.length > 55 ? "…" : ""}
-                  </Text>
-                  <Feather name="external-link" size={10} color={colors.primary} />
-                </TouchableOpacity>
-              )}
-              <View style={s.noteMeta}>
-                <Text style={[s.noteTime, { color: colors.mutedForeground }]}>{timeAgo(n.createdAt)}</Text>
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  style={[s.upvoteBtn, upvoted.has(n.id) && { opacity: 0.5 }]}
-                  onPress={() => handleUpvote(n.id)}
-                  disabled={upvoted.has(n.id)}
-                >
-                  <Feather name="thumbs-up" size={12} color={upvoted.has(n.id) ? colors.primary : colors.mutedForeground} />
-                  <Text style={[s.upvoteCount, { color: upvoted.has(n.id) ? colors.primary : colors.mutedForeground }]}>
-                    {n.upvotes}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+        <>
+          {/* Pick counter */}
+          <View style={[s.picksBar, { backgroundColor: picksLeft === 0 ? colors.primary + "12" : colors.background, borderColor: colors.border }]}>
+            <View style={s.picksLeft}>
+              <Text style={[s.picksLabel, { color: colors.foreground }]}>
+                ❤️ Pick your favorites
+              </Text>
+              <Text style={[s.picksSub, { color: colors.mutedForeground }]}>
+                Tap up to 3 comments that resonate with you
+              </Text>
             </View>
-          ))}
-        </View>
+            <View style={s.picksDots}>
+              {Array.from({ length: MAX_PICKS }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    s.dot,
+                    { backgroundColor: i < selected.size ? colors.primary : colors.border },
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
+
+          {picksLeft === 0 && (
+            <View style={[s.limitBanner, { backgroundColor: colors.primary + "0A", borderColor: colors.primary + "20" }]}>
+              <Text style={[s.limitText, { color: colors.primary }]}>
+                3/3 picks used · Tap a ❤️ to swap your selection
+              </Text>
+            </View>
+          )}
+
+          {/* Notes list */}
+          <View style={s.notesList}>
+            {notes.map((n) => {
+              const isSelected = selected.has(n.id);
+              const isDisabled = !isSelected && picksLeft <= 0;
+              const scale = getScale(n.id);
+
+              return (
+                <View
+                  key={n.id}
+                  style={[
+                    s.noteCard,
+                    { borderColor: colors.border },
+                    isSelected && { backgroundColor: colors.primary + "06" },
+                  ]}
+                >
+                  <Text style={[s.noteText, { color: colors.foreground, opacity: isDisabled ? 0.45 : 1 }]}>
+                    {n.note}
+                  </Text>
+                  {n.contentLink && (
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      style={[s.linkRow, { backgroundColor: colors.primary + "0C", borderColor: colors.primary + "25" }]}
+                      onPress={() => Linking.openURL(n.contentLink!).catch(() => {})}
+                    >
+                      <Feather name="link" size={12} color={colors.primary} />
+                      <Text style={[s.linkText, { color: colors.primary }]} numberOfLines={1}>
+                        {n.contentLink.replace(/^https?:\/\//, "").slice(0, 50)}
+                        {n.contentLink.length > 55 ? "…" : ""}
+                      </Text>
+                      <Feather name="external-link" size={10} color={colors.primary} />
+                    </TouchableOpacity>
+                  )}
+                  <View style={s.noteMeta}>
+                    <Text style={[s.noteTime, { color: colors.mutedForeground }]}>{timeAgo(n.createdAt)}</Text>
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      style={[s.heartBtn, isDisabled && s.heartDisabled]}
+                      onPress={() => handleToggle(n.id)}
+                      disabled={isDisabled}
+                    >
+                      <Animated.View style={{ transform: [{ scale }] }}>
+                        <Text style={[s.heartEmoji, { opacity: isDisabled ? 0.3 : 1 }]}>
+                          {isSelected ? "❤️" : "🤍"}
+                        </Text>
+                      </Animated.View>
+                      <Text style={[s.upvoteCount, { color: isSelected ? colors.primary : colors.mutedForeground }]}>
+                        {n.upvotes}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </>
       )}
 
+      {/* Post modal */}
       <Modal
         visible={modalOpen}
         animationType="slide"
@@ -273,15 +387,29 @@ const s = StyleSheet.create({
   addBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   empty: { alignItems: "center", gap: 8, paddingVertical: 20 },
   emptyText: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center", lineHeight: 20 },
-  notesList: { gap: 10 },
-  noteCard: { borderBottomWidth: 1, paddingBottom: 10 },
+
+  picksBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 8 },
+  picksLeft: { flex: 1, gap: 2 },
+  picksLabel: { fontFamily: "Inter_700Bold", fontSize: 13 },
+  picksSub: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15 },
+  picksDots: { flexDirection: "row", gap: 6 },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+
+  limitBanner: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 8, alignItems: "center" },
+  limitText: { fontFamily: "Inter_500Medium", fontSize: 12 },
+
+  notesList: { gap: 0 },
+  noteCard: { paddingVertical: 12, borderBottomWidth: 1, borderRadius: 0, paddingHorizontal: 4 },
   noteText: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 21 },
   linkRow: { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6, marginTop: 7 },
   linkText: { fontFamily: "Inter_500Medium", fontSize: 12, flex: 1 },
-  noteMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 7 },
+  noteMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 8 },
   noteTime: { fontFamily: "Inter_400Regular", fontSize: 11 },
-  upvoteBtn: { flexDirection: "row", alignItems: "center", gap: 4 },
-  upvoteCount: { fontFamily: "Inter_500Medium", fontSize: 12 },
+  heartBtn: { flexDirection: "row", alignItems: "center", gap: 5 },
+  heartDisabled: { opacity: 0.35 },
+  heartEmoji: { fontSize: 15 },
+  upvoteCount: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+
   backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)" },
   sheet: { backgroundColor: "#FFF", borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingTop: 12 },
   sheetHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 16 },

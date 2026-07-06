@@ -106,4 +106,20 @@ router.post("/love-notes/:id/upvote", async (req: Request, res: Response) => {
   }
 });
 
+// ── DELETE un-select a love note (decrement, floor 0) ────────────────────────
+router.delete("/love-notes/:id/upvote", async (req: Request, res: Response) => {
+  const user = uid(req);
+  if (!user) { res.status(401).json({ error: "Authentication required" }); return; }
+  const { sql } = await import("drizzle-orm");
+  try {
+    await db.update(loveNotesTable)
+      .set({ upvotes: sql`GREATEST(${loveNotesTable.upvotes} - 1, 0)` })
+      .where(eq(loveNotesTable.id, String(req.params.id)));
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to remove upvote");
+    res.status(500).json({ error: "Failed to remove selection" });
+  }
+});
+
 export default router;
