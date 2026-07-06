@@ -18,6 +18,8 @@ artifacts/biz-onepager
 artifacts/api-server
 artifacts/mockup-sandbox
 .local
+attached_assets
+.agents
 lib/api-spec
 lib/api-zod
 lib/db
