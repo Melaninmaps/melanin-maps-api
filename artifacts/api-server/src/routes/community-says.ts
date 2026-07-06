@@ -84,7 +84,7 @@ router.post("/businesses/:id/love-note", async (req: Request, res: Response) => 
   }
   try {
     const [entry] = await db.insert(loveNotesTable).values({
-      businessId, userId: user, note: note.trim(), contentLink: cleanLink,
+      businessId, userId: user, note: trimmedNote, contentLink: cleanLink,
     }).returning();
     res.status(201).json({ loveNote: entry });
   } catch (err) {

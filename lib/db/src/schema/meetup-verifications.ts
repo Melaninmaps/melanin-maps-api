@@ -12,6 +12,10 @@ export const meetupVerificationsTable = pgTable("meetup_verifications", {
   initiatedAt: timestamp("initiated_at").notNull().defaultNow(),
   confirmedAt: timestamp("confirmed_at"),
   expiresAt: timestamp("expires_at").notNull(),
+  clearCode: varchar("clear_code", { length: 100 }),
+  safetyWatcherId: varchar("safety_watcher_id").references(() => usersTable.id, { onDelete: "set null" }),
+  safetyWatcherEmail: text("safety_watcher_email"),
+  clearedAt: timestamp("cleared_at"),
 });
 
 export type MeetupVerification = typeof meetupVerificationsTable.$inferSelect;

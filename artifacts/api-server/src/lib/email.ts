@@ -2145,3 +2145,59 @@ export async function sendAppLaunchBlast(
     `,
   });
 }
+
+export async function sendMeetupSafetyWatcherEmail(
+  to: string,
+  watcherName: string | null,
+  initiatorHandle: string,
+  partnerHandle: string,
+  location: string | null,
+  note: string | null,
+  meetupId: number,
+) {
+  if (!resend) { log("meetup safety watcher email"); return; }
+  const name = watcherName ?? "there";
+  const locationLine = location ? `<p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 8px"><strong>📍 Location:</strong> ${location}</p>` : "";
+  const noteLine = note ? `<p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 8px"><strong>📝 Note:</strong> ${note}</p>` : "";
+  await resend.emails.send({
+    from: FROM,
+    replyTo: "hello@mappingwithmelanin.com",
+    to,
+    subject: `Safety Alert: @${initiatorHandle} is meeting @${partnerHandle} — You're their safety watcher`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
+
+        <div style="background:#7C3AED18;border:1px solid #7C3AED40;border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:24px">🛡️</span>
+          <p style="color:#5B21B6;font-size:15px;font-weight:700;margin:0">You've been designated as a safety watcher on Mapping With Melanin™</p>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">Hi ${name},</p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          <strong>@${initiatorHandle}</strong> is meeting <strong>@${partnerHandle}</strong> in person and has listed you as their safety contact. If something seems wrong, this email contains all the details you need.
+        </p>
+
+        <div style="background:#2B1507;border-radius:14px;padding:24px;margin-bottom:24px">
+          <p style="color:#CA922B;font-size:13px;font-weight:700;margin:0 0 16px;text-transform:uppercase;letter-spacing:1px">Meetup Details</p>
+          <p style="color:#F5EBD8;font-size:15px;margin:0 0 8px"><strong style="color:#CA922B">Person:</strong> @${initiatorHandle}</p>
+          <p style="color:#F5EBD8;font-size:15px;margin:0 0 8px"><strong style="color:#CA922B">Meeting:</strong> @${partnerHandle}</p>
+          ${location ? `<p style="color:#F5EBD8;font-size:15px;margin:0 0 8px"><strong style="color:#CA922B">📍 Location:</strong> ${location}</p>` : ""}
+          ${note ? `<p style="color:#F5EBD8;font-size:15px;margin:0"><strong style="color:#CA922B">📝 Note:</strong> ${note}</p>` : ""}
+        </div>
+
+        <p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 16px">
+          <strong>What does this mean for you?</strong> If @${initiatorHandle} doesn't check in with you after their meetup as expected, please reach out to them directly. If you believe they may be in danger and cannot reach them, contact local emergency services.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 24px;opacity:0.7">
+          This notification was sent because @${initiatorHandle} designated you as their safety watcher on Mapping With Melanin™. Meetup verification ID: #${meetupId}.
+        </p>
+
+        <p style="color:#2B1507;font-size:15px;font-weight:700;font-style:italic;margin:24px 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.6;margin:0">Melanin Maps LLC · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a></p>
+      </div>
+    `,
+  });
+}
