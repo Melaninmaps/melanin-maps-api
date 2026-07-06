@@ -18,7 +18,13 @@ artifacts/biz-onepager
 artifacts/api-server
 artifacts/mockup-sandbox
 .local
-lib
+lib/api-spec
+lib/api-zod
+lib/db
+lib/integrations
+lib/integrations-openai-ai-react
+lib/integrations-openai-ai-server
+lib/dbintegrations-openai-ai-server
 scripts
 *.pdf
 *.pptx

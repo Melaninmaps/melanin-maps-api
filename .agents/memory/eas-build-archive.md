@@ -21,4 +21,8 @@ description: Rules for avoiding disk quota and archive errors when running EAS b
    cd /home/runner/workspace/artifacts/mobile && eas build --platform android --profile preview
    ```
 
-**Why:** The Replit environment accumulates pnpm metadata in `.cache/pnpm` inside the workspace root. EAS archives the entire monorepo root and the cache bloats the tarball past the `/tmp` quota limit.
+5. **`lib/api-client-react` must NOT be excluded from .easignore.** The mobile package depends on `@workspace/api-client-react` which lives in `lib/api-client-react/`. Blanket-excluding `lib` causes "Install dependencies" failure on EAS servers. Instead, exclude each lib subdirectory individually except `api-client-react`. Safe to exclude: `lib/api-spec`, `lib/api-zod`, `lib/db`, `lib/integrations`, `lib/integrations-openai-ai-react`, `lib/integrations-openai-ai-server`, `lib/dbintegrations-openai-ai-server`.
+
+6. **`expo-apple-authentication` must be `~8.0.8` for SDK 54.** Any other major version (e.g. `^57.0.0`) causes "Install dependencies" failure. Check with `pnpm exec expo install --check` from `artifacts/mobile/`.
+
+**Why:** EAS archives the entire pnpm workspace root, runs `pnpm install` on EAS servers, then builds from `artifacts/mobile/`. Any workspace package the mobile app imports must be present in the archive.
