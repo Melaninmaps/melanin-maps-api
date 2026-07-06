@@ -104,6 +104,7 @@ import globalRecommendationsRouter from "./global-recommendations";
 import officerWatchRouter from "./officer-watch";
 import wellnessRouter from "./wellness";
 import kinfolkTasksRouter from "./kinfolk-tasks";
+import featuredVideoRouter from "./featured-video";
 
 const router: IRouter = Router();
 
@@ -211,6 +212,7 @@ router.use(forYouRouter);
 router.use(globalRecommendationsRouter);
 router.use(officerWatchRouter);
 router.use(wellnessRouter);
+router.use(featuredVideoRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

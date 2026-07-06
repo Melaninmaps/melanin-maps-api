@@ -195,6 +195,14 @@ export default function BusinessOwnerHome() {
       route: "/business-owner/preview",
     },
     {
+      id: "featured-video",
+      icon: "video",
+      label: "Featured Video",
+      sub: "Pin one video from YouTube, TikTok, Instagram, or Facebook",
+      color: "#FF4500",
+      route: "/business-owner/featured-video",
+    },
+    {
       id: "global",
       icon: "globe",
       label: "Share Global Recommendations",

@@ -73,6 +73,10 @@ export const businessesTable = pgTable("businesses", {
   referredByCode: varchar("referred_by_code", { length: 30 }),
   // ── Owner intro video (hosted on platform, ≤ 2 min) ─────────────────────
   introVideoUrl: varchar("intro_video_url", { length: 512 }),
+  // ── Featured pinned social video ─────────────────────────────────────────
+  featuredVideoUrl: varchar("featured_video_url", { length: 512 }),
+  featuredVideoTitle: varchar("featured_video_title", { length: 150 }),
+  featuredVideoPurpose: varchar("featured_video_purpose", { length: 60 }),
   // ── Weekly availability calendar ─────────────────────────────────────────
   // Format: { mon: { open: "9:00 AM", close: "5:00 PM" } | null, tue: ..., ... }
   weeklySchedule: jsonb("weekly_schedule").$type<Record<string, { open: string; close: string } | null>>(),

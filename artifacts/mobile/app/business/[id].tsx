@@ -47,6 +47,8 @@ import { KnowBeforeYouGoSection } from "@/components/KnowBeforeYouGoSection";
 import { PassThePlateModal } from "@/components/PassThePlateModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { SafetyExperienceSurvey } from "@/components/SafetyExperienceSurvey";
+import FeaturedVideoCard from "@/components/FeaturedVideoCard";
+import CommunityCommentsSection from "@/components/CommunityCommentsSection";
 
 const CATEGORY_IMAGES: Record<string, any> = {
   Food: require("@/assets/images/bento-businesses.jpg"),
@@ -555,6 +557,19 @@ export default function BusinessDetailScreen() {
               )}
             </View>
           )}
+
+          {/* Featured Video */}
+          {!!(business as any).featuredVideoUrl && (
+            <FeaturedVideoCard
+              videoUrl={(business as any).featuredVideoUrl}
+              videoTitle={(business as any).featuredVideoTitle}
+              videoPurpose={(business as any).featuredVideoPurpose}
+              businessName={business.name}
+            />
+          )}
+
+          {/* Community Comments */}
+          <CommunityCommentsSection businessId={id ?? ""} businessName={business.name} />
 
           {/* Info card */}
           <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>

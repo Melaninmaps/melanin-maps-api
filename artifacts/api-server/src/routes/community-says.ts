@@ -70,16 +70,20 @@ router.post("/businesses/:id/love-note", async (req: Request, res: Response) => 
   const user = uid(req);
   if (!user) { res.status(401).json({ error: "Sign in to leave a love note" }); return; }
   const businessId = String(req.params.id);
-  const { note } = req.body as { note?: string };
-  if (!note?.trim() || note.trim().length < 10) {
-    res.status(400).json({ error: "Note must be at least 10 characters" }); return;
+  const { note, contentLink } = req.body as { note?: string; contentLink?: string | null };
+  if (!note?.trim() || note.trim().length < 5) {
+    res.status(400).json({ error: "Comment must be at least 5 characters" }); return;
   }
   if (note.trim().length > 200) {
-    res.status(400).json({ error: "Keep your love note under 200 characters" }); return;
+    res.status(400).json({ error: "Keep your comment under 200 characters" }); return;
+  }
+  const cleanLink = contentLink?.trim() || null;
+  if (cleanLink && !/^https?:\/\/.+\..+/i.test(cleanLink)) {
+    res.status(400).json({ error: "Content link must be a valid URL" }); return;
   }
   try {
     const [entry] = await db.insert(loveNotesTable).values({
-      businessId, userId: user, note: note.trim(),
+      businessId, userId: user, note: note.trim(), contentLink: cleanLink,
     }).returning();
     res.status(201).json({ loveNote: entry });
   } catch (err) {

@@ -31,6 +31,7 @@ export const loveNotesTable = pgTable("love_notes", {
   businessId: varchar("business_id").notNull(),
   userId: varchar("user_id").notNull(),
   note: text("note").notNull(),
+  contentLink: varchar("content_link", { length: 512 }),
   upvotes: integer("upvotes").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
