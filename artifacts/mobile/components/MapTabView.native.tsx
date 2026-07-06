@@ -62,28 +62,71 @@ type ActiveAlert = {
   lng: number;
   confirmedCount: number;
   distanceKm: number;
+  status?: "possible" | "confirmed";
   description?: string | null;
 };
 
 const ALERT_TYPE_COLORS: Record<string, string> = {
+  // Legacy
   police: "#3B82F6",
   ice: "#DC2626",
   checkpoint: "#F59E0B",
+  traffic: "#F59E0B",
   other: "#8B5CF6",
+  // Community Intelligence
+  road_closure: "#F59E0B",
+  construction: "#D97706",
+  road_reopened: "#16A34A",
+  transit_disruption: "#0EA5E9",
+  protest: "#8B5CF6",
+  celebration: "#10B981",
+  festival: "#EC4899",
+  severe_weather: "#6366F1",
+  emergency: "#DC2626",
+  avoid_area: "#DC2626",
+  situation_cleared: "#16A34A",
 };
 
 const ALERT_TYPE_ICONS: Record<string, string> = {
+  // Legacy
   police: "🚔",
   ice: "🚨",
   checkpoint: "⛔",
+  traffic: "🚦",
   other: "⚠️",
+  // Community Intelligence
+  road_closure: "🚧",
+  construction: "🏗️",
+  road_reopened: "✅",
+  transit_disruption: "🚌",
+  protest: "✊🏾",
+  celebration: "🎉",
+  festival: "🎊",
+  severe_weather: "⛈️",
+  emergency: "🚨",
+  avoid_area: "⛔",
+  situation_cleared: "🟢",
 };
 
 const ALERT_TYPE_LABELS: Record<string, string> = {
+  // Legacy
   police: "Police Activity Reported",
   ice: "ICE / Immigration Activity",
   checkpoint: "Checkpoint Reported",
+  traffic: "Traffic Issue",
   other: "Community Safety Alert",
+  // Community Intelligence
+  road_closure: "Road Closure",
+  construction: "Construction Zone",
+  road_reopened: "Road Reopened",
+  transit_disruption: "Transit Disruption",
+  protest: "Active Protest",
+  celebration: "Community Celebration",
+  festival: "Festival or Event",
+  severe_weather: "Severe Weather",
+  emergency: "Neighborhood Emergency",
+  avoid_area: "Area to Avoid",
+  situation_cleared: "Situation Cleared",
 };
 
 function ActiveAlertCard({
@@ -95,6 +138,9 @@ function ActiveAlertCard({
 }) {
   const slideAnim = useRef(new Animated.Value(-120)).current;
   const color = ALERT_TYPE_COLORS[alert.type] ?? "#EF4444";
+  const isConfirmed = (alert.status === "confirmed") || alert.confirmedCount >= 3;
+  const statusColor = isConfirmed ? "#16A34A" : "#F59E0B";
+  const statusLabel = isConfirmed ? "✓ Confirmed" : "⚡ Possible";
 
   useEffect(() => {
     Animated.spring(slideAnim, { toValue: 0, tension: 60, friction: 10, useNativeDriver: true }).start();
@@ -106,14 +152,19 @@ function ActiveAlertCard({
 
   return (
     <Animated.View
-      style={[styles.warningCard, { borderLeftColor: color, transform: [{ translateY: slideAnim }] }]}
+      style={[styles.warningCard, { borderLeftColor: statusColor, transform: [{ translateY: slideAnim }] }]}
     >
       <View style={styles.warningTop}>
-        <View style={[styles.warningBadge, { backgroundColor: color + "22" }]}>
-          <Text style={styles.warningIcon}>{ALERT_TYPE_ICONS[alert.type] ?? "⚠️"}</Text>
-          <Text style={[styles.warningBadgeText, { color }]}>
-            {ALERT_TYPE_LABELS[alert.type] ?? "Alert"}
-          </Text>
+        <View style={styles.warningBadgeRow}>
+          <View style={[styles.warningBadge, { backgroundColor: color + "22" }]}>
+            <Text style={styles.warningIcon}>{ALERT_TYPE_ICONS[alert.type] ?? "⚠️"}</Text>
+            <Text style={[styles.warningBadgeText, { color }]}>
+              {ALERT_TYPE_LABELS[alert.type] ?? "Alert"}
+            </Text>
+          </View>
+          <View style={[styles.statusPill, { backgroundColor: statusColor + "18", borderColor: statusColor + "40" }]}>
+            <Text style={[styles.statusPillText, { color: statusColor }]}>{statusLabel}</Text>
+          </View>
         </View>
         <TouchableOpacity onPress={onDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Feather name="x" size={16} color="#9CA3AF" />
@@ -124,7 +175,9 @@ function ActiveAlertCard({
       </Text>
       <Text style={styles.warningMeta}>{distMi} · Reported by your community</Text>
       <View style={styles.warningFooter}>
-        <Text style={[styles.warningCategory, { color }]}>Stay aware of your surroundings</Text>
+        <Text style={[styles.warningCategory, { color: statusColor }]}>
+          {isConfirmed ? "Community-verified — stay aware" : "Unverified — use caution"}
+        </Text>
         <Text style={styles.warningTip}>Be safe 🙏🏾</Text>
       </View>
     </Animated.View>
@@ -248,11 +301,7 @@ export function MapTabView() {
         );
         if (res.ok) {
           const data = await res.json();
-          setCommunityAlertPins(
-            (data.alerts ?? []).filter(
-              (a: ActiveAlert) => ["police", "ice", "checkpoint"].includes(a.type)
-            )
-          );
+          setCommunityAlertPins(data.alerts ?? []);
         }
       } catch { /**/ }
     };
@@ -394,24 +443,36 @@ export function MapTabView() {
           );
         })}
 
-        {/* Police / ICE / checkpoint alert pins with radius circles */}
+        {/* Community Intelligence alert pins with radius circles */}
         {communityAlertPins.map((alert) => {
-          const color = ALERT_TYPE_COLORS[alert.type] ?? "#EF4444";
-          const radius = alert.type === "ice" ? 500 : 300;
+          const typeColor = ALERT_TYPE_COLORS[alert.type] ?? "#EF4444";
+          const isConfirmed = (alert.status === "confirmed") || alert.confirmedCount >= 3;
+          const pinColor = isConfirmed ? typeColor : "#F59E0B";
+          const radius = alert.type === "ice" || alert.type === "emergency" ? 500 : 300;
           return (
             <React.Fragment key={alert.id}>
               <Circle
                 center={{ latitude: alert.lat, longitude: alert.lng }}
                 radius={radius}
-                fillColor={color + "22"}
-                strokeColor={color + "88"}
-                strokeWidth={2}
+                fillColor={pinColor + (isConfirmed ? "1A" : "11")}
+                strokeColor={pinColor + (isConfirmed ? "88" : "55")}
+                strokeWidth={isConfirmed ? 2 : 1}
               />
               <Marker coordinate={{ latitude: alert.lat, longitude: alert.lng }}>
-                <View style={[styles.alertPin, { backgroundColor: color + "22", borderColor: color }]}>
+                <View style={[
+                  styles.alertPin,
+                  {
+                    backgroundColor: pinColor + (isConfirmed ? "22" : "11"),
+                    borderColor: pinColor,
+                    borderWidth: isConfirmed ? 3 : 2,
+                  },
+                ]}>
                   <Text style={styles.alertPinIcon}>
                     {ALERT_TYPE_ICONS[alert.type] ?? "⚠️"}
                   </Text>
+                  {isConfirmed && (
+                    <View style={styles.confirmedDot} />
+                  )}
                 </View>
               </Marker>
             </React.Fragment>
@@ -678,8 +739,11 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 10,
   },
-  warningTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  warningTop: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
+  warningBadgeRow: { flexDirection: "row", alignItems: "center", gap: 6, flex: 1, flexWrap: "wrap" },
   warningBadge: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  statusPill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, borderWidth: 1 },
+  statusPillText: { fontFamily: "Inter_700Bold", fontSize: 10 },
   warningIcon: { fontSize: 12 },
   warningBadgeText: { fontFamily: "Inter_700Bold", fontSize: 11, letterSpacing: 0.3 },
   warningName: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#111827" },
@@ -756,10 +820,15 @@ const styles = StyleSheet.create({
   dismissBtn: { position: "absolute", top: 10, right: 10 },
   alertPin: {
     width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center",
-    borderWidth: 2.5, shadowColor: "#000", shadowOffset: { width: 0, height: 2 },
+    shadowColor: "#000", shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.22, shadowRadius: 6, elevation: 6,
   },
   alertPinIcon: { fontSize: 16 },
+  confirmedDot: {
+    position: "absolute", bottom: 1, right: 1,
+    width: 10, height: 10, borderRadius: 5,
+    backgroundColor: "#16A34A", borderWidth: 1.5, borderColor: "#fff",
+  },
   altSection: { borderTopWidth: 1, marginTop: 10, paddingTop: 10 },
   altTitle: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   altChip: {

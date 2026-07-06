@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
@@ -62,20 +63,54 @@ type MeetupVerification = {
   partnerLastName: string | null;
 };
 
+type IntelAlert = {
+  id: string;
+  type: string;
+  lat: number;
+  lng: number;
+  description: string | null;
+  confirmedCount: number;
+  clearedCount: number;
+  status: "possible" | "confirmed";
+  distanceMeters: number;
+  expiresAt: string;
+  createdAt: string;
+};
+
+const INTEL_TYPE_META: Record<string, { icon: string; label: string; color: string }> = {
+  road_closure:       { icon: "🚧", label: "Road Closure",            color: "#F59E0B" },
+  construction:       { icon: "🏗️", label: "Construction Zone",       color: "#D97706" },
+  road_reopened:      { icon: "✅", label: "Road Reopened",           color: "#16A34A" },
+  transit_disruption: { icon: "🚌", label: "Transit Disruption",      color: "#0EA5E9" },
+  protest:            { icon: "✊🏾", label: "Active Protest",         color: "#8B5CF6" },
+  celebration:        { icon: "🎉", label: "Community Celebration",  color: "#10B981" },
+  festival:           { icon: "🎊", label: "Festival or Event",       color: "#EC4899" },
+  severe_weather:     { icon: "⛈️", label: "Severe Weather",          color: "#6366F1" },
+  emergency:          { icon: "🚨", label: "Neighborhood Emergency",  color: "#DC2626" },
+  avoid_area:         { icon: "⛔", label: "Area to Avoid",           color: "#DC2626" },
+  situation_cleared:  { icon: "🟢", label: "Situation Cleared",       color: "#16A34A" },
+  police:             { icon: "🚔", label: "Police Activity",         color: "#3B82F6" },
+  ice:                { icon: "🚨", label: "ICE / Immigration",       color: "#DC2626" },
+  checkpoint:         { icon: "⛔", label: "Checkpoint",              color: "#F59E0B" },
+  traffic:            { icon: "🚦", label: "Traffic Issue",           color: "#F59E0B" },
+  other:              { icon: "⚠️", label: "Community Alert",         color: "#8B5CF6" },
+};
+
 const ALL_FEATURES: { id: string; icon: React.ComponentProps<typeof Feather>["name"]; title: string; desc: string; color: string; route: string | null; externalUrl?: string }[] = [
-  { id: "tip", icon: "alert-triangle", title: "Submit Safety Tip", desc: "Pin a location where violence or hate occurred. Nearby verified members are alerted to confirm.", color: "#DC2626", route: "/safety-tip" },
-  { id: "checkin", icon: "check-circle", title: "Safety Check-In", desc: "Schedule a check-in. Your contact is alerted if you don't confirm.", color: "#16A34A", route: "/checkin" },
-  { id: "location", icon: "map-pin", title: "Location Sharing", desc: "Share your live location with a trusted contact temporarily.", color: "#2563EB", route: "/location-share" },
-  { id: "meetup", icon: "users", title: "Meetup Verification", desc: "Mutually verify in-person meetups with connections you trust.", color: "#7C3AED", route: "/member-connections" },
-  { id: "police", icon: "shield-off", title: "Report Police or ICE", desc: "Report a police encounter, ICE activity, racial profiling, or checkpoint in your area.", color: "#991B1B", route: "/report-police" },
-  { id: "report", icon: "flag", title: "Anonymous Report", desc: "Report unsafe content or behavior without revealing your identity.", color: "#DC2626", route: "/report-safety" },
-  { id: "space", icon: "alert-octagon", title: "Report an Unsafe Space", desc: "Flag any business or venue where you experienced unsafe, discriminatory, or unwelcoming treatment.", color: "#7C2D12", route: "/report-space" },
-  { id: "family", icon: "eye", title: "Under-18 Content Shield", desc: "All messages and posts from users under 18 are automatically scanned and filtered for harmful content.", color: "#CA922B", route: null },
-  { id: "survey", icon: "star", title: "Neighborhood Safety", desc: "Share and read community safety reports for any neighborhood.", color: "#0891B2", route: "/neighborhood-survey" },
-  { id: "registry", icon: "search", title: "Sex Offender Registry", desc: "Search the national registry to see registered offenders in any neighborhood or zip code.", color: "#4338CA", route: null, externalUrl: "https://www.nsopw.gov" },
-  { id: "officer-watch",  icon: "eye",        title: "Officer Watch",                desc: "Track law enforcement officers flagged for violence against minorities and their department transfers.",    color: "#DC2626", route: "/officer-watch" },
-  { id: "mental-health",  icon: "heart",      title: "Mental Health Resources",      desc: "Crisis hotlines, 988 Lifeline, NAMI, Trevor Project, and Black mental health support — one tap away.",        color: "#DC2626", route: "/mental-health" },
-  { id: "na-aa-meetings", icon: "map-pin",    title: "NA/AA Meetings Near You",      desc: "Find Narcotics Anonymous, Alcoholics Anonymous, Al-Anon, and SMART Recovery meetings in your area.",        color: "#059669", route: "/na-aa-meetings" },
+  { id: "intel",       icon: "radio",         title: "Community Intelligence",       desc: "Report real-time alerts — road closures, protests, celebrations, weather impacts, and more.",          color: "#CA922B", route: "/report-intelligence" },
+  { id: "tip",         icon: "alert-triangle", title: "Submit Safety Tip",           desc: "Pin a location where violence or hate occurred. Nearby verified members are alerted to confirm.",      color: "#DC2626", route: "/safety-tip" },
+  { id: "checkin",     icon: "check-circle",   title: "Safety Check-In",             desc: "Schedule a check-in. Your contact is alerted if you don't confirm.",                                   color: "#16A34A", route: "/checkin" },
+  { id: "location",    icon: "map-pin",        title: "Location Sharing",            desc: "Share your live location with a trusted contact temporarily.",                                          color: "#2563EB", route: "/location-share" },
+  { id: "meetup",      icon: "users",          title: "Meetup Verification",         desc: "Mutually verify in-person meetups with connections you trust.",                                         color: "#7C3AED", route: "/member-connections" },
+  { id: "police",      icon: "shield-off",     title: "Report Police or ICE",        desc: "Report a police encounter, ICE activity, racial profiling, or checkpoint in your area.",               color: "#991B1B", route: "/report-police" },
+  { id: "report",      icon: "flag",           title: "Anonymous Report",            desc: "Report unsafe content or behavior without revealing your identity.",                                    color: "#DC2626", route: "/report-safety" },
+  { id: "space",       icon: "alert-octagon",  title: "Report an Unsafe Space",      desc: "Flag any business or venue where you experienced unsafe, discriminatory, or unwelcoming treatment.",    color: "#7C2D12", route: "/report-space" },
+  { id: "family",      icon: "eye",            title: "Under-18 Content Shield",     desc: "All messages and posts from users under 18 are automatically scanned and filtered for harmful content.", color: "#CA922B", route: null },
+  { id: "survey",      icon: "star",           title: "Neighborhood Safety",         desc: "Share and read community safety reports for any neighborhood.",                                         color: "#0891B2", route: "/neighborhood-survey" },
+  { id: "registry",    icon: "search",         title: "Sex Offender Registry",       desc: "Search the national registry to see registered offenders in any neighborhood or zip code.",             color: "#4338CA", route: null, externalUrl: "https://www.nsopw.gov" },
+  { id: "officer-watch",   icon: "eye",    title: "Officer Watch",              desc: "Track law enforcement officers flagged for violence against minorities and their department transfers.", color: "#DC2626", route: "/officer-watch" },
+  { id: "mental-health",   icon: "heart",  title: "Mental Health Resources",    desc: "Crisis hotlines, 988 Lifeline, NAMI, Trevor Project, and Black mental health support — one tap away.", color: "#DC2626", route: "/mental-health" },
+  { id: "na-aa-meetings",  icon: "map-pin", title: "NA/AA Meetings Near You",   desc: "Find Narcotics Anonymous, Alcoholics Anonymous, Al-Anon, and SMART Recovery meetings in your area.", color: "#059669", route: "/na-aa-meetings" },
 ];
 
 function applyOrder(ids: string[]) {
@@ -86,6 +121,22 @@ function applyOrder(ids: string[]) {
     if (!known.has(f.id)) ordered.push(f);
   }
   return ordered;
+}
+
+function formatAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function formatDist(meters: number): string {
+  if (meters < 161) return "< 0.1 mi away";
+  const miles = meters / 1609;
+  return `${(Math.round(miles * 10) / 10).toFixed(1)} mi away`;
 }
 
 export default function SafetyHubTab() {
@@ -99,6 +150,8 @@ export default function SafetyHubTab() {
   const [checkins, setCheckins] = useState<SafetyCheckin[]>([]);
   const [shares, setShares] = useState<LocationShare[]>([]);
   const [meetups, setMeetups] = useState<MeetupVerification[]>([]);
+  const [intelAlerts, setIntelAlerts] = useState<IntelAlert[]>([]);
+  const [intelLoading, setIntelLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [features, setFeatures] = useState(ALL_FEATURES);
@@ -111,6 +164,25 @@ export default function SafetyHubTab() {
         setFeatures(applyOrder(ids));
       } catch {}
     });
+  }, []);
+
+  const fetchIntel = useCallback(async () => {
+    setIntelLoading(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") return;
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const base = getApiBase();
+      const res = await fetch(
+        `${base}/api/community-alerts/nearby?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}&radius=16`
+      );
+      if (res.ok) {
+        const data = await res.json() as { alerts: IntelAlert[] };
+        setIntelAlerts(data.alerts ?? []);
+      }
+    } catch { /**/ } finally {
+      setIntelLoading(false);
+    }
   }, []);
 
   const fetchData = useCallback(async () => {
@@ -130,7 +202,10 @@ export default function SafetyHubTab() {
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void fetchData(); }, [fetchData]);
+  useEffect(() => {
+    void fetchData();
+    void fetchIntel();
+  }, [fetchData, fetchIntel]);
 
   const moveWidget = (index: number, direction: "up" | "down") => {
     if (Platform.OS !== "web") Haptics.selectionAsync();
@@ -165,6 +240,37 @@ export default function SafetyHubTab() {
     setShares((prev) => prev.filter((s) => s.id !== id));
   };
 
+  const handleConfirmAlert = async (alertId: string) => {
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const token = await SecureStore.getItemAsync("auth_session_token");
+    const res = await fetch(`${getApiBase()}/api/community-alerts/${alertId}/confirm`, {
+      method: "POST",
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (res.ok) {
+      const data = await res.json() as { confirmedCount: number; status: "possible" | "confirmed" };
+      setIntelAlerts((prev) =>
+        prev.map((a) =>
+          a.id === alertId
+            ? { ...a, confirmedCount: data.confirmedCount, status: data.status }
+            : a
+        )
+      );
+    }
+  };
+
+  const handleClearAlert = async (alertId: string) => {
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const token = await SecureStore.getItemAsync("auth_session_token");
+    const res = await fetch(`${getApiBase()}/api/community-alerts/${alertId}/clear`, {
+      method: "POST",
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (res.ok) {
+      setIntelAlerts((prev) => prev.filter((a) => a.id !== alertId));
+    }
+  };
+
   const pendingCheckins = checkins.filter((c) => c.status === "pending");
   const activeShares = shares.filter((s) => s.isActive && new Date(s.expiresAt) > new Date());
   const pendingMeetups = meetups.filter((m) => m.status === "pending" && m.partnerId === user?.id);
@@ -188,9 +294,11 @@ export default function SafetyHubTab() {
     });
   };
 
+  const confirmedAlerts = intelAlerts.filter((a) => a.status === "confirmed");
+  const possibleAlerts = intelAlerts.filter((a) => a.status === "possible");
+
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      {/* Tab-style header — no back button */}
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Safety Hub</Text>
         {editMode ? (
@@ -219,7 +327,7 @@ export default function SafetyHubTab() {
             </View>
           )}
 
-          {/* Active alerts */}
+          {/* Active safety alerts */}
           {!editMode && (pendingCheckins.length > 0 || pendingMeetups.length > 0) && (
             <View style={styles.alertsSection}>
               {pendingCheckins.map((c) => (
@@ -249,6 +357,91 @@ export default function SafetyHubTab() {
                   </View>
                 );
               })}
+            </View>
+          )}
+
+          {/* ─── Community Intelligence ───────────────────────────────────────── */}
+          {!editMode && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionTitleRow}>
+                  <Text style={styles.intelDot}>📡</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Community Intelligence</Text>
+                  {intelAlerts.length > 0 && (
+                    <View style={[styles.intelCount, { backgroundColor: "#CA922B18" }]}>
+                      <Text style={styles.intelCountText}>{intelAlerts.length}</Text>
+                    </View>
+                  )}
+                </View>
+                <TouchableOpacity
+                  onPress={() => router.push("/report-intelligence" as Parameters<typeof router.push>[0])}
+                  style={[styles.reportIntelBtn, { backgroundColor: "#CA922B18", borderColor: "#CA922B40" }]}
+                  activeOpacity={0.8}
+                >
+                  <Feather name="plus" size={13} color="#CA922B" />
+                  <Text style={styles.reportIntelBtnText}>Report</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={[styles.threeStarRuleRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={[styles.statusBadge, { backgroundColor: "#F59E0B18", borderColor: "#F59E0B40" }]}>
+                  <Text style={[styles.statusBadgeText, { color: "#F59E0B" }]}>⚡ Possible</Text>
+                </View>
+                <Text style={[styles.ruleSlash, { color: colors.mutedForeground }]}>1–2 reports</Text>
+                <View style={[styles.statusBadge, { backgroundColor: "#16A34A18", borderColor: "#16A34A40" }]}>
+                  <Text style={[styles.statusBadgeText, { color: "#16A34A" }]}>✓ Confirmed</Text>
+                </View>
+                <Text style={[styles.ruleSlash, { color: colors.mutedForeground }]}>3+ reports</Text>
+              </View>
+
+              {intelLoading && (
+                <View style={styles.intelLoadingRow}>
+                  <ActivityIndicator size="small" color="#CA922B" />
+                  <Text style={[styles.intelLoadingText, { color: colors.mutedForeground }]}>Scanning your area…</Text>
+                </View>
+              )}
+
+              {!intelLoading && intelAlerts.length === 0 && (
+                <View style={[styles.intelEmptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Text style={styles.intelEmptyEmoji}>🟢</Text>
+                  <Text style={[styles.intelEmptyTitle, { color: colors.foreground }]}>All clear nearby</Text>
+                  <Text style={[styles.intelEmptySub, { color: colors.mutedForeground }]}>
+                    No active community intelligence in your area. Be the first to report if you see something.
+                  </Text>
+                </View>
+              )}
+
+              {confirmedAlerts.length > 0 && (
+                <View style={styles.intelGroup}>
+                  <Text style={[styles.intelGroupLabel, { color: "#16A34A" }]}>✓ Confirmed ({confirmedAlerts.length})</Text>
+                  {confirmedAlerts.map((a) => (
+                    <IntelAlertCard
+                      key={a.id}
+                      alert={a}
+                      colors={colors}
+                      onConfirm={() => void handleConfirmAlert(a.id)}
+                      onClear={() => void handleClearAlert(a.id)}
+                      isAuthed={!!user}
+                    />
+                  ))}
+                </View>
+              )}
+
+              {possibleAlerts.length > 0 && (
+                <View style={styles.intelGroup}>
+                  <Text style={[styles.intelGroupLabel, { color: "#F59E0B" }]}>⚡ Possible ({possibleAlerts.length})</Text>
+                  {possibleAlerts.map((a) => (
+                    <IntelAlertCard
+                      key={a.id}
+                      alert={a}
+                      colors={colors}
+                      onConfirm={() => void handleConfirmAlert(a.id)}
+                      onClear={() => void handleClearAlert(a.id)}
+                      isAuthed={!!user}
+                    />
+                  ))}
+                </View>
+              )}
             </View>
           )}
 
@@ -338,6 +531,69 @@ export default function SafetyHubTab() {
   );
 }
 
+type ColorsType = ReturnType<typeof useColors>;
+
+function IntelAlertCard({
+  alert,
+  colors,
+  onConfirm,
+  onClear,
+  isAuthed,
+}: {
+  alert: IntelAlert;
+  colors: ColorsType;
+  onConfirm: () => void;
+  onClear: () => void;
+  isAuthed: boolean;
+}) {
+  const meta = INTEL_TYPE_META[alert.type] ?? { icon: "⚠️", label: "Community Alert", color: "#8B5CF6" };
+  const isConfirmed = alert.status === "confirmed";
+  const statusColor = isConfirmed ? "#16A34A" : "#F59E0B";
+  const statusLabel = isConfirmed ? "✓ Confirmed" : "⚡ Possible";
+
+  return (
+    <View style={[styles.intelCard, { backgroundColor: colors.card, borderColor: isConfirmed ? "#16A34A30" : "#F59E0B30", borderLeftColor: statusColor }]}>
+      <View style={styles.intelCardTop}>
+        <Text style={styles.intelCardEmoji}>{meta.icon}</Text>
+        <View style={{ flex: 1, gap: 3 }}>
+          <View style={styles.intelCardTitleRow}>
+            <Text style={[styles.intelCardLabel, { color: colors.foreground }]} numberOfLines={1}>{meta.label}</Text>
+            <View style={[styles.statusBadgeSmall, { backgroundColor: statusColor + "18", borderColor: statusColor + "40" }]}>
+              <Text style={[styles.statusBadgeSmallText, { color: statusColor }]}>{statusLabel}</Text>
+            </View>
+          </View>
+          <Text style={[styles.intelCardMeta, { color: colors.mutedForeground }]}>
+            {formatAgo(alert.createdAt)} · {formatDist(alert.distanceMeters)} · {alert.confirmedCount} confirmation{alert.confirmedCount !== 1 ? "s" : ""}
+          </Text>
+          {alert.description ? (
+            <Text style={[styles.intelCardDesc, { color: colors.foreground }]} numberOfLines={2}>{alert.description}</Text>
+          ) : null}
+        </View>
+      </View>
+      {isAuthed && (
+        <View style={styles.intelCardActions}>
+          <TouchableOpacity
+            style={[styles.intelActionBtn, { backgroundColor: "#16A34A18", borderColor: "#16A34A40" }]}
+            onPress={onConfirm}
+            activeOpacity={0.8}
+          >
+            <Feather name="check" size={13} color="#16A34A" />
+            <Text style={[styles.intelActionText, { color: "#16A34A" }]}>Confirm</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.intelActionBtn, { backgroundColor: "#6B728018", borderColor: "#6B728040" }]}
+            onPress={onClear}
+            activeOpacity={0.8}
+          >
+            <Feather name="x" size={13} color="#6B7280" />
+            <Text style={[styles.intelActionText, { color: "#6B7280" }]}>All Clear</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1 },
@@ -356,7 +612,41 @@ const styles = StyleSheet.create({
   imSafeBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
   imSafeBtnText: { fontFamily: "Inter_700Bold", fontSize: 12, color: "#fff" },
   section: { gap: 12 },
+  sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  intelDot: { fontSize: 16 },
   sectionTitle: { fontFamily: "Inter_700Bold", fontSize: 17 },
+  intelCount: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
+  intelCountText: { fontFamily: "Inter_700Bold", fontSize: 11, color: "#CA922B" },
+  reportIntelBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, borderWidth: 1 },
+  reportIntelBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#CA922B" },
+  threeStarRuleRow: { flexDirection: "row", alignItems: "center", gap: 8, padding: 10, borderRadius: 10, borderWidth: 1, flexWrap: "wrap" },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
+  statusBadgeText: { fontFamily: "Inter_700Bold", fontSize: 11 },
+  ruleSlash: { fontFamily: "Inter_400Regular", fontSize: 11 },
+  intelLoadingRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8 },
+  intelLoadingText: { fontFamily: "Inter_400Regular", fontSize: 13 },
+  intelEmptyCard: { borderRadius: 14, borderWidth: 1, padding: 20, alignItems: "center", gap: 8 },
+  intelEmptyEmoji: { fontSize: 32 },
+  intelEmptyTitle: { fontFamily: "Inter_700Bold", fontSize: 15 },
+  intelEmptySub: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, textAlign: "center" },
+  intelGroup: { gap: 8 },
+  intelGroupLabel: { fontFamily: "Inter_700Bold", fontSize: 13 },
+  intelCard: {
+    borderRadius: 14, borderWidth: 1, borderLeftWidth: 4,
+    padding: 12, gap: 10,
+  },
+  intelCardTop: { flexDirection: "row", gap: 10, alignItems: "flex-start" },
+  intelCardEmoji: { fontSize: 22, marginTop: 1 },
+  intelCardTitleRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
+  intelCardLabel: { fontFamily: "Inter_700Bold", fontSize: 13 },
+  statusBadgeSmall: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10, borderWidth: 1 },
+  statusBadgeSmallText: { fontFamily: "Inter_700Bold", fontSize: 10 },
+  intelCardMeta: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15 },
+  intelCardDesc: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 16 },
+  intelCardActions: { flexDirection: "row", gap: 8 },
+  intelActionBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1 },
+  intelActionText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   shareCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 16, borderWidth: 1 },
   shareIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   shareName: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
