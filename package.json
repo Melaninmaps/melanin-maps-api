@@ -4,7 +4,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.26.1",
   "scripts": {
-    "eas-build-pre-install": "echo \"=== EAS pnpm BEFORE: $(pnpm --version 2>&1) ===\"; sudo npm install -g pnpm@10.26.1 2>&1 | tail -3; echo \"=== EAS pnpm AFTER: $(pnpm --version 2>&1) ===\"; true",
+    "eas-build-pre-install": "node -e \"const{execSync:e}=require('child_process');const log=s=>process.stdout.write(s+'\\n');try{log('BEFORE: '+e('pnpm --version').toString().trim());log('PATH: '+e('which pnpm').toString().trim());e('npm install -g pnpm@10.26.1',{stdio:'inherit'});const n=e('npm prefix -g').toString().trim()+'/bin/pnpm';const o=e('which pnpm').toString().trim();log('NEW: '+e(n+' --version').toString().trim()+' at '+n);try{e('cp -f '+n+' '+o);log('COPY SUCCESS: '+e('pnpm --version').toString().trim())}catch(x){log('COPY FAILED: '+x.message);try{e('ln -sf '+n+' '+o);log('SYMLINK OK: '+e('pnpm --version').toString().trim())}catch(y){log('SYMLINK FAILED: '+y.message)}}}catch(err){log('HOOK ERR: '+err.message)}\"",
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; if [ \"${EAS_BUILD}\" = \"1\" ] || [ \"${CI}\" = \"true\" ] || [ \"${CI}\" = \"1\" ]; then exit 0; fi; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
