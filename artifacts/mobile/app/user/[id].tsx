@@ -201,10 +201,8 @@ export default function VisitorProfileScreen() {
     }
   };
 
-  const displayName = profile
-    ? [profile.firstName, profile.lastName].filter(Boolean).join(" ") || profile.username || "Community Member"
-    : "";
-  const initials = displayName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "CM";
+  const displayName = profile?.username ? `@${profile.username}` : "Community Member";
+  const initials = (profile?.username ?? "CM").slice(0, 2).toUpperCase();
   const memberBadge = MEMBER_BADGE[(profile?.memberType ?? "free").toLowerCase()];
   const isOwnProfile = myId && id && myId === id;
 
@@ -260,16 +258,13 @@ export default function VisitorProfileScreen() {
                 <Text style={s.avatarInitials}>{initials}</Text>
               </View>
 
-              {/* Name + verified + member badge */}
+              {/* Handle + verified */}
               <View style={s.nameRow}>
                 <Text style={[s.displayName, { color: colors.foreground }]}>{displayName}</Text>
                 {profile.identityVerified && (
                   <Feather name="check-circle" size={16} color="#2D7A4F" />
                 )}
               </View>
-              {profile.username && (
-                <Text style={[s.username, { color: colors.mutedForeground }]}>@{profile.username}</Text>
-              )}
               {memberBadge && (
                 <View style={[s.memberBadge, { backgroundColor: memberBadge.color + "15", borderColor: memberBadge.color + "40" }]}>
                   <View style={[s.memberDot, { backgroundColor: memberBadge.color }]} />

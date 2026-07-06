@@ -279,7 +279,7 @@ export default function UserProfileScreen() {
     );
   }
 
-  const displayName = [profile.firstName, profile.lastName].filter(Boolean).join(" ") || "Community Member";
+  const displayName = profile.username ? `@${profile.username}` : "Community Member";
 
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
@@ -315,9 +315,6 @@ export default function UserProfileScreen() {
                 </View>
               )}
               <Text style={[s.heroName, { color: colors.foreground }]}>{displayName}</Text>
-              {profile.username && (
-                <Text style={[s.heroUsername, { color: colors.mutedForeground }]}>@{profile.username}</Text>
-              )}
               {(profile.jobTitle || profile.industry) && (
                 <Text style={[s.heroRole, { color: colors.mutedForeground }]}>
                   {[profile.jobTitle, profile.industry].filter(Boolean).join(" · ")}
@@ -362,7 +359,7 @@ export default function UserProfileScreen() {
               <View style={[s.tagInputRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <TextInput
                   style={[s.tagInput, { color: colors.foreground }]}
-                  placeholder={`Say something kind about ${profile.firstName ?? "them"}…`}
+                  placeholder={`Say something kind about ${profile.username ? `@${profile.username}` : "them"}…`}
                   placeholderTextColor={colors.mutedForeground}
                   value={tagInput}
                   onChangeText={setTagInput}
@@ -486,7 +483,7 @@ export default function UserProfileScreen() {
           }
           const tag = item as ProfileTag;
           const canDelete = myId === tag.taggerId || myId === userId;
-          const taggerName = [tag.taggerFirstName, tag.taggerLastName].filter(Boolean).join(" ") || "Community member";
+          const taggerName = tag.taggerUsername ? `@${tag.taggerUsername}` : "Community member";
           return (
             <View style={[s.tagCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={s.tagCardHeader}>

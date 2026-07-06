@@ -613,11 +613,8 @@ export default function ProfileScreen() {
               </View>
             </TouchableOpacity>
             <View style={styles.profileInfo}>
-              <Text style={[styles.name, { color: colors.foreground }]}>
-                {[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Community Member"}
-              </Text>
               {(user as any)?.username ? (
-                <Text style={[styles.username, { color: colors.primary }]}>@{(user as any).username}</Text>
+                <Text style={[styles.name, { color: colors.foreground }]}>@{(user as any).username}</Text>
               ) : null}
               {user?.jobTitle || user?.industry ? (
                 <Text style={[styles.industryLine, { color: colors.mutedForeground }]}>
@@ -626,9 +623,6 @@ export default function ProfileScreen() {
               ) : null}
               {(user as any)?.bio ? (
                 <Text style={[styles.bio, { color: colors.mutedForeground }]} numberOfLines={2}>{(user as any).bio}</Text>
-              ) : null}
-              {user?.email ? (
-                <Text style={[styles.email, { color: colors.mutedForeground }]}>{user.email}</Text>
               ) : null}
               {subscription ? (
                 <View style={[styles.memberBadge, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "30" }]}>
@@ -974,8 +968,8 @@ export default function ProfileScreen() {
 
       {isAuthenticated && (
         <StatusComposer
-          authorName={[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "You"}
-          authorInitials={([user?.firstName, user?.lastName].filter(Boolean).join(" ") || "YO").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
+          authorName={(user as any)?.username ? `@${(user as any).username}` : "You"}
+          authorInitials={((user as any)?.username ?? "YO").slice(0, 2).toUpperCase()}
           authorColor="#CA922B"
         />
       )}

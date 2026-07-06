@@ -47,7 +47,6 @@ export default function SettingsScreen() {
       title: "Account",
       rows: [
         { id: "profile", icon: "user", label: "Edit Profile", sub: "Name, photo, bio", route: "/(tabs)/profile" },
-        { id: "email", icon: "mail", label: "Email Address", sub: user?.email ?? "Not signed in", route: null },
         { id: "password", icon: "lock", label: "Change Password", sub: "Managed via Replit account", route: null },
         { id: "connected", icon: "link", label: "Connected Accounts", sub: "Managed via Replit Auth", route: null },
       ],
