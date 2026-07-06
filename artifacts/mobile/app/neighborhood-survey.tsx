@@ -33,19 +33,6 @@ const ATMOSPHERES = [
   { id: "slightly_unwelcoming", label: "Slightly unwelcoming", score: 2 },
   { id: "uncomfortable", label: "Uncomfortable", score: 1 },
 ];
-const POLICE_VISIBILITY_OPTIONS = [
-  { id: "very_visible", label: "Very visible" },
-  { id: "moderately_visible", label: "Moderately visible" },
-  { id: "occasionally_visible", label: "Occasionally visible" },
-  { id: "rarely_visible", label: "Rarely visible" },
-  { id: "not_observed", label: "Not observed" },
-];
-const POLICE_IMPACT_OPTIONS = [
-  { id: "increased", label: "Increased my sense of safety" },
-  { id: "no_impact", label: "Had no impact" },
-  { id: "decreased", label: "Decreased my sense of safety" },
-  { id: "unsure", label: "Unsure" },
-];
 const ACCESSIBILITY_FEATURES = [
   "Wheelchair accessible sidewalks", "Good street lighting", "Accessible public transit",
   "Gender-neutral restrooms nearby", "Family-friendly spaces", "LGBTQ+ friendly businesses", "None noticed",
@@ -140,8 +127,6 @@ export default function NeighborhoodSurveyScreen() {
   const [walkability, setWalkability] = useState(0);
   const [transitSafety, setTransitSafety] = useState(0);
   const [atmosphere, setAtmosphere] = useState("");
-  const [policeVisibility, setPoliceVisibility] = useState("");
-  const [policeImpact, setPoliceImpact] = useState("");
   const [accessibility, setAccessibility] = useState<string[]>([]);
   const [tips, setTips] = useState<string[]>([]);
   const [comments, setComments] = useState("");
@@ -186,8 +171,6 @@ export default function NeighborhoodSurveyScreen() {
           walkability: walkability || undefined,
           transitSafety: transitSafety || undefined,
           atmosphere,
-          policeVisibility: policeVisibility || undefined,
-          policeImpact: policeImpact || undefined,
           communityRating: communityRating || undefined,
           culturallyConnected: culturallyConnected || undefined,
           nomination: nominationName ? {
@@ -371,7 +354,7 @@ export default function NeighborhoodSurveyScreen() {
           <View style={styles.stepContent}>
             <Text style={[styles.stepTitle, { color: colors.foreground }]}>🏘️ Community Experience</Text>
             <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-              Atmosphere is required — police and community questions are optional
+              Atmosphere is required — community questions are optional
             </Text>
 
             <View style={styles.qBlock}>
@@ -392,46 +375,6 @@ export default function NeighborhoodSurveyScreen() {
                   >
                     <Text style={[styles.atmosphereTxt, { color: colors.foreground }]}>{a.label}</Text>
                     {atmosphere === a.id && <Feather name="check-circle" size={18} color={colors.primary} />}
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.qBlock}>
-              <Text style={[styles.qLabel, { color: colors.foreground }]}>How would you describe the level of police presence?</Text>
-              <View style={{ gap: 10 }}>
-                {POLICE_VISIBILITY_OPTIONS.map((opt) => (
-                  <TouchableOpacity
-                    key={opt.id}
-                    style={[
-                      styles.atmosphereCard,
-                      { backgroundColor: policeVisibility === opt.id ? colors.primary + "12" : colors.card, borderColor: policeVisibility === opt.id ? colors.primary : colors.border },
-                    ]}
-                    onPress={() => { setPoliceVisibility(opt.id); if (Platform.OS !== "web") Haptics.selectionAsync(); }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.atmosphereTxt, { color: colors.foreground }]}>{opt.label}</Text>
-                    {policeVisibility === opt.id && <Feather name="check-circle" size={18} color={colors.primary} />}
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.qBlock}>
-              <Text style={[styles.qLabel, { color: colors.foreground }]}>How did the level of police presence affect your sense of safety?</Text>
-              <View style={{ gap: 10 }}>
-                {POLICE_IMPACT_OPTIONS.map((opt) => (
-                  <TouchableOpacity
-                    key={opt.id}
-                    style={[
-                      styles.atmosphereCard,
-                      { backgroundColor: policeImpact === opt.id ? colors.primary + "12" : colors.card, borderColor: policeImpact === opt.id ? colors.primary : colors.border },
-                    ]}
-                    onPress={() => { setPoliceImpact(opt.id); if (Platform.OS !== "web") Haptics.selectionAsync(); }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.atmosphereTxt, { color: colors.foreground }]}>{opt.label}</Text>
-                    {policeImpact === opt.id && <Feather name="check-circle" size={18} color={colors.primary} />}
                   </TouchableOpacity>
                 ))}
               </View>
