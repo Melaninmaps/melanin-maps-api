@@ -4,7 +4,7 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "eas-build-pre-install": "node -e \"const{execSync:e}=require('child_process');const log=s=>process.stdout.write(s+'\\n');try{log('BEFORE: '+e('pnpm --version').toString().trim());log('PATH: '+e('which pnpm').toString().trim());e('npm install -g pnpm@10.26.1',{stdio:'inherit'});const n=e('npm prefix -g').toString().trim()+'/bin/pnpm';const o=e('which pnpm').toString().trim();log('NEW: '+e(n+' --version').toString().trim()+' at '+n);try{e('cp -f '+n+' '+o);log('COPY SUCCESS: '+e('pnpm --version').toString().trim())}catch(x){log('COPY FAILED: '+x.message);try{e('ln -sf '+n+' '+o);log('SYMLINK OK: '+e('pnpm --version').toString().trim())}catch(y){log('SYMLINK FAILED: '+y.message)}}}catch(err){log('HOOK ERR: '+err.message)}\"",
+    "eas-build-pre-install": "node -e \"const{execSync:e}=require('child_process');const log=s=>process.stdout.write(s+'\\n');try{log('pnpm before: '+e('pnpm --version').toString().trim());e('npm install -g pnpm@10.26.1',{stdio:'inherit'});log('pnpm after: '+e('pnpm --version').toString().trim())}catch(err){log('hook error: '+err.message)}\"",
     "dev": "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_EXPO_DEV_DOMAIN EXPO_PUBLIC_DOMAIN=$REPLIT_DEV_DOMAIN EXPO_PUBLIC_REPL_ID=$REPL_ID REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN pnpm exec expo start --localhost --port $PORT",
     "build": "node scripts/build.js",
     "serve": "node server/serve.js",
