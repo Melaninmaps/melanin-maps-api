@@ -47,7 +47,8 @@
       "env": {
         "EXPO_PUBLIC_DOMAIN": "www.melaninmaps.com",
         "EXPO_PUBLIC_REPL_ID": "ac64a230-72f5-4194-b8b4-3ca827a772f9",
-        "GOOGLE_MAPS_API_KEY": "AIzaSyD-QflBkAV_ps-8Y290jBLvWXbJyMCpmzE"
+        "GOOGLE_MAPS_API_KEY": "AIzaSyD-QflBkAV_ps-8Y290jBLvWXbJyMCpmzE",
+        "PNPM_VERSION": "10.26.1"
       }
     }
   },
