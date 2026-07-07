@@ -17,32 +17,31 @@ config.resolver.extraNodeModules = {
   assert: path.resolve(__dirname, "mocks/assert.js"),
 };
 
+// Resolve expo-router's qualified entry once at startup, before Metro begins.
+// Using require.resolve with explicit paths works reliably in EAS build env.
+let expoRouterQualifiedEntry;
+try {
+  expoRouterQualifiedEntry = require.resolve("expo-router/build/qualified-entry", {
+    paths: [projectRoot, workspaceRoot],
+  });
+} catch (_e) {
+  // Fallback: construct path directly from workspace node_modules
+  expoRouterQualifiedEntry = path.resolve(
+    workspaceRoot,
+    "node_modules/expo-router/build/qualified-entry.js"
+  );
+}
+
 const originalResolveRequest = config.resolver.resolveRequest;
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   const origin = context.originModulePath || "";
 
   // Fix for pnpm virtual store: expo/AppEntry.js imports '../../App' which
-  // can't resolve in pnpm's deeply-nested store paths.
-  // Redirect it to expo-router's qualified entry App component.
-  // Use path.resolve (not require.resolve) so EAS build env finds it reliably.
-  if (
-    moduleName === "../../App" &&
-    (origin.includes("/expo/AppEntry") || origin.endsWith("expo/AppEntry.js"))
-  ) {
-    const qualifiedEntry = path.resolve(
-      workspaceRoot,
-      "node_modules/expo-router/build/qualified-entry.js"
-    );
-    const fallbackEntry = path.resolve(
-      projectRoot,
-      "node_modules/expo-router/build/qualified-entry.js"
-    );
-    const fs = require("fs");
-    return {
-      type: "sourceFile",
-      filePath: fs.existsSync(qualifiedEntry) ? qualifiedEntry : fallbackEntry,
-    };
+  // cannot resolve in pnpm's deeply-nested virtual store paths.
+  // This intercepts it regardless of origin so it works in all EAS build modes.
+  if (moduleName === "../../App" && origin.includes("node_modules/expo/AppEntry")) {
+    return { type: "sourceFile", filePath: expoRouterQualifiedEntry };
   }
 
   const isContactAccessButton =
