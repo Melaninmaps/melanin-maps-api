@@ -24,6 +24,8 @@ export const communityPostsTable = pgTable("community_posts", {
   visibility: varchar("visibility", { length: 20 }).notNull().default("public"),
   hasContentWarning: boolean("has_content_warning").notNull().default(false),
   contentWarningType: varchar("content_warning_type", { length: 30 }),
+  audienceRating: varchar("audience_rating", { length: 20 }).notNull().default("everyone"),
+  ratingReason: varchar("rating_reason", { length: 200 }),
   // Link preview fields
   linkUrl: text("link_url"),
   linkTitle: text("link_title"),

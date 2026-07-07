@@ -19,6 +19,8 @@ export const knowledgeArticlesTable = pgTable("knowledge_articles", {
   tags: text("tags").array(),
   imageUrl: varchar("image_url", { length: 500 }),
   readTimeMinutes: integer("read_time_minutes").default(4),
+  audienceRating: varchar("audience_rating", { length: 20 }).notNull().default("everyone"),
+  ratingReason: varchar("rating_reason", { length: 200 }),
   disclaimer: text("disclaimer"),
   featured: boolean("featured").default(false),
   viewCount: integer("view_count").default(0),

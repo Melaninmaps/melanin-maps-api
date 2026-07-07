@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, contentFilterViolationsTable, familyCirclesTable, familyCircleMembersTable, notificationsTable } from "@workspace/db";
+import { db, contentFilterViolationsTable, familyCirclesTable, familyCircleMembersTable, notificationsTable, familySettingsTable, communityPostsTable, eventsTable } from "@workspace/db";
 import type { FamilyMemberPermissions } from "@workspace/db";
-import { and, desc, eq, or } from "drizzle-orm";
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import { sendPushToUser } from "../lib/pushNotifications";
 
 const router: IRouter = Router();
@@ -338,6 +338,142 @@ router.post("/family/circle/leave", async (req: Request, res: Response): Promise
   } catch (err) {
     req.log.error({ err }, "POST /family/circle/leave error");
     res.status(500).json({ error: "Failed to leave circle" });
+  }
+});
+
+// ── GET /family/guidance-settings ─────────────────────────────────────────
+// Returns the caller's Community Guidance content tier preferences.
+router.get("/family/guidance-settings", async (req: Request, res: Response): Promise<void> => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const [row] = await db
+      .select()
+      .from(familySettingsTable)
+      .where(eq(familySettingsTable.userId, req.user!.id))
+      .limit(1);
+
+    const settings = row ?? {
+      userId: req.user!.id,
+      allowEveryone: true,
+      allowTeen: true,
+      allowYoungAdult: true,
+      allowAdult: true,
+      familyModeEnabled: false,
+      updatedAt: new Date(),
+    };
+    res.json({ settings });
+  } catch (err) {
+    req.log.error({ err }, "GET /family/guidance-settings error");
+    res.status(500).json({ error: "Failed to load guidance settings" });
+  }
+});
+
+// ── PATCH /family/guidance-settings ───────────────────────────────────────
+// Upserts the caller's Community Guidance content tier preferences.
+router.patch("/family/guidance-settings", async (req: Request, res: Response): Promise<void> => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const { allowEveryone, allowTeen, allowYoungAdult, allowAdult, familyModeEnabled } = req.body as {
+      allowEveryone?: boolean;
+      allowTeen?: boolean;
+      allowYoungAdult?: boolean;
+      allowAdult?: boolean;
+      familyModeEnabled?: boolean;
+    };
+
+    const [existing] = await db
+      .select({ userId: familySettingsTable.userId })
+      .from(familySettingsTable)
+      .where(eq(familySettingsTable.userId, req.user!.id))
+      .limit(1);
+
+    const patch: Record<string, unknown> = { updatedAt: new Date() };
+    if (typeof allowEveryone === "boolean") patch.allowEveryone = true; // always on
+    if (typeof allowTeen === "boolean") patch.allowTeen = allowTeen;
+    if (typeof allowYoungAdult === "boolean") patch.allowYoungAdult = allowYoungAdult;
+    if (typeof allowAdult === "boolean") patch.allowAdult = allowAdult;
+    if (typeof familyModeEnabled === "boolean") patch.familyModeEnabled = familyModeEnabled;
+
+    if (existing) {
+      const [updated] = await db
+        .update(familySettingsTable)
+        .set(patch)
+        .where(eq(familySettingsTable.userId, req.user!.id))
+        .returning();
+      res.json({ settings: updated });
+    } else {
+      const [created] = await db
+        .insert(familySettingsTable)
+        .values({
+          userId: req.user!.id,
+          allowEveryone: true,
+          allowTeen: typeof allowTeen === "boolean" ? allowTeen : true,
+          allowYoungAdult: typeof allowYoungAdult === "boolean" ? allowYoungAdult : true,
+          allowAdult: typeof allowAdult === "boolean" ? allowAdult : true,
+          familyModeEnabled: typeof familyModeEnabled === "boolean" ? familyModeEnabled : false,
+        })
+        .returning();
+      res.json({ settings: created });
+    }
+  } catch (err) {
+    req.log.error({ err }, "PATCH /family/guidance-settings error");
+    res.status(500).json({ error: "Failed to save guidance settings" });
+  }
+});
+
+// ── GET /family/mode/posts ─────────────────────────────────────────────────
+// Returns community posts rated "everyone" — suitable for Family Mode.
+router.get("/family/mode/posts", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 30, 100);
+    const offset = Number(req.query.offset) || 0;
+    const category = typeof req.query.category === "string" ? req.query.category : undefined;
+
+    const posts = await db
+      .select()
+      .from(communityPostsTable)
+      .where(
+        and(
+          eq(communityPostsTable.audienceRating, "everyone"),
+          eq(communityPostsTable.visibility, "public"),
+          category && category !== "all" ? eq(communityPostsTable.category, category) : sql`1=1`,
+        ),
+      )
+      .orderBy(desc(communityPostsTable.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    res.json({ posts });
+  } catch (err) {
+    req.log.error({ err }, "GET /family/mode/posts error");
+    res.status(500).json({ error: "Failed to load family posts" });
+  }
+});
+
+// ── GET /family/mode/events ────────────────────────────────────────────────
+// Returns events rated "everyone" — suitable for Family Mode.
+router.get("/family/mode/events", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 30, 100);
+    const offset = Number(req.query.offset) || 0;
+
+    const events = await db
+      .select()
+      .from(eventsTable)
+      .where(
+        and(
+          eq(eventsTable.audienceRating, "everyone"),
+          eq(eventsTable.status, "active"),
+        ),
+      )
+      .orderBy(desc(eventsTable.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    res.json({ events });
+  } catch (err) {
+    req.log.error({ err }, "GET /family/mode/events error");
+    res.status(500).json({ error: "Failed to load family events" });
   }
 });
 

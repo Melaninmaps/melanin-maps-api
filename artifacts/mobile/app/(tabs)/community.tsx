@@ -215,6 +215,8 @@ export default function CommunityScreen() {
   const [newPostTopicTag, setNewPostTopicTag] = useState("");
   const [newPostIsPrivateTopic, setNewPostIsPrivateTopic] = useState(false);
   const [showTopicPicker, setShowTopicPicker] = useState(false);
+  const [newPostAudienceRating, setNewPostAudienceRating] = useState<"everyone" | "teen" | "young_adult" | "adult">("everyone");
+  const [newPostRatingReason, setNewPostRatingReason] = useState("");
   const [submittingPost, setSubmittingPost] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [editingPost, setEditingPost] = useState<CommunityPost | null>(null);
@@ -428,6 +430,8 @@ export default function CommunityScreen() {
           locationType: newPostLocationTag.trim() ? newPostLocationType : undefined,
           topicTag: newPostTopicTag.trim() || undefined,
           isPrivateTopic: newPostTopicTag.trim() ? newPostIsPrivateTopic : undefined,
+          audienceRating: newPostAudienceRating,
+          ratingReason: newPostRatingReason.trim() || undefined,
         }),
       });
       if (res.ok) {
@@ -444,6 +448,8 @@ export default function CommunityScreen() {
         setNewPostIsPrivateTopic(false);
         setShowTopicPicker(false);
         setMediaAttachments([]);
+        setNewPostAudienceRating("everyone");
+        setNewPostRatingReason("");
         setShowCompose(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
@@ -1409,6 +1415,51 @@ export default function CommunityScreen() {
                   </Text>
                 </TouchableOpacity>
               ))}
+            </View>
+
+            {/* Audience Guidance picker */}
+            <View style={{ paddingHorizontal: 16, paddingBottom: 10 }}>
+              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.mutedForeground, marginBottom: 6 }}>
+                COMMUNITY GUIDANCE — Who is this for?
+              </Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+                {([
+                  { value: "everyone",    label: "🟢 Everyone",       color: "#16A34A" },
+                  { value: "teen",        label: "🔵 Teen (13+)",      color: "#2563EB" },
+                  { value: "young_adult", label: "🟠 Young Adult (16+)", color: "#EA580C" },
+                  { value: "adult",       label: "🔴 Adult (18+)",     color: "#DC2626" },
+                ] as const).map((opt) => (
+                  <TouchableOpacity
+                    key={opt.value}
+                    activeOpacity={0.85}
+                    onPress={() => { setNewPostAudienceRating(opt.value); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                    style={{
+                      paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14,
+                      borderWidth: 1,
+                      borderColor: newPostAudienceRating === opt.value ? opt.color : colors.border,
+                      backgroundColor: newPostAudienceRating === opt.value ? opt.color + "18" : "transparent",
+                    }}
+                  >
+                    <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: newPostAudienceRating === opt.value ? opt.color : colors.mutedForeground }}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {newPostAudienceRating !== "everyone" && (
+                <TextInput
+                  style={{
+                    marginTop: 8, borderWidth: 1, borderColor: colors.border,
+                    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6,
+                    fontFamily: "Inter_400Regular", fontSize: 12, color: colors.foreground,
+                  }}
+                  placeholder="Optional: why this rating? (e.g. discusses workplace discrimination)"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={newPostRatingReason}
+                  onChangeText={setNewPostRatingReason}
+                  maxLength={200}
+                />
+              )}
             </View>
 
             {/* Visibility selector */}

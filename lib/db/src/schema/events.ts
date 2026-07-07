@@ -19,6 +19,8 @@ export const eventsTable = pgTable("events", {
   isFree: boolean("is_free").notNull().default(true),
   latitude: numeric("latitude", { precision: 10, scale: 7 }),
   longitude: numeric("longitude", { precision: 10, scale: 7 }),
+  audienceRating: varchar("audience_rating", { length: 20 }).notNull().default("everyone"),
+  ratingReason: varchar("rating_reason", { length: 200 }),
   featured: boolean("featured").notNull().default(false),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   createdById: varchar("created_by_id"),

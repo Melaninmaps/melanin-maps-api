@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { randomUUID } from "crypto";
 import multer from "multer";
-import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool } from "@workspace/db";
+import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool, familySettingsTable } from "@workspace/db";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
@@ -172,6 +172,8 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       isPrivateTopic = false,
       hasContentWarning = false,
       contentWarningType,
+      audienceRating = "everyone",
+      ratingReason,
       linkUrl,
       linkTitle,
       linkDescription,
@@ -197,6 +199,8 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       isPrivateTopic?: boolean;
       hasContentWarning?: boolean;
       contentWarningType?: string;
+      audienceRating?: string;
+      ratingReason?: string;
       linkUrl?: string;
       linkTitle?: string;
       linkDescription?: string;
@@ -287,6 +291,8 @@ router.post("/community/posts", async (req: Request, res: Response) => {
         visibility: (isPrivateTopic ? "followers_only" : visibility === "followers_only" ? "followers_only" : "public") as "public" | "followers_only",
         hasContentWarning: !!hasContentWarning,
         contentWarningType: hasContentWarning && contentWarningType ? contentWarningType : null,
+        audienceRating: (["everyone", "teen", "young_adult", "adult"].includes(audienceRating) ? audienceRating : "everyone") as "everyone" | "teen" | "young_adult" | "adult",
+        ratingReason: ratingReason?.trim().slice(0, 200) || null,
         linkUrl: linkUrl?.trim() || null,
         linkTitle: linkTitle?.trim() || null,
         linkDescription: linkDescription?.trim() || null,
