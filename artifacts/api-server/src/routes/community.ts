@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { randomUUID } from "crypto";
 import multer from "multer";
-import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool, familySettingsTable } from "@workspace/db";
+import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool } from "@workspace/db";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
@@ -58,7 +58,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
     const offset = Number(req.query.offset) || 0;
     const viewerId: string | null = req.user?.id ?? null;
 
-    type PostRow = { id: string; author_id: string | null; author_name: string; author_initials: string; author_color: string; content: string; category: string; post_type: string; business_id: string | null; business_name: string | null; business_link: string | null; media_urls: string | null; saved_place_id: string | null; location_tag: string | null; location_type: string | null; topic_tag: string | null; is_private_topic: boolean; visibility: string; upvotes: number; downvotes: number; comments_count: number; created_at: Date };
+    type PostRow = { id: string; author_id: string | null; author_name: string; author_initials: string; author_color: string; content: string; category: string; post_type: string; business_id: string | null; business_name: string | null; business_link: string | null; media_urls: string | null; saved_place_id: string | null; location_tag: string | null; location_type: string | null; topic_tag: string | null; is_private_topic: boolean; visibility: string; has_content_warning: boolean; content_warning_type: string | null; audience_rating: string; rating_reason: string | null; upvotes: number; downvotes: number; comments_count: number; created_at: Date };
 
     let rows: PostRow[];
 
@@ -121,6 +121,10 @@ router.get("/community/posts", async (req: Request, res: Response) => {
       locationTag: r.location_tag, locationType: r.location_type,
       topicTag: r.topic_tag, isPrivateTopic: r.is_private_topic,
       visibility: r.visibility,
+      hasContentWarning: r.has_content_warning ?? false,
+      contentWarningType: r.content_warning_type ?? null,
+      audienceRating: r.audience_rating ?? "everyone",
+      ratingReason: r.rating_reason ?? null,
       linkUrl: r.link_url ?? null,
       linkTitle: r.link_title ?? null,
       linkDescription: r.link_description ?? null,

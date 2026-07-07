@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { useColors } from "@/hooks/useColors";
 import { BusinessMiniCard, type BusinessMiniCardData } from "@/components/BusinessMiniCard";
 import { ReportButton } from "@/components/ReportButton";
+import AudienceRatingBadge from "@/components/AudienceRatingBadge";
 import type { CommunityPost } from "@/constants/types";
 
 interface Props {
@@ -303,6 +304,18 @@ export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeC
 
       {/* Content */}
       <Text style={[s.content, { color: colors.foreground }]}>{post.content}</Text>
+
+      {/* Community Guidance rating — shown for any non-everyone tier */}
+      {post.audienceRating && post.audienceRating !== "everyone" && (
+        <View style={s.ratingRow}>
+          <AudienceRatingBadge
+            rating={post.audienceRating}
+            reason={post.ratingReason}
+            size="sm"
+            showReason={!!post.ratingReason}
+          />
+        </View>
+      )}
 
       {/* Repost block — shows quoted original */}
       {isRepost && (post.repostContent || post.repostAuthorName) && (
@@ -628,4 +641,8 @@ const s = StyleSheet.create({
   },
   viewBizText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   moreBtn: { padding: 2 },
+  ratingRow: {
+    paddingHorizontal: 14,
+    paddingBottom: 8,
+  },
 });

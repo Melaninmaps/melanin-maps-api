@@ -120,6 +120,8 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
     isPrivateTopic: !!(raw.isPrivateTopic),
     hasContentWarning: !!(raw.hasContentWarning),
     contentWarningType: (raw.contentWarningType as string) ?? undefined,
+    audienceRating: (raw.audienceRating as string) ?? (raw.audience_rating as string) ?? "everyone",
+    ratingReason: (raw.ratingReason as string) ?? (raw.rating_reason as string) ?? undefined,
   };
 }
 

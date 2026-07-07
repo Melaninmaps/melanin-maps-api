@@ -73,6 +73,8 @@ export interface Event {
   longitude: number;
   featured?: boolean;
   relevanceScore?: number;
+  audienceRating?: string;
+  ratingReason?: string;
 }
 
 export type PostCategory = "discussion" | "recommendation" | "alert" | "question";
@@ -102,6 +104,8 @@ export interface CommunityPost {
   isPrivateTopic?: boolean;
   hasContentWarning?: boolean;
   contentWarningType?: string;
+  audienceRating?: string;
+  ratingReason?: string;
   linkUrl?: string;
   linkTitle?: string;
   linkDescription?: string;
