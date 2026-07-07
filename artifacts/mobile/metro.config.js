@@ -39,8 +39,10 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
 
   // Fix for pnpm virtual store: expo/AppEntry.js imports '../../App' which
   // cannot resolve in pnpm's deeply-nested virtual store paths.
-  // This intercepts it regardless of origin so it works in all EAS build modes.
-  if (moduleName === "../../App" && origin.includes("node_modules/expo/AppEntry")) {
+  // Drop the origin check — in EAS builds context.originModulePath may be
+  // empty/undefined, causing the condition to silently miss. The '../../App'
+  // import is exclusive to expo/AppEntry.js so intercepting unconditionally is safe.
+  if (moduleName === "../../App") {
     return { type: "sourceFile", filePath: expoRouterQualifiedEntry };
   }
 
