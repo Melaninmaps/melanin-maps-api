@@ -9,7 +9,7 @@ export default function Slide08Businesses() {
           src={`${base}hero-business.png`}
           crossOrigin="anonymous"
           className="w-full h-full object-cover"
-          alt="Black-owned business"
+          alt="Minority-owned business"
         />
         <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, #1C0E06 0%, rgba(28,14,6,0.2) 50%, transparent 100%)" }} />
       </div>

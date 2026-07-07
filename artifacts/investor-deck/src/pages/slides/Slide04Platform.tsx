@@ -30,7 +30,7 @@ export default function Slide04Platform() {
             <div className="font-display mb-[1.5vh]" style={{ fontSize: "3.8vw", fontWeight: 700, color: "#1C0E06" }}>Discovery</div>
             <div className="inv-rule w-[5vw] mb-[1.5vh]" />
             <p className="font-body" style={{ fontSize: "2.8vw", fontWeight: 300, color: "#3A1F0E", lineHeight: 1.4 }}>
-              Black-owned business listings, map, verified reviews, and neighborhood safety data
+              Minority-owned business listings, map, verified reviews, and neighborhood safety data
             </p>
           </div>
           <div className="flex flex-col justify-center py-[3vh] px-[3vw]" style={{ background: "rgba(202,146,43,0.08)", border: "1px solid rgba(202,146,43,0.3)" }}>

@@ -19,11 +19,11 @@ export default function Slide10TheAsk() {
       <div className="absolute left-0 top-0 w-[48vw] h-full flex flex-col justify-center pl-[7vw] pr-[4vw]">
         <div className="font-body mb-[2vh]" style={{ fontSize: "2.4vw", color: "#CA922B", letterSpacing: "0.18em", fontWeight: 300 }}>THE VISION</div>
         <h2 className="font-display text-accent leading-tight mb-[3vh]" style={{ fontSize: "5vw", fontWeight: 700, textWrap: "balance" }}>
-          The infrastructure for Black community life.
+          The infrastructure for the melanated diaspora.
         </h2>
         <div className="inv-rule w-[14vw] mb-[3vh]" />
         <p className="font-body text-accent" style={{ fontSize: "2.9vw", fontWeight: 300, lineHeight: 1.6, opacity: 0.85 }}>
-          We are building the layer of trust, intelligence, and connection that 44 million people have needed — and that no platform has ever built for them.
+          We are building the layer of trust, intelligence, and connection that millions of minorities and the melanated diaspora have needed — and that no platform has ever built for them.
         </p>
       </div>
 

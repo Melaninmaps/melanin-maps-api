@@ -15,23 +15,23 @@ export default function Slide03Market() {
         </h2>
         <div className="inv-rule w-[16vw] mt-[2vh] mb-[3vh]" />
         <p className="font-body" style={{ fontSize: "3vw", fontWeight: 300, color: "#3A1F0E", lineHeight: 1.5 }}>
-          Black Americans represent the 15th largest economy in the world — and no platform has been built to serve them at scale.
+          The melanated diaspora and minority communities represent one of the largest consumer markets in the world — and no platform has been built to serve them at scale.
         </p>
       </div>
 
       {/* Right: 3 stats stacked */}
       <div className="absolute right-[7vw] top-[8vh] bottom-[8vh] w-[45vw] flex flex-col justify-evenly">
         <div className="py-[3vh] px-[3vw]" style={{ border: "1px solid rgba(202,146,43,0.4)", borderLeft: "4px solid #CA922B", background: "rgba(202,146,43,0.05)" }}>
-          <div className="font-display" style={{ fontSize: "8vw", fontWeight: 700, color: "#CA922B", lineHeight: 1 }}>44M</div>
-          <div className="font-body mt-[1vh]" style={{ fontSize: "3vw", fontWeight: 300, color: "#1C0E06" }}>Black Americans in the US</div>
+          <div className="font-display" style={{ fontSize: "8vw", fontWeight: 700, color: "#CA922B", lineHeight: 1 }}>100M+</div>
+          <div className="font-body mt-[1vh]" style={{ fontSize: "3vw", fontWeight: 300, color: "#1C0E06" }}>Minorities and melanated diaspora in the US</div>
         </div>
         <div className="py-[3vh] px-[3vw]" style={{ border: "1px solid rgba(202,146,43,0.4)", borderLeft: "4px solid #CA922B", background: "rgba(202,146,43,0.05)" }}>
-          <div className="font-display" style={{ fontSize: "8vw", fontWeight: 700, color: "#CA922B", lineHeight: 1 }}>$1.6T</div>
+          <div className="font-display" style={{ fontSize: "8vw", fontWeight: 700, color: "#CA922B", lineHeight: 1 }}>$3T+</div>
           <div className="font-body mt-[1vh]" style={{ fontSize: "3vw", fontWeight: 300, color: "#1C0E06" }}>In collective buying power</div>
         </div>
         <div className="py-[3vh] px-[3vw]" style={{ border: "1px solid rgba(202,146,43,0.4)", borderLeft: "4px solid #CA922B", background: "rgba(202,146,43,0.05)" }}>
-          <div className="font-display" style={{ fontSize: "8vw", fontWeight: 700, color: "#CA922B", lineHeight: 1 }}>3.1M</div>
-          <div className="font-body mt-[1vh]" style={{ fontSize: "3vw", fontWeight: 300, color: "#1C0E06" }}>Black-owned businesses nationwide</div>
+          <div className="font-display" style={{ fontSize: "8vw", fontWeight: 700, color: "#CA922B", lineHeight: 1 }}>10M+</div>
+          <div className="font-body mt-[1vh]" style={{ fontSize: "3vw", fontWeight: 300, color: "#1C0E06" }}>Minority-owned businesses nationwide</div>
         </div>
       </div>
     </div>

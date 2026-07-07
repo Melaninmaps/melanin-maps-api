@@ -10,9 +10,9 @@ export default function Slide02Audience() {
       <div className="absolute inset-0 flex items-center pl-[8vw] pr-[6vw]">
         {/* Left: Stat */}
         <div className="w-[40vw] flex-shrink-0">
-          <div className="font-display" style={{ fontSize: "15vw", fontWeight: 800, color: "#CA922B", lineHeight: 0.9 }}>44M</div>
+          <div className="font-display" style={{ fontSize: "15vw", fontWeight: 800, color: "#CA922B", lineHeight: 0.9 }}>100M+</div>
           <div className="biz-bar w-[16vw] mt-[2.5vh] mb-[2vh]" />
-          <div className="font-body text-accent" style={{ fontSize: "3.2vw", fontWeight: 300, lineHeight: 1.3 }}>Black Americans with over $1.6 trillion in buying power.</div>
+          <div className="font-body text-accent" style={{ fontSize: "3.2vw", fontWeight: 300, lineHeight: 1.3 }}>Minorities and the melanated diaspora — with over $3 trillion in buying power.</div>
         </div>
 
         {/* Divider */}
@@ -30,11 +30,11 @@ export default function Slide02Audience() {
             </div>
             <div className="flex items-start gap-[1.5vw]">
               <div className="w-[0.5vw] h-[0.5vw] rounded-full flex-shrink-0 mt-[1.2vh]" style={{ background: "#CA922B" }} />
-              <span className="font-body text-accent" style={{ fontSize: "3vw", fontWeight: 300, opacity: 0.9 }}>Members search for businesses they can trust</span>
+              <span className="font-body text-accent" style={{ fontSize: "3vw", fontWeight: 300, opacity: 0.9 }}>Members search for minority-owned businesses they can trust</span>
             </div>
             <div className="flex items-start gap-[1.5vw]">
               <div className="w-[0.5vw] h-[0.5vw] rounded-full flex-shrink-0 mt-[1.2vh]" style={{ background: "#CA922B" }} />
-              <span className="font-body text-accent" style={{ fontSize: "3vw", fontWeight: 300, opacity: 0.9 }}>Recommendations from people like them</span>
+              <span className="font-body text-accent" style={{ fontSize: "3vw", fontWeight: 300, opacity: 0.9 }}>Recommendations from people in the community</span>
             </div>
           </div>
         </div>

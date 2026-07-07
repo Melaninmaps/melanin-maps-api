@@ -29,7 +29,7 @@ export default function Slide01Cover() {
             <div className="w-[3px] h-[5vh] flex-shrink-0 mt-[0.5vh]" style={{ background: "#CA922B" }} />
             <div>
               <div className="font-display" style={{ fontSize: "3.5vw", fontWeight: 700, color: "#1C0E06" }}>Community Discovery</div>
-              <div className="font-body" style={{ fontSize: "3vw", fontWeight: 300, color: "#3A1F0E", opacity: 0.8 }}>Built for 44M Black Americans</div>
+              <div className="font-body" style={{ fontSize: "3vw", fontWeight: 300, color: "#3A1F0E", opacity: 0.8 }}>Built for minorities and the melanated diaspora</div>
             </div>
           </div>
           <div className="flex items-start gap-[2vw]">

@@ -36,8 +36,8 @@ export default function Slide09WhyNow() {
           <div className="flex items-center gap-[3vw]">
             <div className="font-display text-primary flex-shrink-0" style={{ fontSize: "5vw", fontWeight: 700, opacity: 0.5, minWidth: "8vw" }}>03</div>
             <div className="flex-1 py-[2vh] px-[2.5vw]" style={{ border: "1px solid rgba(202,146,43,0.35)", background: "rgba(202,146,43,0.08)" }}>
-              <div className="font-display text-accent" style={{ fontSize: "3.3vw", fontWeight: 700 }}>Black wealth is growing</div>
-              <p className="font-body text-accent" style={{ fontSize: "2.8vw", fontWeight: 300, opacity: 0.75, lineHeight: 1.3 }}>Rising Black entrepreneurship, mobility, and investment demand culturally specific tools</p>
+              <div className="font-display text-accent" style={{ fontSize: "3.3vw", fontWeight: 700 }}>Minority wealth is growing</div>
+              <p className="font-body text-accent" style={{ fontSize: "2.8vw", fontWeight: 300, opacity: 0.75, lineHeight: 1.3 }}>Rising minority entrepreneurship, mobility, and investment demand culturally specific tools</p>
             </div>
           </div>
           <div className="flex items-center gap-[3vw]">

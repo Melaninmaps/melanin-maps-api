@@ -34,7 +34,7 @@ export default function Slide05Hubs() {
             <span className="font-body text-accent" style={{ fontSize: "3vw", fontWeight: 600 }}>Philadelphia</span>
           </div>
           <div className="py-[2.2vh] px-[2vw]" style={{ background: "rgba(202,146,43,0.12)", borderLeft: "3px solid #CA922B" }}>
-            <span className="font-body text-accent" style={{ fontSize: "3vw", fontWeight: 600 }}>Black History</span>
+            <span className="font-body text-accent" style={{ fontSize: "3vw", fontWeight: 600 }}>Melanated History</span>
           </div>
           <div className="py-[2.2vh] px-[2vw]" style={{ background: "rgba(202,146,43,0.08)", borderLeft: "3px solid rgba(202,146,43,0.4)" }}>
             <span className="font-body text-accent" style={{ fontSize: "3vw", fontWeight: 600 }}>Autism</span>

@@ -11,7 +11,7 @@ export default function Slide02Problem() {
       <div className="absolute top-[8vh] left-[7vw] right-[7vw]">
         <div className="font-body mb-[1.5vh]" style={{ fontSize: "2.4vw", color: "#CA922B", letterSpacing: "0.18em", fontWeight: 300 }}>THE PROBLEM</div>
         <h2 className="font-display" style={{ fontSize: "5.5vw", fontWeight: 700, color: "#1C0E06", textWrap: "balance" }}>
-          There is no trusted community layer for Black America.
+          There is no trusted community layer for the melanated diaspora.
         </h2>
         <div className="inv-rule w-[20vw] mt-[2vh]" />
       </div>
@@ -30,7 +30,7 @@ export default function Slide02Problem() {
             <div className="font-display mb-[1.5vh]" style={{ fontSize: "3.6vw", fontWeight: 700, color: "#CA922B" }}>Untrusted</div>
             <div className="inv-rule w-[4vw] mb-[1.5vh]" />
             <p className="font-body" style={{ fontSize: "2.8vw", fontWeight: 300, color: "#FAF6EF", opacity: 0.85, lineHeight: 1.4 }}>
-              Generic platforms like Yelp and Google Maps don't reflect the lived experience of Black communities
+              Generic platforms like Yelp and Google Maps don't reflect the lived experience of minority and melanated communities
             </p>
           </div>
           <div className="flex-1 flex flex-col justify-center py-[3vh] px-[2.5vw]" style={{ background: "#1C0E06" }}>
