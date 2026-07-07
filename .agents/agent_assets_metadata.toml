@@ -84,6 +84,36 @@ uri = "file://artifacts/biz-deck/public/bg-gold-bar.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "jlLS-1BH8yfZgfK5a4wpL"
+uri = "file://attached_assets/ipad_screenshot_1_discover.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "FZTLR4vg9EoRSCTvUx8wr"
+uri = "file://attached_assets/ipad_screenshot_2_map.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "Pu5XSFe2CJiteqz0_dsxp"
+uri = "file://attached_assets/ipad_screenshot_3_business.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "BUOjMtCryBGHh-SilVZYt"
+uri = "file://attached_assets/ipad_screenshot_4_safety.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "ueYJBvizt9x2Bv_wMlp-E"
+uri = "file://attached_assets/ipad_screenshot_5_membership.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "kU1-MXMYrBRo-HYqMfRHN"
 uri = "file://.local/outputs/Melanin-Discovery-Hub.pptx"
@@ -209,3 +239,33 @@ id = "KLV3e9hYa8sjLjcQNUxOg"
 uri = "file://.local/outputs/Melanin-Discovery-Hub.pdf"
 type = "pdf"
 title = "Melanin Discovery Hub.pdf"
+
+[[outputs]]
+id = "GG_NftcbR8xazQh-kIviO"
+uri = "file://attached_assets/ipad_screenshot_1_discover.png"
+type = "image"
+title = "1 — Discover Screen"
+
+[[outputs]]
+id = "-65BgSWSHa6CpfJiiNwaO"
+uri = "file://attached_assets/ipad_screenshot_2_map.png"
+type = "image"
+title = "2 — Map Screen"
+
+[[outputs]]
+id = "VZfOfQxtJ5_BI68i4tzAy"
+uri = "file://attached_assets/ipad_screenshot_3_business.png"
+type = "image"
+title = "3 — Business Profile"
+
+[[outputs]]
+id = "Et5rsQRmv7hsVlajNdDL8"
+uri = "file://attached_assets/ipad_screenshot_4_safety.png"
+type = "image"
+title = "4 — Safety Hub"
+
+[[outputs]]
+id = "mXnlzYrqi8vO-gk9KudC0"
+uri = "file://attached_assets/ipad_screenshot_5_membership.png"
+type = "image"
+title = "5 — Membership / Profile"
