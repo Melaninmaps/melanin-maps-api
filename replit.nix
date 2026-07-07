@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.jdk
     pkgs.fontconfig
     pkgs.freetype
     pkgs.gcc-unwrapped
