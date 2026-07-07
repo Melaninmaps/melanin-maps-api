@@ -153,7 +153,7 @@ export default function OfficerWatchScreen() {
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={[s.headerTitle, { color: colors.foreground }]}>Officer Watch</Text>
-          <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Track flagged officers & department transfers</Text>
+          <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Track verified officer misconduct records & department transfers</Text>
         </View>
       </View>
 
@@ -174,7 +174,7 @@ export default function OfficerWatchScreen() {
           <View style={[s.disclaimerCard, { backgroundColor: "#FEF3C7", borderColor: "#FCD34D" }]}>
             <Feather name="info" size={16} color="#92400E" />
             <Text style={[s.disclaimerText, { color: "#92400E" }]}>
-              Records on this list are community-reported and admin-verified. Information is sourced from public records, journalism, and court documents. This is not a criminal database.
+              Records published in Officer Watch are reviewed by our team and supported by publicly available sources such as court documents, public records, investigative journalism, or official reports whenever available. This feature is intended to promote transparency through verified information and is not a criminal database.
             </Text>
           </View>
 
@@ -185,7 +185,7 @@ export default function OfficerWatchScreen() {
               <Feather name="shield" size={32} color={colors.mutedForeground} />
               <Text style={[s.emptyTitle, { color: colors.foreground }]}>No verified records yet</Text>
               <Text style={[s.emptySub, { color: colors.mutedForeground }]}>
-                Know about a flagged officer transferred to your area? Submit a tip — our team will verify and publish it.
+                Know about an officer with a misconduct record transferred to your area? Submit a tip — our team will verify and publish it.
               </Text>
               <TouchableOpacity activeOpacity={0.85} style={[s.emptyBtn, { backgroundColor: colors.primary }]} onPress={() => setTab("report")}>
                 <Text style={s.emptyBtnText}>Submit a Tip</Text>
