@@ -1,1 +1,82 @@
-[]
+[
+  {
+    "id": "c1-slide-01-welcome",
+    "position": 1,
+    "filepath": "src/pages/slides/Slide01Welcome.tsx",
+    "title": "Welcome Home",
+    "description": "Opening title slide — community and belonging",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c1-slide-02-directions",
+    "position": 2,
+    "filepath": "src/pages/slides/Slide02Directions.tsx",
+    "title": "Life Doesn't Come With Directions",
+    "description": "The universal struggle — navigating life's big transitions alone",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c1-slide-03-intro",
+    "position": 3,
+    "filepath": "src/pages/slides/Slide03Intro.tsx",
+    "title": "What If Community Came With You?",
+    "description": "Platform reveal — Mapping With Melanin as the solution",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c1-slide-04-journeys",
+    "position": 4,
+    "filepath": "src/pages/slides/Slide04Journeys.tsx",
+    "title": "Every Journey Starts Somewhere",
+    "description": "Seven life journey types the platform serves",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c1-slide-05-hubs",
+    "position": 5,
+    "filepath": "src/pages/slides/Slide05Hubs.tsx",
+    "title": "Community Hubs",
+    "description": "Living communities built around who you are — eight example hubs",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c1-slide-06-built",
+    "position": 6,
+    "filepath": "src/pages/slides/Slide06BuiltByYou.tsx",
+    "title": "Built By People Like You",
+    "description": "Eight creator and community features powered by members",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c1-slide-07-safety",
+    "position": 7,
+    "filepath": "src/pages/slides/Slide07Safety.tsx",
+    "title": "Safety That Travels With You",
+    "description": "Six community-powered safety features",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c1-slide-08-businesses",
+    "position": 8,
+    "filepath": "src/pages/slides/Slide08Businesses.tsx",
+    "title": "Businesses Worth Discovering",
+    "description": "How minority-owned businesses are featured and celebrated",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c1-slide-09-ai",
+    "position": 9,
+    "filepath": "src/pages/slides/Slide09AI.tsx",
+    "title": "AI That Understands Your Journey",
+    "description": "Kinfolk AI — personalized roadmaps, recommendations, and digests",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c1-slide-10-closing",
+    "position": 10,
+    "filepath": "src/pages/slides/Slide10Closing.tsx",
+    "title": "This Isn't Just Another App",
+    "description": "Closing — community grows stronger every time someone shares",
+    "speakerNotes": ""
+  }
+]

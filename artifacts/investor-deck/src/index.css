@@ -39,15 +39,14 @@
 
 :root {
   --slide-primary: #CA922B;
-  --slide-accent: #FAF6EF;
-  --slide-bg: #1C0E06;
-  --slide-text: #FAF6EF;
-  --slide-muted: #A07840;
-  --slide-dark: #3A1F0E;
-  --slide-gold-light: #E8B86D;
-  --font-display-family: "Playfair Display", Georgia, serif;
-  --font-body-family: "Source Sans 3", system-ui, sans-serif;
-  color-scheme: dark;
+  --slide-accent: #1C0E06;
+  --slide-bg: #FAF6EF;
+  --slide-text: #1C0E06;
+  --slide-muted: #7B5408;
+  --slide-rule: #CA922B;
+  --font-display-family: "Space Grotesk", Georgia, sans-serif;
+  --font-body-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  color-scheme: light;
 }
 
 html, body, #root {
@@ -73,14 +72,12 @@ body {
   -webkit-user-select: none;
 }
 
-.gold-rule {
-  height: 2px;
-  background: linear-gradient(90deg, #CA922B 0%, #E8B86D 50%, transparent 100%);
+.inv-rule {
+  height: 3px;
+  background: #CA922B;
 }
 
-.gold-dot {
-  width: 0.5vw;
-  height: 0.5vw;
-  border-radius: 50%;
-  background: #CA922B;
+.inv-rule-thin {
+  height: 1px;
+  background: rgba(202,146,43,0.4);
 }

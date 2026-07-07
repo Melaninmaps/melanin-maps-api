@@ -42,6 +42,48 @@ uri = "file://artifacts/web/public/hero-cobblestone.png"
 type = "image"
 title = "macro cobblestone sharp puddle blurred brownstone bokeh background"
 
+[[generated]]
+id = "THErXEiLwd2Z4sNQ7gl9b"
+uri = "file://artifacts/community-deck/public/hero-welcome.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "gmtVdxrHF0wUAUemc3aRW"
+uri = "file://artifacts/community-deck/public/hero-journey.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "AwEpxjGBmCjJcn7y-ti2O"
+uri = "file://artifacts/community-deck/public/hero-business.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "OW2JezHUk6uqMt7YHDlu7"
+uri = "file://artifacts/community-deck/public/bg-texture.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "aL7Wy7LswYBvRSLPOiYym"
+uri = "file://artifacts/biz-deck/public/hero-growth.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "bDsvMQw-Fixyt7pJIZex1"
+uri = "file://artifacts/biz-deck/public/hero-owner.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "YOMyjmyyBMVWizgNImMPi"
+uri = "file://artifacts/biz-deck/public/bg-gold-bar.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "kU1-MXMYrBRo-HYqMfRHN"
 uri = "file://.local/outputs/Melanin-Discovery-Hub.pptx"

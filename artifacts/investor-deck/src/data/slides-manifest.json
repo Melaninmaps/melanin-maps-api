@@ -1,0 +1,82 @@
+[
+  {
+    "id": "inv-slide-01-cover",
+    "position": 1,
+    "filepath": "src/pages/slides/Slide01Cover.tsx",
+    "title": "The Future of Community Intelligence",
+    "description": "Opening title slide — investor brief",
+    "speakerNotes": ""
+  },
+  {
+    "id": "inv-slide-02-problem",
+    "position": 2,
+    "filepath": "src/pages/slides/Slide02Problem.tsx",
+    "title": "The Problem",
+    "description": "Three problems: fragmented, untrusted, static",
+    "speakerNotes": ""
+  },
+  {
+    "id": "inv-slide-03-market",
+    "position": 3,
+    "filepath": "src/pages/slides/Slide03Market.tsx",
+    "title": "The Market",
+    "description": "44M Black Americans, $1.6T buying power, 3.1M businesses",
+    "speakerNotes": ""
+  },
+  {
+    "id": "inv-slide-04-platform",
+    "position": 4,
+    "filepath": "src/pages/slides/Slide04Platform.tsx",
+    "title": "The Platform",
+    "description": "Four interconnected layers: community, discovery, intelligence, commerce",
+    "speakerNotes": ""
+  },
+  {
+    "id": "inv-slide-05-intelligence",
+    "position": 5,
+    "filepath": "src/pages/slides/Slide05Intelligence.tsx",
+    "title": "Community Intelligence",
+    "description": "Data moat — three-step compounding flywheel",
+    "speakerNotes": ""
+  },
+  {
+    "id": "inv-slide-06-revenue",
+    "position": 6,
+    "filepath": "src/pages/slides/Slide06Revenue.tsx",
+    "title": "Revenue Model",
+    "description": "Four revenue streams: memberships, business subscriptions, promotions, data",
+    "speakerNotes": ""
+  },
+  {
+    "id": "inv-slide-07-traction",
+    "position": 7,
+    "filepath": "src/pages/slides/Slide07Traction.tsx",
+    "title": "Traction",
+    "description": "Four milestone timeline: built, Philly launch, Founding 500, expansion",
+    "speakerNotes": ""
+  },
+  {
+    "id": "inv-slide-08-founding500",
+    "position": 8,
+    "filepath": "src/pages/slides/Slide08Founding500.tsx",
+    "title": "The Founding 500",
+    "description": "Anchor strategy — what it is and why it matters",
+    "speakerNotes": ""
+  },
+  {
+    "id": "inv-slide-09-whynow",
+    "position": 9,
+    "filepath": "src/pages/slides/Slide09WhyNow.tsx",
+    "title": "Why Now",
+    "description": "Four market timing factors",
+    "speakerNotes": ""
+  },
+  {
+    "id": "inv-slide-10-ask",
+    "position": 10,
+    "filepath": "src/pages/slides/Slide10TheAsk.tsx",
+    "title": "The Ask",
+    "description": "Vision statement and use of funds",
+    "speakerNotes": ""
+  }
+]

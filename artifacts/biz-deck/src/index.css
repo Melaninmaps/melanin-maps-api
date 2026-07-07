@@ -43,10 +43,10 @@
   --slide-bg: #1C0E06;
   --slide-text: #FAF6EF;
   --slide-muted: #A07840;
-  --slide-dark: #3A1F0E;
-  --slide-gold-light: #E8B86D;
-  --font-display-family: "Playfair Display", Georgia, serif;
-  --font-body-family: "Source Sans 3", system-ui, sans-serif;
+  --slide-gold-bright: #E8B86D;
+  --slide-dark2: #2A1408;
+  --font-display-family: "Syne", Georgia, sans-serif;
+  --font-body-family: "DM Sans", system-ui, sans-serif;
   color-scheme: dark;
 }
 
@@ -73,14 +73,7 @@ body {
   -webkit-user-select: none;
 }
 
-.gold-rule {
-  height: 2px;
-  background: linear-gradient(90deg, #CA922B 0%, #E8B86D 50%, transparent 100%);
-}
-
-.gold-dot {
-  width: 0.5vw;
-  height: 0.5vw;
-  border-radius: 50%;
+.biz-bar {
+  height: 0.6vh;
   background: #CA922B;
 }

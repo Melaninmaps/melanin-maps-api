@@ -1,0 +1,82 @@
+[
+  {
+    "id": "biz-slide-01-cover",
+    "position": 1,
+    "filepath": "src/pages/slides/Slide01Cover.tsx",
+    "title": "Grow Your Business Through Community",
+    "description": "Opening title slide for business owners",
+    "speakerNotes": ""
+  },
+  {
+    "id": "biz-slide-02-audience",
+    "position": 2,
+    "filepath": "src/pages/slides/Slide02Audience.tsx",
+    "title": "Your Customers Are Already Here",
+    "description": "44M Black Americans — the buying power of your audience",
+    "speakerNotes": ""
+  },
+  {
+    "id": "biz-slide-03-reach",
+    "position": 3,
+    "filepath": "src/pages/slides/Slide03Reach.tsx",
+    "title": "Where We Are",
+    "description": "Geographic reach — cities launched and expanding",
+    "speakerNotes": ""
+  },
+  {
+    "id": "biz-slide-04-offer",
+    "position": 4,
+    "filepath": "src/pages/slides/Slide04WhatWeOffer.tsx",
+    "title": "What We Offer Your Business",
+    "description": "Five core business features: profile, map, feed, events, promotions",
+    "speakerNotes": ""
+  },
+  {
+    "id": "biz-slide-05-founding500",
+    "position": 5,
+    "filepath": "src/pages/slides/Slide05Founding500.tsx",
+    "title": "Founding 500",
+    "description": "Introducing the Founding 500 program — the first 500 businesses",
+    "speakerNotes": ""
+  },
+  {
+    "id": "biz-slide-06-benefits",
+    "position": 6,
+    "filepath": "src/pages/slides/Slide06FoundingBenefits.tsx",
+    "title": "Founding Benefits",
+    "description": "Five concrete founding member benefits",
+    "speakerNotes": ""
+  },
+  {
+    "id": "biz-slide-07-dashboard",
+    "position": 7,
+    "filepath": "src/pages/slides/Slide07Dashboard.tsx",
+    "title": "Business Dashboard",
+    "description": "Six dashboard tools: analytics, reviews, profile, events, verification, promotions",
+    "speakerNotes": ""
+  },
+  {
+    "id": "biz-slide-08-visibility",
+    "position": 8,
+    "filepath": "src/pages/slides/Slide08Visibility.tsx",
+    "title": "Promotion and Visibility",
+    "description": "Five paid placement types for business promotion",
+    "speakerNotes": ""
+  },
+  {
+    "id": "biz-slide-09-trust",
+    "position": 9,
+    "filepath": "src/pages/slides/Slide09Trust.tsx",
+    "title": "Community Trust",
+    "description": "Verified reviews, confidence score, owner responses",
+    "speakerNotes": ""
+  },
+  {
+    "id": "biz-slide-10-closing",
+    "position": 10,
+    "filepath": "src/pages/slides/Slide10Closing.tsx",
+    "title": "Join the Founding 500",
+    "description": "Closing — only 500 spots, call to action",
+    "speakerNotes": ""
+  }
+]
