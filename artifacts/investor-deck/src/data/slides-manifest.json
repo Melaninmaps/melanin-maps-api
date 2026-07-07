@@ -1,82 +1,82 @@
 [
-  {
-    "id": "inv-slide-01-cover",
-    "position": 1,
-    "filepath": "src/pages/slides/Slide01Cover.tsx",
-    "title": "The Future of Community Intelligence",
-    "description": "Opening title slide — investor brief",
-    "speakerNotes": ""
-  },
-  {
-    "id": "inv-slide-02-problem",
-    "position": 2,
-    "filepath": "src/pages/slides/Slide02Problem.tsx",
-    "title": "The Problem",
-    "description": "Three problems: fragmented, untrusted, static",
-    "speakerNotes": ""
-  },
-  {
-    "id": "inv-slide-03-market",
-    "position": 3,
-    "filepath": "src/pages/slides/Slide03Market.tsx",
-    "title": "The Market",
-    "description": "44M Black Americans, $1.6T buying power, 3.1M businesses",
-    "speakerNotes": ""
-  },
-  {
-    "id": "inv-slide-04-platform",
-    "position": 4,
-    "filepath": "src/pages/slides/Slide04Platform.tsx",
-    "title": "The Platform",
-    "description": "Four interconnected layers: community, discovery, intelligence, commerce",
-    "speakerNotes": ""
-  },
-  {
-    "id": "inv-slide-05-intelligence",
-    "position": 5,
-    "filepath": "src/pages/slides/Slide05Intelligence.tsx",
-    "title": "Community Intelligence",
-    "description": "Data moat — three-step compounding flywheel",
-    "speakerNotes": ""
-  },
-  {
-    "id": "inv-slide-06-revenue",
-    "position": 6,
-    "filepath": "src/pages/slides/Slide06Revenue.tsx",
-    "title": "Revenue Model",
-    "description": "Four revenue streams: memberships, business subscriptions, promotions, data",
-    "speakerNotes": ""
-  },
-  {
-    "id": "inv-slide-07-traction",
-    "position": 7,
-    "filepath": "src/pages/slides/Slide07Traction.tsx",
-    "title": "Traction",
-    "description": "Four milestone timeline: built, Philly launch, Founding 500, expansion",
-    "speakerNotes": ""
-  },
-  {
-    "id": "inv-slide-08-founding500",
-    "position": 8,
-    "filepath": "src/pages/slides/Slide08Founding500.tsx",
-    "title": "The Founding 500",
-    "description": "Anchor strategy — what it is and why it matters",
-    "speakerNotes": ""
-  },
-  {
-    "id": "inv-slide-09-whynow",
-    "position": 9,
-    "filepath": "src/pages/slides/Slide09WhyNow.tsx",
-    "title": "Why Now",
-    "description": "Four market timing factors",
-    "speakerNotes": ""
-  },
-  {
-    "id": "inv-slide-10-ask",
-    "position": 10,
-    "filepath": "src/pages/slides/Slide10TheAsk.tsx",
-    "title": "The Ask",
-    "description": "Vision statement and use of funds",
-    "speakerNotes": ""
-  }
+	{
+		"id": "inv-slide-01-cover",
+		"position": 1,
+		"filepath": "src/pages/slides/Slide01Cover.tsx",
+		"title": "The Future of Community Intelligence",
+		"description": "Opening title slide — investor brief",
+		"speakerNotes": "you cannot see all of the words please edit and change colors and fonts as needed \n"
+	},
+	{
+		"id": "inv-slide-02-problem",
+		"position": 2,
+		"filepath": "src/pages/slides/Slide02Problem.tsx",
+		"title": "The Problem",
+		"description": "Three problems: fragmented, untrusted, static",
+		"speakerNotes": "please reformat so the words are visible some are hidden behind text boxes also it looks like words are cut off in the text boxes "
+	},
+	{
+		"id": "inv-slide-03-market",
+		"position": 3,
+		"filepath": "src/pages/slides/Slide03Market.tsx",
+		"title": "The Market",
+		"description": "44M Black Americans, $1.6T buying power, 3.1M businesses",
+		"speakerNotes": "this looks as if it has been cut off please reformat to have all of the words on this page "
+	},
+	{
+		"id": "inv-slide-04-platform",
+		"position": 4,
+		"filepath": "src/pages/slides/Slide04Platform.tsx",
+		"title": "The Platform",
+		"description": "Four interconnected layers: community, discovery, intelligence, commerce",
+		"speakerNotes": "this entire page needs to be reformatted the words are not visible boxes are cut off "
+	},
+	{
+		"id": "inv-slide-05-intelligence",
+		"position": 5,
+		"filepath": "src/pages/slides/Slide05Intelligence.tsx",
+		"title": "Community Intelligence",
+		"description": "Data moat — three-step compounding flywheel",
+		"speakerNotes": "please make sure all text is visible also make sure all text fit on the page "
+	},
+	{
+		"id": "inv-slide-06-revenue",
+		"position": 6,
+		"filepath": "src/pages/slides/Slide06Revenue.tsx",
+		"title": "Revenue Model",
+		"description": "Four revenue streams: memberships, business subscriptions, promotions, data",
+		"speakerNotes": "again edit to make sure all text fits on the page and all words are visible "
+	},
+	{
+		"id": "inv-slide-07-traction",
+		"position": 7,
+		"filepath": "src/pages/slides/Slide07Traction.tsx",
+		"title": "Traction",
+		"description": "Four milestone timeline: built, Philly launch, Founding 500, expansion",
+		"speakerNotes": "edit to make sure all words are visible and all text fits on the page "
+	},
+	{
+		"id": "inv-slide-08-founding500",
+		"position": 8,
+		"filepath": "src/pages/slides/Slide08Founding500.tsx",
+		"title": "The Founding 500",
+		"description": "Anchor strategy — what it is and why it matters",
+		"speakerNotes": "please edit to make sure all text fits on the page and that the format look professional "
+	},
+	{
+		"id": "inv-slide-09-whynow",
+		"position": 9,
+		"filepath": "src/pages/slides/Slide09WhyNow.tsx",
+		"title": "Why Now",
+		"description": "Four market timing factors",
+		"speakerNotes": "completely revamp with different lighter colors these boxes can't be read at all "
+	},
+	{
+		"id": "inv-slide-10-ask",
+		"position": 10,
+		"filepath": "src/pages/slides/Slide10TheAsk.tsx",
+		"title": "The Ask",
+		"description": "Vision statement and use of funds",
+		"speakerNotes": "please edit to make sure all words are visible and that all text fits on the page I can't tell if there are words in the brown box \n"
+	}
 ]
