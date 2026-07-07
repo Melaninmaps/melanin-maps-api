@@ -25,13 +25,23 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   // Fix for pnpm virtual store: expo/AppEntry.js imports '../../App' which
   // can't resolve in pnpm's deeply-nested store paths.
   // Redirect it to expo-router's qualified entry App component.
+  // Use path.resolve (not require.resolve) so EAS build env finds it reliably.
   if (
     moduleName === "../../App" &&
-    origin.includes("/expo/AppEntry")
+    (origin.includes("/expo/AppEntry") || origin.endsWith("expo/AppEntry.js"))
   ) {
+    const qualifiedEntry = path.resolve(
+      workspaceRoot,
+      "node_modules/expo-router/build/qualified-entry.js"
+    );
+    const fallbackEntry = path.resolve(
+      projectRoot,
+      "node_modules/expo-router/build/qualified-entry.js"
+    );
+    const fs = require("fs");
     return {
       type: "sourceFile",
-      filePath: require.resolve("expo-router/build/qualified-entry"),
+      filePath: fs.existsSync(qualifiedEntry) ? qualifiedEntry : fallbackEntry,
     };
   }
 
