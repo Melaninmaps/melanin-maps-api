@@ -61,6 +61,14 @@ type MeetupVerification = {
   confirmedAt: string | null;
   partnerFirstName: string | null;
   partnerLastName: string | null;
+  arrivalCheckAt: string | null;
+  arrivalCheckedAt: string | null;
+  arrivalCheckStatus: string | null;
+  homeCheckAt: string | null;
+  homeCheckedAt: string | null;
+  homeCheckStatus: string | null;
+  safetyFriendName: string | null;
+  safetyFriendEmail: string | null;
 };
 
 type IntelAlert = {
@@ -271,9 +279,37 @@ export default function SafetyHubTab() {
     }
   };
 
+  const handleArrivalCheckin = async (id: number) => {
+    if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    const token = await SecureStore.getItemAsync("auth_session_token");
+    const res = await fetch(`${getApiBase()}/api/meetups/${id}/arrival-checkin`, {
+      method: "PATCH", headers: { Authorization: `Bearer ${token ?? ""}` },
+    });
+    if (res.ok) {
+      setMeetups((prev) => prev.map((m) => m.id === id ? { ...m, arrivalCheckStatus: "confirmed", arrivalCheckedAt: new Date().toISOString() } : m));
+    } else {
+      Alert.alert("Error", "Failed to confirm arrival.");
+    }
+  };
+
+  const handleHomeCheckin = async (id: number) => {
+    if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    const token = await SecureStore.getItemAsync("auth_session_token");
+    const res = await fetch(`${getApiBase()}/api/meetups/${id}/home-checkin`, {
+      method: "PATCH", headers: { Authorization: `Bearer ${token ?? ""}` },
+    });
+    if (res.ok) {
+      setMeetups((prev) => prev.map((m) => m.id === id ? { ...m, homeCheckStatus: "confirmed", homeCheckedAt: new Date().toISOString() } : m));
+    } else {
+      Alert.alert("Error", "Failed to confirm home check-in.");
+    }
+  };
+
   const pendingCheckins = checkins.filter((c) => c.status === "pending");
   const activeShares = shares.filter((s) => s.isActive && new Date(s.expiresAt) > new Date());
   const pendingMeetups = meetups.filter((m) => m.status === "pending" && m.partnerId === user?.id);
+  const arrivalCheckinsDue = meetups.filter((m) => m.initiatorId === user?.id && m.arrivalCheckAt && m.arrivalCheckStatus === "pending");
+  const homeCheckinsDue = meetups.filter((m) => m.initiatorId === user?.id && m.homeCheckAt && m.homeCheckStatus === "pending");
 
   const formatRelativeTime = (iso: string) => {
     const d = new Date(iso);
@@ -328,7 +364,7 @@ export default function SafetyHubTab() {
           )}
 
           {/* Active safety alerts */}
-          {!editMode && (pendingCheckins.length > 0 || pendingMeetups.length > 0) && (
+          {!editMode && (pendingCheckins.length > 0 || pendingMeetups.length > 0 || arrivalCheckinsDue.length > 0 || homeCheckinsDue.length > 0) && (
             <View style={styles.alertsSection}>
               {pendingCheckins.map((c) => (
                 <View key={c.id} style={[styles.alertCard, { backgroundColor: "#FEF2F2", borderColor: "#FECACA" }]}>
@@ -357,6 +393,33 @@ export default function SafetyHubTab() {
                   </View>
                 );
               })}
+              {arrivalCheckinsDue.map((m) => {
+                const loc = m.location ?? "your meetup location";
+                return (
+                  <View key={`arr-${m.id}`} style={[styles.alertCard, { backgroundColor: "#FFF7ED", borderColor: "#FED7AA" }]}>
+                    <Text style={{ fontSize: 18 }}>📍</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.alertTitle, { color: "#92400E" }]}>Arrived at {loc}?</Text>
+                      <Text style={[styles.alertSub, { color: "#78350F" }]}>Tap to confirm arrival — or your safety friend will be alerted.</Text>
+                    </View>
+                    <TouchableOpacity style={[styles.imSafeBtn, { backgroundColor: "#CA922B" }]} onPress={() => void handleArrivalCheckin(m.id)} activeOpacity={0.85}>
+                      <Text style={styles.imSafeBtnText}>I Arrived ✓</Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+              {homeCheckinsDue.map((m) => (
+                <View key={`home-${m.id}`} style={[styles.alertCard, { backgroundColor: "#F0FDF4", borderColor: "#BBF7D0" }]}>
+                  <Text style={{ fontSize: 18 }}>🏠</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.alertTitle, { color: "#14532D" }]}>Home safe yet?</Text>
+                    <Text style={[styles.alertSub, { color: "#166534" }]}>Confirm you're home — or your safety friend will be alerted.</Text>
+                  </View>
+                  <TouchableOpacity style={[styles.imSafeBtn, { backgroundColor: "#16A34A" }]} onPress={() => void handleHomeCheckin(m.id)} activeOpacity={0.85}>
+                    <Text style={styles.imSafeBtnText}>I'm Home ✓</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
             </View>
           )}
 

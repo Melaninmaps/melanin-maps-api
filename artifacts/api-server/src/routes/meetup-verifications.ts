@@ -34,6 +34,15 @@ router.get("/meetups", async (req: Request, res: Response) => {
         safetyWatcherEmail: meetupVerificationsTable.safetyWatcherEmail,
         safetyWatcherId: meetupVerificationsTable.safetyWatcherId,
         hasClearCode: meetupVerificationsTable.clearCode,
+        // Check-in fields
+        arrivalCheckAt: meetupVerificationsTable.arrivalCheckAt,
+        arrivalCheckedAt: meetupVerificationsTable.arrivalCheckedAt,
+        arrivalCheckStatus: meetupVerificationsTable.arrivalCheckStatus,
+        homeCheckAt: meetupVerificationsTable.homeCheckAt,
+        homeCheckedAt: meetupVerificationsTable.homeCheckedAt,
+        homeCheckStatus: meetupVerificationsTable.homeCheckStatus,
+        safetyFriendName: meetupVerificationsTable.safetyFriendName,
+        safetyFriendEmail: meetupVerificationsTable.safetyFriendEmail,
         // Initiator identity
         initiatorFirstName: initiatorUser.firstName,
         initiatorLastName: initiatorUser.lastName,
@@ -86,6 +95,10 @@ router.post("/meetups", async (req: Request, res: Response) => {
       clearCode,
       safetyWatcherId,
       safetyWatcherEmail,
+      arrivalCheckAt,
+      homeCheckAt,
+      safetyFriendName,
+      safetyFriendEmail,
     } = req.body as {
       partnerId?: string;
       connectionId?: number;
@@ -94,6 +107,10 @@ router.post("/meetups", async (req: Request, res: Response) => {
       clearCode?: string;
       safetyWatcherId?: string;
       safetyWatcherEmail?: string;
+      arrivalCheckAt?: string;
+      homeCheckAt?: string;
+      safetyFriendName?: string;
+      safetyFriendEmail?: string;
     };
 
     if (!partnerId) { res.status(400).json({ error: "partnerId is required" }); return; }
@@ -104,6 +121,10 @@ router.post("/meetups", async (req: Request, res: Response) => {
     const cleanClearCode = clearCode?.trim() || null;
     const cleanWatcherEmail = safetyWatcherEmail?.trim().toLowerCase() || null;
     const cleanWatcherId = safetyWatcherId?.trim() || null;
+    const cleanFriendEmail = safetyFriendEmail?.trim().toLowerCase() || null;
+    const cleanFriendName = safetyFriendName?.trim() || null;
+    const cleanArrivalCheckAt = arrivalCheckAt ? new Date(arrivalCheckAt) : null;
+    const cleanHomeCheckAt = homeCheckAt ? new Date(homeCheckAt) : null;
 
     // Set expiry far in the future — records persist until manually cleared
     const expiresAt = new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000);
@@ -119,6 +140,12 @@ router.post("/meetups", async (req: Request, res: Response) => {
       clearCode: cleanClearCode,
       safetyWatcherId: cleanWatcherId,
       safetyWatcherEmail: cleanWatcherEmail,
+      arrivalCheckAt: cleanArrivalCheckAt,
+      arrivalCheckStatus: cleanArrivalCheckAt ? "pending" : null,
+      homeCheckAt: cleanHomeCheckAt,
+      homeCheckStatus: cleanHomeCheckAt ? "pending" : null,
+      safetyFriendName: cleanFriendName,
+      safetyFriendEmail: cleanFriendEmail,
     }).returning();
 
     // Notify the safety watcher via email if provided
@@ -174,6 +201,70 @@ router.patch("/meetups/:id/confirm", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "PATCH /meetups/:id/confirm error");
     res.status(500).json({ error: "Failed to confirm meetup" });
+  }
+});
+
+// PATCH /meetups/:id/arrival-checkin — initiator confirms they arrived safely at the meetup location
+router.patch("/meetups/:id/arrival-checkin", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res); if (!userId) return;
+  try {
+    const id = parseInt(req.params["id"] as string, 10);
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid verification ID" }); return; }
+
+    const [v] = await db.select().from(meetupVerificationsTable)
+      .where(and(
+        eq(meetupVerificationsTable.id, id),
+        eq(meetupVerificationsTable.initiatorId, userId),
+        isNull(meetupVerificationsTable.clearedAt),
+      ))
+      .limit(1);
+
+    if (!v) { res.status(404).json({ error: "Meetup record not found" }); return; }
+    if (!v.arrivalCheckAt) { res.status(400).json({ error: "No arrival check-in was set for this meetup" }); return; }
+    if (v.arrivalCheckStatus === "confirmed") { res.status(409).json({ error: "Arrival already confirmed" }); return; }
+
+    const [updated] = await db.update(meetupVerificationsTable)
+      .set({ arrivalCheckedAt: new Date(), arrivalCheckStatus: "confirmed" })
+      .where(eq(meetupVerificationsTable.id, id))
+      .returning();
+
+    req.log.info({ meetupId: id, userId }, "Arrival check-in confirmed");
+    res.json({ verification: { ...updated, hasClearCode: !!updated.clearCode, clearCode: undefined } });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /meetups/:id/arrival-checkin error");
+    res.status(500).json({ error: "Failed to confirm arrival" });
+  }
+});
+
+// PATCH /meetups/:id/home-checkin — initiator confirms they got home safely
+router.patch("/meetups/:id/home-checkin", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res); if (!userId) return;
+  try {
+    const id = parseInt(req.params["id"] as string, 10);
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid verification ID" }); return; }
+
+    const [v] = await db.select().from(meetupVerificationsTable)
+      .where(and(
+        eq(meetupVerificationsTable.id, id),
+        eq(meetupVerificationsTable.initiatorId, userId),
+        isNull(meetupVerificationsTable.clearedAt),
+      ))
+      .limit(1);
+
+    if (!v) { res.status(404).json({ error: "Meetup record not found" }); return; }
+    if (!v.homeCheckAt) { res.status(400).json({ error: "No home check-in was set for this meetup" }); return; }
+    if (v.homeCheckStatus === "confirmed") { res.status(409).json({ error: "Home check-in already confirmed" }); return; }
+
+    const [updated] = await db.update(meetupVerificationsTable)
+      .set({ homeCheckedAt: new Date(), homeCheckStatus: "confirmed" })
+      .where(eq(meetupVerificationsTable.id, id))
+      .returning();
+
+    req.log.info({ meetupId: id, userId }, "Home check-in confirmed");
+    res.json({ verification: { ...updated, hasClearCode: !!updated.clearCode, clearCode: undefined } });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /meetups/:id/home-checkin error");
+    res.status(500).json({ error: "Failed to confirm home check-in" });
   }
 });
 

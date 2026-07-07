@@ -2199,3 +2199,75 @@ export async function sendMeetupSafetyWatcherEmail(
     `,
   });
 }
+
+export async function sendMeetupCheckinMissedEmail(
+  to: string,
+  friendName: string | null,
+  memberName: string,
+  checkType: "arrival" | "home",
+  scheduledAt: Date,
+  location: string | null,
+  meetupId: number,
+) {
+  if (!resend) { log("meetup checkin missed email"); return; }
+  const name = friendName ?? "there";
+  const checkLabel = checkType === "arrival" ? "arrival" : "home safe";
+  const checkEmoji = checkType === "arrival" ? "📍" : "🏠";
+  const timeStr = scheduledAt.toLocaleString("en-US", {
+    month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true,
+  });
+  await resend.emails.send({
+    from: FROM,
+    replyTo: "hello@mappingwithmelanin.com",
+    to,
+    subject: `⚠️ ${memberName} missed their ${checkLabel} check-in`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
+
+        <div style="background:#DC2626;border-radius:12px;padding:20px 24px;margin-bottom:28px;display:flex;align-items:center;gap:16px">
+          <span style="font-size:32px">${checkEmoji}</span>
+          <div>
+            <p style="color:#fff;font-size:18px;font-weight:700;margin:0 0 4px">Missed Check-In Alert</p>
+            <p style="color:#fecaca;font-size:14px;margin:0">${memberName} has not confirmed their ${checkLabel} check-in.</p>
+          </div>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">Hi ${name},</p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          <strong>${memberName}</strong> set up a safety check-in and listed you as their trusted friend.
+          They were supposed to confirm their <strong>${checkLabel} check-in</strong> by <strong>${timeStr}</strong> — but they haven't.
+        </p>
+
+        <div style="background:#2B1507;border-radius:14px;padding:24px;margin-bottom:24px">
+          <p style="color:#CA922B;font-size:13px;font-weight:700;margin:0 0 16px;text-transform:uppercase;letter-spacing:1px">Check-In Details</p>
+          <p style="color:#F5EBD8;font-size:15px;margin:0 0 8px"><strong style="color:#CA922B">Person:</strong> ${memberName}</p>
+          <p style="color:#F5EBD8;font-size:15px;margin:0 0 8px"><strong style="color:#CA922B">Check-in type:</strong> ${checkType === "arrival" ? "Arrival at meetup location" : "Safely home"}</p>
+          <p style="color:#F5EBD8;font-size:15px;margin:0 0 8px"><strong style="color:#CA922B">Expected by:</strong> ${timeStr}</p>
+          ${location ? `<p style="color:#F5EBD8;font-size:15px;margin:0"><strong style="color:#CA922B">📍 Location:</strong> ${location}</p>` : ""}
+        </div>
+
+        <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:20px;margin-bottom:24px">
+          <p style="color:#991B1B;font-size:15px;font-weight:700;margin:0 0 8px">What should you do?</p>
+          <p style="color:#7F1D1D;font-size:14px;line-height:1.6;margin:0 0 8px">
+            1. Try reaching ${memberName} directly — call or text them now.
+          </p>
+          <p style="color:#7F1D1D;font-size:14px;line-height:1.6;margin:0 0 8px">
+            2. If you cannot reach them and you believe they may be in danger, contact local emergency services (911).
+          </p>
+          <p style="color:#7F1D1D;font-size:14px;line-height:1.6;margin:0">
+            3. <strong>Do not contact the person they were meeting</strong> — this check-in is private and only shared with you.
+          </p>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:13px;line-height:1.6;margin:0 0 24px;opacity:0.7">
+          This alert was sent because ${memberName} designated you as their trusted safety friend on Mapping With Melanin™. Meetup ID: #${meetupId}.
+        </p>
+
+        <p style="color:#2B1507;font-size:15px;font-weight:700;font-style:italic;margin:24px 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.6;margin:0">Melanin Maps LLC · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a></p>
+      </div>
+    `,
+  });
+}

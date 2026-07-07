@@ -64,6 +64,15 @@ type MeetupVerification = {
   watcherFirstName: string | null;
   watcherLastName: string | null;
   watcherUsername: string | null;
+  // Safety check-in fields
+  arrivalCheckAt: string | null;
+  arrivalCheckedAt: string | null;
+  arrivalCheckStatus: string | null;
+  homeCheckAt: string | null;
+  homeCheckedAt: string | null;
+  homeCheckStatus: string | null;
+  safetyFriendName: string | null;
+  safetyFriendEmail: string | null;
 };
 
 type UserSearchResult = {
@@ -111,8 +120,16 @@ export default function MemberConnectionsScreen() {
   const [searchingWatcher, setSearchingWatcher] = useState(false);
   const [sending, setSending] = useState(false);
 
+  // Safety check-in form state
+  const [arrivalMinutes, setArrivalMinutes] = useState<number | null>(null);
+  const [homeMinutes, setHomeMinutes] = useState<number | null>(null);
+  const [friendName, setFriendName] = useState("");
+  const [friendEmail, setFriendEmail] = useState("");
+
   // Confirm state (per-meetup loading to prevent double-tap)
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const [confirmingArrivalId, setConfirmingArrivalId] = useState<number | null>(null);
+  const [confirmingHomeId, setConfirmingHomeId] = useState<number | null>(null);
 
   // Clear modal state
   const [clearTarget, setClearTarget] = useState<MeetupVerification | null>(null);
@@ -185,6 +202,10 @@ export default function MemberConnectionsScreen() {
         clearCode: clearCode.trim() || undefined,
         safetyWatcherId: selectedWatcher?.id || undefined,
         safetyWatcherEmail: watcherEmail.trim() || undefined,
+        arrivalCheckAt: arrivalMinutes != null ? new Date(Date.now() + arrivalMinutes * 60000).toISOString() : undefined,
+        homeCheckAt: homeMinutes != null ? new Date(Date.now() + homeMinutes * 60000).toISOString() : undefined,
+        safetyFriendName: friendName.trim() || undefined,
+        safetyFriendEmail: friendEmail.trim() || undefined,
       };
       const res = await fetch(`${getApiBase()}/api/meetups`, {
         method: "POST",
@@ -257,6 +278,46 @@ export default function MemberConnectionsScreen() {
     } finally { setClearing(false); }
   };
 
+  const confirmArrivalCheckin = async (id: number) => {
+    if (confirmingArrivalId !== null) return;
+    setConfirmingArrivalId(id);
+    try {
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/meetups/${id}/arrival-checkin`, {
+        method: "PATCH", headers: { Authorization: `Bearer ${token}` },
+      });
+      const d = await res.json() as { verification?: MeetupVerification; error?: string };
+      if (res.ok && d.verification) {
+        setMeetups((prev) => prev.map((m) => m.id === id ? d.verification! : m));
+        Alert.alert("Arrived Safely ✓", "Your arrival is confirmed. Your safety friend will not be alerted.");
+      } else {
+        Alert.alert("Error", d.error ?? "Failed to confirm arrival.");
+      }
+    } catch { Alert.alert("Error", "Network error. Please try again."); }
+    finally { setConfirmingArrivalId(null); }
+  };
+
+  const confirmHomeCheckin = async (id: number) => {
+    if (confirmingHomeId !== null) return;
+    setConfirmingHomeId(id);
+    try {
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/meetups/${id}/home-checkin`, {
+        method: "PATCH", headers: { Authorization: `Bearer ${token}` },
+      });
+      const d = await res.json() as { verification?: MeetupVerification; error?: string };
+      if (res.ok && d.verification) {
+        setMeetups((prev) => prev.map((m) => m.id === id ? d.verification! : m));
+        Alert.alert("Home Safe ✓", "Your home check-in is confirmed. Stay safe out there!");
+      } else {
+        Alert.alert("Error", d.error ?? "Failed to confirm home check-in.");
+      }
+    } catch { Alert.alert("Error", "Network error. Please try again."); }
+    finally { setConfirmingHomeId(null); }
+  };
+
   const shareMeetup = async () => {
     if (!shareTarget) return;
     setSharing(true);
@@ -288,6 +349,10 @@ export default function MemberConnectionsScreen() {
     setWatcherSearch("");
     setWatcherResults([]);
     setSelectedWatcher(null);
+    setArrivalMinutes(null);
+    setHomeMinutes(null);
+    setFriendName("");
+    setFriendEmail("");
   };
 
   const acceptedConnections = connections.filter((c) => c.status === "accepted");
@@ -475,6 +540,46 @@ export default function MemberConnectionsScreen() {
                         </Text>
                       </TouchableOpacity>
                     </View>
+
+                    {/* Safety check-in action buttons — only for the initiator */}
+                    {m.initiatorId === user?.id && (m.arrivalCheckStatus === "pending" || m.homeCheckStatus === "pending") && (
+                      <View style={[styles.checkinRow, { borderTopColor: colors.border }]}>
+                        {m.arrivalCheckStatus === "pending" && (
+                          <TouchableOpacity
+                            style={[styles.checkinBtn, { backgroundColor: "#CA922B12", borderColor: "#CA922B30" }]}
+                            onPress={() => void confirmArrivalCheckin(m.id)}
+                            disabled={confirmingArrivalId === m.id}
+                            activeOpacity={0.75}
+                          >
+                            {confirmingArrivalId === m.id ? (
+                              <ActivityIndicator size="small" color="#CA922B" />
+                            ) : (
+                              <>
+                                <Text style={{ fontSize: 12 }}>📍</Text>
+                                <Text style={[styles.checkinBtnText, { color: "#92400E" }]}>I Arrived ✓</Text>
+                              </>
+                            )}
+                          </TouchableOpacity>
+                        )}
+                        {m.homeCheckStatus === "pending" && (
+                          <TouchableOpacity
+                            style={[styles.checkinBtn, { backgroundColor: "#16A34A12", borderColor: "#16A34A30" }]}
+                            onPress={() => void confirmHomeCheckin(m.id)}
+                            disabled={confirmingHomeId === m.id}
+                            activeOpacity={0.75}
+                          >
+                            {confirmingHomeId === m.id ? (
+                              <ActivityIndicator size="small" color="#16A34A" />
+                            ) : (
+                              <>
+                                <Text style={{ fontSize: 12 }}>🏠</Text>
+                                <Text style={[styles.checkinBtnText, { color: "#14532D" }]}>I'm Home ✓</Text>
+                              </>
+                            )}
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    )}
                   </View>
                 );
               })}
@@ -758,10 +863,78 @@ export default function MemberConnectionsScreen() {
                     />
                   </View>
 
+                  {/* Safety Check-In Times */}
+                  <View style={[styles.watcherSection, { backgroundColor: "#16A34A06", borderColor: "#16A34A25", marginTop: 12 }]}>
+                    <View style={styles.watcherSectionHeader}>
+                      <Text style={{ fontSize: 14 }}>🛡️</Text>
+                      <Text style={[styles.watcherSectionTitle, { color: "#16A34A" }]}>Safety Check-In Times</Text>
+                      <Text style={[styles.watcherSectionOptional, { color: colors.mutedForeground }]}>(optional)</Text>
+                    </View>
+                    <Text style={[styles.watcherSectionDesc, { color: colors.mutedForeground }]}>
+                      Set check-in windows for your meetup. A trusted friend (not the person you're meeting) is alerted only if you miss them.
+                    </Text>
+
+                    <Text style={[styles.modalLabel, { color: colors.foreground, marginTop: 8 }]}>📍 I'll arrive in…</Text>
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                      {[{ label: "30 min", minutes: 30 }, { label: "1 hr", minutes: 60 }, { label: "1.5 hrs", minutes: 90 }, { label: "2 hrs", minutes: 120 }, { label: "3 hrs", minutes: 180 }].map((opt) => (
+                        <TouchableOpacity
+                          key={opt.minutes}
+                          onPress={() => setArrivalMinutes(arrivalMinutes === opt.minutes ? null : opt.minutes)}
+                          style={[styles.chipBtn, arrivalMinutes === opt.minutes && styles.chipBtnActive]}
+                          activeOpacity={0.75}
+                        >
+                          <Text style={[styles.chipText, arrivalMinutes === opt.minutes && styles.chipTextActive]}>{opt.label}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+
+                    <Text style={[styles.modalLabel, { color: colors.foreground }]}>🏠 I'll be home in…</Text>
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                      {[{ label: "2 hrs", minutes: 120 }, { label: "3 hrs", minutes: 180 }, { label: "4 hrs", minutes: 240 }, { label: "5 hrs", minutes: 300 }, { label: "6 hrs", minutes: 360 }, { label: "8 hrs", minutes: 480 }].map((opt) => (
+                        <TouchableOpacity
+                          key={opt.minutes}
+                          onPress={() => setHomeMinutes(homeMinutes === opt.minutes ? null : opt.minutes)}
+                          style={[styles.chipBtn, homeMinutes === opt.minutes && styles.chipBtnActive]}
+                          activeOpacity={0.75}
+                        >
+                          <Text style={[styles.chipText, homeMinutes === opt.minutes && styles.chipTextActive]}>{opt.label}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+
+                    {(arrivalMinutes != null || homeMinutes != null) && (
+                      <>
+                        <Text style={[styles.modalLabel, { color: colors.foreground }]}>Safety friend's name</Text>
+                        <TextInput
+                          style={[styles.modalInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+                          placeholder="e.g. Mom, Best Friend"
+                          placeholderTextColor={colors.mutedForeground}
+                          value={friendName}
+                          onChangeText={setFriendName}
+                        />
+                        <Text style={[styles.modalLabel, { color: colors.foreground }]}>Safety friend's email <Text style={{ color: "#DC2626" }}>*</Text></Text>
+                        <TextInput
+                          style={[styles.modalInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+                          placeholder="friend@example.com"
+                          placeholderTextColor={colors.mutedForeground}
+                          value={friendEmail}
+                          onChangeText={setFriendEmail}
+                          keyboardType="email-address"
+                          autoCapitalize="none"
+                        />
+                        <View style={[styles.privacyNote, { backgroundColor: "#7C3AED08", borderColor: "#7C3AED25" }]}>
+                          <Text style={[styles.privacyNoteText, { color: "#5B21B6" }]}>
+                            🔒 Only you and your safety friend will ever receive alerts. The person you're meeting will never be notified.
+                          </Text>
+                        </View>
+                      </>
+                    )}
+                  </View>
+
                   <TouchableOpacity
-                    style={[styles.sendBtn, { opacity: sending ? 0.6 : 1 }]}
+                    style={[styles.sendBtn, { opacity: (sending || ((arrivalMinutes != null || homeMinutes != null) && !friendEmail.trim())) ? 0.6 : 1 }]}
                     onPress={() => void sendMeetupRequest()}
-                    disabled={sending}
+                    disabled={sending || ((arrivalMinutes != null || homeMinutes != null) && !friendEmail.trim())}
                     activeOpacity={0.85}
                   >
                     {sending ? (
@@ -928,6 +1101,15 @@ const styles = StyleSheet.create({
   meetupActions: { flexDirection: "row", gap: 8, padding: 12, borderTopWidth: 1 },
   actionBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, paddingVertical: 8, borderRadius: 10, borderWidth: 1 },
   actionBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  checkinRow: { flexDirection: "row", gap: 8, padding: 12, borderTopWidth: 1 },
+  checkinBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, paddingVertical: 9, borderRadius: 10, borderWidth: 1 },
+  checkinBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  chipBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1.5, borderColor: "#D1D5DB", backgroundColor: "transparent" },
+  chipBtnActive: { borderColor: "#16A34A", backgroundColor: "#16A34A18" },
+  chipText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#6B7280" },
+  chipTextActive: { color: "#14532D" },
+  privacyNote: { borderRadius: 8, borderWidth: 1, padding: 12, marginTop: 8 },
+  privacyNoteText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18 },
 
   // Connection cards
   emptyCard: { borderRadius: 18, borderWidth: 1, padding: 28, alignItems: "center", gap: 10 },
