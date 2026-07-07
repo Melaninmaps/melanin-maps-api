@@ -16,8 +16,8 @@ router.get("/ai/for-you", async (req: Request, res: Response) => {
          WHERE sp.user_id = $1 ORDER BY sp.created_at DESC LIMIT 12`,
         [userId]
       ),
-      pool.query<{ lifestyle_services: string[] | null; cities: string[] | null; travel_styles: string[] | null }>(
-        `SELECT lifestyle_services, cities, travel_styles FROM user_preferences WHERE user_id = $1 LIMIT 1`,
+      pool.query<{ lifestyle_services: string[] | null; favorite_cities: string[] | null; trip_style: string | null }>(
+        `SELECT lifestyle_services, favorite_cities, trip_style FROM user_preferences WHERE user_id = $1 LIMIT 1`,
         [userId]
       ),
       pool.query<{ topic_tag: string | null }>(
@@ -35,8 +35,8 @@ router.get("/ai/for-you", async (req: Request, res: Response) => {
     if (savedCategories.length) contextLines.push(`Saved business categories: ${savedCategories.join(", ")}`);
     if (savedNames.length) contextLines.push(`Recently saved: ${savedNames.join(", ")}`);
     if (prefs.lifestyle_services?.length) contextLines.push(`Lifestyle interests: ${(prefs.lifestyle_services as string[]).join(", ")}`);
-    if (prefs.cities?.length) contextLines.push(`Cities of interest: ${(prefs.cities as string[]).join(", ")}`);
-    if (prefs.travel_styles?.length) contextLines.push(`Travel style: ${(prefs.travel_styles as string[]).join(", ")}`);
+    if (prefs.favorite_cities?.length) contextLines.push(`Cities of interest: ${(prefs.favorite_cities as string[]).join(", ")}`);
+    if (prefs.trip_style) contextLines.push(`Travel style: ${prefs.trip_style}`);
     if (engagedTopics.length) contextLines.push(`Topics engaged with: ${engagedTopics.join(", ")}`);
 
     if (!contextLines.length) {

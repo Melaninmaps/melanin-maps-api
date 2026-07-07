@@ -32,7 +32,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const { login, loginWithEmail, refreshUser } = useAuth();
 
-  const [emailMode, setEmailMode] = useState(false);
+  const [emailMode, setEmailMode] = useState(true);
   const [emailVal, setEmailVal] = useState("");
   const [passwordVal, setPasswordVal] = useState("");
   const [showPw, setShowPw] = useState(false);
