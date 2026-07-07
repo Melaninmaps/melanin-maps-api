@@ -1,4 +1,13 @@
 export default function Slide07Dashboard() {
+  const cards = [
+    { title: "Analytics",          body: "Views, clicks, saves, and engagement over time",      hi: true },
+    { title: "Review Management",  body: "Respond to reviews and flag inaccurate content",      hi: false },
+    { title: "Profile Editor",     body: "Update photos, hours, menu, and owner story",         hi: true },
+    { title: "Event Posting",      body: "Create and promote events to local members",          hi: false },
+    { title: "Verification",       body: "Submit ownership docs to earn the verified badge",    hi: true },
+    { title: "Promotions",         body: "Boost placement with targeted paid promotion slots",  hi: false },
+  ];
+
   return (
     <div className="w-screen h-screen overflow-hidden flex flex-col" style={{ background: "#1C0E06" }}>
       <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 80% 20%, rgba(90,45,10,0.35) 0%, transparent 55%)" }} />
@@ -18,30 +27,19 @@ export default function Slide07Dashboard() {
       {/* 3×2 grid */}
       <div className="relative flex-1 px-[7vw] pb-[6vh]">
         <div className="grid grid-cols-3 gap-[2vw] h-full">
-          <div className="flex flex-col justify-start px-[2vw] py-[2.5vh]" style={{ background: "rgba(202,146,43,0.12)", border: "1px solid rgba(202,146,43,0.4)" }}>
-            <div className="font-display mb-[1vh]" style={{ fontSize: "3vw", fontWeight: 800, color: "#CA922B" }}>Analytics</div>
-            <p className="font-body" style={{ fontSize: "2.5vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.45 }}>Views, clicks, saves, and engagement over time</p>
-          </div>
-          <div className="flex flex-col justify-start px-[2vw] py-[2.5vh]" style={{ background: "rgba(202,146,43,0.06)", border: "1px solid rgba(202,146,43,0.2)" }}>
-            <div className="font-display mb-[1vh]" style={{ fontSize: "3vw", fontWeight: 800, color: "#CA922B" }}>Review Management</div>
-            <p className="font-body" style={{ fontSize: "2.5vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.45 }}>Respond to reviews and flag inaccurate content</p>
-          </div>
-          <div className="flex flex-col justify-start px-[2vw] py-[2.5vh]" style={{ background: "rgba(202,146,43,0.12)", border: "1px solid rgba(202,146,43,0.4)" }}>
-            <div className="font-display mb-[1vh]" style={{ fontSize: "3vw", fontWeight: 800, color: "#CA922B" }}>Profile Editor</div>
-            <p className="font-body" style={{ fontSize: "2.5vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.45 }}>Update photos, hours, menu, and owner story</p>
-          </div>
-          <div className="flex flex-col justify-start px-[2vw] py-[2.5vh]" style={{ background: "rgba(202,146,43,0.06)", border: "1px solid rgba(202,146,43,0.2)" }}>
-            <div className="font-display mb-[1vh]" style={{ fontSize: "3vw", fontWeight: 800, color: "#CA922B" }}>Event Posting</div>
-            <p className="font-body" style={{ fontSize: "2.5vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.45 }}>Create and promote events to local members</p>
-          </div>
-          <div className="flex flex-col justify-start px-[2vw] py-[2.5vh]" style={{ background: "rgba(202,146,43,0.12)", border: "1px solid rgba(202,146,43,0.4)" }}>
-            <div className="font-display mb-[1vh]" style={{ fontSize: "3vw", fontWeight: 800, color: "#CA922B" }}>Verification</div>
-            <p className="font-body" style={{ fontSize: "2.5vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.45 }}>Submit ownership docs to earn the verified badge</p>
-          </div>
-          <div className="flex flex-col justify-start px-[2vw] py-[2.5vh]" style={{ background: "rgba(202,146,43,0.06)", border: "1px solid rgba(202,146,43,0.2)" }}>
-            <div className="font-display mb-[1vh]" style={{ fontSize: "3vw", fontWeight: 800, color: "#CA922B" }}>Promotions</div>
-            <p className="font-body" style={{ fontSize: "2.5vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.45 }}>Boost placement with targeted paid promotion slots</p>
-          </div>
+          {cards.map(({ title, body, hi }) => (
+            <div
+              key={title}
+              className="min-w-0 overflow-hidden flex flex-col justify-start px-[2vw] py-[2.5vh]"
+              style={{
+                background: hi ? "rgba(202,146,43,0.12)" : "rgba(202,146,43,0.06)",
+                border: `1px solid ${hi ? "rgba(202,146,43,0.4)" : "rgba(202,146,43,0.2)"}`,
+              }}
+            >
+              <div className="font-display mb-[1vh]" style={{ fontSize: "2.2vw", fontWeight: 800, color: "#CA922B" }}>{title}</div>
+              <p className="font-body" style={{ fontSize: "2.2vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.45 }}>{body}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>

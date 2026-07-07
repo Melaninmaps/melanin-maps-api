@@ -19,28 +19,28 @@ export default function Slide04WhatWeOffer() {
       <div className="relative flex-1 px-[7vw] pb-[6vh] flex flex-col gap-[2vh]">
         {/* Row 1 — 2 wide items */}
         <div className="flex gap-[2vw]" style={{ flex: "1.1" }}>
-          <div className="flex-1 flex flex-col justify-center px-[2.5vw] py-[2vh]" style={{ background: "rgba(202,146,43,0.15)", border: "1px solid rgba(202,146,43,0.4)" }}>
-            <div className="font-display mb-[1vh]" style={{ fontSize: "3.3vw", fontWeight: 800, color: "#CA922B" }}>Business Profile</div>
-            <div className="font-body" style={{ fontSize: "2.6vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.4 }}>Hero images, owner story, video, and real reviews</div>
+          <div className="flex-1 flex flex-col justify-start px-[2.5vw] py-[2vh]" style={{ background: "rgba(202,146,43,0.15)", border: "1px solid rgba(202,146,43,0.4)" }}>
+            <div className="font-display mb-[0.8vh]" style={{ fontSize: "3vw", fontWeight: 800, color: "#CA922B" }}>Business Profile</div>
+            <div className="font-body" style={{ fontSize: "2.3vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.4 }}>Hero images, owner story, video, and real reviews</div>
           </div>
-          <div className="flex-1 flex flex-col justify-center px-[2.5vw] py-[2vh]" style={{ background: "rgba(202,146,43,0.08)", border: "1px solid rgba(202,146,43,0.25)" }}>
-            <div className="font-display mb-[1vh]" style={{ fontSize: "3.3vw", fontWeight: 800, color: "#CA922B" }}>Map Discovery</div>
-            <div className="font-body" style={{ fontSize: "2.6vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.4 }}>Pin on the full-screen interactive map with category filters</div>
+          <div className="flex-1 flex flex-col justify-start px-[2.5vw] py-[2vh]" style={{ background: "rgba(202,146,43,0.08)", border: "1px solid rgba(202,146,43,0.25)" }}>
+            <div className="font-display mb-[0.8vh]" style={{ fontSize: "3vw", fontWeight: 800, color: "#CA922B" }}>Map Discovery</div>
+            <div className="font-body" style={{ fontSize: "2.3vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.4 }}>Pin on the full-screen interactive map with category filters</div>
           </div>
         </div>
         {/* Row 2 — 3 items */}
         <div className="flex gap-[2vw]" style={{ flex: "1" }}>
-          <div className="flex-1 flex flex-col justify-center px-[2vw] py-[2vh]" style={{ background: "rgba(202,146,43,0.08)", border: "1px solid rgba(202,146,43,0.25)" }}>
-            <div className="font-display mb-[1vh]" style={{ fontSize: "3vw", fontWeight: 800, color: "#CA922B" }}>Community Feed</div>
-            <div className="font-body" style={{ fontSize: "2.4vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.4 }}>Posts, tips, and recommendations surfaced to your neighborhood</div>
+          <div className="flex-1 flex flex-col justify-start px-[2vw] py-[2vh]" style={{ background: "rgba(202,146,43,0.08)", border: "1px solid rgba(202,146,43,0.25)" }}>
+            <div className="font-display mb-[0.8vh]" style={{ fontSize: "2.7vw", fontWeight: 800, color: "#CA922B" }}>Community Feed</div>
+            <div className="font-body" style={{ fontSize: "2.1vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.4 }}>Posts, tips, and recommendations surfaced to your neighborhood</div>
           </div>
-          <div className="flex-1 flex flex-col justify-center px-[2vw] py-[2vh]" style={{ background: "rgba(202,146,43,0.15)", border: "1px solid rgba(202,146,43,0.4)" }}>
-            <div className="font-display mb-[1vh]" style={{ fontSize: "3vw", fontWeight: 800, color: "#CA922B" }}>Events</div>
-            <div className="font-body" style={{ fontSize: "2.4vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.4 }}>Post and promote events directly to local community members</div>
+          <div className="flex-1 flex flex-col justify-start px-[2vw] py-[2vh]" style={{ background: "rgba(202,146,43,0.15)", border: "1px solid rgba(202,146,43,0.4)" }}>
+            <div className="font-display mb-[0.8vh]" style={{ fontSize: "2.7vw", fontWeight: 800, color: "#CA922B" }}>Events</div>
+            <div className="font-body" style={{ fontSize: "2.1vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.4 }}>Post and promote events directly to local community members</div>
           </div>
-          <div className="flex-1 flex flex-col justify-center px-[2vw] py-[2vh]" style={{ background: "rgba(202,146,43,0.08)", border: "1px solid rgba(202,146,43,0.25)" }}>
-            <div className="font-display mb-[1vh]" style={{ fontSize: "3vw", fontWeight: 800, color: "#CA922B" }}>Promotions</div>
-            <div className="font-body" style={{ fontSize: "2.4vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.4 }}>Paid placement in search, map, and community feeds</div>
+          <div className="flex-1 flex flex-col justify-start px-[2vw] py-[2vh]" style={{ background: "rgba(202,146,43,0.08)", border: "1px solid rgba(202,146,43,0.25)" }}>
+            <div className="font-display mb-[0.8vh]" style={{ fontSize: "2.7vw", fontWeight: 800, color: "#CA922B" }}>Promotions</div>
+            <div className="font-body" style={{ fontSize: "2.1vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.4 }}>Paid placement in search, map, and community feeds</div>
           </div>
         </div>
       </div>
