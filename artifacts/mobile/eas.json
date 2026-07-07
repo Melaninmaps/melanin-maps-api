@@ -48,7 +48,10 @@
         "EXPO_PUBLIC_DOMAIN": "www.mappingwithmelanin.com",
         "EXPO_PUBLIC_REPL_ID": "ac64a230-72f5-4194-b8b4-3ca827a772f9",
         "GOOGLE_MAPS_API_KEY": "AIzaSyD-QflBkAV_ps-8Y290jBLvWXbJyMCpmzE",
-        "PNPM_VERSION": "10.26.1"
+        "PNPM_VERSION": "10.26.1",
+        "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_evRvvCBBMxNrhJJKrqQELZrxeJv",
+        "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_YtlteQfYyxtiWoOvOylWcxKaIBk",
+        "EXPO_PUBLIC_REVENUECAT_TEST_API_KEY": "appl_evRvvCBBMxNrhJJKrqQELZrxeJv"
       }
     }
   },
