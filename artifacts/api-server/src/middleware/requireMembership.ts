@@ -2,18 +2,35 @@ import type { Request, Response, NextFunction } from "express";
 import { storage } from "../storage";
 
 // Internal tier identifiers — map to display names:
-//   "free"        → Community Member (Free)
-//   "navigator"   → Explorer+
-//   "trailblazer" → Navigator (top tier)
-export type MembershipTier = "free" | "navigator" | "trailblazer";
+//   "free"              → Explorer (Free)
+//   "navigator"         → Navigator ($7.99/mo)
+//   "trailblazer"       → Trailblazer ($19.99/mo)
+//   "community_builder" → Community Builder ($29.99/mo)
+//   "legacy_member"     → Legacy Member ($79.99/mo)
+export type MembershipTier = "free" | "navigator" | "trailblazer" | "community_builder" | "legacy_member";
 
 export const TIER_DISPLAY: Record<MembershipTier, string> = {
-  free: "Community Member",
-  navigator: "Explorer+",
-  trailblazer: "Navigator",
+  free: "Explorer",
+  navigator: "Navigator",
+  trailblazer: "Trailblazer",
+  community_builder: "Community Builder",
+  legacy_member: "Legacy Member",
 };
 
-export const TIER_RANK: Record<MembershipTier, number> = { free: 0, navigator: 1, trailblazer: 2 };
+export const TIER_RANK: Record<MembershipTier, number> = {
+  free: 0,
+  navigator: 1,
+  trailblazer: 2,
+  community_builder: 3,
+  legacy_member: 4,
+};
+
+const PAID_TIERS: readonly string[] = ["navigator", "trailblazer", "community_builder", "legacy_member"];
+
+function resolveFromMemberType(memberType: string | null | undefined): MembershipTier {
+  if (memberType && PAID_TIERS.includes(memberType)) return memberType as MembershipTier;
+  return "navigator"; // default for any active paid subscription
+}
 
 function getTier(user: Awaited<ReturnType<typeof storage.getUser>>): MembershipTier {
   if (!user) return "free";
@@ -22,19 +39,13 @@ function getTier(user: Awaited<ReturnType<typeof storage.getUser>>): MembershipT
   const trialActive = user.trialEndsAt && user.trialEndsAt > now;
 
   // Founding members and beta testers get top-tier access
-  if (user.memberType === "founding" || user.memberType === "beta") return "trailblazer";
+  if (user.memberType === "founding" || user.memberType === "beta") return "legacy_member";
 
-  // Active paid subscription — memberType determines which tier
-  if (user.stripeSubscriptionId) {
-    if (user.memberType === "trailblazer") return "trailblazer";
-    return "navigator";
-  }
+  // Active Stripe subscription OR RevenueCat subscription (stored as "rc_<productId>" in stripeSubscriptionId)
+  if (user.stripeSubscriptionId) return resolveFromMemberType(user.memberType);
 
-  // Active trial — memberType determines which tier
-  if (trialActive) {
-    if (user.memberType === "trailblazer") return "trailblazer";
-    return "navigator";
-  }
+  // Active trial
+  if (trialActive) return resolveFromMemberType(user.memberType);
 
   return "free";
 }
@@ -45,7 +56,7 @@ export async function getUserTier(userId: string): Promise<MembershipTier> {
   return getTier(user);
 }
 
-export function requireMembership(minTier: "navigator" | "trailblazer" = "navigator") {
+export function requireMembership(minTier: MembershipTier = "navigator") {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const userId = (req as any).user?.id;
     if (!userId) {
@@ -61,9 +72,7 @@ export function requireMembership(minTier: "navigator" | "trailblazer" = "naviga
 
     if (TIER_RANK[tier] < TIER_RANK[minTier]) {
       res.status(403).json({
-        error: minTier === "trailblazer"
-          ? "This feature requires a Navigator membership."
-          : "This feature requires an Explorer+ or higher membership.",
+        error: `This feature requires a ${TIER_DISPLAY[minTier]} or higher membership.`,
         code: "MEMBERSHIP_REQUIRED",
         upgradeUrl: "/membership",
         currentTier: tier,

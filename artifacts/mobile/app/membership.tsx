@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
@@ -16,6 +17,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useMembership } from "@/hooks/useMembership";
+import { useSubscription } from "@/lib/revenuecat";
 
 type Billing = "monthly" | "annual";
 type Audience = "consumer" | "business" | "creator";
@@ -25,9 +27,9 @@ interface Plan {
   emoji: string;
   name: string;
   stripeKey?: string;
+  rcOfferingId?: string;
   tagline: string;
   badge: string | null;
-  fee?: string;
   monthlyPrice: number;
   annualTotal: number;
   color: string;
@@ -39,93 +41,123 @@ interface Plan {
 
 const CONSUMER_PLANS: Plan[] = [
   {
-    id: "free",
-    emoji: "👥",
-    name: "Community Member",
-    tagline: "Discover, connect, and participate — always free.",
+    id: "explorer_free",
+    emoji: "🟤",
+    name: "Explorer",
+    tagline: "Discover your community — always free.",
     badge: null,
     monthlyPrice: 0,
     annualTotal: 0,
     color: "#A87A40",
     bg: null,
     features: [
-      "Unlimited business searches",
-      "Unlimited business profile views",
-      "Up to 25 saves (businesses, locations, topics & more)",
-      "1 saved trip or itinerary",
-      "5 community posts per month",
-      "Unlimited business, employer & neighborhood reviews",
-      "AI trip planning — 3 trips/month",
-      "AI relocation plans — 1 plan/month",
-      "Join up to 5 community groups",
-      "Unlimited event RSVPs",
-      "Travel blogs — read only",
-      "Basic push alerts",
-      "Basic safety alerts",
-      "Report safety concerns",
-      "Melanin Points rewards",
+      "Search minority-owned businesses",
+      "Browse community updates",
+      "View Community Hubs",
+      "Save favorites",
+      "Create a profile",
+      "RSVP to events",
+      "Join Kinfolk Circles",
+      "Access basic safety information",
+      "One linked creator/business video per profile",
     ],
     cta: "Current Plan",
     ctaActive: false,
   },
   {
-    id: "explorer",
-    emoji: "⭐",
-    name: "Explorer+",
+    id: "navigator",
+    emoji: "🧭",
+    name: "Navigator",
     stripeKey: "Navigator",
-    tagline: "More saves, more AI, more community — for your most engaged moments.",
-    badge: "Recommended",
+    rcOfferingId: "navigator",
+    tagline: "For users who travel or explore regularly.",
+    badge: "Most Popular",
     monthlyPrice: 7.99,
-    annualTotal: 79,
+    annualTotal: 79.9,
     color: "#CA922B",
     bg: "#CA922B",
     features: [
-      "Everything in Community Member",
-      "Up to 250 saves (businesses, locations, topics & more)",
-      "Up to 10 saved trips & itineraries",
-      "Unlimited community posts",
-      "AI trip planning — 25 trips/month",
-      "AI relocation plans — 10 plans/month",
-      "Join up to 25 community groups",
-      "Create up to 2 groups",
-      "Create up to 2 public events per month",
-      "Create up to 5 travel blogs per month",
-      "Custom push alerts",
-      "Personalized safety alerts",
-      "KinfolkAI™ travel assistance",
-      "Early access to new features",
-      "Premium discounts with participating businesses",
+      "Everything in Explorer, plus:",
+      "Expanded AI trip planning",
+      "More saved topics",
+      "Advanced travel planning",
+      "Enhanced safety notifications",
+      "Premium travel recommendations",
+      "Priority feature access",
     ],
     cta: "Start Free Trial",
     ctaActive: true,
   },
   {
-    id: "navigator_premium",
-    emoji: "🧭",
-    name: "Navigator",
+    id: "trailblazer",
+    emoji: "🌍",
+    name: "Trailblazer",
     stripeKey: "Trailblazer",
-    tagline: "Full access, no limits — for your most ambitious journeys.",
-    badge: "Full Access",
-    monthlyPrice: 14.99,
-    annualTotal: 149,
+    rcOfferingId: "trailblazer",
+    tagline: "For frequent travelers, relocators, and community explorers.",
+    badge: null,
+    monthlyPrice: 19.99,
+    annualTotal: 199.9,
+    color: "#1A5C35",
+    bg: "#1A5C35",
+    features: [
+      "Everything in Navigator, plus:",
+      "Unlimited AI planning",
+      "Advanced relocation tools",
+      "Enhanced Community Hubs",
+      "Premium city guides",
+      "Personalized recommendations",
+      "Early access to new features",
+    ],
+    cta: "Start Free Trial",
+    ctaActive: true,
+  },
+  {
+    id: "community_builder",
+    emoji: "🤝",
+    name: "Community Builder",
+    stripeKey: "Community Builder",
+    rcOfferingId: "community_builder",
+    tagline: "For mentors, creators, volunteers, and highly engaged members.",
+    badge: null,
+    monthlyPrice: 29.99,
+    annualTotal: 299.9,
+    color: "#5C3D9E",
+    bg: "#5C3D9E",
+    features: [
+      "Everything in Trailblazer, plus:",
+      "Creator insights",
+      "Priority profile placement",
+      "Advanced community tools",
+      "Mentor profile",
+      "Volunteer opportunities",
+      "Community Builder badge",
+      "Beta access to new community features",
+    ],
+    cta: "Start Free Trial",
+    ctaActive: true,
+  },
+  {
+    id: "legacy_member",
+    emoji: "👑",
+    name: "Legacy Member",
+    stripeKey: "Legacy Member",
+    rcOfferingId: "legacy_member",
+    tagline: "For families and power users who want everything.",
+    badge: "Premium",
+    monthlyPrice: 79.99,
+    annualTotal: 799.9,
     color: "#1A0A00",
     bg: "#1A0A00",
     features: [
-      "Everything in Explorer+",
-      "Unlimited saves (businesses, locations, topics & more)",
-      "Unlimited trips & itineraries",
-      "Unlimited community posts",
-      "Unlimited AI trip planning",
-      "Unlimited AI relocation plans",
-      "Unlimited group memberships",
-      "Create unlimited groups",
-      "Create unlimited public events",
-      "Create unlimited travel blogs",
-      "Advanced push alerts",
-      "Priority safety alerts & advanced filters",
-      "Full KinfolkAI™ access",
-      "Priority customer support",
-      "Exclusive member events",
+      "Everything above, plus:",
+      "Family membership with child accounts",
+      "Advanced AI assistant",
+      "Concierge-style planning",
+      "Premium partner offers",
+      "Exclusive events",
+      "Legacy badge",
+      "VIP customer support",
     ],
     cta: "Start Free Trial",
     ctaActive: true,
@@ -136,7 +168,7 @@ const BUSINESS_PLANS: Plan[] = [
   {
     id: "biz_free",
     emoji: "📍",
-    name: "Community Listing",
+    name: "Community Business",
     tagline: "Get discovered by the community — always free.",
     badge: null,
     monthlyPrice: 0,
@@ -144,15 +176,13 @@ const BUSINESS_PLANS: Plan[] = [
     color: "#A87A40",
     bg: null,
     features: [
-      "Claim and manage your business profile",
-      "Unlimited profile views",
-      "Unlimited customer reviews received",
-      "Respond to customer reviews — always free, no tier required",
-      "Up to 5 photos",
+      "Claim your business",
+      "Business profile",
+      "Website & social media links",
+      "Business hours",
+      "Customer reviews",
+      "Respond to reviews",
       "Basic analytics",
-      "1 business owner account",
-      "Be discovered in search & map",
-      "Business notifications (2/month)",
     ],
     cta: "List Your Business",
     ctaActive: true,
@@ -160,86 +190,73 @@ const BUSINESS_PLANS: Plan[] = [
   {
     id: "growth_business",
     emoji: "🚀",
-    name: "Growth",
+    name: "Growth Business",
     stripeKey: "Growth Business",
-    tagline: "More reach, more tools, more revenue.",
+    tagline: "Designed for growing businesses.",
     badge: "Recommended",
-    monthlyPrice: 29,
-    annualTotal: 290,
+    monthlyPrice: 29.99,
+    annualTotal: 299.9,
     color: "#CA922B",
     bg: "#CA922B",
     features: [
-      "Everything in Community Listing",
-      "Unlimited photos",
-      "Promotional posts & business promotions",
-      "AI business insights",
-      "Customer engagement tools",
-      "Marketplace access — sell products & services",
-      "Up to 3 team member accounts",
-      "8 customer broadcasts/month",
-      "Higher search placement",
-      "Customer demographics & profile view analytics",
-      "AI social media captions",
-      "AI promotion ideas & marketing assistant",
-      "AI responses to reviews",
+      "Everything in Community Business, plus:",
+      "Enhanced analytics",
+      "Featured business opportunities",
+      "Business insights",
+      "AI-assisted profile recommendations",
+      "Event promotion",
+      "Job postings",
+      "Volunteer opportunities",
     ],
     cta: "Start Free Trial",
     ctaActive: true,
   },
   {
     id: "premium_business",
-    emoji: "👑",
-    name: "Premium",
+    emoji: "⭐",
+    name: "Premium Business",
     stripeKey: "Premium Business",
-    tagline: "Advanced tools for established businesses.",
+    tagline: "For businesses focused on expansion.",
     badge: "Full Access",
-    monthlyPrice: 79,
-    annualTotal: 790,
+    monthlyPrice: 79.99,
+    annualTotal: 799.9,
     color: "#1A0A00",
     bg: "#1A0A00",
     features: [
-      "Everything in Growth",
-      "Advanced analytics & revenue insights",
-      "Featured placement opportunities",
-      "Unlimited promotional campaigns",
-      "AI-generated growth plans",
-      "AI business consultant & Health Score™",
-      "Priority customer support",
-      "Multi-location management",
-      "Unlimited team members",
-      "20 broadcasts/month",
-      "Homepage & city spotlight eligibility",
-      "Geographic customer trends & campaign performance",
-      "Beta feature access",
+      "Everything in Growth Business, plus:",
+      "Priority placement",
+      "Advanced analytics",
+      "Promotional campaigns",
+      "Customer insights",
+      "Expanded business tools",
+      "AI-generated business roadmaps",
+      "Additional team members",
     ],
     cta: "Start Free Trial",
     ctaActive: true,
   },
   {
-    id: "enterprise_business",
+    id: "founding_business",
     emoji: "🏛️",
-    name: "Enterprise Partner",
-    tagline: "Built for community leaders.",
+    name: "Founding Business",
+    stripeKey: "Founding Business",
+    tagline: "Your highest-tier business membership.",
     badge: "Enterprise",
-    monthlyPrice: 199,
-    annualTotal: 1990,
+    monthlyPrice: 199.99,
+    annualTotal: 1999.9,
     color: "#0A0A0A",
     bg: "#0A0A0A",
     features: [
-      "Everything in Premium",
-      "1% off current marketplace rates*",
-      "Dedicated account manager",
-      "Custom analytics & reporting",
-      "API access for integrations",
-      "White-glove onboarding",
-      "Featured homepage placement",
-      "Custom promotional campaigns",
-      "Priority fraud & dispute support",
-      "Quarterly business reviews",
-      "Enterprise badge",
-      "* Marketplace rate discount applies to Enterprise Partners who joined after the Founding Program. Rate subject to change.",
+      "Everything in Premium Business, plus:",
+      "Founding Business badge",
+      "National spotlight opportunities",
+      "Invitation to advisory sessions",
+      "Featured storytelling opportunities",
+      "Advanced AI growth planning",
+      "Early access to new business features",
+      "Concierge onboarding and support",
     ],
-    cta: "Contact Sales",
+    cta: "Start Free Trial",
     ctaActive: true,
   },
 ];
@@ -252,6 +269,9 @@ export default function MembershipScreen() {
   const [audience, setAudience] = useState<Audience>("consumer");
 
   const { subscription, checkoutLoading, checkoutPlanId, initiateCheckout, openPortal } = useMembership();
+  const { purchase, offerings, customerInfo } = useSubscription();
+  const [rcPurchasingId, setRcPurchasingId] = useState<string | null>(null);
+  const activeRcProductId = customerInfo?.entitlements?.active?.["premium"]?.productIdentifier ?? "";
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -259,17 +279,65 @@ export default function MembershipScreen() {
   const handleCta = useCallback(async (plan: Plan) => {
     if (!plan.ctaActive) return;
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (plan.id === "free") return;
+
     if (plan.id === "biz_free") { router.push("/list-business"); return; }
-    if (plan.id === "legacy_partner") {
-      await Linking.openURL("mailto:hello@mappingwithmelanin.com?subject=Legacy%20Partner%20Plan%20Inquiry%20%E2%80%94%20Mapping%20with%20Melanin");
-      return;
-    }
-    if (plan.id === "enterprise_business") {
-      await Linking.openURL("mailto:hello@mappingwithmelanin.com?subject=Enterprise%20Partner%20Inquiry%20%E2%80%94%20Mapping%20with%20Melanin");
+
+    // Business plans on iOS → redirect to web (B2B subscriptions)
+    if (Platform.OS === "ios" && audience === "business") {
+      await Linking.openURL("https://www.mappingwithmelanin.com/membership");
       return;
     }
 
+    // Consumer plans on iOS → RevenueCat IAP (Apple requires this for 3.1.1)
+    if (Platform.OS === "ios" && plan.rcOfferingId) {
+      const offering = offerings?.all[plan.rcOfferingId];
+      const pkg = billing === "annual" ? offering?.annual : offering?.monthly;
+
+      if (!pkg) {
+        Alert.alert(
+          "Coming Soon",
+          "This plan is being set up and will be available very soon.",
+        );
+        return;
+      }
+
+      setRcPurchasingId(plan.id);
+      try {
+        await purchase(pkg);
+        // Sync new tier to server
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        if (token) {
+          const apiBase = process.env.EXPO_PUBLIC_DOMAIN
+            ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
+            : "";
+          await fetch(`${apiBase}/api/revenuecat/sync`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ productIdentifier: pkg.product.identifier }),
+          });
+        }
+        Alert.alert(
+          "🎉 Welcome!",
+          `Your ${plan.name} membership is now active. Thank you for supporting the community.`,
+        );
+      } catch (err: unknown) {
+        const e = err as { userCancelled?: boolean; code?: string };
+        if (!e.userCancelled && e.code !== "PURCHASE_CANCELLED") {
+          Alert.alert(
+            "Purchase Failed",
+            "Something went wrong. Please try again or contact support@mappingwithmelanin.com.",
+          );
+        }
+      } finally {
+        setRcPurchasingId(null);
+      }
+      return;
+    }
+
+    // Web & Android → Stripe checkout
     const result = await initiateCheckout(plan.stripeKey ?? plan.name, billing);
 
     if (result === "no_auth") {
@@ -293,7 +361,7 @@ export default function MembershipScreen() {
     } else if (result === "error") {
       Alert.alert("Something went wrong", "Please try again in a moment.");
     }
-  }, [router, billing, initiateCheckout]);
+  }, [router, billing, audience, initiateCheckout, purchase, offerings]);
 
   const plans = audience === "consumer" ? CONSUMER_PLANS : BUSINESS_PLANS;
 
@@ -305,11 +373,14 @@ export default function MembershipScreen() {
     return `$${plan.monthlyPrice.toFixed(2)}/mo`;
   };
 
-  const isSubscribed = (plan: Plan) =>
-    subscription !== null && subscription.productName === (plan.stripeKey ?? plan.name);
+  const isSubscribed = (plan: Plan): boolean => {
+    if (subscription !== null && subscription.productName === (plan.stripeKey ?? plan.name)) return true;
+    if (plan.rcOfferingId && activeRcProductId.includes(plan.rcOfferingId)) return true;
+    return false;
+  };
 
   const getCtaLabel = (plan: Plan) => {
-    if (plan.id === "free") return plan.cta;
+    if (plan.monthlyPrice === 0) return plan.cta;
     if (isSubscribed(plan)) return "Manage Subscription";
     return plan.cta;
   };
@@ -537,7 +608,7 @@ export default function MembershipScreen() {
         {/* ── Standard plans ── */}
         {audience !== "creator" && plans.map((plan) => {
           const isHighlight = plan.bg !== null;
-          const loading = checkoutLoading && checkoutPlanId === (plan.stripeKey ?? plan.name);
+          const loading = (checkoutLoading && checkoutPlanId === (plan.stripeKey ?? plan.name)) || rcPurchasingId === plan.id;
           const subscribed = isSubscribed(plan);
           return (
             <View
@@ -603,14 +674,21 @@ export default function MembershipScreen() {
                       : (isHighlight ? "rgba(255,255,255,0.2)" : colors.muted),
                     borderWidth: isHighlight ? 1.5 : 0,
                     borderColor: isHighlight ? "rgba(255,255,255,0.4)" : "transparent",
-                    opacity: (plan.id === "free" || loading) ? 0.7 : 1,
+                    opacity: (!plan.ctaActive || loading) ? 0.7 : 1,
                   },
                 ]}
                 onPress={() => {
-                  if (subscribed) { void openPortal(); return; }
+                  if (subscribed) {
+                    if (Platform.OS === "ios" && plan.rcOfferingId) {
+                      void Linking.openURL("https://apps.apple.com/account/subscriptions");
+                    } else {
+                      void openPortal();
+                    }
+                    return;
+                  }
                   void handleCta(plan);
                 }}
-                disabled={plan.id === "free" || loading}
+                disabled={!plan.ctaActive || loading}
                 activeOpacity={0.8}
               >
                 {loading ? (
@@ -625,13 +703,13 @@ export default function MembershipScreen() {
           );
         })}
 
-        {/* Founding Business Program — business only */}
+        {/* Founding 500 Offer — business only */}
         {audience === "business" && (
           <View style={[styles.foundingCard, { backgroundColor: colors.card, borderColor: "#C9A84C" }]}>
             <View style={styles.foundingHeader}>
-              <Text style={styles.foundingEmoji}>🎁</Text>
+              <Text style={styles.foundingEmoji}>🌟</Text>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.foundingName, { color: colors.foreground }]}>Founding Business Program</Text>
+                <Text style={[styles.foundingName, { color: colors.foreground }]}>Founding 500 Offer</Text>
                 <View style={[styles.foundingBadge, { backgroundColor: "#C9A84C22" }]}>
                   <Text style={[styles.foundingBadgeTxt, { color: "#C9A84C" }]}>First 500 verified businesses · Exclusively during launch</Text>
                 </View>
@@ -639,23 +717,18 @@ export default function MembershipScreen() {
             </View>
 
             <Text style={[styles.featureTxt, { color: colors.mutedForeground, marginBottom: 14, lineHeight: 20 }]}>
-              Our Founding Businesses receive exclusive introductory marketplace rates as a thank you for believing in Mapping with Melanin™ from the beginning. As we continue investing in AI, community tools, safety features, and platform innovation, standard rates will apply to businesses joining after the Founding Program closes.
+              Founding 500 is a launch incentive, not a tier — it's recognition for the businesses that believed in Mapping With Melanin™ from the beginning. Selected businesses receive one year of Premium Business benefits and a permanent Founding Business badge, not a discounted subscription.
             </Text>
 
             <View style={styles.featureList}>
-              <View style={[styles.featureRow, { flexDirection: "column", alignItems: "flex-start", gap: 6, marginBottom: 4 }]}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <Text style={{ fontSize: 14 }}>🔒</Text>
-                  <Text style={[styles.featureTxt, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>1% off current market rates — locked in for 3 years</Text>
-                </View>
-              </View>
               {[
-                "Founding Business badge on your profile and listing",
-                "Six months of Premium Business membership — AI tools, analytics & priority placement",
-                "Priority onboarding with our team",
-                "Early access to every new feature before public release",
-                "Recognition on mappingwithmelanin.com as an early supporter",
-                "Opportunities to be featured in launch marketing and press",
+                "One year of Premium Business benefits",
+                "Permanent Founding Business badge on your profile",
+                "Recognition inside the app and on our website",
+                "Featured during the Welcome Home Tour",
+                "Opportunity to be featured in documentary content",
+                "Priority access to new features",
+                "Help shape future platform development",
               ].map((f, i) => (
                 <View key={i} style={styles.featureRow}>
                   <Text style={{ fontSize: 14 }}>⭐</Text>
@@ -673,7 +746,6 @@ export default function MembershipScreen() {
             </TouchableOpacity>
           </View>
         )}
-
 
         {/* Marketplace Fees table — business only */}
         {audience === "business" && (

@@ -24,7 +24,7 @@ export const usersTable = pgTable("users", {
   pushToken: varchar("push_token"),
   approved: boolean("approved").notNull().default(true),
   role: varchar("role", { enum: ["user", "tester", "admin"] }).notNull().default("user"),
-  memberType: varchar("member_type", { enum: ["individual", "navigator", "trailblazer", "business", "founding", "beta", "business_referral"] }).default("individual"),
+  memberType: varchar("member_type", { enum: ["individual", "navigator", "trailblazer", "community_builder", "legacy_member", "business", "founding", "beta", "business_referral"] }).default("individual"),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
   foundingMemberNumber: integer("founding_member_number"),
   username: varchar("username", { length: 30 }).unique(),

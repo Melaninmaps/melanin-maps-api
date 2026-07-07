@@ -114,6 +114,7 @@ import travelPlannerRouter from "./travel-planner";
 import smartFillRouter from "./smart-fill";
 import wrappedRouter from "./wrapped";
 import archiveRouter from "./archive";
+import revenuecatRouter from "./revenuecat";
 
 const router: IRouter = Router();
 
@@ -231,6 +232,7 @@ router.use(travelPlannerRouter);
 router.use(smartFillRouter);
 router.use(wrappedRouter);
 router.use(archiveRouter);
+router.use(revenuecatRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

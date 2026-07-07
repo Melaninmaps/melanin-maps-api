@@ -70,8 +70,8 @@ const TIERS: TierConfig[] = [
     annual: {
       identifier: "mwm_navigator_annual",
       displayName: "Navigator Annual",
-      priceUsdMicros: 79990000,
-      priceEurMicros: 74990000,
+      priceUsdMicros: 79900000,
+      priceEurMicros: 74900000,
     },
   },
   {
@@ -82,68 +82,50 @@ const TIERS: TierConfig[] = [
     monthly: {
       identifier: "mwm_trailblazer_monthly",
       displayName: "Trailblazer Monthly",
-      priceUsdMicros: 14990000,
-      priceEurMicros: 13990000,
+      priceUsdMicros: 19990000,
+      priceEurMicros: 18490000,
     },
     annual: {
       identifier: "mwm_trailblazer_annual",
       displayName: "Trailblazer Annual",
-      priceUsdMicros: 149990000,
-      priceEurMicros: 139990000,
+      priceUsdMicros: 199900000,
+      priceEurMicros: 184900000,
     },
   },
   {
-    id: "growth_partner",
-    displayName: "Growth Partner",
-    offeringDisplayName: "Growth Partner Tier",
+    id: "community_builder",
+    displayName: "Community Builder",
+    offeringDisplayName: "Community Builder Tier",
     isCurrent: false,
     monthly: {
-      identifier: "mwm_growth_partner_monthly",
-      displayName: "Growth Partner Monthly",
-      priceUsdMicros: 24990000,
-      priceEurMicros: 22990000,
+      identifier: "mwm_community_builder_monthly",
+      displayName: "Community Builder Monthly",
+      priceUsdMicros: 29990000,
+      priceEurMicros: 27990000,
     },
     annual: {
-      identifier: "mwm_growth_partner_annual",
-      displayName: "Growth Partner Annual",
-      priceUsdMicros: 249990000,
-      priceEurMicros: 229990000,
+      identifier: "mwm_community_builder_annual",
+      displayName: "Community Builder Annual",
+      priceUsdMicros: 299900000,
+      priceEurMicros: 279900000,
     },
   },
   {
-    id: "community_leader",
-    displayName: "Community Leader",
-    offeringDisplayName: "Community Leader Tier",
+    id: "legacy_member",
+    displayName: "Legacy Member",
+    offeringDisplayName: "Legacy Member Tier",
     isCurrent: false,
     monthly: {
-      identifier: "mwm_community_leader_monthly",
-      displayName: "Community Leader Monthly",
-      priceUsdMicros: 69990000,
-      priceEurMicros: 64990000,
+      identifier: "mwm_legacy_member_monthly",
+      displayName: "Legacy Member Monthly",
+      priceUsdMicros: 79990000,
+      priceEurMicros: 74990000,
     },
     annual: {
-      identifier: "mwm_community_leader_annual",
-      displayName: "Community Leader Annual",
-      priceUsdMicros: 699990000,
-      priceEurMicros: 649990000,
-    },
-  },
-  {
-    id: "legacy_partner",
-    displayName: "Legacy Partner",
-    offeringDisplayName: "Legacy Partner Tier",
-    isCurrent: false,
-    monthly: {
-      identifier: "mwm_legacy_partner_monthly",
-      displayName: "Legacy Partner Monthly",
-      priceUsdMicros: 199990000,
-      priceEurMicros: 184990000,
-    },
-    annual: {
-      identifier: "mwm_legacy_partner_annual",
-      displayName: "Legacy Partner Annual",
-      priceUsdMicros: 1999990000,
-      priceEurMicros: 1849990000,
+      identifier: "mwm_legacy_member_annual",
+      displayName: "Legacy Member Annual",
+      priceUsdMicros: 799900000,
+      priceEurMicros: 749900000,
     },
   },
 ];
@@ -510,7 +492,7 @@ async function seedRevenueCat() {
     playStoreApiKeys?.items.map((i) => i.key).join(", ") ?? "N/A"
   );
   console.log("Entitlement identifier: premium");
-  console.log("Tiers seeded: navigator (current), trailblazer, growth_partner, community_leader, legacy_partner");
+  console.log("Tiers seeded: navigator (current), trailblazer, community_builder, legacy_member");
   console.log("====================\n");
 }
 
