@@ -21,7 +21,7 @@ function isAdmin(req: Request): boolean {
 
 router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) => {
   try {
-    const { email, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy, familyEmails } = req.body as {
+    const { email, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy, familyEmails, cityNomination } = req.body as {
       email?: string;
       firstName?: string;
       lastName?: string;
@@ -32,6 +32,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       referralCode?: string;
       referredBy?: string;
       familyEmails?: string[];
+      cityNomination?: string;
     };
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -74,6 +75,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
         referredBy: referredBy ?? null,
         status: "pending",
         familyGroupId,
+        cityNomination: cityNomination?.trim() || null,
       })
       .onConflictDoNothing();
 

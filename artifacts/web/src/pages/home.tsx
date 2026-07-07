@@ -191,6 +191,7 @@ export default function Home() {
   const [referredBy, setReferredBy] = useState("");
   const [familyEmails, setFamilyEmails] = useState<string[]>([""]);
   const [showFamilySection, setShowFamilySection] = useState(false);
+  const [cityNomination, setCityNomination] = useState("");
 
   const [inviteType, setInviteType] = useState<"friend" | "business">("friend");
   const [inviteEmail, setInviteEmail] = useState("");
@@ -245,7 +246,7 @@ export default function Home() {
       const res = await fetch(`${BASE}api/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, firstName: firstName.trim() || undefined, lastName: lastName.trim() || undefined, city, state, isBusinessOwner, referredBy: referredBy.trim() || undefined, familyEmails: showFamilySection ? familyEmails.filter(e => e.trim().includes("@") && e.trim().includes(".")).map(e => e.trim().toLowerCase()) : undefined }),
+        body: JSON.stringify({ email, firstName: firstName.trim() || undefined, lastName: lastName.trim() || undefined, city, state, isBusinessOwner, referredBy: referredBy.trim() || undefined, cityNomination: cityNomination.trim() || undefined, familyEmails: showFamilySection ? familyEmails.filter(e => e.trim().includes("@") && e.trim().includes(".")).map(e => e.trim().toLowerCase()) : undefined }),
       });
       const data = await res.json();
       setPosition(data.position ?? null);
@@ -638,6 +639,16 @@ export default function Home() {
                         )}
                       </div>
                     )}
+
+                    {/* City Nomination */}
+                    <div className="rounded-2xl bg-white/5 border border-[#CA922B]/30 p-4 mt-1">
+                      <p className="text-sm font-bold text-[#CA922B] mb-1">🗺️ Officially put your city on the map</p>
+                      <p className="text-xs text-[#F5EBD8]/50 font-medium mb-2">
+                        Every city on the Welcome Home Tour gets a permanent community archive built by locals. Nominate yours.
+                      </p>
+                      <input type="text" placeholder="Nominate a city (e.g. Atlanta, GA)" value={cityNomination ?? ""} onChange={e => setCityNomination(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm" />
+                    </div>
 
                     <Button data-testid="waitlist-submit" type="submit" disabled={submitting || !email}
                       className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-50 text-white h-12 font-bold text-base mt-1">

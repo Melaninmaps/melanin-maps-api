@@ -15,6 +15,7 @@ export const waitlistTable = pgTable("waitlist_signups", {
   referredBy: varchar("referred_by", { length: 20 }),
   familyGroupId: varchar("family_group_id", { length: 36 }),
   notes: text("notes"),
+  cityNomination: varchar("city_nomination", { length: 150 }),
   welcomeEmailSent: boolean("welcome_email_sent").notNull().default(false),
   launchEmailSent: boolean("launch_email_sent").notNull().default(false),
   betaEmailSent: boolean("beta_email_sent").notNull().default(false),

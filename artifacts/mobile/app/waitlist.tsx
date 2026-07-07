@@ -282,6 +282,7 @@ export default function WaitlistScreen() {
   const [showFamilySection, setShowFamilySection] = useState(false);
   const [familyEmails, setFamilyEmails] = useState<string[]>([""]);
   const [familyAdded, setFamilyAdded] = useState(0);
+  const [cityNomination, setCityNomination] = useState("");
 
   const referralCode = email.replace(/[@.]/g, "").toUpperCase().slice(0, 8) || "MELANIN";
   const referralLink = REFERRAL_URL + referralCode;
@@ -307,6 +308,7 @@ export default function WaitlistScreen() {
           isBusinessOwner,
           websiteUrl: isBusinessOwner ? websiteUrl.trim() : undefined,
           referralCode: code,
+          cityNomination: cityNomination.trim() || undefined,
           familyEmails: showFamilySection
             ? familyEmails.filter(e => e.trim().includes("@") && e.trim().includes(".")).map(e => e.trim().toLowerCase())
             : undefined,
@@ -522,6 +524,24 @@ export default function WaitlistScreen() {
                 </View>
               )}
 
+              {/* Put Your City on the Map */}
+              <View style={[styles.archivePitch, { backgroundColor: "#1C0E0608", borderColor: "#CA922B30" }]}>
+                <View style={styles.archivePitchHeader}>
+                  <Text style={{ fontSize: 18 }}>🗺️</Text>
+                  <Text style={[styles.archivePitchTitle, { color: colors.foreground }]}>Officially Put Your City on the Map</Text>
+                </View>
+                <Text style={[styles.archivePitchText, { color: colors.mutedForeground }]}>
+                  Every city on the Welcome Home Tour gets a permanent community archive — interviews, food recs, local knowledge, and stories from residents. Nominate your city and we'll reach out when the tour arrives.
+                </Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground, marginTop: 8 }]}
+                  placeholder="e.g. Atlanta, GA"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={cityNomination}
+                  onChangeText={setCityNomination}
+                />
+              </View>
+
               <TouchableOpacity
                 style={[styles.joinBtn, { backgroundColor: valid ? colors.primary : colors.muted }]}
                 onPress={handleJoin}
@@ -627,6 +647,35 @@ export default function WaitlistScreen() {
               </View>
               <Feather name="chevron-right" size={18} color={colors.primary} />
             </TouchableOpacity>
+
+            {/* Welcome Home Archive Pitch */}
+            {cityNomination.trim() && (
+              <View style={[styles.archivePitch, { backgroundColor: "#CA922B10", borderColor: "#CA922B30" }]}>
+                <Text style={[styles.archivePitchTitle, { color: colors.foreground }]}>🗺️ {cityNomination.trim()} is Nominated!</Text>
+                <Text style={[styles.archivePitchText, { color: colors.mutedForeground }]}>
+                  When the Welcome Home Tour comes to your city, you'll have the chance to officially contribute to its archive — your words, your places, your community's story. Permanently.
+                </Text>
+              </View>
+            )}
+
+            {/* Nominate a friend */}
+            <View style={[styles.archivePitch, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.archivePitchHeader}>
+                <Text style={{ fontSize: 18 }}>🤎</Text>
+                <Text style={[styles.archivePitchTitle, { color: colors.foreground }]}>Nominate a Friend</Text>
+              </View>
+              <Text style={[styles.archivePitchText, { color: colors.mutedForeground }]}>
+                Know someone who should be part of this? Invite them to the waitlist — and nominate them to be a founding voice for their city's archive.
+              </Text>
+              <TouchableOpacity
+                style={[styles.joinBtn, { backgroundColor: colors.primary, marginTop: 4 }]}
+                onPress={() => setShowInvite(true)}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.joinTxt, { color: colors.primaryForeground }]}>Invite a Friend</Text>
+                <Feather name="user-plus" size={15} color={colors.primaryForeground} />
+              </TouchableOpacity>
+            </View>
 
             {/* Who are we missing? — after signup too */}
             <RecommendBanner colors={colors} onPress={() => setShowRecommend(true)} />
@@ -1082,6 +1131,10 @@ const styles = StyleSheet.create({
   shareBtnTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   doneBtn: { alignItems: "center", paddingVertical: 17, borderRadius: 16 },
   doneBtnTxt: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
+  archivePitch: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 6 },
+  archivePitchHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  archivePitchTitle: { fontFamily: "Inter_700Bold", fontSize: 14, flex: 1 },
+  archivePitchText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
   inviteCard: {
     flexDirection: "row", alignItems: "center", gap: 14, borderWidth: 2,
     borderRadius: 20, padding: 16,
