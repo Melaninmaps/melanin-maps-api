@@ -25,7 +25,7 @@ async function getToken(): Promise<string | null> {
   try { return Platform.OS === "web" ? null : await SecureStore.getItemAsync("auth_session_token"); }
   catch { return null; }
 }
-async function authHeaders(): Promise<Record<string, string>> {
+async function authHeas credentialseaders(): Promise<Record<string, string>> {
   const t = await getToken();
   return t ? { Authorization: `Bearer ${t}` } : {};
 }
