@@ -1,40 +1,42 @@
 export default function Slide02Audience() {
   return (
-    <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#1C0E06" }}>
+    <div className="w-screen h-screen overflow-hidden flex items-center" style={{ background: "#1C0E06" }}>
       <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 70% 30%, rgba(90,45,10,0.4) 0%, transparent 60%)" }} />
 
       {/* Slide number */}
-      <div className="absolute bottom-[4vh] right-[6vw] font-display" style={{ fontSize: "2.2vw", color: "#CA922B", fontWeight: 800, opacity: 0.4 }}>02</div>
+      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 800, opacity: 0.4 }}>02</div>
 
-      {/* Big stat layout */}
-      <div className="absolute inset-0 flex items-center pl-[8vw] pr-[6vw]">
-        {/* Left: Stat */}
-        <div className="w-[40vw] flex-shrink-0">
-          <div className="font-display" style={{ fontSize: "15vw", fontWeight: 800, color: "#CA922B", lineHeight: 0.9 }}>100M+</div>
-          <div className="biz-bar w-[16vw] mt-[2.5vh] mb-[2vh]" />
-          <div className="font-body text-accent" style={{ fontSize: "3.2vw", fontWeight: 300, lineHeight: 1.3 }}>Minorities and the melanated diaspora — with over $3 trillion in buying power.</div>
+      {/* Content row */}
+      <div className="relative flex items-center w-full pl-[8vw] pr-[6vw] gap-[0]">
+        {/* Left: big stat */}
+        <div className="flex-shrink-0 w-[38vw]">
+          <div className="font-display" style={{ fontSize: "13vw", fontWeight: 800, color: "#CA922B", lineHeight: 0.9 }}>100M+</div>
+          <div className="biz-bar w-[14vw] mt-[2vh] mb-[1.8vh]" />
+          <div className="font-body" style={{ fontSize: "2.8vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.4 }}>
+            Minorities and the melanated diaspora — with over $3 trillion in buying power.
+          </div>
         </div>
 
         {/* Divider */}
-        <div className="w-[1px] h-[55vh] mx-[5vw] flex-shrink-0" style={{ background: "linear-gradient(180deg, transparent, #CA922B 30%, #CA922B 70%, transparent)" }} />
+        <div className="flex-shrink-0 mx-[4vw]" style={{ width: "1px", height: "52vh", background: "linear-gradient(180deg, transparent, #CA922B 30%, #CA922B 70%, transparent)" }} />
 
-        {/* Right: Context */}
+        {/* Right: context */}
         <div className="flex-1">
-          <h2 className="font-display text-accent leading-tight mb-[3vh]" style={{ fontSize: "4.5vw", fontWeight: 800 }}>
+          <h2 className="font-display" style={{ fontSize: "4vw", fontWeight: 800, color: "#FAF6EF", lineHeight: 1.2, marginBottom: "3vh" }}>
             Your customers are already here.
           </h2>
           <div className="flex flex-col gap-[2.5vh]">
             <div className="flex items-start gap-[1.5vw]">
-              <div className="w-[0.5vw] h-[0.5vw] rounded-full flex-shrink-0 mt-[1.2vh]" style={{ background: "#CA922B" }} />
-              <span className="font-body text-accent" style={{ fontSize: "3vw", fontWeight: 300, opacity: 0.9 }}>Community-first platform, not a generic directory</span>
+              <div className="flex-shrink-0 mt-[1vh] rounded-full" style={{ width: "0.5vw", height: "0.5vw", background: "#CA922B" }} />
+              <span className="font-body" style={{ fontSize: "2.7vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.4 }}>Community-first platform, not a generic directory</span>
             </div>
             <div className="flex items-start gap-[1.5vw]">
-              <div className="w-[0.5vw] h-[0.5vw] rounded-full flex-shrink-0 mt-[1.2vh]" style={{ background: "#CA922B" }} />
-              <span className="font-body text-accent" style={{ fontSize: "3vw", fontWeight: 300, opacity: 0.9 }}>Members search for minority-owned businesses they can trust</span>
+              <div className="flex-shrink-0 mt-[1vh] rounded-full" style={{ width: "0.5vw", height: "0.5vw", background: "#CA922B" }} />
+              <span className="font-body" style={{ fontSize: "2.7vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.4 }}>Members search for minority-owned businesses they can trust</span>
             </div>
             <div className="flex items-start gap-[1.5vw]">
-              <div className="w-[0.5vw] h-[0.5vw] rounded-full flex-shrink-0 mt-[1.2vh]" style={{ background: "#CA922B" }} />
-              <span className="font-body text-accent" style={{ fontSize: "3vw", fontWeight: 300, opacity: 0.9 }}>Recommendations from people in the community</span>
+              <div className="flex-shrink-0 mt-[1vh] rounded-full" style={{ width: "0.5vw", height: "0.5vw", background: "#CA922B" }} />
+              <span className="font-body" style={{ fontSize: "2.7vw", fontWeight: 300, color: "#FAF6EF", lineHeight: 1.4 }}>Recommendations from people in the community</span>
             </div>
           </div>
         </div>

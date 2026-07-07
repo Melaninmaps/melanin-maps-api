@@ -1,58 +1,60 @@
 export default function Slide06FoundingBenefits() {
   return (
-    <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#1C0E06" }}>
+    <div className="w-screen h-screen overflow-hidden flex" style={{ background: "#1C0E06" }}>
       <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 15% 50%, rgba(90,45,10,0.4) 0%, transparent 55%)" }} />
 
-      {/* Left bold gold column */}
-      <div className="absolute left-0 top-0 bottom-0 w-[9vw] flex flex-col items-center justify-center" style={{ background: "#CA922B" }}>
-        <div className="font-display text-accent" style={{ fontSize: "2vw", fontWeight: 800, letterSpacing: "0.2em", writingMode: "vertical-rl", transform: "rotate(180deg)" }}>FOUNDING 500</div>
+      {/* Gold left column */}
+      <div className="flex-shrink-0 w-[8vw] flex flex-col items-center justify-center" style={{ background: "#CA922B" }}>
+        <div className="font-display" style={{ fontSize: "1.8vw", fontWeight: 800, letterSpacing: "0.2em", writingMode: "vertical-rl", transform: "rotate(180deg)", color: "#1C0E06" }}>
+          FOUNDING 500
+        </div>
       </div>
 
-      {/* Slide number */}
-      <div className="absolute bottom-[4vh] right-[6vw] font-display" style={{ fontSize: "2.2vw", color: "#CA922B", fontWeight: 800, opacity: 0.4 }}>06</div>
+      {/* Main content */}
+      <div className="flex-1 flex flex-col pl-[4vw] pr-[6vw] pt-[5vh] pb-[6vh]">
+        {/* Header */}
+        <div className="mb-[2.5vh]">
+          <h2 className="font-display" style={{ fontSize: "4.2vw", fontWeight: 800, color: "#FAF6EF", lineHeight: 1.15 }}>
+            Founding benefits.
+          </h2>
+          <div className="biz-bar w-[13vw] mt-[1.2vh]" />
+        </div>
 
-      {/* Header */}
-      <div className="absolute top-[8vh] left-[13vw] right-[6vw]">
-        <h2 className="font-display text-accent leading-tight" style={{ fontSize: "5vw", fontWeight: 800 }}>Founding benefits.</h2>
-        <div className="biz-bar w-[15vw] mt-[1.5vh]" />
-      </div>
-
-      {/* 5 benefits */}
-      <div className="absolute left-[13vw] right-[6vw]" style={{ top: "29vh", bottom: "8vh" }}>
-        <div className="flex flex-col gap-[2.2vh] h-full justify-evenly">
-          <div className="flex items-center gap-[2.5vw] py-[2vh] px-[2.5vw]" style={{ background: "rgba(202,146,43,0.12)", border: "1px solid rgba(202,146,43,0.35)" }}>
-            <div className="font-display text-primary flex-shrink-0" style={{ fontSize: "4vw", fontWeight: 800 }}>01</div>
+        {/* 5 benefits */}
+        <div className="flex-1 flex flex-col justify-evenly">
+          <div className="flex items-center gap-[2.5vw] py-[1.8vh] px-[2.5vw]" style={{ background: "rgba(202,146,43,0.12)", border: "1px solid rgba(202,146,43,0.35)" }}>
+            <div className="font-display flex-shrink-0" style={{ fontSize: "3.5vw", fontWeight: 800, color: "#CA922B" }}>01</div>
             <div>
-              <div className="font-display text-accent" style={{ fontSize: "3.2vw", fontWeight: 800 }}>Permanent Gold Badge</div>
-              <div className="font-body text-accent" style={{ fontSize: "2.8vw", fontWeight: 300, opacity: 0.75 }}>Founding business seal displayed on your profile forever</div>
+              <div className="font-display" style={{ fontSize: "2.9vw", fontWeight: 800, color: "#FAF6EF" }}>Permanent Gold Badge</div>
+              <div className="font-body" style={{ fontSize: "2.5vw", fontWeight: 300, color: "#FAF6EF", opacity: 0.75, lineHeight: 1.3 }}>Founding business seal displayed on your profile forever</div>
             </div>
           </div>
-          <div className="flex items-center gap-[2.5vw] py-[2vh] px-[2.5vw]" style={{ background: "rgba(202,146,43,0.06)", border: "1px solid rgba(202,146,43,0.2)" }}>
-            <div className="font-display text-primary flex-shrink-0" style={{ fontSize: "4vw", fontWeight: 800 }}>02</div>
+          <div className="flex items-center gap-[2.5vw] py-[1.8vh] px-[2.5vw]" style={{ background: "rgba(202,146,43,0.06)", border: "1px solid rgba(202,146,43,0.2)" }}>
+            <div className="font-display flex-shrink-0" style={{ fontSize: "3.5vw", fontWeight: 800, color: "#CA922B" }}>02</div>
             <div>
-              <div className="font-display text-accent" style={{ fontSize: "3.2vw", fontWeight: 800 }}>Priority Listing</div>
-              <div className="font-body text-accent" style={{ fontSize: "2.8vw", fontWeight: 300, opacity: 0.75 }}>Top placement in search, map, and category results</div>
+              <div className="font-display" style={{ fontSize: "2.9vw", fontWeight: 800, color: "#FAF6EF" }}>Priority Listing</div>
+              <div className="font-body" style={{ fontSize: "2.5vw", fontWeight: 300, color: "#FAF6EF", opacity: 0.75, lineHeight: 1.3 }}>Top placement in search, map, and category results</div>
             </div>
           </div>
-          <div className="flex items-center gap-[2.5vw] py-[2vh] px-[2.5vw]" style={{ background: "rgba(202,146,43,0.12)", border: "1px solid rgba(202,146,43,0.35)" }}>
-            <div className="font-display text-primary flex-shrink-0" style={{ fontSize: "4vw", fontWeight: 800 }}>03</div>
+          <div className="flex items-center gap-[2.5vw] py-[1.8vh] px-[2.5vw]" style={{ background: "rgba(202,146,43,0.12)", border: "1px solid rgba(202,146,43,0.35)" }}>
+            <div className="font-display flex-shrink-0" style={{ fontSize: "3.5vw", fontWeight: 800, color: "#CA922B" }}>03</div>
             <div>
-              <div className="font-display text-accent" style={{ fontSize: "3.2vw", fontWeight: 800 }}>Locked-In Rate</div>
-              <div className="font-body text-accent" style={{ fontSize: "2.8vw", fontWeight: 300, opacity: 0.75 }}>Founding member pricing stays fixed as the platform grows</div>
+              <div className="font-display" style={{ fontSize: "2.9vw", fontWeight: 800, color: "#FAF6EF" }}>Locked-In Rate</div>
+              <div className="font-body" style={{ fontSize: "2.5vw", fontWeight: 300, color: "#FAF6EF", opacity: 0.75, lineHeight: 1.3 }}>Founding member pricing stays fixed as the platform grows</div>
             </div>
           </div>
-          <div className="flex items-center gap-[2.5vw] py-[2vh] px-[2.5vw]" style={{ background: "rgba(202,146,43,0.06)", border: "1px solid rgba(202,146,43,0.2)" }}>
-            <div className="font-display text-primary flex-shrink-0" style={{ fontSize: "4vw", fontWeight: 800 }}>04</div>
+          <div className="flex items-center gap-[2.5vw] py-[1.8vh] px-[2.5vw]" style={{ background: "rgba(202,146,43,0.06)", border: "1px solid rgba(202,146,43,0.2)" }}>
+            <div className="font-display flex-shrink-0" style={{ fontSize: "3.5vw", fontWeight: 800, color: "#CA922B" }}>04</div>
             <div>
-              <div className="font-display text-accent" style={{ fontSize: "3.2vw", fontWeight: 800 }}>Early Feature Access</div>
-              <div className="font-body text-accent" style={{ fontSize: "2.8vw", fontWeight: 300, opacity: 0.75 }}>First to use new business tools and dashboard features</div>
+              <div className="font-display" style={{ fontSize: "2.9vw", fontWeight: 800, color: "#FAF6EF" }}>Early Feature Access</div>
+              <div className="font-body" style={{ fontSize: "2.5vw", fontWeight: 300, color: "#FAF6EF", opacity: 0.75, lineHeight: 1.3 }}>First to use new business tools and dashboard features</div>
             </div>
           </div>
-          <div className="flex items-center gap-[2.5vw] py-[2vh] px-[2.5vw]" style={{ background: "rgba(202,146,43,0.12)", border: "1px solid rgba(202,146,43,0.35)" }}>
-            <div className="font-display text-primary flex-shrink-0" style={{ fontSize: "4vw", fontWeight: 800 }}>05</div>
+          <div className="flex items-center gap-[2.5vw] py-[1.8vh] px-[2.5vw]" style={{ background: "rgba(202,146,43,0.12)", border: "1px solid rgba(202,146,43,0.35)" }}>
+            <div className="font-display flex-shrink-0" style={{ fontSize: "3.5vw", fontWeight: 800, color: "#CA922B" }}>05</div>
             <div>
-              <div className="font-display text-accent" style={{ fontSize: "3.2vw", fontWeight: 800 }}>Featured in Launch Campaign</div>
-              <div className="font-body text-accent" style={{ fontSize: "2.8vw", fontWeight: 300, opacity: 0.75 }}>Included in city launch marketing and press</div>
+              <div className="font-display" style={{ fontSize: "2.9vw", fontWeight: 800, color: "#FAF6EF" }}>Featured in Launch Campaign</div>
+              <div className="font-body" style={{ fontSize: "2.5vw", fontWeight: 300, color: "#FAF6EF", opacity: 0.75, lineHeight: 1.3 }}>Included in city launch marketing and press</div>
             </div>
           </div>
         </div>
