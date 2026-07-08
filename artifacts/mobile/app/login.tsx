@@ -215,11 +215,11 @@ export default function LoginScreen() {
             <Feather name="globe" size={18} color={c.foreground} />
           )}
           <Text style={[styles.googleTxt, { color: c.foreground }]}>
-            {loading && !emailMode ? "Opening sign in…" : "Continue with Replit"}
+            {loading && !emailMode ? "Opening sign in…" : "Continue with SSO"}
           </Text>
         </TouchableOpacity>
         <Text style={[styles.replitNote, { color: c.mutedForeground }]}>
-          Requires a Replit account — use Email below if you don't have one
+          Single sign-on — use Email & Password below for direct access
         </Text>
 
         {Platform.OS === "ios" && (
