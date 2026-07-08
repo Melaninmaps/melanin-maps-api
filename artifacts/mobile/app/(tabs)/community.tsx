@@ -227,6 +227,8 @@ export default function CommunityScreen() {
   const [groupCategory, setGroupCategory] = useState("all");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<string | undefined>(undefined);
+  const [kinfolkSuggestions, setKinfolkSuggestions] = useState<Array<{ id: string; name: string; category: string; city: string; rating: string; imageUrl: string | null; description: string }>>([]);
+  const [showKinfolkSuggest, setShowKinfolkSuggest] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [groupCreateName, setGroupCreateName] = useState("");
   const [groupCreateDesc, setGroupCreateDesc] = useState("");
@@ -437,7 +439,7 @@ export default function CommunityScreen() {
         }),
       });
       if (res.ok) {
-        const data = await res.json() as { post: Record<string, unknown> };
+        const data = await res.json() as { post: Record<string, unknown>; kinfolkSuggestions?: Array<{ id: string; name: string; category: string; city: string; rating: string; imageUrl: string | null; description: string }> };
         setPosts((prev) => [toPostCard(data.post), ...prev]);
         setNewPostText("");
         setNewPostCategory("general");
@@ -454,6 +456,10 @@ export default function CommunityScreen() {
         setNewPostRatingReason("");
         setShowCompose(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        if (data.kinfolkSuggestions?.length) {
+          setKinfolkSuggestions(data.kinfolkSuggestions);
+          setShowKinfolkSuggest(true);
+        }
       } else {
         const err = await res.json() as { error?: string; code?: string };
         if (err.code === "TIER_LIMIT_REACHED") {
@@ -1185,6 +1191,68 @@ export default function CommunityScreen() {
         onClose={() => setShowUpgrade(false)}
         feature={upgradeFeature}
       />
+
+      {/* KinfolkAI Alternative Suggestions Modal */}
+      <Modal
+        visible={showKinfolkSuggest}
+        animationType="slide"
+        transparent
+        presentationStyle="overFullScreen"
+        onRequestClose={() => setShowKinfolkSuggest(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.composeSheet, { backgroundColor: colors.card, paddingBottom: bottomPad + 16, maxHeight: "70%" }]}>
+            <View style={[styles.composeHeader, { borderBottomColor: colors.border }]}>
+              <View style={{ width: 60 }} />
+              <Text style={[styles.composeTitle, { color: colors.foreground }]}>KinfolkAI™ Suggests</Text>
+              <TouchableOpacity activeOpacity={0.8} onPress={() => setShowKinfolkSuggest(false)}>
+                <Text style={[styles.composeCancelText, { color: colors.mutedForeground }]}>Done</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }} showsVerticalScrollIndicator={false}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <View style={{ backgroundColor: "#2D7A4F", borderRadius: 8, padding: 6 }}>
+                  <Feather name="zap" size={14} color="#fff" />
+                </View>
+                <Text style={{ color: colors.mutedForeground, fontSize: 13, flex: 1, lineHeight: 18 }}>
+                  Sorry about that experience. Here are some Black-owned businesses your community recommends nearby:
+                </Text>
+              </View>
+              {kinfolkSuggestions.map((biz) => (
+                <TouchableOpacity
+                  key={biz.id}
+                  activeOpacity={0.85}
+                  onPress={() => { setShowKinfolkSuggest(false); router.push(`/business/${biz.id}` as any); }}
+                  style={{ backgroundColor: colors.background, borderRadius: 12, borderWidth: 1, borderColor: colors.border, overflow: "hidden" }}
+                >
+                  {biz.imageUrl ? (
+                    <Image source={{ uri: biz.imageUrl }} style={{ width: "100%", height: 100 }} resizeMode="cover" />
+                  ) : (
+                    <View style={{ width: "100%", height: 80, backgroundColor: "#2D7A4F22", alignItems: "center", justifyContent: "center" }}>
+                      <Feather name="home" size={28} color="#2D7A4F" />
+                    </View>
+                  )}
+                  <View style={{ padding: 12 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                      <Text style={{ color: colors.foreground, fontWeight: "700", fontSize: 15, flex: 1 }} numberOfLines={1}>{biz.name}</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginLeft: 8 }}>
+                        <Feather name="star" size={12} color="#CA922B" />
+                        <Text style={{ color: "#CA922B", fontSize: 13, fontWeight: "600" }}>{parseFloat(biz.rating).toFixed(1)}</Text>
+                      </View>
+                    </View>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <View style={{ backgroundColor: "#2D7A4F22", borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 }}>
+                        <Text style={{ color: "#2D7A4F", fontSize: 11, fontWeight: "600" }}>Black-Owned</Text>
+                      </View>
+                      <Text style={{ color: colors.mutedForeground, fontSize: 12 }}>{biz.category} · {biz.city}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       {/* Edit Post Modal */}
       <Modal

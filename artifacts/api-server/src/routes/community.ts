@@ -266,11 +266,21 @@ router.post("/community/posts", async (req: Request, res: Response) => {
 
     const { name, initials, color } = await resolveAuthorInfo(req.user.id);
 
-    // Resolve business name if businessId provided
+    // Resolve business name + ownership if businessId provided
     let resolvedBusinessName = providedBusinessName ?? null;
-    if (businessId && !resolvedBusinessName) {
-      const [biz] = await db.select({ name: businessesTable.name }).from(businessesTable).where(eq(businessesTable.id, businessId)).limit(1);
-      resolvedBusinessName = biz?.name ?? null;
+    let resolvedBusinessBlackOwned: boolean | null = null;
+    let resolvedBusinessCity: string | null = null;
+    let resolvedBusinessCategory: string | null = null;
+    if (businessId) {
+      const [biz] = await db
+        .select({ name: businessesTable.name, blackOwned: businessesTable.blackOwned, city: businessesTable.city, category: businessesTable.category })
+        .from(businessesTable)
+        .where(eq(businessesTable.id, businessId))
+        .limit(1);
+      resolvedBusinessName = resolvedBusinessName ?? biz?.name ?? null;
+      resolvedBusinessBlackOwned = biz?.blackOwned ?? null;
+      resolvedBusinessCity = biz?.city ?? null;
+      resolvedBusinessCategory = biz?.category ?? null;
     }
 
     const [post] = await db
@@ -309,7 +319,71 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       })
       .returning();
 
-    res.status(201).json({ post });
+    // ── KinfolkAI: suggest Black-owned alternatives when post is negative + business is non-minority ──
+    const NEGATIVE_KEYWORDS = [
+      "racist", "racism", "discrimination", "discriminated", "profiled", "prejudice",
+      "bias", "biased", "rude", "mistreated", "ignored", "disrespected", "unwelcoming",
+      "hostile", "bad experience", "terrible", "awful", "horrible", "worst",
+      "never again", "never going back", "scam", "scammed", "poor service",
+      "offensive", "uncomfortable", "threatening", "harassed", "harassment",
+      "treated badly", "felt unsafe", "felt uncomfortable",
+    ];
+    const isNegative = NEGATIVE_KEYWORDS.some((kw) => content.toLowerCase().includes(kw));
+
+    let kinfolkSuggestions: Array<{ id: string; name: string; category: string; city: string; rating: string; imageUrl: string | null; description: string }> = [];
+
+    if (isNegative) {
+      // Determine if the mentioned business is non-minority-owned
+      const isNonMinority =
+        resolvedBusinessBlackOwned === false || // In-DB business confirmed non-black-owned
+        (resolvedBusinessBlackOwned === null && (!!providedBusinessName || !!businessLink)); // External business
+
+      const searchCity = resolvedBusinessCity ?? locationTag ?? null;
+
+      if (isNonMinority && searchCity) {
+        const whereClause = resolvedBusinessCategory
+          ? and(eq(businessesTable.blackOwned, true), sql`lower(${businessesTable.city}) = lower(${searchCity})`, eq(businessesTable.category, resolvedBusinessCategory))
+          : and(eq(businessesTable.blackOwned, true), sql`lower(${businessesTable.city}) = lower(${searchCity})`);
+
+        const alts = await db
+          .select({
+            id: businessesTable.id,
+            name: businessesTable.name,
+            category: businessesTable.category,
+            city: businessesTable.city,
+            rating: businessesTable.rating,
+            imageUrl: businessesTable.imageUrl,
+            description: businessesTable.description,
+          })
+          .from(businessesTable)
+          .where(whereClause)
+          .orderBy(sql`${businessesTable.rating}::numeric DESC, ${businessesTable.confidenceScore} DESC`)
+          .limit(3);
+
+        // If no matches by category, fall back to any category in the city
+        if (alts.length === 0 && resolvedBusinessCategory) {
+          const fallback = await db
+            .select({
+              id: businessesTable.id,
+              name: businessesTable.name,
+              category: businessesTable.category,
+              city: businessesTable.city,
+              rating: businessesTable.rating,
+              imageUrl: businessesTable.imageUrl,
+              description: businessesTable.description,
+            })
+            .from(businessesTable)
+            .where(and(eq(businessesTable.blackOwned, true), sql`lower(${businessesTable.city}) = lower(${searchCity})`))
+            .orderBy(sql`${businessesTable.rating}::numeric DESC, ${businessesTable.confidenceScore} DESC`)
+            .limit(3);
+          kinfolkSuggestions = fallback;
+        } else {
+          kinfolkSuggestions = alts;
+        }
+      }
+    }
+
+    res.status(201).json({ post, ...(kinfolkSuggestions.length ? { kinfolkSuggestions } : {}) });
   } catch (err) {
     req.log.error({ err }, "Failed to create community post");
     res.status(500).json({ error: "Failed to create post" });
