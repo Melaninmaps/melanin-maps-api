@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
+import * as SecureStore from "expo-secure-store";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
@@ -182,9 +183,10 @@ export default function ReportSafetyScreen() {
         ? `${form.neighborhood.trim()}, ${form.city.trim()}`
         : form.city.trim();
 
+      const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
       const res = await fetch(`${API_BASE}/api/reports`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({
           category: form.reportType,
           targetType: "neighborhood",

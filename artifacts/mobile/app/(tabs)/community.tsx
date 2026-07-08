@@ -189,7 +189,7 @@ export default function CommunityScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ compose?: string; caption?: string }>();
   const { isAuthenticated, user } = useAuth();
-  const isPaidMember = !!user && ["navigator", "trailblazer", "founding", "beta"].includes(user.memberType ?? "");
+  const isPaidMember = !!user && ["navigator", "trailblazer", "community_builder", "legacy_member", "founding", "beta"].includes(user.memberType ?? "");
   const [activeTab, setActiveTab] = useState("Feed");
   const [refreshing, setRefreshing] = useState(false);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
@@ -290,7 +290,10 @@ export default function CommunityScreen() {
   const loadPosts = useCallback(async () => {
     setLoadError(false);
     try {
-      const res = await fetch(`${getApiBase()}/api/community/posts?feed=${feedMode}`);
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/community/posts?feed=${feedMode}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (res.ok) {
         const data = await res.json() as { posts: Record<string, unknown>[] };
         setPosts((data.posts ?? []).map(toPostCard));

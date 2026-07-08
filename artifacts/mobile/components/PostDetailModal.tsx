@@ -85,7 +85,10 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
     if (!post?.id) return;
     setLoading(true);
     try {
-      const res = await fetch(`${getApiBase()}/api/community/posts/${post.id}/comments`);
+      const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
+      const res = await fetch(`${getApiBase()}/api/community/posts/${post.id}/comments`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (res.ok) {
         const data = await res.json() as { comments: Comment[] };
         setComments(data.comments ?? []);
@@ -110,9 +113,10 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLocalLiked((l) => !l);
     setLocalLikes((n) => localLiked ? n - 1 : n + 1);
+    const voteToken = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
     await fetch(`${getApiBase()}/api/community/posts/${post.id}/vote`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(voteToken ? { Authorization: `Bearer ${voteToken}` } : {}) },
       body: JSON.stringify({ direction: localLiked ? "down" : "up" }),
     }).catch(() => {});
     onLike?.();
