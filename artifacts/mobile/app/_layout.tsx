@@ -42,7 +42,6 @@ import * as SecureStore from "expo-secure-store";
 })();
 import { FRESH_LOGIN_KEY, getBiometricCapabilities, isBiometricsEnabled, enableBiometrics } from "@/hooks/useBiometrics";
 import { AIChatWidget } from "@/components/AIChatWidget";
-import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { AuthProvider, useAuth } from "@/lib/auth";
@@ -624,7 +623,6 @@ export default function RootLayout() {
                   <PushNotificationRegistrar />
                   <RootLayoutNav />
                   <AIChatWidget />
-                  <CookieConsentBanner />
                   <OfflineBanner />
                 </View>
               </KeyboardProviderWrapper>
