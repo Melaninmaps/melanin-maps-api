@@ -238,7 +238,7 @@ export function PostItineraryFeedbackSurvey({ visible, destination, onClose, onS
                 <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>Optional — free-form feedback goes directly to our AI team</Text>
                 <TextInput
                   style={[styles.textArea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-                  placeholder="What would make this AI trip planner more useful for Black travelers?"
+                  placeholder="What would make this AI trip planner more useful for melanated travelers?"
                   placeholderTextColor={colors.mutedForeground}
                   multiline
                   numberOfLines={6}

@@ -28,7 +28,7 @@ interface Feature {
 const FEATURES: Feature[] = [
   { id: "f1", title: "Business Safety Surveys", desc: "Community-powered safety ratings for every business listing", category: "Safety", status: "shipped", votes: 412 },
   { id: "f2", title: "Neighborhood Safety Ratings", desc: "City neighborhood scores aggregated from community surveys", category: "Safety", status: "shipped", votes: 387 },
-  { id: "f3", title: "KinfolkAI™ Travel Itineraries", desc: "AI-powered personalized city itineraries with safety context for Black travelers", category: "AI", status: "shipped", votes: 524 },
+  { id: "f3", title: "KinfolkAI™ Travel Itineraries", desc: "AI-powered personalized city itineraries with safety context for melanated travelers", category: "AI", status: "shipped", votes: 524 },
   { id: "f4", title: "Business Discovery & Search", desc: "Full-text search with category, safety, and minority-owned filters", category: "Discovery", status: "shipped", votes: 601 },
   { id: "f5", title: "Interactive Map", desc: "Full map view with custom pins, clustering, and rich info windows", category: "Map", status: "shipped", votes: 489 },
   { id: "f6", title: "Direct Messaging", desc: "Message businesses and community members directly", category: "Community", status: "shipped", votes: 298 },

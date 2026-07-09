@@ -73,7 +73,7 @@ export default function SafetyInfoScreen() {
           <Feather name="shield" size={36} color="rgba(255,255,255,0.9)" />
           <Text style={styles.heroTitle}>Safety Built for Us</Text>
           <Text style={styles.heroSub}>
-            Traditional safety scores weren't built with Black travelers in mind. Mapping with Melanin is different — built by the community, for the community.
+            Traditional safety scores weren't built with melanated travelers in mind. Mapping with Melanin is different — built by the community, for the community.
           </Text>
         </View>
 
