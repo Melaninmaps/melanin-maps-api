@@ -192,6 +192,7 @@ const BUSINESS_PLANS: Plan[] = [
     emoji: "🚀",
     name: "Growth Business",
     stripeKey: "Growth Business",
+    rcOfferingId: "growth_business",
     tagline: "Designed for growing businesses.",
     badge: "Recommended",
     monthlyPrice: 29.99,
@@ -216,6 +217,7 @@ const BUSINESS_PLANS: Plan[] = [
     emoji: "⭐",
     name: "Premium Business",
     stripeKey: "Premium Business",
+    rcOfferingId: "premium_business",
     tagline: "For businesses focused on expansion.",
     badge: "Full Access",
     monthlyPrice: 79.99,
@@ -240,6 +242,7 @@ const BUSINESS_PLANS: Plan[] = [
     emoji: "🏛️",
     name: "Founding Business",
     stripeKey: "Founding Business",
+    rcOfferingId: "founding_business",
     tagline: "Your highest-tier business membership.",
     badge: "Enterprise",
     monthlyPrice: 199.99,
@@ -282,13 +285,8 @@ export default function MembershipScreen() {
 
     if (plan.id === "biz_free") { router.push("/list-business"); return; }
 
-    // Business plans on iOS → redirect to web (B2B subscriptions)
-    if (Platform.OS === "ios" && audience === "business") {
-      await Linking.openURL("https://www.mappingwithmelanin.com/membership");
-      return;
-    }
-
-    // Consumer plans on iOS → RevenueCat IAP (Apple requires this for 3.1.1)
+    // iOS → RevenueCat IAP for all paid plans (Apple requires this for 3.1.1,
+    // including business/B2B subscriptions — see guideline 3.1.3(b))
     if (Platform.OS === "ios" && plan.rcOfferingId) {
       const offering = offerings?.all[plan.rcOfferingId];
       const pkg = billing === "annual" ? offering?.annual : offering?.monthly;
