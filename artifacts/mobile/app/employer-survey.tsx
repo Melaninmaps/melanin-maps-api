@@ -69,7 +69,7 @@ export default function OnboardingPreferenceSurveyScreen() {
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   const [step, setStep] = useState(1);
-  const [travelStyle, setTravelStyle] = useState("");
+  const [travelStyle, setTravelStyle] = useState<string[]>([]);
   const [selectedCities, setSelectedCities] = useState<string[]>([]);
   const [companions, setCompanions] = useState("");
   const [budget, setBudget] = useState("");
@@ -78,6 +78,11 @@ export default function OnboardingPreferenceSurveyScreen() {
   const [safetyPriority, setSafetyPriority] = useState("");
   const [accessibility, setAccessibility] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
+
+  const toggleStyle = (s: string) => {
+    setTravelStyle((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
+    if (Platform.OS !== "web") Haptics.selectionAsync();
+  };
 
   const canNext1 = travelStyle.length > 0;
   const canNext2 = selectedCities.length >= 1;
@@ -123,7 +128,7 @@ export default function OnboardingPreferenceSurveyScreen() {
           </Text>
           <View style={[styles.profileRow, { backgroundColor: colors.secondary }]}>
             <View style={styles.profileItem}>
-              <Text style={[styles.profileVal, { color: colors.primary }]}>{travelStyle}</Text>
+              <Text style={[styles.profileVal, { color: colors.primary }]} numberOfLines={1}>{travelStyle.join(", ")}</Text>
               <Text style={[styles.profileKey, { color: colors.mutedForeground }]}>Travel Style</Text>
             </View>
             <View style={[styles.profileDivider, { backgroundColor: colors.border }]} />
@@ -187,11 +192,11 @@ export default function OnboardingPreferenceSurveyScreen() {
           <View style={styles.stepContent}>
             <Text style={[styles.stepTitle, { color: colors.foreground }]}>✈️ Travel Style</Text>
             <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-              How do you like to travel? Pick the one that fits best
+              How do you like to travel? Pick all that apply
             </Text>
             <View style={styles.chips}>
               {TRAVEL_STYLES.map((s) => (
-                <Chip key={s} label={s} selected={travelStyle === s} onPress={() => { setTravelStyle(s); if (Platform.OS !== "web") Haptics.selectionAsync(); }}
+                <Chip key={s} label={s} selected={travelStyle.includes(s)} multi onPress={() => toggleStyle(s)}
                   color={colors.primary} primaryForeground={colors.primaryForeground}
                   secondary={colors.secondary} border={colors.border} foreground={colors.foreground} />
               ))}
