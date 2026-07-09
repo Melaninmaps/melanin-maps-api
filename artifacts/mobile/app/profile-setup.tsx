@@ -123,6 +123,14 @@ export default function ProfileSetupScreen() {
       >
         {/* Header */}
         <View style={styles.headerRow}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => (step > 1 ? setStep((s) => s - 1) : router.canGoBack() ? router.back() : router.replace("/(tabs)"))}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            style={{ marginRight: 8 }}
+          >
+            <Feather name="arrow-left" size={22} color={c.foreground} />
+          </TouchableOpacity>
           <View style={styles.progressDots}>
             {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
               <View

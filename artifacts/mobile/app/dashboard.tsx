@@ -58,6 +58,12 @@ export default function DashboardScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
+        <TouchableOpacity activeOpacity={0.85}
+          style={[styles.notifBtn, { backgroundColor: colors.secondary, marginRight: 12 }]}
+          onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}
+        >
+          <Feather name="arrow-left" size={20} color={colors.foreground} />
+        </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={[styles.greeting, { color: colors.mutedForeground }]}>Welcome back 👋🏾</Text>
           <Text style={[styles.name, { color: colors.foreground }]}>{firstName}</Text>

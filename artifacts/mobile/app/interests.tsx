@@ -52,6 +52,14 @@ export default function InterestsScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 24 }]}>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)"))}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          style={styles.backBtn}
+        >
+          <Feather name="arrow-left" size={22} color={colors.foreground} />
+        </TouchableOpacity>
         <View style={[styles.stepRow]}>
           {[1, 2, 3].map((n) => (
             <View
@@ -134,6 +142,7 @@ export default function InterestsScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   header: { paddingHorizontal: 24, paddingBottom: 20, gap: 10 },
+  backBtn: { width: 32, height: 32, alignItems: "flex-start", justifyContent: "center", marginBottom: 4 },
   stepRow: { flexDirection: "row", gap: 6, marginBottom: 4 },
   step: { flex: 1, height: 4, borderRadius: 2 },
   title: { fontSize: 28, fontFamily: "Inter_700Bold" },
