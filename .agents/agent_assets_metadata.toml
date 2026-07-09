@@ -377,3 +377,105 @@ id = "wqSeA6ycJVHtjyPwl3yVo"
 uri = "file://attached_assets/cropped2/settings_crop.png"
 type = "image"
 title = "Settings list"
+
+[[outputs]]
+id = "U7SjqUF4GrMRx-HSkqoxr"
+uri = "file://attached_assets/appstore_final/IMG_7061_1783633730331_crop.png"
+type = "image"
+title = "Explorer tier (Personal) — 1284x2778"
+
+[[outputs]]
+id = "j00Dj51ue4T2nSihdLUmB"
+uri = "file://attached_assets/appstore_final/IMG_7062_1783633733610_crop.png"
+type = "image"
+title = "Navigator tier (Personal) — 1284x2778"
+
+[[outputs]]
+id = "d0uYTetUIorpv1dpZ9rMO"
+uri = "file://attached_assets/appstore_final/IMG_7063_1783633749679_crop.png"
+type = "image"
+title = "Trailblazer tier (Personal) — 1284x2778"
+
+[[outputs]]
+id = "9lfkpXXzO1-wH9bdByTNb"
+uri = "file://attached_assets/appstore_final/IMG_7064_1783633716268_crop.png"
+type = "image"
+title = "Community Builder tier (Personal) — 1284x2778"
+
+[[outputs]]
+id = "XsS19cQxHgMscV5LdqzIV"
+uri = "file://attached_assets/appstore_final/IMG_7065_1783633700276_crop.png"
+type = "image"
+title = "Legacy Member tier (Personal) — 1284x2778"
+
+[[outputs]]
+id = "RL_kX-ifWiGDBauKx-eKF"
+uri = "file://attached_assets/appstore_final/IMG_7066_1783633677490_crop.png"
+type = "image"
+title = "Growth Business tier — 1284x2778"
+
+[[outputs]]
+id = "O4J2a_dPnnARZ5PpG8ukd"
+uri = "file://attached_assets/appstore_final/IMG_7067_1783633666574_crop.png"
+type = "image"
+title = "Community Business tier — 1284x2778"
+
+[[outputs]]
+id = "OHajDQ-EDIxwkKY2orfLd"
+uri = "file://attached_assets/appstore_final/IMG_7068_1783633613375_crop.png"
+type = "image"
+title = "Premium Business tier — 1284x2778"
+
+[[outputs]]
+id = "Harxx3FW_ES09uEh8B7h2"
+uri = "file://attached_assets/appstore_final/IMG_7069_1783633590082_crop.png"
+type = "image"
+title = "Founding Business tier — 1284x2778"
+
+[[outputs]]
+id = "Wn2clC-TSSUT7BloFeNSf"
+uri = "file://attached_assets/appstore_final/discover_iphone_real.png"
+type = "image"
+title = "Discover screen — 1284x2778"
+
+[[outputs]]
+id = "OSUB_fClPzG03jfDHTTi3"
+uri = "file://attached_assets/appstore_final/essence_kitchen_iphone_real.png"
+type = "image"
+title = "Business profile — 1284x2778"
+
+[[outputs]]
+id = "oMUuA-KBHizkEKa2qq505"
+uri = "file://attached_assets/appstore_final/kinfolkai_iphone_real.png"
+type = "image"
+title = "KinfolkAI chat — 1284x2778"
+
+[[outputs]]
+id = "1vWDpTPNxHE8FKBSFkytL"
+uri = "file://attached_assets/appstore_final/safety_hub_iphone_real.png"
+type = "image"
+title = "Safety Hub — 1284x2778"
+
+[[outputs]]
+id = "m02tjIn2JIpa9zXXSYfMG"
+uri = "file://attached_assets/appstore_final/membership_business_ipad_crop.png"
+type = "image"
+title = "Membership Business (iPad) — 1668x2388"
+
+[[outputs]]
+id = "I7adJwFMlrSrj_cbGJNc4"
+uri = "file://attached_assets/appstore_final/membership_personal_ipad_crop.png"
+type = "image"
+title = "Membership Personal (iPad) — 1668x2388"
+
+[[outputs]]
+id = "0_PhIPxTZcaP-QLODm5gL"
+uri = "file://attached_assets/appstore_final/profile_ipad_signedout.png"
+type = "image"
+title = "Profile signed-out (iPad) — 1668x2388"
+
+[[outputs]]
+id = "8FQQ_UP5RMCDXBlIioEgb"
+uri = "file://attached_assets/appstore_final/settings_crop.png"
+type = "image"
+title = "Settings list (iPad) — 1668x2388"
