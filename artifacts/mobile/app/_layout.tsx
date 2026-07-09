@@ -326,7 +326,6 @@ function RootLayoutNav() {
         options={{
           headerShown: false,
           presentation: "card",
-          gestureEnabled: false,
         }}
       />
       <Stack.Screen
@@ -370,7 +369,6 @@ function RootLayoutNav() {
         options={{
           headerShown: false,
           presentation: "card",
-          gestureEnabled: false,
         }}
       />
       <Stack.Screen

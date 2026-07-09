@@ -37,7 +37,7 @@ export default function DashboardScreen() {
   const { events, isLoading: eventsLoading } = useEvents();
   const { total: pointsTotal, ledger } = usePoints();
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
   const firstName = user?.firstName ?? "Explorer";
 
