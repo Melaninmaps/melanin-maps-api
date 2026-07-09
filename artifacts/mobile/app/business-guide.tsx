@@ -205,22 +205,6 @@ export default function BusinessGuideScreen() {
         </View>
       </View>
 
-      {/* Why upgrade? */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>The Upgrade Promise</Text>
-        {UPGRADE_REASONS.map((r, i) => (
-          <View key={i} style={[styles.reasonCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={[styles.reasonIcon, { backgroundColor: colors.primary + "15" }]}>
-              <Feather name={r.icon} size={18} color={colors.primary} />
-            </View>
-            <View style={{ flex: 1, gap: 3 }}>
-              <Text style={[styles.reasonTitle, { color: colors.foreground }]}>{r.title}</Text>
-              <Text style={[styles.reasonDesc, { color: colors.mutedForeground }]}>{r.desc}</Text>
-            </View>
-          </View>
-        ))}
-      </View>
-
       {/* Tier cards */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>The Three Tiers</Text>
@@ -307,6 +291,22 @@ export default function BusinessGuideScreen() {
             </View>
           );
         })}
+      </View>
+
+      {/* Why upgrade? */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>The Upgrade Promise</Text>
+        {UPGRADE_REASONS.map((r, i) => (
+          <View key={i} style={[styles.reasonCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.reasonIcon, { backgroundColor: colors.primary + "15" }]}>
+              <Feather name={r.icon} size={18} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1, gap: 3 }}>
+              <Text style={[styles.reasonTitle, { color: colors.foreground }]}>{r.title}</Text>
+              <Text style={[styles.reasonDesc, { color: colors.mutedForeground }]}>{r.desc}</Text>
+            </View>
+          </View>
+        ))}
       </View>
 
       {/* Comparison table */}
