@@ -7,10 +7,18 @@ function log(_msg: string) {
   // RESEND_API_KEY not configured — email silently skipped in this environment
 }
 
+async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
+  const { data, error } = await resend!.emails.send(payload);
+  if (error) {
+    throw new Error(`Resend send failed: ${error.name} — ${error.message}`);
+  }
+  return data;
+}
+
 export async function sendWelcomeEmail(to: string, firstName: string | null) {
   if (!resend) { log("welcome email"); return; }
   const name = firstName ?? "there";
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     replyTo: "hello@mappingwithmelanin.com",
     to,
@@ -96,7 +104,7 @@ export async function sendPasswordResetEmail(to: string, firstName: string | nul
   const name = firstName ?? "there";
   const encodedEmail = encodeURIComponent(to);
   const deepLink = `mappingwithmelanin://reset-password?email=${encodedEmail}&code=${code}`;
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     replyTo: "hello@mappingwithmelanin.com",
     to,
@@ -137,7 +145,7 @@ export async function sendWaitlistConfirmation(to: string, position: number, ref
   if (!resend) { log("waitlist confirmation"); return; }
   const fullName = lastName ? `${firstName} ${lastName}` : firstName;
   const referralLink = `https://mappingwithmelanin.com/?ref=${referralCode}`;
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "founders@mappingwithmelanin.com",
@@ -232,7 +240,7 @@ export async function sendReferralNudge(
   if (!resend) { log("referral nudge"); return; }
   const referralLink = `https://mappingwithmelanin.com/?ref=${referralCode}`;
   const name = firstName || "there";
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "hello@mappingwithmelanin.com",
@@ -296,7 +304,7 @@ export async function sendReferralNudge(
 
 export async function sendBusinessOutreach(to: string, businessName: string, claimLink: string) {
   if (!resend) { log("business outreach"); return; }
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "business@mappingwithmelanin.com",
@@ -358,7 +366,7 @@ export async function sendBusinessOutreach(to: string, businessName: string, cla
 export async function sendApprovalNotification(to: string, firstName: string | null) {
   if (!resend) { log("approval notification"); return; }
   const name = firstName ?? "there";
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "hello@mappingwithmelanin.com",
@@ -410,7 +418,7 @@ export async function sendTrialStarted(
   const endDate = trialEndsAt.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
   const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
 
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "hello@mappingwithmelanin.com",
@@ -483,7 +491,7 @@ export async function sendTrialEndingSoon(
   const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
   const endDate = trialEndsAt.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "hello@mappingwithmelanin.com",
@@ -543,7 +551,7 @@ export async function sendTrialExpired(
   const planLabel = PLAN_LABELS[planType] ?? "Premium";
   const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
 
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "hello@mappingwithmelanin.com",
@@ -607,7 +615,7 @@ export async function sendMembershipCancelled(
   const planLabel = PLAN_LABELS[planType] ?? "Premium";
   const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
 
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "hello@mappingwithmelanin.com",
@@ -663,7 +671,7 @@ export async function sendCheckinOverdueEmail(
   const timeStr = scheduledAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
   const dateStr = scheduledAt.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
   const where = [location, city].filter(Boolean).join(", ") || "their destination";
-  await resend.emails.send({
+  await sendEmail({
     from: "Mapping With Melanin Safety <safety@send.mappingwithmelanin.com>",
     to,
     replyTo: "safety@mappingwithmelanin.com",
@@ -715,7 +723,7 @@ export async function sendWeeklyDigest(
     </p>
   `;
 
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "hello@mappingwithmelanin.com",
@@ -769,7 +777,7 @@ export async function sendFoundingWelcomeEmail(
   if (!resend) { log("founding welcome email"); return; }
   const name = firstName ?? "there";
   const badge = String(foundingNumber).padStart(3, "0");
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "founders@mappingwithmelanin.com",
@@ -951,7 +959,7 @@ export async function sendFoundingAnniversaryEmail(
   const fmtNum = (n: number) => n.toLocaleString("en-US");
   const fmtUSD = (n: number) => "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "founders@mappingwithmelanin.com",
@@ -1082,7 +1090,7 @@ export async function sendFoundingAnniversaryEmail(
 export async function sendClaimReceived(to: string, ownerName: string, businessName: string) {
   if (!resend) { log("claim received email"); return; }
   const name = ownerName.split(" ")[0] || ownerName;
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "business@mappingwithmelanin.com",
@@ -1142,7 +1150,7 @@ export async function sendClaimReceived(to: string, ownerName: string, businessN
 export async function sendClaimApproved(to: string, ownerName: string, businessName: string) {
   if (!resend) { log("claim approved email"); return; }
   const name = ownerName.split(" ")[0] || ownerName;
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "business@mappingwithmelanin.com",
@@ -1229,7 +1237,7 @@ export async function sendBusinessSubmissionAlert(data: {
     data.tiktok    ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">TikTok</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.tiktok}</td></tr>` : "",
     data.twitter   ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">X / Twitter</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.twitter}</td></tr>` : "",
   ].filter(Boolean).join("");
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to: "hello@mappingwithmelanin.com",
     replyTo: data.ownerEmail,
@@ -1285,7 +1293,7 @@ export async function sendContactAlert(data: {
        </div>`
     : "";
 
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to: "hello@mappingwithmelanin.com",
     replyTo: data.email,
@@ -1343,7 +1351,7 @@ export async function sendNominationAlert(data: {
       : `<span style="display:inline-block;background:#15803d;color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;margin-left:8px">✉️ Email via Website</span>`
     : "";
 
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to: "hello@mappingwithmelanin.com",
     subject: `✊🏾 New Business Nomination: ${data.nominationName}`,
@@ -1387,7 +1395,7 @@ export async function sendSearchInquiryAlert(data: {
   const locationLine = [data.city, data.state].filter(Boolean).join(", ");
   const claimLink = `https://mappingwithmelanin.com/for-business-owners?utm_source=search-invite&business=${encodeURIComponent(data.businessName)}`;
 
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to: "hello@mappingwithmelanin.com",
     subject: `🔍 Community Search Alert: Someone searched for "${data.businessName}"`,
@@ -1422,7 +1430,7 @@ export async function sendSearchInquiryAlert(data: {
 
 export async function sendBusinessSearchInvite(to: string, businessName: string, claimLink: string) {
   if (!resend) { log("business search invite"); return; }
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "business@mappingwithmelanin.com",
@@ -1519,7 +1527,7 @@ export async function sendAdminSafetyReportAlert({
   const adminTo = process.env.ADMIN_EMAILS?.split(",").map((e) => e.trim()).filter(Boolean)[0] ?? "hello@mappingwithmelanin.com";
   const severityColors: Record<string, string> = { low: "#CA922B", medium: "#E07A2F", high: "#C0392B", critical: "#7B241C" };
   const ownershipLabel = isMinorityOwned === true ? "Minority-Owned (requires your review to affect score)" : isMinorityOwned === false ? "Non-Minority-Owned (score updates automatically after 3+ reports)" : "Ownership Unknown";
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to: adminTo,
     replyTo: "hello@mappingwithmelanin.com",
@@ -1570,7 +1578,7 @@ export async function sendBusinessRecommendationInvite(
          </p>`
       : "";
 
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "business@mappingwithmelanin.com",
@@ -1643,7 +1651,7 @@ export async function sendFriendInvitation(
 ) {
   if (!resend) { log("friend invitation"); return; }
   const greet = inviteeName ? `Hi ${inviteeName},` : "Hi there,";
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "hello@mappingwithmelanin.com",
@@ -1732,7 +1740,7 @@ export async function sendBusinessWaitlistInvitation(
   joinLink: string,
 ) {
   if (!resend) { log("business waitlist invitation"); return; }
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "business@mappingwithmelanin.com",
@@ -1815,7 +1823,7 @@ export async function sendReferralMilestoneUpdate(
   const newJoinedText = newInviteeName
     ? `<strong>${newInviteeName}</strong> just joined the waitlist`
     : "Someone just joined the waitlist";
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "hello@mappingwithmelanin.com",
@@ -1924,7 +1932,7 @@ export async function sendWeeklyBusinessReport(
     return `<span style="color:#6B7280">—</span>`;
   }
 
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "hello@mappingwithmelanin.com",
@@ -2020,7 +2028,7 @@ export async function sendBetaAnnouncementBlast(
 ) {
   if (!resend) { log("beta announcement blast"); return; }
   const name = firstName || "there";
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "hello@mappingwithmelanin.com",
@@ -2084,7 +2092,7 @@ export async function sendAppLaunchBlast(
   if (!resend) { log("app launch blast"); return; }
   const name = firstName || "there";
   const websiteUrl = `https://mappingwithmelanin.com/?ref=${referralCode}`;
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     to,
     replyTo: "hello@mappingwithmelanin.com",
@@ -2157,7 +2165,7 @@ export async function sendMeetupSafetyWatcherEmail(
 ) {
   if (!resend) { log("meetup safety watcher email"); return; }
   const name = watcherName ?? "there";
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     replyTo: "hello@mappingwithmelanin.com",
     to,
@@ -2216,7 +2224,7 @@ export async function sendMeetupCheckinMissedEmail(
   const timeStr = scheduledAt.toLocaleString("en-US", {
     month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true,
   });
-  await resend.emails.send({
+  await sendEmail({
     from: FROM,
     replyTo: "hello@mappingwithmelanin.com",
     to,
