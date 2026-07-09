@@ -275,3 +275,105 @@ id = "K_H471-5pTBIe7opvq-mX"
 uri = "file://subscription-images/subscription-review.png"
 type = "image"
 title = "Subscription Review Image (1024x1024)"
+
+[[outputs]]
+id = "HrmVSAN_4Olt97QtJJry3"
+uri = "file://attached_assets/cropped/IMG_7061_1783633730331_crop.png"
+type = "image"
+title = "Explorer tier (Personal)"
+
+[[outputs]]
+id = "5f_iqYt-Cgd6AwkvzMpKJ"
+uri = "file://attached_assets/cropped/IMG_7062_1783633733610_crop.png"
+type = "image"
+title = "Navigator tier (Personal)"
+
+[[outputs]]
+id = "9ELHPH5ZfnQtDCFkp8py7"
+uri = "file://attached_assets/cropped/IMG_7063_1783633749679_crop.png"
+type = "image"
+title = "Trailblazer tier (Personal)"
+
+[[outputs]]
+id = "I3jKZOI3djYA2lwIz7LAh"
+uri = "file://attached_assets/cropped/IMG_7064_1783633716268_crop.png"
+type = "image"
+title = "Community Builder tier (Personal)"
+
+[[outputs]]
+id = "_JIICSbOhMG744O3O8FOm"
+uri = "file://attached_assets/cropped/IMG_7065_1783633700276_crop.png"
+type = "image"
+title = "Legacy Member tier (Personal)"
+
+[[outputs]]
+id = "hYS1Ef2d4mosSStkbRW8h"
+uri = "file://attached_assets/cropped/IMG_7066_1783633677490_crop.png"
+type = "image"
+title = "Growth Business tier"
+
+[[outputs]]
+id = "oN4t5eYMS8WgVT0jFZ0Vl"
+uri = "file://attached_assets/cropped/IMG_7067_1783633666574_crop.png"
+type = "image"
+title = "Community Business tier"
+
+[[outputs]]
+id = "8n197juYN2O9pmQFLXpWP"
+uri = "file://attached_assets/cropped/IMG_7068_1783633613375_crop.png"
+type = "image"
+title = "Premium Business tier"
+
+[[outputs]]
+id = "qvHoBdzJRmLqlbG471vuo"
+uri = "file://attached_assets/cropped/IMG_7069_1783633590082_crop.png"
+type = "image"
+title = "Founding Business tier"
+
+[[outputs]]
+id = "OPoIae-_TWWo3xR196jz5"
+uri = "file://attached_assets/cropped2/discover_iphone_real.png"
+type = "image"
+title = "Discover screen"
+
+[[outputs]]
+id = "u06mGf5027CkBKeoL8qZR"
+uri = "file://attached_assets/cropped2/essence_kitchen_iphone_real.png"
+type = "image"
+title = "Business profile (Jefferson Street BBQ)"
+
+[[outputs]]
+id = "EQiFCuOVAePD-vJJX_FU4"
+uri = "file://attached_assets/cropped2/kinfolkai_iphone_real.png"
+type = "image"
+title = "KinfolkAI chat"
+
+[[outputs]]
+id = "pP0_EXOWvnyhsng9J_igT"
+uri = "file://attached_assets/cropped2/membership_business_ipad_crop.png"
+type = "image"
+title = "Membership Business (iPad)"
+
+[[outputs]]
+id = "MSBRk4whtotNlzSzkPDH0"
+uri = "file://attached_assets/cropped2/membership_personal_ipad_crop.png"
+type = "image"
+title = "Membership Personal (iPad)"
+
+[[outputs]]
+id = "mHOQMN4JLl4hfnDfn8FGW"
+uri = "file://attached_assets/cropped2/profile_ipad_signedout.png"
+type = "image"
+title = "Profile signed-out (iPad)"
+
+[[outputs]]
+id = "-yXrfIN0aTUxcgYRQCCGe"
+uri = "file://attached_assets/cropped2/safety_hub_iphone_real.png"
+type = "image"
+title = "Safety Hub"
+
+[[outputs]]
+id = "wqSeA6ycJVHtjyPwl3yVo"
+uri = "file://attached_assets/cropped2/settings_crop.png"
+type = "image"
+title = "Settings list"
