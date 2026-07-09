@@ -126,7 +126,7 @@ export default function LibraryArticleScreen() {
   const router = useRouter();
   const { articleId } = useLocalSearchParams<{ articleId: string }>();
   const { subscription } = useMembership();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [article, setArticle] = useState<ArticleData | null>(null);
   const [loading, setLoading] = useState(true);

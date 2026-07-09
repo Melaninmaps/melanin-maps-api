@@ -69,7 +69,7 @@ export default function TravelPlannerScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [phase, setPhase] = useState<"form" | "generating" | "result">("form");
   const [destination, setDestination] = useState("");

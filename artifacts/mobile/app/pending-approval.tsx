@@ -20,7 +20,7 @@ export default function PendingApprovalScreen() {
   const router = useRouter();
   const { logout, user } = useAuth();
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   const handleSignOut = async () => {

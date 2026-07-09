@@ -53,7 +53,7 @@ export default function MentorshipScreen() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "mentor" | "mentee">("all");
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   useEffect(() => {
     async function load() {

@@ -101,7 +101,7 @@ export default function MemberConnectionsScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [connections, setConnections] = useState<Connection[]>([]);
   const [meetups, setMeetups] = useState<MeetupVerification[]>([]);

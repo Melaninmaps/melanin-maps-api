@@ -104,7 +104,7 @@ export default function WriteReviewScreen() {
   const params = useLocalSearchParams<{ businessId?: string; businessName?: string }>();
 
   const businessName = params.businessName ?? "Sweet Auburn BBQ";
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   const [step, setStep] = useState(1);

@@ -59,7 +59,7 @@ export default function NaAaMeetingsScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [query, setQuery] = useState("");
   const [selectedType, setSelectedType] = useState("all");

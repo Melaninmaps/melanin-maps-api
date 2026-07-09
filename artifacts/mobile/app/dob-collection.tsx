@@ -38,7 +38,7 @@ export default function DobCollectionScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   const years = Array.from({ length: 100 }, (_, i) => currentYear - 13 - i);

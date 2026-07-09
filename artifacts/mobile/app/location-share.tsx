@@ -50,7 +50,7 @@ export default function LocationShareScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [shares, setShares] = useState<LocationShare[]>([]);
   const [loading, setLoading] = useState(true);

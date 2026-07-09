@@ -93,7 +93,7 @@ export default function SafetyHubScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [checkins, setCheckins] = useState<SafetyCheckin[]>([]);
   const [shares, setShares] = useState<LocationShare[]>([]);

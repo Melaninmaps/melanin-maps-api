@@ -78,7 +78,7 @@ export default function CompareNeighborhoodsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { pin1: pin1Id, pin2: pin2Id } = useLocalSearchParams<{ pin1: string; pin2: string }>();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   const [data, setData] = useState<CompareData | null>(null);

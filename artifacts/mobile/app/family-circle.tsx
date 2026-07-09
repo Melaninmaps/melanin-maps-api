@@ -78,7 +78,7 @@ export default function FamilyCircleScreen() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [loading, setLoading] = useState(true);
   const [circle, setCircle] = useState<Circle | null>(null);

@@ -120,7 +120,7 @@ export default function LocationFeedScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [loading, setLoading] = useState(true);
   const [creators, setCreators] = useState<Creator[]>([]);

@@ -70,7 +70,7 @@ export default function OpportunitiesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [activeTab, setActiveTab] = useState<OppTab>("jobs");
   const [jobs, setJobs] = useState<JobListing[]>([]);

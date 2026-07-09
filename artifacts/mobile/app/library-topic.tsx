@@ -205,7 +205,7 @@ export default function CommunityHubScreen() {
   const router = useRouter();
   const { topicId } = useLocalSearchParams<{ topicId: string }>();
   const { subscription } = useMembership();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [activeTab, setActiveTab] = useState<HubTab>("info");
   const [hub, setHub] = useState<HubData | null>(null);

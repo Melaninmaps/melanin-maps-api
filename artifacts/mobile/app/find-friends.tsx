@@ -180,7 +180,7 @@ export default function FindFriendsScreen() {
     router.replace("/(tabs)");
   };
 
-  const topPad = Platform.OS === "web" ? 60 : insets.top;
+  const topPad = Platform.OS === "web" ? 60 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   return (

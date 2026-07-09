@@ -76,7 +76,7 @@ export default function OfficerWatchScreen() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [tab, setTab] = useState<"watch" | "report">("watch");
   const [officers, setOfficers] = useState<Officer[]>([]);

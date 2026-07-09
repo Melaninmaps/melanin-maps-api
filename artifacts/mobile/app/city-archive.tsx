@@ -265,7 +265,7 @@ export default function CityArchiveScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [city, setCity] = useState<CityArchive | null>(null);
   const [contributions, setContributions] = useState<Record<string, Contribution[]>>({});

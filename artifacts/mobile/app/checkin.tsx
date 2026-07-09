@@ -63,7 +63,7 @@ export default function CheckinScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [checkins, setCheckins] = useState<SafetyCheckin[]>([]);
   const [loading, setLoading] = useState(true);

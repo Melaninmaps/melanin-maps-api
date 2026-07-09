@@ -1351,7 +1351,7 @@ function formatTime(d: Date): string {
 export default function TravelScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const { messages, sessionId, isLoading, sessions, sendMessage, submitFeedback, loadSessions, loadSession, startNewSession } = useKinfolk();
   const { preferences } = useUserPreferences();

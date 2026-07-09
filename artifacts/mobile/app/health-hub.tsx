@@ -90,7 +90,7 @@ export default function HealthHubScreen() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
   const isAdmin = !!(user as any)?.role && (user as any).role === "admin";
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   // ── Hub-level tab ──────────────────────────────────────────────────────────

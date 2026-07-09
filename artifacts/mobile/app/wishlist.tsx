@@ -656,7 +656,7 @@ const modalStyles = StyleSheet.create({
 export default function WishlistScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const { items, isLoading, load, addItem, removeItem, updateNotes } = useWishlist();
   const { isWarned } = useSpaceWarnings();
   const { getThumbsUpCount } = useThumbsUpAlerts();

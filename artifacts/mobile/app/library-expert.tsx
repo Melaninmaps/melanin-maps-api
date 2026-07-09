@@ -126,7 +126,7 @@ export default function LibraryExpertScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { expertId } = useLocalSearchParams<{ expertId: string }>();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [expert, setExpert] = useState<ExpertData | null>(null);
   const [articles, setArticles] = useState<ArticleSummary[]>([]);

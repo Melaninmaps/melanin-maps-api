@@ -114,7 +114,7 @@ export default function BusinessIntelligenceScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
