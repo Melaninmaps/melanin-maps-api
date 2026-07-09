@@ -1526,7 +1526,7 @@ export default function TravelScreen() {
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>KinfolkAI™</Text>
-          <Text style={styles.headerSub}>Your personal travel companion</Text>
+          <Text style={styles.headerSub}>Your personal life companion</Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity activeOpacity={0.85}
