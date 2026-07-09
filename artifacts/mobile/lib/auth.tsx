@@ -64,33 +64,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [sessionExpired, setSessionExpired] = useState(false);
 
   const fetchUser = useCallback(async () => {
-    try {
-      const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
-      if (!token) {
-        setUser(null);
+    const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+    if (!token) {
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
+
+    const apiBase = getApiBaseUrl();
+    const maxAttempts = 3;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const res = await fetch(`${apiBase}/api/auth/user`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+
+        if (data.user) {
+          setUser(data.user as User);
+          setSessionExpired(false);
+        } else {
+          // Server explicitly says this token is invalid — safe to sign out.
+          await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
+          setUser(null);
+          setSessionExpired(true);
+        }
         setIsLoading(false);
         return;
+      } catch {
+        // Network-level failure (not a server response) — don't assume the
+        // user is signed out. Retry with backoff before giving up, so a
+        // transient connectivity blip right after login doesn't strand the
+        // user on the login screen despite a valid stored session.
+        if (attempt < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+          continue;
+        }
       }
-
-      const apiBase = getApiBaseUrl();
-      const res = await fetch(`${apiBase}/api/auth/user`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-
-      if (data.user) {
-        setUser(data.user as User);
-        setSessionExpired(false);
-      } else {
-        await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
-        setUser(null);
-        setSessionExpired(true);
-      }
-    } catch {
-      setUser(null);
-    } finally {
-      setIsLoading(false);
     }
+
+    // All retries exhausted due to network errors. Keep the existing user
+    // state (if any) rather than forcing a sign-out — the token is still
+    // valid, we just couldn't reach the server.
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
