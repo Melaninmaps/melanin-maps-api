@@ -18,7 +18,7 @@ import { useColors } from "@/hooks/useColors";
 
 function getApiBase() { return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : ""; }
 async function getToken() { try { return Platform.OS === "web" ? null : await SecureStore.getItemAsync("auth_session_token"); } catch { return null; } }
-async function authHeaders() { const t = await getToken(); return t ? { Authorization: `Bearer ${t}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" }; }
+async function authHeaders(): Promise<Record<string, string>> { const t = await getToken(); return t ? { Authorization: `Bearer ${t}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" }; }
 
 interface Roadmap { id: string; title: string; description: string | null; coverEmoji: string; topicName: string | null; intent: string | null; totalSteps: number; completedSteps: number; }
 interface RoadmapStep { id: string; category: string; categoryEmoji: string; title: string; description: string | null; displayOrder: number; isComplete: boolean; priority: string; externalUrl: string | null; externalLabel: string | null; }

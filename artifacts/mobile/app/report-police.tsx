@@ -75,7 +75,7 @@ const SEVERITY_OPTIONS = [
   { id: "critical", label: "Critical", sub: "Active danger", color: "#7C2D12", bg: "#7C2D1215" },
 ];
 
-interface FormData {
+interface ReportForm {
   encounterType: string;
   severity: string;
   city: string;
@@ -84,7 +84,7 @@ interface FormData {
   isAnonymous: boolean;
 }
 
-const INITIAL: FormData = {
+const INITIAL: ReportForm = {
   encounterType: "",
   severity: "medium",
   city: "",
@@ -130,7 +130,7 @@ export default function ReportPoliceScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<FormData>(INITIAL);
+  const [form, setForm] = useState<ReportForm>(INITIAL);
   const [cityFocused, setCityFocused] = useState(false);
   const [neighFocused, setNeighFocused] = useState(false);
   const [descFocused, setDescFocused] = useState(false);
@@ -146,7 +146,7 @@ export default function ReportPoliceScreen() {
       const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
       if (geo) {
         const neigh = [geo.streetNumber, geo.street].filter(Boolean).join(" ") || geo.subregion || "";
-        setForm((f) => ({ ...f, neighborhood: neigh, city: geo.city ?? f.city, state: geo.region ?? f.state }));
+        setForm((f) => ({ ...f, neighborhood: neigh, city: geo.city ?? f.city }));
       }
     } catch { Alert.alert("Location Error", "Could not get your location. Try again."); }
     finally { setLocating(false); }

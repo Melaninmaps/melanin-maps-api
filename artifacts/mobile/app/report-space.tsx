@@ -40,7 +40,7 @@ const CONCERN_TYPES = [
   { id: "other", label: "Other", icon: "more-horizontal" as const },
 ];
 
-interface FormData {
+interface ReportForm {
   spaceName: string;
   address: string;
   city: string;
@@ -50,7 +50,7 @@ interface FormData {
   isAnonymous: boolean;
 }
 
-const INITIAL: FormData = {
+const INITIAL: ReportForm = {
   spaceName: "",
   address: "",
   city: "",
@@ -101,7 +101,7 @@ export default function ReportSpaceScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<FormData>(INITIAL);
+  const [form, setForm] = useState<ReportForm>(INITIAL);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [locating, setLocating] = useState(false);
@@ -115,7 +115,7 @@ export default function ReportSpaceScreen() {
       const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
       if (geo) {
         const addr = [geo.streetNumber, geo.street].filter(Boolean).join(" ");
-        setForm((f) => ({ ...f, address: addr, city: geo.city ?? f.city, state: geo.region ?? f.state }));
+        setForm((f) => ({ ...f, address: addr, city: geo.city ?? f.city }));
       }
     } catch { Alert.alert("Location Error", "Could not get your location. Try again."); }
     finally { setLocating(false); }
