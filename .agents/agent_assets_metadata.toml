@@ -269,3 +269,9 @@ id = "mXnlzYrqi8vO-gk9KudC0"
 uri = "file://attached_assets/ipad_screenshot_5_membership.png"
 type = "image"
 title = "5 — Membership / Profile (2064×2752)"
+
+[[outputs]]
+id = "K_H471-5pTBIe7opvq-mX"
+uri = "file://subscription-images/subscription-review.png"
+type = "image"
+title = "Subscription Review Image (1024x1024)"
