@@ -171,7 +171,7 @@ export default function NotificationCenterScreen() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, Platform.OS === "ios" ? 44 : 24);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   const [activeTab, setActiveTab] = useState<NotifType>("all");
