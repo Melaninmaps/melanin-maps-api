@@ -571,11 +571,19 @@ export default function ProfileScreen() {
           </Text>
           <TouchableOpacity
             style={[styles.signInBtn, { backgroundColor: colors.primary }]}
-            onPress={login}
+            onPress={() => router.push("/signup" as any)}
             activeOpacity={0.85}
           >
-            <Feather name="log-in" size={18} color="#FFFFFF" />
-            <Text style={styles.signInBtnText}>Sign In</Text>
+            <Feather name="user-plus" size={18} color="#FFFFFF" />
+            <Text style={styles.signInBtnText}>Create Account — It's Free</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.signInBtnGhost, { borderColor: colors.primary + "60" }]}
+            onPress={() => router.push("/login" as any)}
+            activeOpacity={0.85}
+          >
+            <Feather name="log-in" size={18} color={colors.primary} />
+            <Text style={[styles.signInBtnGhostText, { color: colors.primary }]}>I Already Have an Account</Text>
           </TouchableOpacity>
           <View style={styles.benefitsGrid}>
             {[
@@ -1319,9 +1327,11 @@ const styles = StyleSheet.create({
   signInBtn: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "stretch",
     gap: 10,
     paddingHorizontal: 32,
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderRadius: 14,
     marginTop: 4,
   },
@@ -1329,6 +1339,22 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
     fontSize: 16,
     color: "#FFFFFF",
+  },
+  signInBtnGhost: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "stretch",
+    gap: 10,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    marginTop: 2,
+  },
+  signInBtnGhostText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
   },
   benefitsGrid: {
     flexDirection: "row",

@@ -1,8 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { db, usersTable, profileTagsTable, reviewsTable, memberConnections } from "@workspace/db";
-import { eq, ilike, or, and, ne, desc, inArray } from "drizzle-orm";
+import { db, usersTable, profileTagsTable, reviewsTable, memberConnections, userFollowsTable } from "@workspace/db";
+import { eq, ilike, or, and, ne, desc, inArray, sql } from "drizzle-orm";
 import { objectStorageClient } from "../lib/objectStorage";
 
 const avatarUpload = multer({
@@ -243,29 +243,50 @@ router.patch("/users/me", async (req: Request, res: Response) => {
   }
 });
 
-/* ── Public user profile ─────────────────────────────────────────────── */
+/* ── Privacy & bio update ────────────────────────────────────────────── */
 router.patch("/users/me/privacy", async (req: Request, res: Response) => {
-  if (!req.user?.id) {
-    res.status(401).json({ error: "Authentication required" });
-    return;
-  }
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const { isPrivate, bio } = req.body as Record<string, unknown>;
+
   try {
-    const { isPrivate } = req.body as { isPrivate?: unknown };
-    if (typeof isPrivate !== "boolean") {
-      res.status(400).json({ error: "isPrivate must be a boolean" });
-      return;
-    }
+    const updates: Partial<typeof usersTable.$inferInsert> = {};
+    if (typeof isPrivate === "boolean") updates.isPrivate = isPrivate;
+    if (typeof bio === "string") updates.bio = bio.trim().slice(0, 300) || null;
+
+    if (Object.keys(updates).length === 0) { res.status(400).json({ error: "Nothing to update" }); return; }
+
     const [user] = await db
       .update(usersTable)
-      .set({ isPrivate, updatedAt: new Date() })
+      .set({ ...updates, updatedAt: new Date() })
       .where(eq(usersTable.id, req.user.id))
-      .returning();
-    if (!user) {
-      res.status(404).json({ error: "User not found" });
-      return;
+      .returning({
+        isPrivate: usersTable.isPrivate,
+        bio: usersTable.bio,
+      });
+
+    // When switching to public: auto-accept all pending follow requests
+    if (isPrivate === false) {
+      const pending = await db
+        .select({ id: userFollowsTable.id, followerId: userFollowsTable.followerId })
+        .from(userFollowsTable)
+        .where(and(eq(userFollowsTable.followingId, req.user.id), eq(userFollowsTable.status, "pending")));
+
+      if (pending.length > 0) {
+        await db.update(userFollowsTable)
+          .set({ status: "accepted", acceptedAt: new Date() })
+          .where(and(eq(userFollowsTable.followingId, req.user.id), eq(userFollowsTable.status, "pending")));
+        await db.update(usersTable)
+          .set({ followersCount: sql`${usersTable.followersCount} + ${pending.length}` })
+          .where(eq(usersTable.id, req.user.id));
+        for (const p of pending) {
+          await db.update(usersTable)
+            .set({ followingCount: sql`${usersTable.followingCount} + 1` })
+            .where(eq(usersTable.id, p.followerId));
+        }
+      }
     }
-    const { stripeCustomerId, stripeSubscriptionId, pushToken, ...safeUser } = user;
-    res.json({ user: safeUser });
+
+    res.json({ user });
   } catch (err) {
     req.log.error({ err }, "PATCH /api/users/me/privacy error");
     res.status(500).json({ error: "Failed to update privacy setting" });

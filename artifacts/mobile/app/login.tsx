@@ -198,8 +198,28 @@ export default function LoginScreen() {
 
         {!!error && (
           <View style={[styles.errorBox, { backgroundColor: "#FEE2E2" }]}>
-            <Feather name="alert-circle" size={14} color="#DC2626" />
-            <Text style={styles.errorTxt}>{error}</Text>
+            <Feather name="alert-circle" size={14} color="#DC2626" style={{ marginTop: 1 }} />
+            <View style={{ flex: 1, gap: 8 }}>
+              <Text style={styles.errorTxt}>{error}</Text>
+              {error.toLowerCase().includes("apple") && Platform.OS === "ios" && (
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={handleAppleSignIn}
+                  style={styles.errorAppleBtn}
+                >
+                  <Feather name="arrow-up" size={12} color="#DC2626" />
+                  <Text style={styles.errorAppleTxt}>Tap "Continue with Apple" above to sign in</Text>
+                </TouchableOpacity>
+              )}
+              {error.toLowerCase().includes("apple") && (
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => router.push("/forgot-password" as any)}
+                >
+                  <Text style={[styles.errorAppleTxt, { color: "#B91C1C" }]}>Or use Forgot Password to set an email password →</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         )}
 
@@ -332,7 +352,9 @@ const styles = StyleSheet.create({
   },
   biometricTxt: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   errorBox: { flexDirection: "row", alignItems: "flex-start", gap: 8, padding: 12, borderRadius: 10, marginBottom: 16 },
-  errorTxt: { color: "#DC2626", fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
+  errorTxt: { color: "#DC2626", fontSize: 13, fontFamily: "Inter_400Regular" },
+  errorAppleBtn: { flexDirection: "row", alignItems: "center", gap: 4 },
+  errorAppleTxt: { color: "#DC2626", fontSize: 12, fontFamily: "Inter_600SemiBold", textDecorationLine: "underline" },
   googleBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",
     gap: 10, paddingVertical: 16, borderRadius: 14, borderWidth: 1, marginBottom: 12,
