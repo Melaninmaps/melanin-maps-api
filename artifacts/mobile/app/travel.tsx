@@ -64,7 +64,30 @@ const COMPANION_OPTIONS = [
   { id: "friends", label: "Friends" },
   { id: "colleagues", label: "Colleagues" },
 ];
-const SUGGESTED_CITIES = ["Atlanta", "Houston", "New Orleans", "DC", "Chicago", "LA", "Miami", "Philly"];
+const LIFE_CHIPS: { emoji: string; label: string; prompt: string }[] = [
+  { emoji: "🏠", label: "I'm Moving", prompt: "I'm thinking about relocating" },
+  { emoji: "✈️", label: "I'm Traveling", prompt: "I'm planning a trip" },
+  { emoji: "💼", label: "My Career", prompt: "I need help with my career" },
+  { emoji: "🛍", label: "Find Businesses", prompt: "Help me find minority-owned businesses near me" },
+  { emoji: "🤝", label: "Community", prompt: "I want to connect with my community" },
+  { emoji: "🛡", label: "Stay Safe", prompt: "I want to check safety info for my area" },
+  { emoji: "❤️", label: "Healthcare", prompt: "I need healthcare recommendations" },
+  { emoji: "🎓", label: "Schools", prompt: "I need help finding good schools" },
+];
+const WELCOME_HEADLINES = [
+  "What are you navigating today?",
+  "Looking for your next favorite place?",
+  "Planning a move?",
+  "Need a trusted recommendation?",
+  "Looking for community?",
+  "Tell me where you're headed.",
+  "Need help deciding?",
+  "Looking for hidden gems?",
+  "Let's map it out.",
+  "Ready for your next adventure?",
+  "What's your next chapter?",
+  "How can I help today?",
+];
 const WELCOME_CHIPS = [
   "Where's good to eat in Atlanta?",
   "Best minority-owned hotels in Houston",
@@ -617,14 +640,16 @@ function WelcomeScreen({
   onChipPress: (t: string) => void;
   onCityPress: (c: string) => void;
 }) {
+  const [headline] = useState(() => WELCOME_HEADLINES[Math.floor(Math.random() * WELCOME_HEADLINES.length)]);
+
   return (
     <View style={wsStyles.container}>
       <View style={[wsStyles.iconWrap, { backgroundColor: colors.primary + "18" }]}>
         <Ionicons name="sparkles" size={36} color={colors.primary} />
       </View>
-      <Text style={[wsStyles.title, { color: colors.text }]}>Hey, I'm KinfolkAI™</Text>
+      <Text style={[wsStyles.title, { color: colors.text }]}>Welcome Home.</Text>
       <Text style={[wsStyles.sub, { color: colors.mutedForeground }]}>
-        {getDailyQuoteText("kinfolk")}
+        {headline}
       </Text>
 
       {/* Trip Journals shortcut */}
@@ -641,20 +666,20 @@ function WelcomeScreen({
         <Ionicons name="arrow-forward" size={16} color="#C9922B" />
       </TouchableOpacity>
 
-      <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground }]}>Where you headed?</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-        {SUGGESTED_CITIES.map((c) => (
+      <View style={wsStyles.lifeChipsWrap}>
+        {LIFE_CHIPS.map((c) => (
           <TouchableOpacity
-            key={c}
-            style={[wsStyles.cityChip, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => onCityPress(c)}
-            activeOpacity={0.7}
+            key={c.label}
+            style={[wsStyles.lifeChip, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => onChipPress(c.prompt)}
+            activeOpacity={0.75}
           >
-            <Text style={[wsStyles.cityChipText, { color: colors.text }]}>{c}</Text>
+            <Text style={wsStyles.lifeChipEmoji}>{c.emoji}</Text>
+            <Text style={[wsStyles.lifeChipText, { color: colors.text }]}>{c.label}</Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
-      <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground }]}>Or try asking:</Text>
+      </View>
+      <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground, marginTop: 8 }]}>Or try asking:</Text>
       {WELCOME_CHIPS.map((c) => (
         <TouchableOpacity
           key={c}
@@ -684,6 +709,10 @@ const wsStyles = StyleSheet.create({
   journalEmoji: { fontSize: 26 },
   journalTitle: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#FFFFFF", marginBottom: 2 },
   journalSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.75)" },
+  lifeChipsWrap: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 20 },
+  lifeChip: { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 9 },
+  lifeChipEmoji: { fontSize: 14 },
+  lifeChipText: { fontFamily: "Inter_600SemiBold", fontSize: 12.5 },
 });
 
 // ─── Sub-component: Taste Profile Sheet ─────────────────────────────────────
@@ -1640,7 +1669,7 @@ export default function TravelScreen() {
           </TouchableOpacity>
           <TextInput
             style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
-            placeholder="Ask KinfolkAI anything…"
+            placeholder="Or tell me anything…"
             placeholderTextColor={colors.mutedForeground}
             value={inputText}
             onChangeText={setInputText}

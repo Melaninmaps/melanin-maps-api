@@ -267,8 +267,15 @@ export default function NeighborhoodSurveyScreen() {
 
             <View style={styles.qBlock}>
               <Text style={[styles.qLabel, { color: colors.foreground }]}>City</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground, marginBottom: 10 }]}
+                placeholder="Search by city name or zip/postal code…"
+                placeholderTextColor={colors.mutedForeground}
+                value={city}
+                onChangeText={setCity}
+              />
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }} contentContainerStyle={{ paddingHorizontal: 4, gap: 8 }}>
-                {CITIES.map((c) => (
+                {CITIES.filter((c) => c !== "Other").map((c) => (
                   <TouchableOpacity activeOpacity={0.85}
                     key={c}
                     style={[styles.cityChip, { backgroundColor: city === c ? colors.primary : colors.secondary, borderColor: city === c ? colors.primary : colors.border }]}
