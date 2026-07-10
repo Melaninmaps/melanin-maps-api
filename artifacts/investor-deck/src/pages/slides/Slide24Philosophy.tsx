@@ -1,5 +1,5 @@
-const BUSINESSES_KEEP = ["Website", "Booking system", "Social media", "Customer relationships"];
-const COMMUNITIES_KEEP = ["Their voice", "Local knowledge", "Recommendations", "Trust"];
+const BUSINESSES_KEEP = ["Their website", "Their booking system", "Their social media", "Their customer relationships"];
+const COMMUNITIES_KEEP = ["Their voice", "Local knowledge", "Trusted recommendations", "Trust"];
 
 export default function Slide24Philosophy() {
   return (
@@ -21,7 +21,7 @@ export default function Slide24Philosophy() {
       <div className="absolute left-1/2 top-[28vh] -translate-x-1/2 flex" style={{ gap: "6vw" }}>
         <div className="flex flex-col items-start">
           <div className="font-body mb-[1.6vh]" style={{ fontSize: "1.3vw", color: "#A6720F", letterSpacing: "0.08em", fontWeight: 700 }}>
-            BUSINESSES KEEP
+            BUSINESSES KEEP OWNERSHIP OF...
           </div>
           <div className="flex flex-col gap-[1vh]">
             {BUSINESSES_KEEP.map((item) => (
@@ -35,7 +35,7 @@ export default function Slide24Philosophy() {
         <div style={{ width: "1px", background: "rgba(58,31,14,0.15)" }} />
         <div className="flex flex-col items-start">
           <div className="font-body mb-[1.6vh]" style={{ fontSize: "1.3vw", color: "#A6720F", letterSpacing: "0.08em", fontWeight: 700 }}>
-            COMMUNITIES KEEP
+            COMMUNITIES KEEP...
           </div>
           <div className="flex flex-col gap-[1vh]">
             {COMMUNITIES_KEEP.map((item) => (
