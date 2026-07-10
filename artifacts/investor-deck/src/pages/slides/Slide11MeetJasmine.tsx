@@ -1,5 +1,13 @@
 const base = import.meta.env.BASE_URL;
 
+const CHECKLIST = [
+  "New city",
+  "Knows no one",
+  "Looking for housing",
+  "Wants to support local businesses",
+  "Wants to feel safe",
+];
+
 export default function Slide11MeetJasmine() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
@@ -11,18 +19,28 @@ export default function Slide11MeetJasmine() {
       </div>
 
       <div className="absolute right-[6vw] top-1/2 -translate-y-1/2" style={{ left: "46vw" }}>
-        <div className="font-body mb-[2vh]" style={{ fontSize: "1.8vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
+        <div className="font-body mb-[2vh]" style={{ fontSize: "1.4vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
           A USER STORY
         </div>
-        <h1 className="font-display leading-tight" style={{ fontSize: "5vw", fontWeight: 700, color: "#1C0E06" }}>
+        <h1 className="font-display leading-tight" style={{ fontSize: "4.4vw", fontWeight: 700, color: "#1C0E06" }}>
           Meet Jasmine.
         </h1>
-        <div className="inv-rule w-[8vw] my-[2.5vh]" />
-        <div className="font-body" style={{ fontSize: "2.6vw", color: "#3A1F0E", fontWeight: 400 }}>
-          She&rsquo;s relocating from Philadelphia to Houston.
+        <div className="inv-rule w-[8vw] my-[2.2vh]" />
+        <div className="font-body" style={{ fontSize: "1.7vw", color: "#3A1F0E", fontWeight: 400, lineHeight: 1.4 }}>
+          She just accepted her dream job in Houston.
         </div>
-        <div className="font-body mt-[2vh]" style={{ fontSize: "2.6vw", color: "#7B5408", fontWeight: 300 }}>
-          She opens Mapping with Melanin&trade;&hellip;
+
+        <div className="mt-[3vh]" style={{ display: "flex", flexDirection: "column", gap: "1.3vh" }}>
+          {CHECKLIST.map((item) => (
+            <div key={item} className="font-body" style={{ fontSize: "1.35vw", color: "#7B5408", fontWeight: 500, display: "flex", alignItems: "center", gap: "0.9vw" }}>
+              <span style={{ color: "#CA922B", fontSize: "1.3vw", fontWeight: 700 }}>&#10003;</span>
+              {item}
+            </div>
+          ))}
+        </div>
+
+        <div className="font-display mt-[3.2vh]" style={{ fontSize: "1.9vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
+          Then she opens Mapping with Melanin&trade;.
         </div>
       </div>
     </div>
