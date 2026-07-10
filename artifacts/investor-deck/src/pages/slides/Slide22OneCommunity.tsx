@@ -22,6 +22,14 @@ export default function Slide21OneCommunity() {
       <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 50% 20%, rgba(202,146,43,0.18), transparent 55%)" }} />
       <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>29</div>
 
+      <div className="absolute left-0 right-0 text-center px-[10vw]" style={{ bottom: "8vh" }}>
+        <div style={{ height: "1px", background: "rgba(202,146,43,0.25)", marginBottom: "2.5vh" }} />
+        <div className="font-display" style={{ fontSize: "1.6vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.5 }}>
+          This is bigger than finding businesses.<br />
+          It's about strengthening <span style={{ color: "#CA922B" }}>communities</span> through <span style={{ color: "#CA922B" }}>economic opportunity</span>.
+        </div>
+      </div>
+
       <div className="absolute left-[6vw] right-[6vw] top-[7vh] text-center">
         <h1 className="font-display leading-tight" style={{ fontSize: "4.6vw", fontWeight: 700, color: "#FAF6EF" }}>
           Built for Every Part of the Community.
@@ -34,7 +42,7 @@ export default function Slide21OneCommunity() {
         </div>
       </div>
 
-      <div className="absolute left-[6vw] right-[6vw] grid grid-cols-3 gap-[2vw]" style={{ top: "36vh" }}>
+      <div className="absolute left-[6vw] right-[6vw] grid grid-cols-3 gap-[2vw]" style={{ top: "33vh" }}>
         {CARDS.map((card) => (
           <div key={card.label} className="p-[2vw]" style={{ borderRadius: "0.8vw", border: "1px solid rgba(202,146,43,0.25)", background: "rgba(250,246,239,0.04)" }}>
             <div className="mb-[1.2vh]" style={{ fontSize: "2.4vw", lineHeight: 1 }}>{card.emoji}</div>
