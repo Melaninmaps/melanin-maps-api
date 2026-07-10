@@ -8,7 +8,7 @@ export default function Slide15BusinessQuestion() {
           THE OTHER SIDE
         </div>
         <h1 className="font-display leading-tight" style={{ fontSize: "5.6vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
-          But what about the businesses Jasmine is discovering?
+          What about the businesses welcoming Jasmine?
         </h1>
       </div>
     </div>
