@@ -42,7 +42,7 @@
       },
       "android": {
         "buildType": "app-bundle",
-        "credentialsSource": "remote"
+        "credentialsSource": "local"
       },
       "env": {
         "EXPO_PUBLIC_DOMAIN": "www.mappingwithmelanin.com",

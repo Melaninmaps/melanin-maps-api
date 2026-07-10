@@ -14,6 +14,7 @@ ios/
 android/
 *.orig.*
 *.jks
+!new_upload_keystore.jks
 *.p8
 *.p12
 *.key
