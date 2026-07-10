@@ -4,7 +4,7 @@ const CHECKLIST = [
   "Starting over in a new city",
   "Looking for a neighborhood that feels like home",
   "Wants to support businesses that reflect her values",
-  "Looking to build real community",
+  "Looking to build meaningful connections",
   "Hopes she\u2019ll feel like she belongs",
 ];
 
