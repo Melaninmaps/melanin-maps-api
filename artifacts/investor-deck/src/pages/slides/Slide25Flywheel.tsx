@@ -13,10 +13,10 @@ const GAP_DEG = 13;
 // per-label fine-tuning: bring each word right to the circle edge
 const LABEL_RADIUS_OVERRIDE: Record<string, number> = {
   Community: 28.5,
-  Discovery: 29,
+  Discovery: 25,
   Recommendations: 29,
   "Thriving Businesses": 29,
-  "Community Grows": 29,
+  "Community Grows": 25,
 };
 
 function pointOnCircle(angleDeg: number, r: number, cx = 50, cy = 50) {
