@@ -28,7 +28,7 @@ export default function Slide26WhyFlywheelMatters() {
 
         <div className="flex-1 flex flex-col">
           <div className="font-body mb-[2.4vh]" style={{ fontSize: "1.15vw", color: "#CA922B", letterSpacing: "0.1em", fontWeight: 600 }}>
-            KINFOLK AI GETS SMARTER THROUGH
+            KINFOLK AI LEARNS FROM
           </div>
           <div className="flex flex-col" style={{ gap: "1.6vh" }}>
             {LEFT_ITEMS.map((item) => (
@@ -40,12 +40,12 @@ export default function Slide26WhyFlywheelMatters() {
           </div>
         </div>
 
-        {/* divider — 70% height, vertically centred */}
-        <div className="self-center" style={{ width: "1px", height: "70%", background: "rgba(202,146,43,0.3)", flexShrink: 0, margin: "0 1vw" }} />
+        {/* divider — 50% height, vertically centred */}
+        <div className="self-center" style={{ width: "1px", height: "50%", background: "rgba(202,146,43,0.3)", flexShrink: 0, margin: "0 1vw" }} />
 
         <div className="flex-1 flex flex-col">
           <div className="font-body mb-[2.4vh]" style={{ fontSize: "1.15vw", color: "#CA922B", letterSpacing: "0.1em", fontWeight: 600 }}>
-            WHICH HELPS IT
+            IT USES THAT KNOWLEDGE TO
           </div>
           <div className="flex flex-col" style={{ gap: "1.6vh" }}>
             {RIGHT_ITEMS.map((item) => (
@@ -61,9 +61,9 @@ export default function Slide26WhyFlywheelMatters() {
 
       <div className="absolute left-0 right-0 text-center px-[10vw]" style={{ bottom: "7vh" }}>
         <div style={{ height: "1px", background: "rgba(202,146,43,0.3)", marginBottom: "3vh" }} />
-        <div className="font-display" style={{ fontSize: "1.6vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.7 }}>
-          The community teaches Kinfolk AI.<br />
-          Kinfolk AI returns the favor.
+        <div className="font-display" style={{ fontSize: "1.76vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.7 }}>
+          The <span style={{ color: "#CA922B" }}>community</span> teaches <span style={{ color: "#CA922B" }}>Kinfolk AI</span>.<br />
+          <span style={{ color: "#CA922B" }}>Kinfolk AI</span> returns the favor.
         </div>
       </div>
     </div>
