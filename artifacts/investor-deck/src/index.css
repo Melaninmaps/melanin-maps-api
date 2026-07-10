@@ -8,6 +8,7 @@
   --color-muted: var(--slide-muted);
   --font-display: var(--font-display-family);
   --font-body: var(--font-body-family);
+  --font-quote: var(--font-quote-family);
 
   --text-xs: 0.75rem;
   --text-xs--line-height: calc(1 / 0.75);
@@ -44,8 +45,9 @@
   --slide-text: #1C0E06;
   --slide-muted: #7B5408;
   --slide-rule: #CA922B;
-  --font-display-family: "Playfair Display", Georgia, serif;
-  --font-body-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-display-family: "DM Sans", system-ui, sans-serif;
+  --font-body-family: "Inter", system-ui, sans-serif;
+  --font-quote-family: "Cormorant Garamond", Georgia, serif;
   color-scheme: light;
 }
 

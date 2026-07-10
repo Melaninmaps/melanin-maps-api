@@ -10,8 +10,8 @@ export default function Slide09AppOpen() {
         <div className="font-body mb-[3vh]" style={{ fontSize: "1.8vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
           THE EXPERIENCE
         </div>
-        <div className="font-display" style={{ fontSize: "3.4vw", color: "#CA922B", opacity: 0.5, lineHeight: 1 }}>&ldquo;</div>
-        <p className="font-display leading-snug" style={{ fontSize: "2.4vw", fontStyle: "italic", fontWeight: 600, color: "#FAF6EF", textWrap: "balance", marginTop: "-1vh" }}>
+        <div className="font-quote" style={{ fontSize: "3.4vw", color: "#CA922B", opacity: 0.5, lineHeight: 1, fontStyle: "italic" }}>&ldquo;</div>
+        <p className="font-quote leading-snug" style={{ fontSize: "2.6vw", fontStyle: "italic", fontWeight: 600, color: "#FAF6EF", textWrap: "balance", marginTop: "-1vh" }}>
           Finally a platform that actually understands what it means to travel while Minority. The safety scores alone are worth it &mdash; I checked three cities before my last trip and felt genuinely prepared.
         </p>
         <div className="font-body mt-[3vh]" style={{ fontSize: "1.15vw", color: "#CA922B", letterSpacing: "0.04em" }}>
