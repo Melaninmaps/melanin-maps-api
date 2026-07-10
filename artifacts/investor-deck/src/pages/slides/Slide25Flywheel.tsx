@@ -1,8 +1,8 @@
 const STEPS = ["Community", "Discovery", "Recommendations", "Business Growth", "Community Grows"];
 const GOLD_STEPS = new Set(["Community", "Business Growth"]);
-const ARC_RADIUS = 22;
-const LABEL_RADIUS = 34;
-const GAP_DEG = 14;
+const ARC_RADIUS = 26;
+const LABEL_RADIUS = 26;
+const GAP_DEG = 16;
 
 function pointOnCircle(angleDeg: number, r: number, cx = 50, cy = 50) {
   const rad = (angleDeg * Math.PI) / 180;
@@ -40,7 +40,7 @@ export default function Slide25Flywheel() {
         </div>
       </div>
 
-      <div className="absolute" style={{ left: "50%", top: "48%", transform: "translate(-50%, -50%)", width: "56vw", height: "56vw" }}>
+      <div className="absolute" style={{ left: "50%", top: "48%", transform: "translate(-50%, -50%)", width: "72vw", height: "72vw" }}>
         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" style={{ overflow: "visible" }}>
           <defs>
             <marker id="arrowhead" markerWidth="3.2" markerHeight="3.2" refX="1.6" refY="1.6" orient="auto-start-reverse">
