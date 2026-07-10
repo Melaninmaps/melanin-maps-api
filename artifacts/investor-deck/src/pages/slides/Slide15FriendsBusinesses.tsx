@@ -7,7 +7,7 @@ export default function Slide14FriendsBusinesses() {
 
       <div className="absolute left-[6vw] top-1/2 -translate-y-1/2" style={{ maxWidth: "34vw" }}>
         <div className="font-body mb-[2vh]" style={{ fontSize: "1.1vw", color: "#A6720F", letterSpacing: "0.16em", fontWeight: 500 }}>
-          JASMINE&rsquo;S JOURNEY &mdash; SHE GIVES BACK
+          JASMINE&rsquo;S JOURNEY &mdash; SHE PAYS IT FORWARD
         </div>
         <h1 className="font-display leading-tight" style={{ fontSize: "3.6vw", fontWeight: 700, color: "#1C0E06", textWrap: "balance" }}>
           Now she helps the next newcomer.
@@ -16,10 +16,13 @@ export default function Slide14FriendsBusinesses() {
         <div className="font-body mb-[3.2vh]" style={{ fontSize: "1.2vw", color: "#3A1F0E", fontWeight: 400, lineHeight: 1.5, textWrap: "balance" }}>
           She leaves the first review. She recommends her doctor. She welcomes the next person who&rsquo;s just landed in Houston &mdash; the way someone once welcomed her.
         </div>
-        <div className="font-display" style={{ fontSize: "1.7vw", fontWeight: 700, color: "#A6720F", textWrap: "balance" }}>
-          One search becomes one relationship.
+        <div className="font-display" style={{ fontSize: "1.6vw", fontWeight: 700, color: "#A6720F", textWrap: "balance" }}>
+          One person finds home.
           <br />
-          One relationship becomes community.
+          Then they help someone else find theirs.
+        </div>
+        <div className="font-display mt-[1.6vh]" style={{ fontSize: "1.3vw", fontWeight: 700, color: "#1C0E06", fontStyle: "italic" }}>
+          That is Mapping with Melanin&trade;.
         </div>
       </div>
 
@@ -60,7 +63,7 @@ export default function Slide14FriendsBusinesses() {
                   </div>
                 </div>
                 <div className="font-body mt-[0.4vw]" style={{ fontSize: "0.58vw", color: "#3A1F0E", lineHeight: 1.4 }}>
-                  &ldquo;This was the first place that felt like family. Now it&rsquo;s the first place I tell every newcomer to try.&rdquo;
+                  &ldquo;Moving is hard. Finding places like this makes it easier. I recommend this to every newcomer.&rdquo;
                 </div>
               </div>
             </div>
