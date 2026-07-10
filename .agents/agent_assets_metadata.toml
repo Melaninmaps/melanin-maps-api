@@ -479,3 +479,9 @@ id = "8FQQ_UP5RMCDXBlIioEgb"
 uri = "file://attached_assets/appstore_final/settings_crop.png"
 type = "image"
 title = "Settings list (iPad) — 1668x2388"
+
+[[outputs]]
+id = "MUkdGT24E1JtJ0kg1wLJC"
+uri = "file://upload_certificate.txt"
+type = "text"
+title = "New Upload Key Certificate (PEM) — upload this file to Play Console"
