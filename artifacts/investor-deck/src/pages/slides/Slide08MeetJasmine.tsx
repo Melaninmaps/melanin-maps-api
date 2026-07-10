@@ -5,24 +5,40 @@ export default function Slide08MeetJasmine() {
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
       <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>08</div>
 
-      <div className="absolute left-0 top-0 w-[42vw] h-full overflow-hidden">
-        <img src={`${base}photos/traveler-airport.jpg`} crossOrigin="anonymous" alt="Jasmine" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(28,14,6,0.05), rgba(28,14,6,0.55))" }} />
+      <div className="absolute left-[6vw] top-1/2 -translate-y-1/2" style={{ maxWidth: "34vw" }}>
+        <h1 className="font-display leading-tight" style={{ fontSize: "5.6vw", fontWeight: 700, color: "#1C0E06" }}>
+          Thrive.
+        </h1>
+        <div className="font-display leading-tight mt-[2.5vh]" style={{ fontSize: "2.4vw", fontWeight: 700, color: "#A6720F", textWrap: "balance" }}>
+          Communities thrive when local businesses thrive.
+        </div>
+        <div className="font-body mt-[2.5vh]" style={{ fontSize: "1.4vw", color: "#7B5408", fontWeight: 400, lineHeight: 1.5, textWrap: "balance" }}>
+          We help minority-owned businesses get discovered, send customers to their own sites and social&mdash;not away from them&mdash;and turn supporters into repeat customers.
+        </div>
+        <div className="inv-rule mt-[3.5vh] mb-[1.6vh]" style={{ width: "5vw" }} />
+        <div className="font-display" style={{ fontSize: "1.5vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
+          Economic empowerment, not just exposure.
+        </div>
       </div>
 
-      <div className="absolute right-[6vw] top-1/2 -translate-y-1/2" style={{ left: "46vw" }}>
-        <div className="font-body mb-[2vh]" style={{ fontSize: "1.8vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
-          A USER STORY
+      <div className="absolute top-1/2 -translate-y-1/2 flex items-center" style={{ right: "6vw" }}>
+        <div className="relative flex-shrink-0" style={{ width: "19vw", height: "40.85vw", borderRadius: "2.09vw", border: "0.475vw solid #3A1F0E", background: "#1C0E06", boxShadow: "0 1.4vw 2.8vw rgba(28,14,6,0.22)", overflow: "hidden" }}>
+          <img src={`${base}mockups/app-businesses.jpg`} crossOrigin="anonymous" alt="Business discovery screen" className="absolute inset-0 w-full h-full object-cover" />
         </div>
-        <h1 className="font-display leading-tight" style={{ fontSize: "5vw", fontWeight: 700, color: "#1C0E06" }}>
-          Meet Jasmine.
-        </h1>
-        <div className="inv-rule w-[8vw] my-[2.5vh]" />
-        <div className="font-body" style={{ fontSize: "2.6vw", color: "#3A1F0E", fontWeight: 400 }}>
-          She&rsquo;s relocating from Philadelphia to Houston.
-        </div>
-        <div className="font-body mt-[2vh]" style={{ fontSize: "2.6vw", color: "#7B5408", fontWeight: 300 }}>
-          She opens Mapping with Melanin&trade;&hellip;
+
+        <div className="flex flex-col gap-[3.4vh]" style={{ marginLeft: "2.4vw", width: "12vw" }}>
+          <div className="flex items-center gap-[0.5vw]">
+            <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
+            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Get discovered</strong> by customers actively looking.</span>
+          </div>
+          <div className="flex items-center gap-[0.5vw]">
+            <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
+            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Keep the relationship</strong>&mdash;we send traffic to you.</span>
+          </div>
+          <div className="flex items-center gap-[0.5vw]">
+            <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
+            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Act on real feedback</strong> from your own community.</span>
+          </div>
         </div>
       </div>
     </div>

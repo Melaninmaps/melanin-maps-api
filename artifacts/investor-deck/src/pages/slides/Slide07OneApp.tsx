@@ -22,22 +22,22 @@ export default function Slide07OneApp() {
       </div>
 
       <div className="absolute top-1/2 -translate-y-1/2 flex items-center" style={{ right: "6vw" }}>
-        <div className="relative flex-shrink-0" style={{ width: "20vw", height: "43vw", borderRadius: "2.2vw", border: "0.5vw solid #3A1F0E", background: "#1C0E06", boxShadow: "0 1.4vw 2.8vw rgba(28,14,6,0.22)", overflow: "hidden" }}>
+        <div className="relative flex-shrink-0" style={{ width: "19vw", height: "40.85vw", borderRadius: "2.09vw", border: "0.475vw solid #3A1F0E", background: "#1C0E06", boxShadow: "0 1.4vw 2.8vw rgba(28,14,6,0.22)", overflow: "hidden" }}>
           <img src={`${base}mockups/app-community.jpg`} crossOrigin="anonymous" alt="Community screen" className="absolute inset-0 w-full h-full object-cover" />
         </div>
 
-        <div className="flex flex-col gap-[3.4vh]" style={{ marginLeft: "1.5vw", width: "12vw" }}>
+        <div className="flex flex-col gap-[3.4vh]" style={{ marginLeft: "2.4vw", width: "12vw" }}>
           <div className="flex items-center gap-[0.5vw]">
-            <div style={{ width: "0.9vw", height: "1px", background: "#CA922B", opacity: 0.45 }} />
-            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}>Join circles around shared interests.</span>
+            <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
+            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Join circles</strong> around shared interests.</span>
           </div>
           <div className="flex items-center gap-[0.5vw]">
-            <div style={{ width: "0.9vw", height: "1px", background: "#CA922B", opacity: 0.45 }} />
-            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}>Meet people before you arrive.</span>
+            <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
+            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Meet people</strong> before you arrive.</span>
           </div>
           <div className="flex items-center gap-[0.5vw]">
-            <div style={{ width: "0.9vw", height: "1px", background: "#CA922B", opacity: 0.45 }} />
-            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}>Build trusted relationships before moving or traveling.</span>
+            <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
+            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Build trusted relationships</strong> before moving or traveling.</span>
           </div>
         </div>
       </div>
