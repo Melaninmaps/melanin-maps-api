@@ -51,7 +51,7 @@ export default function Slide25Flywheel() {
         </div>
       </div>
 
-      <div className="absolute" style={{ left: "53%", top: "44%", transform: "translate(-50%, -50%)", width: "66vw", height: "66vw" }}>
+      <div className="absolute" style={{ left: "53%", top: "41%", transform: "translate(-50%, -50%)", width: "60vw", height: "60vw" }}>
         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" style={{ overflow: "visible" }}>
           <defs>
             <marker id="arrowhead" markerWidth="3.2" markerHeight="3.2" refX="1.6" refY="1.6" orient="auto-start-reverse">
@@ -112,8 +112,8 @@ export default function Slide25Flywheel() {
         </div>
       </div>
 
-      <div className="absolute left-0 right-0 text-center px-[10vw]" style={{ bottom: "3.5vh" }}>
-        <div className="font-display" style={{ fontSize: "1.4vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.5 }}>
+      <div className="absolute left-0 right-0 text-center px-[4vw]" style={{ bottom: "6vh" }}>
+        <div className="font-display" style={{ fontSize: "1.6vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.4, whiteSpace: "nowrap" }}>
           Every recommendation strengthens the community. Every stronger community creates new opportunities for discovery.
         </div>
       </div>
