@@ -26,7 +26,7 @@ export default function Slide02Vignettes() {
         <div className="font-display leading-tight" style={{ fontSize: "4.4vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
           Communities don&rsquo;t happen by accident.
         </div>
-        <div className="font-body mt-[2vh]" style={{ fontSize: "2.4vw", fontWeight: 400, color: "#E8C97A" }}>
+        <div className="font-body mt-[2vh]" style={{ fontSize: "2.6vw", fontWeight: 400, color: "#E8C97A" }}>
           Someone chooses to build one.
         </div>
       </div>
