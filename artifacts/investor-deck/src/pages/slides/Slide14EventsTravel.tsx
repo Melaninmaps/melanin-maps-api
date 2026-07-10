@@ -1,17 +1,16 @@
 const base = import.meta.env.BASE_URL;
 
 const POSTS = [
-  { photo: "photos/feed-woman-shop.jpg", name: "Marcus W.", loc: "Chicago, IL", caption: "Found my business co-founder through a local meetup last week. This community shows up for each other.", likes: 84, comments: 12 },
   { photo: "photos/feed-friends-rooftop.jpg", name: "Jasmine T.", loc: "Houston, TX", caption: "Landed in a new city and already have people to meet this weekend. Never felt like a stranger.", likes: 61, comments: 9 },
   { photo: "photos/feed-woman-movein.jpg", name: "Aisha R.", loc: "Atlanta, GA", caption: "Six months in and this city finally feels like home. Grateful for this community.", likes: 103, comments: 18 },
 ];
 
 const CHECKLIST = [
   "She joins a neighborhood run club.",
-  "She recommends her favorite coffee shop.",
-  "She welcomes another newcomer.",
-  "She leaves her first community review.",
-  "Someone else discovers Houston because of her.",
+  "She shares businesses she loves with others.",
+  "She welcomes newcomers to Houston.",
+  "She helps others discover places they\u2019ll love.",
+  "She\u2019s part of the community that makes Houston feel like home.",
 ];
 
 export default function Slide13EventsTravel() {
@@ -54,6 +53,23 @@ export default function Slide13EventsTravel() {
               <span style={{ fontSize: "0.75vw" }}>🔔</span>
             </div>
             <div className="flex-1 overflow-hidden flex flex-col gap-[0.55vw] px-[0.55vw] pt-[0.55vw]">
+              <div className="rounded-[0.9vw] overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid rgba(58,31,14,0.08)" }}>
+                <div className="flex items-center gap-[0.5vw] px-[0.7vw] py-[0.55vw]">
+                  <div className="rounded-full flex-shrink-0 flex items-center justify-center" style={{ width: "1.8vw", height: "1.8vw", background: "#CA922B", fontSize: "0.75vw" }}>🏃🏾&zwj;♀️</div>
+                  <div>
+                    <div className="font-body" style={{ fontSize: "0.72vw", color: "#1C0E06", fontWeight: 700 }}>Houston Sunrise Run Club</div>
+                    <div className="font-body" style={{ fontSize: "0.6vw", color: "#A6720F" }}>Community Event &middot; This Saturday</div>
+                  </div>
+                </div>
+                <div className="mx-[0.7vw] mb-[0.6vw] rounded-[0.6vw] px-[0.7vw] py-[0.6vw]" style={{ background: "#FBF1DD", border: "1px dashed #CA922B" }}>
+                  <div className="font-body" style={{ fontSize: "0.65vw", color: "#3A1F0E", fontWeight: 600 }}>Saturday, 7:00 AM &middot; Memorial Park</div>
+                  <div className="font-body" style={{ fontSize: "0.6vw", color: "#7B5408", marginTop: "0.2vw" }}>Hosted by neighbors in her new community</div>
+                </div>
+                <div className="px-[0.7vw] pb-[0.6vw] flex items-center justify-between">
+                  <span className="font-body" style={{ fontSize: "0.6vw", color: "#B4832A" }}>18 going &middot; 6 new this week</span>
+                  <span className="font-display rounded-full px-[0.65vw] py-[0.25vw]" style={{ fontSize: "0.58vw", color: "#FAF6EF", background: "#1C0E06", fontWeight: 700 }}>Jasmine RSVP&rsquo;d &#10003;</span>
+                </div>
+              </div>
               {POSTS.map((p) => (
                 <div key={p.name} className="rounded-[0.9vw] overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid rgba(58,31,14,0.08)" }}>
                   <div className="flex items-center gap-[0.5vw] px-[0.7vw] py-[0.55vw]">
