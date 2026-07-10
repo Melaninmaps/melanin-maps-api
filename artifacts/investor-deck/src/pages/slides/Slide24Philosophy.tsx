@@ -53,7 +53,7 @@ export default function Slide24Philosophy() {
           Mapping with Melanin&trade; connects them.
         </div>
         <div className="font-body mt-[2vh]" style={{ fontSize: "1.25vw", color: "#3A1F0E", fontWeight: 500, lineHeight: 1.5 }}>
-          You don&rsquo;t just connect businesses to customers. You connect stories &mdash; Jasmine&rsquo;s, Marcus&rsquo;s, the neighborhood&rsquo;s, the city&rsquo;s.
+          We don&rsquo;t just connect businesses to customers. We connect stories &mdash; Jasmine&rsquo;s, Marcus&rsquo;s, the neighborhood&rsquo;s, the city&rsquo;s.
         </div>
       </div>
     </div>
