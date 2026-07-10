@@ -1,9 +1,64 @@
+const GOLD = "#A6720F";
+
+function Icon({ name }: { name: string }) {
+  const common = {
+    width: "2.2vw",
+    height: "2.2vw",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: GOLD,
+    strokeWidth: 1.3,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+  switch (name) {
+    case "discover":
+      return (
+        <svg {...common}>
+          <circle cx="10.5" cy="10.5" r="6.5" />
+          <line x1="15.3" y1="15.3" x2="21" y2="21" />
+        </svg>
+      );
+    case "connect":
+      return (
+        <svg {...common}>
+          <circle cx="8.5" cy="12" r="5" />
+          <circle cx="15.5" cy="12" r="5" />
+        </svg>
+      );
+    case "grow":
+      return (
+        <svg {...common}>
+          <path d="M12 21V10" />
+          <path d="M12 10C12 10 6 9.5 6 4C11.5 4 12 10 12 10Z" />
+          <path d="M12 13C12 13 18 12.5 18 7C12.5 7 12 13 12 13Z" />
+        </svg>
+      );
+    case "travel":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M15.2 8.8L13 13L8.8 15.2L11 11L15.2 8.8Z" />
+        </svg>
+      );
+    case "belong":
+      return (
+        <svg {...common}>
+          <path d="M4 11.5L12 4L20 11.5" />
+          <path d="M6.5 10V20H17.5V10" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 const pillars = [
-  { icon: "\u{1F50D}", title: "Discover" },
-  { icon: "\u{1F91D}\u{1F3FE}", title: "Connect" },
-  { icon: "\u{1F4C8}", title: "Grow" },
-  { icon: "\u2708\uFE0F", title: "Travel" },
-  { icon: "\u{1F90E}", title: "Belong" },
+  { icon: "discover", title: "Discover" },
+  { icon: "connect", title: "Connect" },
+  { icon: "grow", title: "Thrive" },
+  { icon: "travel", title: "Travel" },
+  { icon: "belong", title: "Belong" },
 ];
 
 export default function Slide05Mission() {
@@ -20,11 +75,26 @@ export default function Slide05Mission() {
         </h1>
       </div>
 
-      <div className="absolute left-[6vw] right-[6vw] top-[42vh] grid grid-cols-5 gap-[1.6vw]">
+      <div className="absolute left-[10vw] right-[10vw] top-[45vh]" style={{ height: "1px", background: GOLD, opacity: 0.3 }} />
+
+      <div className="absolute left-[6vw] right-[6vw] top-[38vh] grid grid-cols-5 gap-[1.6vw]">
         {pillars.map((p) => (
           <div key={p.title} className="flex flex-col items-center text-center gap-[1.6vh]">
-            <div style={{ fontSize: "3.2vw", lineHeight: 1 }}>{p.icon}</div>
-            <div className="font-display" style={{ fontSize: "2.4vw", fontWeight: 700, color: "#1C0E06" }}>{p.title}</div>
+            <div
+              className="flex items-center justify-center"
+              style={{
+                width: "5vw",
+                height: "5vw",
+                borderRadius: "50%",
+                border: `1.3px solid ${GOLD}`,
+                background: "#FAF6EF",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              <Icon name={p.icon} />
+            </div>
+            <div className="font-display" style={{ fontSize: "2vw", fontWeight: 700, color: "#1C0E06" }}>{p.title}</div>
           </div>
         ))}
       </div>

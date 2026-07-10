@@ -1,0 +1,99 @@
+The biggest issue
+The emojis.
+😊 They're fun.
+But they don't match the premium visual language you've established.
+Slides 1–4 feel like Apple.
+This slide feels like PowerPoint.
+That's not a criticism of you—it's just a shift in tone.
+Instead
+Use simple line icons.
+Very thin.
+Very modern.
+Single color.
+Gold.
+Examples:
+Discover → outline magnifying glass
+Connect → two linked circles or handshake icon
+Grow → upward arrow or sprouting leaf
+Travel → compass or location pin (rather than an airplane, which narrows the meaning)
+Belong → community or home icon (rather than a heart, which can imply romance or "liking")
+Those icons will age much better and match the sophistication of the rest of the deck.
+The title
+I LOVE this:
+Everything we built starts here.
+That feels like Apple.
+Keep it.
+"Five Principles"
+I also think this is stronger than "Five Pillars."
+It aligns with your mission.
+Here's the biggest idea I had
+I actually think these aren't just principles.
+They're a journey.
+Look at the order.
+Discover.
+↓
+Connect.
+↓
+Grow.
+↓
+Travel.
+↓
+Belong.
+That's literally the user experience.
+So...
+What if we visually communicated that?
+Instead of five isolated icons...
+Discover → Connect → Grow → Travel → Belong
+A subtle gold line connecting them.
+Now you've shown that each principle leads naturally into the next.
+One wording change
+I think "Grow" is the weakest word.
+Not because it's bad.
+Because it's broad.
+Ask yourself:
+Who grows?
+Businesses?
+Communities?
+People?
+Relationships?
+Investors might not know.
+Some alternatives to test:
+Thrive
+Empower
+Build
+Support
+Personally, I think Grow still works, but I'd explore it.
+My favorite refinement
+Instead of icons floating above the words...
+Imagine each principle inside a simple circle.
+○
+Discover
+
+○
+Connect
+
+○
+Grow
+Very clean.
+Very premium.
+Very intentional.
+Here's something I don't want you to miss
+This is where the audience is mentally asking:
+"Okay...show me."
+That's a great sign.
+Because it means we've earned the product reveal.
+I would NOT add more text.
+Resist the temptation.
+This slide is already saying:
+"Everything else you're about to see fits into one of these five ideas."
+That's exactly what it should do.
+Here's where I think we diverge from a typical startup deck
+Most founders would now create:
+Maps
+AI
+Reviews
+Safety
+Travel
+Events
+Six separate feature slides.
+I think that's a mistake.
