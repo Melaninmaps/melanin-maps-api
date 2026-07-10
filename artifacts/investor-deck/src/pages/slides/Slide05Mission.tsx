@@ -44,8 +44,10 @@ function Icon({ name }: { name: string }) {
     case "belong":
       return (
         <svg {...common}>
-          <path d="M4 11.5L12 4L20 11.5" />
-          <path d="M6.5 10V20H17.5V10" />
+          <circle cx="9" cy="8" r="2.6" />
+          <path d="M4.5 18.5C4.5 15 6.5 12.8 9 12.8C11.5 12.8 13.5 15 13.5 18.5" />
+          <circle cx="16" cy="9" r="2.2" />
+          <path d="M12.8 18.5C13 15.6 14.4 13.8 16.3 13.8C18.5 13.8 20 15.9 20 18.5" />
         </svg>
       );
     default:
@@ -66,25 +68,25 @@ export default function Slide05Mission() {
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
       <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>05</div>
 
-      <div className="absolute left-[6vw] right-[6vw] top-[16vh] text-center">
+      <div className="absolute left-[6vw] right-[6vw] top-[14vh] text-center">
         <div className="font-body" style={{ fontSize: "1.5vw", color: "#7B5408", letterSpacing: "0.16em", fontWeight: 500 }}>
-          FIVE PRINCIPLES
+          THE JOURNEY TO BELONGING
         </div>
-        <h1 className="font-display leading-tight mt-[1.5vh]" style={{ fontSize: "3.6vw", fontWeight: 700, color: "#1C0E06", textWrap: "balance" }}>
+        <h1 className="font-display leading-tight mt-[2.6vh]" style={{ fontSize: "3.6vw", fontWeight: 700, color: "#1C0E06", textWrap: "balance" }}>
           Everything we built starts here.
         </h1>
       </div>
 
-      <div className="absolute left-[10vw] right-[10vw] top-[45vh]" style={{ height: "1px", background: GOLD, opacity: 0.3 }} />
+      <div className="absolute left-[12vw] right-[12vw] top-[45vh]" style={{ height: "1px", background: GOLD, opacity: 0.3 }} />
 
-      <div className="absolute left-[6vw] right-[6vw] top-[38vh] grid grid-cols-5 gap-[1.6vw]">
+      <div className="absolute left-[6vw] right-[6vw] top-[39vh] grid grid-cols-5 gap-[1.6vw]">
         {pillars.map((p) => (
           <div key={p.title} className="flex flex-col items-center text-center gap-[1.6vh]">
             <div
               className="flex items-center justify-center"
               style={{
-                width: "5vw",
-                height: "5vw",
+                width: "4.5vw",
+                height: "4.5vw",
                 borderRadius: "50%",
                 border: `1.3px solid ${GOLD}`,
                 background: "#FAF6EF",
