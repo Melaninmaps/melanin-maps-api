@@ -9,7 +9,7 @@ const RIGHT_ITEMS = [
   "Recommend businesses people will love",
   "Surface hidden local gems",
   "Understand community preferences",
-  "Improve every future recommendation",
+  "Make every future recommendation smarter",
 ];
 
 export default function Slide26WhyFlywheelMatters() {
@@ -24,7 +24,7 @@ export default function Slide26WhyFlywheelMatters() {
         </div>
       </div>
 
-      <div className="absolute left-0 right-0 flex" style={{ top: "28vh", bottom: "22vh", paddingLeft: "10vw", paddingRight: "10vw", gap: "4vw" }}>
+      <div className="absolute left-0 right-0 flex" style={{ top: "22vh", bottom: "22vh", paddingLeft: "10vw", paddingRight: "10vw", gap: "4vw" }}>
 
         <div className="flex-1 flex flex-col">
           <div className="font-body mb-[2.4vh]" style={{ fontSize: "1.15vw", color: "#CA922B", letterSpacing: "0.1em", fontWeight: 600 }}>
@@ -40,12 +40,12 @@ export default function Slide26WhyFlywheelMatters() {
           </div>
         </div>
 
-        {/* divider — 50% height, vertically centred */}
-        <div className="self-center" style={{ width: "1px", height: "50%", background: "rgba(202,146,43,0.3)", flexShrink: 0, margin: "0 1vw" }} />
+        {/* divider — ends ~at last bullet */}
+        <div className="self-start" style={{ width: "1px", height: "38%", background: "rgba(202,146,43,0.3)", flexShrink: 0, margin: "3.2vh 1vw 0" }} />
 
         <div className="flex-1 flex flex-col">
           <div className="font-body mb-[2.4vh]" style={{ fontSize: "1.15vw", color: "#CA922B", letterSpacing: "0.1em", fontWeight: 600 }}>
-            IT USES THAT KNOWLEDGE TO
+            KINFOLK AI USES THAT KNOWLEDGE TO
           </div>
           <div className="flex flex-col" style={{ gap: "1.6vh" }}>
             {RIGHT_ITEMS.map((item) => (
