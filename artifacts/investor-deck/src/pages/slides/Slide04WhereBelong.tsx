@@ -9,8 +9,8 @@ export default function Slide04WhereBelong() {
         <div className="font-display leading-tight mt-[2vh]" style={{ fontSize: "6.2vw", fontWeight: 700, color: "#1C0E06", textWrap: "balance" }}>
           A community ecosystem.
         </div>
-        <div className="font-body mt-[4vh]" style={{ fontSize: "2vw", fontWeight: 400, color: "#7B5408", textWrap: "balance" }}>
-          Built to connect people with trusted businesses, meaningful relationships, and thriving communities.
+        <div className="font-display mt-[3vh]" style={{ fontSize: "2vw", fontWeight: 700, fontStyle: "italic", color: "#A6720F", textWrap: "balance" }}>
+          Where people, businesses, and belonging come together.
         </div>
       </div>
     </div>
