@@ -1,0 +1,75 @@
+1. Make the flywheel larger
+Right now the flywheel is taking up maybe 25% of the slide.
+This slide is the system.
+It deserves to own the page.
+I'd enlarge the circle about 40–50% and center it more.
+The explanatory text on the right should feel like a caption, not the main event.
+2. Make the arrows more obvious
+At first glance, I actually had to look for them.
+A flywheel should immediately communicate movement.
+I'd use slightly thicker gold arrows and have them wrap around the circle more clearly.
+The eye should naturally follow:
+Community → Discovery → Recommendations → Business Growth → More Community → Community
+3. Make the stages feel progressive
+Right now you have:
+Community
+Discovery
+Recommendations
+Business Growth
+More Community
+I'd make one tiny wording change.
+Instead of More Community
+I'd use
+Community Grows
+or
+Growing Community
+because it's an action.
+The sequence becomes:
+Community
+↓
+Discovery
+↓
+Recommendations
+↓
+Business Growth
+↓
+Community Grows
+↺
+That reads like momentum.
+4. I LOVE moving KinfolkAI outside the wheel
+This was exactly what I hoped you'd do.
+It subconsciously tells investors:
+The community is the engine.
+AI is the turbocharger.
+That's exactly the story you want.
+5. One sentence I'd tighten
+Current:
+Kinfolk AI learns from every interaction—making each recommendation smarter than the last.
+I'd make it just a little more powerful.
+KinfolkAI learns from every interaction, making every future recommendation more relevant.
+Or
+Every interaction makes KinfolkAI smarter. Every recommendation becomes more valuable.
+That ties directly into the flywheel.
+My only big suggestion...
+I actually think this slide deserves one sentence underneath the wheel.
+Right now there's a lot of empty space beneath it.
+I'd add something like:
+Every new member strengthens the network. Every recommendation creates another opportunity for discovery.
+Or
+The more people contribute, the more valuable the platform becomes—for everyone.
+That sentence is important because it explains why this isn't just a loop.
+It's a compounding loop.
+One thing I absolutely love...
+Think about what you've accidentally built across the last several slides.
+It goes:
+Jasmine discovers.
+Jasmine contributes.
+Marcus grows.
+KinfolkAI learns.
+The community grows.
+The cycle repeats.
+That isn't just a product walkthrough.
+That's your network effect.
+Most investor decks spend three slides trying to explain their network effects.
+You've shown it through people.
+That's much more memorable.
