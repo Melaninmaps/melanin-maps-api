@@ -10,7 +10,7 @@ export default function Slide03SameQuestion() {
           Mapping with Melanin&trade; exists.
         </div>
         <div className="font-body mt-[4vh]" style={{ fontSize: "2vw", fontWeight: 400, color: "#7B5408" }}>
-          Helping people find community&mdash;and helping communities find one another.
+          Helping people find community while helping communities grow.
         </div>
       </div>
     </div>
