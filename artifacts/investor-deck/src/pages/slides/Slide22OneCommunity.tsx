@@ -1,6 +1,6 @@
 const CARDS = [
   {
-    emoji: "🧑🏼",
+    emoji: "🧑🏽",
     label: "CONSUMERS",
     copy: "Discover trusted places and people.",
   },
