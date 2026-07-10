@@ -4,7 +4,7 @@ const JOURNEY = [
   "He tells his story",
   "Community discovers him",
   "Neighbors become customers",
-  "Customers return",
+  "Customers become regulars",
   "Customers recommend him",
   "Business grows",
 ];
@@ -35,7 +35,7 @@ export default function Slide23MeetMarcus() {
             BEFORE MAPPING WITH MELANIN&trade;
           </div>
           <div className="font-body" style={{ fontSize: "1.3vw", color: "#3A1F0E", fontWeight: 500 }}>
-            Great business. Great service. Hard to be discovered.
+            A great business people don&rsquo;t know exists.
           </div>
         </div>
 
@@ -44,7 +44,7 @@ export default function Slide23MeetMarcus() {
             <div key={item}>
               <div className="font-display" style={{ fontSize: "1.6vw", color: "#3A1F0E", fontWeight: 700 }}>{item}</div>
               {i < JOURNEY.length - 1 && (
-                <div style={{ color: "#CA922B", fontSize: "1.2vw", fontWeight: 700, lineHeight: 1 }}>&#8595;</div>
+                <div style={{ color: "#CA922B", fontSize: "1vw", fontWeight: 400, lineHeight: 1, opacity: 0.5 }}>&#8595;</div>
               )}
             </div>
           ))}
@@ -55,7 +55,7 @@ export default function Slide23MeetMarcus() {
         </div>
 
         <div className="font-display mt-[1.6vh]" style={{ fontSize: "1.4vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
-          There are thousands of businesses like Marcus&rsquo;s. Great businesses deserve more than great luck.
+          There are thousands of businesses like Marcus&rsquo;s. Great businesses deserve to be discovered.
         </div>
         <div className="font-display mt-[1vh]" style={{ fontSize: "1.4vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
           Marcus came looking for customers. Now he&rsquo;s building a community.
