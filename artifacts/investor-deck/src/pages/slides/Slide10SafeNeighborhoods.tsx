@@ -1,9 +1,9 @@
 const base = import.meta.env.BASE_URL;
 
 const POSTS = [
-  { photo: "photos/entrepreneur-storefront.jpg", name: "Marcus W.", loc: "Chicago, IL", caption: "Found my business co-founder through a local meetup last week. This community shows up for each other.", likes: 84, comments: 12 },
-  { photo: "photos/traveler-airport.jpg", name: "Jasmine T.", loc: "Houston, TX", caption: "Landed in a new city and already have people to meet this weekend. Never felt like a stranger.", likes: 61, comments: 9 },
-  { photo: "photos/family-relocating.jpg", name: "Aisha R.", loc: "Atlanta, GA", caption: "Six months in and this city finally feels like home. Grateful for this community.", likes: 103, comments: 18 },
+  { photo: "photos/feed-woman-shop.jpg", name: "Marcus W.", loc: "Chicago, IL", caption: "Found my business co-founder through a local meetup last week. This community shows up for each other.", likes: 84, comments: 12 },
+  { photo: "photos/feed-friends-rooftop.jpg", name: "Jasmine T.", loc: "Houston, TX", caption: "Landed in a new city and already have people to meet this weekend. Never felt like a stranger.", likes: 61, comments: 9 },
+  { photo: "photos/feed-woman-movein.jpg", name: "Aisha R.", loc: "Atlanta, GA", caption: "Six months in and this city finally feels like home. Grateful for this community.", likes: 103, comments: 18 },
 ];
 
 export default function Slide10SafeNeighborhoods() {

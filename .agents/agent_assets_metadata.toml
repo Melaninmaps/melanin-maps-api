@@ -114,6 +114,24 @@ uri = "file://attached_assets/ipad_screenshot_5_membership.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "qpAgew_Iy7bpiBZWDiMOM"
+uri = "file://attached_assets/generated_images/feed-woman-shop.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "99sAiIIeZss2JYTXKL_Zf"
+uri = "file://attached_assets/generated_images/feed-friends-rooftop.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "ZjoiIktybSb-3_MGVBoiS"
+uri = "file://attached_assets/generated_images/feed-woman-movein.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "kU1-MXMYrBRo-HYqMfRHN"
 uri = "file://.local/outputs/Melanin-Discovery-Hub.pptx"
@@ -485,3 +503,159 @@ id = "MUkdGT24E1JtJ0kg1wLJC"
 uri = "file://upload_certificate.txt"
 type = "text"
 title = "New Upload Key Certificate (PEM) — upload this file to Play Console"
+
+[[outputs]]
+id = "egF1_gQh6fAX6nWWVfOtv"
+uri = "file://attached_assets/stock_images/feed-post-1.jpg"
+type = "image"
+title = "candid smiling woman using smartphone outdoors in city street, warm golden hour light, diverse"
+
+[[outputs]]
+id = "XKDKzJREejm_Pwl6Y6XsY"
+uri = "file://attached_assets/stock_images/feed-post-3.jpg"
+type = "image"
+title = "candid woman unpacking boxes smiling in new apartment, warm natural light, moving in"
+
+[[outputs]]
+id = "RH5M3oEme9k_kqZZDA-54"
+uri = "file://attached_assets/stock_images/feed-post-2b_1.jpg"
+type = "image"
+title = "friends celebrating together at a party, smiling, diverse group"
+
+[[outputs]]
+id = "7isOhYnzaacGYIIwCwRAg"
+uri = "file://attached_assets/stock_images/feed-post-2b_2.jpg"
+type = "image"
+title = "friends celebrating together at a party, smiling, diverse group"
+
+[[outputs]]
+id = "uqAbXoitTJQv1pVtZK5-q"
+uri = "file://attached_assets/stock_images/feed-post-2b_3.jpg"
+type = "image"
+title = "friends celebrating together at a party, smiling, diverse group"
+
+[[outputs]]
+id = "Gl4mTW8WvSu2J1HGKoM1x"
+uri = "file://attached_assets/stock_images/feed-a_1.jpg"
+type = "image"
+title = "black woman entrepreneur smiling in her small business shop, warm lighting, candid portrait"
+
+[[outputs]]
+id = "tYrz7L7NVlHHcEtYZ2rIQ"
+uri = "file://attached_assets/stock_images/feed-a_2.jpg"
+type = "image"
+title = "black woman entrepreneur smiling in her small business shop, warm lighting, candid portrait"
+
+[[outputs]]
+id = "18LGzy-d020Nf3FkjCrR3"
+uri = "file://attached_assets/stock_images/feed-a_3.jpg"
+type = "image"
+title = "black woman entrepreneur smiling in her small business shop, warm lighting, candid portrait"
+
+[[outputs]]
+id = "9pXoovHFzsGORFVvELJu5"
+uri = "file://attached_assets/stock_images/feed-b_1.jpg"
+type = "image"
+title = "black friends group hugging and laughing outdoors city rooftop sunset"
+
+[[outputs]]
+id = "ZGJrQ7_O36nI-EQL-QKY5"
+uri = "file://attached_assets/stock_images/feed-b_2.jpg"
+type = "image"
+title = "black friends group hugging and laughing outdoors city rooftop sunset"
+
+[[outputs]]
+id = "fF1Q1BMXAiXsb-PFJ6UhN"
+uri = "file://attached_assets/stock_images/feed-b_3.jpg"
+type = "image"
+title = "black friends group hugging and laughing outdoors city rooftop sunset"
+
+[[outputs]]
+id = "dE-limVPAdHdxhzJX0BT3"
+uri = "file://attached_assets/stock_images/feed-c_1.jpg"
+type = "image"
+title = "black woman moving into new apartment carrying box smiling candid"
+
+[[outputs]]
+id = "48H0xO8NuD1B5ejtx06oX"
+uri = "file://attached_assets/stock_images/feed-c_2.jpg"
+type = "image"
+title = "black woman moving into new apartment carrying box smiling candid"
+
+[[outputs]]
+id = "_0kjkYJJnxldwSg5qM19t"
+uri = "file://attached_assets/stock_images/feed-c_3.jpg"
+type = "image"
+title = "black woman moving into new apartment carrying box smiling candid"
+
+[[outputs]]
+id = "e9S9brbJYwvLIXRoY2fhz"
+uri = "file://attached_assets/stock_images/feedx-a_1.jpg"
+type = "image"
+title = "African American woman smiling using phone in cafe candid"
+
+[[outputs]]
+id = "upwiWeUJBl3fZR9sC8I6I"
+uri = "file://attached_assets/stock_images/feedx-a_2.jpg"
+type = "image"
+title = "African American woman smiling using phone in cafe candid"
+
+[[outputs]]
+id = "kcqc4NlSRphPzVX-r9PWs"
+uri = "file://attached_assets/stock_images/feedx-a_3.jpg"
+type = "image"
+title = "African American woman smiling using phone in cafe candid"
+
+[[outputs]]
+id = "XOPQDU7VUmGjPl3IniQ7D"
+uri = "file://attached_assets/stock_images/feedx-a_4.jpg"
+type = "image"
+title = "African American woman smiling using phone in cafe candid"
+
+[[outputs]]
+id = "xbNJvZ9yWPFtPxvuHHaGS"
+uri = "file://attached_assets/stock_images/feedx-b_1.jpg"
+type = "image"
+title = "African American friends group hanging out outdoors laughing"
+
+[[outputs]]
+id = "vh8hu40A8pJAL8hd5nriE"
+uri = "file://attached_assets/stock_images/feedx-b_2.jpg"
+type = "image"
+title = "African American friends group hanging out outdoors laughing"
+
+[[outputs]]
+id = "rGH036MAbQ4ZrSXqGoFAu"
+uri = "file://attached_assets/stock_images/feedx-b_3.jpg"
+type = "image"
+title = "African American friends group hanging out outdoors laughing"
+
+[[outputs]]
+id = "Bu5OJ0JgIh4fssYF-4NkW"
+uri = "file://attached_assets/stock_images/feedx-b_4.jpg"
+type = "image"
+title = "African American friends group hanging out outdoors laughing"
+
+[[outputs]]
+id = "BIiW17ydKbzUVJYLlYivA"
+uri = "file://attached_assets/stock_images/feedx-c_1.jpg"
+type = "image"
+title = "African American woman carrying moving box smiling new home"
+
+[[outputs]]
+id = "fnKEcL2iCuvt8S-njCqtc"
+uri = "file://attached_assets/stock_images/feedx-c_2.jpg"
+type = "image"
+title = "African American woman carrying moving box smiling new home"
+
+[[outputs]]
+id = "XZNJ5bA0LcXhbmMtoKUVY"
+uri = "file://attached_assets/stock_images/feedx-c_3.jpg"
+type = "image"
+title = "African American woman carrying moving box smiling new home"
+
+[[outputs]]
+id = "vBwxocpZNXaCXDmqY9RYZ"
+uri = "file://attached_assets/stock_images/feedx-c_4.jpg"
+type = "image"
+title = "African American woman carrying moving box smiling new home"
