@@ -9,10 +9,10 @@ export default function Slide17SendThemBack() {
           We don&rsquo;t keep customers.
         </h1>
         <div className="font-display leading-tight" style={{ fontSize: "4vw", fontWeight: 700, color: "#CA922B" }}>
-          We send them home.
+          We build introductions.
         </div>
         <div className="font-body mt-[2vh]" style={{ fontSize: "1.3vw", color: "#D8B98A", fontWeight: 400 }}>
-          Every search ends with a real relationship.
+          We don&rsquo;t own the customer. The business does.
         </div>
       </div>
 
