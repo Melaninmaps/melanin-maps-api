@@ -2,52 +2,34 @@ const base = import.meta.env.BASE_URL;
 
 export default function Slide02Vignettes() {
   return (
-    <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
-      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>02</div>
+    <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#1C0E06" }}>
+      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35, zIndex: 10 }}>02</div>
 
-      <div className="absolute top-[6vh] left-[6vw]">
-        <div className="font-body" style={{ fontSize: "1.6vw", color: "#7B5408", letterSpacing: "0.16em", fontWeight: 500 }}>
-          FOUR STORIES, ONE THREAD
+      <div className="absolute inset-0 flex">
+        <div className="relative overflow-hidden" style={{ flex: 1 }}>
+          <img src={`${base}photos/family-relocating.jpg`} crossOrigin="anonymous" alt="A family" className="absolute inset-0 w-full h-full object-cover" />
+        </div>
+        <div className="relative overflow-hidden" style={{ flex: 1 }}>
+          <img src={`${base}photos/traveler-airport.jpg`} crossOrigin="anonymous" alt="A traveler" className="absolute inset-0 w-full h-full object-cover" />
+        </div>
+        <div className="relative overflow-hidden" style={{ flex: 1 }}>
+          <img src={`${base}photos/entrepreneur-storefront.jpg`} crossOrigin="anonymous" alt="An entrepreneur" className="absolute inset-0 w-full h-full object-cover" />
+        </div>
+        <div className="relative overflow-hidden" style={{ flex: 1 }}>
+          <img src={`${base}photos/student-movein.jpg`} crossOrigin="anonymous" alt="A neighbor" className="absolute inset-0 w-full h-full object-cover" />
         </div>
       </div>
 
-      <div className="absolute left-[6vw] right-[6vw] top-[15vh] flex" style={{ height: "56vh" }}>
-        <div className="relative overflow-hidden rounded-[0.4vw]" style={{ flex: 1, zIndex: 4 }}>
-          <img src={`${base}photos/family-relocating.jpg`} crossOrigin="anonymous" alt="A family relocates" className="absolute inset-0 w-full h-full object-cover" />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(28,14,6,0.88), rgba(28,14,6,0.05))" }} />
-          <div className="absolute bottom-[3vh] left-[1.2vw] right-[1.2vw] font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.2 }}>
-            A family relocates&hellip;
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-[0.4vw]" style={{ flex: 1, zIndex: 3, marginLeft: "-1vw" }}>
-          <img src={`${base}photos/traveler-airport.jpg`} crossOrigin="anonymous" alt="A traveler lands in a new city" className="absolute inset-0 w-full h-full object-cover" />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(28,14,6,0.88), rgba(28,14,6,0.05))" }} />
-          <div className="absolute bottom-[3vh] left-[1.2vw] right-[1.2vw] font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.2 }}>
-            A traveler lands in a new city&hellip;
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-[0.4vw]" style={{ flex: 1, zIndex: 2, marginLeft: "-1vw" }}>
-          <img src={`${base}photos/entrepreneur-storefront.jpg`} crossOrigin="anonymous" alt="A young entrepreneur opens a business" className="absolute inset-0 w-full h-full object-cover" />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(28,14,6,0.88), rgba(28,14,6,0.05))" }} />
-          <div className="absolute bottom-[3vh] left-[1.2vw] right-[1.2vw] font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.2 }}>
-            A young entrepreneur opens a business&hellip;
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-[0.4vw]" style={{ flex: 1, zIndex: 1, marginLeft: "-1vw" }}>
-          <img src={`${base}photos/student-movein.jpg`} crossOrigin="anonymous" alt="A college student leaves home for the first time" className="absolute inset-0 w-full h-full object-cover" />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(28,14,6,0.88), rgba(28,14,6,0.05))" }} />
-          <div className="absolute bottom-[3vh] left-[1.2vw] right-[1.2vw] font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.2 }}>
-            A college student leaves home for the first time&hellip;
-          </div>
-        </div>
-      </div>
+      <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(28,14,6,0.55) 0%, rgba(28,14,6,0.72) 45%, rgba(28,14,6,0.55) 100%)" }} />
 
-      <div className="absolute left-[10vw] right-[10vw] text-center" style={{ bottom: "5vh" }}>
-        <div className="font-display" style={{ fontSize: "2vw", fontWeight: 700, color: "#7B5408", lineHeight: 1.3 }}>
-          They aren&rsquo;t living the same story&hellip; they&rsquo;re asking the same question.
+      <div className="absolute left-[8vw] right-[8vw] top-1/2 -translate-y-1/2 text-center">
+        <div className="font-display leading-tight" style={{ fontSize: "4.4vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
+          Communities don&rsquo;t happen by accident.
         </div>
-        <div className="font-quote mt-[0.6vh]" style={{ fontSize: "2.6vw", fontStyle: "italic", fontWeight: 600, color: "#1C0E06" }}>
-          Where do I belong?
+        <div className="font-quote mt-[3.5vh]" style={{ fontSize: "2.6vw", fontStyle: "italic", fontWeight: 500, color: "#E8C97A", lineHeight: 1.5 }}>
+          They are built by families&hellip; by travelers&hellip; by entrepreneurs&hellip; by neighbors&hellip;
+          <br />
+          by businesses that become part of people&rsquo;s lives.
         </div>
       </div>
     </div>
