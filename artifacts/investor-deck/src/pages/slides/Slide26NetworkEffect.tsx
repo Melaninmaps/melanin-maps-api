@@ -1,7 +1,7 @@
 const COLS = [
-  { input: "Every review", outputPre: "Improves ", gold: "trust", outputPost: "" },
+  { input: "Every review", outputPre: "Builds ", gold: "trust", outputPost: "" },
   { input: "Every recommendation", outputPre: "Improves ", gold: "discovery", outputPost: "" },
-  { input: "Every saved business", outputPre: "Improves ", gold: "personalization", outputPost: "" },
+  { input: "Every saved business", outputPre: "Personalizes future ", gold: "recommendations", outputPost: "" },
   { input: "Every new community", outputPre: "Expands ", gold: "opportunity", outputPost: "" },
 ];
 
@@ -17,7 +17,7 @@ export default function Slide26NetworkEffect() {
         </div>
       </div>
 
-      <div className="absolute left-0 right-0 flex justify-center" style={{ top: "26vh" }}>
+      <div className="absolute left-0 right-0 flex justify-center" style={{ top: "30vh" }}>
         <div className="grid grid-cols-4 gap-[2.4vw]" style={{ width: "80vw" }}>
           {COLS.map((col) => (
             <div key={col.input} className="flex flex-col items-center text-center">
@@ -44,7 +44,7 @@ export default function Slide26NetworkEffect() {
       <div className="absolute left-0 right-0 text-center px-[10vw]" style={{ bottom: "8vh" }}>
         <div style={{ height: "1px", background: "rgba(202,146,43,0.25)", marginBottom: "3vh" }} />
         <div className="font-display" style={{ fontSize: "1.6vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.4 }}>
-          Every person who joins makes the <span style={{ color: "#CA922B" }}>community</span> more valuable for everyone else.
+          Every contribution strengthens the <span style={{ color: "#CA922B" }}>community</span>. Every stronger community improves the platform.
         </div>
       </div>
     </div>
