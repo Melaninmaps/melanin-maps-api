@@ -73,7 +73,7 @@ export default function Slide05Mission() {
           THE JOURNEY TO BELONGING
         </div>
         <h1 className="font-display leading-tight mt-[2.6vh]" style={{ fontSize: "3.6vw", fontWeight: 700, color: "#1C0E06", textWrap: "balance" }}>
-          Everything we built starts here.
+          Every journey starts here.
         </h1>
       </div>
 
