@@ -19,7 +19,7 @@ export default function Slide10SafeNeighborhoods() {
           Home isn&rsquo;t always where you started. It&rsquo;s where you&rsquo;re welcomed.
         </div>
         <div className="font-body mt-[2.5vh]" style={{ fontSize: "1.4vw", color: "#7B5408", fontWeight: 400, lineHeight: 1.5, textWrap: "balance" }}>
-          Because belonging isn&rsquo;t where your journey ends&mdash;it&rsquo;s how you experience every place you go.
+          Belonging isn&rsquo;t the end of the journey&mdash;it&rsquo;s how every place begins to feel like home.
         </div>
         <div className="inv-rule mt-[3.5vh] mb-[1.6vh]" style={{ width: "5vw" }} />
         <div className="font-display" style={{ fontSize: "1.85vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
