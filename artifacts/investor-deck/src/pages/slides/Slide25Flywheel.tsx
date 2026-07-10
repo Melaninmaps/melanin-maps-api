@@ -1,5 +1,16 @@
-const STEPS = ["Community", "Discovery", "Recommendations", "Business Growth", "Stronger Communities"];
-const GOLD_STEPS = new Set(["Community", "Stronger Communities"]);
+const STEPS = ["Community", "Discovery", "Recommendations", "Business Growth", "Stronger Community"];
+const GOLD_STEPS = new Set(["Community", "Stronger Community"]);
+const FONT_SIZE: Record<string, string> = {
+  Community: "2.5vw",
+  "Business Growth": "2.15vw",
+  Discovery: "1.8vw",
+  Recommendations: "1.8vw",
+  "Stronger Community": "1.8vw",
+};
+const LABEL_RADIUS_OVERRIDE: Record<string, number> = {
+  "Business Growth": 30,
+  "Stronger Community": 23,
+};
 const ARC_RADIUS = 26;
 const LABEL_RADIUS = 26;
 const GAP_DEG = 16;
@@ -40,7 +51,7 @@ export default function Slide25Flywheel() {
         </div>
       </div>
 
-      <div className="absolute" style={{ left: "53%", top: "48%", transform: "translate(-50%, -50%)", width: "72vw", height: "72vw" }}>
+      <div className="absolute" style={{ left: "53%", top: "44%", transform: "translate(-50%, -50%)", width: "66vw", height: "66vw" }}>
         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" style={{ overflow: "visible" }}>
           <defs>
             <marker id="arrowhead" markerWidth="3.2" markerHeight="3.2" refX="1.6" refY="1.6" orient="auto-start-reverse">
@@ -66,7 +77,8 @@ export default function Slide25Flywheel() {
 
         {STEPS.map((label, i) => {
           const angle = i * step;
-          const { x, y, dx, dy } = pointOnCircle(angle, LABEL_RADIUS);
+          const r = LABEL_RADIUS_OVERRIDE[label] ?? LABEL_RADIUS;
+          const { x, y, dx, dy } = pointOnCircle(angle, r);
           const { justify, textAlign } = anchorFor(dx);
           const gold = GOLD_STEPS.has(label);
           return (
@@ -77,7 +89,7 @@ export default function Slide25Flywheel() {
                 left: `${x}%`,
                 top: `${y}%`,
                 transform: `translate(${-50 + dx * 50}%, ${-50 + dy * 50}%)`,
-                fontSize: "2vw",
+                fontSize: FONT_SIZE[label] ?? "2vw",
                 fontWeight: 700,
                 color: gold ? "#CA922B" : "#FAF6EF",
                 width: "15vw",
@@ -100,8 +112,8 @@ export default function Slide25Flywheel() {
         </div>
       </div>
 
-      <div className="absolute left-0 right-0 text-center px-[10vw]" style={{ bottom: "5vh" }}>
-        <div className="font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.5 }}>
+      <div className="absolute left-0 right-0 text-center px-[10vw]" style={{ bottom: "3.5vh" }}>
+        <div className="font-display" style={{ fontSize: "1.4vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.5 }}>
           Every recommendation strengthens the community. Every stronger community creates new opportunities for discovery.
         </div>
       </div>
