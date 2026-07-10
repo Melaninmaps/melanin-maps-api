@@ -14,7 +14,7 @@ export default function Slide14FriendsBusinesses() {
         </h1>
         <div className="inv-rule w-[7vw] mt-[3vh] mb-[3vh]" />
         <div className="font-body mb-[3.2vh]" style={{ fontSize: "1.2vw", color: "#3A1F0E", fontWeight: 400, lineHeight: 1.5, textWrap: "balance" }}>
-          She leaves the first review. She recommends her doctor. She welcomes the next person who&rsquo;s just landed in Houston &mdash; the way someone once welcomed her.
+          She shares the businesses she trusts. She recommends the doctor who made her feel understood. She welcomes the next person arriving in Houston &mdash; just as someone once welcomed her.
         </div>
         <div className="font-display" style={{ fontSize: "1.6vw", fontWeight: 700, color: "#A6720F", textWrap: "balance" }}>
           One person finds home.
