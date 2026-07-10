@@ -138,6 +138,12 @@ uri = "file://artifacts/investor-deck/public/photos/entrepreneur-restaurant-owne
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "slvfl5d6RiA0PcyljgMAq"
+uri = "file://artifacts/investor-deck/public/photos/marcus-restaurant-cover.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "kU1-MXMYrBRo-HYqMfRHN"
 uri = "file://.local/outputs/Melanin-Discovery-Hub.pptx"
