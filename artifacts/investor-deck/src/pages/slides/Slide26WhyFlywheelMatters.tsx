@@ -1,15 +1,15 @@
 const LEFT_ITEMS = [
-  "Review",
-  "Recommendation",
-  "Saved business",
-  "Community interaction",
+  "Every review",
+  "Every recommendation",
+  "Every saved business",
+  "Every community interaction",
 ];
 
 const RIGHT_ITEMS = [
-  "Recommend better businesses",
-  "Surface hidden gems",
+  "Recommend businesses people will love",
+  "Surface hidden local gems",
   "Understand community preferences",
-  "Improve every future search",
+  "Improve every future recommendation",
 ];
 
 export default function Slide26WhyFlywheelMatters() {
@@ -20,15 +20,15 @@ export default function Slide26WhyFlywheelMatters() {
 
       <div className="absolute left-0 right-0 text-center px-[10vw]" style={{ top: "9vh" }}>
         <div className="font-display" style={{ fontSize: "3vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.2 }}>
-          Kinfolk AI powers the flywheel.
+          Kinfolk AI powers the Community Flywheel.
         </div>
       </div>
 
-      <div className="absolute left-0 right-0 flex" style={{ top: "28vh", bottom: "20vh", paddingLeft: "10vw", paddingRight: "10vw", gap: "4vw" }}>
+      <div className="absolute left-0 right-0 flex" style={{ top: "28vh", bottom: "22vh", paddingLeft: "10vw", paddingRight: "10vw", gap: "4vw" }}>
 
         <div className="flex-1 flex flex-col">
           <div className="font-body mb-[2.4vh]" style={{ fontSize: "1.15vw", color: "#CA922B", letterSpacing: "0.1em", fontWeight: 600 }}>
-            KINFOLK AI GETS SMARTER WITH EVERY
+            KINFOLK AI GETS SMARTER THROUGH
           </div>
           <div className="flex flex-col" style={{ gap: "1.6vh" }}>
             {LEFT_ITEMS.map((item) => (
@@ -40,7 +40,8 @@ export default function Slide26WhyFlywheelMatters() {
           </div>
         </div>
 
-        <div style={{ width: "1px", background: "rgba(202,146,43,0.3)", flexShrink: 0, margin: "0 1vw" }} />
+        {/* divider — 70% height, vertically centred */}
+        <div className="self-center" style={{ width: "1px", height: "70%", background: "rgba(202,146,43,0.3)", flexShrink: 0, margin: "0 1vw" }} />
 
         <div className="flex-1 flex flex-col">
           <div className="font-body mb-[2.4vh]" style={{ fontSize: "1.15vw", color: "#CA922B", letterSpacing: "0.1em", fontWeight: 600 }}>
@@ -60,8 +61,9 @@ export default function Slide26WhyFlywheelMatters() {
 
       <div className="absolute left-0 right-0 text-center px-[10vw]" style={{ bottom: "7vh" }}>
         <div style={{ height: "1px", background: "rgba(202,146,43,0.3)", marginBottom: "3vh" }} />
-        <div className="font-display" style={{ fontSize: "1.6vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.4 }}>
-          The community teaches Kinfolk AI. Kinfolk AI returns the favor.
+        <div className="font-display" style={{ fontSize: "1.6vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.7 }}>
+          The community teaches Kinfolk AI.<br />
+          Kinfolk AI returns the favor.
         </div>
       </div>
     </div>

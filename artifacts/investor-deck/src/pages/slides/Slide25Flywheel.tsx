@@ -49,7 +49,7 @@ export default function Slide25Flywheel() {
 
       <div className="absolute left-[6vw] top-[5vh]">
         <div className="font-body" style={{ fontSize: "1.4vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
-          THE FLYWHEEL
+          THE COMMUNITY FLYWHEEL
         </div>
         <div className="font-body" style={{ fontSize: "1.1vw", fontStyle: "italic", fontWeight: 500, color: "#D9C4A3", marginTop: "1vh" }}>
           Every interaction makes Kinfolk AI smarter.
