@@ -48,10 +48,12 @@ export default function Slide24Philosophy() {
         </div>
       </div>
 
-      <div className="absolute left-0 right-0 text-center" style={{ top: "68vh" }}>
-        <div style={{ color: "#CA922B", fontSize: "1.6vw", fontWeight: 400, lineHeight: 1, opacity: 0.6 }}>&#8595;</div>
-        <div className="font-display mt-[1.6vh]" style={{ fontSize: "2vw", fontWeight: 700, color: "#A6720F" }}>
+      <div className="absolute left-0 right-0 text-center px-[10vw]" style={{ top: "66vh" }}>
+        <div className="font-display" style={{ fontSize: "2vw", fontWeight: 700, color: "#A6720F" }}>
           Mapping with Melanin&trade; connects them.
+        </div>
+        <div className="font-body mt-[2vh]" style={{ fontSize: "1.25vw", color: "#3A1F0E", fontWeight: 500, lineHeight: 1.5 }}>
+          You don&rsquo;t just connect businesses to customers. You connect stories &mdash; Jasmine&rsquo;s, Marcus&rsquo;s, the neighborhood&rsquo;s, the city&rsquo;s.
         </div>
       </div>
     </div>
