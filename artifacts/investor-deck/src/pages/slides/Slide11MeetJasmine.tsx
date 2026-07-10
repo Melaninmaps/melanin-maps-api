@@ -2,7 +2,7 @@ const base = import.meta.env.BASE_URL;
 
 const CHECKLIST = [
   "Starting over in a new city",
-  "Doesn\u2019t know who to trust",
+  "Looking to build real community",
   "Looking for a neighborhood that feels like home",
   "Wants to support businesses that reflect her values",
   "Hopes she\u2019ll feel like she belongs",
@@ -39,10 +39,8 @@ export default function Slide11MeetJasmine() {
           ))}
         </div>
 
-        <div className="font-display mt-[3.6vh]" style={{ fontSize: "2vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic", lineHeight: 1.35 }}>
+        <div className="font-display mt-[3.6vh]" style={{ fontSize: "2vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
           Then she opens Mapping with Melanin&trade;.
-          <br />
-          Here&rsquo;s what happens next.
         </div>
       </div>
     </div>
