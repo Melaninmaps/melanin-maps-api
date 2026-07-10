@@ -1,9 +1,9 @@
 const CHECKLIST = [
   "A doctor she feels comfortable with.",
   "A mentor who helps her navigate a new city.",
-  "Employers whose culture reflects her values.",
+  "An employer where she can thrive.",
   "Businesses trusted by the community.",
-  "Friends who make Houston feel like home.",
+  "People who make Houston feel like home.",
 ];
 
 export default function Slide12DoctorsEmployers() {
@@ -37,11 +37,8 @@ export default function Slide12DoctorsEmployers() {
           ))}
         </div>
 
-        <div className="font-display mt-[2.8vh]" style={{ fontSize: "1.3vw", color: "#1C0E06", fontWeight: 700, fontStyle: "italic", textWrap: "balance" }}>
+        <div className="font-display mt-[3.2vh]" style={{ fontSize: "1.5vw", color: "#1C0E06", fontWeight: 700, fontStyle: "italic", textWrap: "balance" }}>
           Because belonging isn&rsquo;t one decision &mdash; it&rsquo;s hundreds of little ones.
-        </div>
-        <div className="font-display mt-[1.4vh]" style={{ fontSize: "1.4vw", color: "#A6720F", fontWeight: 700, textWrap: "balance" }}>
-          One search becomes one relationship. One relationship becomes community.
         </div>
       </div>
     </div>
