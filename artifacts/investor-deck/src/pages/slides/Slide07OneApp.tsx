@@ -10,7 +10,7 @@ export default function Slide07OneApp() {
           Connect.
         </h1>
         <div className="font-display leading-tight mt-[2.5vh]" style={{ fontSize: "2.4vw", fontWeight: 700, color: "#A6720F", textWrap: "balance" }}>
-          Communities aren&rsquo;t built with followers. They&rsquo;re built with people.
+          Community isn&rsquo;t something you consume. It&rsquo;s something you create.
         </div>
         <div className="font-body mt-[2.5vh]" style={{ fontSize: "1.4vw", color: "#7B5408", fontWeight: 400, lineHeight: 1.5, textWrap: "balance" }}>
           Join circles, connect with neighbors, discover local events, and start building relationships before you ever arrive.
