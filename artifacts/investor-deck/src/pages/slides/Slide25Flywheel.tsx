@@ -1,12 +1,13 @@
 const STEPS = ["Community", "Discovery", "Recommendations", "Business Growth", "Community Grows"];
-const NODE_RADIUS = 15;
-const LABEL_RADIUS = 23;
+const GOLD_STEPS = new Set(["Community", "Business Growth"]);
+const RADIUS = 24;
+const GAP_DEG = 14;
 
-function pointOnCircle(angleDeg: number, r: number) {
+function pointOnCircle(angleDeg: number, r: number, cx = 50, cy = 50) {
   const rad = (angleDeg * Math.PI) / 180;
   const dx = Math.sin(rad);
   const dy = -Math.cos(rad);
-  return { x: 50 + r * dx, y: 50 + r * dy, dx, dy };
+  return { x: cx + r * dx, y: cy + r * dy, dx, dy };
 }
 
 function anchorFor(dx: number) {
@@ -15,7 +16,18 @@ function anchorFor(dx: number) {
   return { justify: "center", textAlign: "center" as const };
 }
 
+function describeArc(startAngle: number, endAngle: number, r: number) {
+  const start = pointOnCircle(startAngle, r);
+  const end = pointOnCircle(endAngle, r);
+  const largeArc = 0;
+  const sweep = 1;
+  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} ${sweep} ${end.x} ${end.y}`;
+}
+
 export default function Slide25Flywheel() {
+  const n = STEPS.length;
+  const step = 360 / n;
+
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#3D2417" }}>
       <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 42% 44%, rgba(202,146,43,0.2), transparent 55%)" }} />
@@ -28,15 +40,37 @@ export default function Slide25Flywheel() {
       </div>
 
       <div className="absolute" style={{ left: "50%", top: "48%", transform: "translate(-50%, -50%)", width: "56vw", height: "56vw" }}>
-        <div className="absolute rounded-full" style={{ inset: "16%", border: "3px solid rgba(202,146,43,0.55)" }} />
+        <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" style={{ overflow: "visible" }}>
+          <defs>
+            <marker id="arrowhead" markerWidth="3.2" markerHeight="3.2" refX="1.6" refY="1.6" orient="auto-start-reverse">
+              <path d="M0,0 L3.2,1.6 L0,3.2 Z" fill="#CA922B" />
+            </marker>
+          </defs>
+          {STEPS.map((_, i) => {
+            const startAngle = i * step + GAP_DEG;
+            const endAngle = (i + 1) * step - GAP_DEG;
+            return (
+              <path
+                key={`arc-${i}`}
+                d={describeArc(startAngle, endAngle, RADIUS)}
+                fill="none"
+                stroke="#CA922B"
+                strokeWidth="1"
+                strokeLinecap="round"
+                markerEnd="url(#arrowhead)"
+              />
+            );
+          })}
+        </svg>
 
-        {STEPS.map((step, i) => {
-          const angle = (i / STEPS.length) * 360;
-          const { x, y, dx, dy } = pointOnCircle(angle, LABEL_RADIUS);
+        {STEPS.map((label, i) => {
+          const angle = i * step;
+          const { x, y, dx, dy } = pointOnCircle(angle, RADIUS);
           const { justify, textAlign } = anchorFor(dx);
+          const gold = GOLD_STEPS.has(label);
           return (
             <div
-              key={step}
+              key={label}
               className="absolute font-display flex"
               style={{
                 left: `${x}%`,
@@ -44,36 +78,14 @@ export default function Slide25Flywheel() {
                 transform: `translate(${-50 + dx * 50}%, ${-50 + dy * 50}%)`,
                 fontSize: "2vw",
                 fontWeight: 700,
-                color: i % 2 === 0 ? "#FAF6EF" : "#CA922B",
+                color: gold ? "#CA922B" : "#FAF6EF",
                 width: "15vw",
                 justifyContent: justify,
                 textAlign,
               }}
             >
-              {step}
+              {label}
             </div>
-          );
-        })}
-
-        {STEPS.map((_, i) => {
-          const midAngle = (i / STEPS.length) * 360 + 360 / STEPS.length / 2;
-          const { x, y } = pointOnCircle(midAngle, NODE_RADIUS);
-          return (
-            <div
-              key={`arrow-${i}`}
-              className="absolute"
-              style={{
-                left: `${x}%`,
-                top: `${y}%`,
-                transform: `translate(-50%, -50%) rotate(${midAngle + 90}deg)`,
-                width: 0,
-                height: 0,
-                borderLeft: "0.8vw solid transparent",
-                borderRight: "0.8vw solid transparent",
-                borderTop: "1.1vw solid #CA922B",
-                opacity: 0.9,
-              }}
-            />
           );
         })}
       </div>
