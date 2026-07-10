@@ -1,22 +1,14 @@
-type Step = {
-  label: string;
-  angle: number;
-  gold: boolean;
-  fontSize: string;
-  align: "center" | "left" | "right";
-};
-
-const STEPS: Step[] = [
-  { label: "Community", angle: 0, gold: true, fontSize: "2.6vw", align: "center" },
-  { label: "Discovery", angle: 90, gold: false, fontSize: "1.75vw", align: "left" },
-  { label: "Recommendations", angle: 150, gold: false, fontSize: "1.75vw", align: "left" },
-  { label: "Thriving Businesses", angle: 210, gold: true, fontSize: "2.1vw", align: "right" },
-  { label: "Community Grows", angle: 300, gold: false, fontSize: "1.75vw", align: "right" },
+const STEPS = [
+  { label: "Community", gold: true, fontSize: "2.6vw" },
+  { label: "Discovery", gold: false, fontSize: "1.75vw" },
+  { label: "Recommendations", gold: false, fontSize: "1.75vw" },
+  { label: "Thriving Businesses", gold: true, fontSize: "2.1vw" },
+  { label: "Community Grows", gold: false, fontSize: "1.75vw" },
 ];
 
 const ARC_RADIUS = 27;
 const LABEL_RADIUS = 36;
-const GAP_DEG = 14;
+const GAP_DEG = 13;
 
 function pointOnCircle(angleDeg: number, r: number, cx = 50, cy = 50) {
   const rad = (angleDeg * Math.PI) / 180;
@@ -25,12 +17,16 @@ function pointOnCircle(angleDeg: number, r: number, cx = 50, cy = 50) {
   return { x: cx + r * dx, y: cy + r * dy, dx, dy };
 }
 
+function anchorFor(dx: number) {
+  if (dx > 0.25) return { justify: "flex-start", textAlign: "left" as const };
+  if (dx < -0.25) return { justify: "flex-end", textAlign: "right" as const };
+  return { justify: "center", textAlign: "center" as const };
+}
+
 function describeArc(startAngle: number, endAngle: number, r: number) {
-  const start = pointOnCircle(startAngle, r);
-  const end = pointOnCircle(endAngle, r);
-  const largeArc = 0;
-  const sweep = 1;
-  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} ${sweep} ${end.x} ${end.y}`;
+  const s = pointOnCircle(startAngle, r);
+  const e = pointOnCircle(endAngle, r);
+  return `M ${s.x} ${s.y} A ${r} ${r} 0 0 1 ${e.x} ${e.y}`;
 }
 
 export default function Slide25Flywheel() {
@@ -51,20 +47,23 @@ export default function Slide25Flywheel() {
         </div>
       </div>
 
-      <div className="absolute" style={{ left: "53%", top: "44%", transform: "translate(-50%, -50%)", width: "52vw", height: "52vw" }}>
+      {/* wheel container — centred on slide, pulled up to leave room for caption */}
+      <div className="absolute" style={{ left: "53%", top: "43%", transform: "translate(-50%, -50%)", width: "56vw", height: "56vw" }}>
         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" style={{ overflow: "visible" }}>
           <defs>
             <marker id="arrowhead" markerWidth="3" markerHeight="3" refX="1.5" refY="1.5" orient="auto-start-reverse">
               <path d="M0,0 L3,1.5 L0,3 Z" fill="#CA922B" />
             </marker>
           </defs>
-          {STEPS.map((s, i) => {
-            const startAngle = i * step + GAP_DEG;
-            const endAngle = (i + 1) * step - GAP_DEG;
+
+          {/* arcs: each arc runs from gap-end of current node to gap-start of next node */}
+          {STEPS.map((_, i) => {
+            const arcStart = i * step + GAP_DEG;
+            const arcEnd   = (i + 1) * step - GAP_DEG;
             return (
               <path
                 key={`arc-${i}`}
-                d={describeArc(startAngle, endAngle, ARC_RADIUS)}
+                d={describeArc(arcStart, arcEnd, ARC_RADIUS)}
                 fill="none"
                 stroke="#CA922B"
                 strokeWidth="0.7"
@@ -75,23 +74,24 @@ export default function Slide25Flywheel() {
           })}
         </svg>
 
-        {STEPS.map((s) => {
-          const { x, y } = pointOnCircle(s.angle, LABEL_RADIUS);
-          const justify = s.align === "left" ? "flex-start" : s.align === "right" ? "flex-end" : "center";
+        {/* labels: each label sits at i * step — exactly the midpoint of its gap */}
+        {STEPS.map((s, i) => {
+          const angle = i * step;
+          const { x, y, dx, dy } = pointOnCircle(angle, LABEL_RADIUS);
+          const { justify, textAlign } = anchorFor(dx);
           return (
             <div
               key={s.label}
-              className="absolute font-display flex"
+              className="absolute font-display"
               style={{
                 left: `${x}%`,
                 top: `${y}%`,
-                transform: "translate(-50%, -50%)",
+                transform: `translate(${-50 + dx * 50}%, ${-50 + dy * 50}%)`,
                 fontSize: s.fontSize,
                 fontWeight: s.gold ? 700 : 600,
                 color: s.gold ? "#CA922B" : "#F5EBD8",
                 width: "16vw",
-                justifyContent: justify,
-                textAlign: s.align,
+                textAlign,
                 lineHeight: 1.25,
               }}
             >
