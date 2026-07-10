@@ -44,7 +44,7 @@
   --slide-text: #1C0E06;
   --slide-muted: #7B5408;
   --slide-rule: #CA922B;
-  --font-display-family: "Space Grotesk", Georgia, sans-serif;
+  --font-display-family: "Playfair Display", Georgia, serif;
   --font-body-family: "Plus Jakarta Sans", system-ui, sans-serif;
   color-scheme: light;
 }
