@@ -1,7 +1,7 @@
 export default function Slide24OneMap() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
-      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>25</div>
+      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>27</div>
 
       <div className="absolute left-[6vw] right-[6vw] top-[10vh]">
         <div className="grid grid-cols-2 gap-x-[3vw] gap-y-[2.4vh]">

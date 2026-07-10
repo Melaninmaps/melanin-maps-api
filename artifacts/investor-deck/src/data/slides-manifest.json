@@ -168,40 +168,56 @@
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-22-one-community",
+                "id": "inv-slide-22-angela-divider",
                 "position": 22,
+                "filepath": "src/pages/slides/Slide22AngelaDivider.tsx",
+                "title": "A New Chapter",
+                "description": "Transition — from Kinfolk AI into the business owner's journey",
+                "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-23-meet-angela",
+                "position": 23,
+                "filepath": "src/pages/slides/Slide23MeetAngela.tsx",
+                "title": "Meet Angela",
+                "description": "Business owner story — the business equivalent of Jasmine's journey",
+                "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-24-one-community",
+                "position": 24,
                 "filepath": "src/pages/slides/Slide22OneCommunity.tsx",
                 "title": "One Community, Three Experiences",
                 "description": "Signature ecosystem slide — consumers, businesses, communities",
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-23-one-ecosystem",
-                "position": 23,
+                "id": "inv-slide-25-one-ecosystem",
+                "position": 25,
                 "filepath": "src/pages/slides/Slide23OneEcosystem.tsx",
                 "title": "One Ecosystem",
                 "description": "Instead of three apps, one ecosystem",
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-24-bigger-than",
-                "position": 24,
+                "id": "inv-slide-26-bigger-than",
+                "position": 26,
                 "filepath": "src/pages/slides/Slide24BiggerThan.tsx",
                 "title": "Bigger Than Businesses",
                 "description": "Economic opportunity framing",
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-25-one-map",
-                "position": 25,
+                "id": "inv-slide-27-one-map",
+                "position": 27,
                 "filepath": "src/pages/slides/Slide25OneMap.tsx",
                 "title": "One Map, One Movement",
                 "description": "Closing mission recap",
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-26-founding-invite",
-                "position": 26,
+                "id": "inv-slide-28-founding-invite",
+                "position": 28,
                 "filepath": "src/pages/slides/Slide26FoundingInvite.tsx",
                 "title": "Founding Businesses",
                 "description": "Closing call to action",
