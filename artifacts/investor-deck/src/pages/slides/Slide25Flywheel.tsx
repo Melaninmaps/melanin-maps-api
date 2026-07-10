@@ -51,7 +51,7 @@ export default function Slide25Flywheel() {
         </div>
       </div>
 
-      <div className="absolute" style={{ left: "53%", top: "41%", transform: "translate(-50%, -50%)", width: "60vw", height: "60vw" }}>
+      <div className="absolute" style={{ left: "53%", top: "38%", transform: "translate(-50%, -50%)", width: "60vw", height: "60vw" }}>
         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" style={{ overflow: "visible" }}>
           <defs>
             <marker id="arrowhead" markerWidth="3.2" markerHeight="3.2" refX="1.6" refY="1.6" orient="auto-start-reverse">
