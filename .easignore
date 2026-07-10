@@ -30,7 +30,7 @@ lib/integrations
 lib/integrations-openai-ai-react
 lib/integrations-openai-ai-server
 lib/dbintegrations-openai-ai-server
-scripts
+/scripts
 *.pdf
 *.pptx
 *.mp4
