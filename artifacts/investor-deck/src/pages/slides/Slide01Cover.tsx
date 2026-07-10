@@ -15,13 +15,13 @@ export default function Slide01Cover() {
         MAPPING WITH MELANIN&trade;
       </div>
 
-      <div className="absolute left-[6vw] right-[6vw] top-1/2" style={{ transform: "translateY(calc(-50% - 2.2vh))" }}>
+      <div className="absolute left-[8.6vw] right-[6vw] top-1/2" style={{ transform: "translateY(calc(-50% - 2.2vh))" }}>
         <h1 className="font-display leading-tight" style={{ fontSize: "6.5vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
           No one should have to wonder<br />if they&rsquo;ll belong.
         </h1>
-        <div className="mt-[4vh] flex items-center gap-[1.5vw]">
+        <div className="mt-[6.3vh] flex items-center gap-[1.5vw]">
           <div style={{ width: "4.8vw", height: "3px", background: "#CA922B" }} />
-          <div className="font-body" style={{ fontSize: "2vw", color: "#A87A40", fontWeight: 300 }}>
+          <div className="font-body" style={{ fontSize: "2.25vw", color: "#A87A40", fontWeight: 300 }}>
             Helping people discover community before they arrive.
           </div>
         </div>
