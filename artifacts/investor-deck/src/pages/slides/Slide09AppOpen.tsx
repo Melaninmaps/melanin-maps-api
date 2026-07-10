@@ -29,15 +29,15 @@ export default function Slide09AppOpen() {
         <div className="flex flex-col gap-[3.4vh]" style={{ marginLeft: "2.4vw", width: "12vw" }}>
           <div className="flex items-center gap-[0.5vw]">
             <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
-            <span className="font-body" style={{ fontSize: "0.92vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.35 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Check safety scores</strong> before you book, not after.</span>
+            <span className="font-body" style={{ fontSize: "0.92vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.35 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Know safety</strong> before you arrive.</span>
           </div>
           <div className="flex items-center gap-[0.5vw]">
             <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
-            <span className="font-body" style={{ fontSize: "0.92vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.35 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Find trusted businesses</strong> in any new city.</span>
+            <span className="font-body" style={{ fontSize: "0.92vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.35 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Discover trusted businesses</strong> wherever you go.</span>
           </div>
           <div className="flex items-center gap-[0.5vw]">
             <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
-            <span className="font-body" style={{ fontSize: "0.92vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.35 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Move with real insight</strong>, not guesswork.</span>
+            <span className="font-body" style={{ fontSize: "0.92vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.35 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Relocate</strong> with community insight.</span>
           </div>
         </div>
       </div>
