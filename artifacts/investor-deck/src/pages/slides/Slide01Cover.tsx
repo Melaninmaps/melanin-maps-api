@@ -22,7 +22,7 @@ export default function Slide01Cover() {
         <div className="mt-[6.3vh] flex items-center gap-[1.5vw]">
           <div style={{ width: "4vw", height: "2px", background: "#CA922B", opacity: 0.75 }} />
           <div className="font-body" style={{ fontSize: "2.25vw", color: "#A87A40", fontWeight: 300 }}>
-            Helping people discover community before they arrive.
+            Helping people discover community before they arrive
           </div>
         </div>
       </div>
