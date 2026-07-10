@@ -10,7 +10,7 @@ const CHECKLIST = [
   "She shares businesses she loves with others.",
   "She welcomes newcomers to Houston.",
   "She helps others discover places they\u2019ll love.",
-  "She\u2019s part of the community that makes Houston feel like home.",
+  "She\u2019s helping make Houston feel like home for someone else.",
 ];
 
 export default function Slide13EventsTravel() {
