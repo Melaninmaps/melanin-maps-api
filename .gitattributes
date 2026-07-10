@@ -1,3 +1,4 @@
+attached_assets/** export-ignore
 MappingWithMelanin-v1.0.3.aab filter=lfs diff=lfs merge=lfs -text
 MappingWithMelanin-v1.0.3.tar.gz filter=lfs diff=lfs merge=lfs -text
 MappingWithMelanin-v1.0.3-final.aab filter=lfs diff=lfs merge=lfs -text
