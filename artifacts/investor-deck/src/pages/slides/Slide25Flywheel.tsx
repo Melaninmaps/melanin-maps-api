@@ -112,9 +112,11 @@ export default function Slide25Flywheel() {
         </div>
       </div>
 
-      <div className="absolute left-0 right-0 text-center px-[4vw]" style={{ bottom: "6vh" }}>
-        <div className="font-display" style={{ fontSize: "1.6vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.4, whiteSpace: "nowrap" }}>
-          Every recommendation strengthens the community. Every stronger community creates new opportunities for discovery.
+      <div className="absolute left-0 right-0 text-center" style={{ bottom: "6vh" }}>
+        <div className="font-display mx-auto" style={{ fontSize: "1.7vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.6, maxWidth: "44vw" }}>
+          Every recommendation strengthens the community.
+          <br />
+          Every stronger community creates new opportunities for discovery.
         </div>
       </div>
     </div>
