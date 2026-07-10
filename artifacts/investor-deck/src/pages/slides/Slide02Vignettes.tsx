@@ -11,34 +11,43 @@ export default function Slide02Vignettes() {
         </div>
       </div>
 
-      <div className="absolute left-[6vw] right-[6vw] top-[16vh] bottom-[6vh] grid grid-cols-4 gap-[1.4vw]">
-        <div className="relative overflow-hidden rounded-[0.4vw]">
+      <div className="absolute left-[6vw] right-[6vw] top-[15vh] flex" style={{ height: "56vh" }}>
+        <div className="relative overflow-hidden rounded-[0.4vw]" style={{ flex: 1, zIndex: 4 }}>
           <img src={`${base}photos/family-relocating.jpg`} crossOrigin="anonymous" alt="A family relocates" className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(28,14,6,0.88), rgba(28,14,6,0.05))" }} />
-          <div className="absolute bottom-[2vh] left-[1.2vw] right-[1.2vw] font-display" style={{ fontSize: "1.9vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.15 }}>
-            A family relocates.
+          <div className="absolute bottom-[3vh] left-[1.2vw] right-[1.2vw] font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.2 }}>
+            A family relocates&hellip;
           </div>
         </div>
-        <div className="relative overflow-hidden rounded-[0.4vw]">
+        <div className="relative overflow-hidden rounded-[0.4vw]" style={{ flex: 1, zIndex: 3, marginLeft: "-1vw" }}>
           <img src={`${base}photos/traveler-airport.jpg`} crossOrigin="anonymous" alt="A traveler lands in a new city" className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(28,14,6,0.88), rgba(28,14,6,0.05))" }} />
-          <div className="absolute bottom-[2vh] left-[1.2vw] right-[1.2vw] font-display" style={{ fontSize: "1.9vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.15 }}>
-            A traveler lands in a new city.
+          <div className="absolute bottom-[3vh] left-[1.2vw] right-[1.2vw] font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.2 }}>
+            A traveler lands in a new city&hellip;
           </div>
         </div>
-        <div className="relative overflow-hidden rounded-[0.4vw]">
+        <div className="relative overflow-hidden rounded-[0.4vw]" style={{ flex: 1, zIndex: 2, marginLeft: "-1vw" }}>
           <img src={`${base}photos/entrepreneur-storefront.jpg`} crossOrigin="anonymous" alt="A young entrepreneur opens a business" className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(28,14,6,0.88), rgba(28,14,6,0.05))" }} />
-          <div className="absolute bottom-[2vh] left-[1.2vw] right-[1.2vw] font-display" style={{ fontSize: "1.9vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.15 }}>
-            A young entrepreneur opens a business.
+          <div className="absolute bottom-[3vh] left-[1.2vw] right-[1.2vw] font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.2 }}>
+            A young entrepreneur opens a business&hellip;
           </div>
         </div>
-        <div className="relative overflow-hidden rounded-[0.4vw]">
+        <div className="relative overflow-hidden rounded-[0.4vw]" style={{ flex: 1, zIndex: 1, marginLeft: "-1vw" }}>
           <img src={`${base}photos/student-movein.jpg`} crossOrigin="anonymous" alt="A college student leaves home for the first time" className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(28,14,6,0.88), rgba(28,14,6,0.05))" }} />
-          <div className="absolute bottom-[2vh] left-[1.2vw] right-[1.2vw] font-display" style={{ fontSize: "1.9vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.15 }}>
-            A college student leaves home for the first time.
+          <div className="absolute bottom-[3vh] left-[1.2vw] right-[1.2vw] font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.2 }}>
+            A college student leaves home for the first time&hellip;
           </div>
+        </div>
+      </div>
+
+      <div className="absolute left-[10vw] right-[10vw] text-center" style={{ bottom: "5vh" }}>
+        <div className="font-display" style={{ fontSize: "2vw", fontWeight: 700, color: "#7B5408", lineHeight: 1.3 }}>
+          They aren&rsquo;t living the same story&hellip; they&rsquo;re asking the same question.
+        </div>
+        <div className="font-quote mt-[0.6vh]" style={{ fontSize: "2.6vw", fontStyle: "italic", fontWeight: 600, color: "#1C0E06" }}>
+          Where do I belong?
         </div>
       </div>
     </div>
