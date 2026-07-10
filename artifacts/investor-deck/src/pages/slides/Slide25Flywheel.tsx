@@ -1,5 +1,5 @@
-const STEPS = ["People", "Discovery", "Recommendations", "Growth", "Stronger Communities"];
-const GOLD_STEPS = new Set(["People", "Stronger Communities"]);
+const STEPS = ["Community", "Discovery", "Recommendations", "Business Growth", "Stronger Communities"];
+const GOLD_STEPS = new Set(["Community", "Stronger Communities"]);
 const ARC_RADIUS = 26;
 const LABEL_RADIUS = 26;
 const GAP_DEG = 16;
@@ -102,7 +102,7 @@ export default function Slide25Flywheel() {
 
       <div className="absolute left-0 right-0 text-center px-[10vw]" style={{ bottom: "5vh" }}>
         <div className="font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.5 }}>
-          Every new member strengthens the network. Every recommendation creates another opportunity for discovery.
+          Every recommendation strengthens the community. Every stronger community creates new opportunities for discovery.
         </div>
       </div>
     </div>
