@@ -1,18 +1,24 @@
 const STEPS = ["Community", "Discovery", "Recommendations", "Business Growth", "Stronger Community"];
-const GOLD_STEPS = new Set(["Community", "Stronger Community"]);
+const GOLD_STEPS = new Set(["Community", "Business Growth"]);
 const FONT_SIZE: Record<string, string> = {
   Community: "2.5vw",
   "Business Growth": "2.15vw",
-  Discovery: "1.8vw",
-  Recommendations: "1.8vw",
-  "Stronger Community": "1.8vw",
+  Discovery: "1.7vw",
+  Recommendations: "1.7vw",
+  "Stronger Community": "1.7vw",
+};
+const NUDGE: Record<string, { x: number; y: number }> = {
+  Community: { x: 0, y: 0.5 },
+  Discovery: { x: -3.5, y: 1.2 },
+  Recommendations: { x: 0.8, y: 1.8 },
+  "Business Growth": { x: -0.8, y: -3.5 },
+  "Stronger Community": { x: 2, y: 1.5 },
 };
 const LABEL_RADIUS_OVERRIDE: Record<string, number> = {
-  "Business Growth": 30,
-  "Stronger Community": 23,
+  Community: 31,
 };
-const ARC_RADIUS = 26;
-const LABEL_RADIUS = 26;
+const ARC_RADIUS = 27;
+const LABEL_RADIUS = 27;
 const GAP_DEG = 16;
 
 function pointOnCircle(angleDeg: number, r: number, cx = 50, cy = 50) {
@@ -51,7 +57,7 @@ export default function Slide25Flywheel() {
         </div>
       </div>
 
-      <div className="absolute" style={{ left: "53%", top: "38%", transform: "translate(-50%, -50%)", width: "60vw", height: "60vw" }}>
+      <div className="absolute" style={{ left: "53%", top: "45%", transform: "translate(-50%, -50%)", width: "65vw", height: "65vw" }}>
         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" style={{ overflow: "visible" }}>
           <defs>
             <marker id="arrowhead" markerWidth="3.2" markerHeight="3.2" refX="1.6" refY="1.6" orient="auto-start-reverse">
@@ -81,17 +87,18 @@ export default function Slide25Flywheel() {
           const { x, y, dx, dy } = pointOnCircle(angle, r);
           const { justify, textAlign } = anchorFor(dx);
           const gold = GOLD_STEPS.has(label);
+          const nudge = NUDGE[label] ?? { x: 0, y: 0 };
           return (
             <div
               key={label}
               className="absolute font-display flex"
               style={{
-                left: `${x}%`,
-                top: `${y}%`,
+                left: `calc(${x}% + ${nudge.x}vw)`,
+                top: `calc(${y}% + ${nudge.y}vw)`,
                 transform: `translate(${-50 + dx * 50}%, ${-50 + dy * 50}%)`,
                 fontSize: FONT_SIZE[label] ?? "2vw",
-                fontWeight: 700,
-                color: gold ? "#CA922B" : "#FAF6EF",
+                fontWeight: gold ? 700 : 600,
+                color: gold ? "#CA922B" : "#F5EBD8",
                 width: "15vw",
                 justifyContent: justify,
                 textAlign,
