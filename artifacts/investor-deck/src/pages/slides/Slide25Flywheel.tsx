@@ -1,5 +1,5 @@
-const STEPS = ["Community", "Discovery", "Recommendations", "Business Growth", "Community Grows"];
-const GOLD_STEPS = new Set(["Community", "Business Growth"]);
+const STEPS = ["People", "Discovery", "Recommendations", "Business Growth", "Stronger Communities"];
+const GOLD_STEPS = new Set(["People", "Stronger Communities"]);
 const ARC_RADIUS = 26;
 const LABEL_RADIUS = 26;
 const GAP_DEG = 16;
@@ -40,7 +40,7 @@ export default function Slide25Flywheel() {
         </div>
       </div>
 
-      <div className="absolute" style={{ left: "50%", top: "48%", transform: "translate(-50%, -50%)", width: "72vw", height: "72vw" }}>
+      <div className="absolute" style={{ left: "53%", top: "48%", transform: "translate(-50%, -50%)", width: "72vw", height: "72vw" }}>
         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" style={{ overflow: "visible" }}>
           <defs>
             <marker id="arrowhead" markerWidth="3.2" markerHeight="3.2" refX="1.6" refY="1.6" orient="auto-start-reverse">
@@ -56,7 +56,7 @@ export default function Slide25Flywheel() {
                 d={describeArc(startAngle, endAngle, ARC_RADIUS)}
                 fill="none"
                 stroke="#CA922B"
-                strokeWidth="1"
+                strokeWidth="0.8"
                 strokeLinecap="round"
                 markerEnd="url(#arrowhead)"
               />
@@ -91,7 +91,7 @@ export default function Slide25Flywheel() {
         })}
       </div>
 
-      <div className="absolute" style={{ right: "5vw", top: "16vh", maxWidth: "17vw", borderLeft: "2px solid rgba(202,146,43,0.4)", paddingLeft: "1.2vw" }}>
+      <div className="absolute" style={{ right: "3vw", top: "16vh", maxWidth: "17vw", borderLeft: "2px solid rgba(202,146,43,0.4)", paddingLeft: "1.2vw" }}>
         <div className="font-body mb-[0.8vh]" style={{ fontSize: "0.9vw", color: "#CA922B", letterSpacing: "0.1em", fontWeight: 600 }}>
           KINFOLK AI
         </div>
