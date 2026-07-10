@@ -3,7 +3,7 @@ const base = import.meta.env.BASE_URL;
 export default function Slide12DoctorsEmployers() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
-      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>12</div>
+      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>13</div>
 
       <div className="absolute left-[6vw] top-1/2 -translate-y-1/2" style={{ maxWidth: "34vw" }}>
         <div className="font-body mb-[2vh]" style={{ fontSize: "1.8vw", color: "#7B5408", letterSpacing: "0.16em", fontWeight: 500 }}>

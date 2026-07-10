@@ -1,7 +1,7 @@
 export default function Slide16IntentionalDiscovery() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
-      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>16</div>
+      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>17</div>
 
       <div className="absolute left-[6vw] top-[9vh]">
         <div className="font-body mb-[1.6vh]" style={{ fontSize: "1.8vw", color: "#7B5408", letterSpacing: "0.16em", fontWeight: 500 }}>

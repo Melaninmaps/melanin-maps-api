@@ -1,7 +1,7 @@
 export default function Slide20KinfolkCapabilities() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
-      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>20</div>
+      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>21</div>
 
       <div className="absolute left-[6vw] top-[9vh] max-w-[46vw]">
         <h1 className="font-display leading-tight" style={{ fontSize: "4vw", fontWeight: 700, color: "#1C0E06", textWrap: "balance" }}>
