@@ -15,9 +15,9 @@ export default function Slide11FoodBeauty() {
           JASMINE&rsquo;S JOURNEY
         </div>
         <h1 className="font-display leading-tight" style={{ fontSize: "3.6vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
-          She isn&rsquo;t just discovering businesses.
+          She isn&rsquo;t starting over.
           <br />
-          She&rsquo;s discovering her community.
+          She&rsquo;s starting connected.
         </h1>
         <div className="font-body mt-[2.8vh]" style={{ fontSize: "1.3vw", color: "#D8B98A", fontWeight: 400, lineHeight: 1.5, textWrap: "balance" }}>
           Instead of starting from scratch, Jasmine discovers places already trusted by the community.
@@ -62,11 +62,11 @@ export default function Slide11FoodBeauty() {
           <div className="flex flex-col gap-[1.6vh]">
             <div className="flex items-center gap-[0.5vw]">
               <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.5 }} />
-              <span className="font-body" style={{ fontSize: "0.88vw", color: "#D8B98A", fontWeight: 400, lineHeight: 1.4 }}>Restaurants locals recommend.</span>
+              <span className="font-body" style={{ fontSize: "0.88vw", color: "#D8B98A", fontWeight: 400, lineHeight: 1.4 }}>Local favorites the community stands behind.</span>
             </div>
             <div className="flex items-center gap-[0.5vw]">
               <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.5 }} />
-              <span className="font-body" style={{ fontSize: "0.88vw", color: "#D8B98A", fontWeight: 400, lineHeight: 1.4 }}>Businesses that reflect her values.</span>
+              <span className="font-body" style={{ fontSize: "0.88vw", color: "#D8B98A", fontWeight: 400, lineHeight: 1.4 }}>Businesses that reflect her culture and values.</span>
             </div>
             <div className="flex items-center gap-[0.5vw]">
               <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.5 }} />
