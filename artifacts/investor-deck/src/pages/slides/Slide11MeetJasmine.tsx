@@ -1,11 +1,11 @@
 const base = import.meta.env.BASE_URL;
 
 const CHECKLIST = [
-  "New city",
-  "Knows no one",
-  "Looking for housing",
-  "Wants to support local businesses",
-  "Wants to feel safe",
+  "Starting over in a new city",
+  "Doesn\u2019t know who to trust",
+  "Looking for a neighborhood that feels like home",
+  "Wants to support businesses that reflect her values",
+  "Hopes she\u2019ll feel like she belongs",
 ];
 
 export default function Slide11MeetJasmine() {
@@ -25,9 +25,9 @@ export default function Slide11MeetJasmine() {
         <h1 className="font-display leading-tight" style={{ fontSize: "4.4vw", fontWeight: 700, color: "#1C0E06" }}>
           Meet Jasmine.
         </h1>
-        <div className="inv-rule w-[8vw] my-[2.2vh]" />
+        <div className="inv-rule w-[8vw] mt-[2.9vh] mb-[2.2vh]" />
         <div className="font-body" style={{ fontSize: "1.7vw", color: "#3A1F0E", fontWeight: 400, lineHeight: 1.4 }}>
-          She just accepted her dream job in Houston.
+          Jasmine just accepted her dream job in Houston.
         </div>
 
         <div className="mt-[3vh]" style={{ display: "flex", flexDirection: "column", gap: "1.3vh" }}>
@@ -39,8 +39,10 @@ export default function Slide11MeetJasmine() {
           ))}
         </div>
 
-        <div className="font-display mt-[3.2vh]" style={{ fontSize: "1.9vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
+        <div className="font-display mt-[3.6vh]" style={{ fontSize: "2vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic", lineHeight: 1.35 }}>
           Then she opens Mapping with Melanin&trade;.
+          <br />
+          Here&rsquo;s what happens next.
         </div>
       </div>
     </div>
