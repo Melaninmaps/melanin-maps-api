@@ -1,18 +1,18 @@
-const STEPS = ["Community", "Discovery", "Recommendations", "Business Growth", "Stronger Community"];
+const STEPS = ["Community", "Discovery", "Recommendations", "Business Growth", "Community Grows"];
 const GOLD_STEPS = new Set(["Community", "Business Growth"]);
 const FONT_SIZE: Record<string, string> = {
-  Community: "2.5vw",
-  "Business Growth": "2.15vw",
-  Discovery: "1.7vw",
-  Recommendations: "1.7vw",
-  "Stronger Community": "1.7vw",
+  Community: "2.6vw",
+  "Business Growth": "2.2vw",
+  Discovery: "1.75vw",
+  Recommendations: "1.75vw",
+  "Community Grows": "1.75vw",
 };
 const NUDGE: Record<string, { x: number; y: number }> = {
   Community: { x: 0, y: 0.5 },
-  Discovery: { x: -3.5, y: 1.2 },
-  Recommendations: { x: 0.8, y: 1.8 },
-  "Business Growth": { x: -0.8, y: -3.5 },
-  "Stronger Community": { x: 2, y: 1.5 },
+  Discovery: { x: -2.5, y: 1 },
+  Recommendations: { x: 0.5, y: 1.4 },
+  "Business Growth": { x: -0.5, y: -2.8 },
+  "Community Grows": { x: 1.5, y: 1.2 },
 };
 const LABEL_RADIUS_OVERRIDE: Record<string, number> = {
   Community: 31,
@@ -20,6 +20,7 @@ const LABEL_RADIUS_OVERRIDE: Record<string, number> = {
 const ARC_RADIUS = 27;
 const LABEL_RADIUS = 27;
 const GAP_DEG = 16;
+const ANGLE_OFFSET = 10;
 
 function pointOnCircle(angleDeg: number, r: number, cx = 50, cy = 50) {
   const rad = (angleDeg * Math.PI) / 180;
@@ -48,16 +49,19 @@ export default function Slide25Flywheel() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#3D2417" }}>
-      <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 42% 44%, rgba(202,146,43,0.2), transparent 55%)" }} />
+      <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 42% 50%, rgba(202,146,43,0.2), transparent 55%)" }} />
       <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>25</div>
 
       <div className="absolute left-[6vw] top-[5vh]">
         <div className="font-body" style={{ fontSize: "1.4vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
           THE FLYWHEEL
         </div>
+        <div className="font-body" style={{ fontSize: "1.1vw", fontStyle: "italic", fontWeight: 500, color: "#D9C4A3", marginTop: "1vh" }}>
+          Every interaction makes Kinfolk AI smarter.
+        </div>
       </div>
 
-      <div className="absolute" style={{ left: "53%", top: "45%", transform: "translate(-50%, -50%)", width: "65vw", height: "65vw" }}>
+      <div className="absolute" style={{ left: "53%", top: "48%", transform: "translate(-50%, -50%)", width: "62vw", height: "62vw" }}>
         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" style={{ overflow: "visible" }}>
           <defs>
             <marker id="arrowhead" markerWidth="3.2" markerHeight="3.2" refX="1.6" refY="1.6" orient="auto-start-reverse">
@@ -65,8 +69,8 @@ export default function Slide25Flywheel() {
             </marker>
           </defs>
           {STEPS.map((_, i) => {
-            const startAngle = i * step + GAP_DEG;
-            const endAngle = (i + 1) * step - GAP_DEG;
+            const startAngle = i * step + GAP_DEG + ANGLE_OFFSET;
+            const endAngle = (i + 1) * step - GAP_DEG + ANGLE_OFFSET;
             return (
               <path
                 key={`arc-${i}`}
@@ -82,7 +86,7 @@ export default function Slide25Flywheel() {
         </svg>
 
         {STEPS.map((label, i) => {
-          const angle = i * step;
+          const angle = i * step + ANGLE_OFFSET;
           const r = LABEL_RADIUS_OVERRIDE[label] ?? LABEL_RADIUS;
           const { x, y, dx, dy } = pointOnCircle(angle, r);
           const { justify, textAlign } = anchorFor(dx);
@@ -110,17 +114,8 @@ export default function Slide25Flywheel() {
         })}
       </div>
 
-      <div className="absolute" style={{ right: "3vw", top: "16vh", maxWidth: "17vw", borderLeft: "2px solid rgba(202,146,43,0.4)", paddingLeft: "1.2vw" }}>
-        <div className="font-body mb-[0.8vh]" style={{ fontSize: "0.9vw", color: "#CA922B", letterSpacing: "0.1em", fontWeight: 600 }}>
-          KINFOLK AI
-        </div>
-        <div className="font-body" style={{ fontSize: "1vw", fontWeight: 500, color: "#D9C4A3", lineHeight: 1.45, fontStyle: "italic" }}>
-          Every interaction makes Kinfolk AI smarter. Every recommendation becomes more valuable.
-        </div>
-      </div>
-
-      <div className="absolute left-0 right-0 text-center" style={{ bottom: "6vh" }}>
-        <div className="font-display mx-auto" style={{ fontSize: "1.7vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.6, maxWidth: "44vw" }}>
+      <div className="absolute left-0 right-0 text-center" style={{ bottom: "4vh" }}>
+        <div className="font-display mx-auto" style={{ fontSize: "1.45vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.4, maxWidth: "46vw" }}>
           Every recommendation strengthens the community.
           <br />
           Every stronger community creates new opportunities for discovery.
