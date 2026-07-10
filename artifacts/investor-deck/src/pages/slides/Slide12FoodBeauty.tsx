@@ -28,10 +28,14 @@ export default function Slide11FoodBeauty() {
         <div className="relative flex-shrink-0" style={{ width: "19vw", height: "40.85vw", borderRadius: "2.09vw", border: "0.475vw solid #1C0E06", background: "#1C0E06", boxShadow: "0 1.4vw 2.8vw rgba(0,0,0,0.5)", overflow: "hidden" }}>
           <div className="absolute inset-0 flex flex-col" style={{ background: "#FAF6EF" }}>
             <div className="flex items-center justify-between px-[1vw] py-[1vw]" style={{ background: "#1C0E06" }}>
-              <span className="font-display" style={{ fontSize: "0.85vw", color: "#F5EBD8", fontWeight: 700 }}>Jasmine&rsquo;s Favorites</span>
+              <span className="font-display" style={{ fontSize: "0.85vw", color: "#F5EBD8", fontWeight: 700 }}>Welcome to Houston</span>
               <span style={{ fontSize: "0.75vw", color: "#CA922B" }}>&#9733;</span>
             </div>
-            <div className="flex-1 overflow-hidden flex flex-col gap-[0.7vw] px-[0.8vw] pt-[0.8vw]">
+            <div className="px-[0.8vw] pt-[0.6vw]">
+              <div className="font-body" style={{ fontSize: "0.62vw", color: "#A6720F", fontWeight: 700, letterSpacing: "0.06em" }}>RECOMMENDED FOR JASMINE</div>
+              <div className="font-body" style={{ fontSize: "0.6vw", color: "#7B5408", marginTop: "0.15vw" }}>Based on community recommendations</div>
+            </div>
+            <div className="flex-1 overflow-hidden flex flex-col gap-[0.7vw] px-[0.8vw] pt-[0.6vw]">
               {SAVED.map((s) => (
                 <div key={s.name} className="rounded-[0.9vw] px-[0.8vw] py-[0.75vw] flex items-start gap-[0.6vw]" style={{ background: "#FFFFFF", border: "1px solid rgba(58,31,14,0.08)" }}>
                   <div className="rounded-full flex-shrink-0 flex items-center justify-center font-display" style={{ width: "2.3vw", height: "2.3vw", background: "#CA922B", color: "#1C0E06", fontWeight: 700, fontSize: "0.95vw" }}>
@@ -53,7 +57,7 @@ export default function Slide11FoodBeauty() {
 
         <div className="flex flex-col gap-[3.4vh]" style={{ marginLeft: "2.4vw", width: "13.5vw" }}>
           <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", fontWeight: 700, lineHeight: 1.35 }}>
-            Community Favorites
+            Trusted by the Community
           </div>
           <div className="flex flex-col gap-[1.6vh]">
             <div className="flex items-center gap-[0.5vw]">
@@ -66,7 +70,7 @@ export default function Slide11FoodBeauty() {
             </div>
             <div className="flex items-center gap-[0.5vw]">
               <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.5 }} />
-              <span className="font-body" style={{ fontSize: "0.88vw", color: "#D8B98A", fontWeight: 400, lineHeight: 1.4 }}>Places she&rsquo;ll return to long after moving day.</span>
+              <span className="font-body" style={{ fontSize: "0.88vw", color: "#D8B98A", fontWeight: 400, lineHeight: 1.4 }}>Today she&rsquo;s discovering them. Tomorrow she&rsquo;s recommending them.</span>
             </div>
           </div>
         </div>
