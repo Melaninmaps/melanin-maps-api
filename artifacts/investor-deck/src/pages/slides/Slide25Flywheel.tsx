@@ -1,6 +1,7 @@
 const STEPS = ["Community", "Discovery", "Recommendations", "Business Growth", "Community Grows"];
 const GOLD_STEPS = new Set(["Community", "Business Growth"]);
-const RADIUS = 24;
+const ARC_RADIUS = 22;
+const LABEL_RADIUS = 34;
 const GAP_DEG = 14;
 
 function pointOnCircle(angleDeg: number, r: number, cx = 50, cy = 50) {
@@ -52,7 +53,7 @@ export default function Slide25Flywheel() {
             return (
               <path
                 key={`arc-${i}`}
-                d={describeArc(startAngle, endAngle, RADIUS)}
+                d={describeArc(startAngle, endAngle, ARC_RADIUS)}
                 fill="none"
                 stroke="#CA922B"
                 strokeWidth="1"
@@ -65,7 +66,7 @@ export default function Slide25Flywheel() {
 
         {STEPS.map((label, i) => {
           const angle = i * step;
-          const { x, y, dx, dy } = pointOnCircle(angle, RADIUS);
+          const { x, y, dx, dy } = pointOnCircle(angle, LABEL_RADIUS);
           const { justify, textAlign } = anchorFor(dx);
           const gold = GOLD_STEPS.has(label);
           return (
