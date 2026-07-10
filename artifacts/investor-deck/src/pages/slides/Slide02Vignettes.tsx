@@ -22,7 +22,7 @@ export default function Slide02Vignettes() {
 
       <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(28,14,6,0.55) 0%, rgba(28,14,6,0.72) 45%, rgba(28,14,6,0.55) 100%)" }} />
 
-      <div className="absolute left-[8vw] right-[8vw] top-1/2 -translate-y-1/2 text-center">
+      <div className="absolute left-[13vw] right-[3vw] top-1/2 -translate-y-1/2 text-center">
         <div className="font-display leading-tight" style={{ fontSize: "4.4vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
           Communities don&rsquo;t happen by accident.
         </div>
