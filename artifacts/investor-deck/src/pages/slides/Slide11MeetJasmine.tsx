@@ -2,9 +2,9 @@ const base = import.meta.env.BASE_URL;
 
 const CHECKLIST = [
   "Starting over in a new city",
-  "Looking to build real community",
   "Looking for a neighborhood that feels like home",
   "Wants to support businesses that reflect her values",
+  "Looking to build real community",
   "Hopes she\u2019ll feel like she belongs",
 ];
 
