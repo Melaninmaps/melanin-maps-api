@@ -7,8 +7,16 @@ export default function Slide18CommunityAlgorithm() {
           Community is the algorithm.
         </h1>
         <div className="inv-rule mx-auto w-[8vw] my-[4vh]" />
-        <div className="font-body" style={{ fontSize: "2.6vw", color: "#7B5408", fontWeight: 300 }}>
-          People recommend people. People trust people.
+        <div className="font-body" style={{ fontSize: "1.7vw", color: "#3A1F0E", fontWeight: 400, lineHeight: 1.5 }}>
+          Every recommendation teaches the platform.
+          <br />
+          Every experience helps someone else.
+        </div>
+        <div className="font-display mt-[3vh]" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#A6720F" }}>
+          That&rsquo;s your AI.
+        </div>
+        <div className="font-body mt-[1.4vh]" style={{ fontSize: "1.3vw", color: "#7B5408", fontStyle: "italic" }}>
+          Not just AI. Community-powered AI.
         </div>
       </div>
     </div>
