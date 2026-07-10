@@ -1,11 +1,18 @@
 export default function Slide04WhereBelong() {
   return (
-    <div className="relative w-screen h-screen overflow-hidden flex items-center justify-center" style={{ background: "#3D2417" }}>
-      <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 80% 70%, rgba(202,146,43,0.16), transparent 55%)" }} />
+    <div className="relative w-screen h-screen overflow-hidden flex items-center justify-center" style={{ background: "#FAF6EF" }}>
       <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>04</div>
-      <h1 className="font-display" style={{ fontSize: "10vw", fontWeight: 700, color: "#FAF6EF" }}>
-        &ldquo;Where do I belong?&rdquo;
-      </h1>
+      <div className="text-center px-[8vw]">
+        <div className="font-display leading-tight" style={{ fontSize: "3.4vw", fontWeight: 700, color: "#7B5408", textWrap: "balance" }}>
+          More than a map. More than a directory. More than a social network.
+        </div>
+        <div className="font-display leading-tight mt-[2vh]" style={{ fontSize: "5.6vw", fontWeight: 700, color: "#1C0E06", textWrap: "balance" }}>
+          It&rsquo;s a community ecosystem.
+        </div>
+        <div className="font-body mt-[4vh]" style={{ fontSize: "2vw", fontWeight: 400, color: "#7B5408", textWrap: "balance" }}>
+          Built to help people discover trusted businesses, build meaningful connections, and navigate life with confidence.
+        </div>
+      </div>
     </div>
   );
 }
