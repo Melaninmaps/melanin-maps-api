@@ -200,48 +200,56 @@
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-26-city-by-city",
+                "id": "inv-slide-26-network-effect",
                 "position": 26,
+                "filepath": "src/pages/slides/Slide26NetworkEffect.tsx",
+                "title": "The Bigger Our Community Becomes, the Smarter the Platform Gets",
+                "description": "Network-effect slide — each new member type compounds platform value",
+                "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-27-city-by-city",
+                "position": 27,
                 "filepath": "src/pages/slides/Slide26CityByCity.tsx",
                 "title": "City by City",
                 "description": "Rollout strategy across cities",
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-27-one-community",
-                "position": 27,
+                "id": "inv-slide-28-one-community",
+                "position": 28,
                 "filepath": "src/pages/slides/Slide22OneCommunity.tsx",
                 "title": "One Community, Three Experiences",
                 "description": "Signature ecosystem slide — consumers, businesses, communities",
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-28-one-ecosystem",
-                "position": 28,
+                "id": "inv-slide-29-one-ecosystem",
+                "position": 29,
                 "filepath": "src/pages/slides/Slide23OneEcosystem.tsx",
                 "title": "One Ecosystem",
                 "description": "Instead of three apps, one ecosystem",
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-29-bigger-than",
-                "position": 29,
+                "id": "inv-slide-30-bigger-than",
+                "position": 30,
                 "filepath": "src/pages/slides/Slide24BiggerThan.tsx",
                 "title": "Bigger Than Businesses",
                 "description": "Economic opportunity framing",
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-30-one-map",
-                "position": 30,
+                "id": "inv-slide-31-one-map",
+                "position": 31,
                 "filepath": "src/pages/slides/Slide25OneMap.tsx",
                 "title": "One Map, One Movement",
                 "description": "Closing mission recap",
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-31-founding-invite",
-                "position": 31,
+                "id": "inv-slide-32-founding-invite",
+                "position": 32,
                 "filepath": "src/pages/slides/Slide26FoundingInvite.tsx",
                 "title": "Founding Businesses",
                 "description": "Closing call to action",

@@ -4,7 +4,7 @@ const LAUNCH_WITH = ["Businesses", "Community", "AI", "Local content", "Safety i
 export default function Slide26CityByCity() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
-      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>26</div>
+      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>27</div>
 
       <div className="absolute left-[6vw] top-[7vh] max-w-[46vw]">
         <div className="font-body mb-[1.6vh]" style={{ fontSize: "1.4vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
