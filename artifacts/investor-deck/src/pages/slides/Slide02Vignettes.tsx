@@ -26,10 +26,8 @@ export default function Slide02Vignettes() {
         <div className="font-display leading-tight" style={{ fontSize: "4.4vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
           Communities don&rsquo;t happen by accident.
         </div>
-        <div className="font-quote mt-[3.5vh]" style={{ fontSize: "2.6vw", fontStyle: "italic", fontWeight: 500, color: "#E8C97A", lineHeight: 1.5 }}>
-          They are built by families&hellip; by travelers&hellip; by entrepreneurs&hellip; by neighbors&hellip;
-          <br />
-          by businesses that become part of people&rsquo;s lives.
+        <div className="font-body mt-[2vh]" style={{ fontSize: "2.4vw", fontWeight: 400, color: "#E8C97A" }}>
+          Someone chooses to build one.
         </div>
       </div>
     </div>
