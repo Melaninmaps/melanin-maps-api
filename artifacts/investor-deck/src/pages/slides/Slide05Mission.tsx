@@ -73,11 +73,11 @@ export default function Slide05Mission() {
           THE JOURNEY TO BELONGING
         </div>
         <h1 className="font-display leading-tight mt-[2.6vh]" style={{ fontSize: "3.6vw", fontWeight: 700, color: "#1C0E06", textWrap: "balance" }}>
-          Every journey starts here.
+          Every journey begins here.
         </h1>
       </div>
 
-      <div className="absolute left-[12vw] right-[12vw] top-[45vh]" style={{ height: "1px", background: GOLD, opacity: 0.3 }} />
+      <div className="absolute left-[8vw] right-[8vw] top-[45vh]" style={{ height: "1px", background: GOLD, opacity: 0.3 }} />
 
       <div className="absolute left-[6vw] right-[6vw] top-[39vh] grid grid-cols-5 gap-[1.6vw]">
         {pillars.map((p) => (
