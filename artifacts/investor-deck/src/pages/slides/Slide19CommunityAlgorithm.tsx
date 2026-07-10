@@ -18,6 +18,9 @@ export default function Slide18CommunityAlgorithm() {
         <div className="font-body mt-[1.4vh]" style={{ fontSize: "1.3vw", color: "#7B5408", fontStyle: "italic" }}>
           Not just AI. Community-powered AI.
         </div>
+        <div className="font-body mt-[3.5vh]" style={{ fontSize: "1.35vw", color: "#3A1F0E", fontWeight: 500 }}>
+          The more our community grows, the smarter every recommendation becomes.
+        </div>
       </div>
     </div>
   );
