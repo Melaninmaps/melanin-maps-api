@@ -26,18 +26,18 @@ export default function Slide06ImagineCity() {
           <img src={`${base}mockups/app-discover.jpg`} crossOrigin="anonymous" alt="Discover screen" className="absolute inset-0 w-full h-full object-cover" />
         </div>
 
-        <div className="flex flex-col gap-[3.4vh]" style={{ marginLeft: "2.2vw", width: "12vw" }}>
-          <div className="flex items-center gap-[0.6vw]">
-            <div style={{ width: "1.4vw", height: "1px", background: "#CA922B", opacity: 0.45 }} />
-            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}>Find what matters faster</span>
+        <div className="flex flex-col gap-[3.4vh]" style={{ marginLeft: "1.5vw", width: "12vw" }}>
+          <div className="flex items-center gap-[0.5vw]">
+            <div style={{ width: "0.9vw", height: "1px", background: "#CA922B", opacity: 0.45 }} />
+            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}>Find what matters faster.</span>
           </div>
-          <div className="flex items-center gap-[0.6vw]">
-            <div style={{ width: "1.4vw", height: "1px", background: "#CA922B", opacity: 0.45 }} />
-            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}>Support verified minority-owned businesses</span>
+          <div className="flex items-center gap-[0.5vw]">
+            <div style={{ width: "0.9vw", height: "1px", background: "#CA922B", opacity: 0.45 }} />
+            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}>Support businesses that strengthen communities.</span>
           </div>
-          <div className="flex items-center gap-[0.6vw]">
-            <div style={{ width: "1.4vw", height: "1px", background: "#CA922B", opacity: 0.45 }} />
-            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}>See recommendations from the community</span>
+          <div className="flex items-center gap-[0.5vw]">
+            <div style={{ width: "0.9vw", height: "1px", background: "#CA922B", opacity: 0.45 }} />
+            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}>Discover through trusted local voices.</span>
           </div>
         </div>
       </div>
