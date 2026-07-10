@@ -1,38 +1,28 @@
-const STEPS = ["Community", "Discovery", "Recommendations", "Business Growth", "Community Grows"];
-const GOLD_STEPS = new Set(["Community", "Business Growth"]);
-const FONT_SIZE: Record<string, string> = {
-  Community: "2.6vw",
-  "Business Growth": "2.2vw",
-  Discovery: "1.75vw",
-  Recommendations: "1.75vw",
-  "Community Grows": "1.75vw",
+type Step = {
+  label: string;
+  angle: number;
+  gold: boolean;
+  fontSize: string;
+  align: "center" | "left" | "right";
 };
-const NUDGE: Record<string, { x: number; y: number }> = {
-  Community: { x: 0, y: 0.5 },
-  Discovery: { x: -2.5, y: 1 },
-  Recommendations: { x: 0.5, y: 1.4 },
-  "Business Growth": { x: -0.5, y: -2.8 },
-  "Community Grows": { x: 1.5, y: 1.2 },
-};
-const LABEL_RADIUS_OVERRIDE: Record<string, number> = {
-  Community: 31,
-};
+
+const STEPS: Step[] = [
+  { label: "Community", angle: 0, gold: true, fontSize: "2.6vw", align: "center" },
+  { label: "Discovery", angle: 90, gold: false, fontSize: "1.75vw", align: "left" },
+  { label: "Recommendations", angle: 150, gold: false, fontSize: "1.75vw", align: "left" },
+  { label: "Thriving Businesses", angle: 210, gold: true, fontSize: "2.1vw", align: "right" },
+  { label: "Community Grows", angle: 300, gold: false, fontSize: "1.75vw", align: "right" },
+];
+
 const ARC_RADIUS = 27;
-const LABEL_RADIUS = 27;
-const GAP_DEG = 16;
-const ANGLE_OFFSET = 10;
+const LABEL_RADIUS = 36;
+const GAP_DEG = 14;
 
 function pointOnCircle(angleDeg: number, r: number, cx = 50, cy = 50) {
   const rad = (angleDeg * Math.PI) / 180;
   const dx = Math.sin(rad);
   const dy = -Math.cos(rad);
   return { x: cx + r * dx, y: cy + r * dy, dx, dy };
-}
-
-function anchorFor(dx: number) {
-  if (dx > 0.3) return { justify: "flex-start", textAlign: "left" as const };
-  if (dx < -0.3) return { justify: "flex-end", textAlign: "right" as const };
-  return { justify: "center", textAlign: "center" as const };
 }
 
 function describeArc(startAngle: number, endAngle: number, r: number) {
@@ -61,23 +51,23 @@ export default function Slide25Flywheel() {
         </div>
       </div>
 
-      <div className="absolute" style={{ left: "53%", top: "48%", transform: "translate(-50%, -50%)", width: "62vw", height: "62vw" }}>
+      <div className="absolute" style={{ left: "53%", top: "44%", transform: "translate(-50%, -50%)", width: "52vw", height: "52vw" }}>
         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" style={{ overflow: "visible" }}>
           <defs>
-            <marker id="arrowhead" markerWidth="3.2" markerHeight="3.2" refX="1.6" refY="1.6" orient="auto-start-reverse">
-              <path d="M0,0 L3.2,1.6 L0,3.2 Z" fill="#CA922B" />
+            <marker id="arrowhead" markerWidth="3" markerHeight="3" refX="1.5" refY="1.5" orient="auto-start-reverse">
+              <path d="M0,0 L3,1.5 L0,3 Z" fill="#CA922B" />
             </marker>
           </defs>
-          {STEPS.map((_, i) => {
-            const startAngle = i * step + GAP_DEG + ANGLE_OFFSET;
-            const endAngle = (i + 1) * step - GAP_DEG + ANGLE_OFFSET;
+          {STEPS.map((s, i) => {
+            const startAngle = i * step + GAP_DEG;
+            const endAngle = (i + 1) * step - GAP_DEG;
             return (
               <path
                 key={`arc-${i}`}
                 d={describeArc(startAngle, endAngle, ARC_RADIUS)}
                 fill="none"
                 stroke="#CA922B"
-                strokeWidth="0.8"
+                strokeWidth="0.7"
                 strokeLinecap="round"
                 markerEnd="url(#arrowhead)"
               />
@@ -85,30 +75,27 @@ export default function Slide25Flywheel() {
           })}
         </svg>
 
-        {STEPS.map((label, i) => {
-          const angle = i * step + ANGLE_OFFSET;
-          const r = LABEL_RADIUS_OVERRIDE[label] ?? LABEL_RADIUS;
-          const { x, y, dx, dy } = pointOnCircle(angle, r);
-          const { justify, textAlign } = anchorFor(dx);
-          const gold = GOLD_STEPS.has(label);
-          const nudge = NUDGE[label] ?? { x: 0, y: 0 };
+        {STEPS.map((s) => {
+          const { x, y } = pointOnCircle(s.angle, LABEL_RADIUS);
+          const justify = s.align === "left" ? "flex-start" : s.align === "right" ? "flex-end" : "center";
           return (
             <div
-              key={label}
+              key={s.label}
               className="absolute font-display flex"
               style={{
-                left: `calc(${x}% + ${nudge.x}vw)`,
-                top: `calc(${y}% + ${nudge.y}vw)`,
-                transform: `translate(${-50 + dx * 50}%, ${-50 + dy * 50}%)`,
-                fontSize: FONT_SIZE[label] ?? "2vw",
-                fontWeight: gold ? 700 : 600,
-                color: gold ? "#CA922B" : "#F5EBD8",
-                width: "15vw",
+                left: `${x}%`,
+                top: `${y}%`,
+                transform: "translate(-50%, -50%)",
+                fontSize: s.fontSize,
+                fontWeight: s.gold ? 700 : 600,
+                color: s.gold ? "#CA922B" : "#F5EBD8",
+                width: "16vw",
                 justifyContent: justify,
-                textAlign,
+                textAlign: s.align,
+                lineHeight: 1.25,
               }}
             >
-              {label}
+              {s.label}
             </div>
           );
         })}
