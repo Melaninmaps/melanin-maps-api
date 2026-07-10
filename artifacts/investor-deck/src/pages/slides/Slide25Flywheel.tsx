@@ -1,4 +1,4 @@
-const STEPS = ["People", "Discovery", "Recommendations", "Business Growth", "Stronger Communities"];
+const STEPS = ["People", "Discovery", "Recommendations", "Growth", "Stronger Communities"];
 const GOLD_STEPS = new Set(["People", "Stronger Communities"]);
 const ARC_RADIUS = 26;
 const LABEL_RADIUS = 26;
