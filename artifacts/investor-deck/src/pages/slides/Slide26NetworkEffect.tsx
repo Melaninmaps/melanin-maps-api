@@ -1,7 +1,7 @@
 const COLS = [
   { input: "Every review", outputPre: "Builds ", gold: "trust", outputPost: "" },
   { input: "Every recommendation", outputPre: "Improves ", gold: "discovery", outputPost: "" },
-  { input: "Every saved business", outputPre: "Personalizes future ", gold: "recommendations", outputPost: "" },
+  { input: "Every saved place", outputPre: "Personalizes future ", gold: "recommendations", outputPost: "" },
   { input: "Every new community", outputPre: "Expands ", gold: "opportunity", outputPost: "" },
 ];
 
@@ -44,7 +44,7 @@ export default function Slide26NetworkEffect() {
       <div className="absolute left-0 right-0 text-center px-[10vw]" style={{ bottom: "8vh" }}>
         <div style={{ height: "1px", background: "rgba(202,146,43,0.25)", marginBottom: "3vh" }} />
         <div className="font-display" style={{ fontSize: "1.6vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.4 }}>
-          Every contribution strengthens the <span style={{ color: "#CA922B" }}>community</span>. Every stronger community improves the platform.
+          Every contribution strengthens the <span style={{ color: "#CA922B" }}>community</span>. Every stronger community makes the platform <span style={{ color: "#CA922B" }}>smarter</span>.
         </div>
       </div>
     </div>
