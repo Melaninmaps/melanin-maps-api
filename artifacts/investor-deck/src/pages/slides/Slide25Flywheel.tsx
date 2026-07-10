@@ -7,8 +7,17 @@ const STEPS = [
 ];
 
 const ARC_RADIUS = 27;
-const LABEL_RADIUS = 36;
+const LABEL_RADIUS = 30;
 const GAP_DEG = 13;
+
+// per-label fine-tuning: bring each word right to the circle edge
+const LABEL_RADIUS_OVERRIDE: Record<string, number> = {
+  Community: 28.5,
+  Discovery: 29,
+  Recommendations: 29,
+  "Thriving Businesses": 29,
+  "Community Grows": 29,
+};
 
 function pointOnCircle(angleDeg: number, r: number, cx = 50, cy = 50) {
   const rad = (angleDeg * Math.PI) / 180;
@@ -77,7 +86,8 @@ export default function Slide25Flywheel() {
         {/* labels: each label sits at i * step — exactly the midpoint of its gap */}
         {STEPS.map((s, i) => {
           const angle = i * step;
-          const { x, y, dx, dy } = pointOnCircle(angle, LABEL_RADIUS);
+          const r = LABEL_RADIUS_OVERRIDE[s.label] ?? LABEL_RADIUS;
+          const { x, y, dx, dy } = pointOnCircle(angle, r);
           const { justify, textAlign } = anchorFor(dx);
           return (
             <div
