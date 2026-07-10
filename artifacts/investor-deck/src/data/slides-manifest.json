@@ -178,8 +178,8 @@
         {
                 "id": "inv-slide-23-meet-angela",
                 "position": 23,
-                "filepath": "src/pages/slides/Slide23MeetAngela.tsx",
-                "title": "Meet Angela",
+                "filepath": "src/pages/slides/Slide23MeetMarcus.tsx",
+                "title": "Meet Marcus",
                 "description": "Business owner story — the business equivalent of Jasmine's journey",
                 "speakerNotes": ""
         },
