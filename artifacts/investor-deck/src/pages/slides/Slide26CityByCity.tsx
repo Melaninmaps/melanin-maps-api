@@ -2,7 +2,7 @@ const PHASE_ONE = ["Philadelphia", "Baltimore", "Washington DC"];
 const PHASE_TWO = ["Atlanta", "Houston", "Chicago", "Los Angeles"];
 const LAUNCH_WITH = [
   "Verified businesses",
-  "Community members",
+  "Founding community members",
   "Kinfolk AI",
   "Local recommendations",
   "Safety intelligence",
@@ -24,7 +24,7 @@ export default function Slide26CityByCity() {
 
         <div className="mt-[4vh]">
           <div className="font-body mb-[1.8vh]" style={{ fontSize: "1.15vw", color: "#7B5408", letterSpacing: "0.1em", fontWeight: 600 }}>
-            EVERY LAUNCH INCLUDES THE COMPLETE COMMUNITY FLYWHEEL
+            EVERY CITY LAUNCHES WITH THE COMPLETE COMMUNITY FLYWHEEL
           </div>
           <div className="flex flex-col" style={{ gap: "1vh" }}>
             {LAUNCH_WITH.map((item) => (
@@ -36,7 +36,13 @@ export default function Slide26CityByCity() {
           </div>
         </div>
 
-        <div className="mt-[4vh]" style={{ borderLeft: "3px solid #CA922B", paddingLeft: "1.2vw" }}>
+        <div className="mt-[3vh]" style={{ borderLeft: "3px solid #CA922B", paddingLeft: "1.2vw" }}>
+          <div className="font-body" style={{ fontSize: "1.1vw", fontStyle: "italic", color: "#7B5408", lineHeight: 1.6 }}>
+            Each city strengthens the data, recommendations, and community that power the next launch.
+          </div>
+        </div>
+
+        <div className="mt-[2.5vh]" style={{ borderLeft: "3px solid #CA922B", paddingLeft: "1.2vw" }}>
           <div className="font-body" style={{ fontSize: "1.15vw", fontStyle: "italic", color: "#7B5408", lineHeight: 1.6 }}>
             We don't just launch an app.<br />
             We launch the entire ecosystem.
@@ -44,12 +50,11 @@ export default function Slide26CityByCity() {
         </div>
       </div>
 
-      {/* SUBTLE ARROW CONNECTOR */}
-      <div className="absolute" style={{ left: "51vw", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.4vh" }}>
-        {Array.from({ length: 9 }).map((_, i) => (
-          <div key={i} style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#CA922B", opacity: 0.35 }} />
+      {/* CENTER CONNECTOR */}
+      <div className="absolute flex flex-col items-center justify-center" style={{ left: "50vw", transform: "translateX(-50%)", top: "30%", gap: "0.8vh" }}>
+        {["Repeat.", "Scale.", "Expand."].map((word) => (
+          <div key={word} className="font-display" style={{ fontSize: "1.2vw", fontWeight: 700, color: "#CA922B", opacity: 0.55, letterSpacing: "0.06em" }}>{word}</div>
         ))}
-        <div style={{ fontSize: "1.4vw", color: "#CA922B", opacity: 0.5 }}>→</div>
       </div>
 
       {/* RIGHT COLUMN — city phases */}
