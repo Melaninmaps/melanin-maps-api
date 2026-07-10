@@ -10,10 +10,10 @@ export default function Slide07OneApp() {
           Connect.
         </h1>
         <div className="font-display leading-tight mt-[2.5vh]" style={{ fontSize: "2.4vw", fontWeight: 700, color: "#A6720F", textWrap: "balance" }}>
-          Community isn&rsquo;t something you scroll. It&rsquo;s something you build.
+          Communities aren&rsquo;t built with followers. They&rsquo;re built with people.
         </div>
         <div className="font-body mt-[2.5vh]" style={{ fontSize: "1.4vw", color: "#7B5408", fontWeight: 400, lineHeight: 1.5, textWrap: "balance" }}>
-          Join circles, message neighbors, and find events&mdash;so you&rsquo;re building relationships before you ever arrive.
+          Join circles, connect with neighbors, discover local events, and start building relationships before you ever arrive.
         </div>
         <div className="inv-rule mt-[3.5vh] mb-[1.6vh]" style={{ width: "5vw" }} />
         <div className="font-display" style={{ fontSize: "1.5vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
@@ -29,15 +29,15 @@ export default function Slide07OneApp() {
         <div className="flex flex-col gap-[3.4vh]" style={{ marginLeft: "1.5vw", width: "12vw" }}>
           <div className="flex items-center gap-[0.5vw]">
             <div style={{ width: "0.9vw", height: "1px", background: "#CA922B", opacity: 0.45 }} />
-            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}>Join circles built around shared interests.</span>
+            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}>Join circles around shared interests.</span>
           </div>
           <div className="flex items-center gap-[0.5vw]">
             <div style={{ width: "0.9vw", height: "1px", background: "#CA922B", opacity: 0.45 }} />
-            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}>Message and meet people before you arrive.</span>
+            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}>Meet people before you arrive.</span>
           </div>
           <div className="flex items-center gap-[0.5vw]">
             <div style={{ width: "0.9vw", height: "1px", background: "#CA922B", opacity: 0.45 }} />
-            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}>Find events where you already belong.</span>
+            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}>Build trusted relationships before moving or traveling.</span>
           </div>
         </div>
       </div>
