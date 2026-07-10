@@ -1,43 +1,88 @@
-const CITIES = ["Philadelphia", "Baltimore", "Washington DC", "Atlanta", "Houston", "Chicago", "Los Angeles"];
-const LAUNCH_WITH = ["Businesses", "Community", "AI", "Local content", "Safety intelligence"];
+const PHASE_ONE = ["Philadelphia", "Baltimore", "Washington DC"];
+const PHASE_TWO = ["Atlanta", "Houston", "Chicago", "Los Angeles"];
+const LAUNCH_WITH = [
+  "Verified businesses",
+  "Community members",
+  "Kinfolk AI",
+  "Local recommendations",
+  "Safety intelligence",
+];
 
 export default function Slide26CityByCity() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
       <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>28</div>
 
-      <div className="absolute left-[6vw] top-[7vh] max-w-[46vw]">
+      {/* LEFT COLUMN */}
+      <div className="absolute left-[6vw] top-[7vh]" style={{ width: "44vw" }}>
         <div className="font-body mb-[1.6vh]" style={{ fontSize: "1.4vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
           THE ROLLOUT
         </div>
-        <h1 className="font-display leading-tight" style={{ fontSize: "3.6vw", fontWeight: 700, color: "#1C0E06" }}>
-          Every city becomes smarter.
+        <h1 className="font-display leading-tight" style={{ fontSize: "3.2vw", fontWeight: 700, color: "#1C0E06" }}>
+          Every new city strengthens the network.
         </h1>
 
         <div className="mt-[4vh]">
-          <div className="font-body mb-[1.4vh]" style={{ fontSize: "1.2vw", color: "#7B5408", letterSpacing: "0.1em", fontWeight: 600 }}>
-            EACH CITY LAUNCHES WITH
+          <div className="font-body mb-[1.8vh]" style={{ fontSize: "1.15vw", color: "#7B5408", letterSpacing: "0.1em", fontWeight: 600 }}>
+            EVERY LAUNCH INCLUDES THE COMPLETE COMMUNITY FLYWHEEL
           </div>
-          <div className="flex flex-col gap-[0.9vh]">
+          <div className="flex flex-col" style={{ gap: "1vh" }}>
             {LAUNCH_WITH.map((item) => (
-              <div key={item} className="flex items-start gap-[1vw]">
-                <div style={{ width: "3px", height: "2.8vh", background: "#CA922B", flexShrink: 0, marginTop: "0.2vh" }} />
-                <div className="font-body" style={{ fontSize: "1.5vw", color: "#3A1F0E", fontWeight: 500 }}>{item}</div>
+              <div key={item} className="flex items-center" style={{ gap: "1vw" }}>
+                <div style={{ fontSize: "1.2vw", color: "#CA922B", fontWeight: 700, flexShrink: 0 }}>✓</div>
+                <div className="font-body" style={{ fontSize: "1.45vw", color: "#3A1F0E", fontWeight: 500 }}>{item}</div>
               </div>
             ))}
           </div>
         </div>
+
+        <div className="mt-[4vh]" style={{ borderLeft: "3px solid #CA922B", paddingLeft: "1.2vw" }}>
+          <div className="font-body" style={{ fontSize: "1.15vw", fontStyle: "italic", color: "#7B5408", lineHeight: 1.6 }}>
+            We don't just launch an app.<br />
+            We launch the entire ecosystem.
+          </div>
+        </div>
       </div>
 
-      <div className="absolute right-[7vw] top-1/2 -translate-y-1/2 flex flex-col items-start gap-[1vh]">
-        {CITIES.map((city, i) => (
-          <div key={city} className="flex flex-col items-start">
-            <div className="font-display" style={{ fontSize: "2vw", fontWeight: 700, color: "#1C0E06" }}>{city}</div>
-            {i < CITIES.length - 1 && (
-              <div style={{ color: "#CA922B", fontSize: "1.3vw", fontWeight: 400, lineHeight: 1, opacity: 0.5, marginLeft: "0.4vw" }}>&#8595;</div>
-            )}
-          </div>
+      {/* SUBTLE ARROW CONNECTOR */}
+      <div className="absolute" style={{ left: "51vw", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.4vh" }}>
+        {Array.from({ length: 9 }).map((_, i) => (
+          <div key={i} style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#CA922B", opacity: 0.35 }} />
         ))}
+        <div style={{ fontSize: "1.4vw", color: "#CA922B", opacity: 0.5 }}>→</div>
+      </div>
+
+      {/* RIGHT COLUMN — city phases */}
+      <div className="absolute flex flex-col justify-center" style={{ right: "6vw", top: "10vh", bottom: "10vh", width: "36vw" }}>
+
+        <div className="mb-[3.5vh]">
+          <div className="font-body mb-[1.4vh]" style={{ fontSize: "1.1vw", color: "#CA922B", letterSpacing: "0.12em", fontWeight: 600 }}>
+            PILOT CITIES
+          </div>
+          <div className="flex flex-col" style={{ gap: "0.6vh" }}>
+            {PHASE_ONE.map((city) => (
+              <div key={city} className="font-display" style={{ fontSize: "2vw", fontWeight: 700, color: "#1C0E06" }}>{city}</div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center mb-[3.5vh]" style={{ gap: "0.8vw" }}>
+          <div style={{ flex: 1, height: "1px", background: "rgba(202,146,43,0.3)" }} />
+          <div style={{ fontSize: "1.6vw", color: "#CA922B", opacity: 0.6 }}>↓</div>
+          <div style={{ flex: 1, height: "1px", background: "rgba(202,146,43,0.3)" }} />
+        </div>
+
+        <div>
+          <div className="font-body mb-[1.4vh]" style={{ fontSize: "1.1vw", color: "#CA922B", letterSpacing: "0.12em", fontWeight: 600 }}>
+            EXPANSION CITIES
+          </div>
+          <div className="flex flex-col" style={{ gap: "0.6vh" }}>
+            {PHASE_TWO.map((city) => (
+              <div key={city} className="font-display" style={{ fontSize: "2vw", fontWeight: 700, color: "#1C0E06", opacity: 0.65 }}>{city}</div>
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );
