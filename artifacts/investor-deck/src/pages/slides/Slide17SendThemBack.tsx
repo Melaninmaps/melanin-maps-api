@@ -4,7 +4,7 @@ export default function Slide17SendThemBack() {
     "Booking System", "Online Store", "Phone Number", "Google Maps",
   ];
   return (
-    <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#1C0E06" }}>
+    <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#3D2417" }}>
       <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 70% 30%, rgba(202,146,43,0.16), transparent 55%)" }} />
       <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>17</div>
 

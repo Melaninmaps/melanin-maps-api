@@ -1,6 +1,6 @@
 export default function Slide01Cover() {
   return (
-    <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#1C0E06" }}>
+    <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#3D2417" }}>
       <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 20% 20%, rgba(202,146,43,0.18), transparent 55%)" }} />
       <div className="absolute top-[6vh] left-[6vw] font-body" style={{ fontSize: "1.6vw", color: "#CA922B", letterSpacing: "0.2em", fontWeight: 500 }}>
         MAPPING WITH MELANIN&trade;
