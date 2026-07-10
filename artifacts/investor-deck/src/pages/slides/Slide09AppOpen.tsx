@@ -6,12 +6,16 @@ export default function Slide09AppOpen() {
       <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 75% 50%, rgba(202,146,43,0.14), transparent 55%)" }} />
       <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>09</div>
 
-      <div className="absolute left-[6vw] top-1/2 -translate-y-1/2" style={{ maxWidth: "32vw" }}>
-        <div className="font-body mb-[2vh]" style={{ fontSize: "1.8vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
+      <div className="absolute left-[6vw] top-1/2 -translate-y-1/2" style={{ maxWidth: "34vw" }}>
+        <div className="font-body mb-[3vh]" style={{ fontSize: "1.8vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
           THE EXPERIENCE
         </div>
-        <div className="relative overflow-hidden" style={{ width: "26vw", height: "34vw", borderRadius: "1vw", boxShadow: "0 1.6vw 3vw rgba(0,0,0,0.4)" }}>
-          <img src={`${base}photos/traveler-airport.jpg`} crossOrigin="anonymous" alt="Jasmine with her phone in hand" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="font-display" style={{ fontSize: "3.4vw", color: "#CA922B", opacity: 0.5, lineHeight: 1 }}>&ldquo;</div>
+        <p className="font-display leading-snug" style={{ fontSize: "2.4vw", fontStyle: "italic", fontWeight: 600, color: "#FAF6EF", textWrap: "balance", marginTop: "-1vh" }}>
+          Finally a platform that actually understands what it means to travel while Minority. The safety scores alone are worth it &mdash; I checked three cities before my last trip and felt genuinely prepared.
+        </p>
+        <div className="font-body mt-[3vh]" style={{ fontSize: "1.15vw", color: "#CA922B", letterSpacing: "0.04em" }}>
+          Aaliyah T. &nbsp;&middot;&nbsp; Frequent Traveler, Atlanta GA
         </div>
       </div>
 
