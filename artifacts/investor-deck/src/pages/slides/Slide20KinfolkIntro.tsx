@@ -13,6 +13,9 @@ export default function Slide19KinfolkIntro() {
         <div className="font-display leading-tight mt-[1vh]" style={{ fontSize: "6.2vw", fontWeight: 700, color: "#CA922B" }}>
           Your business partner.
         </div>
+        <div className="font-body mt-[3.5vh]" style={{ fontSize: "1.4vw", color: "#D8B98A", fontWeight: 400 }}>
+          AI doesn&rsquo;t replace expertise. AI remembers what communities already know.
+        </div>
       </div>
     </div>
   );
