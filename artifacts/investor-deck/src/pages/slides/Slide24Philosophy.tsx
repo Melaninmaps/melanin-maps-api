@@ -8,10 +8,10 @@ export default function Slide24Philosophy() {
 
       <div className="absolute left-0 right-0 top-[6vh] text-center px-[8vw]">
         <h1 className="font-display leading-tight" style={{ fontSize: "3.4vw", fontWeight: 700, color: "#1C0E06", textWrap: "balance" }}>
-          We&rsquo;re not replacing local communities.
+          We&rsquo;re not another destination.
         </h1>
         <h1 className="font-display leading-tight" style={{ fontSize: "3.4vw", fontWeight: 700, color: "#CA922B", textWrap: "balance" }}>
-          We&rsquo;re helping people find them.
+          We&rsquo;re the connection.
         </h1>
         <div className="font-body mt-[1.6vh]" style={{ fontSize: "1.25vw", color: "#7B5408", fontWeight: 500, fontStyle: "italic" }}>
           We don&rsquo;t ask businesses to start over. We help them build on what they&rsquo;ve already built.
