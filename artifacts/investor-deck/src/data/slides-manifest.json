@@ -3,80 +3,200 @@
 		"id": "inv-slide-01-cover",
 		"position": 1,
 		"filepath": "src/pages/slides/Slide01Cover.tsx",
-		"title": "The Future of Community Intelligence",
-		"description": "Opening title slide — investor brief",
-		"speakerNotes": "you cannot see all of the words please edit and change colors and fonts as needed \n"
+		"title": "No One Should Have To Wonder",
+		"description": "Opening title — belonging as the core promise",
+		"speakerNotes": ""
 	},
 	{
-		"id": "inv-slide-02-problem",
+		"id": "inv-slide-02-vignettes",
 		"position": 2,
-		"filepath": "src/pages/slides/Slide02Problem.tsx",
-		"title": "The Problem",
-		"description": "Three problems: fragmented, untrusted, static",
-		"speakerNotes": "please reformat so the words are visible some are hidden behind text boxes also it looks like words are cut off in the text boxes "
+		"filepath": "src/pages/slides/Slide02Vignettes.tsx",
+		"title": "Four Stories",
+		"description": "Family, traveler, entrepreneur, student — four real vignettes",
+		"speakerNotes": ""
 	},
 	{
-		"id": "inv-slide-03-market",
+		"id": "inv-slide-03-same-question",
 		"position": 3,
-		"filepath": "src/pages/slides/Slide03Market.tsx",
-		"title": "The Market",
-		"description": "44M Black Americans, $1.6T buying power, 3.1M businesses",
-		"speakerNotes": "this looks as if it has been cut off please reformat to have all of the words on this page "
+		"filepath": "src/pages/slides/Slide03SameQuestion.tsx",
+		"title": "Same Answer",
+		"description": "Different questions, same underlying search",
+		"speakerNotes": ""
 	},
 	{
-		"id": "inv-slide-04-platform",
+		"id": "inv-slide-04-where-belong",
 		"position": 4,
-		"filepath": "src/pages/slides/Slide04Platform.tsx",
-		"title": "The Platform",
-		"description": "Four interconnected layers: community, discovery, intelligence, commerce",
-		"speakerNotes": "this entire page needs to be reformatted the words are not visible boxes are cut off "
+		"filepath": "src/pages/slides/Slide04WhereBelong.tsx",
+		"title": "Where Do I Belong?",
+		"description": "The universal question, stated plainly",
+		"speakerNotes": ""
 	},
 	{
-		"id": "inv-slide-05-intelligence",
+		"id": "inv-slide-05-mission",
 		"position": 5,
-		"filepath": "src/pages/slides/Slide05Intelligence.tsx",
-		"title": "Community Intelligence",
-		"description": "Data moat — three-step compounding flywheel",
-		"speakerNotes": "please make sure all text is visible also make sure all text fit on the page "
+		"filepath": "src/pages/slides/Slide05Mission.tsx",
+		"title": "Our Mission",
+		"description": "Not a directory, not a social network — confidence, community, opportunity",
+		"speakerNotes": ""
 	},
 	{
-		"id": "inv-slide-06-revenue",
+		"id": "inv-slide-06-imagine-city",
 		"position": 6,
-		"filepath": "src/pages/slides/Slide06Revenue.tsx",
-		"title": "Revenue Model",
-		"description": "Four revenue streams: memberships, business subscriptions, promotions, data",
-		"speakerNotes": "again edit to make sure all text fits on the page and all words are visible "
+		"filepath": "src/pages/slides/Slide06ImagineCity.tsx",
+		"title": "Imagine Moving",
+		"description": "The unknowns of relocating to a new city",
+		"speakerNotes": ""
 	},
 	{
-		"id": "inv-slide-07-traction",
+		"id": "inv-slide-07-one-app",
 		"position": 7,
-		"filepath": "src/pages/slides/Slide07Traction.tsx",
-		"title": "Traction",
-		"description": "Four milestone timeline: built, Philly launch, Founding 500, expansion",
-		"speakerNotes": "edit to make sure all words are visible and all text fits on the page "
+		"filepath": "src/pages/slides/Slide07OneApp.tsx",
+		"title": "One App",
+		"description": "Transition — finding it all in one place",
+		"speakerNotes": ""
 	},
 	{
-		"id": "inv-slide-08-founding500",
+		"id": "inv-slide-08-meet-jasmine",
 		"position": 8,
-		"filepath": "src/pages/slides/Slide08Founding500.tsx",
-		"title": "The Founding 500",
-		"description": "Anchor strategy — what it is and why it matters",
-		"speakerNotes": "please edit to make sure all text fits on the page and that the format look professional "
+		"filepath": "src/pages/slides/Slide08MeetJasmine.tsx",
+		"title": "Meet Jasmine",
+		"description": "User journey intro — relocating Philadelphia to Houston",
+		"speakerNotes": ""
 	},
 	{
-		"id": "inv-slide-09-whynow",
+		"id": "inv-slide-09-app-open",
 		"position": 9,
-		"filepath": "src/pages/slides/Slide09WhyNow.tsx",
-		"title": "Why Now",
-		"description": "Four market timing factors",
-		"speakerNotes": "completely revamp with different lighter colors these boxes can't be read at all "
+		"filepath": "src/pages/slides/Slide09AppOpen.tsx",
+		"title": "She Opens The App",
+		"description": "Real app home screen mockup",
+		"speakerNotes": ""
 	},
 	{
-		"id": "inv-slide-10-ask",
+		"id": "inv-slide-10-safe-neighborhoods",
 		"position": 10,
-		"filepath": "src/pages/slides/Slide10TheAsk.tsx",
-		"title": "The Ask",
-		"description": "Vision statement and use of funds",
-		"speakerNotes": "please edit to make sure all words are visible and that all text fits on the page I can't tell if there are words in the brown box \n"
+		"filepath": "src/pages/slides/Slide10SafeNeighborhoods.tsx",
+		"title": "Safe Neighborhoods",
+		"description": "Real app map/safety screen mockup",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-11-food-beauty",
+		"position": 11,
+		"filepath": "src/pages/slides/Slide11FoodBeauty.tsx",
+		"title": "Restaurants & Salons",
+		"description": "Real app discover screen mockup",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-12-doctors-employers",
+		"position": 12,
+		"filepath": "src/pages/slides/Slide12DoctorsEmployers.tsx",
+		"title": "Doctors & Employers",
+		"description": "Real app business listings screen mockup",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-13-events-travel",
+		"position": 13,
+		"filepath": "src/pages/slides/Slide13EventsTravel.tsx",
+		"title": "Events & Travel",
+		"description": "Real app community screen mockup",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-14-friends-businesses",
+		"position": 14,
+		"filepath": "src/pages/slides/Slide14FriendsBusinesses.tsx",
+		"title": "Houston Feels Like Home",
+		"description": "Jasmine's journey resolution",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-15-business-question",
+		"position": 15,
+		"filepath": "src/pages/slides/Slide15BusinessQuestion.tsx",
+		"title": "The Other Side",
+		"description": "Transition to the business owner's perspective",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-16-intentional-discovery",
+		"position": 16,
+		"filepath": "src/pages/slides/Slide16IntentionalDiscovery.tsx",
+		"title": "Intentional Discovery",
+		"description": "Not advertising — clicks, recommendations, saved businesses, itineraries",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-17-send-them-back",
+		"position": 17,
+		"filepath": "src/pages/slides/Slide17SendThemBack.tsx",
+		"title": "We Send Them Back To You",
+		"description": "Channel grid — website, social, booking, store, phone, maps",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-18-community-algorithm",
+		"position": 18,
+		"filepath": "src/pages/slides/Slide18CommunityAlgorithm.tsx",
+		"title": "Community Is The Algorithm",
+		"description": "Trust-based discovery mechanism",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-19-kinfolk-intro",
+		"position": 19,
+		"filepath": "src/pages/slides/Slide19KinfolkIntro.tsx",
+		"title": "Meet Kinfolk AI",
+		"description": "AI positioning — a business partner, not just AI",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-20-kinfolk-capabilities",
+		"position": 20,
+		"filepath": "src/pages/slides/Slide20KinfolkCapabilities.tsx",
+		"title": "Kinfolk AI Capabilities",
+		"description": "Marketing, events, reviews, growth strategy",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-21-one-community",
+		"position": 21,
+		"filepath": "src/pages/slides/Slide21OneCommunity.tsx",
+		"title": "One Community, Three Experiences",
+		"description": "Signature ecosystem slide — consumers, businesses, communities",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-22-one-ecosystem",
+		"position": 22,
+		"filepath": "src/pages/slides/Slide22OneEcosystem.tsx",
+		"title": "One Ecosystem",
+		"description": "Instead of three apps, one ecosystem",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-23-bigger-than",
+		"position": 23,
+		"filepath": "src/pages/slides/Slide23BiggerThan.tsx",
+		"title": "Bigger Than Businesses",
+		"description": "Economic opportunity framing",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-24-one-map",
+		"position": 24,
+		"filepath": "src/pages/slides/Slide24OneMap.tsx",
+		"title": "One Map, One Movement",
+		"description": "Closing mission recap",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-25-founding-invite",
+		"position": 25,
+		"filepath": "src/pages/slides/Slide25FoundingInvite.tsx",
+		"title": "Founding Businesses",
+		"description": "Closing call to action",
+		"speakerNotes": ""
 	}
 ]

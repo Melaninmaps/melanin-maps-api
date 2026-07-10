@@ -1,54 +1,20 @@
 export default function Slide01Cover() {
   return (
-    <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
-      {/* Left dark panel */}
-      <div className="absolute left-0 top-0 w-[44vw] h-full" style={{ background: "#1C0E06" }} />
-      {/* Gold divider line */}
-      <div className="absolute top-0 bottom-0 w-[0.5vw]" style={{ left: "44vw", background: "#CA922B" }} />
-
-      {/* Slide number */}
+    <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#1C0E06" }}>
+      <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 20% 20%, rgba(202,146,43,0.18), transparent 55%)" }} />
+      <div className="absolute top-[6vh] left-[6vw] font-body" style={{ fontSize: "1.6vw", color: "#CA922B", letterSpacing: "0.2em", fontWeight: 500 }}>
+        MAPPING WITH MELANIN&trade;
+      </div>
       <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>01</div>
 
-      {/* Left panel */}
-      <div className="absolute left-0 top-0 w-[44vw] h-full flex flex-col justify-center pl-[7vw] pr-[5vw]">
-        <div className="font-body mb-[2.5vh]" style={{ fontSize: "2.2vw", color: "#CA922B", letterSpacing: "0.18em", fontWeight: 300 }}>
-          INVESTOR BRIEF
-        </div>
-        <h1 className="font-display leading-tight mb-[2vh]" style={{ fontSize: "5.5vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
-          The Future of Community Intelligence.
+      <div className="absolute left-[6vw] right-[6vw] top-1/2 -translate-y-1/2">
+        <h1 className="font-display leading-tight" style={{ fontSize: "6.5vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
+          No one should have to wonder<br />if they&rsquo;ll belong.
         </h1>
-        <div className="inv-rule w-[12vw] mb-[2.5vh]" />
-        <div className="font-body" style={{ fontSize: "2.4vw", fontWeight: 300, color: "#A07840" }}>
-          Mapping With Melanin™
-        </div>
-      </div>
-
-      {/* Right panel */}
-      <div className="absolute top-0 bottom-0 flex flex-col justify-center pl-[6vw] pr-[6vw]" style={{ left: "46vw" }}>
-        <div className="font-body mb-[3.5vh]" style={{ fontSize: "2.2vw", color: "#CA922B", letterSpacing: "0.14em", fontWeight: 300 }}>
-          THE OPPORTUNITY
-        </div>
-        <div className="flex flex-col gap-[3.5vh]">
-          <div className="flex items-start gap-[1.8vw]">
-            <div className="flex-shrink-0 mt-[0.6vh]" style={{ width: "3px", height: "4.5vh", background: "#CA922B" }} />
-            <div>
-              <div className="font-display" style={{ fontSize: "3vw", fontWeight: 700, color: "#1C0E06" }}>Community Discovery</div>
-              <div className="font-body" style={{ fontSize: "2.5vw", fontWeight: 300, color: "#3A1F0E" }}>Built for minorities and the melanated diaspora</div>
-            </div>
-          </div>
-          <div className="flex items-start gap-[1.8vw]">
-            <div className="flex-shrink-0 mt-[0.6vh]" style={{ width: "3px", height: "4.5vh", background: "#CA922B" }} />
-            <div>
-              <div className="font-display" style={{ fontSize: "3vw", fontWeight: 700, color: "#1C0E06" }}>Network Intelligence</div>
-              <div className="font-body" style={{ fontSize: "2.5vw", fontWeight: 300, color: "#3A1F0E" }}>Data that compounds with every member</div>
-            </div>
-          </div>
-          <div className="flex items-start gap-[1.8vw]">
-            <div className="flex-shrink-0 mt-[0.6vh]" style={{ width: "3px", height: "4.5vh", background: "#CA922B" }} />
-            <div>
-              <div className="font-display" style={{ fontSize: "3vw", fontWeight: 700, color: "#1C0E06" }}>Multiple Revenue Streams</div>
-              <div className="font-body" style={{ fontSize: "2.5vw", fontWeight: 300, color: "#3A1F0E" }}>Memberships, B2B, AI, and data</div>
-            </div>
+        <div className="mt-[4vh] flex items-center gap-[1.5vw]">
+          <div style={{ width: "4vw", height: "3px", background: "#CA922B" }} />
+          <div className="font-body" style={{ fontSize: "2vw", color: "#A87A40", fontWeight: 300 }}>
+            A platform for finding home, wherever you land.
           </div>
         </div>
       </div>
