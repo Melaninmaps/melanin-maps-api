@@ -1,8 +1,17 @@
+const base = import.meta.env.BASE_URL;
+
+const POSTS = [
+  { photo: "photos/feed-woman-shop.jpg", name: "Marcus W.", loc: "Chicago, IL", caption: "Found my business co-founder through a local meetup last week. This community shows up for each other.", likes: 84, comments: 12 },
+  { photo: "photos/feed-friends-rooftop.jpg", name: "Jasmine T.", loc: "Houston, TX", caption: "Landed in a new city and already have people to meet this weekend. Never felt like a stranger.", likes: 61, comments: 9 },
+  { photo: "photos/feed-woman-movein.jpg", name: "Aisha R.", loc: "Atlanta, GA", caption: "Six months in and this city finally feels like home. Grateful for this community.", likes: 103, comments: 18 },
+];
+
 const CHECKLIST = [
-  "She joins a local run club through the community feed.",
-  "She shows up to a neighborhood event and recognizes faces.",
-  "She makes friends who share her experience.",
-  "She finally feels safe in her new neighborhood.",
+  "She joins a neighborhood run club.",
+  "She recommends her favorite coffee shop.",
+  "She welcomes another newcomer.",
+  "She leaves her first community review.",
+  "Someone else discovers Houston because of her.",
 ];
 
 export default function Slide13EventsTravel() {
@@ -11,27 +20,63 @@ export default function Slide13EventsTravel() {
       <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 75% 50%, rgba(202,146,43,0.14), transparent 55%)" }} />
       <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>14</div>
 
-      <div className="absolute left-[6vw] top-1/2 -translate-y-1/2" style={{ maxWidth: "38vw" }}>
-        <div className="font-body mb-[2vh]" style={{ fontSize: "1.4vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
+      <div className="absolute left-[6vw] top-1/2 -translate-y-1/2" style={{ maxWidth: "33vw" }}>
+        <div className="font-body mb-[2vh]" style={{ fontSize: "1.3vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
           JASMINE&rsquo;S JOURNEY &mdash; SHE BECOMES PART OF THE COMMUNITY
         </div>
-        <h1 className="font-display leading-tight" style={{ fontSize: "3.8vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
+        <h1 className="font-display leading-tight" style={{ fontSize: "3.4vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
           She&rsquo;s no longer new here.
           <br />
           She&rsquo;s known here.
         </h1>
 
-        <div className="mt-[3.4vh]" style={{ display: "flex", flexDirection: "column", gap: "1.6vh" }}>
+        <div className="mt-[3vh]" style={{ display: "flex", flexDirection: "column", gap: "1.35vh" }}>
           {CHECKLIST.map((item) => (
-            <div key={item} className="font-body" style={{ fontSize: "1.25vw", color: "#D8B98A", fontWeight: 400, display: "flex", alignItems: "flex-start", gap: "0.8vw", lineHeight: 1.4 }}>
-              <span style={{ color: "#CA922B", fontSize: "1.2vw", fontWeight: 700, flexShrink: 0 }}>&#10003;</span>
+            <div key={item} className="font-body" style={{ fontSize: "1.15vw", color: "#D8B98A", fontWeight: 400, display: "flex", alignItems: "flex-start", gap: "0.8vw", lineHeight: 1.4 }}>
+              <span style={{ color: "#CA922B", fontSize: "1.1vw", fontWeight: 700, flexShrink: 0 }}>&#10003;</span>
               {item}
             </div>
           ))}
         </div>
 
-        <div className="font-display mt-[3.6vh]" style={{ fontSize: "1.7vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic", textWrap: "balance" }}>
-          A city full of strangers became a community of friends.
+        <div className="font-display mt-[3.2vh]" style={{ fontSize: "1.5vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic", textWrap: "balance" }}>
+          She came looking for a community.
+          <br />
+          Now she&rsquo;s helping build one.
+        </div>
+      </div>
+
+      <div className="absolute top-1/2 -translate-y-1/2" style={{ right: "6vw" }}>
+        <div className="relative flex-shrink-0" style={{ width: "19vw", height: "40.85vw", borderRadius: "2.09vw", border: "0.475vw solid #1C0E06", background: "#1C0E06", boxShadow: "0 1.4vw 2.8vw rgba(0,0,0,0.5)", overflow: "hidden" }}>
+          <div className="absolute inset-0 flex flex-col" style={{ background: "#FAF6EF" }}>
+            <div className="flex items-center justify-between px-[1vw] py-[1vw]" style={{ background: "#1C0E06" }}>
+              <span className="font-display" style={{ fontSize: "0.85vw", color: "#F5EBD8", fontWeight: 700 }}>Community Feed</span>
+              <span style={{ fontSize: "0.75vw" }}>🔔</span>
+            </div>
+            <div className="flex-1 overflow-hidden flex flex-col gap-[0.55vw] px-[0.55vw] pt-[0.55vw]">
+              {POSTS.map((p) => (
+                <div key={p.name} className="rounded-[0.9vw] overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid rgba(58,31,14,0.08)" }}>
+                  <div className="flex items-center gap-[0.5vw] px-[0.7vw] py-[0.55vw]">
+                    <div className="rounded-full flex-shrink-0" style={{ width: "1.8vw", height: "1.8vw", background: "#CA922B" }} />
+                    <div>
+                      <div className="font-body" style={{ fontSize: "0.72vw", color: "#1C0E06", fontWeight: 700 }}>{p.name}</div>
+                      <div className="font-body" style={{ fontSize: "0.6vw", color: "#A6720F" }}>{p.loc}</div>
+                    </div>
+                  </div>
+                  <div className="relative w-full" style={{ height: "6.2vw" }}>
+                    <img src={`${base}${p.photo}`} crossOrigin="anonymous" alt={p.name} className="absolute inset-0 w-full h-full object-cover" />
+                  </div>
+                  <div className="px-[0.7vw] py-[0.5vw]">
+                    <div className="font-body" style={{ fontSize: "0.62vw", color: "#3A1F0E", lineHeight: 1.35 }}>{p.caption}</div>
+                    <div className="flex items-center gap-[0.7vw] mt-[0.4vw]" style={{ fontSize: "0.6vw", color: "#B4832A" }}>
+                      <span>&#10084; {p.likes}</span>
+                      <span>&#128172; {p.comments}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
