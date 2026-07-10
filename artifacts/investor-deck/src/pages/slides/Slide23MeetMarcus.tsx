@@ -1,14 +1,12 @@
 const base = import.meta.env.BASE_URL;
 
 const JOURNEY = [
-  "He tells people who he is.",
-  "He shares why he started.",
-  "Community discovers him.",
-  "People save him for later.",
-  "Families visit.",
-  "Visitors become regulars.",
-  "Regulars recommend Marcus.",
-  "His reputation grows with every recommendation.",
+  "He tells his story",
+  "Community discovers him",
+  "Neighbors become customers",
+  "Customers return",
+  "Customers recommend him",
+  "Business grows",
 ];
 
 export default function Slide23MeetMarcus() {
@@ -21,8 +19,8 @@ export default function Slide23MeetMarcus() {
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(28,14,6,0.05), rgba(28,14,6,0.55))" }} />
       </div>
 
-      <div className="absolute right-[5vw] top-[6vh]" style={{ left: "42vw" }}>
-        <div className="font-body mb-[1.6vh]" style={{ fontSize: "1.3vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
+      <div className="absolute right-[5vw] top-[5vh]" style={{ left: "42vw" }}>
+        <div className="font-body mb-[1.4vh]" style={{ fontSize: "1.3vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
           A BUSINESS STORY
         </div>
         <h1 className="font-display leading-tight" style={{ fontSize: "3.6vw", fontWeight: 700, color: "#1C0E06" }}>
@@ -32,32 +30,34 @@ export default function Slide23MeetMarcus() {
           Restaurant Owner
         </div>
 
-        <div className="mt-[2.6vh] p-[1.6vw]" style={{ borderRadius: "0.6vw", background: "rgba(202,146,43,0.08)", border: "1px solid rgba(202,146,43,0.25)" }}>
-          <div className="font-body mb-[0.8vh]" style={{ fontSize: "1.1vw", color: "#A6720F", letterSpacing: "0.1em", fontWeight: 600 }}>
+        <div className="mt-[2vh] pl-[1vw]" style={{ borderLeft: "2px solid rgba(202,146,43,0.35)" }}>
+          <div className="font-body mb-[0.6vh]" style={{ fontSize: "1vw", color: "#A6720F", letterSpacing: "0.1em", fontWeight: 600 }}>
             BEFORE MAPPING WITH MELANIN&trade;
           </div>
-          <div className="font-display" style={{ fontSize: "1.5vw", color: "#3A1F0E", fontWeight: 700 }}>
+          <div className="font-body" style={{ fontSize: "1.3vw", color: "#3A1F0E", fontWeight: 500 }}>
             Great business. Great service. Hard to be discovered.
           </div>
         </div>
 
-        <div className="mt-[2.4vh] grid grid-cols-2 gap-x-[2vw] gap-y-[0.9vh]">
-          {JOURNEY.map((item) => (
-            <div key={item} className="font-body" style={{ fontSize: "1.15vw", color: "#7B5408", fontWeight: 500, display: "flex", alignItems: "center", gap: "0.7vw" }}>
-              <span style={{ color: "#CA922B", fontSize: "1.1vw", fontWeight: 700 }}>&#8595;</span>
-              {item}
+        <div className="mt-[2.8vh]" style={{ display: "flex", flexDirection: "column", gap: "0.9vh" }}>
+          {JOURNEY.map((item, i) => (
+            <div key={item}>
+              <div className="font-display" style={{ fontSize: "1.6vw", color: "#3A1F0E", fontWeight: 700 }}>{item}</div>
+              {i < JOURNEY.length - 1 && (
+                <div style={{ color: "#CA922B", fontSize: "1.2vw", fontWeight: 700, lineHeight: 1 }}>&#8595;</div>
+              )}
             </div>
           ))}
         </div>
 
-        <div className="font-body mt-[2vh]" style={{ fontSize: "1.15vw", color: "#3A1F0E", fontWeight: 500 }}>
-          Every recommendation helps more people discover Marcus.
+        <div className="font-body mt-[2.4vh]" style={{ fontSize: "1.15vw", color: "#3A1F0E", fontWeight: 500 }}>
+          Every recommendation helps someone else find a place they&rsquo;ll love.
         </div>
 
-        <div className="font-display mt-[2vh]" style={{ fontSize: "1.5vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
-          Marcus isn&rsquo;t an exception. He&rsquo;s exactly who we built this platform for.
+        <div className="font-display mt-[1.6vh]" style={{ fontSize: "1.4vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
+          There are thousands of businesses like Marcus&rsquo;s. Great businesses deserve more than great luck.
         </div>
-        <div className="font-display mt-[1.2vh]" style={{ fontSize: "1.5vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
+        <div className="font-display mt-[1vh]" style={{ fontSize: "1.4vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
           Marcus came looking for customers. Now he&rsquo;s building a community.
         </div>
       </div>
