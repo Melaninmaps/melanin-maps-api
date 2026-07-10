@@ -23,7 +23,7 @@ export default function Slide09AppOpen() {
 
       <div className="absolute top-1/2 -translate-y-1/2 flex items-center" style={{ right: "6vw" }}>
         <div className="relative flex-shrink-0" style={{ width: "19vw", height: "40.85vw", borderRadius: "2.09vw", border: "0.475vw solid #3A1F0E", background: "#1C0E06", boxShadow: "0 1.4vw 2.8vw rgba(28,14,6,0.22)", overflow: "hidden" }}>
-          <img src={`${base}mockups/app-map.jpg`} crossOrigin="anonymous" alt="Map and safety screen" className="absolute inset-0 w-full h-full object-cover" />
+          <img src={`${base}mockups/app-map-safety.png`} crossOrigin="anonymous" alt="Map and safety screen" className="absolute inset-0 w-full h-full object-cover" />
         </div>
 
         <div className="flex flex-col gap-[3.4vh]" style={{ marginLeft: "2.4vw", width: "12vw" }}>
