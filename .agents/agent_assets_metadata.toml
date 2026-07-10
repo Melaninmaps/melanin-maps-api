@@ -132,6 +132,12 @@ uri = "file://attached_assets/generated_images/feed-woman-movein.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "CxE678ATMaAH73cD_JRUU"
+uri = "file://artifacts/investor-deck/public/photos/entrepreneur-restaurant-owner.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "kU1-MXMYrBRo-HYqMfRHN"
 uri = "file://.local/outputs/Melanin-Discovery-Hub.pptx"

@@ -5,7 +5,7 @@ export default function Slide22AngelaDivider() {
       <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>22</div>
       <div className="text-center px-[8vw]">
         <div className="font-body mb-[2vh]" style={{ fontSize: "1.8vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
-          A NEW CHAPTER
+          THE BUSINESS JOURNEY
         </div>
         <h1 className="font-display leading-tight" style={{ fontSize: "4.6vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
           Growing a business shouldn&rsquo;t mean chasing attention.
