@@ -37,7 +37,7 @@ export default function Slide09AppOpen() {
           </div>
           <div className="flex items-center gap-[0.5vw]">
             <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
-            <span className="font-body" style={{ fontSize: "0.92vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.35 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Relocate</strong> with community insight.</span>
+            <span className="font-body" style={{ fontSize: "0.92vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.35 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Move</strong> with community insight.</span>
           </div>
         </div>
       </div>
