@@ -29,15 +29,15 @@ export default function Slide08MeetJasmine() {
         <div className="flex flex-col gap-[3.4vh]" style={{ marginLeft: "2.4vw", width: "12vw" }}>
           <div className="flex items-center gap-[0.5vw]">
             <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
-            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Get discovered</strong> by customers actively looking.</span>
+            <span className="font-body" style={{ fontSize: "0.92vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.35 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Connect with customers</strong> already looking for what you offer.</span>
           </div>
           <div className="flex items-center gap-[0.5vw]">
             <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
-            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Keep the relationship</strong>&mdash;we send traffic to you.</span>
+            <span className="font-body" style={{ fontSize: "0.92vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.35 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Own the customer relationship</strong>&mdash;your website, your social.</span>
           </div>
           <div className="flex items-center gap-[0.5vw]">
             <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
-            <span className="font-body" style={{ fontSize: "0.85vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.3 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Act on real feedback</strong> from your own community.</span>
+            <span className="font-body" style={{ fontSize: "0.92vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.35 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Grow</strong> with trusted community feedback.</span>
           </div>
         </div>
       </div>

@@ -2,26 +2,43 @@ const base = import.meta.env.BASE_URL;
 
 export default function Slide09AppOpen() {
   return (
-    <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#3D2417" }}>
-      <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 75% 50%, rgba(202,146,43,0.14), transparent 55%)" }} />
+    <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
       <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>09</div>
 
       <div className="absolute left-[6vw] top-1/2 -translate-y-1/2" style={{ maxWidth: "34vw" }}>
-        <div className="font-body mb-[3vh]" style={{ fontSize: "1.8vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
-          THE EXPERIENCE
+        <h1 className="font-display leading-tight" style={{ fontSize: "5.6vw", fontWeight: 700, color: "#1C0E06" }}>
+          Travel.
+        </h1>
+        <div className="font-display leading-tight mt-[2.5vh]" style={{ fontSize: "2.4vw", fontWeight: 700, color: "#A6720F", textWrap: "balance" }}>
+          Confidence is the best travel companion.
         </div>
-        <div className="font-quote" style={{ fontSize: "3.4vw", color: "#CA922B", opacity: 0.5, lineHeight: 1, fontStyle: "italic" }}>&ldquo;</div>
-        <p className="font-quote leading-snug" style={{ fontSize: "2.6vw", fontStyle: "italic", fontWeight: 600, color: "#FAF6EF", textWrap: "balance", marginTop: "-1vh" }}>
-          Finally a platform that actually understands what it means to travel while Minority. The safety scores alone are worth it &mdash; I checked three cities before my last trip and felt genuinely prepared.
-        </p>
-        <div className="font-body mt-[3vh]" style={{ fontSize: "1.15vw", color: "#CA922B", letterSpacing: "0.04em" }}>
-          Aaliyah T. &nbsp;&middot;&nbsp; Frequent Traveler, Atlanta GA
+        <div className="font-body mt-[2.5vh]" style={{ fontSize: "1.4vw", color: "#7B5408", fontWeight: 400, lineHeight: 1.5, textWrap: "balance" }}>
+          Discover safer neighborhoods, trusted businesses, and community insight before you arrive&mdash;so every trip begins with confidence, not uncertainty.
+        </div>
+        <div className="inv-rule mt-[3.5vh] mb-[1.6vh]" style={{ width: "5vw" }} />
+        <div className="font-display" style={{ fontSize: "1.5vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
+          Know before you go.
         </div>
       </div>
 
-      <div className="absolute top-1/2 -translate-y-1/2" style={{ right: "9vw" }}>
-        <div className="relative" style={{ width: "20vw", height: "43vw", borderRadius: "2.2vw", border: "0.5vw solid #2A160C", background: "#1C0E06", boxShadow: "0 2vw 4vw rgba(0,0,0,0.5)", overflow: "hidden" }}>
-          <img src={`${base}mockups/app-home.jpg`} crossOrigin="anonymous" alt="App home screen" className="absolute inset-0 w-full h-full object-cover" />
+      <div className="absolute top-1/2 -translate-y-1/2 flex items-center" style={{ right: "6vw" }}>
+        <div className="relative flex-shrink-0" style={{ width: "19vw", height: "40.85vw", borderRadius: "2.09vw", border: "0.475vw solid #3A1F0E", background: "#1C0E06", boxShadow: "0 1.4vw 2.8vw rgba(28,14,6,0.22)", overflow: "hidden" }}>
+          <img src={`${base}mockups/app-map.jpg`} crossOrigin="anonymous" alt="Map and safety screen" className="absolute inset-0 w-full h-full object-cover" />
+        </div>
+
+        <div className="flex flex-col gap-[3.4vh]" style={{ marginLeft: "2.4vw", width: "12vw" }}>
+          <div className="flex items-center gap-[0.5vw]">
+            <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
+            <span className="font-body" style={{ fontSize: "0.92vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.35 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Check safety scores</strong> before you book, not after.</span>
+          </div>
+          <div className="flex items-center gap-[0.5vw]">
+            <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
+            <span className="font-body" style={{ fontSize: "0.92vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.35 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Find trusted businesses</strong> in any new city.</span>
+          </div>
+          <div className="flex items-center gap-[0.5vw]">
+            <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.4 }} />
+            <span className="font-body" style={{ fontSize: "0.92vw", color: "#B4832A", fontWeight: 500, lineHeight: 1.35 }}><strong style={{ fontWeight: 700, color: "#A6720F" }}>Move with real insight</strong>, not guesswork.</span>
+          </div>
         </div>
       </div>
     </div>
