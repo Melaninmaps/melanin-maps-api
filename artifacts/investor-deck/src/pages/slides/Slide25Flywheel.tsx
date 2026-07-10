@@ -14,8 +14,8 @@ const GAP_DEG = 13;
 const LABEL_RADIUS_OVERRIDE: Record<string, number> = {
   Community: 28.5,
   Discovery: 25,
-  Recommendations: 29,
-  "Thriving Businesses": 29,
+  Recommendations: 25,
+  "Thriving Businesses": 25,
   "Community Grows": 25,
 };
 
