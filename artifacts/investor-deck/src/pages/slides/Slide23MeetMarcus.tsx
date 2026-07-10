@@ -1,14 +1,14 @@
 const base = import.meta.env.BASE_URL;
 
 const JOURNEY = [
-  "Claims his business.",
-  "Adds his story.",
-  "Community finds him.",
-  "People save him.",
-  "People visit.",
-  "People recommend him.",
-  "Kinfolk AI learns.",
-  "Business grows.",
+  "He tells people who he is.",
+  "He shares why he started.",
+  "Community discovers him.",
+  "People save him for later.",
+  "Families visit.",
+  "Visitors become regulars.",
+  "Regulars recommend Marcus.",
+  "His reputation grows with every recommendation.",
 ];
 
 export default function Slide23MeetMarcus() {
@@ -50,8 +50,15 @@ export default function Slide23MeetMarcus() {
           ))}
         </div>
 
-        <div className="font-display mt-[2.4vh]" style={{ fontSize: "1.5vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
-          This is Marcus&rsquo;s journey. It&rsquo;s every business owner&rsquo;s journey.
+        <div className="font-body mt-[2vh]" style={{ fontSize: "1.15vw", color: "#3A1F0E", fontWeight: 500 }}>
+          Every recommendation helps more people discover Marcus.
+        </div>
+
+        <div className="font-display mt-[2vh]" style={{ fontSize: "1.5vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
+          Marcus isn&rsquo;t an exception. He&rsquo;s exactly who we built this platform for.
+        </div>
+        <div className="font-display mt-[1.2vh]" style={{ fontSize: "1.5vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
+          Marcus came looking for customers. Now he&rsquo;s building a community.
         </div>
       </div>
     </div>
