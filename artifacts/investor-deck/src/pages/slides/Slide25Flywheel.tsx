@@ -15,7 +15,7 @@ const LABEL_RADIUS_OVERRIDE: Record<string, number> = {
   Community: 28.5,
   Discovery: 25,
   Recommendations: 25,
-  "Thriving Businesses": 24,
+  "Thriving Businesses": 26,
   "Community Grows": 25,
 };
 
