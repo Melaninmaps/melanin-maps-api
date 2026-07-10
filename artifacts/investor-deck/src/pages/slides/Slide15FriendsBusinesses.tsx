@@ -60,7 +60,7 @@ export default function Slide14FriendsBusinesses() {
                   </div>
                 </div>
                 <div className="font-body mt-[0.4vw]" style={{ fontSize: "0.58vw", color: "#3A1F0E", lineHeight: 1.4 }}>
-                  &ldquo;This was the first place that felt like home. Now I send every newcomer here.&rdquo;
+                  &ldquo;This was the first place that felt like family. Now it&rsquo;s the first place I tell every newcomer to try.&rdquo;
                 </div>
               </div>
             </div>
