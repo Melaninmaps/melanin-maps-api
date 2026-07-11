@@ -27,7 +27,7 @@ export default function Slide14FriendsBusinesses() {
       </div>
 
       <div className="absolute top-1/2 -translate-y-1/2" style={{ right: "7vw" }}>
-        <div className="relative flex-shrink-0" style={{ width: "19vw", height: "40.85vw", borderRadius: "2.09vw", border: "0.475vw solid #1C0E06", background: "#1C0E06", boxShadow: "0 1.4vw 2.8vw rgba(28,14,6,0.35)", overflow: "hidden" }}>
+        <div className="relative flex-shrink-0" style={{ width: "19vw", height: "min(40.85vw, 70vh)", borderRadius: "2.09vw", border: "0.475vw solid #1C0E06", background: "#1C0E06", boxShadow: "0 1.4vw 2.8vw rgba(28,14,6,0.35)", overflow: "hidden" }}>
           <div className="absolute inset-0 flex flex-col" style={{ background: "#FAF6EF" }}>
             <div className="relative w-full" style={{ height: "12vw" }}>
               <img src={`${base}photos/marcus-restaurant-cover.png`} crossOrigin="anonymous" alt="Marcus's Table cover photo" className="absolute inset-0 w-full h-full object-cover" />

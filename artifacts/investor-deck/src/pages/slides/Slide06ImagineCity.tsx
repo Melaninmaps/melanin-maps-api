@@ -22,7 +22,7 @@ export default function Slide06ImagineCity() {
       </div>
 
       <div className="absolute top-1/2 -translate-y-1/2 flex items-center" style={{ right: "6vw" }}>
-        <div className="relative flex-shrink-0" style={{ width: "20vw", height: "43vw", borderRadius: "2.2vw", border: "0.5vw solid #3A1F0E", background: "#1C0E06", boxShadow: "0 1.4vw 2.8vw rgba(28,14,6,0.22)", overflow: "hidden" }}>
+        <div className="relative flex-shrink-0" style={{ width: "20vw", height: "min(43vw, 70vh)", borderRadius: "2.2vw", border: "0.5vw solid #3A1F0E", background: "#1C0E06", boxShadow: "0 1.4vw 2.8vw rgba(28,14,6,0.22)", overflow: "hidden" }}>
           <img src={`${base}mockups/app-discover.jpg`} crossOrigin="anonymous" alt="Discover screen" className="absolute inset-0 w-full h-full object-cover" />
         </div>
 
