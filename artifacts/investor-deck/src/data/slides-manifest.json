@@ -262,5 +262,61 @@
                 "title": "Founding Businesses",
                 "description": "Closing call to action",
                 "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-34-product-ecosystem",
+                "position": 34,
+                "filepath": "src/pages/slides/SlideInv34ProductEcosystem.tsx",
+                "title": "One Platform. Six Core Experiences.",
+                "description": "Product overview — Discover, Safety, Community, Experiences, KinfolkAI, Relocation",
+                "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-35-market-opportunity",
+                "position": 35,
+                "filepath": "src/pages/slides/SlideInv35MarketOpportunity.tsx",
+                "title": "Market Opportunity",
+                "description": "Six high-growth markets totalling $6.4T+ TAM",
+                "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-36-business-model",
+                "position": 36,
+                "filepath": "src/pages/slides/SlideInv36BusinessModel.tsx",
+                "title": "Business Model",
+                "description": "Diversified revenue — Consumers, Businesses, Partners",
+                "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-37-why-we-win",
+                "position": 37,
+                "filepath": "src/pages/slides/SlideInv37WhyWeWin.tsx",
+                "title": "Why We Win",
+                "description": "Competitive moat matrix — six categories, clear differentiation",
+                "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-38-traction",
+                "position": 38,
+                "filepath": "src/pages/slides/SlideInv38Traction.tsx",
+                "title": "Traction",
+                "description": "Pre-revenue proof points — product, technical, community, market",
+                "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-39-go-to-market",
+                "position": 39,
+                "filepath": "src/pages/slides/SlideInv39GoToMarket.tsx",
+                "title": "Go-to-Market",
+                "description": "Five-phase city rollout with community growth drivers",
+                "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-40-ask",
+                "position": 40,
+                "filepath": "src/pages/slides/SlideInv40Ask.tsx",
+                "title": "The Ask",
+                "description": "$750K seed — use of funds and 18-month milestones",
+                "speakerNotes": ""
         }
 ]
