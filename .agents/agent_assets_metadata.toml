@@ -676,7 +676,7 @@ title = "African American woman carrying moving box smiling new home"
 id = "5ZLAiuBfibzi2csIjfuEa"
 uri = "file://.local/outputs/Mapping-With-Melanin---Investor-Deck.pdf"
 type = "pdf"
-title = "Mapping With Melanin — Investor Deck (PDF)"
+title = "Mapping With Melanin — Investor Deck (PDF, 55 slides)"
 
 [[outputs]]
 id = "FuOHO2NS7EEka5naQnvC6"
@@ -707,3 +707,9 @@ id = "HAE3WJFktN1qp4sOyeMC1"
 uri = "file://attached_assets/resized/IMG_7082_1783742086413.PNG"
 type = "image"
 title = "Screenshot 4 — Report Intel"
+
+[[outputs]]
+id = "bRKmphBGGPqxuO3PaebhK"
+uri = "file://.local/outputs/Mapping-With-Melanin---App-Demo-Deck.pdf"
+type = "pdf"
+title = "Mapping With Melanin — App Demo Deck (PDF, 74 slides)"
