@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const FROM = "Mapping With Melanin™ <hello@send.mappingwithmelanin.com>";
+const FROM = "Mapping With Melanin™ <hello@mappingwithmelanin.com>";
 
 function log(_msg: string) {
   // RESEND_API_KEY not configured — email silently skipped in this environment
