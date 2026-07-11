@@ -60,7 +60,7 @@ export default function Slide25Flywheel() {
       <div
         className="absolute"
         style={{
-          left: "51%", top: "50%",
+          left: "51%", top: "45%",
           transform: "translate(-50%, -50%)",
           width: "50vw", height: "50vw",
           overflow: "visible",
