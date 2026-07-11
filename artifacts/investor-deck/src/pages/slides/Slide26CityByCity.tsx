@@ -53,7 +53,7 @@ export default function Slide26CityByCity() {
       {/* CENTER CONNECTOR */}
       <div className="absolute flex flex-col items-center justify-center" style={{ left: "50vw", transform: "translateX(-50%)", top: "48%", gap: "0.45vw" }}>
         {["Repeat.", "Scale.", "Expand."].map((word) => (
-          <div key={word} className="font-display" style={{ fontSize: "1.2vw", fontWeight: 700, color: "#CA922B", opacity: 0.55, letterSpacing: "0.06em" }}>{word}</div>
+          <div key={word} className="font-display" style={{ fontSize: "1.8vw", fontWeight: 800, color: "#CA922B", letterSpacing: "0.06em" }}>{word}</div>
         ))}
       </div>
 

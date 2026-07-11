@@ -25,7 +25,7 @@ export default function Slide11FoodBeauty() {
       </div>
 
       <div className="absolute flex items-center" style={{ right: "7vw", top: "5%", bottom: "5%" }}>
-        <div className="relative flex-shrink-0" style={{ width: "19vw", height: "min(40.85vw, 70vh)", borderRadius: "2.09vw", border: "0.475vw solid #1C0E06", background: "#1C0E06", boxShadow: "0 1.4vw 2.8vw rgba(0,0,0,0.5)", overflow: "hidden" }}>
+        <div className="relative flex-shrink-0" style={{ width: "19vw", height: "min(40.85vw, 70vh)", borderRadius: "2.09vw", border: "0.475vw solid #1C0E06", background: "#1C0E06", boxShadow: "0 0.4vw 0.8vw rgba(0,0,0,0.25)", overflow: "hidden" }}>
           <div className="absolute inset-0 flex flex-col" style={{ background: "#FAF6EF" }}>
             <div className="flex items-center justify-between px-[1vw] py-[1vw]" style={{ background: "#1C0E06" }}>
               <span className="font-display" style={{ fontSize: "0.85vw", color: "#F5EBD8", fontWeight: 700 }}>Welcome to Houston</span>
@@ -55,22 +55,22 @@ export default function Slide11FoodBeauty() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-[1.9vw]" style={{ marginLeft: "2.4vw", width: "13.5vw" }}>
+        <div className="flex flex-col gap-[1.9vw]" style={{ marginLeft: "3.2vw", width: "13.5vw" }}>
           <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", fontWeight: 700, lineHeight: 1.35 }}>
             Trusted by the Community
           </div>
           <div className="flex flex-col gap-[0.9vw]">
             <div className="flex items-center gap-[0.5vw]">
-              <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.5 }} />
-              <span className="font-body" style={{ fontSize: "0.88vw", color: "#D8B98A", fontWeight: 400, lineHeight: 1.4 }}>Local favorites the community stands behind.</span>
+              <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.7 }} />
+              <span className="font-body" style={{ fontSize: "0.88vw", color: "#FAF6EF", fontWeight: 500, lineHeight: 1.4 }}>Local favorites the community stands behind.</span>
             </div>
             <div className="flex items-center gap-[0.5vw]">
-              <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.5 }} />
-              <span className="font-body" style={{ fontSize: "0.88vw", color: "#D8B98A", fontWeight: 400, lineHeight: 1.4 }}>Businesses that reflect her culture and values.</span>
+              <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.7 }} />
+              <span className="font-body" style={{ fontSize: "0.88vw", color: "#FAF6EF", fontWeight: 500, lineHeight: 1.4 }}>Businesses that reflect her culture and values.</span>
             </div>
             <div className="flex items-center gap-[0.5vw]">
-              <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.5 }} />
-              <span className="font-body" style={{ fontSize: "0.88vw", color: "#D8B98A", fontWeight: 400, lineHeight: 1.4 }}>Today she&rsquo;s discovering them. Tomorrow she&rsquo;s recommending them.</span>
+              <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.7 }} />
+              <span className="font-body" style={{ fontSize: "0.88vw", color: "#FAF6EF", fontWeight: 500, lineHeight: 1.4 }}>Today she&rsquo;s discovering them. Tomorrow she&rsquo;s recommending them.</span>
             </div>
           </div>
         </div>
