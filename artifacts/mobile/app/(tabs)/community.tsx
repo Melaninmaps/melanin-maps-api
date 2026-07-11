@@ -1059,11 +1059,12 @@ export default function CommunityScreen() {
       ) : activeTab === "Challenges 🏆" ? (
         <ChallengesTab colors={colors} router={router} isAuthenticated={isAuthenticated} bottomPad={bottomPad} />
       ) : (
-        <>
+        <View style={{ flex: 1 }}>
           <FlatList
             data={filteredPosts}
             keyExtractor={(p) => p.id}
-            contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100 }]}
+            style={{ flex: 1 }}
+            contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100, flexGrow: 1 }]}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
             ListHeaderComponent={
               <>
@@ -1179,7 +1180,7 @@ export default function CommunityScreen() {
           >
             <Feather name="edit-3" size={22} color="#FFFFFF" />
           </TouchableOpacity>
-        </>
+        </View>
       )}
 
       <PostDetailModal
