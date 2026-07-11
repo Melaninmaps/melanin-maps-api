@@ -1,21 +1,21 @@
 const STEPS = [
-  { label: "Community",           gold: true,  fontSize: "2.5vw" },
+  { label: "People",              gold: true,  fontSize: "2.5vw" },
   { label: "Discovery",           gold: false, fontSize: "1.75vw" },
   { label: "Recommendations",     gold: false, fontSize: "1.6vw" },
   { label: "Thriving Businesses", gold: true,  fontSize: "1.85vw" },
   { label: "Community Grows",     gold: false, fontSize: "1.75vw" },
 ];
 
-const ARC_RADIUS = 27;
+const ARC_RADIUS = 30;
 const GAP_DEG    = 5;
-const OFFSET_DEG = 20; // rotates Community to upper-right
+const OFFSET_DEG = 20;
 
 const LABEL_RADIUS_OVERRIDE: Record<string, number> = {
-  Community:           22,
-  Discovery:           23,
-  Recommendations:     23,
-  "Thriving Businesses": 23,
-  "Community Grows":   23,
+  People:                26,
+  Discovery:             27,
+  Recommendations:       27,
+  "Thriving Businesses": 27,
+  "Community Grows":     27,
 };
 
 function pointOnCircle(angleDeg: number, r: number, cx = 50, cy = 50) {
@@ -32,8 +32,8 @@ function anchorFor(dx: number) {
 }
 
 function describeArc(startAngle: number, endAngle: number, r: number) {
-  const s = pointOnCircle(startAngle, r);
-  const e = pointOnCircle(endAngle,   r);
+  const s    = pointOnCircle(startAngle, r);
+  const e    = pointOnCircle(endAngle,   r);
   const span = ((endAngle - startAngle) + 360) % 360;
   const largeArc = span > 180 ? 1 : 0;
   return `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`;
@@ -45,7 +45,7 @@ export default function Slide25Flywheel() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#3D2417" }}>
-      <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 42% 50%, rgba(202,146,43,0.2), transparent 55%)" }} />
+      <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 50% 50%, rgba(202,146,43,0.18), transparent 60%)" }} />
       <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>25</div>
 
       <div className="absolute left-[6vw] top-[2.8vw]">
@@ -60,9 +60,9 @@ export default function Slide25Flywheel() {
       <div
         className="absolute"
         style={{
-          left: "51%", top: "47%",
+          left: "51%", top: "44%",
           transform: "translate(-50%, -50%)",
-          width: "46vw", height: "46vw",
+          width: "50vw", height: "50vw",
           overflow: "visible",
         }}
       >
@@ -82,7 +82,7 @@ export default function Slide25Flywheel() {
                 d={describeArc(arcStart, arcEnd, ARC_RADIUS)}
                 fill="none"
                 stroke="#CA922B"
-                strokeWidth="0.75"
+                strokeWidth="0.7"
                 strokeLinecap="round"
                 markerEnd="url(#arrowhead25)"
               />
@@ -92,7 +92,7 @@ export default function Slide25Flywheel() {
 
         {STEPS.map((s, i) => {
           const angle = OFFSET_DEG + i * step;
-          const r     = LABEL_RADIUS_OVERRIDE[s.label] ?? 23;
+          const r     = LABEL_RADIUS_OVERRIDE[s.label] ?? 27;
           const { x, y, dx, dy } = pointOnCircle(angle, r);
           const { textAlign }    = anchorFor(dx);
           return (
@@ -100,13 +100,13 @@ export default function Slide25Flywheel() {
               key={s.label}
               className="absolute font-display"
               style={{
-                left:      `${x}%`,
-                top:       `${y}%`,
-                transform: `translate(${-50 + dx * 50}%, ${-50 + dy * 50}%)`,
-                fontSize:  s.fontSize,
+                left:       `${x}%`,
+                top:        `${y}%`,
+                transform:  `translate(${-50 + dx * 50}%, ${-50 + dy * 50}%)`,
+                fontSize:   s.fontSize,
                 fontWeight: s.gold ? 700 : 600,
-                color:     s.gold ? "#CA922B" : "#F5EBD8",
-                width:     "16vw",
+                color:      s.gold ? "#CA922B" : "#F5EBD8",
+                width:      "16vw",
                 textAlign,
                 lineHeight: 1.25,
               }}
@@ -117,10 +117,9 @@ export default function Slide25Flywheel() {
         })}
       </div>
 
-      <div className="absolute left-0 right-0 text-center" style={{ bottom: "2.3vw" }}>
-        <div className="font-display mx-auto" style={{ fontSize: "1.4vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.4, maxWidth: "46vw" }}>
+      <div className="absolute left-0 right-0 text-center" style={{ bottom: "2vw" }}>
+        <div className="font-display mx-auto" style={{ fontSize: "1.3vw", fontWeight: 600, color: "#D9C4A3", lineHeight: 1.4, maxWidth: "50vw" }}>
           Every recommendation strengthens the community.
-          <br />
           Every stronger community creates new opportunities for discovery.
         </div>
       </div>
