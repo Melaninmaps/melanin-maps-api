@@ -13,7 +13,7 @@ const OFFSET_DEG = 20;
 const LABEL_RADIUS_OVERRIDE: Record<string, number> = {
   People:                43,
   Discovery:             36,
-  Recommendations:       36,
+  Recommendations:       38,
   "Thriving Businesses": 36,
   "Community Grows":     36,
 };
