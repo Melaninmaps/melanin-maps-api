@@ -116,7 +116,7 @@ export function CommunityPage() {
           {/* Post 1 — plain text with hashtags (Business Owner) */}
           <div className="bg-[#231200] rounded-2xl border border-white/8 p-4">
             <div className="flex items-start gap-3 mb-3">
-              <Avatar initials="DW" bg="from-[#CA922B] to-[#8B5E1A]" md />
+              <Avatar initials="DW" bg="from-[#CA922B] to-[#8B5E1A]" size="md" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-white text-sm font-bold">Deja Williams</span>
@@ -145,7 +145,7 @@ export function CommunityPage() {
           {/* Post 2 — text + link preview (article) */}
           <div className="bg-[#231200] rounded-2xl border border-white/8 p-4">
             <div className="flex items-start gap-3 mb-3">
-              <Avatar initials="TA" bg="bg-[#1E7A4E]" md />
+              <Avatar initials="TA" bg="bg-[#1E7A4E]" size="md" />
               <div className="flex-1 min-w-0">
                 <span className="text-white text-sm font-bold">Tia Anderson</span>
                 <div className="flex items-center gap-2 mt-0.5">
@@ -174,7 +174,7 @@ export function CommunityPage() {
           {/* Post 3 — text + business link card */}
           <div className="bg-[#231200] rounded-2xl border border-white/8 p-4">
             <div className="flex items-start gap-3 mb-3">
-              <Avatar initials="JM" bg="bg-[#CA922B]" md />
+              <Avatar initials="JM" bg="bg-[#CA922B]" size="md" />
               <div className="flex-1 min-w-0">
                 <span className="text-white text-sm font-bold">Jasmine Mitchell</span>
                 <div className="flex items-center gap-2 mt-0.5">
@@ -220,7 +220,7 @@ export function CommunityPage() {
           {/* Post 4 — link only (event) */}
           <div className="bg-[#231200] rounded-2xl border border-white/8 p-4">
             <div className="flex items-start gap-3 mb-3">
-              <Avatar initials="MR" bg="bg-[#7B5EA7]" md />
+              <Avatar initials="MR" bg="bg-[#7B5EA7]" size="md" />
               <div className="flex-1 min-w-0">
                 <span className="text-white text-sm font-bold">Marcus Reed</span>
                 <div className="flex items-center gap-2 mt-0.5">
@@ -253,7 +253,7 @@ export function CommunityPage() {
               <span className="text-white/30 text-[10px]">Jasmine reposted</span>
             </div>
             <div className="flex items-start gap-3 mb-3">
-              <Avatar initials="KJ" bg="bg-[#C0392B]" md />
+              <Avatar initials="KJ" bg="bg-[#C0392B]" size="md" />
               <div className="flex-1 min-w-0">
                 <span className="text-white text-sm font-bold">Kofi James</span>
                 <div className="flex items-center gap-2 mt-0.5">

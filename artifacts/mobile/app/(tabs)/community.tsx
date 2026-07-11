@@ -603,7 +603,8 @@ export default function CommunityScreen() {
           <FlatList
             data={filteredEvents}
             keyExtractor={(e) => e.id}
-            contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100 }]}
+            style={{ flex: 1 }}
+            contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100, flexGrow: 1 }]}
             refreshControl={<RefreshControl refreshing={eventsLoading} onRefresh={refetchEvents} tintColor={colors.primary} />}
             ListHeaderComponent={
               <>
@@ -726,7 +727,8 @@ export default function CommunityScreen() {
           <FlatList
             data={filteredGroups}
             keyExtractor={(g) => String(g.id)}
-            contentContainerStyle={[styles.groupsList, { paddingBottom: bottomPad + 100 }]}
+            style={{ flex: 1 }}
+            contentContainerStyle={[styles.groupsList, { paddingBottom: bottomPad + 100, flexGrow: 1 }]}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
             ListEmptyComponent={
               groupsLoading ? (
@@ -772,7 +774,7 @@ export default function CommunityScreen() {
       ) : activeTab === "Resources" ? (
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 40, gap: 14 }]}
+          contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 40, gap: 14, flexGrow: 1 }]}
           showsVerticalScrollIndicator={false}
         >
           {/* Health Hub card */}
@@ -1910,7 +1912,8 @@ function CirclesTab({ colors, router, isAuthenticated, isPaidMember, bottomPad }
         <FlatList
           data={circles}
           keyExtractor={(c) => String(c.id)}
-          contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: bottomPad + 100 }}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: bottomPad + 100, flexGrow: 1 }}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={{ backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 18, padding: 16, flexDirection: "row", alignItems: "center", gap: 14 }}

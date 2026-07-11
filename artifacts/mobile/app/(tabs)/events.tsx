@@ -145,8 +145,9 @@ export default function EventsScreen() {
       ) : null}
 
       <ScrollView
+        style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 100 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 100, flexGrow: 1 }]}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={ORANGE} />
         }
@@ -270,7 +271,7 @@ export default function EventsScreen() {
         {/* Host an Event CTA */}
         <TouchableOpacity
           style={[styles.hostBanner, { backgroundColor: ORANGE }]}
-          onPress={() => router.push("/list-event" as never)}
+          onPress={() => router.push("/submit-event" as never)}
           activeOpacity={0.88}
         >
           <View style={{ flex: 1 }}>
@@ -344,6 +345,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingTop: 20,
+    flexGrow: 1,
   },
   weekSummary: {
     marginHorizontal: 20,

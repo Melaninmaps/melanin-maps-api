@@ -1,4 +1,4 @@
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -22,7 +22,6 @@ import { BusinessCard } from "@/components/BusinessCard";
 import { SkipFeedbackModal } from "@/components/SkipFeedbackModal";
 import { SwipeableBusinessCard } from "@/components/SwipeableBusinessCard";
 import { SkeletonBusinessCardHorizontal, SkeletonBusinessCardVertical } from "@/components/SkeletonCard";
-import { CategoryPill } from "@/components/CategoryPill";
 import { NeighborhoodSafetySurvey } from "@/components/NeighborhoodSafetySurvey";
 import { OnboardingPreferenceSurvey } from "@/components/OnboardingPreferenceSurvey";
 import { ScoreFilterPanel } from "@/components/ScoreFilterPanel";
@@ -578,7 +577,7 @@ export default function DiscoverScreen() {
                   </View>
                   <View style={styles.travelBannerRight}>
                     <View style={styles.travelBannerArrow}>
-                      <Ionicons name="airplane" size={22} color={colors.primary} />
+                      <Feather name="send" size={22} color={colors.primary} />
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -636,7 +635,7 @@ export default function DiscoverScreen() {
                 </View>
                 <View style={styles.travelBannerRight}>
                   <View style={[styles.travelBannerArrow, { backgroundColor: "#CA922B" }]}>
-                    <Ionicons name="globe-outline" size={22} color="#fff" />
+                    <Feather name="globe" size={22} color="#fff" />
                   </View>
                 </View>
               </TouchableOpacity>
