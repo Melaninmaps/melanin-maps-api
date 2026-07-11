@@ -187,6 +187,28 @@ export default function DiscoverScreen() {
     (filters.verifiedOnly ? 1 : 0) +
     (filters.ownershipTypes.length > 0 ? 1 : 0);
 
+  const isFiltering =
+    search.length > 0 || activeCategory !== "All" || activeFilterCount > 0 || activeVibe !== null;
+
+  const nearYou = nearby.slice(0, 8);
+
+  const trending = sortByPref(
+    [...filtered]
+      .sort((a, b) => b.rating - a.rating || b.confidenceScore - a.confidenceScore)
+      .slice(0, 10)
+  );
+
+  const newBusinesses = sortByPref(
+    [...businesses].filter((b) => !isDismissed(b.id)).reverse().slice(0, 10)
+  );
+
+  const communityFaves = sortByPref(
+    filtered
+      .filter((b) => b.blackOwned && b.verified)
+      .sort((a, b) => b.confidenceScore - a.confidenceScore)
+      .slice(0, 10)
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
@@ -294,466 +316,393 @@ export default function DiscoverScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
-        {/* AI For You */}
-        <ForYouCard />
+        {isFiltering ? (
+          <>
+            {/* Vibe Match chips */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.vibeScroll}>
+              {VIBES.map((v) => (
+                <TouchableOpacity key={v.label} style={[styles.vibeChip, activeVibe === v.label ? { backgroundColor: colors.primary, borderColor: colors.primary } : { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => setActiveVibe(activeVibe === v.label ? null : v.label)} activeOpacity={0.75}>
+                  <Text style={styles.vibeEmoji}>{v.emoji}</Text>
+                  <Text style={[styles.vibeLabel, { color: activeVibe === v.label ? "#FFFFFF" : colors.foreground }]}>{v.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
 
-        {/* Safety alerts */}
-        <View style={styles.section}>
-          <View style={styles.safetyHeader}>
-            <View style={styles.safetyTitleRow}>
-              <Feather name="shield" size={16} color="#DC2626" />
-              <Text style={[styles.safetyTitle, { color: colors.foreground }]}>Community Safety</Text>
-              {isLive && (
-                <View style={[styles.alertCount, { backgroundColor: "#DC262618" }]}>
-                  <Text style={styles.alertCountText}>LIVE</Text>
-                </View>
-              )}
-              {alerts.length > 0 && (
-                <View style={[styles.alertCount, { backgroundColor: "#DC262618" }]}>
-                  <Text style={styles.alertCountText}>{alerts.length}</Text>
-                </View>
-              )}
+            {/* Filter panel */}
+            <View style={{ paddingHorizontal: 20 }}>
+              <ScoreFilterPanel filters={filters} onChange={setFilters} />
             </View>
-            <View style={{ flexDirection: "row", gap: 8 }}>
-              <TouchableOpacity
-                style={[styles.reportBtn, { backgroundColor: "#2D7A4F12", borderColor: "#2D7A4F30" }]}
-                onPress={() => setShowNeighborhoodSurvey(true)}
-                activeOpacity={0.8}
-              >
-                <Feather name="map-pin" size={13} color="#2D7A4F" />
-                <Text style={[styles.reportBtnText, { color: "#2D7A4F" }]}>Rate Neighborhood</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.reportBtn, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}
-                onPress={() => router.push("/report-safety")}
-                activeOpacity={0.8}
-              >
-                <Feather name="plus" size={13} color="#DC2626" />
-                <Text style={[styles.reportBtnText, { color: "#DC2626" }]}>Report</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          {alerts.length > 0 ? (
-            alerts.map((a) => (
-              <AlertBanner
-                key={a.id}
-                alert={a}
-                onDismiss={() => setAlerts((prev) => prev.filter((x) => x.id !== a.id))}
-              />
-            ))
-          ) : (
-            <View style={[styles.noAlerts, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Feather name="check-circle" size={20} color="#2D7A4F" />
-              <Text style={[styles.noAlertsText, { color: colors.mutedForeground }]}>No active alerts in your area</Text>
-            </View>
-          )}
-        </View>
 
-        {/* Hero banner */}
-        <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 24 }]}>
-          <View style={[styles.heroBanner, { overflow: "hidden" }]}>
-            <Image
-              source={require("@/assets/images/hero.jpg")}
-              style={styles.heroImage}
-              contentFit="cover"
-            />
-            <LinearGradient
-              colors={["transparent", "rgba(0,0,0,0.65)"]}
-              style={styles.heroOverlay}
-            >
-              <Text style={styles.heroLabel}>{getDailyQuoteText("mission", 0).toUpperCase()}</Text>
-              <Text style={styles.heroTitle}>Map Your Life.{"\n"}Connect Deeper.{"\n"}Live With Purpose.</Text>
-              <TouchableOpacity style={styles.heroCta} activeOpacity={0.85} onPress={() => router.push("/(tabs)/map")}>
-                <Text style={styles.heroCtaText}>Explore Near You</Text>
-                <Feather name="arrow-right" size={14} color="#CA922B" />
-              </TouchableOpacity>
-            </LinearGradient>
-          </View>
-        </View>
-
-        {/* Stats strip */}
-        <View style={styles.statsStrip}>
-          {[
-            { value: "2,400+", label: "Verified Businesses" },
-            { value: "48", label: "States" },
-            { value: "94/100", label: "Avg. Score" },
-            { value: "100%", label: "Authenticity Checked" },
-          ].map((stat, i, arr) => (
-            <React.Fragment key={stat.label}>
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{stat.value}</Text>
-                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{stat.label}</Text>
-              </View>
-              {i < arr.length - 1 && (
-                <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-              )}
-            </React.Fragment>
-          ))}
-        </View>
-
-        {/* Brand quote strip */}
-        <BrandQuoteBanner
-          category="community"
-          offset={1}
-          variant="card"
-          style={{ marginHorizontal: 20, marginBottom: 20 }}
-        />
-
-        {/* AI Travel banner — hides on scroll down, reappears on scroll up */}
-        <Animated.View style={{
-          opacity: kinfolkAnim,
-          maxHeight: kinfolkAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 140] }),
-          overflow: "hidden",
-          marginBottom: kinfolkAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 24] }),
-        }}>
-          <View style={[styles.section, { paddingHorizontal: 20 }]}>
-            <TouchableOpacity
-              activeOpacity={0.88}
-              onPress={() => router.push("/travel")}
-              style={[styles.travelBanner, { backgroundColor: colors.primary }]}
-            >
-              <View style={styles.travelBannerLeft}>
-                <Text style={styles.travelBannerEyebrow}>✨ KINFOLKAI™</Text>
-                <Text style={styles.travelBannerTitle}>Plan Your Next Trip</Text>
-                <Text style={styles.travelBannerSub}>
-                  {getDailyQuoteText("kinfolk", 0)}
+            {/* Active filter summary */}
+            {activeFilterCount > 0 && (
+              <View style={[styles.filterSummary, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}>
+                <Feather name="filter" size={13} color={colors.primary} />
+                <Text style={[styles.filterSummaryText, { color: colors.primary }]}>
+                  {filtered.length} result{filtered.length !== 1 ? "s" : ""} · {activeFilterCount} filter{activeFilterCount !== 1 ? "s" : ""} active
                 </Text>
               </View>
-              <View style={styles.travelBannerRight}>
-                <View style={styles.travelBannerArrow}>
-                  <Ionicons name="airplane" size={22} color={colors.primary} />
-                </View>
+            )}
+
+            {/* Featured businesses */}
+            {businessesLoading ? (
+              <View style={styles.section}>
+                <SectionHeader title="Featured Businesses" />
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+                  {[0, 1, 2].map((i) => <SkeletonBusinessCardHorizontal key={i} />)}
+                </ScrollView>
               </View>
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-
-        {/* Global Recommendations banner */}
-        <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 16 }]}>
-          <TouchableOpacity
-            activeOpacity={0.88}
-            onPress={() => router.push("/global-recommendations" as any)}
-            style={[styles.travelBanner, { backgroundColor: "#1A2E22" }]}
-          >
-            <View style={styles.travelBannerLeft}>
-              <Text style={styles.travelBannerEyebrow}>🌍 COMMUNITY PICKS</Text>
-              <Text style={styles.travelBannerTitle}>Global Recommendations</Text>
-              <Text style={styles.travelBannerSub}>
-                Trusted places around the world — shared by our community.
-              </Text>
-            </View>
-            <View style={styles.travelBannerRight}>
-              <View style={[styles.travelBannerArrow, { backgroundColor: "#CA922B" }]}>
-                <Ionicons name="globe-outline" size={22} color="#fff" />
+            ) : featured.length > 0 ? (
+              <View style={styles.section}>
+                <SectionHeader title="Featured Businesses" />
+                <FlatList horizontal data={featured} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
+                  renderItem={({ item }) => (
+                    <View>
+                      <BusinessCard business={item} onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })} isSaved={isSaved(item.id)} onToggleSave={() => toggleSave(item.id)} horizontal />
+                      <View style={styles.cardActions}>
+                        {item.feedbackOptIn && (
+                          <TouchableOpacity style={styles.notForMeBtn} onPress={() => setFeedbackBusiness(item)} activeOpacity={0.7}>
+                            <Text style={[styles.notForMeTxt, { color: colors.mutedForeground }]}>Leave a note</Text>
+                          </TouchableOpacity>
+                        )}
+                        <TouchableOpacity style={styles.hideBtn} onPress={() => dismissBusiness(item.id)} activeOpacity={0.7}>
+                          <Feather name="x" size={11} color={colors.mutedForeground} />
+                          <Text style={[styles.hideTxt, { color: colors.mutedForeground }]}>Not interested</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+                />
               </View>
-            </View>
-          </TouchableOpacity>
-        </View>
+            ) : null}
 
-        {/* Relocation Planner banner */}
-        <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 16 }]}>
-          <TouchableOpacity
-            activeOpacity={0.88}
-            onPress={() => router.push("/relocation-planner" as any)}
-            style={[styles.travelBanner, { backgroundColor: "#1A3A2A" }]}
-          >
-            <View style={styles.travelBannerLeft}>
-              <Text style={styles.travelBannerEyebrow}>🚚 RELOCATION CONCIERGE</Text>
-              <Text style={styles.travelBannerTitle}>Plan Your Move</Text>
-              <Text style={styles.travelBannerSub}>
-                AI guides you step-by-step — realtor, movers, doctor, and more minority-owned businesses at every turn.
-              </Text>
-            </View>
-            <View style={styles.travelBannerRight}>
-              <View style={[styles.travelBannerArrow, { backgroundColor: "#C9922B" }]}>
-                <Text style={{ fontSize: 20 }}>🏠</Text>
+            {feedbackBusiness && (
+              <SkipFeedbackModal visible={!!feedbackBusiness} businessId={feedbackBusiness.id} businessName={feedbackBusiness.name} onClose={() => setFeedbackBusiness(null)} />
+            )}
+
+            {/* Results — vertical filtered list */}
+            {businessesLoading ? (
+              <View style={styles.section}>
+                <SectionHeader title="Results" />
+                {[0, 1, 2, 3].map((i) => <SkeletonBusinessCardVertical key={i} />)}
               </View>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Community Spaces banner */}
-        <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 12 }]}>
-          <TouchableOpacity
-            style={[styles.spacesBanner, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => router.push("/spaces")}
-            activeOpacity={0.85}
-          >
-            <View style={[styles.spacesIconWrap, { backgroundColor: "#2D7A4F18" }]}>
-              <Feather name="home" size={22} color="#2D7A4F" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.spacesBannerTitle, { color: colors.foreground }]}>Community Spaces</Text>
-              <Text style={[styles.spacesBannerSub, { color: colors.mutedForeground }]}>
-                Spaces for rent, sale & business in safe neighborhoods
-              </Text>
-            </View>
-            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
-          </TouchableOpacity>
-          {searchSpaces.length > 0 && (
-            <TouchableOpacity
-              style={[styles.spacesMatch, { backgroundColor: "#2D7A4F12", borderColor: "#2D7A4F33" }]}
-              onPress={() => router.push({ pathname: "/spaces", params: { q: search } } as any)}
-              activeOpacity={0.85}
-            >
-              <Feather name="briefcase" size={13} color="#2D7A4F" />
-              <Text style={[styles.spacesMatchText, { color: "#2D7A4F" }]}>
-                {searchSpaces.length} space{searchSpaces.length !== 1 ? "s" : ""} match "{search}" — tap to view
-              </Text>
-              <Feather name="arrow-right" size={13} color="#2D7A4F" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Vibe Match chips */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.vibeScroll}
-        >
-          {VIBES.map((v) => (
-            <TouchableOpacity
-              key={v.label}
-              style={[
-                styles.vibeChip,
-                activeVibe === v.label
-                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                  : { backgroundColor: colors.card, borderColor: colors.border },
-              ]}
-              onPress={() => setActiveVibe(activeVibe === v.label ? null : v.label)}
-              activeOpacity={0.75}
-            >
-              <Text style={styles.vibeEmoji}>{v.emoji}</Text>
-              <Text style={[styles.vibeLabel, { color: activeVibe === v.label ? "#FFFFFF" : colors.foreground }]}>
-                {v.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Filter panel */}
-        <View style={{ paddingHorizontal: 20 }}>
-          <ScoreFilterPanel filters={filters} onChange={setFilters} />
-        </View>
-
-        {/* Active filter summary */}
-        {activeFilterCount > 0 && (
-          <View style={[styles.filterSummary, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}>
-            <Feather name="filter" size={13} color={colors.primary} />
-            <Text style={[styles.filterSummaryText, { color: colors.primary }]}>
-              {filtered.length} result{filtered.length !== 1 ? "s" : ""} · {activeFilterCount} filter{activeFilterCount !== 1 ? "s" : ""} active
-            </Text>
-          </View>
-        )}
-
-        {/* Featured businesses */}
-        {businessesLoading ? (
-          <View style={styles.section}>
-            <SectionHeader title="Featured Businesses" />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
-              {[0, 1, 2].map((i) => <SkeletonBusinessCardHorizontal key={i} />)}
-            </ScrollView>
-          </View>
-        ) : featured.length > 0 ? (
-          <View style={styles.section}>
-            <SectionHeader title="Featured Businesses" />
-            <FlatList
-              horizontal
-              data={featured}
-              keyExtractor={(b) => b.id}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 12 }}
-              renderItem={({ item }) => (
-                <View>
-                  <BusinessCard
-                    business={item}
-                    onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })}
-                    isSaved={isSaved(item.id)}
-                    onToggleSave={() => toggleSave(item.id)}
-                    horizontal
-                  />
-                  <View style={styles.cardActions}>
-                    {item.feedbackOptIn && (
-                      <TouchableOpacity
-                        style={styles.notForMeBtn}
-                        onPress={() => setFeedbackBusiness(item)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[styles.notForMeTxt, { color: colors.mutedForeground }]}>Leave a note</Text>
-                      </TouchableOpacity>
-                    )}
-                    <TouchableOpacity
-                      style={styles.hideBtn}
-                      onPress={() => dismissBusiness(item.id)}
-                      activeOpacity={0.7}
-                    >
+            ) : nearby.length > 0 ? (
+              <View style={styles.section}>
+                <SectionHeader title="Results" subtitle={`${nearby.length} business${nearby.length !== 1 ? "es" : ""}`} />
+                {nearby.map((b) => (
+                  <View key={b.id}>
+                    <SwipeableBusinessCard business={b} onPress={() => router.push({ pathname: "/business/[id]", params: { id: b.id } })} isSaved={isSaved(b.id)} onToggleSave={() => toggleSave(b.id)} />
+                    <TouchableOpacity style={[styles.hideBtn, { justifyContent: "center", marginBottom: 4 }]} onPress={() => dismissBusiness(b.id)} activeOpacity={0.7}>
                       <Feather name="x" size={11} color={colors.mutedForeground} />
                       <Text style={[styles.hideTxt, { color: colors.mutedForeground }]}>Not interested</Text>
                     </TouchableOpacity>
                   </View>
-                </View>
-              )}
-            />
-          </View>
-        ) : null}
-
-        {feedbackBusiness && (
-          <SkipFeedbackModal
-            visible={!!feedbackBusiness}
-            businessId={feedbackBusiness.id}
-            businessName={feedbackBusiness.name}
-            onClose={() => setFeedbackBusiness(null)}
-          />
-        )}
-
-        {/* Nearby businesses */}
-        {businessesLoading ? (
-          <View style={styles.section}>
-            <SectionHeader title="Near You" />
-            {[0, 1, 2, 4].map((i) => <SkeletonBusinessCardVertical key={i} />)}
-          </View>
-        ) : nearby.length > 0 ? (
-          <View style={styles.section}>
-            <SectionHeader title="Near You" subtitle="Swipe ← skip  ·  → save" />
-            {nearby.map((b) => (
-              <View key={b.id}>
-                <SwipeableBusinessCard
-                  business={b}
-                  onPress={() => router.push({ pathname: "/business/[id]", params: { id: b.id } })}
-                  isSaved={isSaved(b.id)}
-                  onToggleSave={() => toggleSave(b.id)}
-                />
-                <TouchableOpacity
-                  style={[styles.hideBtn, { justifyContent: "center", marginBottom: 4 }]}
-                  onPress={() => dismissBusiness(b.id)}
-                  activeOpacity={0.7}
-                >
-                  <Feather name="x" size={11} color={colors.mutedForeground} />
-                  <Text style={[styles.hideTxt, { color: colors.mutedForeground }]}>Not interested</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
-        ) : null}
-
-        {/* No preference-matched businesses — offer to broaden */}
-        {showNoPrefsMatch && (
-          <View style={[styles.noPrefsMatch, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.noPrefsMatchTop}>
-              <Feather name="heart" size={18} color="#CA922B" />
-              <Text style={[styles.noPrefsMatchTitle, { color: colors.foreground }]}>
-                No exact preference matches
-              </Text>
-              <TouchableOpacity activeOpacity={0.85}
-                onPress={() => setPrefsBannerDismissed(true)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Feather name="x" size={16} color={colors.mutedForeground} />
-              </TouchableOpacity>
-            </View>
-            <Text style={[styles.noPrefsMatchSub, { color: colors.mutedForeground }]}>
-              We couldn't find businesses matching your saved preferences in this view. Would you like to explore other minority-owned businesses?
-            </Text>
-            <View style={styles.noPrefsMatchBtns}>
-              <TouchableOpacity
-                style={[styles.noPrefsBtn, { backgroundColor: "#CA922B" }]}
-                onPress={() => {
-                  setFilters((f) => ({ ...f, ownershipTypes: ["minority-owned"] }));
-                  setPrefsBannerDismissed(true);
-                }}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.noPrefsBtnTxt}>Show All Minority-Owned</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.noPrefsGhostBtn, { borderColor: colors.border }]}
-                onPress={() => {
-                  setFilters((f) => ({ ...f, ownershipTypes: [] }));
-                  setPrefsBannerDismissed(true);
-                }}
-                activeOpacity={0.85}
-              >
-                <Text style={[styles.noPrefsGhostTxt, { color: colors.mutedForeground }]}>Show Everything</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {filtered.length === 0 && !showNoPrefsMatch && (() => {
-          const hasActiveOwnershipFilter = filters.ownershipTypes.length > 0;
-          const hasOtherMinorityBiz = businesses.some(
-            (b) => !isDismissed(b.id) && (b.blackOwned || (b.ownershipDesignations && b.ownershipDesignations.length > 0))
-          );
-          const selectedLabel = hasActiveOwnershipFilter
-            ? filters.ownershipTypes[0]?.replace(/-/g, " ") ?? "filtered"
-            : "filtered";
-
-          if (hasActiveOwnershipFilter && hasOtherMinorityBiz && !minorityExpanded) {
-            return (
-              <View style={[styles.minorityOptCard, { backgroundColor: colors.card, borderColor: "#CA922B44" }]}>
-                <View style={[styles.minorityOptGold, { backgroundColor: "#CA922B" }]} />
-                <View style={{ flex: 1, padding: 14 }}>
-                  <Text style={[styles.minorityOptTitle, { color: colors.foreground }]}>
-                    No {selectedLabel} businesses found yet
-                  </Text>
-                  <Text style={[styles.minorityOptBody, { color: colors.mutedForeground }]}>
-                    We're growing every day. Would you like to explore other minority-owned businesses in the meantime?
-                  </Text>
-                  <TouchableOpacity
-                    style={[styles.minorityOptBtn, { backgroundColor: "#CA922B" }]}
-                    onPress={() => setMinorityExpanded(true)}
-                    activeOpacity={0.85}
-                  >
-                    <Feather name="compass" size={14} color="#fff" />
-                    <Text style={styles.minorityOptBtnText}>Explore Other Minority-Owned</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            );
-          }
-
-          if (hasActiveOwnershipFilter && hasOtherMinorityBiz && minorityExpanded) {
-            const expansion = businesses.filter(
-              (b) => !isDismissed(b.id) && (b.blackOwned || (b.ownershipDesignations && b.ownershipDesignations.length > 0))
-            );
-            return (
-              <View>
-                <View style={[styles.expansionHeader, { borderBottomColor: "#CA922B44" }]}>
-                  <Feather name="compass" size={15} color="#CA922B" />
-                  <Text style={[styles.expansionLabel, { color: "#CA922B" }]}>
-                    Other Minority-Owned Businesses
-                  </Text>
-                  <TouchableOpacity activeOpacity={0.85} onPress={() => setMinorityExpanded(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Feather name="x" size={15} color={colors.mutedForeground} />
-                  </TouchableOpacity>
-                </View>
-                <Text style={[styles.expansionNote, { color: colors.mutedForeground }]}>
-                  Showing results from all minority-owned businesses — not filtered by your selected type
-                </Text>
-                {expansion.map((b) => (
-                  <BusinessCard key={b.id} business={b} onPress={() => router.push({ pathname: "/business/[id]", params: { id: b.id } } as never)} isSaved={false} onToggleSave={() => {}} />
                 ))}
               </View>
-            );
-          }
+            ) : null}
 
-          return (
-            <View style={styles.empty}>
-              <Feather name="search" size={40} color={colors.muted} />
-              <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No businesses found</Text>
-              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                We're growing every day — try a different search, category, or check back soon.
-              </Text>
+            {/* No preference-matched businesses */}
+            {showNoPrefsMatch && (
+              <View style={[styles.noPrefsMatch, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.noPrefsMatchTop}>
+                  <Feather name="heart" size={18} color="#CA922B" />
+                  <Text style={[styles.noPrefsMatchTitle, { color: colors.foreground }]}>No exact preference matches</Text>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => setPrefsBannerDismissed(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Feather name="x" size={16} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                </View>
+                <Text style={[styles.noPrefsMatchSub, { color: colors.mutedForeground }]}>
+                  We couldn't find businesses matching your saved preferences in this view. Would you like to explore other minority-owned businesses?
+                </Text>
+                <View style={styles.noPrefsMatchBtns}>
+                  <TouchableOpacity style={[styles.noPrefsBtn, { backgroundColor: "#CA922B" }]} onPress={() => { setFilters((f) => ({ ...f, ownershipTypes: ["minority-owned"] })); setPrefsBannerDismissed(true); }} activeOpacity={0.85}>
+                    <Text style={styles.noPrefsBtnTxt}>Show All Minority-Owned</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.noPrefsGhostBtn, { borderColor: colors.border }]} onPress={() => { setFilters((f) => ({ ...f, ownershipTypes: [] })); setPrefsBannerDismissed(true); }} activeOpacity={0.85}>
+                    <Text style={[styles.noPrefsGhostTxt, { color: colors.mutedForeground }]}>Show Everything</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {filtered.length === 0 && !showNoPrefsMatch && (() => {
+              const hasActiveOwnershipFilter = filters.ownershipTypes.length > 0;
+              const hasOtherMinorityBiz = businesses.some((b) => !isDismissed(b.id) && (b.blackOwned || (b.ownershipDesignations && b.ownershipDesignations.length > 0)));
+              const selectedLabel = hasActiveOwnershipFilter ? filters.ownershipTypes[0]?.replace(/-/g, " ") ?? "filtered" : "filtered";
+              if (hasActiveOwnershipFilter && hasOtherMinorityBiz && !minorityExpanded) {
+                return (
+                  <View style={[styles.minorityOptCard, { backgroundColor: colors.card, borderColor: "#CA922B44" }]}>
+                    <View style={[styles.minorityOptGold, { backgroundColor: "#CA922B" }]} />
+                    <View style={{ flex: 1, padding: 14 }}>
+                      <Text style={[styles.minorityOptTitle, { color: colors.foreground }]}>No {selectedLabel} businesses found yet</Text>
+                      <Text style={[styles.minorityOptBody, { color: colors.mutedForeground }]}>We're growing every day. Would you like to explore other minority-owned businesses in the meantime?</Text>
+                      <TouchableOpacity style={[styles.minorityOptBtn, { backgroundColor: "#CA922B" }]} onPress={() => setMinorityExpanded(true)} activeOpacity={0.85}>
+                        <Feather name="compass" size={14} color="#fff" />
+                        <Text style={styles.minorityOptBtnText}>Explore Other Minority-Owned</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              }
+              if (hasActiveOwnershipFilter && hasOtherMinorityBiz && minorityExpanded) {
+                const expansion = businesses.filter((b) => !isDismissed(b.id) && (b.blackOwned || (b.ownershipDesignations && b.ownershipDesignations.length > 0)));
+                return (
+                  <View>
+                    <View style={[styles.expansionHeader, { borderBottomColor: "#CA922B44" }]}>
+                      <Feather name="compass" size={15} color="#CA922B" />
+                      <Text style={[styles.expansionLabel, { color: "#CA922B" }]}>Other Minority-Owned Businesses</Text>
+                      <TouchableOpacity activeOpacity={0.85} onPress={() => setMinorityExpanded(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                        <Feather name="x" size={15} color={colors.mutedForeground} />
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={[styles.expansionNote, { color: colors.mutedForeground }]}>Showing results from all minority-owned businesses — not filtered by your selected type</Text>
+                    {expansion.map((b) => (
+                      <BusinessCard key={b.id} business={b} onPress={() => router.push({ pathname: "/business/[id]", params: { id: b.id } } as never)} isSaved={false} onToggleSave={() => {}} />
+                    ))}
+                  </View>
+                );
+              }
+              return (
+                <View style={styles.empty}>
+                  <Feather name="search" size={40} color={colors.muted} />
+                  <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No businesses found</Text>
+                  <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>We're growing every day — try a different search, category, or check back soon.</Text>
+                </View>
+              );
+            })()}
+          </>
+        ) : (
+          <>
+            {/* AI For You */}
+            <ForYouCard />
+
+            {/* Safety alerts */}
+            <View style={styles.section}>
+              <View style={styles.safetyHeader}>
+                <View style={styles.safetyTitleRow}>
+                  <Feather name="shield" size={16} color="#DC2626" />
+                  <Text style={[styles.safetyTitle, { color: colors.foreground }]}>Community Safety</Text>
+                  {isLive && (
+                    <View style={[styles.alertCount, { backgroundColor: "#DC262618" }]}>
+                      <Text style={styles.alertCountText}>LIVE</Text>
+                    </View>
+                  )}
+                  {alerts.length > 0 && (
+                    <View style={[styles.alertCount, { backgroundColor: "#DC262618" }]}>
+                      <Text style={styles.alertCountText}>{alerts.length}</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  <TouchableOpacity style={[styles.reportBtn, { backgroundColor: "#2D7A4F12", borderColor: "#2D7A4F30" }]} onPress={() => setShowNeighborhoodSurvey(true)} activeOpacity={0.8}>
+                    <Feather name="map-pin" size={13} color="#2D7A4F" />
+                    <Text style={[styles.reportBtnText, { color: "#2D7A4F" }]}>Rate Neighborhood</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.reportBtn, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]} onPress={() => router.push("/report-safety")} activeOpacity={0.8}>
+                    <Feather name="plus" size={13} color="#DC2626" />
+                    <Text style={[styles.reportBtnText, { color: "#DC2626" }]}>Report</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              {alerts.length > 0 ? (
+                alerts.map((a) => (
+                  <AlertBanner key={a.id} alert={a} onDismiss={() => setAlerts((prev) => prev.filter((x) => x.id !== a.id))} />
+                ))
+              ) : (
+                <View style={[styles.noAlerts, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Feather name="check-circle" size={20} color="#2D7A4F" />
+                  <Text style={[styles.noAlertsText, { color: colors.mutedForeground }]}>No active alerts in your area</Text>
+                </View>
+              )}
             </View>
-          );
-        })()}
+
+            {/* Hero banner */}
+            <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 24 }]}>
+              <View style={[styles.heroBanner, { overflow: "hidden" }]}>
+                <Image source={require("@/assets/images/hero.jpg")} style={styles.heroImage} contentFit="cover" />
+                <LinearGradient colors={["transparent", "rgba(0,0,0,0.65)"]} style={styles.heroOverlay}>
+                  <Text style={styles.heroLabel}>{getDailyQuoteText("mission", 0).toUpperCase()}</Text>
+                  <Text style={styles.heroTitle}>Map Your Life.{"\n"}Connect Deeper.{"\n"}Live With Purpose.</Text>
+                  <TouchableOpacity style={styles.heroCta} activeOpacity={0.85} onPress={() => router.push("/(tabs)/map")}>
+                    <Text style={styles.heroCtaText}>Explore Near You</Text>
+                    <Feather name="arrow-right" size={14} color="#CA922B" />
+                  </TouchableOpacity>
+                </LinearGradient>
+              </View>
+            </View>
+
+            {/* Stats strip */}
+            <View style={styles.statsStrip}>
+              {[
+                { value: "2,400+", label: "Verified Businesses" },
+                { value: "48", label: "States" },
+                { value: "94/100", label: "Avg. Score" },
+                { value: "100%", label: "Authenticity Checked" },
+              ].map((stat, i, arr) => (
+                <React.Fragment key={stat.label}>
+                  <View style={styles.statItem}>
+                    <Text style={[styles.statValue, { color: colors.primary }]}>{stat.value}</Text>
+                    <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{stat.label}</Text>
+                  </View>
+                  {i < arr.length - 1 && <View style={[styles.statDivider, { backgroundColor: colors.border }]} />}
+                </React.Fragment>
+              ))}
+            </View>
+
+            {/* Near You carousel */}
+            {businessesLoading ? (
+              <View style={styles.section}>
+                <SectionHeader title="📍 Near You" />
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+                  {[0, 1, 2].map((i) => <SkeletonBusinessCardHorizontal key={i} />)}
+                </ScrollView>
+              </View>
+            ) : nearYou.length > 0 ? (
+              <View style={styles.section}>
+                <SectionHeader title="📍 Near You" onSeeAll={() => router.push("/(tabs)/map")} />
+                <FlatList horizontal data={nearYou} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
+                  renderItem={({ item }) => (
+                    <BusinessCard business={item} onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })} isSaved={isSaved(item.id)} onToggleSave={() => toggleSave(item.id)} horizontal />
+                  )}
+                />
+              </View>
+            ) : null}
+
+            {/* KinfolkAI banner — hides on scroll down, reappears on scroll up */}
+            <Animated.View style={{ opacity: kinfolkAnim, maxHeight: kinfolkAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 140] }), overflow: "hidden", marginBottom: kinfolkAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 24] }) }}>
+              <View style={[styles.section, { paddingHorizontal: 20 }]}>
+                <TouchableOpacity activeOpacity={0.88} onPress={() => router.push("/travel")} style={[styles.travelBanner, { backgroundColor: colors.primary }]}>
+                  <View style={styles.travelBannerLeft}>
+                    <Text style={styles.travelBannerEyebrow}>✨ KINFOLKAI™</Text>
+                    <Text style={styles.travelBannerTitle}>Plan Your Next Trip</Text>
+                    <Text style={styles.travelBannerSub}>{getDailyQuoteText("kinfolk", 0)}</Text>
+                  </View>
+                  <View style={styles.travelBannerRight}>
+                    <View style={styles.travelBannerArrow}>
+                      <Ionicons name="airplane" size={22} color={colors.primary} />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+
+            {/* Trending This Week carousel */}
+            {trending.length > 0 && (
+              <View style={styles.section}>
+                <SectionHeader title="🔥 Trending This Week" />
+                <FlatList horizontal data={trending} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
+                  renderItem={({ item }) => (
+                    <BusinessCard business={item} onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })} isSaved={isSaved(item.id)} onToggleSave={() => toggleSave(item.id)} horizontal />
+                  )}
+                />
+              </View>
+            )}
+
+            {/* Featured carousel */}
+            {featured.length > 0 && (
+              <View style={styles.section}>
+                <SectionHeader title="⭐ Featured" />
+                <FlatList horizontal data={featured} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
+                  renderItem={({ item }) => (
+                    <View>
+                      <BusinessCard business={item} onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })} isSaved={isSaved(item.id)} onToggleSave={() => toggleSave(item.id)} horizontal />
+                      <View style={styles.cardActions}>
+                        {item.feedbackOptIn && (
+                          <TouchableOpacity style={styles.notForMeBtn} onPress={() => setFeedbackBusiness(item)} activeOpacity={0.7}>
+                            <Text style={[styles.notForMeTxt, { color: colors.mutedForeground }]}>Leave a note</Text>
+                          </TouchableOpacity>
+                        )}
+                        <TouchableOpacity style={styles.hideBtn} onPress={() => dismissBusiness(item.id)} activeOpacity={0.7}>
+                          <Feather name="x" size={11} color={colors.mutedForeground} />
+                          <Text style={[styles.hideTxt, { color: colors.mutedForeground }]}>Not interested</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+                />
+              </View>
+            )}
+
+            {feedbackBusiness && (
+              <SkipFeedbackModal visible={!!feedbackBusiness} businessId={feedbackBusiness.id} businessName={feedbackBusiness.name} onClose={() => setFeedbackBusiness(null)} />
+            )}
+
+            {/* Global Recommendations banner */}
+            <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 16 }]}>
+              <TouchableOpacity activeOpacity={0.88} onPress={() => router.push("/global-recommendations" as any)} style={[styles.travelBanner, { backgroundColor: "#1A2E22" }]}>
+                <View style={styles.travelBannerLeft}>
+                  <Text style={styles.travelBannerEyebrow}>🌍 COMMUNITY PICKS</Text>
+                  <Text style={styles.travelBannerTitle}>Global Recommendations</Text>
+                  <Text style={styles.travelBannerSub}>Trusted places around the world — shared by our community.</Text>
+                </View>
+                <View style={styles.travelBannerRight}>
+                  <View style={[styles.travelBannerArrow, { backgroundColor: "#CA922B" }]}>
+                    <Ionicons name="globe-outline" size={22} color="#fff" />
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Relocation Planner banner */}
+            <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 16 }]}>
+              <TouchableOpacity activeOpacity={0.88} onPress={() => router.push("/relocation-planner" as any)} style={[styles.travelBanner, { backgroundColor: "#1A3A2A" }]}>
+                <View style={styles.travelBannerLeft}>
+                  <Text style={styles.travelBannerEyebrow}>🚚 RELOCATION CONCIERGE</Text>
+                  <Text style={styles.travelBannerTitle}>Plan Your Move</Text>
+                  <Text style={styles.travelBannerSub}>AI guides you step-by-step — realtor, movers, doctor, and more minority-owned businesses at every turn.</Text>
+                </View>
+                <View style={styles.travelBannerRight}>
+                  <View style={[styles.travelBannerArrow, { backgroundColor: "#C9922B" }]}>
+                    <Text style={{ fontSize: 20 }}>🏠</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* New Businesses carousel */}
+            {newBusinesses.length > 0 && (
+              <View style={styles.section}>
+                <SectionHeader title="✨ New Businesses" />
+                <FlatList horizontal data={newBusinesses} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
+                  renderItem={({ item }) => (
+                    <BusinessCard business={item} onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })} isSaved={isSaved(item.id)} onToggleSave={() => toggleSave(item.id)} horizontal />
+                  )}
+                />
+              </View>
+            )}
+
+            {/* Community Favorites carousel */}
+            {communityFaves.length > 0 && (
+              <View style={styles.section}>
+                <SectionHeader title="👑 Community Favorites" subtitle="Verified · Black-Owned" />
+                <FlatList horizontal data={communityFaves} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
+                  renderItem={({ item }) => (
+                    <BusinessCard business={item} onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })} isSaved={isSaved(item.id)} onToggleSave={() => toggleSave(item.id)} horizontal />
+                  )}
+                />
+              </View>
+            )}
+
+            {/* Brand quote */}
+            <BrandQuoteBanner category="community" offset={1} variant="card" style={{ marginHorizontal: 20, marginBottom: 20 }} />
+
+            {/* Community Spaces banner */}
+            <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 12 }]}>
+              <TouchableOpacity style={[styles.spacesBanner, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => router.push("/spaces")} activeOpacity={0.85}>
+                <View style={[styles.spacesIconWrap, { backgroundColor: "#2D7A4F18" }]}>
+                  <Feather name="home" size={22} color="#2D7A4F" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.spacesBannerTitle, { color: colors.foreground }]}>Community Spaces</Text>
+                  <Text style={[styles.spacesBannerSub, { color: colors.mutedForeground }]}>Spaces for rent, sale & business in safe neighborhoods</Text>
+                </View>
+                <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
 
         {/* List Your Business CTA */}
-        <TouchableOpacity
-          style={[styles.listBizBanner, { backgroundColor: colors.primary }]}
-          onPress={() => router.push("/list-business" as never)}
-          activeOpacity={0.88}
-        >
+        <TouchableOpacity style={[styles.listBizBanner, { backgroundColor: colors.primary }]} onPress={() => router.push("/list-business" as never)} activeOpacity={0.88}>
           <View style={styles.listBizLeft}>
             <View style={[styles.listBizIconWrap, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
               <Feather name="briefcase" size={20} color="#FFFFFF" />
@@ -770,11 +719,7 @@ export default function DiscoverScreen() {
         </TouchableOpacity>
 
         {/* Nominate any business */}
-        <TouchableOpacity
-          style={[styles.nominateBanner, { backgroundColor: colors.card, borderColor: colors.border }]}
-          onPress={() => router.push("/nominate-business" as never)}
-          activeOpacity={0.85}
-        >
+        <TouchableOpacity style={[styles.nominateBanner, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => router.push("/nominate-business" as never)} activeOpacity={0.85}>
           <Feather name="star" size={16} color={colors.primary} style={{ marginRight: 10 }} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.nominateTitle, { color: colors.foreground }]}>Know a great local spot?</Text>
@@ -784,17 +729,13 @@ export default function DiscoverScreen() {
         </TouchableOpacity>
 
         {/* Preferences shortcut */}
-        <TouchableOpacity
-          style={[styles.prefsRow, { backgroundColor: colors.card, borderColor: colors.border }]}
-          onPress={() => setShowPrefsSurvey(true)}
-          activeOpacity={0.85}
-        >
+        <TouchableOpacity style={[styles.prefsRow, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => setShowPrefsSurvey(true)} activeOpacity={0.85}>
           <View style={[styles.prefsIcon, { backgroundColor: colors.primary + "15" }]}>
             <Feather name="sliders" size={16} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.prefsTitle, { color: colors.foreground }]}>Update Preferences</Text>
-            <Text style={[styles.prefsSub, { color: colors.mutedForeground }]}>Personalize your discovery feed</Text>
+            <Text style={[styles.prefsTitle, { color: colors.foreground }]}>Personalize Your Feed</Text>
+            <Text style={[styles.prefsSub, { color: colors.mutedForeground }]}>Update preferences for better recommendations</Text>
           </View>
           <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
         </TouchableOpacity>
