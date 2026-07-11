@@ -1,9 +1,9 @@
 const STEPS = [
-  { label: "People",              gold: false, fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:  17, dyOffset:  -6 },
-  { label: "Discovery",           gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:   0, dyOffset:   0 },
-  { label: "Recommendations",     gold: false, fontSize: "1.6vw",  width: "16vw", nowrap: false, angleOffset: -11, dyOffset:   0 },
-  { label: "Thriving Businesses", gold: false, fontSize: "1.55vw", width: "20vw", nowrap: true,  angleOffset:   3, dyOffset:   0 },
-  { label: "Community Grows",     gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:  -1, dyOffset:   0 },
+  { label: "People",              gold: false, fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:  17, dyOffset:  -6, dxOffset:  -2 },
+  { label: "Discovery",           gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:   0, dyOffset:   0, dxOffset:   0 },
+  { label: "Recommendations",     gold: false, fontSize: "1.6vw",  width: "16vw", nowrap: false, angleOffset: -11, dyOffset:   0, dxOffset:   0 },
+  { label: "Thriving Businesses", gold: false, fontSize: "1.55vw", width: "20vw", nowrap: true,  angleOffset:   3, dyOffset:   0, dxOffset:   0 },
+  { label: "Community Grows",     gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:  -1, dyOffset:   0, dxOffset:   0 },
 ];
 
 const ARC_RADIUS = 36;
@@ -100,7 +100,7 @@ export default function Slide25Flywheel() {
               key={s.label}
               className="absolute font-display"
               style={{
-                left:       `${x}%`,
+                left:       `${x + (s.dxOffset ?? 0)}%`,
                 top:        `${y + (s.dyOffset ?? 0)}%`,
                 transform:  `translate(${-50 + dx * 50}%, ${-50 + dy * 50}%)`,
                 fontSize:   s.fontSize,
