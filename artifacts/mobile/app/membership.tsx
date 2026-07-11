@@ -403,7 +403,7 @@ export default function MembershipScreen() {
     } else if (result === "error") {
       Alert.alert("Something went wrong", "Please try again in a moment.");
     }
-  }, [router, billing, audience, initiateCheckout, purchase, offerings]);
+  }, [router, billing, audience, initiateCheckout, purchase, offerings, rcLoading]);
 
   const plans = audience === "consumer" ? CONSUMER_PLANS : BUSINESS_PLANS;
 
