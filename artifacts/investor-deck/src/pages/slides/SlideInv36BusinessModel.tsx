@@ -16,31 +16,36 @@ export default function SlideInv36BusinessModel() {
 
       {/* Metric strip */}
       <div className="absolute" style={{ left: "6vw", right: "6vw", top: "14.5vw", display: "flex", alignItems: "center", gap: "0" }}>
-        <div style={{ flex: 1, background: "rgba(202,146,43,0.09)", border: "1px solid rgba(202,146,43,0.28)", borderRadius: "0.4vw 0 0 0.4vw", padding: "0.55vw 1.2vw", display: "flex", alignItems: "center", gap: "0.9vw" }}>
+        <div style={{ flex: 1, background: "rgba(202,146,43,0.09)", border: "1px solid rgba(202,146,43,0.28)", borderRadius: "0.4vw 0 0 0.4vw", padding: "0.8vw 1.2vw", display: "flex", alignItems: "center", gap: "0.9vw" }}>
           <div className="font-display" style={{ fontSize: "2vw", fontWeight: 800, color: "#CA922B", lineHeight: 1 }}>4</div>
           <div className="font-body" style={{ fontSize: "0.82vw", color: "#1C0E06", fontWeight: 600, lineHeight: 1.3 }}>Customer<br />Segments</div>
         </div>
-        <div style={{ width: "0.6vw", height: "3.5vw", background: "#FAF6EF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: "0.6vw", height: "4vw", background: "#FAF6EF", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div className="font-body" style={{ fontSize: "0.9vw", color: "#CA922B", fontWeight: 700 }}>›</div>
         </div>
-        <div style={{ flex: 1, background: "rgba(202,146,43,0.09)", border: "1px solid rgba(202,146,43,0.28)", borderLeft: "none", padding: "0.55vw 1.2vw", display: "flex", alignItems: "center", gap: "0.9vw" }}>
+        <div style={{ flex: 1, background: "rgba(202,146,43,0.09)", border: "1px solid rgba(202,146,43,0.28)", borderLeft: "none", padding: "0.8vw 1.2vw", display: "flex", alignItems: "center", gap: "0.9vw" }}>
           <div className="font-display" style={{ fontSize: "2vw", fontWeight: 800, color: "#CA922B", lineHeight: 1 }}>12+</div>
           <div className="font-body" style={{ fontSize: "0.82vw", color: "#1C0E06", fontWeight: 600, lineHeight: 1.3 }}>Revenue<br />Opportunities</div>
         </div>
-        <div style={{ width: "0.6vw", height: "3.5vw", background: "#FAF6EF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: "0.6vw", height: "4vw", background: "#FAF6EF", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div className="font-body" style={{ fontSize: "0.9vw", color: "#CA922B", fontWeight: 700 }}>›</div>
         </div>
-        <div style={{ flex: 1, background: "rgba(202,146,43,0.09)", border: "1px solid rgba(202,146,43,0.28)", borderLeft: "none", borderRadius: "0 0.4vw 0.4vw 0", padding: "0.55vw 1.2vw", display: "flex", alignItems: "center", gap: "0.9vw" }}>
+        <div style={{ flex: 1, background: "rgba(202,146,43,0.09)", border: "1px solid rgba(202,146,43,0.28)", borderLeft: "none", borderRadius: "0 0.4vw 0.4vw 0", padding: "0.8vw 1.2vw", display: "flex", alignItems: "center", gap: "0.9vw" }}>
           <div className="font-display" style={{ fontSize: "2vw", fontWeight: 800, color: "#CA922B", lineHeight: 1 }}>1</div>
           <div className="font-body" style={{ fontSize: "0.82vw", color: "#1C0E06", fontWeight: 600, lineHeight: 1.3 }}>Shared<br />Platform</div>
         </div>
       </div>
 
+      {/* Revenue type strip */}
+      <div className="absolute font-body" style={{ left: "6vw", right: "6vw", top: "19.3vw", textAlign: "center", fontSize: "0.8vw", color: "#CA922B", letterSpacing: "0.15em", fontWeight: 700 }}>
+        SUBSCRIPTIONS &nbsp;&nbsp;|&nbsp;&nbsp; MARKETPLACE &nbsp;&nbsp;|&nbsp;&nbsp; SAAS &nbsp;&nbsp;|&nbsp;&nbsp; ENTERPRISE
+      </div>
+
       {/* Divider */}
-      <div className="absolute" style={{ left: "6vw", right: "6vw", top: "19vw", height: "1px", background: "rgba(202,146,43,0.3)" }} />
+      <div className="absolute" style={{ left: "6vw", right: "6vw", top: "20.8vw", height: "1px", background: "rgba(202,146,43,0.3)" }} />
 
       {/* 4-column grid */}
-      <div className="absolute" style={{ left: "6vw", right: "6vw", top: "20.5vw", display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "0" }}>
+      <div className="absolute" style={{ left: "6vw", right: "6vw", top: "22vw", display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "0" }}>
 
         {/* ── Col 1: Consumers ── */}
         <div style={{ paddingRight: "1.8vw", borderRight: "1px solid rgba(58,31,14,0.12)" }}>
@@ -49,13 +54,13 @@ export default function SlideInv36BusinessModel() {
           </div>
           <div className="font-display" style={{ fontSize: "1vw", color: "#CA922B", marginBottom: "0.6vw", paddingLeft: "0.2vw" }}>↓</div>
           <div className="font-body" style={{ fontSize: "0.82vw", color: "#CA922B", fontWeight: 700, letterSpacing: "0.1em", marginBottom: "0.2vw" }}>RECURRING SUBSCRIPTION REVENUE</div>
-          <div className="font-body" style={{ fontSize: "0.83vw", color: "#7B5408", fontStyle: "italic", marginBottom: "1.1vw", lineHeight: 1.45 }}>
+          <div className="font-body" style={{ fontSize: "0.83vw", color: "#3D2417", fontStyle: "italic", fontWeight: 600, marginBottom: "1.1vw", lineHeight: 1.45 }}>
             Pay for convenience, personalization,<br />and premium access.
           </div>
 
           <div style={{ marginBottom: "1.5vw" }}>
             <div className="font-display" style={{ fontSize: "1.15vw", fontWeight: 700, color: "#1C0E06" }}>Subscriptions</div>
-            <div className="font-body" style={{ fontSize: "0.82vw", color: "#CA922B", fontWeight: 600, marginTop: "0.1vw" }}>Free · $9.99 · $19.99 · $29.99/mo</div>
+            <div className="font-body" style={{ fontSize: "0.82vw", color: "#CA922B", fontWeight: 600, marginTop: "0.1vw" }}>Free → Premium</div>
             <div className="font-body" style={{ fontSize: "0.82vw", color: "#5C3A1A", marginTop: "0.15vw", lineHeight: 1.4 }}>Discovery, AI planning, Circles, trip itineraries</div>
           </div>
 
@@ -79,13 +84,13 @@ export default function SlideInv36BusinessModel() {
           </div>
           <div className="font-display" style={{ fontSize: "1vw", color: "#CA922B", marginBottom: "0.6vw", paddingLeft: "0.2vw" }}>↓</div>
           <div className="font-body" style={{ fontSize: "0.82vw", color: "#CA922B", fontWeight: 700, letterSpacing: "0.1em", marginBottom: "0.2vw" }}>SAAS REVENUE</div>
-          <div className="font-body" style={{ fontSize: "0.83vw", color: "#7B5408", fontStyle: "italic", marginBottom: "1.1vw", lineHeight: 1.45 }}>
+          <div className="font-body" style={{ fontSize: "0.83vw", color: "#3D2417", fontStyle: "italic", fontWeight: 600, marginBottom: "1.1vw", lineHeight: 1.45 }}>
             Pay to reach engaged customers<br />and grow visibility.
           </div>
 
           <div style={{ marginBottom: "1.5vw" }}>
             <div className="font-display" style={{ fontSize: "1.15vw", fontWeight: 700, color: "#1C0E06" }}>Memberships</div>
-            <div className="font-body" style={{ fontSize: "0.82vw", color: "#CA922B", fontWeight: 600, marginTop: "0.1vw" }}>Free · $29.99 · $79.99 · $199.99/mo</div>
+            <div className="font-body" style={{ fontSize: "0.82vw", color: "#CA922B", fontWeight: 600, marginTop: "0.1vw" }}>Free → Enterprise</div>
             <div className="font-body" style={{ fontSize: "0.82vw", color: "#5C3A1A", marginTop: "0.15vw", lineHeight: 1.4 }}>Verified listings, analytics, AI insights</div>
           </div>
 
@@ -109,7 +114,7 @@ export default function SlideInv36BusinessModel() {
           </div>
           <div className="font-display" style={{ fontSize: "1vw", color: "#CA922B", marginBottom: "0.6vw", paddingLeft: "0.2vw" }}>↓</div>
           <div className="font-body" style={{ fontSize: "0.82vw", color: "#CA922B", fontWeight: 700, letterSpacing: "0.1em", marginBottom: "0.2vw" }}>GOVERNMENT &amp; INSTITUTIONAL REVENUE</div>
-          <div className="font-body" style={{ fontSize: "0.83vw", color: "#7B5408", fontStyle: "italic", marginBottom: "1.1vw", lineHeight: 1.45 }}>
+          <div className="font-body" style={{ fontSize: "0.83vw", color: "#3D2417", fontStyle: "italic", fontWeight: 600, marginBottom: "1.1vw", lineHeight: 1.45 }}>
             Pay to promote tourism and<br />strengthen local economies.
           </div>
 
@@ -139,7 +144,7 @@ export default function SlideInv36BusinessModel() {
           </div>
           <div className="font-display" style={{ fontSize: "1vw", color: "#CA922B", marginBottom: "0.6vw", paddingLeft: "0.2vw" }}>↓</div>
           <div className="font-body" style={{ fontSize: "0.82vw", color: "#CA922B", fontWeight: 700, letterSpacing: "0.1em", marginBottom: "0.2vw" }}>ENTERPRISE CONTRACTS</div>
-          <div className="font-body" style={{ fontSize: "0.83vw", color: "#7B5408", fontStyle: "italic", marginBottom: "1.1vw", lineHeight: 1.45 }}>
+          <div className="font-body" style={{ fontSize: "0.83vw", color: "#3D2417", fontStyle: "italic", fontWeight: 600, marginBottom: "1.1vw", lineHeight: 1.45 }}>
             Pay for workforce insights<br />and community engagement.
           </div>
 
