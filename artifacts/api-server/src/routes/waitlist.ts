@@ -403,20 +403,71 @@ router.get("/admin/waitlist/export", async (req: Request, res: Response) => {
 
 router.post("/admin/waitlist/bulk", async (req: Request, res: Response) => {
   if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
-  const { ids, status } = req.body as { ids?: string[]; status?: string };
+  const { ids, status, filter } = req.body as {
+    ids?: string[];
+    status?: string;
+    filter?: { status?: string };
+  };
   const allowed = ["pending", "approved", "rejected"];
-  if (!Array.isArray(ids) || ids.length === 0) {
-    res.status(400).json({ error: "ids must be a non-empty array" }); return;
-  }
   if (!status || !allowed.includes(status)) {
     res.status(400).json({ error: "Invalid status" }); return;
   }
+
+  const hasIds = Array.isArray(ids) && ids.length > 0;
+  const hasFilter = filter !== undefined && typeof filter === "object";
+
+  if (!hasIds && !hasFilter) {
+    res.status(400).json({ error: "Provide either ids array or a filter object" }); return;
+  }
+
   try {
-    const { inArray } = await import("drizzle-orm");
-    await db.update(waitlistTable)
-      .set({ status, approvedAt: status === "approved" ? new Date() : null })
-      .where(inArray(waitlistTable.id, ids));
-    res.json({ updated: ids.length });
+    const { inArray: drizzleInArray } = await import("drizzle-orm");
+    const updates = { status, approvedAt: status === "approved" ? new Date() : null };
+
+    let updatedCount = 0;
+
+    if (hasFilter) {
+      // Filter-based: update all entries matching the given filter (cross-page bulk)
+      const filterStatus = filter!.status;
+      const filterAllowed = ["pending", "approved", "rejected"];
+      const whereClause = filterStatus && filterAllowed.includes(filterStatus)
+        ? eq(waitlistTable.status, filterStatus)
+        : undefined;
+
+      const result = whereClause
+        ? await db.update(waitlistTable).set(updates).where(whereClause).returning({ id: waitlistTable.id })
+        : await db.update(waitlistTable).set(updates).returning({ id: waitlistTable.id });
+
+      updatedCount = result.length;
+    } else {
+      // ID-based: update specific entries
+      await db.update(waitlistTable)
+        .set(updates)
+        .where(drizzleInArray(waitlistTable.id, ids!));
+      updatedCount = ids!.length;
+    }
+
+    // Fire approval emails for newly approved entries (filter-based only for explicit IDs; skip for large filter updates to avoid email floods)
+    if (status === "approved" && hasIds && ids!.length <= 50) {
+      const approvedEntries = await db.select({ id: waitlistTable.id, email: waitlistTable.email, firstName: waitlistTable.firstName })
+        .from(waitlistTable)
+        .where(drizzleInArray(waitlistTable.id, ids!));
+      for (const entry of approvedEntries) {
+        if (!entry.email) continue;
+        const [existingUser] = await db
+          .select({ id: usersTable.id, approved: usersTable.approved })
+          .from(usersTable)
+          .where(eq(usersTable.email, entry.email.toLowerCase()))
+          .limit(1);
+        if (existingUser && !existingUser.approved) {
+          await db.update(usersTable).set({ approved: true }).where(eq(usersTable.id, existingUser.id));
+        }
+        sendApprovalNotification(entry.email, entry.firstName ?? null)
+          .catch((err: unknown) => req.log.error({ err }, "Failed to send bulk approval email"));
+      }
+    }
+
+    res.json({ updated: updatedCount });
   } catch (err) {
     req.log.error({ err }, "Failed to bulk update waitlist");
     res.status(500).json({ error: "Failed to bulk update" });

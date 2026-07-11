@@ -323,6 +323,7 @@ export default function Admin() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [selectAllFiltered, setSelectAllFiltered] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   const [nudgeSending, setNudgeSending] = useState(false);
   const [nudgeResult, setNudgeResult] = useState<string | null>(null);
@@ -535,19 +536,24 @@ export default function Admin() {
   };
 
   const bulkUpdate = async (status: string) => {
-    if (selected.size === 0) return;
+    if (selected.size === 0 && !selectAllFiltered) return;
     setBulkUpdating(true);
+    const body = selectAllFiltered
+      ? { filter: { status: statusFilter !== "all" ? statusFilter : undefined }, status }
+      : { ids: Array.from(selected), status };
     await fetch(`${BASE}api/admin/waitlist/bulk`, {
       method: "POST", credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: Array.from(selected), status }),
+      body: JSON.stringify(body),
     });
     setSelected(new Set());
-    await loadWaitlist();
+    setSelectAllFiltered(false);
+    await loadWaitlist(waitlistPage, statusFilter);
     setBulkUpdating(false);
   };
 
   const toggleSelect = (id: string) => {
+    setSelectAllFiltered(false);
     setSelected(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -556,8 +562,9 @@ export default function Admin() {
   };
 
   const toggleSelectAll = () => {
-    if (selected.size === waitlist.length) {
+    if (selectAllFiltered || selected.size === waitlist.length) {
       setSelected(new Set());
+      setSelectAllFiltered(false);
     } else {
       setSelected(new Set(waitlist.map(e => e.id)));
     }
@@ -944,41 +951,57 @@ export default function Admin() {
       </div>
 
       {/* Bulk action bar */}
-      {tab === "waitlist" && selected.size > 0 && (
+      {tab === "waitlist" && (selected.size > 0 || selectAllFiltered) && (
         <div className="bg-[#2B1507] text-white px-6 py-3 flex items-center gap-4">
-          <div className="max-w-6xl mx-auto w-full flex items-center gap-4">
-            <span className="text-sm font-bold text-[#CA922B]">{selected.size} selected</span>
-            <Button
-              size="sm"
-              onClick={() => bulkUpdate("approved")}
-              disabled={bulkUpdating}
-              className="h-7 px-4 rounded-full bg-green-600 hover:bg-green-700 text-white text-xs font-bold"
-            >
-              <Check className="w-3 h-3 mr-1" /> Approve All
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => bulkUpdate("rejected")}
-              disabled={bulkUpdating}
-              className="h-7 px-4 rounded-full bg-red-600 hover:bg-red-700 text-white text-xs font-bold"
-            >
-              <X className="w-3 h-3 mr-1" /> Reject All
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => bulkUpdate("pending")}
-              disabled={bulkUpdating}
-              variant="outline"
-              className="h-7 px-4 rounded-full border-white/30 text-white hover:bg-white/10 text-xs"
-            >
-              Reset All
-            </Button>
-            <button
-              onClick={() => setSelected(new Set())}
-              className="ml-auto text-[#F5EBD8]/50 hover:text-white text-xs"
-            >
-              Clear selection
-            </button>
+          <div className="max-w-6xl mx-auto w-full flex flex-col gap-2">
+            <div className="flex items-center gap-4 flex-wrap">
+              <span className="text-sm font-bold text-[#CA922B]">
+                {selectAllFiltered ? `All ${waitlistTotal.toLocaleString()} entries selected` : `${selected.size} selected`}
+              </span>
+              <Button
+                size="sm"
+                onClick={() => bulkUpdate("approved")}
+                disabled={bulkUpdating}
+                className="h-7 px-4 rounded-full bg-green-600 hover:bg-green-700 text-white text-xs font-bold"
+              >
+                <Check className="w-3 h-3 mr-1" /> Approve All
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => bulkUpdate("rejected")}
+                disabled={bulkUpdating}
+                className="h-7 px-4 rounded-full bg-red-600 hover:bg-red-700 text-white text-xs font-bold"
+              >
+                <X className="w-3 h-3 mr-1" /> Reject All
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => bulkUpdate("pending")}
+                disabled={bulkUpdating}
+                variant="outline"
+                className="h-7 px-4 rounded-full border-white/30 text-white hover:bg-white/10 text-xs"
+              >
+                Reset All
+              </Button>
+              <button
+                onClick={() => { setSelected(new Set()); setSelectAllFiltered(false); }}
+                className="ml-auto text-[#F5EBD8]/50 hover:text-white text-xs"
+              >
+                Clear selection
+              </button>
+            </div>
+            {/* Cross-page select all filtered banner */}
+            {!selectAllFiltered && selected.size === waitlist.length && waitlistTotalPages > 1 && (
+              <div className="text-xs text-[#F5EBD8]/70 flex items-center gap-2">
+                <span>All {waitlist.length} entries on this page are selected.</span>
+                <button
+                  onClick={() => setSelectAllFiltered(true)}
+                  className="underline text-[#CA922B] hover:text-amber-300 font-semibold"
+                >
+                  Select all {waitlistTotal.toLocaleString()} matching entries instead
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1134,7 +1157,7 @@ export default function Admin() {
                     <thead>
                       <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
                         <th className="px-4 py-3 w-8">
-                          <input type="checkbox" checked={selected.size === waitlist.length && waitlist.length > 0} onChange={toggleSelectAll} className="rounded accent-[#CA922B]" />
+                          <input type="checkbox" checked={(selected.size === waitlist.length && waitlist.length > 0) || selectAllFiltered} onChange={toggleSelectAll} className="rounded accent-[#CA922B]" />
                         </th>
                         <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Name</th>
                         <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Email</th>
