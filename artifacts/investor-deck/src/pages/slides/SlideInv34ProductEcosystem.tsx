@@ -112,8 +112,16 @@ export default function SlideInv34ProductEcosystem() {
           className="font-body"
           style={{ fontSize: "0.95vw", color: "#A87A40", fontStyle: "italic", lineHeight: 1.55, marginTop: "0.6vw", maxWidth: "26vw" }}
         >
-          Every interaction makes the<br />entire community smarter.
+          Every interaction strengthens<br />every future recommendation.
         </div>
+      </div>
+
+      {/* ── Column phase labels ─────────────────────────────────────── */}
+      <div className="absolute font-body" style={{ left: "2vw", top: "11.8vw", width: "21vw", fontSize: "0.78vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 700, textAlign: "center", opacity: 0.85 }}>
+        ACQUIRE &amp; BUILD TRUST
+      </div>
+      <div className="absolute font-body" style={{ left: "77vw", top: "11.8vw", width: "21vw", fontSize: "0.78vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 700, textAlign: "center", opacity: 0.85 }}>
+        ENGAGE &amp; GROW LIFETIME VALUE
       </div>
 
       {/* ──────────────────────────────────────────────────────────────
@@ -224,7 +232,7 @@ export default function SlideInv34ProductEcosystem() {
             <div className="font-display" style={{ fontSize: "1.3vw", fontWeight: 700, color: "#FAF6EF" }}>Business</div>
             <div className="font-body" style={{ fontSize: "0.8vw", color: "#CA922B", letterSpacing: "0.13em", fontWeight: 700, marginTop: "0.1vw" }}>CREATES SUPPLY</div>
             <div className="font-body" style={{ fontSize: "0.87vw", color: "#A87A40", marginTop: "0.2vw", lineHeight: 1.4 }}>
-              Businesses create the supply — places, events, and opportunities — that fuel the platform.
+              Businesses power discovery, experiences, and community engagement across the ecosystem.
             </div>
           </div>
         </div>
@@ -253,6 +261,24 @@ export default function SlideInv34ProductEcosystem() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Flywheel bridge sentence (below center hub) ─────────────── */}
+      <div
+        className="absolute font-body"
+        style={{
+          left: "32vw",
+          top: "48vw",
+          width: "36vw",
+          fontSize: "0.9vw",
+          color: "#A87A40",
+          fontStyle: "italic",
+          textAlign: "center",
+          lineHeight: 1.5,
+          opacity: 0.9,
+        }}
+      >
+        Every stage creates more data, trust, and engagement — making the next stage even more valuable.
       </div>
 
       {/* ── Footer ──────────────────────────────────────────────────── */}
