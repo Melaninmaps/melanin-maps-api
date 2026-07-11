@@ -1,362 +1,426 @@
 [
-        {
-                "id": "inv-slide-01-cover",
-                "position": 1,
-                "filepath": "src/pages/slides/Slide01Cover.tsx",
-                "title": "No One Should Have To Wonder",
-                "description": "Opening title — belonging as the core promise",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-02-vignettes",
-                "position": 2,
-                "filepath": "src/pages/slides/Slide02Vignettes.tsx",
-                "title": "Four Stories",
-                "description": "Family, traveler, entrepreneur, student — four real vignettes",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-03-same-question",
-                "position": 3,
-                "filepath": "src/pages/slides/Slide03SameQuestion.tsx",
-                "title": "Same Answer",
-                "description": "Different questions, same underlying search",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-04-where-belong",
-                "position": 4,
-                "filepath": "src/pages/slides/Slide04WhereBelong.tsx",
-                "title": "Where Do I Belong?",
-                "description": "The universal question, stated plainly",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-05-mission",
-                "position": 5,
-                "filepath": "src/pages/slides/Slide05Mission.tsx",
-                "title": "Our Mission",
-                "description": "Not a directory, not a social network — confidence, community, opportunity",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-06-imagine-city",
-                "position": 6,
-                "filepath": "src/pages/slides/Slide06ImagineCity.tsx",
-                "title": "Imagine Moving",
-                "description": "The unknowns of relocating to a new city",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-07-one-app",
-                "position": 7,
-                "filepath": "src/pages/slides/Slide07OneApp.tsx",
-                "title": "One App",
-                "description": "Transition — finding it all in one place",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-08-thrive",
-                "position": 8,
-                "filepath": "src/pages/slides/Slide08MeetJasmine.tsx",
-                "title": "Thrive",
-                "description": "Chapter — economic empowerment for minority-owned businesses",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-09-app-open",
-                "position": 9,
-                "filepath": "src/pages/slides/Slide09AppOpen.tsx",
-                "title": "She Opens The App",
-                "description": "Real app home screen mockup",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-10-safe-neighborhoods",
-                "position": 10,
-                "filepath": "src/pages/slides/Slide10SafeNeighborhoods.tsx",
-                "title": "Belong",
-                "description": "Chapter — community feed showing everywhere-you-go belonging",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-11-meet-jasmine",
-                "position": 11,
-                "filepath": "src/pages/slides/Slide11MeetJasmine.tsx",
-                "title": "Meet Jasmine",
-                "description": "User journey intro — relocating Philadelphia to Houston",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-12-food-beauty",
-                "position": 12,
-                "filepath": "src/pages/slides/Slide12FoodBeauty.tsx",
-                "title": "Restaurants & Salons",
-                "description": "Real app discover screen mockup",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-13-doctors-employers",
-                "position": 13,
-                "filepath": "src/pages/slides/Slide13DoctorsEmployers.tsx",
-                "title": "Doctors & Employers",
-                "description": "Real app business listings screen mockup",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-14-events-travel",
-                "position": 14,
-                "filepath": "src/pages/slides/Slide14EventsTravel.tsx",
-                "title": "Events & Travel",
-                "description": "Real app community screen mockup",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-15-friends-businesses",
-                "position": 15,
-                "filepath": "src/pages/slides/Slide15FriendsBusinesses.tsx",
-                "title": "Houston Feels Like Home",
-                "description": "Jasmine's journey resolution",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-16-business-question",
-                "position": 16,
-                "filepath": "src/pages/slides/Slide16BusinessQuestion.tsx",
-                "title": "The Other Side",
-                "description": "Transition to the business owner's perspective",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-17-intentional-discovery",
-                "position": 17,
-                "filepath": "src/pages/slides/Slide17IntentionalDiscovery.tsx",
-                "title": "Intentional Discovery",
-                "description": "Not advertising — clicks, recommendations, saved businesses, itineraries",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-18-send-them-back",
-                "position": 18,
-                "filepath": "src/pages/slides/Slide18SendThemBack.tsx",
-                "title": "We Send Them Back To You",
-                "description": "Channel grid — website, social, booking, store, phone, maps",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-19-community-algorithm",
-                "position": 19,
-                "filepath": "src/pages/slides/Slide19CommunityAlgorithm.tsx",
-                "title": "Community Is The Algorithm",
-                "description": "Trust-based discovery mechanism",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-20-kinfolk-intro",
-                "position": 20,
-                "filepath": "src/pages/slides/Slide20KinfolkIntro.tsx",
-                "title": "Meet Kinfolk AI",
-                "description": "AI positioning — a business partner, not just AI",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-21-kinfolk-capabilities",
-                "position": 21,
-                "filepath": "src/pages/slides/Slide21KinfolkCapabilities.tsx",
-                "title": "Kinfolk AI Capabilities",
-                "description": "Marketing, events, reviews, growth strategy",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-22-angela-divider",
-                "position": 22,
-                "filepath": "src/pages/slides/Slide22AngelaDivider.tsx",
-                "title": "A New Chapter",
-                "description": "Transition — from Kinfolk AI into the business owner's journey",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-23-meet-angela",
-                "position": 23,
-                "filepath": "src/pages/slides/Slide23MeetMarcus.tsx",
-                "title": "Meet Marcus",
-                "description": "Business owner story — the business equivalent of Jasmine's journey",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-24-philosophy",
-                "position": 24,
-                "filepath": "src/pages/slides/Slide24Philosophy.tsx",
-                "title": "We're Not Replacing Communities",
-                "description": "Company philosophy — connects, doesn't replace",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-25-flywheel",
-                "position": 25,
-                "filepath": "src/pages/slides/Slide25Flywheel.tsx",
-                "title": "The Flywheel",
-                "description": "Compounding network-effect loop diagram",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-26-why-flywheel-matters",
-                "position": 26,
-                "filepath": "src/pages/slides/Slide26WhyFlywheelMatters.tsx",
-                "title": "Why the Flywheel Matters",
-                "description": "Kinfolk AI learns from every review, recommendation, saved business, and community interaction",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-27-network-effect",
-                "position": 27,
-                "filepath": "src/pages/slides/Slide26NetworkEffect.tsx",
-                "title": "The Bigger Our Community Becomes, the Smarter the Platform Gets",
-                "description": "Network-effect slide — each new member type compounds platform value",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-28-city-by-city",
-                "position": 28,
-                "filepath": "src/pages/slides/Slide26CityByCity.tsx",
-                "title": "City by City",
-                "description": "Rollout strategy across cities",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-29-one-community",
-                "position": 29,
-                "filepath": "src/pages/slides/Slide22OneCommunity.tsx",
-                "title": "One Community, Three Experiences",
-                "description": "Signature ecosystem slide — consumers, businesses, communities",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-30-one-ecosystem",
-                "position": 30,
-                "filepath": "src/pages/slides/Slide23OneEcosystem.tsx",
-                "title": "One Ecosystem",
-                "description": "Instead of three apps, one ecosystem",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-31-bigger-than",
-                "position": 31,
-                "filepath": "src/pages/slides/Slide24BiggerThan.tsx",
-                "title": "Bigger Than Businesses",
-                "description": "Economic opportunity framing",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-32-one-map",
-                "position": 32,
-                "filepath": "src/pages/slides/Slide25OneMap.tsx",
-                "title": "One Map, One Movement",
-                "description": "Closing mission recap",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-33-founding-invite",
-                "position": 33,
-                "filepath": "src/pages/slides/Slide26FoundingInvite.tsx",
-                "title": "Founding Businesses",
-                "description": "Closing call to action",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-34-product-ecosystem",
-                "position": 34,
-                "filepath": "src/pages/slides/SlideInv34ProductEcosystem.tsx",
-                "title": "One Platform. Six Core Experiences.",
-                "description": "Product overview — Discover, Safety, Community, Experiences, KinfolkAI, Relocation",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-35-market-opportunity",
-                "position": 35,
-                "filepath": "src/pages/slides/SlideInv35MarketOpportunity.tsx",
-                "title": "Market Opportunity",
-                "description": "Six high-growth markets totalling $6.4T+ TAM",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-36-business-model",
-                "position": 36,
-                "filepath": "src/pages/slides/SlideInv36BusinessModel.tsx",
-                "title": "Business Model",
-                "description": "Diversified revenue — Consumers, Businesses, Partners",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-37-why-we-win",
-                "position": 37,
-                "filepath": "src/pages/slides/SlideInv37WhyWeWin.tsx",
-                "title": "Why We Win",
-                "description": "Competitive advantage matrix — six categories, clear differentiation",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-38-traction",
-                "position": 38,
-                "filepath": "src/pages/slides/SlideInv38Traction.tsx",
-                "title": "Traction",
-                "description": "Pre-revenue proof points — product, technical, community, market",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-39-go-to-market",
-                "position": 39,
-                "filepath": "src/pages/slides/SlideInv39GoToMarket.tsx",
-                "title": "Go-to-Market",
-                "description": "Five-phase city rollout with community growth drivers",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-40-ask",
-                "position": 40,
-                "filepath": "src/pages/slides/SlideInv40Ask.tsx",
-                "title": "The Ask",
-                "description": "$750K seed — use of funds and 18-month milestones",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-41-team",
-                "position": 41,
-                "filepath": "src/pages/slides/SlideInv41Team.tsx",
-                "title": "The Team",
-                "description": "Founder-market fit, execution proof, hiring plan, and community support",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-42-business-section",
-                "position": 42,
-                "filepath": "src/pages/slides/SlideInv42BusinessSection.tsx",
-                "title": "Part II — The Businesses This Community Trusts",
-                "description": "Section divider transitioning from investor pitch to business opportunity",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-43-your-customers",
-                "position": 43,
-                "filepath": "src/pages/slides/SlideInv42YourCustomers.tsx",
-                "title": "Your Customers Are Already Looking",
-                "description": "Business section opener — consumer demand, $1.7T market, community-trust discovery mockup",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-44-the-problem",
-                "position": 44,
-                "filepath": "src/pages/slides/SlideInv43TheProblem.tsx",
-                "title": "The Tools That Exist Weren't Built For You",
-                "description": "Three-column problem slide — visibility gap, trust gap, tools gap",
-                "speakerNotes": ""
-        },
-        {
-                "id": "inv-slide-45-what-we-do",
-                "position": 45,
-                "filepath": "src/pages/slides/SlideInv44WhatWeDoForYou.tsx",
-                "title": "Your Business. Trusted. Found. Chosen.",
-                "description": "Solution pivot — business profile mockup, three value props, free/5min/Day 1 stats",
-                "speakerNotes": ""
-        }
+	{
+		"id": "inv-slide-01-cover",
+		"position": 1,
+		"filepath": "src/pages/slides/Slide01Cover.tsx",
+		"title": "No One Should Have To Wonder",
+		"description": "Opening title — belonging as the core promise",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-02-vignettes",
+		"position": 2,
+		"filepath": "src/pages/slides/Slide02Vignettes.tsx",
+		"title": "Four Stories",
+		"description": "Family, traveler, entrepreneur, student — four real vignettes",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-03-same-question",
+		"position": 3,
+		"filepath": "src/pages/slides/Slide03SameQuestion.tsx",
+		"title": "Same Answer",
+		"description": "Different questions, same underlying search",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-04-where-belong",
+		"position": 4,
+		"filepath": "src/pages/slides/Slide04WhereBelong.tsx",
+		"title": "Where Do I Belong?",
+		"description": "The universal question, stated plainly",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-05-mission",
+		"position": 5,
+		"filepath": "src/pages/slides/Slide05Mission.tsx",
+		"title": "Our Mission",
+		"description": "Not a directory, not a social network — confidence, community, opportunity",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-06-imagine-city",
+		"position": 6,
+		"filepath": "src/pages/slides/Slide06ImagineCity.tsx",
+		"title": "Imagine Moving",
+		"description": "The unknowns of relocating to a new city",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-07-one-app",
+		"position": 7,
+		"filepath": "src/pages/slides/Slide07OneApp.tsx",
+		"title": "One App",
+		"description": "Transition — finding it all in one place",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-08-thrive",
+		"position": 8,
+		"filepath": "src/pages/slides/Slide08MeetJasmine.tsx",
+		"title": "Thrive",
+		"description": "Chapter — economic empowerment for minority-owned businesses",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-09-app-open",
+		"position": 9,
+		"filepath": "src/pages/slides/Slide09AppOpen.tsx",
+		"title": "She Opens The App",
+		"description": "Real app home screen mockup",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-10-safe-neighborhoods",
+		"position": 10,
+		"filepath": "src/pages/slides/Slide10SafeNeighborhoods.tsx",
+		"title": "Belong",
+		"description": "Chapter — community feed showing everywhere-you-go belonging",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-11-meet-jasmine",
+		"position": 11,
+		"filepath": "src/pages/slides/Slide11MeetJasmine.tsx",
+		"title": "Meet Jasmine",
+		"description": "User journey intro — relocating Philadelphia to Houston",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-12-food-beauty",
+		"position": 12,
+		"filepath": "src/pages/slides/Slide12FoodBeauty.tsx",
+		"title": "Restaurants & Salons",
+		"description": "Real app discover screen mockup",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-13-doctors-employers",
+		"position": 13,
+		"filepath": "src/pages/slides/Slide13DoctorsEmployers.tsx",
+		"title": "Doctors & Employers",
+		"description": "Real app business listings screen mockup",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-14-events-travel",
+		"position": 14,
+		"filepath": "src/pages/slides/Slide14EventsTravel.tsx",
+		"title": "Events & Travel",
+		"description": "Real app community screen mockup",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-15-friends-businesses",
+		"position": 15,
+		"filepath": "src/pages/slides/Slide15FriendsBusinesses.tsx",
+		"title": "Houston Feels Like Home",
+		"description": "Jasmine's journey resolution",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-16-business-question",
+		"position": 16,
+		"filepath": "src/pages/slides/Slide16BusinessQuestion.tsx",
+		"title": "The Other Side",
+		"description": "Transition to the business owner's perspective",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-17-intentional-discovery",
+		"position": 17,
+		"filepath": "src/pages/slides/Slide17IntentionalDiscovery.tsx",
+		"title": "Intentional Discovery",
+		"description": "Not advertising — clicks, recommendations, saved businesses, itineraries",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-18-send-them-back",
+		"position": 18,
+		"filepath": "src/pages/slides/Slide18SendThemBack.tsx",
+		"title": "We Send Them Back To You",
+		"description": "Channel grid — website, social, booking, store, phone, maps",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-19-community-algorithm",
+		"position": 19,
+		"filepath": "src/pages/slides/Slide19CommunityAlgorithm.tsx",
+		"title": "Community Is The Algorithm",
+		"description": "Trust-based discovery mechanism",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-20-kinfolk-intro",
+		"position": 20,
+		"filepath": "src/pages/slides/Slide20KinfolkIntro.tsx",
+		"title": "Meet Kinfolk AI",
+		"description": "AI positioning — a business partner, not just AI",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-21-kinfolk-capabilities",
+		"position": 21,
+		"filepath": "src/pages/slides/Slide21KinfolkCapabilities.tsx",
+		"title": "Kinfolk AI Capabilities",
+		"description": "Marketing, events, reviews, growth strategy",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-22-angela-divider",
+		"position": 22,
+		"filepath": "src/pages/slides/Slide22AngelaDivider.tsx",
+		"title": "A New Chapter",
+		"description": "Transition — from Kinfolk AI into the business owner's journey",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-23-meet-angela",
+		"position": 23,
+		"filepath": "src/pages/slides/Slide23MeetMarcus.tsx",
+		"title": "Meet Marcus",
+		"description": "Business owner story — the business equivalent of Jasmine's journey",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-24-philosophy",
+		"position": 24,
+		"filepath": "src/pages/slides/Slide24Philosophy.tsx",
+		"title": "We're Not Replacing Communities",
+		"description": "Company philosophy — connects, doesn't replace",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-25-flywheel",
+		"position": 25,
+		"filepath": "src/pages/slides/Slide25Flywheel.tsx",
+		"title": "The Flywheel",
+		"description": "Compounding network-effect loop diagram",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-26-why-flywheel-matters",
+		"position": 26,
+		"filepath": "src/pages/slides/Slide26WhyFlywheelMatters.tsx",
+		"title": "Why the Flywheel Matters",
+		"description": "Kinfolk AI learns from every review, recommendation, saved business, and community interaction",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-27-network-effect",
+		"position": 27,
+		"filepath": "src/pages/slides/Slide26NetworkEffect.tsx",
+		"title": "The Bigger Our Community Becomes, the Smarter the Platform Gets",
+		"description": "Network-effect slide — each new member type compounds platform value",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-28-city-by-city",
+		"position": 28,
+		"filepath": "src/pages/slides/Slide26CityByCity.tsx",
+		"title": "City by City",
+		"description": "Rollout strategy across cities",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-29-one-community",
+		"position": 29,
+		"filepath": "src/pages/slides/Slide22OneCommunity.tsx",
+		"title": "One Community, Three Experiences",
+		"description": "Signature ecosystem slide — consumers, businesses, communities",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-30-one-ecosystem",
+		"position": 30,
+		"filepath": "src/pages/slides/Slide23OneEcosystem.tsx",
+		"title": "One Ecosystem",
+		"description": "Instead of three apps, one ecosystem",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-31-bigger-than",
+		"position": 31,
+		"filepath": "src/pages/slides/Slide24BiggerThan.tsx",
+		"title": "Bigger Than Businesses",
+		"description": "Economic opportunity framing",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-32-one-map",
+		"position": 32,
+		"filepath": "src/pages/slides/Slide25OneMap.tsx",
+		"title": "One Map, One Movement",
+		"description": "Closing mission recap",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-33-founding-invite",
+		"position": 33,
+		"filepath": "src/pages/slides/Slide26FoundingInvite.tsx",
+		"title": "Founding Businesses",
+		"description": "Closing call to action",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-34-product-ecosystem",
+		"position": 34,
+		"filepath": "src/pages/slides/SlideInv34ProductEcosystem.tsx",
+		"title": "One Platform. Six Core Experiences.",
+		"description": "Product overview — Discover, Safety, Community, Experiences, KinfolkAI, Relocation",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-35-market-opportunity",
+		"position": 35,
+		"filepath": "src/pages/slides/SlideInv35MarketOpportunity.tsx",
+		"title": "Market Opportunity",
+		"description": "Six high-growth markets totalling $6.4T+ TAM",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-36-business-model",
+		"position": 36,
+		"filepath": "src/pages/slides/SlideInv36BusinessModel.tsx",
+		"title": "Business Model",
+		"description": "Diversified revenue — Consumers, Businesses, Partners",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-37-why-we-win",
+		"position": 37,
+		"filepath": "src/pages/slides/SlideInv37WhyWeWin.tsx",
+		"title": "Why We Win",
+		"description": "Competitive advantage matrix — six categories, clear differentiation",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-38-traction",
+		"position": 38,
+		"filepath": "src/pages/slides/SlideInv38Traction.tsx",
+		"title": "Traction",
+		"description": "Pre-revenue proof points — product, technical, community, market",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-39-go-to-market",
+		"position": 39,
+		"filepath": "src/pages/slides/SlideInv39GoToMarket.tsx",
+		"title": "Go-to-Market",
+		"description": "Five-phase city rollout with community growth drivers",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-40-ask",
+		"position": 40,
+		"filepath": "src/pages/slides/SlideInv40Ask.tsx",
+		"title": "The Ask",
+		"description": "$750K seed — use of funds and 18-month milestones",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-41-team",
+		"position": 41,
+		"filepath": "src/pages/slides/SlideInv41Team.tsx",
+		"title": "The Team",
+		"description": "Founder-market fit, execution proof, hiring plan, and community support",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-42-business-section",
+		"position": 42,
+		"filepath": "src/pages/slides/SlideInv42BusinessSection.tsx",
+		"title": "Part II — The Businesses This Community Trusts",
+		"description": "Section divider transitioning from investor pitch to business opportunity",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-43-your-customers",
+		"position": 43,
+		"filepath": "src/pages/slides/SlideInv42YourCustomers.tsx",
+		"title": "Your Customers Are Already Looking",
+		"description": "Business section opener — consumer demand, $1.7T market, community-trust discovery mockup",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-44-the-problem",
+		"position": 44,
+		"filepath": "src/pages/slides/SlideInv43TheProblem.tsx",
+		"title": "The Tools That Exist Weren't Built For You",
+		"description": "Three-column problem slide — visibility gap, trust gap, tools gap",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-45-what-we-do",
+		"position": 45,
+		"filepath": "src/pages/slides/SlideInv44WhatWeDoForYou.tsx",
+		"title": "Your Business. Trusted. Found. Chosen.",
+		"description": "Solution pivot — business profile mockup, three value props, free/5min/Day 1 stats",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-46-flywheel",
+		"position": 46,
+		"filepath": "src/pages/slides/SlideInv45Flywheel.tsx",
+		"title": "Your Business Grows With Every Interaction",
+		"description": "Business growth loop — 6-step flywheel diagram with KinfolkAI at the center",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-47-dashboard",
+		"position": 47,
+		"filepath": "src/pages/slides/SlideInv46Dashboard.tsx",
+		"title": "Know What's Working Before Your Competitors Do",
+		"description": "Business dashboard mockup — profile views, saves, trust score, KinfolkAI prompt",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-48-kinfolk-ai",
+		"position": 48,
+		"filepath": "src/pages/slides/SlideInv47KinfolkAI.tsx",
+		"title": "Not An AI Assistant. Your Business Partner.",
+		"description": "KinfolkAI capabilities — 6 actions: posts, review responses, trends, promotions, growth, alerts",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-49-reputation",
+		"position": 49,
+		"filepath": "src/pages/slides/SlideInv48Reputation.tsx",
+		"title": "Reputation Becomes Your Competitive Advantage",
+		"description": "Trust chain — verified badge → recommendations → trust score → search ranking → loyalty → word of mouth",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-50-ecosystem",
+		"position": 50,
+		"filepath": "src/pages/slides/SlideInv49Ecosystem.tsx",
+		"title": "Businesses Don't Grow Alone",
+		"description": "Orbit diagram — business at center, 8 community satellite connections",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-51-pricing",
+		"position": 51,
+		"filepath": "src/pages/slides/SlideInv50Pricing.tsx",
+		"title": "Simple. Transparent. Built for Small Businesses.",
+		"description": "Three-tier pricing — Free / Standard $49 / Founding $29 locked forever",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-52-signature",
+		"position": 52,
+		"filepath": "src/pages/slides/SlideInv51Signature.tsx",
+		"title": "The More Your Community Grows, The More Your Business Grows",
+		"description": "Signature orbit slide — business at center, 9 community connection points",
+		"speakerNotes": ""
+	},
+	{
+		"id": "inv-slide-53-cta",
+		"position": 53,
+		"filepath": "src/pages/slides/SlideInv52CTA.tsx",
+		"title": "Become a Founding Business",
+		"description": "Final CTA — 500 spots, $29/month locked, mappingwithmelanin.com/business",
+		"speakerNotes": ""
+	}
 ]
