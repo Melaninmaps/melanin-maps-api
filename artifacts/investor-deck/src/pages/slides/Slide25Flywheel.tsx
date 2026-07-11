@@ -1,9 +1,9 @@
 const STEPS = [
-  { label: "People",              gold: false, fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:  17 },
-  { label: "Discovery",           gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:   0 },
-  { label: "Recommendations",     gold: false, fontSize: "1.6vw",  width: "16vw", nowrap: false, angleOffset: -11 },
-  { label: "Thriving Businesses", gold: false, fontSize: "1.55vw", width: "20vw", nowrap: true,  angleOffset:   3 },
-  { label: "Community Grows",     gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:  -1 },
+  { label: "People",              gold: false, fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:  17, dyOffset: -10 },
+  { label: "Discovery",           gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:   0, dyOffset:   0 },
+  { label: "Recommendations",     gold: false, fontSize: "1.6vw",  width: "16vw", nowrap: false, angleOffset: -11, dyOffset:   0 },
+  { label: "Thriving Businesses", gold: false, fontSize: "1.55vw", width: "20vw", nowrap: true,  angleOffset:   3, dyOffset:   0 },
+  { label: "Community Grows",     gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:  -1, dyOffset:   0 },
 ];
 
 const ARC_RADIUS = 36;
@@ -101,7 +101,7 @@ export default function Slide25Flywheel() {
               className="absolute font-display"
               style={{
                 left:       `${x}%`,
-                top:        `${y}%`,
+                top:        `${y + (s.dyOffset ?? 0)}%`,
                 transform:  `translate(${-50 + dx * 50}%, ${-50 + dy * 50}%)`,
                 fontSize:   s.fontSize,
                 fontWeight: s.gold ? 700 : 600,
