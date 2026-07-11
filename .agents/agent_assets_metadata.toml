@@ -683,3 +683,27 @@ id = "FuOHO2NS7EEka5naQnvC6"
 uri = "file://.local/outputs/Mapping-With-Melanin---Investor-Deck.pptx"
 type = "slides"
 title = "Mapping With Melanin — Investor Deck (PPTX)"
+
+[[outputs]]
+id = "4El7EB9qgEEBA4nI1YEEW"
+uri = "file://attached_assets/resized/IMG_7079_1783742110743.png"
+type = "image"
+title = "Screenshot 1 — Discover"
+
+[[outputs]]
+id = "67KHAmBkUYTNybaIV0KKQ"
+uri = "file://attached_assets/resized/IMG_7080_1783742102876.png"
+type = "image"
+title = "Screenshot 2 — Map"
+
+[[outputs]]
+id = "raJSHW7Io8yIj1G6PdKBf"
+uri = "file://attached_assets/resized/IMG_7081_1783742096794.PNG"
+type = "image"
+title = "Screenshot 3 — Business Profile"
+
+[[outputs]]
+id = "HAE3WJFktN1qp4sOyeMC1"
+uri = "file://attached_assets/resized/IMG_7082_1783742086413.PNG"
+type = "image"
+title = "Screenshot 4 — Report Intel"
