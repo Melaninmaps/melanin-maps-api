@@ -677,3 +677,9 @@ id = "5ZLAiuBfibzi2csIjfuEa"
 uri = "file://.local/outputs/Mapping-With-Melanin---Investor-Deck.pdf"
 type = "pdf"
 title = "Mapping With Melanin — Investor Deck (PDF)"
+
+[[outputs]]
+id = "FuOHO2NS7EEka5naQnvC6"
+uri = "file://.local/outputs/Mapping-With-Melanin---Investor-Deck.pptx"
+type = "slides"
+title = "Mapping With Melanin — Investor Deck (PPTX)"
