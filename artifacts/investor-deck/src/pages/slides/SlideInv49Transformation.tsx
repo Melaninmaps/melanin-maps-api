@@ -4,7 +4,7 @@ export default function SlideInv49Transformation() {
     { before: "Guessing what works",        after: "Community Trust Score growing"       },
     { before: "Buying ads",                 after: "Customers finding you organically"   },
     { before: "Managing reviews manually",  after: "KinfolkAI™ monitoring opportunities" },
-    { before: "Hoping customers return",    after: "Reputation building itself"          },
+    { before: "Hoping customers return",    after: "Your reputation keeps growing"       },
   ];
 
   return (
@@ -35,21 +35,18 @@ export default function SlideInv49Transformation() {
         {rows.map((row, i) => (
           <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "0 3vw", alignItems: "center", padding: "1.3vw 0", borderBottom: i < rows.length - 1 ? "1px solid rgba(202,146,43,0.08)" : "none" }}>
             {/* Before */}
-            <div style={{ textAlign: "right" }}>
-              <span className="font-display" style={{ fontSize: "1.6vw", fontWeight: 700, color: "rgba(217,196,163,0.3)", textDecoration: "line-through", textDecorationColor: "rgba(217,196,163,0.2)" }}>{row.before}</span>
+            <div style={{ textAlign: "right", opacity: 0.22 }}>
+              <span className="font-display" style={{ fontSize: "1.6vw", fontWeight: 700, color: "#D9C4A3", textDecoration: "line-through", textDecorationColor: "rgba(217,196,163,0.5)" }}>{row.before}</span>
             </div>
 
             {/* Arrow */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "1.5vw" }}>
-              <svg width="1.5vw" height="1.5vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "2.4vw" }}>
+              <span className="font-display" style={{ fontSize: "1.3vw", color: "#CA922B", letterSpacing: "-0.1em", opacity: 0.8 }}>&#187;&#187;</span>
             </div>
 
             {/* After */}
             <div style={{ textAlign: "left" }}>
-              <span className="font-display" style={{ fontSize: "1.6vw", fontWeight: 800, color: "#FAF6EF" }}>{row.after}</span>
+              <span className="font-display" style={{ fontSize: "1.6vw", fontWeight: 800, color: "#FAF6EF", textShadow: "0 0 28px rgba(202,146,43,0.35)" }}>{row.after}</span>
             </div>
           </div>
         ))}
