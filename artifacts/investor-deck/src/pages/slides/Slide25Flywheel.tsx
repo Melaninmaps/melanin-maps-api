@@ -2,7 +2,7 @@ const STEPS = [
   { label: "People",              gold: false, fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:   2 },
   { label: "Discovery",           gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:   0 },
   { label: "Recommendations",     gold: false, fontSize: "1.6vw",  width: "16vw", nowrap: false, angleOffset: -10 },
-  { label: "Thriving Businesses", gold: false, fontSize: "1.55vw", width: "20vw", nowrap: true,  angleOffset:   8 },
+  { label: "Thriving Businesses", gold: false, fontSize: "1.55vw", width: "20vw", nowrap: true,  angleOffset:   4 },
   { label: "Community Grows",     gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:   0 },
 ];
 
@@ -11,7 +11,7 @@ const GAP_DEG    = 5;
 const OFFSET_DEG = 20;
 
 const LABEL_RADIUS_OVERRIDE: Record<string, number> = {
-  People:                33,
+  People:                36,
   Discovery:             36,
   Recommendations:       36,
   "Thriving Businesses": 36,
