@@ -65,11 +65,11 @@ export function BusinessTimeBadges({
 
   return (
     <>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      <View style={styles.row}>
         {allBadges.map((badge) => (
           <BadgePill key={badge.id} badge={badge} onPress={setTooltip} />
         ))}
-      </ScrollView>
+      </View>
 
       <Modal visible={!!tooltip} transparent animationType="fade" onRequestClose={() => setTooltip(null)}>
         <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setTooltip(null)}>
@@ -102,6 +102,7 @@ export function BusinessTimeBadges({
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
     paddingVertical: 4,
   },
