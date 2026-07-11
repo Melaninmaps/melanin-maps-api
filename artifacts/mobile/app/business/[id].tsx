@@ -496,19 +496,19 @@ export default function BusinessDetailScreen() {
             <View style={[styles.safetyCard, { backgroundColor: "#2D7A4F10", borderColor: "#2D7A4F30" }]}>
               <View style={styles.safetyHeader}>
                 <Feather name="shield" size={15} color="#2D7A4F" />
-                <Text style={[styles.safetyTitle, { color: "#2D7A4F" }]}>Community Safety Stats</Text>
+                <Text style={[styles.safetyTitle, { color: "#2D7A4F" }]}>Community Insights</Text>
               </View>
               <View style={styles.safetyStats}>
                 {business.wouldReturnAlone != null && (
                   <View style={styles.statItem}>
                     <Text style={styles.statValue}>{business.wouldReturnAlone}%</Text>
-                    <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Would Return Alone</Text>
+                    <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Would Return</Text>
                   </View>
                 )}
                 {business.safetyRating != null && (
                   <View style={[styles.statItem, styles.statBorder, { borderColor: "#2D7A4F20" }]}>
                     <Text style={styles.statValue}>{business.safetyRating.toFixed(1)}</Text>
-                    <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Safety Rating</Text>
+                    <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Experience Rating</Text>
                   </View>
                 )}
                 {business.recommendationRate != null && (
@@ -534,8 +534,8 @@ export default function BusinessDetailScreen() {
               <Feather name="shield" size={20} color="#2D7A4F" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.rateSafetyTitle, { color: colors.foreground }]}>Rate Your Safety Experience</Text>
-              <Text style={[styles.rateSafetySub, { color: colors.mutedForeground }]}>Help the community know what to expect</Text>
+              <Text style={[styles.rateSafetyTitle, { color: colors.foreground }]}>🛡️ Share Your Experience</Text>
+              <Text style={[styles.rateSafetySub, { color: colors.mutedForeground }]}>Help the community know what to expect.</Text>
             </View>
             <Feather name="chevron-right" size={16} color="#2D7A4F" />
           </TouchableOpacity>

@@ -28,6 +28,10 @@ export interface SafetySurveyData {
   overallSafety: number;
   returnAlone: number;
   wouldRecommend: number;
+  belongingRating: number;
+  wouldRecommendChip: string;
+  wouldReturnChip: string;
+  staffProfessional: string;
   timeOfDay: string;
   groupType: string;
   incidentOccurred: boolean;
@@ -103,6 +107,7 @@ export function SafetyExperienceSurvey({ visible, businessName, businessCategory
   const [step, setStep] = useState(0);
   const EMPTY_DATA: SafetySurveyData = {
     overallSafety: 0, returnAlone: 0, wouldRecommend: 0,
+    belongingRating: 0, wouldRecommendChip: "", wouldReturnChip: "", staffProfessional: "",
     timeOfDay: "", groupType: "", incidentOccurred: false,
     incidentCategories: [], incidentParties: [], incidentSeverity: "",
     reportedToBusiness: "", issueResolved: "", wouldReturn: "",
@@ -127,8 +132,8 @@ export function SafetyExperienceSurvey({ visible, businessName, businessCategory
   }, [submitted]);
 
   const canNext = () => {
-    if (step === 0) return data.overallSafety > 0 && data.returnAlone > 0 && (!isEmployer || data.wouldRecommend > 0);
-    if (step === 1) return data.timeOfDay !== "" && data.groupType !== "";
+    if (step === 0) return data.overallSafety > 0 && data.returnAlone > 0;
+    if (step === 1) return data.belongingRating > 0 && data.wouldRecommendChip !== "" && data.wouldReturnChip !== "" && data.timeOfDay !== "" && data.groupType !== "";
     return true;
   };
 
@@ -141,7 +146,7 @@ export function SafetyExperienceSurvey({ visible, businessName, businessCategory
 
   const categoryQuestions = getCategoryRatingQuestions(businessCategory);
   const categoryLabel = getCategoryExperienceLabel(businessCategory);
-  const STEPS = ["Safety Ratings", "Visit Context", "Comments", categoryLabel];
+  const STEPS = ["Your Experience", "More Details", "Comments", categoryLabel];
 
   const isEmployer = (() => {
     const cat = (businessCategory ?? "").toLowerCase();
@@ -160,7 +165,7 @@ export function SafetyExperienceSurvey({ visible, businessName, businessCategory
               <Feather name="x" size={22} color={colors.foreground} />
             </TouchableOpacity>
             <View style={{ flex: 1, alignItems: "center" }}>
-              <Text style={[styles.headerTitle, { color: colors.foreground }]}>Rate Safety Experience</Text>
+              <Text style={[styles.headerTitle, { color: colors.foreground }]}>Share Your Experience</Text>
               <Text style={[styles.headerSub, { color: colors.mutedForeground }]} numberOfLines={1}>{businessName}</Text>
             </View>
             <View style={{ width: 22 }} />
@@ -187,10 +192,10 @@ export function SafetyExperienceSurvey({ visible, businessName, businessCategory
                 <View style={[styles.thankIcon, { backgroundColor: "#2D7A4F18" }]}>
                   <Feather name="check-circle" size={44} color="#2D7A4F" />
                 </View>
-                <Text style={[styles.thankTitle, { color: colors.foreground }]}>Report Submitted</Text>
+                <Text style={[styles.thankTitle, { color: colors.foreground }]}>Experience Shared</Text>
                 <Text style={[styles.thankBiz, { color: colors.primary }]}>{businessName}</Text>
                 <Text style={[styles.thankSub, { color: colors.mutedForeground }]}>
-                  Your experience has been added to the community safety score for this location. Every report helps our community travel smarter and live with confidence.
+                  Your experience has been added to the Community Insights for this location. Every voice helps our community find spaces where they feel welcomed, safe, and they belong.
                 </Text>
                 <View style={[styles.thankPoints, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
                   <Feather name="award" size={14} color={colors.primary} />
@@ -202,28 +207,67 @@ export function SafetyExperienceSurvey({ visible, businessName, businessCategory
               </View>
             ) : step === 0 ? (
               <View style={styles.stepContent}>
-                <Text style={[styles.stepTitle, { color: colors.foreground }]}>How safe did you feel?</Text>
+                <Text style={[styles.stepTitle, { color: colors.foreground }]}>How was your experience?</Text>
                 <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-                  Rate your safety experience at {businessName}
+                  Rate your experience at {businessName}
                 </Text>
                 <View style={[styles.ratingCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <StarRow label="Overall Safety" value={data.overallSafety} onChange={(v) => setData({ ...data, overallSafety: v })} />
+                  <StarRow label="Overall Experience" value={data.overallSafety} onChange={(v) => setData({ ...data, overallSafety: v })} />
                   <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                  <StarRow label="Comfortable returning alone?" value={data.returnAlone} onChange={(v) => setData({ ...data, returnAlone: v })} />
-                  {isEmployer && (
-                    <>
-                      <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                      <StarRow label="Would recommend to others?" value={data.wouldRecommend} onChange={(v) => setData({ ...data, wouldRecommend: v })} />
-                    </>
-                  )}
+                  <StarRow label="Did you feel welcomed and respected?" value={data.returnAlone} onChange={(v) => setData({ ...data, returnAlone: v })} />
                 </View>
               </View>
             ) : step === 1 ? (
               <View style={styles.stepContent}>
-                <Text style={[styles.stepTitle, { color: colors.foreground }]}>Tell us about your visit</Text>
+                <Text style={[styles.stepTitle, { color: colors.foreground }]}>Tell us more</Text>
                 <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-                  Context helps us surface more accurate safety scores
+                  Help the community understand what to expect
                 </Text>
+
+                {/* Belonging — signature question */}
+                <View style={[styles.ratingCard, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 20 }]}>
+                  <StarRow label="Did this feel like a place where you belonged?" value={data.belongingRating} onChange={(v) => setData({ ...data, belongingRating: v })} />
+                </View>
+
+                {/* Recommend */}
+                <Text style={[styles.groupLabel, { color: colors.foreground }]}>Would you recommend this business?</Text>
+                <View style={[styles.chipGrid, { marginBottom: 16 }]}>
+                  {["Yes", "Maybe", "No"].map((o) => {
+                    const activeColor = o === "Yes" ? "#2D7A4F" : o === "No" ? "#DC2626" : "#C4622D";
+                    return (
+                      <TouchableOpacity key={o} style={[styles.chip, { flex: 1, justifyContent: "center", backgroundColor: data.wouldRecommendChip === o ? activeColor : colors.card, borderColor: data.wouldRecommendChip === o ? activeColor : colors.border }]} onPress={() => { Haptics.selectionAsync(); setData({ ...data, wouldRecommendChip: o }); }}>
+                        <Text style={[styles.chipText, { color: data.wouldRecommendChip === o ? "#FBF7F0" : colors.foreground, textAlign: "center" }]}>{o}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                {/* Would return */}
+                <Text style={[styles.groupLabel, { color: colors.foreground }]}>Would you return?</Text>
+                <View style={[styles.chipGrid, { marginBottom: 16 }]}>
+                  {["Yes", "Maybe", "No"].map((o) => {
+                    const activeColor = o === "Yes" ? "#2D7A4F" : o === "No" ? "#DC2626" : "#C4622D";
+                    return (
+                      <TouchableOpacity key={o} style={[styles.chip, { flex: 1, justifyContent: "center", backgroundColor: data.wouldReturnChip === o ? activeColor : colors.card, borderColor: data.wouldReturnChip === o ? activeColor : colors.border }]} onPress={() => { Haptics.selectionAsync(); setData({ ...data, wouldReturnChip: o }); }}>
+                        <Text style={[styles.chipText, { color: data.wouldReturnChip === o ? "#FBF7F0" : colors.foreground, textAlign: "center" }]}>{o}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                {/* Staff professional */}
+                <Text style={[styles.groupLabel, { color: colors.foreground }]}>Did staff resolve concerns professionally?</Text>
+                <View style={[styles.chipGrid, { marginBottom: 20 }]}>
+                  {["Yes", "Somewhat", "No", "N/A"].map((o) => {
+                    const activeColor = o === "Yes" ? "#2D7A4F" : o === "No" ? "#DC2626" : "#C4622D";
+                    return (
+                      <TouchableOpacity key={o} style={[styles.chip, { flex: 1, justifyContent: "center", backgroundColor: data.staffProfessional === o ? activeColor : colors.card, borderColor: data.staffProfessional === o ? activeColor : colors.border }]} onPress={() => { Haptics.selectionAsync(); setData({ ...data, staffProfessional: o }); }}>
+                        <Text style={[styles.chipText, { color: data.staffProfessional === o ? "#FBF7F0" : colors.foreground, textAlign: "center" }]}>{o}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
                 <Text style={[styles.groupLabel, { color: colors.foreground }]}>Time of visit</Text>
                 <View style={styles.chipGrid}>
                   {TIMES.map((t) => (
