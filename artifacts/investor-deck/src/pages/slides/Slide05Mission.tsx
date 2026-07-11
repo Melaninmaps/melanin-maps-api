@@ -66,22 +66,22 @@ const pillars = [
 export default function Slide05Mission() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
-      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>05</div>
+      <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>05</div>
 
-      <div className="absolute left-[6vw] right-[6vw] top-[14vh] text-center">
+      <div className="absolute left-[6vw] right-[6vw] top-[7.9vw] text-center">
         <div className="font-body" style={{ fontSize: "1.5vw", color: "#7B5408", letterSpacing: "0.16em", fontWeight: 500 }}>
           THE JOURNEY TO BELONGING
         </div>
-        <h1 className="font-display leading-tight mt-[2.6vh]" style={{ fontSize: "3.6vw", fontWeight: 700, color: "#1C0E06", textWrap: "balance" }}>
+        <h1 className="font-display leading-tight mt-[1.5vw]" style={{ fontSize: "3.6vw", fontWeight: 700, color: "#1C0E06", textWrap: "balance" }}>
           Every journey begins here.
         </h1>
       </div>
 
-      <div className="absolute left-[8vw] right-[8vw] top-[45vh]" style={{ height: "1px", background: GOLD, opacity: 0.3 }} />
+      <div className="absolute left-[8vw] right-[8vw] top-[25.3vw]" style={{ height: "1px", background: GOLD, opacity: 0.3 }} />
 
-      <div className="absolute left-[6vw] right-[6vw] top-[39vh] grid grid-cols-5 gap-[1.6vw]">
+      <div className="absolute left-[6vw] right-[6vw] top-[21.9vw] grid grid-cols-5 gap-[1.6vw]">
         {pillars.map((p) => (
-          <div key={p.title} className="flex flex-col items-center text-center gap-[1.6vh]">
+          <div key={p.title} className="flex flex-col items-center text-center gap-[0.9vw]">
             <div
               className="flex items-center justify-center"
               style={{

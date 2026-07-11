@@ -45,13 +45,13 @@ export default function Slide25Flywheel() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#3D2417" }}>
       <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 42% 50%, rgba(202,146,43,0.2), transparent 55%)" }} />
-      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>25</div>
+      <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>25</div>
 
-      <div className="absolute left-[6vw] top-[5vh]">
+      <div className="absolute left-[6vw] top-[2.8vw]">
         <div className="font-body" style={{ fontSize: "1.4vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
           THE COMMUNITY FLYWHEEL
         </div>
-        <div className="font-body" style={{ fontSize: "1.1vw", fontStyle: "italic", fontWeight: 500, color: "#D9C4A3", marginTop: "1vh" }}>
+        <div className="font-body" style={{ fontSize: "1.1vw", fontStyle: "italic", fontWeight: 500, color: "#D9C4A3", marginTop: "0.56vw" }}>
           Every interaction makes Kinfolk AI smarter.
         </div>
       </div>
@@ -111,7 +111,7 @@ export default function Slide25Flywheel() {
         })}
       </div>
 
-      <div className="absolute left-0 right-0 text-center" style={{ bottom: "4vh" }}>
+      <div className="absolute left-0 right-0 text-center" style={{ bottom: "2.3vw" }}>
         <div className="font-display mx-auto" style={{ fontSize: "1.45vw", fontWeight: 700, color: "#F5EBD8", lineHeight: 1.4, maxWidth: "46vw" }}>
           Every recommendation strengthens the community.
           <br />

@@ -17,10 +17,10 @@ export default function Slide13EventsTravel() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#3D2417" }}>
       <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 75% 50%, rgba(202,146,43,0.14), transparent 55%)" }} />
-      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>14</div>
+      <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>14</div>
 
-      <div className="absolute left-[6vw] top-1/2 -translate-y-1/2" style={{ maxWidth: "33vw" }}>
-        <div className="font-body mb-[2vh]" style={{ fontSize: "1.3vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
+      <div className="absolute left-[6vw] flex flex-col justify-center" style={{ top: "8%", bottom: "8%", maxWidth: "33vw" }}>
+        <div className="font-body mb-[1.1vw]" style={{ fontSize: "1.3vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
           JASMINE&rsquo;S JOURNEY &mdash; SHE BECOMES PART OF THE COMMUNITY
         </div>
         <h1 className="font-display leading-tight" style={{ fontSize: "3.4vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
@@ -29,7 +29,7 @@ export default function Slide13EventsTravel() {
           She&rsquo;s known here.
         </h1>
 
-        <div className="mt-[3vh]" style={{ display: "flex", flexDirection: "column", gap: "1.35vh" }}>
+        <div className="mt-[1.7vw]" style={{ display: "flex", flexDirection: "column", gap: "0.76vw" }}>
           {CHECKLIST.map((item) => (
             <div key={item} className="font-body" style={{ fontSize: "1.15vw", color: "#D8B98A", fontWeight: 400, display: "flex", alignItems: "flex-start", gap: "0.8vw", lineHeight: 1.4 }}>
               <span style={{ color: "#CA922B", fontSize: "1.1vw", fontWeight: 700, flexShrink: 0 }}>&#10003;</span>
@@ -38,14 +38,14 @@ export default function Slide13EventsTravel() {
           ))}
         </div>
 
-        <div className="font-display mt-[3.2vh]" style={{ fontSize: "1.5vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic", textWrap: "balance" }}>
+        <div className="font-display mt-[1.8vw]" style={{ fontSize: "1.5vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic", textWrap: "balance" }}>
           She came looking for a community.
           <br />
           Now she&rsquo;s helping build one.
         </div>
       </div>
 
-      <div className="absolute top-1/2 -translate-y-1/2" style={{ right: "6vw" }}>
+      <div className="absolute flex items-center" style={{ right: "6vw", top: "5%", bottom: "5%" }}>
         <div className="relative flex-shrink-0" style={{ width: "19vw", height: "min(40.85vw, 70vh)", borderRadius: "2.09vw", border: "0.475vw solid #1C0E06", background: "#1C0E06", boxShadow: "0 1.4vw 2.8vw rgba(0,0,0,0.5)", overflow: "hidden" }}>
           <div className="absolute inset-0 flex flex-col" style={{ background: "#FAF6EF" }}>
             <div className="flex items-center justify-between px-[1vw] py-[1vw]" style={{ background: "#1C0E06" }}>

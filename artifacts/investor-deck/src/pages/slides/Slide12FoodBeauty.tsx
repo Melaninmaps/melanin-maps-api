@@ -8,10 +8,10 @@ export default function Slide11FoodBeauty() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#3D2417" }}>
       <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 75% 50%, rgba(202,146,43,0.14), transparent 55%)" }} />
-      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>12</div>
+      <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>12</div>
 
-      <div className="absolute left-[6vw] top-1/2 -translate-y-1/2" style={{ maxWidth: "34vw" }}>
-        <div className="font-body mb-[2vh]" style={{ fontSize: "1.4vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
+      <div className="absolute left-[6vw] flex flex-col justify-center" style={{ top: "8%", bottom: "8%", maxWidth: "34vw" }}>
+        <div className="font-body mb-[1.1vw]" style={{ fontSize: "1.4vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
           JASMINE&rsquo;S JOURNEY
         </div>
         <h1 className="font-display leading-tight" style={{ fontSize: "3.6vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
@@ -19,12 +19,12 @@ export default function Slide11FoodBeauty() {
           <br />
           She&rsquo;s starting connected.
         </h1>
-        <div className="font-body mt-[2.8vh]" style={{ fontSize: "1.3vw", color: "#D8B98A", fontWeight: 400, lineHeight: 1.5, textWrap: "balance" }}>
+        <div className="font-body mt-[1.6vw]" style={{ fontSize: "1.3vw", color: "#D8B98A", fontWeight: 400, lineHeight: 1.5, textWrap: "balance" }}>
           Instead of starting from scratch, Jasmine discovers places already trusted by the community.
         </div>
       </div>
 
-      <div className="absolute top-1/2 -translate-y-1/2 flex items-center" style={{ right: "7vw" }}>
+      <div className="absolute flex items-center" style={{ right: "7vw", top: "5%", bottom: "5%" }}>
         <div className="relative flex-shrink-0" style={{ width: "19vw", height: "min(40.85vw, 70vh)", borderRadius: "2.09vw", border: "0.475vw solid #1C0E06", background: "#1C0E06", boxShadow: "0 1.4vw 2.8vw rgba(0,0,0,0.5)", overflow: "hidden" }}>
           <div className="absolute inset-0 flex flex-col" style={{ background: "#FAF6EF" }}>
             <div className="flex items-center justify-between px-[1vw] py-[1vw]" style={{ background: "#1C0E06" }}>
@@ -55,11 +55,11 @@ export default function Slide11FoodBeauty() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-[3.4vh]" style={{ marginLeft: "2.4vw", width: "13.5vw" }}>
+        <div className="flex flex-col gap-[1.9vw]" style={{ marginLeft: "2.4vw", width: "13.5vw" }}>
           <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", fontWeight: 700, lineHeight: 1.35 }}>
             Trusted by the Community
           </div>
-          <div className="flex flex-col gap-[1.6vh]">
+          <div className="flex flex-col gap-[0.9vw]">
             <div className="flex items-center gap-[0.5vw]">
               <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", opacity: 0.5 }} />
               <span className="font-body" style={{ fontSize: "0.88vw", color: "#D8B98A", fontWeight: 400, lineHeight: 1.4 }}>Local favorites the community stands behind.</span>

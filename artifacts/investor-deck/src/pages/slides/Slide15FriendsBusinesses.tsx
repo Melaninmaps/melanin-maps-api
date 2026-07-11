@@ -3,17 +3,17 @@ const base = import.meta.env.BASE_URL;
 export default function Slide14FriendsBusinesses() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
-      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>15</div>
+      <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>15</div>
 
-      <div className="absolute left-[6vw] top-1/2 -translate-y-1/2" style={{ maxWidth: "34vw" }}>
-        <div className="font-body mb-[2vh]" style={{ fontSize: "1.1vw", color: "#A6720F", letterSpacing: "0.16em", fontWeight: 500 }}>
+      <div className="absolute left-[6vw] flex flex-col justify-center" style={{ top: "8%", bottom: "8%", maxWidth: "34vw" }}>
+        <div className="font-body mb-[1.1vw]" style={{ fontSize: "1.1vw", color: "#A6720F", letterSpacing: "0.16em", fontWeight: 500 }}>
           JASMINE&rsquo;S JOURNEY &mdash; SHE PAYS IT FORWARD
         </div>
         <h1 className="font-display leading-tight" style={{ fontSize: "3.6vw", fontWeight: 700, color: "#1C0E06", textWrap: "balance" }}>
           Now she helps the next newcomer.
         </h1>
-        <div className="inv-rule w-[7vw] mt-[3vh] mb-[3vh]" />
-        <div className="font-body mb-[3.2vh]" style={{ fontSize: "1.2vw", color: "#3A1F0E", fontWeight: 400, lineHeight: 1.5, textWrap: "balance" }}>
+        <div className="inv-rule w-[7vw] mt-[1.7vw] mb-[1.7vw]" />
+        <div className="font-body mb-[1.8vw]" style={{ fontSize: "1.2vw", color: "#3A1F0E", fontWeight: 400, lineHeight: 1.5, textWrap: "balance" }}>
           The places that earned Jasmine&rsquo;s trust become the places she confidently shares with others. The experiences that helped her feel at home become the experiences she passes on to the next newcomer.
         </div>
         <div className="font-display" style={{ fontSize: "1.6vw", fontWeight: 700, color: "#A6720F", textWrap: "balance" }}>
@@ -21,12 +21,12 @@ export default function Slide14FriendsBusinesses() {
           <br />
           Then they help someone else find theirs.
         </div>
-        <div className="font-display mt-[1.6vh]" style={{ fontSize: "1.3vw", fontWeight: 700, color: "#1C0E06", fontStyle: "italic" }}>
+        <div className="font-display mt-[0.9vw]" style={{ fontSize: "1.3vw", fontWeight: 700, color: "#1C0E06", fontStyle: "italic" }}>
           That is Mapping with Melanin&trade;.
         </div>
       </div>
 
-      <div className="absolute top-1/2 -translate-y-1/2" style={{ right: "7vw" }}>
+      <div className="absolute flex items-center" style={{ right: "7vw", top: "5%", bottom: "5%" }}>
         <div className="relative flex-shrink-0" style={{ width: "19vw", height: "min(40.85vw, 70vh)", borderRadius: "2.09vw", border: "0.475vw solid #1C0E06", background: "#1C0E06", boxShadow: "0 1.4vw 2.8vw rgba(28,14,6,0.35)", overflow: "hidden" }}>
           <div className="absolute inset-0 flex flex-col" style={{ background: "#FAF6EF" }}>
             <div className="relative w-full" style={{ height: "12vw" }}>

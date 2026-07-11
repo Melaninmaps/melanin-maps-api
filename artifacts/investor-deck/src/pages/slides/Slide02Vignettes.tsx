@@ -3,7 +3,7 @@ const base = import.meta.env.BASE_URL;
 export default function Slide02Vignettes() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#1C0E06" }}>
-      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35, zIndex: 10 }}>02</div>
+      <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35, zIndex: 10 }}>02</div>
 
       <div className="absolute inset-0 flex">
         <div className="relative overflow-hidden" style={{ flex: 1 }}>
@@ -26,7 +26,7 @@ export default function Slide02Vignettes() {
         <div className="font-display leading-tight" style={{ fontSize: "4.4vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
           Communities don&rsquo;t happen by accident.
         </div>
-        <div className="font-body mt-[2vh]" style={{ fontSize: "2.6vw", fontWeight: 400, color: "#E8C97A" }}>
+        <div className="font-body mt-[1.1vw]" style={{ fontSize: "2.6vw", fontWeight: 400, color: "#E8C97A" }}>
           Someone chooses to build one.
         </div>
       </div>

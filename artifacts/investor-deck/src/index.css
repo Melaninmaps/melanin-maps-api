@@ -51,6 +51,11 @@
   color-scheme: light;
 }
 
+@page {
+  size: 1280px 720px;
+  margin: 0;
+}
+
 html, body, #root {
   width: 100%;
   height: 100%;

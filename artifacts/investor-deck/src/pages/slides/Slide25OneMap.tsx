@@ -3,13 +3,13 @@ const LINES = ["Find your community.", "Support your community.", "Strengthen yo
 export default function Slide24OneMap() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
-      <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>32</div>
+      <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>32</div>
 
-      <div className="absolute left-[6vw] right-[6vw]" style={{ top: "11vh" }}>
-        <div className="font-body mb-[4vh]" style={{ fontSize: "1.8vw", fontStyle: "italic", color: "#7B5408", fontWeight: 400 }}>
+      <div className="absolute left-[6vw] right-[6vw]" style={{ top: "6.2vw" }}>
+        <div className="font-body mb-[2.3vw]" style={{ fontSize: "1.8vw", fontStyle: "italic", color: "#7B5408", fontWeight: 400 }}>
           Wherever life takes you…
         </div>
-        <div className="flex flex-col" style={{ gap: "2.6vh" }}>
+        <div className="flex flex-col" style={{ gap: "1.5vw" }}>
           {LINES.map((line) => {
             const [verb, ...rest] = line.split(" ");
             return (
@@ -21,8 +21,8 @@ export default function Slide24OneMap() {
         </div>
       </div>
 
-      <div className="absolute left-[6vw] right-[6vw] bottom-[10vh]">
-        <div style={{ height: "1px", background: "rgba(202,146,43,0.35)", marginBottom: "4vh" }} />
+      <div className="absolute left-[6vw] right-[6vw] bottom-[5.6vw]">
+        <div style={{ height: "1px", background: "rgba(202,146,43,0.35)", marginBottom: "2.3vw" }} />
         <div className="font-display leading-tight" style={{ fontSize: "4.6vw", fontWeight: 700, color: "#1C0E06" }}>
           One map.
         </div>

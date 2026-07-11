@@ -11,7 +11,7 @@ export default function Slide01Cover() {
           backgroundSize: "100% 100%",
         }}
       />
-      <div className="absolute top-[8vh] left-[6vw] font-body" style={{ fontSize: "1.85vw", color: "#E4A93A", letterSpacing: "0.2em", fontWeight: 500 }}>
+      <div className="absolute top-[4.5vw] left-[6vw] font-body" style={{ fontSize: "1.85vw", color: "#E4A93A", letterSpacing: "0.2em", fontWeight: 500 }}>
         MAPPING WITH MELANIN&trade;
       </div>
 
@@ -19,7 +19,7 @@ export default function Slide01Cover() {
         <h1 className="font-display leading-tight" style={{ fontSize: "6.5vw", fontWeight: 700, color: "#FAF6EF", textWrap: "balance" }}>
           No one should have to wonder<br />if they&rsquo;ll <span style={{ fontWeight: 800 }}>belong.</span>
         </h1>
-        <div className="mt-[6.3vh] flex items-center gap-[1.5vw]">
+        <div className="mt-[3.5vw] flex items-center gap-[1.5vw]">
           <div style={{ width: "4vw", height: "2px", background: "#CA922B", opacity: 0.75 }} />
           <div className="font-body" style={{ fontSize: "2.25vw", color: "#A87A40", fontWeight: 300 }}>
             Helping people discover community before they arrive
