@@ -118,7 +118,7 @@ export default function Slide25Flywheel() {
         })}
       </div>
 
-      <div className="absolute left-0 right-0 text-center" style={{ bottom: "7vw" }}>
+      <div className="absolute left-0 right-0 text-center" style={{ bottom: "2vw" }}>
         <div className="font-display mx-auto" style={{ fontSize: "1.3vw", fontWeight: 600, color: "#D9C4A3", lineHeight: 1.4, maxWidth: "50vw" }}>
           Every recommendation strengthens the community.
           Every stronger community creates new opportunities for discovery.
