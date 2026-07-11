@@ -56,7 +56,7 @@ export default function SlideInv45Flywheel() {
         <svg viewBox="-60 60 560 490" width="100%" height="100%" overflow="visible">
           <defs>
             <marker id="inv45-arr" markerWidth="6" markerHeight="6" refX="4.5" refY="3" orient="auto">
-              <path d="M 0,1 L 4.5,3 L 0,5" fill="none" stroke="#CA922B" strokeWidth="1.2"
+              <path d="M 0,1 L 4.5,3 L 0,5" fill="none" stroke="#CA922B" strokeWidth="1.35"
                 strokeLinecap="round" strokeLinejoin="round" />
             </marker>
           </defs>
@@ -74,8 +74,8 @@ export default function SlideInv45Flywheel() {
             return (
               <path key={i}
                 d={`M ${s.x},${s.y} A ${r},${r} 0 ${large},1 ${e2.x},${e2.y}`}
-                fill="none" stroke="#CA922B" strokeWidth="2.2"
-                strokeLinecap="round" markerEnd="url(#inv45-arr)" opacity="0.82"
+                fill="none" stroke="#CA922B" strokeWidth="2.4"
+                strokeLinecap="round" markerEnd="url(#inv45-arr)" opacity="0.85"
               />
             );
           })}
