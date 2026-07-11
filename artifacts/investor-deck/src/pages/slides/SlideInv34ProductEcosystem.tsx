@@ -32,9 +32,10 @@ export default function SlideInv34ProductEcosystem() {
 
       {/* ── SVG: connector lines + clockwise journey indicators ────────
            viewBox "0 0 100 56.25" → coordinates match vw units exactly.
-           Cards: top=14/24/34, height=8.5 → center_y = 18.25 / 28.25 / 38.25
+           Cards: top=14/25.5/37, height=10 → center_y = 19 / 30.5 / 42
            Left card right edge x=23, hub left x=32
            Hub right x=68, right card left x=77
+           Gap midpoints: (24+25.5)/2=24.75, (35.5+37)/2=36.25
       ──────────────────────────────────────────────────────────────── */}
       <svg
         className="absolute"
@@ -44,32 +45,32 @@ export default function SlideInv34ProductEcosystem() {
       >
         {/* Connector lines */}
         <g stroke="#CA922B" strokeWidth="0.28" strokeDasharray="1.4 2.6" opacity="0.3" fill="none" strokeLinecap="round">
-          <line x1="23" y1="18.25" x2="32" y2="18.25" />
-          <line x1="23" y1="28.25" x2="32" y2="28.25" />
-          <line x1="23" y1="38.25" x2="32" y2="38.25" />
-          <line x1="68" y1="18.25" x2="77" y2="18.25" />
-          <line x1="68" y1="28.25" x2="77" y2="28.25" />
-          <line x1="68" y1="38.25" x2="77" y2="38.25" />
+          <line x1="23" y1="19" x2="32" y2="19" />
+          <line x1="23" y1="30.5" x2="32" y2="30.5" />
+          <line x1="23" y1="42" x2="32" y2="42" />
+          <line x1="68" y1="19" x2="77" y2="19" />
+          <line x1="68" y1="30.5" x2="77" y2="30.5" />
+          <line x1="68" y1="42" x2="77" y2="42" />
         </g>
         {/* Endpoint dots */}
         <g fill="#CA922B" opacity="0.38">
-          <circle cx="23" cy="18.25" r="0.48" /><circle cx="32" cy="18.25" r="0.48" />
-          <circle cx="23" cy="28.25" r="0.48" /><circle cx="32" cy="28.25" r="0.48" />
-          <circle cx="23" cy="38.25" r="0.48" /><circle cx="32" cy="38.25" r="0.48" />
-          <circle cx="68" cy="18.25" r="0.48" /><circle cx="77" cy="18.25" r="0.48" />
-          <circle cx="68" cy="28.25" r="0.48" /><circle cx="77" cy="28.25" r="0.48" />
-          <circle cx="68" cy="38.25" r="0.48" /><circle cx="77" cy="38.25" r="0.48" />
+          <circle cx="23" cy="19" r="0.48" /><circle cx="32" cy="19" r="0.48" />
+          <circle cx="23" cy="30.5" r="0.48" /><circle cx="32" cy="30.5" r="0.48" />
+          <circle cx="23" cy="42" r="0.48" /><circle cx="32" cy="42" r="0.48" />
+          <circle cx="68" cy="19" r="0.48" /><circle cx="77" cy="19" r="0.48" />
+          <circle cx="68" cy="30.5" r="0.48" /><circle cx="77" cy="30.5" r="0.48" />
+          <circle cx="68" cy="42" r="0.48" /><circle cx="77" cy="42" r="0.48" />
         </g>
         {/* Journey flow arrows — left column ↓ (step 1→2→3) */}
         <g stroke="#CA922B" strokeWidth="0.35" opacity="0.35" fill="none" strokeLinecap="round" strokeLinejoin="round">
           {/* ↓ between Discover and Safety */}
-          <polyline points="11.5,23 12.5,24.2 13.5,23" />
+          <polyline points="11.5,24.5 12.5,25.7 13.5,24.5" />
           {/* ↓ between Safety and Community */}
-          <polyline points="11.5,33 12.5,34.2 13.5,33" />
+          <polyline points="11.5,36 12.5,37.2 13.5,36" />
           {/* ↑ between Experiences and Business (right col, step 4→5) */}
-          <polyline points="86.5,33 87.5,31.8 88.5,33" />
+          <polyline points="86.5,36 87.5,34.8 88.5,36" />
           {/* ↑ between Business and Relocation (step 5→6) */}
-          <polyline points="86.5,23 87.5,21.8 88.5,23" />
+          <polyline points="86.5,24.5 87.5,23.3 88.5,24.5" />
         </g>
       </svg>
 
@@ -80,7 +81,7 @@ export default function SlideInv34ProductEcosystem() {
           left: "32vw",
           top: "14vw",
           width: "36vw",
-          height: "28.5vw",
+          height: "33vw",
           background: "rgba(202,146,43,0.14)",
           border: "1.5px solid #CA922B",
           borderRadius: "0.7vw",
@@ -120,7 +121,7 @@ export default function SlideInv34ProductEcosystem() {
       ──────────────────────────────────────────────────────────────── */}
 
       {/* STEP 1 — Discover */}
-      <div className="absolute" style={{ left: "2vw", top: "14vw", width: "21vw", height: "8.5vw" }}>
+      <div className="absolute" style={{ left: "2vw", top: "14vw", width: "21vw", height: "10vw" }}>
         <div style={{ position: "relative", height: "100%", background: "rgba(202,146,43,0.07)", border: "1px solid rgba(202,146,43,0.28)", borderRadius: "0.5vw", padding: "1vw 1.2vw" }}>
           <div style={{ position: "absolute", top: "0.55vw", right: "0.55vw", width: "1.4vw", height: "1.4vw", borderRadius: "50%", background: "rgba(202,146,43,0.22)", border: "1px solid rgba(202,146,43,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span className="font-display" style={{ fontSize: "0.72vw", color: "#CA922B", fontWeight: 800, lineHeight: 1 }}>1</span>
@@ -141,7 +142,7 @@ export default function SlideInv34ProductEcosystem() {
       </div>
 
       {/* STEP 2 — Safety */}
-      <div className="absolute" style={{ left: "2vw", top: "24vw", width: "21vw", height: "8.5vw" }}>
+      <div className="absolute" style={{ left: "2vw", top: "25.5vw", width: "21vw", height: "10vw" }}>
         <div style={{ position: "relative", height: "100%", background: "rgba(202,146,43,0.07)", border: "1px solid rgba(202,146,43,0.28)", borderRadius: "0.5vw", padding: "1vw 1.2vw" }}>
           <div style={{ position: "absolute", top: "0.55vw", right: "0.55vw", width: "1.4vw", height: "1.4vw", borderRadius: "50%", background: "rgba(202,146,43,0.22)", border: "1px solid rgba(202,146,43,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span className="font-display" style={{ fontSize: "0.72vw", color: "#CA922B", fontWeight: 800, lineHeight: 1 }}>2</span>
@@ -161,7 +162,7 @@ export default function SlideInv34ProductEcosystem() {
       </div>
 
       {/* STEP 3 — Community */}
-      <div className="absolute" style={{ left: "2vw", top: "34vw", width: "21vw", height: "8.5vw" }}>
+      <div className="absolute" style={{ left: "2vw", top: "37vw", width: "21vw", height: "10vw" }}>
         <div style={{ position: "relative", height: "100%", background: "rgba(202,146,43,0.07)", border: "1px solid rgba(202,146,43,0.28)", borderRadius: "0.5vw", padding: "1vw 1.2vw" }}>
           <div style={{ position: "absolute", top: "0.55vw", right: "0.55vw", width: "1.4vw", height: "1.4vw", borderRadius: "50%", background: "rgba(202,146,43,0.22)", border: "1px solid rgba(202,146,43,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span className="font-display" style={{ fontSize: "0.72vw", color: "#CA922B", fontWeight: 800, lineHeight: 1 }}>3</span>
@@ -186,7 +187,7 @@ export default function SlideInv34ProductEcosystem() {
       ──────────────────────────────────────────────────────────────── */}
 
       {/* STEP 6 — Relocation (top-right, final journey stage) */}
-      <div className="absolute" style={{ left: "77vw", top: "14vw", width: "21vw", height: "8.5vw" }}>
+      <div className="absolute" style={{ left: "77vw", top: "14vw", width: "21vw", height: "10vw" }}>
         <div style={{ position: "relative", height: "100%", background: "rgba(202,146,43,0.07)", border: "1px solid rgba(202,146,43,0.28)", borderRadius: "0.5vw", padding: "1vw 1.2vw" }}>
           <div style={{ position: "absolute", top: "0.55vw", right: "0.55vw", width: "1.4vw", height: "1.4vw", borderRadius: "50%", background: "rgba(202,146,43,0.22)", border: "1px solid rgba(202,146,43,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span className="font-display" style={{ fontSize: "0.72vw", color: "#CA922B", fontWeight: 800, lineHeight: 1 }}>6</span>
@@ -208,7 +209,7 @@ export default function SlideInv34ProductEcosystem() {
       </div>
 
       {/* STEP 5 — Business (mid-right) */}
-      <div className="absolute" style={{ left: "77vw", top: "24vw", width: "21vw", height: "8.5vw" }}>
+      <div className="absolute" style={{ left: "77vw", top: "25.5vw", width: "21vw", height: "10vw" }}>
         <div style={{ position: "relative", height: "100%", background: "rgba(202,146,43,0.07)", border: "1px solid rgba(202,146,43,0.28)", borderRadius: "0.5vw", padding: "1vw 1.2vw" }}>
           <div style={{ position: "absolute", top: "0.55vw", right: "0.55vw", width: "1.4vw", height: "1.4vw", borderRadius: "50%", background: "rgba(202,146,43,0.22)", border: "1px solid rgba(202,146,43,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span className="font-display" style={{ fontSize: "0.72vw", color: "#CA922B", fontWeight: 800, lineHeight: 1 }}>5</span>
@@ -223,14 +224,14 @@ export default function SlideInv34ProductEcosystem() {
             <div className="font-display" style={{ fontSize: "1.3vw", fontWeight: 700, color: "#FAF6EF" }}>Business</div>
             <div className="font-body" style={{ fontSize: "0.8vw", color: "#CA922B", letterSpacing: "0.13em", fontWeight: 700, marginTop: "0.1vw" }}>CREATES SUPPLY</div>
             <div className="font-body" style={{ fontSize: "0.87vw", color: "#A87A40", marginTop: "0.2vw", lineHeight: 1.4 }}>
-              Businesses create the places, events, and opportunities that keep the ecosystem growing.
+              Businesses create the supply — places, events, and opportunities — that fuel the platform.
             </div>
           </div>
         </div>
       </div>
 
       {/* STEP 4 — Experiences (bottom-right, picks up the journey from Community) */}
-      <div className="absolute" style={{ left: "77vw", top: "34vw", width: "21vw", height: "8.5vw" }}>
+      <div className="absolute" style={{ left: "77vw", top: "37vw", width: "21vw", height: "10vw" }}>
         <div style={{ position: "relative", height: "100%", background: "rgba(202,146,43,0.07)", border: "1px solid rgba(202,146,43,0.28)", borderRadius: "0.5vw", padding: "1vw 1.2vw" }}>
           <div style={{ position: "absolute", top: "0.55vw", right: "0.55vw", width: "1.4vw", height: "1.4vw", borderRadius: "50%", background: "rgba(202,146,43,0.22)", border: "1px solid rgba(202,146,43,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span className="font-display" style={{ fontSize: "0.72vw", color: "#CA922B", fontWeight: 800, lineHeight: 1 }}>4</span>
