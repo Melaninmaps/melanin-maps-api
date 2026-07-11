@@ -6,7 +6,7 @@ const STEPS = [
   { label: "Community Grows",     gold: false, fontSize: "1.75vw" },
 ];
 
-const ARC_RADIUS = 30;
+const ARC_RADIUS = 36;
 const GAP_DEG    = 5;
 const OFFSET_DEG = 20;
 
@@ -82,7 +82,7 @@ export default function Slide25Flywheel() {
                 d={describeArc(arcStart, arcEnd, ARC_RADIUS)}
                 fill="none"
                 stroke="#CA922B"
-                strokeWidth="0.7"
+                strokeWidth="0.5"
                 strokeLinecap="round"
                 markerEnd="url(#arrowhead25)"
               />
