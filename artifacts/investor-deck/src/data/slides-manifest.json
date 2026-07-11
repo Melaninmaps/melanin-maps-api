@@ -318,5 +318,13 @@
                 "title": "The Ask",
                 "description": "$750K seed — use of funds and 18-month milestones",
                 "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-41-team",
+                "position": 41,
+                "filepath": "src/pages/slides/SlideInv41Team.tsx",
+                "title": "The Team",
+                "description": "Founder-market fit, execution proof, hiring plan, and community support",
+                "speakerNotes": ""
         }
 ]
