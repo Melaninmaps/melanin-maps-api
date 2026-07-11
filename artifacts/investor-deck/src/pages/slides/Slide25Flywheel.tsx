@@ -1,9 +1,9 @@
 const STEPS = [
-  { label: "People",              gold: false, fontSize: "2.5vw",  width: "16vw", nowrap: false },
-  { label: "Discovery",           gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false },
-  { label: "Recommendations",     gold: false, fontSize: "1.6vw",  width: "16vw", nowrap: false },
-  { label: "Thriving Businesses", gold: false, fontSize: "1.55vw", width: "20vw", nowrap: true  },
-  { label: "Community Grows",     gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false },
+  { label: "People",              gold: false, fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:   0 },
+  { label: "Discovery",           gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:   0 },
+  { label: "Recommendations",     gold: false, fontSize: "1.6vw",  width: "16vw", nowrap: false, angleOffset: -14 },
+  { label: "Thriving Businesses", gold: false, fontSize: "1.55vw", width: "20vw", nowrap: true,  angleOffset:   0 },
+  { label: "Community Grows",     gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:   0 },
 ];
 
 const ARC_RADIUS = 36;
@@ -91,7 +91,7 @@ export default function Slide25Flywheel() {
         </svg>
 
         {STEPS.map((s, i) => {
-          const angle = OFFSET_DEG + i * step;
+          const angle = OFFSET_DEG + i * step + s.angleOffset;
           const r     = LABEL_RADIUS_OVERRIDE[s.label] ?? 27;
           const { x, y, dx, dy } = pointOnCircle(angle, r);
           const { textAlign }    = anchorFor(dx);
