@@ -1,4 +1,4 @@
-const LINES = ["Find your community.", "Support your community.", "Grow your community."];
+const LINES = ["Find your community.", "Support your community.", "Strengthen your community."];
 
 export default function Slide24OneMap() {
   return (
