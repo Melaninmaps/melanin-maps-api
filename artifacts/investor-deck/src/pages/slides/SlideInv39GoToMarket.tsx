@@ -71,9 +71,9 @@ export default function SlideInv39GoToMarket() {
             <div style={{ width: "2px", height: "3.5vw", background: "rgba(202,146,43,0.2)" }} />
           </div>
           <div style={{ paddingBottom: "1.2vw" }}>
-            <div className="font-display" style={{ fontSize: "1.6vw", fontWeight: 700, color: "#5C3A1A" }}>National</div>
+            <div className="font-display" style={{ fontSize: "1.6vw", fontWeight: 700, color: "#5C3A1A" }}>Multi-City Expansion</div>
             <div className="font-body" style={{ fontSize: "1.05vw", color: "#7B5408", marginTop: "0.3vw", lineHeight: 1.5 }}>
-              Full US rollout — 25+ cities, creator network, ambassador program
+              Full US rollout — creator network, ambassador program, enterprise partnerships
             </div>
           </div>
         </div>
@@ -94,24 +94,31 @@ export default function SlideInv39GoToMarket() {
         </div>
       </div>
 
+      {/* Footer */}
+      <div className="absolute left-[6vw] bottom-[2vw]">
+        <div className="font-display" style={{ fontSize: "1.25vw", fontWeight: 700, color: "#A6720F", fontStyle: "italic" }}>
+          We don't start over in every city. Every launch begins with the momentum of the last.
+        </div>
+      </div>
+
       {/* Vertical divider */}
       <div className="absolute" style={{ left: "49vw", top: "16vw", bottom: "5vw", width: "1px", background: "rgba(58,31,14,0.12)" }} />
 
       {/* Right column — Growth drivers */}
       <div className="absolute" style={{ left: "52vw", top: "16vw", right: "6vw" }}>
-        <div className="font-body" style={{ fontSize: "1.1vw", color: "#CA922B", letterSpacing: "0.14em", fontWeight: 600, marginBottom: "1.4vw" }}>GROWTH DRIVERS</div>
+        <div className="font-body" style={{ fontSize: "1.1vw", color: "#CA922B", letterSpacing: "0.14em", fontWeight: 600, marginBottom: "1.4vw" }}>WHY GROWTH COMPOUNDS</div>
 
         <div style={{ marginBottom: "1.8vw" }}>
           <div className="font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#1C0E06" }}>Community Referrals</div>
           <div className="font-body" style={{ fontSize: "1.05vw", color: "#7B5408", marginTop: "0.4vw", lineHeight: 1.5 }}>
-            Members invite family, friends, and neighbors — the community grows itself.
+            Every member becomes a new acquisition channel.
           </div>
         </div>
 
         <div style={{ marginBottom: "1.8vw" }}>
           <div className="font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#1C0E06" }}>Founding Businesses</div>
           <div className="font-body" style={{ fontSize: "1.05vw", color: "#7B5408", marginTop: "0.4vw", lineHeight: 1.5 }}>
-            Each business brings its own customer base, extending reach at zero cost.
+            Every business brings customers before marketing begins.
           </div>
         </div>
 
@@ -124,8 +131,8 @@ export default function SlideInv39GoToMarket() {
 
         <div style={{ marginBottom: "1.8vw" }}>
           <div className="font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#1C0E06" }}>KinfolkAI™ Gets Smarter</div>
-          <div className="font-body" style={{ fontSize: "1.05vw", color: "#7B5408", marginTop: "0.4vw", lineHeight: 1.5 }}>
-            Every city adds data that improves AI recommendations for every other city.
+          <div className="font-body" style={{ fontSize: "1.05vw", color: "#1C0E06", fontWeight: 700, marginTop: "0.4vw", lineHeight: 1.5 }}>
+            Every city improves recommendations for every future city.
           </div>
         </div>
 
