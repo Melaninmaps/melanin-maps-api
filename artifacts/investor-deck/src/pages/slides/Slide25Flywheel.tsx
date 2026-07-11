@@ -1,9 +1,9 @@
 const STEPS = [
-  { label: "People",              gold: true,  fontSize: "2.5vw" },
-  { label: "Discovery",           gold: false, fontSize: "1.75vw" },
-  { label: "Recommendations",     gold: false, fontSize: "1.6vw" },
-  { label: "Thriving Businesses", gold: true,  fontSize: "1.85vw" },
-  { label: "Community Grows",     gold: false, fontSize: "1.75vw" },
+  { label: "People",              gold: false, fontSize: "2.5vw",  width: "16vw", nowrap: false },
+  { label: "Discovery",           gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false },
+  { label: "Recommendations",     gold: false, fontSize: "1.6vw",  width: "16vw", nowrap: false },
+  { label: "Thriving Businesses", gold: false, fontSize: "1.55vw", width: "20vw", nowrap: true  },
+  { label: "Community Grows",     gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false },
 ];
 
 const ARC_RADIUS = 36;
@@ -106,7 +106,8 @@ export default function Slide25Flywheel() {
                 fontSize:   s.fontSize,
                 fontWeight: s.gold ? 700 : 600,
                 color:      s.gold ? "#CA922B" : "#F5EBD8",
-                width:      "16vw",
+                width:      s.width,
+                whiteSpace: s.nowrap ? "nowrap" : "normal",
                 textAlign,
                 lineHeight: 1.25,
               }}
