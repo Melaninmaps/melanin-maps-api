@@ -18,7 +18,7 @@ export default function Slide11MeetJasmine() {
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(28,14,6,0.05), rgba(28,14,6,0.55))" }} />
       </div>
 
-      <div className="absolute right-[6vw] top-1/2 -translate-y-1/2" style={{ left: "46vw" }}>
+      <div className="absolute right-[6vw] flex flex-col justify-center" style={{ left: "46vw", top: "8%", bottom: "8%" }}>
         <div className="font-body mb-[1.1vw]" style={{ fontSize: "1.4vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 500 }}>
           A USER STORY
         </div>
