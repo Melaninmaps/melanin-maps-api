@@ -11,7 +11,7 @@ export default function SlideInv37WhyWeWin() {
           Why We Win.
         </div>
         <div className="font-body" style={{ fontSize: "1.05vw", color: "#A87A40", marginTop: "0.5vw" }}>
-          We're not competing on features. We're competing on ways of thinking.
+          We're not redefining features. We're redefining how people discover, connect, and belong.
         </div>
       </div>
 
@@ -44,8 +44,8 @@ export default function SlideInv37WhyWeWin() {
       {/* Row 3 — Context */}
       <div className="absolute" style={{ left: "6vw", right: "6vw", top: "28.6vw", display: "grid", gridTemplateColumns: "20vw 1fr 1fr", alignItems: "center", minHeight: "4vw" }}>
         <div className="font-display" style={{ fontSize: "1.45vw", fontWeight: 800, color: "#FAF6EF", letterSpacing: "0.06em" }}>CONTEXT</div>
-        <div className="font-body" style={{ fontSize: "1.05vw", color: "#7B5408", paddingLeft: "1.5vw" }}>Location only</div>
-        <div className="font-body" style={{ fontSize: "1.05vw", color: "#FAF6EF", paddingLeft: "1.5vw" }}><span style={{ color: "#CA922B", fontWeight: 700 }}>✓ </span>Community intelligence</div>
+        <div className="font-body" style={{ fontSize: "1.05vw", color: "#7B5408", paddingLeft: "1.5vw" }}>Places</div>
+        <div className="font-body" style={{ fontSize: "1.05vw", color: "#FAF6EF", paddingLeft: "1.5vw" }}><span style={{ color: "#CA922B", fontWeight: 700 }}>✓ </span>People + Places</div>
       </div>
       <div className="absolute" style={{ left: "6vw", right: "6vw", top: "32.6vw", height: "1px", background: "rgba(202,146,43,0.12)" }} />
 
@@ -77,10 +77,13 @@ export default function SlideInv37WhyWeWin() {
         <div>
           <div className="font-body" style={{ fontSize: "0.78vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 700, marginBottom: "0.3vw" }}>WHY THIS IS DIFFICULT TO REPLICATE</div>
           <div className="font-body" style={{ fontSize: "0.92vw", color: "#D9C4A3", lineHeight: 1.5 }}>
-            We combine trusted community intelligence, AI, safety, discovery, businesses, and relocation into one connected ecosystem.
+            No single feature creates our advantage. It comes from how trusted community intelligence, AI, discovery, businesses, safety, and relocation continuously reinforce one another.
+          </div>
+          <div className="font-body" style={{ fontSize: "0.78vw", color: "#7B5408", fontStyle: "italic", marginTop: "0.4vw" }}>
+            The same six growth engines that drive retention also create a competitive advantage that's difficult to replicate.
           </div>
         </div>
-        <div className="font-display" style={{ fontSize: "1.25vw", fontWeight: 700, color: "#FAF6EF", fontStyle: "italic", whiteSpace: "nowrap", textAlign: "right" }}>
+        <div className="font-display" style={{ fontSize: "1.45vw", fontWeight: 700, color: "#FAF6EF", fontStyle: "italic", whiteSpace: "nowrap", textAlign: "right" }}>
           Others solve one problem.<br />We connect an entire journey.
         </div>
       </div>
