@@ -671,3 +671,9 @@ id = "vBwxocpZNXaCXDmqY9RYZ"
 uri = "file://attached_assets/stock_images/feedx-c_4.jpg"
 type = "image"
 title = "African American woman carrying moving box smiling new home"
+
+[[outputs]]
+id = "5ZLAiuBfibzi2csIjfuEa"
+uri = "file://.local/outputs/Mapping-With-Melanin---Investor-Deck.pdf"
+type = "pdf"
+title = "Mapping With Melanin — Investor Deck (PDF)"
