@@ -326,5 +326,13 @@
                 "title": "The Team",
                 "description": "Founder-market fit, execution proof, hiring plan, and community support",
                 "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-42-your-customers",
+                "position": 42,
+                "filepath": "src/pages/slides/SlideInv42YourCustomers.tsx",
+                "title": "Your Customers Are Already Looking",
+                "description": "Business section opener — consumer demand, $1.7T market, community-trust discovery mockup",
+                "speakerNotes": ""
         }
 ]
