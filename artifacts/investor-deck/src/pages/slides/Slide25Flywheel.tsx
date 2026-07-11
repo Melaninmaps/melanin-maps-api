@@ -44,7 +44,7 @@ export default function Slide25Flywheel() {
   const step = 360 / n;
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#3D2417" }}>
+    <div className="relative w-screen overflow-hidden" style={{ aspectRatio: "16/9", background: "#3D2417" }}>
       <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 50% 50%, rgba(202,146,43,0.18), transparent 60%)" }} />
       <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>25</div>
 
