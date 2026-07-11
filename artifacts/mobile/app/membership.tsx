@@ -264,6 +264,33 @@ const BUSINESS_PLANS: Plan[] = [
   },
 ];
 
+function RestorePurchasesButton() {
+  const colors = useColors();
+  const { restore, isRestoring } = useSubscription();
+
+  const handleRestore = async () => {
+    try {
+      await restore();
+      Alert.alert("Restored", "Your purchases have been restored successfully.");
+    } catch {
+      Alert.alert("Restore Failed", "Could not restore purchases. Please try again or contact support@mappingwithmelanin.com.");
+    }
+  };
+
+  return (
+    <TouchableOpacity
+      style={{ alignItems: "center", paddingVertical: 16, marginBottom: 8 }}
+      onPress={handleRestore}
+      disabled={isRestoring}
+      activeOpacity={0.7}
+    >
+      <Text style={{ color: colors.mutedForeground, fontSize: 13, fontFamily: "Inter_400Regular" }}>
+        {isRestoring ? "Restoring…" : "Restore Purchases"}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
 export default function MembershipScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -272,7 +299,7 @@ export default function MembershipScreen() {
   const [audience, setAudience] = useState<Audience>("consumer");
 
   const { subscription, checkoutLoading, checkoutPlanId, initiateCheckout, openPortal } = useMembership();
-  const { purchase, offerings, customerInfo } = useSubscription();
+  const { purchase, offerings, customerInfo, isLoading: rcLoading } = useSubscription();
   const [rcPurchasingId, setRcPurchasingId] = useState<string | null>(null);
   const activeRcProductId = customerInfo?.entitlements?.active?.["premium"]?.productIdentifier ?? "";
 
@@ -288,13 +315,30 @@ export default function MembershipScreen() {
     // iOS → RevenueCat IAP for all paid plans (Apple requires this for 3.1.1,
     // including business/B2B subscriptions — see guideline 3.1.3(b))
     if (Platform.OS === "ios" && plan.rcOfferingId) {
+      // If RC is still fetching offerings, show a loading hint and wait.
+      if (rcLoading) {
+        Alert.alert("Loading", "Store products are loading. Please try again in a moment.");
+        return;
+      }
+
       const offering = offerings?.all[plan.rcOfferingId];
       const pkg = billing === "annual" ? offering?.annual : offering?.monthly;
 
       if (!pkg) {
+        // Offerings loaded but this specific product isn't available in the store.
+        // This should not normally happen in production; if it does it means the
+        // App Store Connect in-app purchase product hasn't been linked in the
+        // RevenueCat dashboard for offering ID: plan.rcOfferingId
         Alert.alert(
-          "Coming Soon",
-          "This plan is being set up and will be available very soon.",
+          "Unavailable",
+          `The ${plan.name} plan is not yet available for purchase on this device. Please visit mappingwithmelanin.com to subscribe, or contact support@mappingwithmelanin.com.`,
+          [
+            {
+              text: "Open Website",
+              onPress: () => Linking.openURL("https://www.mappingwithmelanin.com/membership"),
+            },
+            { text: "Cancel", style: "cancel" },
+          ],
         );
         return;
       }
@@ -847,6 +891,10 @@ export default function MembershipScreen() {
               </Text>
             </View>
           </View>
+        )}
+
+        {Platform.OS === "ios" && (
+          <RestorePurchasesButton />
         )}
       </ScrollView>
     </View>

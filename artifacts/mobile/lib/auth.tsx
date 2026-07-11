@@ -128,12 +128,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (token) {
           await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
           await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
-          setIsLoading(true);
-          await fetchUser();
         }
       }
+
+      // Always refresh auth state after the browser session closes.
+      // On iPadOS, ASWebAuthenticationSession can return { type: "dismiss" } or
+      // { type: "cancel" } even when sign-in completed — the OS delivers the
+      // custom-scheme deep link to auth-complete.tsx which stores the token
+      // before openAuthSessionAsync returns. Calling fetchUser here ensures we
+      // pick up that token regardless of which code path stored it.
+      setIsLoading(true);
+      await fetchUser();
     } catch (err) {
       console.error("Login error:", err);
+      setIsLoading(false);
     }
   }, [fetchUser]);
 
