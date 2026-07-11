@@ -13,7 +13,7 @@ export default function SlideInv38Traction() {
           The Community Is Growing.
         </div>
         <div className="font-body" style={{ fontSize: "1.15vw", color: "#7B5408", marginTop: "0.7vw" }}>
-          The technology is built. The community is forming. Launch is underway.
+          The product is operational. Early adoption has begun. We're ready to scale.
         </div>
       </div>
 
@@ -23,7 +23,7 @@ export default function SlideInv38Traction() {
       {/* Column 1 — Product Risk */}
       <div className="absolute" style={{ left: "6vw", top: "20vw", width: "26vw" }}>
         <div className="font-display" style={{ fontSize: "1.5vw", fontWeight: 800, color: "#1C0E06", letterSpacing: "0.04em" }}>PRODUCT RISK</div>
-        <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.2em", fontWeight: 700, marginTop: "0.3vw", marginBottom: "1.8vw" }}>ELIMINATED</div>
+        <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.2em", fontWeight: 800, marginTop: "0.3vw", marginBottom: "1.8vw" }}>ELIMINATED</div>
 
         <div className="flex items-start" style={{ gap: "0.9vw", marginBottom: "1.5vw" }}>
           <div style={{ fontSize: "1.2vw", flexShrink: 0, marginTop: "0.1vw" }}>✅</div>
@@ -44,8 +44,8 @@ export default function SlideInv38Traction() {
         <div className="flex items-start" style={{ gap: "0.9vw" }}>
           <div style={{ fontSize: "1.2vw", flexShrink: 0, marginTop: "0.1vw" }}>✅</div>
           <div>
-            <div className="font-display" style={{ fontSize: "1.2vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2 }}>Core product complete</div>
-            <div className="font-body" style={{ fontSize: "0.95vw", color: "#7B5408", marginTop: "0.2vw" }}>Discovery, safety, community, and business tools all built</div>
+            <div className="font-display" style={{ fontSize: "1.2vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2 }}>Core platform operational</div>
+            <div className="font-body" style={{ fontSize: "0.95vw", color: "#7B5408", marginTop: "0.2vw" }}>Discovery, safety, community, and business tools all live</div>
           </div>
         </div>
       </div>
@@ -56,7 +56,7 @@ export default function SlideInv38Traction() {
       {/* Column 2 — Market Risk */}
       <div className="absolute" style={{ left: "37vw", top: "20vw", width: "26vw" }}>
         <div className="font-display" style={{ fontSize: "1.5vw", fontWeight: 800, color: "#1C0E06", letterSpacing: "0.04em" }}>MARKET RISK</div>
-        <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.2em", fontWeight: 700, marginTop: "0.3vw", marginBottom: "1.8vw" }}>VALIDATED</div>
+        <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.2em", fontWeight: 800, marginTop: "0.3vw", marginBottom: "1.8vw" }}>VALIDATED</div>
 
         <div className="flex items-start" style={{ gap: "0.9vw", marginBottom: "1.5vw" }}>
           <div style={{ fontSize: "1.2vw", flexShrink: 0, marginTop: "0.1vw" }}>✅</div>
@@ -89,7 +89,7 @@ export default function SlideInv38Traction() {
       {/* Column 3 — Execution Risk */}
       <div className="absolute" style={{ left: "68vw", top: "20vw", right: "6vw" }}>
         <div className="font-display" style={{ fontSize: "1.5vw", fontWeight: 800, color: "#1C0E06", letterSpacing: "0.04em" }}>EXECUTION RISK</div>
-        <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.2em", fontWeight: 700, marginTop: "0.3vw", marginBottom: "1.8vw" }}>MITIGATED</div>
+        <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.2em", fontWeight: 800, marginTop: "0.3vw", marginBottom: "1.8vw" }}>MITIGATED</div>
 
         <div className="flex items-start" style={{ gap: "0.9vw", marginBottom: "1.5vw" }}>
           <div style={{ fontSize: "1.2vw", flexShrink: 0, marginTop: "0.1vw" }}>✅</div>
