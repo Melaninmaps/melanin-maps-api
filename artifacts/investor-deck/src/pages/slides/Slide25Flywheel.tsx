@@ -60,9 +60,9 @@ export default function Slide25Flywheel() {
       <div
         className="absolute"
         style={{
-          left: "51%", top: "40%",
+          left: "51%", top: "44%",
           transform: "translate(-50%, -50%)",
-          width: "48vw", height: "48vw",
+          width: "50vw", height: "50vw",
           overflow: "visible",
         }}
       >
@@ -118,7 +118,7 @@ export default function Slide25Flywheel() {
         })}
       </div>
 
-      <div className="absolute left-0 right-0 text-center" style={{ bottom: "2vw" }}>
+      <div className="absolute left-0 right-0 text-center" style={{ bottom: "7vw" }}>
         <div className="font-display mx-auto" style={{ fontSize: "1.3vw", fontWeight: 600, color: "#D9C4A3", lineHeight: 1.4, maxWidth: "50vw" }}>
           Every recommendation strengthens the community.
           Every stronger community creates new opportunities for discovery.
