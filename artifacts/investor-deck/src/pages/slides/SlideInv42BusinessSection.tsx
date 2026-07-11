@@ -17,7 +17,7 @@ export default function SlideInv42BusinessSection() {
           this community trusts.
         </div>
         <div className="font-body" style={{ fontSize: "1.35vw", color: "#A87A40", lineHeight: 1.65, maxWidth: "48vw" }}>
-          The demand is proven. The community is live. Here's how businesses grow on the platform built specifically for them.
+          People are already looking for trusted businesses. Here's how yours becomes one of them.
         </div>
 
         {/* Category strip */}
