@@ -26,7 +26,7 @@ export default function SlideInv38Traction() {
         <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.2em", fontWeight: 800, marginTop: "0.3vw", marginBottom: "1.8vw" }}>ELIMINATED</div>
 
         <div className="flex items-start" style={{ gap: "0.9vw", marginBottom: "1.5vw" }}>
-          <div style={{ fontSize: "1.2vw", flexShrink: 0, marginTop: "0.1vw" }}>✅</div>
+          <div className="font-body" style={{ fontSize: "1.2vw", color: "#CA922B", fontWeight: 700, flexShrink: 0, marginTop: "0.1vw" }}>✓</div>
           <div>
             <div className="font-display" style={{ fontSize: "1.2vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2 }}>Multi-platform beta live</div>
             <div className="font-body" style={{ fontSize: "0.95vw", color: "#7B5408", marginTop: "0.2vw" }}>iOS App Store submitted · Android testing active</div>
@@ -34,7 +34,7 @@ export default function SlideInv38Traction() {
         </div>
 
         <div className="flex items-start" style={{ gap: "0.9vw", marginBottom: "1.5vw" }}>
-          <div style={{ fontSize: "1.2vw", flexShrink: 0, marginTop: "0.1vw" }}>✅</div>
+          <div className="font-body" style={{ fontSize: "1.2vw", color: "#CA922B", fontWeight: 700, flexShrink: 0, marginTop: "0.1vw" }}>✓</div>
           <div>
             <div className="font-display" style={{ fontSize: "1.2vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2 }}>AI platform operational</div>
             <div className="font-body" style={{ fontSize: "0.95vw", color: "#7B5408", marginTop: "0.2vw" }}>KinfolkAI™ — multi-turn, personalized, live</div>
@@ -42,7 +42,7 @@ export default function SlideInv38Traction() {
         </div>
 
         <div className="flex items-start" style={{ gap: "0.9vw" }}>
-          <div style={{ fontSize: "1.2vw", flexShrink: 0, marginTop: "0.1vw" }}>✅</div>
+          <div className="font-body" style={{ fontSize: "1.2vw", color: "#CA922B", fontWeight: 700, flexShrink: 0, marginTop: "0.1vw" }}>✓</div>
           <div>
             <div className="font-display" style={{ fontSize: "1.2vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2 }}>Core platform operational</div>
             <div className="font-body" style={{ fontSize: "0.95vw", color: "#7B5408", marginTop: "0.2vw" }}>Discovery, safety, community, and business tools all live</div>
@@ -59,7 +59,7 @@ export default function SlideInv38Traction() {
         <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.2em", fontWeight: 800, marginTop: "0.3vw", marginBottom: "1.8vw" }}>VALIDATED</div>
 
         <div className="flex items-start" style={{ gap: "0.9vw", marginBottom: "1.5vw" }}>
-          <div style={{ fontSize: "1.2vw", flexShrink: 0, marginTop: "0.1vw" }}>✅</div>
+          <div className="font-body" style={{ fontSize: "1.2vw", color: "#CA922B", fontWeight: 700, flexShrink: 0, marginTop: "0.1vw" }}>✓</div>
           <div>
             <div className="font-display" style={{ fontSize: "1.2vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2 }}>Waitlist growing</div>
             <div className="font-body" style={{ fontSize: "0.95vw", color: "#7B5408", marginTop: "0.2vw" }}>Early adopters signed up ahead of public launch</div>
@@ -67,7 +67,7 @@ export default function SlideInv38Traction() {
         </div>
 
         <div className="flex items-start" style={{ gap: "0.9vw", marginBottom: "1.5vw" }}>
-          <div style={{ fontSize: "1.2vw", flexShrink: 0, marginTop: "0.1vw" }}>✅</div>
+          <div className="font-body" style={{ fontSize: "1.2vw", color: "#CA922B", fontWeight: 700, flexShrink: 0, marginTop: "0.1vw" }}>✓</div>
           <div>
             <div className="font-display" style={{ fontSize: "1.2vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2 }}>Founding businesses enrolled</div>
             <div className="font-body" style={{ fontSize: "0.95vw", color: "#7B5408", marginTop: "0.2vw" }}>Philadelphia pilot businesses onboarded and verified</div>
@@ -75,7 +75,7 @@ export default function SlideInv38Traction() {
         </div>
 
         <div className="flex items-start" style={{ gap: "0.9vw" }}>
-          <div style={{ fontSize: "1.2vw", flexShrink: 0, marginTop: "0.1vw" }}>✅</div>
+          <div className="font-body" style={{ fontSize: "1.2vw", color: "#CA922B", fontWeight: 700, flexShrink: 0, marginTop: "0.1vw" }}>✓</div>
           <div>
             <div className="font-display" style={{ fontSize: "1.2vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2 }}>Pilot city launched</div>
             <div className="font-body" style={{ fontSize: "0.95vw", color: "#7B5408", marginTop: "0.2vw" }}>Philadelphia community flywheel activating</div>
@@ -92,7 +92,7 @@ export default function SlideInv38Traction() {
         <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.2em", fontWeight: 800, marginTop: "0.3vw", marginBottom: "1.8vw" }}>MITIGATED</div>
 
         <div className="flex items-start" style={{ gap: "0.9vw", marginBottom: "1.5vw" }}>
-          <div style={{ fontSize: "1.2vw", flexShrink: 0, marginTop: "0.1vw" }}>✅</div>
+          <div className="font-body" style={{ fontSize: "1.2vw", color: "#CA922B", fontWeight: 700, flexShrink: 0, marginTop: "0.1vw" }}>✓</div>
           <div>
             <div className="font-display" style={{ fontSize: "1.2vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2 }}>Business tools operational</div>
             <div className="font-body" style={{ fontSize: "0.95vw", color: "#7B5408", marginTop: "0.2vw" }}>Dashboard, analytics, and growth tools live</div>
@@ -100,7 +100,7 @@ export default function SlideInv38Traction() {
         </div>
 
         <div className="flex items-start" style={{ gap: "0.9vw", marginBottom: "1.5vw" }}>
-          <div style={{ fontSize: "1.2vw", flexShrink: 0, marginTop: "0.1vw" }}>✅</div>
+          <div className="font-body" style={{ fontSize: "1.2vw", color: "#CA922B", fontWeight: 700, flexShrink: 0, marginTop: "0.1vw" }}>✓</div>
           <div>
             <div className="font-display" style={{ fontSize: "1.2vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2 }}>Brand &amp; IP established</div>
             <div className="font-body" style={{ fontSize: "0.95vw", color: "#7B5408", marginTop: "0.2vw" }}>Mapping With Melanin™, KinfolkAI™, Intentional Discovery™ protected</div>
@@ -108,7 +108,7 @@ export default function SlideInv38Traction() {
         </div>
 
         <div className="flex items-start" style={{ gap: "0.9vw" }}>
-          <div style={{ fontSize: "1.2vw", flexShrink: 0, marginTop: "0.1vw" }}>✅</div>
+          <div className="font-body" style={{ fontSize: "1.2vw", color: "#CA922B", fontWeight: 700, flexShrink: 0, marginTop: "0.1vw" }}>✓</div>
           <div>
             <div className="font-display" style={{ fontSize: "1.2vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2 }}>Safety system collecting data</div>
             <div className="font-body" style={{ fontSize: "0.95vw", color: "#7B5408", marginTop: "0.2vw" }}>Neighborhood survey system actively live</div>
