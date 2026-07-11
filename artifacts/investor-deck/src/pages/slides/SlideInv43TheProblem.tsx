@@ -11,7 +11,7 @@ export default function SlideInv43TheProblem() {
           <span style={{ color: "#CA922B" }}>weren't built for you.</span>
         </div>
         <div className="font-body" style={{ fontSize: "1.2vw", color: "#7B5408", lineHeight: 1.6, marginTop: "0.9vw", maxWidth: "52vw" }}>
-          General platforms weren't designed with your community in mind. They can't solve a trust problem with a bigger ad budget.
+          Most platforms compete for attention. We help businesses earn trust.
         </div>
       </div>
 
@@ -32,7 +32,7 @@ export default function SlideInv43TheProblem() {
             Invisible to your own community
           </div>
           <div className="font-body" style={{ fontSize: "1vw", color: "#7B5408", lineHeight: 1.7 }}>
-            Generic platforms rank businesses by ad spend and review volume — not by community trust. Your neighbors are searching for businesses like yours every day and not finding you.
+            Your community is already recommending businesses like yours. Those conversations are happening every day — but on platforms where you'll never see them.
           </div>
           <div style={{ marginTop: "1.5vw", paddingTop: "1.2vw", borderTop: "1px solid rgba(58,31,14,0.08)" }}>
             <div className="font-body" style={{ fontSize: "0.88vw", color: "#1C0E06", fontWeight: 700 }}>The result:</div>
@@ -50,7 +50,7 @@ export default function SlideInv43TheProblem() {
           </svg>
           <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.14em", fontWeight: 700, marginBottom: "0.6vw" }}>THE TRUST GAP</div>
           <div className="font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2, marginBottom: "1vw" }}>
-            Ads don't build trust
+            Trust can't be purchased.
           </div>
           <div className="font-body" style={{ fontSize: "1vw", color: "#7B5408", lineHeight: 1.7 }}>
             Paid placements feel transactional. This community decides where to spend based on who their neighbors, friends, and family actually recommend — not who paid to appear first.
@@ -71,7 +71,7 @@ export default function SlideInv43TheProblem() {
           </svg>
           <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.14em", fontWeight: 700, marginBottom: "0.6vw" }}>THE TOOLS GAP</div>
           <div className="font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2, marginBottom: "1vw" }}>
-            No tools built for your growth
+            Built for everyone. Perfect for no one.
           </div>
           <div className="font-body" style={{ fontSize: "1vw", color: "#7B5408", lineHeight: 1.7 }}>
             Existing platforms offer generic analytics with no cultural context. No community insights, no reputation tools designed around how this community discovers and shares, no AI built for your market.
@@ -86,7 +86,7 @@ export default function SlideInv43TheProblem() {
       {/* Footer */}
       <div className="absolute left-[6vw] right-[8vw] bottom-[2vw]">
         <div className="font-display" style={{ fontSize: "1.05vw", fontWeight: 700, color: "#CA922B", fontStyle: "italic" }}>
-          The platform your community deserves has always been missing. Until now.
+          Businesses don't need more advertising. They need to be discovered by the right people.
         </div>
       </div>
     </div>
