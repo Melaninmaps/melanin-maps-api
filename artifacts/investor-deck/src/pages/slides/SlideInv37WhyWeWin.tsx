@@ -72,7 +72,7 @@ export default function SlideInv37WhyWeWin() {
       {/* Bottom callout */}
       <div className="absolute left-[6vw] bottom-[2.5vw]">
         <div className="font-display" style={{ fontSize: "1.4vw", fontWeight: 700, color: "#CA922B", fontStyle: "italic" }}>
-          Investors remember moats — not feature lists.
+          Our advantage isn't one feature — it's what happens when all six work together.
         </div>
       </div>
     </div>
