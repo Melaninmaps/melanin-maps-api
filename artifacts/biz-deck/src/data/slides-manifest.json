@@ -1,106 +1,22 @@
 [
-  {
-    "id": "biz-slide-01-cover",
-    "position": 1,
-    "filepath": "src/pages/slides/BizSlide01Cover.tsx",
-    "title": "Grow With the Community That Already Wants to Support You",
-    "description": "Cover slide for business owners — headline, tagline, key stats",
-    "speakerNotes": ""
-  },
-  {
-    "id": "biz-slide-02-problem",
-    "position": 2,
-    "filepath": "src/pages/slides/BizSlide02Problem.tsx",
-    "title": "This Isn't About Google. This Is About Attention.",
-    "description": "The core problem — community intent vs. advertising-first platforms",
-    "speakerNotes": ""
-  },
-  {
-    "id": "biz-slide-03-why-mwm",
-    "position": 3,
-    "filepath": "src/pages/slides/BizSlide03WhyMWM.tsx",
-    "title": "Not Another Directory. A Community Intelligence Platform.",
-    "description": "Philosophy contrast slide — 4 They/We pairs, closes with Yelp/Google/Facebook named",
-    "speakerNotes": ""
-  },
-  {
-    "id": "biz-slide-04-your-customers",
-    "position": 4,
-    "filepath": "src/pages/slides/BizSlide04YourCustomers.tsx",
-    "title": "Your Customers Are Already Looking For You",
-    "description": "Community demand — phone mockup, $1.7T buying power, 87% trust-over-ads stat",
-    "speakerNotes": ""
-  },
-  {
-    "id": "biz-slide-05-intentional-discovery",
-    "position": 5,
-    "filepath": "src/pages/slides/BizSlide05IntentionalDiscovery.tsx",
-    "title": "Intentional Discovery™",
-    "description": "We don't sell attention — the 5-step customer journey to your door",
-    "speakerNotes": ""
-  },
-  {
-    "id": "biz-slide-06-flywheel",
-    "position": 6,
-    "filepath": "src/pages/slides/BizSlide06Flywheel.tsx",
-    "title": "Your Business Grows With Every Interaction",
-    "description": "Growth loop flywheel — 6 nodes (discover → visit → recommend → friends → trust → searches → repeat) + 4 benefit callouts",
-    "speakerNotes": ""
-  },
-  {
-    "id": "biz-slide-07-dashboard",
-    "position": 7,
-    "filepath": "src/pages/slides/BizSlide07Dashboard.tsx",
-    "title": "Know What's Working Before Your Competitors Do",
-    "description": "Business dashboard mockup — Profile Views, Saves, Search Trends, Trust Score, Community Feedback, AI Suggestions",
-    "speakerNotes": ""
-  },
-  {
-    "id": "biz-slide-08-kinfolkai",
-    "position": 8,
-    "filepath": "src/pages/slides/BizSlide08KinfolkAI.tsx",
-    "title": "Meet KinfolkAI™ — Your Business Partner",
-    "description": "KinfolkAI capabilities — Creates posts, Responds to reviews, Finds trends, Suggests promotions, Identifies growth, Alerts",
-    "speakerNotes": ""
-  },
-  {
-    "id": "biz-slide-09-reputation",
-    "position": 9,
-    "filepath": "src/pages/slides/BizSlide09Reputation.tsx",
-    "title": "Reputation Becomes Your Competitive Advantage",
-    "description": "6-step chain — Verified Badge → Recommendations → Trust Score → Search Ranking → Customer Loyalty → Word of Mouth",
-    "speakerNotes": ""
-  },
-  {
-    "id": "biz-slide-10-ecosystem",
-    "position": 10,
-    "filepath": "src/pages/slides/BizSlide10Ecosystem.tsx",
-    "title": "Businesses Don't Grow Alone",
-    "description": "Ecosystem hub-and-spoke — Your Business at center with 8 satellite stakeholders",
-    "speakerNotes": ""
-  },
-  {
-    "id": "biz-slide-11-pricing",
-    "position": 11,
-    "filepath": "src/pages/slides/BizSlide11Pricing.tsx",
-    "title": "Simple. Transparent. Built for Small Businesses.",
-    "description": "3 tiers — Free ($0), Standard ($49/mo), Founding Business ($29/mo locked)",
-    "speakerNotes": ""
-  },
-  {
-    "id": "biz-slide-12-signature",
-    "position": 12,
-    "filepath": "src/pages/slides/BizSlide12Signature.tsx",
-    "title": "The More Your Community Grows, The More Your Business Grows",
-    "description": "Signature slide — orbital visualization with Your Business at center, 9 satellite feeds (recommendations, reviews, events, saves, followers, KinfolkAI, collaborations, creators, partnerships)",
-    "speakerNotes": ""
-  },
-  {
-    "id": "biz-slide-13-cta",
-    "position": 13,
-    "filepath": "src/pages/slides/BizSlide13CTA.tsx",
-    "title": "Become a Founding Business",
-    "description": "Closing CTA — 500 spots, $29/mo forever, Day 1 access to all tools",
-    "speakerNotes": ""
-  }
+  { "id": "demo-01-cover",         "position": 1,  "filepath": "src/pages/slides/DemoS01Cover.tsx",         "title": "The Full Product Experience",                     "description": "Cover — community member + business owner journeys", "speakerNotes": "" },
+  { "id": "demo-02-onboarding",    "position": 2,  "filepath": "src/pages/slides/DemoS02Onboarding.tsx",    "title": "First Launch — Welcome & Personalization",         "description": "Splash → interest chips → KinfolkAI onboarding",    "speakerNotes": "" },
+  { "id": "demo-03-home",          "position": 3,  "filepath": "src/pages/slides/DemoS03Home.tsx",          "title": "Home — Discover What's Around You",                "description": "Home screen: flash deals, vibe chips, stories, business cards", "speakerNotes": "" },
+  { "id": "demo-04-search",        "position": 4,  "filepath": "src/pages/slides/DemoS04Search.tsx",        "title": "Search & Filter",                                  "description": "Search results with Trust Score + category/price/confidence filters", "speakerNotes": "" },
+  { "id": "demo-05-profile",       "position": 5,  "filepath": "src/pages/slides/DemoS05BusinessProfile.tsx", "title": "Business Profiles — Trust You Can See",           "description": "Hero + verified badge + Trust Score + compliment chips + reviews", "speakerNotes": "" },
+  { "id": "demo-06-map",           "position": 6,  "filepath": "src/pages/slides/DemoS06Map.tsx",           "title": "The Map — Find Places, Feel Confident",            "description": "Full map view + safety overlay + geo alert banner",  "speakerNotes": "" },
+  { "id": "demo-07-safety",        "position": 7,  "filepath": "src/pages/slides/DemoS07Safety.tsx",        "title": "Community Safety — Travel With Backup",            "description": "Safety Hub + check-in flow + live location share + meetup verification", "speakerNotes": "" },
+  { "id": "demo-08-survey",        "position": 8,  "filepath": "src/pages/slides/DemoS08Survey.tsx",        "title": "Neighborhood Safety Surveys",                      "description": "Community-powered neighborhood safety ratings", "speakerNotes": "" },
+  { "id": "demo-09-kinfolk",       "position": 9,  "filepath": "src/pages/slides/DemoS09KinfolkAI.tsx",     "title": "KinfolkAI™ — Your AI That Knows the Culture",     "description": "Personalized chat + travel planning + recommendations", "speakerNotes": "" },
+  { "id": "demo-10-circles",       "position": 10, "filepath": "src/pages/slides/DemoS10Circles.tsx",       "title": "Kinfolk Circles™ — Save & Plan Together",          "description": "My circles + circle detail + group trip planning",    "speakerNotes": "" },
+  { "id": "demo-11-community",     "position": 11, "filepath": "src/pages/slides/DemoS11Community.tsx",     "title": "Community Feed & Events",                          "description": "Community posts + events listing + groups",           "speakerNotes": "" },
+  { "id": "demo-12-resources",     "position": 12, "filepath": "src/pages/slides/DemoS12Resources.tsx",     "title": "Wellness & Mental Health Resources",               "description": "Crisis lines + Black mental health orgs + AA/NA finders", "speakerNotes": "" },
+  { "id": "demo-13-profile",       "position": 13, "filepath": "src/pages/slides/DemoS13Profile.tsx",       "title": "Your Profile — A Membership That Grows With You", "description": "Profile + membership tier + points/milestones + referrals", "speakerNotes": "" },
+  { "id": "demo-14-biz-section",   "position": 14, "filepath": "src/pages/slides/DemoS14BizSection.tsx",   "title": "The Business Owner Experience",                    "description": "Section transition slide",                            "speakerNotes": "" },
+  { "id": "demo-15-dashboard",     "position": 15, "filepath": "src/pages/slides/DemoS15Dashboard.tsx",    "title": "Business Dashboard — Know Before Anyone Else Does","description": "KPI cards + trending searches + peak hours + community feedback", "speakerNotes": "" },
+  { "id": "demo-16-kinfolkbiz",    "position": 16, "filepath": "src/pages/slides/DemoS16KinfolkBiz.tsx",   "title": "KinfolkAI™ for Business — Always Working",         "description": "Proactive AI notifications + draft promotions + reply to reviews", "speakerNotes": "" },
+  { "id": "demo-17-growth",        "position": 17, "filepath": "src/pages/slides/DemoS17Growth.tsx",       "title": "Growth Tools — Turn Attention Into Revenue",       "description": "5 promotion placement types + flash deals + business stories", "speakerNotes": "" },
+  { "id": "demo-18-reviews",       "position": 18, "filepath": "src/pages/slides/DemoS18Reviews.tsx",      "title": "Review Management & Owner Responses",              "description": "Compliment chip breakdown + owner response + KinfolkAI draft", "speakerNotes": "" },
+  { "id": "demo-19-trust",         "position": 19, "filepath": "src/pages/slides/DemoS19Trust.tsx",        "title": "Trust Score & Verification",                       "description": "Trust Score components + verified badge + DocuSign flow", "speakerNotes": "" },
+  { "id": "demo-20-plans",         "position": 20, "filepath": "src/pages/slides/DemoS20Plans.tsx",        "title": "Membership Plans — Built for Small Businesses",    "description": "Free / Standard / Founding plans + feature comparison + CTA", "speakerNotes": "" }
 ]
