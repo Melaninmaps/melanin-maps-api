@@ -1,24 +1,23 @@
-const STATEMENTS = [
-  "Helping families relocate with confidence.",
-  "Helping travelers feel welcome.",
-  "Helping entrepreneurs grow.",
-];
+const LINES = ["Find your community.", "Support your community.", "Grow your community."];
 
 export default function Slide24OneMap() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
       <div className="absolute bottom-[3vh] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>32</div>
 
-      <div className="absolute left-[6vw] right-[6vw]" style={{ top: "12vh" }}>
-        <div className="flex flex-col" style={{ gap: "3.6vh" }}>
-          {STATEMENTS.map((s, i) => (
-            <div key={s} className="flex items-baseline" style={{ gap: "1.2vw" }}>
-              <div className="font-display" style={{ fontSize: "1.4vw", color: "#CA922B", fontWeight: 700, opacity: 0.5, flexShrink: 0, minWidth: "1.6vw" }}>
-                {i + 1}.
+      <div className="absolute left-[6vw] right-[6vw]" style={{ top: "11vh" }}>
+        <div className="font-body mb-[4vh]" style={{ fontSize: "1.8vw", fontStyle: "italic", color: "#7B5408", fontWeight: 400 }}>
+          Wherever life takes you…
+        </div>
+        <div className="flex flex-col" style={{ gap: "2.6vh" }}>
+          {LINES.map((line) => {
+            const [verb, ...rest] = line.split(" ");
+            return (
+              <div key={line} className="font-body" style={{ fontSize: "3.2vw", fontWeight: 500, color: "#3A1F0E", lineHeight: 1.2 }}>
+                <span style={{ color: "#CA922B", fontWeight: 700 }}>{verb}</span>{" "}{rest.join(" ")}
               </div>
-              <div className="font-body" style={{ fontSize: "2.8vw", color: "#3A1F0E", fontWeight: 500, lineHeight: 1.25 }}>{s}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
