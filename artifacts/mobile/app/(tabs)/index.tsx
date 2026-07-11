@@ -7,6 +7,7 @@ import {
   Animated,
   Dimensions,
   FlatList,
+  Modal,
   Platform,
   RefreshControl,
   ScrollView,
@@ -59,6 +60,7 @@ export default function DiscoverScreen() {
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const { alerts: liveAlerts, isLive, refetch: refetchAlerts } = useAlerts("GA");
   const [alerts, setAlerts] = useState(liveAlerts);
@@ -240,20 +242,46 @@ export default function DiscoverScreen() {
           </TouchableOpacity>
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryScroll}
+        {/* Category dropdown */}
+        <TouchableOpacity
+          style={[styles.categoryDropdownBtn, { backgroundColor: colors.card, borderColor: activeCategory !== "All" ? colors.primary : colors.border }]}
+          onPress={() => setCategoryDropdownOpen(true)}
+          activeOpacity={0.85}
         >
-          {CATEGORIES.map((cat) => (
-            <CategoryPill
-              key={cat}
-              label={cat}
-              selected={activeCategory === cat}
-              onPress={() => setActiveCategory(cat)}
-            />
-          ))}
-        </ScrollView>
+          <Feather name="grid" size={14} color={activeCategory !== "All" ? colors.primary : colors.mutedForeground} />
+          <Text style={[styles.categoryDropdownLabel, { color: activeCategory !== "All" ? colors.primary : colors.foreground }]} numberOfLines={1}>
+            {activeCategory === "All" ? "All Categories" : activeCategory}
+          </Text>
+          <Feather name="chevron-down" size={14} color={activeCategory !== "All" ? colors.primary : colors.mutedForeground} />
+        </TouchableOpacity>
+
+        <Modal visible={categoryDropdownOpen} transparent animationType="fade" onRequestClose={() => setCategoryDropdownOpen(false)}>
+          <TouchableOpacity style={styles.categoryModalOverlay} activeOpacity={1} onPress={() => setCategoryDropdownOpen(false)}>
+            <View style={[styles.categoryModalSheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.categoryModalHeader, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.categoryModalTitle, { color: colors.foreground }]}>Browse by Category</Text>
+                <TouchableOpacity onPress={() => setCategoryDropdownOpen(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Feather name="x" size={20} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              </View>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.categoryModalList}>
+                {CATEGORIES.map((cat) => (
+                  <TouchableOpacity
+                    key={cat}
+                    style={[styles.categoryModalItem, { borderBottomColor: colors.border, backgroundColor: activeCategory === cat ? colors.primary + "12" : "transparent" }]}
+                    onPress={() => { setActiveCategory(cat); setCategoryDropdownOpen(false); }}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[styles.categoryModalItemText, { color: activeCategory === cat ? colors.primary : colors.foreground, fontFamily: activeCategory === cat ? "Inter_600SemiBold" : "Inter_400Regular" }]}>
+                      {cat}
+                    </Text>
+                    {activeCategory === cat && <Feather name="check" size={15} color={colors.primary} />}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </TouchableOpacity>
+        </Modal>
       </LinearGradient>
 
       <ScrollView
@@ -867,6 +895,35 @@ const styles = StyleSheet.create({
   aiSearchTitle: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#CA922B" },
   aiSearchSub: { fontFamily: "Inter_400Regular", fontSize: 10, color: "#CA922B99", marginTop: 1 },
   categoryScroll: { paddingHorizontal: 20, gap: 8 },
+  categoryDropdownBtn: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    marginHorizontal: 20, marginBottom: 4,
+    paddingHorizontal: 14, paddingVertical: 11,
+    borderRadius: 12, borderWidth: 1,
+  },
+  categoryDropdownLabel: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 13 },
+  categoryModalOverlay: {
+    flex: 1, backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  categoryModalSheet: {
+    borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    borderWidth: 1, borderBottomWidth: 0,
+    maxHeight: "70%",
+  },
+  categoryModalHeader: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 20, paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  categoryModalTitle: { fontFamily: "Inter_700Bold", fontSize: 16 },
+  categoryModalList: { paddingBottom: 32 },
+  categoryModalItem: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 20, paddingVertical: 15,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  categoryModalItemText: { fontSize: 15 },
   scroll: { flex: 1 },
   scrollContent: { paddingTop: 20 },
   heroBanner: { borderRadius: 18, height: 200 },
