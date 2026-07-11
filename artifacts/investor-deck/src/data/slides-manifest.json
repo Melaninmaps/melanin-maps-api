@@ -392,40 +392,48 @@
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-50-reputation",
+                "id": "inv-slide-50-transformation",
                 "position": 50,
+                "filepath": "src/pages/slides/SlideInv49Transformation.tsx",
+                "title": "Six Months Later...",
+                "description": "Before/after transformation — Unknown→Recommended, chasing→found, guessing→knowing, ads→trust, alone→KinfolkAI beside you",
+                "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-51-reputation",
+                "position": 51,
                 "filepath": "src/pages/slides/SlideInv48Reputation.tsx",
                 "title": "Reputation Becomes Your Competitive Advantage",
                 "description": "Trust chain — verified badge → recommendations → trust score → search ranking → loyalty → word of mouth",
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-51-ecosystem",
-                "position": 51,
+                "id": "inv-slide-52-ecosystem",
+                "position": 52,
                 "filepath": "src/pages/slides/SlideInv49Ecosystem.tsx",
                 "title": "Businesses Don't Grow Alone",
                 "description": "Orbit diagram — business at center, 8 community satellite connections",
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-52-pricing",
-                "position": 52,
+                "id": "inv-slide-53-pricing",
+                "position": 53,
                 "filepath": "src/pages/slides/SlideInv50Pricing.tsx",
                 "title": "Simple. Transparent. Built for Small Businesses.",
                 "description": "Three-tier pricing — Free / Standard $49 / Founding $29 locked forever",
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-53-signature",
-                "position": 53,
+                "id": "inv-slide-54-signature",
+                "position": 54,
                 "filepath": "src/pages/slides/SlideInv51Signature.tsx",
                 "title": "The More Your Community Grows, The More Your Business Grows",
                 "description": "Signature orbit slide — business at center, 9 community connection points",
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-54-cta",
-                "position": 54,
+                "id": "inv-slide-55-cta",
+                "position": 55,
                 "filepath": "src/pages/slides/SlideInv52CTA.tsx",
                 "title": "Become a Founding Business",
                 "description": "Final CTA — 500 spots, $29/month locked, mappingwithmelanin.com/business",
