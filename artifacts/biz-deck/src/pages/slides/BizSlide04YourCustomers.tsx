@@ -122,7 +122,7 @@ export default function BizSlide04YourCustomers() {
 
       <div className="absolute left-[6vw] right-[8vw] bottom-[2vw]">
         <div className="font-display" style={{ fontSize: "1.05vw", fontWeight: 700, color: "#CA922B", fontStyle: "italic" }}>
-          They're not finding you on Google. They're asking us.
+          People don't remember ads. They remember recommendations.
         </div>
       </div>
     </div>
