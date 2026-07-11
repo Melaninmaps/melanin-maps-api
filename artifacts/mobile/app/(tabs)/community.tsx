@@ -1949,9 +1949,9 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: "Inter_700Bold", fontSize: 26 },
   searchBtn: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  tabRow: { borderBottomWidth: 1, flexShrink: 0 },
-  tabBtn: { alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: "transparent" },
-  tabText: { fontFamily: "Inter_500Medium", fontSize: 13 },
+  tabRow: { borderBottomWidth: 1, flexShrink: 0, height: 44 },
+  tabBtn: { alignItems: "center", justifyContent: "center", paddingHorizontal: 16, height: 44, borderBottomWidth: 2, borderBottomColor: "transparent" },
+  tabText: { fontFamily: "Inter_500Medium", fontSize: 13, lineHeight: 18, includeFontPadding: false },
   categoryScroll: { borderBottomWidth: 1, maxHeight: 54 },
   categoryChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
   categoryChipText: { fontFamily: "Inter_500Medium", fontSize: 12 },
@@ -2188,8 +2188,9 @@ function ChallengesTab({ colors, isAuthenticated, bottomPad }: {
         <FlatList
           data={challenges}
           keyExtractor={c => c.id}
+          style={{ flex: 1 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(); }} tintColor={colors.primary} />}
-          contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: bottomPad + 100 }}
+          contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: bottomPad + 100, flexGrow: 1 }}
           ListEmptyComponent={
             <View style={{ alignItems: "center", paddingTop: 60, gap: 12 }}>
               <Text style={{ fontSize: 44 }}>🏆</Text>
