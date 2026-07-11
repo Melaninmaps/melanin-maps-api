@@ -83,7 +83,7 @@ export default function SlideInv47KinfolkAI() {
                 <svg width="0.9vw" height="0.9vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{cap.icon}</svg>
               </div>
               <div style={{ display: "flex", flex: 1, alignItems: "baseline", gap: "0.5vw" }}>
-                <div className="font-body" style={{ fontSize: "0.72vw", color: "#CA922B", fontWeight: 700, fontStyle: "italic", flexShrink: 0, opacity: 0.7 }}>{cap.label}</div>
+                <div className="font-body" style={{ fontSize: "0.68vw", color: "#CA922B", fontWeight: 800, letterSpacing: "0.1em", flexShrink: 0 }}>{cap.label.toUpperCase()}</div>
                 <div className="font-body" style={{ fontSize: "0.9vw", color: "#FAF6EF", fontWeight: 700 }}>{cap.title}</div>
               </div>
             </div>
