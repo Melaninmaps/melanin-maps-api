@@ -13,7 +13,7 @@ export default function Slide16IntentionalDiscovery() {
       </div>
 
       <div className="absolute left-[6vw] top-[18.6vw]" style={{ fontSize: "1.15vw", color: "#5C3A1A" }}>
-        People don&rsquo;t come here looking for content. They come looking for answers.
+        People don&rsquo;t come here to consume. They come here to connect.
       </div>
 
       <div className="absolute left-[6vw] right-[6vw] top-[22.5vw] grid grid-cols-2 gap-x-[3vw] gap-y-[1.5vw]">
