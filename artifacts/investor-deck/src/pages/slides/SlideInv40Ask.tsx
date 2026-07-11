@@ -7,8 +7,11 @@ export default function SlideInv40Ask() {
       {/* Header */}
       <div className="absolute left-[6vw] top-[3.5vw]">
         <div className="font-body" style={{ fontSize: "1.3vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 600 }}>THE ASK</div>
-        <div className="font-display" style={{ fontSize: "4vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.1, marginTop: "0.5vw" }}>
-          Seeking <span style={{ color: "#CA922B" }}>$750K</span><br />Seed Investment.
+        <div className="font-display" style={{ fontSize: "3.8vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.1, marginTop: "0.5vw" }}>
+          Raising <span style={{ color: "#CA922B" }}>$750K</span> to Launch,<br />Scale, and Prove the Model.
+        </div>
+        <div className="font-body" style={{ fontSize: "1.15vw", color: "#A87A40", marginTop: "0.8vw" }}>
+          This investment funds our first three-city rollout and positions Mapping with Melanin™ for Series A growth.
         </div>
       </div>
 
@@ -70,32 +73,39 @@ export default function SlideInv40Ask() {
         </div>
       </div>
 
+      {/* Footer */}
+      <div className="absolute left-[6vw] bottom-[2vw]">
+        <div className="font-display" style={{ fontSize: "1.25vw", fontWeight: 700, color: "#CA922B", fontStyle: "italic" }}>
+          We're not raising to build an idea. We're raising to scale a platform that's already in motion.
+        </div>
+      </div>
+
       {/* Vertical divider */}
-      <div className="absolute" style={{ left: "50vw", top: "20vw", bottom: "5.5vw", width: "1px", background: "rgba(202,146,43,0.25)" }} />
+      <div className="absolute" style={{ left: "50vw", top: "19vw", bottom: "5.5vw", width: "1px", background: "rgba(202,146,43,0.25)" }} />
 
       {/* Right — Milestones */}
-      <div className="absolute" style={{ left: "53vw", top: "20vw", right: "6vw" }}>
+      <div className="absolute" style={{ left: "53vw", top: "19vw", right: "6vw" }}>
         <div className="font-body" style={{ fontSize: "1.1vw", color: "#CA922B", letterSpacing: "0.14em", fontWeight: 600, marginBottom: "1.4vw" }}>18-MONTH MILESTONES</div>
 
-        <div style={{ marginBottom: "1.6vw", paddingLeft: "1.2vw", borderLeft: "3px solid #CA922B" }}>
+        <div style={{ marginBottom: "1.2vw", paddingLeft: "1.2vw", borderLeft: "3px solid #CA922B" }}>
           <div className="font-body" style={{ fontSize: "1vw", color: "#CA922B", fontWeight: 600, letterSpacing: "0.08em" }}>Q3 2026</div>
-          <div className="font-display" style={{ fontSize: "1.35vw", fontWeight: 700, color: "#FAF6EF", marginTop: "0.2vw" }}>Philadelphia Full Launch</div>
+          <div className="font-display" style={{ fontSize: "1.35vw", fontWeight: 700, color: "#FAF6EF", marginTop: "0.2vw" }}>Launch Philadelphia &amp; Activate the Flywheel</div>
           <div className="font-body" style={{ fontSize: "0.95vw", color: "#A87A40" }}>App live, founding community active, first revenue</div>
         </div>
 
-        <div style={{ marginBottom: "1.6vw", paddingLeft: "1.2vw", borderLeft: "3px solid rgba(202,146,43,0.6)" }}>
+        <div style={{ marginBottom: "1.2vw", paddingLeft: "1.2vw", borderLeft: "3px solid rgba(202,146,43,0.6)" }}>
           <div className="font-body" style={{ fontSize: "1vw", color: "#CA922B", fontWeight: 600, letterSpacing: "0.08em" }}>Q4 2026</div>
-          <div className="font-display" style={{ fontSize: "1.35vw", fontWeight: 700, color: "#FAF6EF", marginTop: "0.2vw" }}>10,000 Active Users</div>
+          <div className="font-display" style={{ fontSize: "1.35vw", fontWeight: 700, color: "#FAF6EF", marginTop: "0.2vw" }}>Reach 10,000 Active Users &amp; Establish Recurring Revenue</div>
           <div className="font-body" style={{ fontSize: "0.95vw", color: "#A87A40" }}>Subscription revenue established, B2B pipeline open</div>
         </div>
 
-        <div style={{ marginBottom: "1.6vw", paddingLeft: "1.2vw", borderLeft: "3px solid rgba(202,146,43,0.4)" }}>
+        <div style={{ marginBottom: "1.2vw", paddingLeft: "1.2vw", borderLeft: "3px solid rgba(202,146,43,0.4)" }}>
           <div className="font-body" style={{ fontSize: "1vw", color: "#CA922B", fontWeight: 600, letterSpacing: "0.08em" }}>Q1 2027</div>
-          <div className="font-display" style={{ fontSize: "1.35vw", fontWeight: 700, color: "#FAF6EF", marginTop: "0.2vw" }}>Baltimore &amp; DC Launch</div>
+          <div className="font-display" style={{ fontSize: "1.35vw", fontWeight: 700, color: "#FAF6EF", marginTop: "0.2vw" }}>Expand to Two Additional Markets</div>
           <div className="font-body" style={{ fontSize: "0.95vw", color: "#A87A40" }}>Regional expansion — flywheel compounds across cities</div>
         </div>
 
-        <div style={{ marginBottom: "1.6vw", paddingLeft: "1.2vw", borderLeft: "3px solid rgba(202,146,43,0.25)" }}>
+        <div style={{ marginBottom: "1.2vw", paddingLeft: "1.2vw", borderLeft: "3px solid rgba(202,146,43,0.25)" }}>
           <div className="font-body" style={{ fontSize: "1vw", color: "#CA922B", fontWeight: 600, letterSpacing: "0.08em" }}>Q2 2027</div>
           <div className="font-display" style={{ fontSize: "1.35vw", fontWeight: 700, color: "#FAF6EF", marginTop: "0.2vw" }}>25,000 Users Across 3 Cities</div>
           <div className="font-body" style={{ fontSize: "0.95vw", color: "#A87A40" }}>Network effects measurable, partner revenue live</div>
