@@ -20,7 +20,7 @@
     "position": 3,
     "filepath": "src/pages/slides/BizSlide03WhyMWM.tsx",
     "title": "Not Another Directory. A Community Intelligence Platform.",
-    "description": "7 platform pillars — why MWM exists and what it does for businesses",
+    "description": "Philosophy contrast slide — 4 They/We pairs, closes with Yelp/Google/Facebook named",
     "speakerNotes": ""
   },
   {
@@ -40,49 +40,65 @@
     "speakerNotes": ""
   },
   {
-    "id": "biz-slide-06-how-businesses-grow",
+    "id": "biz-slide-06-flywheel",
     "position": 6,
-    "filepath": "src/pages/slides/BizSlide06HowBusinessesGrow.tsx",
-    "title": "How Businesses Grow",
-    "description": "5-tool growth kit — Dashboard, Analytics, Customer Insights, Events, KinfolkAI",
+    "filepath": "src/pages/slides/BizSlide06Flywheel.tsx",
+    "title": "Your Business Grows With Every Interaction",
+    "description": "Growth loop flywheel — 6 nodes (discover → visit → recommend → friends → trust → searches → repeat) + 4 benefit callouts",
     "speakerNotes": ""
   },
   {
-    "id": "biz-slide-07-ecosystem",
+    "id": "biz-slide-07-dashboard",
     "position": 7,
-    "filepath": "src/pages/slides/BizSlide07BusinessEcosystem.tsx",
-    "title": "The Full Business Ecosystem",
-    "description": "12-tool grid across Free, Standard, Premium, and Founding tiers",
+    "filepath": "src/pages/slides/BizSlide07Dashboard.tsx",
+    "title": "Know What's Working Before Your Competitors Do",
+    "description": "Business dashboard mockup — Profile Views, Saves, Search Trends, Trust Score, Community Feedback, AI Suggestions",
     "speakerNotes": ""
   },
   {
-    "id": "biz-slide-08-flywheel",
+    "id": "biz-slide-08-kinfolkai",
     "position": 8,
-    "filepath": "src/pages/slides/BizSlide08CommunityFlywheel.tsx",
-    "title": "The Community Flywheel",
-    "description": "SVG arc flywheel — Businesses → Community Discovery → Recommendations → New Customers → Reviews & Trust",
+    "filepath": "src/pages/slides/BizSlide08KinfolkAI.tsx",
+    "title": "Meet KinfolkAI™ — Your Business Partner",
+    "description": "KinfolkAI capabilities — Creates posts, Responds to reviews, Finds trends, Suggests promotions, Identifies growth, Alerts",
     "speakerNotes": ""
   },
   {
-    "id": "biz-slide-09-founding-benefits",
+    "id": "biz-slide-09-reputation",
     "position": 9,
-    "filepath": "src/pages/slides/BizSlide09FoundingBenefits.tsx",
-    "title": "Founding Business Benefits",
-    "description": "5 founding benefits — Badge, Premium, Marketplace, Priority, Recognition",
+    "filepath": "src/pages/slides/BizSlide09Reputation.tsx",
+    "title": "Reputation Becomes Your Competitive Advantage",
+    "description": "6-step chain — Verified Badge → Recommendations → Trust Score → Search Ranking → Customer Loyalty → Word of Mouth",
     "speakerNotes": ""
   },
   {
-    "id": "biz-slide-10-pricing",
+    "id": "biz-slide-10-ecosystem",
     "position": 10,
-    "filepath": "src/pages/slides/BizSlide10Pricing.tsx",
-    "title": "Pricing",
+    "filepath": "src/pages/slides/BizSlide10Ecosystem.tsx",
+    "title": "Businesses Don't Grow Alone",
+    "description": "Ecosystem hub-and-spoke — Your Business at center with 8 satellite stakeholders",
+    "speakerNotes": ""
+  },
+  {
+    "id": "biz-slide-11-pricing",
+    "position": 11,
+    "filepath": "src/pages/slides/BizSlide11Pricing.tsx",
+    "title": "Simple. Transparent. Built for Small Businesses.",
     "description": "3 tiers — Free ($0), Standard ($49/mo), Founding Business ($29/mo locked)",
     "speakerNotes": ""
   },
   {
-    "id": "biz-slide-11-cta",
-    "position": 11,
-    "filepath": "src/pages/slides/BizSlide11CTA.tsx",
+    "id": "biz-slide-12-signature",
+    "position": 12,
+    "filepath": "src/pages/slides/BizSlide12Signature.tsx",
+    "title": "The More Your Community Grows, The More Your Business Grows",
+    "description": "Signature slide — orbital visualization with Your Business at center, 9 satellite feeds (recommendations, reviews, events, saves, followers, KinfolkAI, collaborations, creators, partnerships)",
+    "speakerNotes": ""
+  },
+  {
+    "id": "biz-slide-13-cta",
+    "position": 13,
+    "filepath": "src/pages/slides/BizSlide13CTA.tsx",
     "title": "Become a Founding Business",
     "description": "Closing CTA — 500 spots, $29/mo forever, Day 1 access to all tools",
     "speakerNotes": ""
