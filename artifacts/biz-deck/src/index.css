@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+.inv-rule {
+  height: 3px;
+  background: #CA922B;
+}
+
+.inv-rule-thin {
+  height: 1px;
+  background: rgba(202,146,43,0.4);
+}
+
 @theme inline {
   --color-primary: var(--slide-primary);
   --color-accent: var(--slide-accent);
@@ -8,6 +18,7 @@
   --color-muted: var(--slide-muted);
   --font-display: var(--font-display-family);
   --font-body: var(--font-body-family);
+  --font-quote: var(--font-quote-family);
 
   --text-xs: 0.75rem;
   --text-xs--line-height: calc(1 / 0.75);
@@ -45,8 +56,9 @@
   --slide-muted: #A07840;
   --slide-gold-bright: #E8B86D;
   --slide-dark2: #2A1408;
-  --font-display-family: "Syne", Georgia, sans-serif;
-  --font-body-family: "DM Sans", system-ui, sans-serif;
+  --font-display-family: "DM Sans", system-ui, sans-serif;
+  --font-body-family: "Inter", system-ui, sans-serif;
+  --font-quote-family: "Cormorant Garamond", Georgia, serif;
   color-scheme: dark;
 }
 
@@ -73,7 +85,7 @@ body {
   -webkit-user-select: none;
 }
 
-.biz-bar {
-  height: 0.6vh;
-  background: #CA922B;
+.demo-rule {
+  height: 0.4vh;
+  background: linear-gradient(90deg, #CA922B, transparent);
 }
