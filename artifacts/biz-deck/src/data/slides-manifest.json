@@ -2,81 +2,89 @@
   {
     "id": "biz-slide-01-cover",
     "position": 1,
-    "filepath": "src/pages/slides/Slide01Cover.tsx",
-    "title": "Grow Your Business Through Community",
-    "description": "Opening title slide for business owners",
+    "filepath": "src/pages/slides/BizSlide01Cover.tsx",
+    "title": "Grow With the Community That Already Wants to Support You",
+    "description": "Cover slide for business owners — headline, tagline, key stats",
     "speakerNotes": ""
   },
   {
-    "id": "biz-slide-02-audience",
+    "id": "biz-slide-02-problem",
     "position": 2,
-    "filepath": "src/pages/slides/Slide02Audience.tsx",
-    "title": "Your Customers Are Already Here",
-    "description": "44M Black Americans — the buying power of your audience",
+    "filepath": "src/pages/slides/BizSlide02Problem.tsx",
+    "title": "This Isn't About Google. This Is About Attention.",
+    "description": "The core problem — community intent vs. advertising-first platforms",
     "speakerNotes": ""
   },
   {
-    "id": "biz-slide-03-reach",
+    "id": "biz-slide-03-why-mwm",
     "position": 3,
-    "filepath": "src/pages/slides/Slide03Reach.tsx",
-    "title": "Where We Are",
-    "description": "Geographic reach — cities launched and expanding",
+    "filepath": "src/pages/slides/BizSlide03WhyMWM.tsx",
+    "title": "Not Another Directory. A Community Intelligence Platform.",
+    "description": "7 platform pillars — why MWM exists and what it does for businesses",
     "speakerNotes": ""
   },
   {
-    "id": "biz-slide-04-offer",
+    "id": "biz-slide-04-your-customers",
     "position": 4,
-    "filepath": "src/pages/slides/Slide04WhatWeOffer.tsx",
-    "title": "What We Offer Your Business",
-    "description": "Five core business features: profile, map, feed, events, promotions",
+    "filepath": "src/pages/slides/BizSlide04YourCustomers.tsx",
+    "title": "Your Customers Are Already Looking For You",
+    "description": "Community demand — phone mockup, $1.7T buying power, 87% trust-over-ads stat",
     "speakerNotes": ""
   },
   {
-    "id": "biz-slide-05-founding500",
+    "id": "biz-slide-05-intentional-discovery",
     "position": 5,
-    "filepath": "src/pages/slides/Slide05Founding500.tsx",
-    "title": "Founding 500",
-    "description": "Introducing the Founding 500 program — the first 500 businesses",
+    "filepath": "src/pages/slides/BizSlide05IntentionalDiscovery.tsx",
+    "title": "Intentional Discovery™",
+    "description": "We don't sell attention — the 5-step customer journey to your door",
     "speakerNotes": ""
   },
   {
-    "id": "biz-slide-06-benefits",
+    "id": "biz-slide-06-how-businesses-grow",
     "position": 6,
-    "filepath": "src/pages/slides/Slide06FoundingBenefits.tsx",
-    "title": "Founding Benefits",
-    "description": "Five concrete founding member benefits",
+    "filepath": "src/pages/slides/BizSlide06HowBusinessesGrow.tsx",
+    "title": "How Businesses Grow",
+    "description": "5-tool growth kit — Dashboard, Analytics, Customer Insights, Events, KinfolkAI",
     "speakerNotes": ""
   },
   {
-    "id": "biz-slide-07-dashboard",
+    "id": "biz-slide-07-ecosystem",
     "position": 7,
-    "filepath": "src/pages/slides/Slide07Dashboard.tsx",
-    "title": "Business Dashboard",
-    "description": "Six dashboard tools: analytics, reviews, profile, events, verification, promotions",
+    "filepath": "src/pages/slides/BizSlide07BusinessEcosystem.tsx",
+    "title": "The Full Business Ecosystem",
+    "description": "12-tool grid across Free, Standard, Premium, and Founding tiers",
     "speakerNotes": ""
   },
   {
-    "id": "biz-slide-08-visibility",
+    "id": "biz-slide-08-flywheel",
     "position": 8,
-    "filepath": "src/pages/slides/Slide08Visibility.tsx",
-    "title": "Promotion and Visibility",
-    "description": "Five paid placement types for business promotion",
+    "filepath": "src/pages/slides/BizSlide08CommunityFlywheel.tsx",
+    "title": "The Community Flywheel",
+    "description": "SVG arc flywheel — Businesses → Community Discovery → Recommendations → New Customers → Reviews & Trust",
     "speakerNotes": ""
   },
   {
-    "id": "biz-slide-09-trust",
+    "id": "biz-slide-09-founding-benefits",
     "position": 9,
-    "filepath": "src/pages/slides/Slide09Trust.tsx",
-    "title": "Community Trust",
-    "description": "Verified reviews, confidence score, owner responses",
+    "filepath": "src/pages/slides/BizSlide09FoundingBenefits.tsx",
+    "title": "Founding Business Benefits",
+    "description": "5 founding benefits — Badge, Premium, Marketplace, Priority, Recognition",
     "speakerNotes": ""
   },
   {
-    "id": "biz-slide-10-closing",
+    "id": "biz-slide-10-pricing",
     "position": 10,
-    "filepath": "src/pages/slides/Slide10Closing.tsx",
-    "title": "Join the Founding 500",
-    "description": "Closing — only 500 spots, call to action",
+    "filepath": "src/pages/slides/BizSlide10Pricing.tsx",
+    "title": "Pricing",
+    "description": "3 tiers — Free ($0), Standard ($49/mo), Founding Business ($29/mo locked)",
+    "speakerNotes": ""
+  },
+  {
+    "id": "biz-slide-11-cta",
+    "position": 11,
+    "filepath": "src/pages/slides/BizSlide11CTA.tsx",
+    "title": "Become a Founding Business",
+    "description": "Closing CTA — 500 spots, $29/mo forever, Day 1 access to all tools",
     "speakerNotes": ""
   }
 ]

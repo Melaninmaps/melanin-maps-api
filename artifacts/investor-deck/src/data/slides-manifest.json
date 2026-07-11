@@ -328,24 +328,32 @@
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-42-your-customers",
+                "id": "inv-slide-42-business-section",
                 "position": 42,
+                "filepath": "src/pages/slides/SlideInv42BusinessSection.tsx",
+                "title": "Part II — The Businesses This Community Trusts",
+                "description": "Section divider transitioning from investor pitch to business opportunity",
+                "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-43-your-customers",
+                "position": 43,
                 "filepath": "src/pages/slides/SlideInv42YourCustomers.tsx",
                 "title": "Your Customers Are Already Looking",
                 "description": "Business section opener — consumer demand, $1.7T market, community-trust discovery mockup",
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-43-the-problem",
-                "position": 43,
+                "id": "inv-slide-44-the-problem",
+                "position": 44,
                 "filepath": "src/pages/slides/SlideInv43TheProblem.tsx",
                 "title": "The Tools That Exist Weren't Built For You",
                 "description": "Three-column problem slide — visibility gap, trust gap, tools gap",
                 "speakerNotes": ""
         },
         {
-                "id": "inv-slide-44-what-we-do",
-                "position": 44,
+                "id": "inv-slide-45-what-we-do",
+                "position": 45,
                 "filepath": "src/pages/slides/SlideInv44WhatWeDoForYou.tsx",
                 "title": "Your Business. Trusted. Found. Chosen.",
                 "description": "Solution pivot — business profile mockup, three value props, free/5min/Day 1 stats",
