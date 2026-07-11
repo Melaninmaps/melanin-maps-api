@@ -334,5 +334,21 @@
                 "title": "Your Customers Are Already Looking",
                 "description": "Business section opener — consumer demand, $1.7T market, community-trust discovery mockup",
                 "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-43-the-problem",
+                "position": 43,
+                "filepath": "src/pages/slides/SlideInv43TheProblem.tsx",
+                "title": "The Tools That Exist Weren't Built For You",
+                "description": "Three-column problem slide — visibility gap, trust gap, tools gap",
+                "speakerNotes": ""
+        },
+        {
+                "id": "inv-slide-44-what-we-do",
+                "position": 44,
+                "filepath": "src/pages/slides/SlideInv44WhatWeDoForYou.tsx",
+                "title": "Your Business. Trusted. Found. Chosen.",
+                "description": "Solution pivot — business profile mockup, three value props, free/5min/Day 1 stats",
+                "speakerNotes": ""
         }
 ]
