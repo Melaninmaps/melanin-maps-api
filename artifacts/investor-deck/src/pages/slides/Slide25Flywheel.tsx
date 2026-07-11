@@ -1,5 +1,5 @@
 const STEPS = [
-  { label: "People",              gold: false, fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:  17, dyOffset:  -6, dxOffset:  -2 },
+  { label: "People",              gold: false, fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:  17, dyOffset:  -7, dxOffset:  -2 },
   { label: "Discovery",           gold: true,  fontSize: "1.75vw", width: "16vw", nowrap: false, angleOffset:   0, dyOffset:   0, dxOffset:   0 },
   { label: "Recommendations",     gold: false, fontSize: "1.6vw",  width: "16vw", nowrap: false, angleOffset: -11, dyOffset:   0, dxOffset:   0 },
   { label: "Thriving Businesses", gold: false, fontSize: "1.55vw", width: "20vw", nowrap: true,  angleOffset:   3, dyOffset:   0, dxOffset:   0 },
