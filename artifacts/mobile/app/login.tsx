@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as AppleAuthentication from "expo-apple-authentication";
+import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
 import { useAuth, getApiBaseUrl } from "@/lib/auth";
@@ -81,11 +82,23 @@ export default function LoginScreen() {
     setError("");
     setLoading(true);
     try {
+      // Generate a cryptographic nonce. Apple embeds SHA-256(rawNonce) in the
+      // identity token so the server can verify the request wasn't replayed.
+      // This is required by Apple on iOS 26+ and strongly recommended everywhere.
+      const rawNonce = Array.from(
+        await Crypto.getRandomBytesAsync(32)
+      ).map(b => b.toString(16).padStart(2, "0")).join("");
+      const hashedNonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        rawNonce,
+      );
+
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
+        nonce: hashedNonce,
       });
       if (!credential.identityToken) throw new Error("No identity token from Apple");
       const base = getApiBaseUrl();
@@ -94,6 +107,7 @@ export default function LoginScreen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           identityToken: credential.identityToken,
+          nonce: rawNonce,
           appleUserId: credential.user,
           email: credential.email ?? undefined,
           firstName: credential.fullName?.givenName ?? undefined,

@@ -689,7 +689,10 @@ router.post("/auth/reset-password", async (req: Request, res: Response) => {
 });
 
 // ─── POST /auth/apple ─────────────────────────────────────────────────────────
-async function verifyAppleToken(identityToken: string): Promise<{ sub: string; email?: string }> {
+async function verifyAppleToken(
+  identityToken: string,
+  rawNonce?: string,
+): Promise<{ sub: string; email?: string }> {
   const res = await fetch("https://appleid.apple.com/auth/keys");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { keys } = await res.json() as { keys: any[] };
@@ -709,19 +712,29 @@ async function verifyAppleToken(identityToken: string): Promise<{ sub: string; e
     algorithms: ["RS256"],
     issuer: "https://appleid.apple.com",
     audience: "com.melaninmaps.app",
-  }) as { sub: string; email?: string };
+  }) as { sub: string; email?: string; nonce?: string };
+
+  // If the client sent a nonce, verify that the SHA-256 hash of the raw nonce
+  // matches what Apple embedded in the JWT — this closes the replay-attack vector
+  // and satisfies Apple's guideline enforcement on iOS 26+.
+  if (rawNonce) {
+    const expectedHash = crypto.createHash("sha256").update(rawNonce).digest("hex");
+    if (payload.nonce !== expectedHash) {
+      throw new Error("Apple identity token nonce mismatch");
+    }
+  }
 
   return payload;
 }
 
 router.post("/auth/apple", async (req: Request, res: Response) => {
-  const { identityToken, appleUserId, email, firstName, lastName } =
-    req.body as { identityToken?: string; appleUserId?: string; email?: string; firstName?: string; lastName?: string };
+  const { identityToken, nonce, appleUserId, email, firstName, lastName } =
+    req.body as { identityToken?: string; nonce?: string; appleUserId?: string; email?: string; firstName?: string; lastName?: string };
 
   if (!identityToken) { res.status(400).json({ error: "identityToken is required." }); return; }
 
   try {
-    const payload = await verifyAppleToken(identityToken);
+    const payload = await verifyAppleToken(identityToken, nonce);
     const sub = payload.sub;
     const verifiedEmail = email || payload.email;
 
