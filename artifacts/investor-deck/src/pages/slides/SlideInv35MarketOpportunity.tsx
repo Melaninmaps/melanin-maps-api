@@ -9,10 +9,13 @@ export default function SlideInv35MarketOpportunity() {
         <div className="font-display" style={{ fontSize: "3.6vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.1, marginTop: "0.5vw" }}>
           Building at the intersection<br />of six massive markets.
         </div>
-        <div className="font-body" style={{ fontSize: "1.1vw", color: "#7B5408", marginTop: "0.7vw", maxWidth: "62vw" }}>
-          Our growth isn't dependent on a single industry — we create value across multiple connected markets.
+        <div className="font-body" style={{ fontSize: "1.1vw", color: "#7B5408", marginTop: "0.7vw", maxWidth: "72vw" }}>
+          Unlike point solutions that serve one market, Mapping with Melanin™ connects all six into a single ecosystem.
         </div>
-        <div className="font-body" style={{ fontSize: "1.05vw", color: "#CA922B", fontWeight: 600, marginTop: "0.35vw", letterSpacing: "0.04em" }}>
+        <div className="font-body" style={{ fontSize: "1.0vw", color: "#5C3A1A", marginTop: "0.4vw", maxWidth: "72vw", opacity: 0.85 }}>
+          Serving millions of travelers, relocators, community members, creators, and minority-owned businesses through one connected platform.
+        </div>
+        <div className="font-body" style={{ fontSize: "1.05vw", color: "#CA922B", fontWeight: 600, marginTop: "0.4vw", letterSpacing: "0.04em" }}>
           No single competitor owns all six. We do.
         </div>
       </div>
