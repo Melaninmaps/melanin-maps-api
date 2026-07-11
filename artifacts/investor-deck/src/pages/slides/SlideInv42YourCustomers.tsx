@@ -18,22 +18,26 @@ export default function SlideInv42YourCustomers() {
           Your customers are<br />
           <span style={{ color: "#CA922B" }}>already looking for you.</span>
         </div>
-        <div className="font-body" style={{ fontSize: "1.25vw", color: "#D9C4A3", lineHeight: 1.65, marginBottom: "2.2vw" }}>
-          Every day, people in your city open Mapping with Melanin™ to find trusted businesses — restaurants, salons, doctors, law firms, and more. They're not browsing ads. They're asking their community for recommendations.
+        <div className="font-body" style={{ fontSize: "1.15vw", color: "#D9C4A3", lineHeight: 1.7, marginBottom: "1vw" }}>
+          Every day, people open Mapping with Melanin™ looking for trusted businesses recommended by their community. They're not scrolling through ads. They're looking for businesses they can feel confident supporting.
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "1vw" }}>
+        <div className="font-body" style={{ fontSize: "1.05vw", color: "#CA922B", fontStyle: "italic", lineHeight: 1.5, marginBottom: "1.8vw" }}>
+          When someone searches for what you offer, your business deserves to be part of the conversation.
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.9vw" }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: "0.9vw" }}>
-            <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", marginTop: "0.7vw", flexShrink: 0 }} />
-            <span className="font-body" style={{ fontSize: "1vw", color: "#FAF6EF", lineHeight: 1.5 }}>Community-verified searches happen every day in your city</span>
+            <svg width="1vw" height="1vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: "0.2vw" }}><polyline points="20 6 9 17 4 12" /></svg>
+            <span className="font-body" style={{ fontSize: "1vw", color: "#FAF6EF", lineHeight: 1.5 }}>Get discovered by people already looking to support businesses like yours.</span>
           </div>
           <div style={{ display: "flex", alignItems: "flex-start", gap: "0.9vw" }}>
-            <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", marginTop: "0.7vw", flexShrink: 0 }} />
-            <span className="font-body" style={{ fontSize: "1vw", color: "#FAF6EF", lineHeight: 1.5 }}>Users search by category, trust score, and neighborhood</span>
+            <svg width="1vw" height="1vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: "0.2vw" }}><polyline points="20 6 9 17 4 12" /></svg>
+            <span className="font-body" style={{ fontSize: "1vw", color: "#FAF6EF", lineHeight: 1.5 }}>Build trust through community recommendations — not advertising.</span>
           </div>
           <div style={{ display: "flex", alignItems: "flex-start", gap: "0.9vw" }}>
-            <div style={{ width: "0.7vw", height: "1px", background: "#CA922B", marginTop: "0.7vw", flexShrink: 0 }} />
-            <span className="font-body" style={{ fontSize: "1vw", color: "#FAF6EF", lineHeight: 1.5 }}>Your listing is the first step to becoming their trusted go-to</span>
+            <svg width="1vw" height="1vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: "0.2vw" }}><polyline points="20 6 9 17 4 12" /></svg>
+            <span className="font-body" style={{ fontSize: "1vw", color: "#FAF6EF", lineHeight: 1.5 }}>Turn one customer into dozens through word-of-mouth visibility.</span>
           </div>
         </div>
       </div>
@@ -124,16 +128,16 @@ export default function SlideInv42YourCustomers() {
         {/* Right of phone — pull quote */}
         <div style={{ marginLeft: "2.8vw", width: "12.5vw", display: "flex", flexDirection: "column", gap: "1.6vw" }}>
           <div style={{ borderLeft: "2px solid rgba(202,146,43,0.5)", paddingLeft: "1vw" }}>
-            <div className="font-display" style={{ fontSize: "2.4vw", fontWeight: 800, color: "#CA922B", lineHeight: 1 }}>$1.7T</div>
-            <div className="font-body" style={{ fontSize: "0.85vw", color: "#D9C4A3", lineHeight: 1.4, marginTop: "0.3vw" }}>buying power in the melanated diaspora market</div>
+            <div className="font-display" style={{ fontSize: "2.4vw", fontWeight: 800, color: "#CA922B", lineHeight: 1 }}>87%</div>
+            <div className="font-body" style={{ fontSize: "0.85vw", color: "#D9C4A3", lineHeight: 1.4, marginTop: "0.3vw" }}>Consumers trust community recommendations more than paid advertising.</div>
           </div>
           <div style={{ borderLeft: "2px solid rgba(202,146,43,0.3)", paddingLeft: "1vw" }}>
-            <div className="font-display" style={{ fontSize: "2.4vw", fontWeight: 800, color: "#CA922B", lineHeight: 1 }}>87%</div>
-            <div className="font-body" style={{ fontSize: "0.85vw", color: "#D9C4A3", lineHeight: 1.4, marginTop: "0.3vw" }}>prefer community recommendations over paid ads</div>
+            <div className="font-display" style={{ fontSize: "2.4vw", fontWeight: 800, color: "#CA922B", lineHeight: 1 }}>3×</div>
+            <div className="font-body" style={{ fontSize: "0.85vw", color: "#D9C4A3", lineHeight: 1.4, marginTop: "0.3vw" }}>Community-trusted businesses see significantly stronger repeat engagement.</div>
           </div>
           <div style={{ borderLeft: "2px solid rgba(202,146,43,0.2)", paddingLeft: "1vw" }}>
-            <div className="font-display" style={{ fontSize: "2.4vw", fontWeight: 800, color: "#CA922B", lineHeight: 1 }}>3×</div>
-            <div className="font-body" style={{ fontSize: "0.85vw", color: "#D9C4A3", lineHeight: 1.4, marginTop: "0.3vw" }}>more likely to return to a community-trusted business</div>
+            <div className="font-display" style={{ fontSize: "2.4vw", fontWeight: 800, color: "#CA922B", lineHeight: 1 }}>$1.7T</div>
+            <div className="font-body" style={{ fontSize: "0.85vw", color: "#D9C4A3", lineHeight: 1.4, marginTop: "0.3vw" }}>Buying power within the melanated diaspora.</div>
           </div>
         </div>
       </div>
