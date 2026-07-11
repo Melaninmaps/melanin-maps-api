@@ -1,7 +1,6 @@
 export default function SlideInv36BusinessModel() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
-      <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>36</div>
 
       {/* Header */}
       <div className="absolute left-[6vw] top-[3vw]">

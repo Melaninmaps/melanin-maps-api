@@ -17,7 +17,6 @@ export default function SlideInv34ProductEcosystem() {
       />
 
       {/* Page number */}
-      <div className="absolute font-display" style={{ bottom: "1.7vw", right: "5vw", fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>34</div>
 
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="absolute" style={{ left: "6vw", top: "2.2vw" }}>

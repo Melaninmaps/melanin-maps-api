@@ -2,7 +2,6 @@ export default function SlideInv40Ask() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#3D2417" }}>
       <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 40% 50%, rgba(202,146,43,0.18), transparent 60%)" }} />
-      <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>40</div>
 
       {/* Header */}
       <div className="absolute left-[6vw] top-[3.5vw]">
