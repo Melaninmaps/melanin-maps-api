@@ -20,14 +20,14 @@ export default function SlideInv48DayInLife() {
     },
     {
       time: "4:00 PM",
-      msg: "Weekend foot traffic in your neighborhood peaks Friday evening. Want me to draft a promotion?",
-      action: "Draft one now →",
+      msg: "Weekend traffic peaks Friday at 6 PM. Want me to draft a promotion now so it's ready?",
+      action: "Draft it now →",
       icon: <><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></>,
     },
     {
       time: "6:30 PM",
-      msg: "A new 5-star review just came in. A thoughtful response helps your Trust Score.",
-      action: "Reply →",
+      msg: "A new 5-star review just came in. Businesses that reply within an hour earn more repeat engagement. Want me to draft one?",
+      action: "Draft a reply →",
       icon: <><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,
     },
     {
