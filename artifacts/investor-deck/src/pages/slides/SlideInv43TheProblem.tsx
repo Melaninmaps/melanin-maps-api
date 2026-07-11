@@ -32,7 +32,7 @@ export default function SlideInv43TheProblem() {
             Invisible to your own community
           </div>
           <div className="font-body" style={{ fontSize: "1vw", color: "#7B5408", lineHeight: 1.7 }}>
-            Your community is already recommending businesses like yours. Those conversations are happening every day — but on platforms where you'll never see them.
+            Your community is already recommending businesses like yours every day. Those conversations are happening in text messages, group chats, and social feeds you'll never see.
           </div>
           <div style={{ marginTop: "1.5vw", paddingTop: "1.2vw", borderTop: "1px solid rgba(58,31,14,0.08)" }}>
             <div className="font-body" style={{ fontSize: "0.88vw", color: "#1C0E06", fontWeight: 700 }}>The result:</div>
