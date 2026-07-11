@@ -13,7 +13,7 @@ export default function SlideInv44WhatWeDoForYou() {
           <span style={{ color: "#CA922B" }}>Trusted. Found. Chosen.</span>
         </div>
         <div className="font-body" style={{ fontSize: "1.15vw", color: "#D9C4A3", lineHeight: 1.7, marginBottom: "2vw" }}>
-          Mapping with Melanin™ puts your business in front of the community that is actively searching for you — not through ads, but through trust.
+          Your next customer isn't looking for another ad. They're looking for a recommendation.
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "1.3vw" }}>
@@ -43,8 +43,8 @@ export default function SlideInv44WhatWeDoForYou() {
               <line x1="12" y1="12" x2="12" y2="16" /><line x1="10" y1="14" x2="14" y2="14" />
             </svg>
             <div>
-              <div className="font-body" style={{ fontSize: "1vw", color: "#FAF6EF", fontWeight: 700, marginBottom: "0.2vw" }}>Grow with tools built for your market</div>
-              <div className="font-body" style={{ fontSize: "0.92vw", color: "#A87A40", lineHeight: 1.5 }}>KinfolkAI™ drafts your marketing, responds to reviews, and helps you understand what your community wants</div>
+              <div className="font-body" style={{ fontSize: "1vw", color: "#FAF6EF", fontWeight: 700, marginBottom: "0.2vw" }}>Grow with insights that matter</div>
+              <div className="font-body" style={{ fontSize: "0.92vw", color: "#A87A40", lineHeight: 1.5 }}>KinfolkAI helps you understand your customers, strengthen your reputation, and grow with confidence.</div>
             </div>
           </div>
         </div>
@@ -155,15 +155,15 @@ export default function SlideInv44WhatWeDoForYou() {
         <div style={{ marginLeft: "2.8vw", width: "11vw", display: "flex", flexDirection: "column", gap: "1.8vw" }}>
           <div style={{ borderLeft: "2px solid rgba(202,146,43,0.5)", paddingLeft: "1vw" }}>
             <div className="font-display" style={{ fontSize: "2.2vw", fontWeight: 800, color: "#CA922B", lineHeight: 1 }}>Free</div>
-            <div className="font-body" style={{ fontSize: "0.85vw", color: "#D9C4A3", lineHeight: 1.4, marginTop: "0.3vw" }}>to list and get discovered by the community</div>
+            <div className="font-body" style={{ fontSize: "0.85vw", color: "#D9C4A3", lineHeight: 1.4, marginTop: "0.3vw" }}>Start building trust today.</div>
           </div>
           <div style={{ borderLeft: "2px solid rgba(202,146,43,0.35)", paddingLeft: "1vw" }}>
             <div className="font-display" style={{ fontSize: "2.2vw", fontWeight: 800, color: "#CA922B", lineHeight: 1 }}>5 min</div>
-            <div className="font-body" style={{ fontSize: "0.85vw", color: "#D9C4A3", lineHeight: 1.4, marginTop: "0.3vw" }}>to set up your full business profile</div>
+            <div className="font-body" style={{ fontSize: "0.85vw", color: "#D9C4A3", lineHeight: 1.4, marginTop: "0.3vw" }}>to claim your place in the community.</div>
           </div>
           <div style={{ borderLeft: "2px solid rgba(202,146,43,0.2)", paddingLeft: "1vw" }}>
             <div className="font-display" style={{ fontSize: "2.2vw", fontWeight: 800, color: "#CA922B", lineHeight: 1 }}>Day 1</div>
-            <div className="font-body" style={{ fontSize: "0.85vw", color: "#D9C4A3", lineHeight: 1.4, marginTop: "0.3vw" }}>your business is visible to everyone searching</div>
+            <div className="font-body" style={{ fontSize: "0.85vw", color: "#D9C4A3", lineHeight: 1.4, marginTop: "0.3vw" }}>Start appearing in trusted community searches.</div>
           </div>
         </div>
       </div>
@@ -171,7 +171,7 @@ export default function SlideInv44WhatWeDoForYou() {
       {/* Footer */}
       <div className="absolute left-[6vw] right-[8vw] bottom-[2vw]">
         <div className="font-display" style={{ fontSize: "1.05vw", fontWeight: 700, color: "#CA922B", fontStyle: "italic" }}>
-          Not just a listing. A presence your community can trust.
+          The best marketing has always been a recommendation.
         </div>
       </div>
     </div>
