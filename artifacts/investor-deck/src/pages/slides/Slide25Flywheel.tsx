@@ -11,7 +11,7 @@ const GAP_DEG    = 5;
 const OFFSET_DEG = 20;
 
 const LABEL_RADIUS_OVERRIDE: Record<string, number> = {
-  People:                43,
+  People:                33,
   Discovery:             34,
   Recommendations:       38,
   "Thriving Businesses": 36,
