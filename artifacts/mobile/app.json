@@ -30,6 +30,7 @@
         "NSCameraUsageDescription": "Mapping With Melanin uses your camera so you can update your profile photo.",
         "NSPhotoLibraryUsageDescription": "Mapping With Melanin accesses your photo library so you can choose a profile picture.",
         "NSPhotoLibraryAddUsageDescription": "Mapping With Melanin saves photos to your library.",
+        "NSUserNotificationsUsageDescription": "Mapping With Melanin sends notifications about nearby businesses, community safety alerts, and activity in your circles.",
         "NSPrivacyAccessedAPICategoryUserDefaults": [
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
@@ -81,7 +82,10 @@
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.INTERNET"
+        "android.permission.INTERNET",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE"
       ],
       "versionCode": 45
     },
@@ -97,6 +101,14 @@
         }
       ],
       "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#CA922B",
+          "sounds": []
+        }
+      ],
       [
         "expo-contacts",
         {

@@ -15,12 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-
-const Notifications = {
-  getPermissionsAsync: async () => ({ status: "denied" as string }),
-  requestPermissionsAsync: async () => ({ status: "denied" as string }),
-  getExpoPushTokenAsync: async () => ({ data: null as string | null }),
-};
+import * as Notifications from "expo-notifications";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -140,7 +135,7 @@ export default function NotificationsSettingsScreen() {
           Alert.alert("Permission required", "Enable notifications in your device settings to receive alerts.");
           return;
         }
-        const pushToken = await Notifications.getExpoPushTokenAsync().catch(() => null);
+        const pushToken = await Notifications.getExpoPushTokenAsync({ projectId: "0f873107-7787-46ab-9a04-685c2a6756b1" }).catch(() => null);
         if (pushToken?.data && token && apiBase) {
           await fetch(`${apiBase}/api/notifications/register`, {
             method: "POST",
