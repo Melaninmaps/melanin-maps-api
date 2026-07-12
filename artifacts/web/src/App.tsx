@@ -49,6 +49,7 @@ import SharedTrip from "@/pages/shared-trip";
 import DeleteAccount from "@/pages/delete-account";
 import BusinessResponse from "@/pages/business-response";
 import GlobalRecommendations from "@/pages/global-recommendations";
+import ResetPassword from "@/pages/reset-password";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { data: auth, isLoading } = useGetCurrentAuthUser();
@@ -142,6 +143,7 @@ function Router() {
         <Layout><Membership /></Layout>
       </Route>
       <Route path="/login" component={Login} />
+      <Route path="/reset-password" component={ResetPassword} />
       <Route path="/signup" component={Signup} />
       <Route path="/pending-approval" component={PendingApproval} />
       <Route path="/admin" component={Admin} />
