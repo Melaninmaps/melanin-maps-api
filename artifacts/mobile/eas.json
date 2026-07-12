@@ -35,7 +35,7 @@
       }
     },
     "production": {
-      "autoIncrement": false,
+      "autoIncrement": true,
       "ios": {
         "credentialsSource": "local",
         "resourceClass": "m-medium"
