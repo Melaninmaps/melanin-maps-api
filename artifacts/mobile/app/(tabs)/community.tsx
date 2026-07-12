@@ -1732,13 +1732,13 @@ export default function CommunityScreen() {
                   </Text>
                 </View>
 
-                {/* Link input */}
+                {/* Video link input */}
                 <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, overflow: "hidden" }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 10, gap: 8 }}>
-                    <Feather name="link" size={14} color={colors.mutedForeground} />
+                  <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 10, gap: 8, backgroundColor: "#7B2D8B06" }}>
+                    <Feather name="video" size={14} color="#7B2D8B" />
                     <TextInput
                       style={{ flex: 1, fontFamily: "Inter_400Regular", fontSize: 13, color: colors.foreground, paddingVertical: 10 }}
-                      placeholder="Add a link — post, video, or website…"
+                      placeholder="Paste a video link — TikTok, Instagram, YouTube…"
                       placeholderTextColor={colors.mutedForeground}
                       value={newPostTagUrl}
                       onChangeText={setNewPostTagUrl}
@@ -1752,26 +1752,19 @@ export default function CommunityScreen() {
                       </TouchableOpacity>
                     )}
                   </View>
-                  {/* Social video toggle — paid members only */}
-                  {isPaidMember && newPostTagUrl.trim().length > 0 && (
-                    <TouchableOpacity
-                      activeOpacity={0.85}
-                      onPress={() => { setNewPostTagUrlIsSocialVideo((v) => !v); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                      style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: newPostTagUrlIsSocialVideo ? "#7B2D8B0A" : "transparent" }}
-                    >
-                      <View style={[{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, alignItems: "center", justifyContent: "center" }, newPostTagUrlIsSocialVideo ? { backgroundColor: "#7B2D8B", borderColor: "#7B2D8B" } : { borderColor: colors.border }]}>
-                        {newPostTagUrlIsSocialVideo && <Feather name="check" size={12} color="#fff" />}
-                      </View>
-                      <Feather name="video" size={13} color={newPostTagUrlIsSocialVideo ? "#7B2D8B" : colors.mutedForeground} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: newPostTagUrlIsSocialVideo ? "#7B2D8B" : colors.foreground }}>
-                          Social video link
-                        </Text>
-                        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, color: colors.mutedForeground }}>
-                          Mark as TikTok, Instagram, or YouTube video
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
+                  {/* Social video label — always shown when a URL is entered */}
+                  {newPostTagUrl.trim().length > 0 && (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 7, borderTopWidth: 1, borderTopColor: colors.border }}>
+                      <Feather name="check-circle" size={12} color="#2D7A4F" />
+                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, flex: 1 }}>
+                        Video will appear on your post <Text style={{ fontWeight: "600", color: colors.foreground }}>and</Text> {taggedBusiness.name}'s vibe page
+                      </Text>
+                      {isPaidMember && (
+                        <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: "#7B2D8B18", borderWidth: 1, borderColor: "#7B2D8B30" }}>
+                          <Text style={{ fontFamily: "Inter_700Bold", fontSize: 9, color: "#7B2D8B" }}>FEATURED</Text>
+                        </View>
+                      )}
+                    </View>
                   )}
                 </View>
               </View>

@@ -9,6 +9,7 @@ import {
   RefreshControl,
   Image,
   Platform,
+  Linking,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,11 +24,20 @@ interface Post {
   authorColor: string;
   content: string;
   mediaUrls: string | null;
+  businessLink: string | null;
   upvotes: number;
   commentsCount: number;
   createdAt: string;
   postType: string;
   category: string;
+}
+
+function videoSource(url: string): { label: string; icon: "youtube" | "instagram" | "twitter" | "link" } {
+  if (/youtu\.?be/i.test(url))   return { label: "Watch on YouTube",   icon: "youtube" };
+  if (/instagram\.com/i.test(url)) return { label: "Watch on Instagram", icon: "instagram" };
+  if (/tiktok\.com/i.test(url))  return { label: "Watch on TikTok",    icon: "link" };
+  if (/twitter\.com|x\.com/i.test(url)) return { label: "Watch on X",  icon: "twitter" };
+  return { label: "Watch Video", icon: "link" };
 }
 
 function getApiBase(): string {
@@ -262,6 +272,22 @@ export default function BusinessVibesScreen() {
                     </ScrollView>
                   )}
 
+                  {/* Video link */}
+                  {post.businessLink ? (() => {
+                    const vs = videoSource(post.businessLink);
+                    return (
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => post.businessLink && void Linking.openURL(post.businessLink)}
+                        style={[styles.videoBtn, { borderColor: colors.primary + "40", backgroundColor: colors.primary + "0A" }]}
+                      >
+                        <Feather name="play-circle" size={16} color={colors.primary} />
+                        <Text style={[styles.videoBtnText, { color: colors.primary }]}>{vs.label}</Text>
+                        <Feather name="external-link" size={12} color={colors.primary} style={{ marginLeft: "auto" }} />
+                      </TouchableOpacity>
+                    );
+                  })() : null}
+
                   {/* Footer */}
                   <View style={styles.footer}>
                     <View style={styles.footerStat}>
@@ -384,6 +410,21 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 8,
     marginRight: 8,
+  },
+  videoBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 10,
+  },
+  videoBtnText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    flex: 1,
   },
   footer: { flexDirection: "row", gap: 16 },
   footerStat: { flexDirection: "row", alignItems: "center", gap: 4 },
