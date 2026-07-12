@@ -49,7 +49,7 @@ Community discovery, travel, and business platform celebrating Black culture —
 ## User preferences
 
 - Custom domain: **mappingwithmelanin.com**
-- EAS builds: always instruct the user to run `eas build` from their own terminal (never attempt to trigger builds from within Replit — git sandbox restrictions block it)
+- EAS builds: user runs `eas build` from the Replit shell, always from inside `artifacts/mobile/` directory (e.g. `cd artifacts/mobile && eas build --platform ios --profile production`)
 - Multi-step tasks: give one step at a time and wait for the user to share a screenshot confirming completion before moving to the next step
 - Slide decks: if the user sends emojis in a message, translate them to gold outlined SVG line-art icons (fill:none, stroke:#CA922B, rounded caps) — never use literal emoji characters in any slide
 - Slide decks: do not auto-export/download a PDF after every edit — only export when the user explicitly asks for a download
