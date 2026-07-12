@@ -208,7 +208,7 @@ export default function CommunityScreen() {
   const [newPostType, setNewPostType] = useState<"community" | "question" | "business" | "safety" | "travel">("community");
   const [newPostBusinessLink, setNewPostBusinessLink] = useState("");
   const [newPostVisibility, setNewPostVisibility] = useState<"public" | "followers_only">("public");
-  const [feedMode, setFeedMode] = useState<"everyone" | "following">("everyone");
+  const [feedMode, setFeedMode] = useState<"foryou" | "everyone" | "following">(isAuthenticated ? "foryou" : "everyone");
   const [mediaAttachments, setMediaAttachments] = useState<{ uri: string; type: "image" | "video"; uploaded?: string; isGraphic?: boolean; warningType?: string }[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [newPostLocationTag, setNewPostLocationTag] = useState("");
@@ -1121,11 +1121,14 @@ export default function CommunityScreen() {
 
                 {/* Feed mode toggle */}
                 <View style={{ flexDirection: "row", paddingHorizontal: 16, paddingTop: 10, paddingBottom: 4, gap: 8 }}>
-                  {(["everyone", "following"] as const).map((mode) => (
+                  {(isAuthenticated
+                    ? (["foryou", "following"] as const)
+                    : (["everyone", "following"] as const)
+                  ).map((mode) => (
                     <TouchableOpacity activeOpacity={0.85}
                       key={mode}
                       onPress={() => {
-                        setFeedMode(mode);
+                        setFeedMode(mode as "foryou" | "everyone" | "following");
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       }}
                       style={{
@@ -1139,7 +1142,7 @@ export default function CommunityScreen() {
                         fontFamily: "Inter_600SemiBold", fontSize: 13,
                         color: feedMode === mode ? "#FFFFFF" : colors.mutedForeground,
                       }}>
-                        {mode === "everyone" ? "For You" : "Following"}
+                        {mode === "foryou" ? "For You" : mode === "everyone" ? "Explore" : "Following"}
                       </Text>
                     </TouchableOpacity>
                   ))}

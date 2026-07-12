@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { randomUUID } from "crypto";
 import multer from "multer";
-import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool } from "@workspace/db";
+import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool, userPreferencesTable } from "@workspace/db";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
@@ -86,6 +86,77 @@ router.get("/community/posts", async (req: Request, res: Response) => {
         LIMIT $2 OFFSET $3
       `, [viewerId, limit, offset]);
       rows = result.rows;
+    } else if (feedMode === "foryou" && viewerId) {
+      // For You — personalized feed scored by interests + follows + recency + engagement
+      // 1. Fetch a wide window of public posts (3× the limit so we have enough to score)
+      const poolSize = Math.min(limit * 4, 300);
+      const [rawResult, prefsResult, followsResult] = await Promise.all([
+        pool.query<PostRow>(`
+          SELECT cp.* FROM community_posts cp
+          LEFT JOIN users u ON u.id = cp.author_id
+          WHERE cp.visibility = 'public'
+            AND (u.is_private = false OR u.is_private IS NULL OR cp.author_id IS NULL)
+            AND cp.created_at > NOW() - INTERVAL '30 days'
+          ORDER BY cp.created_at DESC
+          LIMIT $1
+        `, [poolSize]),
+        db.select().from(userPreferencesTable).where(eq(userPreferencesTable.userId, viewerId)).limit(1),
+        pool.query<{ following_id: string }>(`
+          SELECT following_id FROM user_follows WHERE follower_id = $1 AND status = 'accepted'
+          UNION
+          SELECT CASE WHEN mc.requester_id = $1 THEN mc.recipient_id ELSE mc.requester_id END
+            FROM member_connections mc
+            WHERE (mc.requester_id = $1 OR mc.recipient_id = $1) AND mc.status = 'accepted'
+        `, [viewerId]),
+      ]);
+
+      const prefs = prefsResult[0];
+      const followedIds = new Set(followsResult.rows.map((r) => r.following_id));
+
+      // Interest keyword sets (lowercased for matching)
+      const favCats    = new Set((prefs?.favoriteCategories  ?? []).map((s: string) => s.toLowerCase()));
+      const cultInts   = new Set((prefs?.culturalInterests   ?? []).map((s: string) => s.toLowerCase()));
+      const lifestyles = new Set((prefs?.lifestyleServices   ?? []).map((s: string) => s.toLowerCase()));
+      const favCities  = new Set((prefs?.favoriteCities      ?? []).map((s: string) => s.toLowerCase()));
+
+      const now = Date.now();
+
+      const scored = rawResult.rows.map((row) => {
+        let score = 0;
+
+        // Follow boost — strongest signal
+        if (row.author_id && (followedIds.has(row.author_id) || row.author_id === viewerId)) score += 10;
+
+        // Interest matching — topic/category
+        const topic    = (row.topic_tag  ?? "").toLowerCase();
+        const category = (row.category   ?? "").toLowerCase();
+        const location = (row.location_tag ?? "").toLowerCase();
+
+        if (favCats.has(category) || favCats.has(topic))    score += 5;
+        if (cultInts.has(category) || cultInts.has(topic))  score += 4;
+        if (lifestyles.has(category) || lifestyles.has(topic)) score += 3;
+        if (location && favCities.has(location))             score += 3;
+
+        // Media signal — richer content
+        if (row.media_urls) score += 1;
+
+        // Recency decay
+        const ageMs = now - new Date(row.created_at).getTime();
+        const ageH  = ageMs / 3_600_000;
+        if      (ageH < 1)   score += 8;
+        else if (ageH < 6)   score += 6;
+        else if (ageH < 24)  score += 4;
+        else if (ageH < 72)  score += 2;
+        else if (ageH < 168) score += 1;
+
+        // Engagement signal
+        score += Math.log1p((row.upvotes ?? 0) + (row.comments_count ?? 0) * 2) * 2;
+
+        return { row, score };
+      });
+
+      scored.sort((a, b) => b.score - a.score);
+      rows = scored.slice(offset, offset + limit).map((s) => s.row);
     } else {
       // Everyone feed — public posts from public accounts (+ followed private accounts)
       const followingClause = viewerId
