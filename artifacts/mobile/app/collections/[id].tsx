@@ -76,7 +76,7 @@ export default function CollectionScreen() {
   function navToItem(item: CollectionItem) {
     if (item.itemType === "business") router.push({ pathname: "/business/[id]", params: { id: item.itemId } } as never);
     else if (item.itemType === "hub") router.push({ pathname: "/library-topic", params: { topicId: item.itemId } } as never);
-    else if (item.itemType === "mentor") router.push({ pathname: "/profile/[id]", params: { id: item.itemId } } as never);
+    else if (item.itemType === "mentor") router.push({ pathname: "/user/[id]", params: { id: item.itemId } } as never);
   }
 
   if (loading) {

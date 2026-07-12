@@ -205,7 +205,7 @@ export default function OpportunitiesScreen() {
                 </TouchableOpacity>
               </View>
             ) : mentors.map((m) => (
-              <TouchableOpacity key={m.id} style={[s.listCard, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => router.push({ pathname: "/profile/[id]", params: { id: m.id } } as never)} activeOpacity={0.75}>
+              <TouchableOpacity key={m.id} style={[s.listCard, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => router.push({ pathname: "/user/[id]", params: { id: m.id } } as never)} activeOpacity={0.75}>
                 <View style={{ flex: 1 }}>
                   <Text style={[s.listTitle, { color: colors.foreground }]} numberOfLines={1}>{m.displayName ?? "Community Mentor"}</Text>
                   {m.headline && <Text style={[s.listSub, { color: colors.mutedForeground }]} numberOfLines={2}>{m.headline}</Text>}

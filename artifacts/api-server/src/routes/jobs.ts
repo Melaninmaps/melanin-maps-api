@@ -22,6 +22,21 @@ router.get("/jobs", async (req, res) => {
   }
 });
 
+router.get("/jobs/:id", async (req, res) => {
+  try {
+    const [job] = await db
+      .select()
+      .from(jobListingsTable)
+      .where(eq(jobListingsTable.id, req.params.id))
+      .limit(1);
+    if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+    res.json(job);
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch job");
+    res.status(500).json({ error: "Failed to fetch job listing" });
+  }
+});
+
 router.post("/jobs", async (req, res) => {
   if (!req.user?.id) { res.status(401).json({ error: "Unauthorized" }); return; }
   const body = req.body as Record<string, unknown>;

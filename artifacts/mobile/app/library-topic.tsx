@@ -636,7 +636,7 @@ export default function CommunityHubScreen() {
                 <TouchableOpacity
                   key={creator.id}
                   style={[styles.creatorCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => router.push({ pathname: "/profile/[id]", params: { id: creator.id } } as never)}
+                  onPress={() => router.push({ pathname: "/user/[id]", params: { id: creator.id } } as never)}
                   activeOpacity={0.75}
                 >
                   <View style={[styles.creatorAvatar, { backgroundColor: typeMeta.color + "20", overflow: "hidden" }]}>
@@ -830,7 +830,7 @@ export default function CommunityHubScreen() {
                 <TouchableOpacity
                   key={expert.id}
                   style={[styles.expertCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => router.push({ pathname: "/profile/[id]", params: { id: expert.userId } } as never)}
+                  onPress={() => router.push({ pathname: "/user/[id]", params: { id: expert.userId } } as never)}
                   activeOpacity={0.75}
                 >
                   <View style={[styles.expertAvatar, { backgroundColor: typeMeta.color + "20" }]}>

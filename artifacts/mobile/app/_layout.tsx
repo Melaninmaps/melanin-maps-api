@@ -329,6 +329,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="jobs/[id]"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
         name="profile-setup"
         options={{
           headerShown: false,
