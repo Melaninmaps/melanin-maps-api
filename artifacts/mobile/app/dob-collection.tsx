@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/lib/auth";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -30,6 +31,7 @@ export default function DobCollectionScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { refreshUser } = useAuth();
 
   const currentYear = new Date().getFullYear();
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
@@ -61,6 +63,7 @@ export default function DobCollectionScreen() {
       });
       const data = await res.json() as { error?: string };
       if (!res.ok) { setError(data.error ?? "Failed to save. Please try again."); return; }
+      await refreshUser();
       router.replace("/(tabs)");
     } catch {
       setError("Something went wrong. Please try again.");

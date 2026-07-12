@@ -451,6 +451,7 @@ export default function ProfileScreen() {
       if (!res.ok) throw new Error("Upload failed");
       const data = await res.json() as { url: string };
       setUploadedAvatarUrl(data.url);
+      await refreshUser();
     } catch {
       Alert.alert("Upload failed", "Couldn't upload photo. It will be saved when you tap Save.");
     } finally {
