@@ -32,8 +32,8 @@ cat > artifacts/mobile/google-services.json{
     "project_id": "mapping-with-melanin",
     "storage_bucket": "mapping-with-melanin.firebasestorage.app"
   },
-  "client": [
-    {
+  "client": [ head -3 artifacts/mobile/google-services.json
+  {
       "client_info": {
         "mobilesdk_app_id": "1:977895289878:android:ce11182d23eb3e05827137",
         "android_client_info": {
