@@ -693,6 +693,71 @@ router.delete("/businesses/mine/intro-video", async (req: any, res: Response) =>
   }
 });
 
+// ─── POST /businesses/mine/featured-video/upload — host community intro video ──
+const featuredVideoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 200 * 1024 * 1024 }, // 200 MB
+  fileFilter: (_req, file, cb) => { cb(null, file.mimetype.startsWith("video/")); },
+});
+
+router.post("/businesses/mine/featured-video/upload", featuredVideoUpload.single("video"), async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!req.file) { res.status(400).json({ error: "Video file is required" }); return; }
+
+  try {
+    const [business] = await db.select({ id: businessesTable.id, featuredVideoTitle: businessesTable.featuredVideoTitle, featuredVideoPurpose: businessesTable.featuredVideoPurpose })
+      .from(businessesTable).where(eq(businessesTable.submittedById, String(userId)));
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (!bucketId) { res.status(500).json({ error: "Object storage not configured" }); return; }
+
+    const ext = (req.file.originalname.split(".").pop() ?? "mp4").toLowerCase();
+    const objectKey = `businesses/${business.id}/featured-video.${ext}`;
+    const gcsFile = objectStorageClient.bucket(bucketId).file(objectKey);
+    await gcsFile.save(req.file.buffer, { contentType: req.file.mimetype, resumable: false });
+
+    const featuredVideoUrl = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
+    const [updated] = await db
+      .update(businessesTable)
+      .set({ featuredVideoUrl, updatedAt: new Date() })
+      .where(eq(businessesTable.id, business.id))
+      .returning();
+
+    res.json({ featuredVideoUrl: updated.featuredVideoUrl });
+  } catch (err) {
+    req.log.error({ err }, "Failed to upload featured video");
+    res.status(500).json({ error: "Failed to upload featured video" });
+  }
+});
+
+// ─── DELETE /businesses/mine/featured-video/hosted — remove hosted featured video
+router.delete("/businesses/mine/featured-video/hosted", async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  try {
+    const [business] = await db.select({ id: businessesTable.id, featuredVideoUrl: businessesTable.featuredVideoUrl })
+      .from(businessesTable).where(eq(businessesTable.submittedById, String(userId)));
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (bucketId && business.featuredVideoUrl?.includes(`storage.googleapis.com/${bucketId}/`)) {
+      const objectKey = business.featuredVideoUrl.split(`storage.googleapis.com/${bucketId}/`)[1];
+      if (objectKey) objectStorageClient.bucket(bucketId).file(objectKey).delete().catch(() => {});
+    }
+
+    await db.update(businessesTable)
+      .set({ featuredVideoUrl: null, updatedAt: new Date() })
+      .where(eq(businessesTable.id, business.id));
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to delete hosted featured video");
+    res.status(500).json({ error: "Failed to delete hosted featured video" });
+  }
+});
+
 // ─── PATCH /businesses/mine/weekly-schedule — set calendar availability ────────
 router.patch("/businesses/mine/weekly-schedule", async (req: any, res: Response) => {
   const userId = req.user?.id;
