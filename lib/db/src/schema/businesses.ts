@@ -81,6 +81,9 @@ export const businessesTable = pgTable("businesses", {
   // Format: { mon: { open: "9:00 AM", close: "5:00 PM" } | null, tue: ..., ... }
   weeklySchedule: jsonb("weekly_schedule").$type<Record<string, { open: string; close: string } | null>>(),
   showAvailability: boolean("show_availability").notNull().default(false),
+  // Community dispute system ("fake business" flagging)
+  flagCount: integer("flag_count").notNull().default(0),
+  flagStatus: varchar("flag_status", { length: 20 }).notNull().default("none"), // none | under_review | confirmed_fake | cleared
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

@@ -29,6 +29,7 @@ const ADMIN_TABS = [
   { id: "reports", label: "Safety Reports", icon: "flag" as const },
   { id: "reviews", label: "Reviews", icon: "star" as const },
   { id: "content-reports", label: "Content Reports", icon: "alert-circle" as const },
+  { id: "disputed", label: "Disputed Businesses", icon: "alert-triangle" as const },
   { id: "captions", label: "Captions", icon: "message-circle" as const },
   { id: "claims", label: "Claims", icon: "check-square" as const },
   { id: "submissions", label: "Submissions", icon: "inbox" as const },
@@ -2374,6 +2375,151 @@ function ContentReportsTab() {
   );
 }
 
+interface DisputedBusiness {
+  id: string;
+  name: string;
+  category: string | null;
+  city: string | null;
+  state: string | null;
+  flag_count: number;
+  flag_status: string;
+  created_at: string;
+  report_count: string;
+}
+
+function DisputedBusinessesTab() {
+  const colors = useColors();
+  const [businesses, setBusinesses] = React.useState<DisputedBusiness[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [actioning, setActioning] = React.useState<string | null>(null);
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const res = await fetch(`${getApiBase()}/api/admin/businesses/disputed`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json();
+      setBusinesses(data.businesses ?? []);
+    } catch {
+      setBusinesses([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => { load(); }, [load]);
+
+  const handleAction = async (id: string, action: "clear-dispute" | "confirm-fake") => {
+    setActioning(id + action);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      await fetch(`${getApiBase()}/api/admin/businesses/${id}/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      });
+      await load();
+    } catch {
+      // silent
+    } finally {
+      setActioning(null);
+    }
+  };
+
+  const underReview = businesses.filter((b) => b.flag_status === "under_review");
+  const confirmedFake = businesses.filter((b) => b.flag_status === "confirmed_fake");
+
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+      {loading && (
+        <View style={{ alignItems: "center", paddingVertical: 40 }}>
+          <ActivityIndicator color={colors.primary} />
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginTop: 10 }]}>Loading…</Text>
+        </View>
+      )}
+      {!loading && businesses.length === 0 && (
+        <View style={{ alignItems: "center", paddingVertical: 40 }}>
+          <Feather name="check-circle" size={32} color={colors.muted} />
+          <Text style={[adminStyles.bizName, { color: colors.mutedForeground, marginTop: 10 }]}>No disputed businesses</Text>
+          <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginTop: 4, textAlign: "center" }]}>
+            When 3+ community members flag a listing, it appears here for review.
+          </Text>
+        </View>
+      )}
+      {underReview.length > 0 && (
+        <>
+          <SectionLabel title={`Under Review (${underReview.length})`} />
+          {underReview.map((biz) => (
+            <View key={biz.id} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: "#F59E0B40", marginBottom: 10 }]}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+                <View style={[adminStyles.statusBadge, { backgroundColor: "#FEF3C7" }]}>
+                  <Text style={[adminStyles.statusBadgeText, { color: "#B45309" }]}>Community Disputed</Text>
+                </View>
+                <View style={[adminStyles.statusBadge, { backgroundColor: colors.secondary }]}>
+                  <Text style={[adminStyles.statusBadgeText, { color: colors.mutedForeground }]}>{biz.flag_count} flags</Text>
+                </View>
+              </View>
+              <Text style={[adminStyles.bizName, { color: colors.foreground, marginBottom: 2 }]}>{biz.name}</Text>
+              <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginBottom: 8 }]}>
+                {biz.category ?? "Unknown"} · {biz.city}, {biz.state}
+              </Text>
+              <Text style={[adminStyles.scoreText, { color: colors.mutedForeground, marginBottom: 10 }]}>
+                {biz.report_count} report{biz.report_count !== "1" ? "s" : ""} · Listed {new Date(biz.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+              </Text>
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                <TouchableOpacity activeOpacity={0.85}
+                  style={[adminStyles.smallBtn, { backgroundColor: "#DC262618", borderColor: "#DC262630", opacity: actioning === biz.id + "confirm-fake" ? 0.6 : 1 }]}
+                  onPress={() => handleAction(biz.id, "confirm-fake")}
+                  disabled={!!actioning}
+                >
+                  <Text style={[adminStyles.smallBtnText, { color: "#DC2626" }]}>Confirm Fake</Text>
+                </TouchableOpacity>
+                <TouchableOpacity activeOpacity={0.85}
+                  style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30", opacity: actioning === biz.id + "clear-dispute" ? 0.6 : 1 }]}
+                  onPress={() => handleAction(biz.id, "clear-dispute")}
+                  disabled={!!actioning}
+                >
+                  <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>Clear / Legitimate</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+        </>
+      )}
+      {confirmedFake.length > 0 && (
+        <>
+          <SectionLabel title={`Confirmed Fake (${confirmedFake.length})`} />
+          {confirmedFake.map((biz) => (
+            <View key={biz.id} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: "#DC262630", marginBottom: 10 }]}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+                <View style={[adminStyles.statusBadge, { backgroundColor: "#FEE2E2" }]}>
+                  <Text style={[adminStyles.statusBadgeText, { color: "#DC2626" }]}>Confirmed Fake</Text>
+                </View>
+                <View style={[adminStyles.statusBadge, { backgroundColor: colors.secondary }]}>
+                  <Text style={[adminStyles.statusBadgeText, { color: colors.mutedForeground }]}>{biz.flag_count} flags</Text>
+                </View>
+              </View>
+              <Text style={[adminStyles.bizName, { color: colors.foreground, marginBottom: 2 }]}>{biz.name}</Text>
+              <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginBottom: 8 }]}>
+                {biz.category ?? "Unknown"} · {biz.city}, {biz.state}
+              </Text>
+              <TouchableOpacity activeOpacity={0.85}
+                style={[adminStyles.smallBtn, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F30" }]}
+                onPress={() => handleAction(biz.id, "clear-dispute")}
+                disabled={!!actioning}
+              >
+                <Text style={[adminStyles.smallBtnText, { color: "#2D7A4F" }]}>Restore Listing</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </>
+      )}
+      <View style={{ height: 80 }} />
+    </ScrollView>
+  );
+}
+
 function TopicsTab() {
   const colors = useColors();
   const [topics, setTopics] = useState<any[]>([]);
@@ -2695,6 +2841,7 @@ const TAB_COMPONENTS: Record<string, React.FC> = {
   reports: ReportsTab,
   reviews: ReviewsTab,
   "content-reports": ContentReportsTab,
+  disputed: DisputedBusinessesTab,
   captions: CaptionsTab,
   claims: ClaimsTab,
   submissions: SubmissionsTab,

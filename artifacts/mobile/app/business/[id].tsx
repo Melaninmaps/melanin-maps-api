@@ -429,6 +429,26 @@ export default function BusinessDetailScreen() {
         <Image source={img} style={styles.hero} contentFit="cover" />
 
         <View style={styles.body}>
+          {/* Community Disputed banner */}
+          {((business as any).flagStatus === "under_review" || (business as any).flagStatus === "confirmed_fake") && (
+            <View style={[styles.disputedBanner, { borderColor: (business as any).flagStatus === "confirmed_fake" ? "#DC262640" : "#F59E0B50" }]}>
+              <Feather
+                name="alert-triangle"
+                size={16}
+                color={(business as any).flagStatus === "confirmed_fake" ? "#DC2626" : "#B45309"}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.disputedTitle, { color: (business as any).flagStatus === "confirmed_fake" ? "#DC2626" : "#92400E" }]}>
+                  {(business as any).flagStatus === "confirmed_fake" ? "Confirmed Fake Listing" : "Community Disputed"}
+                </Text>
+                <Text style={[styles.disputedSub, { color: colors.mutedForeground }]}>
+                  {(business as any).flagStatus === "confirmed_fake"
+                    ? "Our team has confirmed this listing does not represent a legitimate business."
+                    : "Community members have raised concerns about the authenticity of this listing. Under review."}
+                </Text>
+              </View>
+            </View>
+          )}
           {/* Title row + badges */}
           <View style={styles.titleSection}>
             <View style={{ flex: 1 }}>
@@ -1081,6 +1101,7 @@ export default function BusinessDetailScreen() {
       <ReportContentModal
         visible={reportModalOpen}
         businessName={business.name}
+        businessId={business.id}
         onClose={() => setReportModalOpen(false)}
       />
       <ShareModal
@@ -1374,6 +1395,27 @@ const styles = StyleSheet.create({
   pinnedReviewText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20, fontStyle: "italic" },
   pinnedVideoRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   pinnedVideoTitle: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
+  disputedBanner: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    backgroundColor: "#FEF3C7",
+  },
+  disputedTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  disputedSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    lineHeight: 17,
+  },
   responseTagline: {
     flexDirection: "row",
     alignItems: "flex-start",

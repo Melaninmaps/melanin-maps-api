@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { Platform } from "react-native";
 import React, { useState } from "react";
 import {
   Modal,
@@ -13,32 +14,49 @@ import {
 import { useColors } from "@/hooks/useColors";
 
 const REPORT_CATEGORIES = [
-  { id: "inaccurate", icon: "alert-circle" as const, label: "Inaccurate Information", sub: "Hours, address, or details are wrong" },
-  { id: "closed", icon: "x-circle" as const, label: "Business Closed", sub: "This location is no longer operating" },
-  { id: "not_black_owned", icon: "flag" as const, label: "Not Black-Owned", sub: "Ownership claim appears incorrect" },
-  { id: "discrimination", icon: "shield-off" as const, label: "Discrimination Report", sub: "Experienced racial bias or discrimination" },
-  { id: "safety", icon: "alert-triangle" as const, label: "Safety Concern", sub: "Unsafe environment or practices reported" },
-  { id: "spam", icon: "trash-2" as const, label: "Spam / Fake Listing", sub: "This listing appears fake or promotional" },
-  { id: "inappropriate", icon: "eye-off" as const, label: "Inappropriate Content", sub: "Content violates community guidelines" },
-  { id: "other", icon: "more-horizontal" as const, label: "Other", sub: "Something else not listed above" },
+  { id: "not_black_owned", icon: "flag" as const, label: "Ownership Misrepresented", sub: "Ownership claim appears incorrect or false", triggersDispute: true },
+  { id: "spam", icon: "trash-2" as const, label: "Fake / Fraudulent Listing", sub: "This business does not appear to exist", triggersDispute: true },
+  { id: "inaccurate", icon: "alert-circle" as const, label: "Inaccurate Information", sub: "Hours, address, or details are wrong", triggersDispute: false },
+  { id: "closed", icon: "x-circle" as const, label: "Business Closed", sub: "This location is no longer operating", triggersDispute: false },
+  { id: "discrimination", icon: "shield-off" as const, label: "Discrimination Report", sub: "Experienced racial bias or discrimination", triggersDispute: false },
+  { id: "safety", icon: "alert-triangle" as const, label: "Safety Concern", sub: "Unsafe environment or practices reported", triggersDispute: false },
+  { id: "inappropriate", icon: "eye-off" as const, label: "Inappropriate Content", sub: "Content violates community guidelines", triggersDispute: false },
+  { id: "other", icon: "more-horizontal" as const, label: "Other", sub: "Something else not listed above", triggersDispute: false },
 ];
+
+const CATEGORY_TO_REASON: Record<string, string> = {
+  not_black_owned: "fake",
+  spam: "fake",
+  inaccurate: "incorrect_info",
+  closed: "incorrect_info",
+  discrimination: "suspicious",
+  safety: "suspicious",
+  inappropriate: "inappropriate",
+  other: "other",
+};
 
 interface Props {
   visible: boolean;
   businessName: string;
+  businessId?: string;
   onClose: () => void;
+  onFlagged?: () => void;
 }
 
-export function ReportContentModal({ visible, businessName, onClose }: Props) {
+export function ReportContentModal({ visible, businessName, businessId, onClose, onFlagged }: Props) {
   const colors = useColors();
   const [selected, setSelected] = useState<string | null>(null);
   const [details, setDetails] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const reset = () => {
     setSelected(null);
     setDetails("");
     setSubmitted(false);
+    setLoading(false);
+    setError(null);
   };
 
   const handleClose = () => {
@@ -46,15 +64,77 @@ export function ReportContentModal({ visible, businessName, onClose }: Props) {
     onClose();
   };
 
-  const handleSubmit = () => {
-    if (!selected) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setSubmitted(true);
-    setTimeout(() => {
-      reset();
-      onClose();
-    }, 2000);
+  const getBaseUrl = () => {
+    if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+    return "";
   };
+
+  const handleSubmit = async () => {
+    if (!selected || loading) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { getItemAsync } = await import("expo-secure-store");
+      const token = Platform.OS !== "web" ? await getItemAsync("auth_session_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const category = REPORT_CATEGORIES.find((c) => c.id === selected);
+      const reason = CATEGORY_TO_REASON[selected] ?? "other";
+
+      if (category?.triggersDispute && businessId) {
+        // Dispute route — increments flag count, auto-marks business under review at threshold
+        const resp = await fetch(`${getBaseUrl()}/api/businesses/${businessId}/dispute`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ description: details.trim() || undefined }),
+        });
+        if (!resp.ok) {
+          const json = await resp.json().catch(() => ({}));
+          if (resp.status === 409) {
+            setError("You've already flagged this business.");
+          } else if (resp.status === 401) {
+            setError("Sign in to flag a business.");
+          } else {
+            setError((json as any).error ?? "Failed to submit report.");
+          }
+          setLoading(false);
+          return;
+        }
+        onFlagged?.();
+      } else {
+        // Generic content report for non-dispute categories
+        const resp = await fetch(`${getBaseUrl()}/api/content-reports`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ targetType: "business", targetId: businessId, reason, description: details.trim() || undefined }),
+        });
+        if (!resp.ok) {
+          const json = await resp.json().catch(() => ({}));
+          if (resp.status === 401) {
+            setError("Sign in to report a business.");
+          } else {
+            setError((json as any).error ?? "Failed to submit report.");
+          }
+          setLoading(false);
+          return;
+        }
+      }
+
+      setSubmitted(true);
+      setTimeout(() => {
+        reset();
+        onClose();
+      }, 2200);
+    } catch {
+      setError("Network error — please try again.");
+      setLoading(false);
+    }
+  };
+
+  const selectedCategory = REPORT_CATEGORIES.find((c) => c.id === selected);
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
@@ -70,7 +150,9 @@ export function ReportContentModal({ visible, businessName, onClose }: Props) {
               </View>
               <Text style={[styles.successTitle, { color: colors.foreground }]}>Report Submitted</Text>
               <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
-                Our team will review this within 24–48 hours. Thank you for keeping the community accurate.
+                {selectedCategory?.triggersDispute
+                  ? "Your flag has been recorded. If enough community members flag this listing, it will be reviewed by our team."
+                  : "Our team will review this within 24–48 hours. Thank you for keeping the community accurate."}
               </Text>
             </View>
           ) : (
@@ -102,6 +184,7 @@ export function ReportContentModal({ visible, businessName, onClose }: Props) {
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setSelected(cat.id);
+                    setError(null);
                   }}
                   activeOpacity={0.75}
                 >
@@ -111,6 +194,12 @@ export function ReportContentModal({ visible, businessName, onClose }: Props) {
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.catLabel, { color: colors.foreground }]}>{cat.label}</Text>
                     <Text style={[styles.catSub, { color: colors.mutedForeground }]}>{cat.sub}</Text>
+                    {cat.triggersDispute && (
+                      <View style={styles.disputePill}>
+                        <Feather name="users" size={9} color="#B45309" />
+                        <Text style={styles.disputePillText}>Community Dispute</Text>
+                      </View>
+                    )}
                   </View>
                   {selected === cat.id && (
                     <Feather name="check-circle" size={18} color={colors.primary} />
@@ -131,14 +220,21 @@ export function ReportContentModal({ visible, businessName, onClose }: Props) {
                 onChangeText={setDetails}
               />
 
+              {error && (
+                <View style={styles.errorRow}>
+                  <Feather name="alert-circle" size={13} color="#DC2626" />
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              )}
+
               <TouchableOpacity
-                style={[styles.submitBtn, { backgroundColor: selected ? "#DC2626" : colors.muted }]}
+                style={[styles.submitBtn, { backgroundColor: selected && !loading ? "#DC2626" : colors.muted }]}
                 onPress={handleSubmit}
-                disabled={!selected}
+                disabled={!selected || loading}
                 activeOpacity={0.85}
               >
                 <Feather name="flag" size={16} color="#FFFFFF" />
-                <Text style={styles.submitText}>Submit Report</Text>
+                <Text style={styles.submitText}>{loading ? "Submitting..." : "Submit Report"}</Text>
               </TouchableOpacity>
 
               <Text style={[styles.disclaimer, { color: colors.mutedForeground }]}>
@@ -220,6 +316,22 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     fontSize: 11,
   },
+  disputePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    marginTop: 4,
+    alignSelf: "flex-start",
+    backgroundColor: "#FEF3C7",
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  disputePillText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 9,
+    color: "#B45309",
+  },
   input: {
     borderRadius: 12,
     borderWidth: 1,
@@ -230,6 +342,21 @@ const styles = StyleSheet.create({
     minHeight: 80,
     textAlignVertical: "top",
     marginBottom: 16,
+  },
+  errorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 12,
+    backgroundColor: "#FEE2E2",
+    borderRadius: 8,
+    padding: 10,
+  },
+  errorText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    color: "#B91C1C",
+    flex: 1,
   },
   submitBtn: {
     flexDirection: "row",

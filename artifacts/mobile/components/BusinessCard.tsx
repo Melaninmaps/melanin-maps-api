@@ -133,12 +133,17 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
             </View>
           ) : null}
           <View style={styles.hContent}>
-            {warningCount >= 3 && (
+            {(business as any).flagStatus === "under_review" || (business as any).flagStatus === "confirmed_fake" ? (
+              <View style={styles.disputedBanner}>
+                <Feather name="alert-triangle" size={11} color="#92400E" />
+                <Text style={styles.disputedText}>Community Disputed</Text>
+              </View>
+            ) : warningCount >= 3 ? (
               <View style={styles.warningBanner}>
                 <Feather name="alert-octagon" size={11} color="#7C2D12" />
                 <Text style={styles.warningText}>{warningCount} community reports filed</Text>
               </View>
-            )}
+            ) : null}
             <View style={styles.hTop}>
               <View style={styles.hTitleRow}>
                 <Text style={[styles.hName, { color: colors.foreground }]} numberOfLines={1}>
@@ -262,12 +267,17 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
           ) : null}
         </View>
         <View style={styles.vContent}>
-          {warningCount >= 3 && (
+          {(business as any).flagStatus === "under_review" || (business as any).flagStatus === "confirmed_fake" ? (
+            <View style={styles.disputedBanner}>
+              <Feather name="alert-triangle" size={11} color="#92400E" />
+              <Text style={styles.disputedText}>Community Disputed</Text>
+            </View>
+          ) : warningCount >= 3 ? (
             <View style={styles.warningBanner}>
               <Feather name="alert-octagon" size={11} color="#7C2D12" />
               <Text style={styles.warningText}>{warningCount} community reports filed</Text>
             </View>
-          )}
+          ) : null}
           <View style={styles.vTitleRow}>
             <Text style={[styles.vName, { color: colors.foreground }]} numberOfLines={1}>
               {business.name}
@@ -579,5 +589,23 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 11,
     color: "#7C2D12",
+  },
+  disputedBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#FEF3C7",
+    borderColor: "#F59E0B60",
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginBottom: 6,
+    alignSelf: "flex-start",
+  },
+  disputedText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+    color: "#92400E",
   },
 });

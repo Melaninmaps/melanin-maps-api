@@ -1,12 +1,13 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { db, pool, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable, businessClickEventsTable, businessCaptionsTable } from "@workspace/db";
-import { eq, and, or, ilike, desc, sql, gt, count, inArray } from "drizzle-orm";
+import { db, pool, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable, businessClickEventsTable, businessCaptionsTable, contentReportsTable } from "@workspace/db";
+import { eq, and, or, ilike, desc, sql, gt, count, inArray, ne } from "drizzle-orm";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
 import { sendFoundingWelcomeEmail, sendSearchInquiryAlert } from "../lib/email";
 import { objectStorageClient } from "../lib/objectStorage";
+import { reportLimiter } from "../middleware/rateLimiter";
 
 const photoUpload = multer({
   storage: multer.memoryStorage(),
@@ -1349,6 +1350,134 @@ router.patch("/admin/businesses/:id/status", async (req: Request, res: Response)
   } catch (err) {
     req.log.error({ err }, "Failed to update business status");
     res.status(500).json({ error: "Failed to update business status" });
+  }
+});
+
+// ── Community Dispute System ──────────────────────────────────────────────────
+// POST /businesses/:id/dispute — community member flags a business as fake/misrepresented
+// Inserts a content_report (reason: "fake") and atomically increments flag_count.
+// At threshold 3, flag_status transitions to "under_review".
+router.post("/businesses/:id/dispute", reportLimiter, async (req: Request, res: Response): Promise<void> => {
+  const user = (req as any).user;
+  if (!user) { res.status(401).json({ error: "Authentication required" }); return; }
+
+  const businessId = String(req.params.id);
+  const { description } = req.body as { description?: string };
+
+  try {
+    // Check business exists
+    const { rows: biz } = await pool.query<{ id: string; name: string; flag_count: number; flag_status: string }>(
+      "SELECT id, name, flag_count, flag_status FROM businesses WHERE id = $1",
+      [businessId],
+    );
+    if (!biz.length) { res.status(404).json({ error: "Business not found" }); return; }
+
+    // Check user hasn't already filed a dispute for this business
+    const { rows: existing } = await pool.query<{ id: string }>(
+      "SELECT id FROM content_reports WHERE reporter_id = $1 AND target_type = 'business' AND target_id = $2 AND reason = 'fake'",
+      [user.id, businessId],
+    );
+    if (existing.length) {
+      res.status(409).json({ error: "You have already flagged this business" }); return;
+    }
+
+    // Insert the content report
+    await pool.query(
+      "INSERT INTO content_reports (id, reporter_id, target_type, target_id, reason, description, status) VALUES (gen_random_uuid(), $1, 'business', $2, 'fake', $3, 'pending')",
+      [user.id, businessId, description?.slice(0, 1000) ?? null],
+    );
+
+    // Atomically increment flag_count and conditionally promote to under_review
+    const DISPUTE_THRESHOLD = 3;
+    const { rows: updated } = await pool.query<{ flag_count: number; flag_status: string }>(
+      `UPDATE businesses
+       SET flag_count = flag_count + 1,
+           flag_status = CASE
+             WHEN flag_count + 1 >= $1 AND flag_status = 'none' THEN 'under_review'
+             ELSE flag_status
+           END,
+           updated_at = NOW()
+       WHERE id = $2
+       RETURNING flag_count, flag_status`,
+      [DISPUTE_THRESHOLD, businessId],
+    );
+
+    const newStatus = updated[0]?.flag_status ?? "none";
+    const newCount = updated[0]?.flag_count ?? 0;
+
+    res.status(201).json({ flagCount: newCount, flagStatus: newStatus });
+  } catch (err) {
+    req.log.error({ err }, "Failed to submit business dispute");
+    res.status(500).json({ error: "Failed to submit dispute" });
+  }
+});
+
+// GET /admin/businesses/disputed — list businesses under review or confirmed fake
+router.get("/admin/businesses/disputed", async (req: Request, res: Response): Promise<void> => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }
+  try {
+    const { rows } = await pool.query<{
+      id: string; name: string; category: string | null; city: string | null;
+      state: string | null; flag_count: number; flag_status: string; created_at: string;
+      report_count: string;
+    }>(
+      `SELECT b.id, b.name, b.category, b.city, b.state, b.flag_count, b.flag_status, b.created_at,
+              COUNT(cr.id) AS report_count
+       FROM businesses b
+       LEFT JOIN content_reports cr ON cr.target_id = b.id AND cr.target_type = 'business' AND cr.reason = 'fake'
+       WHERE b.flag_status IN ('under_review', 'confirmed_fake')
+       GROUP BY b.id
+       ORDER BY b.flag_count DESC, b.created_at DESC`,
+    );
+    res.json({ businesses: rows });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch disputed businesses");
+    res.status(500).json({ error: "Failed to fetch disputed businesses" });
+  }
+});
+
+// POST /admin/businesses/:id/clear-dispute — admin clears the dispute flag
+router.post("/admin/businesses/:id/clear-dispute", async (req: Request, res: Response): Promise<void> => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }
+  const id = String(req.params.id);
+  try {
+    const [biz] = await db
+      .update(businessesTable)
+      .set({ flagCount: 0, flagStatus: "cleared", updatedAt: new Date() })
+      .where(eq(businessesTable.id, id))
+      .returning({ id: businessesTable.id, name: businessesTable.name });
+    if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
+    // Dismiss all pending content reports for this business
+    await pool.query(
+      "UPDATE content_reports SET status = 'dismissed' WHERE target_id = $1 AND target_type = 'business' AND reason = 'fake' AND status = 'pending'",
+      [id],
+    );
+    res.json({ business: biz, flagStatus: "cleared" });
+  } catch (err) {
+    req.log.error({ err }, "Failed to clear business dispute");
+    res.status(500).json({ error: "Failed to clear dispute" });
+  }
+});
+
+// POST /admin/businesses/:id/confirm-fake — admin confirms the business is fake
+router.post("/admin/businesses/:id/confirm-fake", async (req: Request, res: Response): Promise<void> => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }
+  const id = String(req.params.id);
+  try {
+    const [biz] = await db
+      .update(businessesTable)
+      .set({ flagStatus: "confirmed_fake", status: "suspended", updatedAt: new Date() })
+      .where(eq(businessesTable.id, id))
+      .returning({ id: businessesTable.id, name: businessesTable.name });
+    if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
+    await pool.query(
+      "UPDATE content_reports SET status = 'actioned' WHERE target_id = $1 AND target_type = 'business' AND reason = 'fake' AND status = 'pending'",
+      [id],
+    );
+    res.json({ business: biz, flagStatus: "confirmed_fake" });
+  } catch (err) {
+    req.log.error({ err }, "Failed to confirm business as fake");
+    res.status(500).json({ error: "Failed to confirm fake" });
   }
 });
 
