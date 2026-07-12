@@ -239,6 +239,16 @@ export default function LoginScreen() {
 
         <TouchableOpacity
           style={[styles.googleBtn, { backgroundColor: c.card, borderColor: c.border }]}
+          onPress={() => router.push("/phone-login" as any)}
+          disabled={loading}
+          activeOpacity={0.85}
+        >
+          <Feather name="smartphone" size={18} color={c.foreground} />
+          <Text style={[styles.googleTxt, { color: c.foreground }]}>Continue with Phone</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.googleBtn, { backgroundColor: c.card, borderColor: c.border }]}
           onPress={handleGoogleSignIn}
           disabled={loading}
           activeOpacity={0.85}

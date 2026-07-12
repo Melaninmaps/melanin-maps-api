@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import path from "path";
 import healthRouter from "./health";
 import authRouter from "./auth";
+import phoneAuthRouter from "./phone-auth";
 import businessesRouter from "./businesses";
 import travelRouter from "./travel";
 import surveysRouter from "./surveys";
@@ -120,6 +121,7 @@ const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(authRouter);
+router.use(phoneAuthRouter);
 router.use(businessesRouter);
 router.use(travelRouter);
 router.use(surveysRouter);
