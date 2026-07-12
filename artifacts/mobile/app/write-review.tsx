@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -439,6 +440,104 @@ export default function WriteReviewScreen() {
               Completely optional — share what visitors should know
             </Text>
 
+            {/* Video link — shown first, most prominent */}
+            <View style={[styles.videoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              {/* Header */}
+              <View style={styles.videoCardHeader}>
+                <View style={[styles.videoCardIcon, { backgroundColor: "#7B2D8B18" }]}>
+                  <Feather name="video" size={18} color="#7B2D8B" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.videoCardTitle, { color: colors.foreground }]}>
+                    Share a video of your visit
+                  </Text>
+                  <Text style={[styles.videoCardSub, { color: colors.mutedForeground }]}>
+                    Optional — helps others see the real experience
+                  </Text>
+                </View>
+              </View>
+
+              {/* Platform badges */}
+              <View style={styles.platformRow}>
+                {[
+                  { name: "TikTok",    color: "#010101", bg: "#01010112" },
+                  { name: "Instagram", color: "#E1306C", bg: "#E1306C12" },
+                  { name: "YouTube",   color: "#FF0000", bg: "#FF000012" },
+                  { name: "Facebook",  color: "#1877F2", bg: "#1877F212" },
+                ].map((p) => (
+                  <View key={p.name} style={[styles.platformBadge, { backgroundColor: p.bg, borderColor: p.color + "30" }]}>
+                    <Text style={[styles.platformBadgeText, { color: p.color }]}>{p.name}</Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* Confirmed video card */}
+              {videoLink.trim() && isValidVideoUrl(videoLink) ? (
+                <View style={[styles.videoConfirmed, { backgroundColor: "#2D7A4F12", borderColor: "#2D7A4F30" }]}>
+                  <Feather name="play-circle" size={22} color="#2D7A4F" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.videoConfirmedPlatform, { color: "#2D7A4F" }]}>
+                      {detectVideoPlatform(videoLink)} video ready
+                    </Text>
+                    <Text style={[styles.videoConfirmedUrl, { color: colors.mutedForeground }]} numberOfLines={1}>
+                      {videoLink.trim()}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => { setVideoLink(""); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Feather name="x-circle" size={20} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <>
+                  {/* Input row */}
+                  <View style={[styles.videoInputRow, { borderColor: videoLink && !isValidVideoUrl(videoLink) ? colors.destructive : colors.border, backgroundColor: colors.background }]}>
+                    <Feather name="link" size={14} color={colors.mutedForeground} />
+                    <TextInput
+                      style={[styles.videoInput, { color: colors.foreground }]}
+                      placeholder="Paste video link here…"
+                      placeholderTextColor={colors.mutedForeground}
+                      value={videoLink}
+                      onChangeText={setVideoLink}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="url"
+                    />
+                    {videoLink.length > 0 ? (
+                      <TouchableOpacity onPress={() => setVideoLink("")} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+                        <Feather name="x" size={14} color={colors.mutedForeground} />
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        onPress={async () => {
+                          const text = await Clipboard.getStringAsync();
+                          if (text?.startsWith("http")) {
+                            setVideoLink(text.trim());
+                            if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          }
+                        }}
+                        style={[styles.pasteBtn, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }]}
+                      >
+                        <Text style={[styles.pasteBtnText, { color: colors.primary }]}>Paste</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {/* Inline validation error */}
+                  {videoLink.length > 0 && !isValidVideoUrl(videoLink) && (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 6 }}>
+                      <Feather name="alert-circle" size={12} color={colors.destructive} />
+                      <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.destructive }}>
+                        Paste a TikTok, Instagram, YouTube, or Facebook video link
+                      </Text>
+                    </View>
+                  )}
+                </>
+              )}
+            </View>
+
             <View style={styles.qBlock}>
               <Text style={[styles.qLabel, { color: colors.foreground }]}>Quick safety tips for visitors</Text>
               <View style={styles.chips}>
@@ -463,31 +562,6 @@ export default function WriteReviewScreen() {
                 textAlignVertical="top"
               />
               <Text style={[styles.charCount, { color: colors.mutedForeground }]}>{comments.length}/500</Text>
-            </View>
-
-            <View style={styles.qBlock}>
-              <Text style={[styles.qLabel, { color: colors.foreground }]}>
-                Add a video link{" "}
-                <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text>
-              </Text>
-              <Text style={[styles.qHint, { color: colors.mutedForeground }]}>
-                Paste a YouTube, TikTok, Instagram, or Facebook video URL
-              </Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.card, borderColor: videoLink && !isValidVideoUrl(videoLink) ? colors.destructive : colors.border, color: colors.foreground }]}
-                placeholder="https://www.tiktok.com/@user/video/..."
-                placeholderTextColor={colors.mutedForeground}
-                value={videoLink}
-                onChangeText={setVideoLink}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="url"
-              />
-              {videoLink.length > 0 && (
-                <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: isValidVideoUrl(videoLink) ? colors.success : colors.destructive, marginTop: 4 }}>
-                  {isValidVideoUrl(videoLink) ? `✓ ${detectVideoPlatform(videoLink)} link detected` : "Please enter a valid YouTube, TikTok, Instagram, or Facebook URL"}
-                </Text>
-              )}
             </View>
 
             <View style={[styles.anonRow, { backgroundColor: colors.secondary }]}>
@@ -586,4 +660,19 @@ const styles = StyleSheet.create({
   doneStatLabel: { fontSize: 14, fontFamily: "Inter_400Regular" },
   doneBtn: { alignItems: "center", paddingVertical: 17, paddingHorizontal: 40, borderRadius: 16 },
   doneBtnTxt: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
+  videoCard: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 14 },
+  videoCardHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
+  videoCardIcon: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  videoCardTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  videoCardSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
+  platformRow: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
+  platformBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
+  platformBadgeText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  videoConfirmed: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 12, borderWidth: 1 },
+  videoConfirmedPlatform: { fontSize: 13, fontFamily: "Inter_700Bold" },
+  videoConfirmedUrl: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
+  videoInputRow: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
+  videoInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", paddingVertical: 0 },
+  pasteBtn: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8, borderWidth: 1 },
+  pasteBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
 });
