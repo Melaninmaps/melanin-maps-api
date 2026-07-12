@@ -1,9 +1,9 @@
-const stories = [
-  "\u201CI found my first barber before I unpacked.\u201D",
-  "\u201CA small business gained a lifelong customer.\u201D",
-  "\u201CSomeone stopped feeling like a stranger.\u201D",
-  "\u201CA family found home faster.\u201D",
-  "\u201COne recommendation strengthened an entire community.\u201D",
+const cascade = [
+  "One Conversation",
+  "One Download",
+  "One New Favorite Business",
+  "One New Friendship",
+  "One Stronger Community",
 ];
 
 export default function CB01bWhyBuildersMatter() {
@@ -23,7 +23,6 @@ export default function CB01bWhyBuildersMatter() {
 
         <div style={{ width: "5vw", height: "3px", background: "#CA922B", marginBottom: "1.3vw" }} />
 
-        {/* Visual middle */}
         <p className="font-body" style={{ fontSize: "1.05vw", color: "#8B6030", lineHeight: 1.65, marginBottom: "0.85vw" }}>
           Think about the last place someone recommended to you.
         </p>
@@ -47,7 +46,6 @@ export default function CB01bWhyBuildersMatter() {
           That&rsquo;s how communities grow.
         </p>
 
-        {/* Box */}
         <div style={{ padding: "1.1vw 1.6vw", borderRadius: "0.7vw", border: "1px solid rgba(202,146,43,0.22)", background: "rgba(202,146,43,0.05)" }}>
           <p className="font-display" style={{ fontSize: "1.3vw", fontWeight: 800, color: "#FAF6EF", lineHeight: 1.4 }}>
             You&rsquo;re not selling anything.<br />
@@ -56,22 +54,41 @@ export default function CB01bWhyBuildersMatter() {
         </div>
       </div>
 
-      {/* Right: 5 tiny stories */}
-      <div className="absolute flex flex-col justify-center" style={{ right: "5vw", top: "6%", bottom: "6%", width: "33vw" }}>
-        <div className="font-body" style={{ fontSize: "0.8vw", color: "rgba(202,146,43,0.6)", letterSpacing: "0.22em", fontWeight: 700, marginBottom: "1.6vw" }}>EVERY CONVERSATION CAN HELP SOMEONE&hellip;</div>
-        <div className="flex flex-col" style={{ gap: "1vw" }}>
-          {stories.map((story, i) => (
-            <div key={i} style={{ padding: "1vw 1.3vw", borderRadius: "0.5vw", border: "1px solid rgba(202,146,43,0.15)", background: "rgba(250,246,239,0.03)" }}>
-              <div className="flex items-start" style={{ gap: "0.9vw" }}>
-                <svg style={{ flexShrink: 0, marginTop: "0.15vw" }} width="1.1vw" height="1.1vw" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="7" stroke="#CA922B" strokeWidth="1.2"/>
-                  <path d="M4.5 8l2.5 2.5L11.5 5.5" stroke="#CA922B" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span className="font-quote" style={{ fontSize: "1.05vw", fontStyle: "italic", color: "#C4935A", lineHeight: 1.5 }}>{story}</span>
-              </div>
+      {/* Right: cascade */}
+      <div className="absolute flex flex-col items-center justify-center" style={{ right: "5vw", top: "6%", bottom: "6%", width: "31vw" }}>
+        {cascade.map((step, i) => (
+          <div key={step} className="flex flex-col items-center w-full">
+            <div style={{
+              width: "100%",
+              padding: "0.85vw 1.4vw",
+              borderRadius: "0.6vw",
+              border: i === cascade.length - 1 ? "1.5px solid #CA922B" : "1px solid rgba(202,146,43,0.25)",
+              background: i === cascade.length - 1 ? "rgba(202,146,43,0.1)" : "rgba(250,246,239,0.03)",
+              textAlign: "center",
+            }}>
+              <span
+                className="font-display"
+                style={{
+                  fontSize: i === cascade.length - 1 ? "1.25vw" : "1.15vw",
+                  fontWeight: i === cascade.length - 1 ? 800 : 600,
+                  color: i === cascade.length - 1 ? "#CA922B" : "#FAF6EF",
+                  letterSpacing: "0.01em",
+                }}
+              >
+                {step}
+              </span>
             </div>
-          ))}
-        </div>
+            {i < cascade.length - 1 && (
+              <div className="flex flex-col items-center" style={{ padding: "0.4vw 0" }}>
+                <div style={{ width: "1px", height: "0.7vw", background: "rgba(202,146,43,0.4)" }} />
+                <svg width="0.9vw" height="0.9vw" viewBox="0 0 12 12" fill="none">
+                  <path d="M6 1v8M2 6l4 5 4-5" stroke="#CA922B" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div style={{ width: "1px", height: "0.4vw", background: "rgba(202,146,43,0.4)" }} />
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
