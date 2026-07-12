@@ -438,5 +438,93 @@
                 "title": "Become a Founding Business",
                 "description": "Final CTA — 500 spots, $29/month locked, mappingwithmelanin.com/business",
                 "speakerNotes": ""
+        },
+        {
+                "id": "cb-slide-01-cover",
+                "position": 56,
+                "filepath": "src/pages/slides/CB01Cover.tsx",
+                "title": "Become a Community Builder",
+                "description": "Community Builder section cover",
+                "speakerNotes": ""
+        },
+        {
+                "id": "cb-slide-02-what-is-it",
+                "position": 57,
+                "filepath": "src/pages/slides/CB02WhatIsIt.tsx",
+                "title": "What Is It?",
+                "description": "One sentence + People → Community → Businesses → Belonging flow",
+                "speakerNotes": ""
+        },
+        {
+                "id": "cb-slide-03-who-is-it-for",
+                "position": 58,
+                "filepath": "src/pages/slides/CB03WhoIsItFor.tsx",
+                "title": "Who Is It For?",
+                "description": "Six situations with phone mockup",
+                "speakerNotes": ""
+        },
+        {
+                "id": "cb-slide-04-how-it-works",
+                "position": 59,
+                "filepath": "src/pages/slides/CB04HowItWorks.tsx",
+                "title": "How Does It Work?",
+                "description": "Discover → Connect → Support → Recommend → Strengthen flywheel",
+                "speakerNotes": ""
+        },
+        {
+                "id": "cb-slide-05-what-makes-it-different",
+                "position": 60,
+                "filepath": "src/pages/slides/CB05WhatMakesItDifferent.tsx",
+                "title": "What Makes It Different?",
+                "description": "NOT vs INSTEAD two-column contrast",
+                "speakerNotes": ""
+        },
+        {
+                "id": "cb-slide-06-why-businesses-love-it",
+                "position": 61,
+                "filepath": "src/pages/slides/CB06WhyBusinessesLoveIt.tsx",
+                "title": "Why Businesses Love It",
+                "description": "We send customers to THEIR website/booking/social + phone",
+                "speakerNotes": ""
+        },
+        {
+                "id": "cb-slide-07-why-community-members-love-it",
+                "position": 62,
+                "filepath": "src/pages/slides/CB07WhyCommunityMembersLoveIt.tsx",
+                "title": "Why Community Members Love It",
+                "description": "Six emotional benefit cards",
+                "speakerNotes": ""
+        },
+        {
+                "id": "cb-slide-08-meet-kinfolkai",
+                "position": 63,
+                "filepath": "src/pages/slides/CB08MeetKinfolkAI.tsx",
+                "title": "Meet KinfolkAI™",
+                "description": "Learns / Suggests / Protects / Connects / Grows",
+                "speakerNotes": ""
+        },
+        {
+                "id": "cb-slide-09-network-effect",
+                "position": 64,
+                "filepath": "src/pages/slides/CB09WhatHappensWhenMoreJoin.tsx",
+                "title": "What Happens When More People Join?",
+                "description": "Everyday community flywheel cascade",
+                "speakerNotes": ""
+        },
+        {
+                "id": "cb-slide-10-how-can-you-help",
+                "position": 65,
+                "filepath": "src/pages/slides/CB10HowCanYouHelp.tsx",
+                "title": "How Can You Help?",
+                "description": "Seven ambassador action cards",
+                "speakerNotes": ""
+        },
+        {
+                "id": "cb-slide-11-closing",
+                "position": 66,
+                "filepath": "src/pages/slides/CB11Closing.tsx",
+                "title": "Closing — Welcome",
+                "description": "Full-screen closing quote",
+                "speakerNotes": ""
         }
 ]

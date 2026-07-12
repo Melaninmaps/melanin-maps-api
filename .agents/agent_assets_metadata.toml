@@ -719,3 +719,9 @@ id = "47t_7VK1bIKX9pbwkkRlf"
 uri = "file://.local/outputs/Mapping-With-Melanin---Community-Builder-Deck.pdf"
 type = "pdf"
 title = "Community Builder Deck — 11 slides"
+
+[[outputs]]
+id = "VZUUmkI9mffhJWzh6rJad"
+uri = "file://.local/outputs/Mapping-With-Melanin---Foundation-Book.pdf"
+type = "pdf"
+title = "Foundation Book — 66 slides (Investor + Community Builder)"
