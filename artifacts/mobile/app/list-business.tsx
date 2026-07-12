@@ -477,15 +477,15 @@ export default function ListBusinessScreen() {
 
             <TouchableOpacity
               style={[styles.successBtn, { backgroundColor: colors.primary }]}
-              onPress={() => router.replace("/(tabs)")}
+              onPress={() => router.replace("/business-owner" as any)}
               activeOpacity={0.85}
             >
-              <Text style={[styles.successBtnText, { color: colors.primaryForeground }]}>Back to Discover</Text>
+              <Text style={[styles.successBtnText, { color: colors.primaryForeground }]}>Manage Your Business</Text>
               <Feather name="arrow-right" size={16} color={colors.primaryForeground} />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => router.replace("/(tabs)/profile")} activeOpacity={0.7}>
-              <Text style={[styles.successLink, { color: colors.primary }]}>View my profile</Text>
+            <TouchableOpacity onPress={() => router.replace("/(tabs)")} activeOpacity={0.7}>
+              <Text style={[styles.successLink, { color: colors.primary }]}>Back to Discover</Text>
             </TouchableOpacity>
           </View>
         ) : (
