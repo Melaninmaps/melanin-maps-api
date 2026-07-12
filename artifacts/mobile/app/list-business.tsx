@@ -392,6 +392,13 @@ export default function ListBusinessScreen() {
         const err = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(err.error ?? "Submission failed");
       }
+      if (token) {
+        await fetch(`${apiBase}/api/auth/user/setup`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ isBusinessOwner: true }),
+        }).catch(() => {});
+      }
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       animateToStep(TOTAL_STEPS);
     } catch (err) {
