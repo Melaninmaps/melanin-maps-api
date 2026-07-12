@@ -1,9 +1,9 @@
-const cascade = [
-  "One Conversation",
-  "One Download",
-  "One New Favorite Business",
-  "One New Friendship",
-  "One Stronger Community",
+const outcomes = [
+  "Help someone discover a business they\u2019ll love",
+  "Help a family feel at home in a new city",
+  "Help an entrepreneur be seen",
+  "Help strengthen a neighborhood",
+  "Help someone feel like they belong",
 ];
 
 export default function CB01bWhyBuildersMatter() {
@@ -21,31 +21,34 @@ export default function CB01bWhyBuildersMatter() {
           Every movement begins with one conversation.
         </div>
 
-        <div style={{ width: "5vw", height: "3px", background: "#CA922B", marginBottom: "1.3vw" }} />
+        <div style={{ width: "5vw", height: "3px", background: "#CA922B", marginBottom: "1.6vw" }} />
 
-        <p className="font-body" style={{ fontSize: "1.05vw", color: "#8B6030", lineHeight: 1.65, marginBottom: "0.85vw" }}>
-          Think about the last place someone recommended to you.
-        </p>
-
-        <div className="flex flex-wrap" style={{ gap: "0.45vw 0.8vw", marginBottom: "0.85vw" }}>
-          {["A restaurant.", "A barber.", "A neighborhood.", "A church.", "A small business.", "A new city."].map((item) => (
-            <span key={item} className="font-body" style={{ fontSize: "1.05vw", color: "#C4935A", fontWeight: 500 }}>{item}</span>
-          ))}
+        {/* Body copy — rhythmic, shorter sentences */}
+        <div className="flex flex-col" style={{ gap: "0.55vw", marginBottom: "1.8vw" }}>
+          <p className="font-body" style={{ fontSize: "1.1vw", color: "#C4935A", lineHeight: 1.6 }}>
+            The strongest communities aren&rsquo;t built through advertising.
+          </p>
+          <p className="font-body" style={{ fontSize: "1.1vw", color: "#8B6030", lineHeight: 1.6 }}>
+            They&rsquo;re built when someone says,
+          </p>
+          <p className="font-display" style={{ fontSize: "1.25vw", fontWeight: 700, color: "#FAF6EF", marginBottom: "0.3vw" }}>
+            &ldquo;You should check this out.&rdquo;
+          </p>
+          <p className="font-body" style={{ fontSize: "1.05vw", color: "#8B6030", lineHeight: 1.6 }}>
+            One recommendation becomes one new customer.
+          </p>
+          <p className="font-body" style={{ fontSize: "1.05vw", color: "#8B6030", lineHeight: 1.6 }}>
+            One customer becomes another recommendation.
+          </p>
+          <p className="font-body" style={{ fontSize: "1.05vw", color: "#C4935A", lineHeight: 1.6, fontWeight: 500 }}>
+            That&rsquo;s how trust grows.
+          </p>
+          <p className="font-body" style={{ fontSize: "1.05vw", color: "#C4935A", lineHeight: 1.6, fontWeight: 500 }}>
+            That&rsquo;s how communities grow.
+          </p>
         </div>
 
-        <p className="font-body" style={{ fontSize: "1.05vw", color: "#8B6030", lineHeight: 1.65, marginBottom: "0.4vw" }}>
-          It probably didn&rsquo;t start with an advertisement.
-        </p>
-        <p className="font-body" style={{ fontSize: "1.05vw", color: "#8B6030", lineHeight: 1.65, marginBottom: "0.5vw" }}>
-          It started with someone you trusted saying,
-        </p>
-        <p className="font-display" style={{ fontSize: "1.2vw", fontWeight: 700, color: "#FAF6EF", marginBottom: "0.5vw" }}>
-          &ldquo;You should check this out.&rdquo;
-        </p>
-        <p className="font-body" style={{ fontSize: "1.05vw", color: "#8B6030", lineHeight: 1.65, marginBottom: "1.4vw" }}>
-          That&rsquo;s how communities grow.
-        </p>
-
+        {/* Box */}
         <div style={{ padding: "1.1vw 1.6vw", borderRadius: "0.7vw", border: "1px solid rgba(202,146,43,0.22)", background: "rgba(202,146,43,0.05)" }}>
           <p className="font-display" style={{ fontSize: "1.3vw", fontWeight: 800, color: "#FAF6EF", lineHeight: 1.4 }}>
             You&rsquo;re not selling anything.<br />
@@ -54,41 +57,22 @@ export default function CB01bWhyBuildersMatter() {
         </div>
       </div>
 
-      {/* Right: cascade */}
-      <div className="absolute flex flex-col items-center justify-center" style={{ right: "5vw", top: "6%", bottom: "6%", width: "31vw" }}>
-        {cascade.map((step, i) => (
-          <div key={step} className="flex flex-col items-center w-full">
-            <div style={{
-              width: "100%",
-              padding: "0.85vw 1.4vw",
-              borderRadius: "0.6vw",
-              border: i === cascade.length - 1 ? "1.5px solid #CA922B" : "1px solid rgba(202,146,43,0.25)",
-              background: i === cascade.length - 1 ? "rgba(202,146,43,0.1)" : "rgba(250,246,239,0.03)",
-              textAlign: "center",
-            }}>
-              <span
-                className="font-display"
-                style={{
-                  fontSize: i === cascade.length - 1 ? "1.25vw" : "1.15vw",
-                  fontWeight: i === cascade.length - 1 ? 800 : 600,
-                  color: i === cascade.length - 1 ? "#CA922B" : "#FAF6EF",
-                  letterSpacing: "0.01em",
-                }}
-              >
-                {step}
+      {/* Right: outcome list */}
+      <div className="absolute flex flex-col justify-center" style={{ right: "5vw", top: "6%", bottom: "6%", width: "32vw" }}>
+        <div className="font-body" style={{ fontSize: "0.8vw", color: "rgba(202,146,43,0.6)", letterSpacing: "0.22em", fontWeight: 700, marginBottom: "1.8vw" }}>EVERY RECOMMENDATION CAN&hellip;</div>
+        <div className="flex flex-col" style={{ gap: "1.05vw" }}>
+          {outcomes.map((outcome, i) => (
+            <div key={i} className="flex items-center" style={{ gap: "1.1vw", padding: "1vw 1.3vw", borderRadius: "0.5vw", border: i === outcomes.length - 1 ? "1px solid rgba(202,146,43,0.35)" : "1px solid rgba(202,146,43,0.15)", background: i === outcomes.length - 1 ? "rgba(202,146,43,0.07)" : "rgba(250,246,239,0.025)" }}>
+              <svg style={{ flexShrink: 0 }} width="1.3vw" height="1.3vw" viewBox="0 0 18 18" fill="none">
+                <circle cx="9" cy="9" r="8" stroke="#CA922B" strokeWidth="1.3"/>
+                <path d="M5 9l3 3 5-5" stroke="#CA922B" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span className="font-body" style={{ fontSize: "1.05vw", color: i === outcomes.length - 1 ? "#FAF6EF" : "#C4935A", fontWeight: i === outcomes.length - 1 ? 600 : 400, lineHeight: 1.4 }}>
+                {outcome}
               </span>
             </div>
-            {i < cascade.length - 1 && (
-              <div className="flex flex-col items-center" style={{ padding: "0.4vw 0" }}>
-                <div style={{ width: "1px", height: "0.7vw", background: "rgba(202,146,43,0.4)" }} />
-                <svg width="0.9vw" height="0.9vw" viewBox="0 0 12 12" fill="none">
-                  <path d="M6 1v8M2 6l4 5 4-5" stroke="#CA922B" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <div style={{ width: "1px", height: "0.4vw", background: "rgba(202,146,43,0.4)" }} />
-              </div>
-            )}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
