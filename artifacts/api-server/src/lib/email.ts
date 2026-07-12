@@ -3,12 +3,11 @@ import { Resend } from "resend";
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM = "Mapping With Melanin™ <hello@mappingwithmelanin.com>";
 
-function log(_msg: string) {
-  // RESEND_API_KEY not configured — email silently skipped in this environment
-}
-
 async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
-  const { data, error } = await resend!.emails.send(payload);
+  if (!resend) {
+    throw new Error("RESEND_API_KEY is not configured — cannot send email");
+  }
+  const { data, error } = await resend.emails.send(payload);
   if (error) {
     throw new Error(`Resend send failed: ${error.name} — ${error.message}`);
   }
@@ -16,7 +15,7 @@ async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
 }
 
 export async function sendWelcomeEmail(to: string, firstName: string | null) {
-  if (!resend) { log("welcome email"); return; }
+  if (!resend) return;
   const name = firstName ?? "there";
   await sendEmail({
     from: FROM,
@@ -100,7 +99,6 @@ export async function sendWelcomeEmail(to: string, firstName: string | null) {
 }
 
 export async function sendPasswordResetEmail(to: string, firstName: string | null, code: string) {
-  if (!resend) { log("password reset email"); return; }
   const name = firstName ?? "there";
   const encodedEmail = encodeURIComponent(to);
   const deepLink = `mappingwithmelanin://reset-password?email=${encodedEmail}&code=${code}`;
@@ -142,7 +140,7 @@ export async function sendPasswordResetEmail(to: string, firstName: string | nul
 }
 
 export async function sendWaitlistConfirmation(to: string, position: number, referralCode: string, firstName: string, lastName?: string) {
-  if (!resend) { log("waitlist confirmation"); return; }
+  if (!resend) return;
   const fullName = lastName ? `${firstName} ${lastName}` : firstName;
   const referralLink = `https://mappingwithmelanin.com/?ref=${referralCode}`;
   await sendEmail({
@@ -237,7 +235,7 @@ export async function sendReferralNudge(
   referralCode: string,
   newSignupsThisWeek: number,
 ) {
-  if (!resend) { log("referral nudge"); return; }
+  if (!resend) return;
   const referralLink = `https://mappingwithmelanin.com/?ref=${referralCode}`;
   const name = firstName || "there";
   await sendEmail({
@@ -303,7 +301,7 @@ export async function sendReferralNudge(
 }
 
 export async function sendBusinessOutreach(to: string, businessName: string, claimLink: string) {
-  if (!resend) { log("business outreach"); return; }
+  if (!resend) return;
   await sendEmail({
     from: FROM,
     to,
@@ -364,7 +362,7 @@ export async function sendBusinessOutreach(to: string, businessName: string, cla
 }
 
 export async function sendApprovalNotification(to: string, firstName: string | null) {
-  if (!resend) { log("approval notification"); return; }
+  if (!resend) return;
   const name = firstName ?? "there";
   await sendEmail({
     from: FROM,
@@ -412,7 +410,7 @@ export async function sendTrialStarted(
   trialDays: number,
   trialEndsAt: Date,
 ) {
-  if (!resend) { log("trial started"); return; }
+  if (!resend) return;
   const name = firstName ?? "there";
   const planLabel = PLAN_LABELS[planType] ?? "Premium";
   const endDate = trialEndsAt.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
@@ -485,7 +483,7 @@ export async function sendTrialEndingSoon(
   trialEndsAt: Date,
   daysLeft: number,
 ) {
-  if (!resend) { log("trial ending soon"); return; }
+  if (!resend) return;
   const name = firstName ?? "there";
   const planLabel = PLAN_LABELS[planType] ?? "Premium";
   const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
@@ -546,7 +544,7 @@ export async function sendTrialExpired(
   firstName: string | null,
   planType: string,
 ) {
-  if (!resend) { log("trial expired"); return; }
+  if (!resend) return;
   const name = firstName ?? "there";
   const planLabel = PLAN_LABELS[planType] ?? "Premium";
   const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
@@ -610,7 +608,7 @@ export async function sendMembershipCancelled(
   firstName: string | null,
   planType: string,
 ) {
-  if (!resend) { log("membership cancelled"); return; }
+  if (!resend) return;
   const name = firstName ?? "there";
   const planLabel = PLAN_LABELS[planType] ?? "Premium";
   const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
@@ -667,7 +665,7 @@ export async function sendCheckinOverdueEmail(
   location: string | null,
   city: string | null,
 ) {
-  if (!resend) { log("checkin overdue"); return; }
+  if (!resend) return;
   const timeStr = scheduledAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
   const dateStr = scheduledAt.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
   const where = [location, city].filter(Boolean).join(", ") || "their destination";
@@ -704,7 +702,7 @@ export async function sendWeeklyDigest(
   businesses: Array<{ name: string; category: string; city: string; state: string; id: string }>,
   weekLabel: string,
 ) {
-  if (!resend) { log("weekly digest"); return; }
+  if (!resend) return;
   const name = firstName ?? "there";
 
   const bizCards = businesses.slice(0, 6).map(b => `
@@ -774,7 +772,7 @@ export async function sendFoundingWelcomeEmail(
   businessName: string,
   foundingNumber: number,
 ) {
-  if (!resend) { log("founding welcome email"); return; }
+  if (!resend) return;
   const name = firstName ?? "there";
   const badge = String(foundingNumber).padStart(3, "0");
   await sendEmail({
@@ -946,7 +944,7 @@ export async function sendFoundingAnniversaryEmail(
   metrics: FoundingAnniversaryMetrics,
   aiMessage: string,
 ) {
-  if (!resend) { log("founding anniversary email"); return; }
+  if (!resend) return;
   const name = firstName ?? "there";
   const badge = String(foundingNumber).padStart(3, "0");
 
@@ -1088,7 +1086,7 @@ export async function sendFoundingAnniversaryEmail(
 }
 
 export async function sendClaimReceived(to: string, ownerName: string, businessName: string) {
-  if (!resend) { log("claim received email"); return; }
+  if (!resend) return;
   const name = ownerName.split(" ")[0] || ownerName;
   await sendEmail({
     from: FROM,
@@ -1148,7 +1146,7 @@ export async function sendClaimReceived(to: string, ownerName: string, businessN
 }
 
 export async function sendClaimApproved(to: string, ownerName: string, businessName: string) {
-  if (!resend) { log("claim approved email"); return; }
+  if (!resend) return;
   const name = ownerName.split(" ")[0] || ownerName;
   await sendEmail({
     from: FROM,
@@ -1230,7 +1228,7 @@ export async function sendBusinessSubmissionAlert(data: {
   twitter?: string;
   message: string;
 }) {
-  if (!resend) { log("business submission alert"); return; }
+  if (!resend) return;
   const socials = [
     data.instagram ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700;width:130px">Instagram</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.instagram}</td></tr>` : "",
     data.facebook  ? `<tr><td style="padding:6px 0;color:#3A1F0E;font-size:14px;font-weight:700">Facebook</td><td style="padding:6px 0;color:#3A1F0E;font-size:14px">${data.facebook}</td></tr>` : "",
@@ -1273,7 +1271,7 @@ export async function sendContactAlert(data: {
   subject?: string | null;
   message: string;
 }) {
-  if (!resend) { log("contact alert"); return; }
+  if (!resend) return;
 
   const TYPE_META: Record<string, { emoji: string; label: string; urgency: boolean; color: string }> = {
     general:     { emoji: "📬", label: "General Question",       urgency: false, color: "#2B1507" },
@@ -1342,7 +1340,7 @@ export async function sendNominationAlert(data: {
   city?: string;
   neighborhood?: string;
 }) {
-  if (!resend) { log("nomination alert"); return; }
+  if (!resend) return;
 
   const outreach = data.nominationSocialLink ? detectOutreachMethod(data.nominationSocialLink) : null;
   const outreachBadge = outreach
@@ -1390,7 +1388,7 @@ export async function sendSearchInquiryAlert(data: {
   contactEmail?: string;
   contactHandle?: string;
 }) {
-  if (!resend) { log("search inquiry alert"); return; }
+  if (!resend) return;
 
   const locationLine = [data.city, data.state].filter(Boolean).join(", ");
   const claimLink = `https://mappingwithmelanin.com/for-business-owners?utm_source=search-invite&business=${encodeURIComponent(data.businessName)}`;
@@ -1429,7 +1427,7 @@ export async function sendSearchInquiryAlert(data: {
 }
 
 export async function sendBusinessSearchInvite(to: string, businessName: string, claimLink: string) {
-  if (!resend) { log("business search invite"); return; }
+  if (!resend) return;
   await sendEmail({
     from: FROM,
     to,
@@ -1523,7 +1521,7 @@ export async function sendAdminSafetyReportAlert({
   isMinorityOwned: boolean | null;
   reportId: string;
 }) {
-  if (!resend) { log("admin safety report alert"); return; }
+  if (!resend) return;
   const adminTo = process.env.ADMIN_EMAILS?.split(",").map((e) => e.trim()).filter(Boolean)[0] ?? "hello@mappingwithmelanin.com";
   const severityColors: Record<string, string> = { low: "#CA922B", medium: "#E07A2F", high: "#C0392B", critical: "#7B241C" };
   const ownershipLabel = isMinorityOwned === true ? "Minority-Owned (requires your review to affect score)" : isMinorityOwned === false ? "Non-Minority-Owned (score updates automatically after 3+ reports)" : "Ownership Unknown";
@@ -1559,7 +1557,7 @@ export async function sendBusinessRecommendationInvite(
   recommendationCount: number,
   waitlistLink: string,
 ) {
-  if (!resend) { log("business recommendation invite"); return; }
+  if (!resend) return;
 
   const countLine =
     recommendationCount >= 2
@@ -1649,7 +1647,7 @@ export async function sendFriendInvitation(
   referralLink: string,
   referralCode: string,
 ) {
-  if (!resend) { log("friend invitation"); return; }
+  if (!resend) return;
   const greet = inviteeName ? `Hi ${inviteeName},` : "Hi there,";
   await sendEmail({
     from: FROM,
@@ -1739,7 +1737,7 @@ export async function sendBusinessWaitlistInvitation(
   referrerName: string,
   joinLink: string,
 ) {
-  if (!resend) { log("business waitlist invitation"); return; }
+  if (!resend) return;
   await sendEmail({
     from: FROM,
     to,
@@ -1817,7 +1815,7 @@ export async function sendReferralMilestoneUpdate(
   cityTotal: number,
   referralCode: string,
 ) {
-  if (!resend) { log("referral milestone update"); return; }
+  if (!resend) return;
   const name = firstName ?? "there";
   const referralLink = `https://mappingwithmelanin.com/?ref=${referralCode}`;
   const newJoinedText = newInviteeName
@@ -1921,7 +1919,7 @@ export async function sendWeeklyBusinessReport(
   firstName: string | null,
   data: WeeklyBusinessReportData,
 ) {
-  if (!resend) { log("weekly business report"); return; }
+  if (!resend) return;
   const name = firstName ?? "there";
   const tierColor = data.tier === "trailblazer" ? "#CA922B" : "#7B2D8B";
   const tierLabel = data.tier === "trailblazer" ? "Trailblazer" : "Navigator";
@@ -2026,7 +2024,7 @@ export async function sendBetaAnnouncementBlast(
   firstName: string,
   betaSignupUrl: string,
 ) {
-  if (!resend) { log("beta announcement blast"); return; }
+  if (!resend) return;
   const name = firstName || "there";
   await sendEmail({
     from: FROM,
@@ -2089,7 +2087,7 @@ export async function sendAppLaunchBlast(
   iosUrl: string,
   androidUrl: string,
 ) {
-  if (!resend) { log("app launch blast"); return; }
+  if (!resend) return;
   const name = firstName || "there";
   const websiteUrl = `https://mappingwithmelanin.com/?ref=${referralCode}`;
   await sendEmail({
@@ -2163,7 +2161,7 @@ export async function sendMeetupSafetyWatcherEmail(
   note: string | null,
   meetupId: number,
 ) {
-  if (!resend) { log("meetup safety watcher email"); return; }
+  if (!resend) return;
   const name = watcherName ?? "there";
   await sendEmail({
     from: FROM,
@@ -2217,7 +2215,7 @@ export async function sendMeetupCheckinMissedEmail(
   location: string | null,
   meetupId: number,
 ) {
-  if (!resend) { log("meetup checkin missed email"); return; }
+  if (!resend) return;
   const name = friendName ?? "there";
   const checkLabel = checkType === "arrival" ? "arrival" : "home safe";
   const checkEmoji = checkType === "arrival" ? "📍" : "🏠";
