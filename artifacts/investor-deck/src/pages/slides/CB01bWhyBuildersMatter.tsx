@@ -11,7 +11,7 @@ export default function CB01bWhyBuildersMatter() {
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#1C0E06" }}>
       <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 30% 60%, rgba(202,146,43,0.11) 0%, transparent 60%)" }} />
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: "linear-gradient(90deg,transparent,#CA922B,transparent)" }} />
-      <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>02</div>
+      <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>03</div>
 
       {/* Left */}
       <div className="absolute flex flex-col justify-center" style={{ left: "7vw", top: "6%", bottom: "6%", width: "43vw" }}>

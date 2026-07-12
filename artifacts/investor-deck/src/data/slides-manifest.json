@@ -448,19 +448,19 @@
                 "speakerNotes": ""
         },
         {
-                "id": "cb-slide-01b-why-builders-matter",
+                "id": "cb-slide-02-what-is-it",
                 "position": 57,
-                "filepath": "src/pages/slides/CB01bWhyBuildersMatter.tsx",
-                "title": "Why Community Builders Matter",
-                "description": "Every movement begins with one conversation — purpose before features",
+                "filepath": "src/pages/slides/CB02WhatIsIt.tsx",
+                "title": "What Is It?",
+                "description": "One platform. Every part of belonging.",
                 "speakerNotes": ""
         },
         {
-                "id": "cb-slide-02-what-is-it",
+                "id": "cb-slide-01b-why-builders-matter",
                 "position": 58,
-                "filepath": "src/pages/slides/CB02WhatIsIt.tsx",
-                "title": "What Is It?",
-                "description": "One sentence + People → Community → Businesses → Belonging flow",
+                "filepath": "src/pages/slides/CB01bWhyBuildersMatter.tsx",
+                "title": "Why Community Builders Matter",
+                "description": "Every movement begins with one conversation",
                 "speakerNotes": ""
         },
         {
