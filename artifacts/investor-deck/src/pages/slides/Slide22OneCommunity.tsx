@@ -1,16 +1,36 @@
+const ICONS = [
+  // Person / consumer
+  <svg key="consumer" width="2.4vw" height="2.4vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="8" r="4"/>
+    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+  </svg>,
+  // Store / business
+  <svg key="business" width="2.4vw" height="2.4vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 9l1-5h16l1 5"/>
+    <path d="M3 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/>
+    <path d="M5 9v11h14V9"/>
+    <path d="M9 14h6v6H9z"/>
+  </svg>,
+  // Globe / community
+  <svg key="community" width="2.4vw" height="2.4vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="9"/>
+    <path d="M12 3c-2.5 3-4 5.7-4 9s1.5 6 4 9"/>
+    <path d="M12 3c2.5 3 4 5.7 4 9s-1.5 6-4 9"/>
+    <path d="M3 12h18"/>
+    <path d="M3.6 8h16.8M3.6 16h16.8"/>
+  </svg>,
+];
+
 const CARDS = [
   {
-    emoji: "🧑🏽",
     label: "CONSUMERS",
     copy: "Discover trusted places and people.",
   },
   {
-    emoji: "🏪",
     label: "BUSINESSES",
     copy: "Grow with community-powered discovery.",
   },
   {
-    emoji: "🌍",
     label: "COMMUNITIES",
     copy: "Strengthen trust through shared experiences.",
   },
@@ -43,9 +63,9 @@ export default function Slide21OneCommunity() {
       </div>
 
       <div className="absolute left-[6vw] right-[6vw] grid grid-cols-3 gap-[2vw]" style={{ top: "18.6vw" }}>
-        {CARDS.map((card) => (
+        {CARDS.map((card, i) => (
           <div key={card.label} className="p-[2vw]" style={{ borderRadius: "0.8vw", border: "1px solid rgba(202,146,43,0.25)", background: "rgba(250,246,239,0.04)" }}>
-            <div className="mb-[0.68vw]" style={{ fontSize: "2.4vw", lineHeight: 1 }}>{card.emoji}</div>
+            <div className="mb-[0.68vw]" style={{ lineHeight: 1 }}>{ICONS[i]}</div>
             <div className="font-body mb-[0.79vw]" style={{ fontSize: "1.1vw", color: "#CA922B", letterSpacing: "0.14em", fontWeight: 600 }}>{card.label}</div>
             <div className="font-display" style={{ fontSize: "1.9vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.3 }}>{card.copy}</div>
           </div>
