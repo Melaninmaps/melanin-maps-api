@@ -445,6 +445,28 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       })
       .returning();
 
+    // ── Notify business owner when their business is @mentioned ──────────────
+    if (mentionedBusinessId && post) {
+      const [mentionedBiz] = await db
+        .select({ submittedById: businessesTable.submittedById, name: businessesTable.name })
+        .from(businessesTable)
+        .where(eq(businessesTable.id, mentionedBusinessId))
+        .limit(1);
+      if (mentionedBiz?.submittedById && mentionedBiz.submittedById !== req.user.id) {
+        const tagLabel = mentionedBusinessTag === "community_favorite" ? "Community Favorite"
+          : mentionedBusinessTag === "hidden_gem" ? "Hidden Gem"
+          : mentionedBusinessTag === "supporting_local" ? "Supporting Local"
+          : mentionedBusinessTag === "visited_loved" ? "Visited & Loved"
+          : mentionedBusinessRating ? `${mentionedBusinessRating}-star rating`
+          : "mentioned";
+        sendPushToUser(mentionedBiz.submittedById, {
+          title: "Your business was mentioned! 🎉",
+          body: `${post.authorName} tagged ${mentionedBiz.name} as "${tagLabel}" in the community feed.`,
+          data: { screen: "business", id: mentionedBusinessId },
+        }).catch(() => {});
+      }
+    }
+
     // ── KinfolkAI: suggest Black-owned alternatives when post is negative + business is non-minority ──
     const NEGATIVE_KEYWORDS = [
       "racist", "racism", "discrimination", "discriminated", "profiled", "prejudice",
