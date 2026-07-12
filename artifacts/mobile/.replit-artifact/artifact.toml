@@ -22,6 +22,7 @@ run = "EXPO_PUBLIC_REPLIT_DEV_DOMAIN=$REPLIT_DEV_DOMAIN pnpm --filter @workspace
 build = [ "pnpm", "--filter", "@workspace/mobile", "run", "build" ]
 run = [ "pnpm", "--filter", "@workspace/mobile", "run", "serve" ]
 
+
 [services.env]
 PORT = "18115"
 BASE_PATH = "/mobile/"
