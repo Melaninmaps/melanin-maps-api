@@ -1,82 +1,90 @@
 [
   {
-    "id": "c1-slide-01-welcome",
+    "id": "cb-slide-01-cover",
     "position": 1,
-    "filepath": "src/pages/slides/Slide01Welcome.tsx",
-    "title": "Welcome Home",
-    "description": "Opening title slide — community and belonging",
+    "filepath": "src/pages/slides/CB01Cover.tsx",
+    "title": "Become a Community Builder",
+    "description": "Opening cover — Community Builder deck identity",
     "speakerNotes": ""
   },
   {
-    "id": "c1-slide-02-directions",
+    "id": "cb-slide-02-what-is-it",
     "position": 2,
-    "filepath": "src/pages/slides/Slide02Directions.tsx",
-    "title": "Life Doesn't Come With Directions",
-    "description": "The universal struggle — navigating life's big transitions alone",
+    "filepath": "src/pages/slides/CB02WhatIsIt.tsx",
+    "title": "What Is It?",
+    "description": "One sentence + People → Community → Businesses → Belonging flow",
     "speakerNotes": ""
   },
   {
-    "id": "c1-slide-03-intro",
+    "id": "cb-slide-03-who-is-it-for",
     "position": 3,
-    "filepath": "src/pages/slides/Slide03Intro.tsx",
-    "title": "What If Community Came With You?",
-    "description": "Platform reveal — Mapping With Melanin as the solution",
+    "filepath": "src/pages/slides/CB03WhoIsItFor.tsx",
+    "title": "Who Is It For?",
+    "description": "Six situations with phone mockup",
     "speakerNotes": ""
   },
   {
-    "id": "c1-slide-04-journeys",
+    "id": "cb-slide-04-how-it-works",
     "position": 4,
-    "filepath": "src/pages/slides/Slide04Journeys.tsx",
-    "title": "Every Journey Starts Somewhere",
-    "description": "Seven life journey types the platform serves",
+    "filepath": "src/pages/slides/CB04HowItWorks.tsx",
+    "title": "How Does It Work?",
+    "description": "Discover → Connect → Support → Recommend → Strengthen flywheel",
     "speakerNotes": ""
   },
   {
-    "id": "c1-slide-05-hubs",
+    "id": "cb-slide-05-what-makes-it-different",
     "position": 5,
-    "filepath": "src/pages/slides/Slide05Hubs.tsx",
-    "title": "Community Hubs",
-    "description": "Living communities built around who you are — eight example hubs",
+    "filepath": "src/pages/slides/CB05WhatMakesItDifferent.tsx",
+    "title": "What Makes It Different?",
+    "description": "NOT vs INSTEAD two-column contrast",
     "speakerNotes": ""
   },
   {
-    "id": "c1-slide-06-built",
+    "id": "cb-slide-06-why-businesses-love-it",
     "position": 6,
-    "filepath": "src/pages/slides/Slide06BuiltByYou.tsx",
-    "title": "Built By People Like You",
-    "description": "Eight creator and community features powered by members",
+    "filepath": "src/pages/slides/CB06WhyBusinessesLoveIt.tsx",
+    "title": "Why Businesses Love It",
+    "description": "We send customers to THEIR website/booking/social + phone",
     "speakerNotes": ""
   },
   {
-    "id": "c1-slide-07-safety",
+    "id": "cb-slide-07-why-community-members-love-it",
     "position": 7,
-    "filepath": "src/pages/slides/Slide07Safety.tsx",
-    "title": "Safety That Travels With You",
-    "description": "Six community-powered safety features",
+    "filepath": "src/pages/slides/CB07WhyCommunityMembersLoveIt.tsx",
+    "title": "Why Community Members Love It",
+    "description": "Six emotional benefit cards",
     "speakerNotes": ""
   },
   {
-    "id": "c1-slide-08-businesses",
+    "id": "cb-slide-08-meet-kinfolkai",
     "position": 8,
-    "filepath": "src/pages/slides/Slide08Businesses.tsx",
-    "title": "Businesses Worth Discovering",
-    "description": "How minority-owned businesses are featured and celebrated",
+    "filepath": "src/pages/slides/CB08MeetKinfolkAI.tsx",
+    "title": "Meet KinfolkAI™",
+    "description": "Learns / Suggests / Protects / Connects / Grows",
     "speakerNotes": ""
   },
   {
-    "id": "c1-slide-09-ai",
+    "id": "cb-slide-09-network-effect",
     "position": 9,
-    "filepath": "src/pages/slides/Slide09AI.tsx",
-    "title": "AI That Understands Your Journey",
-    "description": "Kinfolk AI — personalized roadmaps, recommendations, and digests",
+    "filepath": "src/pages/slides/CB09WhatHappensWhenMoreJoin.tsx",
+    "title": "What Happens When More People Join?",
+    "description": "Everyday community flywheel cascade",
     "speakerNotes": ""
   },
   {
-    "id": "c1-slide-10-closing",
+    "id": "cb-slide-10-how-can-you-help",
     "position": 10,
-    "filepath": "src/pages/slides/Slide10Closing.tsx",
-    "title": "This Isn't Just Another App",
-    "description": "Closing — community grows stronger every time someone shares",
+    "filepath": "src/pages/slides/CB10HowCanYouHelp.tsx",
+    "title": "How Can You Help?",
+    "description": "Seven ambassador action cards",
+    "speakerNotes": ""
+  },
+  {
+    "id": "cb-slide-11-closing",
+    "position": 11,
+    "filepath": "src/pages/slides/CB11Closing.tsx",
+    "title": "Closing — Welcome",
+    "description": "Full-screen closing quote with Cormorant Garamond",
     "speakerNotes": ""
   }
 ]
