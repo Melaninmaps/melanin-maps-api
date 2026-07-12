@@ -4,6 +4,7 @@ export const modules: ModuleMap = {
   "./components/mockups/CommunityBoundaries.tsx": () => import("../components/mockups/CommunityBoundaries.tsx"),
   "./components/mockups/hero-modes/DarkMode.tsx": () => import("../components/mockups/hero-modes/DarkMode.tsx"),
   "./components/mockups/hero-modes/LightMode.tsx": () => import("../components/mockups/hero-modes/LightMode.tsx"),
+  "./components/mockups/profiles/BusinessEditProfile.tsx": () => import("../components/mockups/profiles/BusinessEditProfile.tsx"),
   "./components/mockups/profiles/BusinessOwnerProfile.tsx": () => import("../components/mockups/profiles/BusinessOwnerProfile.tsx"),
   "./components/mockups/profiles/BusinessOwnerProfileVisitor.tsx": () => import("../components/mockups/profiles/BusinessOwnerProfileVisitor.tsx"),
   "./components/mockups/profiles/CommunityPage.tsx": () => import("../components/mockups/profiles/CommunityPage.tsx"),
