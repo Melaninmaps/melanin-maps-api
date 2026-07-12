@@ -18,7 +18,7 @@ export default function CB01Cover() {
         </h1>
         <div style={{ width: "6vw", height: "3px", background: "#CA922B", marginBottom: "2.2vw", opacity: 0.8 }} />
         <div className="font-body text-center" style={{ fontSize: "1.8vw", color: "#A87A40", fontWeight: 300, lineHeight: 1.6, maxWidth: "52vw" }}>
-          More than a map. A community that helps people belong.
+          You&rsquo;re not just sharing an app.<br />You&rsquo;re helping someone find their community.
         </div>
       </div>
     </div>
