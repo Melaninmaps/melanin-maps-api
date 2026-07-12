@@ -90,6 +90,7 @@ export default function EditBusinessProfile() {
   const [addLinkText, setAddLinkText] = useState("");
   const [addingLink, setAddingLink] = useState(false);
   const [introVideoUrl, setIntroVideoUrl] = useState<string | null>(null);
+  const [hasFeaturedVideo, setHasFeaturedVideo] = useState(false);
   const [uploadingIntroVideo, setUploadingIntroVideo] = useState(false);
   type DaySchedule = { open: string; close: string } | null;
   const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -129,6 +130,7 @@ export default function EditBusinessProfile() {
           setCoverUrl(b.imageUrl ?? null);
           setVideos(b.videos ?? []);
           setIntroVideoUrl(b.introVideoUrl ?? null);
+          setHasFeaturedVideo(!!(b as any).featuredVideoUrl);
           setWeeklySchedule((b.weeklySchedule as Record<string, { open: string; close: string } | null>) ?? {});
           setShowAvailability(b.showAvailability ?? false);
         }
@@ -188,7 +190,18 @@ export default function EditBusinessProfile() {
 
       if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setOriginal({ ...form });
-      Alert.alert("Changes saved!", "Your business profile has been updated.", [{ text: "OK", onPress: () => router.back() }]);
+      if (!hasFeaturedVideo) {
+        Alert.alert(
+          "Profile saved!",
+          "KinfolkAI has conversation starters ready to help you introduce yourself to the community. Want to set up your video now?",
+          [
+            { text: "Maybe Later", style: "cancel", onPress: () => router.back() },
+            { text: "Let's Go", onPress: () => router.replace("/business-owner/featured-video" as never) },
+          ]
+        );
+      } else {
+        Alert.alert("Changes saved!", "Your business profile has been updated.", [{ text: "OK", onPress: () => router.back() }]);
+      }
     } catch {
       Alert.alert("Save failed", "Something went wrong. Please try again.");
     } finally { setSaving(false); }

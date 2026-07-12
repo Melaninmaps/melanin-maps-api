@@ -1,31 +1,21 @@
 const GOLD = "#CA922B";
 const BG = "#0F0800";
+const CARD = "#1A0E00";
 const CARD2 = "#231200";
 const BORDER = "rgba(255,255,255,0.08)";
-const MUTED = "rgba(255,255,255,0.4)";
-const GREEN = "#2D7A4F";
+const MUTED = "rgba(255,255,255,0.45)";
 
-const PURPOSES = [
-  { id: "intro", label: "Owner Introduction", emoji: "👋" },
-  { id: "product", label: "Product / Service Demo", emoji: "✨" },
-  { id: "testimonial", label: "Customer Testimonial", emoji: "💬" },
-  { id: "behind_scenes", label: "Behind the Scenes", emoji: "🎬" },
-  { id: "event", label: "Event Highlight", emoji: "🎉" },
-  { id: "community", label: "Community Impact", emoji: "❤️" },
+const SAMPLE_PROMPTS = [
+  "Why did you start this business? What happened in your life that made you decide this needed to exist?",
+  "What do you hope people feel when they walk through your door?",
+  "How do you give back to your community?",
+  "What keeps you motivated on difficult days?",
+  "If someone remembers only one thing about you after watching this video — what do you hope it is?",
 ];
-
-function Tab({ label, icon, active }: { label: string; icon: React.ReactNode; active: boolean }) {
-  return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 0", borderRadius: 9, background: active ? GOLD : "transparent" }}>
-      {icon}
-      <span style={{ color: active ? "#fff" : MUTED, fontSize: 12, fontWeight: 700, fontFamily: "system-ui" }}>{label}</span>
-    </div>
-  );
-}
 
 export function BizFeaturedVideo() {
   return (
-    <div style={{ minHeight: "100vh", background: BG, fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: BG, fontFamily: "system-ui, -apple-system, sans-serif", overflowY: "auto" }}>
       {/* Status bar */}
       <div style={{ display: "flex", justifyContent: "space-between", padding: "16px 24px 4px" }}>
         <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>9:41</span>
@@ -43,75 +33,55 @@ export function BizFeaturedVideo() {
         <span style={{ color: "#fff", fontSize: 16, fontWeight: 700, fontFamily: "Georgia, serif" }}>Featured Video</span>
       </div>
 
-      <div style={{ paddingBottom: 100 }}>
-        {/* Mode tabs */}
-        <div style={{ margin: "14px 16px 0", background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: 4, display: "flex", gap: 4 }}>
-          <Tab label="Upload to Platform" active={true}
-            icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>} />
-          <Tab label="Link to Social" active={false}
-            icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>} />
-        </div>
+      <div style={{ padding: "16px 16px 60px", display: "flex", flexDirection: "column", gap: 14 }}>
 
-        {/* Explainer */}
-        <div style={{ margin: "14px 16px 0", background: `${GOLD}0C`, border: `1px solid ${GOLD}25`, borderRadius: 16, padding: "18px 16px", textAlign: "center" }}>
-          <div style={{ fontSize: 28, marginBottom: 6 }}>🏠</div>
-          <p style={{ color: "#fff", fontSize: 16, fontWeight: 700, margin: "0 0 6px", fontFamily: "Georgia, serif" }}>Community Introduction</p>
-          <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, margin: 0, lineHeight: 1.6 }}>
-            Upload a video directly to the platform — no YouTube, no public feed. Speak directly to our community in a space that's built for you.
+        {/* KinfolkAI card */}
+        <div style={{ background: `${GOLD}10`, border: `1px solid ${GOLD}30`, borderRadius: 16, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: GOLD, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{ color: "#fff", fontSize: 14, fontWeight: 800 }}>K</span>
+            </div>
+            <span style={{ color: GOLD, fontSize: 13, fontWeight: 700 }}>KinfolkAI</span>
+          </div>
+          <p style={{ color: "#fff", fontSize: 17, fontWeight: 700, margin: 0, fontFamily: "Georgia, serif" }}>Need some inspiration?</p>
+          <p style={{ color: MUTED, fontSize: 13, margin: 0, lineHeight: 1.65 }}>
+            People connect with stories more than sales. Talk as if you're welcoming a new neighbor into your business for the first time.
+          </p>
+          <p style={{ color: MUTED, fontSize: 13, margin: 0, lineHeight: 1.65 }}>
+            You don't have to be perfect. Just be yourself.
           </p>
         </div>
 
-        {/* Bullets */}
-        <div style={{ margin: "12px 16px 0", background: CARD2, border: `1px solid ${BORDER}`, borderRadius: 14, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
-          {[
-            "Hosted privately — only visible inside Mapping With Melanin",
-            "Great for personal intros you wouldn't post publicly",
-            "Up to 5 minutes, any common video format",
-            "Plays inline on your business listing",
-          ].map(b => (
-            <div key={b} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="2.5" style={{ flexShrink: 0, marginTop: 2 }}><polyline points="20 6 9 17 4 12"/></svg>
-              <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, lineHeight: 1.5, fontFamily: "system-ui" }}>{b}</span>
+        {/* Conversation starters card */}
+        <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: "14px 16px", display: "flex", flexDirection: "column" }}>
+          <p style={{ color: "#fff", fontSize: 15, fontWeight: 700, margin: "0 0 4px", fontFamily: "Georgia, serif" }}>Your conversation starters</p>
+          <p style={{ color: MUTED, fontSize: 12, margin: "0 0 14px", lineHeight: 1.5 }}>Pick any 2–5 to answer. Pause between each one.</p>
+
+          {SAMPLE_PROMPTS.map((q, i) => (
+            <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "12px 0", borderTop: i > 0 ? `1px solid ${BORDER}` : "none" }}>
+              <div style={{ width: 24, height: 24, borderRadius: 12, background: `${GOLD}20`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <span style={{ color: GOLD, fontSize: 11, fontWeight: 800 }}>{i + 1}</span>
+              </div>
+              <p style={{ color: i === SAMPLE_PROMPTS.length - 1 ? GOLD : "rgba(255,255,255,0.85)", fontSize: 13, margin: 0, lineHeight: 1.6, fontStyle: i === SAMPLE_PROMPTS.length - 1 ? "italic" : "normal" }}>{q}</p>
             </div>
           ))}
         </div>
 
-        {/* Upload button */}
-        <div style={{ margin: "14px 16px 0", background: GOLD, borderRadius: 14, padding: "15px", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-          <span style={{ color: "#fff", fontSize: 15, fontWeight: 700 }}>Choose Video from Library</span>
+        {/* No rush hint */}
+        <p style={{ color: MUTED, fontSize: 12, textAlign: "center", margin: 0, lineHeight: 1.6 }}>
+          No rush — come back when you're in the setting, lighting, and attire that represents your brand.
+        </p>
+
+        {/* CTA: Ready */}
+        <div style={{ background: GOLD, borderRadius: 14, padding: "15px", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          <span style={{ color: "#fff", fontSize: 15, fontWeight: 700 }}>I'm ready — let's film</span>
         </div>
 
-        {/* Caption field */}
-        <div style={{ margin: "16px 16px 0" }}>
-          <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: 700, margin: "0 0 8px" }}>Video Caption (optional)</p>
-          <div style={{ background: CARD2, border: `1px solid rgba(255,255,255,0.12)`, borderRadius: 12, padding: "10px 12px" }}>
-            <p style={{ color: MUTED, fontSize: 13, margin: 0 }}>e.g. "Meet the Owner" or "Why We Do This"</p>
-          </div>
-        </div>
-
-        {/* Purpose picker */}
-        <div style={{ margin: "14px 16px 0" }}>
-          <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: 700, margin: "0 0 8px" }}>What does this video showcase?</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {PURPOSES.map((p, i) => (
-              <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 20, border: `1.5px solid ${i === 0 ? GOLD : BORDER}`, background: i === 0 ? `${GOLD}18` : "transparent" }}>
-                <span style={{ fontSize: 13 }}>{p.emoji}</span>
-                <span style={{ color: i === 0 ? GOLD : MUTED, fontSize: 12, fontWeight: i === 0 ? 700 : 400, fontFamily: "system-ui" }}>{p.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* OR divider to hint at link tab */}
-        <div style={{ margin: "20px 16px 0", display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ flex: 1, height: 1, background: BORDER }} />
-          <span style={{ color: MUTED, fontSize: 11, fontWeight: 600 }}>OR link to social instead</span>
-          <div style={{ flex: 1, height: 1, background: BORDER }} />
-        </div>
-        <div style={{ margin: "10px 16px 0", background: CARD2, border: `1px solid ${BORDER}`, borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          <span style={{ color: MUTED, fontSize: 12 }}>Switch to "Link to Social" tab to pin a YouTube, TikTok, or Instagram video</span>
+        {/* Ghost CTA: Save & come back */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, paddingBottom: 6 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={MUTED} strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          <span style={{ color: MUTED, fontSize: 13 }}>Save my prompts & come back later</span>
         </div>
       </div>
     </div>
