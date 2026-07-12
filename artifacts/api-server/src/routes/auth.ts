@@ -796,7 +796,7 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
       access_token: "",
     };
     const sid = await createSession(sessionData);
-    res.json({ token: sid });
+    res.json({ token: sid, profileSetupComplete: user.profileSetupComplete ?? false });
   } catch (err) {
     req.log.error({ err }, "POST /api/auth/apple error");
     res.status(500).json({ error: "Apple Sign-In failed. Please try again." });

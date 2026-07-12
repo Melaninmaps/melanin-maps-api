@@ -16,6 +16,8 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as AppleAuthentication from "expo-apple-authentication";
+import * as Crypto from "expo-crypto";
 import { useColors } from "@/hooks/useColors";
 import { useAuth, getApiBaseUrl } from "@/lib/auth";
 
@@ -76,6 +78,63 @@ export default function SignupScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  const [appleAvailable, setAppleAvailable] = React.useState(false);
+  React.useEffect(() => {
+    if (Platform.OS === "ios") {
+      void AppleAuthentication.isAvailableAsync().then(setAppleAvailable);
+    }
+  }, []);
+
+  const handleAppleSignUp = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const rawNonce = Array.from(
+        await Crypto.getRandomBytesAsync(32)
+      ).map(b => b.toString(16).padStart(2, "0")).join("");
+      const hashedNonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        rawNonce,
+      );
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+        nonce: hashedNonce,
+      });
+      if (!credential.identityToken) throw new Error("No identity token from Apple");
+      const base = getApiBaseUrl();
+      const res = await fetch(`${base}/api/auth/apple`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identityToken: credential.identityToken,
+          nonce: rawNonce,
+          appleUserId: credential.user,
+          email: credential.email ?? undefined,
+          firstName: credential.fullName?.givenName ?? undefined,
+          lastName: credential.fullName?.familyName ?? undefined,
+        }),
+      });
+      const data = await res.json() as { token?: string; error?: string; profileSetupComplete?: boolean };
+      if (!res.ok || !data.token) {
+        setError(data.error ?? "Apple Sign-Up failed. Please try again.");
+        return;
+      }
+      await SecureStore.setItemAsync("auth_session_token", data.token);
+      await refreshUser();
+      router.replace(data.profileSetupComplete ? "/(tabs)" : "/profile-setup");
+    } catch (err: unknown) {
+      const appleErr = err as { code?: string };
+      if (appleErr?.code !== "ERR_REQUEST_CANCELED") {
+        setError("Apple Sign-Up failed. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const [dobMonth, setDobMonth] = useState("");
   const [dobDay, setDobDay] = useState("");
@@ -249,6 +308,23 @@ export default function SignupScreen() {
               )}
             </View>
           </View>
+        )}
+
+        {step === 0 && appleAvailable && (
+          <>
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={14}
+              style={{ width: "100%", height: 52, marginBottom: 12 }}
+              onPress={handleAppleSignUp}
+            />
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+              <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>or sign up with email</Text>
+              <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+            </View>
+          </>
         )}
 
         {step === 0 && (

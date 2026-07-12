@@ -114,14 +114,14 @@ export default function LoginScreen() {
           lastName: credential.fullName?.familyName ?? undefined,
         }),
       });
-      const data = await res.json() as { token?: string; error?: string };
+      const data = await res.json() as { token?: string; error?: string; profileSetupComplete?: boolean };
       if (!res.ok || !data.token) {
         setError(data.error ?? "Apple Sign-In failed. Please try again.");
         return;
       }
       await SecureStore.setItemAsync("auth_session_token", data.token);
       await refreshUser();
-      router.replace("/(tabs)");
+      router.replace(data.profileSetupComplete === false ? "/profile-setup" : "/(tabs)");
     } catch (err: unknown) {
       const appleErr = err as { code?: string };
       if (appleErr?.code !== "ERR_REQUEST_CANCELED") {
