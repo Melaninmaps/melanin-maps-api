@@ -42,8 +42,6 @@ async function initStripe() {
   }
 }
 
-await initStripe();
-
 // Startup configuration checks — warn loudly about missing secrets before first request
 (function checkRequiredConfig() {
   const warnings: string[] = [];
@@ -76,4 +74,8 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  // Run Stripe init in the background — must not block server startup
+  // or the health check will time out before the server starts listening.
+  initStripe().catch((err) => logger.error({ err }, "Background Stripe init failed"));
 });
