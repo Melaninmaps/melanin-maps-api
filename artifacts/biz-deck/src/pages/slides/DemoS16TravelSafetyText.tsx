@@ -13,7 +13,7 @@ export default function DemoS16TravelSafetyText() {
         <div style={{ width: "5vw", height: "2px", background: "#CA922B", marginBottom: "2vw", opacity: 0.8 }} />
 
         <div className="font-body" style={{ fontSize: "1.1vw", color: "#A87A40", lineHeight: 1.75, marginBottom: "3vw", maxWidth: "62vw" }}>
-          Black women are statistically the most targeted demographic for travel-related harm — and the least served by mainstream safety apps. Mapping With Melanin™ was built, in part, to change that.
+          Women of the melanated diaspora are statistically among the most targeted demographics for travel-related harm — and the least served by mainstream safety apps. Mapping With Melanin™ was built, in part, to change that.
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2.2vw 4vw" }}>
@@ -21,7 +21,7 @@ export default function DemoS16TravelSafetyText() {
             { head: "Before you leave: Know the area", body: "Neighborhood Safety surveys give community-sourced confidence scores for any zip code or city — before you book a hotel or accept a meeting invite." },
             { head: "While you're there: Check-In active", body: "Schedule a safety check-in with a trusted contact. If you don't confirm by the time you set, they're alerted immediately — no app required on their end." },
             { head: "In the moment: Share your location", body: "One tap sends a live location link to anyone — a friend, a family member, a community circle. They see exactly where you are, in real time, for exactly as long as you choose." },
-            { head: "If something happens: Tools exist", body: "Anonymous report, Report an Unsafe Space, and Submit Safety Tip give Black women a voice that actually reaches other community members — not just a report that disappears into a form." },
+            { head: "If something happens: Tools exist", body: "Anonymous report, Report an Unsafe Space, and Submit Safety Tip give women of the diaspora a voice that actually reaches other community members — not just a report that disappears into a form." },
           ].map((p, i) => (
             <div key={i} style={{ display: "flex", gap: "1vw", alignItems: "flex-start" }}>
               <div style={{ width: "1.8vw", height: "1.8vw", borderRadius: "50%", background: "rgba(202,146,43,0.15)", border: "1px solid rgba(202,146,43,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "0.1vw" }}>

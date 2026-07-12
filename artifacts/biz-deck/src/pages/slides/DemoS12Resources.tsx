@@ -20,7 +20,7 @@ export default function DemoS12Resources() {
           We can't build a platform for the whole person and ignore mental health. The melanated diaspora faces disproportionate barriers to mental health care — stigma, cost, cultural mismatch. We put these resources here because being a trusted community platform means showing up for the hardest moments too.
         </div>
         <div style={{ marginTop: "2vw", display: "flex", flexDirection: "column", gap: "0.55vw" }}>
-          {["Crisis resources are one tap away — not buried three menus deep", "Black-specific mental health organizations curated, not generically listed", "Meeting locators serve recovery communities with shared cultural context", "Resources appear in the community tab — normalized, not hidden", "Our presence here signals that wellness is part of belonging"].map((f, i) => (
+          {["Crisis resources are one tap away — not buried three menus deep", "Culturally aligned mental health organizations curated, not generically listed", "Meeting locators serve recovery communities with shared cultural context", "Resources appear in the community tab — normalized, not hidden", "Our presence here signals that wellness is part of belonging"].map((f, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.7vw" }}>
               <svg width="0.75vw" height="0.75vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
               <span className="font-body" style={{ fontSize: "0.85vw", color: "#3A2010" }}>{f}</span>

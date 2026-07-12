@@ -182,7 +182,7 @@ Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-5.1",
+      model: "gpt-4o",
       max_completion_tokens: 8192,
       messages: [
         {

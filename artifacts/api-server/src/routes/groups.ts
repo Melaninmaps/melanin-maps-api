@@ -480,7 +480,7 @@ Return ONLY valid JSON matching this exact TypeScript type — no markdown, no p
 }`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-5-mini",
+      model: "gpt-4o-mini",
       max_completion_tokens: 4096,
       messages: [{ role: "user", content: prompt }],
     });

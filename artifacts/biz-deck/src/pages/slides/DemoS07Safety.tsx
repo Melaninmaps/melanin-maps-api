@@ -17,7 +17,7 @@ export default function DemoS07Safety() {
           Travel with backup.<br /><span style={{ color: "#CA922B" }}>Always.</span>
         </div>
         <div className="font-body" style={{ fontSize: "0.92vw", color: "#A87A40", lineHeight: 1.7 }}>
-          People of color, Black women, and LGBTQ+ community members face real risk in everyday situations. These tools exist because that risk is real — and the community deserves infrastructure to meet it.
+          People of color, women of the diaspora, and LGBTQ+ community members face real risk in everyday situations. These tools exist because that risk is real — and the community deserves infrastructure to meet it.
         </div>
         <div style={{ marginTop: "2vw", display: "flex", flexDirection: "column", gap: "0.8vw" }}>
           {[

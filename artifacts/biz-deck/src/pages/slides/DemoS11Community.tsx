@@ -27,7 +27,7 @@ export default function DemoS11Community() {
           Connect with people who share<br /><span style={{ color: "#CA922B" }}>your culture.</span>
         </div>
         <div className="font-body" style={{ fontSize: "0.95vw", color: "#A87A40", lineHeight: 1.7 }}>
-          Social media algorithms suppress Black content — they deprioritize it and force community pages to pay for reach. We built a feed where community voices aren't filtered, Black events surface first, and local businesses get authentic exposure without paying for it.
+          Social media algorithms suppress minority community content — they deprioritize it and force community pages to pay for reach. We built a feed where community voices aren't filtered, diaspora events surface first, and local businesses get authentic exposure without paying for it.
         </div>
         <div style={{ marginTop: "2vw", display: "flex", flexDirection: "column", gap: "0.55vw" }}>
           {["Algorithm-free feed: no paid boosting, no suppression", "Events reach the people most likely to show up and care", "Groups create structured community around shared interests or travel", "Audience ratings protect families without restricting creators", "Content stays in the community — no external data harvesting"].map((f, i) => (

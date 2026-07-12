@@ -14,6 +14,10 @@ import { useColors } from "@/hooks/useColors";
 import * as SecureStore from "expo-secure-store";
 import { useAuth } from "@/lib/auth";
 
+function getApiBase(): string {
+  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+}
+
 type NotifType = "all" | "safety" | "events" | "business" | "community" | "weather" | "travel";
 
 interface Notif {
@@ -186,7 +190,7 @@ export default function NotificationCenterScreen() {
           : null;
         const headers: Record<string, string> = {};
         if (token) headers["Authorization"] = `Bearer ${token}`;
-        const res = await fetch("/api/notifications", {
+        const res = await fetch(`${getApiBase()}/api/notifications`, {
           headers,
           credentials: Platform.OS === "web" ? "include" : "omit",
         });
@@ -213,7 +217,7 @@ export default function NotificationCenterScreen() {
         ? await SecureStore.getItemAsync("auth_session_token")
         : null;
       if (!token) return;
-      fetch("/api/notifications/mark-all-read", {
+      fetch(`${getApiBase()}/api/notifications/mark-all-read`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       }).catch(() => {});
@@ -227,7 +231,7 @@ export default function NotificationCenterScreen() {
         ? await SecureStore.getItemAsync("auth_session_token")
         : null;
       if (!token) return;
-      fetch(`/api/notifications/${id}/read`, {
+      fetch(`${getApiBase()}/api/notifications/${id}/read`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       }).catch(() => {});

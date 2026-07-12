@@ -20,7 +20,7 @@ export default function DemoS09KinfolkAI() {
           Generic AI gives generic answers. KinfolkAI is trained on actual community behavior — what gets saved, which neighborhoods score highest, which businesses earn trust, and what the melanated diaspora actually values. It's the difference between a search engine and a trusted guide.
         </div>
         <div style={{ marginTop: "2vw", display: "flex", flexDirection: "column", gap: "0.55vw" }}>
-          {["Community data + lived culture = recommendations that actually fit", "Multi-turn chat learns your preferences over time", "Trip planning surfaces Black-owned options others miss entirely", "Personalization depth scales with your membership tier", "No sponsored answers — every result is merit-based"].map((f, i) => (
+          {["Community data + lived culture = recommendations that actually fit", "Multi-turn chat learns your preferences over time", "Trip planning surfaces minority-owned options others miss entirely", "Personalization depth scales with your membership tier", "No sponsored answers — every result is merit-based"].map((f, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.7vw" }}>
               <svg width="0.75vw" height="0.75vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
               <span className="font-body" style={{ fontSize: "0.85vw", color: "#D9C4A3" }}>{f}</span>

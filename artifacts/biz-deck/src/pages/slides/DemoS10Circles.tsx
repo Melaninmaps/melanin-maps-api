@@ -20,7 +20,7 @@ export default function DemoS10Circles() {
           Discovery is personal. Sharing is how community wealth moves. When you save a business to a circle and share it with four friends, that business gets discovered four new times — with pre-built social trust already attached. Circles are the community referral engine. They just don't look like one.
         </div>
         <div style={{ marginTop: "2vw", display: "flex", flexDirection: "column", gap: "0.55vw" }}>
-          {["Shared circles multiply community trust organically — no algorithm needed", "Group trip planning creates economic accountability to travel Black-owned", "KinfolkAI curation removes 'where should we go?' decision paralysis", "Public circles let community curators build cultural authority", "Circle activity contributes to Trust Score for every saved business"].map((f, i) => (
+          {["Shared circles multiply community trust organically — no algorithm needed", "Group trip planning creates economic accountability to support minority-owned businesses", "KinfolkAI curation removes 'where should we go?' decision paralysis", "Public circles let community curators build cultural authority", "Circle activity contributes to Trust Score for every saved business"].map((f, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.7vw" }}>
               <svg width="0.75vw" height="0.75vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
               <span className="font-body" style={{ fontSize: "0.85vw", color: "#3A2010" }}>{f}</span>

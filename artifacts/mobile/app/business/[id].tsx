@@ -167,7 +167,7 @@ export default function BusinessDetailScreen() {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`/api/plate-passes/${id}/count`)
+    fetch(`${process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : ""}/api/plate-passes/${id}/count`)
       .then(r => r.ok ? r.json() : null)
       .then((d: { thisWeek?: number } | null) => { if (d?.thisWeek) setPlatePassCount(d.thisWeek); })
       .catch(() => {});

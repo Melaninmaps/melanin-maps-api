@@ -224,7 +224,7 @@ Every time you recommend an action that requires hiring someone or finding a ser
 Each phase should have 3-5 specific, actionable steps. When steps involve hiring, contracting, or finding a service — always name a minority-owned or Black-owned business to start with. The aiInsight should be warm, culturally aware, and feel like a trusted friend giving real advice.`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-5.1",
+      model: "gpt-4o",
       max_completion_tokens: 3000,
       messages: [{ role: "user", content: prompt }],
     });

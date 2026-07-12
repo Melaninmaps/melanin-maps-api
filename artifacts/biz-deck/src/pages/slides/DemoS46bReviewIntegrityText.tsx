@@ -174,7 +174,7 @@ export default function DemoS46bReviewIntegrityText() {
           letterSpacing: "0.12em",
         }}
       >
-        47 / 59
+        47 / 75
       </div>
     </div>
   );

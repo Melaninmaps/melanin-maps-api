@@ -8,7 +8,7 @@ export default function Slide01Welcome() {
         <img
           src={`${base}hero-family.png`}
           className="w-full h-full object-cover"
-          alt="Black American family"
+          alt="Family from the melanated diaspora"
         />
         <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, #1C0E06 0%, rgba(28,14,6,0.5) 45%, transparent 100%)" }} />
       </div>

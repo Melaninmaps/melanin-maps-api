@@ -92,7 +92,7 @@ export default function DemoS19Trust() {
               <div style={{ color: "#D9C4A3", fontSize: "0.48vw", marginTop: "0.15vw" }}>Marcus's Barber Studio · Verified Jan 2025</div>
             </div>
             <div style={{ color: "#5C3A1A", fontSize: "0.46vw" }}>VERIFICATION INCLUDES</div>
-            {["Business license confirmation", "Owner identity verification", "Physical location confirmation", "Black ownership attestation"].map((item, i) => (
+            {["Business license confirmation", "Owner identity verification", "Physical location confirmation", "Minority ownership attestation"].map((item, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5vw" }}>
                 <svg width="0.65vw" height="0.65vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                 <span style={{ color: "#D9C4A3", fontSize: "0.5vw" }}>{item}</span>

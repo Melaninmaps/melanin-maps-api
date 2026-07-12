@@ -33,7 +33,7 @@ export default function DemoS03Home() {
           Everything worth finding.<br /><span style={{ color: "#CA922B" }}>Right where you are.</span>
         </div>
         <div className="font-body" style={{ fontSize: "0.95vw", color: "#7B5408", lineHeight: 1.7 }}>
-          Visibility on this platform is earned by trust, not ad spend. When a Black-owned business surfaces first, community dollars stay in the community. We designed discovery to be intentional.
+          Visibility on this platform is earned by trust, not ad spend. When a minority-owned business surfaces first, community dollars stay in the community. We designed discovery to be intentional.
         </div>
         <div style={{ marginTop: "2vw", display: "flex", flexDirection: "column", gap: "0.55vw" }}>
           {[
