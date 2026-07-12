@@ -37,6 +37,14 @@ export const communityPostsTable = pgTable("community_posts", {
   repostAuthorName: varchar("repost_author_name", { length: 100 }),
   repostAuthorInitials: varchar("repost_author_initials", { length: 4 }),
   repostContent: text("repost_content"),
+  // Business mention stance — required when @mentioning a platform business
+  mentionedBusinessId: varchar("mentioned_business_id"),
+  mentionedBusinessName: varchar("mentioned_business_name", { length: 150 }),
+  mentionedBusinessTag: varchar("mentioned_business_tag", { length: 50 }), // community_favorite | hidden_gem | supporting_local | visited_loved
+  mentionedBusinessRating: integer("mentioned_business_rating"), // 3–5 stars (optional when tag is set)
+  // Moderation & trust
+  requiresModeration: boolean("requires_moderation").notNull().default(false),
+  isTrustedAuthor: boolean("is_trusted_author").notNull().default(false),
   upvotes: integer("upvotes").notNull().default(0),
   downvotes: integer("downvotes").notNull().default(0),
   commentsCount: integer("comments_count").notNull().default(0),

@@ -1,131 +1,113 @@
 import { Feather } from "@expo/vector-icons";
-import React from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import type { Business } from "@/constants/types";
+import * as SecureStore from "expo-secure-store";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 
-export interface SelectedBusiness {
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
+
+export interface BusinessResult {
   id: string;
   name: string;
+  category: string | null;
+  city: string | null;
 }
+
+/** @deprecated – legacy prop kept for backwards-compat; pass query only */
+export interface SelectedBusiness { id: string; name: string; }
 
 interface Props {
   query: string;
-  businesses: Business[];
-  onSelect: (business: SelectedBusiness) => void;
+  onSelect: (biz: BusinessResult) => void;
 }
 
-export function BusinessMentionPicker({ query, businesses, onSelect }: Props) {
+export function BusinessMentionPicker({ query, onSelect }: Props) {
   const colors = useColors();
+  const [results, setResults] = useState<BusinessResult[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const matches = query.length === 0
-    ? businesses.slice(0, 5)
-    : businesses
-        .filter((b) => b.name.toLowerCase().includes(query.toLowerCase()))
-        .slice(0, 5);
+  useEffect(() => {
+    if (query.length < 1) { setResults([]); return; }
+    let cancelled = false;
+    const run = async () => {
+      setLoading(true);
+      try {
+        const token = (Platform.OS as string) !== "web"
+          ? await SecureStore.getItemAsync("auth_session_token").catch(() => null)
+          : null;
+        const res = await fetch(
+          `${getApiBase()}/api/businesses/mention-search?q=${encodeURIComponent(query)}`,
+          { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        );
+        if (!res.ok || cancelled) return;
+        const data = await res.json() as { businesses: BusinessResult[] };
+        if (!cancelled) setResults(data.businesses.slice(0, 6));
+      } catch { /* ignore */ } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    const timer = setTimeout(() => void run(), 250);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [query]);
 
-  if (matches.length === 0) return null;
+  if (results.length === 0 && !loading) return null;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <Feather name="at-sign" size={13} color={colors.primary} />
-        <Text style={[styles.headerText, { color: colors.mutedForeground }]}>
-          {query ? `Businesses matching "${query}"` : "Tag a business"}
-        </Text>
+      <View style={[styles.sectionHeader, { borderBottomColor: colors.border }]}>
+        <Feather name="briefcase" size={11} color={colors.primary} />
+        <Text style={[styles.sectionLabel, { color: colors.primary }]}>Businesses</Text>
       </View>
-      <FlatList
-        data={matches}
-        keyExtractor={(b) => b.id}
-        scrollEnabled={false}
-        renderItem={({ item: b, index }) => (
-          <TouchableOpacity
-            style={[
-              styles.row,
-              { borderBottomColor: colors.border },
-              index === matches.length - 1 && styles.rowLast,
-            ]}
-            onPress={() => onSelect({ id: b.id, name: b.name })}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.avatar, { backgroundColor: colors.primary + "18" }]}>
-              <Feather name="briefcase" size={13} color={colors.primary} />
-            </View>
-            <View style={styles.info}>
-              <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
-                {b.name}
-              </Text>
-              <Text style={[styles.sub, { color: colors.mutedForeground }]} numberOfLines={1}>
-                {b.category} · {b.city}
-              </Text>
-            </View>
-            <View style={[styles.atBadge, { backgroundColor: colors.primary + "18" }]}>
-              <Text style={[styles.atBadgeText, { color: colors.primary }]}>@</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
+      {loading ? (
+        <View style={styles.loadingRow}><ActivityIndicator size="small" color={colors.primary} /></View>
+      ) : (
+        <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 220 }}>
+          {results.map(biz => (
+            <TouchableOpacity
+              key={biz.id}
+              style={[styles.row, { borderBottomColor: colors.border }]}
+              onPress={() => onSelect(biz)}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.icon, { backgroundColor: colors.primary + "20" }]}>
+                <Feather name="map-pin" size={14} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.name, { color: colors.foreground }]}>{biz.name}</Text>
+                {(biz.category || biz.city) && (
+                  <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+                    {[biz.category, biz.city].filter(Boolean).join(" · ")}
+                  </Text>
+                )}
+              </View>
+              <Feather name="chevron-right" size={13} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
-    marginBottom: 6,
-    borderRadius: 12,
-    borderWidth: 1,
-    overflow: "hidden",
+    borderRadius: 12, borderWidth: 1, marginBottom: 8, overflow: "hidden",
+    shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
+  sectionHeader: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    paddingHorizontal: 12, paddingVertical: 7, borderBottomWidth: 1,
   },
-  headerText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-  },
+  sectionLabel: { fontFamily: "Inter_700Bold", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5 },
+  loadingRow: { padding: 12, alignItems: "center" },
   row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 10,
-    borderBottomWidth: 1,
+    flexDirection: "row", alignItems: "center", gap: 10,
+    paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1,
   },
-  rowLast: {
-    borderBottomWidth: 0,
-  },
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  info: {
-    flex: 1,
-    gap: 2,
-  },
-  name: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 13,
-  },
-  sub: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 11,
-  },
-  atBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  atBadgeText: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 13,
-  },
+  icon: { width: 32, height: 32, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+  name: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  meta: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 1 },
 });

@@ -172,6 +172,25 @@ router.get("/businesses", async (req: Request, res: Response) => {
   }
 });
 
+// GET /businesses/mention-search?q= — lightweight name search for the @ mention picker
+router.get("/businesses/mention-search", async (req: Request, res: Response) => {
+  try {
+    const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+    if (!q) { res.json({ businesses: [] }); return; }
+    const result = await pool.query<{ id: string; name: string; category: string | null; city: string | null }>(
+      `SELECT id, name, category, city FROM businesses
+       WHERE name ILIKE $1
+       ORDER BY name
+       LIMIT 8`,
+      [`%${q}%`]
+    );
+    res.json({ businesses: result.rows });
+  } catch (err) {
+    req.log.error({ err }, "mention-search failed");
+    res.status(500).json({ businesses: [] });
+  }
+});
+
 router.post("/businesses/search-inquiry", async (req: any, res: Response) => {
   try {
     const { businessName, city, state, handle, category, contactEmail, contactHandle, notes } = req.body as {

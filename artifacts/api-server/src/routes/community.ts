@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { randomUUID } from "crypto";
 import multer from "multer";
-import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool, userPreferencesTable } from "@workspace/db";
+import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool, userPreferencesTable, usersTable } from "@workspace/db";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
@@ -82,6 +82,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
           UNION SELECT $1
         )
         AND (cp.visibility = 'public' OR cp.visibility = 'followers_only')
+        AND (cp.requires_moderation = false OR cp.author_id = $1)
         ORDER BY cp.created_at DESC
         LIMIT $2 OFFSET $3
       `, [viewerId, limit, offset]);
@@ -97,6 +98,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
           WHERE cp.visibility = 'public'
             AND (u.is_private = false OR u.is_private IS NULL OR cp.author_id IS NULL)
             AND cp.created_at > NOW() - INTERVAL '30 days'
+            AND cp.requires_moderation = false
           ORDER BY cp.created_at DESC
           LIMIT $1
         `, [poolSize]),
@@ -173,6 +175,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
         SELECT cp.* FROM community_posts cp
         LEFT JOIN users u ON u.id = cp.author_id
         WHERE cp.visibility = 'public'
+          AND cp.requires_moderation = false
           AND (
             u.is_private = false OR u.is_private IS NULL OR cp.author_id IS NULL
             ${followingClause}
@@ -260,6 +263,9 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       repostAuthorName,
       repostAuthorInitials,
       repostContent,
+      mentionedBusinessId,
+      mentionedBusinessTag,
+      mentionedBusinessRating,
     } = req.body as {
       content?: string;
       category?: string;
@@ -287,6 +293,9 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       repostAuthorName?: string;
       repostAuthorInitials?: string;
       repostContent?: string;
+      mentionedBusinessId?: string;
+      mentionedBusinessTag?: string;
+      mentionedBusinessRating?: number;
     };
 
     if (!content?.trim()) {
@@ -324,6 +333,45 @@ router.post("/community/posts", async (req: Request, res: Response) => {
         }
       }
     }
+
+    // ── Business mention stance validation ──────────────────────────────────────
+    const VALID_MENTION_TAGS = ["community_favorite", "hidden_gem", "supporting_local", "visited_loved"];
+    if (mentionedBusinessId) {
+      const hasValidTag = mentionedBusinessTag && VALID_MENTION_TAGS.includes(mentionedBusinessTag);
+      const hasValidRating = typeof mentionedBusinessRating === "number" && mentionedBusinessRating >= 3 && mentionedBusinessRating <= 5;
+      if (!hasValidTag && !hasValidRating) {
+        res.status(400).json({
+          error: "When mentioning a business, please attach a community stance tag or a rating of 3 stars or more.",
+          code: "BUSINESS_MENTION_STANCE_REQUIRED",
+        });
+        return;
+      }
+    }
+
+    // ── Determine moderation tier and trust level ─────────────────────────────
+    const [userRow] = await db
+      .select({ createdAt: usersTable.createdAt, memberType: usersTable.memberType, trustLevel: usersTable.trustLevel })
+      .from(usersTable)
+      .where(eq(usersTable.id, req.user.id))
+      .limit(1);
+
+    const accountCreatedAt = userRow?.createdAt ? new Date(userRow.createdAt) : new Date();
+    const accountAgeDays = (Date.now() - accountCreatedAt.getTime()) / (1000 * 60 * 60 * 24);
+
+    const [totalPostsRow] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(communityPostsTable)
+      .where(eq(communityPostsTable.authorId, req.user.id));
+    const totalPosts = totalPostsRow?.count ?? 0;
+
+    const isNewMember = accountAgeDays < 30 && totalPosts < 5;
+    const TRUSTED_MEMBER_TYPES = ["navigator", "trailblazer", "legacy_member", "founding", "community_builder"];
+    const isTrustedAuthor =
+      (userRow?.memberType != null && TRUSTED_MEMBER_TYPES.includes(userRow.memberType)) ||
+      (userRow?.trustLevel ?? 1) >= 3;
+
+    // New members who @mention a business go into the moderation queue
+    const requiresModeration = isNewMember && !!mentionedBusinessId;
 
     const filter = checkContent(content);
     if (!filter.ok) {
@@ -389,6 +437,11 @@ router.post("/community/posts", async (req: Request, res: Response) => {
         repostAuthorName: repostAuthorName?.trim() || null,
         repostAuthorInitials: repostAuthorInitials?.trim() || null,
         repostContent: repostContent?.trim() || null,
+        mentionedBusinessId: mentionedBusinessId ?? null,
+        mentionedBusinessTag: (mentionedBusinessId && mentionedBusinessTag && VALID_MENTION_TAGS.includes(mentionedBusinessTag)) ? mentionedBusinessTag : null,
+        mentionedBusinessRating: (mentionedBusinessId && typeof mentionedBusinessRating === "number" && mentionedBusinessRating >= 3) ? mentionedBusinessRating : null,
+        requiresModeration,
+        isTrustedAuthor,
       })
       .returning();
 
