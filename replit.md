@@ -64,3 +64,4 @@ Community discovery, travel, and business platform celebrating Black culture —
 ## Pointers
 
 - See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- For any SMS OTP / phone verification feature, always suggest Twilio Verify (not raw phone number + custom OTP logic)
