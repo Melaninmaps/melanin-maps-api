@@ -761,7 +761,7 @@ export default function BusinessDetailScreen() {
           <TouchableOpacity
             style={[styles.vibeCard, { backgroundColor: "#1A3B2B" }]}
             activeOpacity={0.85}
-            onPress={() => router.push({ pathname: "/travel-videos", params: { businessId: id, businessName: business.name } } as never)}
+            onPress={() => router.push({ pathname: "/business-vibes", params: { businessId: id, businessName: business.name } } as never)}
           >
             <Text style={styles.vibeCardEmoji}>🎥</Text>
             <View style={{ flex: 1 }}>

@@ -139,11 +139,13 @@ router.get("/community/posts", async (req: Request, res: Response) => {
 
     const locationTagFilter = typeof req.query.locationTag === "string" ? req.query.locationTag : undefined;
     const topicTagFilter = typeof req.query.topicTag === "string" ? req.query.topicTag : undefined;
+    const businessIdFilter = typeof req.query.businessId === "string" ? req.query.businessId : undefined;
     let filtered = posts;
     if (category && category !== "all") filtered = filtered.filter((p) => p.category === category);
     if (postType && postType !== "all") filtered = filtered.filter((p) => p.postType === postType);
     if (locationTagFilter) filtered = filtered.filter((p) => (p.locationTag as string | null | undefined)?.toLowerCase() === locationTagFilter.toLowerCase());
     if (topicTagFilter) filtered = filtered.filter((p) => (p.topicTag as string | null | undefined)?.toLowerCase() === topicTagFilter.toLowerCase());
+    if (businessIdFilter) filtered = filtered.filter((p) => p.businessId === businessIdFilter);
 
     res.json({ posts: filtered, total: filtered.length, offset, limit });
   } catch (err) {

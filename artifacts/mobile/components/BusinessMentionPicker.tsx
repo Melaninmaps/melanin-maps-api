@@ -4,10 +4,15 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native
 import type { Business } from "@/constants/types";
 import { useColors } from "@/hooks/useColors";
 
+export interface SelectedBusiness {
+  id: string;
+  name: string;
+}
+
 interface Props {
   query: string;
   businesses: Business[];
-  onSelect: (businessName: string) => void;
+  onSelect: (business: SelectedBusiness) => void;
 }
 
 export function BusinessMentionPicker({ query, businesses, onSelect }: Props) {
@@ -40,7 +45,7 @@ export function BusinessMentionPicker({ query, businesses, onSelect }: Props) {
               { borderBottomColor: colors.border },
               index === matches.length - 1 && styles.rowLast,
             ]}
-            onPress={() => onSelect(b.name)}
+            onPress={() => onSelect({ id: b.id, name: b.name })}
             activeOpacity={0.7}
           >
             <View style={[styles.avatar, { backgroundColor: colors.primary + "18" }]}>

@@ -22,7 +22,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { BusinessMentionPicker } from "@/components/BusinessMentionPicker";
+import { BusinessMentionPicker, type SelectedBusiness } from "@/components/BusinessMentionPicker";
 import { UserMentionPicker } from "@/components/UserMentionPicker";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import { PostDetailModal } from "@/components/PostDetailModal";
@@ -242,6 +242,9 @@ export default function CommunityScreen() {
   const { businesses } = useBusinesses();
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionMode, setMentionMode] = useState<"users" | "businesses">("users");
+  const [taggedBusiness, setTaggedBusiness] = useState<SelectedBusiness | null>(null);
+  const [newPostTagUrl, setNewPostTagUrl] = useState("");
+  const [newPostTagUrlIsSocialVideo, setNewPostTagUrlIsSocialVideo] = useState(false);
 
   const handlePostTextChange = (t: string) => {
     setNewPostText(t);
@@ -256,6 +259,15 @@ export default function CommunityScreen() {
   const handleMentionSelect = (mention: string) => {
     const updated = newPostText.replace(/@(\w*)$/, `@${mention} `);
     setNewPostText(updated);
+    setMentionQuery(null);
+    inputRef.current?.focus();
+  };
+
+  const handleBusinessMentionSelect = (biz: SelectedBusiness) => {
+    const slug = biz.name.replace(/\s+/g, "");
+    const updated = newPostText.replace(/@(\w*)$/, `@${slug} `);
+    setNewPostText(updated);
+    setTaggedBusiness(biz);
     setMentionQuery(null);
     inputRef.current?.focus();
   };
@@ -428,7 +440,13 @@ export default function CommunityScreen() {
           content: newPostText.trim(),
           category: newPostCategory,
           postType: newPostType,
-          businessLink: newPostType === "business" && newPostBusinessLink.trim() ? newPostBusinessLink.trim() : undefined,
+          businessId: taggedBusiness?.id ?? undefined,
+          businessName: taggedBusiness?.name ?? undefined,
+          businessLink: newPostTagUrl.trim()
+            ? newPostTagUrl.trim()
+            : newPostType === "business" && newPostBusinessLink.trim()
+              ? newPostBusinessLink.trim()
+              : undefined,
           visibility: newPostVisibility,
           mediaUrls: mediaAttachments.filter((m) => m.uploaded).map((m) => m.uploaded!),
           hasContentWarning: mediaAttachments.some((m) => m.isGraphic),
@@ -457,6 +475,9 @@ export default function CommunityScreen() {
         setMediaAttachments([]);
         setNewPostAudienceRating("everyone");
         setNewPostRatingReason("");
+        setTaggedBusiness(null);
+        setNewPostTagUrl("");
+        setNewPostTagUrlIsSocialVideo(false);
         setShowCompose(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         if (data.kinfolkSuggestions?.length) {
@@ -1678,6 +1699,81 @@ export default function CommunityScreen() {
               </View>
             )}
 
+            {/* Tagged business strip + link input */}
+            {taggedBusiness && (
+              <View style={{ paddingHorizontal: 16, paddingBottom: 10, gap: 8 }}>
+                {/* Business pill */}
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: colors.primary + "12", borderWidth: 1, borderColor: colors.primary + "35" }}>
+                    <Feather name="briefcase" size={13} color={colors.primary} />
+                    <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: colors.primary, flex: 1 }} numberOfLines={1}>
+                      @{taggedBusiness.name}
+                    </Text>
+                    <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: colors.primary + "20" }}>
+                      <Text style={{ fontFamily: "Inter_500Medium", fontSize: 10, color: colors.primary }}>Tagged</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => { setTaggedBusiness(null); setNewPostTagUrl(""); setNewPostTagUrlIsSocialVideo(false); }}
+                  >
+                    <Feather name="x-circle" size={18} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Double-exposure note */}
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                  <Feather name="repeat" size={11} color={colors.mutedForeground} />
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground }}>
+                    Shows on your feed <Text style={{ fontWeight: "600" }}>+</Text> {taggedBusiness.name}'s vibe page
+                  </Text>
+                </View>
+
+                {/* Link input */}
+                <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, overflow: "hidden" }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 10, gap: 8 }}>
+                    <Feather name="link" size={14} color={colors.mutedForeground} />
+                    <TextInput
+                      style={{ flex: 1, fontFamily: "Inter_400Regular", fontSize: 13, color: colors.foreground, paddingVertical: 10 }}
+                      placeholder="Add a link — post, video, or website…"
+                      placeholderTextColor={colors.mutedForeground}
+                      value={newPostTagUrl}
+                      onChangeText={setNewPostTagUrl}
+                      keyboardType="url"
+                      autoCapitalize="none"
+                      maxLength={300}
+                    />
+                    {newPostTagUrl.trim().length > 0 && (
+                      <TouchableOpacity onPress={() => setNewPostTagUrl("")} activeOpacity={0.7}>
+                        <Feather name="x" size={14} color={colors.mutedForeground} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  {/* Social video toggle — paid members only */}
+                  {isPaidMember && newPostTagUrl.trim().length > 0 && (
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      onPress={() => { setNewPostTagUrlIsSocialVideo((v) => !v); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                      style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: newPostTagUrlIsSocialVideo ? "#7B2D8B0A" : "transparent" }}
+                    >
+                      <View style={[{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, alignItems: "center", justifyContent: "center" }, newPostTagUrlIsSocialVideo ? { backgroundColor: "#7B2D8B", borderColor: "#7B2D8B" } : { borderColor: colors.border }]}>
+                        {newPostTagUrlIsSocialVideo && <Feather name="check" size={12} color="#fff" />}
+                      </View>
+                      <Feather name="video" size={13} color={newPostTagUrlIsSocialVideo ? "#7B2D8B" : colors.mutedForeground} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: newPostTagUrlIsSocialVideo ? "#7B2D8B" : colors.foreground }}>
+                          Social video link
+                        </Text>
+                        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, color: colors.mutedForeground }}>
+                          Mark as TikTok, Instagram, or YouTube video
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            )}
+
             {mentionQuery !== null && (
               <View>
                 <View style={{ flexDirection: "row", paddingHorizontal: 4, marginBottom: 4, gap: 6 }}>
@@ -1697,7 +1793,7 @@ export default function CommunityScreen() {
                 {mentionMode === "users" ? (
                   <UserMentionPicker query={mentionQuery} onSelect={handleMentionSelect} />
                 ) : (
-                  <BusinessMentionPicker query={mentionQuery} businesses={businesses} onSelect={handleMentionSelect} />
+                  <BusinessMentionPicker query={mentionQuery} businesses={businesses} onSelect={handleBusinessMentionSelect} />
                 )}
               </View>
             )}
