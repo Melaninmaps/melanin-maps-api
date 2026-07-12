@@ -26,7 +26,7 @@ export default function CB01bWhyBuildersMatter() {
         {/* Body copy — rhythmic, shorter sentences */}
         <div className="flex flex-col" style={{ gap: "0.55vw", marginBottom: "1.8vw" }}>
           <p className="font-body" style={{ fontSize: "1.1vw", color: "#C4935A", lineHeight: 1.6 }}>
-            The strongest communities aren&rsquo;t built through advertising.
+            The strongest communities aren&rsquo;t built by algorithms.
           </p>
           <p className="font-body" style={{ fontSize: "1.1vw", color: "#8B6030", lineHeight: 1.6 }}>
             They&rsquo;re built when someone says,
@@ -35,10 +35,10 @@ export default function CB01bWhyBuildersMatter() {
             &ldquo;You should check this out.&rdquo;
           </p>
           <p className="font-body" style={{ fontSize: "1.05vw", color: "#8B6030", lineHeight: 1.6 }}>
-            One recommendation becomes one new customer.
+            One recommendation becomes one connection.
           </p>
           <p className="font-body" style={{ fontSize: "1.05vw", color: "#8B6030", lineHeight: 1.6 }}>
-            One customer becomes another recommendation.
+            One connection becomes another recommendation.
           </p>
           <p className="font-body" style={{ fontSize: "1.05vw", color: "#C4935A", lineHeight: 1.6, fontWeight: 500 }}>
             That&rsquo;s how trust grows.
