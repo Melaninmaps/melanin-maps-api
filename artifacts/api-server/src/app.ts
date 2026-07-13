@@ -14,6 +14,12 @@ const app: Express = express();
 // Trust the proxy in front of us (Replit's reverse proxy sets X-Forwarded-For)
 app.set("trust proxy", 1);
 
+// Health check registered BEFORE all middleware so the startup probe
+// always gets an immediate 200 — nothing (auth, rate-limit, pino, etc.) can block it.
+app.get("/api/healthz", (_req: Request, res: Response) => {
+  res.json({ status: "ok" });
+});
+
 app.use(
   pinoHttp({
     logger,
