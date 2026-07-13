@@ -1,6 +1,5 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { runMigrations } from "stripe-replit-sync";
 import { getStripeSync } from "./stripeClient";
 
 const rawPort = process.env["PORT"] ?? "8080";
@@ -18,6 +17,7 @@ async function initStripe() {
   }
   try {
     logger.info("Initializing Stripe schema…");
+    const { runMigrations } = await import("stripe-replit-sync");
     await runMigrations({ databaseUrl });
     logger.info("Stripe schema ready");
 
@@ -35,7 +35,6 @@ async function initStripe() {
   }
 }
 
-// Startup configuration checks — warn loudly about missing secrets before first request
 (function checkRequiredConfig() {
   const warnings: string[] = [];
 
@@ -68,7 +67,5 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
 
-  // Run Stripe init in the background — must not block server startup
-  // or the health check will time out before the server starts listening.
   initStripe().catch((err) => logger.error({ err }, "Background Stripe init failed"));
 });
