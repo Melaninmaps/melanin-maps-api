@@ -16,7 +16,14 @@ app.set("trust proxy", 1);
 
 // Health check registered BEFORE all middleware so the startup probe
 // always gets an immediate 200 — nothing (auth, rate-limit, pino, etc.) can block it.
+// Multiple paths to cover different proxy/direct-port health check strategies.
 app.get("/api/healthz", (_req: Request, res: Response) => {
+  res.json({ status: "ok" });
+});
+app.get("/healthz", (_req: Request, res: Response) => {
+  res.json({ status: "ok" });
+});
+app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
