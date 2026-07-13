@@ -1,0 +1,221 @@
+2026-07-13T13:38:26Z info: Deployment: 9954d68a-a012-4b1a-a59d-2e2604ac8057
+2026-07-13T13:38:26Z info: Build: 7eb82c75-25a0-4b63-a3ce-494a0e53dc76
+2026-07-13T13:38:27Z info: Running Security Scan
+2026-07-13T13:38:35Z info: Installing packages
+--> pnpm install
+
+Scope: all 15 workspace projects
+
+
+   ╭──────────────────────────────────────────╮
+   │                                          │
+   │   Update available! 10.26.1 → 11.12.0.   │
+   │   Changelog: https://pnpm.io/v/11.12.0   │
+   │     To update, run: pnpm add -g pnpm     │
+   │                                          │
+   ╰──────────────────────────────────────────╯
+
+
+Lockfile is up to date, resolution step is skipped
+
+Progress: resolved 1, reused 0, downloaded 0, added 0
+
+Packages: +4 -1
+++++-
+
+Progress: resolved 4, reused 1, downloaded 0, added 0
+
+Progress: resolved 4, reused 4, downloaded 0, added 0, done
+
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; if [ "${EAS_BUILD}" = "1" ] || [ "${CI}" = "true" ] || [ "${CI}" = "1" ]; then exit 0; fi; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+
+. preinstall: Done
+
+╭ Warning ─────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│   Ignored build scripts: core-js@3.49.0.                                     │
+│   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+│   to run scripts.                                                            │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Done in 6.4s using pnpm v10.26.1
+
+2026-07-13T13:38:43Z info: Starting Build
+
+> @workspace/api-server@0.0.0 build /home/runner/workspace/artifacts/api-server
+> node ./build.mjs
+
+
+
+  dist/index.mjs                      17.3mb ⚠️
+  dist/pino-worker.mjs               153.4kb
+  dist/pino-file.mjs                 142.1kb
+  dist/pino-pretty.mjs               114.6kb
+  dist/thread-stream-worker.mjs        7.3kb
+  dist/index.mjs.map                  29.7mb
+  dist/pino-worker.mjs.map           256.9kb
+  dist/pino-file.mjs.map             229.0kb
+  dist/pino-pretty.mjs.map           204.0kb
+  dist/thread-stream-worker.mjs.map   12.0kb
+
+⚡ Done in 2828ms
+
+
+> @workspace/biz-deck@0.0.0 build /home/runner/workspace/artifacts/biz-deck
+> vite build --config vite.config.ts
+
+
+vite v7.3.3 building client environment for production...
+
+transforming...
+
+[plugin vite:esbuild] src/pages/slides/DemoS04Search.tsx: Duplicate key "transform" in object literal
+89 |                <div style={{ height: "0.35vw", background: "rgba(255,255,255,0.08)", borderRadius: "0.2vw", position: ...
+90 |                  <div style={{ position: "absolute", left: 0, width: "70%", height: "100%", background: "#CA922B", bor...
+91 |  ...e", left: "70%", transform: "translateX(-50%)", top: "50%", transform: "translate(-50%,-50%)", width: "1vw", heigh...
+   |                                                                 ^
+92 |                </div>
+93 |              </div>
+
+
+✓ 187 modules transformed.
+
+rendering chunks...
+
+computing gzip size...
+
+dist/public/index.html                     1.05 kB │ gzip:   0.53 kB
+
+dist/public/assets/index-Ct54iRp0.css     18.36 kB │ gzip:   4.55 kB
+dist/public/assets/index-BtHOn-hs.js   1,002.53 kB │ gzip: 194.26 kB
+✓ built in 2.15s
+
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+
+> @workspace/community-deck@0.0.0 build /home/runner/workspace/artifacts/community-deck
+> vite build --config vite.config.ts
+
+
+vite v7.3.3 building client environment for production...
+
+transforming...
+
+Found 1 warning while optimizing generated CSS:
+
+│   }
+│ }
+│ @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700;800&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap');
+┆        ^-- @import rules must precede all rules aside from @charset and @layer statements
+┆
+│ :root {
+│   --slide-primary: #CA922B;
+
+
+✓ 75 modules transformed.
+
+rendering chunks...
+
+computing gzip size...
+
+dist/public/index.html                   1.09 kB │ gzip:  0.54 kB
+dist/public/assets/index-v0bP_PVJ.css    8.96 kB │ gzip:  2.83 kB
+
+dist/public/assets/index-DsuDaT7l.js   311.27 kB │ gzip: 85.75 kB
+✓ built in 1.55s
+
+
+> @workspace/investor-deck@0.0.0 build /home/runner/workspace/artifacts/investor-deck
+> vite build --config vite.config.ts
+
+
+vite v7.3.3 building client environment for production...
+
+transforming...
+
+Found 1 warning while optimizing generated CSS:
+
+│   }
+│ }
+│ @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700;800&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap');
+┆        ^-- @import rules must precede all rules aside from @charset and @layer statements
+┆
+│ :root {
+│   --slide-primary: #CA922B;
+
+
+✓ 120 modules transformed.
+
+rendering chunks...
+
+computing gzip size...
+
+dist/public/index.html                   1.08 kB │ gzip:   0.54 kB
+
+dist/public/assets/index-r38j0MFZ.css   13.58 kB │ gzip:   3.64 kB
+dist/public/assets/index-DTT5zGiC.js   546.10 kB │ gzip: 119.83 kB
+
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+✓ built in 1.65s
+
+
+> @workspace/web@0.0.0 build /home/runner/workspace/artifacts/web
+> vite build --config vite.config.ts
+
+
+vite v7.3.3 building client environment for production...
+
+transforming...
+
+src/components/ui/tooltip.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+
+src/components/ui/select.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+
+✓ 2488 modules transformed.
+
+rendering chunks...
+
+computing gzip size...
+
+dist/public/index.html                     2.94 kB │ gzip:   0.98 kB
+dist/public/assets/index-nO3dgEuG.css    187.77 kB │ gzip:  28.43 kB
+dist/public/assets/index-QbesnESn.js   1,672.04 kB │ gzip: 452.71 kB
+
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+✓ built in 5.70s
+
+Removed all cached metadata files
+
+Removed 80742 files
+
+Removed 1551 packages
+
+2026-07-13T13:39:12Z info: Pushing pid1 binary layer...
+2026-07-13T13:39:14Z info: Created pid1 binary layer
+2026-07-13T13:39:16Z info: Pushing hosting layer...
+2026-07-13T13:39:16Z info: Pushing Repl layer...
+2026-07-13T13:39:16Z info: Retrieved cached nix layer
+2026-07-13T13:39:16Z info: Created hosting layer
+2026-07-13T13:41:14Z info: Security Scan Complete
+2026-07-13T13:41:42Z info: Created Repl layer
+2026-07-13T13:41:45Z info: Pushed image manifest
+2026-07-13T13:41:47Z info: Pushed soci index manifest
+2026-07-13T13:41:47Z info: Pushed referrer manifest
+2026-07-13T13:41:51Z info: Creating virtual machine
+2026-07-13T13:42:33Z info: Virtual machine created
+2026-07-13T13:42:33Z info: Waiting for deployment to be ready
