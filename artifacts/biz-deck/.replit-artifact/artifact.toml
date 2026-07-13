@@ -12,7 +12,7 @@ version = "1.0.0"
 [[services]]
 name = "web"
 paths = [ "/biz-deck/" ]
-localPort = 18080
+localPort = 19816
 
 [services.development]
 run = "pnpm --filter @workspace/biz-deck run dev"
@@ -27,5 +27,5 @@ from = "/*"
 to = "/index.html"
 
 [services.env]
-PORT = "18080"
+PORT = "19816"
 BASE_PATH = "/biz-deck/"
