@@ -22,7 +22,7 @@ args = ["pnpm", "--filter", "@workspace/api-server", "run", "build"]
 NODE_ENV = "production"
 
 [services.production.run]
-args = ["bash", "-l", "-c", "cd /home/runner/workspace && node artifacts/api-server/dist/index.mjs"]
+args = ["pnpm", "--filter", "@workspace/api-server", "run", "start"]
 
 [services.production.run.env]
 PORT = "8080"
