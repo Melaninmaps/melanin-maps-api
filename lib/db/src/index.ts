@@ -14,7 +14,11 @@ function getPool(): pg.Pool {
         "DATABASE_URL must be set. Did you forget to provision a database?",
       );
     }
-    _pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const url = process.env.DATABASE_URL;
+    const ssl = url && !url.includes("localhost") && !url.includes("127.0.0.1")
+      ? { rejectUnauthorized: false }
+      : false;
+    _pool = new Pool({ connectionString: url, ssl });
   }
   return _pool;
 }

@@ -107,7 +107,7 @@ app.use(webSsrRouter);
 // Serve the web app static files (built by build.mjs and copied to dist/public/)
 app.use(express.static(webPublicDir));
 // SPA fallback — any non-API route serves index.html so React Router works
-app.get("*", (req: Request, res: Response, next: NextFunction) => {
+app.get("/{*path}", (req: Request, res: Response, next: NextFunction) => {
   if (req.path.startsWith("/api/")) return next();
   const indexPath = path.join(webPublicDir, "index.html");
   res.sendFile(indexPath, (err) => {
