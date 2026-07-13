@@ -9,32 +9,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || "8080");
 const API_PORT = 3001;
 
-// Diagnose paths
 const cwdPath = path.join(process.cwd(), "web-static");
 const dirnamePath = path.join(__dirname, "web-static");
-
-process.stderr.write(`CWD: ${process.cwd()}\n`);
-process.stderr.write(`__dirname: ${__dirname}\n`);
-process.stderr.write(`cwd/web-static exists: ${fs.existsSync(cwdPath)}\n`);
-process.stderr.write(`__dirname/web-static exists: ${fs.existsSync(dirnamePath)}\n`);
-
-// Try to list files in various locations
-const candidates = [
-  "/app",
-  "/app/web-static",
-  process.cwd(),
-  cwdPath,
-  __dirname,
-  dirnamePath,
-];
-for (const c of candidates) {
-  try {
-    const entries = fs.readdirSync(c).slice(0, 5).join(", ");
-    process.stderr.write(`ls ${c}: ${entries}\n`);
-  } catch {
-    process.stderr.write(`ls ${c}: ERROR\n`);
-  }
-}
 
 const WEB_STATIC = fs.existsSync(dirnamePath)
   ? dirnamePath
@@ -53,25 +29,34 @@ api.on("exit", (code) => {
   process.exit(code || 1);
 });
 
+// In-memory error store (last 50 client errors)
+const clientErrors = [];
+
 const app = express();
 
-// Client error logging endpoint — receives window.onerror beacons from the browser
+// Client error beacon receiver — browsers send window.onerror payloads here
 app.post("/__client-error", (req, res) => {
   let body = "";
   req.on("data", (chunk) => { body += chunk; });
   req.on("end", () => {
-    process.stderr.write(`[CLIENT-ERROR] ${body}\n`);
+    const entry = { ts: new Date().toISOString(), ua: req.headers["user-agent"] || "", body };
+    clientErrors.unshift(entry);
+    if (clientErrors.length > 50) clientErrors.pop();
+    process.stderr.write(`[CLIENT-ERROR] ${body.slice(0, 500)}\n`);
     res.status(204).end();
   });
 });
 
-// Debug route — hit this to see filesystem state
+// Error store read endpoint — curl this to see recent browser JS errors
+app.get("/__errors", (req, res) => {
+  res.json({ count: clientErrors.length, errors: clientErrors });
+});
+
+// Debug route
 app.get("/__debug", (req, res) => {
   const info = {
     cwd: process.cwd(),
     __dirname,
-    cwdWebStatic: fs.existsSync(cwdPath),
-    dirnameWebStatic: fs.existsSync(dirnamePath),
     WEB_STATIC,
     cwdContents: (() => { try { return fs.readdirSync(process.cwd()); } catch { return "error"; } })(),
     webStaticContents: WEB_STATIC ? (() => { try { return fs.readdirSync(WEB_STATIC); } catch { return "error"; } })() : "not set",
@@ -79,6 +64,7 @@ app.get("/__debug", (req, res) => {
   res.json(info);
 });
 
+// Proxy all /api/* to the Express API
 app.use("/api", (req, res) => {
   const proxyReq = httpRequest(
     {
@@ -106,7 +92,7 @@ if (WEB_STATIC) {
   });
 } else {
   app.get("*", (req, res) => {
-    res.status(503).send(`Web app not found. WEB_STATIC is null. cwd=${process.cwd()} __dirname=${__dirname}`);
+    res.status(503).send(`Web app not found. WEB_STATIC is null.`);
   });
 }
 
