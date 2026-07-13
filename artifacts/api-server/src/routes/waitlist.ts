@@ -177,7 +177,7 @@ router.get("/waitlist/count", async (_req: Request, res: Response) => {
       .map(r => ({ city: r.city as string, count: Number(r.total) }));
     res.json({ count: Number(total), cities });
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch count" });
+    res.json({ count: 0, cities: [] });
   }
 });
 
@@ -1007,7 +1007,7 @@ router.get("/waitlist/leaderboard", async (_req: Request, res: Response) => {
 
     res.json({ builders, cities });
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch leaderboard" });
+    res.json({ builders: [], cities: [] });
   }
 });
 

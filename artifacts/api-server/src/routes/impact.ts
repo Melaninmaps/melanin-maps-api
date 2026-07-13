@@ -26,7 +26,7 @@ router.get("/impact", async (req, res) => {
     });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch impact stats");
-    res.status(500).json({ error: "Failed to fetch impact stats" });
+    res.json({ businesses: 0, cities: 0, reviews: 0, community: 0 });
   }
 });
 

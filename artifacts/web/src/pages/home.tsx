@@ -28,7 +28,7 @@ interface ImpactStats { businesses: number; cities: number; reviews: number; com
 function ImpactCounter() {
   const [stats, setStats] = useState<ImpactStats | null>(null);
   useEffect(() => {
-    fetch(`${BASE}api/impact`).then(r => r.json()).then(setStats).catch(() => {});
+    fetch(`${BASE}api/impact`).then(r => r.ok ? r.json() : Promise.reject()).then(setStats).catch(() => {});
   }, []);
   const items = [
     { icon: Building2, label: "Businesses Listed", value: stats?.businesses ?? 0, suffix: "+" },
@@ -91,8 +91,8 @@ function LeaderboardSection() {
 
   useEffect(() => {
     fetch(`${BASE}api/waitlist/leaderboard`)
-      .then(r => r.json())
-      .then((d: LeaderboardData) => setData(d))
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then((d: LeaderboardData) => { if (d && Array.isArray(d.builders)) setData(d); })
       .catch(() => {});
   }, []);
 
@@ -225,8 +225,8 @@ export default function Home() {
 
   useEffect(() => {
     fetch(`${BASE}api/waitlist/count`)
-      .then(r => r.json())
-      .then((data: WaitlistStats) => setWaitlistStats(data))
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then((data: WaitlistStats) => { if (data && Array.isArray(data.cities)) setWaitlistStats(data); })
       .catch(() => {});
   }, []);
 
@@ -727,11 +727,11 @@ export default function Home() {
             Cities already on the waitlist
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            {(waitlistStats?.cities.length ? waitlistStats.cities : FALLBACK_CITIES).map((c, i) => (
+            {(waitlistStats?.cities?.length ? waitlistStats.cities : FALLBACK_CITIES).map((c, i) => (
               <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-[#3A1F0E]/10 shadow-sm">
                 <MapPin className="w-3.5 h-3.5 text-[#CA922B]" />
                 <span className="text-sm font-semibold text-[#3A1F0E]">{c.city}</span>
-                {waitlistStats?.cities.length ? (
+                {waitlistStats?.cities?.length ? (
                   <span className="text-xs text-[#3A1F0E]/50 font-bold">{(c as { city: string; count: number }).count} waiting</span>
                 ) : null}
               </div>
