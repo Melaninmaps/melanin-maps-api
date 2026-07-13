@@ -1,5 +1,2 @@
-[phases.build]
-cmds = []
-
 [start]
-cmd = "node dist/index.mjs"
+cmd = "npm start"
