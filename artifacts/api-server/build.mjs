@@ -4,7 +4,6 @@ import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
 import { rm, copyFile, cp } from "node:fs/promises";
-import { execSync } from "node:child_process";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
@@ -135,18 +134,13 @@ buildAll()
     )
   )
   .then(() => {
-    // Build the web app and copy its static files into dist/public/
-    // so Railway can serve both the API and the website from one process.
-    console.log("Building web app...");
-    execSync("pnpm --filter @workspace/web run build", {
-      stdio: "inherit",
-      cwd: path.resolve(artifactDir, "../.."),
-    });
-    const webDistSrc = path.resolve(artifactDir, "../../artifacts/web/dist/public");
-    const webDistDst = path.resolve(artifactDir, "dist/public");
-    return cp(webDistSrc, webDistDst, { recursive: true });
+    // Copy pre-built web app static files into dist/public/
+    // web-static/ is committed to git so Railway doesn't need to build the web app.
+    const webStaticSrc = path.resolve(artifactDir, "web-static");
+    const webStaticDst = path.resolve(artifactDir, "dist/public");
+    return cp(webStaticSrc, webStaticDst, { recursive: true });
   })
-  .then(() => console.log("Web app copied to dist/public/"))
+  .then(() => console.log("Web static files copied to dist/public/"))
   .catch((err) => {
     console.error(err);
     process.exit(1);
