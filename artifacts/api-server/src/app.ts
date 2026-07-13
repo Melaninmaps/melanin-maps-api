@@ -2,12 +2,17 @@ import express, { type Express, type Request, type Response, type NextFunction }
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import router from "./routes";
 import webSsrRouter from "./routes/web-ssr";
 import { logger } from "./lib/logger";
 import { authMiddleware } from "./middlewares/authMiddleware";
 import { WebhookHandlers } from "./webhookHandlers";
 import { generalLimiter } from "./middleware/rateLimiter";
+
+const _dirname = path.dirname(fileURLToPath(import.meta.url));
+const webPublicDir = path.join(_dirname, "public");
 
 const app: Express = express();
 
@@ -98,6 +103,17 @@ app.use("/api", generalLimiter);
 
 app.use("/api", router);
 app.use(webSsrRouter);
+
+// Serve the web app static files (built by build.mjs and copied to dist/public/)
+app.use(express.static(webPublicDir));
+// SPA fallback — any non-API route serves index.html so React Router works
+app.get("*", (req: Request, res: Response, next: NextFunction) => {
+  if (req.path.startsWith("/api/")) return next();
+  const indexPath = path.join(webPublicDir, "index.html");
+  res.sendFile(indexPath, (err) => {
+    if (err) next();
+  });
+});
 
 app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
   const statusCode = (err as any)?.status ?? (err as any)?.statusCode ?? 500;
