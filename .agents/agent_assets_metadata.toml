@@ -725,3 +725,9 @@ id = "VZUUmkI9mffhJWzh6rJad"
 uri = "file://.local/outputs/Mapping-With-Melanin---Foundation-Book.pdf"
 type = "pdf"
 title = "Foundation Book — 67 slides"
+
+[[outputs]]
+id = "Rwbw8Z2rAJe9_XXNmToFE"
+uri = "file://.local/outputs/Mapping-With-Melanin---Business-Deck.pdf"
+type = "pdf"
+title = "Mapping With Melanin — Business Deck (PDF)"
