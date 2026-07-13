@@ -55,6 +55,16 @@ api.on("exit", (code) => {
 
 const app = express();
 
+// Client error logging endpoint — receives window.onerror beacons from the browser
+app.post("/__client-error", (req, res) => {
+  let body = "";
+  req.on("data", (chunk) => { body += chunk; });
+  req.on("end", () => {
+    process.stderr.write(`[CLIENT-ERROR] ${body}\n`);
+    res.status(204).end();
+  });
+});
+
 // Debug route — hit this to see filesystem state
 app.get("/__debug", (req, res) => {
   const info = {
