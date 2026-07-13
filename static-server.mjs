@@ -3,10 +3,28 @@ import { spawn } from "child_process";
 import { request as httpRequest } from "http";
 import { fileURLToPath } from "url";
 import path from "path";
+import fs from "fs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || "8080");
 const API_PORT = 3001;
+
+// Diagnose paths at startup
+const cwdPath = path.join(process.cwd(), "web-static");
+const dirnamePath = path.join(__dirname, "web-static");
+console.log(`CWD: ${process.cwd()}`);
+console.log(`__dirname: ${__dirname}`);
+console.log(`cwd/web-static exists: ${fs.existsSync(cwdPath)}`);
+console.log(`__dirname/web-static exists: ${fs.existsSync(dirnamePath)}`);
+
+// Pick whichever path has the files
+const WEB_STATIC = fs.existsSync(dirnamePath)
+  ? dirnamePath
+  : fs.existsSync(cwdPath)
+  ? cwdPath
+  : null;
+
+console.log(`Using web-static at: ${WEB_STATIC}`);
 
 const api = spawn(process.execPath, ["dist/index.mjs"], {
   env: { ...process.env, PORT: String(API_PORT) },
@@ -39,11 +57,16 @@ app.use("/api", (req, res) => {
   req.pipe(proxyReq);
 });
 
-app.use(express.static(path.join(__dirname, "web-static")));
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "web-static", "index.html"));
-});
+if (WEB_STATIC) {
+  app.use(express.static(WEB_STATIC));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(WEB_STATIC, "index.html"));
+  });
+} else {
+  app.get("*", (req, res) => {
+    res.status(503).send("Web app not found — web-static directory missing");
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`Listening on port ${PORT} — API on ${API_PORT}`);
