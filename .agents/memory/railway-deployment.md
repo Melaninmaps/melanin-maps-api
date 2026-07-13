@@ -1,0 +1,45 @@
+---
+name: Railway production deployment
+description: API server live at www.mappingwithmelanin.com via Railway; key IDs, DNS records, crash fix, and domain verification steps.
+---
+
+## Railway Service IDs
+- Project: `b98310f8-7bfa-4e43-a574-8819752e9cfe`
+- Service: `a77b49bb-e448-4be8-9d02-de7a3b43136b`
+- Environment: `2292b38f-3d0d-4cad-92a4-ad36cabda629`
+- Service domain: `api-server-production-a991.up.railway.app`
+
+## GitHub source
+- Repo: `Melaninmaps/melanin-maps-api` branch `main`
+- Deploys via Dockerfile (auto-detect, null buildCommand, null startCommand)
+- NIXPACKS builds FAIL for this repo; always use DOCKERFILE or null builder
+
+## What fixed the crash
+- Empty string PORT env var (`""`) was explicitly set in Railway vars
+- `index.ts` does `process.env["PORT"] ?? "8080"` — `??` doesn't catch `""`, so `Number("") = 0 → throw`
+- Fix: deleted PORT from Railway vars so Railway auto-injects correct PORT
+
+## DNS (GoDaddy mappingwithmelanin.com)
+- `www` CNAME → `z306ftl5.up.railway.app` (Railway's CNAME target for this domain)
+- `_railway-verify.www` TXT → `railway-verify=bf7f36498aacc71364fc57ec5cf19c7222431cc7801ecb32ecf198e629057e3a`
+- Both records are propagated
+
+## Custom domain IDs
+- `www.mappingwithmelanin.com` id: `a7b92ed1-9d50-4002-be66-a50ca4c01125` (re-created after delete+re-add to force verification)
+- `api.melaninmaps.com` id: `275a707d-6a5f-4976-a831-7b9959f3ee76`
+
+## Deployment working state
+- Builder: NIXPACKS (auto-detect), buildCommand: null, startCommand: null
+- Deploy `9b60ab95` is SUCCESS and the active production deploy
+- `https://www.mappingwithmelanin.com/api/healthz` → `{"status":"ok"}`
+- SSL cert: Let's Encrypt via Railway, verified and valid
+
+## Domain verification gotcha
+- `verified: false` blocks Railway edge routing even if cert is valid and CNAME is propagated
+- TXT record `_railway-verify.www` is ALSO required — GoDaddy host value is `_railway-verify.www` (not the full FQDN)
+- If domain gets stuck `verified: false`: delete custom domain via GraphQL and immediately re-add it — triggers fresh verification check against already-propagated DNS
+
+## Railway GraphQL API
+- Endpoint: `https://backboard.railway.com/graphql/v2`
+- Auth: `Authorization: Bearer $RAILWAY_TOKEN`
+- Key mutations: `customDomainCreate`, `customDomainDelete`, `customDomainIssueCertificate`, `variableDelete`, `serviceInstanceUpdate`, `serviceInstanceDeploy`, `deploymentRollback`

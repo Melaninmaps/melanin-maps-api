@@ -35,4 +35,4 @@
 - [App Store submission checklist — REMIND AT SESSION START](app-store-submission-checklist.md) — owner asked to be reminded immediately next session; full checklist ready to work through.
 - [Slide deck icon rule](slide-deck-icon-rule.md) — NO emoji in any slide ever; always use inline SVG line-art icons (fill:none, stroke gold/muted, rounded caps). Common paths pre-built in topic file.
 - [PDF export clipping fix](pdf-export-clipping.md) — never use top:50%+transform:translate(-50%,-50%) on centered containers in slides; PDF clips pre-transform. Use pre-computed left/top (e.g. left:26vw;top:3.125vw for a 50vw circle at 51%/50%). Move labels to root div.
-- [Railway deployment plan](railway-deployment-plan.md) — PRIORITY NEXT SESSION: site offline, Replit Autoscale broken (.replit uneditable), Railway is next; full context, token, project IDs, env vars list, DNS steps all documented.
+- [Railway production deployment](railway-deployment.md) — API live at www.mappingwithmelanin.com via Railway; key IDs, DNS setup, and crash fix (PORT env var) documented here.
