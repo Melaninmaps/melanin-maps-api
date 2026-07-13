@@ -2,7 +2,15 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, businessesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import satori from "satori";
-import { Resvg } from "@resvg/resvg-js";
+// Dynamic import so native module absence doesn't crash startup
+let _Resvg: typeof import("@resvg/resvg-js").Resvg | null = null;
+async function getResvg() {
+  if (!_Resvg) {
+    const mod = await import("@resvg/resvg-js").catch(() => null);
+    _Resvg = mod?.Resvg ?? null;
+  }
+  return _Resvg;
+}
 import { readFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -214,7 +222,13 @@ router.get("/og/business/:id", async (req: Request, res: Response) => {
       ],
     });
 
-    const resvg = new Resvg(svg, {
+    const ResvgClass = await getResvg();
+    if (!ResvgClass) {
+      req.log.error("@resvg/resvg-js not available — OG image generation disabled");
+      res.redirect(302, FALLBACK_URL);
+      return;
+    }
+    const resvg = new ResvgClass(svg, {
       fitTo: { mode: "width" as const, value: 1200 },
     });
     const pngBuffer = resvg.render().asPng();
