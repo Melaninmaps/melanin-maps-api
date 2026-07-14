@@ -54,6 +54,19 @@ export type SmartPromotion = {
   triggerReason: string;
 };
 
+export type TaskActionTask = {
+  title: string;
+  notes?: string | null;
+  dueTimeLabel?: string | null;
+  category?: string;
+};
+
+export type TaskAction = {
+  type: "create_list" | "create_task" | "add_tasks";
+  list?: { name: string; icon?: string };
+  tasks: TaskActionTask[];
+};
+
 export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
@@ -61,6 +74,8 @@ export type ChatMessage = {
   recommendations?: TravelRecommendations | null;
   followUpSuggestions?: string[];
   smartPromotion?: SmartPromotion | null;
+  taskAction?: TaskAction | null;
+  taskActionDone?: boolean;
   timestamp: Date;
   feedback?: Record<string, "like" | "dislike">;
   limitReached?: boolean;
@@ -83,6 +98,8 @@ export function useKinfolk() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
+  const [queriesUsed, setQueriesUsed] = useState<number | null>(null);
+  const [queriesLimit, setQueriesLimit] = useState<number>(3);
 
   const sendMessage = useCallback(async (
     text: string,
@@ -122,9 +139,14 @@ export function useKinfolk() {
           recommendations?: TravelRecommendations | null;
           followUpSuggestions?: string[];
           smartPromotion?: SmartPromotion | null;
+          taskAction?: TaskAction | null;
+          queriesUsed?: number;
+          queriesLimit?: number;
         };
 
         setSessionId(data.sessionId);
+        if (typeof data.queriesUsed === "number") setQueriesUsed(data.queriesUsed);
+        if (typeof data.queriesLimit === "number") setQueriesLimit(data.queriesLimit);
 
         const aiMsg: ChatMessage = {
           id: makeId(),
@@ -133,6 +155,7 @@ export function useKinfolk() {
           recommendations: data.recommendations ?? null,
           followUpSuggestions: data.followUpSuggestions ?? [],
           smartPromotion: data.smartPromotion ?? null,
+          taskAction: data.taskAction ?? null,
           timestamp: new Date(),
           feedback: {},
         };
@@ -253,15 +276,61 @@ export function useKinfolk() {
     setSessionId(null);
   }, []);
 
+  const confirmTaskAction = useCallback(async (messageId: string, action: TaskAction): Promise<boolean> => {
+    setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, taskActionDone: true } : m));
+    const token = await getToken();
+    const apiBase = getApiBase();
+    if (!token || !apiBase) return false;
+    try {
+      if (action.type === "create_list" && action.list) {
+        const listRes = await fetch(`${apiBase}/api/kinfolk/lists`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ name: action.list.name, icon: action.list.icon ?? "📋" }),
+        });
+        if (listRes.ok) {
+          const { list } = await listRes.json() as { list: { id: string } };
+          await fetch(`${apiBase}/api/kinfolk/tasks/bulk`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ tasks: action.tasks, listId: list.id }),
+          });
+        }
+      } else if (action.type === "create_task" && action.tasks.length > 0) {
+        const t = action.tasks[0]!;
+        await fetch(`${apiBase}/api/kinfolk/tasks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ title: t.title, notes: t.notes, dueTimeLabel: t.dueTimeLabel, category: t.category ?? "other" }),
+        });
+      } else if (action.type === "add_tasks") {
+        await fetch(`${apiBase}/api/kinfolk/tasks/bulk`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ tasks: action.tasks }),
+        });
+      }
+      return true;
+    } catch { return false; }
+  }, []);
+
+  const dismissTaskAction = useCallback((messageId: string) => {
+    setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, taskActionDone: true } : m));
+  }, []);
+
   return {
     messages,
     sessionId,
     isLoading,
     sessions,
+    queriesUsed,
+    queriesLimit,
     sendMessage,
     submitFeedback,
     loadSessions,
     loadSession,
     startNewSession,
+    confirmTaskAction,
+    dismissTaskAction,
   };
 }

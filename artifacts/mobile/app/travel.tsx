@@ -21,7 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useColors } from "@/hooks/useColors";
-import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion } from "@/hooks/useKinfolk";
+import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion, type TaskAction } from "@/hooks/useKinfolk";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useWishlist } from "@/hooks/useWishlist";
 import { KinfolkOnboarding, shouldShowKinfolkOnboarding, resetKinfolkOnboarding } from "@/components/KinfolkOnboarding";
@@ -287,10 +287,83 @@ const evStyles = StyleSheet.create({
   desc: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
 });
 
+// ─── Sub-component: Task Action Card ─────────────────────────────────────────
+function TaskActionCard({
+  action, onConfirm, onDismiss, colors,
+}: {
+  action: TaskAction;
+  onConfirm: () => void;
+  onDismiss: () => void;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const listName = action.list?.name ?? (action.type === "create_task" ? "Reminder" : "My List");
+  const icon = action.list?.icon ?? (action.type === "create_task" ? "⏰" : "📋");
+  return (
+    <View style={[taStyles.card, { backgroundColor: colors.card, borderColor: colors.primary + "40" }]}>
+      <View style={taStyles.headerRow}>
+        <View style={[taStyles.iconWrap, { backgroundColor: colors.primary + "18" }]}>
+          <Ionicons name="checkmark-done-outline" size={16} color={colors.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[taStyles.title, { color: colors.text }]}>
+            {icon} {listName}
+          </Text>
+          <Text style={[taStyles.subtitle, { color: colors.mutedForeground }]}>
+            {action.tasks.length} {action.tasks.length === 1 ? "item" : "items"} — add to My Lists?
+          </Text>
+        </View>
+      </View>
+      <View style={[taStyles.taskList, { borderColor: colors.border }]}>
+        {action.tasks.slice(0, 5).map((t, i) => (
+          <View key={i} style={[taStyles.taskRow, i < Math.min(action.tasks.length, 5) - 1 && { borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
+            <View style={[taStyles.taskDot, { backgroundColor: colors.primary }]} />
+            <Text style={[taStyles.taskTitle, { color: colors.text }]} numberOfLines={1}>{t.title}</Text>
+            {t.dueTimeLabel ? (
+              <Text style={[taStyles.taskTime, { color: colors.mutedForeground }]}>{t.dueTimeLabel}</Text>
+            ) : null}
+          </View>
+        ))}
+        {action.tasks.length > 5 && (
+          <Text style={[taStyles.more, { color: colors.mutedForeground }]}>+{action.tasks.length - 5} more items</Text>
+        )}
+      </View>
+      <View style={taStyles.actions}>
+        <TouchableOpacity style={[taStyles.addBtn, { backgroundColor: colors.primary }]} onPress={onConfirm} activeOpacity={0.85}>
+          <Ionicons name="checkmark" size={14} color="#fff" />
+          <Text style={taStyles.addBtnText}>Add to My Lists</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[taStyles.skipBtn, { borderColor: colors.border }]} onPress={onDismiss} activeOpacity={0.7}>
+          <Text style={[taStyles.skipBtnText, { color: colors.mutedForeground }]}>Skip</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+const taStyles = StyleSheet.create({
+  card: { borderRadius: 14, borderWidth: 1.5, padding: 14, marginTop: 8 },
+  headerRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 10 },
+  iconWrap: { width: 32, height: 32, borderRadius: 8, alignItems: "center", justifyContent: "center", marginTop: 1 },
+  title: { fontFamily: "Inter_700Bold", fontSize: 14, marginBottom: 2 },
+  subtitle: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  taskList: { borderRadius: 10, borderWidth: 1, overflow: "hidden", marginBottom: 12 },
+  taskRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 10, paddingVertical: 9 },
+  taskDot: { width: 5, height: 5, borderRadius: 3, flexShrink: 0 },
+  taskTitle: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
+  taskTime: { fontFamily: "Inter_400Regular", fontSize: 11 },
+  more: { fontFamily: "Inter_400Regular", fontSize: 12, paddingHorizontal: 10, paddingVertical: 8 },
+  actions: { flexDirection: "row", gap: 8 },
+  addBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: 10, paddingVertical: 10 },
+  addBtnText: { fontFamily: "Inter_700Bold", fontSize: 13, color: "#fff" },
+  skipBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  skipBtnText: { fontFamily: "Inter_400Regular", fontSize: 13 },
+});
+
 // ─── Sub-component: AI Message ────────────────────────────────────────────────
 function AiMessageBubble({
   msg, onFeedback, onQuickReply, onWishlist, wishlistedNames,
-  compareMode, compareSelectedNames, onCompareToggle, colors,
+  compareMode, compareSelectedNames, onCompareToggle,
+  onConfirmTaskAction, onDismissTaskAction,
+  colors,
 }: {
   msg: ChatMessage;
   onFeedback: (msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => void;
@@ -300,6 +373,8 @@ function AiMessageBubble({
   compareMode: boolean;
   compareSelectedNames: Set<string>;
   onCompareToggle: (biz: TravelBusiness) => void;
+  onConfirmTaskAction: (msgId: string, action: TaskAction) => void;
+  onDismissTaskAction: (msgId: string) => void;
   colors: ReturnType<typeof useColors>;
 }) {
   const recs = msg.recommendations;
@@ -328,6 +403,16 @@ function AiMessageBubble({
             <Ionicons name="volume-medium-outline" size={14} color={colors.mutedForeground} />
           </TouchableOpacity>
         </View>
+
+        {/* Task Action Card — shown when AI wants to create tasks */}
+        {msg.taskAction && !msg.taskActionDone && msg.taskAction.tasks.length > 0 && (
+          <TaskActionCard
+            action={msg.taskAction}
+            onConfirm={() => onConfirmTaskAction(msg.id, msg.taskAction!)}
+            onDismiss={() => onDismissTaskAction(msg.id)}
+            colors={colors}
+          />
+        )}
 
         {/* Recommendations */}
         {recs && (
@@ -1357,7 +1442,7 @@ export default function TravelScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
-  const { messages, sessionId, isLoading, sessions, sendMessage, submitFeedback, loadSessions, loadSession, startNewSession } = useKinfolk();
+  const { messages, sessionId, isLoading, sessions, queriesUsed, queriesLimit, sendMessage, submitFeedback, loadSessions, loadSession, startNewSession, confirmTaskAction, dismissTaskAction } = useKinfolk();
   const { preferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
   const { isAuthenticated } = useAuth();
@@ -1413,6 +1498,24 @@ export default function TravelScreen() {
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);
   }, [submitFeedback]);
+
+  const handleConfirmTaskAction = useCallback(async (msgId: string, action: TaskAction) => {
+    const ok = await confirmTaskAction(msgId, action);
+    if (ok) {
+      Alert.alert(
+        "Added to My Lists",
+        `"${action.list?.name ?? (action.type === "create_task" ? "Reminder" : "My List")}" is ready in your lists.`,
+        [
+          { text: "View Lists", onPress: () => router.push("/kinfolk-tasks" as any) },
+          { text: "OK", style: "cancel" },
+        ],
+      );
+    }
+  }, [confirmTaskAction]);
+
+  const handleDismissTaskAction = useCallback((msgId: string) => {
+    dismissTaskAction(msgId);
+  }, [dismissTaskAction]);
 
   const wishlistedNames = useMemo<Record<string, string>>(() => {
     const map: Record<string, string> = {};
@@ -1493,10 +1596,12 @@ export default function TravelScreen() {
         compareMode={compareMode}
         compareSelectedNames={compareSelectedNamesSet}
         onCompareToggle={handleCompareToggle}
+        onConfirmTaskAction={handleConfirmTaskAction}
+        onDismissTaskAction={handleDismissTaskAction}
         colors={colors}
       />
     );
-  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle]);
+  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -1584,6 +1689,30 @@ export default function TravelScreen() {
             Your taste profile is active — recommendations are personalized to you
           </Text>
         </View>
+      )}
+
+      {/* Free-tier query counter — shown after first query when user is on free plan */}
+      {isAuthenticated && queriesUsed !== null && queriesUsed > 0 &&
+        (!subscription || (subscription.status !== "active" && subscription.status !== "trialing")) && (
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => router.push("/membership" as any)}
+          style={[styles.queryCounter, {
+            backgroundColor: queriesUsed >= queriesLimit - 1 ? "#DC262612" : colors.secondary,
+            borderBottomColor: queriesUsed >= queriesLimit - 1 ? "#DC262630" : colors.border,
+          }]}
+        >
+          <Ionicons
+            name={queriesUsed >= queriesLimit - 1 ? "warning-outline" : "flash-outline"}
+            size={13}
+            color={queriesUsed >= queriesLimit - 1 ? "#DC2626" : colors.mutedForeground}
+          />
+          <Text style={[styles.queryCounterText, { color: queriesUsed >= queriesLimit - 1 ? "#DC2626" : colors.mutedForeground }]}>
+            {queriesUsed} of {queriesLimit} free chats used this month
+            {queriesUsed >= queriesLimit - 1 ? " — last one!" : " — Upgrade for unlimited"}
+          </Text>
+          <Ionicons name="chevron-forward" size={13} color={queriesUsed >= queriesLimit - 1 ? "#DC2626" : colors.mutedForeground} />
+        </TouchableOpacity>
       )}
 
       {/* Chat area */}
@@ -1743,6 +1872,8 @@ const styles = StyleSheet.create({
   premiumBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, color: "#C9922B", flex: 1 },
   personalBanner: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
   personalBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
+  queryCounter: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1 },
+  queryCounterText: { fontFamily: "Inter_400Regular", fontSize: 11, flex: 1 },
   chatContent: { paddingTop: 16, paddingBottom: 8 },
   compareBar: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1 },
   compareBarText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 13 },

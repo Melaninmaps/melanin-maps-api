@@ -834,6 +834,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
   try {
     // ── Enforce free-tier monthly query limit ─────────────────────────────────
+    let queriesUsedThisCall: number | null = null;
     if (req.user?.id) {
       const user = await storage.getUser(req.user.id);
       const isFree =
@@ -860,11 +861,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           return;
         }
 
+        queriesUsedThisCall = sameMonth ? usedQueries + 1 : 1;
         await db
           .update(usersTable)
           .set({
             kinfolkQueryMonth: currentMonth,
-            kinfolkQueriesThisMonth: sameMonth ? usedQueries + 1 : 1,
+            kinfolkQueriesThisMonth: queriesUsedThisCall,
           })
           .where(eq(usersTable.id, req.user.id));
       }
@@ -907,6 +909,21 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         .where(eq(savedPlacesTable.userId, req.user.id))
         .limit(15);
       savedPlaces = saved.map((s) => s.businessId);
+
+      // Respect personalisedSuggestions setting — if false, strip all taste profile data
+      try {
+        const [uSettings] = await db
+          .select({ personalisedSuggestions: userSettingsTable.personalisedSuggestions })
+          .from(userSettingsTable)
+          .where(eq(userSettingsTable.userId, req.user.id))
+          .limit(1);
+        if (uSettings?.personalisedSuggestions === false) {
+          prefs = null;
+          likedSpots = [];
+          dislikedSpots = [];
+          savedPlaces = [];
+        }
+      } catch { /* non-critical */ }
     }
 
     // Load or create session
@@ -1149,7 +1166,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
-    res.json({ sessionId: finalSessionId, reply, recommendations, followUpSuggestions, smartPromotion, taskAction });
+    res.json({
+      sessionId: finalSessionId,
+      reply,
+      recommendations,
+      followUpSuggestions,
+      smartPromotion,
+      taskAction,
+      ...(queriesUsedThisCall !== null && {
+        queriesUsed: queriesUsedThisCall,
+        queriesLimit: FREE_MONTHLY_LIMIT,
+      }),
+    });
   } catch (err) {
     req.log.error({ err }, "KinfolkAI chat failed");
     res.status(500).json({ error: "Failed to generate response" });
