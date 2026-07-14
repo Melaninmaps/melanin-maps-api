@@ -305,6 +305,16 @@ export function MapTabView() {
   const [routeCoords, setRouteCoords] = useState<Array<{ latitude: number; longitude: number }>>([]);
   const [isNavigating, setIsNavigating] = useState(false);
 
+  type NavAlert = {
+    id: string; type: string; distanceKm: number;
+    confirmedCount: number; status?: string; description?: string | null;
+  };
+  type NavAlt = { id: string; name: string; city: string; category: string; latitude: number; longitude: number; distanceMiles: number };
+  const [navDestAlerts, setNavDestAlerts] = useState<NavAlert[]>([]);
+  const [navAlternatives, setNavAlternatives] = useState<NavAlt[]>([]);
+
+  const HIGH_CONCERN_TYPES = new Set(["ice", "checkpoint", "avoid_area", "police"]);
+
   const prevWarningCount = useRef(0);
 
   useEffect(() => {
@@ -383,6 +393,8 @@ export function MapTabView() {
   });
 
   const flaggedBusinessIds = new Set(warnings.map((w) => w.targetId));
+  const navHighAlerts = navDestAlerts.filter((a) => HIGH_CONCERN_TYPES.has(a.type));
+  const navHasSafetyConcern = navHighAlerts.length > 0 || (selected ? flaggedBusinessIds.has(String(selected.id)) : false);
 
   const handleMarkerPress = (business: Business) => {
     setSelected(business);
@@ -415,16 +427,22 @@ export function MapTabView() {
     }
 
     setIsNavigating(true);
+    setNavDestAlerts([]);
+    setNavAlternatives([]);
     try {
       const origin = userLocation
         ? `${userLocation.lat},${userLocation.lng}`
         : `${INITIAL_REGION.latitude},${INITIAL_REGION.longitude}`;
       const destination = `${biz.latitude},${biz.longitude}`;
-      const res = await fetch(
-        `${apiBase}/api/maps/directions?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`
-      );
-      if (res.ok) {
-        const data = await res.json() as { routes?: Array<{ overview_polyline?: { points: string } }> };
+
+      // Fetch route + destination safety data in parallel
+      const [routeRes, alertsRes] = await Promise.all([
+        fetch(`${apiBase}/api/maps/directions?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`),
+        fetch(`${apiBase}/api/community-alerts/nearby?lat=${biz.latitude}&lng=${biz.longitude}&radius=8`),
+      ]);
+
+      if (routeRes.ok) {
+        const data = await routeRes.json() as { routes?: Array<{ overview_polyline?: { points: string } }> };
         const points = data.routes?.[0]?.overview_polyline?.points;
         if (points) {
           const coords = decodePolyline(points);
@@ -440,6 +458,24 @@ export function MapTabView() {
               800
             );
           }
+        }
+      }
+
+      if (alertsRes.ok) {
+        const alertData = await alertsRes.json() as { alerts?: NavAlert[] };
+        const destAlerts = (alertData.alerts ?? []).filter((a) => a.distanceKm < 8);
+        setNavDestAlerts(destAlerts);
+
+        // Fetch minority-owned alternatives whenever navigating to any business
+        // (safety concerns or not — give users the option to support community)
+        const altsRes = await fetch(
+          `${apiBase}/api/community-alerts/minority-alternatives?lat=${biz.latitude}&lng=${biz.longitude}&category=${encodeURIComponent(biz.category ?? "")}&radiusMiles=10`
+        );
+        if (altsRes.ok) {
+          const altsData = await altsRes.json() as { businesses?: NavAlt[] };
+          // Exclude the destination itself
+          const alts = (altsData.businesses ?? []).filter((a) => String(a.id) !== String(biz.id));
+          setNavAlternatives(alts.slice(0, 5));
         }
       }
     } catch { /**/ } finally {
@@ -768,7 +804,7 @@ export function MapTabView() {
           </TouchableOpacity>
 
           {/* Minority-owned alternatives strip — shown when a non-minority business is selected */}
-          {alternatives.length > 0 && (
+          {alternatives.length > 0 && routeCoords.length === 0 && (
             <View style={[styles.altSection, { borderTopColor: colors.border }]}>
               <Text style={[styles.altTitle, { color: colors.foreground }]}>
                 ✨ Try a minority-owned alternative nearby
@@ -798,6 +834,117 @@ export function MapTabView() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+            </View>
+          )}
+
+          {/* ── Route Safety Panel — shown when in-app navigation is active ── */}
+          {routeCoords.length > 0 && (
+            <View style={[styles.navSafetySection, { borderTopColor: navHasSafetyConcern ? "#DC262640" : colors.border }]}>
+
+              {/* Header row */}
+              <View style={styles.navSafetyHeader}>
+                <View style={[styles.navSafetyBadge, { backgroundColor: navHasSafetyConcern ? "#DC262618" : "#16A34A18" }]}>
+                  <Text style={styles.navSafetyIcon}>{navHasSafetyConcern ? "⚠️" : "✅"}</Text>
+                  <Text style={[styles.navSafetyBadgeText, { color: navHasSafetyConcern ? "#DC2626" : "#16A34A" }]}>
+                    {navHasSafetyConcern ? "Safety alerts near destination" : "Route looks clear"}
+                  </Text>
+                </View>
+                {navDestAlerts.length > 0 && (
+                  <View style={styles.navAlertCount}>
+                    <Text style={styles.navAlertCountText}>{navDestAlerts.length} alert{navDestAlerts.length !== 1 ? "s" : ""}</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* High-concern alerts */}
+              {navHighAlerts.length > 0 && (
+                <View style={{ gap: 6, marginTop: 8 }}>
+                  {navHighAlerts.slice(0, 3).map((alert) => {
+                    const color = ALERT_TYPE_COLORS[alert.type] ?? "#EF4444";
+                    const dist = alert.distanceKm < 1
+                      ? `${Math.round(alert.distanceKm * 1000)}m away`
+                      : `${(alert.distanceKm / 1.609).toFixed(1)} mi away`;
+                    return (
+                      <View key={alert.id} style={[styles.navAlertRow, { backgroundColor: color + "12", borderColor: color + "30" }]}>
+                        <Text style={styles.navAlertIcon}>{ALERT_TYPE_ICONS[alert.type] ?? "⚠️"}</Text>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.navAlertLabel, { color }]}>
+                            {ALERT_TYPE_LABELS[alert.type] ?? "Community Alert"}
+                          </Text>
+                          <Text style={styles.navAlertMeta}>
+                            {alert.confirmedCount} confirmation{alert.confirmedCount !== 1 ? "s" : ""} · {dist}
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+
+              {/* Business safety reports warning */}
+              {selected && flaggedBusinessIds.has(String(selected.id)) && (() => {
+                const w = warnings.find((x) => x.targetId === String(selected.id));
+                if (!w) return null;
+                return (
+                  <View style={[styles.navAlertRow, { backgroundColor: "#EF444412", borderColor: "#EF444430", marginTop: 6 }]}>
+                    <Text style={styles.navAlertIcon}>🏪</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.navAlertLabel, { color: "#EF4444" }]}>Community-flagged destination</Text>
+                      <Text style={styles.navAlertMeta}>
+                        {w.reportCount} safety report{w.reportCount !== 1 ? "s" : ""} in the last 7 days
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })()}
+
+              {/* Minority-owned alternatives during navigation */}
+              {navAlternatives.length > 0 && (
+                <View style={{ marginTop: 10 }}>
+                  <Text style={[styles.navAltsTitle, { color: colors.foreground }]}>
+                    {navHasSafetyConcern
+                      ? "Minority-owned alternatives nearby:"
+                      : "Support the community — alternatives nearby:"}
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={{ marginTop: 6 }}
+                    contentContainerStyle={{ gap: 8 }}
+                  >
+                    {navAlternatives.map((alt) => {
+                      const destBiz = businesses.find((x) => String(x.id) === alt.id);
+                      return (
+                        <TouchableOpacity
+                          key={alt.id}
+                          style={[styles.navAltChip, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "50" }]}
+                          onPress={() => {
+                            if (destBiz) {
+                              handleMarkerPress(destBiz);
+                            } else {
+                              // navigate to this alternative directly
+                              const fakeBiz = { ...alt, blackOwned: true, rating: 0, reviewCount: 0, verified: false, imageUrl: null } as unknown as Business;
+                              handleNavigate(fakeBiz);
+                            }
+                          }}
+                          activeOpacity={0.75}
+                        >
+                          <Text style={[styles.navAltName, { color: colors.foreground }]} numberOfLines={1}>
+                            {alt.name}
+                          </Text>
+                          <Text style={[styles.navAltMeta, { color: colors.primary }]}>
+                            {alt.distanceMiles} mi · {alt.category}
+                          </Text>
+                          <View style={[styles.navAltBtn, { backgroundColor: colors.primary }]}>
+                            <Text style={styles.navAltBtnText}>Navigate →</Text>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )}
+
             </View>
           )}
 
@@ -943,4 +1090,36 @@ const styles = StyleSheet.create({
   },
   altChipName: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginBottom: 2 },
   altChipMeta: { fontFamily: "Inter_400Regular", fontSize: 11 },
+  // ── Route Safety Panel styles ──
+  navSafetySection: {
+    borderTopWidth: 1, marginTop: 10, paddingTop: 10, gap: 4,
+  },
+  navSafetyHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  navSafetyBadge: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    paddingHorizontal: 9, paddingVertical: 4, borderRadius: 20,
+  },
+  navSafetyIcon: { fontSize: 12 },
+  navSafetyBadgeText: { fontFamily: "Inter_700Bold", fontSize: 11 },
+  navAlertCount: {
+    backgroundColor: "#EF444418", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10,
+  },
+  navAlertCountText: { fontFamily: "Inter_700Bold", fontSize: 10, color: "#EF4444" },
+  navAlertRow: {
+    flexDirection: "row", alignItems: "flex-start", gap: 8,
+    padding: 8, borderRadius: 8, borderWidth: 1,
+  },
+  navAlertIcon: { fontSize: 13, marginTop: 1 },
+  navAlertLabel: { fontFamily: "Inter_600SemiBold", fontSize: 12, lineHeight: 16 },
+  navAlertMeta: { fontFamily: "Inter_400Regular", fontSize: 10, color: "#6B7280", marginTop: 1 },
+  navAltsTitle: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  navAltChip: {
+    borderRadius: 10, borderWidth: 1, padding: 9, minWidth: 140, maxWidth: 180, gap: 2,
+  },
+  navAltName: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  navAltMeta: { fontFamily: "Inter_400Regular", fontSize: 11 },
+  navAltBtn: {
+    marginTop: 6, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, alignSelf: "flex-start",
+  },
+  navAltBtnText: { fontFamily: "Inter_700Bold", fontSize: 10, color: "#FFF" },
 });
