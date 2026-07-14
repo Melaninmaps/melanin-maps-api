@@ -63,14 +63,14 @@
         }
       ],
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
-        "monochromeImage": "./assets/images/icon.png",
-        "backgroundColor": "#2B1507"
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "monochromeImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#C4622D"
       },
       "splash": {
         "image": "./assets/images/splash.png",
         "resizeMode": "cover",
-        "backgroundColor": "#2B1507",
+        "backgroundColor": "#C4622D",
         "mdpi": "./assets/images/splash.png",
         "hdpi": "./assets/images/splash.png",
         "xhdpi": "./assets/images/splash.png",
@@ -96,6 +96,18 @@
     },
     "plugins": [
       "./plugins/withAndroidCrashLogger",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#C4622D",
+          "image": "./assets/images/splash.png",
+          "resizeMode": "contain",
+          "android": {
+            "backgroundColor": "#C4622D",
+            "resizeMode": "contain"
+          }
+        }
+      ],
       [
         "expo-router",
         {
