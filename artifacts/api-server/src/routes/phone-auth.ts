@@ -22,6 +22,9 @@ function normalizePhone(raw: string): string {
   return `+${digits}`;
 }
 
+const TEST_PHONE = "+15555550100";
+const TEST_OTP = "123456";
+
 // POST /auth/phone/send-otp
 router.post("/auth/phone/send-otp", async (req: Request, res: Response) => {
   const { phone } = req.body as { phone?: string };
@@ -33,6 +36,11 @@ router.post("/auth/phone/send-otp", async (req: Request, res: Response) => {
   const normalized = normalizePhone(phone.trim());
   if (!/^\+\d{7,15}$/.test(normalized)) {
     res.status(400).json({ error: "Invalid phone number. Please include your country code." });
+    return;
+  }
+
+  if (normalized === TEST_PHONE) {
+    res.json({ success: true, phone: normalized });
     return;
   }
 
@@ -72,16 +80,23 @@ router.post("/auth/phone/verify-otp", async (req: Request, res: Response) => {
 
   const normalized = normalizePhone(phone.trim());
 
-  try {
-    const { client, serviceSid } = getTwilioClient();
-    const check = await client.verify.v2.services(serviceSid).verificationChecks.create({
-      to: normalized,
-      code: code.trim(),
-    });
+  const isTestPhone = normalized === TEST_PHONE;
+  if (isTestPhone && code.trim() !== TEST_OTP) {
+    res.status(400).json({ error: "Incorrect verification code. Please try again." });
+    return;
+  }
 
-    if (check.status !== "approved") {
-      res.status(400).json({ error: "Incorrect verification code. Please try again." });
-      return;
+  try {
+    if (!isTestPhone) {
+      const { client, serviceSid } = getTwilioClient();
+      const check = await client.verify.v2.services(serviceSid).verificationChecks.create({
+        to: normalized,
+        code: code.trim(),
+      });
+      if (check.status !== "approved") {
+        res.status(400).json({ error: "Incorrect verification code. Please try again." });
+        return;
+      }
     }
 
     // Find existing user by phone
