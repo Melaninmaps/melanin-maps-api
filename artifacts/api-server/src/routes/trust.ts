@@ -73,11 +73,22 @@ router.get("/users/me/trust", async (req: Request, res: Response) => {
   }
 });
 
+const PAID_TIERS = ["navigator", "trailblazer", "community_builder", "founding", "beta", "legacy_member"];
+
 router.post("/users/identity-verification", async (req: Request, res: Response) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
   }
+
+  const memberType = (req as any).user?.memberType ?? "individual";
+  if (!PAID_TIERS.includes(memberType)) {
+    res.status(403).json({ error: "Community Verified is available for Navigator members and above.", code: "UPGRADE_REQUIRED" });
+    return;
+  }
+
+  const { selfieKey } = req.body as { selfieKey?: string };
+
   try {
     const existing = await db
       .select({ id: identityVerificationsTable.id, status: identityVerificationsTable.status })
@@ -97,9 +108,10 @@ router.post("/users/identity-verification", async (req: Request, res: Response) 
 
     const [request] = await db
       .insert(identityVerificationsTable)
-      .values({ userId: req.user.id, status: "pending" })
+      .values({ userId: req.user.id, status: "pending", selfieKey: selfieKey ?? null })
       .returning();
 
+    req.log.info({ userId: req.user.id }, "Community verification submitted");
     res.status(201).json({ ok: true, request, message: "Verification request submitted. You will be notified once reviewed." });
   } catch (err) {
     req.log.error({ err }, "Failed to submit identity verification");
@@ -175,6 +187,34 @@ router.post("/reviews/:id/helpful", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to mark review as helpful");
     res.status(500).json({ error: "Failed to mark review as helpful" });
+  }
+});
+
+router.get("/admin/identity-verifications/:id/selfie-url", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const id = String(req.params.id);
+  try {
+    const [row] = await db
+      .select({ selfieKey: identityVerificationsTable.selfieKey })
+      .from(identityVerificationsTable)
+      .where(eq(identityVerificationsTable.id, id))
+      .limit(1);
+
+    if (!row) { res.status(404).json({ error: "Verification not found" }); return; }
+    if (!row.selfieKey) { res.status(404).json({ error: "No selfie submitted" }); return; }
+
+    const { objectStorageClient } = await import("../lib/objectStorage");
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (!bucketId) { res.status(500).json({ error: "Storage not configured" }); return; }
+    const bucket = objectStorageClient.bucket(bucketId);
+    const [signedUrl] = await bucket.file(row.selfieKey).getSignedUrl({
+      action: "read",
+      expires: Date.now() + 15 * 60 * 1000,
+    });
+    res.json({ url: signedUrl });
+  } catch (err) {
+    req.log.error({ err }, "Failed to generate selfie signed URL");
+    res.status(500).json({ error: "Failed to generate selfie URL" });
   }
 });
 

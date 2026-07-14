@@ -6,6 +6,7 @@ export const identityVerificationsTable = pgTable("identity_verifications", {
   userId: varchar("user_id").notNull(),
   status: varchar("status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
   adminNotes: text("admin_notes"),
+  selfieKey: text("selfie_key"),
   submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
   reviewedBy: varchar("reviewed_by"),
