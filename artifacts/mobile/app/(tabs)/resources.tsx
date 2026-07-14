@@ -916,6 +916,22 @@ export default function ResourcesScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={s.list}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { void handleRefresh(); }} tintColor="#CA922B" />}
+          ListHeaderComponent={
+            <TouchableOpacity
+              style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 14, borderWidth: 1, marginBottom: 10, backgroundColor: colors.card, borderColor: "#16A34A30" }}
+              onPress={() => router.push("/financial-hub" as never)}
+              activeOpacity={0.85}
+            >
+              <View style={{ width: 40, height: 40, borderRadius: 11, backgroundColor: "#16A34A18", alignItems: "center", justifyContent: "center" }}>
+                <Feather name="dollar-sign" size={20} color="#16A34A" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: colors.foreground }}>Financial Empowerment Hub</Text>
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, marginTop: 2 }}>Track savings goals, pay off debt, build credit. Free literacy resources included.</Text>
+              </View>
+              <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          }
           ListEmptyComponent={
             <View style={s.emptyState}>
               <Feather name="heart" size={36} color={colors.mutedForeground} />

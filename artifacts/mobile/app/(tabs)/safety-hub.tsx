@@ -119,6 +119,7 @@ const ALL_FEATURES: { id: string; icon: React.ComponentProps<typeof Feather>["na
   { id: "officer-watch",   icon: "eye",    title: "Officer Watch",              desc: "Track law enforcement officers flagged for violence against minorities and their department transfers.", color: "#DC2626", route: "/officer-watch" },
   { id: "mental-health",   icon: "heart",  title: "Mental Health Resources",    desc: "Crisis hotlines, 988 Lifeline, NAMI, Trevor Project, and Black mental health support — one tap away.", color: "#DC2626", route: "/mental-health" },
   { id: "na-aa-meetings",  icon: "map-pin", title: "NA/AA Meetings Near You",   desc: "Find Narcotics Anonymous, Alcoholics Anonymous, Al-Anon, and SMART Recovery meetings in your area.", color: "#059669", route: "/na-aa-meetings" },
+  { id: "wellness-tracker", icon: "activity", title: "Wellness Tracker",         desc: "Daily mood, energy, sleep, and wellness check-ins. Build streaks and set personal wellness goals.", color: "#7C3AED", route: "/wellness-tracker" },
 ];
 
 function applyOrder(ids: string[]) {

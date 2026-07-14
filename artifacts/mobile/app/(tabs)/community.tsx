@@ -805,6 +805,24 @@ export default function CommunityScreen() {
           contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 40, gap: 14, flexGrow: 1 }]}
           showsVerticalScrollIndicator={false}
         >
+          {/* Community Market card */}
+          <TouchableOpacity
+            style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#CA922B33" }]}
+            onPress={() => router.push("/marketplace" as never)}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.resSpacesIcon, { backgroundColor: "#CA922B18" }]}>
+              <Feather name="shopping-bag" size={22} color="#CA922B" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.resSpacesTitle, { color: colors.foreground }]}>Community Market</Text>
+              <Text style={[styles.resSpacesSub, { color: colors.mutedForeground }]}>
+                Buy, sell, trade, and offer services within the community. Economic power starts here.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+
           {/* Health Hub card */}
           <TouchableOpacity
             style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#0891B233" }]}
