@@ -188,6 +188,105 @@ router.post("/auth/phone/verify-otp", async (req: Request, res: Response) => {
   }
 });
 
+// POST /auth/phone/link-to-existing  — verify OTP then link phone to an existing email account
+router.post("/auth/phone/link-to-existing", async (req: Request, res: Response) => {
+  const { phone, code, email, password } = req.body as {
+    phone?: string;
+    code?: string;
+    email?: string;
+    password?: string;
+  };
+
+  if (!phone || !code || !email?.trim() || !password) {
+    res.status(400).json({ error: "Phone, code, email, and password are required." });
+    return;
+  }
+
+  const normalized = normalizePhone(phone.trim());
+  const isTestPhone = normalized === TEST_PHONE;
+
+  try {
+    // 1. Verify OTP with Twilio (unless test phone)
+    if (!isTestPhone) {
+      const { client, serviceSid } = getTwilioClient();
+      const check = await client.verify.v2.services(serviceSid).verificationChecks.create({
+        to: normalized,
+        code: code.trim(),
+      });
+      if (check.status !== "approved") {
+        res.status(400).json({ error: "Verification code is incorrect or has expired." });
+        return;
+      }
+    } else if (code.trim() !== TEST_OTP) {
+      res.status(400).json({ error: "Incorrect verification code." });
+      return;
+    }
+
+    // 2. Find user by email
+    const cleanEmail = email.trim().toLowerCase();
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.email, cleanEmail))
+      .limit(1);
+
+    if (!user) {
+      res.status(404).json({ error: "No account found with that email address." });
+      return;
+    }
+    if (!user.passwordHash) {
+      res.status(400).json({ error: "This account uses Apple or another sign-in method. Please use that to log in." });
+      return;
+    }
+
+    // 3. Verify password
+    const bcrypt = await import("bcryptjs");
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
+      res.status(401).json({ error: "Incorrect password. Please try again." });
+      return;
+    }
+
+    // 4. Check phone not already claimed by a different account
+    const [phoneTaken] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.phoneNumber, normalized))
+      .limit(1);
+
+    if (phoneTaken && phoneTaken.id !== user.id) {
+      res.status(409).json({ error: "This phone number is already linked to another account." });
+      return;
+    }
+
+    // 5. Link phone to account
+    await db
+      .update(usersTable)
+      .set({ phoneNumber: normalized, phoneVerified: true })
+      .where(eq(usersTable.id, user.id));
+
+    // 6. Return session
+    const sessionData: SessionData = {
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profileImageUrl: user.profileImageUrl,
+        approved: user.approved,
+        role: user.role as "user" | "tester" | "admin",
+      },
+      access_token: "",
+    };
+
+    const sid = await createSession(sessionData);
+    res.json({ token: sid, profileSetupComplete: user.profileSetupComplete });
+  } catch (err: unknown) {
+    req.log.error({ err }, "POST /api/auth/phone/link-to-existing error");
+    res.status(500).json({ error: "Something went wrong. Please try again." });
+  }
+});
+
 // GET /auth/phone/check  — check if a phone number is already registered
 router.get("/auth/phone/check", async (req: Request, res: Response) => {
   const { phone } = req.query as { phone?: string };

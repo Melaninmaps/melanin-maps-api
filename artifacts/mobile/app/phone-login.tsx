@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth, getApiBaseUrl } from "@/lib/auth";
 
-type Step = "phone" | "otp" | "signup";
+type Step = "phone" | "otp" | "choose" | "link" | "signup";
 
 export default function PhoneLoginScreen() {
   const colors = useColors();
@@ -44,6 +44,10 @@ export default function PhoneLoginScreen() {
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [agreed, setAgreed] = useState(false);
+
+  const [linkEmail, setLinkEmail] = useState("");
+  const [linkPassword, setLinkPassword] = useState("");
+  const [linkPasswordVisible, setLinkPasswordVisible] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -117,7 +121,7 @@ export default function PhoneLoginScreen() {
     setError("");
 
     if (!isExisting) {
-      setStep("signup");
+      setStep("choose");
       return;
     }
 
@@ -131,6 +135,40 @@ export default function PhoneLoginScreen() {
       });
       const data = await res.json() as { token?: string; error?: string; profileSetupComplete?: boolean };
       if (!res.ok || !data.token) { setError(data.error ?? "Verification failed."); return; }
+      if (Platform.OS !== "web") await SecureStore.setItemAsync("auth_session_token", data.token);
+      await refreshUser();
+      if (data.profileSetupComplete === false) {
+        router.replace("/profile-setup" as any);
+      } else {
+        router.replace("/(tabs)");
+      }
+    } catch {
+      setError("Connection error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLinkSubmit = async () => {
+    if (!linkEmail.trim()) { setError("Please enter your email address."); return; }
+    if (!linkPassword) { setError("Please enter your password."); return; }
+    setError("");
+    setLoading(true);
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      const code = otp.join("");
+      const res = await fetch(`${base}/api/auth/phone/link-to-existing`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: normalizedPhone,
+          code,
+          email: linkEmail.trim(),
+          password: linkPassword,
+        }),
+      });
+      const data = await res.json() as { token?: string; error?: string; profileSetupComplete?: boolean };
+      if (!res.ok || !data.token) { setError(data.error ?? "Could not link account. Please try again."); return; }
       if (Platform.OS !== "web") await SecureStore.setItemAsync("auth_session_token", data.token);
       await refreshUser();
       if (data.profileSetupComplete === false) {
@@ -193,7 +231,9 @@ export default function PhoneLoginScreen() {
         <TouchableOpacity
           style={styles.back}
           onPress={() => {
-            if (step === "otp" || step === "signup") { setStep("phone"); setOtp(["","","","","",""]); setError(""); }
+            if (step === "link") { setStep("choose"); setError(""); }
+            else if (step === "choose" || step === "signup") { setStep("otp"); setError(""); }
+            else if (step === "otp") { setStep("phone"); setOtp(["","","","","",""]); setError(""); }
             else router.canGoBack() ? router.back() : router.replace("/login");
           }}
           activeOpacity={0.85}
@@ -207,13 +247,17 @@ export default function PhoneLoginScreen() {
             <Feather name="smartphone" size={28} color={c.primary} />
           </View>
           <Text style={[styles.title, { color: c.foreground }]}>
-            {step === "phone" ? "Sign in with phone" : step === "otp" ? "Enter your code" : "Create your account"}
+            {step === "phone" ? "Sign in with phone" : step === "otp" ? "Enter your code" : step === "choose" ? "How would you like to continue?" : step === "link" ? "Link your account" : "Create your account"}
           </Text>
           <Text style={[styles.sub, { color: c.mutedForeground }]}>
             {step === "phone"
               ? "We'll send you a 6-digit code to verify your number"
               : step === "otp"
               ? `Code sent to ${normalizedPhone}`
+              : step === "choose"
+              ? "This number isn't linked to an account yet"
+              : step === "link"
+              ? "Enter your account credentials to link your phone number"
               : "Just a few more details to get started"}
           </Text>
         </View>
@@ -329,7 +373,88 @@ export default function PhoneLoginScreen() {
           </View>
         )}
 
-        {/* ── STEP 3: New user sign-up fields ── */}
+        {/* ── STEP 3: Choose — link existing or create new ── */}
+        {step === "choose" && (
+          <View style={styles.form}>
+            <TouchableOpacity
+              style={[styles.choiceCard, { backgroundColor: c.card, borderColor: c.primary }]}
+              onPress={() => { setError(""); setStep("link"); }}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.choiceIcon, { backgroundColor: c.primary + "15" }]}>
+                <Feather name="link" size={22} color={c.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.choiceTitle, { color: c.foreground }]}>Link to existing account</Text>
+                <Text style={[styles.choiceSub, { color: c.mutedForeground }]}>You signed up with email — connect your phone number so you can log in either way.</Text>
+              </View>
+              <Feather name="chevron-right" size={18} color={c.mutedForeground} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.choiceCard, { backgroundColor: c.card, borderColor: c.border }]}
+              onPress={() => { setError(""); setStep("signup"); }}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.choiceIcon, { backgroundColor: c.muted }]}>
+                <Feather name="user-plus" size={22} color={c.foreground} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.choiceTitle, { color: c.foreground }]}>Create a new account</Text>
+                <Text style={[styles.choiceSub, { color: c.mutedForeground }]}>Start fresh with your phone number as your login.</Text>
+              </View>
+              <Feather name="chevron-right" size={18} color={c.mutedForeground} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* ── STEP 4: Link to existing account ── */}
+        {step === "link" && (
+          <View style={styles.form}>
+            <Text style={[styles.label, { color: c.foreground }]}>Email Address</Text>
+            <TextInput
+              style={[styles.input, { borderColor: c.border, backgroundColor: c.card, color: c.foreground }]}
+              placeholder="your@email.com"
+              placeholderTextColor={c.mutedForeground}
+              value={linkEmail}
+              onChangeText={setLinkEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoFocus
+            />
+
+            <Text style={[styles.label, { color: c.foreground }]}>Password</Text>
+            <View style={[styles.passwordRow, { borderColor: c.border, backgroundColor: c.card }]}>
+              <TextInput
+                style={[styles.passwordInput, { color: c.foreground }]}
+                placeholder="Your password"
+                placeholderTextColor={c.mutedForeground}
+                value={linkPassword}
+                onChangeText={setLinkPassword}
+                secureTextEntry={!linkPasswordVisible}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <TouchableOpacity onPress={() => setLinkPasswordVisible((v) => !v)} activeOpacity={0.7}>
+                <Feather name={linkPasswordVisible ? "eye-off" : "eye"} size={18} color={c.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.primaryBtn, { backgroundColor: c.primary, opacity: loading ? 0.7 : 1 }]}
+              onPress={handleLinkSubmit}
+              disabled={loading}
+              activeOpacity={0.85}
+            >
+              {loading
+                ? <ActivityIndicator color="#FFF" size="small" />
+                : <><Feather name="link" size={18} color="#FFF" /><Text style={styles.primaryBtnTxt}>Link & Sign In</Text></>}
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* ── STEP 5: New user sign-up fields ── */}
         {step === "signup" && (
           <View style={styles.form}>
             <Text style={[styles.label, { color: c.foreground }]}>First Name *</Text>
@@ -464,4 +589,19 @@ const styles = StyleSheet.create({
   },
   agreeTxt: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1, lineHeight: 20 },
   note: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 16, marginTop: 24 },
+  choiceCard: {
+    flexDirection: "row", alignItems: "center", gap: 14,
+    padding: 16, borderRadius: 14, borderWidth: 1.5,
+  },
+  choiceIcon: {
+    width: 46, height: 46, borderRadius: 12,
+    alignItems: "center", justifyContent: "center", flexShrink: 0,
+  },
+  choiceTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", marginBottom: 3 },
+  choiceSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
+  passwordRow: {
+    flexDirection: "row", alignItems: "center",
+    borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, gap: 10,
+  },
+  passwordInput: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular", padding: 0 },
 });
