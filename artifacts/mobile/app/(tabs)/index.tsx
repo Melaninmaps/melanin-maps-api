@@ -263,20 +263,6 @@ export default function DiscoverScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Browse Businesses — full-width shortcut */}
-        <TouchableOpacity
-          style={[styles.searchBannerFull, { borderColor: "#CA922B30", backgroundColor: "#CA922B08" }]}
-          onPress={() => router.push("/business-search" as never)}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.aiSearchIcon}>🏪</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.aiSearchTitle, { color: "#CA922B" }]}>Browse Businesses</Text>
-            <Text style={[styles.aiSearchSub, { color: "#CA922B99" }]}>Find minority-owned businesses near you</Text>
-          </View>
-          <Feather name="chevron-right" size={16} color="#CA922B" />
-        </TouchableOpacity>
-
         {/* Category dropdown */}
         <TouchableOpacity
           style={[styles.categoryDropdownBtn, { backgroundColor: colors.card, borderColor: activeCategory !== "All" ? colors.primary : colors.border }]}
