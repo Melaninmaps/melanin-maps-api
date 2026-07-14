@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import router from "./routes";
 import webSsrRouter from "./routes/web-ssr";
+import privacyRouter from "./routes/privacy";
 import { logger } from "./lib/logger";
 import { authMiddleware } from "./middlewares/authMiddleware";
 import { WebhookHandlers } from "./webhookHandlers";
@@ -103,6 +104,7 @@ app.use("/api", generalLimiter);
 
 app.use("/api", router);
 app.use(webSsrRouter);
+app.use(privacyRouter);
 
 // Serve the web app static files (built by build.mjs and copied to dist/public/)
 app.use(express.static(webPublicDir));

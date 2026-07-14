@@ -52,7 +52,11 @@ export default function BillingScreen() {
 
   const handleManage = async () => {
     if (Platform.OS !== "web") Haptics.selectionAsync();
-    await openPortal();
+    if (Platform.OS === "ios") {
+      await Linking.openURL("https://apps.apple.com/account/subscriptions");
+    } else {
+      await openPortal();
+    }
   };
 
   return (
@@ -109,11 +113,15 @@ export default function BillingScreen() {
               activeOpacity={0.85}
             >
               <Feather name="external-link" size={16} color="#FFFFFF" />
-              <Text style={styles.manageBtnText}>Manage Subscription & Invoices</Text>
+              <Text style={styles.manageBtnText}>
+                {Platform.OS === "ios" ? "Manage Apple Subscription" : "Manage Subscription & Invoices"}
+              </Text>
             </TouchableOpacity>
 
             <Text style={[styles.portalNote, { color: colors.mutedForeground }]}>
-              Opens the Stripe Customer Portal where you can view invoices, update payment methods, and cancel your subscription.
+              {Platform.OS === "ios"
+                ? "Manage your subscription, update payment methods, and cancel in iOS Settings → Apple ID → Subscriptions."
+                : "Opens the customer portal where you can view invoices, update payment methods, and cancel your subscription."}
             </Text>
           </>
         ) : (
@@ -172,9 +180,11 @@ export default function BillingScreen() {
           </View>
         </View>
 
-        <Text style={[styles.disclaimer, { color: colors.mutedForeground }]}>
-          Payments are processed securely by Stripe. Mapping With Melanin™ does not store your card information.
-        </Text>
+        {Platform.OS !== "ios" && (
+          <Text style={[styles.disclaimer, { color: colors.mutedForeground }]}>
+            Payments are processed securely. Mapping With Melanin™ does not store your card information.
+          </Text>
+        )}
       </ScrollView>
     </View>
   );

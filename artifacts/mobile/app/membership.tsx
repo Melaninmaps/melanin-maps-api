@@ -331,11 +331,11 @@ export default function MembershipScreen() {
         // RevenueCat dashboard for offering ID: plan.rcOfferingId
         Alert.alert(
           "Unavailable",
-          `The ${plan.name} plan is not yet available for purchase on this device. Please visit mappingwithmelanin.com to subscribe, or contact support@mappingwithmelanin.com.`,
+          `The ${plan.name} plan is not currently available for purchase. Please contact support@mappingwithmelanin.com for assistance.`,
           [
             {
-              text: "Open Website",
-              onPress: () => Linking.openURL("https://www.mappingwithmelanin.com/membership"),
+              text: "Contact Support",
+              onPress: () => Linking.openURL("mailto:support@mappingwithmelanin.com?subject=Membership%20Plan%20Unavailable"),
             },
             { text: "Cancel", style: "cancel" },
           ],
