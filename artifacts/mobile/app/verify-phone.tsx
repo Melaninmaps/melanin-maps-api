@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -153,6 +154,14 @@ export default function VerifyPhoneScreen() {
         <TouchableOpacity activeOpacity={0.85} style={styles.changeNumBtn} onPress={() => router.back()}>
           <Text style={[styles.changeNumTxt, { color: colors.mutedForeground }]}>Change phone number</Text>
         </TouchableOpacity>
+
+        <View style={[styles.privacyNote, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Feather name="lock" size={13} color={colors.mutedForeground} style={{ marginTop: 1, flexShrink: 0 }} />
+          <Text style={[styles.privacyNoteText, { color: colors.mutedForeground }]}>
+            <Text style={{ fontFamily: "Inter_600SemiBold" }}>Your privacy matters.</Text>
+            {" "}Verification information is used only to authenticate your identity and is handled securely. Verification details are never displayed publicly or shared with other users.
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -185,4 +194,9 @@ const styles = StyleSheet.create({
   resendCountdown: { fontSize: 14, fontFamily: "Inter_400Regular" },
   changeNumBtn: { alignItems: "center", paddingVertical: 4 },
   changeNumTxt: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  privacyNote: {
+    flexDirection: "row", alignItems: "flex-start", gap: 10,
+    padding: 14, borderRadius: 12, borderWidth: 1, marginTop: 24,
+  },
+  privacyNoteText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, flex: 1 },
 });

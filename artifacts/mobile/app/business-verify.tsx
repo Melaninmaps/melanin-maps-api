@@ -309,6 +309,14 @@ export default function BusinessVerifyScreen() {
               </Text>
             </View>
 
+            <View style={[styles.privacyNote, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="lock" size={14} color={colors.mutedForeground} style={{ marginTop: 1, flexShrink: 0 }} />
+              <Text style={[styles.privacyNoteText, { color: colors.mutedForeground }]}>
+                <Text style={{ fontFamily: "Inter_600SemiBold" }}>Your privacy matters.</Text>
+                {" "}Verification information is used only to authenticate your identity or business and is handled securely. Verification details are never displayed publicly or shared with other users.
+              </Text>
+            </View>
+
             <TouchableOpacity
               style={[styles.checkRow, { borderColor: policyAccepted ? colors.primary : colors.border }]}
               onPress={() => {
@@ -447,6 +455,14 @@ export default function BusinessVerifyScreen() {
                 })}
               </View>
             )}
+
+            <View style={[styles.privacyNote, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 16 }]}>
+              <Feather name="lock" size={14} color={colors.mutedForeground} style={{ marginTop: 1, flexShrink: 0 }} />
+              <Text style={[styles.privacyNoteText, { color: colors.mutedForeground }]}>
+                <Text style={{ fontFamily: "Inter_600SemiBold" }}>Your privacy matters.</Text>
+                {" "}Verification information is used only to authenticate your identity or business and is handled securely. Verification details are never displayed publicly or shared with other users.
+              </Text>
+            </View>
 
             <View style={styles.docTypeList}>
               {DOC_TYPES.map((dt) => {
@@ -651,6 +667,12 @@ const styles = StyleSheet.create({
   summaryHeader: { fontFamily: "Inter_600SemiBold", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5 },
   summaryRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   summaryText: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
+  privacyNote: {
+    flexDirection: "row", alignItems: "flex-start", gap: 10,
+    padding: 14, borderRadius: 12, borderWidth: 1, marginTop: 16,
+  },
+  privacyNoteText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, flex: 1 },
+
   doneBtn: { alignSelf: "stretch", alignItems: "center", paddingVertical: 17, borderRadius: 14 },
   doneTxt: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
 
