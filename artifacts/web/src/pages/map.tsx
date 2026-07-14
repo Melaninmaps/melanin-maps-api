@@ -1,6 +1,6 @@
-import { useListBusinesses } from "@workspace/api-client-react";
+import { useListBusinesses, useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Link } from "wouter";
-import { Search, MapPin, X, SlidersHorizontal } from "lucide-react";
+import { Search, MapPin, X, SlidersHorizontal, Navigation, Navigation2 } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -20,6 +20,12 @@ type BizWithCoords = {
   latitude?: string | number | null;
   longitude?: string | number | null;
   blackOwned?: boolean | null;
+};
+
+type RouteInfo = {
+  distance: string;
+  duration: string;
+  bizName: string;
 };
 
 const CATEGORIES = ["All", "Food", "Beauty", "Finance", "Wellness", "Retail", "Cultural", "Professional"];
@@ -42,17 +48,22 @@ const BRAND_STYLE: object[] = [
 
 export default function MapPage() {
   const { data, isLoading } = useListBusinesses({}, { query: { queryKey: ["businesses", "map-full"] } });
+  const { data: authData } = useGetCurrentAuthUser();
 
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<GMap>(null);
   const markersRef = useRef<Map<string, GMarker>>(new Map());
   const infoWindowRef = useRef<GInfoWindow>(null);
+  const directionsRendererRef = useRef<any>(null);
 
   const [ready, setReady] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [apiKeyError, setApiKeyError] = useState(false);
+  const [isPaidMember, setIsPaidMember] = useState(false);
+  const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
+  const [routingBizId, setRoutingBizId] = useState<string | null>(null);
 
   const businesses = ((data?.businesses ?? []) as BizWithCoords[]).filter(
     (b) => b.latitude && b.longitude
@@ -67,6 +78,20 @@ export default function MapPage() {
     return matchSearch && matchCat;
   });
 
+  // Check subscription status
+  useEffect(() => {
+    if (!authData?.user) return;
+    const base = BASE.replace(/\/$/, "");
+    fetch(`${base}/api/stripe/subscription`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((d: any) => {
+        if (d.subscription && ["active", "trialing"].includes(d.subscription.status)) {
+          setIsPaidMember(true);
+        }
+      })
+      .catch(() => {});
+  }, [authData?.user]);
+
   // Load Google Maps JS API via the server-side key endpoint
   useEffect(() => {
     if (ready) return;
@@ -77,7 +102,6 @@ export default function MapPage() {
         if (!key) { setApiKeyError(true); return; }
         if (document.getElementById("gmaps-script")) { setReady(true); return; }
         (window as any).__mwmMapInit = () => setReady(true);
-        // Official Google Maps auth-failure hook — fires on InvalidKeyMapError
         (window as any).gm_authFailure = () => setApiKeyError(true);
         const script = document.createElement("script");
         script.id = "gmaps-script";
@@ -94,7 +118,6 @@ export default function MapPage() {
     if (!ready || !mapDivRef.current || isLoading) return;
     if (mapRef.current) return;
 
-    // Detect InvalidKeyMapError / other Google Maps init failures
     const onGmError = (e: ErrorEvent) => {
       if (
         e.message?.toLowerCase().includes("invalidkey") ||
@@ -165,7 +188,6 @@ export default function MapPage() {
     mapRef.current.panTo({ lat, lng });
     mapRef.current.setZoom(14);
 
-    // Highlight selected marker, reset others
     markersRef.current.forEach((mk, mid) => {
       mk.setIcon({
         path: g.SymbolPath.CIRCLE,
@@ -190,6 +212,7 @@ export default function MapPage() {
 
   const resetView = useCallback(() => {
     setSelected(null);
+    clearRoute();
     const g = (window as any).google?.maps;
     if (!g || !mapRef.current) return;
     mapRef.current.panTo({ lat: 37.09, lng: -95.71 });
@@ -207,6 +230,79 @@ export default function MapPage() {
     });
   }, []);
 
+  const clearRoute = useCallback(() => {
+    if (directionsRendererRef.current) {
+      directionsRendererRef.current.setMap(null);
+      directionsRendererRef.current = null;
+    }
+    setRouteInfo(null);
+    setRoutingBizId(null);
+  }, []);
+
+  const handleDirections = useCallback((biz: BizWithCoords, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const lat = parseFloat(String(biz.latitude));
+    const lng = parseFloat(String(biz.longitude));
+
+    if (!isPaidMember) {
+      window.open(
+        `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+        "_blank"
+      );
+      return;
+    }
+
+    const g = (window as any).google?.maps;
+    if (!g || !mapRef.current) return;
+
+    setRoutingBizId(biz.id);
+
+    const doRoute = (origin: { lat: number; lng: number } | any) => {
+      if (!directionsRendererRef.current) {
+        directionsRendererRef.current = new g.DirectionsRenderer({
+          polylineOptions: {
+            strokeColor: "#CA922B",
+            strokeWeight: 5,
+            strokeOpacity: 0.85,
+          },
+          suppressMarkers: false,
+        });
+      }
+      directionsRendererRef.current.setMap(mapRef.current);
+
+      const service = new g.DirectionsService();
+      service.route(
+        {
+          origin,
+          destination: { lat, lng },
+          travelMode: g.TravelMode.DRIVING,
+        },
+        (result: any, status: any) => {
+          setRoutingBizId(null);
+          if (status === "OK" && result) {
+            directionsRendererRef.current.setDirections(result);
+            const leg = result.routes?.[0]?.legs?.[0];
+            setRouteInfo({
+              distance: leg?.distance?.text ?? "",
+              duration: leg?.duration?.text ?? "",
+              bizName: biz.name ?? "",
+            });
+            infoWindowRef.current?.close();
+          }
+        }
+      );
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => doRoute({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => doRoute(mapRef.current!.getCenter())
+      );
+    } else {
+      doRoute(mapRef.current.getCenter());
+    }
+  }, [isPaidMember]);
+
   // Show/hide markers based on active filters
   useEffect(() => {
     if (!mapRef.current) return;
@@ -216,7 +312,6 @@ export default function MapPage() {
     });
   }, [filtered]);
 
-  // Render helper — sidebar is identical in both error and normal states
   const renderSidebar = () => (
     <div className="w-80 shrink-0 flex flex-col border-r border-[#3A1F0E]/10 bg-white overflow-hidden">
       <div className="p-4 border-b border-[#3A1F0E]/8 shrink-0">
@@ -282,36 +377,57 @@ export default function MapPage() {
             </button>
           </div>
         ) : (
-          filtered.map((biz) => (
-            <div
-              key={biz.id}
-              onClick={() => !apiKeyError && selectBusiness(biz.id, biz)}
-              className={`p-4 border-b border-[#3A1F0E]/6 transition-colors flex gap-3 ${
-                !apiKeyError ? "cursor-pointer" : ""
-              } ${selected === biz.id ? "bg-[#CA922B]/8 border-l-2 border-l-[#CA922B]" : "hover:bg-[#FAF6EF]"}`}
-            >
-              <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-[#3A1F0E]/8">
-                {biz.imageUrl && (
-                  <img src={biz.imageUrl} alt={biz.name ?? ""} className="w-full h-full object-cover" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-bold text-[#2B1507] text-sm leading-tight truncate">{biz.name}</div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-[#CA922B] mt-0.5">{biz.category}</div>
-                <div className="text-xs text-[#3A1F0E]/50 mt-0.5 flex items-center gap-1">
-                  <MapPin className="w-3 h-3 shrink-0" />
-                  {biz.city}, {biz.state}
+          filtered.map((biz) => {
+            const isRouting = routingBizId === biz.id;
+            return (
+              <div
+                key={biz.id}
+                onClick={() => !apiKeyError && selectBusiness(biz.id, biz)}
+                className={`p-4 border-b border-[#3A1F0E]/6 transition-colors flex gap-3 ${
+                  !apiKeyError ? "cursor-pointer" : ""
+                } ${selected === biz.id ? "bg-[#CA922B]/8 border-l-2 border-l-[#CA922B]" : "hover:bg-[#FAF6EF]"}`}
+              >
+                <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-[#3A1F0E]/8">
+                  {biz.imageUrl && (
+                    <img src={biz.imageUrl} alt={biz.name ?? ""} className="w-full h-full object-cover" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-[#2B1507] text-sm leading-tight truncate">{biz.name}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-[#CA922B] mt-0.5">{biz.category}</div>
+                  <div className="text-xs text-[#3A1F0E]/50 mt-0.5 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 shrink-0" />
+                    {biz.city}, {biz.state}
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  <Link
+                    href={`/businesses/${biz.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[10px] font-bold text-[#CA922B] hover:underline"
+                  >
+                    View →
+                  </Link>
+                  <button
+                    onClick={(e) => handleDirections(biz, e)}
+                    title={isPaidMember ? "Get in-app directions" : "Open in Google Maps"}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
+                      isRouting
+                        ? "bg-[#CA922B]/20 text-[#CA922B] animate-pulse"
+                        : "bg-[#FAF6EF] text-[#3A1F0E]/60 hover:bg-[#CA922B]/15 hover:text-[#CA922B]"
+                    }`}
+                  >
+                    {isRouting ? (
+                      <Navigation2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Navigation className="w-3 h-3" />
+                    )}
+                    {isPaidMember ? "Route" : "Directions"}
+                  </button>
                 </div>
               </div>
-              <Link
-                href={`/businesses/${biz.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="text-[10px] font-bold text-[#CA922B] hover:underline shrink-0 mt-1"
-              >
-                View →
-              </Link>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
@@ -348,10 +464,35 @@ export default function MapPage() {
         )}
         <div ref={mapDivRef} className="w-full h-full" />
 
+        {/* Active route info bar */}
+        {routeInfo && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#2B1507] text-[#F5EBD8] rounded-2xl px-5 py-3 shadow-xl flex items-center gap-4 z-10">
+            <Navigation2 className="w-4 h-4 text-[#CA922B] shrink-0" />
+            <div>
+              <div className="text-xs font-bold text-[#CA922B] leading-none mb-0.5">Route to {routeInfo.bizName}</div>
+              <div className="text-sm font-semibold">{routeInfo.duration} · {routeInfo.distance}</div>
+            </div>
+            <button
+              onClick={clearRoute}
+              className="ml-2 w-6 h-6 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         {/* Legend */}
-        <div className="absolute bottom-6 left-4 bg-white/90 backdrop-blur-sm rounded-xl px-4 py-2.5 shadow-lg border border-[#3A1F0E]/8 flex items-center gap-2.5 pointer-events-none">
-          <div className="w-3 h-3 rounded-full bg-[#CA922B] border-2 border-[#2B1507]" />
-          <span className="text-xs font-semibold text-[#3A1F0E]/70">minority-owned Business</span>
+        <div className="absolute bottom-6 left-4 bg-white/90 backdrop-blur-sm rounded-xl px-4 py-2.5 shadow-lg border border-[#3A1F0E]/8 flex items-center gap-4 pointer-events-none">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-[#CA922B] border-2 border-[#2B1507]" />
+            <span className="text-xs font-semibold text-[#3A1F0E]/70">minority-owned Business</span>
+          </div>
+          {isPaidMember && (
+            <div className="flex items-center gap-1.5 border-l border-[#3A1F0E]/10 pl-4">
+              <Navigation className="w-3 h-3 text-[#CA922B]" />
+              <span className="text-xs font-semibold text-[#CA922B]">In-app routing active</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

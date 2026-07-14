@@ -29,4 +29,34 @@ router.get("/maps/js-key", mapsLimiter, (req: Request, res: Response) => {
   res.json({ key: apiKey });
 });
 
+// Proxies Google Directions API so the key stays server-side.
+// ?origin=lat,lng  &destination=lat,lng  (&mode=driving|walking|bicycling|transit)
+router.get("/maps/directions", mapsLimiter, async (req: Request, res: Response) => {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey) {
+    res.status(503).json({ error: "Maps not configured" });
+    return;
+  }
+  const origin = typeof req.query.origin === "string" ? req.query.origin.trim() : "";
+  const destination = typeof req.query.destination === "string" ? req.query.destination.trim() : "";
+  const mode = typeof req.query.mode === "string" ? req.query.mode.trim() : "driving";
+  if (!origin || !destination) {
+    res.status(400).json({ error: "origin and destination are required" });
+    return;
+  }
+  try {
+    const url =
+      `https://maps.googleapis.com/maps/api/directions/json` +
+      `?origin=${encodeURIComponent(origin)}` +
+      `&destination=${encodeURIComponent(destination)}` +
+      `&mode=${encodeURIComponent(mode)}` +
+      `&key=${apiKey}`;
+    const upstream = await fetch(url);
+    const data = await upstream.json() as unknown;
+    res.json(data);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch directions" });
+  }
+});
+
 export default router;

@@ -5,13 +5,15 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
+  Linking,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Callout, Circle, Marker, PROVIDER_DEFAULT, type Region } from "react-native-maps";
+import MapView, { Callout, Circle, Marker, Polyline, PROVIDER_DEFAULT, type Region } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryPill } from "@/components/CategoryPill";
 import { IntentModal, type PinLocation } from "@/components/IntentModal";
@@ -23,7 +25,37 @@ import type { Business } from "@/constants/types";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
+import { useMembership } from "@/hooks/useMembership";
 import { useSafetyProximity, type ProximityWarning } from "@/hooks/useSafetyProximity";
+
+function decodePolyline(encoded: string): Array<{ latitude: number; longitude: number }> {
+  const coords: Array<{ latitude: number; longitude: number }> = [];
+  let index = 0;
+  const len = encoded.length;
+  let lat = 0;
+  let lng = 0;
+  while (index < len) {
+    let b: number;
+    let shift = 0;
+    let result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    lat += (result & 1) !== 0 ? ~(result >> 1) : result >> 1;
+    shift = 0;
+    result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    lng += (result & 1) !== 0 ? ~(result >> 1) : result >> 1;
+    coords.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
+  }
+  return coords;
+}
 
 const INITIAL_REGION: Region = {
   latitude: 33.7,
@@ -268,6 +300,11 @@ export function MapTabView() {
     dismissAll,
   } = useSafetyProximity();
 
+  const { subscription } = useMembership();
+  const isPaidMember = subscription !== null && ["active", "trialing"].includes(subscription.status ?? "");
+  const [routeCoords, setRouteCoords] = useState<Array<{ latitude: number; longitude: number }>>([]);
+  const [isNavigating, setIsNavigating] = useState(false);
+
   const prevWarningCount = useRef(0);
 
   useEffect(() => {
@@ -349,6 +386,7 @@ export function MapTabView() {
 
   const handleMarkerPress = (business: Business) => {
     setSelected(business);
+    setRouteCoords([]);
     mapRef.current?.animateToRegion(
       {
         latitude: business.latitude,
@@ -358,6 +396,55 @@ export function MapTabView() {
       },
       500
     );
+  };
+
+  const handleNavigate = async (biz: Business) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    if (!isPaidMember) {
+      const lat = biz.latitude;
+      const lng = biz.longitude;
+      const nativeUrl =
+        Platform.OS === "ios"
+          ? `maps://?daddr=${lat},${lng}&dirflg=d`
+          : `google.navigation:q=${lat},${lng}`;
+      const webFallback = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+      const canOpen = await Linking.canOpenURL(nativeUrl).catch(() => false);
+      Linking.openURL(canOpen ? nativeUrl : webFallback);
+      return;
+    }
+
+    setIsNavigating(true);
+    try {
+      const origin = userLocation
+        ? `${userLocation.lat},${userLocation.lng}`
+        : `${INITIAL_REGION.latitude},${INITIAL_REGION.longitude}`;
+      const destination = `${biz.latitude},${biz.longitude}`;
+      const res = await fetch(
+        `${apiBase}/api/maps/directions?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`
+      );
+      if (res.ok) {
+        const data = await res.json() as { routes?: Array<{ overview_polyline?: { points: string } }> };
+        const points = data.routes?.[0]?.overview_polyline?.points;
+        if (points) {
+          const coords = decodePolyline(points);
+          setRouteCoords(coords);
+          if (coords.length > 0) {
+            mapRef.current?.animateToRegion(
+              {
+                latitude: (coords[0].latitude + coords[coords.length - 1].latitude) / 2,
+                longitude: (coords[0].longitude + coords[coords.length - 1].longitude) / 2,
+                latitudeDelta: Math.abs(coords[0].latitude - coords[coords.length - 1].latitude) * 1.5 + 0.05,
+                longitudeDelta: Math.abs(coords[0].longitude - coords[coords.length - 1].longitude) * 1.5 + 0.05,
+              },
+              800
+            );
+          }
+        }
+      }
+    } catch { /**/ } finally {
+      setIsNavigating(false);
+    }
   };
 
   const handlePinArea = async () => {
@@ -486,6 +573,15 @@ export function MapTabView() {
             fillColor="rgba(59,130,246,0.05)"
             strokeColor="rgba(59,130,246,0.25)"
             strokeWidth={1}
+          />
+        )}
+
+        {routeCoords.length > 0 && (
+          <Polyline
+            coordinates={routeCoords}
+            strokeColor="#CA922B"
+            strokeWidth={5}
+            lineDashPattern={undefined}
           />
         )}
       </MapView>
@@ -634,6 +730,17 @@ export function MapTabView() {
                 <Feather name="bookmark" size={18} color={isSaved(selected.id) ? colors.primary : colors.mutedForeground} />
               </TouchableOpacity>
               <TouchableOpacity
+                onPress={() => handleNavigate(selected)}
+                style={[styles.actionBtn, { backgroundColor: isNavigating ? colors.primary + "40" : colors.secondary }]}
+                disabled={isNavigating}
+              >
+                <Feather
+                  name="navigation"
+                  size={18}
+                  color={routeCoords.length > 0 ? colors.primary : (isNavigating ? colors.primary : colors.mutedForeground)}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
                 onPress={() => router.push({ pathname: "/business/[id]", params: { id: selected.id } })}
                 style={[styles.viewBtn, { backgroundColor: colors.primary }]}
               >
@@ -694,7 +801,7 @@ export function MapTabView() {
             </View>
           )}
 
-          <TouchableOpacity onPress={() => setSelected(null)} style={styles.dismissBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity onPress={() => { setSelected(null); setRouteCoords([]); }} style={styles.dismissBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name="x" size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
         </View>
