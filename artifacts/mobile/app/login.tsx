@@ -82,23 +82,19 @@ export default function LoginScreen() {
     setError("");
     setLoading(true);
     try {
-      // Generate a cryptographic nonce. Apple embeds SHA-256(rawNonce) in the
-      // identity token so the server can verify the request wasn't replayed.
-      // This is required by Apple on iOS 26+ and strongly recommended everywhere.
+      // Generate a cryptographic nonce. We pass rawNonce to Apple; Apple
+      // embeds SHA-256(rawNonce) in the identity token. The server then
+      // verifies SHA-256(rawNonce) === payload.nonce.
       const rawNonce = Array.from(
         await Crypto.getRandomBytesAsync(32)
       ).map(b => b.toString(16).padStart(2, "0")).join("");
-      const hashedNonce = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        rawNonce,
-      );
 
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
-        nonce: hashedNonce,
+        nonce: rawNonce,
       });
       if (!credential.identityToken) throw new Error("No identity token from Apple");
       const base = getApiBaseUrl();

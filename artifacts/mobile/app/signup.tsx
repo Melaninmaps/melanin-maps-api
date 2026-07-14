@@ -93,16 +93,12 @@ export default function SignupScreen() {
       const rawNonce = Array.from(
         await Crypto.getRandomBytesAsync(32)
       ).map(b => b.toString(16).padStart(2, "0")).join("");
-      const hashedNonce = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        rawNonce,
-      );
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
-        nonce: hashedNonce,
+        nonce: rawNonce,
       });
       if (!credential.identityToken) throw new Error("No identity token from Apple");
       const base = getApiBaseUrl();
