@@ -27,11 +27,14 @@ type VerificationStatus =
   | "already_verified"
   | "pending"
   | "rejected"
-  | "ready"
+  | "choose_method"
   | "capturing"
   | "submitting"
   | "success";
 
+type VerificationMethod = "selfie" | "gov_id" | null;
+
+const GOLD = "#CA922B";
 const PAID_TIERS = ["navigator", "trailblazer", "community_builder", "founding", "beta", "legacy_member"];
 
 export default function CommunityVerifiedScreen() {
@@ -40,19 +43,16 @@ export default function CommunityVerifiedScreen() {
   const insets = useSafeAreaInsets();
 
   const [status, setStatus] = useState<VerificationStatus>("loading");
-  const [selfieUri, setSelfieUri] = useState<string | null>(null);
-  const [selfieKey, setSelfieKey] = useState<string | null>(null);
+  const [method, setMethod] = useState<VerificationMethod>(null);
+  const [capturedUri, setCapturedUri] = useState<string | null>(null);
+  const [capturedKey, setCapturedKey] = useState<string | null>(null);
   const [pendingSubmittedAt, setPendingSubmittedAt] = useState<string | null>(null);
   const [rejectedNotes, setRejectedNotes] = useState<string | null>(null);
 
   const loadStatus = useCallback(async () => {
     if (!isAuthenticated) { setStatus("upgrade_required"); return; }
-
     const memberType = (user as any)?.memberType ?? "individual";
-    if (!PAID_TIERS.includes(memberType)) {
-      setStatus("upgrade_required");
-      return;
-    }
+    if (!PAID_TIERS.includes(memberType)) { setStatus("upgrade_required"); return; }
 
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
@@ -60,7 +60,7 @@ export default function CommunityVerifiedScreen() {
       const res = await fetch(`${apiBase}/api/users/me/trust`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (!res.ok) { setStatus("ready"); return; }
+      if (!res.ok) { setStatus("choose_method"); return; }
       const data = await res.json() as {
         identityVerified: boolean;
         pendingVerification: { id: string; status: string; submittedAt: string; adminNotes?: string } | null;
@@ -74,69 +74,79 @@ export default function CommunityVerifiedScreen() {
         setStatus("rejected");
         setRejectedNotes((data.pendingVerification as any).adminNotes ?? null);
       } else {
-        setStatus("ready");
+        setStatus("choose_method");
       }
     } catch {
-      setStatus("ready");
+      setStatus("choose_method");
     }
   }, [isAuthenticated, user]);
 
   useEffect(() => { void loadStatus(); }, [loadStatus]);
 
-  const takeSelfie = async () => {
+  const handleSelectMethod = async (chosen: VerificationMethod) => {
+    setMethod(chosen);
     if ((Platform.OS as string) === "web") {
-      Alert.alert("Camera not available", "Please use the iOS app to complete verification.");
-      return;
-    }
-
-    const { status: camStatus } = await ImagePicker.requestCameraPermissionsAsync();
-    if (camStatus !== "granted") {
-      Alert.alert(
-        "Camera access needed",
-        "To take your verification selfie, allow camera access in Settings.",
-        [
-          { text: "Open Settings", onPress: () => Linking.openSettings() },
-          { text: "Cancel", style: "cancel" },
-        ],
-      );
+      Alert.alert("Not available", "Please use the iOS app to complete verification.");
       return;
     }
 
     setStatus("capturing");
+
     try {
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ["images"],
-        cameraType: ImagePicker.CameraType.front,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.85,
-      });
-
-      if (result.canceled || !result.assets[0]) {
-        setStatus("ready");
-        return;
+      if (chosen === "selfie") {
+        const { status: camStatus } = await ImagePicker.requestCameraPermissionsAsync();
+        if (camStatus !== "granted") {
+          Alert.alert(
+            "Camera access needed",
+            "Allow camera access in Settings to take your verification selfie.",
+            [{ text: "Open Settings", onPress: () => Linking.openSettings() }, { text: "Cancel", style: "cancel" }],
+          );
+          setStatus("choose_method");
+          return;
+        }
+        const result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ["images"],
+          cameraType: ImagePicker.CameraType.front,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.85,
+        });
+        if (result.canceled || !result.assets[0]) { setStatus("choose_method"); return; }
+        setCapturedUri(result.assets[0].uri);
+        setCapturedKey(null);
+      } else {
+        const { status: libStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (libStatus !== "granted") {
+          Alert.alert(
+            "Photo access needed",
+            "Allow photo library access in Settings to upload your ID.",
+            [{ text: "Open Settings", onPress: () => Linking.openSettings() }, { text: "Cancel", style: "cancel" }],
+          );
+          setStatus("choose_method");
+          return;
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ["images"],
+          allowsEditing: false,
+          quality: 0.9,
+        });
+        if (result.canceled || !result.assets[0]) { setStatus("choose_method"); return; }
+        setCapturedUri(result.assets[0].uri);
+        setCapturedKey(null);
       }
-
-      setSelfieUri(result.assets[0].uri);
-      setSelfieKey(null);
-      setStatus("ready");
+      setStatus("choose_method");
     } catch {
-      setStatus("ready");
-      Alert.alert("Camera error", "Couldn't open camera. Please try again.");
+      setStatus("choose_method");
+      Alert.alert("Error", "Couldn't open camera or photo library. Please try again.");
     }
   };
 
-  const uploadSelfie = async (uri: string): Promise<string> => {
+  const uploadImage = async (uri: string): Promise<string> => {
     const token = await SecureStore.getItemAsync("auth_session_token");
     const apiBase = getApiBase();
     const formData = new FormData();
-    formData.append("file", {
-      uri,
-      type: "image/jpeg",
-      name: "selfie.jpg",
-    } as unknown as Blob);
-    formData.append("docType", "government_issued_id");
-
+    formData.append("file", { uri, type: "image/jpeg", name: "verification.jpg" } as unknown as Blob);
+    formData.append("docType", method === "gov_id" ? "government_issued_id" : "government_issued_id");
     const res = await fetch(`${apiBase}/api/verification/upload-document`, {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -148,43 +158,35 @@ export default function CommunityVerifiedScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!selfieUri && !selfieKey) {
-      Alert.alert("Selfie required", "Please take a selfie to continue.");
+    if (!capturedUri && !capturedKey) {
+      Alert.alert("Photo required", "Please capture or select your verification photo first.");
       return;
     }
-
     setStatus("submitting");
     try {
-      let key = selfieKey;
-      if (selfieUri && !key) {
-        key = await uploadSelfie(selfieUri);
-        setSelfieKey(key);
+      let key = capturedKey;
+      if (capturedUri && !key) {
+        key = await uploadImage(capturedUri);
+        setCapturedKey(key);
       }
-
       const token = await SecureStore.getItemAsync("auth_session_token");
       const apiBase = getApiBase();
       const res = await fetch(`${apiBase}/api/users/identity-verification`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ selfieKey: key }),
       });
-
       const data = await res.json() as { ok?: boolean; error?: string; code?: string };
-
       if (!res.ok) {
         if (data.code === "PENDING_EXISTS") { setStatus("pending"); return; }
         if (data.code === "ALREADY_VERIFIED") { setStatus("already_verified"); return; }
         if (data.code === "UPGRADE_REQUIRED") { setStatus("upgrade_required"); return; }
         throw new Error(data.error ?? "Submission failed");
       }
-
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setStatus("success");
     } catch (err: any) {
-      setStatus("ready");
+      setStatus("choose_method");
       Alert.alert("Submission failed", err?.message ?? "Something went wrong. Please try again.");
     }
   };
@@ -194,7 +196,7 @@ export default function CommunityVerifiedScreen() {
   if (status === "loading") {
     return (
       <View style={[styles.center, { backgroundColor: bg }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={GOLD} />
       </View>
     );
   }
@@ -215,17 +217,22 @@ export default function CommunityVerifiedScreen() {
       )}
       {status === "pending" && <PendingState colors={colors} submittedAt={pendingSubmittedAt} />}
       {status === "rejected" && (
-        <RejectedState colors={colors} notes={rejectedNotes} onRetry={() => { setSelfieUri(null); setSelfieKey(null); setStatus("ready"); }} />
+        <RejectedState
+          colors={colors}
+          notes={rejectedNotes}
+          onRetry={() => { setCapturedUri(null); setCapturedKey(null); setMethod(null); setStatus("choose_method"); }}
+        />
       )}
       {status === "success" && <SuccessState colors={colors} onDone={() => router.back()} />}
 
-      {(status === "ready" || status === "capturing" || status === "submitting") && (
-        <ReadyState
+      {(status === "choose_method" || status === "capturing" || status === "submitting") && (
+        <ChooseMethodState
           colors={colors}
-          selfieUri={selfieUri}
+          capturedUri={capturedUri}
+          method={method}
           submitting={status === "submitting"}
-          onTakeSelfie={takeSelfie}
-          onRetakeSelfie={() => { setSelfieUri(null); setSelfieKey(null); takeSelfie(); }}
+          onSelectMethod={handleSelectMethod}
+          onRetake={() => { setCapturedUri(null); setCapturedKey(null); handleSelectMethod(method); }}
           onSubmit={handleSubmit}
         />
       )}
@@ -233,20 +240,148 @@ export default function CommunityVerifiedScreen() {
   );
 }
 
+function ChooseMethodState({
+  colors,
+  capturedUri,
+  method,
+  submitting,
+  onSelectMethod,
+  onRetake,
+  onSubmit,
+}: {
+  colors: any;
+  capturedUri: string | null;
+  method: VerificationMethod;
+  submitting: boolean;
+  onSelectMethod: (m: VerificationMethod) => void;
+  onRetake: () => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <View>
+      <Text style={[styles.screenTitle, { color: colors.foreground }]}>Build Trust Within{"\n"}the Community</Text>
+      <Text style={[styles.screenSub, { color: colors.mutedForeground }]}>
+        Verification helps create a safer, more authentic experience for everyone.
+      </Text>
+
+      <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Choose a verification method</Text>
+
+      <TouchableOpacity
+        style={[
+          styles.methodCard,
+          { backgroundColor: colors.card, borderColor: method === "selfie" ? GOLD : colors.border },
+          method === "selfie" && styles.methodCardSelected,
+        ]}
+        onPress={() => onSelectMethod("selfie")}
+        activeOpacity={0.85}
+      >
+        <View style={[styles.methodIconWrap, { backgroundColor: method === "selfie" ? "#CA922B18" : colors.secondary }]}>
+          <Feather name="camera" size={26} color={GOLD} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.methodTitle, { color: colors.foreground }]}>Live Selfie Verification</Text>
+          <Text style={[styles.methodSub, { color: colors.mutedForeground }]}>
+            Take a quick front-facing selfie to confirm you're a real person
+          </Text>
+        </View>
+        <Feather name={method === "selfie" ? "check-circle" : "chevron-right"} size={20} color={method === "selfie" ? GOLD : colors.mutedForeground} />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[
+          styles.methodCard,
+          { backgroundColor: colors.card, borderColor: method === "gov_id" ? GOLD : colors.border },
+          method === "gov_id" && styles.methodCardSelected,
+        ]}
+        onPress={() => onSelectMethod("gov_id")}
+        activeOpacity={0.85}
+      >
+        <View style={[styles.methodIconWrap, { backgroundColor: method === "gov_id" ? "#CA922B18" : colors.secondary }]}>
+          <Feather name="credit-card" size={26} color={GOLD} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.methodTitle, { color: colors.foreground }]}>Government Photo ID</Text>
+          <Text style={[styles.methodSub, { color: colors.mutedForeground }]}>
+            Upload a photo of a valid government-issued ID (driver's license, passport)
+          </Text>
+        </View>
+        <Feather name={method === "gov_id" ? "check-circle" : "chevron-right"} size={20} color={method === "gov_id" ? GOLD : colors.mutedForeground} />
+      </TouchableOpacity>
+
+      {capturedUri && method && (
+        <>
+          <View style={styles.previewWrap}>
+            <Text style={[styles.previewLabel, { color: colors.foreground }]}>
+              {method === "selfie" ? "Your selfie" : "Your ID photo"}
+            </Text>
+            <Image
+              source={{ uri: capturedUri }}
+              style={method === "selfie" ? styles.selfiePreview : styles.idPreview}
+            />
+            <TouchableOpacity onPress={onRetake} style={styles.retakeBtn} activeOpacity={0.7}>
+              <Feather name="refresh-cw" size={14} color={GOLD} />
+              <Text style={[styles.retakeTxt, { color: GOLD }]}>Retake</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.submitBtn, { opacity: submitting ? 0.7 : 1 }]}
+            onPress={onSubmit}
+            disabled={submitting}
+            activeOpacity={0.85}
+          >
+            {submitting ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Feather name="send" size={16} color="#fff" />
+                <Text style={styles.submitBtnText}>Submit for Review</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </>
+      )}
+
+      <View style={[styles.footerNote, { borderTopColor: colors.border }]}>
+        <Feather name="shield" size={14} color={GOLD} />
+        <Text style={[styles.footerNoteText, { color: colors.mutedForeground }]}>
+          Once approved, you'll receive a{" "}
+          <Text style={{ color: colors.foreground, fontWeight: "600" }}>Verified Member</Text> or{" "}
+          <Text style={{ color: colors.foreground, fontWeight: "600" }}>Verified Business</Text> badge.
+        </Text>
+      </View>
+
+      <View style={[styles.footerNote, { borderTopWidth: 0, marginTop: 0 }]}>
+        <Feather name="info" size={14} color={colors.mutedForeground} />
+        <Text style={[styles.footerNoteText, { color: colors.mutedForeground }]}>
+          Verification is optional, but it helps increase confidence when connecting with others.
+        </Text>
+      </View>
+
+      <View style={[styles.privacyRow, { borderTopColor: colors.border }]}>
+        <Feather name="lock" size={12} color={colors.mutedForeground} />
+        <Text style={[styles.privacyText, { color: colors.mutedForeground }]}>
+          Your photo is stored securely and used only for identity verification. It is never shared publicly.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 function AlreadyVerifiedState({ colors }: { colors: any }) {
   return (
     <View style={styles.stateWrap}>
-      <View style={[styles.iconCircle, { backgroundColor: "#DCFCE7" }]}>
-        <Feather name="check-circle" size={36} color="#16A34A" />
+      <View style={[styles.iconCircle, { backgroundColor: "#CA922B18" }]}>
+        <Feather name="shield" size={36} color={GOLD} />
       </View>
-      <Text style={[styles.stateTitle, { color: colors.foreground }]}>You're Community Verified</Text>
+      <Text style={[styles.stateTitle, { color: colors.foreground }]}>You're Verified</Text>
       <Text style={[styles.stateSub, { color: colors.mutedForeground }]}>
-        Your identity has been confirmed. Your verified badge is visible across the platform — on your profile, reviews, and community posts.
+        Your identity has been confirmed. Your Verified Member badge is visible across the platform — on your profile, reviews, and community posts.
       </Text>
-      <View style={[styles.badgeRow, { borderColor: "#16A34A40", backgroundColor: "#DCFCE7" }]}>
-        <Feather name="shield" size={16} color="#16A34A" />
-        <Text style={{ fontSize: 14, color: "#16A34A", fontWeight: "700", marginLeft: 6 }}>
-          ✔ Community Verified
+      <View style={[styles.badgeRow, { borderColor: GOLD + "40", backgroundColor: "#CA922B18" }]}>
+        <Feather name="check-circle" size={16} color={GOLD} />
+        <Text style={{ fontSize: 14, color: GOLD, fontWeight: "700", marginLeft: 6 }}>
+          Verified Member
         </Text>
       </View>
     </View>
@@ -256,28 +391,28 @@ function AlreadyVerifiedState({ colors }: { colors: any }) {
 function UpgradeRequiredState({ colors, onUpgrade }: { colors: any; onUpgrade: () => void }) {
   return (
     <View style={styles.stateWrap}>
-      <View style={[styles.iconCircle, { backgroundColor: "#FEF3C7" }]}>
-        <Feather name="lock" size={36} color="#CA922B" />
+      <View style={[styles.iconCircle, { backgroundColor: "#CA922B18" }]}>
+        <Feather name="lock" size={36} color={GOLD} />
       </View>
-      <Text style={[styles.stateTitle, { color: colors.foreground }]}>Unlock Community Verified</Text>
+      <Text style={[styles.stateTitle, { color: colors.foreground }]}>Unlock Verification</Text>
       <Text style={[styles.stateSub, { color: colors.mutedForeground }]}>
-        Community Verified is available for Navigator members and above. Upgrade your membership to get your verified badge.
+        Verification is available for Navigator members and above. Upgrade your membership to build trust within the community.
       </Text>
       <View style={styles.benefitList}>
         {[
-          "Verified badge on your profile, reviews & posts",
+          "Verified Member badge on your profile, reviews & posts",
           "Increased trust score in the community",
           "Priority visibility in community feeds",
-          "Stronger credibility with businesses",
+          "Greater credibility with businesses and members",
         ].map((b, i) => (
           <View key={i} style={styles.benefitRow}>
-            <Feather name="check" size={14} color="#CA922B" />
+            <Feather name="check" size={14} color={GOLD} />
             <Text style={[styles.benefitText, { color: colors.foreground }]}>{b}</Text>
           </View>
         ))}
       </View>
-      <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: "#CA922B" }]} onPress={onUpgrade} activeOpacity={0.85}>
-        <Text style={styles.primaryBtnText}>Upgrade Membership</Text>
+      <TouchableOpacity style={styles.submitBtn} onPress={onUpgrade} activeOpacity={0.85}>
+        <Text style={styles.submitBtnText}>Upgrade Membership</Text>
         <Feather name="arrow-right" size={16} color="#fff" />
       </TouchableOpacity>
     </View>
@@ -290,20 +425,20 @@ function PendingState({ colors, submittedAt }: { colors: any; submittedAt: strin
     : null;
   return (
     <View style={styles.stateWrap}>
-      <View style={[styles.iconCircle, { backgroundColor: "#EFF6FF" }]}>
-        <Feather name="clock" size={36} color="#2563EB" />
+      <View style={[styles.iconCircle, { backgroundColor: "#CA922B18" }]}>
+        <Feather name="clock" size={36} color={GOLD} />
       </View>
       <Text style={[styles.stateTitle, { color: colors.foreground }]}>Under Review</Text>
       <Text style={[styles.stateSub, { color: colors.mutedForeground }]}>
-        Your verification selfie has been submitted and is being reviewed by our team. This typically takes 1–3 business days.
+        Your verification has been submitted and is being reviewed by our team. This typically takes 1–3 business days.
       </Text>
       {dateStr && (
         <Text style={[styles.dateHint, { color: colors.mutedForeground }]}>Submitted {dateStr}</Text>
       )}
-      <View style={[styles.infoBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Feather name="info" size={14} color={colors.mutedForeground} />
+      <View style={[styles.infoBox, { backgroundColor: "#CA922B12", borderColor: GOLD + "40" }]}>
+        <Feather name="bell" size={14} color={GOLD} />
         <Text style={[styles.infoText, { color: colors.mutedForeground }]}>
-          You'll receive an in-app notification once your verification is complete.
+          You'll receive a notification once your Verified Member badge is ready.
         </Text>
       </View>
     </View>
@@ -318,7 +453,7 @@ function RejectedState({ colors, notes, onRetry }: { colors: any; notes: string 
       </View>
       <Text style={[styles.stateTitle, { color: colors.foreground }]}>Verification Not Approved</Text>
       <Text style={[styles.stateSub, { color: colors.mutedForeground }]}>
-        We weren't able to verify your identity with the submitted photo. Please try again with a clear, well-lit front-facing selfie.
+        We weren't able to verify your identity with the submitted photo. Please try again with a clear, well-lit image.
       </Text>
       {notes && (
         <View style={[styles.infoBox, { backgroundColor: "#FEF2F2", borderColor: "#FECACA" }]}>
@@ -326,9 +461,9 @@ function RejectedState({ colors, notes, onRetry }: { colors: any; notes: string 
           <Text style={[styles.infoText, { color: "#DC2626" }]}>{notes}</Text>
         </View>
       )}
-      <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: colors.primary }]} onPress={onRetry} activeOpacity={0.85}>
-        <Feather name="camera" size={16} color="#fff" />
-        <Text style={styles.primaryBtnText}>Try Again</Text>
+      <TouchableOpacity style={styles.submitBtn} onPress={onRetry} activeOpacity={0.85}>
+        <Feather name="refresh-cw" size={16} color="#fff" />
+        <Text style={styles.submitBtnText}>Try Again</Text>
       </TouchableOpacity>
     </View>
   );
@@ -337,119 +472,23 @@ function RejectedState({ colors, notes, onRetry }: { colors: any; notes: string 
 function SuccessState({ colors, onDone }: { colors: any; onDone: () => void }) {
   return (
     <View style={styles.stateWrap}>
-      <View style={[styles.iconCircle, { backgroundColor: "#DCFCE7" }]}>
-        <Feather name="check-circle" size={36} color="#16A34A" />
+      <View style={[styles.iconCircle, { backgroundColor: "#CA922B18" }]}>
+        <Feather name="check-circle" size={36} color={GOLD} />
       </View>
-      <Text style={[styles.stateTitle, { color: colors.foreground }]}>Verification Submitted!</Text>
+      <Text style={[styles.stateTitle, { color: colors.foreground }]}>Submitted for Review</Text>
       <Text style={[styles.stateSub, { color: colors.mutedForeground }]}>
-        Your selfie has been submitted for review. Our team will confirm your identity within 1–3 business days. You'll be notified when it's approved.
+        Your verification is in our queue. Our team will review it within 1–3 business days. You'll be notified when it's approved.
       </Text>
-      <View style={[styles.infoBox, { backgroundColor: "#DCFCE7", borderColor: "#86EFAC" }]}>
-        <Feather name="shield" size={14} color="#16A34A" />
-        <Text style={[styles.infoText, { color: "#16A34A" }]}>
-          Once approved, your ✔ Community Verified badge will appear on your profile and across the platform.
+      <View style={[styles.infoBox, { backgroundColor: "#CA922B12", borderColor: GOLD + "40" }]}>
+        <Feather name="shield" size={14} color={GOLD} />
+        <Text style={[styles.infoText, { color: colors.mutedForeground }]}>
+          Once approved, your{" "}
+          <Text style={{ color: GOLD, fontWeight: "600" }}>Verified Member</Text> badge will appear on your profile and across the platform.
         </Text>
       </View>
-      <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: "#16A34A" }]} onPress={onDone} activeOpacity={0.85}>
-        <Text style={styles.primaryBtnText}>Back to Profile</Text>
+      <TouchableOpacity style={styles.submitBtn} onPress={onDone} activeOpacity={0.85}>
+        <Text style={styles.submitBtnText}>Back to Profile</Text>
       </TouchableOpacity>
-    </View>
-  );
-}
-
-function ReadyState({
-  colors,
-  selfieUri,
-  submitting,
-  onTakeSelfie,
-  onRetakeSelfie,
-  onSubmit,
-}: {
-  colors: any;
-  selfieUri: string | null;
-  submitting: boolean;
-  onTakeSelfie: () => void;
-  onRetakeSelfie: () => void;
-  onSubmit: () => void;
-}) {
-  return (
-    <View>
-      <Text style={[styles.screenTitle, { color: colors.foreground }]}>Community Verified</Text>
-      <Text style={[styles.screenSub, { color: colors.mutedForeground }]}>
-        A one-time identity check that gives you a verified badge across the platform.
-      </Text>
-
-      <View style={[styles.explanationCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Text style={[styles.cardHeading, { color: colors.foreground }]}>What this verifies</Text>
-        <Text style={[styles.cardBody, { color: colors.mutedForeground }]}>
-          A quick selfie confirms you're a real person — not a bot or fake account. It does not verify any personal documents or government ID.
-        </Text>
-
-        <View style={styles.stepList}>
-          {[
-            { icon: "camera" as const, label: "Take a front-facing selfie in good lighting" },
-            { icon: "upload-cloud" as const, label: "We review and confirm within 1–3 business days" },
-            { icon: "shield" as const, label: "Your ✔ Community Verified badge goes live" },
-          ].map((s, i) => (
-            <View key={i} style={styles.step}>
-              <View style={[styles.stepIcon, { backgroundColor: colors.secondary }]}>
-                <Feather name={s.icon} size={16} color={colors.primary} />
-              </View>
-              <Text style={[styles.stepLabel, { color: colors.foreground }]}>{s.label}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      {selfieUri ? (
-        <View style={styles.previewWrap}>
-          <Text style={[styles.previewLabel, { color: colors.foreground }]}>Your selfie</Text>
-          <Image source={{ uri: selfieUri }} style={styles.selfiePreview} />
-          <TouchableOpacity onPress={onRetakeSelfie} style={styles.retakeBtn} activeOpacity={0.7}>
-            <Feather name="refresh-cw" size={14} color={colors.mutedForeground} />
-            <Text style={[styles.retakeTxt, { color: colors.mutedForeground }]}>Retake</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <TouchableOpacity
-          style={[styles.cameraBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-          onPress={onTakeSelfie}
-          activeOpacity={0.85}
-        >
-          <View style={[styles.cameraBtnIcon, { backgroundColor: "#F0FDF4" }]}>
-            <Feather name="camera" size={28} color="#16A34A" />
-          </View>
-          <Text style={[styles.cameraBtnTitle, { color: colors.foreground }]}>Take Verification Selfie</Text>
-          <Text style={[styles.cameraBtnSub, { color: colors.mutedForeground }]}>
-            Use your front camera — look directly into the lens
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      {selfieUri && (
-        <TouchableOpacity
-          style={[styles.primaryBtn, { backgroundColor: "#16A34A", opacity: submitting ? 0.7 : 1 }]}
-          onPress={onSubmit}
-          disabled={submitting}
-          activeOpacity={0.85}
-        >
-          {submitting ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <>
-              <Feather name="send" size={16} color="#fff" />
-              <Text style={styles.primaryBtnText}>Submit for Review</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      )}
-
-      <View style={[styles.privacyBox, { borderColor: colors.border }]}>
-        <Feather name="lock" size={13} color={colors.mutedForeground} />
-        <Text style={[styles.privacyText, { color: colors.mutedForeground }]}>
-          Your selfie is stored securely and used only for identity verification. It is never shared publicly or with third parties.
-        </Text>
-      </View>
     </View>
   );
 }
@@ -458,43 +497,41 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   backBtn: { marginBottom: 20, alignSelf: "flex-start", padding: 4 },
 
-  screenTitle: { fontSize: 26, fontWeight: "800", marginBottom: 6 },
-  screenSub: { fontSize: 15, lineHeight: 21, marginBottom: 20 },
+  screenTitle: { fontSize: 26, fontWeight: "800", lineHeight: 32, marginBottom: 10 },
+  screenSub: { fontSize: 15, lineHeight: 22, marginBottom: 24 },
 
-  explanationCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 18,
-    marginBottom: 20,
-  },
-  cardHeading: { fontSize: 15, fontWeight: "700", marginBottom: 6 },
-  cardBody: { fontSize: 14, lineHeight: 20, marginBottom: 16 },
+  sectionLabel: { fontSize: 13, fontWeight: "700", letterSpacing: 0.4, textTransform: "uppercase", marginBottom: 12, opacity: 0.6 },
 
-  stepList: { gap: 12 },
-  step: { flexDirection: "row", alignItems: "center", gap: 12 },
-  stepIcon: { width: 36, height: 36, borderRadius: 10, justifyContent: "center", alignItems: "center" },
-  stepLabel: { fontSize: 13, fontWeight: "500", flex: 1, lineHeight: 18 },
-
-  cameraBtn: {
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderStyle: "dashed",
-    padding: 28,
+  methodCard: {
+    flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    marginBottom: 20,
+    gap: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    padding: 16,
+    marginBottom: 12,
   },
-  cameraBtnIcon: { width: 64, height: 64, borderRadius: 32, justifyContent: "center", alignItems: "center" },
-  cameraBtnTitle: { fontSize: 17, fontWeight: "700" },
-  cameraBtnSub: { fontSize: 13, textAlign: "center" },
+  methodCardSelected: {
+    borderWidth: 2,
+  },
+  methodIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  methodTitle: { fontSize: 16, fontWeight: "700", marginBottom: 3 },
+  methodSub: { fontSize: 13, lineHeight: 18 },
 
-  previewWrap: { alignItems: "center", marginBottom: 20 },
-  previewLabel: { fontSize: 14, fontWeight: "600", marginBottom: 10 },
-  selfiePreview: { width: 200, height: 200, borderRadius: 100, marginBottom: 10 },
+  previewWrap: { alignItems: "center", marginTop: 8, marginBottom: 20 },
+  previewLabel: { fontSize: 14, fontWeight: "600", marginBottom: 12 },
+  selfiePreview: { width: 180, height: 180, borderRadius: 90, marginBottom: 10 },
+  idPreview: { width: "100%", height: 200, borderRadius: 12, resizeMode: "cover", marginBottom: 10 },
   retakeBtn: { flexDirection: "row", alignItems: "center", gap: 6 },
-  retakeTxt: { fontSize: 13, fontWeight: "500" },
+  retakeTxt: { fontSize: 13, fontWeight: "600" },
 
-  primaryBtn: {
+  submitBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -502,14 +539,25 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 16,
     marginBottom: 16,
+    backgroundColor: GOLD,
   },
-  primaryBtnText: { fontSize: 16, fontWeight: "700", color: "#fff" },
+  submitBtnText: { fontSize: 16, fontWeight: "700", color: "#fff" },
 
-  privacyBox: {
+  footerNote: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 8,
-    paddingVertical: 12,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    marginBottom: 10,
+  },
+  footerNoteText: { fontSize: 13, lineHeight: 19, flex: 1 },
+
+  privacyRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    paddingTop: 14,
     borderTopWidth: 1,
     marginTop: 4,
   },
