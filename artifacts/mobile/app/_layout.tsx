@@ -296,7 +296,7 @@ function SessionExpiryWatcher() {
 
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerBackTitle: "Back", headerShown: false, gestureEnabled: true }}>
+    <Stack screenOptions={{ headerBackTitle: "Back", headerShown: false, gestureEnabled: true, fullScreenGestureEnabled: true }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
         name="business/[id]"
