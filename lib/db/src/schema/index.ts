@@ -67,6 +67,7 @@ export * from "./challenge-applications";
 export * from "./category-waitlist";
 export * from "./business-nominations";
 export * from "./hidden-gem-nominations";
+export * from "./saved-jobs";
 export * from "./business-identity";
 export * from "./business-broadcasts";
 export * from "./community-health";
