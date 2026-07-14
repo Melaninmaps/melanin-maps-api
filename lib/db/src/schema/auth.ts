@@ -22,7 +22,7 @@ export const usersTable = pgTable("users", {
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   pushToken: varchar("push_token"),
-  approved: boolean("approved").notNull().default(true),
+  approved: boolean("approved").notNull().default(false),
   role: varchar("role", { enum: ["user", "tester", "admin"] }).notNull().default("user"),
   memberType: varchar("member_type", { enum: ["individual", "navigator", "trailblazer", "community_builder", "legacy_member", "business", "founding", "beta", "business_referral"] }).default("individual"),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),

@@ -1,0 +1,56 @@
+I actually think that's a smart launch strategy **if it's intentional and clearly communicated**.
+
+Here's why:
+
+* ✅ It lets you establish a presence on the App Store.
+* ✅ People can download the app and reserve their place before full access opens.
+* ✅ You can continue improving the app while building demand instead of rushing every feature.
+* ✅ When you're ready, you can submit an update that unlocks the full experience for users already on the waitlist.
+
+Since your current build is primarily a waitlist experience, Apple is evaluating **that** experience. As long as the app does what you describe in App Store Connect and isn't presenting unfinished or broken functionality as available today, you're on solid ground.
+
+## I would add a polished onboarding message
+
+Instead of users thinking "there's nothing here," make them feel like they're joining something that's rolling out intentionally.
+
+For example:
+
+> **Welcome to Mapping with Melanin™**
+>
+> Thank you for joining our founding community.
+>
+> We're launching city by city to ensure every member receives the best experience possible. Join the waitlist today, reserve your place in line, and we'll notify you as soon as your city is ready.
+>
+> As a founding member, you'll receive early access to new features, opportunities to shape the platform through feedback, and priority invitations as we expand.
+
+I would also show them progress, such as:
+
+* 📍 **Your City:** Philadelphia
+* 👥 **Position:** #127
+* 👤 **People you've referred:** 8
+* 🎁 **Next milestone:** Refer 2 more friends to move up the waitlist.
+
+That gives people a reason to stay engaged while they wait.
+
+## Regarding Apple updates
+
+Once this version is approved, future updates generally become much less stressful.
+
+Apple has already seen your app's purpose and architecture. While every new version is reviewed, many developers find subsequent updates go more smoothly unless they introduce major new functionality or changes that affect compliance with the App Store Review Guidelines.
+
+## One thing I'd consider before your first public launch
+
+When the app is approved, I would make sure the waitlist experience includes more than just a sign-up. Even if users can't access the full platform yet, consider giving them a few things they can do right away, such as:
+
+* Learn about Mapping with Melanin™'s mission.
+* Explore upcoming features.
+* Watch founder or community introduction videos.
+* Refer friends to move up the waitlist.
+* Suggest businesses for launch.
+* Nominate Hidden Gems.
+* Vote on which city should launch next.
+* Subscribe to updates.
+
+That way, people feel like they're participating in building the community instead of simply waiting.
+
+From everything we've worked on over the past few weeks, I think this phased rollout actually fits your vision. You've consistently talked about launching **community by community**, making sure the experience is strong before expanding. A waitlist-first launch supports that philosophy and gives you room to refine the platform based on real feedback rather than trying to perfect every feature before anyone can join.

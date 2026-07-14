@@ -26,6 +26,7 @@ import Signup from "@/pages/signup";
 import Profile from "@/pages/profile";
 import Admin from "@/pages/admin";
 import PendingApproval from "@/pages/pending-approval";
+import Waitlist from "@/pages/waitlist";
 import Travel from "@/pages/travel";
 import MapPage from "@/pages/map";
 import Events from "@/pages/events";
@@ -51,16 +52,39 @@ import BusinessResponse from "@/pages/business-response";
 import GlobalRecommendations from "@/pages/global-recommendations";
 import ResetPassword from "@/pages/reset-password";
 
+const BASE = import.meta.env.BASE_URL;
+
+function Spinner() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-8 h-8 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
+
+/**
+ * Gate for pages that require a registered, approved account.
+ * - Not logged in → /waitlist
+ * - Logged in but not approved → /pending-approval
+ * - Logged in + approved → render children
+ */
+function PreLaunchRoute({ children }: { children: React.ReactNode }) {
+  const { data: auth, isLoading } = useGetCurrentAuthUser();
+  if (isLoading) return <Spinner />;
+  if (!auth?.user) return <Redirect to="/waitlist" />;
+  if (auth.user.approved === false) return <Redirect to="/pending-approval" />;
+  return <>{children}</>;
+}
+
+/**
+ * Existing ProtectedRoute — still used for pages that need auth (billing, dashboard, etc.)
+ * Now also enforces approval since PreLaunchRoute wraps the outer pages.
+ */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { data: auth, isLoading } = useGetCurrentAuthUser();
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-  if (!auth?.user) return <Redirect to="/login" />;
+  if (isLoading) return <Spinner />;
+  if (!auth?.user) return <Redirect to="/waitlist" />;
+  if (auth.user.approved === false) return <Redirect to="/pending-approval" />;
   return <>{children}</>;
 }
 
@@ -91,6 +115,7 @@ function OgRedirectHandler() {
 function Router() {
   return (
     <Switch>
+      {/* ── Public / Marketing pages ────────────────────────────────────────── */}
       <Route path="/">
         <Layout><Home /></Layout>
       </Route>
@@ -103,67 +128,14 @@ function Router() {
       <Route path="/contact">
         <Layout><Contact /></Layout>
       </Route>
-      <Route path="/explore">
-        <Layout><Explore /></Layout>
-      </Route>
-      <Route path="/discover">
-        <Layout><Discover /></Layout>
-      </Route>
-      <Route path="/businesses">
-        <Layout><Businesses /></Layout>
-      </Route>
-      <Route path="/businesses/:id">
-        <Layout><BusinessDetail /></Layout>
-      </Route>
-      <Route path="/business/:id">
-        <Layout><BusinessDetail /></Layout>
-      </Route>
-      <Route path="/safety">
-        <Layout><Safety /></Layout>
-      </Route>
-      <Route path="/community">
-        <Layout><Community /></Layout>
-      </Route>
-      <Route path="/events">
-        <Layout><Events /></Layout>
-      </Route>
-      <Route path="/travel">
-        <Layout><Travel /></Layout>
-      </Route>
-      <Route path="/map">
-        <Layout><MapPage /></Layout>
-      </Route>
       <Route path="/for-business-owners">
         <Layout><ForBusinessOwners /></Layout>
-      </Route>
-      <Route path="/roadmap">
-        <Layout><Roadmap /></Layout>
       </Route>
       <Route path="/membership">
         <Layout><Membership /></Layout>
       </Route>
-      <Route path="/login" component={Login} />
-      <Route path="/reset-password" component={ResetPassword} />
-      <Route path="/signup" component={Signup} />
-      <Route path="/pending-approval" component={PendingApproval} />
-      <Route path="/admin" component={Admin} />
-      <Route path="/profile">
-        <Layout><Profile /></Layout>
-      </Route>
-      <Route path="/privacy-policy">
-        <Layout><PrivacyPolicy /></Layout>
-      </Route>
-      <Route path="/privacy">
-        <Layout><PrivacyPolicy /></Layout>
-      </Route>
-      <Route path="/delete-account">
-        <Layout><DeleteAccount /></Layout>
-      </Route>
-      <Route path="/terms">
-        <Layout><Terms /></Layout>
-      </Route>
-      <Route path="/community-guidelines">
-        <Layout><CommunityGuidelines /></Layout>
+      <Route path="/roadmap">
+        <Layout><Roadmap /></Layout>
       </Route>
       <Route path="/cities">
         <Layout><Cities /></Layout>
@@ -171,40 +143,101 @@ function Router() {
       <Route path="/cities/:city">
         <Layout><CitySpotlight /></Layout>
       </Route>
-      <Route path="/jobs">
-        <Layout><Jobs /></Layout>
-      </Route>
-      <Route path="/billing">
-        <Layout><ProtectedRoute><Billing /></ProtectedRoute></Layout>
-      </Route>
-      <Route path="/verify-business">
-        <Layout><VerifyBusiness /></Layout>
-      </Route>
-      <Route path="/welcome" component={Welcome} />
-      <Route path="/business-dashboard">
-        <Layout><ProtectedRoute><BusinessDashboard /></ProtectedRoute></Layout>
-      </Route>
-      <Route path="/global-recommendations">
-        <Layout><GlobalRecommendations /></Layout>
-      </Route>
-      <Route path="/notifications">
-        <Layout><ProtectedRoute><Notifications /></ProtectedRoute></Layout>
-      </Route>
       <Route path="/affiliate">
         <Layout><Affiliate /></Layout>
       </Route>
       <Route path="/mentorship">
         <Layout><Mentorship /></Layout>
       </Route>
-      <Route path="/rate-neighborhood">
-        <Layout><RateNeighborhood /></Layout>
+      <Route path="/privacy-policy">
+        <Layout><PrivacyPolicy /></Layout>
       </Route>
+      <Route path="/privacy">
+        <Layout><PrivacyPolicy /></Layout>
+      </Route>
+      <Route path="/terms">
+        <Layout><Terms /></Layout>
+      </Route>
+      <Route path="/community-guidelines">
+        <Layout><CommunityGuidelines /></Layout>
+      </Route>
+      <Route path="/delete-account">
+        <Layout><DeleteAccount /></Layout>
+      </Route>
+
+      {/* ── Auth pages ──────────────────────────────────────────────────────── */}
+      <Route path="/login" component={Login} />
+      <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/signup" component={Signup} />
+      <Route path="/waitlist" component={Waitlist} />
+      <Route path="/pending-approval" component={PendingApproval} />
+      <Route path="/welcome" component={Welcome} />
       <Route path="/r/:code" component={ReferralRedirect} />
       <Route path="/business-response/:token" component={BusinessResponse} />
-      <Route path="/resources">
-        <Layout><Resources /></Layout>
-      </Route>
       <Route path="/shared/trip/:shareId" component={SharedTrip} />
+      <Route path="/admin" component={Admin} />
+
+      {/* ── Pre-launch gated: requires approved account ─────────────────────── */}
+      <Route path="/explore">
+        <Layout><PreLaunchRoute><Explore /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/discover">
+        <Layout><PreLaunchRoute><Discover /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/businesses">
+        <Layout><PreLaunchRoute><Businesses /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/businesses/:id">
+        <Layout><PreLaunchRoute><BusinessDetail /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/business/:id">
+        <Layout><PreLaunchRoute><BusinessDetail /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/safety">
+        <Layout><PreLaunchRoute><Safety /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/community">
+        <Layout><PreLaunchRoute><Community /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/events">
+        <Layout><PreLaunchRoute><Events /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/travel">
+        <Layout><PreLaunchRoute><Travel /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/map">
+        <Layout><PreLaunchRoute><MapPage /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/global-recommendations">
+        <Layout><PreLaunchRoute><GlobalRecommendations /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/rate-neighborhood">
+        <Layout><PreLaunchRoute><RateNeighborhood /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/resources">
+        <Layout><PreLaunchRoute><Resources /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/jobs">
+        <Layout><PreLaunchRoute><Jobs /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/verify-business">
+        <Layout><PreLaunchRoute><VerifyBusiness /></PreLaunchRoute></Layout>
+      </Route>
+
+      {/* ── Auth + approval required ─────────────────────────────────────────── */}
+      <Route path="/profile">
+        <Layout><ProtectedRoute><Profile /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/billing">
+        <Layout><ProtectedRoute><Billing /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/business-dashboard">
+        <Layout><ProtectedRoute><BusinessDashboard /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/notifications">
+        <Layout><ProtectedRoute><Notifications /></ProtectedRoute></Layout>
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -215,7 +248,7 @@ function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <WouterRouter base={BASE.replace(/\/$/, "")}>
             <OgRedirectHandler />
             <Router />
           </WouterRouter>

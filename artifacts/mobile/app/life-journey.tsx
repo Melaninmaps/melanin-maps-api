@@ -17,6 +17,7 @@ import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
 import * as Haptics from "expo-haptics";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 interface JourneyStep {
   id: string;
@@ -79,6 +80,9 @@ export default function LifeJourneyScreen() {
   const [state, setState] = useState("");
   const [description, setDescription] = useState("");
   const [selectedNeeds, setSelectedNeeds] = useState<string[]>([]);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState("");
+  const [journeyLimit, setJourneyLimit] = useState<{ used: number; limit: number; tier: string } | null>(null);
 
   const JOURNEY_NEEDS: Record<string, Array<{ label: string; emoji: string }>> = {
     moving: [
@@ -236,6 +240,19 @@ export default function LifeJourneyScreen() {
           selectedNeeds: selectedNeeds.length > 0 ? selectedNeeds.join(", ") : undefined,
         }),
       });
+      if (res.status === 429) {
+        const errData = await res.json() as { error?: string; code?: string; used?: number; limit?: number; tier?: string };
+        if (errData.code === "JOURNEY_LIMIT_REACHED") {
+          setJourneyLimit({ used: errData.used ?? 1, limit: errData.limit ?? 1, tier: errData.tier ?? "free" });
+          setUpgradeReason(
+            errData.tier === "free"
+              ? "Free members get 1 Life Journey per month. Upgrade to Explorer+ for 10/month or Navigator for unlimited."
+              : "Explorer+ members get 10 Life Journeys per month. Upgrade to Navigator for unlimited journeys."
+          );
+          setShowUpgrade(true);
+          return;
+        }
+      }
       if (!res.ok) throw new Error("Failed to create journey");
       const d = await res.json() as { journey: Journey };
       setJourneys((prev) => [d.journey, ...prev]);
@@ -301,6 +318,7 @@ export default function LifeJourneyScreen() {
 
   if (view === "create") {
     return (
+      <>
       <ScrollView
         keyboardDismissMode="on-drag" style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 80 }}>
         <View style={[styles.header, { paddingTop: insets.top + 16, borderBottomColor: colors.border }]}>
@@ -310,6 +328,20 @@ export default function LifeJourneyScreen() {
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Start a Journey</Text>
           <View style={{ width: 36 }} />
         </View>
+
+        {journeyLimit && (
+          <View style={[styles.limitBanner, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}>
+            <Feather name="alert-circle" size={13} color="#DC2626" />
+            <Text style={styles.limitBannerText}>
+              {journeyLimit.tier === "free"
+                ? `You've used your ${journeyLimit.limit} free journey this month. Upgrade for more.`
+                : `You've used all ${journeyLimit.limit} journeys this month. Upgrade to Navigator for unlimited.`}
+            </Text>
+            <TouchableOpacity onPress={() => setShowUpgrade(true)}>
+              <Text style={styles.limitBannerCta}>Upgrade</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={{ padding: 16 }}>
           <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>What's happening in your life?</Text>
@@ -418,6 +450,13 @@ export default function LifeJourneyScreen() {
           )}
         </View>
       </ScrollView>
+      <UpgradeModal
+        visible={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        feature="Life Journeys™"
+        reason={upgradeReason || "Upgrade to start more Life Journeys and get deeper KinfolkAI™ guidance for every major life event."}
+      />
+      </>
     );
   }
 
@@ -593,6 +632,7 @@ export default function LifeJourneyScreen() {
   }
 
   return (
+    <>
     <ScrollView
         keyboardDismissMode="on-drag" style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 80 }}>
       <View style={[styles.header, { paddingTop: insets.top + 16, borderBottomColor: colors.border }]}>
@@ -685,6 +725,13 @@ export default function LifeJourneyScreen() {
         </View>
       </View>
     </ScrollView>
+    <UpgradeModal
+      visible={showUpgrade}
+      onClose={() => setShowUpgrade(false)}
+      feature="Life Journeys™"
+      reason={upgradeReason || "Upgrade to start more Life Journeys and get deeper KinfolkAI™ guidance for every major life event."}
+    />
+    </>
   );
 }
 
@@ -709,6 +756,9 @@ const styles = StyleSheet.create({
   locationRow: { flexDirection: "row" },
   input: { borderRadius: 10, borderWidth: 1, padding: 12, fontSize: 15 },
   textarea: { borderRadius: 10, borderWidth: 1, padding: 12, fontSize: 14, minHeight: 80, textAlignVertical: "top", marginBottom: 4 },
+  limitBanner: { flexDirection: "row", alignItems: "center", gap: 8, margin: 16, marginBottom: 0, borderRadius: 10, borderWidth: 1, padding: 10 },
+  limitBannerText: { flex: 1, fontSize: 12, color: "#DC2626", fontFamily: "Inter_400Regular", lineHeight: 16 },
+  limitBannerCta: { fontSize: 12, fontWeight: "700", color: "#DC2626", textDecorationLine: "underline" },
   createBtn: { borderRadius: 12, padding: 16, alignItems: "center", marginTop: 20 },
   createBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
   createBtnSub: { color: "rgba(255,255,255,0.75)", fontSize: 12, marginTop: 2 },
