@@ -101,6 +101,16 @@ export default function BusinessDetailScreen() {
   const [directionsFetching, setDirectionsFetching] = useState(false);
   const [directionsSummary, setDirectionsSummary] = useState<{ distance: string; duration: string } | null>(null);
   const [directionsSteps, setDirectionsSteps] = useState<Array<{ index: number; instruction: string; distance: string; maneuver: string | null }>>([]);
+  const [travelMode, setTravelMode] = useState<"driving" | "walking">("driving");
+  const [safetyLoading, setSafetyLoading] = useState(false);
+  const userCoordsRef = React.useRef<{ lat: number; lng: number } | null>(null);
+  const [modeChangedSinceLoad, setModeChangedSinceLoad] = useState(false);
+  type SafetyAlert = { id: string; type: string; label: string; description: string | null; confirmedCount: number; status: string };
+  type SundownWarning = { id: string; area: string; description: string | null };
+  type SuggestedStop = { id: string; name: string; address: string; city: string; category: string; distanceMiles: number; hoursOfOperation: string | null };
+  type FlaggedBiz = { id: string; name: string; address: string; city: string; category: string; alertCount: number; distanceMiles: number };
+  type SafetyCtx = { alerts: SafetyAlert[]; sundownWarnings: SundownWarning[]; suggestedStops: SuggestedStop[]; flaggedBusinesses: FlaggedBiz[] };
+  const [safetyContext, setSafetyContext] = useState<SafetyCtx | null>(null);
 
   // ── Hidden Gem nomination ─────────────────────────────────────────────────
   const [gemStatus, setGemStatus] = useState<{
@@ -954,17 +964,72 @@ export default function BusinessDetailScreen() {
                   Linking.openURL(mapsUrl).catch(() => {});
                   return;
                 }
-                setDirectionsFetching(true);
+                setSafetyContext(null);
+                setDirectionsSteps([]);
+                setDirectionsSummary(null);
+                setModeChangedSinceLoad(false);
                 setDirectionsOpen(true);
+                setDirectionsFetching(true);
                 try {
                   const token = Platform.OS !== "web" ? await (await import("expo-secure-store")).getItemAsync("auth_session_token") : null;
-                  const resp = await fetch(`/api/directions/${id}`, {
+
+                  let userLat = 0, userLng = 0, hasLoc = false;
+                  // Try to reuse cached coords from previous fetch first
+                  if (userCoordsRef.current) {
+                    userLat = userCoordsRef.current.lat;
+                    userLng = userCoordsRef.current.lng;
+                    hasLoc = true;
+                  } else {
+                    try {
+                      const Location = await import("expo-location");
+                      const { status } = await Location.requestForegroundPermissionsAsync();
+                      if (status === "granted") {
+                        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+                        userLat = pos.coords.latitude;
+                        userLng = pos.coords.longitude;
+                        userCoordsRef.current = { lat: userLat, lng: userLng };
+                        hasLoc = true;
+                      }
+                    } catch { /* location unavailable */ }
+                  }
+
+                  if (!hasLoc) {
+                    setDirectionsFetching(false);
+                    return;
+                  }
+
+                  const destLat = business.latitude!;
+                  const destLng = business.longitude!;
+                  const params = new URLSearchParams({
+                    lat: String(userLat), lng: String(userLng),
+                    destLat: String(destLat), destLng: String(destLng),
+                    destName: business.name ?? "", mode: travelMode,
+                  });
+
+                  const resp = await fetch(`/api/directions?${params.toString()}`, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                   });
                   if (resp.ok) {
-                    const data = await resp.json() as { totalDistance: string; totalDuration: string; steps: Array<{ index: number; instruction: string; distance: string; maneuver: string | null }> };
+                    const data = await resp.json() as {
+                      totalDistance: string; totalDuration: string;
+                      steps: Array<{ index: number; instruction: string; distance: string; maneuver: string | null }>;
+                      waypoints: Array<{ lat: number; lng: number }>;
+                    };
                     setDirectionsSummary({ distance: data.totalDistance, duration: data.totalDuration });
                     setDirectionsSteps(data.steps);
+                    if (data.waypoints?.length) {
+                      setSafetyLoading(true);
+                      try {
+                        const safetyResp = await fetch("/api/directions/safety-context", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                          body: JSON.stringify({ waypoints: data.waypoints }),
+                        });
+                        if (safetyResp.ok) setSafetyContext(await safetyResp.json());
+                      } catch { /* safety context is best-effort */ } finally {
+                        setSafetyLoading(false);
+                      }
+                    }
                   }
                 } catch { /* ignore */ } finally {
                   setDirectionsFetching(false);
@@ -1229,9 +1294,15 @@ export default function BusinessDetailScreen() {
         onRequestClose={() => setDirectionsOpen(false)}
       >
         <View style={[styles.directionsModal, { backgroundColor: colors.background }]}>
+          {/* Header */}
           <View style={[styles.directionsHeader, { borderBottomColor: colors.border }]}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.directionsTitle, { color: colors.foreground }]}>Turn-by-Turn Directions</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Text style={[styles.directionsTitle, { color: colors.foreground }]}>Navigator</Text>
+                <View style={{ backgroundColor: colors.primary + "20", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
+                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 9, color: colors.primary }}>SAFETY-AWARE</Text>
+                </View>
+              </View>
               {directionsSummary && (
                 <Text style={[styles.directionsSummary, { color: colors.mutedForeground }]}>
                   {directionsSummary.distance} · {directionsSummary.duration}
@@ -1242,6 +1313,58 @@ export default function BusinessDetailScreen() {
               <Feather name="x" size={22} color={colors.foreground} />
             </TouchableOpacity>
           </View>
+
+          {/* Mode toggle */}
+          <View style={{ flexDirection: "row", margin: 14, marginBottom: 0, gap: 8 }}>
+            {(["driving", "walking"] as const).map((m) => (
+              <TouchableOpacity
+                key={m}
+                style={{ flex: 1, paddingVertical: 7, borderRadius: 8, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 5, backgroundColor: travelMode === m ? colors.primary : colors.secondary, borderWidth: 1, borderColor: travelMode === m ? colors.primary : colors.border }}
+                onPress={() => { if (travelMode !== m) { setTravelMode(m); if (directionsSteps.length > 0) setModeChangedSinceLoad(true); } }}
+              >
+                <Feather name={m === "driving" ? "navigation" : "wind"} size={13} color={travelMode === m ? "#fff" : colors.mutedForeground} />
+                <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: travelMode === m ? "#fff" : colors.mutedForeground }}>{m === "driving" ? "Driving" : "Walking"}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Recalculate banner */}
+          {modeChangedSinceLoad && !directionsFetching && (
+            <TouchableOpacity
+              style={{ margin: 14, marginBottom: 0, padding: 10, borderRadius: 8, backgroundColor: colors.primary, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}
+              onPress={async () => {
+                if (!userCoordsRef.current || !business.latitude || !business.longitude) return;
+                setModeChangedSinceLoad(false);
+                setSafetyContext(null);
+                setDirectionsFetching(true);
+                try {
+                  const token = Platform.OS !== "web" ? await (await import("expo-secure-store")).getItemAsync("auth_session_token") : null;
+                  const { lat, lng } = userCoordsRef.current;
+                  const params = new URLSearchParams({
+                    lat: String(lat), lng: String(lng),
+                    destLat: String(business.latitude), destLng: String(business.longitude),
+                    destName: business.name ?? "", mode: travelMode,
+                  });
+                  const resp = await fetch(`/api/directions?${params.toString()}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                  if (resp.ok) {
+                    const data = await resp.json() as { totalDistance: string; totalDuration: string; steps: Array<{ index: number; instruction: string; distance: string; maneuver: string | null }>; waypoints: Array<{ lat: number; lng: number }> };
+                    setDirectionsSummary({ distance: data.totalDistance, duration: data.totalDuration });
+                    setDirectionsSteps(data.steps);
+                    if (data.waypoints?.length) {
+                      setSafetyLoading(true);
+                      try {
+                        const sResp = await fetch("/api/directions/safety-context", { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ waypoints: data.waypoints }) });
+                        if (sResp.ok) setSafetyContext(await sResp.json());
+                      } catch { } finally { setSafetyLoading(false); }
+                    }
+                  }
+                } catch { } finally { setDirectionsFetching(false); }
+              }}
+            >
+              <Feather name="refresh-cw" size={13} color="#fff" />
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" }}>Recalculate for {travelMode}</Text>
+            </TouchableOpacity>
+          )}
 
           {directionsFetching ? (
             <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
@@ -1254,11 +1377,142 @@ export default function BusinessDetailScreen() {
             <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
               <Feather name="alert-circle" size={32} color={colors.mutedForeground} />
               <Text style={{ fontFamily: "Inter_500Medium", fontSize: 14, color: colors.mutedForeground }}>
-                Could not load directions. Try again.
+                Enable location access to get directions.
               </Text>
             </View>
           ) : (
-            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 10 }} showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 14, paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
+
+              {/* ── Safety Intelligence ─────────────────────────────────── */}
+              {safetyLoading && (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12, padding: 10, borderRadius: 10, backgroundColor: colors.primary + "10" }}>
+                  <Feather name="shield" size={14} color={colors.primary} />
+                  <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: colors.primary }}>
+                    Checking route safety…
+                  </Text>
+                </View>
+              )}
+
+              {/* Sundown Town Warnings */}
+              {(safetyContext?.sundownWarnings ?? []).map((w) => (
+                <View key={w.id} style={styles.safetyWarnRed}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                    <Feather name="alert-triangle" size={15} color="#DC2626" />
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: "#DC2626" }}>Sundown Town Warning</Text>
+                  </View>
+                  <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#7f1d1d", marginBottom: 2 }}>{w.area}</Text>
+                  {w.description ? (
+                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "#991b1b", lineHeight: 15 }}>{w.description}</Text>
+                  ) : (
+                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "#991b1b", lineHeight: 15 }}>
+                      This location has received community-reported discrimination incidents. Exercise caution.
+                    </Text>
+                  )}
+                </View>
+              ))}
+
+              {/* Active Community Alerts */}
+              {(safetyContext?.alerts ?? []).length > 0 && (
+                <View style={styles.safetySection}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                    <Feather name="radio" size={13} color="#D97706" />
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: "#D97706" }}>ACTIVE ALERTS ALONG ROUTE</Text>
+                  </View>
+                  {(safetyContext?.alerts ?? []).map((a) => {
+                    const alertColors: Record<string, { bg: string; border: string; icon: string; text: string }> = {
+                      police: { bg: "#EFF6FF", border: "#BFDBFE", icon: "#1D4ED8", text: "#1e3a5f" },
+                      ice: { bg: "#FFF7ED", border: "#FED7AA", icon: "#EA580C", text: "#7c2d12" },
+                      road_closure: { bg: "#FEFCE8", border: "#FEF08A", icon: "#CA8A04", text: "#713f12" },
+                      severe_weather: { bg: "#F0FDF4", border: "#BBF7D0", icon: "#16A34A", text: "#14532d" },
+                      emergency: { bg: "#FEF2F2", border: "#FECACA", icon: "#DC2626", text: "#7f1d1d" },
+                    };
+                    const c = alertColors[a.type] ?? { bg: "#F9FAFB", border: "#E5E7EB", icon: "#6B7280", text: "#374151" };
+                    return (
+                      <View key={a.id} style={{ padding: 10, borderRadius: 8, backgroundColor: c.bg, borderWidth: 1, borderColor: c.border, marginBottom: 6, flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
+                        <Feather name={a.type === "police" ? "shield" : a.type === "ice" ? "alert-octagon" : a.type === "road_closure" ? "alert-triangle" : "zap"} size={14} color={c.icon} style={{ marginTop: 1 }} />
+                        <View style={{ flex: 1 }}>
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                            <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: c.text }}>{a.label}</Text>
+                            <View style={{ backgroundColor: a.status === "confirmed" ? "#16A34A" : "#D97706", borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
+                              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 9, color: "#fff" }}>{a.status === "confirmed" ? "CONFIRMED" : "REPORTED"}</Text>
+                            </View>
+                          </View>
+                          {a.description ? (
+                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: c.text, marginTop: 2, lineHeight: 15 }}>{a.description}</Text>
+                          ) : null}
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+
+              {/* Flagged Spaces to Avoid */}
+              {(safetyContext?.flaggedBusinesses ?? []).length > 0 && (
+                <View style={styles.safetySection}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                    <Feather name="alert-circle" size={13} color="#EA580C" />
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: "#EA580C" }}>SPACES WITH SAFETY CONCERNS</Text>
+                  </View>
+                  {(safetyContext?.flaggedBusinesses ?? []).map((b) => (
+                    <View key={b.id} style={{ padding: 10, borderRadius: 8, backgroundColor: "#FFF7ED", borderWidth: 1, borderColor: "#FED7AA", marginBottom: 6 }}>
+                      <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#7c2d12" }}>{b.name}</Text>
+                          <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "#9a3412", marginTop: 1 }}>{b.category} · {b.city}</Text>
+                        </View>
+                        <View style={{ backgroundColor: "#EA580C", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, marginLeft: 8 }}>
+                          <Text style={{ fontFamily: "Inter_700Bold", fontSize: 9, color: "#fff" }}>{b.alertCount} REPORTS</Text>
+                        </View>
+                      </View>
+                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, color: "#9a3412", marginTop: 4 }}>
+                        {b.alertCount} community safety reports in the last 6 months · {b.distanceMiles} mi from route
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* Minority-Owned Suggested Stops */}
+              {(safetyContext?.suggestedStops ?? []).length > 0 && (
+                <View style={styles.safetySection}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                    <Feather name="star" size={13} color="#16A34A" />
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: "#16A34A" }}>COMMUNITY-OWNED STOPS NEARBY</Text>
+                  </View>
+                  {(safetyContext?.suggestedStops ?? []).map((s) => (
+                    <View key={s.id} style={{ padding: 10, borderRadius: 8, backgroundColor: "#F0FDF4", borderWidth: 1, borderColor: "#BBF7D0", marginBottom: 6, flexDirection: "row", gap: 8, alignItems: "center" }}>
+                      <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: "#16A34A20", alignItems: "center", justifyContent: "center" }}>
+                        <Feather
+                          name={s.category.toLowerCase().includes("gas") || s.category.toLowerCase().includes("fuel") ? "zap" : s.category.toLowerCase().includes("food") || s.category.toLowerCase().includes("restaurant") || s.category.toLowerCase().includes("cafe") ? "coffee" : "shopping-bag"}
+                          size={14}
+                          color="#16A34A"
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#14532d" }}>{s.name}</Text>
+                        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "#166534", marginTop: 1 }}>{s.category} · {s.distanceMiles} mi from route</Text>
+                        {s.hoursOfOperation ? (
+                          <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, color: "#16A34A", marginTop: 1 }}>{s.hoursOfOperation}</Text>
+                        ) : null}
+                      </View>
+                      <View style={{ backgroundColor: "#16A34A15", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 3 }}>
+                        <Text style={{ fontFamily: "Inter_700Bold", fontSize: 9, color: "#16A34A" }}>SUPPORT</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* ── Step-by-step directions ─────────────────────────────── */}
+              {(safetyContext || safetyLoading === false) && (safetyContext?.alerts.length || safetyContext?.sundownWarnings.length || safetyContext?.suggestedStops.length || safetyContext?.flaggedBusinesses.length) ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8, marginTop: 4 }}>
+                  <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+                  <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.mutedForeground }}>TURN-BY-TURN</Text>
+                  <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+                </View>
+              ) : null}
+
               {directionsSteps.map((step, idx) => (
                 <View
                   key={step.index}
@@ -1759,6 +2013,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
+  },
+  safetyWarnRed: {
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    marginBottom: 10,
+  },
+  safetySection: {
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: "#FAFAFA",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    marginBottom: 10,
   },
   reviewsHeader: {
     flexDirection: "row",
