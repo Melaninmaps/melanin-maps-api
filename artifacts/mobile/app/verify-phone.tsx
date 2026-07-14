@@ -4,7 +4,6 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
