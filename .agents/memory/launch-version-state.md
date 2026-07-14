@@ -6,16 +6,16 @@ description: Current app store submission state — Android and iOS build versio
 # Launch Version State (as of July 14, 2026)
 
 ## iOS
-- **buildNumber in app.json: 26** (auto-incremented by EAS on July 14, 2026)
-- Build 26: currently building on EAS — includes IAP fixes (billing/membership), privacy URL fix
-- Previous submission (build 24/25): "Waiting for Review" — cancel it and submit build 26 once it finishes
+- **buildNumber in app.json: 27**
+- Build 26: "Waiting for Review" in App Store Connect (submitted July 14, 2026)
+- Build 27: pending — fixes Apple Sign-In nonce double-hash bug (login.tsx + signup.tsx)
 - **autoIncrement: true in eas.json — EAS queries Apple automatically before each build. No manual tracking needed.**
 - App Store Connect App ID: 6783773366, Apple Team: Y46Y4A5MMZ, Bundle ID: com.melaninmaps.app
 - Rejection history: Guideline 2.1a (API offline during review — now fixed); IAP violations fixed in build 26
 
 ## Android
-- **versionCode in app.json: 45**
-- Build versionCode 45: built on July 12, 2026 — upload key mismatch pending Google reset (~48hr)
+- **versionCode in app.json: 46**
+- Upload key mismatch pending Google reset (~48hr from July 12, 2026)
 - **autoIncrement: true in eas.json — EAS now queries Google automatically before each build. No manual tracking needed.**
 - Submit command: `eas submit --platform android --profile production`
 - Google Play service account key: `./google-service-account.json` (must exist in artifacts/mobile)
@@ -29,3 +29,8 @@ description: Current app store submission state — Android and iOS build versio
 - Build Android: `cd artifacts/mobile && eas build --platform android --profile production`
 - Submit Android: `cd artifacts/mobile && eas submit --platform android --profile production`
 - eas.json production android has `credentialsSource: "local"` — do not change this
+
+## Railway production fixes applied July 14, 2026
+- RESEND_API_KEY: was wrong key (no activity) — replaced with correct Production key
+- DATABASE_URL: was hardcoded public proxy URL — replaced with ${{ Postgres.DATABASE_URL }} (internal network)
+- Both fixes confirmed working: registration returns 201, emails will now send
