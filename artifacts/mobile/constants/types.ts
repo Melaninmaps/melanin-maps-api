@@ -121,6 +121,9 @@ export interface CommunityPost {
   repostAuthorName?: string;
   repostAuthorInitials?: string;
   repostContent?: string;
+  threadId?: string;
+  threadPosition?: number;
+  threadTotal?: number;
 }
 
 export interface AlertItem {

@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as SecureStore from "expo-secure-store";
 import { Alert, Image, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useState } from "react";
 import { useColors } from "@/hooks/useColors";
@@ -19,6 +20,7 @@ interface Props {
   onRepost?: (post: CommunityPost) => void;
   onEdit?: (post: CommunityPost) => void;
   onDelete?: (postId: string) => void;
+  onThreadPress?: (threadId: string) => void;
 }
 
 const CATEGORY_CONFIG = {
@@ -161,7 +163,7 @@ function RepostBlock({ repostAuthorName, repostAuthorInitials, repostContent }: 
   );
 }
 
-export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeChange, onAuthorPress, onLocationPress, onTopicPress, onRepost, onEdit, onDelete }: Props) {
+export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeChange, onAuthorPress, onLocationPress, onTopicPress, onRepost, onEdit, onDelete, onThreadPress }: Props) {
   const colors = useColors();
   const [liked, setLiked] = useState(post.liked);
   const [likeCount, setLikeCount] = useState(post.likes);
@@ -207,6 +209,16 @@ export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeC
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ direction: next ? "up" : "down" }),
     }).catch(() => {});
+  };
+
+  const markAsRead = async (postId: string) => {
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      fetch(`${getApiBase()}/api/community/posts/${postId}/read`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }).catch(() => {});
+    } catch {}
   };
 
   const bizCardData: BusinessMiniCardData | null = post.businessId ? {
@@ -290,6 +302,14 @@ export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeC
             <Text style={[s.categoryText, { color: categoryConfig.color }]}>{categoryConfig.label}</Text>
           </View>
         )}
+        {(post.threadTotal ?? 1) > 1 && (
+          <View style={[s.threadBadge, { backgroundColor: colors.primary + "15" }]}>
+            <Feather name="link" size={10} color={colors.primary} />
+            <Text style={[s.threadBadgeText, { color: colors.primary }]}>
+              {post.threadPosition ?? 1}/{post.threadTotal}
+            </Text>
+          </View>
+        )}
         {isOwnPost && (
           <TouchableOpacity
             onPress={handleMoreOptions}
@@ -304,6 +324,30 @@ export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeC
 
       {/* Content */}
       <Text style={[s.content, { color: colors.foreground }]}>{post.content}</Text>
+
+      {/* Thread continuation */}
+      {(post.threadTotal ?? 1) > 1 && (
+        <TouchableOpacity
+          style={[s.threadContinue, { borderColor: colors.primary + "30", backgroundColor: colors.primary + "08" }]}
+          onPress={() => {
+            if (post.threadId) {
+              void markAsRead(post.id);
+              onThreadPress?.(post.threadId);
+            }
+          }}
+          activeOpacity={0.7}
+        >
+          <Feather name="link" size={13} color={colors.primary} />
+          <Text style={[s.threadContinueText, { color: colors.primary }]}>
+            {(post.threadPosition ?? 1) === 1
+              ? `Continue thread · ${(post.threadTotal ?? 1) - 1} more part${(post.threadTotal ?? 1) - 1 !== 1 ? "s" : ""}`
+              : `Part ${post.threadPosition ?? 1} of ${post.threadTotal}`}
+          </Text>
+          {(post.threadPosition ?? 1) < (post.threadTotal ?? 1) && (
+            <Feather name="chevron-right" size={13} color={colors.primary} />
+          )}
+        </TouchableOpacity>
+      )}
 
       {/* Community Guidance rating — shown for any non-everyone tier */}
       {post.audienceRating && post.audienceRating !== "everyone" && (
@@ -644,5 +688,34 @@ const s = StyleSheet.create({
   ratingRow: {
     paddingHorizontal: 14,
     paddingBottom: 8,
+  },
+  threadBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  threadBadgeText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+  },
+  threadContinue: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 14,
+    marginTop: 8,
+    marginBottom: 2,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  threadContinueText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 13,
+    flex: 1,
   },
 });

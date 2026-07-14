@@ -239,10 +239,30 @@ export function StatusComposer({ authorName, authorInitials, authorColor, onPost
               placeholder="What's on your mind? Use @ to mention a person or business…"
               placeholderTextColor={colors.mutedForeground}
               multiline
-              maxLength={1000}
               autoFocus
             />
-            <Text style={[s.charCount, { color: colors.mutedForeground }]}>{text.length}/1000</Text>
+            {/* Word counter + thread preview */}
+            {(() => {
+              const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+              const SEGMENT_LIMIT = 300;
+              const numParts = wordCount > 0 ? Math.ceil(wordCount / SEGMENT_LIMIT) : 1;
+              const isThread = numParts > 1;
+              return (
+                <View style={s.wordCountRow}>
+                  <Text style={[s.charCount, { color: isThread ? colors.primary : colors.mutedForeground }]}>
+                    {wordCount} {wordCount === 1 ? "word" : "words"}
+                  </Text>
+                  {isThread && (
+                    <View style={[s.threadPreviewBadge, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }]}>
+                      <Feather name="link" size={11} color={colors.primary} />
+                      <Text style={[s.threadPreviewText, { color: colors.primary }]}>
+                        Posts as {numParts}-part thread · 1/{numParts} → {numParts}/{numParts}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })()}
 
             {/* @ mention pickers */}
             {mentionQuery !== null && (
@@ -457,12 +477,31 @@ const s = StyleSheet.create({
     lineHeight: 21,
     textAlignVertical: "top",
   },
+  wordCountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: 14,
+    marginTop: 4,
+    gap: 8,
+    flexWrap: "wrap",
+  },
   charCount: {
     fontFamily: "Inter_400Regular",
     fontSize: 11,
-    textAlign: "right",
-    marginRight: 14,
-    marginTop: 4,
+  },
+  threadPreviewBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  threadPreviewText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 11,
   },
   pickersWrap: {
     marginHorizontal: 12,

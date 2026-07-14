@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { randomUUID } from "crypto";
 import multer from "multer";
-import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool, userPreferencesTable, usersTable } from "@workspace/db";
+import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool, userPreferencesTable, usersTable, threadReadsTable } from "@workspace/db";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
@@ -13,12 +13,53 @@ import { sendPushToUser } from "../lib/pushNotifications";
 
 const router: IRouter = Router();
 
-// Tier-based media limits for community posts
-const MEDIA_LIMITS: Record<string, { images: number; video: boolean }> = {
-  free:        { images: 0, video: false },
-  navigator:   { images: 3, video: false },
-  trailblazer: { images: 5, video: true  },
+// Monthly media limits per membership tier
+// videoMonthly: max video posts per calendar month (enforced at upload time)
+const MEDIA_LIMITS: Record<string, { images: number; videoMonthly: number }> = {
+  free:              { images: 0,  videoMonthly: 3   }, // Community — try the platform
+  navigator:         { images: 3,  videoMonthly: 10  }, // Explorer
+  trailblazer:       { images: 5,  videoMonthly: 25  }, // Advocate
+  community_builder: { images: 8,  videoMonthly: 75  }, // Creator
+  legacy_member:     { images: 10, videoMonthly: 200 }, // Premium Creator
 };
+
+const VIDEO_TIER_TABLE = [
+  { tier: "free",              label: "Community",       videoMonthly: 3   },
+  { tier: "navigator",         label: "Explorer",        videoMonthly: 10  },
+  { tier: "trailblazer",       label: "Advocate",        videoMonthly: 25  },
+  { tier: "community_builder", label: "Creator",         videoMonthly: 75  },
+  { tier: "legacy_member",     label: "Premium Creator", videoMonthly: 200 },
+];
+
+// Split long content into thread segments at natural sentence boundaries
+// 300 words per segment — a full, complete thought per post
+function splitIntoThread(content: string, maxWords = 300): string[] {
+  const words = content.split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return [content.trim()];
+
+  const segments: string[] = [];
+  let start = 0;
+
+  while (start < words.length) {
+    const end = Math.min(start + maxWords, words.length);
+    if (end >= words.length) {
+      segments.push(words.slice(start).join(" "));
+      break;
+    }
+    // Scan backwards to find a sentence boundary (., !, ?)
+    let splitAt = end;
+    for (let i = end - 1; i >= start + Math.floor(maxWords * 0.65); i--) {
+      if (/[.!?]["']?$/.test(words[i] ?? "")) {
+        splitAt = i + 1;
+        break;
+      }
+    }
+    segments.push(words.slice(start, splitAt).join(" "));
+    start = splitAt;
+  }
+
+  return segments.filter(Boolean);
+}
 
 const imageUpload = multer({
   storage: multer.memoryStorage(),
@@ -208,7 +249,9 @@ router.get("/community/posts", async (req: Request, res: Response) => {
       repostAuthorName: r.repost_author_name ?? null,
       repostAuthorInitials: r.repost_author_initials ?? null,
       repostContent: r.repost_content ?? null,
-      upvotes: r.upvotes, downvotes: r.downvotes, commentsCount: r.comments_count, createdAt: r.created_at,
+      upvotes: r.upvotes, downvotes: r.downvotes, commentsCount: r.comments_count,
+      threadId: r.thread_id ?? null, threadPosition: r.thread_position ?? 1, threadTotal: r.thread_total ?? 1,
+      createdAt: r.created_at,
     }));
 
     const locationTagFilter = typeof req.query.locationTag === "string" ? req.query.locationTag : undefined;
@@ -404,46 +447,57 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       resolvedBusinessCategory = biz?.category ?? null;
     }
 
-    const [post] = await db
-      .insert(communityPostsTable)
-      .values({
-        authorId: req.user.id,
-        authorName: name,
-        authorInitials: initials,
-        authorColor: color,
-        content: content.trim(),
-        category,
-        postType,
-        businessId: businessId ?? null,
-        businessName: resolvedBusinessName,
-        businessLink: businessLink?.trim() ?? null,
-        mediaUrls: mediaUrls?.length ? JSON.stringify(mediaUrls) : null,
-        savedPlaceId: savedPlaceId ?? null,
-        locationTag: locationTag?.trim() || null,
-        locationType: locationTag?.trim() ? (locationType ?? "city") : null,
-        topicTag: topicTag?.trim() || null,
-        isPrivateTopic: !!isPrivateTopic,
-        visibility: (isPrivateTopic ? "followers_only" : visibility === "followers_only" ? "followers_only" : "public") as "public" | "followers_only",
-        hasContentWarning: !!hasContentWarning,
-        contentWarningType: hasContentWarning && contentWarningType ? contentWarningType : null,
-        audienceRating: (["everyone", "teen", "young_adult", "adult"].includes(audienceRating) ? audienceRating : "everyone") as "everyone" | "teen" | "young_adult" | "adult",
-        ratingReason: ratingReason?.trim().slice(0, 200) || null,
-        linkUrl: linkUrl?.trim() || null,
-        linkTitle: linkTitle?.trim() || null,
-        linkDescription: linkDescription?.trim() || null,
-        linkDomain: linkDomain?.trim() || null,
-        linkFavicon: linkFavicon?.trim() || null,
-        repostId: repostId || null,
-        repostAuthorName: repostAuthorName?.trim() || null,
-        repostAuthorInitials: repostAuthorInitials?.trim() || null,
-        repostContent: repostContent?.trim() || null,
-        mentionedBusinessId: mentionedBusinessId ?? null,
-        mentionedBusinessTag: (mentionedBusinessId && mentionedBusinessTag && VALID_MENTION_TAGS.includes(mentionedBusinessTag)) ? mentionedBusinessTag : null,
-        mentionedBusinessRating: (mentionedBusinessId && typeof mentionedBusinessRating === "number" && mentionedBusinessRating >= 3) ? mentionedBusinessRating : null,
-        requiresModeration,
-        isTrustedAuthor,
-      })
-      .returning();
+    // Split content into thread segments if it exceeds 300 words
+    const segments = splitIntoThread(content.trim());
+    const threadId = segments.length > 1 ? randomUUID() : null;
+    const postAuthorId = req.user.id; // capture before map callback (TS narrowing)
+
+    const visValue = (isPrivateTopic ? "followers_only" : visibility === "followers_only" ? "followers_only" : "public") as "public" | "followers_only";
+    const safeRating = (["everyone", "teen", "young_adult", "adult"].includes(audienceRating) ? audienceRating : "everyone") as "everyone" | "teen" | "young_adult" | "adult";
+
+    const rowsToInsert = segments.map((seg, i) => ({
+      authorId: postAuthorId,
+      authorName: name,
+      authorInitials: initials,
+      authorColor: color,
+      content: seg,
+      category,
+      postType,
+      businessId: businessId ?? null,
+      businessName: resolvedBusinessName,
+      businessLink: businessLink?.trim() ?? null,
+      mediaUrls: (i === 0 && mediaUrls?.length) ? JSON.stringify(mediaUrls) : null,
+      savedPlaceId: savedPlaceId ?? null,
+      locationTag: locationTag?.trim() || null,
+      locationType: locationTag?.trim() ? (locationType ?? "city") : null,
+      topicTag: topicTag?.trim() || null,
+      isPrivateTopic: !!isPrivateTopic,
+      visibility: visValue,
+      hasContentWarning: !!hasContentWarning,
+      contentWarningType: hasContentWarning && contentWarningType ? contentWarningType : null,
+      audienceRating: safeRating,
+      ratingReason: ratingReason?.trim().slice(0, 200) || null,
+      linkUrl: i === 0 ? (linkUrl?.trim() || null) : null,
+      linkTitle: i === 0 ? (linkTitle?.trim() || null) : null,
+      linkDescription: i === 0 ? (linkDescription?.trim() || null) : null,
+      linkDomain: i === 0 ? (linkDomain?.trim() || null) : null,
+      linkFavicon: i === 0 ? (linkFavicon?.trim() || null) : null,
+      repostId: i === 0 ? (repostId || null) : null,
+      repostAuthorName: i === 0 ? (repostAuthorName?.trim() || null) : null,
+      repostAuthorInitials: i === 0 ? (repostAuthorInitials?.trim() || null) : null,
+      repostContent: i === 0 ? (repostContent?.trim() || null) : null,
+      mentionedBusinessId: i === 0 ? (mentionedBusinessId ?? null) : null,
+      mentionedBusinessTag: (i === 0 && mentionedBusinessId && mentionedBusinessTag && VALID_MENTION_TAGS.includes(mentionedBusinessTag)) ? mentionedBusinessTag : null,
+      mentionedBusinessRating: (i === 0 && mentionedBusinessId && typeof mentionedBusinessRating === "number" && mentionedBusinessRating >= 3) ? mentionedBusinessRating : null,
+      requiresModeration: i === 0 ? requiresModeration : false,
+      isTrustedAuthor,
+      threadId,
+      threadPosition: i + 1,
+      threadTotal: segments.length,
+    }));
+
+    const insertedPosts = await db.insert(communityPostsTable).values(rowsToInsert).returning();
+    const post = insertedPosts[0]!;
 
     // ── Notify business owner when their business is @mentioned ──────────────
     if (mentionedBusinessId && post) {
@@ -581,8 +635,34 @@ router.post("/community/media/upload/video", videoUpload.single("video"), async 
   try {
     const tier = await getUserTier(req.user.id);
     const limits = MEDIA_LIMITS[tier] ?? MEDIA_LIMITS.free;
-    if (!limits.video) {
-      res.status(403).json({ error: "Video uploads in posts require a Trailblazer membership.", code: "TIER_LIMIT_REACHED", upgradeUrl: "/membership" });
+    const videoMonthlyLimit = limits.videoMonthly ?? 0;
+    if (videoMonthlyLimit === 0) {
+      res.status(403).json({ error: "Video uploads require a membership upgrade.", code: "TIER_LIMIT_REACHED", upgradeUrl: "/membership" });
+      return;
+    }
+    // Enforce monthly video quota — count video-bearing posts this calendar month
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    const { rows: [quotaRow] } = await pool.query<{ video_count: string }>(
+      `SELECT COUNT(*)::int AS video_count FROM community_posts
+       WHERE author_id = $1 AND created_at >= $2 AND media_urls LIKE '%mp4%'`,
+      [req.user.id, monthStart]
+    );
+    const usedThisMonth = Number(quotaRow?.video_count) || 0;
+    if (usedThisMonth >= videoMonthlyLimit) {
+      const nextMonth = new Date(monthStart);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      const tierEntry = VIDEO_TIER_TABLE.find((t) => t.tier === tier);
+      res.status(403).json({
+        error: `You've used all ${videoMonthlyLimit} video posts for this month. Quota resets ${nextMonth.toLocaleDateString("en-US", { month: "long", day: "numeric" })}.`,
+        code: "VIDEO_QUOTA_REACHED",
+        used: usedThisMonth,
+        limit: videoMonthlyLimit,
+        tierLabel: tierEntry?.label ?? "Current Plan",
+        resetDate: nextMonth.toISOString(),
+        upgradeUrl: "/membership",
+      });
       return;
     }
     const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
@@ -752,6 +832,108 @@ router.delete("/community/posts/:id", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to delete post");
     res.status(500).json({ error: "Failed to delete post" });
+  }
+});
+
+// GET /community/video-quota — user's monthly video usage + tier limit
+router.get("/community/video-quota", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const tier = await getUserTier(req.user.id);
+    const limits = MEDIA_LIMITS[tier] ?? MEDIA_LIMITS.free;
+    const tierEntry = VIDEO_TIER_TABLE.find((t) => t.tier === tier);
+
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    const nextMonth = new Date(monthStart);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+    const { rows: [row] } = await pool.query<{ video_count: string }>(
+      `SELECT COUNT(*)::int AS video_count FROM community_posts
+       WHERE author_id = $1 AND created_at >= $2 AND media_urls LIKE '%mp4%'`,
+      [req.user.id, monthStart]
+    );
+    const used = Number(row?.video_count) || 0;
+
+    res.json({
+      used,
+      limit: limits.videoMonthly,
+      remaining: Math.max(0, limits.videoMonthly - used),
+      tierLabel: tierEntry?.label ?? "Current Plan",
+      resetDate: nextMonth.toISOString(),
+      tierTable: VIDEO_TIER_TABLE,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch video quota");
+    res.status(500).json({ error: "Failed to fetch quota" });
+  }
+});
+
+// POST /community/posts/:id/read — mark a thread segment as read (fire-and-forget analytics)
+router.post("/community/posts/:id/read", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.json({ ok: true }); return; }
+  try {
+    const postId = String(req.params["id"]);
+    await pool.query(
+      `INSERT INTO thread_reads (user_id, post_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [req.user.id, postId]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to mark thread segment as read");
+    res.json({ ok: true }); // non-critical — never fail the client
+  }
+});
+
+// GET /community/thread/:threadId — all segments of a thread in order + engagement stats for author
+router.get("/community/thread/:threadId", async (req: Request, res: Response) => {
+  try {
+    const threadId = String(req.params["threadId"]);
+    const viewerId = req.user?.id ?? null;
+
+    const posts = await db
+      .select()
+      .from(communityPostsTable)
+      .where(eq(communityPostsTable.threadId, threadId))
+      .orderBy(communityPostsTable.threadPosition);
+
+    if (!posts.length) { res.status(404).json({ error: "Thread not found" }); return; }
+
+    const totalSegments = posts.length;
+
+    // Engagement stats — only computed for the author
+    let statsPayload: { totalReaders: number; completionReaders: number; completionRate: number } | undefined;
+    const isAuthor = viewerId && posts[0]?.authorId === viewerId;
+    let suggestVideoUpgrade = false;
+
+    if (isAuthor) {
+      const { rows } = await pool.query<{ total_readers: string; completion_readers: string }>(
+        `SELECT
+           COUNT(DISTINCT tr.user_id) AS total_readers,
+           COUNT(DISTINCT CASE WHEN rpu.cnt = $2 THEN rpu.user_id END) AS completion_readers
+         FROM thread_reads tr
+         JOIN community_posts cp ON cp.id = tr.post_id AND cp.thread_id = $1
+         LEFT JOIN (
+           SELECT tr2.user_id, COUNT(*) AS cnt FROM thread_reads tr2
+           JOIN community_posts cp2 ON cp2.id = tr2.post_id
+           WHERE cp2.thread_id = $1
+           GROUP BY tr2.user_id
+         ) rpu ON rpu.user_id = tr.user_id`,
+        [threadId, totalSegments]
+      );
+      const totalReaders = Number(rows[0]?.total_readers) || 0;
+      const completionReaders = Number(rows[0]?.completion_readers) || 0;
+      const completionRate = totalReaders > 0 ? completionReaders / totalReaders : 0;
+      statsPayload = { totalReaders, completionReaders, completionRate: Math.round(completionRate * 100) };
+      // Suggest video upgrade when 10+ people read the whole thread at 70%+ completion rate
+      suggestVideoUpgrade = completionReaders >= 10 && completionRate >= 0.7;
+    }
+
+    res.json({ posts, threadId, totalSegments, stats: statsPayload, suggestVideoUpgrade });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch thread");
+    res.status(500).json({ error: "Failed to fetch thread" });
   }
 });
 

@@ -48,6 +48,10 @@ export const communityPostsTable = pgTable("community_posts", {
   upvotes: integer("upvotes").notNull().default(0),
   downvotes: integer("downvotes").notNull().default(0),
   commentsCount: integer("comments_count").notNull().default(0),
+  // Thread fields — populated when a post is auto-split into segments
+  threadId: varchar("thread_id"),
+  threadPosition: integer("thread_position").notNull().default(1),
+  threadTotal: integer("thread_total").notNull().default(1),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
