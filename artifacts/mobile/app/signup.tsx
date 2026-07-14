@@ -154,7 +154,10 @@ export default function SignupScreen() {
     checkTimeout.current = setTimeout(async () => {
       try {
         const apiBase = getApiBaseUrl();
-        const res = await fetch(`${apiBase}/api/auth/check-username?username=${encodeURIComponent(clean)}`);
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 10000);
+        const res = await fetch(`${apiBase}/api/auth/check-username?username=${encodeURIComponent(clean)}`, { signal: controller.signal });
+        clearTimeout(timer);
         const data = await res.json() as { available: boolean; error?: string };
         if (data.error) { setUsernameStatus("error"); setUsernameMsg(data.error); }
         else { setUsernameStatus(data.available ? "available" : "taken"); }
