@@ -81,6 +81,18 @@ export const knowledgeTopicsTable = pgTable("knowledge_topics", {
   topicType: varchar("topic_type", { length: 30 }).notNull().default("general"),
   isUserCreated: boolean("is_user_created").notNull().default(false),
   createdByUserId: varchar("created_by_user_id", { length: 100 }),
+  credibilityScore: integer("credibility_score").notNull().default(50),
+  credibilityTier: varchar("credibility_tier", { length: 30 }).notNull().default("community"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const topicCredibilitySignalsTable = pgTable("topic_credibility_signals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  topicId: varchar("topic_id", { length: 100 }).notNull(),
+  userId: varchar("user_id", { length: 100 }).references(() => usersTable.id, { onDelete: "set null" }),
+  signalType: varchar("signal_type", { length: 30 }).notNull(),
+  weight: integer("weight").notNull().default(1),
+  metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

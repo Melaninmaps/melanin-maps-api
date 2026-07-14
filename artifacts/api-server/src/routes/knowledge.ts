@@ -10,6 +10,7 @@ import {
   knowledgeArticleReadsTable,
   knowledgeBookmarksTable,
   knowledgeTopicsTable,
+  topicCredibilitySignalsTable,
   userTopicFollowsTable,
   usersTable,
 } from "@workspace/db";
@@ -489,6 +490,12 @@ router.post("/knowledge/topics/:topicId/follow", async (req: Request, res: Respo
     }
 
     await db.insert(userTopicFollowsTable).values({ userId, topicId });
+
+    // Record credibility signal and recalculate asynchronously
+    void db.insert(topicCredibilitySignalsTable).values({
+      topicId, userId, signalType: "follow", weight: 2, metadata: null,
+    }).then(() => recalculateCredibility(topicId)).catch(() => {});
+
     res.json({ following: true });
   } catch {
     res.status(500).json({ error: "Could not follow topic" });
@@ -782,6 +789,199 @@ router.post("/knowledge/articles/:id/read", async (req: Request, res: Response) 
     res.json({ ok: true, suggestion });
   } catch {
     res.json({ ok: true, suggestion: null });
+  }
+});
+
+// ─── Credibility Score Recalculator ──────────────────────────────────────────
+async function recalculateCredibility(topicId: string): Promise<void> {
+  try {
+    const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+    const [topic, signals] = await Promise.all([
+      db.select().from(knowledgeTopicsTable).where(eq(knowledgeTopicsTable.id, topicId)).then((r) => r[0]),
+      db.select().from(topicCredibilitySignalsTable).where(
+        and(
+          eq(topicCredibilitySignalsTable.topicId, topicId),
+          sql`${topicCredibilitySignalsTable.createdAt} > ${cutoff}`,
+        ),
+      ),
+    ]);
+    if (!topic) return;
+
+    let score = topic.isUserCreated ? 30 : 50;
+    const byType = (t: string) => signals.filter((s) => s.signalType === t).length;
+
+    score += Math.min(byType("follow") * 2, 25);
+    score += Math.min(byType("read") * 0.5, 15);
+    score += Math.min(byType("upvote") * 3, 15);
+    score += Math.min(byType("expert_endorse") * 10, 20);
+
+    const trusted = (topic.trustedSources as unknown[] | null)?.length ?? 0;
+    if (trusted > 0) score += Math.min(trusted * 5, 20);
+
+    score = Math.min(100, Math.max(0, Math.round(score)));
+    const tier =
+      score >= 85 ? "authoritative" :
+      score >= 60 ? "established" :
+      score >= 30 ? "emerging" : "community";
+
+    await db.update(knowledgeTopicsTable)
+      .set({ credibilityScore: score, credibilityTier: tier })
+      .where(eq(knowledgeTopicsTable.id, topicId));
+  } catch { /* silent */ }
+}
+
+// ─── GET /knowledge/topics/similar?q=<query> ─────────────────────────────────
+// Returns existing topics that are similar to the given query term.
+// Uses keyword/word-overlap scoring — no pg_trgm required.
+router.get("/knowledge/topics/similar", async (req: Request, res: Response) => {
+  const q = String(req.query.q ?? "").trim();
+  if (!q || q.length < 2) { res.json({ topics: [] }); return; }
+
+  try {
+    const STOP = new Set(["the", "a", "an", "and", "or", "in", "at", "of", "for", "to", "with", "on", "is", "are", "my", "be"]);
+    const qWords = q.toLowerCase().split(/\W+/).filter((w) => w.length > 1 && !STOP.has(w));
+    if (qWords.length === 0) { res.json({ topics: [] }); return; }
+
+    const allTopics = await db.select().from(knowledgeTopicsTable)
+      .where(eq(knowledgeTopicsTable.enabled, true));
+
+    const qLower = q.toLowerCase();
+
+    const scored = allTopics
+      .map((topic) => {
+        const nameLower = topic.topicName.toLowerCase();
+        // Skip exact matches — they're handled by search-or-create
+        if (nameLower === qLower) return { topic, score: 0 };
+
+        const nameWords = nameLower.split(/\W+/);
+        const keywords = (topic.keywords ?? []).map((k) => k.toLowerCase());
+        const synonyms = (topic.synonyms ?? []).map((s) => s.toLowerCase());
+        const all = [...nameWords, ...keywords, ...synonyms];
+
+        let score = 0;
+        for (const w of qWords) {
+          if (nameLower.includes(w)) score += 4;
+          else if (nameWords.some((nw) => nw.startsWith(w) || w.startsWith(nw))) score += 2;
+          if (all.some((kw) => kw === w)) score += 3;
+          else if (all.some((kw) => kw.includes(w) || w.includes(kw))) score += 1;
+        }
+        // Prefix bonus
+        if (nameLower.startsWith(qLower.slice(0, 4)) || qLower.startsWith(nameLower.slice(0, 4))) score += 3;
+
+        return { topic, score };
+      })
+      .filter(({ score }) => score >= 4)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    // Attach follower counts
+    const ids = scored.map(({ topic }) => topic.id);
+    let memberCounts: Record<string, number> = {};
+    if (ids.length > 0) {
+      const rows = await db.select({
+        topicId: userTopicFollowsTable.topicId,
+        cnt: sql<number>`COUNT(*)`,
+      })
+      .from(userTopicFollowsTable)
+      .where(inArray(userTopicFollowsTable.topicId, ids))
+      .groupBy(userTopicFollowsTable.topicId);
+      memberCounts = Object.fromEntries(rows.map((r) => [r.topicId, Number(r.cnt)]));
+    }
+
+    const topics = scored.map(({ topic, score }) => ({
+      ...topic,
+      membersCount: memberCounts[topic.id] ?? 0,
+      similarityScore: score,
+    }));
+
+    res.json({ topics });
+  } catch {
+    res.status(500).json({ error: "Could not search similar topics" });
+  }
+});
+
+// ─── POST /knowledge/topics/:id/signal ───────────────────────────────────────
+// Records a credibility signal (follow, read, upvote, expert_endorse) and
+// recalculates the topic's credibility score asynchronously.
+router.post("/knowledge/topics/:id/signal", async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id as string | undefined;
+  const topicId = String(req.params.id);
+  const { signalType, metadata } = req.body as { signalType?: string; metadata?: Record<string, unknown> };
+  const VALID = ["follow", "read", "upvote", "expert_endorse", "share"];
+  if (!signalType || !VALID.includes(signalType)) {
+    res.status(400).json({ error: "Invalid signalType. Must be one of: " + VALID.join(", ") }); return;
+  }
+
+  try {
+    const weights: Record<string, number> = { follow: 2, read: 1, upvote: 3, expert_endorse: 10, share: 2 };
+    await db.insert(topicCredibilitySignalsTable).values({
+      topicId,
+      userId: userId ?? null,
+      signalType,
+      weight: weights[signalType] ?? 1,
+      metadata: metadata ?? null,
+    });
+
+    // Recalculate score in background (don't await)
+    void recalculateCredibility(topicId);
+
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "Could not record signal" });
+  }
+});
+
+// ─── GET /knowledge/topics/:id/community-videos ───────────────────────────────
+// Returns community posts with media (video/images) tagged to this topic.
+// "topicTag" on community_posts stores the topic name or id match.
+router.get("/knowledge/topics/:id/community-videos", async (req: Request, res: Response) => {
+  const topicId = String(req.params.id);
+  try {
+    const [topic] = await db.select({ topicName: knowledgeTopicsTable.topicName })
+      .from(knowledgeTopicsTable).where(eq(knowledgeTopicsTable.id, topicId));
+
+    if (!topic) { res.status(404).json({ error: "Topic not found" }); return; }
+
+    const posts = await db.select({
+      id: communityPostsTable.id,
+      content: communityPostsTable.content,
+      authorName: communityPostsTable.authorName,
+      authorInitials: communityPostsTable.authorInitials,
+      authorColor: communityPostsTable.authorColor,
+      mediaUrls: communityPostsTable.mediaUrls,
+      topicTag: communityPostsTable.topicTag,
+      upvotes: communityPostsTable.upvotes,
+      commentsCount: communityPostsTable.commentsCount,
+      createdAt: communityPostsTable.createdAt,
+    })
+    .from(communityPostsTable)
+    .where(
+      and(
+        eq(communityPostsTable.visibility, "public"),
+        sql`${communityPostsTable.mediaUrls} IS NOT NULL`,
+        or(
+          ilike(communityPostsTable.topicTag, topic.topicName),
+          ilike(communityPostsTable.topicTag, `%${topic.topicName}%`),
+          ilike(communityPostsTable.content, `%${topic.topicName}%`),
+        ),
+      ),
+    )
+    .orderBy(desc(communityPostsTable.createdAt))
+    .limit(30);
+
+    // Parse mediaUrls and flag which contain video
+    const withMedia = posts.map((p) => {
+      let media: string[] = [];
+      try { media = JSON.parse(p.mediaUrls ?? "[]"); } catch { media = []; }
+      const hasVideo = media.some((url) =>
+        /\.(mp4|mov|webm|m4v)(\?|$)/i.test(url) || url.includes("/video/") || url.includes("video%2F")
+      );
+      return { ...p, media, hasVideo };
+    });
+
+    res.json({ posts: withMedia, topic });
+  } catch {
+    res.status(500).json({ error: "Could not load community videos" });
   }
 });
 

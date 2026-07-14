@@ -225,6 +225,12 @@ export default function CommunityHubScreen() {
   const [volunteerNote, setVolunteerNote] = useState("");
   const [volunteerYears, setVolunteerYears] = useState("");
   const [volunteering, setVolunteering] = useState(false);
+  const [communityVideos, setCommunityVideos] = useState<Array<{
+    id: string; content: string; authorName: string; authorInitials: string;
+    authorColor: string; media: string[]; hasVideo: boolean;
+    upvotes: number; commentsCount: number; createdAt: string;
+  }>>([]);
+  const [videosLoading, setVideosLoading] = useState(false);
   const tabScrollRef = useRef<ScrollView>(null);
 
   const load = useCallback(async () => {
@@ -273,6 +279,18 @@ export default function CommunityHubScreen() {
     if (hub?.topic.topicName) loadBrief(hub.topic.topicName);
     if (topicId) loadExtras(topicId);
   }, [hub?.topic.topicName, loadBrief, loadExtras, topicId]);
+
+  useEffect(() => {
+    if (activeTab !== "videos" || !topicId) return;
+    setVideosLoading(true);
+    authHeaders().then((h) =>
+      fetch(`${getApiBase()}/api/knowledge/topics/${topicId}/community-videos`, { headers: h })
+        .then((r) => r.ok ? r.json() : { posts: [] })
+        .then((d: any) => setCommunityVideos(d.posts ?? []))
+        .catch(() => {})
+        .finally(() => setVideosLoading(false))
+    );
+  }, [activeTab, topicId]);
 
   async function volunteerAsExpert() {
     if (!isAuthenticated) { router.push("/login" as never); return; }
@@ -627,7 +645,79 @@ export default function CommunityHubScreen() {
           {/* ══════════════ CREATORS TAB ══════════════ */}
           {activeTab === "videos" && (
             <View>
+              {/* ── Community Videos Section ── */}
               <View style={[styles.section, { paddingTop: 0 }]}>
+                <View style={styles.sectionHeader}>
+                  <Feather name="video" size={14} color={colors.mutedForeground} />
+                  <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Community Videos & Media</Text>
+                </View>
+                <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>
+                  Posts with photos and videos tagged to this hub by community members.
+                </Text>
+              </View>
+
+              {videosLoading ? (
+                <ActivityIndicator color={typeMeta.color} style={{ marginVertical: 16 }} />
+              ) : communityVideos.length > 0 ? (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingHorizontal: 14, gap: 10 }}
+                  style={{ marginBottom: 8 }}
+                >
+                  {communityVideos.map((post) => {
+                    const firstMedia = post.media[0];
+                    return (
+                      <TouchableOpacity
+                        key={post.id}
+                        style={[styles.videoCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                        onPress={() => router.push("/(tabs)/community" as never)}
+                        activeOpacity={0.8}
+                      >
+                        {firstMedia ? (
+                          <View style={[styles.videoThumb, { backgroundColor: colors.secondary }]}>
+                            <Image
+                              source={{ uri: firstMedia }}
+                              style={{ width: "100%", height: "100%", borderRadius: 10 }}
+                              resizeMode="cover"
+                            />
+                            {post.hasVideo && (
+                              <View style={styles.videoPlayIcon}>
+                                <Feather name="play" size={18} color="#fff" />
+                              </View>
+                            )}
+                          </View>
+                        ) : (
+                          <View style={[styles.videoThumb, { backgroundColor: colors.secondary, alignItems: "center", justifyContent: "center" }]}>
+                            <Feather name="image" size={22} color={colors.mutedForeground} />
+                          </View>
+                        )}
+                        <View style={{ padding: 8 }}>
+                          <View style={[styles.videoAvatar, { backgroundColor: post.authorColor + "30" }]}>
+                            <Text style={[styles.videoAvatarTxt, { color: post.authorColor }]}>{post.authorInitials}</Text>
+                          </View>
+                          <Text style={[styles.videoAuthor, { color: colors.foreground }]} numberOfLines={1}>{post.authorName}</Text>
+                          <Text style={[styles.videoContent, { color: colors.mutedForeground }]} numberOfLines={2}>{post.content}</Text>
+                          <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+                            <Feather name="thumbs-up" size={11} color={colors.mutedForeground} />
+                            <Text style={[{ fontSize: 11, fontFamily: "Inter_400Regular" }, { color: colors.mutedForeground }]}>{post.upvotes}</Text>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              ) : (
+                <View style={[styles.infoNote, { backgroundColor: colors.secondary, borderColor: colors.border, marginBottom: 8 }]}>
+                  <Feather name="video" size={13} color={colors.mutedForeground} />
+                  <Text style={[styles.infoNoteTxt, { color: colors.mutedForeground }]}>
+                    No community media yet. When members post videos or photos tagged to this hub, they appear here.
+                  </Text>
+                </View>
+              )}
+
+              {/* ── MWM Creators ── */}
+              <View style={[styles.section]}>
                 <View style={styles.sectionHeader}>
                   <Feather name="play-circle" size={14} color={colors.mutedForeground} />
                   <Text style={[styles.sectionTitle, { color: colors.foreground }]}>MWM Creators</Text>
@@ -1079,6 +1169,13 @@ const styles = StyleSheet.create({
   ctaBtnTxt: { color: "#fff", fontSize: 14, fontFamily: "Inter_700Bold" },
   ctaOutline: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 12, borderWidth: 1, marginHorizontal: 14 },
   ctaOutlineTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  videoCard: { width: 160, borderRadius: 12, borderWidth: 1, overflow: "hidden" },
+  videoThumb: { width: 160, height: 110, borderRadius: 10, overflow: "hidden", position: "relative" },
+  videoPlayIcon: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.35)" },
+  videoAvatar: { width: 26, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center", marginBottom: 4 },
+  videoAvatarTxt: { fontSize: 10, fontFamily: "Inter_700Bold" },
+  videoAuthor: { fontSize: 12, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
+  videoContent: { fontSize: 11, fontFamily: "Inter_400Regular", lineHeight: 15 },
   mentorTypesRow: { paddingHorizontal: 14, gap: 8, paddingBottom: 16 },
   mentorTypeChip: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
   mentorTypeLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold" },

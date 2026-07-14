@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ActivityIndicator,
   Linking,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -185,6 +186,9 @@ export default function LibraryScreen() {
   const [resolving, setResolving] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState("");
+  const [similarTopics, setSimilarTopics] = useState<Topic[]>([]);
+  const [showSimilarSheet, setShowSimilarSheet] = useState(false);
+  const [pendingTopicName, setPendingTopicName] = useState("");
   const [pinModal, setPinModal] = useState<{
     visible: boolean;
     itemName: string;
@@ -421,16 +425,32 @@ export default function LibraryScreen() {
     } catch { /* silent */ } finally { setResolving(false); }
   }
 
-  async function handleAddTopic(name: string) {
+  async function handleAddTopic(name: string, force = false) {
     if (!name.trim()) return;
     if (!isAuthenticated) { router.push("/login" as never); return; }
     setAddingTopic(true);
     try {
       const h = await authHeaders();
+
+      // Step 1: if not forcing, check for similar existing topics first
+      if (!force) {
+        const simRes = await fetch(`${getApiBase()}/api/knowledge/topics/similar?q=${encodeURIComponent(name.trim())}`, { headers: h });
+        if (simRes.ok) {
+          const simData = await simRes.json() as { topics: Topic[] };
+          if (simData.topics.length > 0) {
+            setPendingTopicName(name.trim());
+            setSimilarTopics(simData.topics);
+            setShowSimilarSheet(true);
+            return;
+          }
+        }
+      }
+
+      // Step 2: create or find exact match
       const res = await fetch(`${getApiBase()}/api/knowledge/topics/search-or-create`, {
         method: "POST",
         headers: { ...h, "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({ name: name.trim(), force }),
       });
       if (res.status === 403) {
         setUpgradeReason("Upgrade to Knowledge+ to save unlimited topics.");
@@ -448,6 +468,9 @@ export default function LibraryScreen() {
         setFollowCount((c) => c + 1);
         setTopicSearch("");
         setResolveResult(null);
+        setPendingTopicName("");
+        setSimilarTopics([]);
+        setShowSimilarSheet(false);
         router.push({ pathname: "/library-topic", params: { topicId: data.topic.id } } as never);
       }
     } catch { /* silent */ } finally { setAddingTopic(false); }
@@ -1311,6 +1334,85 @@ export default function LibraryScreen() {
         )}
       </View>
 
+      {/* ── Similar Topics Sheet ── */}
+      <Modal
+        visible={showSimilarSheet}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowSimilarSheet(false)}
+      >
+        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.45)" }}>
+          <View style={[styles.similarSheet, { backgroundColor: colors.card }]}>
+            <View style={styles.similarHandle} />
+            <Text style={[styles.similarTitle, { color: colors.foreground }]}>Similar topics already exist</Text>
+            <Text style={[styles.similarSub, { color: colors.mutedForeground }]}>
+              These hubs cover related territory — joining one keeps the community connected instead of fragmented.
+            </Text>
+            {similarTopics.map((topic) => {
+              const meta = CATEGORY_META[topic.category] ?? { emoji: "✦", color: "#CA922B", label: topic.category };
+              const members = (topic as any).membersCount ?? 0;
+              return (
+                <TouchableOpacity
+                  key={topic.id}
+                  style={[styles.similarCard, { backgroundColor: colors.background, borderColor: colors.border }]}
+                  onPress={async () => {
+                    setShowSimilarSheet(false);
+                    setAddingTopic(true);
+                    try {
+                      const h = await authHeaders();
+                      await fetch(`${getApiBase()}/api/knowledge/topics/${topic.id}/follow`, { method: "POST", headers: h });
+                      setTopics((prev) =>
+                        prev.find((t) => t.id === topic.id)
+                          ? prev.map((t) => t.id === topic.id ? { ...t, isFollowing: true } : t)
+                          : [...prev, { ...topic, isFollowing: true, newCount: 0 }]
+                      );
+                      setFollowCount((c) => c + 1);
+                      setTopicSearch("");
+                      setResolveResult(null);
+                      router.push({ pathname: "/library-topic", params: { topicId: topic.id } } as never);
+                    } catch { /* silent */ } finally { setAddingTopic(false); }
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <View style={[styles.similarIcon, { backgroundColor: meta.color + "18" }]}>
+                    <Text style={{ fontSize: 20 }}>{meta.emoji}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.similarName, { color: colors.foreground }]}>{topic.topicName}</Text>
+                    <Text style={[styles.similarMeta, { color: colors.mutedForeground }]}>
+                      {members > 0 ? `${members} member${members !== 1 ? "s" : ""}` : "New hub"} · {meta.label}
+                    </Text>
+                  </View>
+                  <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              );
+            })}
+
+            <TouchableOpacity
+              style={[styles.similarForceBtn, { borderColor: colors.border }]}
+              onPress={() => {
+                setShowSimilarSheet(false);
+                void handleAddTopic(pendingTopicName, true);
+              }}
+              activeOpacity={0.8}
+            >
+              <Feather name="plus" size={14} color={colors.mutedForeground} />
+              <Text style={[styles.similarForceTxt, { color: colors.mutedForeground }]}>
+                No — add "{pendingTopicName}" as a new topic
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{ padding: 14, alignItems: "center" }}
+              onPress={() => setShowSimilarSheet(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={[{ fontSize: 14, fontFamily: "Inter_500Medium" }, { color: colors.mutedForeground }]}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <UpgradeModal
         visible={showUpgrade}
         onClose={() => setShowUpgrade(false)}
@@ -1381,6 +1483,16 @@ const styles = StyleSheet.create({
   browseSearch: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5 },
   addTopicBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: 12, paddingVertical: 13 },
   addTopicTxt: { color: "#fff", fontSize: 14, fontFamily: "Inter_700Bold" },
+  similarSheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 16, paddingBottom: 32, paddingTop: 8 },
+  similarHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: "rgba(120,120,120,0.35)", alignSelf: "center", marginBottom: 16 },
+  similarTitle: { fontSize: 17, fontFamily: "Inter_700Bold", marginBottom: 6 },
+  similarSub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18, marginBottom: 14 },
+  similarCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 14, borderWidth: 1, marginBottom: 8 },
+  similarIcon: { width: 44, height: 44, borderRadius: 10, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  similarName: { fontSize: 14, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
+  similarMeta: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  similarForceBtn: { flexDirection: "row", alignItems: "center", gap: 8, padding: 14, borderRadius: 12, borderWidth: 1, marginTop: 4, marginBottom: 4 },
+  similarForceTxt: { fontSize: 13, fontFamily: "Inter_500Medium", flex: 1 },
   searchInput: { flex: 1, fontSize: 14 },
   limitBanner: { marginHorizontal: 14, marginBottom: 4, flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 12, borderWidth: 1 },
   disambigBanner: { marginHorizontal: 14, marginTop: 4, borderRadius: 14, borderWidth: 1, padding: 14, gap: 8 },
