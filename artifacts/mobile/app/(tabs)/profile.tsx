@@ -833,6 +833,14 @@ export default function ProfileScreen() {
             <Feather name="log-in" size={18} color={colors.primary} />
             <Text style={[styles.signInBtnGhostText, { color: colors.primary }]}>I Already Have an Account</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.signInBtnGhost, { borderColor: colors.border, marginTop: -4 }]}
+            onPress={() => router.push("/preview" as any)}
+            activeOpacity={0.8}
+          >
+            <Feather name="eye" size={18} color={colors.mutedForeground} />
+            <Text style={[styles.signInBtnGhostText, { color: colors.mutedForeground }]}>Peek Inside the Platform</Text>
+          </TouchableOpacity>
           <View style={styles.benefitsGrid}>
             {[
               { icon: "bookmark", label: "Save Favorites" },

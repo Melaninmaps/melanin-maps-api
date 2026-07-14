@@ -124,6 +124,7 @@ import wellnessTrackerRouter from "./wellness-tracker";
 import financialHubRouter from "./financial-hub";
 import directionsRouter from "./directions";
 import recommendedSpotsRouter from "./recommended-spots";
+import previewRouter from "./preview";
 
 const router: IRouter = Router();
 
@@ -251,6 +252,7 @@ router.use(wellnessTrackerRouter);
 router.use(financialHubRouter);
 router.use(directionsRouter);
 router.use(recommendedSpotsRouter);
+router.use(previewRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");
