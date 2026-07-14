@@ -1,8 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
+import * as Speech from "expo-speech";
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   Linking,
@@ -27,6 +28,34 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
 import { useMembership } from "@/hooks/useMembership";
 import { useSafetyProximity, type ProximityWarning } from "@/hooks/useSafetyProximity";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+
+// Strip HTML tags from Google Directions html_instructions
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+// Fetch KinfolkAI-voiced navigation steps from the server
+async function fetchVoicedSteps(
+  steps: string[],
+  destCity: string,
+  destName: string,
+  voiceMode: string,
+  prefs: { communicationStyle?: string; emojiLevel?: string; humorLevel?: string; culturalInterests?: string[] } | null,
+  apiBase: string,
+): Promise<string[]> {
+  try {
+    const res = await fetch(`${apiBase}/api/maps/nav-voice`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ steps, destCity, destName, voiceMode, prefs }),
+    });
+    if (!res.ok) return steps;
+    const data = await res.json() as { voicedSteps?: string[] };
+    if (Array.isArray(data.voicedSteps) && data.voicedSteps.length > 0) return data.voicedSteps;
+  } catch { /* fall through */ }
+  return steps;
+}
 
 function decodePolyline(encoded: string): Array<{ latitude: number; longitude: number }> {
   const coords: Array<{ latitude: number; longitude: number }> = [];
@@ -313,6 +342,17 @@ export function MapTabView() {
   const [navDestAlerts, setNavDestAlerts] = useState<NavAlert[]>([]);
   const [navAlternatives, setNavAlternatives] = useState<NavAlt[]>([]);
 
+  // ── KinfolkAI Voice Navigation state ────────────────────────────────────
+  type VoiceMode = "professional" | "community" | "local" | "home";
+  const [navVoiceMode, setNavVoiceMode] = useState<VoiceMode>("community");
+  const [voicedSteps, setVoicedSteps] = useState<string[]>([]);
+  const [navRawSteps, setNavRawSteps] = useState<string[]>([]);
+  const [navDestCity, setNavDestCity] = useState<string>("");
+  const [currentNavStep, setCurrentNavStep] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+
+  const { preferences: userPrefs } = useUserPreferences();
+
   const HIGH_CONCERN_TYPES = new Set(["ice", "checkpoint", "avoid_area", "police"]);
 
   const prevWarningCount = useRef(0);
@@ -324,6 +364,15 @@ export function MapTabView() {
     prevWarningCount.current = warnings.length;
   }, [warnings.length]);
 
+  // Speak the current navigation step whenever it changes (if not muted)
+  useEffect(() => {
+    const step = voicedSteps[currentNavStep];
+    if (!isMuted && step && routeCoords.length > 0) {
+      Speech.stop();
+      Speech.speak(step, { language: "en-US", rate: 0.95 });
+    }
+  }, [currentNavStep, voicedSteps, isMuted, routeCoords.length]);
+
   useEffect(() => {
     Location.requestForegroundPermissionsAsync().then(({ status }) => {
       setLocationGrantedLocal(status === "granted");
@@ -331,6 +380,28 @@ export function MapTabView() {
   }, []);
 
   const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+
+  // Re-voice steps in new mode when user changes the discretion selector
+  const handleVoiceModeChange = useCallback(async (mode: VoiceMode) => {
+    setNavVoiceMode(mode);
+    if (navRawSteps.length === 0) return;
+    const voiced = await fetchVoicedSteps(
+      navRawSteps,
+      navDestCity,
+      selected?.name ?? "",
+      mode,
+      userPrefs ? {
+        communicationStyle: userPrefs.communicationStyle,
+        emojiLevel: userPrefs.emojiLevel,
+        humorLevel: userPrefs.humorLevel,
+        culturalInterests: userPrefs.culturalInterests,
+      } : null,
+      apiBase,
+    );
+    setVoicedSteps(voiced);
+    setCurrentNavStep(0);
+  }, [navRawSteps, navDestCity, selected, userPrefs, apiBase]);
+
   const [communityAlertPins, setCommunityAlertPins] = useState<ActiveAlert[]>([]);
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
   const [alternatives, setAlternatives] = useState<Array<{
@@ -429,6 +500,10 @@ export function MapTabView() {
     setIsNavigating(true);
     setNavDestAlerts([]);
     setNavAlternatives([]);
+    setVoicedSteps([]);
+    setNavRawSteps([]);
+    setCurrentNavStep(0);
+    setNavDestCity(biz.city ?? "");
     try {
       const origin = userLocation
         ? `${userLocation.lat},${userLocation.lng}`
@@ -442,8 +517,34 @@ export function MapTabView() {
       ]);
 
       if (routeRes.ok) {
-        const data = await routeRes.json() as { routes?: Array<{ overview_polyline?: { points: string } }> };
+        type GStep = { html_instructions: string; distance?: { text: string }; duration?: { text: string } };
+        type GRoute = { overview_polyline?: { points: string }; legs?: Array<{ steps?: GStep[] }> };
+        const data = await routeRes.json() as { routes?: GRoute[] };
         const points = data.routes?.[0]?.overview_polyline?.points;
+        // Extract plain-text steps for KinfolkAI voice translation
+        const rawSteps = (data.routes?.[0]?.legs?.[0]?.steps ?? [])
+          .map((s) => stripHtml(s.html_instructions) + (s.distance?.text ? ` (${s.distance.text})` : ""))
+          .filter(Boolean);
+        if (rawSteps.length > 0) {
+          setNavRawSteps(rawSteps);
+          // Fire voice translation in background — don't block the route display
+          void fetchVoicedSteps(
+            rawSteps,
+            biz.city ?? "",
+            biz.name,
+            navVoiceMode,
+            userPrefs ? {
+              communicationStyle: userPrefs.communicationStyle,
+              emojiLevel: userPrefs.emojiLevel,
+              humorLevel: userPrefs.humorLevel,
+              culturalInterests: userPrefs.culturalInterests,
+            } : null,
+            apiBase,
+          ).then((voiced) => {
+            setVoicedSteps(voiced);
+            setCurrentNavStep(0);
+          });
+        }
         if (points) {
           const coords = decodePolyline(points);
           setRouteCoords(coords);
@@ -641,6 +742,49 @@ export function MapTabView() {
           ))}
         </ScrollView>
       </View>
+
+      {/* ── KinfolkAI Navigation Voice Step Banner ── */}
+      {routeCoords.length > 0 && voicedSteps.length > 0 && (
+        <View style={[styles.navStepBanner, { top: insets.top + 120 }]} pointerEvents="box-none">
+          <View style={[styles.navStepCard, { backgroundColor: colors.card, shadowColor: colors.primary }]}>
+            <View style={styles.navStepLeft}>
+              <View style={[styles.navStepCountBadge, { backgroundColor: colors.primary + "20" }]}>
+                <Text style={[styles.navStepCountText, { color: colors.primary }]}>
+                  {currentNavStep + 1}/{voicedSteps.length}
+                </Text>
+              </View>
+              <Text style={[styles.navStepText, { color: colors.foreground }]} numberOfLines={3}>
+                {voicedSteps[currentNavStep]}
+              </Text>
+            </View>
+            <View style={styles.navStepControls}>
+              <TouchableOpacity
+                onPress={() => setIsMuted((m) => !m)}
+                style={[styles.navStepIconBtn, { backgroundColor: isMuted ? "#EF444418" : colors.primary + "18" }]}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Feather name={isMuted ? "volume-x" : "volume-2"} size={15} color={isMuted ? "#EF4444" : colors.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                disabled={currentNavStep === 0}
+                onPress={() => setCurrentNavStep((s) => Math.max(0, s - 1))}
+                style={[styles.navStepIconBtn, { backgroundColor: colors.muted, opacity: currentNavStep === 0 ? 0.35 : 1 }]}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Feather name="chevron-up" size={15} color={colors.foreground} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                disabled={currentNavStep === voicedSteps.length - 1}
+                onPress={() => setCurrentNavStep((s) => Math.min(voicedSteps.length - 1, s + 1))}
+                style={[styles.navStepIconBtn, { backgroundColor: colors.muted, opacity: currentNavStep === voicedSteps.length - 1 ? 0.35 : 1 }]}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Feather name="chevron-down" size={15} color={colors.foreground} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
 
       {topWarning && !showAllWarnings && (
         <View style={[styles.warningStack, { top: insets.top + 120 }]}>
@@ -841,7 +985,7 @@ export function MapTabView() {
           {routeCoords.length > 0 && (
             <View style={[styles.navSafetySection, { borderTopColor: navHasSafetyConcern ? "#DC262640" : colors.border }]}>
 
-              {/* Header row */}
+              {/* Header row: safety status + alert count */}
               <View style={styles.navSafetyHeader}>
                 <View style={[styles.navSafetyBadge, { backgroundColor: navHasSafetyConcern ? "#DC262618" : "#16A34A18" }]}>
                   <Text style={styles.navSafetyIcon}>{navHasSafetyConcern ? "⚠️" : "✅"}</Text>
@@ -854,6 +998,39 @@ export function MapTabView() {
                     <Text style={styles.navAlertCountText}>{navDestAlerts.length} alert{navDestAlerts.length !== 1 ? "s" : ""}</Text>
                   </View>
                 )}
+              </View>
+
+              {/* KinfolkAI Voice discretion selector */}
+              <View style={styles.navVoiceRow}>
+                <Text style={[styles.navVoiceLabel, { color: colors.mutedForeground }]}>Navigator voice:</Text>
+                <View style={styles.navVoicePills}>
+                  {(["professional", "community", "local", "home"] as const).map((mode) => {
+                    const labels: Record<string, string> = {
+                      professional: "Pro",
+                      community: "Community",
+                      local: "Local",
+                      home: "Home",
+                    };
+                    const active = navVoiceMode === mode;
+                    return (
+                      <TouchableOpacity
+                        key={mode}
+                        style={[
+                          styles.navVoicePill,
+                          active
+                            ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                            : { backgroundColor: colors.primary + "12", borderColor: colors.primary + "40" },
+                        ]}
+                        onPress={() => void handleVoiceModeChange(mode)}
+                        activeOpacity={0.75}
+                      >
+                        <Text style={[styles.navVoicePillText, { color: active ? "#FFF" : colors.primary }]}>
+                          {labels[mode]}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
               </View>
 
               {/* High-concern alerts */}
@@ -948,7 +1125,18 @@ export function MapTabView() {
             </View>
           )}
 
-          <TouchableOpacity onPress={() => { setSelected(null); setRouteCoords([]); }} style={styles.dismissBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity
+            onPress={() => {
+              setSelected(null);
+              setRouteCoords([]);
+              setVoicedSteps([]);
+              setNavRawSteps([]);
+              setCurrentNavStep(0);
+              Speech.stop();
+            }}
+            style={styles.dismissBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <Feather name="x" size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
         </View>
@@ -1122,4 +1310,27 @@ const styles = StyleSheet.create({
     marginTop: 6, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, alignSelf: "flex-start",
   },
   navAltBtnText: { fontFamily: "Inter_700Bold", fontSize: 10, color: "#FFF" },
+  // ── KinfolkAI Voice mode selector ──
+  navVoiceRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap" },
+  navVoiceLabel: { fontFamily: "Inter_500Medium", fontSize: 11 },
+  navVoicePills: { flexDirection: "row", gap: 5, flexWrap: "wrap" },
+  navVoicePill: {
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1,
+  },
+  navVoicePillText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  // ── KinfolkAI Voice Step Banner ──
+  navStepBanner: {
+    position: "absolute", left: 12, right: 12, zIndex: 25,
+  },
+  navStepCard: {
+    flexDirection: "row", alignItems: "flex-start", gap: 10,
+    borderRadius: 16, padding: 14,
+    shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 12, elevation: 10,
+  },
+  navStepLeft: { flex: 1, gap: 6 },
+  navStepCountBadge: { alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
+  navStepCountText: { fontFamily: "Inter_700Bold", fontSize: 10 },
+  navStepText: { fontFamily: "Inter_500Medium", fontSize: 14, lineHeight: 20 },
+  navStepControls: { gap: 6, alignItems: "center" },
+  navStepIconBtn: { width: 30, height: 30, borderRadius: 8, alignItems: "center", justifyContent: "center" },
 });
