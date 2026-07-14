@@ -62,7 +62,7 @@ export default function OnboardingIdentity() {
     router.replace(ROUTES[i] as never);
   };
 
-  const skip = () => { markComplete(); router.replace("/(tabs)"); };
+  const skip = () => { router.replace("/onboarding/join" as never); };
 
   const toggle = (id: string) => {
     if (Platform.OS !== "web") Haptics.selectionAsync();

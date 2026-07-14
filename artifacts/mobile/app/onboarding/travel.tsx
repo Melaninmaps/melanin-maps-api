@@ -42,7 +42,7 @@ export default function OnboardingTravel() {
     router.replace(ROUTES[i] as never);
   };
 
-  const skip = () => { markComplete(); router.replace("/(tabs)"); };
+  const skip = () => { router.replace("/onboarding/join" as never); };
 
   return (
     <View style={styles.root}>

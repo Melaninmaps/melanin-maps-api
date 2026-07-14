@@ -42,8 +42,6 @@ export default function OnboardingJoin() {
     router.replace(ROUTES[i] as never);
   };
 
-  const skip = () => { markComplete(); router.replace("/(tabs)"); };
-
   return (
     <View style={styles.root}>
       <Image
@@ -58,8 +56,8 @@ export default function OnboardingJoin() {
       />
 
       <View style={[styles.topBar, { paddingTop: topPad + 8 }]}>
-        <TouchableOpacity activeOpacity={0.85} onPress={skip} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-          <Text style={styles.skipText}>Skip</Text>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => { markComplete(); router.replace("/signup"); }} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <Text style={styles.skipText}>Sign Up</Text>
         </TouchableOpacity>
         <View style={styles.dots}>
           {ROUTES.map((_, i) => (
@@ -127,9 +125,6 @@ export default function OnboardingJoin() {
             <Text style={styles.waitlistBtnText}>Join the Waitlist</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity activeOpacity={0.85} onPress={skip}>
-            <Text style={styles.skipLink}>Explore without an account</Text>
-          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -177,10 +172,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: "rgba(202,146,43,0.45)",
   },
   ghostTxt: { fontSize: 16, fontFamily: "Inter_500Medium", color: "#CA922B" },
-  skipLink: {
-    textAlign: "center", fontSize: 14, fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.5)", paddingVertical: 8,
-  },
   waitlistBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",
     gap: 8, paddingVertical: 13,
