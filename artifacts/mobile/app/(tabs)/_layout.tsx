@@ -38,6 +38,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "books.vertical", selected: "books.vertical.fill" }} />
         <Label>Library</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="resources">
+        <Icon sf={{ default: "heart.text.square", selected: "heart.text.square.fill" }} />
+        <Label>Resources</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="community">
         <Icon sf={{ default: "person.3", selected: "person.3.fill" }} />
         <Label>Community</Label>
@@ -168,6 +172,18 @@ function ClassicTabLayout() {
               <SymbolView name="books.vertical" tintColor={color} size={24} />
             ) : (
               <Feather name="book-open" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="resources"
+        options={{
+          title: "Resources",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="heart.text.square" tintColor={color} size={24} />
+            ) : (
+              <Feather name="heart" size={22} color={color} />
             ),
         }}
       />

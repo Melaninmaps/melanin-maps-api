@@ -118,6 +118,7 @@ import archiveRouter from "./archive";
 import revenuecatRouter from "./revenuecat";
 import kinfolkIntelligenceRouter from "./kinfolk-intelligence";
 import hiddenGemsRouter from "./hidden-gems";
+import resourcesRouter from "./resources";
 
 const router: IRouter = Router();
 
@@ -239,6 +240,7 @@ router.use(archiveRouter);
 router.use(revenuecatRouter);
 router.use(kinfolkIntelligenceRouter);
 router.use("/hidden-gems", hiddenGemsRouter);
+router.use(resourcesRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");
