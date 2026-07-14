@@ -1,6 +1,6 @@
-import { MapTabView } from "@/components/MapTabView";
+import { BusinessMapView } from "@/components/BusinessMapView";
 import React from "react";
 
 export default function MapScreen() {
-  return <MapTabView />;
+  return <BusinessMapView />;
 }

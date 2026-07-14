@@ -40,7 +40,7 @@ export default function MapScreen() {
         <Text style={[styles.title, { color: colors.foreground }]}>Map</Text>
         <View style={[styles.mapNotice, { backgroundColor: colors.secondary }]}>
           <Feather name="map" size={14} color={colors.primary} />
-          <Text style={[styles.mapNoticeText, { color: colors.primary }]}>Use Expo Go for interactive map</Text>
+          <Text style={[styles.mapNoticeText, { color: colors.primary }]}>Open on mobile for interactive map</Text>
         </View>
       </View>
       <View style={styles.searchRow}>
