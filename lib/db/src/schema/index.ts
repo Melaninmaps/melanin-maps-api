@@ -108,3 +108,4 @@ export * from "./resource-alerts";
 export * from "./community-listings";
 export * from "./wellness-checkins";
 export * from "./financial-goals";
+export * from "./profile-recommended-spots";

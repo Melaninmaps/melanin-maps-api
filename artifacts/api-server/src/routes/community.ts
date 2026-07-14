@@ -249,6 +249,10 @@ router.get("/community/posts", async (req: Request, res: Response) => {
       repostAuthorName: r.repost_author_name ?? null,
       repostAuthorInitials: r.repost_author_initials ?? null,
       repostContent: r.repost_content ?? null,
+      mentionedBusinessId: r.mentioned_business_id ?? (r as any).mentionedBusinessId ?? null,
+      mentionedBusinessName: r.mentioned_business_name ?? (r as any).mentionedBusinessName ?? null,
+      mentionedBusinessTag: r.mentioned_business_tag ?? (r as any).mentionedBusinessTag ?? null,
+      mentionedBusinessRating: r.mentioned_business_rating ?? (r as any).mentionedBusinessRating ?? null,
       upvotes: r.upvotes, downvotes: r.downvotes, commentsCount: r.comments_count,
       threadId: r.thread_id ?? null, threadPosition: r.thread_position ?? 1, threadTotal: r.thread_total ?? 1,
       createdAt: r.created_at,
@@ -379,6 +383,8 @@ router.post("/community/posts", async (req: Request, res: Response) => {
 
     // ── Business mention stance validation ──────────────────────────────────────
     const VALID_MENTION_TAGS = ["community_favorite", "hidden_gem", "supporting_local", "visited_loved"];
+    let mentionedBizName: string | null = null;
+    let mentionedBizOwnerId: string | null = null;
     if (mentionedBusinessId) {
       const hasValidTag = mentionedBusinessTag && VALID_MENTION_TAGS.includes(mentionedBusinessTag);
       const hasValidRating = typeof mentionedBusinessRating === "number" && mentionedBusinessRating >= 3 && mentionedBusinessRating <= 5;
@@ -389,6 +395,14 @@ router.post("/community/posts", async (req: Request, res: Response) => {
         });
         return;
       }
+      // Pre-fetch business details for denormalized storage + notification
+      const [mb] = await db
+        .select({ name: businessesTable.name, submittedById: businessesTable.submittedById })
+        .from(businessesTable)
+        .where(eq(businessesTable.id, mentionedBusinessId))
+        .limit(1);
+      mentionedBizName = mb?.name ?? null;
+      mentionedBizOwnerId = mb?.submittedById ?? null;
     }
 
     // ── Determine moderation tier and trust level ─────────────────────────────
@@ -487,6 +501,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       repostAuthorInitials: i === 0 ? (repostAuthorInitials?.trim() || null) : null,
       repostContent: i === 0 ? (repostContent?.trim() || null) : null,
       mentionedBusinessId: i === 0 ? (mentionedBusinessId ?? null) : null,
+      mentionedBusinessName: i === 0 ? mentionedBizName : null,
       mentionedBusinessTag: (i === 0 && mentionedBusinessId && mentionedBusinessTag && VALID_MENTION_TAGS.includes(mentionedBusinessTag)) ? mentionedBusinessTag : null,
       mentionedBusinessRating: (i === 0 && mentionedBusinessId && typeof mentionedBusinessRating === "number" && mentionedBusinessRating >= 3) ? mentionedBusinessRating : null,
       requiresModeration: i === 0 ? requiresModeration : false,
@@ -500,23 +515,32 @@ router.post("/community/posts", async (req: Request, res: Response) => {
     const post = insertedPosts[0]!;
 
     // ── Notify business owner when their business is @mentioned ──────────────
-    if (mentionedBusinessId && post) {
-      const [mentionedBiz] = await db
-        .select({ submittedById: businessesTable.submittedById, name: businessesTable.name })
-        .from(businessesTable)
-        .where(eq(businessesTable.id, mentionedBusinessId))
-        .limit(1);
-      if (mentionedBiz?.submittedById && mentionedBiz.submittedById !== req.user.id) {
-        const tagLabel = mentionedBusinessTag === "community_favorite" ? "Community Favorite"
-          : mentionedBusinessTag === "hidden_gem" ? "Hidden Gem"
-          : mentionedBusinessTag === "supporting_local" ? "Supporting Local"
-          : mentionedBusinessTag === "visited_loved" ? "Visited & Loved"
-          : mentionedBusinessRating ? `${mentionedBusinessRating}-star rating`
-          : "mentioned";
-        sendPushToUser(mentionedBiz.submittedById, {
-          title: "Your business was mentioned! 🎉",
-          body: `${post.authorName} tagged ${mentionedBiz.name} as "${tagLabel}" in the community feed.`,
-          data: { screen: "business", id: mentionedBusinessId },
+    if (mentionedBusinessId && post && mentionedBizOwnerId && mentionedBizOwnerId !== req.user.id) {
+      const tagLabel = mentionedBusinessTag === "community_favorite" ? "Community Favorite"
+        : mentionedBusinessTag === "hidden_gem" ? "Hidden Gem"
+        : mentionedBusinessTag === "supporting_local" ? "Supporting Local"
+        : mentionedBusinessTag === "visited_loved" ? "Visited & Loved"
+        : mentionedBusinessRating ? `${mentionedBusinessRating}-star rating`
+        : "mentioned";
+      sendPushToUser(mentionedBizOwnerId, {
+        title: "Your business was mentioned! 🎉",
+        body: `${post.authorName} tagged ${mentionedBizName ?? "your business"} as "${tagLabel}" in the community feed.`,
+        data: { screen: "business", id: mentionedBusinessId },
+      }).catch(() => {});
+    }
+
+    // ── Notify @mentioned users ──────────────────────────────────────────────
+    const mentionedUserIds: string[] = Array.isArray((req.body as any).mentionedUserIds)
+      ? ((req.body as any).mentionedUserIds as unknown[])
+          .filter((id): id is string => typeof id === "string" && id !== req.user?.id)
+          .slice(0, 10)
+      : [];
+    if (mentionedUserIds.length > 0 && post) {
+      for (const uid of mentionedUserIds) {
+        sendPushToUser(uid, {
+          title: `${post.authorName} mentioned you`,
+          body: post.content.slice(0, 100),
+          data: { screen: "community", postId: post.id },
         }).catch(() => {});
       }
     }

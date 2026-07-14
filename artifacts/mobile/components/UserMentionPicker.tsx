@@ -22,7 +22,7 @@ interface UserResult {
 
 interface Props {
   query: string;
-  onSelect: (mention: string) => void;
+  onSelect: (mention: string, userId: string) => void;
 }
 
 export function UserMentionPicker({ query, onSelect }: Props) {
@@ -71,7 +71,7 @@ export function UserMentionPicker({ query, onSelect }: Props) {
               <TouchableOpacity
                 key={u.id}
                 style={[styles.row, { borderBottomColor: colors.border }]}
-                onPress={() => onSelect(u.username || displayName.replace(/\s+/g, "_"))}
+                onPress={() => onSelect(u.username || displayName.replace(/\s+/g, "_"), u.id)}
                 activeOpacity={0.75}
               >
                 <View style={[styles.avatar, { backgroundColor: colors.primary + "33" }]}>

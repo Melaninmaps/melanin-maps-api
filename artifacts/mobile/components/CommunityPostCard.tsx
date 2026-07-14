@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import { Alert, Image, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useState } from "react";
+import { useRouter } from "expo-router";
 import { useColors } from "@/hooks/useColors";
 import { BusinessMiniCard, type BusinessMiniCardData } from "@/components/BusinessMiniCard";
 import { ReportButton } from "@/components/ReportButton";
@@ -160,6 +161,51 @@ function RepostBlock({ repostAuthorName, repostAuthorInitials, repostContent }: 
         <Text style={[s.repostContent, { color: colors.foreground }]} numberOfLines={4}>{repostContent}</Text>
       ) : null}
     </View>
+  );
+}
+
+const MENTION_STANCE: Record<string, { label: string; icon: keyof typeof Feather.glyphMap; color: string }> = {
+  community_favorite: { label: "Community Favorite", icon: "heart", color: "#C4622D" },
+  hidden_gem: { label: "Hidden Gem", icon: "star", color: "#CA922B" },
+  supporting_local: { label: "Supporting Local", icon: "home", color: "#2D7A4F" },
+  visited_loved: { label: "Visited & Loved", icon: "check-circle", color: "#0369A1" },
+};
+
+function BusinessMentionCard({ businessId, businessName, stanceTag, rating }: {
+  businessId: string;
+  businessName?: string | null;
+  stanceTag?: string | null;
+  rating?: number | null;
+}) {
+  const colors = useColors();
+  const router = useRouter();
+  const stance = stanceTag ? MENTION_STANCE[stanceTag] : null;
+  return (
+    <TouchableOpacity
+      style={[s.mentionCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+      onPress={() => { if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push({ pathname: "/business/[id]", params: { id: businessId } } as never); }}
+      activeOpacity={0.85}
+    >
+      <View style={[s.mentionIcon, { backgroundColor: colors.primary + "15" }]}>
+        <Feather name="briefcase" size={18} color={colors.primary} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[s.mentionName, { color: colors.foreground }]} numberOfLines={1}>{businessName ?? "Business"}</Text>
+        {stance ? (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
+            <Feather name={stance.icon} size={11} color={stance.color} />
+            <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: stance.color }}>{stance.label}</Text>
+          </View>
+        ) : rating ? (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 2, marginTop: 2 }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Feather key={i} name="star" size={11} color={i < rating ? "#CA922B" : colors.border} />
+            ))}
+          </View>
+        ) : null}
+      </View>
+      <Feather name="arrow-right" size={14} color={colors.mutedForeground} />
+    </TouchableOpacity>
   );
 }
 
@@ -368,6 +414,18 @@ export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeC
             repostAuthorName={post.repostAuthorName}
             repostAuthorInitials={post.repostAuthorInitials}
             repostContent={post.repostContent}
+          />
+        </View>
+      )}
+
+      {/* Business @mention endorsement card */}
+      {post.mentionedBusinessId && (
+        <View style={{ paddingHorizontal: 14, paddingBottom: 10 }}>
+          <BusinessMentionCard
+            businessId={post.mentionedBusinessId}
+            businessName={post.mentionedBusinessName}
+            stanceTag={post.mentionedBusinessTag}
+            rating={post.mentionedBusinessRating}
           />
         </View>
       )}
@@ -717,5 +775,24 @@ const s = StyleSheet.create({
     fontFamily: "Inter_500Medium",
     fontSize: 13,
     flex: 1,
+  },
+  mentionCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  mentionIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  mentionName: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
   },
 });

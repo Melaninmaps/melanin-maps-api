@@ -121,6 +121,10 @@ export interface CommunityPost {
   repostAuthorName?: string;
   repostAuthorInitials?: string;
   repostContent?: string;
+  mentionedBusinessId?: string;
+  mentionedBusinessName?: string;
+  mentionedBusinessTag?: string;
+  mentionedBusinessRating?: number;
   threadId?: string;
   threadPosition?: number;
   threadTotal?: number;

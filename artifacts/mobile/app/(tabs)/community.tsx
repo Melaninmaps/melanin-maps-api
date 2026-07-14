@@ -123,6 +123,22 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
     contentWarningType: (raw.contentWarningType as string) ?? undefined,
     audienceRating: (raw.audienceRating as string) ?? (raw.audience_rating as string) ?? "everyone",
     ratingReason: (raw.ratingReason as string) ?? (raw.rating_reason as string) ?? undefined,
+    linkUrl: (raw.linkUrl as string) ?? undefined,
+    linkTitle: (raw.linkTitle as string) ?? undefined,
+    linkDescription: (raw.linkDescription as string) ?? undefined,
+    linkDomain: (raw.linkDomain as string) ?? undefined,
+    linkFavicon: (raw.linkFavicon as string) ?? undefined,
+    repostId: (raw.repostId as string) ?? undefined,
+    repostAuthorName: (raw.repostAuthorName as string) ?? undefined,
+    repostAuthorInitials: (raw.repostAuthorInitials as string) ?? undefined,
+    repostContent: (raw.repostContent as string) ?? undefined,
+    mentionedBusinessId: (raw.mentionedBusinessId as string) ?? undefined,
+    mentionedBusinessName: (raw.mentionedBusinessName as string) ?? undefined,
+    mentionedBusinessTag: (raw.mentionedBusinessTag as string) ?? undefined,
+    mentionedBusinessRating: typeof raw.mentionedBusinessRating === "number" ? raw.mentionedBusinessRating : undefined,
+    threadId: (raw.threadId as string) ?? undefined,
+    threadPosition: typeof raw.threadPosition === "number" ? raw.threadPosition : 1,
+    threadTotal: typeof raw.threadTotal === "number" ? raw.threadTotal : 1,
   };
 }
 
@@ -244,6 +260,8 @@ export default function CommunityScreen() {
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionMode, setMentionMode] = useState<"users" | "businesses">("users");
   const [taggedBusiness, setTaggedBusiness] = useState<SelectedBusiness | null>(null);
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
+  const [mentionedStanceTag, setMentionedStanceTag] = useState<string | null>(null);
   const [newPostTagUrl, setNewPostTagUrl] = useState("");
   const [newPostTagUrlIsSocialVideo, setNewPostTagUrlIsSocialVideo] = useState(false);
 
@@ -257,9 +275,10 @@ export default function CommunityScreen() {
     }
   };
 
-  const handleMentionSelect = (mention: string) => {
+  const handleMentionSelect = (mention: string, userId: string) => {
     const updated = newPostText.replace(/@(\w*)$/, `@${mention} `);
     setNewPostText(updated);
+    if (userId) setMentionedUserIds((prev) => prev.includes(userId) ? prev : [...prev, userId]);
     setMentionQuery(null);
     inputRef.current?.focus();
   };
@@ -458,6 +477,9 @@ export default function CommunityScreen() {
           isPrivateTopic: newPostTopicTag.trim() ? newPostIsPrivateTopic : undefined,
           audienceRating: newPostAudienceRating,
           ratingReason: newPostRatingReason.trim() || undefined,
+          mentionedBusinessId: taggedBusiness?.id && mentionedStanceTag ? taggedBusiness.id : undefined,
+          mentionedBusinessTag: taggedBusiness?.id && mentionedStanceTag ? mentionedStanceTag : undefined,
+          mentionedUserIds: mentionedUserIds.length > 0 ? mentionedUserIds : undefined,
         }),
       });
       if (res.ok) {
@@ -477,6 +499,8 @@ export default function CommunityScreen() {
         setNewPostAudienceRating("everyone");
         setNewPostRatingReason("");
         setTaggedBusiness(null);
+        setMentionedUserIds([]);
+        setMentionedStanceTag(null);
         setNewPostTagUrl("");
         setNewPostTagUrlIsSocialVideo(false);
         setShowCompose(false);
@@ -1109,7 +1133,6 @@ export default function CommunityScreen() {
       ) : (
         <View style={{ flex: 1 }}>
           <FlatList
-        keyboardDismissMode="on-drag"
             data={filteredPosts}
             keyExtractor={(p) => p.id}
             style={{ flex: 1 }}
@@ -1764,6 +1787,34 @@ export default function CommunityScreen() {
                   </Text>
                 </View>
 
+                {/* Stance picker — optional endorsement card */}
+                <View style={{ gap: 6 }}>
+                  <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: colors.foreground }}>
+                    Add a stance <Text style={{ fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>(optional — shows an endorsement card in the feed)</Text>
+                  </Text>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+                    {([
+                      { tag: "community_favorite", label: "Community Favorite", icon: "heart" },
+                      { tag: "hidden_gem", label: "Hidden Gem", icon: "star" },
+                      { tag: "supporting_local", label: "Supporting Local", icon: "home" },
+                      { tag: "visited_loved", label: "Visited & Loved", icon: "check-circle" },
+                    ] as const).map(({ tag, label, icon }) => {
+                      const sel = mentionedStanceTag === tag;
+                      return (
+                        <TouchableOpacity
+                          key={tag}
+                          style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, backgroundColor: sel ? colors.primary + "20" : colors.secondary, borderWidth: 1, borderColor: sel ? colors.primary : colors.border }}
+                          onPress={() => setMentionedStanceTag(sel ? null : tag)}
+                          activeOpacity={0.8}
+                        >
+                          <Feather name={icon} size={11} color={sel ? colors.primary : colors.mutedForeground} />
+                          <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: sel ? colors.primary : colors.mutedForeground }}>{label}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+
                 {/* Video link input */}
                 <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, overflow: "hidden" }}>
                   <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 10, gap: 8, backgroundColor: "#7B2D8B06" }}>
@@ -1821,7 +1872,7 @@ export default function CommunityScreen() {
                 {mentionMode === "users" ? (
                   <UserMentionPicker query={mentionQuery} onSelect={handleMentionSelect} />
                 ) : (
-                  <BusinessMentionPicker query={mentionQuery} businesses={businesses} onSelect={handleBusinessMentionSelect} />
+                  <BusinessMentionPicker query={mentionQuery} onSelect={handleBusinessMentionSelect} />
                 )}
               </View>
             )}

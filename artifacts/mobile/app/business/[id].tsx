@@ -47,6 +47,7 @@ import { CommunityConfidenceScore } from "@/components/CommunityConfidenceScore"
 import { KnowBeforeYouGoSection } from "@/components/KnowBeforeYouGoSection";
 import { PassThePlateModal } from "@/components/PassThePlateModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { useAuth } from "@/lib/auth";
 import { SafetyExperienceSurvey } from "@/components/SafetyExperienceSurvey";
 import FeaturedVideoCard from "@/components/FeaturedVideoCard";
 import CommunityCommentsSection from "@/components/CommunityCommentsSection";
@@ -92,6 +93,14 @@ export default function BusinessDetailScreen() {
   const [userCircles, setUserCircles] = useState<Array<{ id: number; name: string; city: string | null; state: string | null; memberCount: number }>>([]);
   const [circlesLoading, setCirclesLoading] = useState(false);
   const [suggestingCircleId, setSuggestingCircleId] = useState<number | null>(null);
+
+  // ── GPS Directions ─────────────────────────────────────────────────────────
+  const { user } = useAuth();
+  const isNavigator = new Set(["navigator", "trailblazer", "founding", "legacy_member", "community_builder"]).has((user as any)?.memberType ?? "");
+  const [directionsOpen, setDirectionsOpen] = useState(false);
+  const [directionsFetching, setDirectionsFetching] = useState(false);
+  const [directionsSummary, setDirectionsSummary] = useState<{ distance: string; duration: string } | null>(null);
+  const [directionsSteps, setDirectionsSteps] = useState<Array<{ index: number; instruction: string; distance: string; maneuver: string | null }>>([]);
 
   // ── Hidden Gem nomination ─────────────────────────────────────────────────
   const [gemStatus, setGemStatus] = useState<{
@@ -930,6 +939,52 @@ export default function BusinessDetailScreen() {
             />
           </View>
 
+          {/* Get Directions row */}
+          {business.latitude && business.longitude && (
+            <TouchableOpacity
+              style={[styles.directionsRow, { borderColor: colors.border, backgroundColor: colors.secondary }]}
+              activeOpacity={0.75}
+              onPress={async () => {
+                if (!isNavigator) {
+                  const lat = business.latitude!;
+                  const lng = business.longitude!;
+                  const mapsUrl = Platform.OS === "ios"
+                    ? `maps://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`
+                    : `https://maps.google.com/maps?daddr=${lat},${lng}`;
+                  Linking.openURL(mapsUrl).catch(() => {});
+                  return;
+                }
+                setDirectionsFetching(true);
+                setDirectionsOpen(true);
+                try {
+                  const token = Platform.OS !== "web" ? await (await import("expo-secure-store")).getItemAsync("auth_session_token") : null;
+                  const resp = await fetch(`/api/directions/${id}`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                  });
+                  if (resp.ok) {
+                    const data = await resp.json() as { totalDistance: string; totalDuration: string; steps: Array<{ index: number; instruction: string; distance: string; maneuver: string | null }> };
+                    setDirectionsSummary({ distance: data.totalDistance, duration: data.totalDuration });
+                    setDirectionsSteps(data.steps);
+                  }
+                } catch { /* ignore */ } finally {
+                  setDirectionsFetching(false);
+                }
+              }}
+            >
+              <Feather name="navigation" size={14} color={isNavigator ? colors.primary : colors.mutedForeground} />
+              <Text style={[styles.directionsRowText, { color: isNavigator ? colors.primary : colors.mutedForeground }]}>
+                {isNavigator ? "In-App Turn-by-Turn Directions" : "Open in Maps"}
+              </Text>
+              {isNavigator ? (
+                <Feather name="chevron-right" size={14} color={colors.primary} />
+              ) : (
+                <View style={styles.navigatorBadge}>
+                  <Text style={styles.navigatorBadgeText}>NAVIGATOR+</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
+
           {/* Owner's Pinned Highlights */}
           {pinnedItems.length > 0 && (
             <View style={[styles.pinnedSection, { borderColor: "#C9922B33", backgroundColor: "#C9922B07" }]}>
@@ -1165,6 +1220,84 @@ export default function BusinessDetailScreen() {
           <Text style={[styles.primaryBtnText, { color: "#FFFFFF" }]}>Review</Text>
         </TouchableOpacity>
       </View>
+
+      {/* In-App Directions Modal (Navigator+) */}
+      <Modal
+        visible={directionsOpen}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setDirectionsOpen(false)}
+      >
+        <View style={[styles.directionsModal, { backgroundColor: colors.background }]}>
+          <View style={[styles.directionsHeader, { borderBottomColor: colors.border }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.directionsTitle, { color: colors.foreground }]}>Turn-by-Turn Directions</Text>
+              {directionsSummary && (
+                <Text style={[styles.directionsSummary, { color: colors.mutedForeground }]}>
+                  {directionsSummary.distance} · {directionsSummary.duration}
+                </Text>
+              )}
+            </View>
+            <TouchableOpacity onPress={() => setDirectionsOpen(false)} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+              <Feather name="x" size={22} color={colors.foreground} />
+            </TouchableOpacity>
+          </View>
+
+          {directionsFetching ? (
+            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
+              <Feather name="navigation" size={32} color={colors.primary} />
+              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 14, color: colors.mutedForeground }}>
+                Fetching directions…
+              </Text>
+            </View>
+          ) : directionsSteps.length === 0 ? (
+            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
+              <Feather name="alert-circle" size={32} color={colors.mutedForeground} />
+              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 14, color: colors.mutedForeground }}>
+                Could not load directions. Try again.
+              </Text>
+            </View>
+          ) : (
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 10 }} showsVerticalScrollIndicator={false}>
+              {directionsSteps.map((step, idx) => (
+                <View
+                  key={step.index}
+                  style={[styles.directionsStep, { backgroundColor: colors.card, borderColor: colors.border }]}
+                >
+                  <View style={[styles.directionsStepNum, { backgroundColor: idx === 0 ? colors.primary : colors.primary + "20" }]}>
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: idx === 0 ? "#FFFFFF" : colors.primary }}>
+                      {step.index + 1}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: "Inter_500Medium", fontSize: 13, color: colors.foreground }}>
+                      {step.instruction.replace(/<[^>]+>/g, "")}
+                    </Text>
+                    {step.distance ? (
+                      <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 3 }}>
+                        {step.distance}
+                      </Text>
+                    ) : null}
+                  </View>
+                  {step.maneuver ? (
+                    <Feather
+                      name={step.maneuver.includes("left") ? "corner-up-left" : step.maneuver.includes("right") ? "corner-up-right" : "arrow-up"}
+                      size={16}
+                      color={colors.mutedForeground}
+                    />
+                  ) : null}
+                </View>
+              ))}
+              <View style={[styles.directionsStep, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
+                <Feather name="map-pin" size={16} color={colors.primary} />
+                <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: colors.primary, flex: 1 }}>
+                  {business.name}
+                </Text>
+              </View>
+            </ScrollView>
+          )}
+        </View>
+      </Modal>
 
       <WriteReviewModal
         visible={reviewModalOpen}
@@ -1579,6 +1712,54 @@ const styles = StyleSheet.create({
   tag: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
   tagText: { fontFamily: "Inter_500Medium", fontSize: 12 },
   mapWrap: { borderRadius: 14, overflow: "hidden", borderWidth: 1 },
+  directionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 8,
+  },
+  directionsRowText: { fontFamily: "Inter_500Medium", fontSize: 13, flex: 1 },
+  navigatorBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: "#CA922B15",
+    borderWidth: 1,
+    borderColor: "#CA922B30",
+  },
+  navigatorBadgeText: { fontFamily: "Inter_700Bold", fontSize: 9, color: "#CA922B" },
+  directionsModal: { flex: 1 },
+  directionsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    paddingTop: 20,
+    borderBottomWidth: 1,
+    gap: 12,
+  },
+  directionsTitle: { fontFamily: "Inter_700Bold", fontSize: 17 },
+  directionsSummary: { fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 2 },
+  directionsStep: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 6,
+  },
+  directionsStepNum: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
   reviewsHeader: {
     flexDirection: "row",
     alignItems: "center",

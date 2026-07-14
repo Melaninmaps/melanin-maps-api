@@ -284,6 +284,252 @@ const safetyStyles = StyleSheet.create({
   pillText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
 });
 
+type RecSpot = {
+  id: number;
+  businessId: string;
+  businessName: string | null;
+  businessCategory: string | null;
+  stance: string | null;
+  blurb: string | null;
+};
+
+const STANCE_META: Record<string, { label: string; icon: keyof typeof Feather.glyphMap; color: string }> = {
+  community_favorite: { label: "Community Favorite", icon: "heart", color: "#C4622D" },
+  hidden_gem: { label: "Hidden Gem", icon: "star", color: "#CA922B" },
+  supporting_local: { label: "Supporting Local", icon: "home", color: "#2D7A4F" },
+  visited_loved: { label: "Visited & Loved", icon: "check-circle", color: "#0369A1" },
+};
+
+function RecommendedSpotsSection() {
+  const colors = useColors();
+  const { businesses } = useBusinesses();
+  const [spots, setSpots] = useState<RecSpot[]>([]);
+  const [addOpen, setAddOpen] = useState(false);
+  const [addSearch, setAddSearch] = useState("");
+  const [addStance, setAddStance] = useState<string | null>(null);
+  const [addBlurb, setAddBlurb] = useState("");
+  const [selectedBiz, setSelectedBiz] = useState<{ id: string; name: string; category?: string } | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const r = await fetch("/api/users/me/recommended-spots", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (r.ok) {
+          const data = await r.json() as { spots: RecSpot[] };
+          setSpots(data.spots);
+        }
+      } catch { }
+    })();
+  }, []);
+
+  const removeSpot = async (businessId: string) => {
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      await fetch(`/api/users/me/recommended-spots/${businessId}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      setSpots((prev) => prev.filter((s) => s.businessId !== businessId));
+    } catch { }
+  };
+
+  const addSpot = async () => {
+    if (!selectedBiz) return;
+    setSaving(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const r = await fetch("/api/users/me/recommended-spots", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ businessId: selectedBiz.id, stance: addStance, blurb: addBlurb.trim() || undefined }),
+      });
+      if (r.ok) {
+        const data = await r.json() as { spot: RecSpot };
+        setSpots((prev) => {
+          const idx = prev.findIndex((s) => s.businessId === data.spot.businessId);
+          if (idx >= 0) { const next = [...prev]; next[idx] = data.spot; return next; }
+          return [...prev, data.spot];
+        });
+        setAddOpen(false);
+        setSelectedBiz(null);
+        setAddStance(null);
+        setAddBlurb("");
+        setAddSearch("");
+      }
+    } catch { } finally {
+      setSaving(false);
+    }
+  };
+
+  const filteredBizs = addSearch.length >= 1
+    ? businesses.filter((b) => b.name.toLowerCase().includes(addSearch.toLowerCase())).slice(0, 25)
+    : [];
+
+  const openAdd = () => { setAddOpen(true); setSelectedBiz(null); setAddStance(null); setAddBlurb(""); setAddSearch(""); };
+
+  return (
+    <View style={{ marginHorizontal: 16, marginBottom: 16, gap: 10 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <Feather name="award" size={16} color={colors.primary} />
+          <Text style={{ fontFamily: "Inter_700Bold", fontSize: 16, color: colors.foreground }}>My Recommended Spots</Text>
+        </View>
+        {spots.length < 5 && (
+          <TouchableOpacity
+            onPress={openAdd}
+            style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, backgroundColor: colors.primary + "18", borderWidth: 1, borderColor: colors.primary + "30" }}
+            activeOpacity={0.8}
+          >
+            <Feather name="plus" size={13} color={colors.primary} />
+            <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: colors.primary }}>Add</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {spots.length === 0 && (
+        <TouchableOpacity
+          style={{ alignItems: "center", paddingVertical: 20, borderRadius: 12, borderWidth: 1.5, borderStyle: "dashed", borderColor: colors.border }}
+          onPress={openAdd}
+          activeOpacity={0.7}
+        >
+          <Feather name="award" size={24} color={colors.mutedForeground} />
+          <Text style={{ fontFamily: "Inter_500Medium", fontSize: 13, color: colors.mutedForeground, marginTop: 6 }}>Highlight up to 5 favorite spots</Text>
+        </TouchableOpacity>
+      )}
+
+      {spots.map((spot) => {
+        const stance = spot.stance ? STANCE_META[spot.stance] : null;
+        return (
+          <View key={spot.businessId} style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: colors.card, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: 12 }}>
+            <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: colors.primary + "15", alignItems: "center", justifyContent: "center" }}>
+              <Feather name="briefcase" size={17} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: colors.foreground }} numberOfLines={1}>{spot.businessName ?? "Business"}</Text>
+              {stance && (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
+                  <Feather name={stance.icon} size={10} color={stance.color} />
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: stance.color }}>{stance.label}</Text>
+                </View>
+              )}
+              {spot.blurb ? <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, marginTop: 2 }} numberOfLines={2}>{spot.blurb}</Text> : null}
+            </View>
+            <TouchableOpacity onPress={() => { void removeSpot(spot.businessId); }} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }} activeOpacity={0.7}>
+              <Feather name="x" size={16} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          </View>
+        );
+      })}
+
+      <Modal visible={addOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setAddOpen(false)}>
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          <View style={{ flexDirection: "row", alignItems: "center", padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 12 }}>
+            {selectedBiz ? (
+              <TouchableOpacity onPress={() => setSelectedBiz(null)} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                <Feather name="arrow-left" size={22} color={colors.foreground} />
+              </TouchableOpacity>
+            ) : null}
+            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: colors.foreground, flex: 1 }}>
+              {selectedBiz ? `Add "${selectedBiz.name}"` : "Choose a Business"}
+            </Text>
+            <TouchableOpacity onPress={() => setAddOpen(false)} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+              <Feather name="x" size={22} color={colors.foreground} />
+            </TouchableOpacity>
+          </View>
+
+          {!selectedBiz ? (
+            <View style={{ flex: 1, padding: 16, gap: 12 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: colors.secondary, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: colors.border }}>
+                <Feather name="search" size={16} color={colors.mutedForeground} />
+                <TextInput
+                  style={{ flex: 1, fontFamily: "Inter_400Regular", fontSize: 14, color: colors.foreground }}
+                  placeholder="Search businesses…"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={addSearch}
+                  onChangeText={setAddSearch}
+                  autoFocus
+                />
+              </View>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                {filteredBizs.map((b) => (
+                  <TouchableOpacity
+                    key={b.id}
+                    style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}
+                    onPress={() => setSelectedBiz({ id: b.id, name: b.name, category: b.category })}
+                    activeOpacity={0.75}
+                  >
+                    <View style={{ width: 36, height: 36, borderRadius: 9, backgroundColor: colors.primary + "15", alignItems: "center", justifyContent: "center" }}>
+                      <Feather name="briefcase" size={15} color={colors.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: "Inter_500Medium", fontSize: 13, color: colors.foreground }}>{b.name}</Text>
+                      {b.category ? <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground }}>{b.category}</Text> : null}
+                    </View>
+                    <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                ))}
+                {addSearch.length >= 1 && filteredBizs.length === 0 && (
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, textAlign: "center", marginTop: 24 }}>No businesses found</Text>
+                )}
+                {addSearch.length === 0 && (
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, textAlign: "center", marginTop: 24 }}>Start typing to search</Text>
+                )}
+              </ScrollView>
+            </View>
+          ) : (
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 14 }} keyboardShouldPersistTaps="handled">
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 14, color: colors.foreground }}>Add a stance (optional)</Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+                {(Object.entries(STANCE_META) as Array<[string, typeof STANCE_META[string]]>).map(([tag, meta]) => {
+                  const sel = addStance === tag;
+                  return (
+                    <TouchableOpacity
+                      key={tag}
+                      style={{ flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: sel ? meta.color + "18" : colors.secondary, borderWidth: 1, borderColor: sel ? meta.color : colors.border }}
+                      onPress={() => setAddStance(sel ? null : tag)}
+                      activeOpacity={0.8}
+                    >
+                      <Feather name={meta.icon} size={12} color={sel ? meta.color : colors.mutedForeground} />
+                      <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: sel ? meta.color : colors.mutedForeground }}>{meta.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 14, color: colors.foreground }}>Add a note (optional)</Text>
+              <TextInput
+                style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, fontFamily: "Inter_400Regular", fontSize: 13, color: colors.foreground, backgroundColor: colors.secondary, minHeight: 80, textAlignVertical: "top" }}
+                placeholder="Why do you recommend this spot?"
+                placeholderTextColor={colors.mutedForeground}
+                value={addBlurb}
+                onChangeText={setAddBlurb}
+                maxLength={200}
+                multiline
+              />
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, alignSelf: "flex-end" }}>{addBlurb.length}/200</Text>
+
+              <TouchableOpacity
+                style={{ backgroundColor: saving ? colors.primary + "80" : colors.primary, borderRadius: 12, paddingVertical: 14, alignItems: "center", marginTop: 8 }}
+                onPress={() => { void addSpot(); }}
+                activeOpacity={0.85}
+                disabled={saving}
+              >
+                <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 15, color: "#FFFFFF" }}>
+                  {saving ? "Adding…" : "Add to Recommended Spots"}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          )}
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -1088,6 +1334,8 @@ export default function ProfileScreen() {
       {isAuthenticated && savedBusinesses.length > 0 && (
         <SavedSpotsShare savedBusinesses={savedBusinesses} />
       )}
+
+      {isAuthenticated && <RecommendedSpotsSection />}
 
       <TouchableOpacity
         style={[styles.listBizBanner, { backgroundColor: colors.primary }]}
