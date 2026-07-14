@@ -18,7 +18,7 @@ import {
   type SessionMessage,
   type JourneyPhase,
 } from "@workspace/db";
-import { eq, desc, and, ilike, or } from "drizzle-orm";
+import { eq, desc, and, ilike, or, inArray } from "drizzle-orm";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
 
@@ -345,6 +345,7 @@ function buildSystemPrompt(opts: {
   crossCityBridge?: CrossCityMatch[] | null;
   weatherContext?: string | null;
   tier?: string | null;
+  twinRecs?: Array<{ businessName: string; city: string; state: string; twinCount: number; reason: string }>;
 }): string {
   const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
   const tier = opts.tier ?? "free";
@@ -470,6 +471,12 @@ ${prefs.dietaryNotes ? `- Dietary notes: ${prefs.dietaryNotes}` : ""}${culturalL
     ? `\nTHEIR SAVED PLACES:\n${savedPlaces.map((s) => `- ${s}`).join("\n")}`
     : "";
 
+  const twinRecsSection = opts.twinRecs?.length
+    ? `\nCOMMUNITY TWIN INTELLIGENCE — People with identical taste saved these (cross-city collective wisdom):
+${opts.twinRecs.map((r) => `- ${r.businessName} (${r.city}, ${r.state}) — ${r.twinCount} taste-matched users saved this`).join("\n")}
+Use this for proactive discovery suggestions. If this city/location is relevant to the conversation, surface these naturally — "People who love what you love are really into [X] in [City]." If not currently relevant, file it away for future recommendations.`
+    : "";
+
   const journeySection = activeJourney
     ? `\nACTIVE LIFE JOURNEY — THIS IS CRITICAL CONTEXT:
 The user is currently on a "${activeJourney.journeyType}" journey titled "${activeJourney.title}"${activeJourney.city ? ` in ${activeJourney.city}` : ""}.
@@ -556,7 +563,7 @@ For city or trip questions: deliver 2–3 carefully chosen restaurants + 1 relev
 
 You have memory. You know this person. You learn from every interaction. You get more useful every time they talk to you.
 
-${profileSection}${likedSection}${dislikedSection}${savedSection}${journeySection}${crossCitySection}${weatherSection}${lifestyleSection}${tierSection}${smartPromoSection}
+${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${journeySection}${crossCitySection}${weatherSection}${lifestyleSection}${tierSection}${smartPromoSection}
 WHAT YOU CAN DO — be confident about this:
 - Weather: You have live weather data when it's relevant (see LIVE WEATHER section above). Give specific, actionable advice — umbrella, what to wear, packing recommendations. Never say you can't do weather.
 - Travel & discovery: minority-owned businesses, neighborhoods, safety, culture, events, itineraries
@@ -1058,7 +1065,43 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const userTier = req.user?.id
       ? await storage.getUser(req.user.id).then((u) => u?.memberType ?? "free").catch(() => "free")
       : "free";
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier });
+
+    // Fetch algorithmic twin recommendations (fire-and-forget on error)
+    let twinRecs: Array<{ businessName: string; city: string; state: string; twinCount: number; reason: string }> = [];
+    try {
+      const currentUserId = req.user?.id;
+      if (currentUserId) {
+        const myIds = (await db.select({ businessId: savedPlacesTable.businessId }).from(savedPlacesTable).where(eq(savedPlacesTable.userId, currentUserId))).map((s) => s.businessId);
+        if (myIds.length >= 2) {
+          const { pool: twinPool } = await import("@workspace/db");
+          const twinRows = await twinPool.query<{ user_id: string; overlap: string }>(
+            `SELECT sp.user_id, COUNT(*) AS overlap FROM saved_places sp WHERE sp.business_id = ANY($1) AND sp.user_id <> $2 GROUP BY sp.user_id HAVING COUNT(*) >= 2 ORDER BY COUNT(*) DESC LIMIT 30`,
+            [myIds, currentUserId],
+          );
+          if (twinRows.rows.length) {
+            const twinIds = twinRows.rows.map((t: { user_id: string; overlap: string }) => t.user_id);
+            const twinSaves = await twinPool.query<{ business_id: string; user_id: string }>(
+              `SELECT sp.business_id, sp.user_id FROM saved_places sp WHERE sp.user_id = ANY($1) AND sp.business_id <> ALL($2) LIMIT 200`,
+              [twinIds, myIds],
+            );
+            const scoreMap: Record<string, { score: number; twinCount: number }> = {};
+            const overlapMap = Object.fromEntries(twinRows.rows.map((t: { user_id: string; overlap: string }) => [t.user_id, Number(t.overlap)]));
+            for (const row of twinSaves.rows) {
+              if (!scoreMap[row.business_id]) scoreMap[row.business_id] = { score: 0, twinCount: 0 };
+              scoreMap[row.business_id].score += overlapMap[row.user_id] ?? 1;
+              scoreMap[row.business_id].twinCount += 1;
+            }
+            const topIds = Object.entries(scoreMap).sort(([, a], [, b]) => b.score - a.score).slice(0, 8).map(([id]) => id);
+            if (topIds.length) {
+              const bizRows = await db.select({ id: businessesTable.id, name: businessesTable.name, city: businessesTable.city, state: businessesTable.state }).from(businessesTable).where(inArray(businessesTable.id, topIds));
+              twinRecs = bizRows.map((b) => ({ businessName: b.name, city: b.city, state: b.state, twinCount: scoreMap[b.id]?.twinCount ?? 1, reason: `${scoreMap[b.id]?.twinCount ?? 1} taste-matched users saved this` }));
+            }
+          }
+        }
+      }
+    } catch { /* non-fatal — proceed without twin recs */ }
+
+    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs });
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages

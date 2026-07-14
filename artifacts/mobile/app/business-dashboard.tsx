@@ -261,6 +261,10 @@ export default function BusinessDashboardScreen() {
   const [growthLoading, setGrowthLoading] = useState(false);
   const [growthCheckoutLoading, setGrowthCheckoutLoading] = useState<string | null>(null);
   const [skipFeedback, setSkipFeedback] = useState<{ id: string; message: string; createdAt: string }[] | null>(null);
+  const [marketInsights, setMarketInsights] = useState<{ trendingSearches: { query: string; searchCount: number; topCategory: string }[]; opportunityAlerts: { type: string; message: string; action: string; impact: string }[]; targetAudience: { ageGroups: string[]; lifestyleKeywords: string[]; topCities: string[] } | null } | null>(null);
+  const [marketInsightsLoading, setMarketInsightsLoading] = useState(false);
+  const [targetAudienceInput, setTargetAudienceInput] = useState("");
+  const [targetAudienceSaving, setTargetAudienceSaving] = useState(false);
 
   const { listings, connectStatus, loading: listingsLoading, startOnboarding, createListing, toggleActive, deleteListing } =
     useOwnerListings(business?.id ?? "");
@@ -397,6 +401,16 @@ export default function BusinessDashboardScreen() {
           .then((r) => r.ok ? r.json() : null)
           .then((d: { plan: ActionPlanData | null } | null) => { if (d?.plan && !actionPlan) setActionPlan(d.plan); })
           .catch(() => {});
+
+        // Load market insights (AI Marketing Manager)
+        if (!marketInsights && !marketInsightsLoading) {
+          setMarketInsightsLoading(true);
+          fetch(`${base}/api/businesses/${business.id}/market-insights`, { headers: { Authorization: `Bearer ${token}` } })
+            .then((r) => r.ok ? r.json() : null)
+            .then((d: typeof marketInsights | null) => { if (d) setMarketInsights(d); })
+            .catch(() => {})
+            .finally(() => setMarketInsightsLoading(false));
+        }
       }
     } catch { setAnalyticsError("error"); }
     finally { setAnalyticsLoading(false); }
@@ -2039,6 +2053,155 @@ export default function BusinessDashboardScreen() {
                       </View>
                     </>
                   )}
+
+                  {/* AI Marketing Manager */}
+                  <View style={[styles.aiInsightCard, { backgroundColor: "#0F1E14", borderColor: "#2D7A4F30" }]}>
+                    <View style={styles.aiInsightHeader}>
+                      <View style={[styles.aiInsightBadge, { backgroundColor: "#2D7A4F" }]}>
+                        <Feather name="trending-up" size={10} color="#FFF" />
+                        <Text style={styles.aiInsightBadgeTxt}>AI Marketing Manager</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.aiInsightTitle, { color: "#FFF" }]}>Market Intelligence</Text>
+                        <Text style={[styles.aiInsightSub, { color: "rgba(255,255,255,0.5)" }]}>
+                          Community search trends · Opportunity alerts · Audience builder
+                        </Text>
+                      </View>
+                    </View>
+
+                    {marketInsightsLoading && (
+                      <View style={{ paddingVertical: 16, alignItems: "center" }}>
+                        <ActivityIndicator color="#2D7A4F" size="small" />
+                        <Text style={{ color: "rgba(255,255,255,0.4)", fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 8 }}>
+                          Analyzing community search data…
+                        </Text>
+                      </View>
+                    )}
+
+                    {!marketInsightsLoading && marketInsights && (
+                      <>
+                        {/* Trending Searches */}
+                        {marketInsights.trendingSearches.length > 0 && (
+                          <View style={{ marginTop: 12 }}>
+                            <Text style={{ color: "rgba(255,255,255,0.6)", fontFamily: "Inter_600SemiBold", fontSize: 11, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 8 }}>
+                              What people are searching
+                            </Text>
+                            {marketInsights.trendingSearches.slice(0, 4).map((t, i) => (
+                              <View key={i} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.04)" }}>
+                                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                                  <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: "#2D7A4F25", alignItems: "center", justifyContent: "center" }}>
+                                    <Text style={{ color: "#2D7A4F", fontFamily: "Inter_700Bold", fontSize: 9 }}>{i + 1}</Text>
+                                  </View>
+                                  <Text style={{ color: "#FFF", fontFamily: "Inter_500Medium", fontSize: 13 }}>{t.query}</Text>
+                                </View>
+                                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                  <Text style={{ color: "#2D7A4F", fontFamily: "Inter_600SemiBold", fontSize: 11 }}>{t.searchCount} searches</Text>
+                                  <View style={{ backgroundColor: "#CA922B18", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                                    <Text style={{ color: "#CA922B", fontFamily: "Inter_500Medium", fontSize: 10 }}>{t.topCategory}</Text>
+                                  </View>
+                                </View>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+
+                        {/* Opportunity Alerts */}
+                        {marketInsights.opportunityAlerts.length > 0 && (
+                          <View style={{ marginTop: 16 }}>
+                            <Text style={{ color: "rgba(255,255,255,0.6)", fontFamily: "Inter_600SemiBold", fontSize: 11, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 8 }}>
+                              Opportunities for you
+                            </Text>
+                            {marketInsights.opportunityAlerts.slice(0, 3).map((alert, i) => {
+                              const impactColor = alert.impact === "high" ? "#CA922B" : alert.impact === "medium" ? "#2D7A4F" : "#6B7280";
+                              return (
+                                <View key={i} style={{ backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 10, padding: 12, marginBottom: 8, borderLeftWidth: 3, borderLeftColor: impactColor }}>
+                                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                                    <Text style={{ color: "#FFF", fontFamily: "Inter_600SemiBold", fontSize: 13 }}>{alert.message}</Text>
+                                    <View style={{ backgroundColor: impactColor + "20", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                                      <Text style={{ color: impactColor, fontFamily: "Inter_600SemiBold", fontSize: 10, textTransform: "uppercase" }}>{alert.impact}</Text>
+                                    </View>
+                                  </View>
+                                  <Text style={{ color: "rgba(255,255,255,0.55)", fontFamily: "Inter_400Regular", fontSize: 12 }}>{alert.action}</Text>
+                                </View>
+                              );
+                            })}
+                          </View>
+                        )}
+
+                        {/* Target Audience Builder */}
+                        <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.06)" }}>
+                          <Text style={{ color: "rgba(255,255,255,0.6)", fontFamily: "Inter_600SemiBold", fontSize: 11, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 8 }}>
+                            Your Target Audience
+                          </Text>
+                          {marketInsights.targetAudience ? (
+                            <>
+                              {marketInsights.targetAudience.lifestyleKeywords.length > 0 && (
+                                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                                  {marketInsights.targetAudience.lifestyleKeywords.map((kw, i) => (
+                                    <View key={i} style={{ backgroundColor: "#2D7A4F20", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
+                                      <Text style={{ color: "#2D7A4F", fontFamily: "Inter_500Medium", fontSize: 12 }}>{kw}</Text>
+                                    </View>
+                                  ))}
+                                </View>
+                              )}
+                              {marketInsights.targetAudience.topCities.length > 0 && (
+                                <Text style={{ color: "rgba(255,255,255,0.4)", fontFamily: "Inter_400Regular", fontSize: 12, marginBottom: 12 }}>
+                                  Top cities: {marketInsights.targetAudience.topCities.join(", ")}
+                                </Text>
+                              )}
+                            </>
+                          ) : (
+                            <Text style={{ color: "rgba(255,255,255,0.35)", fontFamily: "Inter_400Regular", fontSize: 12, marginBottom: 12 }}>
+                              No audience profile set yet. Describe your ideal customer below.
+                            </Text>
+                          )}
+                          <View style={{ flexDirection: "row", gap: 8 }}>
+                            <TextInput
+                              style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: "#FFF", fontFamily: "Inter_400Regular", fontSize: 13, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" }}
+                              placeholder="e.g. natural hair care, wellness, 25-40, Atlanta"
+                              placeholderTextColor="rgba(255,255,255,0.3)"
+                              value={targetAudienceInput}
+                              onChangeText={setTargetAudienceInput}
+                              returnKeyType="done"
+                            />
+                            <TouchableOpacity
+                              style={{ backgroundColor: "#2D7A4F", borderRadius: 10, paddingHorizontal: 14, justifyContent: "center", opacity: targetAudienceSaving || !targetAudienceInput.trim() ? 0.5 : 1 }}
+                              disabled={targetAudienceSaving || !targetAudienceInput.trim()}
+                              onPress={async () => {
+                                if (!business?.id || !targetAudienceInput.trim()) return;
+                                setTargetAudienceSaving(true);
+                                try {
+                                  const token = await SecureStore.getItemAsync("auth_session_token");
+                                  const base = getApiBase();
+                                  const res = await fetch(`${base}/api/businesses/${business.id}/target-audience`, {
+                                    method: "PATCH",
+                                    headers: { Authorization: `Bearer ${token ?? ""}`, "Content-Type": "application/json" },
+                                    body: JSON.stringify({ description: targetAudienceInput.trim() }),
+                                  });
+                                  if (res.ok) {
+                                    const d = await res.json() as { targetAudience: typeof marketInsights["targetAudience"] };
+                                    setMarketInsights((prev) => prev ? { ...prev, targetAudience: d.targetAudience } : prev);
+                                    setTargetAudienceInput("");
+                                  }
+                                } catch { /* non-fatal */ }
+                                setTargetAudienceSaving(false);
+                              }}
+                            >
+                              {targetAudienceSaving
+                                ? <ActivityIndicator size="small" color="#FFF" />
+                                : <Feather name="check" size={18} color="#FFF" />}
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </>
+                    )}
+
+                    {!marketInsightsLoading && !marketInsights && (
+                      <Text style={{ color: "rgba(255,255,255,0.3)", fontFamily: "Inter_400Regular", fontSize: 12, paddingVertical: 12, textAlign: "center" }}>
+                        Market data loads once your business has search activity
+                      </Text>
+                    )}
+                  </View>
 
                   {/* KinfolkAI Feedback Analysis — tier-gated */}
                   <View style={[styles.aiInsightCard, { backgroundColor: "#1E0F28", borderColor: "#7B2D8B30" }]}>

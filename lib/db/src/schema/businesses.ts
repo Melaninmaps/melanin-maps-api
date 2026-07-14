@@ -84,6 +84,16 @@ export const businessesTable = pgTable("businesses", {
   // Community dispute system ("fake business" flagging)
   flagCount: integer("flag_count").notNull().default(0),
   flagStatus: varchar("flag_status", { length: 20 }).notNull().default("none"), // none | under_review | confirmed_fake | cleared
+  // ── AI target audience (set by business owner) ───────────────────────────
+  targetAudience: jsonb("target_audience").$type<{
+    keywords?: string[];
+    demographics?: string[];
+    occasions?: string[];
+    ageRanges?: string[];
+    primaryCity?: string;
+    primaryState?: string;
+    description?: string;
+  }>(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

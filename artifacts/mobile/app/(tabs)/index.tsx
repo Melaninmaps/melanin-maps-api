@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState, useRef } from "react";
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   FlatList,
@@ -70,6 +71,30 @@ export default function DiscoverScreen() {
     ownershipTypes: [],
   });
   const [prefsBannerDismissed, setPrefsBannerDismissed] = useState(false);
+
+  // Algorithmic twin recommendations
+  const [twinRecs, setTwinRecs] = useState<Array<{ business: { id: string; name: string; category: string; city: string; state: string; imageUrl: string | null; confidenceScore: number; verified: boolean; blackOwned: boolean; priceRange: string | null; description: string }; twinCount: number; reason: string; twinCities: string[] }>>([]);
+  const [twinRecsLoading, setTwinRecsLoading] = useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      setTwinRecsLoading(true);
+      try {
+        const { getItemAsync } = await import("expo-secure-store");
+        const token = await getItemAsync("auth_session_token");
+        if (!token) { setTwinRecsLoading(false); return; }
+        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const res = await fetch(`${base}/api/kinfolk/twin-recommendations`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!cancelled && res.ok) {
+          const data = await res.json() as { recommendations: typeof twinRecs };
+          setTwinRecs(data.recommendations ?? []);
+        }
+      } catch { /* non-fatal */ }
+      if (!cancelled) setTwinRecsLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   // When saved preferences load, auto-apply ownership types if user hasn't set a filter yet
   React.useEffect(() => {
@@ -479,6 +504,47 @@ export default function DiscoverScreen() {
             {/* AI For You */}
             <ForYouCard />
 
+            {/* Community Loves — algorithmic twin recommendations */}
+            {(twinRecsLoading || twinRecs.length > 0) && (
+              <View style={styles.section}>
+                <SectionHeader
+                  title="Community Loves"
+                  subtitle={twinRecs.length > 0 ? `Based on ${twinRecs[0]?.twinCount ?? 0}+ people with your taste` : "Finding your taste matches…"}
+                />
+                {twinRecsLoading ? (
+                  <View style={{ paddingHorizontal: 20, paddingVertical: 8 }}>
+                    <ActivityIndicator color={colors.primary} />
+                  </View>
+                ) : (
+                  <FlatList
+                    keyboardDismissMode="on-drag"
+                    horizontal
+                    data={twinRecs.slice(0, 8)}
+                    keyExtractor={(item) => `twin-${item.business.id}`}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 12, paddingHorizontal: 20 }}
+                    renderItem={({ item }) => (
+                      <View style={{ width: 220 }}>
+                        <BusinessCard
+                          business={item.business as any}
+                          onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.business.id } })}
+                          isSaved={isSaved(item.business.id)}
+                          onToggleSave={() => toggleSave(item.business.id)}
+                          horizontal
+                        />
+                        <View style={styles.twinRecBadge}>
+                          <Feather name="users" size={10} color={colors.primary} />
+                          <Text style={[styles.twinRecBadgeText, { color: colors.mutedForeground }]}>
+                            {item.reason}{item.twinCities.length > 0 ? ` · from ${item.twinCities[0]}` : ""}
+                          </Text>
+                        </View>
+                      </View>
+                    )}
+                  />
+                )}
+              </View>
+            )}
+
             {/* Safety alerts */}
             <View style={styles.section}>
               <View style={styles.safetyHeader}>
@@ -789,6 +855,8 @@ export default function DiscoverScreen() {
 }
 
 const styles = StyleSheet.create({
+  twinRecBadge: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingTop: 4 },
+  twinRecBadgeText: { fontFamily: "Inter_400Regular", fontSize: 10, flex: 1 },
   container: { flex: 1 },
   header: { paddingBottom: 16 },
   headerTop: {

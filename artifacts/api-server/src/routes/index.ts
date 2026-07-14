@@ -116,6 +116,7 @@ import smartFillRouter from "./smart-fill";
 import wrappedRouter from "./wrapped";
 import archiveRouter from "./archive";
 import revenuecatRouter from "./revenuecat";
+import kinfolkIntelligenceRouter from "./kinfolk-intelligence";
 
 const router: IRouter = Router();
 
@@ -235,6 +236,7 @@ router.use(smartFillRouter);
 router.use(wrappedRouter);
 router.use(archiveRouter);
 router.use(revenuecatRouter);
+router.use(kinfolkIntelligenceRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

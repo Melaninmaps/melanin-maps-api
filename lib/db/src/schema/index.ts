@@ -97,3 +97,5 @@ export * from "./global-recommendations";
 export * from "./collections";
 export * from "./roadmaps";
 export * from "./guides";
+export * from "./kinfolk-search-events";
+export * from "./kinfolk-twin-recs";
