@@ -374,12 +374,6 @@ export default function Home() {
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#CA922B]/40 bg-[#CA922B]/10 text-[#CA922B] text-xs font-bold tracking-widest uppercase">
                   <Shield className="w-3 h-3" /> Safety-First Community Intelligence
                 </div>
-                {waitlistStats && waitlistStats.count > 0 && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-white/5 text-white text-xs font-bold">
-                    <Users className="w-3 h-3" />
-                    {formatCount(waitlistStats.count)} community members waiting
-                  </div>
-                )}
               </div>
 
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-white leading-[1.05] mb-8">
@@ -699,8 +693,8 @@ export default function Home() {
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div className="px-4 py-2">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">{waitlistStats ? formatCount(waitlistStats.count) : "2+"} Members</div>
-              <div className="text-sm font-semibold text-[#F5EBD8]/70">And growing every day</div>
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">Growing</div>
+              <div className="text-sm font-semibold text-[#F5EBD8]/70">Every day</div>
             </div>
             <div className="px-4 py-2">
               <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">200+ Cities Covered</div>
