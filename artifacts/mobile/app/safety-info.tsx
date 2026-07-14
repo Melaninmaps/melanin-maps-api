@@ -68,7 +68,8 @@ export default function SafetyInfoScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
         <View style={[styles.heroBanner, { backgroundColor: colors.primary }]}>
           <Feather name="shield" size={36} color="rgba(255,255,255,0.9)" />
           <Text style={styles.heroTitle}>Safety Built for Us</Text>

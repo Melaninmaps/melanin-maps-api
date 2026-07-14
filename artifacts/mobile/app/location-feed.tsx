@@ -165,6 +165,7 @@ export default function LocationFeedScreen() {
         </View>
       ) : (
         <FlatList
+        keyboardDismissMode="on-drag"
           data={posts}
           keyExtractor={p => p.id}
           showsVerticalScrollIndicator={false}
@@ -179,7 +180,8 @@ export default function LocationFeedScreen() {
                       ⭐ Premier Creators — {location}
                     </Text>
                   </View>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingVertical: 4 }}>
+                  <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingVertical: 4 }}>
                     {premierCreators.map(c => (
                       <CreatorCard
                         key={c.id}
@@ -195,7 +197,8 @@ export default function LocationFeedScreen() {
               {otherCreators.length > 0 && (
                 <View style={s.section}>
                   <Text style={[s.sectionTitle, { color: colors.foreground }]}>Creators covering {location}</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingVertical: 4 }}>
+                  <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingVertical: 4 }}>
                     {otherCreators.map(c => (
                       <CreatorCard
                         key={c.id}

@@ -515,7 +515,8 @@ export default function LibraryScreen() {
         ) : activeTab === "library" ? (
 
           /* ── MY LIBRARY TAB ── */
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
+          <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} style={styles.scroll}>
             {!isAuthenticated ? (
               <View style={styles.signInPrompt}>
                 <Text style={{ fontSize: 32, marginBottom: 12 }}>📚</Text>
@@ -565,7 +566,8 @@ export default function LibraryScreen() {
                 {/* Following pills */}
                 <View style={styles.section}>
                   <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Following</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll} contentContainerStyle={styles.pillRow}>
+                  <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll} contentContainerStyle={styles.pillRow}>
                     {followedTopics.map((topic) => {
                       const meta = CATEGORY_META[topic.category] ?? { emoji: "📖", color: "#6B7280", label: topic.category };
                       return (
@@ -848,7 +850,8 @@ export default function LibraryScreen() {
 
           /* ── HAPPENING NOW TAB ── */
           <>
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
+            <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} style={styles.scroll}>
               {/* Header */}
               <View style={[styles.issueHeader, { backgroundColor: "#DC262608", borderColor: "#DC262620" }]}>
                 <Text style={{ fontSize: 24 }}>🚨</Text>
@@ -1093,7 +1096,8 @@ export default function LibraryScreen() {
         ) : (
 
           /* ── BROWSE TOPICS TAB ── */
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll} keyboardShouldPersistTaps="handled">
+          <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} style={styles.scroll} keyboardShouldPersistTaps="handled">
             {/* Hero prompt */}
             <View style={[styles.browseHero, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={{ fontSize: 22, marginBottom: 4 }}>🔍</Text>

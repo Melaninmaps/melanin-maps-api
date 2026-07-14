@@ -553,6 +553,7 @@ export default function MembershipScreen() {
       )}
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 24 }]}
         showsVerticalScrollIndicator={false}
       >

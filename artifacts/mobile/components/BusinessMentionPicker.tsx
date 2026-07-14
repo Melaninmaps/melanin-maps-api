@@ -99,7 +99,8 @@ export function BusinessMentionPicker({ query, onSelect }: Props) {
           <Feather name="briefcase" size={11} color={colors.primary} />
           <Text style={[styles.sectionLabel, { color: colors.primary }]}>Businesses</Text>
         </View>
-        <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 220 }}>
+        <ScrollView
+        keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled" style={{ maxHeight: 220 }}>
           {results.map(biz => (
             <TouchableOpacity
               key={biz.id}

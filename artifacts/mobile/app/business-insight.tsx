@@ -258,7 +258,8 @@ export default function BusinessInsightScreen() {
         </View>
       )}
 
-      <ScrollView contentContainerStyle={[s.scroll, { paddingBottom: bottomPad + 100 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[s.scroll, { paddingBottom: bottomPad + 100 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
         {/* ── Step 0: Ownership gate ──────────────────────────────── */}
         {step === 0 && (

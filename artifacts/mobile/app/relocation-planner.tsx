@@ -548,7 +548,8 @@ export default function RelocationPlannerScreen() {
           <View style={[s.progressFill, { backgroundColor: GOLD, width: `${(setupStep / 3) * 100}%` }]} />
         </View>
 
-        <ScrollView contentContainerStyle={s.setupBody} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={s.setupBody} showsVerticalScrollIndicator={false}>
           {setupStep === 1 && (
             <>
               <Text style={[s.stepLabel, { color: GOLD }]}>STEP 1 OF 3</Text>
@@ -765,7 +766,8 @@ export default function RelocationPlannerScreen() {
 
       {/* Phase Stepper */}
       <View style={[s.stepperWrap, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.stepperScroll}>
+        <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.stepperScroll}>
           {PHASES.map((p, i) => (
             <PhaseStep
               key={p.id}
@@ -786,6 +788,7 @@ export default function RelocationPlannerScreen() {
 
       {/* Messages */}
       <FlatList
+        keyboardDismissMode="on-drag"
         ref={flatRef}
         data={messages}
         keyExtractor={m => m.id}
@@ -881,7 +884,8 @@ export default function RelocationPlannerScreen() {
 
                 {/* Suggestion chips */}
                 {(msg.proactiveSuggestions ?? []).length > 0 && (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.chipScroll}>
+                  <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={s.chipScroll}>
                     {(msg.proactiveSuggestions ?? []).map((s2: string, i: number) => (
                       <TouchableOpacity activeOpacity={0.85}
                         key={i}
@@ -947,7 +951,8 @@ export default function RelocationPlannerScreen() {
               ? `${team.length} minority-owned business${team.length === 1 ? "" : "es"} saved to your team`
               : "Add businesses to build your relocation team"}
           </Text>
-          <ScrollView contentContainerStyle={s.teamList}>
+          <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={s.teamList}>
             {team.length === 0 && (
               <View style={s.emptyTeam}>
                 <Text style={s.emptyEmoji}>🤎</Text>

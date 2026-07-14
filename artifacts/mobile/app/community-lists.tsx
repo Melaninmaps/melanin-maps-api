@@ -169,6 +169,7 @@ export default function CommunityListsScreen() {
       </View>
 
       <FlatList
+        keyboardDismissMode="on-drag"
         data={filtered}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}

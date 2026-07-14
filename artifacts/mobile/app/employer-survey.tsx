@@ -269,6 +269,7 @@ export default function EmployerSurveyScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 100 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

@@ -157,6 +157,7 @@ export default function ReferralScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 40 }]}
       >

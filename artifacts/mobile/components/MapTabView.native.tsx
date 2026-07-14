@@ -728,6 +728,7 @@ export function MapTabView() {
           <SearchBar value={search} onChangeText={setSearch} />
         </View>
         <ScrollView
+        keyboardDismissMode="on-drag"
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoryScroll}
@@ -817,7 +818,8 @@ export function MapTabView() {
               <Text style={styles.dismissAllText}>Dismiss All</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
             {warnings.map((w) => (
               <ProximityWarningCard
                 key={w.targetId}
@@ -954,6 +956,7 @@ export function MapTabView() {
                 ✨ Try a minority-owned alternative nearby
               </Text>
               <ScrollView
+        keyboardDismissMode="on-drag"
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 style={{ marginTop: 8 }}
@@ -1084,6 +1087,7 @@ export function MapTabView() {
                       : "Support the community — alternatives nearby:"}
                   </Text>
                   <ScrollView
+        keyboardDismissMode="on-drag"
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     style={{ marginTop: 6 }}

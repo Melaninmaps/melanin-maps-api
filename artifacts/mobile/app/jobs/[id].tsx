@@ -121,6 +121,7 @@ export default function JobDetailScreen() {
         </View>
       ) : job ? (
         <ScrollView
+        keyboardDismissMode="on-drag"
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}
           showsVerticalScrollIndicator={false}
         >

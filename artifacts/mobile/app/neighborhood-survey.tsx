@@ -253,6 +253,7 @@ export default function NeighborhoodSurveyScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 100 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -274,7 +275,8 @@ export default function NeighborhoodSurveyScreen() {
                 value={city}
                 onChangeText={setCity}
               />
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }} contentContainerStyle={{ paddingHorizontal: 4, gap: 8 }}>
+              <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }} contentContainerStyle={{ paddingHorizontal: 4, gap: 8 }}>
                 {CITIES.filter((c) => c !== "Other").map((c) => (
                   <TouchableOpacity activeOpacity={0.85}
                     key={c}

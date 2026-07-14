@@ -299,6 +299,7 @@ export default function NominateBusinessScreen() {
 
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
         <ScrollView
+        keyboardDismissMode="on-drag"
           contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -492,7 +493,8 @@ export default function NominateBusinessScreen() {
                 <Text style={{ color: "#C9922B", fontFamily: "Inter_600SemiBold" }}>Clear</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView>
+            <ScrollView
+        keyboardDismissMode="on-drag">
               {ALL_CATEGORY_NAMES.map((name) => (
                 <TouchableOpacity activeOpacity={0.85}
                   key={name}

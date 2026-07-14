@@ -194,6 +194,7 @@ export function BusinessListingsSection({ businessId, businessName, returnPolicy
       ) : null}
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scroll}

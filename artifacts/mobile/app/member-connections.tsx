@@ -392,7 +392,8 @@ export default function MemberConnectionsScreen() {
       {loading ? (
         <View style={styles.center}><ActivityIndicator size="large" color="#7C3AED" /></View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
           {/* ── Pending requests from others ── */}
           {pendingForMe.length > 0 && (

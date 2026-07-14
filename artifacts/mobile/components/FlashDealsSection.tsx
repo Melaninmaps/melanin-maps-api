@@ -34,6 +34,7 @@ export function FlashDealsSection({ deals }: Props) {
         </View>
       </View>
       <ScrollView
+        keyboardDismissMode="on-drag"
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scroll}

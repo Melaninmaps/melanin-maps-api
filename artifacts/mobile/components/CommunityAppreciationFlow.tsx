@@ -138,7 +138,8 @@ export function CommunityAppreciationFlow({ businessId, businessName, reviewId, 
   const willShare = sharePref !== "private";
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={s.container}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={s.container}>
       <View style={[s.headerPill, { backgroundColor: "#CA922B18", borderColor: "#CA922B30" }]}>
         <Text style={[s.headerPillText, { color: "#CA922B" }]}>🤎 COMMUNITY RECOGNITION</Text>
       </View>

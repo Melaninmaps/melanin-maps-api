@@ -109,6 +109,7 @@ export default function OnboardingIdentity() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         style={{ flex: 1 }}
         contentContainerStyle={[styles.scroll, { paddingTop: topPad + 72, paddingBottom: bottomPad + 160 }]}
         showsVerticalScrollIndicator={false}

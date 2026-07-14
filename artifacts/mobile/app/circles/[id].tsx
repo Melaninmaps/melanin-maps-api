@@ -309,7 +309,8 @@ export default function CircleDetailScreen() {
               Only what you share here is visible to your Circle — never your profile, reviews, search history, or private activity.
             </Text>
           </View>
-          <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: bottomPad + 120 }}>
+          <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: bottomPad + 120 }}>
             {suggestions.length === 0 ? (
               <View style={[s.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Text style={{ fontSize: 36 }}>💡</Text>
@@ -349,7 +350,8 @@ export default function CircleDetailScreen() {
       {/* ── PLAN TAB ─────────────────────────────────────────────────────────── */}
       {activeTab === "plan" && (
         <View style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: bottomPad + 100 }}>
+          <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: bottomPad + 100 }}>
             <View style={[s.kinfolkHero, { backgroundColor: colors.primary }]}>
               <Text style={s.kinfolkHeroEmoji}>🗺️✊🏾</Text>
               <Text style={s.kinfolkHeroTitle}>Kinfolk Plans The Day</Text>
@@ -436,7 +438,8 @@ export default function CircleDetailScreen() {
 
       {/* ── MEMBERS TAB ──────────────────────────────────────────────────────── */}
       {activeTab === "members" && (
-        <ScrollView contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: bottomPad + 40 }}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: bottomPad + 40 }}>
           {isHost && (
             <View style={[s.hostBanner, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "25" }]}>
               <Feather name="award" size={14} color={colors.primary} />
@@ -460,7 +463,8 @@ export default function CircleDetailScreen() {
       {/* ── MEMORY LANE TAB ──────────────────────────────────────────────────── */}
       {activeTab === "memory" && (
         <View style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: bottomPad + 100 }}>
+          <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: bottomPad + 100 }}>
             <View style={[s.memoryHero, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={{ fontSize: 28 }}>📍</Text>
               <View style={{ flex: 1 }}>
@@ -515,7 +519,8 @@ export default function CircleDetailScreen() {
               placeholder="Restaurant, museum, park…" placeholderTextColor={colors.mutedForeground}
             />
             <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Type</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+            <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
               {PLACE_TYPES.map((t) => (
                 <TouchableOpacity activeOpacity={0.85} key={t} style={[s.chip, { backgroundColor: sugType === t ? colors.primary : colors.card, borderColor: sugType === t ? colors.primary : colors.border }]} onPress={() => setSugType(t)}>
                   <Text style={[s.chipText, { color: sugType === t ? "#FFFFFF" : colors.foreground }]}>{t}</Text>
@@ -553,7 +558,8 @@ export default function CircleDetailScreen() {
                 <Text style={[s.emptyText, { color: colors.mutedForeground }]}>You haven't saved any places yet. Heart businesses on the Discover tab to save them here.</Text>
               </View>
             ) : (
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
                 {savedPlaces.map((sp) => (
                   <TouchableOpacity activeOpacity={0.85}
                     key={sp.businessId}
@@ -586,7 +592,8 @@ export default function CircleDetailScreen() {
           <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setShowPlanModal(false)} />
           <View style={[s.modalSheet, { backgroundColor: colors.background, maxHeight: "92%" }]}>
             <View style={[s.modalHandle, { backgroundColor: colors.border }]} />
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
               <Text style={[s.modalTitle, { color: colors.foreground }]}>Build a Plan ✨</Text>
 
               {/* ── How should Kinfolk plan? ── */}
@@ -619,7 +626,8 @@ export default function CircleDetailScreen() {
               {curatorMode === "by_member" && (
                 <View style={{ marginTop: 4, marginBottom: 4 }}>
                   <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Which member's taste?</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+                  <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
                     {members.map((m) => {
                       const selected = curatorMemberId === m.userId;
                       const label = m.userId === user?.id ? "Me (you)" : m.role === "host" ? "👑 Host" : "Member";
@@ -650,7 +658,8 @@ export default function CircleDetailScreen() {
               {curatorMode === "votes" && (
                 <>
                   <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>What's the Vibe?</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+                  <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
                     {VIBES.map((v) => (
                       <TouchableOpacity activeOpacity={0.85} key={v} style={[s.chip, { backgroundColor: planVibe === v ? colors.primary : colors.card, borderColor: planVibe === v ? colors.primary : colors.border }]} onPress={() => setPlanVibe(v)}>
                         <Text style={[s.chipText, { color: planVibe === v ? "#FFFFFF" : colors.foreground }]}>{v}</Text>

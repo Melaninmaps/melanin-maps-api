@@ -146,7 +146,8 @@ export function ScoreFilterPanel({ filters, onChange }: Props) {
 
           <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Ownership</Text>
           <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>Select one or more to filter</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.ownershipRow}>
+          <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.ownershipRow}>
             {OWNERSHIP_OPTIONS.map((opt) => {
               const active = filters.ownershipTypes.includes(opt.id);
               return (

@@ -199,6 +199,7 @@ export default function AddGlobalRecommendation() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

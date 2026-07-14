@@ -147,7 +147,8 @@ export default function SpacesScreen() {
         </View>
 
         {/* Type filters */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+        <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
           <View style={styles.typeRow}>
             <TouchableOpacity activeOpacity={0.85}
               style={[styles.typeChip, { borderColor: !activeType ? colors.primary : colors.border, backgroundColor: !activeType ? colors.primary + "18" : colors.card }]}
@@ -187,6 +188,7 @@ export default function SpacesScreen() {
         </View>
       ) : (
         <ScrollView
+        keyboardDismissMode="on-drag"
           contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 24 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refresh} />}
@@ -239,7 +241,8 @@ export default function SpacesScreen() {
           <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={() => setShowCreate(false)} />
           <View style={[styles.sheet, { backgroundColor: colors.background }]}>
             <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
               <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Share a Space</Text>
               <Text style={[styles.sheetSub, { color: colors.mutedForeground }]}>
                 Tell the community about a great space in a safe neighborhood

@@ -107,6 +107,7 @@ export default function RoadmapScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]}
         showsVerticalScrollIndicator={false}
       >
@@ -129,7 +130,8 @@ export default function RoadmapScreen() {
           </View>
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+        <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
           {FILTER_TABS.map((tab) => (
             <TouchableOpacity activeOpacity={0.85}
               key={tab.id}

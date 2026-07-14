@@ -144,7 +144,8 @@ export function PostItineraryFeedbackSurvey({ visible, destination, onClose, onS
             </View>
           )}
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+          <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
             {submitted ? (
               <View style={styles.thankYou}>
                 <View style={[styles.thankIcon, { backgroundColor: "#D4873A18" }]}>

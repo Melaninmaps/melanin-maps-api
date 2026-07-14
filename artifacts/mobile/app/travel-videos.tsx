@@ -302,7 +302,8 @@ export default function TravelVideosScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} stickyHeaderIndices={[1]}>
+      <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} stickyHeaderIndices={[1]}>
         {/* Search */}
         <View style={[styles.searchWrap, { paddingTop: 10 }]}>
           <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -326,6 +327,7 @@ export default function TravelVideosScreen() {
         <View style={{ backgroundColor: colors.background }}>
           {/* Feed tabs */}
           <ScrollView
+        keyboardDismissMode="on-drag"
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.feedTabsRow}
@@ -354,6 +356,7 @@ export default function TravelVideosScreen() {
 
           {/* Destination chips */}
           <ScrollView
+        keyboardDismissMode="on-drag"
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.chipsRow}

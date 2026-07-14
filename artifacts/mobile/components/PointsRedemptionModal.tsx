@@ -77,7 +77,8 @@ export function PointsRedemptionModal({ visible, onClose }: Props) {
 
         <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>AVAILABLE REWARDS</Text>
 
-        <ScrollView contentContainerStyle={styles.rewardList} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.rewardList} showsVerticalScrollIndicator={false}>
           {rewards.map((reward) => {
             const canAfford = pointsTotal >= reward.pointsCost;
             const isRedeeming = redeeming === reward.id;

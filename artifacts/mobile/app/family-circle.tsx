@@ -230,7 +230,8 @@ export default function FamilyCircleScreen() {
         <View style={s.centerMsg}><ActivityIndicator size="large" color={colors.primary} /></View>
       ) : !circle ? (
         /* ── No circle yet ── */
-        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 60 }}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ padding: 20, paddingBottom: 60 }}>
           {/* Hero */}
           <View style={[s.heroCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={[s.heroIconWrap, { backgroundColor: colors.primary + "18" }]}>
@@ -304,7 +305,8 @@ export default function FamilyCircleScreen() {
         </ScrollView>
       ) : (
         /* ── Has circle ── */
-        <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ paddingBottom: 60 }}>
           {/* Invite code banner */}
           {myRole === "owner" && (
             <View style={[s.codeCard, { backgroundColor: colors.card, borderColor: colors.border }]}>

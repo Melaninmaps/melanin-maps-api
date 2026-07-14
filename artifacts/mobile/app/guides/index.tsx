@@ -136,7 +136,8 @@ export default function GuidesIndexScreen() {
         </View>
 
         {/* Story type tabs */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.tabScroll}>
+        <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.tabScroll}>
           {STORY_TABS.map((tab) => (
             <TouchableOpacity
               key={tab.key}
@@ -154,7 +155,8 @@ export default function GuidesIndexScreen() {
       {loading ? (
         <View style={s.center}><ActivityIndicator size="large" color="#CA922B" /></View>
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: insets.bottom + 40 }}>
+        <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: insets.bottom + 40 }}>
 
           {/* Empty state with prompts */}
           {guides.length === 0 && (

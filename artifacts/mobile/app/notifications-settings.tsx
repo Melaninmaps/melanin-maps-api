@@ -205,6 +205,7 @@ export default function NotificationsSettingsScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]}
         showsVerticalScrollIndicator={false}
       >
@@ -299,7 +300,8 @@ export default function NotificationsSettingsScreen() {
               <View style={[styles.sep, { backgroundColor: colors.border }]} />
               <View style={styles.timeSection}>
                 <Text style={[styles.timeSectionLabel, { color: colors.mutedForeground }]}>From</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.timePills}>
+                <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.timePills}>
                   {QUIET_FROM_OPTIONS.map((t) => (
                     <TouchableOpacity activeOpacity={0.85}
                       key={t}
@@ -314,7 +316,8 @@ export default function NotificationsSettingsScreen() {
               <View style={[styles.sep, { backgroundColor: colors.border }]} />
               <View style={styles.timeSection}>
                 <Text style={[styles.timeSectionLabel, { color: colors.mutedForeground }]}>Until</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.timePills}>
+                <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.timePills}>
                   {QUIET_UNTIL_OPTIONS.map((t) => (
                     <TouchableOpacity activeOpacity={0.85}
                       key={t}

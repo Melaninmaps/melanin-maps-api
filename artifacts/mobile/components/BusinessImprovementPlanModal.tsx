@@ -279,7 +279,8 @@ export function BusinessImprovementPlanModal({ visible, onClose, businessId, bus
           </View>
         )}
 
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" style={{ flex: 1 }} contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
 
           {/* ════════════════ STEP 1 — Issue ════════════════ */}
           {step === 1 && (

@@ -112,7 +112,8 @@ export default function CollectionsIndexScreen() {
       {loading ? (
         <View style={s.center}><ActivityIndicator size="large" color="#CA922B" /></View>
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: insets.bottom + 40 }}>
+        <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: insets.bottom + 40 }}>
           {display.length === 0 && (
             <View style={s.empty}>
               <Text style={{ fontSize: 40, marginBottom: 12 }}>📌</Text>

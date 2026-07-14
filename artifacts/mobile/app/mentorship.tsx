@@ -183,6 +183,7 @@ export default function MentorshipScreen() {
         </View>
       ) : (
         <FlatList
+        keyboardDismissMode="on-drag"
           data={filtered}
           keyExtractor={(p) => p.id}
           renderItem={renderProfile}

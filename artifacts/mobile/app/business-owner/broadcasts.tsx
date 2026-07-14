@@ -180,7 +180,8 @@ export default function BroadcastsScreen() {
         ))}
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
         {loading ? (
           <ActivityIndicator color={colors.primary} style={{ marginTop: 60 }} />
         ) : unverified ? (

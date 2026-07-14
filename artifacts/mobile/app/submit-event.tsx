@@ -197,6 +197,7 @@ export default function SubmitEventScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[s.scroll, { paddingBottom: bottomPad + 100 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

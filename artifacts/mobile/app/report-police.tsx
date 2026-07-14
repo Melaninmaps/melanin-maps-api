@@ -253,7 +253,8 @@ export default function ReportPoliceScreen() {
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         {isSuccess ? (
-          <ScrollView contentContainerStyle={[styles.successWrap, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
+          <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.successWrap, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
             <View style={styles.successTop}>
               <View style={[styles.successIconBg, { backgroundColor: "#DC262615" }]}>
                 <View style={styles.successIconInner}>
@@ -318,6 +319,7 @@ export default function ReportPoliceScreen() {
           </ScrollView>
         ) : (
           <ScrollView
+        keyboardDismissMode="on-drag"
             contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 120 }]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"

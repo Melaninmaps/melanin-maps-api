@@ -585,6 +585,7 @@ export default function CommunityScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         horizontal
         showsHorizontalScrollIndicator={false}
         style={[styles.tabRow, { borderBottomColor: colors.border }]}
@@ -610,7 +611,8 @@ export default function CommunityScreen() {
       {activeTab === "Events" ? (
         <View style={{ flex: 1 }}>
           <View style={[styles.categoryScroll, { borderBottomColor: colors.border }]}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}>
+            <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}>
               {["Upcoming", "This Week", "This Month"].map((f) => (
                 <TouchableOpacity activeOpacity={0.85}
                   key={f}
@@ -623,6 +625,7 @@ export default function CommunityScreen() {
             </ScrollView>
           </View>
           <FlatList
+        keyboardDismissMode="on-drag"
             data={filteredEvents}
             keyExtractor={(e) => e.id}
             style={{ flex: 1 }}
@@ -698,6 +701,7 @@ export default function CommunityScreen() {
         <View style={{ flex: 1 }}>
           {/* Category filter */}
           <FlatList
+        keyboardDismissMode="on-drag"
             horizontal
             data={GROUP_CATEGORIES}
             keyExtractor={(c) => c.value}
@@ -747,6 +751,7 @@ export default function CommunityScreen() {
           </TouchableOpacity>
 
           <FlatList
+        keyboardDismissMode="on-drag"
             data={filteredGroups}
             keyExtractor={(g) => String(g.id)}
             style={{ flex: 1 }}
@@ -795,6 +800,7 @@ export default function CommunityScreen() {
         </View>
       ) : activeTab === "Resources" ? (
         <ScrollView
+        keyboardDismissMode="on-drag"
           style={{ flex: 1 }}
           contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 40, gap: 14, flexGrow: 1 }]}
           showsVerticalScrollIndicator={false}
@@ -1085,6 +1091,7 @@ export default function CommunityScreen() {
       ) : (
         <View style={{ flex: 1 }}>
           <FlatList
+        keyboardDismissMode="on-drag"
             data={filteredPosts}
             keyExtractor={(p) => p.id}
             style={{ flex: 1 }}
@@ -1242,7 +1249,8 @@ export default function CommunityScreen() {
                 <Text style={[styles.composeCancelText, { color: colors.mutedForeground }]}>Done</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }} showsVerticalScrollIndicator={false}>
+            <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ padding: 16, gap: 12 }} showsVerticalScrollIndicator={false}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
                 <View style={{ backgroundColor: "#2D7A4F", borderRadius: 8, padding: 6 }}>
                   <Feather name="zap" size={14} color="#fff" />
@@ -1354,7 +1362,8 @@ export default function CommunityScreen() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+            <ScrollView
+        keyboardDismissMode="on-drag" style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
               <TextInput
                 style={[styles.composeInput, { color: colors.foreground, borderBottomWidth: 1, borderBottomColor: colors.border }]}
                 placeholder="Group name *"
@@ -1470,7 +1479,8 @@ export default function CommunityScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
-            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+            <ScrollView
+        keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
 
             {/* Post type selector */}
             <View style={[styles.categoryRow, { borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: 10 }]}>
@@ -1814,7 +1824,8 @@ export default function CommunityScreen() {
 
             {/* Media preview strip */}
             {mediaAttachments.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal: 16, paddingBottom: 10 }} contentContainerStyle={{ gap: 8 }}>
+              <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal: 16, paddingBottom: 10 }} contentContainerStyle={{ gap: 8 }}>
                 {mediaAttachments.map((m, i) => (
                   <View key={i} style={{ position: "relative" }}>
                     {m.type === "image" ? (
@@ -2008,6 +2019,7 @@ function CirclesTab({ colors, router, isAuthenticated, isPaidMember, bottomPad }
         </View>
       ) : (
         <FlatList
+        keyboardDismissMode="on-drag"
           data={circles}
           keyExtractor={(c) => String(c.id)}
           style={{ flex: 1 }}
@@ -2287,6 +2299,7 @@ function ChallengesTab({ colors, isAuthenticated, bottomPad }: {
         </View>
       ) : (
         <FlatList
+        keyboardDismissMode="on-drag"
           data={challenges}
           keyExtractor={c => c.id}
           style={{ flex: 1 }}

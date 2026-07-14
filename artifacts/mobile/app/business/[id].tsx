@@ -425,7 +425,8 @@ export default function BusinessDetailScreen() {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 100 }}>
+      <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 100 }}>
         <Image source={img} style={styles.hero} contentFit="cover" />
 
         <View style={styles.body}>
@@ -1052,7 +1053,8 @@ export default function BusinessDetailScreen() {
             <View style={[styles.captionHandle, { backgroundColor: colors.border }]} />
             <Text style={[styles.captionSheetTitle, { color: colors.foreground }]}>What stands out?</Text>
             <Text style={[styles.captionSheetSub, { color: colors.mutedForeground }]}>Tap all that apply — your picks show up on this profile</Text>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
               <View style={styles.captionChipWrap}>
                 {getCaptionsForBusiness(business.category ?? "").map((caption) => {
                   const active = pendingCaptions.includes(caption);

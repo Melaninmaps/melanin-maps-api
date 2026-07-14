@@ -105,7 +105,8 @@ export default function KnowledgeHubScreen() {
   if (selectedChannel) {
     const { channel, articles, businesses, events } = selectedChannel;
     return (
-      <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 80 }}>
+      <ScrollView
+        keyboardDismissMode="on-drag" style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 80 }}>
         <View style={[styles.header, { paddingTop: insets.top + 16, borderBottomColor: colors.border }]}>
           <TouchableOpacity activeOpacity={0.85} onPress={() => setSelectedChannel(null)} style={styles.backBtn}>
             <Feather name="arrow-left" size={20} color={colors.foreground} />
@@ -199,7 +200,8 @@ export default function KnowledgeHubScreen() {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 80 }}>
+    <ScrollView
+        keyboardDismissMode="on-drag" style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 80 }}>
       <View style={[styles.header, { paddingTop: insets.top + 16, borderBottomColor: colors.border }]}>
         <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={styles.backBtn}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
@@ -215,7 +217,8 @@ export default function KnowledgeHubScreen() {
         {following.length > 0 && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Your Channels</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }}>
+            <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }}>
               {channels.filter((c) => following.includes(c.slug)).map((ch) => (
                 <TouchableOpacity activeOpacity={0.85}
                   key={ch.slug}

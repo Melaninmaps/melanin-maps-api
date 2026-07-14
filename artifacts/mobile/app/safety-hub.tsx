@@ -210,7 +210,8 @@ export default function SafetyHubScreen() {
       {loading ? (
         <View style={styles.center}><ActivityIndicator size="large" color="#CA922B" /></View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
           {/* Edit mode banner */}
           {editMode && (

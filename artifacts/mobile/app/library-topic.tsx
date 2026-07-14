@@ -403,7 +403,8 @@ export default function CommunityHubScreen() {
 
         {/* ── Tab Bar ── */}
         <View style={[styles.tabBarWrapper, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <ScrollView ref={tabScrollRef} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabBar}>
+          <ScrollView
+        keyboardDismissMode="on-drag" ref={tabScrollRef} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabBar}>
             {TABS.map((tab) => {
               const active = activeTab === tab.id;
               return (
@@ -424,13 +425,15 @@ export default function CommunityHubScreen() {
         </View>
 
         {/* ── Tab Content ── */}
-        <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
 
           {/* ══════════════ INFO TAB ══════════════ */}
           {activeTab === "info" && (
             <View>
               {/* Now What? Action Chips */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsRow}>
+              <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsRow}>
                 {getHubActions(hub?.topic.topicType ?? "general", userIntent).map((action, i) => (
                   <TouchableOpacity
                     key={i}
@@ -485,7 +488,8 @@ export default function CommunityHubScreen() {
                   <Text style={[styles.sectionSub, { color: colors.mutedForeground, paddingHorizontal: 14 }]}>
                     Information in this hub is drawn from these vetted organizations.
                   </Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sourcesRow}>
+                  <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sourcesRow}>
                     {hub!.trustedSources.map((src, i) => (
                       <TouchableOpacity
                         key={i}
@@ -523,7 +527,8 @@ export default function CommunityHubScreen() {
                   <Text style={[styles.sectionSub, { color: colors.mutedForeground, paddingHorizontal: 14 }]}>
                     Hubs members of this community also find valuable.
                   </Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recsRow}>
+                  <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recsRow}>
                     {recommendations.map((rec, i) => (
                       <TouchableOpacity
                         key={i}

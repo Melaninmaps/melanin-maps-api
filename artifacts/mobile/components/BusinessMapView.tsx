@@ -244,6 +244,7 @@ export function BusinessMapView() {
 
         {/* Category filter pills */}
         <ScrollView
+        keyboardDismissMode="on-drag"
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={s.catRow}

@@ -78,6 +78,7 @@ export default function InterestsScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.grid, { paddingBottom: bottomPad + 120 }]}
         showsVerticalScrollIndicator={false}
       >

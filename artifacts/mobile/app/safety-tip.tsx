@@ -125,7 +125,8 @@ export default function SafetyTipScreen() {
           <View style={{ width: 34 }} />
         </View>
 
-        <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottom + 32 }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: bottom + 32 }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {/* Info banner */}
           <View style={[styles.banner, { backgroundColor: "#DC26261A", borderColor: "#DC262640" }]}>
             <Feather name="alert-triangle" size={16} color="#DC2626" />

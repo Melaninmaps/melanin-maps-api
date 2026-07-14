@@ -136,6 +136,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
               </View>
 
               <ScrollView
+        keyboardDismissMode="on-drag"
                 style={styles.modalScrollView}
                 contentContainerStyle={[
                   styles.modalScrollContent,

@@ -78,6 +78,7 @@ export default function DashboardScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]}
         showsVerticalScrollIndicator={false}
       >
@@ -123,6 +124,7 @@ export default function DashboardScreen() {
             </View>
           ) : (
             <ScrollView
+        keyboardDismissMode="on-drag"
               horizontal
               showsHorizontalScrollIndicator={false}
               style={{ marginHorizontal: -20 }}

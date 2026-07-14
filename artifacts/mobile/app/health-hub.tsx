@@ -377,10 +377,12 @@ export default function HealthHubScreen() {
 
       {/* ─── POSTS TAB ─────────────────────────────────────────────────────── */}
       {hubTab === "posts" && (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 40 }}>
+        <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 40 }}>
           {/* Topic pills */}
           <View style={styles.topicSection}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.topicScroll}>
+            <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.topicScroll}>
               <TouchableOpacity activeOpacity={0.85}
                 style={[styles.pill, { borderColor: !selectedTopic ? colors.primary : colors.border, backgroundColor: !selectedTopic ? colors.primary : colors.card }]}
                 onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setSelectedTopic(null); }}
@@ -525,11 +527,13 @@ export default function HealthHubScreen() {
       {/* ─── INSIGHTS TAB ──────────────────────────────────────────────────── */}
       {hubTab === "insights" && (
         <>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 40 }}>
+        <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 40 }}>
           {/* Designation filter */}
           <View style={styles.insightFilterSection}>
             <Text style={[styles.filterLabel, { color: colors.mutedForeground }]}>FILTER BY COMMUNITY</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+            <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
               <TouchableOpacity activeOpacity={0.85}
                 style={[styles.pill, { borderColor: !selectedDesignations.length ? colors.primary : colors.border, backgroundColor: !selectedDesignations.length ? colors.primary : colors.card }]}
                 onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setSelectedDesignations([]); }}
@@ -553,7 +557,8 @@ export default function HealthHubScreen() {
 
             {/* Journal filter */}
             <Text style={[styles.filterLabel, { color: colors.mutedForeground, marginTop: 10 }]}>FILTER BY JOURNAL</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+            <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
               <TouchableOpacity activeOpacity={0.85}
                 style={[styles.journalPill, { borderColor: !selectedJournal ? colors.primary : colors.border, backgroundColor: !selectedJournal ? colors.primary : colors.card }]}
                 onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setSelectedJournal(null); }}
@@ -747,7 +752,8 @@ export default function HealthHubScreen() {
             <TouchableOpacity activeOpacity={0.85} onPress={() => setShowTopicPicker(false)}><Feather name="x" size={22} color={colors.foreground} /></TouchableOpacity>
           </View>
           <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>Choose the topics you care about. Your feed will prioritize articles on these topics.</Text>
-          <ScrollView contentContainerStyle={styles.topicPickerList}>
+          <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.topicPickerList}>
             {topics.map(t => {
               const following = myTopicIds.includes(t.id);
               return (
@@ -780,7 +786,8 @@ export default function HealthHubScreen() {
             <Text style={[styles.modalTitle, { color: colors.foreground }]}>Share an Article</Text>
             <TouchableOpacity activeOpacity={0.85} onPress={() => setShowPostModal(false)}><Feather name="x" size={22} color={colors.foreground} /></TouchableOpacity>
           </View>
-          <ScrollView contentContainerStyle={styles.formScroll} keyboardShouldPersistTaps="handled">
+          <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.formScroll} keyboardShouldPersistTaps="handled">
             <Text style={[styles.formLabel, { color: colors.foreground }]}>Article Title</Text>
             <TextInput style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]} value={postTitle} onChangeText={setPostTitle} placeholder="Title of the article" placeholderTextColor={colors.mutedForeground} maxLength={300} />
             <Text style={[styles.formLabel, { color: colors.foreground }]}>Your Summary</Text>
@@ -820,14 +827,16 @@ export default function HealthHubScreen() {
             <Text style={[styles.modalTitle, { color: colors.foreground }]}>Apply as Healthcare Provider</Text>
             <TouchableOpacity activeOpacity={0.85} onPress={() => setShowApplyModal(false)}><Feather name="x" size={22} color={colors.foreground} /></TouchableOpacity>
           </View>
-          <ScrollView contentContainerStyle={styles.formScroll} keyboardShouldPersistTaps="handled">
+          <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.formScroll} keyboardShouldPersistTaps="handled">
             <Text style={[styles.applyNote, { color: colors.mutedForeground, borderColor: colors.border }]}>
               🩺 We verify all healthcare providers before approving. Your license info is stored securely and never displayed publicly.
             </Text>
             <Text style={[styles.formLabel, { color: colors.foreground }]}>Full Name & Title</Text>
             <TextInput style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]} value={applyName} onChangeText={setApplyName} placeholder="Dr. Amara Johnson" placeholderTextColor={colors.mutedForeground} />
             <Text style={[styles.formLabel, { color: colors.foreground }]}>Credentials</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
+            <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
               {CREDENTIAL_OPTIONS.map(c => (
                 <TouchableOpacity activeOpacity={0.85} key={c} style={[styles.credChip, { borderColor: applyCreds === c ? colors.primary : colors.border, backgroundColor: applyCreds === c ? colors.primary : colors.card }]} onPress={() => setApplyCreds(c)}>
                   <Text style={{ color: applyCreds === c ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 13 }}>{c}</Text>

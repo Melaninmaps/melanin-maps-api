@@ -134,7 +134,8 @@ export function IntentModal({ visible, location, onClose, onSaved }: Props) {
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <Text style={[styles.question, { color: colors.foreground }]}>What are you trying to do here?</Text>
           <Text style={[styles.questionSub, { color: colors.mutedForeground }]}>
             Your choice unlocks a personalized Smart Pathway™ — curated resources matched to your goal.

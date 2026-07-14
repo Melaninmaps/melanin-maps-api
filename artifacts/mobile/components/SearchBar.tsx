@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { Keyboard, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 
 interface Props {
@@ -30,7 +30,7 @@ export function SearchBar({ value, onChangeText, placeholder = "Search businesse
         autoFocus={autoFocus}
       />
       {value.length > 0 && (
-        <TouchableOpacity onPress={() => onChangeText("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity onPress={() => { onChangeText(""); Keyboard.dismiss(); }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Feather name="x" size={16} color={colors.mutedForeground} />
         </TouchableOpacity>
       )}

@@ -80,6 +80,7 @@ export default function DobCollectionScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scroll, { paddingTop: topPad + 20, paddingBottom: bottomPad + 40 }]}
         showsVerticalScrollIndicator={false}
       >
@@ -117,7 +118,8 @@ export default function DobCollectionScreen() {
           {selectedMonth !== null && (
             <>
               <Text style={[styles.cardLabel, { color: colors.mutedForeground, marginTop: 20 }]}>Day</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dayScroll}>
+              <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={styles.dayScroll}>
                 <View style={styles.chipsRow}>
                   {days.map((d) => {
                     const selected = selectedDay === d;
@@ -138,7 +140,8 @@ export default function DobCollectionScreen() {
           )}
 
           <Text style={[styles.cardLabel, { color: colors.mutedForeground, marginTop: 20 }]}>Year</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dayScroll}>
+          <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={styles.dayScroll}>
             <View style={styles.chipsRow}>
               {years.map((y) => {
                 const selected = selectedYear === y;

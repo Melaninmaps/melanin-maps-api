@@ -161,6 +161,7 @@ export function SellerAgreementModal({ visible, businessId, businessName, onAcce
         </View>
 
         <ScrollView
+        keyboardDismissMode="on-drag"
           ref={scrollRef}
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}

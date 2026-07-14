@@ -177,7 +177,8 @@ export default function PinnedHighlightsScreen() {
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={{ paddingBottom: bottomPad + 40 }} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ paddingBottom: bottomPad + 40 }} showsVerticalScrollIndicator={false}>
           {/* Explainer */}
           <View style={[s.explainerCard, { backgroundColor: colors.primary + "0C", borderColor: colors.primary + "25" }]}>
             <Feather name="bookmark" size={18} color={colors.primary} />
@@ -324,6 +325,7 @@ export default function PinnedHighlightsScreen() {
             <View style={{ width: 22 }} />
           </View>
           <FlatList
+        keyboardDismissMode="on-drag"
             data={reviews as ReviewItem[]}
             keyExtractor={(r) => r.id}
             contentContainerStyle={{ padding: 16, gap: 12 }}

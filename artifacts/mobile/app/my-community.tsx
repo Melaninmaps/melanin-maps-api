@@ -175,6 +175,7 @@ export default function MyCommunityScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
       >
@@ -304,7 +305,8 @@ export default function MyCommunityScreen() {
           <TouchableOpacity style={styles.modalBg} activeOpacity={1} onPress={() => { setShowAdd(false); setAddType("geographic"); setForm({ label: "", city: "", state: "", zipCode: "", neighborhood: "", industry: "" }); setFormError(null); }} />
           <View style={[styles.sheet, { backgroundColor: colors.background }]}>
             <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Add a Community</Text>
               <Text style={[styles.sheetSub, { color: colors.mutedForeground }]}>
                 Save a place or join your professional industry network

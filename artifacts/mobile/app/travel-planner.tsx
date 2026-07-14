@@ -129,7 +129,8 @@ export default function TravelPlannerScreen() {
       {/* ─── FORM PHASE ─── */}
       {(phase === "form" || phase === "generating") && (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: insets.bottom + 48 }} keyboardShouldPersistTaps="handled">
+          <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: insets.bottom + 48 }} keyboardShouldPersistTaps="handled">
 
             {error && (
               <View style={[s.errorBanner, { backgroundColor: "#DC262615", borderColor: "#DC262640" }]}>
@@ -226,7 +227,8 @@ export default function TravelPlannerScreen() {
 
       {/* ─── RESULT PHASE ─── */}
       {phase === "result" && itinerary && (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 48 }}>
+        <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 48 }}>
 
           {/* Overview hero */}
           <View style={[s.overviewCard, { backgroundColor: "#1A3B2B" }]}>

@@ -248,7 +248,8 @@ export default function ReportSafetyScreen() {
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         {isSuccess ? (
-          <ScrollView contentContainerStyle={[styles.successWrap, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
+          <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.successWrap, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
             <View style={styles.successTop}>
               <View style={[styles.successIconBg, { backgroundColor: "#DC262615" }]}>
                 <Image source={require("@/assets/images/safety.jpg")} style={styles.successImg} contentFit="cover" />
@@ -311,6 +312,7 @@ export default function ReportSafetyScreen() {
           </ScrollView>
         ) : (
           <ScrollView
+        keyboardDismissMode="on-drag"
             contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 120 }]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"

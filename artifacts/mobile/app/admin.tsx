@@ -118,7 +118,8 @@ function OverviewTab() {
   }, []);
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={adminStyles.statsGrid}>
         <StatCard label="Total Users" value={userCount} sub="Registered members" color="#CA922B" icon="users" />
         <StatCard label="Pending" value={pendingBizCount > 0 ? String(pendingBizCount) : "—"} sub={pendingBizCount > 0 ? "Awaiting review" : "All clear"} color="#C9922B" icon="briefcase" />
@@ -193,7 +194,8 @@ function BadgeEditModal({ biz, onClose, onSaved }: { biz: AdminBiz; onClose: () 
           <Text style={[badgeModalStyles.title, { color: colors.foreground }]}>Edit Badges</Text>
           <Text style={[badgeModalStyles.bizName, { color: colors.mutedForeground }]}>{biz.name}</Text>
 
-          <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 480 }}>
+          <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} style={{ maxHeight: 480 }}>
             <Text style={[badgeModalStyles.sectionHeader, { color: colors.foreground }]}>📍 Location at current address since</Text>
             <Text style={[badgeModalStyles.hint, { color: colors.mutedForeground }]}>Format: YYYY-MM (e.g. 2019-06)</Text>
             <TextInput
@@ -331,8 +333,10 @@ function BusinessesTab() {
 
   return (
     <>
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+      <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: "row", gap: 8 }}>
           {STATUSES.map((s) => (
             <TouchableOpacity activeOpacity={0.85}
@@ -512,7 +516,8 @@ function UsersTab() {
   const roleColor = (r: string | null) => r === "admin" ? "#DC2626" : r === "tester" ? "#1D4ED8" : colors.mutedForeground;
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       {pending > 0 && (
         <View style={[adminStyles.alertBanner, { backgroundColor: "#C9922B12", borderColor: "#C9922B30", marginBottom: 12 }]}>
           <Feather name="user-check" size={14} color="#C9922B" />
@@ -651,7 +656,8 @@ function ReportsTab() {
   }
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       {pendingCount > 0 && (
         <View style={[adminStyles.alertBanner, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}>
           <Feather name="alert-triangle" size={15} color="#DC2626" />
@@ -781,7 +787,8 @@ function ReviewsTab() {
   const pendingVideos = reviews.filter((r) => r.status === "pending_video");
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       {pendingVideos.length > 0 && (
         <View style={{ marginBottom: 16 }}>
           <Text style={[adminStyles.actionLabel, { color: colors.foreground, marginBottom: 10 }]}>
@@ -901,7 +908,8 @@ function AnalyticsTab() {
   const barData = [65, 82, 74, 96];
   const maxVal = Math.max(...barData);
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={[adminStyles.analyticsCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
         <Text style={[adminStyles.analyticsTitle, { color: colors.foreground }]}>New Users This Month</Text>
         <Text style={[adminStyles.analyticsValue, { color: colors.primary }]}>317</Text>
@@ -944,7 +952,8 @@ function EventsTab() {
     { title: "Melanin Beauty Expo", date: "Aug 3", city: "Washington, DC", status: "active", attendees: 1820 },
   ];
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <ActionRow icon="plus-circle" label="Create New Event" sub="Add an event to the platform" color="#CA922B" />
       {events.map((e, i) => (
         <View key={i} style={[adminStyles.bizRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -970,7 +979,8 @@ function EventsTab() {
 function ContentTab() {
   const colors = useColors();
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <SectionLabel title="Featured Content" />
       <ActionRow icon="star" label="Featured Businesses" sub="Manage which businesses appear featured" color="#C9922B" />
       <ActionRow icon="calendar" label="Featured Events" sub="Control homepage event highlights" color="#1D4ED8" />
@@ -1008,7 +1018,8 @@ function SettingsTab() {
   const colors = useColors();
   const setTab = useContext(AdminNavContext);
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={[adminStyles.alertBanner, { backgroundColor: "#1D4ED818", borderColor: "#1D4ED830", marginBottom: 16 }]}>
         <Feather name="info" size={14} color="#1D4ED8" />
         <Text style={[adminStyles.alertText, { color: "#1D4ED8", flex: 1 }]}>
@@ -1056,14 +1067,16 @@ function SurveysTab() {
   const COLORS: Record<string, string> = { Safety: "#DC2626", Neighborhood: "#2D7A4F", Itinerary: "#C9922B", Preferences: "#1D4ED8" };
   const filtered = typeFilter === "All" ? RESPONSES : RESPONSES.filter((r) => r.type === typeFilter);
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={adminStyles.statsGrid}>
         {KPI.map((k) => (
           <StatCard key={k.label} label={k.label} value={k.value} sub={k.sub} color={k.color} icon={k.icon} />
         ))}
       </View>
       <SectionLabel title="Response Viewer" />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+      <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
         <View style={{ flexDirection: "row", gap: 8 }}>
           {SURVEY_TYPES.map((t) => (
             <TouchableOpacity activeOpacity={0.85}
@@ -1164,7 +1177,8 @@ function ClaimsTab() {
   }
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       {pending > 0 && (
         <View style={[adminStyles.alertBanner, { backgroundColor: "#C9922B12", borderColor: "#C9922B30" }]}>
           <Feather name="check-square" size={15} color="#C9922B" />
@@ -1175,7 +1189,8 @@ function ClaimsTab() {
         </View>
       )}
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 8 }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }}>
+        <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }}>
           <View style={{ flexDirection: "row", gap: 8 }}>
             {STATUSES.map((s) => (
               <TouchableOpacity activeOpacity={0.85} key={s} style={[adminStyles.filterChip, { backgroundColor: filter === s ? colors.primary : colors.secondary, borderColor: filter === s ? colors.primary : colors.border }]} onPress={() => setFilter(s)}>
@@ -1297,7 +1312,8 @@ function SubmissionsTab() {
   const pending = submissions.filter((s) => s.localStatus === "pending").length;
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       {loading && (
         <View style={{ alignItems: "center", paddingVertical: 40 }}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -1328,7 +1344,8 @@ function SubmissionsTab() {
       )}
       {!loading && !error && submissions.length > 0 && (
         <>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+          <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
             <View style={{ flexDirection: "row", gap: 8 }}>
               {STATUSES.map((s) => (
                 <TouchableOpacity activeOpacity={0.85} key={s} style={[adminStyles.filterChip, { backgroundColor: filter === s ? colors.primary : colors.secondary, borderColor: filter === s ? colors.primary : colors.border }]} onPress={() => setFilter(s)}>
@@ -1449,7 +1466,8 @@ function ReferralsTab() {
   ];
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={adminStyles.statsGrid}>
         {KPI.map((k) => (
           <StatCard key={k.label} label={k.label} value={k.value} sub={k.sub} color={k.color} icon={k.icon} />
@@ -1548,7 +1566,8 @@ function EmailTab() {
     { day: "Day 30", subject: "You've been with us a month 🙌🏾", sent: 412, opened: 267, clicked: 89, status: "active" },
   ];
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={adminStyles.statsGrid}>
         {KPI.map((k) => (
           <StatCard key={k.label} label={k.label} value={k.value} sub={k.sub} color={k.color} icon={k.icon} />
@@ -1702,7 +1721,8 @@ function InvitesTab() {
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <View style={adminStyles.statsGrid}>
         <StatCard label="Total Invites"  value={String(invites.length)} sub="All time"           color="#CA922B" icon="send" />
         <StatCard label="Pending"         value={String(counts.pending)}   sub="Need outreach"     color="#C9922B" icon="clock" />
@@ -1729,7 +1749,8 @@ function InvitesTab() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+      <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
         <View style={{ flexDirection: "row", gap: 8 }}>
           {FILTERS.map((f) => (
             <TouchableOpacity activeOpacity={0.85}
@@ -1870,7 +1891,8 @@ function MarketplaceTab() {
 
   if (loading) {
     return (
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+      <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
         <ActivityIndicator color={colors.primary} style={{ marginTop: 32 }} />
       </ScrollView>
     );
@@ -1879,7 +1901,8 @@ function MarketplaceTab() {
   const tiers = ["community", "growth", "premium"] as const;
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <SectionLabel title="Marketplace Fee Configuration" />
       <Text style={[adminStyles.activityText, { color: colors.mutedForeground, marginBottom: 8 }]}>
         Fees are applied at checkout. Priority: Founding (locked) › Promotional › Standard.
@@ -2160,7 +2183,8 @@ function CaptionsTab() {
   const [confirmRemove, setConfirmRemove] = React.useState<{ businessId: string; caption: string } | null>(null);
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       <SectionLabel title="Community Captions" />
       <View style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 12 }]}>
         <Text style={[adminStyles.activityText, { color: colors.mutedForeground }]}>
@@ -2346,7 +2370,8 @@ function ContentReportsTab() {
   }
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       {loading && (
         <View style={{ alignItems: "center", paddingVertical: 40 }}>
           <ActivityIndicator color={colors.primary} />
@@ -2431,7 +2456,8 @@ function DisputedBusinessesTab() {
   const confirmedFake = businesses.filter((b) => b.flag_status === "confirmed_fake");
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
+    <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={adminStyles.tabContent}>
       {loading && (
         <View style={{ alignItems: "center", paddingVertical: 40 }}>
           <ActivityIndicator color={colors.primary} />
@@ -2657,7 +2683,8 @@ function TopicsTab() {
   const PRIORITY_COLORS: Record<string, string> = { breaking: "#DC2626", standard: "#2563EB", digest: "#16A34A", immediate: "#D97706" };
 
   return (
-    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+    <ScrollView
+        keyboardDismissMode="on-drag" style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
       {/* Header */}
       <View style={{ backgroundColor: colors.card, borderBottomWidth: 1, borderColor: colors.border, padding: 16 }}>
         <Text style={{ fontSize: 17, fontWeight: "800", color: colors.foreground }}>Topic Library Console</Text>
@@ -2885,6 +2912,7 @@ export default function AdminScreen() {
 
       {/* Tab bar */}
       <ScrollView
+        keyboardDismissMode="on-drag"
         horizontal
         showsHorizontalScrollIndicator={false}
         style={[styles.tabBar, { borderBottomColor: colors.border, backgroundColor: colors.background }]}

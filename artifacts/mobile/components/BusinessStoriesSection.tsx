@@ -34,6 +34,7 @@ export function BusinessStoriesSection({ stories }: Props) {
     <View>
       <Text style={[styles.title, { color: colors.foreground }]}>From the Owner</Text>
       <ScrollView
+        keyboardDismissMode="on-drag"
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scroll}

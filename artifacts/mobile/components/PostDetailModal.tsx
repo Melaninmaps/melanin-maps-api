@@ -177,6 +177,7 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
         </View>
 
         <FlatList
+        keyboardDismissMode="on-drag"
           data={comments}
           keyExtractor={(c) => c.id}
           contentContainerStyle={{ paddingBottom: bottomPad + 80, paddingHorizontal: 16, paddingTop: 16, gap: 12 }}

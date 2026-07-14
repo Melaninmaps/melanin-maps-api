@@ -233,6 +233,7 @@ export default function JournalsScreen() {
         </View>
       ) : (
         <FlatList
+        keyboardDismissMode="on-drag"
           data={journals}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}

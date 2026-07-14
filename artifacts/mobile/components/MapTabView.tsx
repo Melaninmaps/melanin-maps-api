@@ -308,6 +308,7 @@ export function MapTabView() {
         <SearchBar value={search} onChangeText={setSearch} />
       </View>
       <FlatList
+        keyboardDismissMode="on-drag"
         horizontal
         data={CATEGORIES}
         keyExtractor={(c) => c}
@@ -324,6 +325,7 @@ export function MapTabView() {
       />
       <SafetyPulseWidget />
       <FlatList
+        keyboardDismissMode="on-drag"
         data={filtered}
         keyExtractor={(b) => b.id}
         contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100 }]}
@@ -460,6 +462,7 @@ export function MapTabView() {
               </View>
             ) : (
               <FlatList
+        keyboardDismissMode="on-drag"
                 data={flaggedBizList}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={{ padding: 16, gap: 10 }}

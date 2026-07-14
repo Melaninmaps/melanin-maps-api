@@ -108,6 +108,7 @@ export function MarketplaceTermsModal({ visible, onAccepted, onClose }: Props) {
         </View>
 
         <ScrollView
+        keyboardDismissMode="on-drag"
           ref={scrollRef}
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}

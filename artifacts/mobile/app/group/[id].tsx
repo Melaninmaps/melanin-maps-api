@@ -383,7 +383,8 @@ export default function GroupDetailScreen() {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 120 }]}>
+      <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 120 }]}>
 
         {group.description ? (
           <View style={styles.section}>
@@ -717,7 +718,8 @@ export default function GroupDetailScreen() {
               <Feather name="x" size={22} color={colors.foreground} />
             </TouchableOpacity>
           </View>
-          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.modalScroll} keyboardShouldPersistTaps="handled">
+          <ScrollView
+        keyboardDismissMode="on-drag" style={{ flex: 1 }} contentContainerStyle={styles.modalScroll} keyboardShouldPersistTaps="handled">
             <Text style={[styles.modalLabel, { color: colors.mutedForeground }]}>Type</Text>
             <View style={styles.typeRow}>
               {SUGG_TYPES.map((t) => (
@@ -818,7 +820,8 @@ export default function GroupDetailScreen() {
               <Feather name="x" size={22} color={colors.foreground} />
             </TouchableOpacity>
           </View>
-          <ScrollView contentContainerStyle={[styles.modalScroll, { paddingBottom: 16 }]}>
+          <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.modalScroll, { paddingBottom: 16 }]}>
             <View style={[styles.safetyInfoBanner, { backgroundColor: "#16A34A12", borderColor: "#16A34A30" }]}>
               <Feather name="shield" size={18} color="#16A34A" />
               <Text style={[styles.safetyInfoText, { color: colors.foreground }]}>

@@ -101,7 +101,8 @@ export default function CreatorPublicScreen() {
 
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: bottomPad + 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ paddingBottom: bottomPad + 40 }} showsVerticalScrollIndicator={false}>
         {/* Hero header */}
         <View style={[s.hero, { paddingTop: topPad + 12, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <TouchableOpacity activeOpacity={0.85} style={s.backInHero} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>

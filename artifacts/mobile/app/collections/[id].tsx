@@ -138,7 +138,8 @@ export default function CollectionScreen() {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 40, paddingTop: 8 }}>
+      <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 40, paddingTop: 8 }}>
         {items.length === 0 && (
           <View style={s.empty}>
             <Text style={{ fontSize: 40, marginBottom: 12 }}>📌</Text>

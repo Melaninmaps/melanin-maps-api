@@ -306,6 +306,7 @@ export default function ConnectionsScreen() {
         </View>
       ) : (
         <FlatList
+        keyboardDismissMode="on-drag"
           data={activeTab === "all" ? accepted : pendingReceived}
           keyExtractor={(c) => String(c.id)}
           contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: bottomPad + 20 }}

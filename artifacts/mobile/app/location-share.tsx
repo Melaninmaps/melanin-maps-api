@@ -185,7 +185,8 @@ export default function LocationShareScreen() {
       {loading ? (
         <View style={styles.center}><ActivityIndicator size="large" color="#2563EB" /></View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={[styles.infoBanner, { backgroundColor: "#2563EB0F", borderColor: "#2563EB30" }]}>
             <Feather name="map-pin" size={18} color="#2563EB" />
             <Text style={[styles.infoText, { color: colors.foreground }]}>
@@ -223,7 +224,8 @@ export default function LocationShareScreen() {
                 autoCapitalize="none"
               />
               <Text style={[styles.formLabel, { color: colors.foreground }]}>Duration</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false}>
                 <View style={styles.durationRow}>
                   {DURATION_OPTIONS.map((o) => {
                     const sel = selectedDuration === o.minutes;

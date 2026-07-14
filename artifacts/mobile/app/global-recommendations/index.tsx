@@ -190,7 +190,8 @@ export default function GlobalRecommendationsScreen() {
       {/* Country filter */}
       {countries.length > 0 && (
         <View style={[styles.filterSection, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+          <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
             <TouchableOpacity activeOpacity={0.85}
               onPress={() => setSelectedCountry(null)}
               style={[styles.filterChip, selectedCountry === null && styles.filterChipActive]}
@@ -212,7 +213,8 @@ export default function GlobalRecommendationsScreen() {
 
       {/* Type filter */}
       <View style={[styles.filterSection, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+        <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
           <TouchableOpacity activeOpacity={0.85}
             onPress={() => setSelectedType(null)}
             style={[styles.filterChip, styles.typeChip, selectedType === null && styles.typeChipActive]}
@@ -258,6 +260,7 @@ export default function GlobalRecommendationsScreen() {
         </View>
       ) : (
         <FlatList
+        keyboardDismissMode="on-drag"
           data={filtered}
           keyExtractor={item => item.id}
           renderItem={renderRec}

@@ -174,7 +174,8 @@ export default function CreatorProfileScreen() {
       {loading ? (
         <ActivityIndicator color={colors.primary} style={{ marginTop: 60 }} />
       ) : (
-        <ScrollView contentContainerStyle={[s.scroll, { paddingBottom: bottomPad + 60 }]} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[s.scroll, { paddingBottom: bottomPad + 60 }]} showsVerticalScrollIndicator={false}>
 
           {/* Philosophy banner */}
           <View style={[s.banner, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>

@@ -201,6 +201,7 @@ export default function FindFriendsScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         style={s.scroll}
         contentContainerStyle={[s.scrollContent, { paddingBottom: bottomPad + 100 }]}
         showsVerticalScrollIndicator={false}

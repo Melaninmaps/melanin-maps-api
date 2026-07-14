@@ -149,7 +149,8 @@ export default function CompareNeighborhoodsScreen() {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 40 }}>
+      <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 40 }}>
 
         {/* Neighborhood name cards */}
         <View style={[styles.nameRow, { borderBottomColor: colors.border }]}>

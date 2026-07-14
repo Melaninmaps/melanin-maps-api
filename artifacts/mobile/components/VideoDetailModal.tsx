@@ -88,7 +88,8 @@ export function VideoDetailModal({ visible, video, onClose }: Props) {
           <View style={[styles.sheet, { backgroundColor: colors.background }]}>
             <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
               {/* Video thumbnail placeholder */}
               <View style={[styles.videoThumb, { backgroundColor: video.thumbColor }]}>
                 <Text style={styles.videoThumbEmoji}>{video.thumbEmoji}</Text>

@@ -286,7 +286,8 @@ export default function BusinessIdentityScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 60 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 60 }]} showsVerticalScrollIndicator={false}>
 
         {/* Profile Completion Meter */}
         <View style={[styles.meterCard, { backgroundColor: colors.card, borderColor: colors.border }]}>

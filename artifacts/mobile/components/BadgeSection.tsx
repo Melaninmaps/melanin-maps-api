@@ -85,7 +85,8 @@ export function BadgeSection({ savedCount, isEarlyTester }: { savedCount: number
 
       {/* Earned badges (always visible) */}
       {earned.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.earnedScroll} contentContainerStyle={styles.earnedContent}>
+        <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={styles.earnedScroll} contentContainerStyle={styles.earnedContent}>
           {earned.map(badge => (
             <View key={badge.id} style={styles.earnedBadge}>
               <View style={[styles.badgeCircle, { backgroundColor: badge.color + "20", borderColor: badge.color + "50" }]}>

@@ -104,7 +104,8 @@ function RecommendModal({
           <View style={[s.modalHandle, { backgroundColor: colors.border }]} />
 
           {!done ? (
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={[s.modalTitle, { color: colors.foreground }]}>Help a Business Join 🤎</Text>
               <Text style={[s.modalSub, { color: colors.mutedForeground }]}>
                 Know a minority-owned business you'd love to see on Mapping with Melanin™? Help us grow our community by recommending a business you believe others should discover.
@@ -150,7 +151,8 @@ function RecommendModal({
               </View>
 
               <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Category</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+              <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
                 {BIZ_CATEGORIES.map((c) => (
                   <TouchableOpacity activeOpacity={0.85}
                     key={c}
@@ -357,6 +359,7 @@ export default function WaitlistScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

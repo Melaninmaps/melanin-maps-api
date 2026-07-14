@@ -111,7 +111,8 @@ export function MilestoneSection({ reviewCount, savedCount, pointsTotal, checkIn
           <Text style={[styles.countText, { color: colors.primary }]}>{earnedCount}/{milestones.length}</Text>
         </View>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {milestones.map((m) => (
           <View
             key={m.id}

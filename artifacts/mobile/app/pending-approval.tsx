@@ -32,6 +32,7 @@ export default function PendingApprovalScreen() {
 
   return (
     <ScrollView
+        keyboardDismissMode="on-drag"
       contentContainerStyle={[styles.container, { paddingTop: topPad + 40, paddingBottom: bottomPad + 40, backgroundColor: c.background }]}
       showsVerticalScrollIndicator={false}
     >

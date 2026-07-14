@@ -265,7 +265,8 @@ export default function GuideDetailScreen() {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
+      <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
         {/* Hero */}
         <View style={[s.hero, { backgroundColor: "#CA922B" + "15" }]}>
           <Text style={s.heroEmoji}>{guide.subjectEmoji}</Text>
@@ -402,9 +403,11 @@ export default function GuideDetailScreen() {
                 }
               </TouchableOpacity>
             </View>
-            <ScrollView contentContainerStyle={{ padding: 20 }}>
+            <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ padding: 20 }}>
               <Text style={[s.label, { color: colors.mutedForeground }]}>Section Emoji</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+              <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
                 <View style={{ flexDirection: "row", gap: 8 }}>
                   {SECTION_EMOJIS.map((e) => (
                     <TouchableOpacity
@@ -452,9 +455,11 @@ export default function GuideDetailScreen() {
                 }
               </TouchableOpacity>
             </View>
-            <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
+            <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
               <Text style={[s.label, { color: colors.mutedForeground }]}>Type</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+              <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
                 <View style={{ flexDirection: "row", gap: 8 }}>
                   {ITEM_TYPES.map((t) => (
                     <TouchableOpacity

@@ -277,6 +277,7 @@ export default function KinfolkTasksScreen() {
         </View>
       ) : view === "home" ? (
         <ScrollView
+        keyboardDismissMode="on-drag"
           contentContainerStyle={styles.content}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} colors={[colors.primary]} />}
         >
@@ -358,6 +359,7 @@ export default function KinfolkTasksScreen() {
         </ScrollView>
       ) : (
         <FlatList
+        keyboardDismissMode="on-drag"
           data={[...incompleteListTasks, ...completedListTasks]}
           keyExtractor={(t) => t.id}
           contentContainerStyle={styles.content}

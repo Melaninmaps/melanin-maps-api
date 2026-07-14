@@ -108,7 +108,8 @@ function NewDMModal({
             <Text style={[dmStyles.emptyText, { color: colors.mutedForeground }]}>Type a name or @username to search</Text>
           </View>
         ) : (
-          <ScrollView keyboardShouldPersistTaps="handled">
+          <ScrollView
+        keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled">
             {results.map((u) => {
               const name = [u.firstName, u.lastName].filter(Boolean).join(" ") || u.username || "Community Member";
               return (
@@ -303,6 +304,7 @@ export default function MessagesScreen() {
         </View>
       ) : (
         <ScrollView
+        keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: bottomPad + 40 }}
           refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={colors.primary} />}

@@ -119,7 +119,8 @@ export default function CulturalPreferenceScreen() {
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={{ paddingBottom: bottomPad + 40 }} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ paddingBottom: bottomPad + 40 }} showsVerticalScrollIndicator={false}>
           <View style={[s.explainer, { backgroundColor: colors.primary + "0C", borderColor: colors.primary + "25" }]}>
             <Text style={{ fontSize: 28, textAlign: "center" }}>🌍</Text>
             <Text style={[s.explainerTitle, { color: colors.foreground }]}>Your Community, Your Feed</Text>

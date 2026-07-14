@@ -299,7 +299,8 @@ export default function DiscoverScreen() {
                   <Feather name="x" size={20} color={colors.mutedForeground} />
                 </TouchableOpacity>
               </View>
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.categoryModalList}>
+              <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={styles.categoryModalList}>
                 {CATEGORIES.map((cat) => (
                   <TouchableOpacity
                     key={cat}
@@ -320,6 +321,7 @@ export default function DiscoverScreen() {
       </LinearGradient>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 100 }]}
         showsVerticalScrollIndicator={false}
@@ -332,7 +334,8 @@ export default function DiscoverScreen() {
         {isFiltering ? (
           <>
             {/* Vibe Match chips */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.vibeScroll}>
+            <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.vibeScroll}>
               {VIBES.map((v) => (
                 <TouchableOpacity key={v.label} style={[styles.vibeChip, activeVibe === v.label ? { backgroundColor: colors.primary, borderColor: colors.primary } : { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => setActiveVibe(activeVibe === v.label ? null : v.label)} activeOpacity={0.75}>
                   <Text style={styles.vibeEmoji}>{v.emoji}</Text>
@@ -360,14 +363,16 @@ export default function DiscoverScreen() {
             {businessesLoading ? (
               <View style={styles.section}>
                 <SectionHeader title="Featured Businesses" />
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+                <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
                   {[0, 1, 2].map((i) => <SkeletonBusinessCardHorizontal key={i} />)}
                 </ScrollView>
               </View>
             ) : featured.length > 0 ? (
               <View style={styles.section}>
                 <SectionHeader title="Featured Businesses" />
-                <FlatList horizontal data={featured} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
+                <FlatList
+        keyboardDismissMode="on-drag" horizontal data={featured} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
                   renderItem={({ item }) => (
                     <View>
                       <BusinessCard business={item} onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })} isSaved={isSaved(item.id)} onToggleSave={() => toggleSave(item.id)} horizontal />
@@ -565,14 +570,16 @@ export default function DiscoverScreen() {
             {businessesLoading ? (
               <View style={styles.section}>
                 <SectionHeader title="📍 Near You" />
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+                <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
                   {[0, 1, 2].map((i) => <SkeletonBusinessCardHorizontal key={i} />)}
                 </ScrollView>
               </View>
             ) : nearYou.length > 0 ? (
               <View style={styles.section}>
                 <SectionHeader title="📍 Near You" onSeeAll={() => router.push("/(tabs)/map")} />
-                <FlatList horizontal data={nearYou} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
+                <FlatList
+        keyboardDismissMode="on-drag" horizontal data={nearYou} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
                   renderItem={({ item }) => (
                     <BusinessCard business={item} onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })} isSaved={isSaved(item.id)} onToggleSave={() => toggleSave(item.id)} horizontal />
                   )}
@@ -602,7 +609,8 @@ export default function DiscoverScreen() {
             {trending.length > 0 && (
               <View style={styles.section}>
                 <SectionHeader title="🔥 Trending This Week" />
-                <FlatList horizontal data={trending} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
+                <FlatList
+        keyboardDismissMode="on-drag" horizontal data={trending} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
                   renderItem={({ item }) => (
                     <BusinessCard business={item} onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })} isSaved={isSaved(item.id)} onToggleSave={() => toggleSave(item.id)} horizontal />
                   )}
@@ -614,7 +622,8 @@ export default function DiscoverScreen() {
             {featured.length > 0 && (
               <View style={styles.section}>
                 <SectionHeader title="⭐ Featured" />
-                <FlatList horizontal data={featured} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
+                <FlatList
+        keyboardDismissMode="on-drag" horizontal data={featured} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
                   renderItem={({ item }) => (
                     <View>
                       <BusinessCard business={item} onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })} isSaved={isSaved(item.id)} onToggleSave={() => toggleSave(item.id)} horizontal />
@@ -675,7 +684,8 @@ export default function DiscoverScreen() {
             {newBusinesses.length > 0 && (
               <View style={styles.section}>
                 <SectionHeader title="✨ New Businesses" />
-                <FlatList horizontal data={newBusinesses} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
+                <FlatList
+        keyboardDismissMode="on-drag" horizontal data={newBusinesses} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
                   renderItem={({ item }) => (
                     <BusinessCard business={item} onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })} isSaved={isSaved(item.id)} onToggleSave={() => toggleSave(item.id)} horizontal />
                   )}
@@ -687,7 +697,8 @@ export default function DiscoverScreen() {
             {communityFaves.length > 0 && (
               <View style={styles.section}>
                 <SectionHeader title="👑 Community Favorites" subtitle="Verified · Black-Owned" />
-                <FlatList horizontal data={communityFaves} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
+                <FlatList
+        keyboardDismissMode="on-drag" horizontal data={communityFaves} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
                   renderItem={({ item }) => (
                     <BusinessCard business={item} onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })} isSaved={isSaved(item.id)} onToggleSave={() => toggleSave(item.id)} horizontal />
                   )}

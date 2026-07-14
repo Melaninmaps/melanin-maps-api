@@ -299,6 +299,7 @@ export default function UserProfileScreen() {
       />
 
       <FlatList
+        keyboardDismissMode="on-drag"
         data={(activeTab === "reviews" ? reviews : activeTab === "tags" ? tags : posts) as any[]}
         keyExtractor={(item: any) => String(item.id)}
         showsVerticalScrollIndicator={false}

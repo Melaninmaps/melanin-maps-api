@@ -213,6 +213,7 @@ export function UserProfileModal({ userId, visible, onClose }: Props) {
           </View>
         ) : (
           <FlatList
+        keyboardDismissMode="on-drag"
             data={listData}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}

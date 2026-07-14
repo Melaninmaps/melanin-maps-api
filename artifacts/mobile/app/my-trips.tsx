@@ -57,7 +57,8 @@ export default function MyTripsScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 32 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 32 }]} showsVerticalScrollIndicator={false}>
         {!isLoading && itineraries.length === 0 && (
           <View style={[styles.empty, { borderColor: colors.border }]}>
             <Feather name="bookmark" size={40} color={colors.mutedForeground} />

@@ -158,7 +158,8 @@ export default function NotificationPrefsScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
 
         <Text style={[styles.intro, { color: colors.mutedForeground }]}>
           Saving a business doesn't automatically subscribe you to everything. Choose exactly what you want to hear about.

@@ -139,7 +139,8 @@ export function VideoReportModal({ visible, videoTitle, isBusiness = false, onCl
                 </Text>
               </View>
 
-              <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+              <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
                 <View style={styles.reasonList}>
                   {REPORT_REASONS.map((r) => (
                     <TouchableOpacity

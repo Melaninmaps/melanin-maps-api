@@ -356,6 +356,7 @@ export default function ChatScreen() {
       )}
 
       <FlatList
+        keyboardDismissMode="on-drag"
         ref={flatListRef}
         data={messages}
         keyExtractor={(m) => m.id}

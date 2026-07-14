@@ -186,7 +186,8 @@ export function SafetyExperienceSurvey({ visible, businessName, businessCategory
             </View>
           )}
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+          <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
             {submitted ? (
               <View style={styles.thankYou}>
                 <View style={[styles.thankIcon, { backgroundColor: "#2D7A4F18" }]}>

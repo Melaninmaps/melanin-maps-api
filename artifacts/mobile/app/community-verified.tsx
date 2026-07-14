@@ -203,6 +203,7 @@ export default function CommunityVerifiedScreen() {
 
   return (
     <ScrollView
+        keyboardDismissMode="on-drag"
       style={{ flex: 1, backgroundColor: bg }}
       contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}

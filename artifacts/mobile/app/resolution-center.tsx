@@ -323,7 +323,8 @@ export default function ResolutionCenterScreen() {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
+      <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
 
         {/* Trust statement */}
         <View style={[styles.trustCard, { backgroundColor: "#2D7A4F", }]}>
@@ -412,7 +413,8 @@ export default function ResolutionCenterScreen() {
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Your resolutions</Text>
 
           {/* Filter chips */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+          <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
             {([
               { key: "all", label: `All (${counts.all})` },
               { key: "awaiting_reviewer", label: `Awaiting (${counts.awaiting_reviewer})` },

@@ -269,7 +269,8 @@ export default function BusinessVerifyScreen() {
         />
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 100 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 100 }]} showsVerticalScrollIndicator={false}>
 
         {/* ── Step 1: Policy ── */}
         {step === 1 && (

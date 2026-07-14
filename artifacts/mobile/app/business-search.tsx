@@ -212,6 +212,7 @@ export default function BusinessSearchScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
         keyboardShouldPersistTaps="handled"
@@ -225,7 +226,8 @@ export default function BusinessSearchScreen() {
                 RECENT SEARCHES
               </Text>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
+            <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
               {history.slice(0, 6).map((h, i) => (
                 <TouchableOpacity
                   key={i}
@@ -328,6 +330,7 @@ export default function BusinessSearchScreen() {
 
           <Text style={[styles.fieldLabel, { color: colors.mutedForeground, marginTop: 16 }]}>CATEGORY</Text>
           <ScrollView
+        keyboardDismissMode="on-drag"
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.categoryScroll}

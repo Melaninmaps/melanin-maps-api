@@ -534,6 +534,7 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView
+        keyboardDismissMode="on-drag"
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 100 }]}
       showsVerticalScrollIndicator={false}
@@ -883,7 +884,8 @@ export default function ProfileScreen() {
             </View>
 
             {showIndustryPicker ? (
-              <ScrollView style={styles.industryList} showsVerticalScrollIndicator={false}>
+              <ScrollView
+        keyboardDismissMode="on-drag" style={styles.industryList} showsVerticalScrollIndicator={false}>
                 <TouchableOpacity activeOpacity={0.85} style={[styles.industryOption, { borderBottomColor: colors.border }]} onPress={() => { setEditIndustry(""); setShowIndustryPicker(false); }}>
                   <Text style={[styles.industryOptionText, { color: colors.mutedForeground }]}>No industry</Text>
                   {!editIndustry ? <Feather name="check" size={16} color={colors.primary} /> : null}
@@ -896,7 +898,8 @@ export default function ProfileScreen() {
                 ))}
               </ScrollView>
             ) : (
-              <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <ScrollView
+        keyboardDismissMode="on-drag" style={styles.modalBody} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Username <Text style={{ color: colors.mutedForeground + "88" }}>(optional)</Text></Text>
                 <View style={{ position: "relative" }}>
                   <TextInput

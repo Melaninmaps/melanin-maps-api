@@ -216,7 +216,8 @@ export default function ReportSpaceScreen() {
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Report Submitted</Text>
           <View style={{ width: 22 }} />
         </View>
-        <ScrollView contentContainerStyle={[styles.successWrap, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.successWrap, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
           <View style={[styles.successIcon, { backgroundColor: "#DC262615" }]}>
             <Feather name="alert-octagon" size={48} color="#DC2626" />
           </View>
@@ -280,6 +281,7 @@ export default function ReportSpaceScreen() {
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <ScrollView
+        keyboardDismissMode="on-drag"
           contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 120 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"

@@ -74,7 +74,8 @@ export function ForYouCard() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cards}>
+      <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cards}>
         {suggestions.map((s, i) => {
           const accent = CATEGORY_COLORS[s.category] ?? colors.primary;
           return (

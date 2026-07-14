@@ -301,7 +301,8 @@ export default function LifeJourneyScreen() {
 
   if (view === "create") {
     return (
-      <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 80 }}>
+      <ScrollView
+        keyboardDismissMode="on-drag" style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 80 }}>
         <View style={[styles.header, { paddingTop: insets.top + 16, borderBottomColor: colors.border }]}>
           <TouchableOpacity activeOpacity={0.85} onPress={() => setView("list")} style={styles.backBtn}>
             <Feather name="arrow-left" size={20} color={colors.foreground} />
@@ -423,7 +424,8 @@ export default function LifeJourneyScreen() {
   if (view === "detail" && activeJourney) {
     const prog = journeyProgress(activeJourney);
     return (
-      <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView
+        keyboardDismissMode="on-drag" style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={[styles.header, { paddingTop: insets.top + 16, borderBottomColor: colors.border }]}>
           <TouchableOpacity activeOpacity={0.85} onPress={() => setView("list")} style={styles.backBtn}>
             <Feather name="arrow-left" size={20} color={colors.foreground} />
@@ -591,7 +593,8 @@ export default function LifeJourneyScreen() {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 80 }}>
+    <ScrollView
+        keyboardDismissMode="on-drag" style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 80 }}>
       <View style={[styles.header, { paddingTop: insets.top + 16, borderBottomColor: colors.border }]}>
         <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={styles.backBtn}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />

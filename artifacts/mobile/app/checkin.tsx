@@ -181,7 +181,8 @@ export default function CheckinScreen() {
       {loading ? (
         <View style={styles.center}><ActivityIndicator size="large" color="#16A34A" /></View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {/* How it works banner */}
           <View style={[styles.infoBanner, { backgroundColor: "#16A34A0F", borderColor: "#16A34A30" }]}>
             <Feather name="check-circle" size={18} color="#16A34A" />
@@ -222,7 +223,8 @@ export default function CheckinScreen() {
                 autoCapitalize="none"
               />
               <Text style={[styles.formLabel, { color: colors.foreground }]}>Check in by (from now)</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false}>
                 <View style={styles.durationRow}>
                   {DURATION_OPTIONS.map((o) => {
                     const sel = selectedDuration === o.minutes;

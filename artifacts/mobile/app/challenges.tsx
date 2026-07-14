@@ -116,7 +116,8 @@ export default function ChallengesScreen() {
         <View style={{ width: 38 }} />
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
         <View style={[styles.heroBanner, { backgroundColor: "#CA922B" }]}>
           <Text style={styles.heroEmoji}>🏆</Text>
           <View style={{ flex: 1 }}>

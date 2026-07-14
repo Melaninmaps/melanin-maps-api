@@ -116,6 +116,7 @@ export default function CommunityHubScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 48, paddingTop: 16 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(true); }} tintColor="#CA922B" />}

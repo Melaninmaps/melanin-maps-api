@@ -166,7 +166,8 @@ export default function CreateGuideScreen() {
           <Text style={[s.stepSub, { color: colors.mutedForeground }]}>What kind of guide are you creating?</Text>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 40 }}>
+        <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 40 }}>
           <View style={[s.heroBanner, { backgroundColor: "#CA922B" + "18", borderColor: "#CA922B" + "40" }]}>
             <Text style={s.heroEmoji}>🕊️</Text>
             <Text style={[s.heroTitle, { color: colors.foreground }]}>Leave a legacy.</Text>
@@ -233,13 +234,15 @@ export default function CreateGuideScreen() {
         </View>
 
         <ScrollView
+        keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 40 }}
         >
           {/* Emoji picker */}
           <Text style={[s.label, { color: colors.mutedForeground }]}>Guide Emoji</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+          <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
             <View style={{ flexDirection: "row", gap: 8 }}>
               {EMOJI_PICKS.map((e) => (
                 <TouchableOpacity

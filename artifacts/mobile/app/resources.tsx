@@ -102,7 +102,8 @@ export default function ResourcesScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
         <View style={[styles.heroBanner, { backgroundColor: "#2B1507" }]}>
           <Feather name="heart" size={32} color="rgba(255,255,255,0.9)" />
           <Text style={styles.heroTitle}>You're Not Alone</Text>

@@ -352,7 +352,8 @@ export default function SafetyHubTab() {
       {loading ? (
         <View style={styles.center}><ActivityIndicator size="large" color="#CA922B" /></View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
           {editMode && (
             <View style={[styles.editBanner, { backgroundColor: "#CA922B18", borderColor: "#CA922B40" }]}>

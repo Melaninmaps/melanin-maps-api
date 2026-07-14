@@ -324,6 +324,7 @@ export function AIChatWidget() {
           </View>
 
           <FlatList
+        keyboardDismissMode="on-drag"
             ref={listRef}
             data={messages}
             keyExtractor={(m) => m.id}

@@ -109,7 +109,8 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
               </TouchableOpacity>
             </View>
           ) : (
-            <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <View style={[styles.infoBadge, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
                 <Ionicons name="shield-checkmark-outline" size={15} color={colors.primary} />
                 <Text style={[styles.infoBadgeText, { color: colors.text }]}>

@@ -116,7 +116,8 @@ export function PassThePlateModal({ visible, businessId, businessName, onClose, 
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {done ? (
             <View style={styles.successWrap}>
               <View style={[styles.successCircle, { backgroundColor: "#C9922B20" }]}>

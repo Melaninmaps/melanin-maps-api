@@ -237,6 +237,7 @@ export default function VisitorProfileScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
         showsVerticalScrollIndicator={false}

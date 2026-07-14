@@ -174,6 +174,7 @@ export default function AffiliateScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]}
         showsVerticalScrollIndicator={false}
       >
@@ -195,6 +196,7 @@ export default function AffiliateScreen() {
         )}
 
         <ScrollView
+        keyboardDismissMode="on-drag"
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoryRow}

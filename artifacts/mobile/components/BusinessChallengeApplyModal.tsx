@@ -113,7 +113,8 @@ export function BusinessChallengeApplyModal({ visible, challengeId, challengeNam
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {done ? (
             <View style={styles.successWrap}>
               <View style={[styles.successCircle, { backgroundColor: "#2D7A4F20" }]}>

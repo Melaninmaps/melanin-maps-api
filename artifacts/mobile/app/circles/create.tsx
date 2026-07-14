@@ -93,7 +93,8 @@ export default function CreateCircleScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={[s.content, { paddingBottom: bottomPad + 40 }]} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[s.content, { paddingBottom: bottomPad + 40 }]} keyboardShouldPersistTaps="handled">
         {step === 1 && (
           <View style={s.stepWrap}>
             <Text style={[s.stepTitle, { color: colors.foreground }]}>What kind of Circle?</Text>
@@ -146,7 +147,8 @@ export default function CreateCircleScreen() {
             <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Pick an emoji and give it a name your members will recognize.</Text>
 
             <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Choose an Emoji</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+            <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
               {EMOJIS.map((e) => (
                 <TouchableOpacity activeOpacity={0.85}
                   key={e}

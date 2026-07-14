@@ -187,6 +187,7 @@ export default function BusinessGuideScreen() {
 
   return (
     <ScrollView
+        keyboardDismissMode="on-drag"
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 32 }]}
       showsVerticalScrollIndicator={false}

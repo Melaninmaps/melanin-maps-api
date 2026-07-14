@@ -61,7 +61,8 @@ export function UserMentionPicker({ query, onSelect }: Props) {
           <ActivityIndicator size="small" color={colors.primary} />
         </View>
       ) : (
-        <ScrollView keyboardShouldPersistTaps="handled" horizontal={false} style={{ maxHeight: 200 }}>
+        <ScrollView
+        keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled" horizontal={false} style={{ maxHeight: 200 }}>
           {results.map((u) => {
             const displayName = [u.firstName, u.lastName].filter(Boolean).join(" ") || u.username || "Unknown";
             const handle = u.username ? `@${u.username}` : "";

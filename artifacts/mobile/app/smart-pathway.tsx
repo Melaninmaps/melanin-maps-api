@@ -165,7 +165,8 @@ export default function SmartPathwayScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 40 }}>
+      <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 40 }}>
 
         {/* Stats bar */}
         <View style={[styles.statsBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
@@ -377,7 +378,8 @@ export default function SmartPathwayScreen() {
               </View>
               <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Compare Neighborhoods</Text>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 4 }}>
+            <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 4 }}>
               {otherPins.map(other => (
                 <TouchableOpacity activeOpacity={0.85}
                   key={other.id}

@@ -150,7 +150,8 @@ export default function NaAaMeetingsScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
         {/* Search bar */}
         <View style={[styles.searchRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -189,7 +190,8 @@ export default function NaAaMeetingsScreen() {
         </TouchableOpacity>
 
         {/* Type filter */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterContent}>
+        <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterContent}>
           {MEETING_TYPES.map((t) => {
             const active = selectedType === t.id;
             return (
@@ -255,7 +257,8 @@ export default function NaAaMeetingsScreen() {
                     </View>
                   </View>
                   {f.services && f.services.length > 0 && (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
+                    <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
                       <View style={{ flexDirection: "row", gap: 6 }}>
                         {f.services.slice(0, 5).map((s, j) => (
                           <View key={j} style={[styles.serviceChip, { backgroundColor: colors.secondary }]}>

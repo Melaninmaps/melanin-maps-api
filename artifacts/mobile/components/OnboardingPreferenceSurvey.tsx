@@ -150,7 +150,8 @@ export function OnboardingPreferenceSurvey({ visible, onClose, onSubmit }: Props
           </>
         )}
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+        <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
           {submitted ? (
             <View style={styles.thankYou}>
               <View style={[styles.thankIcon, { backgroundColor: "#C4622D18" }]}>

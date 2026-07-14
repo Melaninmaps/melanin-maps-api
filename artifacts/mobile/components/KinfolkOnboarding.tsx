@@ -134,7 +134,8 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
           ))}
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {step === 0 && (
             <View style={styles.centered}>
               <View style={[styles.iconWrap, { backgroundColor: colors.primary + "18" }]}>

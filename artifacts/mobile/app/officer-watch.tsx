@@ -169,7 +169,8 @@ export default function OfficerWatchScreen() {
       </View>
 
       {tab === "watch" ? (
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60, gap: 12 }}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ padding: 16, paddingBottom: 60, gap: 12 }}>
           {/* Disclaimer */}
           <View style={[s.disclaimerCard, { backgroundColor: "#FEF3C7", borderColor: "#FCD34D" }]}>
             <Feather name="info" size={16} color="#92400E" />
@@ -270,7 +271,8 @@ export default function OfficerWatchScreen() {
         </ScrollView>
       ) : (
         /* ── Submit a Tip ── */
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 80, gap: 14 }} keyboardShouldPersistTaps="handled">
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ padding: 16, paddingBottom: 80, gap: 14 }} keyboardShouldPersistTaps="handled">
           {!isAuthenticated && (
             <View style={[s.disclaimerCard, { backgroundColor: "#FEF3C7", borderColor: "#FCD34D" }]}>
               <Feather name="lock" size={15} color="#92400E" />

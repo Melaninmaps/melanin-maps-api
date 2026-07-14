@@ -128,7 +128,8 @@ export default function SmartSearchScreen() {
         )}
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        keyboardDismissMode="on-drag" style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }} keyboardShouldPersistTaps="handled">
         {!results && !loading && (
           <>
             {history.length > 0 && (

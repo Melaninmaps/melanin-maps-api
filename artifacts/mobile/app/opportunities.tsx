@@ -128,7 +128,8 @@ export default function OpportunitiesScreen() {
 
       {/* Tab bar */}
       <View style={[s.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.tabBarInner}>
+        <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.tabBarInner}>
           {OPP_TABS.map((tab) => {
             const active = activeTab === tab.id;
             return (
@@ -146,7 +147,8 @@ export default function OpportunitiesScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 60, paddingTop: 8 }}>
+      <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 60, paddingTop: 8 }}>
 
         {/* Featured resources */}
         <View style={s.section}>

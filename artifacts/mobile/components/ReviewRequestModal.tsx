@@ -105,7 +105,8 @@ export function ReviewRequestModal({ visible, videoTitle, onClose }: Props) {
                 </TouchableOpacity>
               </View>
 
-              <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+              <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
                 {/* What this is */}
                 <View style={[styles.infoBox, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                   <Feather name="info" size={14} color={colors.mutedForeground} />

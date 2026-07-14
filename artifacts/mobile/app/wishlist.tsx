@@ -86,7 +86,8 @@ function AddDestinationModal({
         <TouchableOpacity style={modalStyles.backdrop} activeOpacity={1} onPress={handleClose} />
         <View style={[modalStyles.sheet, { backgroundColor: colors.background }]}>
           <View style={[modalStyles.handle, { backgroundColor: colors.border }]} />
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
             <Text style={[modalStyles.title, { color: colors.foreground }]}>Add a Destination</Text>
             <Text style={[modalStyles.sub, { color: colors.mutedForeground }]}>
               Save a city, state, region, or country you'd love to visit
@@ -186,7 +187,8 @@ function AddEmployerModal({
         <TouchableOpacity style={modalStyles.backdrop} activeOpacity={1} onPress={handleClose} />
         <View style={[modalStyles.sheet, { backgroundColor: colors.background }]}>
           <View style={[modalStyles.handle, { backgroundColor: colors.border }]} />
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
             <Text style={[modalStyles.title, { color: colors.foreground }]}>Save an Employer</Text>
             <Text style={[modalStyles.sub, { color: colors.mutedForeground }]}>
               Track companies and organizations you'd love to work for
@@ -297,7 +299,8 @@ function AddBusinessModal({
         <TouchableOpacity style={modalStyles.backdrop} activeOpacity={1} onPress={handleClose} />
         <View style={[modalStyles.sheet, { backgroundColor: colors.background }]}>
           <View style={[modalStyles.handle, { backgroundColor: colors.border }]} />
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
             <Text style={[modalStyles.title, { color: colors.foreground }]}>Save a Business</Text>
             <Text style={[modalStyles.sub, { color: colors.mutedForeground }]}>
               Track a business you've visited or want to remember
@@ -783,6 +786,7 @@ export default function WishlistScreen() {
         </View>
       ) : (
         <FlatList
+        keyboardDismissMode="on-drag"
           data={groups}
           keyExtractor={(g) => g.label}
           contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}

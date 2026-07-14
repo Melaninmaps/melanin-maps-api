@@ -66,6 +66,7 @@ export function BusinessMilestonesSection({ business }: Props) {
     <View style={styles.wrap}>
       <Text style={[styles.title, { color: colors.foreground }]}>Business Milestones</Text>
       <ScrollView
+        keyboardDismissMode="on-drag"
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.row}

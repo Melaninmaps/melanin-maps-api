@@ -99,7 +99,8 @@ export default function FamilySettingsScreen() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.container}>
+    <ScrollView
+        keyboardDismissMode="on-drag" style={{ backgroundColor: colors.background }} contentContainerStyle={styles.container}>
       <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
         <Feather name="arrow-left" size={20} color={colors.foreground} />
         <Text style={[styles.backText, { color: colors.foreground }]}>Back</Text>

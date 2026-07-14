@@ -220,6 +220,7 @@ export default function TopicFeedScreen() {
       </View>
 
       <FlatList
+        keyboardDismissMode="on-drag"
         data={posts}
         keyExtractor={p => p.id}
         showsVerticalScrollIndicator={false}

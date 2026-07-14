@@ -385,7 +385,8 @@ export default function EditBusinessProfile() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
         {/* ── Photos ── */}
         <View style={styles.group}>
@@ -396,7 +397,8 @@ export default function EditBusinessProfile() {
             </View>
             <Text style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>{photos.length + pendingPhotos.length}/10</Text>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }} contentContainerStyle={{ gap: 10 }}>
+          <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }} contentContainerStyle={{ gap: 10 }}>
             {photos.map((url) => {
               const isCover = url === coverUrl;
               return (

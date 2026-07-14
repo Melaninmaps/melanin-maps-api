@@ -323,7 +323,8 @@ export default function GroupDetailScreen() {
       </View>
 
       {activeTab === "info" && (
-        <ScrollView contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: bottomPad + 60 }} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: bottomPad + 60 }} showsVerticalScrollIndicator={false}>
           {group.description ? (
             <View style={[s.descCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[s.descTitle, { color: colors.foreground }]}>About this group</Text>
@@ -365,6 +366,7 @@ export default function GroupDetailScreen() {
 
       {activeTab === "members" && (
         <FlatList
+        keyboardDismissMode="on-drag"
           data={members}
           keyExtractor={(m) => m.userId}
           contentContainerStyle={{ padding: 16, gap: 8, paddingBottom: bottomPad + 60 }}
@@ -414,7 +416,8 @@ export default function GroupDetailScreen() {
       )}
 
       {activeTab === "settings" && isAdmin && (
-        <ScrollView contentContainerStyle={{ padding: 20, gap: 14, paddingBottom: bottomPad + 60 }} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={{ padding: 20, gap: 14, paddingBottom: bottomPad + 60 }} showsVerticalScrollIndicator={false}>
           <Text style={[s.settingsLabel, { color: colors.foreground }]}>Group name</Text>
           <TextInput placeholderTextColor={colors.mutedForeground}
             style={[s.settingsInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card }]}

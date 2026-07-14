@@ -126,7 +126,8 @@ export default function DestinationScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
+      <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
         {/* Hero stats bar */}
         <View style={[styles.heroStats, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.heroStat}>
@@ -157,7 +158,8 @@ export default function DestinationScreen() {
         </View>
 
         {/* Highlights row */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.highlightsRow}>
+        <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.highlightsRow}>
           {dest.highlights.map((h) => (
             <View key={h} style={[styles.highlightChip, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
               <Text style={[styles.highlightTxt, { color: colors.foreground }]}>{h}</Text>

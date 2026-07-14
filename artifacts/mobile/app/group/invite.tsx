@@ -128,6 +128,7 @@ export default function InviteMembersScreen() {
       </View>
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
         keyboardShouldPersistTaps="handled"

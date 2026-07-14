@@ -237,7 +237,8 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
               )}
             </View>
           ) : (
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
               <Text style={[styles.title, { color: colors.foreground }]}>Write a Review</Text>
               <Text style={[styles.sub, { color: colors.mutedForeground }]}>{businessName}</Text>
 

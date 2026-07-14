@@ -490,6 +490,7 @@ export default function ListBusinessScreen() {
           </View>
         ) : (
           <ScrollView
+        keyboardDismissMode="on-drag"
             contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 120 }]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"

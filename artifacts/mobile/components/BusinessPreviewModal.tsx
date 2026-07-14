@@ -103,7 +103,8 @@ export function BusinessPreviewModal({ business, visible, onClose, onViewProfile
         {/* Drag handle */}
         <View style={[s.handle, { backgroundColor: colors.border }]} />
 
-        <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} bounces={false}>
           {/* Hero */}
           <View style={s.heroWrap}>
             <Image

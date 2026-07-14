@@ -470,7 +470,8 @@ function AiMessageBubble({
 
         {/* Quick reply chips */}
         {msg.followUpSuggestions && msg.followUpSuggestions.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={aiStyles.chipsScroll}>
+          <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={aiStyles.chipsScroll}>
             {msg.followUpSuggestions.map((s, i) => (
               <TouchableOpacity
                 key={i}
@@ -786,7 +787,8 @@ function TasteProfileSheet({
             <Ionicons name="close" size={22} color={colors.text} />
           </TouchableOpacity>
         </View>
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={tpStyles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+        keyboardDismissMode="on-drag" style={{ flex: 1 }} contentContainerStyle={tpStyles.scroll} showsVerticalScrollIndicator={false}>
           <View style={[tpStyles.profileBadge, { backgroundColor: colors.primary + "14", borderColor: colors.primary + "30" }]}>
             <Ionicons name="sparkles" size={16} color={colors.primary} />
             <Text style={[tpStyles.profileBadgeText, { color: colors.primary }]}>
@@ -1028,7 +1030,8 @@ function SessionHistoryDrawer({
           <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
           <Text style={[shStyles.newBtnText, { color: colors.primary }]}>Start New Conversation</Text>
         </TouchableOpacity>
-        <ScrollView style={{ flex: 1 }}>
+        <ScrollView
+        keyboardDismissMode="on-drag" style={{ flex: 1 }}>
           {sessions.length === 0 ? (
             <Text style={[shStyles.empty, { color: colors.mutedForeground }]}>No past conversations yet</Text>
           ) : (
@@ -1192,7 +1195,8 @@ function FlightTrackerModal({
             <Text style={[ftStyles.emptyText, { color: colors.mutedForeground }]}>Sign in to track your flights</Text>
           </View>
         ) : (
-          <ScrollView style={{ flex: 1 }} contentContainerStyle={ftStyles.scroll}>
+          <ScrollView
+        keyboardDismissMode="on-drag" style={{ flex: 1 }} contentContainerStyle={ftStyles.scroll}>
             <Text style={[ftStyles.subtitle, { color: colors.mutedForeground }]}>
               Save flight numbers from your travel plans. We check status and alert you to delays.
             </Text>
@@ -1585,6 +1589,7 @@ export default function TravelScreen() {
       {/* Chat area */}
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={0}>
         <FlatList
+        keyboardDismissMode="on-drag"
           ref={flatListRef}
           data={messages}
           keyExtractor={(item) => item.id}
@@ -1628,7 +1633,8 @@ export default function TravelScreen() {
         {/* Kinfolk Voices™ mode selector */}
         <View style={[styles.voicesBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
           <Text style={[styles.voicesBarLabel, { color: colors.mutedForeground }]}>Kinfolk Voices™</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.voicesPills}>
+          <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.voicesPills}>
             {KINFOLK_VOICES.map((v) => {
               const isActive = voiceMode === v.id;
               const locked = v.requiresPaid && (!isAuthenticated || !subscription);

@@ -117,7 +117,8 @@ export default function RoadmapScreen() {
         </Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
+      <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
         {Object.entries(categories).map(([cat, catSteps]) => {
           const doneCount = catSteps.filter((s) => s.isComplete).length;
           return (

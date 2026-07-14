@@ -158,7 +158,8 @@ export default function FamilyModeScreen() {
       </View>
 
       {/* Category pills */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[styles.categoryBar, { borderBottomColor: colors.border }]} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingVertical: 10 }}>
+      <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={[styles.categoryBar, { borderBottomColor: colors.border }]} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingVertical: 10 }}>
         {FAMILY_CATEGORIES.map((c) => (
           <TouchableOpacity
             key={c.value}
@@ -196,6 +197,7 @@ export default function FamilyModeScreen() {
         </View>
       ) : (
         <ScrollView
+        keyboardDismissMode="on-drag"
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(); }} tintColor={colors.primary} />}
           contentContainerStyle={styles.list}
         >

@@ -96,7 +96,8 @@ export default function CreateListScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
         {/* Live Preview */}
         <View style={[styles.previewCard, { backgroundColor: "#CA922B" }]}>
           <Text style={styles.previewEmoji}>{emoji}</Text>

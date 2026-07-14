@@ -158,6 +158,7 @@ export default function BusinessVibesScreen() {
         </View>
       ) : (
         <ScrollView
+        keyboardDismissMode="on-drag"
           contentContainerStyle={[
             styles.scroll,
             { paddingBottom: insets.bottom + 100 },
@@ -257,6 +258,7 @@ export default function BusinessVibesScreen() {
                   {/* Media */}
                   {media.length > 0 && (
                     <ScrollView
+        keyboardDismissMode="on-drag"
                       horizontal
                       showsHorizontalScrollIndicator={false}
                       style={styles.mediaRow}

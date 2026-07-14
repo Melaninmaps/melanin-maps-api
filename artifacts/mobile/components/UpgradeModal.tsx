@@ -60,7 +60,8 @@ export function UpgradeModal({ visible, onClose, feature, reason }: Props) {
             </Text>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 340 }}>
+          <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} style={{ maxHeight: 340 }}>
             {/* Always free section */}
             <View style={[styles.freeSection, { backgroundColor: colors.background, borderColor: colors.border }]}>
               <Text style={[styles.sectionLabel, { color: "#16A34A" }]}>✓ Always free — forever</Text>

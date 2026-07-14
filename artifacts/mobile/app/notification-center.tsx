@@ -271,6 +271,7 @@ export default function NotificationCenterScreen() {
 
       {/* Filter tabs */}
       <ScrollView
+        keyboardDismissMode="on-drag"
         horizontal
         showsHorizontalScrollIndicator={false}
         style={[styles.tabsScroll, { borderBottomColor: colors.border }]}
@@ -301,6 +302,7 @@ export default function NotificationCenterScreen() {
 
       {/* Notification list */}
       <ScrollView
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 32 }]}
         showsVerticalScrollIndicator={false}
       >

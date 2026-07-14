@@ -86,7 +86,8 @@ export default function BusinessPreviewScreen() {
         </View>
       )}
 
-      <ScrollView contentContainerStyle={styles.bannerWrap}>
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.bannerWrap}>
         <View style={[styles.banner, { backgroundColor: "#2D7A4F15", borderColor: "#2D7A4F40" }]}>
           <Feather name="eye" size={14} color="#2D7A4F" />
           <Text style={styles.bannerText}>

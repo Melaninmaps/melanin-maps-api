@@ -152,7 +152,8 @@ export function NeighborhoodSafetySurvey({ visible, onClose, onSubmit }: Props) 
             </View>
           )}
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+          <ScrollView
+        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
             {submitted ? (
               <View style={styles.thankYou}>
                 <View style={[styles.thankIcon, { backgroundColor: "#2D7A4F18" }]}>
@@ -171,7 +172,8 @@ export function NeighborhoodSafetySurvey({ visible, onClose, onSubmit }: Props) 
                 <Text style={[styles.stepTitle, { color: colors.foreground }]}>Which neighborhood?</Text>
                 <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>Select your city and enter the neighborhood name</Text>
                 <Text style={[styles.groupLabel, { color: colors.foreground }]}>City</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+                <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
                   <View style={{ flexDirection: "row", gap: 8 }}>
                     {CITIES.map((c) => (
                       <TouchableOpacity

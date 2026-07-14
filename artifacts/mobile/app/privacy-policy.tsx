@@ -106,7 +106,8 @@ export default function PrivacyPolicyScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
         <View style={styles.intro}>
           <View style={[styles.introIcon, { backgroundColor: colors.primary + "15" }]}>
             <Feather name="shield" size={28} color={colors.primary} />

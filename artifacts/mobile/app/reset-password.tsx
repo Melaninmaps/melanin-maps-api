@@ -94,6 +94,7 @@ export default function ResetPasswordScreen() {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <ScrollView
+        keyboardDismissMode="on-drag"
         style={styles.inner}
         contentContainerStyle={{ paddingTop: topPad + 12, paddingBottom: bottomPad + 32 }}
         keyboardShouldPersistTaps="handled"

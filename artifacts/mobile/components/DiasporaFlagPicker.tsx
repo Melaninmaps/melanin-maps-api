@@ -105,6 +105,7 @@ export default function DiasporaFlagPicker({ selected, onToggle, label }: Props)
           </View>
 
           <ScrollView
+        keyboardDismissMode="on-drag"
             style={{ flex: 1 }}
             contentContainerStyle={[s.listContent, { paddingBottom: insets.bottom + 100 }]}
             showsVerticalScrollIndicator={false}

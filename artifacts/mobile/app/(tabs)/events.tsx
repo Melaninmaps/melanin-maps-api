@@ -114,6 +114,7 @@ export default function EventsScreen() {
         <Text style={styles.heroSub}>Attend · RSVP · Invite Friends</Text>
 
         <ScrollView
+        keyboardDismissMode="on-drag"
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.catScroll}
@@ -145,6 +146,7 @@ export default function EventsScreen() {
       ) : null}
 
       <ScrollView
+        keyboardDismissMode="on-drag"
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 100, flexGrow: 1 }]}

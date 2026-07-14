@@ -93,6 +93,7 @@ export default function CreateCollectionScreen() {
         </View>
 
         <ScrollView
+        keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 40 }}
