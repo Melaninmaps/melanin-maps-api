@@ -18,7 +18,7 @@ import * as Haptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { getApiBase } from "@/lib/api";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/lib/auth";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type VerificationStatus =
