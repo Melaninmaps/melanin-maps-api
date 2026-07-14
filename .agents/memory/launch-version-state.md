@@ -6,9 +6,10 @@ description: Current app store submission state — Android and iOS build versio
 # Launch Version State (as of July 14, 2026)
 
 ## iOS
-- **buildNumber in app.json: 29**
+- **buildNumber in app.json: 30**
 - Build 28: in App Store review
-- Build 29: pending — auth spinner fixes, keyboard dismissal (all auth screens + app-wide on-drag), interactive map
+- Build 29: auth spinner fixes, keyboard dismissal (all auth screens + app-wide on-drag), interactive map
+- Build 30: privacy notice on business verification + phone verification screens
 - **autoIncrement: true in eas.json — EAS queries Apple automatically before each build. No manual tracking needed.**
 - App Store Connect App ID: 6783773366, Apple Team: Y46Y4A5MMZ, Bundle ID: com.melaninmaps.app
 
