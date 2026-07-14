@@ -3,6 +3,7 @@ import { db, pool, waitlistTable, usersTable, businessRecommendationsTable, poin
 import { and, asc, count, desc, eq, gte, ilike, isNotNull, lt, sql } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
 import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite, sendFriendInvitation, sendBusinessWaitlistInvitation, sendReferralMilestoneUpdate, sendReferralNudge, sendAppLaunchBlast, sendBetaAnnouncementBlast } from "../lib/email";
+import { runWeeklyNudge } from "../lib/nudgeScheduler";
 
 const router: IRouter = Router();
 
@@ -479,81 +480,14 @@ router.post("/admin/waitlist/bulk", async (req: Request, res: Response) => {
 router.post("/admin/send-weekly-nudge", async (req: Request, res: Response) => {
   if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
   try {
-    const sixDaysAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
-    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-    const pendingMembers = await db
-      .select()
-      .from(waitlistTable)
-      .where(
-        and(
-          eq(waitlistTable.status, "pending"),
-          isNotNull(waitlistTable.referralCode),
-          sql`(${waitlistTable.lastNudgeSentAt} IS NULL OR ${waitlistTable.lastNudgeSentAt} < ${sixDaysAgo})`,
-        ),
-      )
-      .orderBy(waitlistTable.createdAt);
-
-    const [{ newSignupsThisWeek }] = await db
-      .select({ newSignupsThisWeek: count() })
-      .from(waitlistTable)
-      .where(gte(waitlistTable.createdAt, oneWeekAgo));
-
-    const [{ total: totalPending }] = await db
-      .select({ total: count() })
-      .from(waitlistTable)
-      .where(eq(waitlistTable.status, "pending"));
-
-    let sent = 0;
-    let skipped = 0;
-    const errors: string[] = [];
-
-    for (const member of pendingMembers) {
-      if (!member.email || !member.referralCode) {
-        skipped++;
-        continue;
-      }
-
-      const [{ position }] = await db
-        .select({ position: count() })
-        .from(waitlistTable)
-        .where(
-          and(
-            eq(waitlistTable.status, "pending"),
-            lt(waitlistTable.createdAt, member.createdAt),
-          ),
-        );
-
-      const memberPosition = Number(position) + 1;
-
-      try {
-        await sendReferralNudge(
-          member.email,
-          member.firstName ?? "",
-          memberPosition,
-          member.referralCode,
-          Number(newSignupsThisWeek),
-        );
-
-        await db
-          .update(waitlistTable)
-          .set({ lastNudgeSentAt: new Date() })
-          .where(eq(waitlistTable.id, member.id));
-
-        sent++;
-      } catch (err) {
-        errors.push(member.email);
-        req.log.error({ err, email: member.email }, "Failed to send nudge email");
-      }
-    }
-
+    const result = await runWeeklyNudge();
     res.json({
       success: true,
-      sent,
-      skipped,
-      totalPending: Number(totalPending),
-      newSignupsThisWeek: Number(newSignupsThisWeek),
-      errors: errors.length > 0 ? errors : undefined,
+      sent: result.sent,
+      skipped: result.skipped,
+      totalPending: result.totalPending,
+      newSignupsThisWeek: result.newSignupsThisWeek,
+      errors: result.errors.length > 0 ? result.errors : undefined,
     });
   } catch (err) {
     req.log.error({ err }, "Failed to send weekly nudge");
@@ -572,59 +506,15 @@ router.get("/admin/cron-weekly-nudge", async (req: Request, res: Response) => {
     return;
   }
   try {
-    const sixDaysAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
-    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-    const pendingMembers = await db
-      .select()
-      .from(waitlistTable)
-      .where(
-        and(
-          eq(waitlistTable.status, "pending"),
-          isNotNull(waitlistTable.referralCode),
-          sql`(${waitlistTable.lastNudgeSentAt} IS NULL OR ${waitlistTable.lastNudgeSentAt} < ${sixDaysAgo})`,
-        ),
-      )
-      .orderBy(waitlistTable.createdAt);
-
-    const [{ newSignupsThisWeek }] = await db
-      .select({ newSignupsThisWeek: count() })
-      .from(waitlistTable)
-      .where(gte(waitlistTable.createdAt, oneWeekAgo));
-
-    const [{ total: totalPending }] = await db
-      .select({ total: count() })
-      .from(waitlistTable)
-      .where(eq(waitlistTable.status, "pending"));
-
-    let sent = 0;
-    let skipped = 0;
-    const errors: string[] = [];
-
-    for (const member of pendingMembers) {
-      if (!member.email || !member.referralCode) { skipped++; continue; }
-
-      const [{ position }] = await db
-        .select({ position: count() })
-        .from(waitlistTable)
-        .where(and(eq(waitlistTable.status, "pending"), lt(waitlistTable.createdAt, member.createdAt)));
-
-      try {
-        await sendReferralNudge(
-          member.email,
-          member.firstName ?? "",
-          Number(position) + 1,
-          member.referralCode,
-          Number(newSignupsThisWeek),
-        );
-        await db.update(waitlistTable).set({ lastNudgeSentAt: new Date() }).where(eq(waitlistTable.id, member.id));
-        sent++;
-      } catch (err) {
-        errors.push(member.email);
-      }
-    }
-
-    res.json({ success: true, sent, skipped, totalPending: Number(totalPending), errors: errors.length > 0 ? errors : undefined });
+    const result = await runWeeklyNudge();
+    res.json({
+      success: true,
+      sent: result.sent,
+      skipped: result.skipped,
+      totalPending: result.totalPending,
+      newSignupsThisWeek: result.newSignupsThisWeek,
+      errors: result.errors.length > 0 ? result.errors : undefined,
+    });
   } catch (err) {
     res.status(500).json({ error: "Cron nudge failed" });
   }

@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { getStripeSync } from "./stripeClient";
+import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 
 const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);
@@ -68,4 +69,6 @@ app.listen(port, (err) => {
   logger.info({ port }, "Server listening");
 
   initStripe().catch((err) => logger.error({ err }, "Background Stripe init failed"));
+
+  startNudgeCronScheduler();
 });
