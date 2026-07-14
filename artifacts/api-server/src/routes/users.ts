@@ -531,4 +531,20 @@ router.post("/users/avatar", avatarUpload.single("avatar"), async (req: any, res
   }
 });
 
+// DELETE /users/me — permanently delete the authenticated user's account
+router.delete("/users/me", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required." });
+    return;
+  }
+  const userId = req.user.id;
+  try {
+    await db.delete(usersTable).where(eq(usersTable.id, userId));
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "DELETE /api/users/me error");
+    res.status(500).json({ error: "Failed to delete account. Please try again." });
+  }
+});
+
 export default router;
