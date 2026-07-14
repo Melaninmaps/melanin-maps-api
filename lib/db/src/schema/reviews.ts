@@ -29,10 +29,21 @@ export const reviewsTable = pgTable("reviews", {
   // ── Photos ──────────────────────────────────────────────────────────────────
   photos: text("photos").array(),
   // ── Moderation & lifecycle ────────────────────────────────────────────────
-  // posted        = live immediately (no video, not all-5★)
-  // auto_approved = all 5★, no video — posted immediately, owner alerted
-  // pending_video = has a video URL — held for admin video approval
+  // posted                = live immediately
+  // auto_approved         = all 5★, no video — posted immediately, owner alerted
+  // pending_video         = has a video URL — held for admin video approval
+  // pending_verification  = high-risk review for minority-owned business — held for human verification
+  // rejected              = hidden from public view
   status: varchar("status", { length: 30 }).notNull().default("posted"),
+  // ── Risk scoring ──────────────────────────────────────────────────────────
+  // riskScore         = 0–100 composite risk score
+  // moderationLevel   = 'low' | 'medium' | 'high'
+  // moderationReasons = human-readable reasons the review was flagged
+  // verificationBadge = badge to display once approved: 'safety_report_verified' | 'verified_experience'
+  riskScore: integer("risk_score").notNull().default(0),
+  moderationLevel: varchar("moderation_level", { length: 20 }).notNull().default("low"),
+  moderationReasons: text("moderation_reasons").array(),
+  verificationBadge: varchar("verification_badge", { length: 40 }),
   // ── Owner public response ─────────────────────────────────────────────────
   ownerResponse: text("owner_response"),
   ownerRespondedAt: timestamp("owner_responded_at", { withTimezone: true }),

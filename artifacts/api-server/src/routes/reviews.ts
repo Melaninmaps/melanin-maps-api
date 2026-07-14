@@ -7,6 +7,7 @@ import { sendPushToUser, sendPushToUsersWithSavedBusiness, sendThreeStarAlert, s
 import { reviewLimiter } from "../middleware/rateLimiter";
 import { requireTrust } from "../middleware/requireTrust";
 import { checkContent, redactForLog } from "../lib/contentFilter";
+import { scoreReview, type RiskResult } from "../lib/reviewRiskScoring";
 import { objectStorageClient } from "../lib/objectStorage";
 
 const reviewPhotoUpload = multer({
@@ -160,6 +161,7 @@ router.get("/reviews", async (req: Request, res: Response) => {
         eq(reviewsTable.businessId, businessId),
         ne(reviewsTable.status, "pending_video"),
         ne(reviewsTable.status, "pending_review"),
+        ne(reviewsTable.status, "pending_verification"),
         ne(reviewsTable.status, "rejected"),
         gte(reviewsTable.createdAt, sixMonthsAgo),
       ))
@@ -264,12 +266,39 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
   const hasVideo = typeof videoUrl === "string" && videoUrl.trim().length > 0;
   const isNegative = ratingNum <= 3;
 
+  // ── Risk scoring (minority-owned businesses only) ────────────────────────
+  // For non-minority businesses: always post immediately — delaying a safety
+  // report about a non-minority-owned business is itself a safety hazard.
+  let riskResult: RiskResult = { score: 0, level: "low", reasons: [], verificationBadge: null };
+  if (isMinorityOwned && typeof text === "string" && text.trim().length > 0) {
+    const [userRow] = await db
+      .select({ createdAt: usersTable.createdAt })
+      .from(usersTable)
+      .where(eq(usersTable.id, req.user.id))
+      .limit(1);
+    const [countRow] = await db
+      .select({ cnt: sql<string>`COUNT(*)` })
+      .from(reviewsTable)
+      .where(eq(reviewsTable.userId, req.user.id));
+    const accountAgeDays = userRow?.createdAt
+      ? (Date.now() - new Date(userRow.createdAt).getTime()) / 86_400_000
+      : 0;
+    const priorReviewCount = parseInt(countRow?.cnt ?? "0", 10);
+    riskResult = scoreReview({ text: text.trim(), rating: ratingNum, accountAgeDays, priorReviewCount });
+  }
+
   function resolveStatus(): string {
     if (hasVideo) return "pending_video";
-    if (!isMinorityOwned && isNegative) return "pending_review";
+    // Non-minority-owned: always publish immediately (safety hazard to delay)
+    if (!isMinorityOwned) return isNegative ? "pending_review" : (ratingNum === 5 ? "auto_approved" : "posted");
+    // Minority-owned: apply risk-based gating
+    if (riskResult.level === "high") return "pending_verification";
     if (ratingNum === 5) return "auto_approved";
     return "posted";
   }
+
+  const resolvedStatus = resolveStatus();
+  const isPendingVerification = resolvedStatus === "pending_verification";
 
   try {
     const [review] = await db
@@ -288,7 +317,11 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
         socialHandle: cleanHandle,
         socialPlatform: cleanHandle ? cleanPlatform : null,
         videoUrl: hasVideo ? (videoUrl as string).trim() : null,
-        status: resolveStatus(),
+        status: resolvedStatus,
+        riskScore: riskResult.score,
+        moderationLevel: riskResult.level,
+        moderationReasons: riskResult.reasons.length > 0 ? riskResult.reasons : null,
+        verificationBadge: riskResult.verificationBadge ?? null,
         nonMinorityOwned: nonMinorityOwned === true,
         recommendsAsEmployer: nonMinorityOwned === true && recommendsAsEmployer === true,
         nowHiringUrl: nonMinorityOwned === true && recommendsAsEmployer === true && typeof nowHiringUrl === "string" && nowHiringUrl.trim() ? nowHiringUrl.trim() : null,
@@ -404,16 +437,25 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
       }
     }
 
-    if (biz?.submittedById && biz.submittedById !== req.user.id) {
-      const ownerTitle = ratingNum === 5 ? "🌟 Perfect 5-Star Review!" : "New Review ⭐";
-      const ownerBody = ratingNum === 5
-        ? `Your business received a perfect 5-star review on Mapping With Melanin!`
-        : `Someone left a ${ratingNum}-star review for ${biz.name ?? "your business"}.`;
-      sendPushToUser(biz.submittedById, { title: ownerTitle, body: ownerBody, data: { screen: "business", id: businessId } }).catch(() => {});
+    // Skip push notifications for held reviews — the review isn't live yet
+    if (!isPendingVerification) {
+      if (biz?.submittedById && biz.submittedById !== req.user.id) {
+        const ownerTitle = ratingNum === 5 ? "New 5-Star Review!" : "New Review";
+        const ownerBody = ratingNum === 5
+          ? `Your business received a perfect 5-star review on Mapping With Melanin!`
+          : `Someone left a ${ratingNum}-star review for ${biz.name ?? "your business"}.`;
+        sendPushToUser(biz.submittedById, { title: ownerTitle, body: ownerBody, data: { screen: "business", id: businessId } }).catch(() => {});
+      }
+      sendPushToUsersWithSavedBusiness(businessId as string, { title: "New Review", body: `A new review was posted for ${biz?.name ?? "a saved business"}.`, data: { screen: "business", id: businessId } }).catch(() => {});
     }
-    sendPushToUsersWithSavedBusiness(businessId as string, { title: "New Review", body: `A new review was posted for ${biz?.name ?? "a saved business"}.`, data: { screen: "business", id: businessId } }).catch(() => {});
 
-    res.status(201).json({ review, pointsEarned: POINTS_VALUES.review, invite });
+    res.status(201).json({
+      review,
+      pointsEarned: POINTS_VALUES.review,
+      invite,
+      pendingVerification: isPendingVerification,
+      moderationLevel: riskResult.level,
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to submit review");
     res.status(500).json({ error: "Failed to submit review" });

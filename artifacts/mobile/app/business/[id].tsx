@@ -229,6 +229,7 @@ export default function BusinessDetailScreen() {
     id: string; author: string; initials: string; color: string;
     rating: number; text: string; timeAgo: string; wouldReturnAlone?: boolean; videoUrl?: string; nowHiringUrl?: string; communitySupport?: number;
     ownerResponse?: string | null; ownerRespondedAt?: string | null; isOwnReview?: boolean;
+    verificationBadge?: string | null; moderationLevel?: string | null;
   }> = [
     ...apiReviews
       .filter((r) => Date.now() - new Date(r.createdAt).getTime() < SIX_MONTHS_MS)
@@ -247,6 +248,8 @@ export default function BusinessDetailScreen() {
         ownerResponse: r.ownerResponse ?? null,
         ownerRespondedAt: r.ownerRespondedAt ?? null,
         isOwnReview: (r as any).isOwnReview ?? false,
+        verificationBadge: (r as any).verificationBadge ?? null,
+        moderationLevel: (r as any).moderationLevel ?? null,
       })),
     ...(business.reviews ?? []),
   ];
@@ -966,6 +969,19 @@ export default function BusinessDetailScreen() {
                     <Text style={[styles.supportPillText, { color: colors.primary }]}>
                       🤎 {COMMUNITY_SUPPORT_LABELS[rev.communitySupport]}
                     </Text>
+                  </View>
+                )}
+                {/* Verification badges */}
+                {rev.verificationBadge === "safety_report_verified" && (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 8, backgroundColor: "#CA922B10", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, alignSelf: "flex-start", borderWidth: 1, borderColor: "#CA922B25" }}>
+                    <Feather name="shield" size={11} color="#CA922B" />
+                    <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: "#CA922B" }}>Safety Report Verified</Text>
+                  </View>
+                )}
+                {rev.verificationBadge === "verified_experience" && (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 8, backgroundColor: colors.primary + "10", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, alignSelf: "flex-start", borderWidth: 1, borderColor: colors.primary + "25" }}>
+                    <Feather name="check-circle" size={11} color={colors.primary} />
+                    <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: colors.primary }}>Verified Experience</Text>
                   </View>
                 )}
                 {rev.text ? (

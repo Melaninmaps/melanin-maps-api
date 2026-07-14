@@ -123,6 +123,7 @@ export default function WriteReviewScreen() {
   const [comments, setComments] = useState("");
   const [videoLink, setVideoLink] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [pendingVerification, setPendingVerification] = useState(false);
 
   const score = computeScore(safetyRating, returnAloneRating, recommendRating);
 
@@ -185,6 +186,10 @@ export default function WriteReviewScreen() {
       }
 
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const responseData = await res.json().catch(() => ({})) as { pendingVerification?: boolean };
+      if (responseData.pendingVerification) {
+        setPendingVerification(true);
+      }
       setSubmitted(true);
     } catch {
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -200,6 +205,83 @@ export default function WriteReviewScreen() {
   };
 
   if (submitted) {
+    if (pendingVerification) {
+      return (
+        <View style={[styles.root, { backgroundColor: colors.background }]}>
+          <ScrollView contentContainerStyle={[styles.doneWrap, { paddingTop: topPad, paddingHorizontal: 24 }]} showsVerticalScrollIndicator={false}>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: "#CA922B20", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+              <Feather name="shield" size={32} color="#CA922B" />
+            </View>
+            <Text style={[styles.doneTitle, { color: colors.foreground, textAlign: "center" }]}>Review Under Verification</Text>
+            <Text style={[styles.doneSub, { color: colors.mutedForeground, textAlign: "center", marginBottom: 24 }]}>
+              Thank you for sharing your experience with the community.
+            </Text>
+
+            {/* Main verification notice */}
+            <View style={{ backgroundColor: "#CA922B10", borderWidth: 1, borderColor: "#CA922B30", borderRadius: 14, padding: 18, marginBottom: 16 }}>
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 14, color: "#CA922B", marginBottom: 10 }}>
+                Some reviews require additional verification before becoming visible to the community.
+              </Text>
+              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 13, color: colors.mutedForeground, marginBottom: 12 }}>
+                This process helps us:
+              </Text>
+              {[
+                "Confirm the review comes from a real experience",
+                "Reduce fraudulent or abusive submissions",
+                "Protect both community members and businesses",
+                "Maintain a trusted platform",
+              ].map((item, i) => (
+                <View key={i} style={{ flexDirection: "row", gap: 10, marginBottom: 6 }}>
+                  <Feather name="check" size={13} color="#CA922B" style={{ marginTop: 2 }} />
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.foreground, flex: 1, lineHeight: 19 }}>{item}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Scope notice */}
+            <View style={{ backgroundColor: colors.secondary, borderRadius: 12, padding: 16, marginBottom: 16 }}>
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, lineHeight: 20 }}>
+                Some reviews may require additional verification before publication. This can include reviews reporting{" "}
+                <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>
+                  safety concerns, discrimination, illegal activity, harassment, or other significant allegations
+                </Text>
+                , as well as reviews identified by our systems for unusual activity or authenticity checks.
+              </Text>
+            </View>
+
+            {/* Neutrality note */}
+            <View style={{ flexDirection: "row", gap: 10, paddingHorizontal: 4, marginBottom: 28 }}>
+              <Feather name="info" size={14} color={colors.mutedForeground} style={{ marginTop: 2 }} />
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, flex: 1, lineHeight: 18 }}>
+                Verification does not guarantee a review will be approved or rejected — it simply helps ensure the information is authentic.
+              </Text>
+            </View>
+
+            {/* Timeline expectation */}
+            <View style={{ backgroundColor: colors.primary + "0D", borderWidth: 1, borderColor: colors.primary + "25", borderRadius: 10, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 28, flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Feather name="clock" size={14} color={colors.primary} />
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, flex: 1, lineHeight: 18 }}>
+                Most reviews are published immediately. Reviews requiring additional verification are typically reviewed within{" "}
+                <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.primary }}>24–48 hours</Text>.
+              </Text>
+            </View>
+
+            <View style={[styles.doneStat, { backgroundColor: colors.secondary, marginBottom: 20 }]}>
+              <Text style={[styles.doneStatNum, { color: colors.primary }]}>+20</Text>
+              <Text style={[styles.doneStatLabel, { color: colors.mutedForeground }]}>Community Points earned</Text>
+            </View>
+
+            <TouchableOpacity activeOpacity={0.85}
+              style={[styles.doneBtn, { backgroundColor: colors.primary }]}
+              onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}
+            >
+              <Text style={[styles.doneBtnTxt, { color: colors.primaryForeground }]}>Back to Community</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      );
+    }
+
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <View style={[styles.doneWrap, { paddingTop: topPad }]}>
