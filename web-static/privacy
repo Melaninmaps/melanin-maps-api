@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Mapping With Melanin™</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0a0a; color: #f5f0eb; line-height: 1.6; padding: 0 16px 64px; }
+    header { max-width: 720px; margin: 0 auto; padding: 48px 0 32px; border-bottom: 1px solid #2a2a2a; }
+    header h1 { font-size: 2rem; font-weight: 700; color: #CA922B; margin-bottom: 8px; }
+    header p { color: #888; font-size: 0.875rem; }
+    main { max-width: 720px; margin: 0 auto; }
+    section { margin-top: 40px; padding-bottom: 32px; border-bottom: 1px solid #1e1e1e; }
+    section:last-child { border-bottom: none; }
+    h2 { font-size: 0.8rem; font-weight: 700; color: #CA922B; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .item { margin-bottom: 20px; }
+    .item-label { font-weight: 600; color: #f5f0eb; margin-bottom: 4px; font-size: 0.9375rem; }
+    .item-body { color: #aaa; font-size: 0.875rem; }
+    footer { max-width: 720px; margin: 48px auto 0; color: #555; font-size: 0.8125rem; }
+    a { color: #CA922B; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Privacy Policy</h1>
+    <p>Mapping With Melanin™ &mdash; Last updated July 2025</p>
+  </header>
+  <main>
+    <section>
+      <h2>What We Collect</h2>
+      <div class="item"><div class="item-label">Account Information</div><div class="item-body">When you sign up, we collect your name, email address, and a hashed password. If you sign in via Google or Apple, we receive your name and email from those providers — we never store your Google or Apple password.</div></div>
+      <div class="item"><div class="item-label">Profile Data</div><div class="item-body">Information you voluntarily add to your profile: photo, bio, city, and preferences. This data is optional and can be edited or deleted at any time.</div></div>
+      <div class="item"><div class="item-label">Content You Create</div><div class="item-body">Reviews, safety survey responses, community posts, and event RSVPs you submit through the Platform. Safety surveys are stored anonymously — no individual response is ever publicly attributed to you.</div></div>
+      <div class="item"><div class="item-label">Usage Data</div><div class="item-body">How you interact with the app: screens visited, searches performed, businesses viewed. This data helps us improve the Platform.</div></div>
+    </section>
+    <section>
+      <h2>How We Use Your Data</h2>
+      <div class="item"><div class="item-label">Providing the Service</div><div class="item-body">Your account data is used to authenticate you, personalize your experience, and save your preferences across sessions.</div></div>
+      <div class="item"><div class="item-label">Community Safety</div><div class="item-body">Aggregated and anonymized safety survey data is used to calculate neighborhood safety scores. Individual submissions are never publicly displayed.</div></div>
+      <div class="item"><div class="item-label">Communications</div><div class="item-body">We may send transactional emails and — with your consent — community newsletters. You can manage email preferences in Settings.</div></div>
+      <div class="item"><div class="item-label">Platform Improvement</div><div class="item-body">Aggregated usage data helps us identify popular features and fix bugs. We do not use individual behavioral data for advertising or profiling.</div></div>
+    </section>
+    <section>
+      <h2>Location Data</h2>
+      <div class="item"><div class="item-label">When We Access Location</div><div class="item-body">Location is accessed only when you use map-based features and only when the app is in the foreground. We never access your location in the background.</div></div>
+      <div class="item"><div class="item-label">What We Store</div><div class="item-body">We do not store your GPS coordinates. Location is used in real time to filter results and discarded immediately after.</div></div>
+      <div class="item"><div class="item-label">Your Control</div><div class="item-body">You can use the full Platform without enabling location services. Revoke permission at any time in your device settings.</div></div>
+    </section>
+    <section>
+      <h2>Sharing &amp; Disclosure</h2>
+      <div class="item"><div class="item-label">We Do Not Sell Your Data</div><div class="item-body">Mapping With Melanin™ does not sell, rent, or trade your personal information to third parties for marketing or advertising purposes, ever.</div></div>
+      <div class="item"><div class="item-label">Service Providers</div><div class="item-body">We share limited data with trusted service providers who help us operate the Platform. They are contractually prohibited from using your data for any other purpose.</div></div>
+      <div class="item"><div class="item-label">Legal Requirements</div><div class="item-body">We may disclose data if required by law, court order, or to protect the safety of our users or the public.</div></div>
+      <div class="item"><div class="item-label">Business Transfers</div><div class="item-body">If Mapping With Melanin™ is acquired or merges with another company, your data may be transferred. We will notify you before your data is subject to a different privacy policy.</div></div>
+    </section>
+    <section>
+      <h2>Your Rights</h2>
+      <div class="item"><div class="item-label">Access &amp; Correction</div><div class="item-body">You may view and edit your account information at any time through your Profile and Settings screens.</div></div>
+      <div class="item"><div class="item-label">Deletion</div><div class="item-body">You may delete your account and all associated personal data at any time via Settings → Privacy &amp; Safety → Delete Account.</div></div>
+      <div class="item"><div class="item-label">Opt-Out</div><div class="item-body">You may opt out of analytics tracking and marketing emails at any time in Settings → Privacy &amp; Safety.</div></div>
+    </section>
+    <section>
+      <h2>Security</h2>
+      <div class="item"><div class="item-label">How We Protect Your Data</div><div class="item-body">We use industry-standard encryption (TLS in transit, AES-256 at rest). Auth tokens are stored in your device's Secure Enclave (iOS) or Keystore (Android).</div></div>
+      <div class="item"><div class="item-label">Breach Notification</div><div class="item-body">In the event of a data breach affecting your personal information, we will notify you within 72 hours of discovery.</div></div>
+    </section>
+  </main>
+  <footer>
+    <p>Questions? <a href="mailto:hello@mappingwithmelanin.com">hello@mappingwithmelanin.com</a></p>
+  </footer>
+</body>
+</html>
