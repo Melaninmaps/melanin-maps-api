@@ -325,6 +325,7 @@ export default function Admin() {
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [selectAllFiltered, setSelectAllFiltered] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+  const [secondsSinceUpdate, setSecondsSinceUpdate] = useState(0);
   const [nudgeSending, setNudgeSending] = useState(false);
   const [nudgeResult, setNudgeResult] = useState<string | null>(null);
   const [betaBlastSending, setBetaBlastSending] = useState(false);
@@ -388,7 +389,7 @@ export default function Admin() {
     setMetricsLoading(true);
     return fetch(`${BASE}api/admin/metrics`, { credentials: "include" })
       .then((r) => r.json())
-      .then((data) => setMetrics(data))
+      .then((data) => { setMetrics(data); setLastRefreshed(new Date()); })
       .finally(() => setMetricsLoading(false));
   }, []);
 
@@ -445,16 +446,37 @@ export default function Admin() {
   }, []);
 
   const refreshAll = useCallback(() => {
-    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses(), loadMembers(), loadReviews(), loadReports(), loadChallengeApps(), loadCategoryWaitlist(), loadPendingGlobalRecs()]);
-  }, [loadWaitlist, loadUsers, loadBusinesses, loadMembers, loadReviews, loadReports, loadChallengeApps, loadCategoryWaitlist, loadPendingGlobalRecs]);
+    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses(), loadMembers(), loadReviews(), loadReports(), loadChallengeApps(), loadCategoryWaitlist(), loadPendingGlobalRecs(), loadMetrics()]);
+  }, [loadWaitlist, loadUsers, loadBusinesses, loadMembers, loadReviews, loadReports, loadChallengeApps, loadCategoryWaitlist, loadPendingGlobalRecs, loadMetrics]);
 
   useEffect(() => {
     if (!isAdmin) return;
     setLoading(true);
     refreshAll().finally(() => setLoading(false));
 
-    refreshTimer.current = setInterval(() => { refreshAll(); }, 2 * 60 * 1000);
-    return () => { if (refreshTimer.current) clearInterval(refreshTimer.current); };
+    const startTimer = () => {
+      if (refreshTimer.current) clearInterval(refreshTimer.current);
+      refreshTimer.current = setInterval(() => {
+        if (!document.hidden) refreshAll();
+      }, 60 * 1000);
+    };
+
+    startTimer();
+
+    const handleVisibility = () => {
+      if (!document.hidden) {
+        refreshAll();
+        startTimer();
+      } else {
+        if (refreshTimer.current) clearInterval(refreshTimer.current);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      if (refreshTimer.current) clearInterval(refreshTimer.current);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [isAdmin, refreshAll]);
 
   const handleStatusFilter = (newStatus: string) => {
@@ -470,8 +492,13 @@ export default function Admin() {
   useEffect(() => {
     if (!isAdmin) return;
     if (tab === "leaderboard" && leaderboard.length === 0) loadLeaderboard();
-    if (tab === "metrics" && !metrics) loadMetrics();
-  }, [tab, isAdmin, leaderboard.length, metrics, loadLeaderboard, loadMetrics]);
+  }, [tab, isAdmin, leaderboard.length, loadLeaderboard]);
+
+  useEffect(() => {
+    setSecondsSinceUpdate(0);
+    const ticker = setInterval(() => setSecondsSinceUpdate(s => s + 1), 1000);
+    return () => clearInterval(ticker);
+  }, [lastRefreshed]);
 
   const updateWaitlist = async (id: string, status: string) => {
     setUpdating(id);
@@ -921,7 +948,11 @@ export default function Admin() {
           </div>
           <div className="flex items-center gap-3 pr-2">
             <span className="text-[#3A1F0E]/30 text-xs">
-              Updated {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              {secondsSinceUpdate < 5
+                ? "Just updated"
+                : secondsSinceUpdate < 60
+                ? `Updated ${secondsSinceUpdate}s ago`
+                : `Updated ${Math.floor(secondsSinceUpdate / 60)}m ago`}
             </span>
             <button
               onClick={() => refreshAll()}
