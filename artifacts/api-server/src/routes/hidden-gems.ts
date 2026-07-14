@@ -1,6 +1,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, businessesTable, hiddenGemNominationsTable } from "@workspace/db";
 import { eq, sql, and, gt, isNotNull } from "drizzle-orm";
+import { getUserTier } from "../middleware/requireMembership";
+
+const PAID_TIERS = new Set(["navigator", "trailblazer", "community_builder", "legacy_member"]);
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
 function isAdmin(req: Request): boolean {
@@ -194,9 +197,21 @@ router.get("/:businessId/status", async (req: Request, res: Response) => {
   }
 });
 
-// ── GET /hidden-gems (list active gems by city/category) ─────────────────────
+// ── GET /hidden-gems (list active gems by city/category) — paid members only ──
 
 router.get("/", async (req: Request, res: Response) => {
+  // Membership gate: any authenticated paid tier can view the list; anyone can nominate
+  if (!req.user?.id) {
+    res.json({ locked: true, lockedReason: "auth_required", gems: [] });
+    return;
+  }
+
+  const tier = await getUserTier(req.user.id);
+  if (!PAID_TIERS.has(tier)) {
+    res.json({ locked: true, lockedReason: "paid_required", gems: [] });
+    return;
+  }
+
   const { city, state, category, limit: limitStr } = req.query as Record<string, string>;
   const limit = Math.min(parseInt(limitStr ?? "12", 10), 50);
   try {
@@ -242,7 +257,7 @@ router.get("/", async (req: Request, res: Response) => {
       .orderBy(sql`${businessesTable.hiddenGemNominations} DESC`)
       .limit(limit);
 
-    res.json({ gems });
+    res.json({ locked: false, gems });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch Hidden Gems");
     res.status(500).json({ error: "Failed to fetch Hidden Gems" });

@@ -76,6 +76,7 @@ export default function DiscoverScreen() {
   const [twinRecs, setTwinRecs] = useState<Array<{ business: { id: string; name: string; category: string; city: string; state: string; imageUrl: string | null; confidenceScore: number; verified: boolean; blackOwned: boolean; priceRange: string | null; description: string }; twinCount: number; reason: string; twinCities: string[] }>>([]);
   const [twinRecsLoading, setTwinRecsLoading] = useState(false);
   const [spotlights, setSpotlights] = useState<Array<{ id: string; name: string; category: string; city: string; state: string; rating: string; imageUrl: string | null; hiddenGemLabel: string; hiddenGemTagline: string | null; hiddenGemNominations: number; verified: boolean; blackOwned: boolean; priceRange: string | null; description: string }>>([]);
+  const [gemsLocked, setGemsLocked] = useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -100,15 +101,25 @@ export default function DiscoverScreen() {
   React.useEffect(() => {
     void (async () => {
       try {
+        const { getItemAsync } = await import("expo-secure-store");
+        const token = await getItemAsync("auth_session_token");
         const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-        const res = await fetch(`${base}/api/hidden-gems?limit=10`);
+        const res = await fetch(`${base}/api/hidden-gems?limit=10`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         if (res.ok) {
-          const data = await res.json() as { gems: typeof spotlights };
-          setSpotlights(data.gems ?? []);
+          const data = await res.json() as { locked?: boolean; gems: typeof spotlights };
+          if (data.locked) {
+            setGemsLocked(true);
+            setSpotlights([]);
+          } else {
+            setGemsLocked(false);
+            setSpotlights(data.gems ?? []);
+          }
         }
       } catch {}
     })();
-  }, []);
+  }, [user?.id]);
 
   // When saved preferences load, auto-apply ownership types if user hasn't set a filter yet
   React.useEffect(() => {
@@ -559,39 +570,66 @@ export default function DiscoverScreen() {
               </View>
             )}
 
-            {/* Community Spotlights — active Hidden Gems */}
-            {spotlights.length > 0 && (
+            {/* Community Spotlights — active Hidden Gems (paid members only) */}
+            {(spotlights.length > 0 || gemsLocked) && (
               <View style={styles.section}>
                 <SectionHeader
                   title="Community Spotlights"
-                  subtitle="Places the community keeps nominating"
+                  subtitle={gemsLocked ? "Places the community keeps nominating" : "Places the community keeps nominating"}
                 />
-                <FlatList
-                  keyboardDismissMode="on-drag"
-                  horizontal
-                  data={spotlights}
-                  keyExtractor={(item) => `gem-${item.id}`}
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 12, paddingHorizontal: 20 }}
-                  renderItem={({ item }) => (
-                    <View style={{ width: 220 }}>
-                      <BusinessCard
-                        business={item as any}
-                        onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })}
-                        isSaved={isSaved(item.id)}
-                        onToggleSave={() => toggleSave(item.id)}
-                        horizontal
-                      />
-                      <View style={[styles.twinRecBadge, { borderColor: "#CA922B25", backgroundColor: "#CA922B0A" }]}>
-                        <Feather name="star" size={10} color="#CA922B" />
-                        <Text style={[styles.twinRecBadgeText, { color: "#CA922B" }]}>
-                          {item.hiddenGemLabel}
-                          {item.hiddenGemNominations > 0 ? ` · ${item.hiddenGemNominations} nominations` : ""}
+                {gemsLocked ? (
+                  <TouchableOpacity
+                    onPress={() => router.push("/membership")}
+                    activeOpacity={0.85}
+                    style={[styles.gemsLockedCard, { backgroundColor: colors.card, borderColor: "#CA922B30" }]}
+                  >
+                    <View style={[styles.gemsLockedIcon, { backgroundColor: "#CA922B15" }]}>
+                      <Feather name="lock" size={22} color="#CA922B" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.gemsLockedTitle, { color: colors.foreground }]}>
+                        Explorer+ exclusive
+                      </Text>
+                      <Text style={[styles.gemsLockedBody, { color: colors.mutedForeground }]}>
+                        Community Spotlights are curated by members who nominated the most deserving spots. Upgrade to see them.
+                      </Text>
+                      <View style={[styles.gemsLockedBadge, { backgroundColor: "#CA922B15" }]}>
+                        <Feather name="star" size={11} color="#CA922B" />
+                        <Text style={[styles.gemsLockedBadgeText, { color: "#CA922B" }]}>
+                          Unlock with Explorer membership
                         </Text>
+                        <Feather name="chevron-right" size={13} color="#CA922B" />
                       </View>
                     </View>
-                  )}
-                />
+                  </TouchableOpacity>
+                ) : (
+                  <FlatList
+                    keyboardDismissMode="on-drag"
+                    horizontal
+                    data={spotlights}
+                    keyExtractor={(item) => `gem-${item.id}`}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 12, paddingHorizontal: 20 }}
+                    renderItem={({ item }) => (
+                      <View style={{ width: 220 }}>
+                        <BusinessCard
+                          business={item as any}
+                          onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })}
+                          isSaved={isSaved(item.id)}
+                          onToggleSave={() => toggleSave(item.id)}
+                          horizontal
+                        />
+                        <View style={[styles.twinRecBadge, { borderColor: "#CA922B25", backgroundColor: "#CA922B0A" }]}>
+                          <Feather name="star" size={10} color="#CA922B" />
+                          <Text style={[styles.twinRecBadgeText, { color: "#CA922B" }]}>
+                            {item.hiddenGemLabel}
+                            {item.hiddenGemNominations > 0 ? ` · ${item.hiddenGemNominations} nominations` : ""}
+                          </Text>
+                        </View>
+                      </View>
+                    )}
+                  />
+                )}
               </View>
             )}
 
@@ -907,6 +945,47 @@ export default function DiscoverScreen() {
 const styles = StyleSheet.create({
   twinRecBadge: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingTop: 4 },
   twinRecBadgeText: { fontFamily: "Inter_400Regular", fontSize: 10, flex: 1 },
+  gemsLockedCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 14,
+    marginHorizontal: 20,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 16,
+  },
+  gemsLockedIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  gemsLockedTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 15,
+    marginBottom: 5,
+  },
+  gemsLockedBody: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 10,
+  },
+  gemsLockedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  gemsLockedBadgeText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
+  },
   container: { flex: 1 },
   header: { paddingBottom: 16 },
   headerTop: {
