@@ -6,15 +6,15 @@ description: Current app store submission state — Android and iOS build versio
 # Launch Version State (as of July 14, 2026)
 
 ## iOS
-- **buildNumber in app.json: 30**
-- Build 29: submitted to Apple (auth spinner fixes, keyboard dismissal, interactive map)
-- Build 30: privacy notice on business verification + phone verification screens — ready to build
+- **buildNumber 33 — IN REVIEW at App Store Connect as of July 14, 2026**
+- v1.1.2, awaiting Apple review (up to 48hrs); email confirmation when done
+- Build 33 includes: auth fixes, keyboard dismissal, interactive map, privacy notices, community-verified.tsx import fixes
 - **autoIncrement: true in eas.json — EAS queries Apple automatically before each build. No manual tracking needed.**
 - App Store Connect App ID: 6783773366, Apple Team: Y46Y4A5MMZ, Bundle ID: com.melaninmaps.app
 
 ## Android
-- **versionCode in app.json: 46** (next build will be 47 via autoIncrement)
-- versionCode 46 (1.1.2) live in Closed Testing as of July 12 — upload key issue fully resolved
+- **versionCode 47 — build in progress as of July 14, 2026**
+- versionCode 46 (1.1.2) was last successful Closed Testing build (July 12); upload key issue fully resolved
 - **autoIncrement: true in eas.json — EAS now queries Google automatically before each build. No manual tracking needed.**
 - Submit command: `eas submit --platform android --profile production`
 - Google Play service account key: `./google-service-account.json` (must exist in artifacts/mobile)
