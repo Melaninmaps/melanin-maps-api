@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   FlatList,
+  KeyboardAvoidingView,
   Linking,
   Modal,
   Platform,
@@ -1454,7 +1455,7 @@ export default function CommunityScreen() {
       </Modal>
 
       <Modal visible={showCompose} animationType="slide" transparent presentationStyle="overFullScreen">
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.modalOverlay}>
           <View style={[styles.composeSheet, { backgroundColor: colors.card, paddingBottom: bottomPad + 20 }]}>
             <View style={[styles.composeHeader, { borderBottomColor: colors.border }]}>
               <TouchableOpacity activeOpacity={0.85} onPress={() => setShowCompose(false)}>
@@ -1467,6 +1468,7 @@ export default function CommunityScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
 
             {/* Post type selector */}
             <View style={[styles.categoryRow, { borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: 10 }]}>
@@ -1836,6 +1838,8 @@ export default function CommunityScreen() {
               </ScrollView>
             )}
 
+            </ScrollView>
+
             <View style={styles.composeToolbar}>
               <TouchableOpacity
                 style={[styles.mentionBtn, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }]}
@@ -1888,7 +1892,7 @@ export default function CommunityScreen() {
               })()}
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
