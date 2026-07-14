@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import React, { useState, useRef, useEffect } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -12,6 +13,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -85,6 +87,7 @@ export default function PhoneLoginScreen() {
   };
 
   const handlePhoneSubmit = async () => {
+    Keyboard.dismiss();
     const trimmed = phone.trim();
     if (!trimmed) { setError("Please enter your phone number."); return; }
     await sendOtp(trimmed);
@@ -108,6 +111,7 @@ export default function PhoneLoginScreen() {
   };
 
   const handleOtpSubmit = async () => {
+    Keyboard.dismiss();
     const code = otp.join("");
     if (code.length < 6) { setError("Enter all 6 digits."); return; }
     setError("");
@@ -179,6 +183,7 @@ export default function PhoneLoginScreen() {
       style={[styles.root, { backgroundColor: c.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: topPad + 12, paddingBottom: bottomPad + 32 }]}
         showsVerticalScrollIndicator={false}
@@ -394,6 +399,7 @@ export default function PhoneLoginScreen() {
           Standard SMS rates may apply. Verification texts are sent via Twilio.
         </Text>
       </ScrollView>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }

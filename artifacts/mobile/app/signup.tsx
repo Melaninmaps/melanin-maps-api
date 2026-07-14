@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import React, { useState, useRef, useCallback } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,6 +14,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -195,6 +197,7 @@ export default function SignupScreen() {
   };
 
   const handleNext = () => {
+    Keyboard.dismiss();
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (!validateStep()) return;
     setStep((s) => s + 1);
@@ -207,6 +210,7 @@ export default function SignupScreen() {
   };
 
   const handleSubmit = async () => {
+    Keyboard.dismiss();
     if (!validateStep()) return;
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
@@ -258,6 +262,7 @@ export default function SignupScreen() {
       style={[styles.root, { backgroundColor: c.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: topPad + 12, paddingBottom: bottomPad + 40 }]}
         keyboardShouldPersistTaps="handled"
@@ -547,6 +552,7 @@ export default function SignupScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }

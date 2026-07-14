@@ -3,12 +3,15 @@ import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -59,6 +62,7 @@ export default function ResetPasswordScreen() {
   }
 
   const handleReset = async () => {
+    Keyboard.dismiss();
     setError("");
     if (newPw.length < 8) { setError("Password must be at least 8 characters."); return; }
     if (newPw !== confirmPw) { setError("Passwords don't match."); return; }
@@ -88,7 +92,13 @@ export default function ResetPasswordScreen() {
       style={[styles.root, { backgroundColor: colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <View style={[styles.inner, { paddingTop: topPad + 12, paddingBottom: bottomPad + 32 }]}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <ScrollView
+        style={styles.inner}
+        contentContainerStyle={{ paddingTop: topPad + 12, paddingBottom: bottomPad + 32 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.replace("/login")}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
@@ -185,7 +195,8 @@ export default function ResetPasswordScreen() {
             </View>
           </>
         )}
-      </View>
+      </ScrollView>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }

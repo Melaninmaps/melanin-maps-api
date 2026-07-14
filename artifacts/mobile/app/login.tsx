@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import React, { useState, useEffect } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -12,6 +13,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -142,6 +144,7 @@ export default function LoginScreen() {
   };
 
   const handleEmailSignIn = async () => {
+    Keyboard.dismiss();
     setError("");
     if (!emailVal.trim()) { setError("Please enter your email address."); return; }
     if (!passwordVal) { setError("Please enter your password."); return; }
@@ -168,6 +171,7 @@ export default function LoginScreen() {
       style={[styles.root, { backgroundColor: c.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: topPad + 12, paddingBottom: bottomPad + 32 }]}
         showsVerticalScrollIndicator={false}
@@ -320,7 +324,7 @@ export default function LoginScreen() {
                   <Feather name={showPw ? "eye-off" : "eye"} size={18} color={c.mutedForeground} />
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity activeOpacity={0.85} onPress={() => router.push("/forgot-password" as any)} style={styles.forgotRow}>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => { Keyboard.dismiss(); router.push("/forgot-password" as any); }} style={styles.forgotRow}>
                 <Text style={[styles.forgotTxt, { color: c.primary }]}>Forgot password?</Text>
               </TouchableOpacity>
             </View>
@@ -354,6 +358,7 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }
