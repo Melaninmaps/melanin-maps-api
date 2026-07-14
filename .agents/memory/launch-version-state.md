@@ -6,16 +6,15 @@ description: Current app store submission state — Android and iOS build versio
 # Launch Version State (as of July 14, 2026)
 
 ## iOS
-- **buildNumber in app.json: 27**
-- Build 26: "Waiting for Review" in App Store Connect (submitted July 14, 2026)
-- Build 27: pending — fixes Apple Sign-In nonce double-hash bug (login.tsx + signup.tsx)
+- **buildNumber in app.json: 29**
+- Build 28: in App Store review
+- Build 29: pending — auth spinner fixes, keyboard dismissal (all auth screens + app-wide on-drag), interactive map
 - **autoIncrement: true in eas.json — EAS queries Apple automatically before each build. No manual tracking needed.**
 - App Store Connect App ID: 6783773366, Apple Team: Y46Y4A5MMZ, Bundle ID: com.melaninmaps.app
-- Rejection history: Guideline 2.1a (API offline during review — now fixed); IAP violations fixed in build 26
 
 ## Android
 - **versionCode in app.json: 46**
-- Upload key mismatch pending Google reset (~48hr from July 12, 2026)
+- Upload key mismatch pending Google reset (~48hr from July 12, 2026) — do NOT build Android yet
 - **autoIncrement: true in eas.json — EAS now queries Google automatically before each build. No manual tracking needed.**
 - Submit command: `eas submit --platform android --profile production`
 - Google Play service account key: `./google-service-account.json` (must exist in artifacts/mobile)
