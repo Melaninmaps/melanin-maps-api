@@ -113,7 +113,7 @@ export default function About() {
           {/* Core values strip */}
           <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { emoji: "🤝", label: "Connection", sub: "Community over everything" },
+              { emoji: "🤝🏾", label: "Connection", sub: "Community over everything" },
               { emoji: "💰", label: "Economic Power", sub: "Keep dollars circulating" },
               { emoji: "🛡️", label: "Safety & Trust", sub: "Community-verified intel" },
               { emoji: "🌍", label: "Cultural Pride", sub: "Celebrate who we are" },
