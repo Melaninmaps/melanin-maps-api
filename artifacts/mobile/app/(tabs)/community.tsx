@@ -1089,6 +1089,8 @@ export default function CommunityScreen() {
             keyExtractor={(p) => p.id}
             style={{ flex: 1 }}
             contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 100, flexGrow: 1 }]}
+            keyboardDismissMode="on-drag"
+            keyboardShouldPersistTaps="handled"
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
             ListHeaderComponent={
               <>
