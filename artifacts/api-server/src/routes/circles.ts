@@ -7,14 +7,17 @@ import {
   circlePlans,
   circleVotes,
   circleAdventures,
+  circleNudges,
+  circleImportantDates,
   userPreferencesTable,
   savedPlacesTable,
   businessesTable,
   type CircleItinerary,
 } from "@workspace/db/schema";
-import { eq, and, inArray, desc, sql } from "drizzle-orm";
+import { eq, and, inArray, desc, sql, not } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { storage } from "../storage";
+import { sendPushToUser } from "../lib/pushNotifications";
 
 // Tier limits for circle creation
 const CIRCLE_LIMITS: Record<string, { maxCircles: number; maxPrivateMembers: number; maxCommunityMembers: number }> = {
@@ -691,6 +694,207 @@ router.post("/circles/:id/adventures", async (req: Request, res: Response) => {
   } catch (err) {
     (req as any).log.error({ err }, "POST /circles/:id/adventures error");
     res.status(500).json({ error: "Failed to log adventure" });
+  }
+});
+
+// ── NUDGES ──────────────────────────────────────────────────────────────────
+
+router.get("/circles/:id/nudges", async (req: Request, res: Response) => {
+  if (!authed(req, res)) return;
+  const circleId = parseInt(req.params.id as string);
+  if (isNaN(circleId)) { res.status(400).json({ error: "Invalid circle id" }); return; }
+  try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
+    const nudges = await db.select().from(circleNudges)
+      .where(eq(circleNudges.circleId, circleId))
+      .orderBy(desc(circleNudges.createdAt))
+      .limit(30);
+    res.json({ nudges });
+  } catch (err) {
+    (req as any).log.error({ err }, "GET /circles/:id/nudges error");
+    res.status(500).json({ error: "Failed to load nudges" });
+  }
+});
+
+router.post("/circles/:id/nudges", async (req: Request, res: Response) => {
+  if (!authed(req, res)) return;
+  const circleId = parseInt(req.params.id as string);
+  if (isNaN(circleId)) { res.status(400).json({ error: "Invalid circle id" }); return; }
+  const { nudgeType, targetMemberId, businessId, businessName, suggestionId, message, senderName } = req.body as Record<string, unknown>;
+  if (!nudgeType) { res.status(400).json({ error: "nudgeType is required" }); return; }
+  try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
+    const [nudge] = await db.insert(circleNudges).values({
+      circleId,
+      senderId: uid(req),
+      senderName: senderName ? String(senderName) : null,
+      targetMemberId: targetMemberId ? String(targetMemberId) : null,
+      nudgeType: String(nudgeType),
+      businessId: businessId ? String(businessId) : null,
+      businessName: businessName ? String(businessName) : null,
+      suggestionId: suggestionId ? Number(suggestionId) : null,
+      message: message ? String(message).trim() : null,
+      readByUserIds: [uid(req)],
+    }).returning();
+
+    // Push to targeted or all members (excluding sender)
+    const allMembers = await db.select({ userId: circleMembers.userId }).from(circleMembers)
+      .where(eq(circleMembers.circleId, circleId));
+    const targets = targetMemberId
+      ? allMembers.filter((m) => m.userId === String(targetMemberId) && m.userId !== uid(req))
+      : allMembers.filter((m) => m.userId !== uid(req));
+
+    const nudgeLabels: Record<string, string> = {
+      check_this_out: "Check This Out!",
+      dinner_vote: "Decide on Dinner",
+      lets_go: "Let's Go Now!",
+      plan_it: "Plan This",
+      just_a_thought: "Just a Thought",
+    };
+    const titleLabel = nudgeLabels[String(nudgeType)] ?? "New Nudge";
+    const pushBody = businessName
+      ? `${senderName ?? "A circle member"} nudged: ${String(businessName)}${message ? ` — ${String(message)}` : ""}`
+      : message ? String(message) : `${senderName ?? "A circle member"} sent a nudge to the circle`;
+
+    for (const member of targets) {
+      sendPushToUser(member.userId, { title: titleLabel, body: pushBody });
+    }
+
+    res.status(201).json({ nudge });
+  } catch (err) {
+    (req as any).log.error({ err }, "POST /circles/:id/nudges error");
+    res.status(500).json({ error: "Failed to send nudge" });
+  }
+});
+
+router.patch("/circles/:id/nudges/:nudgeId/read", async (req: Request, res: Response) => {
+  if (!authed(req, res)) return;
+  const circleId = parseInt(req.params.id as string);
+  const nudgeId = parseInt(req.params.nudgeId as string);
+  if (isNaN(circleId) || isNaN(nudgeId)) { res.status(400).json({ error: "Invalid id" }); return; }
+  try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
+    const [existing] = await db.select().from(circleNudges)
+      .where(and(eq(circleNudges.id, nudgeId), eq(circleNudges.circleId, circleId))).limit(1);
+    if (!existing) { res.status(404).json({ error: "Nudge not found" }); return; }
+    const alreadyRead = existing.readByUserIds?.includes(uid(req));
+    if (!alreadyRead) {
+      const updated = [...(existing.readByUserIds ?? []), uid(req)];
+      await db.update(circleNudges).set({ readByUserIds: updated }).where(eq(circleNudges.id, nudgeId));
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    (req as any).log.error({ err }, "PATCH /circles/:id/nudges/:nudgeId/read error");
+    res.status(500).json({ error: "Failed to mark read" });
+  }
+});
+
+// ── IMPORTANT DATES ───────────────────────────────────────────────────────────
+
+router.get("/circles/:id/dates", async (req: Request, res: Response) => {
+  if (!authed(req, res)) return;
+  const circleId = parseInt(req.params.id as string);
+  if (isNaN(circleId)) { res.status(400).json({ error: "Invalid circle id" }); return; }
+  try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
+    const dates = await db.select().from(circleImportantDates)
+      .where(eq(circleImportantDates.circleId, circleId))
+      .orderBy(circleImportantDates.targetDate);
+
+    // Generate contextual AI nudge messages for upcoming dates (template-based, no LLM cost)
+    const today = new Date();
+    const upcomingNudges = dates.flatMap((d) => {
+      const target = new Date(d.targetDate);
+      const msPerDay = 86400000;
+      let daysDiff = Math.round((target.getTime() - today.getTime()) / msPerDay);
+      if (d.isRecurring) {
+        // For recurring dates, find the next occurrence (same month/day this year or next)
+        const thisYear = new Date(today.getFullYear(), target.getMonth(), target.getDate());
+        const nextYear = new Date(today.getFullYear() + 1, target.getMonth(), target.getDate());
+        daysDiff = thisYear > today
+          ? Math.round((thisYear.getTime() - today.getTime()) / msPerDay)
+          : Math.round((nextYear.getTime() - today.getTime()) / msPerDay);
+      }
+      if (daysDiff < 0 || daysDiff > 60) return [];
+      const who = d.targetUserName ?? d.title;
+      let nudgeText = "";
+      if (d.dateType === "birthday") {
+        if (daysDiff === 0) nudgeText = `Today is ${who}! Has your circle celebrated yet?`;
+        else if (daysDiff <= 3) nudgeText = `${who} is in ${daysDiff} day${daysDiff === 1 ? "" : "s"} — time to finalize plans!`;
+        else if (daysDiff <= 14) nudgeText = `${who} is coming up in ${daysDiff} days — what's the plan?`;
+        else nudgeText = `${who} is next month — have you started planning?`;
+      } else if (d.dateType === "anniversary") {
+        if (daysDiff === 0) nudgeText = `Today is your anniversary! What are you doing to celebrate?`;
+        else if (daysDiff <= 7) nudgeText = `Your anniversary is ${daysDiff === 1 ? "tomorrow" : `in ${daysDiff} days`} — what's the budget?`;
+        else nudgeText = `Your anniversary is coming up in ${daysDiff} days — time to start planning something special.`;
+      } else if (d.dateType === "trip") {
+        if (daysDiff <= 3) nudgeText = `${d.title} is in ${daysDiff} day${daysDiff === 1 ? "" : "s"} — is everyone ready?`;
+        else if (daysDiff <= 14) nudgeText = `${d.title} is ${daysDiff} days away — any last-minute plans?`;
+        else nudgeText = `${d.title} is coming up — has your circle sorted the details?`;
+      } else {
+        if (daysDiff <= 7) nudgeText = `${d.title} is ${daysDiff === 0 ? "today" : daysDiff === 1 ? "tomorrow" : `in ${daysDiff} days`}!`;
+        else nudgeText = `${d.title} is coming up in ${daysDiff} days — has your circle made plans?`;
+      }
+      return [{ dateId: d.id, title: d.title, dateType: d.dateType, daysDiff, nudgeText }];
+    });
+
+    res.json({ dates, upcomingNudges });
+  } catch (err) {
+    (req as any).log.error({ err }, "GET /circles/:id/dates error");
+    res.status(500).json({ error: "Failed to load dates" });
+  }
+});
+
+router.post("/circles/:id/dates", async (req: Request, res: Response) => {
+  if (!authed(req, res)) return;
+  const circleId = parseInt(req.params.id as string);
+  if (isNaN(circleId)) { res.status(400).json({ error: "Invalid circle id" }); return; }
+  const { title, dateType, targetDate, targetUserId, targetUserName, notes, isRecurring } = req.body as Record<string, unknown>;
+  if (!title || !targetDate) { res.status(400).json({ error: "title and targetDate are required" }); return; }
+  try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
+    const [date] = await db.insert(circleImportantDates).values({
+      circleId,
+      addedByUserId: uid(req),
+      title: String(title).trim(),
+      dateType: dateType ? String(dateType) : "event",
+      targetDate: String(targetDate),
+      targetUserId: targetUserId ? String(targetUserId) : null,
+      targetUserName: targetUserName ? String(targetUserName) : null,
+      notes: notes ? String(notes).trim() : null,
+      isRecurring: Boolean(isRecurring),
+    }).returning();
+    res.status(201).json({ date });
+  } catch (err) {
+    (req as any).log.error({ err }, "POST /circles/:id/dates error");
+    res.status(500).json({ error: "Failed to add date" });
+  }
+});
+
+router.delete("/circles/:id/dates/:dateId", async (req: Request, res: Response) => {
+  if (!authed(req, res)) return;
+  const circleId = parseInt(req.params.id as string);
+  const dateId = parseInt(req.params.dateId as string);
+  if (isNaN(circleId) || isNaN(dateId)) { res.status(400).json({ error: "Invalid id" }); return; }
+  try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
+    const [existing] = await db.select().from(circleImportantDates)
+      .where(and(eq(circleImportantDates.id, dateId), eq(circleImportantDates.circleId, circleId))).limit(1);
+    if (!existing) { res.status(404).json({ error: "Date not found" }); return; }
+    if (existing.addedByUserId !== uid(req) && result.circle.hostUserId !== uid(req)) {
+      res.status(403).json({ error: "Only the person who added this date or the host can remove it" }); return;
+    }
+    await db.delete(circleImportantDates).where(eq(circleImportantDates.id, dateId));
+    res.json({ ok: true });
+  } catch (err) {
+    (req as any).log.error({ err }, "DELETE /circles/:id/dates/:dateId error");
+    res.status(500).json({ error: "Failed to delete date" });
   }
 });
 

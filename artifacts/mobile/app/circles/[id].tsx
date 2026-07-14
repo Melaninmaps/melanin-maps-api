@@ -34,11 +34,28 @@ type Member = { id: number; userId: string; role: string; joinedAt: string };
 type Adventure = { id: number; title: string; adventureDate: string; places: { name: string; type: string }[] | null; note: string | null };
 type CircleDetail = { id: number; name: string; emoji: string; type: string; privacy: string; hostUserId: string; description: string | null; city: string | null };
 type SavedPlace = { businessId: string; businessName: string | null; category: string | null; savedAt: string };
+type CircleNudge = { id: number; senderId: string; senderName: string | null; targetMemberId: string | null; nudgeType: string; businessId: string | null; businessName: string | null; suggestionId: number | null; message: string | null; readByUserIds: string[]; createdAt: string };
+type CircleDate = { id: number; circleId: number; addedByUserId: string; title: string; dateType: string; targetDate: string; targetUserId: string | null; targetUserName: string | null; notes: string | null; isRecurring: boolean; createdAt: string };
+type UpcomingNudge = { dateId: number; title: string; dateType: string; daysDiff: number; nudgeText: string };
 
 const VIBES = ["🍽️ Foodie", "🎨 Arts", "🌿 Outdoors", "🎉 Nightlife", "👨‍👩‍👧 Family", "💰 Budget", "✨ Luxury", "💕 Date Night", "🧘 Relax", "🎮 Adventure", "🎵 Live Music", "🎭 Culture"];
 const BUDGETS = ["$25", "$50", "$100", "Unlimited"];
 const WINDOWS = ["Saturday Morning", "Saturday Afternoon", "Saturday Evening", "Sunday Morning", "Sunday Afternoon", "Sunday Evening", "Flexible"];
 const PLACE_TYPES = ["restaurant", "cafe", "museum", "park", "bar", "event", "activity", "shopping", "other"];
+const NUDGE_TYPES = [
+  { id: "check_this_out", label: "Check This Out!", icon: "eye" as const, desc: "Share something worth seeing" },
+  { id: "dinner_vote", label: "Decide on Dinner", icon: "clock" as const, desc: "Help the circle pick tonight" },
+  { id: "lets_go", label: "Let's Go Now!", icon: "zap" as const, desc: "Real-time — we're doing this" },
+  { id: "plan_it", label: "Plan This", icon: "map" as const, desc: "Suggest we lock this in" },
+  { id: "just_a_thought", label: "Just a Thought", icon: "message-circle" as const, desc: "Low-key share" },
+];
+const DATE_TYPES = [
+  { id: "birthday", label: "Birthday", icon: "gift" as const },
+  { id: "anniversary", label: "Anniversary", icon: "heart" as const },
+  { id: "event", label: "Event", icon: "calendar" as const },
+  { id: "trip", label: "Trip", icon: "navigation" as const },
+  { id: "milestone", label: "Milestone", icon: "award" as const },
+];
 
 const CURATOR_MODES = [
   { id: "votes", emoji: "🗳", label: "Circle votes", desc: "Top-voted spots lead the plan" },
@@ -99,6 +116,29 @@ export default function CircleDetailScreen() {
   const [advNote, setAdvNote] = useState("");
   const [savingAdv, setSavingAdv] = useState(false);
 
+  // ── Nudge state ──────────────────────────────────────────────────────────────
+  const [nudges, setNudges] = useState<CircleNudge[]>([]);
+  const [showNudgeSheet, setShowNudgeSheet] = useState(false);
+  const [nudgeType, setNudgeType] = useState("check_this_out");
+  const [nudgeTarget, setNudgeTarget] = useState<string | null>(null);
+  const [nudgeBizId, setNudgeBizId] = useState<string | null>(null);
+  const [nudgeBizName, setNudgeBizName] = useState<string | null>(null);
+  const [nudgeSugId, setNudgeSugId] = useState<number | null>(null);
+  const [nudgeMessage, setNudgeMessage] = useState("");
+  const [sendingNudge, setSendingNudge] = useState(false);
+
+  // ── Important Dates state ────────────────────────────────────────────────────
+  const [dates, setDates] = useState<CircleDate[]>([]);
+  const [upcomingNudges, setUpcomingNudges] = useState<UpcomingNudge[]>([]);
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [dateTitle, setDateTitle] = useState("");
+  const [dateType, setDateType] = useState("event");
+  const [dateValue, setDateValue] = useState("");
+  const [dateWho, setDateWho] = useState("");
+  const [dateNotes, setDateNotes] = useState("");
+  const [dateRecurring, setDateRecurring] = useState(false);
+  const [savingDate, setSavingDate] = useState(false);
+
   const load = useCallback(async () => {
     if (!id) return;
     try {
@@ -138,8 +178,32 @@ export default function CircleDetailScreen() {
     finally { setLoadingSaved(false); }
   }, [id, loadingSaved]);
 
+  const loadNudges = useCallback(async () => {
+    if (!id) return;
+    try {
+      const headers = await authHeaders();
+      const res = await fetch(`${getApiBase()}/api/circles/${id}/nudges`, { headers });
+      if (res.ok) { const d = await res.json() as { nudges: CircleNudge[] }; setNudges(d.nudges ?? []); }
+    } catch {}
+  }, [id]);
+
+  const loadDates = useCallback(async () => {
+    if (!id) return;
+    try {
+      const headers = await authHeaders();
+      const res = await fetch(`${getApiBase()}/api/circles/${id}/dates`, { headers });
+      if (res.ok) {
+        const d = await res.json() as { dates: CircleDate[]; upcomingNudges: UpcomingNudge[] };
+        setDates(d.dates ?? []);
+        setUpcomingNudges(d.upcomingNudges ?? []);
+      }
+    } catch {}
+  }, [id]);
+
   useEffect(() => { void load(); }, [load]);
   useEffect(() => { if (activeTab === "memory") void loadAdventures(); }, [activeTab, loadAdventures]);
+  useEffect(() => { if (activeTab === "suggest") void loadNudges(); }, [activeTab, loadNudges]);
+  useEffect(() => { if (activeTab === "members") void loadDates(); }, [activeTab, loadDates]);
 
   const addSuggestion = async () => {
     if (!sugName.trim()) { Alert.alert("Required", "Enter a place name."); return; }
@@ -246,6 +310,73 @@ export default function CircleDetailScreen() {
     finally { setSavingAdv(false); }
   };
 
+  const sendNudge = async () => {
+    setSendingNudge(true);
+    try {
+      const headers = await authHeaders();
+      const res = await fetch(`${getApiBase()}/api/circles/${id}/nudges`, {
+        method: "POST", headers, body: JSON.stringify({
+          nudgeType, targetMemberId: nudgeTarget ?? undefined,
+          businessId: nudgeBizId ?? undefined, businessName: nudgeBizName ?? undefined,
+          suggestionId: nudgeSugId ?? undefined, message: nudgeMessage.trim() || undefined,
+          senderName: user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "A circle member" : "A circle member",
+        }),
+      });
+      const data = await res.json() as { nudge?: CircleNudge; error?: string };
+      if (!res.ok) { Alert.alert("Error", data.error ?? "Try again."); return; }
+      setNudges((prev) => [data.nudge!, ...prev]);
+      setShowNudgeSheet(false);
+      setNudgeType("check_this_out"); setNudgeTarget(null); setNudgeBizId(null);
+      setNudgeBizName(null); setNudgeSugId(null); setNudgeMessage("");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch { Alert.alert("Error", "Couldn't send nudge."); }
+    finally { setSendingNudge(false); }
+  };
+
+  const markNudgeRead = async (nudgeId: number) => {
+    setNudges((prev) => prev.map((n) => n.id === nudgeId
+      ? { ...n, readByUserIds: [...(n.readByUserIds ?? []), user?.id ?? ""] } : n));
+    try {
+      const headers = await authHeaders();
+      await fetch(`${getApiBase()}/api/circles/${id}/nudges/${nudgeId}/read`, { method: "PATCH", headers });
+    } catch {}
+  };
+
+  const addDate = async () => {
+    if (!dateTitle.trim() || !dateValue.trim()) { Alert.alert("Required", "Enter a title and date."); return; }
+    setSavingDate(true);
+    try {
+      const headers = await authHeaders();
+      const res = await fetch(`${getApiBase()}/api/circles/${id}/dates`, {
+        method: "POST", headers, body: JSON.stringify({
+          title: dateTitle.trim(), dateType, targetDate: dateValue.trim(),
+          targetUserName: dateWho.trim() || undefined, notes: dateNotes.trim() || undefined,
+          isRecurring: dateRecurring,
+        }),
+      });
+      const data = await res.json() as { date?: CircleDate; error?: string };
+      if (!res.ok) { Alert.alert("Error", data.error ?? "Try again."); return; }
+      setDates((prev) => [...prev, data.date!]);
+      setDateTitle(""); setDateType("event"); setDateValue(""); setDateWho(""); setDateNotes(""); setDateRecurring(false);
+      setShowDateModal(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch { Alert.alert("Error", "Couldn't add date."); }
+    finally { setSavingDate(false); }
+  };
+
+  const deleteDate = async (dateId: number) => {
+    Alert.alert("Remove Date", "Remove this date from the circle?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Remove", style: "destructive", onPress: async () => {
+        try {
+          const headers = await authHeaders();
+          await fetch(`${getApiBase()}/api/circles/${id}/dates/${dateId}`, { method: "DELETE", headers });
+          setDates((prev) => prev.filter((d) => d.id !== dateId));
+        } catch { Alert.alert("Error", "Couldn't remove date."); }
+      }},
+    ]);
+  };
+
   if (loading) {
     return (
       <View style={[s.container, { backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }]}>
@@ -279,11 +410,21 @@ export default function CircleDetailScreen() {
           <Text style={{ fontSize: 24 }}>{circle.emoji}</Text>
           <Text style={[s.headerTitle, { color: colors.foreground }]} numberOfLines={1}>{circle.name}</Text>
         </View>
-        {isHost ? (
-          <TouchableOpacity activeOpacity={0.85} style={s.settingsBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Feather name="settings" size={20} color={colors.mutedForeground} />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+          <TouchableOpacity activeOpacity={0.85} style={s.settingsBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => setShowNudgeSheet(true)}>
+            <Feather name="bell" size={20} color={colors.foreground} />
+            {nudges.filter((n) => !(n.readByUserIds ?? []).includes(user?.id ?? "")).length > 0 && (
+              <View style={[s.nudgeBadge, { backgroundColor: colors.primary }]}>
+                <Text style={s.nudgeBadgeText}>{nudges.filter((n) => !(n.readByUserIds ?? []).includes(user?.id ?? "")).length}</Text>
+              </View>
+            )}
           </TouchableOpacity>
-        ) : <View style={{ width: 38 }} />}
+          {isHost ? (
+            <TouchableOpacity activeOpacity={0.85} style={s.settingsBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Feather name="settings" size={20} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          ) : <View style={{ width: 38 }} />}
+        </View>
       </View>
 
       {/* Tab Bar */}
@@ -303,6 +444,44 @@ export default function CircleDetailScreen() {
       {/* ── SUGGEST TAB ──────────────────────────────────────────────────────── */}
       {activeTab === "suggest" && (
         <View style={{ flex: 1 }}>
+          {/* Nudge feed strip */}
+          {nudges.length > 0 && (
+            <View style={{ paddingTop: 10, paddingBottom: 4 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, marginBottom: 8 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <Feather name="bell" size={13} color={colors.primary} />
+                  <Text style={[s.nudgeSectionTitle, { color: colors.foreground }]}>Nudges</Text>
+                </View>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => setShowNudgeSheet(true)}>
+                  <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: colors.primary }}>Send one</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingBottom: 4 }}>
+                {nudges.slice(0, 8).map((n) => {
+                  const isUnread = !(n.readByUserIds ?? []).includes(user?.id ?? "");
+                  const nudgeInfo = NUDGE_TYPES.find((t) => t.id === n.nudgeType) ?? NUDGE_TYPES[0];
+                  return (
+                    <TouchableOpacity key={n.id} activeOpacity={0.85}
+                      style={[s.nudgeCard, { backgroundColor: colors.card, borderColor: isUnread ? colors.primary + "50" : colors.border }]}
+                      onPress={() => { if (isUnread) markNudgeRead(n.id); }}
+                    >
+                      {isUnread && <View style={[s.nudgeUnreadDot, { backgroundColor: colors.primary }]} />}
+                      <View style={[s.nudgeIconWrap, { backgroundColor: colors.primary + "15" }]}>
+                        <Feather name={nudgeInfo.icon} size={14} color={colors.primary} />
+                      </View>
+                      <Text style={[s.nudgeCardType, { color: colors.primary }]}>{nudgeInfo.label}</Text>
+                      {n.businessName ? <Text style={[s.nudgeCardBiz, { color: colors.foreground }]} numberOfLines={1}>{n.businessName}</Text> : null}
+                      {n.message ? <Text style={[s.nudgeCardMsg, { color: colors.mutedForeground }]} numberOfLines={2}>{n.message}</Text> : null}
+                      <Text style={[s.nudgeCardFrom, { color: colors.mutedForeground }]}>
+                        {n.senderId === user?.id ? "You" : (n.senderName ?? "Circle member")}
+                        {n.targetMemberId && n.targetMemberId !== user?.id ? " → someone" : n.targetMemberId === user?.id ? " → You" : ""}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
           <View style={[s.privacyBanner, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Feather name="shield" size={12} color={colors.primary} />
             <Text style={[s.privacyText, { color: colors.mutedForeground }]}>
@@ -453,10 +632,79 @@ export default function CircleDetailScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[s.memberId, { color: colors.foreground }]}>{m.userId === user?.id ? "You" : "Member"}</Text>
-                <Text style={[s.memberRole, { color: colors.mutedForeground }]}>{m.role === "host" ? "👑 Circle Host" : "Member"}</Text>
+                <Text style={[s.memberRole, { color: colors.mutedForeground }]}>{m.role === "host" ? "Crown — Circle Host" : "Member"}</Text>
               </View>
             </View>
           ))}
+
+          {/* ── Important Dates ── */}
+          <View style={{ marginTop: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+                <Feather name="calendar" size={15} color={colors.primary} />
+                <Text style={[s.memberId, { color: colors.foreground }]}>Important Dates</Text>
+              </View>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => setShowDateModal(true)}
+                style={[{ flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1 }, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
+                <Feather name="plus" size={13} color={colors.primary} />
+                <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: colors.primary }}>Add</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Kinfolk-generated nudges for upcoming dates */}
+            {upcomingNudges.length > 0 && (
+              <View style={{ gap: 8, marginBottom: 12 }}>
+                {upcomingNudges.map((un) => (
+                  <View key={un.dateId} style={[s.dateNudgeCard, { backgroundColor: GOLD + "10", borderColor: GOLD + "30" }]}>
+                    <Feather name="zap" size={14} color={GOLD} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[s.dateNudgeLabel, { color: GOLD }]}>Kinfolk Reminder</Text>
+                      <Text style={[s.dateNudgeText, { color: colors.foreground }]}>{un.nudgeText}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {dates.length === 0 ? (
+              <View style={[s.emptyCard, { backgroundColor: colors.card, borderColor: colors.border, padding: 20 }]}>
+                <Feather name="calendar" size={28} color={colors.mutedForeground} />
+                <Text style={[s.emptyText, { color: colors.mutedForeground, marginTop: 8 }]}>No important dates yet. Add birthdays, anniversaries, or upcoming trips — Kinfolk will remind your circle.</Text>
+              </View>
+            ) : (
+              <View style={{ gap: 8 }}>
+                {dates.map((d) => {
+                  const dateInfo = DATE_TYPES.find((t) => t.id === d.dateType) ?? DATE_TYPES[2];
+                  const canDelete = d.addedByUserId === user?.id || isHost;
+                  return (
+                    <View key={d.id} style={[s.dateRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                      <View style={[s.dateIconWrap, { backgroundColor: colors.primary + "15" }]}>
+                        <Feather name={dateInfo.icon} size={15} color={colors.primary} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                          <Text style={[s.dateRowTitle, { color: colors.foreground }]}>{d.title}</Text>
+                          {d.isRecurring && (
+                            <View style={[s.recurringBadge, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }]}>
+                              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 9, color: colors.primary }}>Yearly</Text>
+                            </View>
+                          )}
+                        </View>
+                        {d.targetUserName ? <Text style={[s.dateRowSub, { color: colors.mutedForeground }]}>{d.targetUserName}</Text> : null}
+                        <Text style={[s.dateRowDate, { color: colors.mutedForeground }]}>{d.targetDate}</Text>
+                        {d.notes ? <Text style={[s.dateRowNotes, { color: colors.mutedForeground }]}>{d.notes}</Text> : null}
+                      </View>
+                      {canDelete && (
+                        <TouchableOpacity activeOpacity={0.85} onPress={() => deleteDate(d.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                          <Feather name="trash-2" size={15} color={colors.mutedForeground} />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
         </ScrollView>
       )}
 
@@ -718,6 +966,179 @@ export default function CircleDetailScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
+      {/* ── Nudge Compose Sheet ──────────────────────────────────────────────── */}
+      <Modal visible={showNudgeSheet} animationType="slide" transparent onRequestClose={() => setShowNudgeSheet(false)}>
+        <KeyboardAvoidingView style={s.modalOverlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setShowNudgeSheet(false)} />
+          <View style={[s.modalSheet, { backgroundColor: colors.background, maxHeight: "90%" }]}>
+            <View style={[s.modalHandle, { backgroundColor: colors.border }]} />
+            <ScrollView keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
+              <Text style={[s.modalTitle, { color: colors.foreground }]}>Send a Nudge</Text>
+
+              {/* Nudge type picker */}
+              <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>What kind of nudge?</Text>
+              <View style={{ gap: 8 }}>
+                {NUDGE_TYPES.map((nt) => {
+                  const sel = nudgeType === nt.id;
+                  return (
+                    <TouchableOpacity key={nt.id} activeOpacity={0.85}
+                      style={[s.nudgeTypeRow, { backgroundColor: sel ? colors.primary + "12" : colors.card, borderColor: sel ? colors.primary : colors.border }]}
+                      onPress={() => setNudgeType(nt.id)}>
+                      <View style={[s.nudgeIconWrap, { backgroundColor: sel ? colors.primary + "20" : colors.secondary }]}>
+                        <Feather name={nt.icon} size={16} color={sel ? colors.primary : colors.mutedForeground} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[s.nudgeTypeLabel, { color: sel ? colors.primary : colors.foreground }]}>{nt.label}</Text>
+                        <Text style={[s.nudgeTypeDesc, { color: colors.mutedForeground }]}>{nt.desc}</Text>
+                      </View>
+                      {sel && <Feather name="check-circle" size={18} color={colors.primary} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Attach a circle suggestion */}
+              {suggestions.length > 0 && (
+                <>
+                  <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Attach a suggestion <Text style={{ color: colors.mutedForeground + "80" }}>(optional)</Text></Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+                    <TouchableOpacity activeOpacity={0.85}
+                      style={[s.chip, { backgroundColor: nudgeSugId === null ? colors.primary : colors.card, borderColor: nudgeSugId === null ? colors.primary : colors.border }]}
+                      onPress={() => { setNudgeSugId(null); setNudgeBizId(null); setNudgeBizName(null); }}>
+                      <Text style={[s.chipText, { color: nudgeSugId === null ? "#FFFFFF" : colors.foreground }]}>None</Text>
+                    </TouchableOpacity>
+                    {suggestions.slice(0, 10).map((sug) => (
+                      <TouchableOpacity activeOpacity={0.85} key={sug.id}
+                        style={[s.chip, { backgroundColor: nudgeSugId === sug.id ? colors.primary : colors.card, borderColor: nudgeSugId === sug.id ? colors.primary : colors.border }]}
+                        onPress={() => { setNudgeSugId(sug.id); setNudgeBizId(null); setNudgeBizName(sug.placeName); }}>
+                        <Text style={[s.chipText, { color: nudgeSugId === sug.id ? "#FFFFFF" : colors.foreground }]} numberOfLines={1}>{sug.placeName}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </>
+              )}
+
+              {/* Target member */}
+              <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Who's this for?</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+                <TouchableOpacity activeOpacity={0.85}
+                  style={[s.chip, { backgroundColor: nudgeTarget === null ? colors.primary : colors.card, borderColor: nudgeTarget === null ? colors.primary : colors.border }]}
+                  onPress={() => setNudgeTarget(null)}>
+                  <Feather name="users" size={12} color={nudgeTarget === null ? "#FFFFFF" : colors.mutedForeground} />
+                  <Text style={[s.chipText, { color: nudgeTarget === null ? "#FFFFFF" : colors.foreground }]}>Everyone</Text>
+                </TouchableOpacity>
+                {members.filter((m) => m.userId !== user?.id).map((m) => (
+                  <TouchableOpacity activeOpacity={0.85} key={m.id}
+                    style={[s.chip, { backgroundColor: nudgeTarget === m.userId ? colors.primary : colors.card, borderColor: nudgeTarget === m.userId ? colors.primary : colors.border }]}
+                    onPress={() => setNudgeTarget(m.userId)}>
+                    <Feather name="user" size={12} color={nudgeTarget === m.userId ? "#FFFFFF" : colors.mutedForeground} />
+                    <Text style={[s.chipText, { color: nudgeTarget === m.userId ? "#FFFFFF" : colors.foreground }]}>{m.role === "host" ? "Host" : "Member"}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* Optional message */}
+              <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Add a message <Text style={{ color: colors.mutedForeground + "80" }}>(optional)</Text></Text>
+              <TextInput
+                style={[s.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                value={nudgeMessage} onChangeText={setNudgeMessage}
+                placeholder="Say something to the circle…" placeholderTextColor={colors.mutedForeground}
+                multiline numberOfLines={3}
+              />
+            </ScrollView>
+
+            <TouchableOpacity activeOpacity={0.85} style={[s.modalBtn, { backgroundColor: colors.primary, marginTop: 12 }]} onPress={sendNudge} disabled={sendingNudge}>
+              {sendingNudge ? <ActivityIndicator size="small" color="#FFFFFF" /> : (
+                <><Feather name="bell" size={16} color="#FFFFFF" /><Text style={s.modalBtnText}>Send Nudge</Text></>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── Add Important Date Modal ─────────────────────────────────────────── */}
+      <Modal visible={showDateModal} animationType="slide" transparent onRequestClose={() => setShowDateModal(false)}>
+        <KeyboardAvoidingView style={s.modalOverlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setShowDateModal(false)} />
+          <View style={[s.modalSheet, { backgroundColor: colors.background, maxHeight: "88%" }]}>
+            <View style={[s.modalHandle, { backgroundColor: colors.border }]} />
+            <ScrollView keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
+              <Text style={[s.modalTitle, { color: colors.foreground }]}>Add an Important Date</Text>
+
+              <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Type</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+                {DATE_TYPES.map((dt) => {
+                  const sel = dateType === dt.id;
+                  return (
+                    <TouchableOpacity activeOpacity={0.85} key={dt.id}
+                      style={[s.chip, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]}
+                      onPress={() => setDateType(dt.id)}>
+                      <Feather name={dt.icon} size={13} color={sel ? "#FFFFFF" : colors.mutedForeground} />
+                      <Text style={[s.chipText, { color: sel ? "#FFFFFF" : colors.foreground }]}>{dt.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+
+              <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Title</Text>
+              <TextInput
+                style={[s.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                value={dateTitle} onChangeText={setDateTitle}
+                placeholder={dateType === "birthday" ? "Teianna's Birthday" : dateType === "anniversary" ? "Our Anniversary" : "Event name"}
+                placeholderTextColor={colors.mutedForeground}
+              />
+
+              {(dateType === "birthday" || dateType === "anniversary" || dateType === "milestone") && (
+                <>
+                  <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Who is this for? <Text style={{ color: colors.mutedForeground + "80" }}>(optional)</Text></Text>
+                  <TextInput
+                    style={[s.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                    value={dateWho} onChangeText={setDateWho}
+                    placeholder="Name of the person" placeholderTextColor={colors.mutedForeground}
+                  />
+                </>
+              )}
+
+              <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Date</Text>
+              <TextInput
+                style={[s.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                value={dateValue} onChangeText={setDateValue}
+                placeholder="e.g. August 17, 2026 or 2026-08-17" placeholderTextColor={colors.mutedForeground}
+              />
+
+              <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Notes <Text style={{ color: colors.mutedForeground + "80" }}>(optional)</Text></Text>
+              <TextInput
+                style={[s.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+                value={dateNotes} onChangeText={setDateNotes}
+                placeholder="Any context for the circle?" placeholderTextColor={colors.mutedForeground}
+              />
+
+              {(dateType === "birthday" || dateType === "anniversary") && (
+                <TouchableOpacity activeOpacity={0.85}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 14, paddingVertical: 6 }}
+                  onPress={() => setDateRecurring((v) => !v)}>
+                  <View style={[{ width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, alignItems: "center", justifyContent: "center" }, { backgroundColor: dateRecurring ? colors.primary : "transparent", borderColor: dateRecurring ? colors.primary : colors.border }]}>
+                    {dateRecurring && <Feather name="check" size={13} color="#FFFFFF" />}
+                  </View>
+                  <Text style={[s.fieldLabel, { color: colors.foreground, marginTop: 0, marginBottom: 0 }]}>Remind every year</Text>
+                </TouchableOpacity>
+              )}
+
+              <View style={[s.dateNudgeCard, { backgroundColor: GOLD + "10", borderColor: GOLD + "25", marginTop: 14 }]}>
+                <Feather name="zap" size={13} color={GOLD} />
+                <Text style={[s.dateNudgeText, { color: colors.mutedForeground, flex: 1 }]}>Kinfolk will automatically remind your circle as the date approaches — planning nudges, budget questions, and more.</Text>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity activeOpacity={0.85} style={[s.modalBtn, { backgroundColor: colors.primary, marginTop: 12 }]} onPress={addDate} disabled={savingDate}>
+              {savingDate ? <ActivityIndicator size="small" color="#FFFFFF" /> : (
+                <><Feather name="calendar" size={16} color="#FFFFFF" /><Text style={s.modalBtnText}>Save Date</Text></>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {/* Log Adventure Modal */}
       <Modal visible={showAdventureModal} animationType="slide" transparent onRequestClose={() => setShowAdventureModal(false)}>
         <KeyboardAvoidingView style={s.modalOverlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
@@ -840,4 +1261,29 @@ const s = StyleSheet.create({
   savedIcon: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
   savedName: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   savedCat: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 1, textTransform: "capitalize" },
+  // Nudge styles
+  nudgeBadge: { position: "absolute", top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, alignItems: "center", justifyContent: "center", paddingHorizontal: 3 },
+  nudgeBadgeText: { fontFamily: "Inter_700Bold", fontSize: 9, color: "#FFFFFF" },
+  nudgeSectionTitle: { fontFamily: "Inter_700Bold", fontSize: 14 },
+  nudgeCard: { width: 160, borderRadius: 14, borderWidth: 1, padding: 12, gap: 4 },
+  nudgeUnreadDot: { position: "absolute", top: 8, right: 8, width: 7, height: 7, borderRadius: 3.5 },
+  nudgeIconWrap: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  nudgeCardType: { fontFamily: "Inter_700Bold", fontSize: 12, marginTop: 2 },
+  nudgeCardBiz: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  nudgeCardMsg: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
+  nudgeCardFrom: { fontFamily: "Inter_400Regular", fontSize: 10, marginTop: 4 },
+  nudgeTypeRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 13, borderRadius: 14, borderWidth: 1.5 },
+  nudgeTypeLabel: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  nudgeTypeDesc: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 1 },
+  // Date styles
+  dateNudgeCard: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 12, borderRadius: 12, borderWidth: 1 },
+  dateNudgeLabel: { fontFamily: "Inter_700Bold", fontSize: 11, marginBottom: 2 },
+  dateNudgeText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18 },
+  dateRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 14, borderRadius: 14, borderWidth: 1 },
+  dateIconWrap: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
+  dateRowTitle: { fontFamily: "Inter_700Bold", fontSize: 14 },
+  dateRowSub: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 1 },
+  dateRowDate: { fontFamily: "Inter_600SemiBold", fontSize: 12, marginTop: 3 },
+  dateRowNotes: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, marginTop: 4 },
+  recurringBadge: { borderRadius: 6, borderWidth: 1, paddingHorizontal: 6, paddingVertical: 2 },
 });
