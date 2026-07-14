@@ -96,7 +96,7 @@ export default function DemoS02Onboarding() {
               </div>
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4vw" }}>
-              {["Food-first 🍽", "Vibe-first ✨", "Safety-first 🛡", "Both!"].map((opt, i) => (
+              {["Food-first", "Vibe-first", "Safety-first", "Both!"].map((opt, i) => (
                 <div key={i} style={{ padding: "0.3vw 0.6vw", borderRadius: "2vw", background: i === 0 ? "rgba(202,146,43,0.2)" : "rgba(255,255,255,0.04)", border: `1px solid ${i === 0 ? "#CA922B" : "rgba(255,255,255,0.1)"}` }}>
                   <span style={{ color: i === 0 ? "#CA922B" : "#5C3A1A", fontSize: "0.5vw" }}>{opt}</span>
                 </div>

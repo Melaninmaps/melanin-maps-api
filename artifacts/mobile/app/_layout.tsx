@@ -704,6 +704,17 @@ function RootLayoutNav() {
       <Stack.Screen name="travel-videos" options={{ headerShown: false, presentation: "card" }} />
       <Stack.Screen name="trust-verification" options={{ headerShown: false, presentation: "card" }} />
       <Stack.Screen name="upgrade" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="vibe-search" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="wellness-tracker" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="circles" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="collections" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="global-recommendations" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="group" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="groups" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="guides" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="roadmap" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="user" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="user-profile" options={{ headerShown: false, presentation: "card" }} />
     </Stack>
   );
 }

@@ -30,7 +30,7 @@ const DEFAULT_REGION: Region = {
   longitudeDelta: 30,
 };
 
-export function BusinessMapView() {
+export function BusinessMapView(_props: { latitude?: number | null; longitude?: number | null; name?: string }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();

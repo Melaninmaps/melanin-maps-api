@@ -50,7 +50,7 @@ export default function DemoS38ProfileScreen() {
                 { label: "My Reviews", sub: "7 reviews · 340 points earned", icon: "✎" },
                 { label: "Kinfolk Circles", sub: "3 circles · DC Crew, Foodie Fam, ATL Squad", icon: "◎" },
                 { label: "Life Journey", sub: "Atlanta → Washington DC (8 months)", icon: "→" },
-                { label: "Notifications", sub: "Safety alerts, circle updates, new reviews", icon: "🔔" },
+                { label: "Notifications", sub: "Safety alerts, circle updates, new reviews", icon: "◉" },
                 { label: "Privacy & Visibility", sub: "Profile public · Saved spots private", icon: "◈" },
                 { label: "Family Mode", sub: "Off · Manage guidance settings", icon: "⊕" },
                 { label: "Membership", sub: "Navigator · Renews Aug 1", icon: "★" },

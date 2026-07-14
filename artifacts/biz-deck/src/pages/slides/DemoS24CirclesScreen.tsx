@@ -36,7 +36,7 @@ export default function DemoS24CirclesScreen() {
             <div className="px-[1vw] pt-[1.3vw] pb-[0.6vw]" style={{ flexShrink: 0 }}>
               <div className="flex items-center gap-[0.6vw]">
                 <svg width="0.75vw" height="0.75vw" viewBox="0 0 24 24" fill="none" stroke="#3A1F0E" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-                <div className="font-display" style={{ fontSize: "1.05vw", fontWeight: 800, color: "#1C0E06" }}>DC Crew 🔥</div>
+                <div className="font-display" style={{ fontSize: "1.05vw", fontWeight: 800, color: "#1C0E06" }}>DC Crew</div>
               </div>
               <div className="font-body mt-[0.1vw]" style={{ fontSize: "0.55vw", color: "#A87A40" }}>4 members · Washington, DC · Private</div>
             </div>

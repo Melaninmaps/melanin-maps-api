@@ -1,10 +1,12 @@
-const activityTypes = [
-  { label: "Checkpoint", icon: "🚧", color: "#C0392B", selected: true },
-  { label: "Traffic Stop", icon: "🚗", color: "#E67E22", selected: false },
-  { label: "Foot Patrol", icon: "👮", color: "#F39C12", selected: false },
-  { label: "Stop & Question", icon: "⚠️", color: "#8E44AD", selected: false },
-  { label: "Unmarked Vehicle", icon: "🚙", color: "#2C3E50", selected: false },
-  { label: "Other", icon: "•••", color: "#7F8C8D", selected: false },
+import React from 'react';
+
+const activityTypes: { label: string; icon: React.ReactNode; color: string; selected: boolean }[] = [
+  { label: "Checkpoint", icon: <svg width="0.55vw" height="0.55vw" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>, color: "#C0392B", selected: true },
+  { label: "Traffic Stop", icon: <svg width="0.55vw" height="0.55vw" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>, color: "#E67E22", selected: false },
+  { label: "Foot Patrol", icon: <svg width="0.55vw" height="0.55vw" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>, color: "#F39C12", selected: false },
+  { label: "Stop & Question", icon: <svg width="0.55vw" height="0.55vw" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, color: "#8E44AD", selected: false },
+  { label: "Unmarked Vehicle", icon: <svg width="0.55vw" height="0.55vw" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-3"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>, color: "#2C3E50", selected: false },
+  { label: "Other", icon: <svg width="0.55vw" height="0.55vw" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>, color: "#7F8C8D", selected: false },
 ];
 
 export default function DemoS69OfficerSubmitScreen() {
@@ -42,7 +44,7 @@ export default function DemoS69OfficerSubmitScreen() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.35vw" }}>
               {activityTypes.map((t, i) => (
                 <div key={i} style={{ background: t.selected ? `${t.color}18` : "#fff", border: `0.08vw solid ${t.selected ? t.color : "#E8DDD0"}`, borderRadius: "0.55vw", padding: "0.45vw 0.5vw", display: "flex", alignItems: "center", gap: "0.35vw" }}>
-                  <span style={{ fontSize: "0.55vw" }}>{t.icon}</span>
+                  <span style={{ color: t.selected ? t.color : "#7F8C8D", display: "flex", alignItems: "center" }}>{t.icon}</span>
                   <span style={{ color: t.selected ? t.color : "#3A2210", fontSize: "0.45vw", fontWeight: t.selected ? 800 : 500 }}>{t.label}</span>
                 </div>
               ))}
@@ -54,59 +56,55 @@ export default function DemoS69OfficerSubmitScreen() {
             <div style={{ background: "#fff", border: "0.08vw solid #CA922B", borderRadius: "0.55vw", padding: "0.5vw 0.7vw", display: "flex", alignItems: "center", gap: "0.4vw" }}>
               <svg width="0.7vw" height="0.7vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
               <div style={{ flex: 1 }}>
-                <div style={{ color: "#1C0E06", fontSize: "0.5vw", fontWeight: 600 }}>Georgia Ave & Euclid St NW</div>
+                <div style={{ color: "#1C0E06", fontSize: "0.5vw", fontWeight: 600 }}>Georgia Ave &amp; Euclid St NW</div>
                 <div style={{ color: "#8C6A3A", fontSize: "0.4vw" }}>Auto-detected · Tap to adjust</div>
               </div>
             </div>
           </div>
-          {/* Badge number */}
+          {/* Badge */}
           <div>
-            <div style={{ color: "#1C0E06", fontSize: "0.52vw", fontWeight: 700, marginBottom: "0.35vw" }}>Badge Number <span style={{ color: "#8C6A3A", fontWeight: 400 }}>(optional)</span></div>
+            <div style={{ color: "#1C0E06", fontSize: "0.52vw", fontWeight: 700, marginBottom: "0.35vw" }}>Badge Number <span style={{ color: "#A87A40", fontWeight: 400 }}>(optional)</span></div>
             <div style={{ background: "#fff", border: "0.08vw solid #E8DDD0", borderRadius: "0.55vw", padding: "0.5vw 0.7vw" }}>
-              <span style={{ color: "#C8B49A", fontSize: "0.5vw" }}>e.g. 4728</span>
+              <span style={{ color: "#BDB0A0", fontSize: "0.5vw" }}>e.g. 2847</span>
             </div>
           </div>
-          {/* Direction / notes */}
-          <div>
-            <div style={{ color: "#1C0E06", fontSize: "0.52vw", fontWeight: 700, marginBottom: "0.35vw" }}>Notes <span style={{ color: "#8C6A3A", fontWeight: 400 }}>(optional)</span></div>
-            <div style={{ background: "#fff", border: "0.08vw solid #E8DDD0", borderRadius: "0.55vw", padding: "0.5vw 0.7vw", minHeight: "2.2vw" }}>
-              <span style={{ color: "#3A2210", fontSize: "0.48vw" }}>4 vehicles, northbound lane, checking IDs</span>
-            </div>
-          </div>
-          {/* Anonymous toggle */}
-          <div style={{ background: "#1C0E06", borderRadius: "0.6vw", padding: "0.5vw 0.7vw", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          {/* Anonymous */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(202,146,43,0.06)", borderRadius: "0.55vw", padding: "0.5vw 0.7vw" }}>
             <div>
-              <div style={{ color: "#FAF6EF", fontSize: "0.5vw", fontWeight: 700 }}>Submit anonymously</div>
-              <div style={{ color: "#6B4A2A", fontSize: "0.4vw" }}>Your identity stays protected</div>
+              <div style={{ color: "#1C0E06", fontSize: "0.52vw", fontWeight: 700 }}>Submit Anonymously</div>
+              <div style={{ color: "#A87A40", fontSize: "0.4vw", marginTop: "0.08vw" }}>Enabled by default — your identity stays private</div>
             </div>
-            <div style={{ width: "1.8vw", height: "0.95vw", background: "#CA922B", borderRadius: "1vw", position: "relative" }}>
-              <div style={{ position: "absolute", right: "0.1vw", top: "0.1vw", width: "0.75vw", height: "0.75vw", background: "#fff", borderRadius: "50%" }} />
+            <div style={{ width: "1.4vw", height: "0.8vw", background: "#CA922B", borderRadius: "0.5vw", position: "relative" }}>
+              <div style={{ position: "absolute", right: "0.1vw", top: "0.1vw", width: "0.6vw", height: "0.6vw", background: "#fff", borderRadius: "50%" }} />
             </div>
           </div>
-        </div>
-        <div style={{ padding: "0.4vw 0.7vw 0.7vw", flexShrink: 0 }}>
-          <div style={{ background: "#C0392B", borderRadius: "0.7vw", padding: "0.6vw", textAlign: "center" }}>
-            <span style={{ color: "#fff", fontSize: "0.55vw", fontWeight: 700 }}>Confirm & Submit Alert</span>
+          {/* Submit CTA */}
+          <div style={{ background: "#1C0E06", borderRadius: "0.7vw", padding: "0.6vw", textAlign: "center", marginTop: "0.3vw" }}>
+            <div style={{ color: "#FAF6EF", fontSize: "0.55vw", fontWeight: 800 }}>Send Alert Now</div>
+            <div style={{ color: "rgba(250,246,239,0.5)", fontSize: "0.38vw", marginTop: "0.1vw" }}>Visible to community within seconds</div>
           </div>
         </div>
       </div>
+      </div>
 
-      {/* Right callouts */}
-      <div style={{ position: "absolute", left: "63vw", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: "1.4vw", maxWidth: "20vw" }}>
+      {/* Right copy */}
+      <div className="absolute" style={{ right: "5vw", top: "50%", transform: "translateY(-50%)", width: "16vw" }}>
+        <div className="font-display" style={{ fontSize: "2.4vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.15, marginBottom: "1.6vw" }}>
+          Under<br />30 seconds.
+        </div>
         {[
-          ["Auto-location detection", "GPS auto-fills the intersection — no typing an address while walking quickly."],
-          ["Badge number is optional", "If visible and safe to record, it helps. If not, the report is still valuable."],
-          ["Under 30 seconds", "The entire submission flow — select type, confirm location, toggle anonymous, tap submit."],
-        ].map(([h, b], i) => (
-          <div key={i}>
-            <div style={{ color: "#CA922B", fontSize: "0.72vw", fontWeight: 800, marginBottom: "0.3vw" }}>{h}</div>
-            <div style={{ color: "#6B4A2A", fontSize: "0.65vw", lineHeight: 1.55 }}>{b}</div>
+          "Pinpoints your GPS location instantly",
+          "Six report types — tap one",
+          "Optional badge number field",
+          "Anonymous by default",
+          "Alert live within seconds",
+        ].map((s, i) => (
+          <div key={i} className="flex items-start gap-[0.7vw] mb-[0.9vw]">
+            <div style={{ width: "0.5vw", height: "0.5vw", borderRadius: "50%", background: "#CA922B", marginTop: "0.3vw", flexShrink: 0 }} />
+            <div style={{ fontSize: "0.88vw", color: "#5C3A1A", lineHeight: 1.5 }}>{s}</div>
           </div>
         ))}
       </div>
-      </div>
-
-      <div style={{ position: "absolute", bottom: "2vw", right: "2vw", color: "#CA922B", fontSize: "2vw", fontWeight: 800, opacity: 0.35 }}>69</div>
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import React from 'react';
+
 const actions = [
   { icon: "invite", label: "Invite a friend", desc: "Share the platform with someone who needs it" },
   { icon: "claim", label: "Claim your business", desc: "Get your business listed and verified" },
@@ -8,7 +10,7 @@ const actions = [
   { icon: "member", label: "Become a founding member", desc: "Get exclusive benefits and shape what we build" },
 ];
 
-const ICONS: Record<string, JSX.Element> = {
+const ICONS: Record<string, React.ReactNode> = {
   invite: <svg width="1.5vw" height="1.5vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>,
   claim: <svg width="1.5vw" height="1.5vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l1-5h16l1 5"/><path d="M3 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M5 9v11h14V9"/><path d="M9 14h6v6H9z"/></svg>,
   recommend: <svg width="1.5vw" height="1.5vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,

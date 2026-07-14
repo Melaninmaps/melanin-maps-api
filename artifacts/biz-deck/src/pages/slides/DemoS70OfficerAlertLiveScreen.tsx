@@ -2,7 +2,7 @@ export default function DemoS70OfficerAlertLiveScreen() {
   const comments = [
     { init: "TL", text: "Confirmed — just drove through, 4 cars backed up", time: "1m" },
     { init: "KR", text: "Stay safe kin. Coming from Sherman Ave instead", time: "2m" },
-    { init: "AM", text: "Route changed, thanks for the heads up 🙏", time: "3m" },
+    { init: "AM", text: "Route changed, thanks for the heads up.", time: "3m" },
     { init: "DW", text: "Still active as of 9:38am", time: "4m" },
   ];
   return (

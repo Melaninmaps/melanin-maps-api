@@ -58,7 +58,7 @@ export default function DemoS52BizAnalyticsScreen() {
               <div className="mt-[0.5vw] rounded-[0.7vw] p-[0.6vw]" style={{ background: "#FFFFFF", border: "1px solid #E8DDC8" }}>
                 <div className="font-body mb-[0.35vw]" style={{ fontSize: "0.44vw", fontWeight: 700, color: "#1C0E06" }}>Conversion Funnel</div>
                 <div className="flex items-end gap-[0.5vw]">
-                  {[["1,204","Views",100],["337","Clicks",28],["98","Saves",8],["53","Reviews",4]].map(([v,l,pct],i)=>(
+                  {([["1,204","Views",100],["337","Clicks",28],["98","Saves",8],["53","Reviews",4]] as [string,string,number][]).map(([v,l,pct],i)=>(
                     <div key={i} className="flex-1 flex flex-col items-center gap-[0.12vw]">
                       <span className="font-body" style={{ fontSize: "0.42vw", fontWeight: 700, color: "#1C0E06" }}>{v}</span>
                       <div style={{ width: "100%", background: "#CA922B", borderRadius: "0.1vw 0.1vw 0 0", opacity: 0.3 + (pct/100)*0.7, height: `${pct * 0.022}vw` }} />

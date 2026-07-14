@@ -1,6 +1,6 @@
 export default function DemoS61MarcusProfileScreen() {
   const posts = [
-    { time: "2h ago", text: "🙏 Zara left us the most beautiful review today. Community like this is exactly why we do what we do. See you Sunday for Community Brunch!", likes: 34, comments: 8 },
+    { time: "2h ago", text: "Zara left us the most beautiful review today. Community like this is exactly why we do what we do. See you Sunday for Community Brunch!", likes: 34, comments: 8 },
     { time: "3d ago", text: "Our Natural Hair Sunday collab with Silk & Thread is CONFIRMED. Brunch + style = your vibe? RSVP in the link.", likes: 61, comments: 14 },
   ];
   return (
@@ -77,7 +77,7 @@ export default function DemoS61MarcusProfileScreen() {
               <div style={{ color: "#1C0E06", fontSize: "0.5vw", lineHeight: 1.55, marginBottom: "0.35vw" }}>{p.text}</div>
               <div style={{ display: "flex", gap: "0.8vw" }}>
                 <span style={{ color: "#8C6A3A", fontSize: "0.42vw" }}>♥ {p.likes}</span>
-                <span style={{ color: "#8C6A3A", fontSize: "0.42vw" }}>💬 {p.comments}</span>
+                <span style={{ color: "#8C6A3A", fontSize: "0.42vw" }}>◎ {p.comments}</span>
               </div>
             </div>
           ))}

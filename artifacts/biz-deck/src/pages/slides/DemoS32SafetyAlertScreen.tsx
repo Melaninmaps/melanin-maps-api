@@ -1,10 +1,10 @@
 const base = import.meta.env.BASE_URL;
 
 const alerts = [
-  { type: "ICE", icon: "⚠", text: "ICE vehicle spotted near Howard University campus. Stay alert.", time: "3 min ago", confirms: 12, color: "#DC2626", bg: "#FEF2F2" },
-  { type: "Police", icon: "🚔", text: "Heavy police presence on 14th & U. Checkpoint near the intersection.", time: "11 min ago", confirms: 8, color: "#7C3AED", bg: "#F5F3FF" },
-  { type: "Celebration", icon: "🎉", text: "Caribbean Carnival on Georgia Ave — road closures from 7PM, great energy!", time: "22 min ago", confirms: 34, color: "#CA922B", bg: "#FEF9EE" },
-  { type: "Community", icon: "📢", text: "Town Hall at Reeves Center starting now — open to all. Free food provided.", time: "35 min ago", confirms: 19, color: "#16A34A", bg: "#F0FDF4" },
+  { type: "ICE", text: "ICE vehicle spotted near Howard University campus. Stay alert.", time: "3 min ago", confirms: 12, color: "#DC2626", bg: "#FEF2F2" },
+  { type: "Police", text: "Heavy police presence on 14th & U. Checkpoint near the intersection.", time: "11 min ago", confirms: 8, color: "#7C3AED", bg: "#F5F3FF" },
+  { type: "Celebration", text: "Caribbean Carnival on Georgia Ave — road closures from 7PM, great energy!", time: "22 min ago", confirms: 34, color: "#CA922B", bg: "#FEF9EE" },
+  { type: "Community", text: "Town Hall at Reeves Center starting now — open to all. Free food provided.", time: "35 min ago", confirms: 19, color: "#16A34A", bg: "#F0FDF4" },
 ];
 
 export default function DemoS32SafetyAlertScreen() {

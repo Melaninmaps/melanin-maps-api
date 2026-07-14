@@ -88,7 +88,7 @@ export default function DemoS04Search() {
               </div>
               <div style={{ height: "0.35vw", background: "rgba(255,255,255,0.08)", borderRadius: "0.2vw", position: "relative" }}>
                 <div style={{ position: "absolute", left: 0, width: "70%", height: "100%", background: "#CA922B", borderRadius: "0.2vw" }} />
-                <div style={{ position: "absolute", left: "70%", transform: "translateX(-50%)", top: "50%", transform: "translate(-50%,-50%)", width: "1vw", height: "1vw", borderRadius: "50%", background: "#CA922B", border: "2px solid #FAF6EF" }} />
+                <div style={{ position: "absolute", left: "70%", top: "50%", transform: "translate(-50%,-50%)", width: "1vw", height: "1vw", borderRadius: "50%", background: "#CA922B", border: "2px solid #FAF6EF" }} />
               </div>
             </div>
             {/* High confidence toggle */}
