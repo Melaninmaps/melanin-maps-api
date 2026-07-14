@@ -46,7 +46,7 @@ type Props = { businessId: string; businessName: string };
 export default function CommunityCommentsSection({ businessId, businessName }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [notes, setNotes] = useState<LoveNote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -292,7 +292,7 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
             Share your experience, tips, or thoughts about {businessName}. Up to 200 characters — emojis welcome! 🤎
           </Text>
 
-          {!isAuthenticated && (
+          {!authLoading && !isAuthenticated && (
             <View style={[s.authWarn, { backgroundColor: "#FEF3C7", borderColor: "#FCD34D" }]}>
               <Feather name="info" size={14} color="#92400E" />
               <Text style={s.authWarnText}>Sign in to post a comment.</Text>

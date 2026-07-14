@@ -73,12 +73,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const apiBase = getApiBaseUrl();
     const maxAttempts = 3;
+    const FETCH_TIMEOUT_MS = 10_000;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
       try {
         const res = await fetch(`${apiBase}/api/auth/user`, {
           headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
         });
+        clearTimeout(timer);
         const data = await res.json();
 
         if (data.user) {
@@ -93,10 +98,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
         return;
       } catch {
-        // Network-level failure (not a server response) — don't assume the
-        // user is signed out. Retry with backoff before giving up, so a
-        // transient connectivity blip right after login doesn't strand the
-        // user on the login screen despite a valid stored session.
+        clearTimeout(timer);
+        // Network-level failure or timeout — don't assume the user is signed
+        // out. Retry with backoff before giving up, so a transient
+        // connectivity blip right after login doesn't strand the user on
+        // the login screen despite a valid stored session.
         if (attempt < maxAttempts) {
           await new Promise((resolve) => setTimeout(resolve, attempt * 500));
           continue;

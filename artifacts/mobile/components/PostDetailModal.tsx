@@ -68,7 +68,7 @@ const POST_TYPE_CONFIG: Record<string, { label: string; color: string; icon: str
 export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLength = 500 }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const inputRef = useRef<TextInput>(null);
 
   const [comments, setComments] = useState<Comment[]>([]);
@@ -304,7 +304,9 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
               </View>
             </>
           ) : (
-            <Text style={[m.loginPrompt, { color: colors.mutedForeground }]}>Sign in to join the conversation</Text>
+            !authLoading
+              ? <Text style={[m.loginPrompt, { color: colors.mutedForeground }]}>Sign in to join the conversation</Text>
+              : null
           )}
         </View>
       </KeyboardAvoidingView>
