@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { db } from "@workspace/db";
-import { groups, groupMembers, groupInvites, groupItineraries, groupSuggestions } from "@workspace/db/schema";
+import { groups, groupMembers, groupInvites, groupItineraries, groupSuggestions, groupReports } from "@workspace/db/schema";
 import { userPreferencesTable, usersTable } from "@workspace/db/schema";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { getUserTier } from "../middleware/requireMembership";
@@ -8,6 +8,15 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 import type { GroupItineraryContent } from "@workspace/db/schema";
 
 const router = Router();
+
+// Tier-based maxMembers caps for groups
+const GROUP_MAX_MEMBERS: Record<string, number> = {
+  free: 8,
+  navigator: 25,
+  trailblazer: 100,
+  founding: 100,
+  beta: 100,
+};
 
 function requireAuth(req: Request, res: Response): boolean {
   if (!req.isAuthenticated()) {
@@ -43,10 +52,9 @@ router.get("/groups", async (req: Request, res: Response) => {
 
     const result = rows
       .filter((g) => {
-        // If the group has audience requirements, only show to matching users (or unauthenticated users see all)
         const aud = (g.audiencePreferences as string[] | null) ?? [];
-        if (aud.length === 0) return true; // no restriction
-        if (userAudiencePrefs.length === 0) return true; // user hasn't set preference — still show all
+        if (aud.length === 0) return true;
+        if (userAudiencePrefs.length === 0) return true;
         return aud.some((a) => userAudiencePrefs.includes(a));
       })
       .map((g) => ({
@@ -103,7 +111,7 @@ router.get("/groups/:id", async (req: Request, res: Response) => {
       .select({ userId: groupMembers.userId, role: groupMembers.role, joinedAt: groupMembers.joinedAt })
       .from(groupMembers)
       .where(eq(groupMembers.groupId, id))
-      .limit(20);
+      .limit(100);
 
     const isMember = req.isAuthenticated()
       ? members.some((m) => m.userId === req.user.id)
@@ -140,7 +148,7 @@ router.post("/groups", async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
 
-    // Tier gate: free users cannot create groups; explorer+ limited to 2
+    // Tier gate: free users cannot create groups; navigator limited to 2
     const tier = await getUserTier(userId);
     if (tier === "free") {
       res.status(403).json({
@@ -165,21 +173,28 @@ router.post("/groups", async (req: Request, res: Response) => {
       }
     }
 
-    const { name, description, category, city, state, isPrivate, maxMembers, audiencePreferences } = req.body as {
+    const { name, description, category, city, state, isPrivate, isAgeRestricted, maxMembers, audiencePreferences, rules, profanityLevel } = req.body as {
       name?: string;
       description?: string;
       category?: string;
       city?: string;
       state?: string;
       isPrivate?: boolean;
+      isAgeRestricted?: boolean;
       maxMembers?: number;
       audiencePreferences?: string[];
+      rules?: string[];
+      profanityLevel?: string;
     };
 
     if (!name?.trim()) { res.status(400).json({ error: "name is required" }); return; }
 
-    const cap = Math.min(Math.max(Number(maxMembers) || 8, 2), 8);
+    const tierCap = GROUP_MAX_MEMBERS[tier] ?? 8;
+    const cap = Math.min(Math.max(Number(maxMembers) || 8, 2), tierCap);
     const audience = Array.isArray(audiencePreferences) ? audiencePreferences.filter(Boolean).slice(0, 6) : [];
+    const groupRules = Array.isArray(rules) ? rules.filter((r) => typeof r === "string" && r.trim()).slice(0, 10) : [];
+    const validProfanity = ["strict", "moderate", "open"];
+    const profLevel = validProfanity.includes(String(profanityLevel ?? "")) ? String(profanityLevel) : "moderate";
 
     const [group] = await db
       .insert(groups)
@@ -190,16 +205,19 @@ router.post("/groups", async (req: Request, res: Response) => {
         city: city?.trim() ?? null,
         state: state?.trim() ?? null,
         isPrivate: isPrivate ?? false,
+        isAgeRestricted: isAgeRestricted ?? false,
         createdBy: userId,
         memberCount: 1,
         maxMembers: cap,
         audiencePreferences: audience,
+        rules: groupRules,
+        profanityLevel: profLevel,
       })
       .returning();
 
     await db.insert(groupMembers).values({ groupId: group.id, userId, role: "admin" });
 
-    res.status(201).json({ group });
+    res.status(201).json({ group, tier, tierCap });
   } catch (err) {
     req.log.error({ err }, "POST /api/groups error");
     res.status(500).json({ error: "Internal server error" });
@@ -220,27 +238,108 @@ router.patch("/groups/:id/settings", async (req: Request, res: Response) => {
       .limit(1);
     if (!admin) { res.status(403).json({ error: "Only group admins can update settings" }); return; }
 
-    const { isAgeRestricted, isPrivate, name, description, maxMembers, audiencePreferences } = req.body as {
+    const { isAgeRestricted, isPrivate, name, description, maxMembers, audiencePreferences, rules, profanityLevel } = req.body as {
       isAgeRestricted?: boolean;
       isPrivate?: boolean;
       name?: string;
       description?: string;
       maxMembers?: number;
       audiencePreferences?: string[];
+      rules?: string[];
+      profanityLevel?: string;
     };
+
+    // Get tier for cap enforcement
+    const tier = await getUserTier(userId);
+    const tierCap = GROUP_MAX_MEMBERS[tier] ?? 8;
 
     const updates: Record<string, unknown> = { updatedAt: new Date() };
     if (isAgeRestricted !== undefined) updates.isAgeRestricted = isAgeRestricted;
     if (isPrivate !== undefined) updates.isPrivate = isPrivate;
     if (name?.trim()) updates.name = name.trim();
     if (description !== undefined) updates.description = description.trim() || null;
-    if (maxMembers !== undefined) updates.maxMembers = Math.min(Math.max(Number(maxMembers) || 8, 2), 8);
+    if (maxMembers !== undefined) updates.maxMembers = Math.min(Math.max(Number(maxMembers) || 8, 2), tierCap);
     if (Array.isArray(audiencePreferences)) updates.audiencePreferences = audiencePreferences.filter(Boolean).slice(0, 6);
+    if (Array.isArray(rules)) updates.rules = rules.filter((r) => typeof r === "string" && r.trim()).slice(0, 10);
+    if (profanityLevel !== undefined) {
+      const valid = ["strict", "moderate", "open"];
+      updates.profanityLevel = valid.includes(String(profanityLevel)) ? String(profanityLevel) : "moderate";
+    }
 
     const [updated] = await db.update(groups).set(updates).where(eq(groups.id, groupId)).returning();
     res.json({ group: updated });
   } catch (err) {
     req.log.error({ err }, "PATCH /api/groups/:id/settings error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/groups/:id/report", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const groupId = parseInt(String(req.params.id), 10);
+    if (isNaN(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
+    const userId = req.user!.id;
+
+    const [group] = await db.select({ id: groups.id }).from(groups).where(eq(groups.id, groupId)).limit(1);
+    if (!group) { res.status(404).json({ error: "Group not found" }); return; }
+
+    const { targetType, targetId, reason, details } = req.body as {
+      targetType?: string;
+      targetId?: string;
+      reason?: string;
+      details?: string;
+    };
+
+    const validTargetTypes = ["group", "member", "content"];
+    const tType = validTargetTypes.includes(String(targetType ?? "")) ? String(targetType) : "group";
+    const validReasons = ["spam", "harassment", "hate_speech", "inappropriate_content", "underage_content", "misinformation", "other"];
+    if (!reason || !validReasons.includes(reason)) {
+      res.status(400).json({ error: "A valid reason is required", validReasons });
+      return;
+    }
+
+    const [report] = await db.insert(groupReports).values({
+      groupId,
+      reportedBy: userId,
+      targetType: tType,
+      targetId: targetId ? String(targetId) : null,
+      reason,
+      details: details?.trim() ?? null,
+    }).returning();
+
+    res.status(201).json({ report, message: "Report submitted. Our team will review it shortly." });
+  } catch (err) {
+    req.log.error({ err }, "POST /api/groups/:id/report error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/groups/:id/reports", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const groupId = parseInt(String(req.params.id), 10);
+    if (isNaN(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
+    const userId = req.user!.id;
+
+    // Only admins can view reports
+    const [admin] = await db
+      .select()
+      .from(groupMembers)
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId), eq(groupMembers.role, "admin")))
+      .limit(1);
+    if (!admin) { res.status(403).json({ error: "Only group admins can view reports" }); return; }
+
+    const reports = await db
+      .select()
+      .from(groupReports)
+      .where(eq(groupReports.groupId, groupId))
+      .orderBy(desc(groupReports.createdAt))
+      .limit(50);
+
+    res.json({ reports });
+  } catch (err) {
+    req.log.error({ err }, "GET /api/groups/:id/reports error");
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -264,7 +363,6 @@ router.post("/groups/:id/invite", async (req: Request, res: Response) => {
 
     const { invitedUserId, message } = req.body as { invitedUserId?: string; message?: string };
     if (!invitedUserId?.trim()) { res.status(400).json({ error: "invitedUserId is required" }); return; }
-
     if (invitedUserId === userId) { res.status(400).json({ error: "Cannot invite yourself" }); return; }
 
     if (group.memberCount >= group.maxMembers) {
@@ -282,13 +380,7 @@ router.post("/groups/:id/invite", async (req: Request, res: Response) => {
     const [existingInvite] = await db
       .select()
       .from(groupInvites)
-      .where(
-        and(
-          eq(groupInvites.groupId, groupId),
-          eq(groupInvites.invitedUserId, invitedUserId),
-          eq(groupInvites.status, "pending")
-        )
-      )
+      .where(and(eq(groupInvites.groupId, groupId), eq(groupInvites.invitedUserId, invitedUserId), eq(groupInvites.status, "pending")))
       .limit(1);
     if (existingInvite) { res.status(409).json({ error: "Invite already pending for this user" }); return; }
 
@@ -533,7 +625,7 @@ router.post("/groups/:id/join", async (req: Request, res: Response) => {
       return;
     }
 
-    // Tier gate: free=5 groups, explorer+=25 groups, navigator=unlimited
+    // Tier gate for joining
     const joinTier = await getUserTier(userId);
     const joinLimit: Record<string, number> = { free: 5, navigator: 25 };
     if (joinTier in joinLimit) {
@@ -690,35 +782,33 @@ router.post("/groups/:id/suggestions/:suggId/upvote", async (req: Request, res: 
   }
 });
 
-/* ── Member role management (admin-only) ─────────────────────────────── */
 router.patch("/groups/:id/members/:userId/role", async (req: Request, res: Response) => {
   if (!requireAuth(req, res)) return;
   try {
     const groupId = parseInt(String(req.params.id), 10);
     const targetUserId = String(req.params.userId);
     if (isNaN(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
-    const actorId = req.user!.id;
+    const requesterId = req.user!.id;
 
-    const [actor] = await db
-      .select({ role: groupMembers.role })
+    const [admin] = await db
+      .select()
       .from(groupMembers)
-      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, actorId)))
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, requesterId), eq(groupMembers.role, "admin")))
       .limit(1);
-    if (!actor || actor.role !== "admin") { res.status(403).json({ error: "Only group admins can change member roles" }); return; }
-    if (targetUserId === actorId) { res.status(400).json({ error: "Cannot change your own role" }); return; }
+    if (!admin) { res.status(403).json({ error: "Only admins can change member roles" }); return; }
 
     const { role } = req.body as { role?: string };
-    const validRoles = ["member", "admin"];
-    if (!role || !validRoles.includes(role)) { res.status(400).json({ error: "role must be 'member' or 'admin'" }); return; }
+    if (role !== "admin" && role !== "member") {
+      res.status(400).json({ error: "role must be 'admin' or 'member'" });
+      return;
+    }
 
-    const [updated] = await db
+    await db
       .update(groupMembers)
       .set({ role })
-      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, targetUserId)))
-      .returning();
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, targetUserId)));
 
-    if (!updated) { res.status(404).json({ error: "Member not found in this group" }); return; }
-    res.json({ member: updated });
+    res.json({ ok: true, role });
   } catch (err) {
     req.log.error({ err }, "PATCH /api/groups/:id/members/:userId/role error");
     res.status(500).json({ error: "Internal server error" });
@@ -731,55 +821,27 @@ router.delete("/groups/:id/members/:userId", async (req: Request, res: Response)
     const groupId = parseInt(String(req.params.id), 10);
     const targetUserId = String(req.params.userId);
     if (isNaN(groupId)) { res.status(400).json({ error: "Invalid id" }); return; }
-    const actorId = req.user!.id;
+    const requesterId = req.user!.id;
 
-    const [actor] = await db
-      .select({ role: groupMembers.role })
+    const [admin] = await db
+      .select()
       .from(groupMembers)
-      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, actorId)))
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, requesterId), eq(groupMembers.role, "admin")))
       .limit(1);
-    if (!actor || actor.role !== "admin") { res.status(403).json({ error: "Only group admins can remove members" }); return; }
-    if (targetUserId === actorId) { res.status(400).json({ error: "Cannot remove yourself — use Leave instead" }); return; }
+    if (!admin) { res.status(403).json({ error: "Only admins can remove members" }); return; }
 
-    const deleted = await db
+    await db
       .delete(groupMembers)
-      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, targetUserId)))
-      .returning();
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, targetUserId)));
 
-    if (deleted.length === 0) { res.status(404).json({ error: "Member not found" }); return; }
-
-    await db.update(groups)
+    await db
+      .update(groups)
       .set({ memberCount: sql`greatest(${groups.memberCount} - 1, 0)`, updatedAt: new Date() })
       .where(eq(groups.id, groupId));
 
-    res.json({ removed: true });
+    res.json({ ok: true });
   } catch (err) {
     req.log.error({ err }, "DELETE /api/groups/:id/members/:userId error");
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-router.delete("/groups/:id/suggestions/:suggId", async (req: Request, res: Response) => {
-  if (!requireAuth(req, res)) return;
-  try {
-    const groupId = parseInt(String(req.params.id), 10);
-    const suggId = parseInt(String(req.params.suggId), 10);
-    if (isNaN(groupId) || isNaN(suggId)) { res.status(400).json({ error: "Invalid id" }); return; }
-    const userId = req.user!.id;
-
-    const [sugg] = await db
-      .select({ id: groupSuggestions.id, userId: groupSuggestions.userId })
-      .from(groupSuggestions)
-      .where(and(eq(groupSuggestions.id, suggId), eq(groupSuggestions.groupId, groupId)))
-      .limit(1);
-
-    if (!sugg) { res.status(404).json({ error: "Suggestion not found" }); return; }
-    if (sugg.userId !== userId) { res.status(403).json({ error: "Not authorized" }); return; }
-
-    await db.delete(groupSuggestions).where(eq(groupSuggestions.id, suggId));
-    res.json({ deleted: true });
-  } catch (err) {
-    req.log.error({ err }, "DELETE /api/groups/:id/suggestions/:suggId error");
     res.status(500).json({ error: "Internal server error" });
   }
 });

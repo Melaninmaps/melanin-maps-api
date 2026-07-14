@@ -8,12 +8,14 @@ export const groups = pgTable("groups", {
   memberCount: integer("member_count").notNull().default(0),
   maxMembers: integer("max_members").notNull().default(8),
   isPrivate: boolean("is_private").notNull().default(false),
+  isAgeRestricted: boolean("is_age_restricted").notNull().default(false),
   createdBy: text("created_by"),
   city: text("city"),
   state: text("state"),
   imageUrl: text("image_url"),
-  isAgeRestricted: boolean("is_age_restricted").notNull().default(false),
   audiencePreferences: jsonb("audience_preferences").$type<string[]>().default([]),
+  rules: jsonb("rules").$type<string[]>().default([]),
+  profanityLevel: text("profanity_level").notNull().default("moderate"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -93,9 +95,24 @@ export const groupSuggestions = pgTable("group_suggestions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const groupReports = pgTable("group_reports", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id")
+    .notNull()
+    .references(() => groups.id, { onDelete: "cascade" }),
+  reportedBy: text("reported_by").notNull(),
+  targetType: text("target_type").notNull().default("group"),
+  targetId: text("target_id"),
+  reason: text("reason").notNull(),
+  details: text("details"),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export type Group = typeof groups.$inferSelect;
 export type GroupMember = typeof groupMembers.$inferSelect;
 export type GroupInvite = typeof groupInvites.$inferSelect;
 export type GroupItinerary = typeof groupItineraries.$inferSelect;
 export type GroupSuggestion = typeof groupSuggestions.$inferSelect;
 export type InsertGroupSuggestion = typeof groupSuggestions.$inferInsert;
+export type GroupReport = typeof groupReports.$inferSelect;
