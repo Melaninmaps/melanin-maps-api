@@ -84,6 +84,17 @@ export const businessesTable = pgTable("businesses", {
   // Community dispute system ("fake business" flagging)
   flagCount: integer("flag_count").notNull().default(0),
   flagStatus: varchar("flag_status", { length: 20 }).notNull().default("none"), // none | under_review | confirmed_fake | cleared
+  // ── Community Spotlight / Hidden Gem status ──────────────────────────────
+  // Set by the system when a business earns enough nominations + meets quality criteria.
+  // Expires after 90 days. Businesses may be re-nominated each cycle.
+  // hiddenGemLabel values: 'Hidden Gem' | 'Community Favorite' | 'Rising Star' |
+  //   'Neighborhood Staple' | 'First-Timer Pick' | 'Family Favorite' | 'Late Night Favorite'
+  hiddenGemLabel: varchar("hidden_gem_label", { length: 60 }),
+  hiddenGemCategory: varchar("hidden_gem_category", { length: 60 }),
+  hiddenGemTagline: varchar("hidden_gem_tagline", { length: 255 }),
+  hiddenGemSince: timestamp("hidden_gem_since", { withTimezone: true }),
+  hiddenGemExpiresAt: timestamp("hidden_gem_expires_at", { withTimezone: true }),
+  hiddenGemNominations: integer("hidden_gem_nominations").notNull().default(0),
   // ── AI target audience (set by business owner) ───────────────────────────
   targetAudience: jsonb("target_audience").$type<{
     keywords?: string[];

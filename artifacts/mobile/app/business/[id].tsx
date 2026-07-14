@@ -93,6 +93,17 @@ export default function BusinessDetailScreen() {
   const [circlesLoading, setCirclesLoading] = useState(false);
   const [suggestingCircleId, setSuggestingCircleId] = useState<number | null>(null);
 
+  // ── Hidden Gem nomination ─────────────────────────────────────────────────
+  const [gemStatus, setGemStatus] = useState<{
+    hasNominated: boolean; totalNominations: number; isActive: boolean;
+    label: string | null; tagline: string | null; nextThreshold: number;
+  } | null>(null);
+  const [nomSheetOpen, setNomSheetOpen] = useState(false);
+  const [nomReason, setNomReason] = useState<string | null>(null);
+  const [nomAudiences, setNomAudiences] = useState<string[]>([]);
+  const [nomComment, setNomComment] = useState("");
+  const [nomSubmitting, setNomSubmitting] = useState(false);
+
   const { reviews: apiReviews, submitReview } = useReviews(id ?? "");
   const { hasCheckedIn, checkIn } = useCheckins();
   const { addLocal } = usePoints();
@@ -176,6 +187,24 @@ export default function BusinessDetailScreen() {
       .then(r => r.ok ? r.json() : null)
       .then((d: { thisWeek?: number } | null) => { if (d?.thisWeek) setPlatePassCount(d.thisWeek); })
       .catch(() => {});
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    void (async () => {
+      try {
+        const { getItemAsync } = await import("expo-secure-store");
+        const token = await getItemAsync("auth_session_token");
+        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const res = await fetch(`${base}/api/hidden-gems/${id}/status`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json() as { hasNominated: boolean; totalNominations: number; isActive: boolean; label: string | null; tagline: string | null; nextThreshold: number };
+          setGemStatus(data);
+        }
+      } catch {}
+    })();
   }, [id]);
 
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -556,6 +585,22 @@ export default function BusinessDetailScreen() {
 
           <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={14} showLabel />
 
+          {/* Hidden Gem / Community Spotlight badge */}
+          {gemStatus?.isActive && gemStatus.label ? (
+            <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10, backgroundColor: "#CA922B12", borderWidth: 1, borderColor: "#CA922B30", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginTop: 10 }}>
+              <Feather name="star" size={18} color="#CA922B" style={{ marginTop: 1 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: "#CA922B" }}>{gemStatus.label}</Text>
+                {gemStatus.tagline ? (
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "#7A6030", marginTop: 2, lineHeight: 17 }}>{gemStatus.tagline}</Text>
+                ) : null}
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "#CA922B90", marginTop: 3 }}>
+                  {gemStatus.totalNominations} community nomination{gemStatus.totalNominations !== 1 ? "s" : ""}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
           {(business as any).introVideoUrl ? (
             <TouchableOpacity
               style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16, marginTop: 10, alignSelf: "flex-start" }}
@@ -615,6 +660,33 @@ export default function BusinessDetailScreen() {
             </View>
             <Feather name="chevron-right" size={16} color="#2D7A4F" />
           </TouchableOpacity>
+
+          {/* Nominate as Hidden Gem */}
+          {gemStatus && !gemStatus.isActive && (
+            <TouchableOpacity
+              style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#CA922B0A", borderWidth: 1, borderColor: "#CA922B25", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, marginTop: 6 }}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setNomSheetOpen(true);
+              }}
+              activeOpacity={0.82}
+            >
+              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: "#CA922B18", alignItems: "center", justifyContent: "center" }}>
+                <Feather name="star" size={16} color="#CA922B" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: "#CA922B" }}>
+                  {gemStatus.hasNominated ? "You nominated this as a Hidden Gem" : "Nominate as a Hidden Gem"}
+                </Text>
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "#7A6030", marginTop: 2 }}>
+                  {gemStatus.hasNominated
+                    ? `${gemStatus.totalNominations} nomination${gemStatus.totalNominations !== 1 ? "s" : ""} total`
+                    : `${gemStatus.totalNominations} of ${gemStatus.nextThreshold} nominations to earn Community Spotlight`}
+                </Text>
+              </View>
+              {!gemStatus.hasNominated && <Feather name="chevron-right" size={16} color="#CA922B80" />}
+            </TouchableOpacity>
+          )}
 
           {/* Community Captions */}
           {(topCaptions.length > 0 || business) && (
@@ -1112,6 +1184,116 @@ export default function BusinessDetailScreen() {
         businessCategory={business.category}
         onClose={() => setShowSafetySurvey(false)}
       />
+
+      {/* Hidden Gem Nomination Sheet */}
+      <Modal visible={nomSheetOpen} transparent animationType="slide" onRequestClose={() => setNomSheetOpen(false)}>
+        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+          <TouchableOpacity style={{ ...StyleSheet.absoluteFillObject, backgroundColor: "#00000055" } as any} activeOpacity={1} onPress={() => setNomSheetOpen(false)} />
+          <View style={{ backgroundColor: colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: Math.max(insets.bottom, 20), maxHeight: "88%" }}>
+            <View style={{ width: 36, height: 4, backgroundColor: colors.border, borderRadius: 2, alignSelf: "center", marginTop: 10, marginBottom: 16 }} />
+            <ScrollView keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                <Feather name="star" size={20} color="#CA922B" />
+                <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: colors.foreground }}>Nominate as a Hidden Gem</Text>
+              </View>
+              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, marginBottom: 20, lineHeight: 19 }}>
+                Know something the community should know about? Help put this business on the map.
+              </Text>
+
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: colors.foreground, marginBottom: 10 }}>Why does this place deserve the spotlight?</Text>
+              {([
+                { key: "amazing_service", label: "Amazing service" },
+                { key: "exceptional_food", label: "Exceptional food" },
+                { key: "community_impact", label: "Community impact" },
+                { key: "welcoming_atmosphere", label: "Welcoming atmosphere" },
+                { key: "unique_products", label: "Unique products" },
+                { key: "family_owned", label: "Family-owned feel" },
+                { key: "great_value", label: "Great value" },
+                { key: "cultural_significance", label: "Cultural significance" },
+                { key: "hidden_location", label: "Hidden location" },
+                { key: "other", label: "Other" },
+              ] as const).map((r) => (
+                <TouchableOpacity
+                  key={r.key}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setNomReason(nomReason === r.key ? null : r.key); }}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border + "60" }}
+                  activeOpacity={0.75}
+                >
+                  <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: nomReason === r.key ? "#CA922B" : colors.border, backgroundColor: nomReason === r.key ? "#CA922B" : "transparent", alignItems: "center", justifyContent: "center" }}>
+                    {nomReason === r.key && <Feather name="check" size={11} color="#FFF" />}
+                  </View>
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 14, color: colors.foreground }}>{r.label}</Text>
+                </TouchableOpacity>
+              ))}
+
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: colors.foreground, marginTop: 20, marginBottom: 10 }}>Who is this place perfect for?</Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+                {([
+                  { key: "new_residents", label: "New residents" },
+                  { key: "visitors", label: "Visitors" },
+                  { key: "families", label: "Families" },
+                  { key: "college_students", label: "College students" },
+                  { key: "professionals", label: "Professionals" },
+                  { key: "date_night", label: "Date night" },
+                  { key: "solo_travelers", label: "Solo travelers" },
+                  { key: "community_shopping", label: "Community shopping" },
+                  { key: "lgbtq_friendly", label: "LGBTQ+ friendly" },
+                ] as const).map((a) => {
+                  const selected = nomAudiences.includes(a.key);
+                  return (
+                    <TouchableOpacity
+                      key={a.key}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setNomAudiences(prev => selected ? prev.filter(x => x !== a.key) : [...prev, a.key]);
+                      }}
+                      style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: selected ? "#CA922B" : colors.border, backgroundColor: selected ? "#CA922B18" : colors.card }}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={{ fontFamily: selected ? "Inter_600SemiBold" : "Inter_400Regular", fontSize: 12, color: selected ? "#CA922B" : colors.mutedForeground }}>{a.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <TouchableOpacity
+                disabled={!nomReason || nomSubmitting}
+                onPress={async () => {
+                  if (!nomReason) return;
+                  setNomSubmitting(true);
+                  try {
+                    const { getItemAsync } = await import("expo-secure-store");
+                    const token = await getItemAsync("auth_session_token");
+                    if (!token) { Alert.alert("Sign in required", "Sign in to nominate a Hidden Gem."); setNomSheetOpen(false); setNomSubmitting(false); return; }
+                    const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+                    const res = await fetch(`${base}/api/hidden-gems/${id}/nominate`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({ reason: nomReason, comment: nomComment.trim() || undefined, audienceTypes: nomAudiences.length ? nomAudiences : undefined }),
+                    });
+                    const data = await res.json() as { error?: string; code?: string; nominated?: boolean; totalNominations?: number; awarded?: boolean };
+                    if (res.status === 409) { Alert.alert("Already nominated", "You've already nominated this business."); }
+                    else if (!res.ok) { Alert.alert("Error", data.error ?? "Could not submit nomination."); }
+                    else {
+                      setGemStatus(prev => prev ? { ...prev, hasNominated: true, totalNominations: data.totalNominations ?? prev.totalNominations + 1, isActive: data.awarded ?? prev.isActive, label: data.awarded ? "Hidden Gem" : prev.label, tagline: prev.tagline } : prev);
+                      setNomSheetOpen(false);
+                      setNomReason(null); setNomAudiences([]); setNomComment("");
+                      Alert.alert(data.awarded ? "Community Spotlight Earned!" : "Nomination submitted", data.awarded ? `${business.name} just earned the Hidden Gem spotlight — thanks to the community.` : "Thanks for the nomination. Keep spreading the word!");
+                    }
+                  } catch { Alert.alert("Error", "Something went wrong. Try again."); }
+                  finally { setNomSubmitting(false); }
+                }}
+                style={{ backgroundColor: !nomReason ? colors.border : "#CA922B", borderRadius: 12, paddingVertical: 14, alignItems: "center", marginTop: 8 }}
+                activeOpacity={0.85}
+              >
+                <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: !nomReason ? colors.mutedForeground : "#FFF" }}>
+                  {nomSubmitting ? "Submitting…" : "Submit Nomination"}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       {/* Caption Voting Sheet */}
       <Modal visible={captionSheetOpen} transparent animationType="slide" onRequestClose={() => setCaptionSheetOpen(false)}>

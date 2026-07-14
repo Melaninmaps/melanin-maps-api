@@ -197,6 +197,12 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
                 </View>
               );
             })()}
+            {business.hiddenGemLabel ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 4 }}>
+                <Feather name="star" size={10} color="#CA922B" />
+                <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 10, color: "#CA922B" }}>{business.hiddenGemLabel}</Text>
+              </View>
+            ) : null}
             <View style={styles.hBottom}>
               <Text style={[styles.hLocation, { color: colors.mutedForeground }]} numberOfLines={1}>
                 {business.city}, {business.state}
@@ -330,6 +336,12 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
               </View>
             );
           })()}
+          {business.hiddenGemLabel ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 4 }}>
+              <Feather name="star" size={10} color="#CA922B" />
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 10, color: "#CA922B" }}>{business.hiddenGemLabel}</Text>
+            </View>
+          ) : null}
           <Text style={[styles.vLocation, { color: colors.mutedForeground }]} numberOfLines={1}>
             {business.address}, {business.city}
             {business.priceRange ? ` · ${business.priceRange}` : ""}

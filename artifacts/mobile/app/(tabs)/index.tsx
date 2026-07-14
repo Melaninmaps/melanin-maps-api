@@ -75,6 +75,7 @@ export default function DiscoverScreen() {
   // Algorithmic twin recommendations
   const [twinRecs, setTwinRecs] = useState<Array<{ business: { id: string; name: string; category: string; city: string; state: string; imageUrl: string | null; confidenceScore: number; verified: boolean; blackOwned: boolean; priceRange: string | null; description: string }; twinCount: number; reason: string; twinCities: string[] }>>([]);
   const [twinRecsLoading, setTwinRecsLoading] = useState(false);
+  const [spotlights, setSpotlights] = useState<Array<{ id: string; name: string; category: string; city: string; state: string; rating: string; imageUrl: string | null; hiddenGemLabel: string; hiddenGemTagline: string | null; hiddenGemNominations: number; verified: boolean; blackOwned: boolean; priceRange: string | null; description: string }>>([]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -95,6 +96,19 @@ export default function DiscoverScreen() {
     })();
     return () => { cancelled = true; };
   }, [user?.id]);
+
+  React.useEffect(() => {
+    void (async () => {
+      try {
+        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const res = await fetch(`${base}/api/hidden-gems?limit=10`);
+        if (res.ok) {
+          const data = await res.json() as { gems: typeof spotlights };
+          setSpotlights(data.gems ?? []);
+        }
+      } catch {}
+    })();
+  }, []);
 
   // When saved preferences load, auto-apply ownership types if user hasn't set a filter yet
   React.useEffect(() => {
@@ -542,6 +556,42 @@ export default function DiscoverScreen() {
                     )}
                   />
                 )}
+              </View>
+            )}
+
+            {/* Community Spotlights — active Hidden Gems */}
+            {spotlights.length > 0 && (
+              <View style={styles.section}>
+                <SectionHeader
+                  title="Community Spotlights"
+                  subtitle="Places the community keeps nominating"
+                />
+                <FlatList
+                  keyboardDismissMode="on-drag"
+                  horizontal
+                  data={spotlights}
+                  keyExtractor={(item) => `gem-${item.id}`}
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 12, paddingHorizontal: 20 }}
+                  renderItem={({ item }) => (
+                    <View style={{ width: 220 }}>
+                      <BusinessCard
+                        business={item as any}
+                        onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.id } })}
+                        isSaved={isSaved(item.id)}
+                        onToggleSave={() => toggleSave(item.id)}
+                        horizontal
+                      />
+                      <View style={[styles.twinRecBadge, { borderColor: "#CA922B25", backgroundColor: "#CA922B0A" }]}>
+                        <Feather name="star" size={10} color="#CA922B" />
+                        <Text style={[styles.twinRecBadgeText, { color: "#CA922B" }]}>
+                          {item.hiddenGemLabel}
+                          {item.hiddenGemNominations > 0 ? ` · ${item.hiddenGemNominations} nominations` : ""}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                />
               </View>
             )}
 

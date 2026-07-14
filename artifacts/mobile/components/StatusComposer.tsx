@@ -20,17 +20,17 @@ import { UserMentionPicker } from "./UserMentionPicker";
 
 type Visibility = "public" | "followers_only" | "only_me";
 
-const VISIBILITY_OPTIONS: { value: Visibility; label: string; icon: string }[] = [
-  { value: "public", label: "Public", icon: "🌐" },
-  { value: "followers_only", label: "Followers", icon: "👥" },
-  { value: "only_me", label: "Only Me", icon: "🔒" },
+const VISIBILITY_OPTIONS: { value: Visibility; label: string; featherIcon: string }[] = [
+  { value: "public", label: "Public", featherIcon: "globe" },
+  { value: "followers_only", label: "Followers", featherIcon: "users" },
+  { value: "only_me", label: "Only Me", featherIcon: "lock" },
 ];
 
-const STANCE_TAGS: { key: string; label: string; icon: string }[] = [
-  { key: "community_favorite", label: "Community Favorite", icon: "⭐" },
-  { key: "hidden_gem",         label: "Hidden Gem",         icon: "💎" },
-  { key: "supporting_local",   label: "Supporting Local",   icon: "🤝" },
-  { key: "visited_loved",      label: "Visited & Loved",    icon: "❤️" },
+const STANCE_TAGS: { key: string; label: string; featherIcon: string }[] = [
+  { key: "community_favorite", label: "Community Favorite", featherIcon: "star" },
+  { key: "hidden_gem",         label: "Hidden Gem",         featherIcon: "star" },
+  { key: "supporting_local",   label: "Supporting Local",   featherIcon: "users" },
+  { key: "visited_loved",      label: "Visited & Loved",    featherIcon: "heart" },
 ];
 
 function getApiBase(): string {
@@ -295,7 +295,7 @@ export function StatusComposer({ authorName, authorInitials, authorColor, onPost
                     }}
                     activeOpacity={0.7}
                   >
-                    <Text style={s.visEmoji}>{opt.icon}</Text>
+                    <Feather name={opt.featherIcon as any} size={14} color={opt.value === visibility ? colors.primary : colors.mutedForeground} />
                     <Text style={[s.visLabel, { color: active ? colors.primary : colors.mutedForeground }]}>{opt.label}</Text>
                   </TouchableOpacity>
                 );
@@ -363,7 +363,7 @@ export function StatusComposer({ authorName, authorInitials, authorColor, onPost
                     onPress={() => setStanceTag(active ? null : t.key)}
                     activeOpacity={0.75}
                   >
-                    <Text style={s.tagIcon}>{t.icon}</Text>
+                    <Feather name={t.featherIcon as any} size={15} color={active ? colors.primary : colors.mutedForeground} />
                     <Text style={[s.tagLabel, { color: active ? colors.primary : colors.foreground }]}>{t.label}</Text>
                   </TouchableOpacity>
                 );

@@ -52,6 +52,12 @@ export interface Business {
   ownerName?: string;
   ownerBio?: string;
   ownerStory?: string;
+  hiddenGemLabel?: string | null;
+  hiddenGemCategory?: string | null;
+  hiddenGemTagline?: string | null;
+  hiddenGemSince?: string | null;
+  hiddenGemExpiresAt?: string | null;
+  hiddenGemNominations?: number;
 }
 
 export interface Event {
