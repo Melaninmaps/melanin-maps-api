@@ -26,6 +26,7 @@ export const businessesTable = pgTable("businesses", {
   latitude: numeric("latitude", { precision: 10, scale: 7 }).notNull(),
   longitude: numeric("longitude", { precision: 10, scale: 7 }).notNull(),
   tags: jsonb("tags").$type<string[]>().notNull().default([]),
+  vibes: jsonb("vibes").$type<string[]>().notNull().default([]),
   reviews: jsonb("reviews").$type<Review[]>().notNull().default([]),
   phone: varchar("phone", { length: 30 }),
   website: varchar("website", { length: 255 }),

@@ -203,6 +203,14 @@ export default function BusinessOwnerHome() {
       route: "/business-owner/featured-video",
     },
     {
+      id: "vibe-tags",
+      icon: "zap",
+      label: "Vibe Search Tags",
+      sub: "Tag your atmosphere so people find you in vibe searches",
+      color: "#5B6AF0",
+      route: "/business-owner/vibe-tags",
+    },
+    {
       id: "global",
       icon: "globe",
       label: "Share Global Recommendations",

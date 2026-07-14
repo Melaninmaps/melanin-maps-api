@@ -125,6 +125,7 @@ import financialHubRouter from "./financial-hub";
 import directionsRouter from "./directions";
 import recommendedSpotsRouter from "./recommended-spots";
 import previewRouter from "./preview";
+import vibesRouter from "./vibes";
 
 const router: IRouter = Router();
 
@@ -253,6 +254,7 @@ router.use(financialHubRouter);
 router.use(directionsRouter);
 router.use(recommendedSpotsRouter);
 router.use(previewRouter);
+router.use(vibesRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

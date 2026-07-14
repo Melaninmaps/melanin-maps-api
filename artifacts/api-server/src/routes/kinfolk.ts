@@ -346,6 +346,7 @@ function buildSystemPrompt(opts: {
   weatherContext?: string | null;
   tier?: string | null;
   twinRecs?: Array<{ businessName: string; city: string; state: string; twinCount: number; reason: string }>;
+  topUserVibes?: string[];
 }): string {
   const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
   const tier = opts.tier ?? "free";
@@ -477,6 +478,12 @@ ${opts.twinRecs.map((r) => `- ${r.businessName} (${r.city}, ${r.state}) — ${r.
 Use this for proactive discovery suggestions. If this city/location is relevant to the conversation, surface these naturally — "People who love what you love are really into [X] in [City]." If not currently relevant, file it away for future recommendations.`
     : "";
 
+  const vibeSection = opts.topUserVibes?.length
+    ? `\nUSER'S VIBE DNA (from their search and tagging behavior — they gravitate toward):
+${opts.topUserVibes.map((v) => `- ${v}`).join("\n")}
+When recommending businesses or experiences, ALWAYS prioritize matches to these vibes. If they ask for a restaurant, lean toward their vibe style. If they ask for somewhere to go, filter through their vibe lens first. Mention the vibe angle naturally — "since you're into that Date Night energy..." or "this one has those Hood Classic vibes you keep gravitating toward..."`
+    : "";
+
   const journeySection = activeJourney
     ? `\nACTIVE LIFE JOURNEY — THIS IS CRITICAL CONTEXT:
 The user is currently on a "${activeJourney.journeyType}" journey titled "${activeJourney.title}"${activeJourney.city ? ` in ${activeJourney.city}` : ""}.
@@ -563,7 +570,7 @@ For city or trip questions: deliver 2–3 carefully chosen restaurants + 1 relev
 
 You have memory. You know this person. You learn from every interaction. You get more useful every time they talk to you.
 
-${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${journeySection}${crossCitySection}${weatherSection}${lifestyleSection}${tierSection}${smartPromoSection}
+${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${lifestyleSection}${tierSection}${smartPromoSection}
 WHAT YOU CAN DO — be confident about this:
 - Weather: You have live weather data when it's relevant (see LIVE WEATHER section above). Give specific, actionable advice — umbrella, what to wear, packing recommendations. Never say you can't do weather.
 - Travel & discovery: minority-owned businesses, neighborhoods, safety, culture, events, itineraries
@@ -1101,7 +1108,19 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     } catch { /* non-fatal — proceed without twin recs */ }
 
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs });
+    let topUserVibes: string[] = [];
+    try {
+      if (req.user?.id) {
+        const { pool: vibePool } = await import("@workspace/db");
+        const vibeTagsRes = await vibePool.query(
+          `SELECT vibe FROM business_vibe_tags WHERE user_id = $1 GROUP BY vibe ORDER BY COUNT(*) DESC LIMIT 5`,
+          [req.user.id],
+        );
+        topUserVibes = (vibeTagsRes.rows as { vibe: string }[]).map((r) => r.vibe);
+      }
+    } catch { /* non-fatal */ }
+
+    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes });
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages

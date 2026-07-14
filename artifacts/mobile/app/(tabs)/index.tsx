@@ -165,15 +165,19 @@ export default function DiscoverScreen() {
   const [activeVibe, setActiveVibe] = useState<string | null>(null);
   const [minorityExpanded, setMinorityExpanded] = useState(false);
 
-  const VIBES: { label: string; emoji: string; categories: string[] }[] = [
-    { label: "Soul Food", emoji: "🍽️", categories: ["Food", "Restaurant"] },
-    { label: "Hair & Beauty", emoji: "💈", categories: ["Beauty", "Hair"] },
-    { label: "Wellness", emoji: "💆🏾", categories: ["Health", "Wellness"] },
-    { label: "Art & Culture", emoji: "🎨", categories: ["Arts", "Culture", "Gallery"] },
-    { label: "Late Night", emoji: "🌙", categories: ["Entertainment", "Nightlife", "Bar"] },
-    { label: "Shopping", emoji: "🛍️", categories: ["Retail", "Shop"] },
-    { label: "Date Night", emoji: "💑", categories: ["Restaurant", "Food", "Entertainment"] },
-    { label: "Family", emoji: "👨🏾‍👩🏾‍👧🏾", categories: ["Food", "Entertainment", "Health"] },
+  const VIBES: { label: string; emoji: string; categories: string[]; vibeId: string }[] = [
+    { label: "Soul Food", emoji: "🍽️", vibeId: "soul-food", categories: ["Food", "Restaurant", "soul", "bbq", "seafood", "southern"] },
+    { label: "Hair & Beauty", emoji: "💈", vibeId: "hair-beauty", categories: ["Beauty", "Hair", "barber", "salon", "nail", "spa"] },
+    { label: "Wellness", emoji: "🌿", vibeId: "wellness", categories: ["Health", "Wellness", "fitness", "gym", "yoga", "medical"] },
+    { label: "Art & Culture", emoji: "🎨", vibeId: "creative-scene", categories: ["Arts", "Culture", "Gallery", "Museum", "creative"] },
+    { label: "Late Night", emoji: "🌙", vibeId: "late-night", categories: ["Entertainment", "Nightlife", "Bar", "lounge", "club"] },
+    { label: "Shopping", emoji: "🛍️", vibeId: "shopping", categories: ["Retail", "Shop", "boutique", "clothing"] },
+    { label: "Date Night", emoji: "✨", vibeId: "date-night", categories: ["Restaurant", "Food", "Entertainment", "lounge"] },
+    { label: "Family", emoji: "🏡", vibeId: "family-time", categories: ["Food", "Entertainment", "Health", "childcare", "education"] },
+    { label: "Bougie", emoji: "🥂", vibeId: "bougie-treat", categories: ["Restaurant", "Spa", "Hotel", "fine dining"] },
+    { label: "Hood Classic", emoji: "🏆", vibeId: "hood-classic", categories: ["Food", "Barbershop", "Community"] },
+    { label: "Work & Study", emoji: "💻", vibeId: "work-and-study", categories: ["Cafe", "Coffee", "coworking", "library"] },
+    { label: "Group Hangout", emoji: "👥", vibeId: "group-hangout", categories: ["Entertainment", "Sports", "Bowling", "Events"] },
   ];
 
   const filtered = businesses.filter((b) => {
@@ -188,11 +192,16 @@ export default function DiscoverScreen() {
           (t === "minority-owned" && b.blackOwned) ||
           b.ownershipDesignations.includes(t)
       );
+    const activeVibeObj = VIBES.find((v) => v.label === activeVibe);
     const matchesVibe = !activeVibe
       ? true
-      : VIBES.find((v) => v.label === activeVibe)?.categories.some(
-          (cat) => b.category?.toLowerCase().includes(cat.toLowerCase())
-        ) ?? true;
+      : (
+          activeVibeObj?.categories.some(
+            (cat) => b.category?.toLowerCase().includes(cat.toLowerCase())
+          ) ??
+          (b as any).vibes?.includes(activeVibeObj?.vibeId) ??
+          true
+        );
     return matchesScore && matchesVerified && matchesOwnership && matchesVibe;
   });
 
@@ -312,6 +321,20 @@ export default function DiscoverScreen() {
             </View>
           </TouchableOpacity>
         </View>
+
+        {/* Vibe Search shortcut */}
+        <TouchableOpacity
+          style={[styles.searchBannerFull, { borderColor: "#5B6AF030", backgroundColor: "#5B6AF008", marginBottom: 8 }]}
+          onPress={() => router.push("/vibe-search" as never)}
+          activeOpacity={0.85}
+        >
+          <Feather name="zap" size={14} color="#5B6AF0" />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.aiSearchTitle, { color: "#5B6AF0" }]}>Vibe Search</Text>
+            <Text style={[styles.aiSearchSub, { color: "#5B6AF099" }]}>Find spots by mood — Date Night, Bougie, Hood Classic & more</Text>
+          </View>
+          <Feather name="arrow-right" size={14} color="#5B6AF0" />
+        </TouchableOpacity>
 
         {/* Category dropdown */}
         <TouchableOpacity

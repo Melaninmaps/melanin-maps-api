@@ -117,6 +117,14 @@ export default function BusinessDetailScreen() {
     hasNominated: boolean; totalNominations: number; isActive: boolean;
     label: string | null; tagline: string | null; nextThreshold: number;
   } | null>(null);
+  const [vibeData, setVibeData] = useState<{
+    ownerVibes: string[];
+    communityTags: Array<{ vibe: string; count: number }>;
+    myTags: string[];
+  } | null>(null);
+  const [vibePickerOpen, setVibePickerOpen] = useState(false);
+  const [vibeTagging, setVibeTagging] = useState(false);
+
   const [nomSheetOpen, setNomSheetOpen] = useState(false);
   const [nomReason, setNomReason] = useState<string | null>(null);
   const [nomAudiences, setNomAudiences] = useState<string[]>([]);
@@ -199,6 +207,60 @@ export default function BusinessDetailScreen() {
   };
 
   useEffect(() => { fetchCaptions(); }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    void (async () => {
+      try {
+        const { getItemAsync } = await import("expo-secure-store");
+        const token = await getItemAsync("auth_session_token");
+        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const res = await fetch(`${base}/api/vibes/businesses/${id}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json() as { ownerVibes: string[]; communityTags: Array<{ vibe: string; count: number }>; myTags: string[] };
+          setVibeData(data);
+        }
+      } catch {}
+    })();
+  }, [id]);
+
+  const toggleVibeTag = async (vibe: string) => {
+    if (!id) return;
+    const isMyTag = vibeData?.myTags.includes(vibe) ?? false;
+    setVibeTagging(true);
+    try {
+      const { getItemAsync } = await import("expo-secure-store");
+      const token = await getItemAsync("auth_session_token");
+      if (!token) return;
+      const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const res = await fetch(`${base}/api/vibes/tag`, {
+        method: isMyTag ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ businessId: id, vibe }),
+      });
+      if (res.ok) {
+        setVibeData((prev) => {
+          if (!prev) return prev;
+          const myTags = isMyTag ? prev.myTags.filter((t) => t !== vibe) : [...prev.myTags, vibe];
+          let communityTags = [...prev.communityTags];
+          const existing = communityTags.find((t) => t.vibe === vibe);
+          if (isMyTag) {
+            if (existing) {
+              existing.count = Math.max(0, existing.count - 1);
+              if (existing.count === 0) communityTags = communityTags.filter((t) => t.vibe !== vibe);
+            }
+          } else {
+            if (existing) { existing.count++; }
+            else { communityTags.push({ vibe, count: 1 }); }
+          }
+          return { ...prev, myTags, communityTags };
+        });
+      }
+    } catch {}
+    setVibeTagging(false);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -630,6 +692,159 @@ export default function BusinessDetailScreen() {
               <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: "#FFF" }}>Watch Owner Intro</Text>
             </TouchableOpacity>
           ) : null}
+
+          {/* Vibe Check Section */}
+          {(() => {
+            const BIZ_VIBES = [
+              { id: "date-night", label: "Date Night", icon: "heart" as const },
+              { id: "group-hangout", label: "Group Hangout", icon: "users" as const },
+              { id: "solo-vibes", label: "Solo Vibes", icon: "user" as const },
+              { id: "bougie-treat", label: "Bougie Treat", icon: "award" as const },
+              { id: "hood-classic", label: "Hood Classic", icon: "home" as const },
+              { id: "soul-food", label: "Soul Food", icon: "coffee" as const },
+              { id: "late-night", label: "Late Night", icon: "moon" as const },
+              { id: "family-time", label: "Family Time", icon: "smile" as const },
+              { id: "creative-scene", label: "Creative Scene", icon: "music" as const },
+              { id: "wellness", label: "Wellness", icon: "activity" as const },
+              { id: "work-and-study", label: "Work & Study", icon: "book-open" as const },
+              { id: "adventure", label: "Adventure Ready", icon: "compass" as const },
+            ];
+            const allTaggedVibes = [
+              ...(vibeData?.ownerVibes ?? []).map((v) => ({ id: v, source: "owner" as const })),
+              ...(vibeData?.communityTags ?? [])
+                .filter((t) => !vibeData?.ownerVibes.includes(t.vibe))
+                .map((t) => ({ id: t.vibe, source: "community" as const, count: t.count })),
+            ];
+            const hasVibes = allTaggedVibes.length > 0;
+
+            return (
+              <View style={{ marginTop: 14, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 14, gap: 10 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Feather name="zap" size={14} color={colors.primary} />
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: colors.foreground }}>Vibe Check</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => setVibePickerOpen(true)}
+                    style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: colors.primary + "15", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 }}
+                    activeOpacity={0.8}
+                  >
+                    <Feather name="plus" size={12} color={colors.primary} />
+                    <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: colors.primary }}>Add Vibe</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {hasVibes ? (
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                    {allTaggedVibes.map((v) => {
+                      const meta = BIZ_VIBES.find((x) => x.id === v.id);
+                      const isMine = vibeData?.myTags.includes(v.id);
+                      const communityCount = vibeData?.communityTags.find((t) => t.vibe === v.id)?.count ?? 0;
+                      return (
+                        <TouchableOpacity
+                          key={v.id}
+                          onPress={() => { void toggleVibeTag(v.id); }}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 5,
+                            paddingHorizontal: 10,
+                            paddingVertical: 6,
+                            borderRadius: 10,
+                            backgroundColor: isMine ? colors.primary + "18" : colors.card,
+                            borderWidth: 1,
+                            borderColor: isMine ? colors.primary + "50" : colors.border,
+                          }}
+                          activeOpacity={0.8}
+                          disabled={vibeTagging}
+                        >
+                          {meta && <Feather name={meta.icon} size={12} color={isMine ? colors.primary : colors.mutedForeground} />}
+                          <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: isMine ? colors.primary : colors.foreground }}>
+                            {meta?.label ?? v.id}
+                          </Text>
+                          {v.source === "owner" && (
+                            <View style={{ backgroundColor: "#CA922B20", borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1 }}>
+                              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 9, color: "#CA922B" }}>Owner</Text>
+                            </View>
+                          )}
+                          {communityCount > 0 && (
+                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, color: colors.mutedForeground }}>{communityCount}</Text>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                ) : (
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, lineHeight: 18 }}>
+                    No vibes tagged yet. Be the first to describe this spot's energy.
+                  </Text>
+                )}
+              </View>
+            );
+          })()}
+
+          {/* Vibe Picker Modal */}
+          <Modal visible={vibePickerOpen} transparent animationType="slide" onRequestClose={() => setVibePickerOpen(false)}>
+            <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.45)" }}>
+              <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setVibePickerOpen(false)} />
+              <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 20, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 16, color: colors.foreground }}>What's the vibe?</Text>
+                  <TouchableOpacity onPress={() => setVibePickerOpen(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Feather name="x" size={20} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                </View>
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4 }}>
+                  Tag what this spot feels like — helps others find their scene
+                </Text>
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexDirection: "row", flexWrap: "wrap", gap: 10, padding: 16 }}>
+                  {[
+                    { id: "date-night", label: "Date Night", icon: "heart" as const },
+                    { id: "group-hangout", label: "Group Hangout", icon: "users" as const },
+                    { id: "solo-vibes", label: "Solo Vibes", icon: "user" as const },
+                    { id: "bougie-treat", label: "Bougie Treat", icon: "award" as const },
+                    { id: "hood-classic", label: "Hood Classic", icon: "home" as const },
+                    { id: "soul-food", label: "Soul Food", icon: "coffee" as const },
+                    { id: "late-night", label: "Late Night", icon: "moon" as const },
+                    { id: "family-time", label: "Family Time", icon: "smile" as const },
+                    { id: "creative-scene", label: "Creative Scene", icon: "music" as const },
+                    { id: "wellness", label: "Wellness", icon: "activity" as const },
+                    { id: "work-and-study", label: "Work & Study", icon: "book-open" as const },
+                    { id: "adventure", label: "Adventure Ready", icon: "compass" as const },
+                  ].map((v) => {
+                    const isMine = vibeData?.myTags.includes(v.id) ?? false;
+                    return (
+                      <TouchableOpacity
+                        key={v.id}
+                        onPress={async () => { await toggleVibeTag(v.id); }}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 7,
+                          paddingHorizontal: 14,
+                          paddingVertical: 10,
+                          borderRadius: 12,
+                          backgroundColor: isMine ? colors.primary : colors.background,
+                          borderWidth: 1.5,
+                          borderColor: isMine ? colors.primary : colors.border,
+                          minWidth: "44%",
+                          flex: 0,
+                        }}
+                        activeOpacity={0.8}
+                        disabled={vibeTagging}
+                      >
+                        <Feather name={v.icon} size={14} color={isMine ? "#FFF" : colors.primary} />
+                        <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: isMine ? "#FFF" : colors.foreground }}>
+                          {v.label}
+                        </Text>
+                        {isMine && <Feather name="check" size={12} color="#FFF" style={{ marginLeft: "auto" }} />}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
 
           {/* Safety stats */}
           {(business.wouldReturnAlone != null || business.safetyRating != null) && (
