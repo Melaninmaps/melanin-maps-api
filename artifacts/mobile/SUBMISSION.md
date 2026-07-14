@@ -2,6 +2,8 @@
 
 This document covers everything needed to build and submit Mapping With Melanin to the Apple App Store and Google Play using EAS (Expo Application Services).
 
+---
+
 ## Prerequisites
 
 1. Install EAS CLI globally:
@@ -13,26 +15,19 @@ This document covers everything needed to build and submit Mapping With Melanin 
    ```bash
    eas login
    ```
-   > Create a free Expo account at https://expo.dev if you don't have one.
+   > Use the `tlindsay428` Expo account. Create one at https://expo.dev if needed.
 
-3. Link the project to EAS:
-   Run this once from the `artifacts/mobile/` directory:
-   ```bash
-   eas init
-   ```
-   Accept the prompts and confirm the bundle identifier (`com.melaninmaps.app`).
+3. All submission credentials are already configured in `eas.json`:
+   - **iOS:** `appleId`, `ascAppId` (`6783773366`), `appleTeamId` (`Y46Y4A5MMZ`)
+   - **Android:** `./google-service-account.json` (in place), `track: "internal"`
 
-4. Configure your Apple Developer and Google Play credentials in `eas.json`:
-   - Update `appleId`, `ascAppId`, and `appleTeamId` under `submit.production.ios`
-   - Place your Google service account JSON at `./google-service-account.json` (from Google Play Console → Setup → API access)
-
-5. Set your `EXPO_PUBLIC_DOMAIN` in each build profile's `env` block (already set to `mappingwithmelanin.com`)
+   No changes to `eas.json` are needed — run from `artifacts/mobile/`.
 
 ---
 
 ## Environment Variables
 
-The production build requires the following environment variable to be set in your EAS project secrets (https://expo.dev → your project → Secrets):
+The production build requires the following environment variable set in your EAS project secrets (https://expo.dev → your project → Secrets):
 
 | Secret name | Description |
 |---|---|
@@ -43,6 +38,86 @@ Set it via CLI:
 ```bash
 eas secret:create --scope project --name GOOGLE_MAPS_API_KEY --value YOUR_KEY_HERE
 ```
+
+---
+
+## Internal Testing Setup
+
+This section covers getting real builds in front of your internal team before going to the public stores.
+
+### Step 1 — Build for internal testing
+
+All commands must be run from the `artifacts/mobile/` directory.
+
+```bash
+cd artifacts/mobile
+
+# Build for both platforms (internal distribution)
+eas build --profile preview --platform all
+```
+
+- **iOS:** Produces a signed `.ipa` distributed via the Expo install link (no TestFlight needed for the `preview` profile).
+- **Android:** Produces an `.apk` for direct sideloading.
+
+Share the install links from the EAS dashboard or via:
+```bash
+eas build:list
+```
+
+### Step 2 — Upload to TestFlight (iOS)
+
+To get the build into TestFlight so Apple testers can install it from the TestFlight app, use the **production** profile and then submit:
+
+```bash
+cd artifacts/mobile
+
+# Build a production .ipa
+eas build --profile production --platform ios
+
+# Submit the latest build to App Store Connect / TestFlight
+eas submit --platform ios --latest
+```
+
+EAS will use the credentials already in `eas.json` (`appleId`, `ascAppId`, `appleTeamId`).
+
+**After submission, add internal testers in App Store Connect:**
+1. Go to https://appstoreconnect.apple.com
+2. Select **Mapping With Melanin** → **TestFlight**
+3. Click the build under **iOS Builds**
+4. Under **Internal Testing**, click **+** to add tester groups or individual emails
+5. Internal testers receive a TestFlight invite email and can install immediately (no Apple review needed)
+
+> Internal testing in TestFlight supports up to **100 testers**. They must be added to App Store Connect as users first (Users & Access → People).
+
+### Step 3 — Upload to Google Play Internal Testing (Android)
+
+```bash
+cd artifacts/mobile
+
+# Build a production .aab
+eas build --profile production --platform android
+
+# Submit to the internal testing track on Google Play
+eas submit --platform android --latest
+```
+
+EAS uses `./google-service-account.json` and targets `track: "internal"` as set in `eas.json`.
+
+**After submission, add internal testers in Google Play Console:**
+1. Go to https://play.google.com/console
+2. Select **Mapping With Melanin** → **Testing** → **Internal testing**
+3. Click **Testers** tab → **Create email list** (or use an existing list)
+4. Add tester email addresses and click **Save**
+5. Click **Release** on the uploaded build to make it available to the list
+6. Testers receive an opt-in link and can install via the Play Store
+
+> Internal testing on Google Play supports up to **100 testers** and goes live immediately (no Google review).
+
+### Step 4 — Verify tester access
+
+**iOS:** Testers open the TestFlight app, accept the invite, and install. They should see version **1.1.2** (build 26+).
+
+**Android:** Testers visit the opt-in URL from the Play Console, then install from the Play Store. They should see version **1.1.2** (versionCode 46+).
 
 ---
 
@@ -59,7 +134,7 @@ eas build --profile development --platform ios
 eas build --profile development --platform android
 ```
 
-### Preview build (internal distribution / share with testers)
+### Preview build (internal distribution — no store upload)
 ```bash
 eas build --profile preview --platform all
 ```
@@ -76,8 +151,8 @@ eas build --profile production --platform android
 # Both platforms simultaneously
 eas build --profile production --platform all
 ```
-- **iOS:** This produces an `.ipa` file signed with your App Store distribution certificate.
-- **Android:** This produces an `.aab` (Android App Bundle).
+- **iOS:** Produces an `.ipa` signed with your App Store distribution certificate.
+- **Android:** Produces an `.aab` (Android App Bundle).
 - **Important:** EAS stores your keystore securely. Download a backup from the EAS dashboard after the first build — losing the keystore means you cannot update the app on Google Play.
 
 ---
@@ -124,14 +199,14 @@ eas submit --platform android --latest
 ## Version Management & Bump Process
 
 Version and build numbers are managed in `app.json`:
-- `version` — semantic version shown to users (e.g. `"1.0.0"`)
-- `ios.buildNumber` — increment for each iOS submission
-- `android.versionCode` — increment integer for each Android submission
+- `version` — semantic version shown to users (e.g. `"1.1.2"`)
+- `ios.buildNumber` — increment for each iOS submission (currently `"26"`)
+- `android.versionCode` — increment integer for each Android submission (currently `46`)
 
 With `autoIncrement: true` in the production build profile, EAS auto-increments these on each build.
 
 **Release Process:**
-1. Increment `version` in `app.json` (e.g. `1.0.0` → `1.1.0`)
+1. Increment `version` in `app.json` (e.g. `1.1.2` → `1.2.0`)
 2. Update `store-assets/whats-new.txt` with release notes
 3. Run `eas build --platform all --profile production`
 4. Run `eas submit --platform all --profile production`
@@ -142,7 +217,7 @@ With `autoIncrement: true` in the production build profile, EAS auto-increments 
 
 When submitting for the first time, include this message in the "Notes for Reviewer" field:
 
-> Mapping With Melanin™ is a community discovery platform for finding Black-owned businesses and neighborhood safety intelligence. The app requires location access to show nearby businesses (used only when in use). The app is currently in early access via an invitation/waitlist system. Test account: use the demo mode on the login screen — no account required to browse businesses and the map. For full access, register at mappingwithmelanin.com/waitlist.
+> Mapping With Melanin™ is a community discovery platform for finding minority-owned businesses and neighborhood safety intelligence. The app requires location access to show nearby businesses (used only when in use). The app is currently in early access via an invitation/waitlist system. Test account: use the demo mode on the login screen — no account required to browse businesses and the map. For full access, register at mappingwithmelanin.com/waitlist.
 
 ---
 
@@ -158,6 +233,10 @@ eas build:view <BUILD_ID>
 
 # Update OTA (without a full store submission) — for JS-only changes
 eas update --branch production --message "Hot fix: description"
+
+# List and manage EAS secrets
+eas secret:list
+eas secret:create --scope project --name KEY_NAME --value VALUE
 ```
 
 **Useful Links:**
@@ -166,5 +245,4 @@ eas update --branch production --message "Hot fix: description"
 - App Store Connect: https://appstoreconnect.apple.com
 - Google Play Console: https://play.google.com/console
 - Expo dashboard: https://expo.dev
-- Privacy policy: https://www.melaninmaps.com/privacy
-
+- Privacy policy: https://mappingwithmelanin.com/privacy
