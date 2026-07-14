@@ -1,0 +1,222 @@
+This is one of the most important trust decisions you'll make. I would **not** trigger verification based solely on a star rating. A legitimate 1-star review should not automatically be delayed, and a false 5-star review can be just as harmful.
+
+Instead, I'd use a **risk-based system** that considers several signals together.
+
+## Reviews that should receive additional verification
+
+### 1. Serious allegations (Highest Priority)
+
+Always hold these for verification regardless of the star rating.
+
+Examples include claims of:
+
+* Physical safety concerns
+* Assault or threats
+* Racism, discrimination, or hate speech
+* Sexual harassment
+* Human trafficking concerns
+* Police misconduct
+* Fraud or scams
+* Theft
+* Illegal activity
+* Food poisoning or serious health concerns
+* Weapons or violence
+* Child safety concerns
+
+These reviews can have significant consequences, so confirming authenticity is worthwhile.
+
+---
+
+### 2. Very Low Ratings + Detailed Accusations
+
+Instead of "all 1-star reviews," I would use something like:
+
+* **1- or 2-star review**
+  **AND**
+* Includes allegations against employees or owners
+* Mentions discrimination or unsafe conditions
+* Contains profanity directed at someone
+* Uses accusatory language
+
+A simple review like:
+
+> "Food wasn't great. Wait was long."
+
+should publish immediately.
+
+Whereas:
+
+> "The owner stole my credit card information."
+
+should require verification.
+
+---
+
+### 3. Unusual Review Behavior
+
+Hold reviews when your system detects things like:
+
+* Brand-new account
+* Account created today
+* No profile photo
+* First review ever
+* Multiple reviews submitted in a short period
+* Several businesses reviewed within minutes
+* Same device reviewing many businesses
+* Multiple accounts from the same IP (when appropriate to monitor)
+* Possible bot behavior
+
+---
+
+### 4. Community Flags
+
+If a published review is reported by multiple users, move it into a verification process while keeping a record of the report.
+
+---
+
+## Reviews that should NOT be held
+
+These should generally publish immediately:
+
+⭐ 3-star:
+
+> "Food was okay."
+
+⭐ 2-star:
+
+> "Service was slow."
+
+⭐ 1-star:
+
+> "Wouldn't go back."
+
+⭐ 5-star:
+
+> "Amazing experience."
+
+Opinions don't usually need verification.
+
+---
+
+## Trigger words
+
+Rather than relying on specific words alone, use them as **signals** combined with other factors.
+
+Examples include:
+
+**Safety**
+
+* unsafe
+* attacked
+* assaulted
+* threatened
+* followed
+* robbed
+* gun
+* weapon
+* fight
+* violence
+
+**Discrimination**
+
+* racist
+* discrimination
+* profiling
+* prejudice
+* hate
+* slur
+
+**Crime**
+
+* stole
+* theft
+* scam
+* fraud
+* counterfeit
+
+**Health**
+
+* poisoned
+* contaminated
+* mold
+* infestation
+
+**Harassment**
+
+* harassed
+* stalked
+* touched
+* assaulted
+
+**Employment**
+
+* retaliation
+* hostile workplace
+* discrimination
+* harassment
+
+The presence of these words should **increase the review's risk score**, not automatically block publication.
+
+---
+
+# I would create three moderation levels
+
+### 🟢 Low Risk
+
+Publish immediately.
+
+Examples:
+
+* Opinions
+* Food quality
+* Prices
+* Cleanliness
+* Wait times
+* Customer service
+
+---
+
+### 🟡 Medium Risk
+
+Publish, but send for moderator review in the background.
+
+Examples:
+
+* Mild discrimination concerns
+* Poor professionalism
+* Repeated complaints from different users
+
+---
+
+### 🔴 High Risk
+
+Hold for verification before publishing.
+
+Examples:
+
+* Safety incidents
+* Criminal accusations
+* Hate crimes
+* Human trafficking concerns
+* Violence
+* Sexual misconduct
+* Doxxing
+* Defamation risks
+
+---
+
+## One feature I'd add for Mapping with Melanin™
+
+Because your platform emphasizes community trust, I'd consider displaying a small badge next to certain reviews, such as:
+
+* ✓ **Verified Experience** — The reviewer completed identity verification.
+* 📍 **Verified Visit** — The reviewer confirmed they were at the location (if you support location verification and users consent).
+* 🛡️ **Safety Report Verified** — The review went through additional verification due to the nature of the claims.
+
+This lets users weigh reviews based on the level of verification without suppressing honest experiences.
+
+Finally, I'd establish a clear service goal. For example:
+
+> **Most reviews are published immediately. Reviews requiring additional verification are typically reviewed within 24–48 hours.**
+
+That sets expectations while reinforcing that the purpose is fairness and authenticity—not filtering out negative feedback.

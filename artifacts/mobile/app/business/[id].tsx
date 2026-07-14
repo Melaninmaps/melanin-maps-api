@@ -5,6 +5,7 @@ import * as WebBrowser from "expo-web-browser";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   Linking,
@@ -87,6 +88,10 @@ export default function BusinessDetailScreen() {
   const [passThePlateOpen, setPassThePlateOpen] = useState(false);
   const [platePassCount, setPlatePassCount] = useState(0);
   const [showSafetySurvey, setShowSafetySurvey] = useState(false);
+  const [circleSheetOpen, setCircleSheetOpen] = useState(false);
+  const [userCircles, setUserCircles] = useState<Array<{ id: number; name: string; city: string | null; state: string | null; memberCount: number }>>([]);
+  const [circlesLoading, setCirclesLoading] = useState(false);
+  const [suggestingCircleId, setSuggestingCircleId] = useState<number | null>(null);
 
   const { reviews: apiReviews, submitReview } = useReviews(id ?? "");
   const { hasCheckedIn, checkIn } = useCheckins();
@@ -347,6 +352,47 @@ export default function BusinessDetailScreen() {
     }
   };
 
+  const openCircleSheet = async () => {
+    setCircleSheetOpen(true);
+    setCirclesLoading(true);
+    try {
+      const { getItemAsync } = await import("expo-secure-store");
+      const token = await getItemAsync("auth_session_token");
+      if (!token) { setCircleSheetOpen(false); router.push("/login" as any); return; }
+      const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const res = await fetch(`${base}/api/circles`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json() as { circles: Array<{ id: number; name: string; city: string | null; state: string | null; memberCount: number }> };
+      setUserCircles(data.circles ?? []);
+    } catch { setUserCircles([]); }
+    setCirclesLoading(false);
+  };
+
+  const suggestToCircle = async (circleId: number) => {
+    if (!business) return;
+    setSuggestingCircleId(circleId);
+    try {
+      const { getItemAsync } = await import("expo-secure-store");
+      const token = await getItemAsync("auth_session_token");
+      const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const res = await fetch(`${base}/api/circles/${circleId}/suggestions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token ?? ""}` },
+        body: JSON.stringify({ placeName: business.name, placeType: business.category ?? "business", businessId: String(business.id) }),
+      });
+      setCircleSheetOpen(false);
+      if (res.ok) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert("Suggested!", `${business.name} was added to your circle's suggestions.`);
+      } else {
+        const err = await res.json() as { error?: string };
+        Alert.alert("Couldn't add", err.error ?? "Something went wrong");
+      }
+    } catch {
+      Alert.alert("Error", "Failed to suggest this place. Try again.");
+    }
+    setSuggestingCircleId(null);
+  };
+
   const handleCheckIn = async () => {
     if (alreadyCheckedIn) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -393,6 +439,12 @@ export default function BusinessDetailScreen() {
             style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
           >
             <Feather name="share-2" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+          <TouchableOpacity activeOpacity={0.85}
+            onPress={openCircleSheet}
+            style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
+          >
+            <Feather name="users" size={20} color="#FFFFFF" />
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.85}
             onPress={() => {
@@ -1127,6 +1179,65 @@ export default function BusinessDetailScreen() {
         onClose={() => setPassThePlateOpen(false)}
         onSuccess={() => setPlatePassCount(prev => prev + 1)}
       />
+
+      {/* Suggest to Circle Sheet */}
+      <Modal visible={circleSheetOpen} transparent animationType="slide" onRequestClose={() => setCircleSheetOpen(false)}>
+        <View style={styles.captionOverlay}>
+          <TouchableOpacity style={styles.captionBackdrop} activeOpacity={1} onPress={() => setCircleSheetOpen(false)} />
+          <View style={[styles.captionSheet, { backgroundColor: colors.card }]}>
+            <View style={[styles.captionHandle, { backgroundColor: colors.border }]} />
+            <Text style={[styles.captionSheetTitle, { color: colors.foreground }]}>Suggest to a Circle</Text>
+            <Text style={[styles.captionSheetSub, { color: colors.mutedForeground }]}>
+              Share {business?.name} with one of your Kinfolk Circles
+            </Text>
+            {circlesLoading ? (
+              <ActivityIndicator color={colors.primary} style={{ marginVertical: 24 }} />
+            ) : userCircles.length === 0 ? (
+              <View style={{ alignItems: "center", paddingVertical: 24, gap: 12 }}>
+                <Feather name="users" size={32} color={colors.mutedForeground} />
+                <Text style={[styles.captionSheetSub, { color: colors.mutedForeground, textAlign: "center" }]}>
+                  You're not in any circles yet.{"\n"}Create one in the Community tab!
+                </Text>
+                <TouchableOpacity
+                  style={[styles.captionSubmitBtn, { backgroundColor: colors.primary, paddingHorizontal: 24 }]}
+                  onPress={() => { setCircleSheetOpen(false); router.push("/(tabs)/community" as any); }}
+                >
+                  <Text style={[styles.captionSubmitText, { color: "#FFFFFF" }]}>Go to Community</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <ScrollView style={{ maxHeight: 320 }} showsVerticalScrollIndicator={false}>
+                {userCircles.map((circle) => (
+                  <TouchableOpacity
+                    key={circle.id}
+                    style={[styles.circlePickRow, { borderBottomColor: colors.border, backgroundColor: suggestingCircleId === circle.id ? colors.primary + "10" : "transparent" }]}
+                    onPress={() => { void suggestToCircle(circle.id); }}
+                    disabled={suggestingCircleId !== null}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.circlePickAvatar, { backgroundColor: colors.primary + "20" }]}>
+                      <Feather name="users" size={16} color={colors.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.circlePickName, { color: colors.foreground }]}>{circle.name}</Text>
+                      {(circle.city || circle.state) && (
+                        <Text style={[styles.circlePickSub, { color: colors.mutedForeground }]}>
+                          {[circle.city, circle.state].filter(Boolean).join(", ")} · {circle.memberCount} member{circle.memberCount !== 1 ? "s" : ""}
+                        </Text>
+                      )}
+                    </View>
+                    {suggestingCircleId === circle.id ? (
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    ) : (
+                      <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1472,4 +1583,8 @@ const styles = StyleSheet.create({
   captionVoteChipText: { fontFamily: "Inter_500Medium", fontSize: 13 },
   captionSubmitBtn: { marginTop: 8, paddingVertical: 16, borderRadius: 14, alignItems: "center" as const },
   captionSubmitText: { fontFamily: "Inter_700Bold", fontSize: 16 },
+  circlePickRow: { flexDirection: "row" as const, alignItems: "center" as const, gap: 12, paddingVertical: 14, paddingHorizontal: 4, borderBottomWidth: 1 },
+  circlePickAvatar: { width: 38, height: 38, borderRadius: 19, alignItems: "center" as const, justifyContent: "center" as const },
+  circlePickName: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  circlePickSub: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 },
 });

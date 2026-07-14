@@ -993,6 +993,7 @@ export default function ProfileScreen() {
             { icon: "star" as const, label: "Leave your first review", route: "/(tabs)/index" as const },
             { icon: "shield" as const, label: "Submit a safety report", route: "/report-safety" as const },
             { icon: "users" as const, label: "Join a community group", route: "/(tabs)/community" as const },
+            { icon: "circle" as const, label: "Start a Kinfolk Circle", route: "/(tabs)/community" as const },
           ].map((step, i, arr) => (
             <TouchableOpacity
               key={step.label}
