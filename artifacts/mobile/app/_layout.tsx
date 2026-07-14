@@ -177,6 +177,26 @@ function BiometricEnrollmentPrompt() {
   return null;
 }
 
+// Paths where unauthenticated users are allowed to land.
+const AUTH_EXEMPT = [
+  "/onboarding",
+  "/login",
+  "/signup",
+  "/phone-login",
+  "/forgot-password",
+  "/reset-password",
+  "/auth-complete",
+  "/pending-approval",
+  "/waitlist",
+  "/dob-collection",
+  "/profile-setup",
+  "/community-guidelines",
+  "/community-standards",
+  "/roadmap",
+  "/contact",
+  "/affiliate",
+];
+
 function OnboardingChecker() {
   const router = useRouter();
 
@@ -192,6 +212,33 @@ function OnboardingChecker() {
       active = false;
     };
   }, [router]);
+
+  return null;
+}
+
+/**
+ * Hard auth gate — once onboarding is done, any unauthenticated user who
+ * navigates to a protected route is bounced to /login.
+ */
+function AuthGate() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (isAuthenticated) return;
+    // Allow auth-exempt paths through
+    if (AUTH_EXEMPT.some((p) => pathname === p || pathname.startsWith(p + "/"))) return;
+    // Check onboarding: only enforce auth once the user has completed onboarding
+    AsyncStorage.getItem("@mapping_with_melanin_onboarding_complete")
+      .then((val) => {
+        if (val) {
+          router.replace("/login");
+        }
+      })
+      .catch(() => {});
+  }, [isLoading, isAuthenticated, pathname, router]);
 
   return null;
 }
@@ -595,6 +642,68 @@ function RootLayoutNav() {
           presentation: "card",
         }}
       />
+      <Stack.Screen name="phone-login" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="business-guide" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="business-intelligence" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="business-search" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="challenges" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="checkin" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="city-archive" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="community-hub" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="community-lists" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="community-verified" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="compare-neighborhoods" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="connections" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="create-journal" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="create-list" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="creator-profile" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="cultural-preference" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="destination" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="dob-collection" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="family-circle" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="family-mode" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="family-settings" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="find-friends" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="health-hub" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="journals" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="kinfolk-settings" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="kinfolk-tasks" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="knowledge-hub" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="library-article" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="library-expert" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="library-topic" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="life-journey" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="location-share" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="melanin-wrapped" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="member-connections" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="mental-health" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="mentorship" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="my-trips" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="na-aa-meetings" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="nominate-business" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="+not-found" options={{ headerShown: false }} />
+      <Stack.Screen name="notification-prefs" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="officer-watch" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="opportunities" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="pending-approval" options={{ headerShown: false, presentation: "card", gestureEnabled: false }} />
+      <Stack.Screen name="privacy-policy" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="relocation-planner" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="report-intelligence" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="report-police" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="report-space" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="resolution-center" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="resources" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="safety-hub" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="safety-survey" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="safety-tip" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="smart-pathway" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="smart-search" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="submit-event" options={{ headerShown: false, presentation: "modal" }} />
+      <Stack.Screen name="terms" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="travel-planner" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="travel-videos" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="trust-verification" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="upgrade" options={{ headerShown: false, presentation: "modal" }} />
     </Stack>
   );
 }
@@ -628,6 +737,7 @@ export default function RootLayout() {
               <KeyboardProviderWrapper>
                 <View style={{ flex: 1 }}>
                   <OnboardingChecker />
+                  <AuthGate />
                   <ApprovalChecker />
                   <DobChecker />
                   <SessionExpiryWatcher />
