@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { db, pool, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable, businessClickEventsTable, businessCaptionsTable, contentReportsTable } from "@workspace/db";
+import { db, pool, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable, businessClickEventsTable, businessCaptionsTable, contentReportsTable, referenceLinkClicksTable } from "@workspace/db";
 import { eq, and, or, ilike, desc, sql, gt, count, inArray, ne } from "drizzle-orm";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
@@ -1038,6 +1038,103 @@ router.post("/businesses/:id/click", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to record business click");
     res.status(500).json({ error: "Failed to record click" });
+  }
+});
+
+// ── Community Reference: outbound link click tracking ─────────────────────────
+router.post("/businesses/:id/reference-link-click", async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const userId = req.user?.id ?? null;
+    const { source, sourceId, referrerUserId } = req.body as {
+      source?: string;
+      sourceId?: string;
+      referrerUserId?: string;
+    };
+    const VALID_SOURCES = ["community_post", "saved_space", "search", "business_profile", "map", "direct"];
+    const resolvedSource = source && VALID_SOURCES.includes(source) ? source : "direct";
+
+    await db.insert(referenceLinkClicksTable).values({
+      businessId: id,
+      userId,
+      source: resolvedSource,
+      sourceId: sourceId ?? null,
+      referrerUserId: referrerUserId ?? null,
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to record reference link click");
+    res.status(500).json({ error: "Failed to record click" });
+  }
+});
+
+// ── Community Reference: funnel analytics ─────────────────────────────────────
+router.get("/businesses/:id/reference-analytics", async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+
+    // Total profile views
+    const [viewsRow] = await db
+      .select({ total: count() })
+      .from(businessProfileViewsTable)
+      .where(eq(businessProfileViewsTable.businessId, id));
+
+    // Total outbound link clicks
+    const [clicksRow] = await db
+      .select({ total: count() })
+      .from(referenceLinkClicksTable)
+      .where(eq(referenceLinkClicksTable.businessId, id));
+
+    // Clicks broken down by source
+    const bySource = await db
+      .select({ source: referenceLinkClicksTable.source, total: count() })
+      .from(referenceLinkClicksTable)
+      .where(eq(referenceLinkClicksTable.businessId, id))
+      .groupBy(referenceLinkClicksTable.source);
+
+    // Top 5 community members who drove clicks (referrerUserId)
+    const topReferrers = await db
+      .select({
+        referrerUserId: referenceLinkClicksTable.referrerUserId,
+        total: count(),
+      })
+      .from(referenceLinkClicksTable)
+      .where(
+        and(
+          eq(referenceLinkClicksTable.businessId, id),
+          sql`${referenceLinkClicksTable.referrerUserId} IS NOT NULL`
+        )
+      )
+      .groupBy(referenceLinkClicksTable.referrerUserId)
+      .orderBy(desc(count()))
+      .limit(5);
+
+    // Daily click trend — last 30 days
+    const dailyTrend = await db
+      .select({
+        day: sql<string>`DATE(${referenceLinkClicksTable.clickedAt})`.as("day"),
+        total: count(),
+      })
+      .from(referenceLinkClicksTable)
+      .where(
+        and(
+          eq(referenceLinkClicksTable.businessId, id),
+          gt(referenceLinkClicksTable.clickedAt, sql`NOW() - INTERVAL '30 days'`)
+        )
+      )
+      .groupBy(sql`DATE(${referenceLinkClicksTable.clickedAt})`)
+      .orderBy(sql`DATE(${referenceLinkClicksTable.clickedAt})`);
+
+    res.json({
+      totalViews: viewsRow?.total ?? 0,
+      totalLinkClicks: clicksRow?.total ?? 0,
+      clicksBySource: bySource,
+      topReferrers,
+      dailyTrend,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch reference analytics");
+    res.status(500).json({ error: "Failed to fetch analytics" });
   }
 });
 

@@ -65,7 +65,12 @@ const CATEGORY_IMAGES: Record<string, any> = {
 const AVATAR_COLORS = ["#CA922B", "#C9922B", "#2D7A4F", "#7B3F00", "#1D4ED8"];
 
 export default function BusinessDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, source, sourceId, referrerId } = useLocalSearchParams<{
+    id: string;
+    source?: string;
+    sourceId?: string;
+    referrerId?: string;
+  }>();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -125,6 +130,13 @@ export default function BusinessDetailScreen() {
   const [vibePickerOpen, setVibePickerOpen] = useState(false);
   const [vibeTagging, setVibeTagging] = useState(false);
 
+  // ── Community Reference analytics ──────────────────────────────────────────
+  const [refAnalytics, setRefAnalytics] = useState<{
+    totalViews: number;
+    totalLinkClicks: number;
+    clicksBySource: Array<{ source: string; total: number }>;
+  } | null>(null);
+
   const [nomSheetOpen, setNomSheetOpen] = useState(false);
   const [nomReason, setNomReason] = useState<string | null>(null);
   const [nomAudiences, setNomAudiences] = useState<string[]>([]);
@@ -161,6 +173,20 @@ export default function BusinessDetailScreen() {
       } catch {}
     })();
   }, [id]);
+
+  useEffect(() => {
+    if (!id || !(business as any)?.isReferenceOnly) return;
+    void (async () => {
+      try {
+        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const res = await fetch(`${base}/api/businesses/${id}/reference-analytics`);
+        if (res.ok) {
+          const data = await res.json() as { totalViews: number; totalLinkClicks: number; clicksBySource: Array<{ source: string; total: number }> };
+          setRefAnalytics(data);
+        }
+      } catch {}
+    })();
+  }, [id, (business as any)?.isReferenceOnly]);
 
   useEffect(() => {
     if (!id) return;
@@ -395,11 +421,34 @@ export default function BusinessDetailScreen() {
     }
   };
 
-  const handleWebsite = () => {
+  const handleWebsite = async () => {
     if (business.website) {
       trackClick("website_visit");
-      const url = /^https?:\/\//i.test(business.website) ? business.website : `https://${business.website}`;
-      WebBrowser.openBrowserAsync(url);
+      const raw = /^https?:\/\//i.test(business.website) ? business.website : `https://${business.website}`;
+
+      // For Community References: append UTM params and fire attribution tracking
+      if ((business as any).isReferenceOnly) {
+        const utm = new URLSearchParams({
+          utm_source: "mappingwithmelanin",
+          utm_medium: "community_reference",
+          utm_campaign: (business as any).referenceCategory ?? "general",
+          utm_content: business.id,
+          ...(source ? { utm_term: source } : {}),
+        });
+        const trackedUrl = raw.includes("?") ? `${raw}&${utm.toString()}` : `${raw}?${utm.toString()}`;
+        try {
+          const { getItemAsync: getToken } = await import("expo-secure-store");
+          const token = Platform.OS !== "web" ? await getToken("auth_session_token") : null;
+          fetch(`/api/businesses/${business.id}/reference-link-click`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+            body: JSON.stringify({ source: source ?? "business_profile", sourceId: sourceId ?? null, referrerUserId: referrerId ?? null }),
+          }).catch(() => {});
+        } catch { /* non-blocking */ }
+        WebBrowser.openBrowserAsync(trackedUrl);
+      } else {
+        WebBrowser.openBrowserAsync(raw);
+      }
     }
   };
 
@@ -996,9 +1045,50 @@ export default function BusinessDetailScreen() {
             )}
             {business.website && (
               <TouchableOpacity activeOpacity={0.85} style={styles.infoRow} onPress={handleWebsite}>
-                <Feather name="globe" size={16} color={colors.primary} />
-                <Text style={[styles.infoText, { color: colors.primary }]}>{business.website}</Text>
+                <Feather name="globe" size={16} color={(business as any).isReferenceOnly ? "#0369A1" : colors.primary} />
+                <Text style={[styles.infoText, { color: (business as any).isReferenceOnly ? "#0369A1" : colors.primary }]}>
+                  {(business as any).isReferenceOnly ? "Visit Resource" : business.website}
+                </Text>
+                {(business as any).isReferenceOnly && (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 3, marginLeft: 6, backgroundColor: "#E0F2FE", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
+                    <Feather name="external-link" size={10} color="#0369A1" />
+                    <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 10, color: "#0369A1" }}>Tracked</Text>
+                  </View>
+                )}
               </TouchableOpacity>
+            )}
+            {(business as any).isReferenceOnly && refAnalytics && (
+              <View style={{ marginTop: 12, backgroundColor: "#F0F9FF", borderRadius: 10, borderWidth: 1, borderColor: "#BAE6FD", padding: 12 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                  <Feather name="bar-chart-2" size={13} color="#0369A1" />
+                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: "#0369A1" }}>Community Impact</Text>
+                </View>
+                <View style={{ flexDirection: "row", gap: 12 }}>
+                  <View style={{ flex: 1, backgroundColor: "#fff", borderRadius: 8, padding: 10, alignItems: "center", borderWidth: 1, borderColor: "#E0F2FE" }}>
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 20, color: "#0369A1" }}>{refAnalytics.totalViews.toLocaleString()}</Text>
+                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "#64748B", marginTop: 2 }}>Profile Views</Text>
+                  </View>
+                  <View style={{ flex: 1, backgroundColor: "#fff", borderRadius: 8, padding: 10, alignItems: "center", borderWidth: 1, borderColor: "#E0F2FE" }}>
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 20, color: "#0369A1" }}>{refAnalytics.totalLinkClicks.toLocaleString()}</Text>
+                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "#64748B", marginTop: 2 }}>Link Visits</Text>
+                  </View>
+                </View>
+                {refAnalytics.clicksBySource.length > 0 && (
+                  <View style={{ marginTop: 10, gap: 4 }}>
+                    {refAnalytics.clicksBySource.map((s) => (
+                      <View key={s.source} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "#64748B", textTransform: "capitalize" }}>
+                          {s.source.replace(/_/g, " ")}
+                        </Text>
+                        <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#0369A1" }}>{Number(s.total).toLocaleString()} clicks</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "#94A3B8", marginTop: 8, textAlign: "center" }}>
+                  Referrals carry UTM tracking — visible in destination site analytics
+                </Text>
+              </View>
             )}
             {(business.instagram || business.tiktok || business.twitter || business.facebook || business.youtube || (business as any).pinterest) && (() => {
               type SocialDef = { key: string; label: string; icon: keyof typeof Feather.glyphMap; color: string; bg: string; baseUrl: string; clickType: string };
