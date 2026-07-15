@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Globe, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
+import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 
 const GROUPS = [
   { m: "4.2K members", t: "Solo Minority Travelers", l: "Global", d: "A safe space for solo travelers to share tips, routes, and real experiences." },
@@ -231,6 +232,13 @@ export default function Community() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Disclaimer */}
+      <section className="py-6 bg-[#FAF6EF]">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <DisclaimerBanner type="community" variant="bordered" />
         </div>
       </section>
 

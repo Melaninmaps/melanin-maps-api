@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Briefcase, MapPin, Clock, DollarSign, ExternalLink, Plus, X, ChevronDown, Building2 } from "lucide-react";
+import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -111,6 +112,7 @@ export default function Jobs() {
               <p className="text-[#F5EBD8]/70 text-lg max-w-xl">
                 Jobs at Minority-owned businesses. Support the ecosystem — hire and get hired within the community.
               </p>
+              <DisclaimerBanner type="employment" className="mt-4 max-w-xl bg-white/10 border border-white/20 text-white" />
             </div>
             <div className="shrink-0">
               {auth?.user ? (

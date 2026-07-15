@@ -6,6 +6,7 @@ import {
   Settings, X, Copy, Check, History, Menu, Share2, ArrowRight,
 } from "lucide-react";
 import { Link } from "wouter";
+import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -663,6 +664,7 @@ export default function Travel() {
                   </button>
                 </div>
                 <p className="text-center text-[10px] text-[#3A1F0E]/25 mt-2">Enter to send · Shift+Enter for new line</p>
+                <DisclaimerBanner type="ai" className="mt-2 mx-auto max-w-3xl" />
               </div>
             </>
           )}

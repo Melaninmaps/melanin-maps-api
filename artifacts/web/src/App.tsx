@@ -51,6 +51,7 @@ import DeleteAccount from "@/pages/delete-account";
 import BusinessResponse from "@/pages/business-response";
 import GlobalRecommendations from "@/pages/global-recommendations";
 import ResetPassword from "@/pages/reset-password";
+import TrustAndSafety from "@/pages/trust-and-safety";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -163,6 +164,9 @@ function Router() {
       </Route>
       <Route path="/delete-account">
         <Layout><DeleteAccount /></Layout>
+      </Route>
+      <Route path="/trust-and-safety">
+        <Layout><TrustAndSafety /></Layout>
       </Route>
 
       {/* ── Auth pages ──────────────────────────────────────────────────────── */}

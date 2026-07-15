@@ -96,6 +96,7 @@ export default function SettingsScreen() {
         { id: "standards", icon: "book-open", label: "Community Standards", route: "/community-standards" },
         { id: "videopolicy", icon: "video", label: "Video Content Policy", sub: "Who controls what · no pay-to-remove", route: "/community-standards" },
         { id: "safetyinfo", icon: "shield", label: "Our Safety Philosophy", route: "/safety-info" },
+        { id: "trust", icon: "shield", label: "Trust & Safety Center", sub: "Disclaimers and platform policies", route: "/trust-and-safety" },
         { id: "licenses", icon: "code", label: "Open Source Licenses", route: null, sub: "React Native, Expo, and more" },
         { id: "version", icon: "info", label: "Version", value: "1.0.1", route: null },
       ],

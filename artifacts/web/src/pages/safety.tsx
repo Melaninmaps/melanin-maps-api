@@ -3,6 +3,7 @@ import { useListSurveys, useCreateSurvey, useGetCurrentAuthUser } from "@workspa
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -240,6 +241,14 @@ export default function Safety() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Disclaimers */}
+      <section className="py-8 bg-[#FAF6EF]">
+        <div className="container mx-auto px-4 max-w-4xl space-y-3">
+          <DisclaimerBanner type="safety" variant="bordered" />
+          <DisclaimerBanner type="emergency" variant="bordered" />
         </div>
       </section>
 

@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
+import { DisclaimerNote } from "@/components/DisclaimerNote";
 
 const WIDGET_ORDER_KEY = "@melanin_maps_safety_widget_order";
 
@@ -590,6 +591,9 @@ export default function SafetyHubTab() {
               </Text>
             </View>
           )}
+
+          <DisclaimerNote type="safety" style={{ marginHorizontal: 16, marginTop: 8 }} />
+          <DisclaimerNote type="emergency" style={{ marginHorizontal: 16, marginTop: 8, marginBottom: 4 }} />
         </ScrollView>
       )}
     </View>

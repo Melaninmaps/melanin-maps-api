@@ -197,6 +197,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <li><Link href="/community-guidelines"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Community Guidelines</span></Link></li>
                 <li><Link href="/membership"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Membership Plans</span></Link></li>
                 <li><Link href="/roadmap"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Product Roadmap</span></Link></li>
+                <li><Link href="/trust-and-safety"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Trust & Safety Center</span></Link></li>
               </ul>
             </div>
             <div>
@@ -217,6 +218,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Link href="/privacy-policy"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Privacy Policy</span></Link>
               <Link href="/terms"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Terms of Service</span></Link>
               <Link href="/community-guidelines"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Community Guidelines</span></Link>
+              <Link href="/trust-and-safety"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Trust & Safety</span></Link>
             </div>
           </div>
         </div>
