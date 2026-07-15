@@ -1,0 +1,160 @@
+Yes. In fact, because of everything Mapping with Melanin™ is becoming, I think you should have **multiple targeted disclaimers** rather than one generic disclaimer. This both protects the company and sets the right expectations for users.
+
+I wouldn't hide these in your Terms of Service. I'd place short versions throughout the app where they're relevant, with links to the full policy.
+
+Here are the ones I would recommend.
+
+---
+
+# 1. General Information Disclaimer
+
+This should appear in your Terms of Service and be linked throughout the app.
+
+> **Information provided through Mapping with Melanin™ is for general informational purposes only. While we strive to provide accurate and timely information, we cannot guarantee the completeness, accuracy, or availability of all content. Users should independently verify information before making personal, financial, legal, medical, travel, employment, or safety decisions.**
+
+---
+
+# 2. Medical Disclaimer
+
+For healthcare providers, wellness resources, health articles, or Kinfolk AI.
+
+> **Mapping with Melanin™ does not provide medical advice, diagnosis, or treatment. Content on this platform is intended for informational purposes only and should not replace the advice of a qualified healthcare professional. If you are experiencing a medical emergency, call emergency services immediately.**
+
+---
+
+# 3. Legal Disclaimer
+
+Especially if you're linking legal aid or discussing rights.
+
+> **Mapping with Melanin™ is not a law firm and does not provide legal advice. Information shared through the platform should not be relied upon as legal counsel. Please consult a licensed attorney regarding your specific circumstances.**
+
+---
+
+# 4. Financial Disclaimer
+
+Since you're discussing grants, loans, scholarships, and entrepreneurship.
+
+> **Financial resources, grants, scholarships, and business opportunities are provided for informational purposes only. Mapping with Melanin™ does not guarantee eligibility, approval, funding, or financial outcomes. Users should verify all requirements directly with the sponsoring organization.**
+
+---
+
+# 5. Employment Disclaimer
+
+Important because of your employer transparency feature.
+
+> **Employer reviews and workplace experiences reflect the opinions and experiences of individual users. Mapping with Melanin™ does not independently verify every review and does not endorse or guarantee the accuracy of user-submitted content. Users should exercise their own judgment when evaluating employers.**
+
+---
+
+# 6. Safety Disclaimer
+
+This one is very important.
+
+> **Safety ratings, neighborhood information, and community reports are based on user experiences and available data at a particular point in time. Conditions may change rapidly. Always exercise your own judgment and follow guidance from local authorities.**
+
+---
+
+# 7. Travel Disclaimer
+
+Perfect for your relocation and travel features.
+
+> **Travel information, business hours, events, transportation, and destination details may change without notice. Users should confirm reservations, operating hours, and travel requirements directly with the applicable business or organization before making plans.**
+
+---
+
+# 8. AI Disclaimer
+
+Especially for Kinfolk AI.
+
+> **Kinfolk AI is designed to provide helpful guidance and recommendations. AI-generated responses may contain inaccuracies or outdated information and should not be relied upon as professional advice. Always verify important information with trusted sources.**
+
+---
+
+# 9. Community Content Disclaimer
+
+For posts, comments, and recommendations.
+
+> **Community posts, reviews, recommendations, and opinions belong to their respective authors and do not necessarily reflect the views of Mapping with Melanin™.**
+
+---
+
+# 10. Business Verification Disclaimer
+
+Even after verification.
+
+> **Business verification confirms that a business met our verification requirements at the time of review. Verification should not be interpreted as an endorsement, guarantee of quality, or guarantee of future conduct.**
+
+---
+
+# 11. Emergency Disclaimer
+
+Especially because you have an SOS feature.
+
+> **Mapping with Melanin™ is not an emergency response service. If you are experiencing an emergency, contact your local emergency services immediately.**
+
+---
+
+# 12. Resource Directory Disclaimer
+
+This one fits your Library and Resources sections.
+
+> **Resources, organizations, scholarships, grants, and community services listed within Mapping with Melanin™ are provided to help users discover opportunities. Inclusion does not constitute an endorsement, and availability, eligibility, or services may change at any time.**
+
+---
+
+# 13. External Links Disclaimer
+
+Since you'll send users to business websites and social media.
+
+> **Links to external websites and social media platforms are provided for convenience. Mapping with Melanin™ is not responsible for the content, privacy practices, or availability of third-party websites or services.**
+
+---
+
+# 14. Promotions & Partnerships
+
+As your platform grows.
+
+> **Some businesses, organizations, or experiences may participate in promotional partnerships with Mapping with Melanin™. Sponsored content will be clearly identified where applicable. Partnerships do not affect our commitment to highlighting minority-owned businesses in accordance with our platform policies.**
+
+---
+
+# 15. Community Impact & Recognition
+
+For your Show Love feature and badges.
+
+> **Community recognition, badges, and rankings are based on user participation and platform activity. These recognitions are intended to celebrate community engagement and should not be interpreted as endorsements or guarantees of quality or conduct.**
+
+---
+
+## One Disclaimer I'd Add That I Haven't Seen Elsewhere
+
+Because your platform is centered on community and trust, I'd include a simple statement like this:
+
+> **Mapping with Melanin™ helps people discover businesses, communities, resources, and opportunities. We encourage users to verify important information, exercise personal judgment, and make decisions that are appropriate for their individual circumstances.**
+
+It strikes the right balance: you're providing tools and information without promising outcomes.
+
+## One More Recommendation
+
+Given the breadth of your platform, I would create a **Trust & Safety Center** instead of scattering legal language everywhere. This could house:
+
+* Community Guidelines
+* Privacy Policy
+* Terms of Service
+* Safety Center
+* Business Verification Policy
+* Review Policy
+* AI Transparency
+* Medical Disclaimer
+* Legal Disclaimer
+* Financial Disclaimer
+* Employment Disclaimer
+* Accessibility Statement
+* Copyright Policy
+* Intellectual Property Policy
+* Report Abuse & Appeals
+* Law Enforcement Request Policy
+* Children's & Family Policy
+* Data Retention & Account Deletion
+
+Having a dedicated Trust & Safety Center makes the platform feel transparent and professional while giving users a single place to understand how information is handled and what they can expect.
