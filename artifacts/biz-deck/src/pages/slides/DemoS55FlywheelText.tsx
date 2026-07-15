@@ -13,7 +13,7 @@ export default function DemoS55FlywheelText() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "1.5vw" }}>
           {[
             { n: "1", head: "Member joins", body: "Zara downloads the app, sets her preferences, discovers Copper & Oak, visits, reviews, and saves. She earns points and starts a Kinfolk Circle." },
-            { n: "2", head: "Business grows", body: "Marcus gains a 5-star review, sees the chip analytics, upgrades to Merchant, activates a promotion, and watches his Trust Score rise." },
+            { n: "2", head: "Business grows", body: "Marcus gains a 5-star review, sees the chip analytics, upgrades to Growth, activates a promotion, and watches his Trust Score rise." },
             { n: "3", head: "Platform deepens", body: "More members mean more reviews, more safety data, more community intelligence, better KinfolkAI context, and more businesses worth listing." },
             { n: "4", head: "Community strengthens", body: "Businesses invest in their community presence. Members invest in the platform. The Trust Score becomes more valuable. The loop compounds." },
           ].map((step, i) => (

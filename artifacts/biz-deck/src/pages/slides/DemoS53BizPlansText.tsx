@@ -18,14 +18,14 @@ export default function DemoS53BizPlansText() {
               features: ["Basic business profile","Community reviews (receive & read)","Trust Score tracking","Basic analytics (views + saves)","One photo gallery"],
             },
             {
-              name: "Merchant", price: "$29/mo", color: "rgba(202,146,43,0.1)", border: "rgba(202,146,43,0.5)", highlight: true,
+              name: "Growth", price: "$29/mo", color: "rgba(202,146,43,0.1)", border: "rgba(202,146,43,0.5)", highlight: true,
               for: "Building your community presence",
               features: ["Everything in Community","KinfolkAI response assist","Full analytics + traffic sources","All compliment chip analytics","Promotion placement access","Business verification badge","Manage promotions + billing history"],
             },
             {
               name: "Trailblazer Business", price: "$79/mo", color: "rgba(202,146,43,0.05)", border: "rgba(202,146,43,0.3)",
               for: "Operating at community scale",
-              features: ["Everything in Merchant","Priority placement in KinfolkAI","Featured in community digest","Event hosting tools","Multi-location support","DocuSign document access (seller/verification agreements)","Dedicated community liaison"],
+              features: ["Everything in Growth","Priority placement in KinfolkAI","Featured in community digest","Event hosting tools","Multi-location support","DocuSign document access (seller/verification agreements)","Dedicated community liaison"],
             },
           ].map((tier, i) => (
             <div key={i} className="rounded-[1vw] p-[1.4vw]" style={{ background: tier.color, border: `1px solid ${tier.border}`, position: "relative" }}>
