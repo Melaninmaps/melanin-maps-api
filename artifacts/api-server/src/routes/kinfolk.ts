@@ -1313,11 +1313,11 @@ router.post("/kinfolk/business-action-plan", async (req: Request, res: Response)
   }
 
   // ── Fetch reviews from DB server-side ───────────────────────────────────────
-  let dbReviews: Array<{ rating: number; content: string | null }> = [];
+  let dbReviews: Array<{ rating: number; content: string | null; weight: string | null }> = [];
   if (businessId) {
     try {
       dbReviews = await db
-        .select({ rating: reviewsTable.rating, content: reviewsTable.text })
+        .select({ rating: reviewsTable.rating, content: reviewsTable.text, weight: reviewsTable.weight })
         .from(reviewsTable)
         .where(eq(reviewsTable.businessId, businessId))
         .orderBy(desc(reviewsTable.createdAt))
@@ -1325,9 +1325,19 @@ router.post("/kinfolk/business-action-plan", async (req: Request, res: Response)
     } catch { /* non-critical */ }
   }
 
-  const reviewsText = dbReviews.length
-    ? dbReviews.map((r) => `- Rating: ${r.rating}/5 | Feedback: ${r.content ?? "(no written feedback)"}`).join("\n")
-    : "No community reviews yet.";
+  const verifiedReviews = dbReviews.filter((r) => parseFloat(r.weight ?? "1") >= 1.5);
+  const communityReviews = dbReviews.filter((r) => parseFloat(r.weight ?? "1") < 1.5);
+
+  const reviewsText = dbReviews.length === 0
+    ? "No community reviews yet."
+    : [
+        verifiedReviews.length > 0
+          ? `VERIFIED COMMUNITY MEMBERS (identity-confirmed, higher trust — ${verifiedReviews.length} review${verifiedReviews.length === 1 ? "" : "s"}):\n${verifiedReviews.map((r) => `- Rating: ${r.rating}/5 | Feedback: ${r.content ?? "(no written feedback)"}`).join("\n")}`
+          : null,
+        communityReviews.length > 0
+          ? `GENERAL COMMUNITY MEMBERS (${communityReviews.length} review${communityReviews.length === 1 ? "" : "s"}):\n${communityReviews.map((r) => `- Rating: ${r.rating}/5 | Feedback: ${r.content ?? "(no written feedback)"}`).join("\n")}`
+          : null,
+      ].filter(Boolean).join("\n\n");
 
   // ── Skip feedback (Trailblazer only) ────────────────────────────────────────
   let skipInsightsText = "";

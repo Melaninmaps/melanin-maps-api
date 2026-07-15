@@ -1,8 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable, usersTable, mentorshipProfilesTable } from "@workspace/db";
-import { computeTrustLevel, getReviewWeight } from "@workspace/db/trust";
-import { eq, desc, and, ne, gte, sql } from "drizzle-orm";
+import { computeTrustLevel, getReviewWeight, computeWeightedRating } from "@workspace/db/trust";
+import { eq, desc, and, ne, gte, sql, inArray } from "drizzle-orm";
 import { sendPushToUser, sendPushToUsersWithSavedBusiness, sendThreeStarAlert, sendBuzzAlert, sendNegativeReviewAlertIfThreshold } from "../lib/pushNotifications";
 import { reviewLimiter } from "../middleware/rateLimiter";
 import { requireTrust } from "../middleware/requireTrust";
@@ -167,9 +167,37 @@ router.get("/reviews", async (req: Request, res: Response) => {
       ))
       .orderBy(desc(reviewsTable.createdAt))
       .limit(50);
+
+    const userIds = [...new Set(reviews.map((r) => r.userId).filter(Boolean))] as string[];
+    const trustData = userIds.length > 0
+      ? await db
+          .select({
+            id: usersTable.id,
+            trustLevel: usersTable.trustLevel,
+            identityVerified: usersTable.identityVerified,
+            identityVerifiedAt: usersTable.identityVerifiedAt,
+            policyViolationsCount: usersTable.policyViolationsCount,
+            helpfulReviewsCount: usersTable.helpfulReviewsCount,
+            createdAt: usersTable.createdAt,
+            reputationScore: usersTable.reputationScore,
+          })
+          .from(usersTable)
+          .where(inArray(usersTable.id, userIds))
+      : [];
+    const trustMap = new Map(trustData.map((u) => [u.id, computeTrustLevel(u)]));
+
     const currentUserId = req.user?.id ?? null;
-    const enriched = reviews.map((r) => ({ ...r, isOwnReview: currentUserId !== null && r.userId === currentUserId }));
-    res.json({ reviews: enriched });
+    const enriched = reviews.map((r) => ({
+      ...r,
+      isOwnReview: currentUserId !== null && r.userId === currentUserId,
+      authorTrustLevel: r.userId ? (trustMap.get(r.userId) ?? 1) : 1,
+    }));
+
+    const weightedRating = computeWeightedRating(
+      enriched.map((r) => ({ rating: r.rating, weight: r.weight ?? "1" }))
+    );
+
+    res.json({ reviews: enriched, weightedRating });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch reviews");
     res.status(500).json({ error: "Failed to fetch reviews" });

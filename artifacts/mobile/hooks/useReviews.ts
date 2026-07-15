@@ -30,10 +30,13 @@ export interface ApiReview {
   ownerResponse: string | null;
   ownerRespondedAt: string | null;
   status: string | null;
+  authorTrustLevel?: number;
+  weight?: string;
 }
 
 export function useReviews(businessId: string) {
   const [reviews, setReviews] = useState<ApiReview[]>([]);
+  const [weightedRating, setWeightedRating] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const load = useCallback(async () => {
@@ -43,8 +46,9 @@ export function useReviews(businessId: string) {
     try {
       const res = await fetch(`${apiBase}/api/reviews?businessId=${encodeURIComponent(businessId)}`);
       if (res.ok) {
-        const data = (await res.json()) as { reviews: ApiReview[] };
+        const data = (await res.json()) as { reviews: ApiReview[]; weightedRating?: number };
         setReviews(data.reviews);
+        if (typeof data.weightedRating === "number") setWeightedRating(data.weightedRating);
       }
     } catch {}
     finally { setIsLoading(false); }
@@ -115,5 +119,5 @@ export function useReviews(businessId: string) {
     [businessId],
   );
 
-  return { reviews, isLoading, submitReview, refresh: load };
+  return { reviews, weightedRating, isLoading, submitReview, refresh: load };
 }

@@ -44,6 +44,7 @@ import { BusinessListingsSection } from "@/components/BusinessListingsSection";
 import { BusinessMilestonesSection } from "@/components/BusinessMilestonesSection";
 import { CircleTrustedSection } from "@/components/CircleTrustedSection";
 import { CommunityConfidenceScore } from "@/components/CommunityConfidenceScore";
+import { TrustBadge, type TrustLevel } from "@/components/TrustBadge";
 import { KnowBeforeYouGoSection } from "@/components/KnowBeforeYouGoSection";
 import { PassThePlateModal } from "@/components/PassThePlateModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
@@ -143,7 +144,7 @@ export default function BusinessDetailScreen() {
   const [nomComment, setNomComment] = useState("");
   const [nomSubmitting, setNomSubmitting] = useState(false);
 
-  const { reviews: apiReviews, submitReview } = useReviews(id ?? "");
+  const { reviews: apiReviews, weightedRating, submitReview } = useReviews(id ?? "");
   const { hasCheckedIn, checkIn } = useCheckins();
   const { addLocal } = usePoints();
   const { deals } = useDeals(id ?? "");
@@ -366,6 +367,7 @@ export default function BusinessDetailScreen() {
     rating: number; text: string; timeAgo: string; wouldReturnAlone?: boolean; videoUrl?: string; nowHiringUrl?: string; communitySupport?: number;
     ownerResponse?: string | null; ownerRespondedAt?: string | null; isOwnReview?: boolean;
     verificationBadge?: string | null; moderationLevel?: string | null;
+    authorTrustLevel?: TrustLevel;
   }> = [
     ...apiReviews
       .filter((r) => Date.now() - new Date(r.createdAt).getTime() < SIX_MONTHS_MS)
@@ -386,6 +388,7 @@ export default function BusinessDetailScreen() {
         isOwnReview: (r as any).isOwnReview ?? false,
         verificationBadge: (r as any).verificationBadge ?? null,
         moderationLevel: (r as any).moderationLevel ?? null,
+        authorTrustLevel: (typeof r.authorTrustLevel === "number" && r.authorTrustLevel >= 1 && r.authorTrustLevel <= 4 ? r.authorTrustLevel : 1) as TrustLevel,
       })),
     ...(business.reviews ?? []),
   ];
@@ -714,6 +717,11 @@ export default function BusinessDetailScreen() {
           </View>
 
           <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={14} showLabel />
+          {weightedRating !== null && weightedRating > 0 && Math.abs(weightedRating - (business.rating ?? 0)) >= 0.1 && (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4, backgroundColor: "#16A34A0D", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignSelf: "flex-start", borderWidth: 1, borderColor: "#16A34A25" }}>
+              <Text style={{ fontSize: 10, color: "#16A34A", fontFamily: "Inter_600SemiBold" }}>✔ {weightedRating.toFixed(1)} verified-weighted</Text>
+            </View>
+          )}
 
           {/* Hidden Gem / Community Spotlight badge */}
           {gemStatus?.isActive && gemStatus.label ? (
@@ -1437,7 +1445,12 @@ export default function BusinessDetailScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.reviewAuthor, { color: colors.foreground }]}>{rev.author}</Text>
-                    <Text style={[styles.reviewTime, { color: colors.mutedForeground }]}>{rev.timeAgo}</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2, flexWrap: "wrap" }}>
+                      <Text style={[styles.reviewTime, { color: colors.mutedForeground }]}>{rev.timeAgo}</Text>
+                      {rev.authorTrustLevel && rev.authorTrustLevel >= 2 && (
+                        <TrustBadge level={rev.authorTrustLevel} size="sm" />
+                      )}
+                    </View>
                   </View>
                   <View style={styles.reviewRight}>
                     <RatingStars rating={rev.rating} showCount={false} size={13} showLabel />
