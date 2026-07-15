@@ -204,7 +204,7 @@ export default function ResetPasswordScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  inner: { flex: 1, paddingHorizontal: 24 },
+  inner: { flex: 1, paddingHorizontal: 16 },
   back: { marginBottom: 24, alignSelf: "flex-start", padding: 4 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 8 },
   topSection: { alignItems: "center", marginBottom: 32 },

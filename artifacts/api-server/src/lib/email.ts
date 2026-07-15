@@ -101,7 +101,8 @@ export async function sendWelcomeEmail(to: string, firstName: string | null) {
 export async function sendPasswordResetEmail(to: string, firstName: string | null, code: string) {
   const name = firstName ?? "there";
   const encodedEmail = encodeURIComponent(to);
-  const webLink = `https://mappingwithmelanin.com/reset-password?email=${encodedEmail}&code=${code}`;
+  const frontendBase = process.env.FRONTEND_URL ?? "https://api-server-production-a991.up.railway.app";
+  const webLink = `${frontendBase}/reset-password?email=${encodedEmail}&code=${code}`;
   const appDeepLink = `mappingwithmelanin://reset-password?email=${encodedEmail}&code=${code}`;
   await sendEmail({
     from: FROM,
