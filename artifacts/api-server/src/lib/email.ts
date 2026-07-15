@@ -534,6 +534,14 @@ export async function sendTrialEndingSoon(
           If you choose not to renew, your account will automatically move to our free Community plan on ${endDate}. You'll still have access to the directory — just without the Premium features.
         </p>
 
+        <div style="background:#1A4731;border-radius:12px;padding:20px 24px;margin-bottom:28px">
+          <p style="color:#fff;font-size:14px;font-weight:700;margin:0 0 6px">Your membership funds our community.</p>
+          <p style="color:rgba(255,255,255,0.82);font-size:14px;line-height:1.6;margin:0">
+            When you subscribe at <strong>mappingwithmelanin.com</strong>, more of your membership goes directly to the
+            <strong>MWM Scholarship Program</strong> and community health initiatives — instead of app store fees. Every web subscription helps fund scholarships, wellness programs, and grants for verified businesses.
+          </p>
+        </div>
+
         <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
         <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping with Melanin™ Team</p>
         <p style="color:#3A1F0E;font-size:13px;opacity:0.5;margin:0">Melanin Maps LLC · <a href="https://mappingwithmelanin.com/membership" style="color:#CA922B">Manage membership</a></p>
@@ -598,9 +606,172 @@ export async function sendTrialExpired(
           Questions or feedback about your experience? We genuinely want to hear from you. Reply to this email or reach us at <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a>.
         </p>
 
+        <div style="background:#1A4731;border-radius:12px;padding:20px 24px;margin-bottom:28px">
+          <p style="color:#fff;font-size:14px;font-weight:700;margin:0 0 6px">Your membership funds our community.</p>
+          <p style="color:rgba(255,255,255,0.82);font-size:14px;line-height:1.6;margin:0">
+            When you reactivate at <strong>mappingwithmelanin.com</strong>, more of your membership goes directly to the
+            <strong>MWM Scholarship Program</strong> and community health initiatives — instead of app store fees. Every web subscription helps fund scholarships, wellness programs, and grants for verified businesses in our community.
+          </p>
+        </div>
+
         <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
         <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping with Melanin™ Team</p>
         <p style="color:#3A1F0E;font-size:13px;opacity:0.5;margin:0">Melanin Maps LLC · <a href="https://mappingwithmelanin.com/membership" style="color:#CA922B">View plans</a></p>
+      </div>
+    `,
+  });
+}
+
+export async function sendTrialEnding1Day(
+  to: string,
+  firstName: string | null,
+  planType: string,
+  trialEndsAt: Date,
+) {
+  if (!resend) return;
+  const name = firstName ?? "there";
+  const planLabel = PLAN_LABELS[planType] ?? "Premium";
+  const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
+  const endDate = trialEndsAt.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+
+  await sendEmail({
+    from: FROM,
+    to,
+    replyTo: "hello@mappingwithmelanin.com",
+    subject: `Last chance — your Mapping with Melanin™ trial ends tomorrow`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 8px">Hi ${name},</p>
+
+        <h1 style="font-size:26px;color:#2B1507;font-weight:700;margin:0 0 16px;line-height:1.3">
+          Your trial ends tomorrow. Don't lose your access.
+        </h1>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          Your <strong>${planLabel}</strong> free trial expires on <strong>${endDate}</strong>. If you haven't subscribed yet, today is the day — it takes less than 2 minutes on the web.
+        </p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:28px;margin-bottom:28px;text-align:center">
+          <p style="color:#F5EBD8;font-size:14px;font-weight:700;margin:0 0 6px;letter-spacing:1px;text-transform:uppercase">Subscribe Today</p>
+          <p style="color:#CA922B;font-size:36px;font-weight:700;margin:0 0 4px">${renewalPrice}</p>
+          <p style="color:#F5EBD8;opacity:0.5;font-size:13px;margin:0 0 20px">Cancel anytime — no long-term commitment</p>
+          <a href="https://mappingwithmelanin.com/membership" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:17px;padding:16px 44px;border-radius:50px;text-decoration:none;letter-spacing:0.3px">
+            Subscribe Now — Keep Access →
+          </a>
+        </div>
+
+        <div style="background:#1A4731;border-radius:12px;padding:20px 24px;margin-bottom:24px">
+          <p style="color:#fff;font-size:14px;font-weight:700;margin:0 0 6px">Why subscribe on the web?</p>
+          <p style="color:rgba(255,255,255,0.82);font-size:14px;line-height:1.6;margin:0">
+            Subscribing at <strong>mappingwithmelanin.com</strong> ensures more of your membership goes directly to the
+            <strong>MWM Scholarship Program</strong> and community health initiatives. Every web subscriber helps fund scholarships, wellness programs, and grants for verified businesses. You can also subscribe through the app — but the web gives your dollars more impact.
+          </p>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:14px;line-height:1.6;margin:0 0 24px;opacity:0.7">
+          After your trial ends, your account moves to our free Community plan — you'll keep basic directory access, but Premium features will no longer be available.
+        </p>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping with Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.5;margin:0">Melanin Maps LLC · <a href="https://mappingwithmelanin.com/membership" style="color:#CA922B">View plans</a></p>
+      </div>
+    `,
+  });
+}
+
+export async function sendMissionWinBack(
+  to: string,
+  firstName: string | null,
+  planType: string,
+) {
+  if (!resend) return;
+  const name = firstName ?? "there";
+  const planLabel = PLAN_LABELS[planType] ?? "Premium";
+  const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
+
+  await sendEmail({
+    from: FROM,
+    to,
+    replyTo: "hello@mappingwithmelanin.com",
+    subject: `${name}, you're missed — and your community needs you`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping with Melanin" style="height:40px;margin-bottom:32px" />
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 8px">Hey ${name},</p>
+
+        <h1 style="font-size:26px;color:#2B1507;font-weight:700;margin:0 0 16px;line-height:1.3">
+          We noticed you haven't subscribed yet. We wanted to share something with you.
+        </h1>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          Your <strong>${planLabel}</strong> trial has ended. We hope your time with us showed you what a community-first platform can look and feel like.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          We're not going to pressure you. But we do want to tell you where your membership dollars actually go.
+        </p>
+
+        <div style="background:#2B1507;border-radius:14px;padding:28px;margin-bottom:28px">
+          <p style="color:#CA922B;font-size:16px;font-weight:700;margin:0 0 16px;letter-spacing:0.3px">What your membership funds:</p>
+          <table style="width:100%;border-collapse:collapse">
+            <tr>
+              <td style="padding:10px 0;border-bottom:1px solid rgba(245,235,216,0.08);vertical-align:top;width:24px">
+                <div style="width:8px;height:8px;background:#CA922B;border-radius:50%;margin-top:5px"></div>
+              </td>
+              <td style="padding:10px 0 10px 12px;border-bottom:1px solid rgba(245,235,216,0.08)">
+                <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 2px">MWM Scholarship Program</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.65">Funding education for the next generation of leaders in medicine, law, and the trades.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 0;border-bottom:1px solid rgba(245,235,216,0.08);vertical-align:top;width:24px">
+                <div style="width:8px;height:8px;background:#CA922B;border-radius:50%;margin-top:5px"></div>
+              </td>
+              <td style="padding:10px 0 10px 12px;border-bottom:1px solid rgba(245,235,216,0.08)">
+                <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 2px">Community Health Initiatives</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.65">Connecting underserved neighborhoods with trusted doctors, wellness resources, and care networks.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 0;vertical-align:top;width:24px">
+                <div style="width:8px;height:8px;background:#CA922B;border-radius:50%;margin-top:5px"></div>
+              </td>
+              <td style="padding:10px 0 10px 12px">
+                <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 2px">Business Grants</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.65">Direct support for verified Black-owned and minority-owned businesses in their first years.</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="background:#1A4731;border-radius:12px;padding:20px 24px;margin-bottom:28px">
+          <p style="color:#fff;font-size:14px;font-weight:700;margin:0 0 6px">Web subscribers make the biggest impact.</p>
+          <p style="color:rgba(255,255,255,0.82);font-size:14px;line-height:1.6;margin:0">
+            When you subscribe at <strong>mappingwithmelanin.com</strong>, nearly your entire membership goes to the community — not to app store fees. That's ~$11 more per year toward scholarships and community programs for every web subscriber.
+          </p>
+        </div>
+
+        <div style="text-align:center;margin-bottom:28px">
+          <p style="color:#CA922B;font-size:28px;font-weight:700;margin:0 0 4px">${renewalPrice}</p>
+          <p style="color:#3A1F0E;font-size:13px;opacity:0.5;margin:0 0 20px">Cancel anytime · No long-term commitment</p>
+          <a href="https://mappingwithmelanin.com/membership" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:16px 44px;border-radius:50px;text-decoration:none">
+            Rejoin the Community →
+          </a>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:14px;line-height:1.6;margin:0 0 24px;opacity:0.65">
+          If now isn't the right time, no hard feelings. Your free Community account stays active — the directory is still yours to explore.
+          <br/><br/>
+          If you have feedback about why you didn't continue, we genuinely want to hear it. Reply to this email.
+        </p>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping with Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.5;margin:0">Melanin Maps LLC · <a href="https://mappingwithmelanin.com/membership" style="color:#CA922B">View plans</a> · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">Reply anytime</a></p>
       </div>
     `,
   });

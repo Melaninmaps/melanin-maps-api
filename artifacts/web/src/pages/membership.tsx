@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Shield, Star, Zap, Building2, Crown, Users, Award, ArrowRight, Clock } from "lucide-react";
+import { Check, Shield, Star, Zap, Building2, Crown, Users, Award, ArrowRight, Clock, Heart, GraduationCap, Stethoscope, Briefcase, Loader2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Dialog,
@@ -140,6 +140,7 @@ export default function Membership() {
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const [spotsRemaining, setSpotsRemaining] = useState<number>(500);
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [, navigate] = useLocation();
 
   useEffect(() => {
@@ -156,13 +157,47 @@ export default function Membership() {
 
   const isTester = currentUser?.approved === true && currentUser?.role === "tester";
 
-  function handlePlanClick(_plan: string) {
+  async function handleStartMembership(plan: string) {
     if (isTester) {
-      setPendingPlan(_plan);
+      setPendingPlan(plan);
       setModalOpen(true);
-    } else {
-      window.location.href = "/#waitlist-form";
+      return;
     }
+    if (!currentUser) {
+      window.location.href = `/login?redirect=/membership`;
+      return;
+    }
+    if (plan === "individual") {
+      navigate("/discover");
+      return;
+    }
+    if (plan === "business") {
+      navigate("/business/signup");
+      return;
+    }
+    setCheckoutLoading(plan);
+    try {
+      const res = await fetch(`${BASE}api/billing/checkout`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan, interval: billing }),
+      });
+      const d = await res.json() as { checkoutUrl?: string; error?: string };
+      if (d.checkoutUrl) {
+        window.location.href = d.checkoutUrl;
+      } else {
+        alert(d.error ?? "Could not start checkout. Please try again.");
+      }
+    } catch {
+      alert("Could not connect to checkout. Please try again.");
+    } finally {
+      setCheckoutLoading(null);
+    }
+  }
+
+  function handlePlanClick(_plan: string) {
+    void handleStartMembership(_plan);
   }
 
   function handleContinue() {
@@ -222,6 +257,63 @@ export default function Membership() {
           </p>
         </div>
       </section>
+
+      {/* ── MISSION / IMPACT SECTION ── */}
+      <div className="bg-[#1A4731] py-16">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/20 bg-white/10 mb-5">
+              <Heart className="w-3.5 h-3.5 text-[#CA922B]" />
+              <span className="text-xs font-bold tracking-widest text-white/80 uppercase">Your Membership Makes This Possible</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-4">
+              Subscribing on the web funds our community.
+            </h2>
+            <p className="text-white/65 text-base md:text-lg max-w-2xl mx-auto font-light leading-relaxed">
+              When you subscribe at mappingwithmelanin.com instead of through an app store, more of every dollar stays in the community — funding programs that change lives.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 mb-10">
+            <div className="bg-white/8 rounded-2xl p-6 border border-white/10">
+              <div className="w-11 h-11 rounded-xl bg-[#CA922B]/20 flex items-center justify-center mb-4">
+                <GraduationCap className="w-5 h-5 text-[#CA922B]" />
+              </div>
+              <h3 className="font-bold text-white mb-2">MWM Scholarship Program</h3>
+              <p className="text-white/55 text-sm leading-relaxed">
+                Funding education for the next generation of leaders in medicine, law, business, and the trades. Every web subscription directly contributes.
+              </p>
+            </div>
+            <div className="bg-white/8 rounded-2xl p-6 border border-white/10">
+              <div className="w-11 h-11 rounded-xl bg-[#CA922B]/20 flex items-center justify-center mb-4">
+                <Stethoscope className="w-5 h-5 text-[#CA922B]" />
+              </div>
+              <h3 className="font-bold text-white mb-2">Community Health Initiatives</h3>
+              <p className="text-white/55 text-sm leading-relaxed">
+                Connecting underserved neighborhoods with trusted doctors, wellness resources, and care networks — starting locally, expanding nationally.
+              </p>
+            </div>
+            <div className="bg-white/8 rounded-2xl p-6 border border-white/10">
+              <div className="w-11 h-11 rounded-xl bg-[#CA922B]/20 flex items-center justify-center mb-4">
+                <Briefcase className="w-5 h-5 text-[#CA922B]" />
+              </div>
+              <h3 className="font-bold text-white mb-2">Business Grants</h3>
+              <p className="text-white/55 text-sm leading-relaxed">
+                Direct financial support for verified minority-owned businesses in their critical first years — the years when most fail for lack of capital.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white/8 rounded-2xl px-6 py-4 border border-white/10 flex items-center gap-4 max-w-2xl mx-auto">
+            <div className="w-10 h-10 rounded-xl bg-[#CA922B] flex items-center justify-center shrink-0">
+              <span className="text-white font-bold text-sm">~$11</span>
+            </div>
+            <p className="text-white/70 text-sm leading-relaxed">
+              <strong className="text-white">Each web subscriber saves ~$11/year in app store fees</strong> that stay in our community programs instead — compounding with every renewal.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* ── BILLING TOGGLE ── */}
       <div className="flex justify-center pt-14 pb-2">
@@ -335,12 +427,15 @@ export default function Membership() {
             </ul>
 
             <Button
-              className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 mt-auto font-bold shadow-[0_4px_14px_rgba(202,146,43,0.39)]"
+              className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 mt-auto font-bold shadow-[0_4px_14px_rgba(202,146,43,0.39)] disabled:opacity-60"
               onClick={() => handlePlanClick("navigator")}
+              disabled={checkoutLoading === "navigator"}
             >
-              Become a Navigator
+              {checkoutLoading === "navigator"
+                ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Opening checkout…</>
+                : "Become a Navigator"}
             </Button>
-            <p className="text-[#3A1F0E]/30 text-xs text-center mt-3">No credit card required to start. Cancel anytime.</p>
+            <p className="text-[#3A1F0E]/30 text-xs text-center mt-3">Secure checkout via Stripe · Cancel anytime.</p>
           </div>
 
           {/* ── Trailblazer ── */}
@@ -368,12 +463,15 @@ export default function Membership() {
               ))}
             </ul>
             <Button
-              className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 mt-auto font-bold shadow-[0_4px_14px_rgba(202,146,43,0.39)]"
+              className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 mt-auto font-bold shadow-[0_4px_14px_rgba(202,146,43,0.39)] disabled:opacity-60"
               onClick={() => handlePlanClick("trailblazer")}
+              disabled={checkoutLoading === "trailblazer"}
             >
-              Become a Trailblazer
+              {checkoutLoading === "trailblazer"
+                ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Opening checkout…</>
+                : "Become a Trailblazer"}
             </Button>
-            <p className="text-[#F5EBD8]/30 text-xs text-center mt-3">14-day free trial. Cancel anytime.</p>
+            <p className="text-[#F5EBD8]/30 text-xs text-center mt-3">Secure checkout via Stripe · Cancel anytime.</p>
           </div>
         </div>
       </div>

@@ -60,13 +60,28 @@ async function handleCustomEvent(event: { type: string; data: { object: Record<s
         // ── Subscription checkout ───────────────────────────────────────────────
         if (obj.mode !== "subscription" || !obj.customer) break;
         const user = await getUserByCustomerId(String(obj.customer));
-        if (!user?.email || !user.trialEndsAt) break;
-        const trialDays = TRIAL_DAYS[user.memberType ?? "individual"] ?? 14;
-        await sendTrialStarted(user.email, user.firstName, user.memberType ?? "individual", trialDays, user.trialEndsAt);
-        if (obj.subscription) {
-          await db.update(usersTable).set({ stripeSubscriptionId: String(obj.subscription) }).where(eq(usersTable.id, user.id));
+        if (!user) break;
+        // Update memberType from metadata if provided (web checkout sets this)
+        const planType = obj.metadata?.planType as string | undefined;
+        const memberTypeMap: Record<string, string> = {
+          navigator: "navigator",
+          trailblazer: "trailblazer",
+        };
+        const newMemberType = planType && memberTypeMap[planType]
+          ? memberTypeMap[planType]
+          : (user.memberType ?? "individual");
+        const updates: Record<string, unknown> = { stripeSubscriptionId: obj.subscription ? String(obj.subscription) : undefined };
+        if (planType && memberTypeMap[planType]) {
+          updates.memberType = newMemberType;
         }
-        logger.info({ userId: user.id }, "Trial started email sent");
+        await db.update(usersTable).set(updates as any).where(eq(usersTable.id, user.id));
+        if (user.email) {
+          if (user.trialEndsAt) {
+            const trialDays = TRIAL_DAYS[newMemberType] ?? 14;
+            await sendTrialStarted(user.email, user.firstName, newMemberType, trialDays, user.trialEndsAt);
+          }
+        }
+        logger.info({ userId: user.id, newMemberType }, "Subscription checkout completed");
         break;
       }
       case "customer.subscription.trial_will_end": {

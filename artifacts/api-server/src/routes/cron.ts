@@ -22,7 +22,9 @@ import { and, isNotNull, lte, gt, eq, isNull, gte, inArray, or, count, sql } fro
 import { openai } from "@workspace/integrations-openai-ai-server";
 import {
   sendTrialEndingSoon,
+  sendTrialEnding1Day,
   sendTrialExpired,
+  sendMissionWinBack,
   sendWeeklyDigest,
   sendCheckinOverdueEmail,
   sendMeetupCheckinMissedEmail,
@@ -52,21 +54,43 @@ router.post("/cron/trial-reminders", async (req, res): Promise<void> => {
   if (!verifyCronSecret(req, res)) return;
 
   const now = new Date();
-  const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+  // Windows for each email type
+  const in25Hours  = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+  const in1Day     = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
+  const in3Days    = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   try {
-    const expiringSoon = await db
+    // ── 3-day reminder (2–3 days out, not yet sent) ────────────────────────
+    const expiring3Day = await db
+      .select()
+      .from(usersTable)
+      .where(
+        and(
+          isNotNull(usersTable.trialEndsAt),
+          gt(usersTable.trialEndsAt, in1Day),
+          lte(usersTable.trialEndsAt, in3Days),
+          isNotNull(usersTable.email),
+          isNull(usersTable.trialReminder3DaySentAt),
+        ),
+      );
+
+    // ── 1-day reminder (≤25 hours out, not yet sent) ───────────────────────
+    const expiring1Day = await db
       .select()
       .from(usersTable)
       .where(
         and(
           isNotNull(usersTable.trialEndsAt),
           gt(usersTable.trialEndsAt, now),
-          lte(usersTable.trialEndsAt, in3Days),
+          lte(usersTable.trialEndsAt, in25Hours),
           isNotNull(usersTable.email),
+          isNull(usersTable.trialReminder1DaySentAt),
         ),
       );
 
+    // ── Expiry (trial ended, no subscription, not yet emailed) ────────────
     const expired = await db
       .select()
       .from(usersTable)
@@ -76,20 +100,50 @@ router.post("/cron/trial-reminders", async (req, res): Promise<void> => {
           lte(usersTable.trialEndsAt, now),
           isNotNull(usersTable.email),
           isNull(usersTable.stripeSubscriptionId),
+          isNull(usersTable.trialExpiredEmailSentAt),
         ),
       );
 
-    let remindersSent = 0;
-    let expiryEmailsSent = 0;
+    // ── Win-back (expired 2–7 days ago, no subscription, not yet emailed) ─
+    const winBackCandidates = await db
+      .select()
+      .from(usersTable)
+      .where(
+        and(
+          isNotNull(usersTable.trialEndsAt),
+          lte(usersTable.trialEndsAt, twoDaysAgo),
+          gte(usersTable.trialEndsAt, sevenDaysAgo),
+          isNotNull(usersTable.email),
+          isNull(usersTable.stripeSubscriptionId),
+          isNull(usersTable.winBackEmailSentAt),
+        ),
+      );
 
-    for (const user of expiringSoon) {
+    let reminder3Sent = 0;
+    let reminder1Sent = 0;
+    let expiryEmailsSent = 0;
+    let winBackSent = 0;
+
+    for (const user of expiring3Day) {
       if (!user.email || !user.trialEndsAt) continue;
-      const daysLeft = Math.max(1, Math.ceil((user.trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+      const daysLeft = Math.max(2, Math.ceil((user.trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
       try {
         await sendTrialEndingSoon(user.email, user.firstName, user.memberType ?? "individual", user.trialEndsAt, daysLeft);
-        remindersSent++;
+        await db.update(usersTable).set({ trialReminder3DaySentAt: now }).where(eq(usersTable.id, user.id));
+        reminder3Sent++;
       } catch (err) {
-        logger.error({ err, userId: user.id }, "Failed to send trial ending soon email");
+        logger.error({ err, userId: user.id }, "Failed to send 3-day trial reminder");
+      }
+    }
+
+    for (const user of expiring1Day) {
+      if (!user.email || !user.trialEndsAt) continue;
+      try {
+        await sendTrialEnding1Day(user.email, user.firstName, user.memberType ?? "individual", user.trialEndsAt);
+        await db.update(usersTable).set({ trialReminder1DaySentAt: now }).where(eq(usersTable.id, user.id));
+        reminder1Sent++;
+      } catch (err) {
+        logger.error({ err, userId: user.id }, "Failed to send 1-day trial reminder");
       }
     }
 
@@ -97,14 +151,26 @@ router.post("/cron/trial-reminders", async (req, res): Promise<void> => {
       if (!user.email) continue;
       try {
         await sendTrialExpired(user.email, user.firstName, user.memberType ?? "individual");
+        await db.update(usersTable).set({ trialExpiredEmailSentAt: now }).where(eq(usersTable.id, user.id));
         expiryEmailsSent++;
       } catch (err) {
         logger.error({ err, userId: user.id }, "Failed to send trial expired email");
       }
     }
 
-    logger.info({ remindersSent, expiryEmailsSent }, "Trial cron completed");
-    res.json({ ok: true, remindersSent, expiryEmailsSent });
+    for (const user of winBackCandidates) {
+      if (!user.email) continue;
+      try {
+        await sendMissionWinBack(user.email, user.firstName, user.memberType ?? "individual");
+        await db.update(usersTable).set({ winBackEmailSentAt: now }).where(eq(usersTable.id, user.id));
+        winBackSent++;
+      } catch (err) {
+        logger.error({ err, userId: user.id }, "Failed to send win-back email");
+      }
+    }
+
+    logger.info({ reminder3Sent, reminder1Sent, expiryEmailsSent, winBackSent }, "Trial cron completed");
+    res.json({ ok: true, reminder3Sent, reminder1Sent, expiryEmailsSent, winBackSent });
   } catch (err: any) {
     logger.error({ err }, "Trial cron failed");
     res.status(500).json({ error: "Cron job failed" });
