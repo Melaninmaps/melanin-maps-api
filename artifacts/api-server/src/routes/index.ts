@@ -129,6 +129,7 @@ import vibesRouter from "./vibes";
 import hashtagsRouter from "./hashtags";
 import communityPlacesRouter from "./community-places";
 import communityImpactRouter from "./community-impact";
+import showLoveRouter from "./show-love";
 
 const router: IRouter = Router();
 
@@ -261,6 +262,7 @@ router.use(vibesRouter);
 router.use(hashtagsRouter);
 router.use(communityPlacesRouter);
 router.use(communityImpactRouter);
+router.use(showLoveRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

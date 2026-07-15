@@ -872,6 +872,24 @@ export default function CommunityScreen() {
           contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 40, gap: 14, flexGrow: 1 }]}
           showsVerticalScrollIndicator={false}
         >
+          {/* Show Love card */}
+          <TouchableOpacity
+            style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#CA922B44" }]}
+            onPress={() => router.push("/show-love" as never)}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.resSpacesIcon, { backgroundColor: "#CA922B18" }]}>
+              <Feather name="heart" size={22} color="#CA922B" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.resSpacesTitle, { color: colors.foreground }]}>Show Love</Text>
+              <Text style={[styles.resSpacesSub, { color: colors.mutedForeground }]}>
+                Recognize creators, businesses, mentors, and community leaders making a real difference.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+
           {/* Community Market card */}
           <TouchableOpacity
             style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#CA922B33" }]}

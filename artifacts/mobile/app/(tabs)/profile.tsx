@@ -41,6 +41,8 @@ import { getDailyQuoteText } from "@/constants/brandQuotes";
 import { StatusComposer } from "@/components/StatusComposer";
 import { SavedSpotsShare } from "@/components/SavedSpotsShare";
 import { CommunityImpactCard } from "@/components/CommunityImpactCard";
+import { useShowLoveReceived } from "@/hooks/useShowLove";
+import { ShowLoveCard } from "@/components/ShowLoveCard";
 
 const SETTINGS = [
   { icon: "users" as const, label: "Family Circle", sub: "Invite family members at no extra cost — stay safely connected", route: "/family-circle" as const },
@@ -537,6 +539,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { savedIds, isSaved, toggleSave } = useFavorites();
   const { user, isLoading, isAuthenticated, login, logout, refreshUser } = useAuth();
+  const { nominations: showLoveNoms } = useShowLoveReceived(user?.id ?? null);
   const { isSupported: biometricSupported, isEnabled: biometricEnabled, label: biometricLabel, toggle: toggleBiometric } = useBiometricSettings();
   const isAdminUser = !!(user?.email && ADMIN_EMAILS.includes(user.email));
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
@@ -1003,6 +1006,22 @@ export default function ProfileScreen() {
             displayName={[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Community Member"}
             showOwnedBusinesses
           />
+        </View>
+      )}
+
+      {isAuthenticated && showLoveNoms.length > 0 && (
+        <View style={{ marginBottom: 4 }}>
+          <View style={{ paddingHorizontal: 16, paddingBottom: 10, paddingTop: 6, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <View>
+              <Text style={{ fontSize: 16, fontWeight: "800", color: colors.colors.text, letterSpacing: -0.3 }}>Why People Show Love</Text>
+              <Text style={{ fontSize: 12, color: colors.colors.muted, marginTop: 2 }}>
+                {showLoveNoms.length === 1 ? "1 recognition from the community" : `${showLoveNoms.length} recognitions from the community`}
+              </Text>
+            </View>
+          </View>
+          {showLoveNoms.slice(0, 3).map((nom) => (
+            <ShowLoveCard key={nom.id} nomination={nom} compact />
+          ))}
         </View>
       )}
 
