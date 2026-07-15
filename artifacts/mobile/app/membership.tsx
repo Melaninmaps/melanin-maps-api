@@ -541,39 +541,39 @@ export default function MembershipScreen() {
         </View>
       )}
 
-      {/* Business Success Promise — business only */}
-      {audience === "business" && (
-        <View style={[styles.promiseCard, { backgroundColor: colors.card, borderColor: colors.primary + "44" }]}>
-          <View style={styles.promiseHeader}>
-            <Text style={{ fontSize: 20 }}>🤝🏾</Text>
-            <Text style={[styles.promiseTitle, { color: colors.foreground }]}>
-              Business Success Promise
-            </Text>
-          </View>
-          <Text style={[styles.promiseBody, { color: colors.mutedForeground }]}>
-            Every upgrade answers one question:{" "}
-            <Text style={[styles.promiseEmphasis, { color: colors.foreground }]}>why would I pay more?</Text>
-          </Text>
-          <Text style={[styles.promiseBody, { color: colors.mutedForeground }]}>
-            Every tier is designed to help you make more money, save time, or increase visibility — not just unlock features.
-          </Text>
-          <TouchableOpacity
-            style={[styles.guideBtn, { borderColor: colors.primary + "55", backgroundColor: colors.primary + "0F" }]}
-            onPress={() => router.push("/business-guide" as never)}
-            activeOpacity={0.8}
-          >
-            <Feather name="book-open" size={14} color={colors.primary} />
-            <Text style={[styles.guideBtnTxt, { color: colors.primary }]}>Read the Business Tier Guide</Text>
-            <Feather name="arrow-right" size={13} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
-      )}
-
       <ScrollView
         keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 24 }]}
         showsVerticalScrollIndicator={false}
       >
+        {/* Business Success Promise — scrolls with plans so full first card is visible */}
+        {audience === "business" && (
+          <View style={[styles.promiseCard, { backgroundColor: colors.card, borderColor: colors.primary + "44" }]}>
+            <View style={styles.promiseHeader}>
+              <Text style={{ fontSize: 20 }}>🤝🏾</Text>
+              <Text style={[styles.promiseTitle, { color: colors.foreground }]}>
+                Business Success Promise
+              </Text>
+            </View>
+            <Text style={[styles.promiseBody, { color: colors.mutedForeground }]}>
+              Every upgrade answers one question:{" "}
+              <Text style={[styles.promiseEmphasis, { color: colors.foreground }]}>why would I pay more?</Text>
+            </Text>
+            <Text style={[styles.promiseBody, { color: colors.mutedForeground }]}>
+              Every tier is designed to help you make more money, save time, or increase visibility — not just unlock features.
+            </Text>
+            <TouchableOpacity
+              style={[styles.guideBtn, { borderColor: colors.primary + "55", backgroundColor: colors.primary + "0F" }]}
+              onPress={() => router.push("/business-guide" as never)}
+              activeOpacity={0.8}
+            >
+              <Feather name="book-open" size={14} color={colors.primary} />
+              <Text style={[styles.guideBtnTxt, { color: colors.primary }]}>Read the Business Tier Guide</Text>
+              <Feather name="arrow-right" size={13} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* ── Creator Program ── */}
         {audience === "creator" && (
           <>
