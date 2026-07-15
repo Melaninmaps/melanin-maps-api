@@ -531,6 +531,65 @@ router.post("/users/avatar", avatarUpload.single("avatar"), async (req: any, res
   }
 });
 
+// GET /users/settings — fetch notification & quiet-hour preferences
+router.get("/users/settings", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required." }); return; }
+  try {
+    const [user] = await db.select({
+      notifEvents: usersTable.notifEvents,
+      notifBusiness: usersTable.notifBusiness,
+      notifMessages: usersTable.notifMessages,
+      notifReviews: usersTable.notifReviews,
+      notifCommunity: usersTable.notifCommunity,
+      notifPromotions: usersTable.notifPromotions,
+      notifDigest: usersTable.notifDigest,
+      notifTips: usersTable.notifTips,
+      notifPostNudges: usersTable.notifPostNudges,
+      quietHoursEnabled: usersTable.quietHoursEnabled,
+      quietHoursFrom: usersTable.quietHoursFrom,
+      quietHoursUntil: usersTable.quietHoursUntil,
+    }).from(usersTable).where(eq(usersTable.id, req.user.id)).limit(1);
+    if (!user) { res.status(404).json({ error: "User not found." }); return; }
+    res.json(user);
+  } catch (err) {
+    req.log.error({ err }, "GET /api/users/settings error");
+    res.status(500).json({ error: "Failed to fetch settings." });
+  }
+});
+
+// PUT /users/settings — save notification & quiet-hour preferences
+router.put("/users/settings", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required." }); return; }
+  try {
+    const {
+      notifEvents, notifBusiness, notifMessages, notifReviews,
+      notifCommunity, notifPromotions, notifDigest, notifTips, notifPostNudges,
+      quietHoursEnabled, quietHoursFrom, quietHoursUntil,
+    } = req.body as Record<string, unknown>;
+
+    const patch: Record<string, unknown> = {};
+    if (typeof notifEvents === "boolean") patch.notifEvents = notifEvents;
+    if (typeof notifBusiness === "boolean") patch.notifBusiness = notifBusiness;
+    if (typeof notifMessages === "boolean") patch.notifMessages = notifMessages;
+    if (typeof notifReviews === "boolean") patch.notifReviews = notifReviews;
+    if (typeof notifCommunity === "boolean") patch.notifCommunity = notifCommunity;
+    if (typeof notifPromotions === "boolean") patch.notifPromotions = notifPromotions;
+    if (typeof notifDigest === "boolean") patch.notifDigest = notifDigest;
+    if (typeof notifTips === "boolean") patch.notifTips = notifTips;
+    if (typeof notifPostNudges === "boolean") patch.notifPostNudges = notifPostNudges;
+    if (typeof quietHoursEnabled === "boolean") patch.quietHoursEnabled = quietHoursEnabled;
+    if (typeof quietHoursFrom === "string") patch.quietHoursFrom = quietHoursFrom;
+    if (typeof quietHoursUntil === "string") patch.quietHoursUntil = quietHoursUntil;
+
+    if (Object.keys(patch).length === 0) { res.json({ ok: true }); return; }
+    await db.update(usersTable).set(patch).where(eq(usersTable.id, req.user.id));
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "PUT /api/users/settings error");
+    res.status(500).json({ error: "Failed to save settings." });
+  }
+});
+
 // DELETE /users/me — permanently delete the authenticated user's account
 router.delete("/users/me", async (req: Request, res: Response) => {
   if (!req.user?.id) {

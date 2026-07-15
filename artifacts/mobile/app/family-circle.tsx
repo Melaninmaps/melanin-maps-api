@@ -251,6 +251,9 @@ export default function FamilyCircleScreen() {
               { icon: "navigation", text: "Live location sharing (only when enabled)" },
               { icon: "alert-triangle", text: "SOS notifications & emergency contacts" },
               { icon: "map", text: "View shared trip itineraries" },
+              { icon: "eye-off", text: "Family Mode — filter community content by audience rating" },
+              { icon: "sliders", text: "Guidance Settings — control what each member sees" },
+              { icon: "users", text: "Kinfolk Circles — plan group trips & outings together" },
               { icon: "dollar-sign", text: "No extra cost for family members" },
             ].map((b) => (
               <View key={b.text} style={s.benefitRow}>
@@ -260,6 +263,26 @@ export default function FamilyCircleScreen() {
                 <Text style={[s.benefitText, { color: colors.foreground }]}>{b.text}</Text>
               </View>
             ))}
+          </View>
+
+          {/* Quick links to family tools */}
+          <View style={{ flexDirection: "row", gap: 10, marginBottom: 4 }}>
+            <TouchableOpacity
+              style={[s.quickLink, { backgroundColor: colors.card, borderColor: colors.border, flex: 1 }]}
+              onPress={() => router.push("/family-mode" as never)}
+              activeOpacity={0.85}
+            >
+              <Feather name="eye-off" size={15} color={colors.primary} />
+              <Text style={[s.quickLinkText, { color: colors.foreground }]}>Family Mode</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[s.quickLink, { backgroundColor: colors.card, borderColor: colors.border, flex: 1 }]}
+              onPress={() => router.push("/family-settings" as never)}
+              activeOpacity={0.85}
+            >
+              <Feather name="sliders" size={15} color={colors.primary} />
+              <Text style={[s.quickLinkText, { color: colors.foreground }]}>Guidance Settings</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Create form */}
@@ -508,6 +531,8 @@ const s = StyleSheet.create({
   permissionsHead: { fontSize: 10, fontWeight: "700", letterSpacing: 0.5, marginBottom: 10 },
   permRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },
   permIcon: { width: 30, height: 30, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+  quickLink: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, borderWidth: 1, borderRadius: 12, paddingVertical: 11, marginBottom: 0 },
+  quickLinkText: { fontSize: 13, fontWeight: "600" },
   permLabel: { fontSize: 13, fontWeight: "600" },
   permSub: { fontSize: 11, marginTop: 1 },
   removeBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1, borderRadius: 12, paddingVertical: 10, marginTop: 14 },

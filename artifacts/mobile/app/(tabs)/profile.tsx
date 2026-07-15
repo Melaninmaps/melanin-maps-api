@@ -621,6 +621,28 @@ export default function ProfileScreen() {
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const apiBase = getApiBase();
+
+      // If user picked a new photo but it hasn't been uploaded yet, upload now
+      let resolvedAvatarUrl = uploadedAvatarUrl;
+      if (localAvatarUri && !uploadedAvatarUrl) {
+        try {
+          setUploadingAvatar(true);
+          const formData = new FormData();
+          formData.append("avatar", { uri: localAvatarUri, type: "image/jpeg", name: "avatar.jpg" } as unknown as Blob);
+          const uploadRes = await fetch(`${apiBase}/api/users/avatar`, {
+            method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: formData,
+          });
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json() as { url: string };
+            resolvedAvatarUrl = uploadData.url;
+            setUploadedAvatarUrl(uploadData.url);
+          }
+        } catch { /* silently skip photo if upload fails — other fields still save */ }
+        finally { setUploadingAvatar(false); }
+      }
+
       const body: Record<string, unknown> = {
         firstName: editFirstName,
         lastName: editLastName,
@@ -629,7 +651,7 @@ export default function ProfileScreen() {
         jobTitle: editJobTitle,
         username: editUsername || null,
       };
-      if (uploadedAvatarUrl) body.profileImageUrl = uploadedAvatarUrl;
+      if (resolvedAvatarUrl) body.profileImageUrl = resolvedAvatarUrl;
       const res = await fetch(`${apiBase}/api/users/me`, {
         method: "PATCH",
         headers: {
@@ -686,27 +708,10 @@ export default function ProfileScreen() {
     });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
+    // Store locally — upload happens when the user taps Save so
+    // there is no premature failure dialog.
     setLocalAvatarUri(asset.uri);
-    setUploadingAvatar(true);
-    try {
-      const token = await SecureStore.getItemAsync("auth_session_token");
-      const apiBase = getApiBase();
-      const formData = new FormData();
-      formData.append("avatar", { uri: asset.uri, type: asset.mimeType ?? "image/jpeg", name: "avatar.jpg" } as unknown as Blob);
-      const res = await fetch(`${apiBase}/api/users/avatar`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-      if (!res.ok) throw new Error("Upload failed");
-      const data = await res.json() as { url: string };
-      setUploadedAvatarUrl(data.url);
-      await refreshUser();
-    } catch {
-      Alert.alert("Upload failed", "Couldn't upload photo. It will be saved when you tap Save.");
-    } finally {
-      setUploadingAvatar(false);
-    }
+    setUploadedAvatarUrl(null);
   };
 
   const loadTopics = useCallback(async () => {
