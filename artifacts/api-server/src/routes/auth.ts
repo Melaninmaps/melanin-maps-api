@@ -495,7 +495,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
     const [existingEmail, existingUsername, passwordHash] = await Promise.all([
       db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.email, cleanEmail)).limit(1).then(r => r[0]),
       db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, cleanUsername)).limit(1).then(r => r[0]),
-      bcrypt.hash(password, 10),
+      bcrypt.hash(password, 8),
     ]);
 
     if (existingEmail) {
@@ -675,7 +675,7 @@ router.post("/auth/reset-password", async (req: Request, res: Response) => {
       return;
     }
 
-    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const passwordHash = await bcrypt.hash(newPassword, 8);
     await db
       .update(usersTable)
       .set({ passwordHash, emailVerificationToken: null, emailVerificationExpires: null })

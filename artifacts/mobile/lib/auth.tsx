@@ -155,7 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const apiBase = getApiBaseUrl();
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 10_000);
+      const timer = setTimeout(() => controller.abort(), 30_000);
       let res: Response;
       try {
         res = await fetch(`${apiBase}/api/auth/login-email`, {
