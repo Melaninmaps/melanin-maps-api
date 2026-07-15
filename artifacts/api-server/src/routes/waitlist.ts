@@ -2,7 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, waitlistTable, usersTable, businessRecommendationsTable, pointsLedgerTable, businessesTable } from "@workspace/db";
 import { and, asc, count, desc, eq, gte, ilike, isNotNull, lt, sql } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
-import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite, sendFriendInvitation, sendBusinessWaitlistInvitation, sendReferralMilestoneUpdate, sendReferralNudge, sendAppLaunchBlast, sendBetaAnnouncementBlast } from "../lib/email";
+import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite, sendFriendInvitation, sendBusinessWaitlistInvitation, sendReferralMilestoneUpdate, sendReferralNudge, sendAppLaunchBlast, sendBetaAnnouncementBlast, sendWaitlistInvitation } from "../lib/email";
 import { runWeeklyNudge } from "../lib/nudgeScheduler";
 
 const router: IRouter = Router();
@@ -597,6 +597,117 @@ router.post("/admin/send-welcome-blast", async (req: Request, res: Response) => 
   } catch (err) {
     req.log.error({ err }, "Failed to send welcome blast");
     res.status(500).json({ error: "Failed to send welcome blast" });
+  }
+});
+
+// ── Admin: send Founding Community Preview invitation blast ───────────────────
+// Body: { eventDate?, eventTime?, zoomLink?, zoomMeetingId?, dryRun? }
+// Pass dryRun:true to get a count without actually sending.
+router.post("/admin/send-invitation-blast", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const {
+      eventDate,
+      eventTime,
+      zoomLink,
+      zoomMeetingId,
+      dryRun = false,
+    } = req.body as {
+      eventDate?: string;
+      eventTime?: string;
+      zoomLink?: string;
+      zoomMeetingId?: string;
+      dryRun?: boolean;
+    };
+
+    const recipients = await db
+      .select()
+      .from(waitlistTable)
+      .orderBy(waitlistTable.createdAt);
+
+    if (dryRun) {
+      res.json({ dryRun: true, wouldSend: recipients.length });
+      return;
+    }
+
+    let sent = 0;
+    let failed = 0;
+
+    for (let i = 0; i < recipients.length; i++) {
+      const entry = recipients[i];
+      if (!entry.email) { failed++; continue; }
+      try {
+        await sendWaitlistInvitation(entry.email, entry.firstName ?? null, {
+          eventDate,
+          eventTime,
+          zoomLink,
+          zoomMeetingId,
+        });
+        sent++;
+        // Respect Resend rate limits — ~2 emails/sec
+        if (i % 10 === 9) await new Promise(r => setTimeout(r, 500));
+      } catch {
+        failed++;
+      }
+    }
+
+    res.json({ sent, failed, total: recipients.length });
+  } catch (err) {
+    req.log.error({ err }, "Failed to send invitation blast");
+    res.status(500).json({ error: "Failed to send invitation blast" });
+  }
+});
+
+// ── Admin: send invitation to a specific list of emails ──────────────────────
+// Useful for testing or sending to a subset first.
+router.post("/admin/send-invitation-to", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const {
+      emails,
+      eventDate,
+      eventTime,
+      zoomLink,
+      zoomMeetingId,
+    } = req.body as {
+      emails: string[];
+      eventDate?: string;
+      eventTime?: string;
+      zoomLink?: string;
+      zoomMeetingId?: string;
+    };
+
+    if (!Array.isArray(emails) || emails.length === 0) {
+      res.status(400).json({ error: "emails array required" }); return;
+    }
+
+    const results: { email: string; status: "sent" | "failed" }[] = [];
+
+    for (const rawEmail of emails) {
+      const email = rawEmail.trim().toLowerCase();
+      // Try to find their name from the waitlist
+      const [entry] = await db
+        .select()
+        .from(waitlistTable)
+        .where(eq(waitlistTable.email, email))
+        .limit(1);
+      try {
+        await sendWaitlistInvitation(email, entry?.firstName ?? null, {
+          eventDate,
+          eventTime,
+          zoomLink,
+          zoomMeetingId,
+        });
+        results.push({ email, status: "sent" });
+      } catch {
+        results.push({ email, status: "failed" });
+      }
+    }
+
+    res.json({ results, sent: results.filter(r => r.status === "sent").length });
+  } catch (err) {
+    req.log.error({ err }, "Failed to send targeted invitations");
+    res.status(500).json({ error: "Failed to send invitations" });
   }
 });
 

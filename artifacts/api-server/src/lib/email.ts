@@ -2505,3 +2505,148 @@ export async function sendMarketplaceInquiry({
     `,
   });
 }
+
+/**
+ * sendWaitlistInvitation
+ *
+ * Sends a warm personal invitation to a waitlist member for the
+ * Founding Community Preview event.
+ *
+ * All event fields are optional — pass undefined to render a
+ * placeholder so the template is ready to send the moment you
+ * have the details.
+ */
+export async function sendWaitlistInvitation(
+  to: string,
+  firstName: string | null,
+  opts?: {
+    eventDate?: string;     // e.g. "Thursday, August 7, 2025"
+    eventTime?: string;     // e.g. "7:00 PM ET / 4:00 PM PT"
+    zoomLink?: string;      // full https://zoom.us/… URL
+    zoomMeetingId?: string; // e.g. "123 456 7890"
+  },
+) {
+  if (!resend) return;
+  const name         = firstName ?? "there";
+  const eventDate    = opts?.eventDate    ?? "Date to be announced";
+  const eventTime    = opts?.eventTime    ?? "Time to be announced";
+  const zoomLink     = opts?.zoomLink     ?? "#";
+  const zoomDisplay  = opts?.zoomLink     ?? "Link to be shared";
+  const zoomId       = opts?.zoomMeetingId
+    ? `<p style="color:#3A1F0E;font-size:13px;margin:4px 0 0;opacity:0.6">Meeting ID: ${opts.zoomMeetingId}</p>`
+    : "";
+
+  const agendaItems = [
+    "Why Mapping With Melanin&trade; was created",
+    "A live walkthrough of the platform",
+    "Upcoming features",
+    "Our roadmap",
+    "How you can become one of our Founding Members",
+    "Live Q&amp;A",
+  ];
+
+  await sendEmail({
+    from: FROM,
+    replyTo: "hello@mappingwithmelanin.com",
+    to,
+    subject: "You're Invited: A First Look at Mapping With Melanin\u2122",
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 8px">Hello ${name},</p>
+
+        <h1 style="font-size:28px;color:#2B1507;font-weight:700;margin:0 0 16px;line-height:1.3">
+          You're invited to an exclusive Founding Community Preview.
+        </h1>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 16px">
+          You've shown interest in Mapping With Melanin&#8482;, and we'd love to personally invite you to an exclusive
+          <strong>Founding Community Preview</strong>.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 28px">
+          This isn't just a product demonstration &#8212; it's an opportunity to hear the story behind the platform,
+          see an early look at what's coming, and help shape the future of our community.
+        </p>
+
+        <div style="background:#2B1507;border-radius:14px;padding:28px;margin-bottom:28px">
+          <p style="color:#CA922B;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 20px">During the event we'll share</p>
+          <table style="width:100%;border-collapse:collapse">
+            ${agendaItems.map((item) => `
+            <tr>
+              <td style="padding:8px 0;border-bottom:1px solid rgba(245,235,216,0.08);vertical-align:top;width:20px">
+                <div style="width:7px;height:7px;background:#CA922B;border-radius:50%;margin-top:7px"></div>
+              </td>
+              <td style="padding:8px 0 8px 14px;border-bottom:1px solid rgba(245,235,216,0.08)">
+                <p style="color:#F5EBD8;font-size:15px;margin:0;line-height:1.5">${item}</p>
+              </td>
+            </tr>`).join("")}
+          </table>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.7;margin:0 0 28px">
+          Whether you're a traveler, business owner, creator, or someone who believes in building stronger communities &#8212; we'd love to have you with us.
+        </p>
+
+        <div style="background:#fff;border:1px solid rgba(202,146,43,0.3);border-radius:14px;padding:28px;margin-bottom:32px">
+          <p style="color:#CA922B;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 20px">Event Details</p>
+          <table style="width:100%;border-collapse:collapse">
+            <tr>
+              <td style="padding:10px 0;border-bottom:1px solid rgba(43,21,7,0.07);vertical-align:top;width:32px">
+                <span style="font-size:20px">&#128197;</span>
+              </td>
+              <td style="padding:10px 0 10px 14px;border-bottom:1px solid rgba(43,21,7,0.07)">
+                <p style="color:#3A1F0E;font-size:11px;font-weight:700;margin:0 0 3px;text-transform:uppercase;letter-spacing:1px;opacity:0.5">Date</p>
+                <p style="color:#2B1507;font-size:16px;font-weight:700;margin:0">${eventDate}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 0;border-bottom:1px solid rgba(43,21,7,0.07);vertical-align:top;width:32px">
+                <span style="font-size:20px">&#128338;</span>
+              </td>
+              <td style="padding:10px 0 10px 14px;border-bottom:1px solid rgba(43,21,7,0.07)">
+                <p style="color:#3A1F0E;font-size:11px;font-weight:700;margin:0 0 3px;text-transform:uppercase;letter-spacing:1px;opacity:0.5">Time</p>
+                <p style="color:#2B1507;font-size:16px;font-weight:700;margin:0">${eventTime}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 0;vertical-align:top;width:32px">
+                <span style="font-size:20px">&#128205;</span>
+              </td>
+              <td style="padding:10px 0 10px 14px">
+                <p style="color:#3A1F0E;font-size:11px;font-weight:700;margin:0 0 3px;text-transform:uppercase;letter-spacing:1px;opacity:0.5">Zoom Link</p>
+                <a href="${zoomLink}" style="color:#CA922B;font-size:15px;font-weight:700;word-break:break-all;text-decoration:none">${zoomDisplay}</a>
+                ${zoomId}
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="text-align:center;margin-bottom:32px">
+          <a href="${zoomLink}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:17px;padding:18px 48px;border-radius:50px;text-decoration:none;letter-spacing:0.3px;box-shadow:0 4px 16px rgba(202,146,43,0.35)">
+            Save My Spot &#8594;
+          </a>
+        </div>
+
+        <div style="border-left:3px solid #CA922B;padding-left:18px;margin-bottom:32px">
+          <p style="color:#3A1F0E;font-size:14px;line-height:1.7;margin:0;font-style:italic">
+            If you know someone who would enjoy being part of this journey, feel free to forward this invitation.
+            The more people who show up, the richer the conversation will be.
+          </p>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 28px">
+          We can't wait to meet you.
+        </p>
+
+        <p style="color:#2B1507;font-size:16px;font-weight:700;font-style:italic;margin:0 0 4px">Map Your Life. Connect Deeper.&#8482;</p>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 4px">The Mapping With Melanin&#8482; Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.5;margin:0">
+          Melanin Maps LLC &#183;
+          <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a>
+        </p>
+      </div>
+    `,
+  });
+}
