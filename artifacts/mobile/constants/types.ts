@@ -107,7 +107,11 @@ export interface CommunityPost {
   mediaUrls?: string[];
   savedPlaceId?: string;
   locationTag?: string;
+  locationVenueName?: string;
+  locationCity?: string;
+  locationCountry?: string;
   locationType?: string;
+  hashtags?: string[];
   topicTag?: string;
   isPrivateTopic?: boolean;
   hasContentWarning?: boolean;

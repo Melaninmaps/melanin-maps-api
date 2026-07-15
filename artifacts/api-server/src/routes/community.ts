@@ -1,7 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { randomUUID } from "crypto";
 import multer from "multer";
-import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool, userPreferencesTable, usersTable, threadReadsTable } from "@workspace/db";
+import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool, userPreferencesTable, usersTable, threadReadsTable, communityPlacesTable } from "@workspace/db";
+import { extractHashtags, upsertHashtags } from "./hashtags";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
@@ -233,7 +234,10 @@ router.get("/community/posts", async (req: Request, res: Response) => {
       authorColor: r.author_color, content: r.content, category: r.category, postType: r.post_type,
       businessId: r.business_id, businessName: r.business_name, businessLink: r.business_link,
       mediaUrls: r.media_urls, savedPlaceId: r.saved_place_id,
-      locationTag: r.location_tag, locationType: r.location_type,
+      locationTag: r.location_tag, locationVenueName: (r as any).location_venue_name ?? null,
+      locationCity: (r as any).location_city ?? null, locationCountry: (r as any).location_country ?? null,
+      locationPlaceId: (r as any).location_place_id ?? null, locationType: r.location_type,
+      hashtags: (r as any).hashtags ?? null,
       topicTag: r.topic_tag, isPrivateTopic: r.is_private_topic,
       visibility: r.visibility,
       hasContentWarning: r.has_content_warning ?? false,
@@ -267,6 +271,8 @@ router.get("/community/posts", async (req: Request, res: Response) => {
     if (locationTagFilter) filtered = filtered.filter((p) => (p.locationTag as string | null | undefined)?.toLowerCase() === locationTagFilter.toLowerCase());
     if (topicTagFilter) filtered = filtered.filter((p) => (p.topicTag as string | null | undefined)?.toLowerCase() === topicTagFilter.toLowerCase());
     if (businessIdFilter) filtered = filtered.filter((p) => p.businessId === businessIdFilter);
+    const hashtagFilter = typeof req.query.hashtag === "string" ? req.query.hashtag.toLowerCase().replace(/^#/, "") : undefined;
+    if (hashtagFilter) filtered = filtered.filter((p) => Array.isArray((p as any).hashtags) && (p as any).hashtags.includes(hashtagFilter));
 
     res.json({ posts: filtered, total: filtered.length, offset, limit });
   } catch (err) {
@@ -294,6 +300,12 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       savedPlaceId,
       visibility = "public",
       locationTag,
+      locationVenueName,
+      locationCity,
+      locationCountry,
+      locationLat,
+      locationLng,
+      locationPlaceId,
       locationType,
       topicTag,
       isPrivateTopic = false,
@@ -324,6 +336,12 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       savedPlaceId?: string;
       visibility?: "public" | "followers_only";
       locationTag?: string;
+      locationVenueName?: string;
+      locationCity?: string;
+      locationCountry?: string;
+      locationLat?: number;
+      locationLng?: number;
+      locationPlaceId?: string;
       locationType?: string;
       topicTag?: string;
       isPrivateTopic?: boolean;
@@ -348,6 +366,39 @@ router.post("/community/posts", async (req: Request, res: Response) => {
     if (!content?.trim()) {
       res.status(400).json({ error: "content is required" });
       return;
+    }
+
+    // Extract hashtags from content
+    const extractedHashtags = extractHashtags(content.trim());
+    upsertHashtags(extractedHashtags).catch(() => {});
+
+    // Auto-create or increment community place when a location is tagged
+    let resolvedPlaceId = locationPlaceId ?? null;
+    if (locationTag?.trim() && !resolvedPlaceId) {
+      try {
+        const existing = await db.select({ id: communityPlacesTable.id })
+          .from(communityPlacesTable)
+          .where(eq(communityPlacesTable.name, locationTag.trim()))
+          .limit(1);
+        if (existing[0]) {
+          resolvedPlaceId = existing[0].id;
+          await db.update(communityPlacesTable)
+            .set({ postCount: sql`${communityPlacesTable.postCount} + 1` })
+            .where(eq(communityPlacesTable.id, existing[0].id));
+        } else {
+          const [newPlace] = await db.insert(communityPlacesTable).values({
+            name: locationTag.trim(),
+            venueName: locationVenueName?.trim() || null,
+            city: locationCity?.trim() || null,
+            country: locationCountry?.trim() || "United States",
+            lat: locationLat ? String(locationLat) : null,
+            lng: locationLng ? String(locationLng) : null,
+            addedByUserId: req.user.id,
+            postCount: 1,
+          }).returning({ id: communityPlacesTable.id });
+          resolvedPlaceId = newPlace?.id ?? null;
+        }
+      } catch { /* non-fatal */ }
     }
 
     const tier = await getUserTier(req.user.id);
@@ -483,7 +534,14 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       mediaUrls: (i === 0 && mediaUrls?.length) ? JSON.stringify(mediaUrls) : null,
       savedPlaceId: savedPlaceId ?? null,
       locationTag: locationTag?.trim() || null,
+      locationVenueName: locationVenueName?.trim() || null,
+      locationCity: locationCity?.trim() || null,
+      locationCountry: locationCountry?.trim() || null,
+      locationLat: locationLat ? String(locationLat) : null,
+      locationLng: locationLng ? String(locationLng) : null,
+      locationPlaceId: resolvedPlaceId,
       locationType: locationTag?.trim() ? (locationType ?? "city") : null,
+      hashtags: extractedHashtags.length ? extractedHashtags.map((t) => t.replace(/^#/, "")) : null,
       topicTag: topicTag?.trim() || null,
       isPrivateTopic: !!isPrivateTopic,
       visibility: visValue,

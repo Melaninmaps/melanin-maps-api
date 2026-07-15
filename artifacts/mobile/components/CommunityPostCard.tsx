@@ -22,6 +22,7 @@ interface Props {
   onEdit?: (post: CommunityPost) => void;
   onDelete?: (postId: string) => void;
   onThreadPress?: (threadId: string) => void;
+  onHashtagPress?: (tag: string) => void;
 }
 
 const CATEGORY_CONFIG = {
@@ -209,7 +210,7 @@ function BusinessMentionCard({ businessId, businessName, stanceTag, rating }: {
   );
 }
 
-export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeChange, onAuthorPress, onLocationPress, onTopicPress, onRepost, onEdit, onDelete, onThreadPress }: Props) {
+export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeChange, onAuthorPress, onLocationPress, onTopicPress, onRepost, onEdit, onDelete, onThreadPress, onHashtagPress }: Props) {
   const colors = useColors();
   const [liked, setLiked] = useState(post.liked);
   const [likeCount, setLikeCount] = useState(post.likes);
@@ -368,8 +369,27 @@ export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeC
         )}
       </View>
 
-      {/* Content */}
-      <Text style={[s.content, { color: colors.foreground }]}>{post.content}</Text>
+      {/* Content — inline hashtag tapping */}
+      <Text style={[s.content, { color: colors.foreground }]}>
+        {post.content.split(/(#\w+)/g).map((part, i) => {
+          if (/^#\w+$/.test(part)) {
+            const tag = part.slice(1);
+            return (
+              <Text
+                key={i}
+                style={{ color: colors.primary, fontFamily: "Inter_600SemiBold" }}
+                onPress={() => {
+                  if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onHashtagPress?.(tag);
+                }}
+              >
+                {part}
+              </Text>
+            );
+          }
+          return part;
+        })}
+      </Text>
 
       {/* Thread continuation */}
       {(post.threadTotal ?? 1) > 1 && (

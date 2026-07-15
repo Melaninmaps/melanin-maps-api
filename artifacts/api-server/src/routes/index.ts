@@ -126,6 +126,9 @@ import directionsRouter from "./directions";
 import recommendedSpotsRouter from "./recommended-spots";
 import previewRouter from "./preview";
 import vibesRouter from "./vibes";
+import hashtagsRouter from "./hashtags";
+import communityPlacesRouter from "./community-places";
+import communityImpactRouter from "./community-impact";
 
 const router: IRouter = Router();
 
@@ -255,6 +258,9 @@ router.use(directionsRouter);
 router.use(recommendedSpotsRouter);
 router.use(previewRouter);
 router.use(vibesRouter);
+router.use(hashtagsRouter);
+router.use(communityPlacesRouter);
+router.use(communityImpactRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

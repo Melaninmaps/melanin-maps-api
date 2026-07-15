@@ -40,6 +40,7 @@ import { BrandQuoteBanner } from "@/components/BrandQuoteBanner";
 import { getDailyQuoteText } from "@/constants/brandQuotes";
 import { StatusComposer } from "@/components/StatusComposer";
 import { SavedSpotsShare } from "@/components/SavedSpotsShare";
+import { CommunityImpactCard } from "@/components/CommunityImpactCard";
 
 const SETTINGS = [
   { icon: "users" as const, label: "Family Circle", sub: "Invite family members at no extra cost — stay safely connected", route: "/family-circle" as const },
@@ -993,6 +994,16 @@ export default function ProfileScreen() {
 
       {isAuthenticated && (
         <BadgeSection savedCount={savedIds.length} isEarlyTester={false} />
+      )}
+
+      {isAuthenticated && user?.id && (
+        <View style={{ paddingHorizontal: 16, marginBottom: 4 }}>
+          <CommunityImpactCard
+            userId={user.id}
+            displayName={[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Community Member"}
+            showOwnedBusinesses
+          />
+        </View>
       )}
 
       {isAuthenticated && trustData && (

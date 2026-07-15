@@ -1,4 +1,4 @@
-import { boolean, integer, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, integer, numeric, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -18,7 +18,14 @@ export const communityPostsTable = pgTable("community_posts", {
   mediaUrls: text("media_urls"),
   savedPlaceId: varchar("saved_place_id"),
   locationTag: varchar("location_tag", { length: 200 }),
+  locationVenueName: varchar("location_venue_name", { length: 200 }),
+  locationCity: varchar("location_city", { length: 100 }),
+  locationCountry: varchar("location_country", { length: 100 }),
+  locationLat: numeric("location_lat", { precision: 10, scale: 7 }),
+  locationLng: numeric("location_lng", { precision: 10, scale: 7 }),
+  locationPlaceId: varchar("location_place_id"),
   locationType: varchar("location_type", { length: 30 }),
+  hashtags: text("hashtags").array(),
   topicTag: varchar("topic_tag", { length: 100 }),
   isPrivateTopic: boolean("is_private_topic").notNull().default(false),
   visibility: varchar("visibility", { length: 20 }).notNull().default("public"),

@@ -25,6 +25,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BusinessMentionPicker, type SelectedBusiness } from "@/components/BusinessMentionPicker";
 import { UserMentionPicker } from "@/components/UserMentionPicker";
+import { LocationPicker, type LocationSelection } from "@/components/LocationPicker";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import { PostDetailModal } from "@/components/PostDetailModal";
 import { EventCard } from "@/components/EventCard";
@@ -116,6 +117,10 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
     mediaUrls,
     savedPlaceId: (raw.savedPlaceId as string) ?? undefined,
     locationTag: (raw.locationTag as string) ?? undefined,
+    locationVenueName: (raw.locationVenueName as string) ?? undefined,
+    locationCity: (raw.locationCity as string) ?? undefined,
+    locationCountry: (raw.locationCountry as string) ?? undefined,
+    hashtags: Array.isArray(raw.hashtags) ? (raw.hashtags as string[]) : undefined,
     locationType: (raw.locationType as string) ?? undefined,
     topicTag: (raw.topicTag as string) ?? undefined,
     isPrivateTopic: !!(raw.isPrivateTopic),
@@ -229,8 +234,15 @@ export default function CommunityScreen() {
   const [mediaAttachments, setMediaAttachments] = useState<{ uri: string; type: "image" | "video"; uploaded?: string; isGraphic?: boolean; warningType?: string }[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [newPostLocationTag, setNewPostLocationTag] = useState("");
+  const [newPostLocationVenueName, setNewPostLocationVenueName] = useState<string | undefined>();
+  const [newPostLocationCity, setNewPostLocationCity] = useState<string | undefined>();
+  const [newPostLocationCountry, setNewPostLocationCountry] = useState<string | undefined>();
+  const [newPostLocationPlaceId, setNewPostLocationPlaceId] = useState<string | undefined>();
   const [newPostLocationType, setNewPostLocationType] = useState("city");
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [trendingHashtags, setTrendingHashtags] = useState<Array<{ tag: string; weeklyPostCount: number }>>([]);
+  const [followedHashtags, setFollowedHashtags] = useState<string[]>([]);
+  const [activeHashtagFilter, setActiveHashtagFilter] = useState<string | null>(null);
   const [newPostTopicTag, setNewPostTopicTag] = useState("");
   const [newPostIsPrivateTopic, setNewPostIsPrivateTopic] = useState(false);
   const [showTopicPicker, setShowTopicPicker] = useState(false);
@@ -341,6 +353,29 @@ export default function CommunityScreen() {
   }, [feedMode]);
 
   useEffect(() => { void loadPosts(); }, [loadPosts]);
+
+  // Fetch trending hashtags on mount
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+        const res = await fetch(`${getApiBase()}/api/hashtags/trending?limit=12`, { headers });
+        if (res.ok) {
+          const data = await res.json() as { hashtags: Array<{ tag: string; weeklyPostCount: number }> };
+          setTrendingHashtags(data.hashtags ?? []);
+        }
+        if (token) {
+          const followedRes = await fetch(`${getApiBase()}/api/hashtags/following`, { headers });
+          if (followedRes.ok) {
+            const fd = await followedRes.json() as { tags: string[] };
+            setFollowedHashtags(fd.tags ?? []);
+          }
+        }
+      } catch { /* non-fatal */ }
+    };
+    void load();
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (params.compose === "true") {
@@ -472,6 +507,10 @@ export default function CommunityScreen() {
           hasContentWarning: mediaAttachments.some((m) => m.isGraphic),
           contentWarningType: mediaAttachments.find((m) => m.isGraphic)?.warningType ?? undefined,
           locationTag: newPostLocationTag.trim() || undefined,
+          locationVenueName: newPostLocationVenueName || undefined,
+          locationCity: newPostLocationCity || undefined,
+          locationCountry: newPostLocationCountry || undefined,
+          locationPlaceId: newPostLocationPlaceId || undefined,
           locationType: newPostLocationTag.trim() ? newPostLocationType : undefined,
           topicTag: newPostTopicTag.trim() || undefined,
           isPrivateTopic: newPostTopicTag.trim() ? newPostIsPrivateTopic : undefined,
@@ -491,6 +530,10 @@ export default function CommunityScreen() {
         setNewPostBusinessLink("");
         setNewPostVisibility("public");
         setNewPostLocationTag("");
+        setNewPostLocationVenueName(undefined);
+        setNewPostLocationCity(undefined);
+        setNewPostLocationCountry(undefined);
+        setNewPostLocationPlaceId(undefined);
         setNewPostLocationType("city");
         setNewPostTopicTag("");
         setNewPostIsPrivateTopic(false);
@@ -883,6 +926,24 @@ export default function CommunityScreen() {
             <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
           </TouchableOpacity>
 
+          {/* Safe Spaces card */}
+          <TouchableOpacity
+            style={[styles.resSpacesCard, { backgroundColor: colors.card, borderColor: "#2D7A4F33" }]}
+            onPress={() => router.push("/safe-spaces" as any)}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.resSpacesIcon, { backgroundColor: "#2D7A4F18" }]}>
+              <Feather name="shield" size={22} color="#2D7A4F" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.resSpacesTitle, { color: colors.foreground }]}>Safe Spaces Directory</Text>
+              <Text style={[styles.resSpacesSub, { color: colors.mutedForeground }]}>
+                Community-sourced places where people feel safe, welcome, and seen. Add your own.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+
           {/* Trip Journals card */}
           <TouchableOpacity
             style={[styles.resSpacesCard, { backgroundColor: "#1A3B2B", borderColor: "#2D7A4F55" }]}
@@ -1180,6 +1241,7 @@ export default function CommunityScreen() {
                       key={mode}
                       onPress={() => {
                         setFeedMode(mode as "foryou" | "everyone" | "following");
+                        setActiveHashtagFilter(null);
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       }}
                       style={{
@@ -1198,6 +1260,64 @@ export default function CommunityScreen() {
                     </TouchableOpacity>
                   ))}
                 </View>
+
+                {/* Trending hashtags strip */}
+                {trendingHashtags.length > 0 && (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, gap: 8 }}
+                  >
+                    {activeHashtagFilter && (
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}
+                        onPress={() => { setActiveHashtagFilter(null); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                      >
+                        <Feather name="x" size={12} color={colors.mutedForeground} />
+                        <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: colors.mutedForeground }}>Clear</Text>
+                      </TouchableOpacity>
+                    )}
+                    {trendingHashtags.map((ht) => {
+                      const isActive = activeHashtagFilter === ht.tag;
+                      const isFollowed = followedHashtags.includes(ht.tag);
+                      return (
+                        <TouchableOpacity
+                          key={ht.tag}
+                          activeOpacity={0.8}
+                          style={{
+                            flexDirection: "row", alignItems: "center", gap: 4,
+                            paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16,
+                            backgroundColor: isActive ? colors.primary : isFollowed ? colors.primary + "15" : colors.card,
+                            borderWidth: 1,
+                            borderColor: isActive ? colors.primary : isFollowed ? colors.primary + "40" : colors.border,
+                          }}
+                          onPress={() => {
+                            router.push({ pathname: "/hashtag-feed", params: { tag: ht.tag } } as any);
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          }}
+                        >
+                          <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: isActive ? "#FFFFFF" : isFollowed ? colors.primary : colors.foreground }}>
+                            #{ht.tag}
+                          </Text>
+                          {ht.weeklyPostCount > 0 && !isActive && (
+                            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, color: colors.mutedForeground }}>
+                              {ht.weeklyPostCount > 999 ? `${Math.floor(ht.weeklyPostCount / 1000)}k` : String(ht.weeklyPostCount)}
+                            </Text>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}
+                      onPress={() => router.push("/safe-spaces" as any)}
+                    >
+                      <Feather name="shield" size={12} color="#2D7A4F" />
+                      <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: "#2D7A4F" }}>Safe Spaces</Text>
+                    </TouchableOpacity>
+                  </ScrollView>
+                )}
 
               </>
             }
@@ -1235,6 +1355,7 @@ export default function CommunityScreen() {
                 onAuthorPress={(id) => { router.push(`/user/${id}` as any); }}
                 onLocationPress={(tag) => router.push({ pathname: "/location-feed", params: { location: tag } } as any)}
                 onTopicPress={(tag) => router.push({ pathname: "/topic-feed", params: { topic: tag.toLowerCase() } } as any)}
+                onHashtagPress={(tag) => router.push({ pathname: "/hashtag-feed", params: { tag } } as any)}
                 onEdit={handleEditPost}
                 onDelete={(id) => handleDeletePost(id)}
               />
@@ -1643,10 +1764,10 @@ export default function CommunityScreen() {
               {newPostLocationTag ? (
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                   <Feather name="map-pin" size={13} color="#0369A1" />
-                  <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14, backgroundColor: "#0369A115", borderWidth: 1, borderColor: "#0369A130" }}>
-                    <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#0369A1" }}>📍 {newPostLocationTag}</Text>
+                  <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14, backgroundColor: "#0369A115", borderWidth: 1, borderColor: "#0369A130", flex: 1 }}>
+                    <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#0369A1" }} numberOfLines={1}>{newPostLocationTag}</Text>
                   </View>
-                  <TouchableOpacity activeOpacity={0.85} onPress={() => setNewPostLocationTag("")}>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => { setNewPostLocationTag(""); setNewPostLocationVenueName(undefined); setNewPostLocationCity(undefined); setNewPostLocationCountry(undefined); setNewPostLocationPlaceId(undefined); }}>
                     <Feather name="x" size={16} color="#9CA3AF" />
                   </TouchableOpacity>
                 </View>
@@ -1656,28 +1777,24 @@ export default function CommunityScreen() {
                   onPress={() => setShowLocationPicker(true)}
                 >
                   <Feather name="map-pin" size={13} color={colors.mutedForeground} />
-                  <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>Tag a location</Text>
+                  <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>Tag a place or city</Text>
                 </TouchableOpacity>
               )}
             </View>
 
-            {/* Location picker inline */}
-            {showLocationPicker && (
-              <View style={[{ paddingHorizontal: 16, paddingBottom: 12 }]}>
-                <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 8 }}>Choose a location:</Text>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-                  {["Atlanta", "Houston", "Chicago", "Washington DC", "New York", "New Orleans", "Los Angeles", "Miami", "Dallas", "Philadelphia", "Charlotte", "Baltimore", "Detroit", "Memphis", "Jamaica", "Ghana", "Nigeria", "London", "Toronto", "Fulton County", "Bronx", "Brooklyn"].map((loc) => (
-                    <TouchableOpacity activeOpacity={0.85}
-                      key={loc}
-                      style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: colors.primary + "50", backgroundColor: colors.primary + "10" }}
-                      onPress={() => { setNewPostLocationTag(loc); setShowLocationPicker(false); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                    >
-                      <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.primary }}>📍 {loc}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            )}
+            <LocationPicker
+              visible={showLocationPicker}
+              onClose={() => setShowLocationPicker(false)}
+              initialValue={newPostLocationTag}
+              onSelect={(loc: LocationSelection) => {
+                setNewPostLocationTag(loc.locationTag);
+                setNewPostLocationVenueName(loc.locationVenueName);
+                setNewPostLocationCity(loc.locationCity);
+                setNewPostLocationCountry(loc.locationCountry);
+                setNewPostLocationPlaceId(loc.placeId);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }}
+            />
 
             {/* Topic tag */}
             <View style={{ paddingHorizontal: 16, paddingBottom: 10 }}>
