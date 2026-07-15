@@ -1,6 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, communityListingsTable } from "@workspace/db";
-import { eq, and, or, ilike, desc, sql } from "drizzle-orm";
+import { db, communityListingsTable, marketplaceSavedTable, usersTable } from "@workspace/db";
+import { eq, and, or, ilike, desc, sql, inArray } from "drizzle-orm";
+import { computeTrustLevel } from "@workspace/db/trust";
+import { sendMarketplaceInquiry } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -37,7 +39,39 @@ router.get("/marketplace", async (req: Request, res: Response) => {
       db.select({ count: sql<number>`COUNT(*)` }).from(communityListingsTable).where(and(...conds)),
     ]);
 
-    res.json({ listings, total: Number(countRow[0]?.count ?? 0), categories: CATEGORIES });
+    // Enrich with seller trust levels
+    const userIds = [...new Set(listings.map((l) => l.userId).filter(Boolean))];
+    const trustData = userIds.length > 0
+      ? await db.select({
+          id: usersTable.id,
+          trustLevel: usersTable.trustLevel,
+          identityVerified: usersTable.identityVerified,
+          identityVerifiedAt: usersTable.identityVerifiedAt,
+          policyViolationsCount: usersTable.policyViolationsCount,
+          helpfulReviewsCount: usersTable.helpfulReviewsCount,
+          createdAt: usersTable.createdAt,
+          reputationScore: usersTable.reputationScore,
+        }).from(usersTable).where(inArray(usersTable.id, userIds))
+      : [];
+    const trustMap = new Map(trustData.map((u) => [u.id, computeTrustLevel(u)]));
+
+    // Check which are saved by the current user
+    const currentUserId = req.user?.id ?? null;
+    let savedSet = new Set<string>();
+    if (currentUserId && listings.length > 0) {
+      const saved = await db.select({ listingId: marketplaceSavedTable.listingId })
+        .from(marketplaceSavedTable)
+        .where(eq(marketplaceSavedTable.userId, currentUserId));
+      savedSet = new Set(saved.map((s) => s.listingId));
+    }
+
+    const enriched = listings.map((l) => ({
+      ...l,
+      sellerTrustLevel: trustMap.get(l.userId) ?? 1,
+      isSaved: savedSet.has(l.id),
+    }));
+
+    res.json({ listings: enriched, total: Number(countRow[0]?.count ?? 0), categories: CATEGORIES });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch marketplace listings");
     res.status(500).json({ error: "Failed to fetch listings" });
@@ -47,17 +81,58 @@ router.get("/marketplace", async (req: Request, res: Response) => {
 // ── GET /marketplace/categories ───────────────────────────────────────────────
 router.get("/marketplace/categories", (_req, res) => res.json({ categories: CATEGORIES }));
 
+// ── GET /marketplace/saved ────────────────────────────────────────────────────
+router.get("/marketplace/saved", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const saved = await db
+      .select({ listingId: marketplaceSavedTable.listingId })
+      .from(marketplaceSavedTable)
+      .where(eq(marketplaceSavedTable.userId, req.user.id));
+    const ids = saved.map((s) => s.listingId);
+    if (ids.length === 0) { res.json({ listings: [] }); return; }
+    const listings = await db.select().from(communityListingsTable)
+      .where(and(inArray(communityListingsTable.id, ids), eq(communityListingsTable.status, "active")));
+    res.json({ listings: listings.map((l) => ({ ...l, isSaved: true })) });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch saved listings");
+    res.status(500).json({ error: "Failed to fetch saved listings" });
+  }
+});
+
+// ── GET /marketplace/my/listings ─────────────────────────────────────────────
+router.get("/marketplace/my/listings", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const listings = await db.select().from(communityListingsTable)
+      .where(eq(communityListingsTable.userId, req.user.id))
+      .orderBy(desc(communityListingsTable.createdAt)).limit(50);
+    res.json({ listings });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch my listings");
+    res.status(500).json({ error: "Failed to fetch listings" });
+  }
+});
+
 // ── GET /marketplace/:id ──────────────────────────────────────────────────────
 router.get("/marketplace/:id", async (req: Request, res: Response) => {
   try {
     const [listing] = await db.select().from(communityListingsTable)
       .where(eq(communityListingsTable.id, String(req.params.id))).limit(1);
     if (!listing) { res.status(404).json({ error: "Listing not found" }); return; }
-    // increment view count
     await db.update(communityListingsTable)
       .set({ viewCount: sql`${communityListingsTable.viewCount} + 1` })
       .where(eq(communityListingsTable.id, listing.id));
-    res.json({ listing });
+
+    const currentUserId = req.user?.id ?? null;
+    let isSaved = false;
+    if (currentUserId) {
+      const [s] = await db.select().from(marketplaceSavedTable)
+        .where(and(eq(marketplaceSavedTable.userId, currentUserId), eq(marketplaceSavedTable.listingId, listing.id)))
+        .limit(1);
+      isSaved = !!s;
+    }
+    res.json({ listing: { ...listing, isSaved } });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch listing");
     res.status(500).json({ error: "Failed to fetch listing" });
@@ -68,13 +143,20 @@ router.get("/marketplace/:id", async (req: Request, res: Response) => {
 router.post("/marketplace", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
 
-  const { type, title, description, price, priceType, category, condition,
-    tags, city, state, zipCode, isRemote, contactPreference, contactInfo } = req.body as Record<string, any>;
+  const {
+    type, title, description, price, priceType, category, condition,
+    tags, city, state, zipCode, isRemote, contactPreference, contactInfo,
+    externalUrl, photos, sellerDisplayName,
+  } = req.body as Record<string, any>;
 
   if (!type || !title?.trim()) { res.status(400).json({ error: "type and title are required" }); return; }
 
   const validTypes = ["product", "service", "skill_trade", "digital", "free"];
   if (!validTypes.includes(type)) { res.status(400).json({ error: "Invalid type" }); return; }
+
+  const cleanUrl = typeof externalUrl === "string" && externalUrl.trim()
+    ? externalUrl.trim().startsWith("http") ? externalUrl.trim() : `https://${externalUrl.trim()}`
+    : null;
 
   const expiresAt = new Date(Date.now() + 30 * 86_400_000);
 
@@ -93,6 +175,9 @@ router.post("/marketplace", async (req: Request, res: Response) => {
       state: state ? String(state).trim() : null,
       zipCode: zipCode ? String(zipCode).trim() : null,
       isRemote: Boolean(isRemote),
+      externalUrl: cleanUrl,
+      photos: Array.isArray(photos) ? photos.filter((p): p is string => typeof p === "string").slice(0, 6) : null,
+      sellerDisplayName: sellerDisplayName ? String(sellerDisplayName).trim().slice(0, 200) : null,
       contactPreference: contactPreference ?? "app_message",
       contactInfo: contactInfo ? String(contactInfo).trim() : null,
       expiresAt,
@@ -101,6 +186,78 @@ router.post("/marketplace", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to create listing");
     res.status(500).json({ error: "Failed to create listing" });
+  }
+});
+
+// ── POST /marketplace/:id/inquiry ─────────────────────────────────────────────
+router.post("/marketplace/:id/inquiry", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+
+  const { message, buyerContact } = req.body as { message?: string; buyerContact?: string };
+  if (!message?.trim()) { res.status(400).json({ error: "Message is required" }); return; }
+
+  try {
+    const [listing] = await db.select().from(communityListingsTable)
+      .where(eq(communityListingsTable.id, String(req.params.id))).limit(1);
+    if (!listing) { res.status(404).json({ error: "Listing not found" }); return; }
+
+    // Get seller email
+    const [seller] = await db.select({ email: usersTable.email, firstName: usersTable.firstName, lastName: usersTable.lastName })
+      .from(usersTable).where(eq(usersTable.id, listing.userId)).limit(1);
+
+    if (seller?.email) {
+      const buyerUser = req.user as { firstName?: string; lastName?: string };
+      const buyerName = [buyerUser.firstName, buyerUser.lastName].filter(Boolean).join(" ") || "A community member";
+      await sendMarketplaceInquiry({
+        to: seller.email,
+        sellerName: listing.sellerDisplayName ?? ([seller.firstName, seller.lastName].filter(Boolean).join(" ") || null),
+        buyerName,
+        listingTitle: listing.title,
+        listingType: listing.type,
+        message: message.trim(),
+        buyerContact: buyerContact?.trim() ?? null,
+      });
+    }
+
+    res.json({ sent: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to send inquiry");
+    res.status(500).json({ error: "Failed to send inquiry" });
+  }
+});
+
+// ── POST /marketplace/:id/save ────────────────────────────────────────────────
+router.post("/marketplace/:id/save", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const listingId = String(req.params.id);
+  try {
+    await db.insert(marketplaceSavedTable)
+      .values({ userId: req.user.id, listingId })
+      .onConflictDoNothing();
+    await db.update(communityListingsTable)
+      .set({ savedCount: sql`${communityListingsTable.savedCount} + 1` })
+      .where(eq(communityListingsTable.id, listingId));
+    res.json({ saved: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to save listing");
+    res.status(500).json({ error: "Failed to save listing" });
+  }
+});
+
+// ── DELETE /marketplace/:id/save ──────────────────────────────────────────────
+router.delete("/marketplace/:id/save", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const listingId = String(req.params.id);
+  try {
+    await db.delete(marketplaceSavedTable)
+      .where(and(eq(marketplaceSavedTable.userId, req.user.id), eq(marketplaceSavedTable.listingId, listingId)));
+    await db.update(communityListingsTable)
+      .set({ savedCount: sql`GREATEST(${communityListingsTable.savedCount} - 1, 0)` })
+      .where(eq(communityListingsTable.id, listingId));
+    res.json({ saved: false });
+  } catch (err) {
+    req.log.error({ err }, "Failed to unsave listing");
+    res.status(500).json({ error: "Failed to unsave listing" });
   }
 });
 
@@ -146,20 +303,6 @@ router.delete("/marketplace/:id", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to remove listing");
     res.status(500).json({ error: "Failed to remove listing" });
-  }
-});
-
-// ── GET /marketplace/my/listings ─────────────────────────────────────────────
-router.get("/marketplace/my/listings", async (req: Request, res: Response) => {
-  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
-  try {
-    const listings = await db.select().from(communityListingsTable)
-      .where(eq(communityListingsTable.userId, req.user.id))
-      .orderBy(desc(communityListingsTable.createdAt)).limit(50);
-    res.json({ listings });
-  } catch (err) {
-    req.log.error({ err }, "Failed to fetch my listings");
-    res.status(500).json({ error: "Failed to fetch listings" });
   }
 });
 

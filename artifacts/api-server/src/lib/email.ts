@@ -2280,3 +2280,57 @@ export async function sendMeetupCheckinMissedEmail(
     `,
   });
 }
+
+export async function sendMarketplaceInquiry({
+  to,
+  sellerName,
+  buyerName,
+  listingTitle,
+  listingType,
+  message,
+  buyerContact,
+}: {
+  to: string;
+  sellerName: string | null;
+  buyerName: string;
+  listingTitle: string;
+  listingType: string;
+  message: string;
+  buyerContact: string | null;
+}) {
+  if (!resend) return;
+  const name = sellerName ?? "there";
+  const typeLabel = listingType === "skill_trade" ? "Skill Trade" : listingType.charAt(0).toUpperCase() + listingType.slice(1);
+  await sendEmail({
+    from: FROM,
+    replyTo: "hello@mappingwithmelanin.com",
+    to,
+    subject: `Someone is interested in your listing — "${listingTitle}"`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
+        <h1 style="font-size:24px;color:#2B1507;font-weight:700;margin:0 0 12px;line-height:1.3">
+          Hey ${name} — someone wants what you've got.
+        </h1>
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          A community member is interested in your <strong>${typeLabel}</strong> listing on the Community Market.
+        </p>
+        <div style="background:#2B1507;border-radius:12px;padding:24px;margin-bottom:24px">
+          <p style="color:#CA922B;font-size:12px;font-weight:700;margin:0 0 12px;text-transform:uppercase;letter-spacing:1px">Your Listing</p>
+          <p style="color:#F5EBD8;font-size:17px;font-weight:700;margin:0 0 4px">${listingTitle}</p>
+          <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Type: ${typeLabel}</p>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #E8D9C4;border-radius:12px;padding:20px;margin-bottom:24px">
+          <p style="color:#CA922B;font-size:12px;font-weight:700;margin:0 0 12px;text-transform:uppercase;letter-spacing:1px">Message from ${buyerName}</p>
+          <p style="color:#2B1507;font-size:15px;line-height:1.6;margin:0 0 16px;font-style:italic">"${message}"</p>
+          ${buyerContact ? `<p style="color:#3A1F0E;font-size:14px;margin:0"><strong>Their contact:</strong> ${buyerContact}</p>` : ""}
+        </div>
+        <p style="color:#3A1F0E;font-size:14px;line-height:1.6;margin:0 0 24px;background:#FEF9F0;border:1px solid #F0D9B0;border-radius:8px;padding:14px">
+          Reply directly to this email to reach ${buyerName}, or reach out via the contact info above. Always meet in public places for in-person exchanges.
+        </p>
+        <p style="color:#2B1507;font-size:15px;font-weight:700;font-style:italic;margin:24px 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.6;margin:0">Melanin Maps LLC · <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a></p>
+      </div>
+    `,
+  });
+}

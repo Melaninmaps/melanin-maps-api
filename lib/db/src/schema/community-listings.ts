@@ -1,4 +1,4 @@
-import { pgTable, text, varchar, boolean, integer, timestamp, uuid, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, boolean, integer, timestamp, uuid, pgEnum, primaryKey } from "drizzle-orm/pg-core";
 
 export const listingTypeEnum = pgEnum("listing_type", [
   "product", "service", "skill_trade", "digital", "free",
@@ -27,6 +27,9 @@ export const communityListingsTable = pgTable("community_listings", {
   state: varchar("state", { length: 50 }),
   zipCode: varchar("zip_code", { length: 20 }),
   isRemote: boolean("is_remote").notNull().default(false),
+  externalUrl: varchar("external_url", { length: 500 }),
+  photos: text("photos").array(),
+  sellerDisplayName: varchar("seller_display_name", { length: 200 }),
   contactPreference: varchar("contact_preference", { length: 30 }).notNull().default("app_message"),
   contactInfo: varchar("contact_info", { length: 200 }),
   status: listingStatusEnum("status").notNull().default("active"),
