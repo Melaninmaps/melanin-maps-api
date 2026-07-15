@@ -1,0 +1,6 @@
+node_modules
+src
+tsconfig.json
+build.mjs
+mobile-build.zip
+dist/*.map
