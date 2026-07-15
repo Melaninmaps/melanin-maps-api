@@ -133,6 +133,12 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
             </View>
           ) : null}
           <View style={styles.hContent}>
+            {business.isReferenceOnly ? (
+              <View style={styles.referenceBanner}>
+                <Feather name="link" size={11} color="#0369A1" />
+                <Text style={styles.referenceText}>Community Reference</Text>
+              </View>
+            ) : null}
             {(business as any).flagStatus === "under_review" || (business as any).flagStatus === "confirmed_fake" ? (
               <View style={styles.disputedBanner}>
                 <Feather name="alert-triangle" size={11} color="#92400E" />
@@ -273,6 +279,12 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
           ) : null}
         </View>
         <View style={styles.vContent}>
+          {business.isReferenceOnly ? (
+            <View style={styles.referenceBanner}>
+              <Feather name="link" size={11} color="#0369A1" />
+              <Text style={styles.referenceText}>Community Reference</Text>
+            </View>
+          ) : null}
           {(business as any).flagStatus === "under_review" || (business as any).flagStatus === "confirmed_fake" ? (
             <View style={styles.disputedBanner}>
               <Feather name="alert-triangle" size={11} color="#92400E" />
@@ -619,5 +631,23 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 11,
     color: "#92400E",
+  },
+  referenceBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#E0F2FE",
+    borderColor: "#0369A140",
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginBottom: 6,
+    alignSelf: "flex-start",
+  },
+  referenceText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+    color: "#0369A1",
   },
 });

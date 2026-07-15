@@ -58,6 +58,8 @@ export interface Business {
   hiddenGemSince?: string | null;
   hiddenGemExpiresAt?: string | null;
   hiddenGemNominations?: number;
+  isReferenceOnly?: boolean;
+  referenceCategory?: string | null;
 }
 
 export interface Event {

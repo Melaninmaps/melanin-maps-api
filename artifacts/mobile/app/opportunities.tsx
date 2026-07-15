@@ -539,9 +539,14 @@ export default function OpportunitiesScreen() {
                 <Text style={[s.sectionLabel, { color: colors.mutedForeground }]}>
                   {nearMe ? "Near You" : "Recent Listings"}
                 </Text>
-                <TouchableOpacity onPress={() => setShowPostJob(true)} activeOpacity={0.75}>
-                  <Text style={[s.postLink, { color: "#CA922B" }]}>Post a Job</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+                  <TouchableOpacity onPress={() => router.push("/community-reference" as never)} activeOpacity={0.75}>
+                    <Text style={[s.postLink, { color: "#0369A1" }]}>+ Community Ref</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setShowPostJob(true)} activeOpacity={0.75}>
+                    <Text style={[s.postLink, { color: "#CA922B" }]}>Post a Job</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
               {loading ? (
                 <ActivityIndicator color="#CA922B" style={{ marginTop: 24 }} />

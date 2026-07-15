@@ -842,6 +842,68 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
   }
 });
 
+// ── Community Reference listing (verified members only) ───────────────────────
+// Adds a non-minority-owned org as a community-sourced reference.
+// The business is NEVER promoted, featured, or notified by the platform.
+router.post("/businesses/community-reference", async (req: any, res: Response) => {
+  try {
+    if (!req.user?.id) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    const { name, referenceCategory, description, city, state, website, address } =
+      req.body as Record<string, unknown>;
+
+    if (!name || !city || !state) {
+      res.status(400).json({ error: "name, city, and state are required" });
+      return;
+    }
+
+    const VALID_CATEGORIES = ["employer", "mentor", "service", "travel", "general"];
+    const cat = typeof referenceCategory === "string" ? referenceCategory : "general";
+    if (!VALID_CATEGORIES.includes(cat)) {
+      res.status(400).json({ error: `referenceCategory must be one of: ${VALID_CATEGORIES.join(", ")}` });
+      return;
+    }
+
+    const id = `ref_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+
+    const [business] = await db
+      .insert(businessesTable)
+      .values({
+        id,
+        name: (name as string).trim(),
+        category: cat,
+        subcategory: cat,
+        description: typeof description === "string" ? description.trim() : "",
+        address: typeof address === "string" ? address.trim() : "",
+        city: (city as string).trim(),
+        state: (state as string).trim(),
+        latitude: "0",
+        longitude: "0",
+        blackOwned: false,
+        isReferenceOnly: true,
+        referenceCategory: cat,
+        website: typeof website === "string" ? website.trim() : null,
+        status: "active",
+        submittedById: req.user.id,
+        ownershipDesignations: ["non-minority-owned"],
+        featured: false,
+        verified: false,
+        promotionEligible: false,
+        feedbackOptIn: false,
+      })
+      .returning();
+
+    req.log.info({ businessId: business.id, submittedBy: req.user.id }, "Community reference listing created");
+    res.status(201).json({ business });
+  } catch (err) {
+    req.log.error({ err }, "Failed to create community reference listing");
+    res.status(500).json({ error: "Failed to create reference listing" });
+  }
+});
+
 router.post("/businesses", async (req: Request, res: Response) => {
   try {
     const {

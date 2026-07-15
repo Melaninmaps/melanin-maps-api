@@ -106,6 +106,13 @@ export const businessesTable = pgTable("businesses", {
     primaryState?: string;
     description?: string;
   }>(),
+  // ── Community Reference ──────────────────────────────────────────────────
+  // Set when a verified community member submits an external org (employer,
+  // mentor provider, etc.) as a community-sourced resource.
+  // These listings are NEVER promoted, featured, or contacted by the platform.
+  isReferenceOnly: boolean("is_reference_only").notNull().default(false),
+  // employer | mentor | service | travel | general
+  referenceCategory: varchar("reference_category", { length: 30 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
