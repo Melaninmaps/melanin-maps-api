@@ -52,6 +52,7 @@ import BusinessResponse from "@/pages/business-response";
 import GlobalRecommendations from "@/pages/global-recommendations";
 import ResetPassword from "@/pages/reset-password";
 import TrustAndSafety from "@/pages/trust-and-safety";
+import BusinessGrowthCenter from "@/pages/business-growth-center";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -237,6 +238,9 @@ function Router() {
       </Route>
       <Route path="/business-dashboard">
         <Layout><ProtectedRoute><BusinessDashboard /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/business-growth-center">
+        <Layout><BusinessGrowthCenter /></Layout>
       </Route>
       <Route path="/notifications">
         <Layout><ProtectedRoute><Notifications /></ProtectedRoute></Layout>

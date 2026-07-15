@@ -131,9 +131,14 @@ interface AnalyticsData {
   viewsVsPeersPct: number;
 }
 
+type PromotionToolType =
+  | "priority_search" | "category_featured" | "city_featured" | "cultural_spotlight" | "event_featured"
+  | "grand_opening" | "new_location" | "anniversary" | "product_launch" | "hiring" | "seasonal_sale"
+  | "event_promo" | "community_event" | "local_cause" | "giveaway" | "launch_package" | "community_spotlight";
+
 interface GrowthPromotion {
   id: string;
-  type: "priority_search" | "category_featured" | "city_featured" | "cultural_spotlight" | "event_featured";
+  type: PromotionToolType;
   status: string;
   targetCategory?: string | null;
   targetCity?: string | null;
@@ -142,10 +147,12 @@ interface GrowthPromotion {
   endsAt?: string | null;
   durationDays?: number | null;
   priceUsdCents?: number | null;
+  campaignLabel?: string | null;
 }
 
 interface GrowthTool {
-  type: GrowthPromotion["type"];
+  type: PromotionToolType;
+  category: "announce" | "updates" | "events" | "visibility" | "special";
   name: string;
   description: string;
   priceCents: number;
@@ -153,10 +160,20 @@ interface GrowthTool {
   durationDays: number;
   icon: string;
   tagline: string;
+  searchLabel: string;
+  highlight?: boolean;
+  applicationOnly?: boolean;
+}
+
+interface GrowthEligibility {
+  eligible: boolean;
+  reasons: string[];
+  warnings: string[];
 }
 
 interface GrowthToolsData {
-  business: { id: string; name: string; category: string; city: string };
+  business: { id: string; name: string; category: string; city: string; verified: boolean };
+  eligibility: GrowthEligibility;
   activePromotions: GrowthPromotion[];
   pendingPromotions: GrowthPromotion[];
   catalogue: GrowthTool[];
@@ -209,12 +226,32 @@ const ACTIONS = [
   { id: "analytics", icon: "bar-chart-2" as const, label: "Analytics", color: "#CA922B", route: null },
 ];
 
-const DEFAULT_GROWTH_CATALOGUE = [
-  { type: "priority_search" as const, name: "Priority Search Placement", description: "Rise to the top of search results when users look for businesses like yours. Your listing ranks above organic results for relevant queries.", priceCents: 2900, priceDisplay: "$29", durationDays: 30, icon: "search", tagline: "30 days · Rise higher in every relevant search" },
-  { type: "category_featured" as const, name: "Category Feature", description: "Be the first business seen when someone browses your category. Featured position at the top of your category page.", priceCents: 4900, priceDisplay: "$49", durationDays: 30, icon: "star", tagline: "30 days · Top spot in your category" },
-  { type: "city_featured" as const, name: "City & Neighborhood Feature", description: "Stand out to users searching in your city or neighborhood. Featured placement for location-specific searches.", priceCents: 7900, priceDisplay: "$79", durationDays: 30, icon: "map-pin", tagline: "30 days · Featured for local searches" },
-  { type: "cultural_spotlight" as const, name: "Cultural Spotlight", description: "Get elevated placement during Black cultural events, heritage months, and holidays — when community engagement is highest.", priceCents: 9900, priceDisplay: "$99", durationDays: 14, icon: "zap", tagline: "14 days · Premium placement during peak moments" },
-  { type: "event_featured" as const, name: "Featured Event Listing", description: "Promote your event to the top of the community events feed. Reach community members actively looking for what's happening.", priceCents: 3900, priceDisplay: "$39", durationDays: 14, icon: "calendar", tagline: "14 days · Front-row placement in the events feed" },
+const CATEGORY_SECTION_LABELS: Record<string, { label: string; color: string }> = {
+  announce:   { label: "Announce a Moment",      color: "#CA922B" },
+  updates:    { label: "Business Updates",         color: "#2D7A4F" },
+  events:     { label: "Events & Community",       color: "#5C3D9E" },
+  visibility: { label: "Visibility Boosts",        color: "#1A5C35" },
+  special:    { label: "Special Programs",         color: "#C9A84C" },
+};
+
+const DEFAULT_GROWTH_CATALOGUE: GrowthTool[] = [
+  { type: "grand_opening",     category: "announce",   name: "Grand Opening",              description: "30 days of featured placement, a Grand Opening badge, and a push notification to nearby community members.",  priceCents: 9900, priceDisplay: "$99",  durationDays: 30, icon: "star",        tagline: "30 days · Badge + featured + push notification", searchLabel: "Grand Opening", highlight: true },
+  { type: "new_location",      category: "announce",   name: "New Location",               description: "Announce your expansion with featured placement in your new city and a New Location badge.",                 priceCents: 7900, priceDisplay: "$79",  durationDays: 30, icon: "map-pin",     tagline: "30 days · New Location badge + city placement",  searchLabel: "New Location" },
+  { type: "anniversary",       category: "announce",   name: "Milestone Anniversary",      description: "Celebrate a business anniversary or milestone with featured placement and a badge that signals longevity.",   priceCents: 4900, priceDisplay: "$49",  durationDays: 14, icon: "award",       tagline: "14 days · Anniversary badge + featured",         searchLabel: "Anniversary" },
+  { type: "product_launch",    category: "updates",    name: "New Product or Service",     description: "Announce a new offering to your existing customers and new ones browsing your category.",                    priceCents: 4900, priceDisplay: "$49",  durationDays: 14, icon: "package",     tagline: "14 days · New offering badge + category boost",  searchLabel: "New" },
+  { type: "hiring",            category: "updates",    name: "We're Hiring",               description: "Reach community members looking for work with a Hiring badge and job-related search placement.",             priceCents: 4900, priceDisplay: "$49",  durationDays: 30, icon: "users",       tagline: "30 days · Hiring badge + job search placement",  searchLabel: "Hiring" },
+  { type: "seasonal_sale",     category: "updates",    name: "Seasonal Sale or Event",     description: "Drive traffic during a sale, holiday, or limited-time offer with featured placement.",                     priceCents: 3900, priceDisplay: "$39",  durationDays: 14, icon: "tag",         tagline: "14 days · Sale badge + featured placement",      searchLabel: "Sale" },
+  { type: "event_promo",       category: "events",     name: "Promote an Event",           description: "Get your event in front of the community events feed to fill seats with engaged members.",                  priceCents: 3900, priceDisplay: "$39",  durationDays: 14, icon: "calendar",    tagline: "14 days · Front-row in the events feed",         searchLabel: "Event" },
+  { type: "community_event",   category: "events",     name: "Sponsor a Community Event",  description: "Put your business behind a community event with a sponsor badge and visibility in community feeds.",       priceCents: 9900, priceDisplay: "$99",  durationDays: 30, icon: "heart",       tagline: "30 days · Sponsor badge + event spotlight",      searchLabel: "Community Sponsor" },
+  { type: "local_cause",       category: "events",     name: "Support a Local Cause",      description: "Link your business to a nonprofit, scholarship, or cause and earn a Community Partner badge.",            priceCents: 4900, priceDisplay: "$49",  durationDays: 30, icon: "gift",        tagline: "30 days · Community Partner badge",              searchLabel: "Community Partner" },
+  { type: "giveaway",          category: "events",     name: "Giveaway or Contest",        description: "Run a community giveaway with featured placement in the community feed.",                                   priceCents: 4900, priceDisplay: "$49",  durationDays: 30, icon: "gift",        tagline: "30 days · Giveaway badge + community feed",      searchLabel: "Giveaway" },
+  { type: "priority_search",   category: "visibility", name: "Priority Search Placement",  description: "Rise to the top of search results when users look for businesses like yours.",                             priceCents: 2900, priceDisplay: "$29",  durationDays: 30, icon: "search",      tagline: "30 days · Rise higher in every relevant search", searchLabel: "Sponsored" },
+  { type: "category_featured", category: "visibility", name: "Category Feature",           description: "Be the first business seen when someone browses your category.",                                            priceCents: 4900, priceDisplay: "$49",  durationDays: 30, icon: "star",        tagline: "30 days · Top spot in your category",            searchLabel: "Sponsored" },
+  { type: "city_featured",     category: "visibility", name: "City & Neighborhood Feature",description: "Stand out to users searching in your city or neighborhood.",                                               priceCents: 7900, priceDisplay: "$79",  durationDays: 30, icon: "map-pin",     tagline: "30 days · Featured for local searches",          searchLabel: "Sponsored" },
+  { type: "cultural_spotlight",category: "visibility", name: "Cultural Spotlight",         description: "Get elevated placement during cultural events, heritage months, and holidays.",                            priceCents: 9900, priceDisplay: "$99",  durationDays: 14, icon: "zap",         tagline: "14 days · Premium during peak moments",          searchLabel: "Featured" },
+  { type: "event_featured",    category: "visibility", name: "Featured Event Listing",     description: "Promote your event to the top of the community events feed.",                                              priceCents: 3900, priceDisplay: "$39",  durationDays: 14, icon: "calendar",    tagline: "14 days · Front-row in the events feed",         searchLabel: "Featured" },
+  { type: "launch_package",    category: "special",    name: "New Business Launch Package",description: "Everything a new business needs: 30 days featured, Grand Opening badge, push notification, and a social media feature.", priceCents: 9900, priceDisplay: "$99", durationDays: 30, icon: "zap", tagline: "30 days · The complete launch bundle", searchLabel: "Grand Opening", highlight: true },
+  { type: "community_spotlight",category: "special",   name: "Community Spotlight",        description: "An editorial feature written by our team — your story, your journey, and what makes you a community landmark.", priceCents: 0, priceDisplay: "Free", durationDays: 30, icon: "mic", tagline: "Application-based · Editorial feature", searchLabel: "Community Story", applicationOnly: true },
 ];
 
 export default function BusinessDashboardScreen() {
@@ -2573,11 +2610,25 @@ export default function BusinessDashboardScreen() {
 
         {activeTab === "grow" && (
           <>
-            {/* Section header */}
-            <View style={styles.growHeader}>
-              <Text style={[styles.growTitle, { color: colors.foreground }]}>Growth Tools</Text>
-              <Text style={[styles.growSubtitle, { color: colors.mutedForeground }]}>
-                Paid tools that help your business get discovered — only shown to users who are already looking for what you offer.
+            {/* ── Policy banner ── */}
+            <View style={[styles.growPolicyBanner, { backgroundColor: "#1A0A00", borderColor: "#CA922B30" }]}>
+              <View style={styles.growPolicyRow}>
+                {[
+                  { icon: "star",        color: "#CA922B", label: "Community Trust",  sub: "Earned — never sold" },
+                  { icon: "trending-up", color: "#2D7A4F", label: "Promotion",        sub: "Purchased — clearly labeled" },
+                  { icon: "search",      color: "#5C3D9E", label: "Relevance",        sub: "Algorithmic — personalized" },
+                ].map((s, i) => (
+                  <View key={i} style={styles.growPolicyItem}>
+                    <View style={[styles.growPolicyIconWrap, { backgroundColor: s.color + "22" }]}>
+                      <Feather name={s.icon as any} size={13} color={s.color} />
+                    </View>
+                    <Text style={[styles.growPolicyItemTitle, { color: "#FFF" }]}>{s.label}</Text>
+                    <Text style={[styles.growPolicyItemSub, { color: "rgba(255,255,255,0.45)" }]}>{s.sub}</Text>
+                  </View>
+                ))}
+              </View>
+              <Text style={styles.growPolicyQuote}>
+                "Businesses may purchase visibility — they can never purchase trust."
               </Text>
             </View>
 
@@ -2587,14 +2638,60 @@ export default function BusinessDashboardScreen() {
               </View>
             )}
 
-            {/* Active promotions */}
+            {/* ── Eligibility status ── */}
+            {growthTools && (
+              <View style={[
+                styles.growEligibilityCard,
+                {
+                  backgroundColor: growthTools.eligibility.eligible ? "#2D7A4F0F" : "#FF3B300F",
+                  borderColor: growthTools.eligibility.eligible ? "#2D7A4F40" : "#FF3B3040",
+                },
+              ]}>
+                <View style={styles.growEligibilityTop}>
+                  <View style={[styles.growEligibilityIcon, {
+                    backgroundColor: growthTools.eligibility.eligible ? "#2D7A4F20" : "#FF3B3020",
+                  }]}>
+                    <Feather
+                      name={growthTools.eligibility.eligible ? "check-circle" : "alert-circle"}
+                      size={15}
+                      color={growthTools.eligibility.eligible ? "#2D7A4F" : "#FF3B30"}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.growEligibilityTitle, {
+                      color: growthTools.eligibility.eligible ? "#2D7A4F" : "#FF3B30",
+                    }]}>
+                      {growthTools.eligibility.eligible ? "Eligible for Campaigns" : "Not Eligible for Promotions"}
+                    </Text>
+                    {growthTools.business.verified && (
+                      <Text style={[styles.growEligibilitySub, { color: colors.primary }]}>
+                        Verified Business
+                      </Text>
+                    )}
+                    {!growthTools.business.verified && (
+                      <Text style={[styles.growEligibilitySub, { color: colors.mutedForeground }]}>
+                        Verify your business to unlock all campaign types
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                {growthTools.eligibility.reasons.map((r, i) => (
+                  <Text key={i} style={[styles.growEligibilityReason, { color: "#FF3B30" }]}>{r}</Text>
+                ))}
+                {growthTools.eligibility.warnings.map((w, i) => (
+                  <Text key={i} style={[styles.growEligibilityReason, { color: colors.primary }]}>{w}</Text>
+                ))}
+              </View>
+            )}
+
+            {/* ── Active promotions ── */}
             {growthTools && growthTools.activePromotions.length > 0 && (
-              <View style={[styles.growSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.growSection, { backgroundColor: colors.card, borderColor: "#2D7A4F40" }]}>
                 <View style={styles.growSectionHeader}>
                   <View style={[styles.growActiveBadge, { backgroundColor: "#2D7A4F" }]}>
-                    <Text style={styles.growActiveBadgeText}>ACTIVE</Text>
+                    <Text style={styles.growActiveBadgeText}>LIVE</Text>
                   </View>
-                  <Text style={[styles.growSectionTitle, { color: colors.foreground }]}>Running Now</Text>
+                  <Text style={[styles.growSectionTitle, { color: colors.foreground }]}>Active Campaigns</Text>
                 </View>
                 {growthTools.activePromotions.map((promo) => {
                   const tool = growthTools.catalogue.find((c) => c.type === promo.type);
@@ -2606,6 +2703,11 @@ export default function BusinessDashboardScreen() {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.growActiveTitle, { color: colors.foreground }]}>{tool?.name ?? promo.type}</Text>
+                        {promo.campaignLabel && (
+                          <View style={[styles.growSearchLabelChip, { backgroundColor: "#2D7A4F15", borderColor: "#2D7A4F30" }]}>
+                            <Text style={[styles.growSearchLabelTxt, { color: "#2D7A4F" }]}>Shows as: {promo.campaignLabel}</Text>
+                          </View>
+                        )}
                         <Text style={[styles.growActiveExpiry, { color: colors.mutedForeground }]}>
                           {endsDate ? `Expires ${endsDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : "Active"}
                         </Text>
@@ -2619,9 +2721,9 @@ export default function BusinessDashboardScreen() {
               </View>
             )}
 
-            {/* Pending promotions */}
+            {/* ── Pending promotions ── */}
             {growthTools && growthTools.pendingPromotions.length > 0 && (
-              <View style={[styles.growSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.growSection, { backgroundColor: colors.card, borderColor: "#CA922B40" }]}>
                 <Text style={[styles.growSectionTitle, { color: colors.mutedForeground }]}>Pending Payment</Text>
                 {growthTools.pendingPromotions.map((promo) => {
                   const tool = growthTools.catalogue.find((c) => c.type === promo.type);
@@ -2643,63 +2745,160 @@ export default function BusinessDashboardScreen() {
               </View>
             )}
 
-            {/* Available tools */}
-            <Text style={[styles.growCatalogueTitle, { color: colors.foreground }]}>Placement Tools</Text>
-            <Text style={[styles.growCatalogueDesc, { color: colors.mutedForeground }]}>
-              Featured businesses must match the searcher's query — no irrelevant results, ever.
-            </Text>
-
-            {(growthTools?.catalogue ?? DEFAULT_GROWTH_CATALOGUE).map((tool) => {
-              const isActive = growthTools?.activePromotions.some((p) => p.type === tool.type) ?? false;
-              const isLoading = growthCheckoutLoading === tool.type;
+            {/* ── Launch Package — featured card ── */}
+            {(() => {
+              const catalogue = growthTools?.catalogue ?? DEFAULT_GROWTH_CATALOGUE;
+              const pkg = catalogue.find((t) => t.type === "launch_package");
+              if (!pkg) return null;
+              const isLoading = growthCheckoutLoading === "launch_package";
+              const isActive = growthTools?.activePromotions.some((p) => p.type === "launch_package") ?? false;
               return (
-                <View key={tool.type} style={[styles.growToolCard, { backgroundColor: colors.card, borderColor: isActive ? "#2D7A4F60" : colors.border }]}>
-                  <View style={styles.growToolTop}>
-                    <View style={[styles.growToolIcon, { backgroundColor: isActive ? "#2D7A4F20" : colors.muted ?? colors.border }]}>
-                      <Feather name={tool.icon as any} size={18} color={isActive ? "#2D7A4F" : colors.foreground} />
+                <View style={[styles.growFeaturedCard, { backgroundColor: "#CA922B" }]}>
+                  <View style={styles.growFeaturedTop}>
+                    <View style={[styles.growFeaturedIconWrap, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+                      <Feather name="zap" size={18} color="#FFF" />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.growToolName, { color: colors.foreground }]}>{tool.name}</Text>
-                      <Text style={[styles.growToolTagline, { color: colors.mutedForeground }]}>{tool.tagline}</Text>
+                      <Text style={styles.growFeaturedTitle}>{pkg.name}</Text>
+                      <Text style={styles.growFeaturedSub}>For new and launching businesses</Text>
                     </View>
-                    {isActive && (
-                      <View style={[styles.growStatusPill, { backgroundColor: "#2D7A4F20" }]}>
-                        <Text style={[styles.growStatusPillText, { color: "#2D7A4F" }]}>Active</Text>
-                      </View>
-                    )}
+                    <View style={[styles.growStatusPill, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+                      <Text style={[styles.growStatusPillText, { color: "#FFF" }]}>Best Value</Text>
+                    </View>
                   </View>
-                  <Text style={[styles.growToolDesc, { color: colors.mutedForeground }]}>{tool.description}</Text>
+                  <Text style={styles.growFeaturedDesc}>{pkg.description}</Text>
+                  {[
+                    "30 days featured placement",
+                    "Grand Opening badge",
+                    "Push notification to nearby members",
+                    "Featured in New Businesses",
+                    "Social media feature",
+                  ].map((f, i) => (
+                    <View key={i} style={styles.growFeaturedFeatureRow}>
+                      <Feather name="check-circle" size={13} color="rgba(255,255,255,0.85)" />
+                      <Text style={styles.growFeaturedFeatureTxt}>{f}</Text>
+                    </View>
+                  ))}
                   <View style={styles.growToolFooter}>
                     <View>
-                      <Text style={[styles.growToolPrice, { color: colors.foreground }]}>{tool.priceDisplay}</Text>
-                      <Text style={[styles.growToolPriceSub, { color: colors.mutedForeground }]}>one-time · {tool.durationDays} days</Text>
+                      <Text style={[styles.growToolPrice, { color: "#FFF" }]}>{pkg.priceDisplay}</Text>
+                      <Text style={[styles.growToolPriceSub, { color: "rgba(255,255,255,0.6)" }]}>one-time · {pkg.durationDays} days</Text>
                     </View>
                     <TouchableOpacity
-                      style={[styles.growToolBtn, {
-                        backgroundColor: isActive ? colors.card : colors.primary,
-                        borderColor: isActive ? colors.border : colors.primary,
-                        borderWidth: isActive ? 1 : 0,
-                        opacity: isLoading ? 0.6 : 1,
-                      }]}
+                      style={[styles.growFeaturedBtn, { opacity: isLoading || isActive ? 0.8 : 1 }]}
                       onPress={() => {
                         if (Platform.OS !== "web") Haptics.selectionAsync();
-                        void startGrowthToolCheckout(tool.type as GrowthPromotion["type"]);
+                        if (!isActive) void startGrowthToolCheckout("launch_package");
                       }}
                       activeOpacity={0.8}
-                      disabled={isLoading}
+                      disabled={isLoading || isActive}
                     >
-                      {isLoading ? (
-                        <ActivityIndicator size="small" color="#FFF" />
-                      ) : (
-                        <Text style={[styles.growToolBtnText, { color: isActive ? colors.mutedForeground : "#FFF" }]}>
-                          {isActive ? "Renew" : "Get Started"}
-                        </Text>
-                      )}
+                      {isLoading
+                        ? <ActivityIndicator size="small" color="#CA922B" />
+                        : <Text style={styles.growFeaturedBtnTxt}>{isActive ? "Active" : "Launch Now"}</Text>
+                      }
                     </TouchableOpacity>
+                  </View>
+                  <View style={styles.growPaymentNote}>
+                    <Feather name="external-link" size={11} color="rgba(255,255,255,0.45)" />
+                    <Text style={styles.growPaymentNoteTxt}>Payment opens in your browser — secure checkout via Stripe</Text>
                   </View>
                 </View>
               );
+            })()}
+
+            {/* ── Campaign categories ── */}
+            {(["announce", "updates", "events", "visibility"] as const).map((cat) => {
+              const catalogue = growthTools?.catalogue ?? DEFAULT_GROWTH_CATALOGUE;
+              const tools = catalogue.filter((t) => t.category === cat && t.type !== "launch_package");
+              if (!tools.length) return null;
+              const meta = CATEGORY_SECTION_LABELS[cat];
+              return (
+                <View key={cat}>
+                  {/* Category header */}
+                  <View style={styles.growCategoryHeader}>
+                    <View style={[styles.growCategoryDot, { backgroundColor: meta.color }]} />
+                    <Text style={[styles.growCatalogueTitle, { color: colors.foreground, marginTop: 0 }]}>{meta.label}</Text>
+                  </View>
+
+                  {tools.map((tool) => {
+                    const isActive = growthTools?.activePromotions.some((p) => p.type === tool.type) ?? false;
+                    const isLoading = growthCheckoutLoading === tool.type;
+                    const eligible = growthTools?.eligibility.eligible ?? true;
+                    return (
+                      <View key={tool.type} style={[styles.growToolCard, { backgroundColor: colors.card, borderColor: isActive ? "#2D7A4F60" : colors.border }]}>
+                        <View style={styles.growToolTop}>
+                          <View style={[styles.growToolIcon, { backgroundColor: meta.color + "18" }]}>
+                            <Feather name={tool.icon as any} size={18} color={meta.color} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={[styles.growToolName, { color: colors.foreground }]}>{tool.name}</Text>
+                            <Text style={[styles.growToolTagline, { color: colors.mutedForeground }]}>{tool.tagline}</Text>
+                          </View>
+                          {isActive && (
+                            <View style={[styles.growStatusPill, { backgroundColor: "#2D7A4F20" }]}>
+                              <Text style={[styles.growStatusPillText, { color: "#2D7A4F" }]}>Active</Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text style={[styles.growToolDesc, { color: colors.mutedForeground }]}>{tool.description}</Text>
+
+                        {/* Shows as label */}
+                        <View style={[styles.growSearchLabelChip, { backgroundColor: meta.color + "10", borderColor: meta.color + "30" }]}>
+                          <Text style={[styles.growSearchLabelTxt, { color: meta.color }]}>Shows as: {tool.searchLabel}</Text>
+                        </View>
+
+                        <View style={styles.growToolFooter}>
+                          <View>
+                            <Text style={[styles.growToolPrice, { color: colors.foreground }]}>{tool.priceDisplay}</Text>
+                            <Text style={[styles.growToolPriceSub, { color: colors.mutedForeground }]}>
+                              {tool.priceCents === 0 ? "application" : `one-time · ${tool.durationDays} days`}
+                            </Text>
+                          </View>
+                          <TouchableOpacity
+                            style={[styles.growToolBtn, {
+                              backgroundColor: isActive
+                                ? colors.secondary
+                                : (!eligible ? colors.muted : meta.color),
+                              opacity: (isLoading || (!eligible && !isActive)) ? 0.6 : 1,
+                            }]}
+                            onPress={() => {
+                              if (Platform.OS !== "web") Haptics.selectionAsync();
+                              if (tool.applicationOnly) {
+                                Alert.alert(
+                                  "Apply for Community Spotlight",
+                                  "Email us at support@mappingwithmelanin.com with the subject 'Community Spotlight' and a short note about your business. We review applications within 5 business days.",
+                                  [{ text: "OK" }],
+                                );
+                                return;
+                              }
+                              void startGrowthToolCheckout(tool.type);
+                            }}
+                            activeOpacity={0.8}
+                            disabled={isLoading || (!eligible && !isActive)}
+                          >
+                            {isLoading ? (
+                              <ActivityIndicator size="small" color="#FFF" />
+                            ) : (
+                              <Text style={[styles.growToolBtnText, { color: isActive ? colors.mutedForeground : "#FFF" }]}>
+                                {isActive ? "Active" : tool.applicationOnly ? "Apply" : "Launch"}
+                              </Text>
+                            )}
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              );
             })}
+
+            <View style={[styles.growPaymentFooter, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+              <Feather name="shield" size={14} color={colors.mutedForeground} />
+              <Text style={[styles.growPaymentFooterTxt, { color: colors.mutedForeground }]}>
+                All payments open in your browser — processed securely by Stripe. No payment is taken inside the app.
+              </Text>
+            </View>
 
             {/* KinfolkAI Growth Journey — business planning via Life Journey system */}
             <View style={[styles.growJourneyCard, { backgroundColor: "#1A0A28", borderColor: "#7B2D8B30" }]}>
@@ -3213,4 +3412,35 @@ const styles = StyleSheet.create({
   growToolPriceSub: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
   growToolBtn: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, minWidth: 110, alignItems: "center" },
   growToolBtnText: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  growPolicyBanner: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 12, gap: 12 },
+  growPolicyRow: { flexDirection: "row", gap: 8 },
+  growPolicyItem: { flex: 1, gap: 4 },
+  growPolicyIconWrap: { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center", marginBottom: 2 },
+  growPolicyItemTitle: { fontSize: 11, fontFamily: "Inter_700Bold" },
+  growPolicyItemSub: { fontSize: 10, fontFamily: "Inter_400Regular", lineHeight: 14 },
+  growPolicyQuote: { fontSize: 11, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.5)", fontStyle: "italic", textAlign: "center", lineHeight: 16, paddingTop: 8, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.08)" },
+  growEligibilityCard: { borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 12, gap: 6 },
+  growEligibilityTop: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  growEligibilityIcon: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+  growEligibilityTitle: { fontSize: 13, fontFamily: "Inter_700Bold" },
+  growEligibilitySub: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
+  growEligibilityReason: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17, paddingLeft: 4 },
+  growSearchLabelChip: { alignSelf: "flex-start", paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20, borderWidth: 1, marginTop: 6 },
+  growSearchLabelTxt: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  growFeaturedCard: { borderRadius: 20, padding: 20, marginBottom: 16, gap: 10 },
+  growFeaturedTop: { flexDirection: "row", alignItems: "center", gap: 12 },
+  growFeaturedIconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  growFeaturedTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#FFF" },
+  growFeaturedSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.6)", marginTop: 1 },
+  growFeaturedDesc: { fontSize: 13, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.75)", lineHeight: 19 },
+  growFeaturedFeatureRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  growFeaturedFeatureTxt: { fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.82)" },
+  growFeaturedBtn: { paddingHorizontal: 20, paddingVertical: 11, borderRadius: 12, backgroundColor: "#FFF", alignItems: "center", minWidth: 120 },
+  growFeaturedBtnTxt: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#CA922B" },
+  growPaymentNote: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 },
+  growPaymentNoteTxt: { fontSize: 11, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.4)", flex: 1 },
+  growCategoryHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8, marginTop: 4 },
+  growCategoryDot: { width: 4, height: 20, borderRadius: 2 },
+  growPaymentFooter: { borderRadius: 14, borderWidth: 1, padding: 14, flexDirection: "row", alignItems: "flex-start", gap: 10, marginTop: 4, marginBottom: 12 },
+  growPaymentFooterTxt: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17, flex: 1 },
 });
