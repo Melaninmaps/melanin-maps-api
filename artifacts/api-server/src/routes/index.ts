@@ -130,6 +130,7 @@ import hashtagsRouter from "./hashtags";
 import communityPlacesRouter from "./community-places";
 import communityImpactRouter from "./community-impact";
 import showLoveRouter from "./show-love";
+import membershipFamilyRouter from "./membership-family";
 
 const router: IRouter = Router();
 
@@ -263,6 +264,7 @@ router.use(hashtagsRouter);
 router.use(communityPlacesRouter);
 router.use(communityImpactRouter);
 router.use(showLoveRouter);
+router.use(membershipFamilyRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

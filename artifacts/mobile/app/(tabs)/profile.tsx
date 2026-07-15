@@ -1013,8 +1013,8 @@ export default function ProfileScreen() {
         <View style={{ marginBottom: 4 }}>
           <View style={{ paddingHorizontal: 16, paddingBottom: 10, paddingTop: 6, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <View>
-              <Text style={{ fontSize: 16, fontWeight: "800", color: colors.colors.text, letterSpacing: -0.3 }}>Why People Show Love</Text>
-              <Text style={{ fontSize: 12, color: colors.colors.muted, marginTop: 2 }}>
+              <Text style={{ fontSize: 16, fontWeight: "800", color: colors.foreground, letterSpacing: -0.3 }}>Why People Show Love</Text>
+              <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 2 }}>
                 {showLoveNoms.length === 1 ? "1 recognition from the community" : `${showLoveNoms.length} recognitions from the community`}
               </Text>
             </View>

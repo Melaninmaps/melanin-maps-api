@@ -37,6 +37,9 @@ interface Plan {
   features: string[];
   cta: string;
   ctaActive: boolean;
+  familySeatsIncluded?: number;
+  aiPool?: number;
+  addOnPriceCents?: number;
 }
 
 const CONSUMER_PLANS: Plan[] = [
@@ -76,13 +79,17 @@ const CONSUMER_PLANS: Plan[] = [
     annualTotal: 79.9,
     color: "#CA922B",
     bg: "#CA922B",
+    familySeatsIncluded: 1,
+    aiPool: 30,
+    addOnPriceCents: 299,
     features: [
       "Everything in Explorer, plus:",
-      "Expanded AI trip planning",
-      "More saved topics",
-      "Advanced travel planning",
+      "150 saved places · 20 followed topics",
+      "AI trip planning — 30 requests/mo",
+      "1 family seat included (+$2.99/additional)",
+      "Create 1 Kinfolk Circle",
+      "Daily safety digest",
       "Enhanced safety notifications",
-      "Premium travel recommendations",
       "Priority feature access",
     ],
     cta: "Start Free Trial",
@@ -100,13 +107,17 @@ const CONSUMER_PLANS: Plan[] = [
     annualTotal: 199.9,
     color: "#1A5C35",
     bg: "#1A5C35",
+    familySeatsIncluded: 1,
+    aiPool: 100,
+    addOnPriceCents: 399,
     features: [
       "Everything in Navigator, plus:",
-      "Unlimited AI planning",
+      "500 saved places · 50 followed topics",
+      "AI trip planning — 100 requests/mo",
+      "1 family seat included (+$3.99/additional)",
+      "Create 3 Kinfolk Circles",
       "Advanced relocation tools",
-      "Enhanced Community Hubs",
       "Premium city guides",
-      "Personalized recommendations",
       "Early access to new features",
     ],
     cta: "Start Free Trial",
@@ -124,15 +135,18 @@ const CONSUMER_PLANS: Plan[] = [
     annualTotal: 299.9,
     color: "#5C3D9E",
     bg: "#5C3D9E",
+    familySeatsIncluded: 1,
+    aiPool: 300,
+    addOnPriceCents: 499,
     features: [
       "Everything in Trailblazer, plus:",
-      "Creator insights",
+      "Unlimited saved places and topics",
+      "AI trip planning — 300 requests/mo",
+      "1 family seat included (+$4.99/additional)",
+      "Create up to 10 Kinfolk Circles",
+      "Creator insights and mentor profile",
       "Priority profile placement",
-      "Advanced community tools",
-      "Mentor profile",
-      "Volunteer opportunities",
       "Community Builder badge",
-      "Beta access to new community features",
     ],
     cta: "Start Free Trial",
     ctaActive: true,
@@ -149,14 +163,17 @@ const CONSUMER_PLANS: Plan[] = [
     annualTotal: 799.9,
     color: "#1A0A00",
     bg: "#1A0A00",
+    familySeatsIncluded: 1,
+    aiPool: -1,
+    addOnPriceCents: 699,
     features: [
       "Everything above, plus:",
-      "Family membership with child accounts",
-      "Advanced AI assistant",
+      "Unlimited everything — no caps",
+      "Unlimited KinfolkAI — shared family pool",
+      "1 family seat included (+$6.99/additional)",
+      "Unlimited Kinfolk Circles",
       "Concierge-style planning",
       "Premium partner offers",
-      "Exclusive events",
-      "Legacy badge",
       "VIP customer support",
     ],
     cta: "Start Free Trial",
@@ -692,6 +709,55 @@ export default function MembershipScreen() {
                   </Text>
                 )}
               </View>
+
+              {/* ── Family + AI Highlights (paid consumer plans only) ─── */}
+              {audience === "consumer" && plan.aiPool !== undefined && plan.aiPool !== 0 && (
+                <View style={{
+                  flexDirection: "row",
+                  gap: 8,
+                  marginBottom: 14,
+                  paddingHorizontal: 2,
+                }}>
+                  {/* AI Pool chip */}
+                  <View style={{
+                    flex: 1,
+                    backgroundColor: isHighlight ? "rgba(255,255,255,0.14)" : "rgba(202,146,43,0.12)",
+                    borderRadius: 10,
+                    paddingVertical: 9,
+                    paddingHorizontal: 10,
+                    alignItems: "center",
+                  }}>
+                    <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: isHighlight ? "rgba(255,255,255,0.65)" : "#CA922B", marginBottom: 2, letterSpacing: 0.4 }}>
+                      KINFOLK AI
+                    </Text>
+                    <Text style={{ fontSize: 15, fontFamily: "Inter_800ExtraBold", color: isHighlight ? "#FFF" : colors.foreground, letterSpacing: -0.3 }}>
+                      {plan.aiPool === -1 ? "Unlimited" : `${plan.aiPool}/mo`}
+                    </Text>
+                    <Text style={{ fontSize: 10, color: isHighlight ? "rgba(255,255,255,0.5)" : colors.mutedForeground, marginTop: 1 }}>
+                      shared family pool
+                    </Text>
+                  </View>
+                  {/* Family Seat chip */}
+                  <View style={{
+                    flex: 1,
+                    backgroundColor: isHighlight ? "rgba(255,255,255,0.14)" : "rgba(26,107,74,0.1)",
+                    borderRadius: 10,
+                    paddingVertical: 9,
+                    paddingHorizontal: 10,
+                    alignItems: "center",
+                  }}>
+                    <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: isHighlight ? "rgba(255,255,255,0.65)" : "#1A6B4A", marginBottom: 2, letterSpacing: 0.4 }}>
+                      FAMILY SEAT
+                    </Text>
+                    <Text style={{ fontSize: 15, fontFamily: "Inter_800ExtraBold", color: isHighlight ? "#FFF" : colors.foreground, letterSpacing: -0.3 }}>
+                      1 Included
+                    </Text>
+                    <Text style={{ fontSize: 10, color: isHighlight ? "rgba(255,255,255,0.5)" : colors.mutedForeground, marginTop: 1 }}>
+                      +{plan.addOnPriceCents ? `$${(plan.addOnPriceCents / 100).toFixed(2)}/extra` : ""}
+                    </Text>
+                  </View>
+                </View>
+              )}
 
               <View style={styles.featureList}>
                 {plan.features.map((f, i) => (

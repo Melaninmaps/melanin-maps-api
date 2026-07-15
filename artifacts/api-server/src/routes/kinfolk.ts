@@ -1,5 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { checkAiPool, incrementAiUsage, getTierFromMemberType } from "../constants/membershipTiers";
 import crypto from "crypto";
 import {
   db,
@@ -849,6 +850,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   try {
     // ── Enforce free-tier monthly query limit ─────────────────────────────────
     let queriesUsedThisCall: number | null = null;
+    let aiPoolCircleId: string | null = null;
     if (req.user?.id) {
       const user = await storage.getUser(req.user.id);
       const isFree =
@@ -883,6 +885,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             kinfolkQueriesThisMonth: queriesUsedThisCall,
           })
           .where(eq(usersTable.id, req.user.id));
+      }
+
+      // ── Paid-tier AI pool check ────────────────────────────────────────────
+      if (!isFree) {
+        const resolvedTier = getTierFromMemberType(user?.memberType);
+        const poolStatus = await checkAiPool(req.user.id, resolvedTier);
+        if (!poolStatus.allowed) {
+          const month = new Date().toLocaleDateString("en-US", { month: "long" });
+          res.status(429).json({
+            error: `Your KinfolkAI pool of ${poolStatus.limit} requests has been used for ${month}. Upgrade your plan or wait until next month.`,
+            code: "AI_POOL_EXHAUSTED",
+            used: poolStatus.used,
+            limit: poolStatus.limit,
+            upgradeUrl: "/membership",
+          });
+          return;
+        }
+        aiPoolCircleId = poolStatus.circleId;
       }
     }
 
@@ -1145,6 +1165,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       messages: aiMessages,
       response_format: { type: "json_object" },
     });
+
+    // Track AI pool usage for paid tiers after successful generation
+    if (aiPoolCircleId) {
+      incrementAiUsage(aiPoolCircleId).catch(() => {});
+    }
 
     const rawContent = completion.choices[0]?.message?.content ?? "{}";
 

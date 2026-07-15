@@ -18,6 +18,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/lib/auth";
 import { useShowLove, createShowLoveNomination, type ShowLoveNomination } from "@/hooks/useShowLove";
 import { ShowLoveCard } from "@/components/ShowLoveCard";
@@ -65,7 +66,8 @@ const FILTER_TYPES = [
 ];
 
 export default function ShowLoveScreen() {
-  const { colors, isDark } = useColors();
+  const colors = useColors();
+  const { isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
@@ -149,11 +151,11 @@ export default function ShowLoveScreen() {
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)" }]}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Feather name="arrow-left" size={22} color={colors.text} />
+          <Feather name="arrow-left" size={22} color={colors.foreground} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: colors.text }]}>Show Love</Text>
-          <Text style={[styles.subtitle, { color: colors.muted }]}>Celebrate the people making a difference</Text>
+          <Text style={[styles.title, { color: colors.foreground }]}>Show Love</Text>
+          <Text style={[styles.subtitle, { color: colors.mutedForeground}]}>Celebrate the people making a difference</Text>
         </View>
         {user ? (
           <Pressable
@@ -199,8 +201,8 @@ export default function ShowLoveScreen() {
       ) : displayNominations.length === 0 ? (
         <View style={styles.emptyState}>
           <Feather name="heart" size={40} color="#CA922B" style={{ opacity: 0.4 }} />
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>No nominations yet</Text>
-          <Text style={[styles.emptyBody, { color: colors.muted }]}>
+          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No nominations yet</Text>
+          <Text style={[styles.emptyBody, { color: colors.mutedForeground}]}>
             Be the first to recognize someone making a difference.
           </Text>
           {user ? (
@@ -238,9 +240,9 @@ export default function ShowLoveScreen() {
             {/* Modal header */}
             <View style={[styles.modalHeader, { borderBottomColor: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)" }]}>
               <Pressable onPress={() => { setShowForm(false); resetForm(); }}>
-                <Feather name="x" size={22} color={colors.text} />
+                <Feather name="x" size={22} color={colors.foreground} />
               </Pressable>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>
+              <Text style={[styles.modalTitle, { color: colors.foreground }]}>
                 {step === 1 ? "Who are you recognizing?" : step === 2 ? "What are they known for?" : "Why are you showing love?"}
               </Text>
               <View style={{ width: 22 }} />
@@ -256,7 +258,7 @@ export default function ShowLoveScreen() {
             <ScrollView contentContainerStyle={styles.formContent} showsVerticalScrollIndicator={false}>
               {step === 1 && (
                 <>
-                  <Text style={[styles.fieldLabel, { color: colors.muted }]}>Type of recognition</Text>
+                  <Text style={[styles.fieldLabel, { color: colors.mutedForeground}]}>Type of recognition</Text>
                   <View style={styles.typeGrid}>
                     {NOMINEE_TYPES.map((t) => (
                       <Pressable
@@ -270,39 +272,39 @@ export default function ShowLoveScreen() {
                           },
                         ]}
                       >
-                        <Text style={[styles.typeOptionText, { color: nomineeType === t.value ? "#CA922B" : colors.text }]}>
+                        <Text style={[styles.typeOptionText, { color: nomineeType === t.value ? "#CA922B" : colors.foreground }]}>
                           {t.label}
                         </Text>
                       </Pressable>
                     ))}
                   </View>
 
-                  <Text style={[styles.fieldLabel, { color: colors.muted, marginTop: 20 }]}>Their name *</Text>
+                  <Text style={[styles.fieldLabel, { color: colors.mutedForeground, marginTop: 20 }]}>Their name *</Text>
                   <TextInput
-                    style={[styles.input, { color: colors.text, backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#F5F0E8", borderColor: isDark ? "rgba(255,255,255,0.1)" : "#E8DDC8" }]}
+                    style={[styles.input, { color: colors.foreground, backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#F5F0E8", borderColor: isDark ? "rgba(255,255,255,0.1)" : "#E8DDC8" }]}
                     placeholder="Full name, business name, or creator name"
-                    placeholderTextColor={colors.muted}
+                    placeholderTextColor={colors.mutedForeground}
                     value={nomineeName}
                     onChangeText={setNomineeName}
                     maxLength={200}
                   />
 
-                  <Text style={[styles.fieldLabel, { color: colors.muted, marginTop: 16 }]}>Handle or username (optional)</Text>
+                  <Text style={[styles.fieldLabel, { color: colors.mutedForeground, marginTop: 16 }]}>Handle or username (optional)</Text>
                   <TextInput
-                    style={[styles.input, { color: colors.text, backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#F5F0E8", borderColor: isDark ? "rgba(255,255,255,0.1)" : "#E8DDC8" }]}
+                    style={[styles.input, { color: colors.foreground, backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#F5F0E8", borderColor: isDark ? "rgba(255,255,255,0.1)" : "#E8DDC8" }]}
                     placeholder="@handle or @username"
-                    placeholderTextColor={colors.muted}
+                    placeholderTextColor={colors.mutedForeground}
                     value={nomineeHandle}
                     onChangeText={setNomineeHandle}
                     autoCapitalize="none"
                     maxLength={100}
                   />
 
-                  <Text style={[styles.fieldLabel, { color: colors.muted, marginTop: 16 }]}>City (optional)</Text>
+                  <Text style={[styles.fieldLabel, { color: colors.mutedForeground, marginTop: 16 }]}>City (optional)</Text>
                   <TextInput
-                    style={[styles.input, { color: colors.text, backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#F5F0E8", borderColor: isDark ? "rgba(255,255,255,0.1)" : "#E8DDC8" }]}
+                    style={[styles.input, { color: colors.foreground, backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#F5F0E8", borderColor: isDark ? "rgba(255,255,255,0.1)" : "#E8DDC8" }]}
                     placeholder="Washington DC, Atlanta, Lagos..."
-                    placeholderTextColor={colors.muted}
+                    placeholderTextColor={colors.mutedForeground}
                     value={nomineeCity}
                     onChangeText={setNomineeCity}
                     maxLength={100}
@@ -312,7 +314,7 @@ export default function ShowLoveScreen() {
 
               {step === 2 && (
                 <>
-                  <Text style={[styles.fieldLabel, { color: colors.muted }]}>Category *</Text>
+                  <Text style={[styles.fieldLabel, { color: colors.mutedForeground}]}>Category *</Text>
                   <View style={styles.categoryGrid}>
                     {CATEGORIES.map((c) => (
                       <Pressable
@@ -333,8 +335,8 @@ export default function ShowLoveScreen() {
                     ))}
                   </View>
 
-                  <Text style={[styles.fieldLabel, { color: colors.muted, marginTop: 20 }]}>What are they known for? (optional)</Text>
-                  <Text style={[styles.fieldHint, { color: colors.muted }]}>Select all that apply</Text>
+                  <Text style={[styles.fieldLabel, { color: colors.mutedForeground, marginTop: 20 }]}>What are they known for? (optional)</Text>
+                  <Text style={[styles.fieldHint, { color: colors.mutedForeground}]}>Select all that apply</Text>
                   <View style={styles.tagsGrid}>
                     {WHAT_KNOWN_FOR_OPTIONS.map((tag) => (
                       <Pressable
@@ -348,7 +350,7 @@ export default function ShowLoveScreen() {
                           },
                         ]}
                       >
-                        <Text style={[styles.tagChipText, { color: whatKnownFor.includes(tag) ? "#CA922B" : colors.muted }]}>
+                        <Text style={[styles.tagChipText, { color: whatKnownFor.includes(tag) ? "#CA922B" : colors.mutedForeground}]}>
                           {tag}
                         </Text>
                       </Pressable>
@@ -359,28 +361,28 @@ export default function ShowLoveScreen() {
 
               {step === 3 && (
                 <>
-                  <Text style={[styles.fieldLabel, { color: colors.muted }]}>Why are you showing love? *</Text>
-                  <Text style={[styles.fieldHint, { color: colors.muted }]}>20–500 characters · Be thoughtful and specific</Text>
+                  <Text style={[styles.fieldLabel, { color: colors.mutedForeground}]}>Why are you showing love? *</Text>
+                  <Text style={[styles.fieldHint, { color: colors.mutedForeground}]}>20–500 characters · Be thoughtful and specific</Text>
                   <TextInput
-                    style={[styles.textarea, { color: colors.text, backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#F5F0E8", borderColor: isDark ? "rgba(255,255,255,0.1)" : "#E8DDC8" }]}
+                    style={[styles.textarea, { color: colors.foreground, backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#F5F0E8", borderColor: isDark ? "rgba(255,255,255,0.1)" : "#E8DDC8" }]}
                     placeholder={`Tell the community why ${nomineeName || "this person"} deserves recognition...`}
-                    placeholderTextColor={colors.muted}
+                    placeholderTextColor={colors.mutedForeground}
                     value={reason}
                     onChangeText={setReason}
                     multiline
                     maxLength={500}
                     textAlignVertical="top"
                   />
-                  <Text style={[styles.charCount, { color: reason.length < 20 ? "#E57373" : colors.muted }]}>
+                  <Text style={[styles.charCount, { color: reason.length < 20 ? "#E57373" : colors.mutedForeground}]}>
                     {reason.length}/500
                   </Text>
 
-                  <Text style={[styles.fieldLabel, { color: colors.muted, marginTop: 20 }]}>Share a memorable experience (optional)</Text>
-                  <Text style={[styles.fieldHint, { color: colors.muted }]}>A story is worth a thousand likes</Text>
+                  <Text style={[styles.fieldLabel, { color: colors.mutedForeground, marginTop: 20 }]}>Share a memorable experience (optional)</Text>
+                  <Text style={[styles.fieldHint, { color: colors.mutedForeground}]}>A story is worth a thousand likes</Text>
                   <TextInput
-                    style={[styles.textarea, { color: colors.text, backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#F5F0E8", borderColor: isDark ? "rgba(255,255,255,0.1)" : "#E8DDC8", minHeight: 80 }]}
+                    style={[styles.textarea, { color: colors.foreground, backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#F5F0E8", borderColor: isDark ? "rgba(255,255,255,0.1)" : "#E8DDC8", minHeight: 80 }]}
                     placeholder="She introduced me to my favorite bookstore in the neighborhood..."
-                    placeholderTextColor={colors.muted}
+                    placeholderTextColor={colors.mutedForeground}
                     value={experience}
                     onChangeText={setExperience}
                     multiline
@@ -395,7 +397,7 @@ export default function ShowLoveScreen() {
             <View style={[styles.formFooter, { borderTopColor: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)", paddingBottom: insets.bottom + 16 }]}>
               {step > 1 && (
                 <Pressable onPress={() => setStep((s) => s - 1)} style={[styles.backFormBtn, { borderColor: isDark ? "rgba(255,255,255,0.15)" : "#E8DDC8" }]}>
-                  <Text style={[styles.backFormBtnText, { color: colors.muted }]}>Back</Text>
+                  <Text style={[styles.backFormBtnText, { color: colors.mutedForeground}]}>Back</Text>
                 </Pressable>
               )}
               {step < 3 ? (
@@ -410,7 +412,7 @@ export default function ShowLoveScreen() {
                     },
                   ]}
                 >
-                  <Text style={[styles.nextBtnText, { color: (step === 1 ? canProceedStep1 : canProceedStep2) ? "#FFF" : colors.muted }]}>
+                  <Text style={[styles.nextBtnText, { color: (step === 1 ? canProceedStep1 : canProceedStep2) ? "#FFF" : colors.mutedForeground}]}>
                     Next
                   </Text>
                 </Pressable>
@@ -423,7 +425,7 @@ export default function ShowLoveScreen() {
                   {isSubmitting ? (
                     <ActivityIndicator color="#FFF" size="small" />
                   ) : (
-                    <Text style={[styles.nextBtnText, { color: canSubmitStep3 ? "#FFF" : colors.muted }]}>
+                    <Text style={[styles.nextBtnText, { color: canSubmitStep3 ? "#FFF" : colors.mutedForeground}]}>
                       Send Love
                     </Text>
                   )}
