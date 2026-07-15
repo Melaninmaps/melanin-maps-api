@@ -47,6 +47,7 @@ export interface TrustUser {
   helpfulReviewsCount: number;
   createdAt: Date;
   reputationScore: number;
+  isInfluencer?: boolean;
 }
 
 export function computeTrustLevel(user: TrustUser): TrustLevel {
@@ -69,12 +70,15 @@ export function computeTrustLevel(user: TrustUser): TrustLevel {
   return 1;
 }
 
+export const INFLUENCER_WEIGHT = 3.0;
+
 export function getReviewWeight(
   trustLevel: TrustLevel,
   verifiedPurchase: boolean,
-  verifiedCheckin: boolean
+  verifiedCheckin: boolean,
+  isInfluencer = false,
 ): number {
-  const base = TRUST_LEVELS[trustLevel]?.weight ?? 1.0;
+  const base = isInfluencer ? INFLUENCER_WEIGHT : (TRUST_LEVELS[trustLevel]?.weight ?? 1.0);
   const verifiedBonus = verifiedPurchase || verifiedCheckin ? 0.5 : 0;
   return base + verifiedBonus;
 }

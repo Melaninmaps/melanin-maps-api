@@ -169,9 +169,9 @@ router.get("/reviews", async (req: Request, res: Response) => {
       .limit(50);
 
     const userIds = [...new Set(reviews.map((r) => r.userId).filter(Boolean))] as string[];
-    const trustData = userIds.length > 0
-      ? await db
-          .select({
+    const [trustData, businessRow] = await Promise.all([
+      userIds.length > 0
+        ? db.select({
             id: usersTable.id,
             trustLevel: usersTable.trustLevel,
             identityVerified: usersTable.identityVerified,
@@ -180,24 +180,65 @@ router.get("/reviews", async (req: Request, res: Response) => {
             helpfulReviewsCount: usersTable.helpfulReviewsCount,
             createdAt: usersTable.createdAt,
             reputationScore: usersTable.reputationScore,
-          })
-          .from(usersTable)
-          .where(inArray(usersTable.id, userIds))
-      : [];
-    const trustMap = new Map(trustData.map((u) => [u.id, computeTrustLevel(u)]));
+            homeCity: usersTable.homeCity,
+            isInfluencer: usersTable.isInfluencer,
+          }).from(usersTable).where(inArray(usersTable.id, userIds))
+        : Promise.resolve([]),
+      db.select({ city: businessesTable.city, state: businessesTable.state })
+        .from(businessesTable)
+        .where(eq(businessesTable.id, businessId))
+        .limit(1),
+    ]);
+
+    const trustMap = new Map(trustData.map((u) => [u.id, {
+      level: computeTrustLevel(u),
+      homeCity: u.homeCity,
+      isInfluencer: u.isInfluencer,
+    }]));
+    const bizCity = businessRow[0]?.city?.toLowerCase().trim() ?? null;
+    const bizState = businessRow[0]?.state?.toLowerCase().trim() ?? null;
 
     const currentUserId = req.user?.id ?? null;
-    const enriched = reviews.map((r) => ({
-      ...r,
-      isOwnReview: currentUserId !== null && r.userId === currentUserId,
-      authorTrustLevel: r.userId ? (trustMap.get(r.userId) ?? 1) : 1,
-    }));
+    const enriched = reviews.map((r) => {
+      const td = r.userId ? trustMap.get(r.userId) : null;
+      return {
+        ...r,
+        isOwnReview: currentUserId !== null && r.userId === currentUserId,
+        authorTrustLevel: td?.level ?? 1,
+        authorIsInfluencer: td?.isInfluencer ?? false,
+      };
+    });
+
+    // Compute source breakdown stats
+    const statsVerified = enriched.filter((r) => r.authorTrustLevel >= 2).length;
+    const statsInfluencer = enriched.filter((r) => r.authorIsInfluencer).length;
+    let statsLocal = 0, statsTraveler = 0;
+    if (bizCity || bizState) {
+      for (const r of enriched) {
+        const td = r.userId ? trustMap.get(r.userId) : null;
+        const rc = td?.homeCity?.toLowerCase().trim();
+        if (!rc) continue;
+        const isLocal = (bizCity && rc.includes(bizCity)) || (bizState && rc.includes(bizState!));
+        if (isLocal) statsLocal++; else statsTraveler++;
+      }
+    }
 
     const weightedRating = computeWeightedRating(
       enriched.map((r) => ({ rating: r.rating, weight: r.weight ?? "1" }))
     );
 
-    res.json({ reviews: enriched, weightedRating });
+    res.json({
+      reviews: enriched,
+      weightedRating,
+      stats: {
+        total: enriched.length,
+        verified: statsVerified,
+        influencer: statsInfluencer,
+        local: statsLocal,
+        traveler: statsTraveler,
+        weightedAverage: weightedRating,
+      },
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch reviews");
     res.status(500).json({ error: "Failed to fetch reviews" });
@@ -276,13 +317,14 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
       helpfulReviewsCount: usersTable.helpfulReviewsCount,
       reputationScore: usersTable.reputationScore,
       createdAt: usersTable.createdAt,
+      isInfluencer: usersTable.isInfluencer,
     })
     .from(usersTable)
     .where(eq(usersTable.id, req.user.id))
     .limit(1);
 
   const trustLevel = userRow ? (computeTrustLevel(userRow) as 1 | 2 | 3 | 4) : 1;
-  const reviewWeight = getReviewWeight(trustLevel, false, false);
+  const reviewWeight = getReviewWeight(trustLevel, false, false, userRow?.isInfluencer ?? false);
 
   const [bizRow] = await db
     .select({ blackOwned: businessesTable.blackOwned })

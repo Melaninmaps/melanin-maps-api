@@ -44,7 +44,7 @@ import { BusinessListingsSection } from "@/components/BusinessListingsSection";
 import { BusinessMilestonesSection } from "@/components/BusinessMilestonesSection";
 import { CircleTrustedSection } from "@/components/CircleTrustedSection";
 import { CommunityConfidenceScore } from "@/components/CommunityConfidenceScore";
-import { TrustBadge, type TrustLevel } from "@/components/TrustBadge";
+import { TrustBadge, InfluencerBadge, ReviewSourceBar, type TrustLevel } from "@/components/TrustBadge";
 import { KnowBeforeYouGoSection } from "@/components/KnowBeforeYouGoSection";
 import { PassThePlateModal } from "@/components/PassThePlateModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
@@ -144,7 +144,7 @@ export default function BusinessDetailScreen() {
   const [nomComment, setNomComment] = useState("");
   const [nomSubmitting, setNomSubmitting] = useState(false);
 
-  const { reviews: apiReviews, weightedRating, submitReview } = useReviews(id ?? "");
+  const { reviews: apiReviews, weightedRating, reviewStats, submitReview } = useReviews(id ?? "");
   const { hasCheckedIn, checkIn } = useCheckins();
   const { addLocal } = usePoints();
   const { deals } = useDeals(id ?? "");
@@ -389,6 +389,7 @@ export default function BusinessDetailScreen() {
         verificationBadge: (r as any).verificationBadge ?? null,
         moderationLevel: (r as any).moderationLevel ?? null,
         authorTrustLevel: (typeof r.authorTrustLevel === "number" && r.authorTrustLevel >= 1 && r.authorTrustLevel <= 4 ? r.authorTrustLevel : 1) as TrustLevel,
+        authorIsInfluencer: (r as any).authorIsInfluencer === true,
       })),
     ...(business.reviews ?? []),
   ];
@@ -719,8 +720,11 @@ export default function BusinessDetailScreen() {
           <RatingStars rating={business.rating} reviewCount={business.reviewCount} size={14} showLabel />
           {weightedRating !== null && weightedRating > 0 && Math.abs(weightedRating - (business.rating ?? 0)) >= 0.1 && (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4, backgroundColor: "#16A34A0D", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignSelf: "flex-start", borderWidth: 1, borderColor: "#16A34A25" }}>
-              <Text style={{ fontSize: 10, color: "#16A34A", fontFamily: "Inter_600SemiBold" }}>✔ {weightedRating.toFixed(1)} verified-weighted</Text>
+              <Text style={{ fontSize: 10, color: "#16A34A", fontFamily: "Inter_600SemiBold" }}>{"\u2714"} {weightedRating.toFixed(1)} trust-weighted avg</Text>
             </View>
+          )}
+          {reviewStats && reviewStats.total > 0 && (
+            <ReviewSourceBar stats={reviewStats} />
           )}
 
           {/* Hidden Gem / Community Spotlight badge */}
@@ -1447,7 +1451,10 @@ export default function BusinessDetailScreen() {
                     <Text style={[styles.reviewAuthor, { color: colors.foreground }]}>{rev.author}</Text>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2, flexWrap: "wrap" }}>
                       <Text style={[styles.reviewTime, { color: colors.mutedForeground }]}>{rev.timeAgo}</Text>
-                      {rev.authorTrustLevel && rev.authorTrustLevel >= 2 && (
+                      {(rev as any).authorIsInfluencer && (
+                        <InfluencerBadge size="sm" />
+                      )}
+                      {!((rev as any).authorIsInfluencer) && rev.authorTrustLevel && rev.authorTrustLevel >= 2 && (
                         <TrustBadge level={rev.authorTrustLevel} size="sm" />
                       )}
                     </View>

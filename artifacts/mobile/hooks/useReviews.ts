@@ -31,12 +31,23 @@ export interface ApiReview {
   ownerRespondedAt: string | null;
   status: string | null;
   authorTrustLevel?: number;
+  authorIsInfluencer?: boolean;
   weight?: string;
+}
+
+export interface ReviewStats {
+  total: number;
+  verified: number;
+  influencer: number;
+  local: number;
+  traveler: number;
+  weightedAverage: number;
 }
 
 export function useReviews(businessId: string) {
   const [reviews, setReviews] = useState<ApiReview[]>([]);
   const [weightedRating, setWeightedRating] = useState<number | null>(null);
+  const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const load = useCallback(async () => {
@@ -44,11 +55,15 @@ export function useReviews(businessId: string) {
     if (!businessId) return;
     setIsLoading(true);
     try {
-      const res = await fetch(`${apiBase}/api/reviews?businessId=${encodeURIComponent(businessId)}`);
+      const token = await getToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${apiBase}/api/reviews?businessId=${encodeURIComponent(businessId)}`, { headers });
       if (res.ok) {
-        const data = (await res.json()) as { reviews: ApiReview[]; weightedRating?: number };
+        const data = (await res.json()) as { reviews: ApiReview[]; weightedRating?: number; stats?: ReviewStats };
         setReviews(data.reviews);
         if (typeof data.weightedRating === "number") setWeightedRating(data.weightedRating);
+        if (data.stats) setReviewStats(data.stats);
       }
     } catch {}
     finally { setIsLoading(false); }
@@ -119,5 +134,5 @@ export function useReviews(businessId: string) {
     [businessId],
   );
 
-  return { reviews, weightedRating, isLoading, submitReview, refresh: load };
+  return { reviews, weightedRating, reviewStats, isLoading, submitReview, refresh: load };
 }

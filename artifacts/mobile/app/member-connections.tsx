@@ -190,6 +190,33 @@ export default function MemberConnectionsScreen() {
 
   const sendMeetupRequest = async () => {
     if (!selectedConn) return;
+
+    // Check if partner is identity-verified before sending
+    try {
+      const preToken = await SecureStore.getItemAsync("auth_session_token");
+      const checkRes = await fetch(`${getApiBase()}/api/meetups/partner-check?partnerId=${encodeURIComponent(selectedConn.otherId)}`, {
+        headers: preToken ? { Authorization: `Bearer ${preToken}` } : {},
+      });
+      if (checkRes.ok) {
+        const checkData = await checkRes.json() as { identityVerified: boolean; displayName: string };
+        if (!checkData.identityVerified) {
+          await new Promise<void>((resolve, reject) => {
+            Alert.alert(
+              "Unverified Community Member",
+              `${checkData.displayName} has not completed identity verification on Mapping With Melanin.\n\nYou can still set up meetup verification, but exercise extra caution and always meet in public places.`,
+              [
+                { text: "Cancel", style: "cancel", onPress: () => reject(new Error("cancelled")) },
+                { text: "Proceed Anyway", style: "default", onPress: () => resolve() },
+              ]
+            );
+          });
+        }
+      }
+    } catch (e) {
+      if ((e as Error).message === "cancelled") return;
+      // If the check fails for network reasons, allow the request to proceed
+    }
+
     setSending(true);
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {

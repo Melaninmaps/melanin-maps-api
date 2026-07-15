@@ -83,6 +83,38 @@ router.get("/meetups", async (req: Request, res: Response) => {
   }
 });
 
+// GET /meetups/partner-check — check if a partner is identity-verified before creating a meetup
+router.get("/meetups/partner-check", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res); if (!userId) return;
+  const { partnerId } = req.query;
+  if (!partnerId || typeof partnerId !== "string") { res.status(400).json({ error: "partnerId required" }); return; }
+  try {
+    const [user] = await db
+      .select({
+        id: usersTable.id,
+        firstName: usersTable.firstName,
+        lastName: usersTable.lastName,
+        username: usersTable.username,
+        identityVerified: usersTable.identityVerified,
+        trustLevel: usersTable.trustLevel,
+        isInfluencer: usersTable.isInfluencer,
+      })
+      .from(usersTable)
+      .where(eq(usersTable.id, partnerId))
+      .limit(1);
+    if (!user) { res.status(404).json({ error: "User not found" }); return; }
+    res.json({
+      identityVerified: user.identityVerified,
+      trustLevel: user.trustLevel,
+      isInfluencer: user.isInfluencer,
+      displayName: [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "Community Member",
+    });
+  } catch (err) {
+    req.log.error({ err }, "GET /meetups/partner-check error");
+    res.status(500).json({ error: "Failed to check partner" });
+  }
+});
+
 // POST /meetups — create a meetup verification request
 router.post("/meetups", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res); if (!userId) return;
