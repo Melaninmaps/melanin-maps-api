@@ -132,6 +132,7 @@ import communityImpactRouter from "./community-impact";
 import showLoveRouter from "./show-love";
 import membershipFamilyRouter from "./membership-family";
 import legalRouter from "./legal";
+import businessMembershipInfoRouter from "./business-membership-info";
 
 const router: IRouter = Router();
 
@@ -267,6 +268,7 @@ router.use(communityImpactRouter);
 router.use(showLoveRouter);
 router.use(membershipFamilyRouter);
 router.use(legalRouter);
+router.use(businessMembershipInfoRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

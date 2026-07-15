@@ -24,7 +24,8 @@ type Audience = "consumer" | "business" | "creator";
 
 interface Plan {
   id: string;
-  emoji: string;
+  icon: string;
+  benefit: string;
   name: string;
   stripeKey?: string;
   rcOfferingId?: string;
@@ -42,10 +43,39 @@ interface Plan {
   addOnPriceCents?: number;
 }
 
+const MATCHING_PERSONAL_TIER: Record<string, string> = {
+  growth_business:   "Community Builder",
+  premium_business:  "Legacy Member",
+  founding_business: "Legacy Member",
+};
+
+const INCLUDED_BENEFITS: Array<{ icon: string; label: string; highlight?: boolean }> = [
+  { icon: "map-pin",        label: "Business Profile" },
+  { icon: "user",           label: "One Matching Community Membership", highlight: true },
+  { icon: "globe",          label: "FREE Website Clicks — 0% referral fee", highlight: true },
+  { icon: "bar-chart-2",    label: "Analytics Dashboard" },
+  { icon: "star",           label: "Community Reviews" },
+  { icon: "calendar",       label: "Events" },
+  { icon: "link",           label: "Website & Social Links" },
+  { icon: "check-circle",   label: "Claim Your Business" },
+  { icon: "heart",          label: "Show Love Recognition" },
+  { icon: "message-circle", label: "Business Messaging" },
+  { icon: "users",          label: "Support Local Campaigns" },
+];
+
+const MISSION_ITEMS: Array<{ icon: string; label: string }> = [
+  { icon: "home",      label: "Sponsor local community events" },
+  { icon: "book-open", label: "Support scholarships" },
+  { icon: "briefcase", label: "Promote minority-owned businesses" },
+  { icon: "map",       label: "Expand to new cities" },
+  { icon: "shield",    label: "Build new safety features" },
+];
+
 const CONSUMER_PLANS: Plan[] = [
   {
     id: "explorer_free",
-    emoji: "🟤",
+    icon: "compass",
+    benefit: "Discover your community.",
     name: "Explorer",
     tagline: "Discover your community — always free.",
     badge: null,
@@ -69,7 +99,8 @@ const CONSUMER_PLANS: Plan[] = [
   },
   {
     id: "navigator",
-    emoji: "🧭",
+    icon: "navigation",
+    benefit: "Travel and explore with confidence.",
     name: "Navigator",
     stripeKey: "Navigator",
     rcOfferingId: "navigator",
@@ -97,7 +128,8 @@ const CONSUMER_PLANS: Plan[] = [
   },
   {
     id: "trailblazer",
-    emoji: "🌍",
+    icon: "globe",
+    benefit: "Explore and relocate with premium tools.",
     name: "Trailblazer",
     stripeKey: "Trailblazer",
     rcOfferingId: "trailblazer",
@@ -125,7 +157,8 @@ const CONSUMER_PLANS: Plan[] = [
   },
   {
     id: "community_builder",
-    emoji: "🤝",
+    icon: "users",
+    benefit: "Lead, mentor, and grow your community.",
     name: "Community Builder",
     stripeKey: "Community Builder",
     rcOfferingId: "community_builder",
@@ -153,7 +186,8 @@ const CONSUMER_PLANS: Plan[] = [
   },
   {
     id: "legacy_member",
-    emoji: "👑",
+    icon: "award",
+    benefit: "Maximize everything — for you and your family.",
     name: "Legacy Member",
     stripeKey: "Legacy Member",
     rcOfferingId: "legacy_member",
@@ -184,7 +218,8 @@ const CONSUMER_PLANS: Plan[] = [
 const BUSINESS_PLANS: Plan[] = [
   {
     id: "biz_free",
-    emoji: "📍",
+    icon: "map-pin",
+    benefit: "Get discovered by the community.",
     name: "Community Business",
     tagline: "Get discovered by the community — always free.",
     badge: null,
@@ -206,7 +241,8 @@ const BUSINESS_PLANS: Plan[] = [
   },
   {
     id: "growth_business",
-    emoji: "🚀",
+    icon: "trending-up",
+    benefit: "Reach more customers and grow faster.",
     name: "Growth Business",
     stripeKey: "Growth Business",
     rcOfferingId: "growth_business",
@@ -231,7 +267,8 @@ const BUSINESS_PLANS: Plan[] = [
   },
   {
     id: "premium_business",
-    emoji: "⭐",
+    icon: "star",
+    benefit: "Expand your reach and automate engagement.",
     name: "Premium Business",
     stripeKey: "Premium Business",
     rcOfferingId: "premium_business",
@@ -256,7 +293,8 @@ const BUSINESS_PLANS: Plan[] = [
   },
   {
     id: "founding_business",
-    emoji: "🏛️",
+    icon: "award",
+    benefit: "Maximize visibility, analytics, and enterprise tools.",
     name: "Founding Business",
     stripeKey: "Founding Business",
     rcOfferingId: "founding_business",
@@ -329,10 +367,7 @@ export default function MembershipScreen() {
 
     if (plan.id === "biz_free") { router.push("/list-business"); return; }
 
-    // iOS → RevenueCat IAP for all paid plans (Apple requires this for 3.1.1,
-    // including business/B2B subscriptions — see guideline 3.1.3(b))
     if (Platform.OS === "ios" && plan.rcOfferingId) {
-      // If RC is still fetching offerings, show a loading hint and wait.
       if (rcLoading) {
         Alert.alert("Loading", "Store products are loading. Please try again in a moment.");
         return;
@@ -342,10 +377,6 @@ export default function MembershipScreen() {
       const pkg = billing === "annual" ? offering?.annual : offering?.monthly;
 
       if (!pkg) {
-        // Offerings loaded but this specific product isn't available in the store.
-        // This should not normally happen in production; if it does it means the
-        // App Store Connect in-app purchase product hasn't been linked in the
-        // RevenueCat dashboard for offering ID: plan.rcOfferingId
         Alert.alert(
           "Unavailable",
           `The ${plan.name} plan is not currently available for purchase. Please contact support@mappingwithmelanin.com for assistance.`,
@@ -363,7 +394,6 @@ export default function MembershipScreen() {
       setRcPurchasingId(plan.id);
       try {
         await purchase(pkg);
-        // Sync new tier to server
         const token = await SecureStore.getItemAsync("auth_session_token");
         if (token) {
           const apiBase = process.env.EXPO_PUBLIC_DOMAIN
@@ -379,7 +409,7 @@ export default function MembershipScreen() {
           });
         }
         Alert.alert(
-          "🎉 Welcome!",
+          "Welcome!",
           `Your ${plan.name} membership is now active. Thank you for supporting the community.`,
         );
       } catch (err: unknown) {
@@ -396,7 +426,6 @@ export default function MembershipScreen() {
       return;
     }
 
-    // Web & Android → Stripe checkout
     const result = await initiateCheckout(plan.stripeKey ?? plan.name, billing);
 
     if (result === "no_auth") {
@@ -420,7 +449,7 @@ export default function MembershipScreen() {
     } else if (result === "error") {
       Alert.alert("Something went wrong", "Please try again in a moment.");
     }
-  }, [router, billing, audience, initiateCheckout, purchase, offerings, rcLoading]);
+  }, [router, billing, initiateCheckout, purchase, offerings, rcLoading]);
 
   const plans = audience === "consumer" ? CONSUMER_PLANS : BUSINESS_PLANS;
 
@@ -446,6 +475,7 @@ export default function MembershipScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
+      {/* ── Header ── */}
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
         <TouchableOpacity activeOpacity={0.85}
           style={styles.back}
@@ -462,7 +492,7 @@ export default function MembershipScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      {/* Consumer / Business / Creator toggle */}
+      {/* ── Audience toggle ── */}
       <View style={[styles.audienceToggle, { backgroundColor: colors.secondary }]}>
         {([
           { id: "consumer", label: "Personal", icon: "user" },
@@ -490,7 +520,7 @@ export default function MembershipScreen() {
         ))}
       </View>
 
-      {/* Billing toggle — hidden for creator tab */}
+      {/* ── Billing toggle ── */}
       {audience !== "creator" && (
         <View style={[styles.billingToggle, { backgroundColor: colors.secondary }]}>
           {(["monthly", "annual"] as Billing[]).map((b) => (
@@ -516,6 +546,7 @@ export default function MembershipScreen() {
         </View>
       )}
 
+      {/* ── Active subscription bar ── */}
       {subscription && (
         <TouchableOpacity
           style={[styles.manageBar, { backgroundColor: colors.secondary }]}
@@ -531,26 +562,29 @@ export default function MembershipScreen() {
         </TouchableOpacity>
       )}
 
-      {/* Launch offer banner — consumer only */}
+      {/* ── Launch offer banner (consumer only) ── */}
       {audience === "consumer" && (
         <View style={[styles.launchBanner, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F44" }]}>
-          <Text style={{ fontSize: 16 }}>🎁</Text>
+          <Feather name="gift" size={16} color="#2D7A4F" />
           <Text style={[styles.launchTxt, { color: "#2D7A4F" }]}>
             Launch Offer — 90-day free Premium trial, no credit card required
           </Text>
         </View>
       )}
 
+      {/* ── ScrollView ── */}
       <ScrollView
         keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 24 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Business Success Promise — scrolls with plans so full first card is visible */}
+        {/* ── Business Success Promise (scrolls with content) ── */}
         {audience === "business" && (
           <View style={[styles.promiseCard, { backgroundColor: colors.card, borderColor: colors.primary + "44" }]}>
             <View style={styles.promiseHeader}>
-              <Text style={{ fontSize: 20 }}>🤝🏾</Text>
+              <View style={[styles.promiseIconWrap, { backgroundColor: colors.primary + "18" }]}>
+                <Feather name="trending-up" size={16} color={colors.primary} />
+              </View>
               <Text style={[styles.promiseTitle, { color: colors.foreground }]}>
                 Business Success Promise
               </Text>
@@ -560,7 +594,7 @@ export default function MembershipScreen() {
               <Text style={[styles.promiseEmphasis, { color: colors.foreground }]}>why would I pay more?</Text>
             </Text>
             <Text style={[styles.promiseBody, { color: colors.mutedForeground }]}>
-              Every tier is designed to help you make more money, save time, or increase visibility — not just unlock features.
+              Every tier is designed to help you earn more, save time, and grow your business — not just unlock more features.
             </Text>
             <TouchableOpacity
               style={[styles.guideBtn, { borderColor: colors.primary + "55", backgroundColor: colors.primary + "0F" }]}
@@ -574,19 +608,80 @@ export default function MembershipScreen() {
           </View>
         )}
 
+        {/* ── Included with Every Business Membership ── */}
+        {audience === "business" && (
+          <View style={[styles.includedCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.includedHeader}>
+              <Feather name="check-circle" size={16} color={colors.primary} />
+              <Text style={[styles.includedTitle, { color: colors.foreground }]}>
+                Included with Every Business Membership
+              </Text>
+            </View>
+            <Text style={[styles.includedSub, { color: colors.mutedForeground }]}>
+              Before you compare tiers — here's what every business gets, regardless of plan.
+            </Text>
+
+            {/* Matching membership — prominent callout */}
+            <View style={[styles.matchingCallout, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "40" }]}>
+              <View style={styles.matchingCalloutTop}>
+                <View style={[styles.matchingIconWrap, { backgroundColor: colors.primary + "20" }]}>
+                  <Feather name="gift" size={14} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.matchingCalloutTitle, { color: colors.foreground }]}>
+                    One Matching Community Membership
+                  </Text>
+                  <Text style={[styles.matchingCalloutSub, { color: colors.mutedForeground }]}>
+                    Your business tier is your personal tier too. Buy Growth Business, become a Community Builder — included.
+                  </Text>
+                </View>
+              </View>
+              <View style={[styles.matchingBadge, { backgroundColor: colors.primary }]}>
+                <Feather name="gift" size={11} color="#FFF" />
+                <Text style={styles.matchingBadgeTxt}>Included — No Extra Cost</Text>
+              </View>
+            </View>
+
+            {/* Baseline benefits list */}
+            <View style={styles.includedList}>
+              {INCLUDED_BENEFITS.filter((b) => b.label !== "One Matching Community Membership").map((b, i) => (
+                <View key={i} style={styles.includedRow}>
+                  <View style={[
+                    styles.includedIconWrap,
+                    { backgroundColor: b.highlight ? colors.primary + "18" : colors.secondary },
+                  ]}>
+                    <Feather
+                      name={b.icon as any}
+                      size={13}
+                      color={b.highlight ? colors.primary : colors.mutedForeground}
+                    />
+                  </View>
+                  <Text style={[
+                    styles.includedLabel,
+                    { color: b.highlight ? colors.foreground : colors.mutedForeground },
+                    b.highlight && { fontFamily: "Inter_600SemiBold" },
+                  ]}>
+                    {b.label}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* ── Creator Program ── */}
         {audience === "creator" && (
           <>
-            {/* Hero */}
             <View style={[styles.creatorHero, { backgroundColor: "#1A3B2B" }]}>
-              <Text style={styles.creatorHeroEmoji}>🎥</Text>
+              <View style={[styles.creatorHeroIcon, { backgroundColor: "rgba(202,146,43,0.18)" }]}>
+                <Feather name="video" size={36} color="#CA922B" />
+              </View>
               <Text style={styles.creatorHeroTitle}>Creator Program</Text>
               <Text style={styles.creatorHeroSub}>
                 A third side of the Mapping With Melanin™ marketplace — alongside Community Members and Businesses.
               </Text>
             </View>
 
-            {/* What creators do */}
             <View style={[styles.creatorCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[styles.creatorCardTitle, { color: colors.foreground }]}>Why Creators Matter</Text>
               <Text style={[styles.creatorCardBody, { color: colors.mutedForeground }]}>
@@ -599,22 +694,21 @@ export default function MembershipScreen() {
               </Text>
             </View>
 
-            {/* Program perks */}
             <View style={[styles.creatorCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.creatorPerksHeader}>
-                <Text style={{ fontSize: 18 }}>🏅</Text>
+                <Feather name="award" size={18} color={colors.primary} />
                 <Text style={[styles.creatorCardTitle, { color: colors.foreground }]}>Selected Creators Receive</Text>
               </View>
               {[
-                { icon: "✅", label: "Verified Creator badge", detail: "A trusted signal on every video and your profile." },
-                { icon: "📌", label: "Featured placement", detail: "Your content surfaces first in destination searches." },
-                { icon: "🎉", label: "Invitations to events", detail: "Early access and press credentials at partner events." },
-                { icon: "🤝🏾", label: "Business partnerships", detail: "Match with local businesses for collaborative content." },
-                { icon: "💰", label: "Future revenue-sharing", detail: "First in line when monetization launches." },
-                { icon: "📊", label: "Creator analytics", detail: "Views, likes, saves, profile visits, and follower growth." },
+                { icon: "check-circle", label: "Verified Creator badge", detail: "A trusted signal on every video and your profile." },
+                { icon: "map-pin",     label: "Featured placement",      detail: "Your content surfaces first in destination searches." },
+                { icon: "calendar",    label: "Invitations to events",   detail: "Early access and press credentials at partner events." },
+                { icon: "users",       label: "Business partnerships",   detail: "Match with local businesses for collaborative content." },
+                { icon: "dollar-sign", label: "Future revenue-sharing",  detail: "First in line when monetization launches." },
+                { icon: "bar-chart-2", label: "Creator analytics",       detail: "Views, likes, saves, profile visits, and follower growth." },
               ].map((p, i) => (
                 <View key={i} style={styles.creatorPerkRow}>
-                  <Text style={{ fontSize: 18, lineHeight: 24 }}>{p.icon}</Text>
+                  <Feather name={p.icon as any} size={16} color={colors.primary} />
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text style={[styles.creatorPerkLabel, { color: colors.foreground }]}>{p.label}</Text>
                     <Text style={[styles.creatorPerkDetail, { color: colors.mutedForeground }]}>{p.detail}</Text>
@@ -623,7 +717,6 @@ export default function MembershipScreen() {
               ))}
             </View>
 
-            {/* Who qualifies */}
             <View style={[styles.creatorCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[styles.creatorCardTitle, { color: colors.foreground }]}>Who Qualifies</Text>
               {[
@@ -639,9 +732,8 @@ export default function MembershipScreen() {
               ))}
             </View>
 
-            {/* Show Me the Vibe callout */}
             <View style={[styles.creatorVibeCard, { backgroundColor: "#CA922B" }]}>
-              <Text style={{ fontSize: 22 }}>🎬</Text>
+              <Feather name="film" size={22} color="#FFF" />
               <View style={{ flex: 1 }}>
                 <Text style={styles.creatorVibeTitle}>Power the "Show Me the Vibe" feature</Text>
                 <Text style={styles.creatorVibeSub}>
@@ -650,7 +742,6 @@ export default function MembershipScreen() {
               </View>
             </View>
 
-            {/* Apply CTA */}
             <TouchableOpacity
               style={[styles.ctaBtn, { backgroundColor: colors.primary }]}
               onPress={() => router.push("/waitlist")}
@@ -665,11 +756,13 @@ export default function MembershipScreen() {
           </>
         )}
 
-        {/* ── Standard plans ── */}
+        {/* ── Plan cards ── */}
         {audience !== "creator" && plans.map((plan) => {
           const isHighlight = plan.bg !== null;
           const loading = (checkoutLoading && checkoutPlanId === (plan.stripeKey ?? plan.name)) || rcPurchasingId === plan.id;
           const subscribed = isSubscribed(plan);
+          const matchingTier = audience === "business" ? MATCHING_PERSONAL_TIER[plan.id] : null;
+
           return (
             <View
               key={plan.id}
@@ -692,12 +785,26 @@ export default function MembershipScreen() {
 
               <View style={styles.planTop}>
                 <View style={styles.planNameRow}>
-                  <Text style={styles.planEmoji}>{plan.emoji}</Text>
-                  <Text style={[styles.planName, { color: isHighlight ? "#FFF" : colors.foreground }]}>
-                    {plan.name}
-                  </Text>
+                  <View style={[
+                    styles.planIconWrap,
+                    { backgroundColor: isHighlight ? "rgba(255,255,255,0.2)" : colors.secondary },
+                  ]}>
+                    <Feather
+                      name={plan.icon as any}
+                      size={18}
+                      color={isHighlight ? "#FFF" : plan.color}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.planName, { color: isHighlight ? "#FFF" : colors.foreground }]}>
+                      {plan.name}
+                    </Text>
+                    <Text style={[styles.planBenefit, { color: isHighlight ? "rgba(255,255,255,0.8)" : colors.primary }]}>
+                      {plan.benefit}
+                    </Text>
+                  </View>
                 </View>
-                <Text style={[styles.planTagline, { color: isHighlight ? "rgba(255,255,255,0.75)" : colors.mutedForeground }]}>
+                <Text style={[styles.planTagline, { color: isHighlight ? "rgba(255,255,255,0.7)" : colors.mutedForeground }]}>
                   {plan.tagline}
                 </Text>
                 <Text style={[styles.planPrice, { color: isHighlight ? "#FFF" : colors.foreground }]}>
@@ -710,22 +817,31 @@ export default function MembershipScreen() {
                 )}
               </View>
 
-              {/* ── Family + AI Highlights (paid consumer plans only) ─── */}
+              {/* Matching community membership callout — paid business plans only */}
+              {audience === "business" && matchingTier && (
+                <View style={[
+                  styles.matchingInCard,
+                  { backgroundColor: isHighlight ? "rgba(255,255,255,0.14)" : colors.primary + "10", borderColor: isHighlight ? "rgba(255,255,255,0.25)" : colors.primary + "35" },
+                ]}>
+                  <Feather name="gift" size={13} color={isHighlight ? "#FFF" : colors.primary} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.matchingInCardLabel, { color: isHighlight ? "#FFF" : colors.foreground }]}>
+                      Includes {matchingTier} membership
+                    </Text>
+                    <Text style={[styles.matchingInCardSub, { color: isHighlight ? "rgba(255,255,255,0.7)" : colors.mutedForeground }]}>
+                      Your personal community membership — no extra charge
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* AI + Family seat chips (consumer paid plans only) */}
               {audience === "consumer" && plan.aiPool !== undefined && plan.aiPool !== 0 && (
-                <View style={{
-                  flexDirection: "row",
-                  gap: 8,
-                  marginBottom: 14,
-                  paddingHorizontal: 2,
-                }}>
-                  {/* AI Pool chip */}
+                <View style={{ flexDirection: "row", gap: 8, marginBottom: 14, paddingHorizontal: 2 }}>
                   <View style={{
                     flex: 1,
                     backgroundColor: isHighlight ? "rgba(255,255,255,0.14)" : "rgba(202,146,43,0.12)",
-                    borderRadius: 10,
-                    paddingVertical: 9,
-                    paddingHorizontal: 10,
-                    alignItems: "center",
+                    borderRadius: 10, paddingVertical: 9, paddingHorizontal: 10, alignItems: "center",
                   }}>
                     <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: isHighlight ? "rgba(255,255,255,0.65)" : "#CA922B", marginBottom: 2, letterSpacing: 0.4 }}>
                       KINFOLK AI
@@ -737,14 +853,10 @@ export default function MembershipScreen() {
                       shared family pool
                     </Text>
                   </View>
-                  {/* Family Seat chip */}
                   <View style={{
                     flex: 1,
                     backgroundColor: isHighlight ? "rgba(255,255,255,0.14)" : "rgba(26,107,74,0.1)",
-                    borderRadius: 10,
-                    paddingVertical: 9,
-                    paddingHorizontal: 10,
-                    alignItems: "center",
+                    borderRadius: 10, paddingVertical: 9, paddingHorizontal: 10, alignItems: "center",
                   }}>
                     <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: isHighlight ? "rgba(255,255,255,0.65)" : "#1A6B4A", marginBottom: 2, letterSpacing: 0.4 }}>
                       FAMILY SEAT
@@ -812,11 +924,13 @@ export default function MembershipScreen() {
           );
         })}
 
-        {/* Founding 500 Offer — business only */}
+        {/* ── Founding 500 Offer ── */}
         {audience === "business" && (
           <View style={[styles.foundingCard, { backgroundColor: colors.card, borderColor: "#C9A84C" }]}>
             <View style={styles.foundingHeader}>
-              <Text style={styles.foundingEmoji}>🌟</Text>
+              <View style={[styles.foundingIconWrap, { backgroundColor: "#C9A84C22" }]}>
+                <Feather name="award" size={22} color="#C9A84C" />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.foundingName, { color: colors.foreground }]}>Founding 500 Offer</Text>
                 <View style={[styles.foundingBadge, { backgroundColor: "#C9A84C22" }]}>
@@ -825,7 +939,7 @@ export default function MembershipScreen() {
               </View>
             </View>
 
-            <Text style={[styles.featureTxt, { color: colors.mutedForeground, marginBottom: 14, lineHeight: 20 }]}>
+            <Text style={[styles.featureTxt, { color: colors.mutedForeground, lineHeight: 20 }]}>
               Founding 500 is a launch incentive, not a tier — it's recognition for the businesses that believed in Mapping With Melanin™ from the beginning. Selected businesses receive one year of Premium Business benefits and a permanent Founding Business badge, not a discounted subscription.
             </Text>
 
@@ -840,7 +954,7 @@ export default function MembershipScreen() {
                 "Help shape future platform development",
               ].map((f, i) => (
                 <View key={i} style={styles.featureRow}>
-                  <Text style={{ fontSize: 14 }}>⭐</Text>
+                  <Feather name="star" size={14} color="#C9A84C" />
                   <Text style={[styles.featureTxt, { color: colors.foreground }]}>{f}</Text>
                 </View>
               ))}
@@ -856,39 +970,58 @@ export default function MembershipScreen() {
           </View>
         )}
 
-        {/* Marketplace Fees table — business only */}
+        {/* ── Marketplace Fees ── */}
         {audience === "business" && (
           <View style={[styles.feeTable, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.feeTableHeader}>
               <Feather name="percent" size={15} color={colors.primary} />
               <Text style={[styles.feeTableTitle, { color: colors.foreground }]}>Marketplace Fees</Text>
             </View>
-            <Text style={[styles.feeNote, { color: colors.mutedForeground, marginBottom: 12 }]}>
+            <Text style={[styles.feeNote, { color: colors.mutedForeground }]}>
               Fees apply only when a transaction happens inside the app. Sending traffic to your own website is always free.
             </Text>
+
+            {/* Website clicks — highlighted as FREE */}
+            <View style={[styles.feeRowFree, { backgroundColor: "#1A6B4A18", borderColor: "#1A6B4A33" }]}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+                <Feather name="globe" size={14} color="#1A6B4A" />
+                <Text style={[styles.feeRowName, { color: colors.foreground }]}>Website clicks</Text>
+              </View>
+              <View style={[styles.freeChip, { backgroundColor: "#1A6B4A" }]}>
+                <Text style={styles.freeChipTxt}>FREE</Text>
+              </View>
+            </View>
+
             {[
-              { label: "Click-through to your website", fee: "0%" },
-              { label: "In-app bookings", fee: "10%" },
-              { label: "Product sales · $0–$25", fee: "5%" },
-              { label: "Product sales · $25.01–$250", fee: "10%" },
-              { label: "Product sales · $250.01+", fee: "10%" },
-              { label: "Event tickets", fee: "5–8%" },
-              { label: "Donations (nonprofits)", fee: "3%" },
-              { label: "Digital downloads", fee: "10%" },
+              { label: "In-app bookings",               fee: "10%" },
+              { label: "Physical products (under $25)", fee: "5%"  },
+              { label: "Physical products ($25+)",      fee: "10%" },
+              { label: "Digital products",              fee: "10%" },
+              { label: "Event tickets",                 fee: "6%"  },
+              { label: "Donations (nonprofits)",        fee: "3%"  },
             ].map((row, i, arr) => (
               <View key={i} style={[styles.feeRow, i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
                 <Text style={[styles.feeRowName, { color: colors.foreground, flex: 1 }]}>{row.label}</Text>
                 <Text style={[styles.feeRowVal, { color: colors.primary }]}>{row.fee}</Text>
               </View>
             ))}
+
+            <View style={[styles.feeDisclaimer, { backgroundColor: colors.secondary, borderRadius: 8 }]}>
+              <Feather name="info" size={12} color={colors.mutedForeground} />
+              <Text style={[styles.feeLegal, { color: colors.mutedForeground }]}>
+                Full fee schedule and tier discounts explained in the Business Tier Guide.
+              </Text>
+            </View>
           </View>
         )}
 
-        {/* Verified Business section — business only */}
+        {/* ── How We Verify Businesses ── */}
         {audience === "business" && (
           <View style={[styles.verifyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.verifyHeader}>
-              <Text style={{ fontSize: 20 }}>✅</Text>
+              <View style={[styles.verifyIconWrap, { backgroundColor: colors.primary + "18" }]}>
+                <Feather name="shield" size={18} color={colors.primary} />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.verifyTitle, { color: colors.foreground }]}>How We Verify Businesses</Text>
                 <Text style={[styles.verifySub, { color: colors.mutedForeground }]}>
@@ -898,30 +1031,10 @@ export default function MembershipScreen() {
             </View>
 
             {[
-              {
-                step: "1",
-                icon: "file-text" as const,
-                label: "Submit your business",
-                detail: "Provide your business name, category, location, and contact info when you list.",
-              },
-              {
-                step: "2",
-                icon: "check-square" as const,
-                label: "Ownership documentation",
-                detail: "We review proof of minority ownership — such as a business license, LLC filing, or signed attestation.",
-              },
-              {
-                step: "3",
-                icon: "users" as const,
-                label: "Community signals",
-                detail: "Community reviews, check-ins, and referrals from existing verified businesses add trust weight.",
-              },
-              {
-                step: "4",
-                icon: "award" as const,
-                label: "Verified badge awarded",
-                detail: "Once approved, your listing displays a Verified Minority-Owned badge visible to every user.",
-              },
+              { step: "1", icon: "file-text" as const, label: "Submit your business",       detail: "Provide your business name, category, location, and contact info when you list." },
+              { step: "2", icon: "check-square" as const, label: "Ownership documentation", detail: "We review proof of minority ownership — such as a business license, LLC filing, or signed attestation." },
+              { step: "3", icon: "users" as const, label: "Community signals",              detail: "Community reviews, check-ins, and referrals from existing verified businesses add trust weight." },
+              { step: "4", icon: "award" as const, label: "Verified badge awarded",         detail: "Once approved, your listing displays a Verified Minority-Owned badge visible to every user." },
             ].map((s, i) => (
               <View key={i} style={styles.verifyStep}>
                 <View style={[styles.verifyStepNum, { backgroundColor: colors.primary + "22" }]}>
@@ -946,6 +1059,30 @@ export default function MembershipScreen() {
           </View>
         )}
 
+        {/* ── Where Your Membership Goes ── */}
+        {audience === "business" && (
+          <View style={[styles.missionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.missionHeader}>
+              <Feather name="heart" size={16} color={colors.primary} />
+              <Text style={[styles.missionTitle, { color: colors.foreground }]}>
+                Where Your Membership Goes
+              </Text>
+            </View>
+            <Text style={[styles.missionSub, { color: colors.mutedForeground }]}>
+              Every subscription helps us build something bigger than a directory.
+            </Text>
+            {MISSION_ITEMS.map((item, i) => (
+              <View key={i} style={styles.missionRow}>
+                <View style={[styles.missionIconWrap, { backgroundColor: colors.primary + "15" }]}>
+                  <Feather name={item.icon as any} size={14} color={colors.primary} />
+                </View>
+                <Text style={[styles.missionLabel, { color: colors.foreground }]}>{item.label}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* ── Money-back guarantee ── */}
         {audience !== "creator" && (
           <View style={[styles.guaranteeBox, { backgroundColor: colors.secondary }]}>
             <Feather name="shield" size={20} color={colors.success} />
@@ -1011,87 +1148,111 @@ const styles = StyleSheet.create({
   },
   launchTxt: { flex: 1, fontSize: 13, fontFamily: "Inter_600SemiBold", lineHeight: 18 },
   scroll: { paddingHorizontal: 20, gap: 16 },
+
+  // Promise card
+  promiseCard: { padding: 16, borderRadius: 14, borderWidth: 1, gap: 10 },
+  promiseHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
+  promiseIconWrap: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  promiseTitle: { fontSize: 15, fontFamily: "Inter_700Bold", flex: 1 },
+  promiseBody: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20 },
+  promiseEmphasis: { fontFamily: "Inter_600SemiBold" },
+  guideBtn: { flexDirection: "row", alignItems: "center", gap: 7, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, marginTop: 2 },
+  guideBtnTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1 },
+
+  // Included benefits card
+  includedCard: { borderRadius: 16, padding: 18, gap: 14, borderWidth: 1 },
+  includedHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  includedTitle: { fontSize: 15, fontFamily: "Inter_700Bold", flex: 1 },
+  includedSub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19, marginTop: -4 },
+  matchingCallout: { borderRadius: 12, borderWidth: 1, padding: 14, gap: 10 },
+  matchingCalloutTop: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  matchingIconWrap: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  matchingCalloutTitle: { fontSize: 14, fontFamily: "Inter_700Bold", marginBottom: 3 },
+  matchingCalloutSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
+  matchingBadge: { flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
+  matchingBadgeTxt: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#FFF" },
+  includedList: { gap: 10 },
+  includedRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  includedIconWrap: { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+  includedLabel: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
+
+  // Plan cards
   planCard: { borderRadius: 20, padding: 22, gap: 18 },
   planBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   planBadgeTxt: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   planTop: { gap: 4 },
-  planNameRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  planEmoji: { fontSize: 22 },
+  planNameRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 4 },
+  planIconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   planName: { fontSize: 20, fontFamily: "Inter_700Bold" },
+  planBenefit: { fontSize: 13, fontFamily: "Inter_600SemiBold", marginTop: 1 },
   planTagline: { fontSize: 13, fontFamily: "Inter_400Regular", marginBottom: 4 },
   planPrice: { fontSize: 30, fontFamily: "Inter_700Bold" },
   planPriceSub: { fontSize: 13, fontFamily: "Inter_400Regular" },
+
+  // Matching tier inside plan card
+  matchingInCard: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderRadius: 10, borderWidth: 1, padding: 12 },
+  matchingInCardLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
+  matchingInCardSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 16 },
+
   featureList: { gap: 10 },
   featureRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   featureTxt: { fontSize: 14, fontFamily: "Inter_400Regular", flex: 1, lineHeight: 20 },
   ctaBtn: { alignItems: "center", paddingVertical: 15, borderRadius: 12 },
   ctaTxt: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  foundingCard: {
-    borderRadius: 20, padding: 22, gap: 18,
-    borderWidth: 1.5,
-  },
+
+  // Founding 500
+  foundingCard: { borderRadius: 20, padding: 22, gap: 18, borderWidth: 1.5 },
   foundingHeader: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
-  foundingEmoji: { fontSize: 28 },
+  foundingIconWrap: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   foundingName: { fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 6 },
   foundingBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   foundingBadgeTxt: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  verifyCard: {
-    borderRadius: 16, padding: 18, gap: 16, borderWidth: 1,
-  },
+
+  // Fee table
+  feeTable: { borderRadius: 16, padding: 18, gap: 0, borderWidth: 1 },
+  feeTableHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
+  feeTableTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  feeNote: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, marginBottom: 12 },
+  feeRowFree: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderRadius: 10, borderWidth: 1, paddingVertical: 11, paddingHorizontal: 12, marginBottom: 4 },
+  feeRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12 },
+  feeRowName: { fontSize: 14, fontFamily: "Inter_400Regular" },
+  feeRowVal: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  freeChip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  freeChipTxt: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#FFF", letterSpacing: 0.5 },
+  feeDisclaimer: { flexDirection: "row", alignItems: "flex-start", gap: 7, marginTop: 10, padding: 10 },
+  feeLegal: { fontSize: 11, fontFamily: "Inter_400Regular", lineHeight: 16, flex: 1 },
+
+  // Verify
+  verifyCard: { borderRadius: 16, padding: 18, gap: 16, borderWidth: 1 },
   verifyHeader: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  verifyIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   verifyTitle: { fontSize: 15, fontFamily: "Inter_700Bold", marginBottom: 4 },
   verifySub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
   verifyStep: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
-  verifyStepNum: {
-    width: 28, height: 28, borderRadius: 14,
-    alignItems: "center", justifyContent: "center", marginTop: 1,
-  },
+  verifyStepNum: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", marginTop: 1 },
   verifyStepNumTxt: { fontSize: 13, fontFamily: "Inter_700Bold" },
   verifyStepLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   verifyStepDetail: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17, marginTop: 2 },
-  verifyNote: {
-    flexDirection: "row", alignItems: "flex-start", gap: 8,
-    padding: 12, borderRadius: 10, borderWidth: 1,
-  },
+  verifyNote: { flexDirection: "row", alignItems: "flex-start", gap: 8, padding: 12, borderRadius: 10, borderWidth: 1 },
   verifyNoteTxt: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
-  promiseCard: {
-    marginHorizontal: 20, marginBottom: 14, padding: 16, borderRadius: 14, borderWidth: 1, gap: 10,
-  },
-  promiseHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
-  promiseTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
-  promiseBody: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20 },
-  promiseEmphasis: { fontFamily: "Inter_600SemiBold" },
-  guideBtn: { flexDirection: "row", alignItems: "center", gap: 7, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, marginTop: 2 },
-  guideBtnTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold", flex: 1 },
-  feeBadge: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 4,
-    borderRadius: 20, marginTop: 6,
-  },
-  feeBadgeTxt: { fontSize: 12, fontFamily: "Inter_500Medium" },
-  feeTable: {
-    borderRadius: 16, padding: 18, gap: 0,
-    borderWidth: 1,
-  },
-  feeTableHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 },
-  feeTableTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
-  feeRow: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingVertical: 12,
-  },
-  feeRowName: { fontSize: 14, fontFamily: "Inter_400Regular" },
-  feeRowVal: { fontSize: 14, fontFamily: "Inter_700Bold" },
-  feeNote: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 10, lineHeight: 18 },
-  guaranteeBox: {
-    flexDirection: "row", alignItems: "flex-start", gap: 12,
-    padding: 16, borderRadius: 14,
-  },
+
+  // Mission
+  missionCard: { borderRadius: 16, padding: 18, gap: 12, borderWidth: 1 },
+  missionHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  missionTitle: { fontSize: 15, fontFamily: "Inter_700Bold", flex: 1 },
+  missionSub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19, marginTop: -4 },
+  missionRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  missionIconWrap: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  missionLabel: { fontSize: 14, fontFamily: "Inter_400Regular", flex: 1 },
+
+  // Guarantee
+  guaranteeBox: { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 16, borderRadius: 14 },
   guaranteeTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", marginBottom: 3 },
   guaranteeSub: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  creatorHero: {
-    borderRadius: 18, padding: 22, gap: 10, alignItems: "center",
-  },
-  creatorHeroEmoji: { fontSize: 40 },
+
+  // Creator
+  creatorHero: { borderRadius: 18, padding: 22, gap: 10, alignItems: "center" },
+  creatorHeroIcon: { width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center", marginBottom: 4 },
   creatorHeroTitle: { fontSize: 22, fontFamily: "Inter_700Bold", color: "#fff", textAlign: "center" },
   creatorHeroSub: { fontSize: 13, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.8)", textAlign: "center", lineHeight: 19 },
   creatorCard: { borderRadius: 16, padding: 18, gap: 12, borderWidth: 1 },

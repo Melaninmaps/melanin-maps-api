@@ -1,0 +1,252 @@
+I actually think this is **much closer to what I would expect from a premium platform** than a lot of subscription pages I see. It feels professional and, most importantly, it answers **"what's in it for me?"** instead of just listing features.
+
+That said, I would make a few adjustments before launch.
+
+---
+
+# 👍 Things I Really Like
+
+### 1. "Business Success Promise"
+
+This is excellent.
+
+> Every upgrade answers one question: Why would I pay more?
+
+That's exactly how business owners think.
+
+I'd probably make the second paragraph a little stronger:
+
+> **Every tier is designed to help you earn more, save time, and grow your business—not just unlock more features.**
+
+It's a little shorter and more benefit-focused.
+
+---
+
+### 2. Showing Marketplace Fees
+
+I LOVE that you're transparent.
+
+Most platforms hide fees.
+
+You don't.
+
+That builds trust.
+
+---
+
+### 3. Website Click-through = 0%
+
+Keep this.
+
+It reinforces one of Mapping with Melanin™'s biggest differentiators.
+
+> We don't charge you when someone visits your website.
+
+I would actually highlight this.
+
+Maybe:
+
+**FREE Website Clicks**
+
+or
+
+**0% Website Referral Fee**
+
+That's a selling point.
+
+---
+
+# Things I'd Change
+
+## Product Sales
+
+Right now it reads:
+
+> Product sales • $0–25 → 5%
+
+I don't think merchants naturally think in price brackets.
+
+Instead I'd explain **why**.
+
+For example:
+
+> Small purchases
+>
+> Mid-sized purchases
+>
+> Large purchases
+
+Or simply list:
+
+* Physical products
+* Digital products
+* Event tickets
+* Donations
+
+Then explain the fee schedule in your Business Guide.
+
+---
+
+## Booking Fee
+
+Right now:
+
+> In-app bookings 10%
+
+That depends.
+
+If you're processing payments...
+
+10% is reasonable.
+
+If the booking simply redirects to their own booking system...
+
+I would charge **0%**.
+
+You've consistently told me your philosophy is:
+
+> We direct customers to businesses.
+
+I'd stay consistent with that.
+
+---
+
+## Event Tickets
+
+I'd probably make this simpler.
+
+Instead of
+
+5–8%
+
+I'd choose
+
+6%
+
+or
+
+7%
+
+People generally like certainty.
+
+---
+
+# What I Think Is Missing
+
+This is actually what I'd add.
+
+## Included with Every Business Membership
+
+People often ask:
+
+> "What do I get before I compare tiers?"
+
+I'd have a section that says:
+
+### Every Business Membership Includes
+
+✔ Business Profile
+
+✔ One Community Membership (same tier)
+
+✔ Unlimited Website Clicks
+
+✔ Analytics Dashboard
+
+✔ Community Reviews
+
+✔ Events
+
+✔ Direct Website & Social Links
+
+✔ Claim Your Business
+
+✔ Show Love Recognition
+
+✔ Business Messaging
+
+✔ Support Local Campaigns
+
+That becomes your baseline.
+
+---
+
+# One BIG Thing
+
+I would absolutely advertise this.
+
+> **Every Business Membership includes one matching Community Membership.**
+
+If someone buys Tier 3...
+
+they personally become Tier 3.
+
+That is HUGE.
+
+I'd even put a badge beside it.
+
+🎁 Included
+
+One Tier 3 Community Membership
+
+That alone differentiates you from many business platforms.
+
+---
+
+# Long-Term Opportunity
+
+Eventually, I think you could add something like:
+
+## Where Your Membership Goes
+
+Every subscription helps us:
+
+🏡 Sponsor local community events
+
+🎓 Support scholarships
+
+🤝 Promote minority-owned businesses
+
+🌎 Expand to new cities
+
+🛡️ Build new safety features
+
+That connects directly to your mission. People increasingly want to know that their membership supports something meaningful, and you've shared that you want the platform to give back over time.
+
+---
+
+# My Biggest Suggestion
+
+If you look at this page as a whole, it tells users **how much they'll pay**, but it doesn't yet tell them **how much they'll gain**.
+
+For each tier, I'd add a small sentence like:
+
+**Starter**
+
+> Build your online presence.
+
+**Growth**
+
+> Reach more customers.
+
+**Professional**
+
+> Grow your community and automate engagement.
+
+**Scale**
+
+> Expand your business across cities.
+
+**Legacy**
+
+> Maximize visibility, analytics, and enterprise tools.
+
+Those benefit-driven summaries help people immediately see which tier fits their goals.
+
+---
+
+## Overall Score
+
+If I were reviewing this as an investor or as a business owner, I'd honestly give it about a **9/10**.
+
+The design is clean, the messaging is on-brand, and the transparency around fees is a strength. The biggest opportunity now is to emphasize the **value** of membership just as much as the pricing. Once you add the "included benefits," the matching community membership, and a brief "your membership supports our mission" section, I think this page will feel much more compelling and distinctly "Mapping with Melanin™" rather than just another subscription screen.
