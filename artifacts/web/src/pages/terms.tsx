@@ -28,7 +28,7 @@ export default function Terms() {
         <section>
           <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">2. Description of Service</h2>
           <p className="leading-relaxed text-[#3A1F0E]/80">
-            Mapping with Melanin™ is a community discovery, travel, and business platform that helps users find Minority-owned businesses, access community safety insights, and plan travel. We provide tools for business owners to list and manage their presence on our platform.
+            Mapping with Melanin™ is a community discovery, travel, and business platform that helps users find Black-owned businesses, access community safety insights, and plan travel. We provide tools for business owners to list and manage their presence on our platform.
           </p>
         </section>
 

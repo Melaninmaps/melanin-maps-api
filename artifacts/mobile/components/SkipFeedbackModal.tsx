@@ -108,7 +108,7 @@ export function SkipFeedbackModal({ visible, businessId, businessName, onClose }
               <Feather name="check-circle" size={40} color="#2D7A4F" />
               <Text style={[styles.doneTitle, { color: colors.foreground }]}>Feedback Sent</Text>
               <Text style={[styles.doneSub, { color: colors.mutedForeground }]}>
-                Thank you — the owner will receive your note privately. Your feedback helps minority-owned businesses grow.
+                Thank you — the owner will receive your note privately. Your feedback helps Black-owned businesses grow.
               </Text>
               <TouchableOpacity style={[styles.doneBtn, { backgroundColor: colors.primary }]} onPress={handleClose} activeOpacity={0.85}>
                 <Text style={styles.doneBtnTxt}>Done</Text>

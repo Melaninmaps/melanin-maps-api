@@ -5,14 +5,15 @@ import { useState } from "react";
 import { Link } from "wouter";
 
 const OWNERSHIP_OPTIONS = [
-  { id: "minority-owned", label: "Minority-Owned", emoji: "✊🏾", color: "#3A1F0E" },
+  { id: "black-owned", label: "Black-Owned", emoji: "✊🏾", color: "#CA922B" },
+  { id: "minority-owned", label: "Minority-Owned", emoji: "🏅", color: "#3A1F0E" },
   { id: "women-owned", label: "Women-Owned", emoji: "👩🏾‍💼", color: "#7B2D8B" },
   { id: "veteran-owned", label: "Veteran-Owned", emoji: "🎖️", color: "#1D4ED8" },
   { id: "lgbtq-owned", label: "LGBTQIA+-Owned", emoji: "🏳️‍🌈", color: "#DC2626" },
   { id: "hispanic-owned", label: "Hispanic/Latino-Owned", emoji: "🤝🏾", color: "#2D7A4F" },
   { id: "indigenous-owned", label: "Indigenous-Owned", emoji: "🌿", color: "#5E4B1A" },
   { id: "disability-owned", label: "Disability-Owned", emoji: "♿", color: "#4B5563" },
-  { id: "immigrant-owned", label: "Immigrant-Owned", emoji: "🌍", color: "#6D28D9" },
+  { id: "immigrant-owned", label: "Melanated Diaspora-Owned", emoji: "🌍", color: "#6D28D9" },
   { id: "d9-affiliated", label: "D9 Affiliated", emoji: "🐾", color: "#7B1E1E" },
 ];
 
@@ -46,7 +47,7 @@ export default function Explore() {
       featured: true,
       image: `${import.meta.env.BASE_URL}images/biz-gathering-table.jpg`,
       tags: ["Community Trusted", "Traveler Favorite", "Soul Food", "Dine-In"],
-      ownershipTags: ["minority-owned", "women-owned"],
+      ownershipTags: ["black-owned", "women-owned"],
     },
     {
       id: "2",
@@ -62,7 +63,7 @@ export default function Explore() {
       featured: true,
       image: `${import.meta.env.BASE_URL}images/biz-heritage-hotel.jpg`,
       tags: ["Community Trusted", "Top Rated", "Boutique", "Historic"],
-      ownershipTags: ["minority-owned"],
+      ownershipTags: ["black-owned"],
     },
     {
       id: "3",
@@ -78,7 +79,7 @@ export default function Explore() {
       featured: false,
       image: `${import.meta.env.BASE_URL}images/biz-diaspora-arts.jpg`,
       tags: ["Highly Recommended", "Local Gem", "Art", "Culture", "Gallery"],
-      ownershipTags: ["minority-owned", "women-owned"],
+      ownershipTags: ["black-owned", "women-owned"],
     },
     {
       id: "4",
@@ -110,7 +111,7 @@ export default function Explore() {
       featured: false,
       image: `${import.meta.env.BASE_URL}images/biz-carter-law.jpg`,
       tags: ["Community Trusted", "Legal", "Business", "Real Estate"],
-      ownershipTags: ["minority-owned", "veteran-owned"],
+      ownershipTags: ["black-owned", "veteran-owned"],
     },
     {
       id: "6",
@@ -126,7 +127,7 @@ export default function Explore() {
       featured: false,
       image: `${import.meta.env.BASE_URL}images/biz-roots-cafe.jpg`,
       tags: ["Local Gem", "Pan-African", "Coffee", "Brunch"],
-      ownershipTags: ["minority-owned", "immigrant-owned"],
+      ownershipTags: ["black-owned", "immigrant-owned"],
     }
   ];
 
@@ -157,7 +158,7 @@ export default function Explore() {
           </div>
           <h1 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4">Explore With Purpose</h1>
           <p className="text-[#F5EBD8]/80 max-w-xl mx-auto mb-8 font-light">
-            Find Minority-owned businesses, cultural landmarks, safe stays, and community events wherever you go.
+            Find Black-owned businesses, cultural landmarks, safe stays, and community events wherever you go.
           </p>
 
           <div className="w-full max-w-2xl bg-white rounded-full p-2 flex items-center shadow-lg">

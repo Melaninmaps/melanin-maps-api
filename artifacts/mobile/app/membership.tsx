@@ -66,7 +66,7 @@ const INCLUDED_BENEFITS: Array<{ icon: string; label: string; highlight?: boolea
 const MISSION_ITEMS: Array<{ icon: string; label: string }> = [
   { icon: "home",      label: "Sponsor local community events" },
   { icon: "book-open", label: "Support scholarships" },
-  { icon: "briefcase", label: "Promote minority-owned businesses" },
+  { icon: "briefcase", label: "Promote Black-owned businesses" },
   { icon: "map",       label: "Expand to new cities" },
   { icon: "shield",    label: "Build new safety features" },
 ];
@@ -84,7 +84,7 @@ const CONSUMER_PLANS: Plan[] = [
     color: "#A87A40",
     bg: null,
     features: [
-      "Search minority-owned businesses",
+      "Search Black-owned businesses",
       "Browse community updates",
       "View Community Hubs",
       "Save favorites",
@@ -1034,7 +1034,7 @@ export default function MembershipScreen() {
               { step: "1", icon: "file-text" as const, label: "Submit your business",       detail: "Provide your business name, category, location, and contact info when you list." },
               { step: "2", icon: "check-square" as const, label: "Ownership documentation", detail: "We review proof of minority ownership — such as a business license, LLC filing, or signed attestation." },
               { step: "3", icon: "users" as const, label: "Community signals",              detail: "Community reviews, check-ins, and referrals from existing verified businesses add trust weight." },
-              { step: "4", icon: "award" as const, label: "Verified badge awarded",         detail: "Once approved, your listing displays a Verified Minority-Owned badge visible to every user." },
+              { step: "4", icon: "award" as const, label: "Verified badge awarded",         detail: "Once approved, your listing displays a Verified Black-Owned badge visible to every user." },
             ].map((s, i) => (
               <View key={i} style={styles.verifyStep}>
                 <View style={[styles.verifyStepNum, { backgroundColor: colors.primary + "22" }]}>

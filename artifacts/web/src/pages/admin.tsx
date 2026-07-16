@@ -1551,7 +1551,7 @@ export default function Admin() {
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1">
                             {biz.verified && <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><Check className="w-2.5 h-2.5" /> Verified</span>}
-                            {biz.blackOwned && <span className="px-2 py-0.5 rounded-full bg-[#CA922B]/10 text-[#CA922B] text-xs font-bold">Minority-Owned</span>}
+                            {biz.blackOwned && <span className="px-2 py-0.5 rounded-full bg-[#CA922B]/10 text-[#CA922B] text-xs font-bold">Black-Owned</span>}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-xs text-[#3A1F0E]/60">
@@ -1587,7 +1587,7 @@ export default function Admin() {
                     )}
                   </div>
                   <p className="text-sm text-[#3A1F0E]/60 mb-4">
-                    Negative reviews (≤ 3★) for non-minority-owned businesses are held here before going public. Approve to publish, or reject to remove.
+                    Negative reviews (≤ 3★) for businesses are held here before going public. Approve to publish, or reject to remove.
                   </p>
                   {pending.length === 0 ? (
                     <div className="bg-green-50 border border-green-200 rounded-2xl px-6 py-8 text-center text-green-700">
@@ -1615,7 +1615,7 @@ export default function Admin() {
                               </td>
                               <td className="px-4 py-3 text-[#3A1F0E]/70 text-xs max-w-[140px]">
                                 <span className="font-medium">{review.businessName ?? review.businessId.slice(0, 8) + "…"}</span>
-                                <span className="block text-[#3A1F0E]/40 mt-0.5">Non-minority-owned</span>
+                                <span className="block text-[#3A1F0E]/40 mt-0.5">Not Black-owned</span>
                               </td>
                               <td className="px-4 py-3">
                                 <span className="inline-flex items-center gap-0.5 font-bold text-red-500">

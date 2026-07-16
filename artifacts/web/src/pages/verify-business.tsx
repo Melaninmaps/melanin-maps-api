@@ -45,7 +45,7 @@ const CERT_ORGS = [
 function LevelBadge({ level }: { level: "basic" | "ownership" | "certified" }) {
   const config = {
     basic: { label: "Verified", color: "bg-blue-100 text-blue-700 border-blue-200", icon: Shield },
-    ownership: { label: "Verified Minority-Owned", color: "bg-[#CA922B]/10 text-[#CA922B] border-[#CA922B]/30", icon: BadgeCheck },
+    ownership: { label: "Verified Black-Owned", color: "bg-[#CA922B]/10 text-[#CA922B] border-[#CA922B]/30", icon: BadgeCheck },
     certified: { label: "Third-Party Certified", color: "bg-green-100 text-green-700 border-green-200", icon: Award },
   };
   const c = config[level];
@@ -96,7 +96,7 @@ export default function VerifyBusiness() {
       setError("Please fill in all required fields."); return;
     }
     if (form.ownershipPercentage && pct < 51) {
-      setError("Ownership percentage must be 51% or greater for a Verified Minority-Owned badge."); return;
+      setError("Ownership percentage must be 51% or greater for a Verified Black-Owned badge."); return;
     }
     setLoading(true);
     try {
@@ -191,7 +191,7 @@ export default function VerifyBusiness() {
         <div className="grid grid-cols-3 gap-3 mb-8">
           {[
             { icon: Shield, level: "basic" as const, title: "Level 1 — Verified", desc: "Community confirmed, publicly listed" },
-            { icon: BadgeCheck, level: "ownership" as const, title: "Level 2 — Minority-Owned", desc: "51%+ ownership with documentation" },
+            { icon: BadgeCheck, level: "ownership" as const, title: "Level 2 — Black-Owned", desc: "51%+ ownership with documentation" },
             { icon: Award, level: "certified" as const, title: "Level 3 — Certified", desc: "Third-party org certification linked" },
           ].map(({ icon: Icon, level, title, desc }) => (
             <div key={level} className={`rounded-2xl p-4 border text-center transition-all ${previewLevel === level ? "border-[#CA922B] bg-[#CA922B]/5 shadow-sm" : "border-[#3A1F0E]/10 bg-white/60"}`}>
@@ -292,7 +292,7 @@ export default function VerifyBusiness() {
             </div>
 
             <p className="text-sm text-[#3A1F0E]/60 leading-relaxed">
-              To earn the <strong className="text-[#2B1507]">"Verified Minority-Owned"</strong> badge, please confirm 51% or greater ownership by the represented group and indicate what documentation you can provide. This information is reviewed by our team — no uploads are required here.
+              To earn the <strong className="text-[#2B1507]">"Verified Black-Owned"</strong> badge, please confirm 51% or greater ownership and indicate what documentation you can provide. This information is reviewed by our team — no uploads are required here.
             </p>
 
             <div>
@@ -450,7 +450,7 @@ export default function VerifyBusiness() {
         <div className="mt-8 flex items-start gap-3 text-xs text-[#3A1F0E]/50 bg-[#2B1507]/4 rounded-2xl p-4">
           <FileText className="w-4 h-4 shrink-0 mt-0.5 text-[#CA922B]" />
           <p>
-            <strong className="text-[#3A1F0E]/70">All minority-owned businesses are welcome on Mapping With Melanin</strong> — verification is optional, not a requirement to list. We understand every business is at a different stage in its journey. The Verified Badge is an additional layer of community trust for businesses ready to take that step. All documentation is reviewed confidentially and never shared publicly. Common verification standards require <strong>51% or greater ownership</strong> by members of the represented group.
+            <strong className="text-[#3A1F0E]/70">All Black-owned businesses are welcome on Mapping With Melanin</strong> — verification is optional, not a requirement to list. We understand every business is at a different stage in its journey. The Verified Badge is an additional layer of community trust for businesses ready to take that step. All documentation is reviewed confidentially and never shared publicly. Common verification standards require <strong>51% or greater ownership</strong>.
           </p>
         </div>
       </div>

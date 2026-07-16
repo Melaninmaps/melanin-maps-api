@@ -748,7 +748,7 @@ export default function LibraryScreen() {
                   <View style={[styles.prefToggleRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.prefToggleTitle, { color: colors.foreground }]}>Notify from saved businesses</Text>
-                      <Text style={[styles.prefToggleDesc, { color: colors.mutedForeground }]}>Updates from minority-owned businesses you've saved</Text>
+                      <Text style={[styles.prefToggleDesc, { color: colors.mutedForeground }]}>Updates from Black-owned businesses you've saved</Text>
                     </View>
                     <TouchableOpacity activeOpacity={0.85}
                       style={[
@@ -912,7 +912,7 @@ export default function LibraryScreen() {
                   {[
                     { emoji: "🛡️", title: "Safety Hub", desc: "Neighborhood safety intel & community reports", route: "/safety-hub", color: "#DC2626" },
                     { emoji: "❤️", title: "Health Hub", desc: "Curated health resources for the community", route: "/health-hub", color: "#DB2777" },
-                    { emoji: "🏠", title: "Relocation Concierge", desc: "AI-guided move with minority-owned vendors", route: "/relocation-planner", color: "#2D7A4F" },
+                    { emoji: "🏠", title: "Relocation Concierge", desc: "AI-guided move with Black-owned vendors", route: "/relocation-planner", color: "#2D7A4F" },
                     { emoji: "✈️", title: "KinfolkAI Travel", desc: "Plan culturally-informed trips with AI", route: "/travel", color: "#CA922B" },
                     { emoji: "🗺️", title: "Cultural Heritage Explorer", desc: "Discover HBCUs, civil rights sites, cultural landmarks, and historic districts across America", route: "/cultural-heritage", color: "#CA922B" },
                   ].map((item) => (

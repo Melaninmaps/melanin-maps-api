@@ -128,7 +128,7 @@ export default function CulturalPreferenceScreen() {
               Mapping With Melanin celebrates all minority communities. Setting your preference helps us surface businesses and groups most relevant to your community — first.
             </Text>
             <Text style={[s.explainerSub, { color: colors.mutedForeground }]}>
-              When no match is found nearby, we'll show you the highest-rated minority-owned alternatives.
+              When no match is found nearby, we'll show you the highest-rated Black-owned alternatives.
             </Text>
           </View>
 
@@ -158,7 +158,7 @@ export default function CulturalPreferenceScreen() {
           <View style={[s.noteCard, { backgroundColor: "#2D7A4F0C", borderColor: "#2D7A4F25" }]}>
             <Feather name="info" size={15} color="#2D7A4F" />
             <Text style={[s.noteText, { color: "#2D7A4F" }]}>
-              You can select multiple identities. This preference only affects how results are sorted — it never excludes any minority-owned business from view.
+              You can select multiple identities. This preference only affects how results are sorted — it never excludes any Black-owned business from view.
             </Text>
           </View>
 

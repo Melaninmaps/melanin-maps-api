@@ -537,7 +537,7 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
                   {nonMinorityOwned && <Feather name="check" size={11} color="#fff" />}
                 </View>
                 <Text style={[styles.nmoText, { color: nonMinorityOwned ? "#C9922B" : colors.mutedForeground }]}>
-                  This is not a minority-owned business
+                  This is not a Black-owned business
                 </Text>
               </TouchableOpacity>
 

@@ -439,7 +439,7 @@ export function MapTabView() {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.flaggedTitle, { color: colors.foreground }]}>🚩 Flagged Businesses</Text>
                 <Text style={[styles.flaggedSub, { color: colors.mutedForeground }]}>
-                  Non-minority-owned · 3+ community alerts · within 10 miles · last 6 months
+                  Non-Black-owned · 3+ community alerts · within 10 miles · last 6 months
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setShowFlaggedModal(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -457,7 +457,7 @@ export function MapTabView() {
                 <Text style={{ fontSize: 40 }}>✅</Text>
                 <Text style={[styles.flaggedEmptyText, { color: colors.foreground }]}>No flagged businesses found</Text>
                 <Text style={[styles.flaggedEmptySubtext, { color: colors.mutedForeground }]}>
-                  No non-minority-owned businesses within 10 miles have received 3+ community safety alerts in the last 6 months.
+                  No non-Black-owned businesses within 10 miles have received 3+ community safety alerts in the last 6 months.
                 </Text>
               </View>
             ) : (

@@ -100,7 +100,7 @@ export default function Contact() {
               <div className="bg-[#2B1507] rounded-2xl p-8 text-white">
                 <h3 className="font-serif font-bold text-xl mb-3">Own a Business?</h3>
                 <p className="text-[#F5EBD8]/70 text-sm mb-6 leading-relaxed">
-                  Get your Minority-owned business listed on our verified directory and connect with thousands of conscious consumers who are actively looking to support you.
+                  Get your Black-owned business listed on our verified directory and connect with thousands of conscious consumers who are actively looking to support you.
                 </p>
                 <a href="/for-business-owners">
                   <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white font-bold px-6">

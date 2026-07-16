@@ -374,7 +374,7 @@ function AddBusinessModal({
                 {nonMinorityOwned && <Ionicons name="checkmark" size={12} color="#fff" />}
               </View>
               <Text style={[bizModalStyles.nmoText, { color: nonMinorityOwned ? BUSINESS_AMBER : colors.mutedForeground }]}>
-                This is not a minority-owned business
+                This is not a Black-owned business
               </Text>
             </TouchableOpacity>
 

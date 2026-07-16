@@ -829,7 +829,7 @@ export default function CommunityHubScreen() {
                   <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Community-Recommended Places</Text>
                 </View>
                 <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>
-                  Safe, community-endorsed spots — not necessarily minority-owned, but trusted by our members.
+                  Safe, community-endorsed spots — not necessarily Black-owned, but trusted by our members.
                 </Text>
               </View>
 

@@ -64,7 +64,7 @@ export default function MyTripsScreen() {
             <Feather name="bookmark" size={40} color={colors.mutedForeground} />
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No saved trips yet</Text>
             <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>
-              Use KinfolkAI™ to find minority-owned spots, then tap "Save This Trip" to build your itinerary.
+              Use KinfolkAI™ to find Black-owned spots, then tap "Save This Trip" to build your itinerary.
             </Text>
             <TouchableOpacity
               style={[styles.emptyBtn, { backgroundColor: colors.primary }]}

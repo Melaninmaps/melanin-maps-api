@@ -480,7 +480,7 @@ export default function NeighborhoodSurveyScreen() {
           <View style={styles.stepContent}>
             <Text style={[styles.stepTitle, { color: colors.foreground }]}>🏆 Nominate a Business</Text>
             <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-              Know a minority-owned business in this area? Help us find and verify it — everything here is optional.
+              Know a Black-owned business in this area? Help us find and verify it — everything here is optional.
             </Text>
 
             <View style={styles.qBlock}>

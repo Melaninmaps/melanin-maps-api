@@ -68,7 +68,7 @@ const LIFE_CHIPS: { emoji: string; label: string; prompt: string }[] = [
   { emoji: "🏠", label: "I'm Moving", prompt: "I'm thinking about relocating" },
   { emoji: "✈️", label: "I'm Traveling", prompt: "I'm planning a trip" },
   { emoji: "💼", label: "My Career", prompt: "I need help with my career" },
-  { emoji: "🛍", label: "Find Businesses", prompt: "Help me find minority-owned businesses near me" },
+  { emoji: "🛍", label: "Find Businesses", prompt: "Help me find Black-owned businesses near me" },
   { emoji: "🤝", label: "Community", prompt: "I want to connect with my community" },
   { emoji: "🛡", label: "Stay Safe", prompt: "I want to check safety info for my area" },
   { emoji: "❤️", label: "Healthcare", prompt: "I need healthcare recommendations" },
@@ -90,7 +90,7 @@ const WELCOME_HEADLINES = [
 ];
 const WELCOME_CHIPS = [
   "Where's good to eat in Atlanta?",
-  "Best minority-owned hotels in Houston",
+  "Best Black-owned hotels in Houston",
   "What's the vibe in New Orleans?",
   "Hidden gems in DC",
   "Family spots in Chicago",

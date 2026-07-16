@@ -41,12 +41,24 @@ function isAdmin(req: Request): boolean {
 
 router.get("/businesses", async (req: Request, res: Response) => {
   try {
-    const { category, search, state, handle, culturalPreference } = req.query;
+    const { category, search, state, handle, culturalPreference, ownership } = req.query;
 
     const conditions = [];
 
     if (category && typeof category === "string" && category !== "All") {
       conditions.push(eq(businessesTable.category, category));
+    }
+
+    // ownership filter: "black-owned" maps to the blackOwned boolean column;
+    // other designations filter against the ownershipDesignations jsonb array.
+    if (ownership && typeof ownership === "string") {
+      if (ownership === "black-owned") {
+        conditions.push(eq(businessesTable.blackOwned, true));
+      } else {
+        conditions.push(
+          sql`${businessesTable.ownershipDesignations} @> ${JSON.stringify([ownership])}::jsonb`
+        );
+      }
     }
 
     if (search && typeof search === "string") {

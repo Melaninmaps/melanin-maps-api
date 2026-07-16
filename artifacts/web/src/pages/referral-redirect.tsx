@@ -79,7 +79,7 @@ export default function ReferralLanding() {
                 {firstName} invited you<br /><span className="text-[#CA922B]">to the community.</span>
               </h1>
               <p className="text-[#F5EBD8]/70 text-lg">
-                Join {stats ? formatCount(stats.count) : "10,000+"} people discovering minority-owned businesses,
+                Join {stats ? formatCount(stats.count) : "10,000+"} people discovering Black-owned businesses,
                 planning journeys safely, and supporting community-driven culture.
               </p>
             </div>
@@ -87,7 +87,7 @@ export default function ReferralLanding() {
 
           <div className="grid grid-cols-3 gap-3">
             {[
-              { icon: MapPin, label: "Find trusted minority-owned businesses nearby" },
+              { icon: MapPin, label: "Find trusted Black-owned businesses nearby" },
               { icon: Shield, label: "Community safety intel for every neighborhood" },
               { icon: Star, label: "KinfolkAI™ plans trips around your culture" },
             ].map(({ icon: Icon, label }) => (

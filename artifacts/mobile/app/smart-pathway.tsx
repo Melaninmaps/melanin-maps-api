@@ -217,7 +217,7 @@ export default function SmartPathwayScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Nearby Resources</Text>
                 <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>
-                  {stats.totalNearby} minority-owned businesses within 50 miles
+                  {stats.totalNearby} Black-owned businesses within 50 miles
                 </Text>
               </View>
             </View>

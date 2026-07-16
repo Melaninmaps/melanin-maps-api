@@ -37,7 +37,7 @@ interface SearchResults {
 const EXAMPLE_QUERIES = [
   { label: "🏡 Moving to a new city", q: "I'm moving to a new city" },
   { label: "🩺 Find a doctor", q: "I need to find a doctor" },
-  { label: "🍽️ Best food spots", q: "minority-owned restaurants near me" },
+  { label: "🍽️ Best food spots", q: "Black-owned restaurants near me" },
   { label: "🚀 Start a business", q: "I want to start a business" },
   { label: "✂️ Salon and barber", q: "hair salon and barber shop" },
   { label: "👶🏾 New parent resources", q: "I just had a baby" },

@@ -29,7 +29,7 @@ type VideoCard = VideoItem;
 const MOCK_VIDEOS: VideoCard[] = [
   {
     id: "1",
-    title: "Hidden minority-owned gems in Salvador, Brazil 🇧🇷",
+    title: "Hidden Black-owned gems in Salvador, Brazil 🇧🇷",
     destination: "Salvador",
     country: "Brazil",
     creator: "Yara Mensah",

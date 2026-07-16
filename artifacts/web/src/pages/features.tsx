@@ -312,7 +312,7 @@ export default function Features() {
               </p>
               <div className="space-y-3 mb-10">
                 {[
-                  "Plan a full weekend itinerary with minority-owned spots only",
+                  "Plan a full weekend itinerary with Black-owned spots only",
                   "Get neighborhood safety scores before you arrive",
                   "Discover hidden gems your family will actually love",
                   "Personalized to your vibe, budget & dietary needs",
@@ -346,7 +346,7 @@ export default function Features() {
                 <div className="space-y-3">
                   <div className="flex justify-end">
                     <div className="bg-[#CA922B]/20 border border-[#CA922B]/30 rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%]">
-                      <p className="text-[#F5EBD8] text-sm">"Plan me a minority-owned food crawl in Atlanta this Saturday — soul food and brunch spots, under $30 a person"</p>
+                      <p className="text-[#F5EBD8] text-sm">"Plan me a Black-owned food crawl in Atlanta this Saturday — soul food and brunch spots, under $30 a person"</p>
                     </div>
                   </div>
                   <div className="flex justify-start">
@@ -564,7 +564,7 @@ export default function Features() {
 
           <div className="grid md:grid-cols-2 gap-6 mb-12">
             {[
-              { title: "Discover", label: "Find Minority-Owned Businesses", desc: "Search by city, category, or keyword. Every listing is community-verified.", link: "/businesses" },
+              { title: "Discover", label: "Find Black-Owned Businesses", desc: "Search by city, category, or keyword. Every listing is community-verified.", link: "/businesses" },
               { title: "Safety", label: "Real-Time Safety Intelligence", desc: "Community-sourced scores, alerts, and the 'Would Return Alone' metric.", link: "/safety" },
               { title: "Personalized", label: "Your Curated Feed", desc: "AI-powered picks based on your identity, interests, and travel goals.", link: "/travel" },
               { title: "Community", label: "Connect & Network", desc: "Join groups, attend meetups, and build relationships before you arrive.", link: "/community" }

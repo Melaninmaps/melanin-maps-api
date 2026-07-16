@@ -39,7 +39,7 @@ const DESTINATION_DATA: Record<string, {
     vibeVideos: [
       { id: "v1", title: "Pelourinho by night — Salvador's soul", creator: "Yara Mensah", emoji: "🌃", duration: "3:47", views: "14.2K" },
       { id: "v2", title: "Candomblé ceremony in Bahia", creator: "Nana Asante", emoji: "🥁", duration: "5:12", views: "22.1K" },
-      { id: "v3", title: "Feijoada tour — Rio's best minority-owned spots", creator: "Malik Ferreira", emoji: "🍲", duration: "6:05", views: "9.8K" },
+      { id: "v3", title: "Feijoada tour — Rio's best Black-owned spots", creator: "Malik Ferreira", emoji: "🍲", duration: "6:05", views: "9.8K" },
     ],
   },
   atlanta: {
@@ -50,7 +50,7 @@ const DESTINATION_DATA: Record<string, {
     highlights: ["Sweet Auburn", "West End", "BeltLine", "Buckhead"],
     vibeVideos: [
       { id: "v1", title: "Sweet Auburn Curb Market — food lover's paradise", creator: "Marcus Cole", emoji: "🛒", duration: "4:22", views: "34.1K" },
-      { id: "v2", title: "BeltLine art walk & minority-owned cafes", creator: "Jade Williams", emoji: "🎨", duration: "5:58", views: "28.7K" },
+      { id: "v2", title: "BeltLine art walk & Black-owned cafes", creator: "Jade Williams", emoji: "🎨", duration: "5:58", views: "28.7K" },
       { id: "v3", title: "HBCU tailgate energy in Atlanta", creator: "Darius Thompson", emoji: "🏈", duration: "3:15", views: "18.4K" },
     ],
   },
@@ -71,7 +71,7 @@ const DESTINATION_DATA: Record<string, {
 const SECTION_CARDS = [
   { icon: "🎥", label: "Community Videos", key: "videos", color: "#1A3B2B" },
   { icon: "📸", label: "Photos", key: "photos", color: "#2D1A6B" },
-  { icon: "🍽️", label: "Minority-Owned Restaurants", key: "restaurants", color: "#3B1A0E" },
+  { icon: "🍽️", label: "Black-Owned Restaurants", key: "restaurants", color: "#3B1A0E" },
   { icon: "🏨", label: "Hotels & Stays", key: "hotels", color: "#1A2B3B" },
   { icon: "🎉", label: "Events", key: "events", color: "#4A1A6B" },
   { icon: "👥", label: "Travel Groups", key: "groups", color: "#1A4B2B" },
