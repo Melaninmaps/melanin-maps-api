@@ -5,35 +5,42 @@
  *   react-native-maps@1.27.x ships react-native-maps.podspec with:
  *     s.name = "react-native-google-maps"
  *
- *   link_native_modules! reads the podspec and generates:
+ *   link_native_modules! reads the podspec, gets s.name = "react-native-google-maps",
+ *   and generates:
  *     pod 'react-native-google-maps', :path => '.../react-native-maps'
  *
- *   CocoaPods then looks for react-native-google-maps.podspec in the directory
- *   but only react-native-maps.podspec exists — FAILS.
+ *   CocoaPods then looks for react-native-google-maps.podspec by filename in the
+ *   directory — only react-native-maps.podspec exists — FAILS.
  *
- * WHY PREVIOUS APPROACHES FAILED:
- *   Patching files in node_modules (via withDangerousMod or postinstall) doesn't
- *   survive because the EAS PREBUILD phase runs pnpm install AFTER expo prebuild
- *   finishes — which restores the original podspec from the pnpm content store.
+ * THE FIX:
+ *   Inject Ruby code into the Podfile. The Podfile is NOT modified by pnpm install,
+ *   so this survives the pnpm install --no-frozen-lockfile that runs after expo prebuild.
+ *   The Ruby code fires during CocoaPods Podfile evaluation (before pod resolution),
+ *   creates react-native-google-maps.podspec with s.name = "react-native-google-maps"
+ *   in every react-native-maps pnpm store entry.
  *
- * THIS FIX:
- *   Inject Ruby code into the Podfile itself. The Podfile is a static file that
- *   pnpm never touches. The injected code runs during CocoaPods Podfile evaluation
- *   (i.e., during pod install) — which happens AFTER all pnpm installs are done.
- *   It creates react-native-google-maps.podspec alongside react-native-maps.podspec,
- *   so CocoaPods finds it by filename when resolving the pod.
+ * WHY NOT PATCH THE PODSPEC IN NODE:
+ *   Any node-level patch to node_modules gets reset by pnpm install in the PREBUILD
+ *   phase (which runs AFTER expo prebuild finishes). The node-level s.name patch was
+ *   also creating a COPY with the WRONG s.name, causing a new mismatch error.
+ *   Only the Podfile injection approach is timing-safe.
  */
 const { withDangerousMod } = require("@expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
 
+// Ruby code injected at the top of the Podfile.
+// Runs during `pod install` Podfile evaluation — after all pnpm installs are done.
+// Creates react-native-google-maps.podspec alongside react-native-maps.podspec in
+// every react-native-maps pnpm store entry. Forces s.name = "react-native-google-maps"
+// in the copy so it matches CocoaPods' expectation regardless of the source state.
 const RUBY_FIX = `
 require 'fileutils'
 
-# [rn-maps-fix] Inject react-native-google-maps.podspec so CocoaPods can find it
-# by filename. react-native-maps.podspec has s.name = "react-native-google-maps",
-# so link_native_modules! generates pod 'react-native-google-maps', :path => '...'
-# and CocoaPods then looks for react-native-google-maps.podspec by filename.
+# [rn-maps-fix] Create react-native-google-maps.podspec so CocoaPods finds it by filename.
+# react-native-maps.podspec has s.name = "react-native-google-maps", so autolinking
+# generates pod 'react-native-google-maps', :path => '...' — CocoaPods then needs a
+# file named react-native-google-maps.podspec in that directory.
 begin
   _rn_maps_pnpm = File.expand_path(
     File.join('..', '..', '..', 'node_modules', '.pnpm'),
@@ -43,15 +50,33 @@ begin
     src = File.join(maps_dir, 'react-native-maps.podspec')
     dst = File.join(maps_dir, 'react-native-google-maps.podspec')
     next unless File.exist?(src)
-    if File.exist?(dst)
-      puts "[rn-maps-fix] Already present: #{dst}"
+    content = File.read(src)
+    # Force s.name = "react-native-google-maps" in the copy regardless of source state.
+    # (The source may have been patched by a previous build's node plugin.)
+    content_for_copy = content.gsub(
+      /s\.name\s*=\s*["'][^"']*["']/,
+      's.name = "react-native-google-maps"'
+    )
+    if File.exist?(dst) && File.read(dst).include?('react-native-google-maps')
+      puts "[rn-maps-fix] Already present and correct: #{dst}"
     else
-      FileUtils.cp(src, dst)
-      puts "[rn-maps-fix] Created: #{dst}"
+      File.write(dst, content_for_copy)
+      puts "[rn-maps-fix] Created #{dst}"
+    end
+    # Also ensure the SOURCE file has s.name = "react-native-google-maps" so
+    # link_native_modules! generates pod 'react-native-google-maps', :path => '...'
+    unless content.include?('s.name = "react-native-google-maps"')
+      content_restored = content.gsub(
+        /s\.name\s*=\s*["'][^"']*["']/,
+        's.name = "react-native-google-maps"'
+      )
+      File.write(src, content_restored)
+      puts "[rn-maps-fix] Restored s.name in #{src}"
     end
   end
 rescue => e
   puts "[rn-maps-fix] Error: #{e.message}"
+  puts e.backtrace.first(5).join("\\n")
 end
 
 `;
