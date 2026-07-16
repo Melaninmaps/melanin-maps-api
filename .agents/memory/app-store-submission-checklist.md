@@ -1,37 +1,35 @@
 ---
 name: App Store submission checklist
-description: Owner requested reminder at next session start — work through these before running eas build
+description: iOS/Android build status and submission checklist — updated July 16 2026
 ---
 
 # App Store Submission Checklist
 
-**REMIND THE OWNER AT THE START OF THE NEXT SESSION.**
-They asked to pick this up the following day (noted July 12, 2026 evening).
+## Current build state (July 16 2026)
+- iOS buildNumber: **57** (version 1.1.5) — next build to attempt
+- Android versionCode: **56** (version 1.1.5) — Android build running/pending result
 
-## Items to work through together
+## iOS pod install fix (react-native-maps)
+The `withRnMapsPodfileFix.js` plugin now injects Ruby into the **Podfile** (not node_modules).
+This is the only approach that survives `pnpm install --no-frozen-lockfile` in the PREBUILD phase.
+Do NOT revert to node_modules patching — it gets reset every build.
 
-1. **Demo credentials** — create a test business owner account + test consumer account to paste into App Store Connect reviewer notes. Without these, Apple can't test auth-gated features.
+## Items to work through for App Store submission
 
-2. **Privacy nutrition labels** — audit and declare in App Store Connect:
-   - Location (when in use — map, neighborhood safety)
-   - Email address / phone number (auth)
+1. **Demo credentials** — create a test business owner account + test consumer account for reviewer notes.
+
+2. **Privacy nutrition labels** — declare in App Store Connect:
+   - Location (when in use)
+   - Email / phone (auth)
    - User ID / device ID (sessions)
-   - Usage data (analytics)
-   - User-generated content (community feed, reviews, safety surveys)
+   - Usage data, user-generated content
 
-3. **Content moderation disclosure** — community feed + reviews requires a visible report/moderation mechanism. Confirm the report flow is discoverable to a first-time reviewer.
+3. **Content moderation disclosure** — confirm report flow is discoverable.
 
-4. **Release notes draft** — I can write these; owner needs to paste into App Store Connect.
+4. **Release notes** — draft in App Store Connect.
 
-5. **Version bump** — bump `buildNumber` (iOS) and `versionCode` (Android) in `artifacts/mobile/app.json` before build. Current as of July 11: iOS build 20, Android versionCode 44, version 1.1.2. Next build needs those incremented.
-
-6. **Run build from owner's terminal** (Replit sandbox blocks git/EAS):
+5. **Run EAS build from owner's terminal** (always from `artifacts/mobile/`):
    ```bash
-   eas build --platform ios --profile production
-   eas submit --platform ios
+   cd artifacts/mobile && eas build --platform ios --profile production
+   eas submit --platform ios --latest
    ```
-
-7. **App Store Connect settings** — set release to "Automatically release upon approval" so it goes live without a manual step.
-
-## Why this matters
-App has payments (Stripe/RevenueCat), user content (community feed, reviews), location, and phone auth — each adds an Apple review touchpoint. Missing demo creds or inaccurate privacy labels are the top rejection causes for apps at this stage.
