@@ -6,9 +6,8 @@ description: Current app store submission state — Android and iOS build versio
 # Launch Version State (as of July 16, 2026)
 
 ## iOS
-- **Next build: auto-incremented by EAS from 40 — will be 41+**
-- v1.1.5 (bumped from 1.1.4 — includes Cultural Heritage Explorer, Living Heritage Places, External Click Tracking)
-- **autoIncrement: true in eas.json — EAS queries Apple automatically before each build. No manual tracking needed.**
+- **Next build: buildNumber 47 (manual — autoIncrement was removed)**
+- v1.1.5 — React Native upgraded to 0.86.0 + React 19.2.3 to fix Xcode 26 / SDK 57 pod install failure
 - App Store Connect App ID: 6783773366, Apple Team: Y46Y4A5MMZ, Bundle ID: com.melaninmaps.app
 
 ## Android
