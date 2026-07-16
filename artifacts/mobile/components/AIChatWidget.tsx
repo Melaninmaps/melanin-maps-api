@@ -3,8 +3,8 @@ import * as FileSystem from "expo-file-system";
 import * as Haptics from "expo-haptics";
 import { usePathname, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useAudioRecorder, requestRecordingPermissionsAsync, RecordingPresets } from "expo-audio";
-import React, { useRef, useState } from "react";
+import { useAudioRecorder, useAudioPlayer, requestRecordingPermissionsAsync, RecordingPresets } from "expo-audio";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   FlatList,
@@ -49,7 +49,7 @@ async function getToken(): Promise<string | null> {
   catch { return null; }
 }
 
-const GREETING = "Hi! I'm KinfolkAI™ — ask me anything.";
+const GREETING = "Kinfolk's here. Let's map it out. Ask me about cities, Black-owned businesses, safety, events, or anything on your mind.";
 
 let sessionId: string | undefined;
 
@@ -161,7 +161,11 @@ export function AIChatWidget() {
   const [typing, setTyping] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isRecording, setIsRecording] = useState(false);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [listenUri, setListenUri] = useState<string | undefined>(undefined);
+  const [voiceUsage, setVoiceUsage] = useState<{ used: number; limit: number; percent: number; tierName: string } | null>(null);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const player = useAudioPlayer(listenUri);
   const listRef = useRef<FlatList>(null);
   const pulse = useRef(new Animated.Value(1)).current;
   const fabTranslateY = useRef(new Animated.Value(0)).current;
@@ -272,6 +276,91 @@ export function AIChatWidget() {
           if (text) setInput(text);
         }
       }
+    } catch { /* non-critical */ }
+  };
+
+  // ── Play audio when listenUri + player are ready ──────────────────────────
+  useEffect(() => {
+    if (listenUri && player.isLoaded) {
+      player.play();
+    }
+  }, [listenUri, player.isLoaded]);
+
+  // ── Clear playingId when audio finishes ───────────────────────────────────
+  useEffect(() => {
+    if (playingId && !player.playing && player.isLoaded) {
+      setPlayingId(null);
+    }
+  }, [player.playing]);
+
+  // ── Fetch voice usage when chat opens ────────────────────────────────────
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      try {
+        const base = getApiBase();
+        const token = await getToken();
+        if (!token) return;
+        const r = await fetch(`${base}/api/kinfolk/voice-usage`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (r.ok) {
+          const data = await r.json() as {
+            charsUsed: number; charsLimit: number;
+            tierName: string; percentRemaining: number;
+          };
+          setVoiceUsage({
+            used: data.charsUsed,
+            limit: data.charsLimit,
+            percent: data.percentRemaining,
+            tierName: data.tierName,
+          });
+        }
+      } catch { /* non-critical */ }
+    })();
+  }, [open]);
+
+  const speakMessage = async (msgId: string, text: string) => {
+    if (Platform.OS === "web") return;
+    if (playingId === msgId) {
+      player.pause();
+      setPlayingId(null);
+      return;
+    }
+    try {
+      const base = getApiBase();
+      const token = await getToken();
+      const r = await fetch(`${base}/api/kinfolk/speak`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ text }),
+      });
+      if (r.status === 429) {
+        Alert.alert(
+          "Voice Time Used",
+          "You've used your Kinfolk Voice allowance for this month. Text responses continue as normal — your allowance resets next month.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+      if (r.status === 401) {
+        Alert.alert("Sign In Required", "Sign in to use voice responses.", [{ text: "OK" }]);
+        return;
+      }
+      if (!r.ok) return;
+      const { audio, format, charsUsed, charsLimit, percentRemaining, tierName } = await r.json() as {
+        audio: string; format: string; charsUsed: number;
+        charsLimit: number; percentRemaining: number; tierName: string;
+      };
+      setVoiceUsage({ used: charsUsed, limit: charsLimit, percent: percentRemaining, tierName });
+      const tempUri = `${FileSystem.cacheDirectory}kinfolk_${msgId}.${format}`;
+      await FileSystem.writeAsStringAsync(tempUri, audio, { encoding: FileSystem.EncodingType.Base64 });
+      setPlayingId(msgId);
+      setListenUri(tempUri);
+      if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch { /* non-critical */ }
   };
 
@@ -399,6 +488,25 @@ export function AIChatWidget() {
             </View>
           </View>
 
+          {voiceUsage && voiceUsage.limit !== -1 && (
+            <View style={[styles.voiceMeter, { borderBottomColor: colors.border }]}>
+              <View style={[styles.voiceMeterTrack, { backgroundColor: colors.muted }]}>
+                <View
+                  style={[
+                    styles.voiceMeterFill,
+                    {
+                      width: `${voiceUsage.percent}%` as `${number}%`,
+                      backgroundColor: voiceUsage.percent > 20 ? colors.primary : "#DC2626",
+                    },
+                  ]}
+                />
+              </View>
+              <Text style={[styles.voiceMeterTxt, { color: colors.mutedForeground }]}>
+                {voiceUsage.tierName} — {voiceUsage.percent}% remaining
+              </Text>
+            </View>
+          )}
+
           <FlatList
             keyboardDismissMode="on-drag"
             ref={listRef}
@@ -426,6 +534,22 @@ export function AIChatWidget() {
                     </Text>
                   </View>
                 </View>
+                {!item.fromUser && (
+                  <TouchableOpacity
+                    onPress={() => void speakMessage(item.id, item.text)}
+                    style={[styles.listenBtn, { marginLeft: 42 }]}
+                    activeOpacity={0.7}
+                  >
+                    <Feather
+                      name={playingId === item.id ? "volume-x" : "volume-2"}
+                      size={13}
+                      color={playingId === item.id ? colors.primary : colors.mutedForeground}
+                    />
+                    <Text style={[styles.listenTxt, { color: playingId === item.id ? colors.primary : colors.mutedForeground }]}>
+                      {playingId === item.id ? "Stop" : "Listen"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
                 {item.taskCreated && (
                   <TouchableOpacity onPress={goToTasks} style={[styles.taskCreatedBadge, { backgroundColor: colors.card, borderColor: colors.primary }]}>
                     <Feather name="check-square" size={13} color={colors.primary} />
@@ -599,4 +723,10 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
     borderWidth: 1,
   },
+  listenBtn: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4, paddingLeft: 2, alignSelf: "flex-start" },
+  listenTxt: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  voiceMeter: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 10, borderBottomWidth: 1 },
+  voiceMeterTrack: { height: 3, borderRadius: 2, overflow: "hidden", marginBottom: 5 },
+  voiceMeterFill: { height: "100%", borderRadius: 2 },
+  voiceMeterTxt: { fontSize: 10, fontFamily: "Inter_400Regular" },
 });

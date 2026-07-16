@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { checkAiPool, incrementAiUsage, getTierFromMemberType } from "../constants/membershipTiers";
+import { textToSpeech } from "@workspace/integrations-openai-ai-server/audio";
+import { checkAiPool, incrementAiUsage, getTierFromMemberType, checkVoiceUsage, incrementVoiceChars, getVoiceUsage, TIER_LIMITS } from "../constants/membershipTiers";
 import crypto from "crypto";
 import {
   db,
@@ -2047,6 +2048,86 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Transcription failed");
     res.status(500).json({ error: "Transcription failed" });
+  }
+});
+
+// ─── POST /api/kinfolk/speak — TTS, gated by monthly char allowance ───────────
+router.post("/kinfolk/speak", async (req: Request, res: Response) => {
+  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
+    return void res.status(503).json({ error: "AI service unavailable" });
+  }
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+
+  const { text } = req.body as { text?: string };
+  if (!text || typeof text !== "string") return void res.status(400).json({ error: "text is required" });
+
+  const chars = Math.min(text.length, 600);
+  const speakText = chars < text.length ? text.slice(0, 597) + "…" : text;
+
+  try {
+    const [userRow] = await db
+      .select({ memberType: usersTable.memberType })
+      .from(usersTable)
+      .where(eq(usersTable.id, req.user.id))
+      .limit(1);
+    const tier = getTierFromMemberType(userRow?.memberType);
+    const usage = await checkVoiceUsage(req.user.id, tier);
+
+    if (!usage.allowed) {
+      return void res.status(429).json({
+        error: "Voice allowance reached for this month",
+        limitReached: true,
+        used: usage.used,
+        limit: usage.limit,
+        tierName: TIER_LIMITS[tier].voiceTierName,
+      });
+    }
+
+    const audioBuffer = await textToSpeech(speakText, "onyx", "wav");
+    await incrementVoiceChars(req.user.id, chars);
+
+    const newUsed = usage.used + chars;
+    const percentRemaining = usage.limit === -1
+      ? 100
+      : Math.max(0, Math.round(((usage.limit - newUsed) / usage.limit) * 100));
+
+    res.json({
+      audio: audioBuffer.toString("base64"),
+      format: "wav",
+      charsUsed: newUsed,
+      charsLimit: usage.limit,
+      percentRemaining,
+      tierName: TIER_LIMITS[tier].voiceTierName,
+    });
+  } catch (err) {
+    req.log.error({ err }, "TTS failed");
+    res.status(500).json({ error: "TTS failed" });
+  }
+});
+
+// ─── GET /api/kinfolk/voice-usage — current monthly voice allowance ────────────
+router.get("/kinfolk/voice-usage", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  try {
+    const [userRow] = await db
+      .select({ memberType: usersTable.memberType })
+      .from(usersTable)
+      .where(eq(usersTable.id, req.user.id))
+      .limit(1);
+    const tier = getTierFromMemberType(userRow?.memberType);
+    const usage = await getVoiceUsage(req.user.id, tier);
+    const percentRemaining = usage.limit === -1
+      ? 100
+      : Math.max(0, Math.round(((usage.limit - usage.used) / usage.limit) * 100));
+    res.json({
+      charsUsed: usage.used,
+      charsLimit: usage.limit,
+      tierName: TIER_LIMITS[tier].voiceTierName,
+      percentRemaining,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch voice usage");
+    res.status(500).json({ error: "Failed to fetch voice usage" });
   }
 });
 

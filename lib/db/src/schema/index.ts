@@ -124,3 +124,4 @@ export * from "./cultural-sites";
 export * from "./heritage-stories";
 export * from "./heritage-support-links";
 export * from "./external-click-events";
+export * from "./voice-usage";

@@ -13,6 +13,8 @@ export interface TierLimits {
   showLoveNominationsMonthly: number; // -1 = unlimited
   digestFrequencies: readonly string[];
   familyMemberAccess: string;   // human-readable description
+  voiceCharsMonthly: number;    // TTS characters/month — -1 = unlimited
+  voiceTierName: string;        // user-facing name for voice allowance
 }
 
 export const TIER_LIMITS: Record<MembershipTier, TierLimits> = {
@@ -28,6 +30,8 @@ export const TIER_LIMITS: Record<MembershipTier, TierLimits> = {
     showLoveNominationsMonthly: 3,
     digestFrequencies: ["weekly"],
     familyMemberAccess: "Not included",
+    voiceCharsMonthly: 10000,
+    voiceTierName: "Kinfolk Voice Preview",
   },
   navigator: {
     aiPoolMonthly: 30,
@@ -41,6 +45,8 @@ export const TIER_LIMITS: Record<MembershipTier, TierLimits> = {
     showLoveNominationsMonthly: -1,
     digestFrequencies: ["weekly", "daily"],
     familyMemberAccess: "Safety alerts, search, community feed, trip viewing",
+    voiceCharsMonthly: 100000,
+    voiceTierName: "Kinfolk Voice",
   },
   trailblazer: {
     aiPoolMonthly: 100,
@@ -54,6 +60,8 @@ export const TIER_LIMITS: Record<MembershipTier, TierLimits> = {
     showLoveNominationsMonthly: -1,
     digestFrequencies: ["weekly", "daily"],
     familyMemberAccess: "Safety, search, travel planning, location sharing, trip join",
+    voiceCharsMonthly: 300000,
+    voiceTierName: "Extended Kinfolk Voice",
   },
   community_builder: {
     aiPoolMonthly: 300,
@@ -67,6 +75,8 @@ export const TIER_LIMITS: Record<MembershipTier, TierLimits> = {
     showLoveNominationsMonthly: -1,
     digestFrequencies: ["weekly", "daily", "realtime"],
     familyMemberAccess: "Full community, circles, events, AI pool access",
+    voiceCharsMonthly: 750000,
+    voiceTierName: "Kinfolk Voice Plus",
   },
   legacy_member: {
     aiPoolMonthly: -1,
@@ -80,6 +90,8 @@ export const TIER_LIMITS: Record<MembershipTier, TierLimits> = {
     showLoveNominationsMonthly: -1,
     digestFrequencies: ["weekly", "daily", "realtime"],
     familyMemberAccess: "Full platform — unlimited AI from shared pool",
+    voiceCharsMonthly: -1,
+    voiceTierName: "Kinfolk Voice — Unlimited",
   },
 };
 
@@ -204,6 +216,47 @@ export async function getAiUsage(userId: string, tier: MembershipTier): Promise<
   const used = (row.rows[0]?.requests_used as number) ?? 0;
 
   return { used, limit, circleId, yearMonth };
+}
+
+// ─── Voice usage helpers ──────────────────────────────────────────────────────
+
+export async function checkVoiceUsage(userId: string, tier: MembershipTier): Promise<{
+  allowed: boolean; used: number; limit: number;
+}> {
+  const limit = TIER_LIMITS[tier].voiceCharsMonthly;
+  if (limit === -1) return { allowed: true, used: 0, limit: -1 };
+  const yearMonth = getCurrentYearMonth();
+  const row = await pool.query(
+    `SELECT chars_used FROM voice_usage WHERE user_id = $1 AND year_month = $2`,
+    [userId, yearMonth]
+  );
+  const used = (row.rows[0]?.chars_used as number) ?? 0;
+  return { allowed: used < limit, used, limit };
+}
+
+export async function incrementVoiceChars(userId: string, chars: number): Promise<void> {
+  const yearMonth = getCurrentYearMonth();
+  await pool.query(
+    `INSERT INTO voice_usage (user_id, year_month, chars_used, updated_at)
+     VALUES ($1, $2, $3, now())
+     ON CONFLICT (user_id, year_month)
+     DO UPDATE SET chars_used = voice_usage.chars_used + $3, updated_at = now()`,
+    [userId, yearMonth, chars]
+  );
+}
+
+export async function getVoiceUsage(userId: string, tier: MembershipTier): Promise<{
+  used: number; limit: number;
+}> {
+  const limit = TIER_LIMITS[tier].voiceCharsMonthly;
+  if (limit === -1) return { used: 0, limit: -1 };
+  const yearMonth = getCurrentYearMonth();
+  const row = await pool.query(
+    `SELECT chars_used FROM voice_usage WHERE user_id = $1 AND year_month = $2`,
+    [userId, yearMonth]
+  );
+  const used = (row.rows[0]?.chars_used as number) ?? 0;
+  return { used, limit };
 }
 
 /** Get total accepted family members for a circle owner */
