@@ -3,34 +3,30 @@ name: Launch version state
 description: Current app store submission state — Android and iOS build versions and track status. Update this every build.
 ---
 
-# Launch Version State (as of July 16, 2026)
+# Launch Version State (as of July 16, 2026 — end of session)
 
 ## iOS
-- **Next build: buildNumber 47 (manual — autoIncrement was removed)**
-- v1.1.5 — React Native upgraded to 0.86.0 + React 19.2.3 to fix Xcode 26 / SDK 57 pod install failure
+- **Current buildNumber in app.json: 51, version 1.1.5**
+- autoIncrement: true in eas.json — EAS auto-increments from 51 onward
+- All recent builds (build ~40–51) FAILED at pod install — NOT yet submitted to TestFlight or App Store
+- The pod install fix is now in place (see rnmaps-podspec-patch.md) — next build should succeed
 - App Store Connect App ID: 6783773366, Apple Team: Y46Y4A5MMZ, Bundle ID: com.melaninmaps.app
+- **NEXT SESSION ACTION: run `eas build --platform ios --profile production`, then `eas submit --platform ios --profile production`**
 
 ## Android
-- **Next build: auto-incremented by EAS from 51 — will be 52+**
-- v1.1.5
+- **versionCode 52, version 1.1.5 — already submitted to Google Play internal track**
 - Submit command: `eas submit --platform android --profile production`
-- Google Play service account key: `./google-service-account.json` (must exist in artifacts/mobile)
-- Track: internal
-- **autoIncrement: true in eas.json — EAS now queries Google automatically before each build. No manual tracking needed.**
-
-## Key reminders
-- **autoIncrement: true is set** — EAS handles build numbers automatically going forward
-- EAS builds: always instruct user to run from their own terminal (never from Replit agent bash)
-- Build iOS: `cd artifacts/mobile && eas build --platform ios --profile production`
-- Submit iOS: `cd artifacts/mobile && eas submit --platform ios --profile production`
-- Build Android: `cd artifacts/mobile && eas build --platform android --profile production`
-- Submit Android: `cd artifacts/mobile && eas submit --platform android --profile production`
+- autoIncrement: true in eas.json
 - eas.json production android has `credentialsSource: "local"` — do not change this
 
+## Build commands (user runs from their own terminal, inside artifacts/mobile/)
+- `cd artifacts/mobile && eas build --platform ios --profile production`
+- `cd artifacts/mobile && eas submit --platform ios --profile production`
+
 ## Railway production fixes applied July 14, 2026
-- RESEND_API_KEY: was wrong key (no activity) — replaced with correct Production key
+- RESEND_API_KEY: was wrong key — replaced with correct Production key
 - DATABASE_URL: was hardcoded public proxy URL — replaced with ${{ Postgres.DATABASE_URL }} (internal network)
-- Both fixes confirmed working: registration returns 201, emails will now send
+- Both fixes confirmed working: registration returns 201, emails send
 
 ## Railway redeployment pattern
 - Push dist to Melaninmaps/melanin-maps-api GitHub repo (requires PAT — password auth disabled)
