@@ -1,27 +1,18 @@
 /**
  * react-native.config.js
  *
- * Points autolinking to the correct podspec file for react-native-maps.
+ * IMPORTANT — do NOT add a podspecPath override for react-native-maps here.
  *
- * react-native-maps@1.27.x ships react-native-maps.podspec with:
- *   s.name = "react-native-google-maps"   ← set by upstream, we patch this in
- *                                            plugins/withRnMapsPodfileFix.js
+ * A podspecPath override causes two separate pod entries in the Podfile:
+ *   pod 'react-native-maps'        ← from this override (npm package name)
+ *   pod 'react-native-google-maps' ← from Expo autolinking (reads s.name)
+ * Both compile from the same source → 339 duplicate symbols → linker crash.
  *
- * withRnMapsPodfileFix.js patches s.name → "react-native-maps" at prebuild time,
- * so link_native_modules! generates:
- *   pod 'react-native-maps', :path => '...node_modules/react-native-maps'
- * and CocoaPods finds react-native-maps.podspec by filename — SUCCESS.
- *
- * This podspecPath override ensures the codegen step also reads the right file.
+ * Instead, Expo autolinking discovers react-native-maps automatically and
+ * generates ONE entry ('react-native-google-maps') based on s.name.
+ * The withRnMapsPodfileFix.js plugin ensures react-native-google-maps.podspec
+ * exists so CocoaPods can resolve that single entry correctly.
  */
 module.exports = {
-  dependencies: {
-    'react-native-maps': {
-      platforms: {
-        ios: {
-          podspecPath: './node_modules/react-native-maps/react-native-maps.podspec',
-        },
-      },
-    },
-  },
+  dependencies: {},
 };
