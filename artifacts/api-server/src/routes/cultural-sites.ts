@@ -1,59 +1,197 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, culturalSitesTable } from "@workspace/db";
-import { eq, and, gte, lte, sql } from "drizzle-orm";
+import { pool } from "@workspace/db";
+import { CULTURAL_SITES_SEED } from "../data/cultural-sites-seed";
 
 const router: IRouter = Router();
 
-const SEED_SITES = [
-  { name: "Apollo Theater", description: "Legendary Harlem venue that launched generations of Black musical talent — from Ella Fitzgerald to James Brown.", category: "Music & Arts", city: "New York", state: "NY", address: "253 W 125th St", latitude: "40.8100", longitude: "-73.9498", era: "1934–present", significance: "Home of Amateur Night, the Apollo shaped American music and Black cultural identity for nearly a century." },
-  { name: "Schomburg Center for Research in Black Culture", description: "One of the world's foremost research centers for documenting the experiences of people of African descent.", category: "Education & Archives", city: "New York", state: "NY", address: "515 Malcolm X Blvd", latitude: "40.8136", longitude: "-73.9424", era: "1925–present", significance: "Founded by Arturo Alfonso Schomburg, whose personal collection became the seed of this vital institution." },
-  { name: "Studio Museum in Harlem", description: "The first Black fine-arts museum in the country, devoted to artists of African descent and the art of the African diaspora.", category: "Museum & Gallery", city: "New York", state: "NY", address: "429 W 127th St", latitude: "40.8090", longitude: "-73.9501", era: "1968–present", significance: "Shaped the careers of countless Black artists and redefined what museums could be for communities of color." },
-  { name: "Sweet Auburn Historic District", description: "Once known as the richest Black street in America, Sweet Auburn was the social, cultural, and economic heart of Atlanta's African American community.", category: "Heritage District", city: "Atlanta", state: "GA", address: "Auburn Ave NE", latitude: "33.7546", longitude: "-84.3799", era: "1890s–present", significance: "Birthplace of Martin Luther King Jr. and home to Ebenezer Baptist Church, the neighborhood anchored the Civil Rights movement." },
-  { name: "Martin Luther King Jr. National Historic Site", description: "The birthplace, church, and gravesite of Dr. Martin Luther King Jr., preserved as a memorial to his life and the Civil Rights movement.", category: "Civil Rights", city: "Atlanta", state: "GA", address: "450 Auburn Ave NE", latitude: "33.7556", longitude: "-84.3733", era: "1929–1968", significance: "Commemorates the life of the most celebrated leader of the American Civil Rights movement." },
-  { name: "Spelman College", description: "Historically Black women's college founded in 1881 — one of the most academically rigorous and culturally rich HBCUs in the nation.", category: "HBCU", city: "Atlanta", state: "GA", address: "350 Spelman Ln SW", latitude: "33.7444", longitude: "-84.4119", era: "1881–present", significance: "Has produced generations of Black women leaders, scholars, and artists who have shaped American society." },
-  { name: "Morehouse College", description: "Historically Black men's liberal arts college and the alma mater of Martin Luther King Jr., Dr. Herman Cain, and many transformational leaders.", category: "HBCU", city: "Atlanta", state: "GA", address: "830 Westview Dr SW", latitude: "33.7456", longitude: "-84.4122", era: "1867–present", significance: "The only historically Black liberal arts college for men in the United States." },
-  { name: "Greenwood District — Black Wall Street", description: "Before its destruction in the 1921 Tulsa Race Massacre, Greenwood was one of the most prosperous Black communities in American history.", category: "Heritage District", city: "Tulsa", state: "OK", address: "Greenwood Ave", latitude: "36.1597", longitude: "-95.9878", era: "1906–present", significance: "A symbol of Black economic power and resilience — and of the violence used to suppress it. Now reclaiming its legacy." },
-  { name: "16th Street Baptist Church", description: "Site of the 1963 bombing by white supremacists that killed four young girls — a turning point in the Civil Rights movement.", category: "Civil Rights", city: "Birmingham", state: "AL", address: "1530 6th Ave N", latitude: "33.5185", longitude: "-86.8154", era: "1873–present", significance: "The bombing galvanized national support for civil rights legislation and became a symbol of resistance and sacrifice." },
-  { name: "Birmingham Civil Rights Institute", description: "World-class research facility and interpretive cultural arts museum exploring the social and cultural history of civil rights struggles.", category: "Museum & Gallery", city: "Birmingham", state: "AL", address: "520 16th St N", latitude: "33.5186", longitude: "-86.8153", era: "1992–present", significance: "Chronicles the civil rights movement and connects historical struggle to contemporary human rights issues globally." },
-  { name: "National Civil Rights Museum — Lorraine Motel", description: "Built around the Lorraine Motel where Dr. Martin Luther King Jr. was assassinated on April 4, 1968.", category: "Civil Rights", city: "Memphis", state: "TN", address: "450 Mulberry St", latitude: "35.1340", longitude: "-90.0545", era: "1968–present", significance: "Preserves the site of one of America's most consequential and tragic moments in the struggle for equality." },
-  { name: "Beale Street Historic District", description: "The birthplace of the blues and home to legendary Black musicians including W.C. Handy, B.B. King, and countless others.", category: "Music & Arts", city: "Memphis", state: "TN", address: "Beale St", latitude: "35.1389", longitude: "-90.0518", era: "1860s–present", significance: "The cultural foundation of the blues and rock 'n' roll, born from the creativity of the African American community." },
-  { name: "Congo Square — Louis Armstrong Park", description: "The site where enslaved Africans gathered on Sundays to maintain cultural traditions through music and dance, giving birth to jazz.", category: "Heritage Site", city: "New Orleans", state: "LA", address: "701 N Rampart St", latitude: "29.9586", longitude: "-90.0633", era: "1700s–present", significance: "The spiritual birthplace of jazz and a sacred site for the preservation of African cultural identity in the Americas." },
-  { name: "Preservation Hall", description: "Historic venue dedicated to preserving and perpetuating traditional New Orleans jazz and the culture from which it evolved.", category: "Music & Arts", city: "New Orleans", state: "LA", address: "726 St Peter St", latitude: "29.9574", longitude: "-90.0651", era: "1961–present", significance: "Home to some of the greatest traditional jazz musicians, keeping the African American musical heritage alive." },
-  { name: "Dexter Avenue King Memorial Baptist Church", description: "The church where Dr. Martin Luther King Jr. served as pastor during the Montgomery Bus Boycott of 1955–1956.", category: "Civil Rights", city: "Montgomery", state: "AL", address: "454 Dexter Ave", latitude: "32.3765", longitude: "-86.2996", era: "1878–present", significance: "The operational center of the Montgomery Bus Boycott — the spark that ignited the modern Civil Rights movement." },
-  { name: "Howard University", description: "One of the nation's most prestigious HBCUs, producing more Black PhDs and professionals than any other university.", category: "HBCU", city: "Washington", state: "DC", address: "2400 6th St NW", latitude: "38.9218", longitude: "-77.0201", era: "1867–present", significance: "The capstone of Black education — training generations of doctors, lawyers, engineers, and artists." },
-  { name: "National Museum of African American History & Culture", description: "The only national museum devoted exclusively to the documentation of African American life, history, and culture.", category: "Museum & Gallery", city: "Washington", state: "DC", address: "1400 Constitution Ave NW", latitude: "38.8913", longitude: "-77.0353", era: "2016–present", significance: "A monumental achievement of cultural preservation, telling the full American story through the African American experience." },
-  { name: "Tuskegee University", description: "Founded by Booker T. Washington in 1881, Tuskegee is one of the most famous and historically significant HBCUs in America.", category: "HBCU", city: "Tuskegee", state: "AL", address: "1200 W Montgomery Rd", latitude: "32.4302", longitude: "-85.7085", era: "1881–present", significance: "Home of the Tuskegee Airmen and George Washington Carver's groundbreaking research laboratory." },
-  { name: "Hampton University", description: "One of America's oldest HBCUs, founded in 1868 to educate formerly enslaved people, and now a nationally ranked research institution.", category: "HBCU", city: "Hampton", state: "VA", address: "100 E Queen St", latitude: "37.0236", longitude: "-76.3358", era: "1868–present", significance: "Shaped the philosophy of education for Black Americans and has produced generations of distinguished alumni." },
-  { name: "Hayti Heritage Center", description: "The former center of Durham's thriving Black business district — once one of the wealthiest Black communities in the American South.", category: "Heritage District", city: "Durham", state: "NC", address: "804 Old Fayetteville St", latitude: "35.9977", longitude: "-78.8998", era: "1890s–present", significance: "North Carolina Mutual Life Insurance Company — the 'largest Black business in America' — was founded here." },
-  { name: "National Underground Railroad Freedom Center", description: "Museum that tells the stories of freedom's heroes from the past and present, connecting visitors to the ongoing struggle for freedom.", category: "Museum & Gallery", city: "Cincinnati", state: "OH", address: "50 E Freedom Way", latitude: "39.1011", longitude: "-84.5116", era: "2004–present", significance: "Preserves and celebrates the legacy of the Underground Railroad and connects it to modern human rights struggles." },
-  { name: "Edmund Pettus Bridge", description: "Site of Bloody Sunday on March 7, 1965, when Civil Rights marchers were brutally attacked by state troopers — a moment that changed American history.", category: "Civil Rights", city: "Selma", state: "AL", address: "Edmund Pettus Bridge", latitude: "32.4074", longitude: "-87.0211", era: "1940–present", significance: "The march across this bridge led directly to the passage of the Voting Rights Act of 1965." },
-  { name: "Harriet Tubman National Historical Park", description: "Commemorates the life and legacy of Harriet Tubman, who escaped slavery and led hundreds to freedom via the Underground Railroad.", category: "Civil Rights", city: "Auburn", state: "NY", address: "180 South St", latitude: "42.9332", longitude: "-76.5654", era: "1820s–1913", significance: "Celebrates the extraordinary life of the most famous conductor of the Underground Railroad, a towering symbol of courage." },
-  { name: "Langston University", description: "The only HBCU west of the Mississippi River, founded in 1897 and named after John Mercer Langston, the first Black congressman from Virginia.", category: "HBCU", city: "Langston", state: "OK", address: "701 Sammy Davis Jr. Dr", latitude: "35.9371", longitude: "-97.2628", era: "1897–present", significance: "A beacon of higher education for Black Oklahomans and communities of color throughout the American Southwest." },
-];
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+async function ensureSeeded() {
+  const countRes = await pool.query<{ count: string }>("SELECT COUNT(*) FROM cultural_sites");
+  const count = parseInt(countRes.rows[0]?.count ?? "0", 10);
+  if (count < CULTURAL_SITES_SEED.length) {
+    await pool.query("TRUNCATE cultural_sites");
+    const cols = [
+      "name", "description", "category", "heritage_category", "subcategory",
+      "ethnic_community", "city", "state", "address", "latitude", "longitude",
+      "era", "significance", "external_url", "year_established",
+      "is_accessible", "is_family_friendly", "admission_free", "audio_guide",
+      "verified_source", "is_verified",
+    ];
+    const placeholders = CULTURAL_SITES_SEED.map(
+      (_, i) => `(${cols.map((_, j) => `$${i * cols.length + j + 1}`).join(", ")})`,
+    ).join(", ");
+    const values: unknown[] = [];
+    for (const s of CULTURAL_SITES_SEED) {
+      values.push(
+        s.name, s.description, s.category, s.heritageCategory, s.subcategory ?? null,
+        s.ethnicCommunity ?? null, s.city, s.state, s.address ?? null,
+        s.latitude, s.longitude, s.era ?? null, s.significance ?? null,
+        s.externalUrl ?? null, s.yearEstablished ?? null,
+        s.isAccessible ?? false, s.isFamilyFriendly ?? true,
+        s.admissionFree ?? true, s.audioGuide ?? false,
+        s.verifiedSource ?? null, true,
+      );
+    }
+    await pool.query(
+      `INSERT INTO cultural_sites (${cols.join(", ")}) VALUES ${placeholders}`,
+      values,
+    );
+  }
+}
+
+// ── GET /cultural-sites ───────────────────────────────────────────────────────
 
 router.get("/cultural-sites", async (req: Request, res: Response) => {
   try {
-    let sites = await db.select().from(culturalSitesTable).limit(200);
+    await ensureSeeded();
 
-    if (sites.length === 0) {
-      await db.insert(culturalSitesTable).values(
-        SEED_SITES.map((s) => ({
-          ...s,
-          isVerified: true,
-        }))
-      ).onConflictDoNothing();
-      sites = await db.select().from(culturalSitesTable).limit(200);
+    const { heritageCategory, category, search, state, city, accessible, admissionFree } =
+      req.query as Record<string, string | undefined>;
+
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    let idx = 1;
+
+    if (heritageCategory) {
+      conditions.push(`heritage_category = $${idx++}`);
+      params.push(heritageCategory);
+    }
+    if (category) {
+      conditions.push(`category = $${idx++}`);
+      params.push(category);
+    }
+    if (state) {
+      conditions.push(`state = $${idx++}`);
+      params.push(state);
+    }
+    if (city) {
+      conditions.push(`city ILIKE $${idx++}`);
+      params.push(`%${city}%`);
+    }
+    if (accessible === "true") {
+      conditions.push(`is_accessible = true`);
+    }
+    if (admissionFree === "true") {
+      conditions.push(`admission_free = true`);
+    }
+    if (search) {
+      conditions.push(
+        `(name ILIKE $${idx} OR description ILIKE $${idx} OR city ILIKE $${idx} OR significance ILIKE $${idx})`,
+      );
+      params.push(`%${search}%`);
+      idx++;
     }
 
-    const { category, city } = req.query as { category?: string; city?: string };
-    let filtered = sites;
-    if (category) filtered = filtered.filter((s) => s.category === category);
-    if (city) filtered = filtered.filter((s) => s.city.toLowerCase().includes(city.toLowerCase()));
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const sql = `
+      SELECT id, name, description, category, heritage_category AS "heritageCategory",
+             subcategory, ethnic_community AS "ethnicCommunity", city, state, address,
+             latitude, longitude, era, significance, image_url AS "imageUrl",
+             external_url AS "externalUrl", is_verified AS "isVerified",
+             year_established AS "yearEstablished", is_accessible AS "isAccessible",
+             is_family_friendly AS "isFamilyFriendly", admission_free AS "admissionFree",
+             audio_guide AS "audioGuide", verified_source AS "verifiedSource",
+             country, created_at AS "createdAt"
+      FROM cultural_sites
+      ${where}
+      ORDER BY
+        CASE heritage_category
+          WHEN 'HBCU' THEN 1
+          WHEN 'African American Heritage' THEN 2
+          WHEN 'Civil Rights' THEN 3
+          WHEN 'Native American Heritage' THEN 4
+          WHEN 'Hispanic & Latino Heritage' THEN 5
+          WHEN 'LGBTQ+ History' THEN 6
+          WHEN 'Women''s History' THEN 7
+          WHEN 'Cultural Neighborhood' THEN 8
+          ELSE 9
+        END,
+        name ASC
+      LIMIT 500
+    `;
 
-    res.json({ sites: filtered });
+    const result = await pool.query(sql, params);
+    const sites = result.rows;
+
+    // Heritage category summary
+    const categorySummary = await pool.query<{ heritage_category: string; count: string }>(
+      `SELECT heritage_category, COUNT(*) AS count FROM cultural_sites GROUP BY heritage_category ORDER BY count DESC`,
+    );
+
+    res.json({
+      sites,
+      total: sites.length,
+      categories: categorySummary.rows.map((r) => ({
+        label: r.heritage_category,
+        count: parseInt(r.count, 10),
+      })),
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch cultural sites");
     res.status(500).json({ error: "Failed to fetch cultural sites" });
+  }
+});
+
+// ── GET /cultural-sites/:id ───────────────────────────────────────────────────
+
+router.get("/cultural-sites/:id", async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, description, category, heritage_category AS "heritageCategory",
+              subcategory, ethnic_community AS "ethnicCommunity", city, state, address,
+              latitude, longitude, era, significance, image_url AS "imageUrl",
+              external_url AS "externalUrl", is_verified AS "isVerified",
+              year_established AS "yearEstablished", is_accessible AS "isAccessible",
+              is_family_friendly AS "isFamilyFriendly", admission_free AS "admissionFree",
+              audio_guide AS "audioGuide", verified_source AS "verifiedSource",
+              country, created_at AS "createdAt"
+       FROM cultural_sites WHERE id = $1`,
+      [req.params.id],
+    );
+    if (!result.rows[0]) { res.status(404).json({ error: "Site not found" }); return; }
+    res.json({ site: result.rows[0] });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch cultural site");
+    res.status(500).json({ error: "Failed to fetch site" });
+  }
+});
+
+// ── POST /cultural-sites/reseed (admin) ───────────────────────────────────────
+
+router.post("/cultural-sites/reseed", async (req: Request, res: Response) => {
+  try {
+    await pool.query("TRUNCATE cultural_sites");
+    const cols = [
+      "name", "description", "category", "heritage_category", "subcategory",
+      "ethnic_community", "city", "state", "address", "latitude", "longitude",
+      "era", "significance", "external_url", "year_established",
+      "is_accessible", "is_family_friendly", "admission_free", "audio_guide",
+      "verified_source", "is_verified",
+    ];
+    const placeholders = CULTURAL_SITES_SEED.map(
+      (_, i) => `(${cols.map((_, j) => `$${i * cols.length + j + 1}`).join(", ")})`,
+    ).join(", ");
+    const values: unknown[] = [];
+    for (const s of CULTURAL_SITES_SEED) {
+      values.push(
+        s.name, s.description, s.category, s.heritageCategory, s.subcategory ?? null,
+        s.ethnicCommunity ?? null, s.city, s.state, s.address ?? null,
+        s.latitude, s.longitude, s.era ?? null, s.significance ?? null,
+        s.externalUrl ?? null, s.yearEstablished ?? null,
+        s.isAccessible ?? false, s.isFamilyFriendly ?? true,
+        s.admissionFree ?? true, s.audioGuide ?? false,
+        s.verifiedSource ?? null, true,
+      );
+    }
+    await pool.query(
+      `INSERT INTO cultural_sites (${cols.join(", ")}) VALUES ${placeholders}`,
+      values,
+    );
+    res.json({ ok: true, seeded: CULTURAL_SITES_SEED.length });
+  } catch (err) {
+    req.log.error({ err }, "Reseed failed");
+    res.status(500).json({ error: "Reseed failed" });
   }
 });
 

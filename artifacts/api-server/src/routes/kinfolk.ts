@@ -1088,6 +1088,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       if (weatherLoc) {
         weatherContext = await fetchWeatherContext(weatherLoc).catch(() => null);
       }
+      // If no location was found at all, inject a guidance note so the AI asks for one
+      if (!weatherContext) {
+        weatherContext =
+          "[WEATHER_NO_LOCATION: The user asked about weather but no specific city or area was mentioned and none is stored in their preferences. Respond warmly and ask them: 'Which city would you like the weather for? Once you let me know, I can pull up the live forecast for you!' Do NOT make up weather data.]";
+      }
     }
 
     // Build system prompt — include tier for depth-of-response rules

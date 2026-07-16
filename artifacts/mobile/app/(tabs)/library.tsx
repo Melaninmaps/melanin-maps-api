@@ -817,6 +817,7 @@ export default function LibraryScreen() {
                     { emoji: "❤️", title: "Health Hub", desc: "Curated health resources for the community", route: "/health-hub", color: "#DB2777" },
                     { emoji: "🏠", title: "Relocation Concierge", desc: "AI-guided move with minority-owned vendors", route: "/relocation-planner", color: "#2D7A4F" },
                     { emoji: "✈️", title: "KinfolkAI Travel", desc: "Plan culturally-informed trips with AI", route: "/travel", color: "#CA922B" },
+                    { emoji: "🗺️", title: "Cultural Heritage Explorer", desc: "Discover HBCUs, civil rights sites, cultural landmarks, and historic districts across America", route: "/cultural-heritage", color: "#CA922B" },
                   ].map((item) => (
                     <TouchableOpacity
                       key={item.route}

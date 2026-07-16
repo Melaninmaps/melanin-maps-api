@@ -1,4 +1,4 @@
-import { boolean, numeric, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, integer, numeric, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
@@ -7,6 +7,9 @@ export const culturalSitesTable = pgTable("cultural_sites", {
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description").notNull(),
   category: varchar("category", { length: 100 }).notNull().default("Heritage"),
+  heritageCategory: varchar("heritage_category", { length: 100 }),
+  subcategory: varchar("subcategory", { length: 100 }),
+  ethnicCommunity: varchar("ethnic_community", { length: 100 }),
   city: varchar("city", { length: 100 }).notNull(),
   state: varchar("state", { length: 50 }).notNull(),
   address: varchar("address", { length: 255 }),
@@ -17,6 +20,13 @@ export const culturalSitesTable = pgTable("cultural_sites", {
   imageUrl: varchar("image_url", { length: 500 }),
   externalUrl: varchar("external_url", { length: 500 }),
   isVerified: boolean("is_verified").notNull().default(true),
+  yearEstablished: integer("year_established"),
+  isAccessible: boolean("is_accessible").default(false),
+  isFamilyFriendly: boolean("is_family_friendly").default(true),
+  admissionFree: boolean("admission_free").default(true),
+  audioGuide: boolean("audio_guide").default(false),
+  verifiedSource: varchar("verified_source", { length: 255 }),
+  country: varchar("country", { length: 100 }).default("United States"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
