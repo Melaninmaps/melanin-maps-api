@@ -1,4 +1,4 @@
-import { boolean, jsonb, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, jsonb, pgTable, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -22,6 +22,7 @@ export const userPreferencesTable = pgTable("user_preferences", {
   diasporaCountries: jsonb("diaspora_countries").$type<string[]>().default([]),
   lifestyleServices: jsonb("lifestyle_services").$type<string[]>().default([]),
   searchHistory: jsonb("search_history").$type<Array<{ query: string; type: string; categories: string[]; ts: number }>>().default([]),
+  aaveLevel: smallint("aave_level").default(0),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

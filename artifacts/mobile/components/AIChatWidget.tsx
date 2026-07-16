@@ -6,6 +6,7 @@ import * as SecureStore from "expo-secure-store";
 import { useAudioRecorder, useAudioPlayer, requestRecordingPermissionsAsync, RecordingPresets } from "expo-audio";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   FlatList,
   KeyboardAvoidingView,
@@ -55,6 +56,14 @@ const GREETING = "Kinfolk's here. Let's map it out. Ask me about cities, Black-o
 const SIGNATURE_PHRASE = "Kinfolk's here. Let's map it out.";
 const VOICE_PREF_KEY = "@kinfolk_voice_pref";
 const SIGNATURE_DATE_KEY = "@kinfolk_sig_date";
+const AAVE_LEVEL_KEY = "@kinfolk_aave_level";
+
+const AAVE_OPTIONS = [
+  { level: 0, label: "Off",       desc: "Standard Kinfolk voice" },
+  { level: 1, label: "Subtle",    desc: "Cultural knowledge, local terms, always clean" },
+  { level: 2, label: "Authentic", desc: "AAVE rhythm & expressions, no profanity" },
+  { level: 3, label: "Full",      desc: "Complete AAVE including profanity", locked: true },
+] as const;
 
 const VOICE_OPTIONS = [
   { id: "onyx",    label: "Onyx",    desc: "Deep, warm, grounded — Kinfolk default" },
@@ -181,6 +190,8 @@ export function AIChatWidget() {
   const [voicePref, setVoicePref] = useState<string>("onyx");
   const [voiceSheet, setVoiceSheet] = useState(false);
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
+  const [aaveLevel, setAaveLevel] = useState<number>(0);
+  const [aaveSaving, setAaveSaving] = useState(false);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const player = useAudioPlayer(listenUri);
   const listRef = useRef<FlatList>(null);
@@ -296,10 +307,38 @@ export function AIChatWidget() {
     } catch { /* non-critical */ }
   };
 
-  // ── Load saved voice preference on mount ─────────────────────────────────
+  // ── Load saved voice + AAVE preferences on mount ─────────────────────────
   useEffect(() => {
     AsyncStorage.getItem(VOICE_PREF_KEY).then((v) => { if (v) setVoicePref(v); }).catch(() => {});
+    AsyncStorage.getItem(AAVE_LEVEL_KEY).then((v) => { if (v) setAaveLevel(Number(v)); }).catch(() => {});
   }, []);
+
+  // ── Save AAVE level — local + backend ────────────────────────────────────
+  const saveAaveLevel = async (level: number) => {
+    setAaveLevel(level);
+    AsyncStorage.setItem(AAVE_LEVEL_KEY, String(level)).catch(() => {});
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const token = await getToken().catch(() => null);
+    if (!token) return;
+    setAaveSaving(true);
+    try {
+      const base = getApiBase();
+      const res = await fetch(`${base}/api/kinfolk/aave-level`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ level }),
+      });
+      if (!res.ok) {
+        const err = await res.json() as { error?: string; code?: string };
+        if (err.code === "UPGRADE_REQUIRED") {
+          setAaveLevel(aaveLevel);
+          AsyncStorage.setItem(AAVE_LEVEL_KEY, String(aaveLevel)).catch(() => {});
+          Alert.alert("Upgrade Required", "Full AAVE voice (Level 3) requires Navigator or Trailblazer membership.", [{ text: "OK" }]);
+        }
+      }
+    } catch { /* ignore — local pref still saved */ }
+    finally { setAaveSaving(false); }
+  };
 
   // ── Play audio when listenUri + player are ready ──────────────────────────
   useEffect(() => {
@@ -775,6 +814,50 @@ export function AIChatWidget() {
                   <Text style={[styles.voiceSheetNote, { color: colors.mutedForeground }]}>
                     Current beta voice. A signature Kinfolk voice is in development.
                   </Text>
+
+                  {/* ── AAVE Cultural Voice Style ─────────────────────────── */}
+                  <View style={[styles.aaveDivider, { borderTopColor: colors.border }]} />
+                  <View style={styles.aaveHeader}>
+                    <Text style={[styles.aaveTitle, { color: colors.foreground }]}>Cultural Voice Style</Text>
+                    <Text style={[styles.aaveSub, { color: colors.mutedForeground }]}>How Kinfolk speaks to you</Text>
+                  </View>
+
+                  {AAVE_OPTIONS.map((opt) => {
+                    const isLocked = opt.level === 3 && !(voiceUsage?.tierName === "Navigator" || voiceUsage?.tierName === "Trailblazer");
+                    const isSelected = aaveLevel === opt.level;
+                    return (
+                      <TouchableOpacity
+                        key={opt.level}
+                        style={[styles.aaveRow, { borderBottomColor: colors.border, opacity: isLocked ? 0.55 : 1 }]}
+                        onPress={() => { if (!isLocked && !aaveSaving) void saveAaveLevel(opt.level); }}
+                        disabled={isLocked || aaveSaving}
+                      >
+                        <View style={[styles.voiceRadio, { borderColor: colors.primary }]}>
+                          {isSelected && <View style={[styles.voiceRadioFill, { backgroundColor: colors.primary }]} />}
+                        </View>
+                        <View style={styles.aaveRowText}>
+                          <View style={styles.aaveRowLabelRow}>
+                            <Text style={[styles.voiceRowLabel, { color: colors.foreground }]}>{opt.label}</Text>
+                            {isLocked && (
+                              <View style={[styles.aaveLockBadge, { backgroundColor: colors.primary + "22", borderColor: colors.primary + "44" }]}>
+                                <Feather name="lock" size={9} color={colors.primary} />
+                                <Text style={[styles.aaveLockTxt, { color: colors.primary }]}>Navigator+</Text>
+                              </View>
+                            )}
+                          </View>
+                          <Text style={[styles.voiceRowDesc, { color: colors.mutedForeground }]}>{opt.desc}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+
+                  {aaveLevel > 0 && (
+                    <Text style={[styles.aaveNote, { color: colors.mutedForeground }]}>
+                      {aaveLevel === 1 && "Kinfolk will drop real cultural knowledge and local terms naturally."}
+                      {aaveLevel === 2 && "Kinfolk speaks with genuine AAVE rhythm. Always clean."}
+                      {aaveLevel === 3 && "Full cultural voice. Kinfolk keeps it real — including language."}
+                    </Text>
+                  )}
                 </View>
               </TouchableOpacity>
             </TouchableOpacity>
@@ -907,4 +990,21 @@ const styles = StyleSheet.create({
   },
   previewBtnTxt: { fontSize: 11, fontFamily: "Inter_500Medium" },
   voiceSheetNote: { fontSize: 10, fontFamily: "Inter_400Regular", marginTop: 14, textAlign: "center", fontStyle: "italic" },
+  aaveDivider: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 22, marginBottom: 18 },
+  aaveHeader: { marginBottom: 10 },
+  aaveTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  aaveSub: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
+  aaveRow: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  aaveRowText: { flex: 1 },
+  aaveRowLabelRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  aaveLockBadge: {
+    flexDirection: "row", alignItems: "center", gap: 3,
+    paddingHorizontal: 6, paddingVertical: 2,
+    borderRadius: 8, borderWidth: 1,
+  },
+  aaveLockTxt: { fontSize: 9, fontFamily: "Inter_600SemiBold" },
+  aaveNote: { fontSize: 10, fontFamily: "Inter_400Regular", fontStyle: "italic", marginTop: 12, textAlign: "center" },
 });

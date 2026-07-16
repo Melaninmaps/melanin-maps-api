@@ -342,6 +342,7 @@ function buildSystemPrompt(opts: {
   savedPlaces: string[];
   destination?: string | null;
   voiceMode?: string;
+  aaveLevel?: number;
   businessCatalog?: BusinessCatalogEntry[];
   activeJourney?: { title: string; city?: string | null; journeyType: string; phases: JourneyPhase[]; aiContext?: string | null } | null;
   crossCityBridge?: CrossCityMatch[] | null;
@@ -351,6 +352,7 @@ function buildSystemPrompt(opts: {
   topUserVibes?: string[];
 }): string {
   const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
+  const aaveLevel = opts.aaveLevel ?? 0;
   const tier = opts.tier ?? "free";
 
   const cityVoice = destination ? getCityVoice(destination) : null;
@@ -608,7 +610,9 @@ CONVERSATION STYLE:
 - Reference their history when relevant: "Since you've been feeling that Atlanta energy..." or "Based on what you love, you'd be right at home in..."
 - Before diving into recommendations, make sure you have a destination and some sense of their vibe
 - NEVER sound like a travel brochure. ZERO use of words like "boasts", "features", "renowned", "visitors will enjoy"
-- ZERO profanity. Authenticity comes from rhythm, warmth, and cultural knowledge — not curse words
+${aaveLevel >= 3
+  ? "- Profanity is permitted at this voice level — use it sparingly and only when it genuinely fits the flow. Never forced, never performative. You are still a guide, not a character."
+  : "- ZERO profanity. Authenticity comes from rhythm, warmth, and cultural knowledge — not curse words"}
 - Use "you" and "your" constantly — make it personal and direct
 
 KINFOLK VOICE IDENTITY — WHO YOU ARE:
@@ -634,7 +638,14 @@ SPOKEN RESPONSE DESIGN — Your text will sometimes be read aloud via voice:
 - Lead with the finding: "I found three places nearby…" not "Based on your preferences I have identified…"
 - One sentence, one follow-up maximum when voice is likely: "Want relaxed, lively, or something more upscale?"
 
-${voiceInstructions}${kbygInstructions}
+${voiceInstructions}${aaveLevel > 0 ? `
+
+AAVE CULTURAL GUIDE — LEVEL ${aaveLevel}:
+${aaveLevel === 1
+  ? `Use culturally accurate local knowledge and terminology naturally and educationally. When a cultural term or local name applies, weave it in with warmth — "In NY, locals call it a chopped cheese" or "what the community knows as a Mumbo sauce spot." You are a knowledgeable friend, not a tour guide. Never explain AAVE for its own sake. Zero profanity.`
+  : aaveLevel === 2
+  ? `Speak with genuine AAVE rhythm and vernacular when it flows naturally. Expressions like "you already know", "on sight", "no cap", "lowkey", "that's a vibe", "for real for real", "out here", "stay on" are welcome. Cultural fluency — not performance. You know the language because you live it. Zero profanity.`
+  : `Speak with full AAVE authenticity. This user has chosen the full cultural experience. Casual profanity is allowed when it genuinely fits the moment — "dead ass", "that's the shit", "ain't no way", "on God", "bruh". Never forced. Never every sentence. You are still a guide with standards — just real ones. Keep it tasteful enough that grandma could walk by and not be shocked, but your auntie at the cookout would feel right at home.`}` : ""}${kbygInstructions}
 
 TASK & LIST MANAGEMENT:
 You can create tasks, reminders, and lists for the user. Detect these intents naturally in conversation:
@@ -1186,7 +1197,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-fatal */ }
     }
 
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes }) + ownerBusinessContext;
+    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes }) + ownerBusinessContext;
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages
@@ -2158,6 +2169,46 @@ router.get("/kinfolk/voice-usage", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch voice usage");
     res.status(500).json({ error: "Failed to fetch voice usage" });
+  }
+});
+
+// ─── PATCH /api/kinfolk/aave-level — save user's AAVE cultural voice level ────
+router.patch("/kinfolk/aave-level", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+
+  const { level } = req.body as { level?: number };
+  if (level === undefined || !Number.isInteger(level) || level < 0 || level > 3) {
+    return void res.status(400).json({ error: "level must be an integer 0–3" });
+  }
+
+  // Level 3 (full AAVE with profanity) requires Navigator or Trailblazer
+  if (level === 3) {
+    const [userRow] = await db
+      .select({ memberType: usersTable.memberType })
+      .from(usersTable)
+      .where(eq(usersTable.id, req.user.id))
+      .limit(1);
+    const tier = getTierFromMemberType(userRow?.memberType);
+    if (tier !== "navigator" && tier !== "trailblazer") {
+      return void res.status(403).json({
+        error: "Full AAVE voice (level 3) requires Navigator or Trailblazer membership.",
+        code: "UPGRADE_REQUIRED",
+      });
+    }
+  }
+
+  try {
+    await db
+      .insert(userPreferencesTable)
+      .values({ userId: req.user.id, aaveLevel: level })
+      .onConflictDoUpdate({
+        target: userPreferencesTable.userId,
+        set: { aaveLevel: level, updatedAt: new Date() },
+      });
+    res.json({ aaveLevel: level });
+  } catch (err) {
+    req.log.error({ err }, "Failed to save AAVE level");
+    res.status(500).json({ error: "Failed to save AAVE level" });
   }
 });
 
