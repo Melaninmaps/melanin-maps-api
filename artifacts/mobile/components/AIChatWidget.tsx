@@ -50,6 +50,26 @@ const GREETING = "Hi! I'm KinfolkAI™ — ask me anything.";
 
 let sessionId: string | undefined;
 
+let cachedVoiceMode: string | null = null;
+
+async function getVoiceMode(token: string | null): Promise<string> {
+  if (cachedVoiceMode) return cachedVoiceMode;
+  if (!token) return "community";
+  try {
+    const base = getApiBase();
+    const res = await fetch(`${base}/api/kinfolk/preferences`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      const data = await res.json() as { preferences?: { personalityMode?: string | null } };
+      const mode = data.preferences?.personalityMode ?? "community";
+      cachedVoiceMode = mode;
+      return mode;
+    }
+  } catch { /* ignore */ }
+  return "community";
+}
+
 async function sendToKinfolk(message: string, token: string | null): Promise<{
   reply: string;
   taskAction?: TaskActionPayload | null;
@@ -58,10 +78,12 @@ async function sendToKinfolk(message: string, token: string | null): Promise<{
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${base}/api/kinfolk`, {
+  const voiceMode = await getVoiceMode(token);
+
+  const res = await fetch(`${base}/api/kinfolk/chat`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ message, sessionId }),
+    body: JSON.stringify({ message, sessionId, voiceMode }),
   });
   if (!res.ok) throw new Error(`API error ${res.status}`);
   const data = await res.json() as { reply?: string; taskAction?: TaskActionPayload | null; sessionId?: string };

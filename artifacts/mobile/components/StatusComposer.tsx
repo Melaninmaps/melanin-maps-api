@@ -62,6 +62,7 @@ export function StatusComposer({ authorName, authorInitials, authorColor, onPost
   // @ mention state
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const mentionStartRef = useRef<number>(-1);
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
 
   // Business mention + stance
   const [pendingBusiness, setPendingBusiness] = useState<BusinessResult | null>(null);
@@ -100,13 +101,14 @@ export function StatusComposer({ authorName, authorInitials, authorColor, onPost
     setMentionQuery(null);
   };
 
-  // User mention selected — insert @username into text
-  const handleUserSelect = (username: string) => {
+  // User mention selected — insert @username into text and track userId
+  const handleUserSelect = (username: string, userId: string) => {
     const start = mentionStartRef.current;
     if (start < 0) { setMentionQuery(null); return; }
     const before = text.slice(0, start);
     const after = text.slice(start + 1 + (mentionQuery?.length ?? 0));
     setText(`${before}@${username} ${after}`);
+    setMentionedUserIds((prev) => prev.includes(userId) ? prev : [...prev, userId]);
     setMentionQuery(null);
     mentionStartRef.current = -1;
   };
@@ -182,6 +184,9 @@ export function StatusComposer({ authorName, authorInitials, authorColor, onPost
         if (businessMention.tag) body.mentionedBusinessTag = businessMention.tag;
         if (businessMention.rating) body.mentionedBusinessRating = businessMention.rating;
       }
+      if (mentionedUserIds.length > 0) {
+        body.mentionedUserIds = mentionedUserIds;
+      }
       const res = await fetch(`${getApiBase()}/api/community/posts`, {
         method: "POST",
         headers: {
@@ -198,6 +203,7 @@ export function StatusComposer({ authorName, authorInitials, authorColor, onPost
       setText("");
       setExpanded(false);
       setBusinessMention(null);
+      setMentionedUserIds([]);
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onPostCreated?.();
     } catch {

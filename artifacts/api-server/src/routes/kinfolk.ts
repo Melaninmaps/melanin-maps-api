@@ -712,7 +712,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
   const {
     favoriteCategories, favoriteCities, avoidCategories, budgetRange, tripStyle, travelCompanion, dietaryNotes,
     communicationStyle, emojiLevel, humorLevel, culturalInterests, knowBeforeYouGo, regionalFlavor,
-    preferredOwnershipTypes, diasporaCountries, lifestyleServices,
+    preferredOwnershipTypes, diasporaCountries, lifestyleServices, personalityMode,
   } = req.body as Record<string, unknown>;
   try {
     const [prefs] = await db
@@ -727,6 +727,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
         travelCompanion: typeof travelCompanion === "string" ? travelCompanion : undefined,
         dietaryNotes: typeof dietaryNotes === "string" ? dietaryNotes : undefined,
         communicationStyle: typeof communicationStyle === "string" ? communicationStyle : undefined,
+        personalityMode: typeof personalityMode === "string" ? personalityMode : undefined,
         emojiLevel: typeof emojiLevel === "string" ? emojiLevel : undefined,
         humorLevel: typeof humorLevel === "string" ? humorLevel : undefined,
         culturalInterests: Array.isArray(culturalInterests) ? culturalInterests as string[] : undefined,
@@ -747,6 +748,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           ...(typeof travelCompanion === "string" && { travelCompanion }),
           ...(dietaryNotes !== undefined && { dietaryNotes: typeof dietaryNotes === "string" ? dietaryNotes : null }),
           ...(typeof communicationStyle === "string" && { communicationStyle }),
+          ...(typeof personalityMode === "string" && { personalityMode }),
           ...(typeof emojiLevel === "string" && { emojiLevel }),
           ...(typeof humorLevel === "string" && { humorLevel }),
           ...(Array.isArray(culturalInterests) && { culturalInterests: culturalInterests as string[] }),
@@ -1292,7 +1294,7 @@ router.get("/kinfolk/business-action-plan/:businessId", async (req: Request, res
 // ─── POST /api/kinfolk/business-action-plan ────────────────────────────────────
 router.post("/kinfolk/business-action-plan", async (req: Request, res: Response) => {
   if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
-  if (!openai) return void res.status(503).json({ error: "AI service unavailable" });
+  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) return void res.status(503).json({ error: "AI service unavailable" });
 
   // ── Tier gate ───────────────────────────────────────────────────────────────
   const tier = await getUserTier(req.user.id);
@@ -1475,7 +1477,7 @@ Include exactly ${MAX_ITEMS} action items. Prioritize accessibility (ADA complia
 // ─── POST /api/kinfolk/expansion-analysis ─────────────────────────────────────
 router.post("/kinfolk/expansion-analysis", async (req: Request, res: Response) => {
   if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
-  if (!openai) return void res.status(503).json({ error: "AI service unavailable" });
+  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) return void res.status(503).json({ error: "AI service unavailable" });
 
   const { businessName, businessCategory, businessCity, avgRating, reviewCount, savesCount } = req.body as {
     businessName?: string;
