@@ -19,6 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
@@ -50,6 +51,19 @@ async function getToken(): Promise<string | null> {
 }
 
 const GREETING = "Kinfolk's here. Let's map it out. Ask me about cities, Black-owned businesses, safety, events, or anything on your mind.";
+
+const SIGNATURE_PHRASE = "Kinfolk's here. Let's map it out.";
+const VOICE_PREF_KEY = "@kinfolk_voice_pref";
+const SIGNATURE_DATE_KEY = "@kinfolk_sig_date";
+
+const VOICE_OPTIONS = [
+  { id: "onyx",    label: "Onyx",    desc: "Deep, warm, grounded — Kinfolk default" },
+  { id: "echo",    label: "Echo",    desc: "Medium tone, conversational, clear" },
+  { id: "fable",   label: "Fable",   desc: "Rich, warm, storyteller quality" },
+  { id: "alloy",   label: "Alloy",   desc: "Neutral, balanced, versatile" },
+  { id: "nova",    label: "Nova",    desc: "Warm, expressive, energetic" },
+  { id: "shimmer", label: "Shimmer", desc: "Clear, gentle, approachable" },
+] as const;
 
 let sessionId: string | undefined;
 
@@ -164,6 +178,9 @@ export function AIChatWidget() {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [listenUri, setListenUri] = useState<string | undefined>(undefined);
   const [voiceUsage, setVoiceUsage] = useState<{ used: number; limit: number; percent: number; tierName: string } | null>(null);
+  const [voicePref, setVoicePref] = useState<string>("onyx");
+  const [voiceSheet, setVoiceSheet] = useState(false);
+  const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const player = useAudioPlayer(listenUri);
   const listRef = useRef<FlatList>(null);
@@ -279,6 +296,11 @@ export function AIChatWidget() {
     } catch { /* non-critical */ }
   };
 
+  // ── Load saved voice preference on mount ─────────────────────────────────
+  useEffect(() => {
+    AsyncStorage.getItem(VOICE_PREF_KEY).then((v) => { if (v) setVoicePref(v); }).catch(() => {});
+  }, []);
+
   // ── Play audio when listenUri + player are ready ──────────────────────────
   useEffect(() => {
     if (listenUri && player.isLoaded) {
@@ -293,7 +315,7 @@ export function AIChatWidget() {
     }
   }, [player.playing]);
 
-  // ── Fetch voice usage when chat opens ────────────────────────────────────
+  // ── Fetch voice usage + play daily signature when chat opens ─────────────
   useEffect(() => {
     if (!open) return;
     (async () => {
@@ -301,11 +323,42 @@ export function AIChatWidget() {
         const base = getApiBase();
         const token = await getToken();
         if (!token) return;
-        const r = await fetch(`${base}/api/kinfolk/voice-usage`, {
+
+        // Load voice preference (in case updated elsewhere)
+        const savedPref = await AsyncStorage.getItem(VOICE_PREF_KEY).catch(() => null);
+        const currentVoice = savedPref ?? voicePref;
+        if (savedPref && savedPref !== voicePref) setVoicePref(savedPref);
+
+        // Fetch voice usage
+        const usageReq = fetch(`${base}/api/kinfolk/voice-usage`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (r.ok) {
-          const data = await r.json() as {
+
+        // Daily audio signature — play once per calendar day
+        const today = new Date().toISOString().slice(0, 10);
+        const lastSig = await AsyncStorage.getItem(SIGNATURE_DATE_KEY).catch(() => null);
+        if (lastSig !== today && Platform.OS !== "web") {
+          await AsyncStorage.setItem(SIGNATURE_DATE_KEY, today).catch(() => {});
+          try {
+            const sigRes = await fetch(`${base}/api/kinfolk/speak`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ text: SIGNATURE_PHRASE, voice: currentVoice }),
+            });
+            if (sigRes.ok) {
+              const { audio, format } = await sigRes.json() as { audio: string; format: string };
+              const sigUri = `${FileSystem.cacheDirectory}kinfolk_sig.${format}`;
+              await FileSystem.writeAsStringAsync(sigUri, audio, { encoding: FileSystem.EncodingType.Base64 });
+              setPlayingId("__signature__");
+              setListenUri(sigUri);
+            }
+          } catch { /* non-critical */ }
+        }
+
+        // Resolve usage
+        const usageRes = await usageReq;
+        if (usageRes.ok) {
+          const data = await usageRes.json() as {
             charsUsed: number; charsLimit: number;
             tierName: string; percentRemaining: number;
           };
@@ -336,7 +389,7 @@ export function AIChatWidget() {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, voice: voicePref }),
       });
       if (r.status === 429) {
         Alert.alert(
@@ -362,6 +415,31 @@ export function AIChatWidget() {
       setListenUri(tempUri);
       if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch { /* non-critical */ }
+  };
+
+  const previewVoice = async (voiceId: string) => {
+    if (Platform.OS === "web" || previewingVoice !== null) return;
+    setPreviewingVoice(voiceId);
+    try {
+      const base = getApiBase();
+      const token = await getToken();
+      const r = await fetch(`${base}/api/kinfolk/speak`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ text: SIGNATURE_PHRASE, voice: voiceId }),
+      });
+      if (r.ok) {
+        const { audio, format } = await r.json() as { audio: string; format: string };
+        const uri = `${FileSystem.cacheDirectory}kinfolk_preview_${voiceId}.${format}`;
+        await FileSystem.writeAsStringAsync(uri, audio, { encoding: FileSystem.EncodingType.Base64 });
+        setPlayingId(`__preview_${voiceId}__`);
+        setListenUri(uri);
+      }
+    } catch { /* non-critical */ }
+    finally { setPreviewingVoice(null); }
   };
 
   if (suppressed) return null;
@@ -477,6 +555,13 @@ export function AIChatWidget() {
               <TouchableOpacity onPress={goToTasks} style={[styles.tasksBtn, { borderColor: colors.border }]}>
                 <Feather name="check-square" size={14} color={colors.primary} />
                 <Text style={[styles.tasksBtnTxt, { color: colors.primary }]}>My Lists</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setVoiceSheet(true)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={[styles.minimizeBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
+              >
+                <Feather name="volume-2" size={15} color={colors.mutedForeground} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => { setOpen(false); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
@@ -630,6 +715,70 @@ export function AIChatWidget() {
               <Feather name="send" size={18} color={input.trim() ? "#FFF" : colors.mutedForeground} />
             </TouchableOpacity>
           </View>
+
+          {/* ── Voice picker sheet ─────────────────────────────────────────── */}
+          {voiceSheet && (
+            <TouchableOpacity
+              style={styles.voiceSheetOverlay}
+              activeOpacity={1}
+              onPress={() => setVoiceSheet(false)}
+            >
+              <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+                <View style={[styles.voiceSheetPanel, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={styles.voiceSheetHeader}>
+                    <View>
+                      <Text style={[styles.voiceSheetTitle, { color: colors.foreground }]}>Kinfolk's Voice</Text>
+                      <Text style={[styles.voiceSheetSub, { color: colors.mutedForeground }]}>Tap Preview to hear each option</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => setVoiceSheet(false)}>
+                      <Feather name="x" size={18} color={colors.mutedForeground} />
+                    </TouchableOpacity>
+                  </View>
+
+                  {VOICE_OPTIONS.map((v) => (
+                    <View key={v.id} style={[styles.voiceRow, { borderBottomColor: colors.border }]}>
+                      <TouchableOpacity
+                        style={styles.voiceRowMain}
+                        onPress={() => {
+                          setVoicePref(v.id);
+                          AsyncStorage.setItem(VOICE_PREF_KEY, v.id).catch(() => {});
+                          if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        }}
+                      >
+                        <View style={[styles.voiceRadio, { borderColor: colors.primary }]}>
+                          {voicePref === v.id && (
+                            <View style={[styles.voiceRadioFill, { backgroundColor: colors.primary }]} />
+                          )}
+                        </View>
+                        <View style={styles.voiceRowText}>
+                          <Text style={[styles.voiceRowLabel, { color: colors.foreground }]}>{v.label}</Text>
+                          <Text style={[styles.voiceRowDesc, { color: colors.mutedForeground }]}>{v.desc}</Text>
+                        </View>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.previewBtn, { borderColor: colors.primary + "66", opacity: previewingVoice === v.id ? 0.5 : 1 }]}
+                        disabled={previewingVoice !== null}
+                        onPress={() => void previewVoice(v.id)}
+                      >
+                        <Feather
+                          name={previewingVoice === v.id ? "loader" : "play"}
+                          size={12}
+                          color={colors.primary}
+                        />
+                        <Text style={[styles.previewBtnTxt, { color: colors.primary }]}>
+                          {previewingVoice === v.id ? "Playing…" : "Preview"}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+
+                  <Text style={[styles.voiceSheetNote, { color: colors.mutedForeground }]}>
+                    Current beta voice. A signature Kinfolk voice is in development.
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          )}
         </KeyboardAvoidingView>
       </Modal>
     </>
@@ -729,4 +878,33 @@ const styles = StyleSheet.create({
   voiceMeterTrack: { height: 3, borderRadius: 2, overflow: "hidden", marginBottom: 5 },
   voiceMeterFill: { height: "100%", borderRadius: 2 },
   voiceMeterTxt: { fontSize: 10, fontFamily: "Inter_400Regular" },
+  voiceSheetOverlay: {
+    position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end", zIndex: 100,
+  },
+  voiceSheetPanel: {
+    borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1,
+    paddingHorizontal: 20, paddingBottom: 32, paddingTop: 20,
+  },
+  voiceSheetHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 },
+  voiceSheetTitle: { fontSize: 16, fontFamily: "Inter_700Bold", marginBottom: 2 },
+  voiceSheetSub: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  voiceRow: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  voiceRowMain: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
+  voiceRadio: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, alignItems: "center", justifyContent: "center" },
+  voiceRadioFill: { width: 9, height: 9, borderRadius: 5 },
+  voiceRowText: { flex: 1 },
+  voiceRowLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  voiceRowDesc: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
+  previewBtn: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: 16, borderWidth: 1, marginLeft: 8,
+  },
+  previewBtnTxt: { fontSize: 11, fontFamily: "Inter_500Medium" },
+  voiceSheetNote: { fontSize: 10, fontFamily: "Inter_400Regular", marginTop: 14, textAlign: "center", fontStyle: "italic" },
 });
