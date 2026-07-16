@@ -1,37 +1,49 @@
 ---
 name: react-native-maps iOS pod install fix
-description: Root cause + definitive fix for "No podspec found for react-native-google-maps" in EAS iOS builds
+description: Root cause + definitive fix for react-native-maps pod name mismatch in EAS iOS builds
 ---
 
 # react-native-maps iOS pod name mismatch
 
 ## Root cause
-`react-native-maps@1.27.x` ships `react-native-maps.podspec` with `s.name = "react-native-google-maps"`.
+`react-native-maps@1.27.x` ships `react-native-maps.podspec` with `s.name = "react-native-maps"`.
 
-`link_native_modules!` reads the podspec, gets `s.name`, and generates:
+Expo autolinking generates:
 ```ruby
 pod 'react-native-google-maps', :path => '.../react-native-maps'
 ```
-CocoaPods then looks for `react-native-google-maps.podspec` **by filename** in the directory — only `react-native-maps.podspec` exists — FAIL.
+CocoaPods scans the directory for `.podspec` files, finds `react-native-maps.podspec`,
+reads `s.name = "react-native-maps"`, expected `"react-native-google-maps"` → FAIL.
 
-## Why node_modules patching fails in EAS
-EAS PREBUILD phase sequence:
-1. `expo prebuild` runs (plugins fire here, including `withDangerousMod`)
-2. `expo prebuild` finishes
-3. `pnpm install --no-frozen-lockfile` runs (AFTER prebuild, INSIDE PREBUILD phase)
-4. `pod install` runs (INSTALL_PODS phase)
+## Why `withDangerousMod` / Podfile Ruby injection also failed
+Two compounding problems:
+1. Any patch to `node_modules` in expo prebuild plugins gets RESET by `pnpm install --no-frozen-lockfile` that runs immediately after prebuild.
+2. The Ruby block created a COPY (`react-native-google-maps.podspec`) but if the source was cached-patched with `s.name = "react-native-maps"`, the copy also had the wrong `s.name`. CocoaPods found the copy but the `s.name` mismatch errored.
 
-Any patch to `node_modules` in step 1 gets reset by step 3. The `eas-build-post-install` hook also runs before step 3.
-
-The "already correct" log message in previous builds was because EAS restored a cached pnpm store with a previously-patched podspec, but step 3 reinstalled from the pnpm content store.
+## EAS build lifecycle (critical)
+```
+eas-build-pre-install  →  pnpm install  →  eas-build-post-install  →  expo prebuild  →  pod install
+```
+Wait — actually for iOS managed builds:
+```
+expo prebuild (plugins fire)  →  pnpm install --no-frozen-lockfile  →  eas-build-post-install  →  pod install
+```
+`eas-build-post-install` runs AFTER pnpm install, BEFORE pod install. This is the ONLY timing-safe window to patch node_modules files.
 
 ## The definitive fix
-**Inject Ruby code into the Podfile** via `withDangerousMod`. The Podfile is a static file — pnpm install never touches it. The Ruby code runs during CocoaPods Podfile evaluation (step 4), after all pnpm installs are done.
+**Wire `scripts/patch-rnmaps-podspec.js` into the `eas-build-post-install` hook** in `artifacts/mobile/package.json`:
+```json
+"eas-build-post-install": "node scripts/patch-expo-entry.js && node scripts/patch-rnmaps-podspec.js"
+```
 
-**Why:** `[rn-maps-fix]` block in the Podfile uses `Dir.glob` to find all `react-native-maps@*` pnpm store entries and `FileUtils.cp` to create `react-native-google-maps.podspec` alongside `react-native-maps.podspec`. CocoaPods then finds it by filename.
+The script changes `s.name = "react-native-maps"` → `"react-native-google-maps"` in every copy of the podspec in the pnpm store. It runs after pnpm install so pnpm can't reset it.
 
-**Do NOT:** patch `s.name` inside `react-native-maps.podspec` — the file gets reset. Do NOT add `postinstall` scripts — they run before the final pnpm install in PREBUILD.
+## Key files
+- `artifacts/mobile/scripts/patch-rnmaps-podspec.js` — patches s.name in the podspec
+- `artifacts/mobile/package.json` eas-build-post-install — wires the script
+- `artifacts/mobile/plugins/withRnMapsPodfileFix.js` — now a no-op stub, keep it registered
 
-## Key file
-`artifacts/mobile/plugins/withRnMapsPodfileFix.js` — injects the Ruby fix block at the top of the Podfile.
-`artifacts/mobile/scripts/patch-rnmaps-podspec.js` — old approach, no longer wired up, do not wire it up.
+## Do NOT
+- Patch in `withDangerousMod` / expo config plugins — resets before pod install
+- Inject Ruby into the Podfile — creates conflicting .podspec copies, causing new errors
+- Wire the script to `preinstall` or `postinstall` npm hooks — those fire before/during pnpm install, not after
