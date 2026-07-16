@@ -161,6 +161,7 @@ const CITY_VOICES: Record<string, CityVoice> = {
   "birmingham": { slang: ["the Magic City","205","B-ham","no cap","fam","lowkey","bruh","on me"], phrases: ["the Magic City always surprises","205 holds it down"], culturalTouchstones: ["16th Street Baptist Church (Civil Rights)","4th Avenue Historic District (Black Wall Street of the South)","Kelly Ingram Park","A.G. Gaston legacy","Miles College (HBCU)","Tuskegee University (nearby HBCU)"], writingGuidance: "Write with Birmingham gravity — this city carries the weight and the resilience of the Civil Rights movement. Use 'the Magic City', '205'. Always reference the 4th Avenue corridor and the historic significance respectfully." },
   "richmond": { slang: ["RVA","804","no cap","fam","lowkey","bruh","the 804","on me"], phrases: ["RVA holds it down","804 energy is underrated"], culturalTouchstones: ["Jackson Ward (Harlem of the South)","Maggie L. Walker legacy","Virginia Union University (HBCU)","Black Wall Street of Richmond","Monument Avenue history","Arthur Ashe birthplace"], writingGuidance: "Write with Richmond pride — a city rewriting its story. Use 'RVA', '804'. Always reference Jackson Ward, Maggie Walker, Virginia Union. Richmond's Black history is extraordinary and underrated." },
   "kansas city": { slang: ["KC","KCMO","816","no cap","fam","lowkey","bruh","the city"], phrases: ["KC always delivers","816 energy is everything"], culturalTouchstones: ["18th and Vine Jazz District","Charlie Parker birthplace","Kansas City jazz and blues legacy","Lincoln University (HBCU, nearby Jefferson City)","Bruce R. Watkins Cultural Heritage Center"], writingGuidance: "Write with Kansas City warmth and rhythm — this is jazz country. Use 'KC', 'KCMO', '816'. Reference 18th and Vine, Charlie Parker, the deep jazz and BBQ culture." },
+  "baton rouge": { slang: ["BR","the Red Stick","225","no cap","fam","lowkey","bruh","on me"], phrases: ["the Red Stick always delivers","225 energy is real","BR never misses"], culturalTouchstones: ["Southern University (HBCU — largest HBCU in the US)","Southern University Jaguars football","Scotlandville community","North Baton Rouge culture","Zydeco music tradition","Creole and Cajun cultural intersection","Juanita Moore legacy","Port Hudson battlefield (Civil War)"], writingGuidance: "Write with Baton Rouge pride — this city carries enormous HBCU energy and deep Creole roots. Use 'the Red Stick', 'BR', '225'. Southern University is a centerpiece — the largest HBCU in the country. Reference North Baton Rouge, zydeco, and the Creole cultural tradition." },
 };
 
 function getCityVoice(destination: string): CityVoice | null {
@@ -389,6 +390,20 @@ const CITY_LOCAL_TERMS: Record<string, CityLocalData> = {
     ],
     transit: ["KC Streetcar", "RideKC bus"],
     nicknames: ["18th and Vine", "Troost Corridor", "Westport", "Crossroads Arts District", "Midtown", "Ruskin Heights"],
+  },
+  "baton rouge": {
+    terms: [
+      { term: "the Red Stick", meaning: "Baton Rouge's nickname — a direct translation of the French 'bâton rouge', referring to a historic red cypress pole marking tribal boundaries" },
+      { term: "225", meaning: "Baton Rouge's area code — the local identity marker" },
+      { term: "BR", meaning: "shorthand for Baton Rouge among locals" },
+      { term: "Southern", meaning: "Southern University — the largest HBCU in the United States, located in Scotlandville. When BR locals say 'Southern,' they mean SU, not LSU." },
+      { term: "Scotlandville", meaning: "the historically Black community on the north side of BR, home to Southern University — the cultural and educational heart of Black Baton Rouge" },
+      { term: "zydeco", meaning: "the Louisiana-born music blending Creole French, blues, and accordion — distinct from Cajun, rooted in Black Louisiana culture" },
+      { term: "lagniappe", meaning: "shared with New Orleans — a little something extra, a gift, a bonus. A Louisiana-wide cultural value." },
+      { term: "Creole", meaning: "in Louisiana context, refers to people and culture of mixed French, African, Spanish, and Native heritage — distinct identity from Cajun" },
+    ],
+    transit: ["CATS (Capital Area Transit System)"],
+    nicknames: ["Scotlandville", "North Baton Rouge", "Mid City", "Broadmoor", "Gardere", "Shenandoah", "Baker"],
   },
 };
 
