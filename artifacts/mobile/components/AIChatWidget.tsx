@@ -1,4 +1,6 @@
 import { Feather } from "@expo/vector-icons";
+import { Audio } from "expo-av";
+import * as FileSystem from "expo-file-system";
 import * as Haptics from "expo-haptics";
 import { usePathname, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -10,6 +12,7 @@ import {
   Modal,
   PanResponder,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -73,6 +76,7 @@ async function getVoiceMode(token: string | null): Promise<string> {
 async function sendToKinfolk(message: string, token: string | null): Promise<{
   reply: string;
   taskAction?: TaskActionPayload | null;
+  followUpSuggestions: string[];
 }> {
   const base = getApiBase();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -86,9 +90,18 @@ async function sendToKinfolk(message: string, token: string | null): Promise<{
     body: JSON.stringify({ message, sessionId, voiceMode }),
   });
   if (!res.ok) throw new Error(`API error ${res.status}`);
-  const data = await res.json() as { reply?: string; taskAction?: TaskActionPayload | null; sessionId?: string };
+  const data = await res.json() as {
+    reply?: string;
+    taskAction?: TaskActionPayload | null;
+    sessionId?: string;
+    followUpSuggestions?: string[];
+  };
   if (data.sessionId) sessionId = data.sessionId;
-  return { reply: data.reply ?? "Sorry, something went sideways on my end.", taskAction: data.taskAction };
+  return {
+    reply: data.reply ?? "Sorry, something went sideways on my end.",
+    taskAction: data.taskAction,
+    followUpSuggestions: data.followUpSuggestions ?? [],
+  };
 }
 
 async function handleTaskAction(action: TaskActionPayload, token: string | null): Promise<{ listName?: string; taskCount?: number; taskTitle?: string }> {
@@ -146,6 +159,9 @@ export function AIChatWidget() {
   ]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const recordingRef = useRef<Audio.Recording | null>(null);
   const listRef = useRef<FlatList>(null);
   const pulse = useRef(new Animated.Value(1)).current;
   const fabTranslateY = useRef(new Animated.Value(0)).current;
@@ -223,6 +239,46 @@ export function AIChatWidget() {
     })
   ).current;
 
+  const startVoice = async () => {
+    if (Platform.OS === "web") return;
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== "granted") return;
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      recordingRef.current = recording;
+      setIsRecording(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch { setIsRecording(false); }
+  };
+
+  const stopVoice = async () => {
+    const rec = recordingRef.current;
+    if (!rec) return;
+    setIsRecording(false);
+    recordingRef.current = null;
+    try {
+      await rec.stopAndUnloadAsync();
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+      const uri = rec.getURI();
+      if (uri) {
+        const base = getApiBase();
+        const token = await getToken();
+        const ext = uri.split(".").pop() ?? "m4a";
+        const fileContent = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+        const r = await fetch(`${base}/api/kinfolk/transcribe`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          body: JSON.stringify({ audio: fileContent, format: ext }),
+        });
+        if (r.ok) {
+          const { text } = await r.json() as { text?: string };
+          if (text) setInput(text);
+        }
+      }
+    } catch { /* non-critical */ }
+  };
+
   if (suppressed) return null;
 
   const send = async () => {
@@ -233,11 +289,12 @@ export function AIChatWidget() {
     const userMsg: Message = { id: String(Date.now()), text, fromUser: true, ts: Date.now() };
     setMessages((m) => [...m, userMsg]);
     setInput("");
+    setSuggestions([]);
     setTyping(true);
 
     try {
       const token = await getToken();
-      const { reply, taskAction } = await sendToKinfolk(text, token);
+      const { reply, taskAction, followUpSuggestions } = await sendToKinfolk(text, token);
 
       let taskCreated: Message["taskCreated"] | undefined;
       if (taskAction && token) {
@@ -250,6 +307,7 @@ export function AIChatWidget() {
 
       const aiMsg: Message = { id: String(Date.now() + 1), text: reply, fromUser: false, ts: Date.now(), taskCreated };
       setMessages((m) => [...m, aiMsg]);
+      setSuggestions(followUpSuggestions);
     } catch {
       const errMsg: Message = {
         id: String(Date.now() + 1),
@@ -346,7 +404,7 @@ export function AIChatWidget() {
           </View>
 
           <FlatList
-        keyboardDismissMode="on-drag"
+            keyboardDismissMode="on-drag"
             ref={listRef}
             data={messages}
             keyExtractor={(m) => m.id}
@@ -398,21 +456,55 @@ export function AIChatWidget() {
             ) : null}
           />
 
+          {/* Quick-reply suggestion chips */}
+          {suggestions.length > 0 && !typing && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={[styles.chipsScroll, { borderTopColor: colors.border }]}
+              contentContainerStyle={styles.chipsRow}
+              keyboardDismissMode="on-drag"
+            >
+              {suggestions.map((s, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={[styles.chip, { backgroundColor: colors.card, borderColor: colors.primary + "55" }]}
+                  onPress={() => {
+                    setSuggestions([]);
+                    setInput(s);
+                    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.chipTxt, { color: colors.primary }]}>{s}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+
           <View style={[styles.inputRow, { borderTopColor: colors.border, paddingBottom: bottomPad + 8, backgroundColor: colors.background }]}>
+            <TouchableOpacity
+              style={[styles.micBtn, { backgroundColor: isRecording ? "#DC2626" : colors.muted }]}
+              onPress={() => isRecording ? void stopVoice() : void startVoice()}
+              activeOpacity={0.8}
+            >
+              <Feather name={isRecording ? "mic-off" : "mic"} size={18} color={isRecording ? "#FFF" : colors.mutedForeground} />
+            </TouchableOpacity>
             <TextInput
-              style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-              placeholder="Ask about cities, safety, places, or make a list…"
-              placeholderTextColor={colors.mutedForeground}
+              style={[styles.input, { backgroundColor: colors.card, borderColor: isRecording ? "#DC262640" : colors.border, color: colors.foreground }]}
+              placeholder={isRecording ? "Recording… tap mic to stop" : "Ask about cities, safety, places, or make a list…"}
+              placeholderTextColor={isRecording ? "#DC2626" : colors.mutedForeground}
               value={input}
               onChangeText={setInput}
               onSubmitEditing={send}
               returnKeyType="send"
               multiline={false}
+              editable={!isRecording}
             />
             <TouchableOpacity
               style={[styles.sendBtn, { backgroundColor: input.trim() ? colors.primary : colors.muted }]}
               onPress={send}
-              disabled={!input.trim()}
+              disabled={!input.trim() || isRecording}
               activeOpacity={0.8}
             >
               <Feather name="send" size={18} color={input.trim() ? "#FFF" : colors.mutedForeground} />
@@ -488,14 +580,23 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   taskCreatedTxt: { fontSize: 12, fontFamily: "Inter_500Medium", flexShrink: 1 },
+  chipsScroll: { borderTopWidth: 1, maxHeight: 56 },
+  chipsRow: { paddingHorizontal: 16, paddingVertical: 8, gap: 8, alignItems: "center" },
+  chip: {
+    paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: 20, borderWidth: 1,
+    flexShrink: 0,
+  },
+  chipTxt: { fontSize: 13, fontFamily: "Inter_500Medium" },
   inputRow: {
-    flexDirection: "row", alignItems: "center", gap: 10,
-    paddingHorizontal: 16, paddingTop: 10, borderTopWidth: 1,
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1,
   },
   input: {
-    flex: 1, borderWidth: 1, borderRadius: 24, paddingHorizontal: 16,
+    flex: 1, borderWidth: 1, borderRadius: 24, paddingHorizontal: 14,
     paddingVertical: 11, fontSize: 14, fontFamily: "Inter_400Regular",
   },
+  micBtn: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   sendBtn: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
   minimizeBtn: {
     width: 34, height: 34, borderRadius: 17,

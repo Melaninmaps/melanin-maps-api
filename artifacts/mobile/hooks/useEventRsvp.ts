@@ -1,3 +1,4 @@
+import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useState } from "react";
 
@@ -13,7 +14,12 @@ async function getToken(): Promise<string | null> {
   catch { return null; }
 }
 
-export function useEventRsvp(eventId: string) {
+interface RsvpOptions {
+  eventTitle?: string;
+  eventDate?: string;
+}
+
+export function useEventRsvp(eventId: string, options?: RsvpOptions) {
   const [isRsvped, setIsRsvped] = useState(false);
   const [rsvpCount, setRsvpCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +47,39 @@ export function useEventRsvp(eventId: string) {
     load();
   }, [eventId]);
 
+  const scheduleReminder = useCallback(async (eventTitle?: string, eventDate?: string) => {
+    try {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== "granted") return;
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "You're going! See you there.",
+          body: eventTitle ? `Your RSVP for "${eventTitle}" is confirmed.` : "Your RSVP is confirmed.",
+          sound: true,
+        },
+        trigger: null,
+      });
+
+      if (eventDate) {
+        const eventDateObj = new Date(eventDate);
+        const dayBefore = new Date(eventDateObj);
+        dayBefore.setDate(dayBefore.getDate() - 1);
+        dayBefore.setHours(9, 0, 0, 0);
+        if (dayBefore > new Date()) {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: eventTitle ? `Tomorrow: ${eventTitle}` : "Tomorrow's event",
+              body: "Your event is tomorrow — get ready!",
+              sound: true,
+            },
+            trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dayBefore },
+          });
+        }
+      }
+    } catch {}
+  }, []);
+
   const toggle = useCallback(async () => {
     const token = await getToken();
     const apiBase = getApiBase();
@@ -61,10 +100,11 @@ export function useEventRsvp(eventId: string) {
         );
         setIsRsvped(true);
         setRsvpCount((c) => c + 1);
+        void scheduleReminder(options?.eventTitle, options?.eventDate);
       }
     } catch {}
     finally { setIsLoading(false); }
-  }, [eventId, isRsvped]);
+  }, [eventId, isRsvped, options, scheduleReminder]);
 
   return { isRsvped, rsvpCount, isLoading, toggle };
 }

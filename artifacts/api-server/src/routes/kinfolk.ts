@@ -1142,7 +1142,22 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     } catch { /* non-fatal */ }
 
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes });
+    // Check if user owns a business and inject owner-mode context
+    let ownerBusinessContext = "";
+    if (req.user?.id) {
+      try {
+        const [ownedBiz] = await db
+          .select({ id: businessesTable.id, name: businessesTable.name, category: businessesTable.category, city: businessesTable.city, state: businessesTable.state, rating: businessesTable.rating })
+          .from(businessesTable)
+          .where(eq(businessesTable.submittedById, req.user.id))
+          .limit(1);
+        if (ownedBiz) {
+          ownerBusinessContext = `\n\n--- BUSINESS OWNER CONTEXT ---\nThis user owns "${ownedBiz.name}" (${ownedBiz.category}) in ${ownedBiz.city}, ${ownedBiz.state} — rated ${ownedBiz.rating ?? "N/A"}/5. If they ask about their business, marketing, reviews, growth, analytics, or how to attract more customers — shift into business advisor mode. Give concrete, actionable guidance for Black business owners. Reference their business name when relevant.`;
+        }
+      } catch { /* non-fatal */ }
+    }
+
+    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes }) + ownerBusinessContext;
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages
@@ -1905,6 +1920,125 @@ router.get("/kinfolk/skip-feedback", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch skip feedback");
     res.status(500).json({ error: "Failed to fetch skip feedback" });
+  }
+});
+
+// ─── GET /api/kinfolk/memory-summary ───────────────────────────────────────────
+router.get("/kinfolk/memory-summary", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
+  try {
+    const [prefs] = await db
+      .select()
+      .from(userPreferencesTable)
+      .where(eq(userPreferencesTable.userId, req.user.id))
+      .limit(1);
+    if (!prefs) return void res.json({ summary: {} });
+    res.json({
+      summary: {
+        favoriteCities: prefs.favoriteCities ?? [],
+        favoriteCategories: prefs.favoriteCategories ?? [],
+        budgetRange: prefs.budgetRange ?? null,
+        travelCompanion: prefs.travelCompanion ?? null,
+        tripStyle: prefs.tripStyle ?? [],
+        dietaryNotes: prefs.dietaryNotes ?? null,
+        communicationStyle: prefs.communicationStyle ?? null,
+        personalityMode: prefs.personalityMode ?? null,
+        emojiLevel: prefs.emojiLevel ?? null,
+        humorLevel: prefs.humorLevel ?? null,
+        culturalInterests: prefs.culturalInterests ?? [],
+        diasporaCountries: prefs.diasporaCountries ?? [],
+        lifestyleServices: prefs.lifestyleServices ?? [],
+      },
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch memory summary");
+    res.status(500).json({ error: "Failed to fetch memory summary" });
+  }
+});
+
+// ─── GET /api/kinfolk/proactive ─────────────────────────────────────────────
+router.get("/kinfolk/proactive", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
+  try {
+    const [prefs] = await db
+      .select()
+      .from(userPreferencesTable)
+      .where(eq(userPreferencesTable.userId, req.user.id))
+      .limit(1);
+
+    const cities = (prefs?.favoriteCities as string[] | null) ?? [];
+    const categories = (prefs?.favoriteCategories as string[] | null) ?? [];
+    const tripStyle = (prefs?.tripStyle as string[] | null) ?? [];
+    const lifestyleServices = (prefs?.lifestyleServices as string[] | null) ?? [];
+
+    const dow = new Date().getDay();
+    const isWeekend = dow === 0 || dow === 6;
+
+    let suggestion: { type: string; title: string; body: string; cta: string; ctaRoute: string; icon: string };
+
+    if (isWeekend && cities.length > 0) {
+      const city = cities[0];
+      suggestion = {
+        type: "weekend",
+        title: `Weekend in ${city}`,
+        icon: "sun",
+        body: `It's the weekend and KinfolkAI™ knows ${city} well. Want a curated day plan — food, culture, and community?`,
+        cta: "Plan My Day",
+        ctaRoute: "/(tabs)/index",
+      };
+    } else if (categories.length > 0) {
+      const cat = categories[0];
+      suggestion = {
+        type: "category",
+        title: `New ${cat} Spots Nearby`,
+        icon: "tag",
+        body: `The community has been finding amazing new ${cat.toLowerCase()} businesses. Ask KinfolkAI™ what's hot right now.`,
+        cta: "Ask KinfolkAI™",
+        ctaRoute: "/(tabs)/index",
+      };
+    } else if (tripStyle.includes("cultural") || lifestyleServices.includes("cultural_events")) {
+      suggestion = {
+        type: "cultural",
+        title: "Explore Cultural History",
+        icon: "book-open",
+        body: "Discover the historic sites and cultural landmarks woven into Black American history — tap the map's cultural layer.",
+        cta: "Open Map",
+        ctaRoute: "/(tabs)/map",
+      };
+    } else {
+      suggestion = {
+        type: "safety",
+        title: "Help Keep the Community Safe",
+        icon: "shield",
+        body: "Share your neighborhood safety experience and help others travel with confidence. It only takes 2 minutes.",
+        cta: "Submit a Survey",
+        ctaRoute: "/neighborhood-survey",
+      };
+    }
+
+    res.json({ suggestion });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch proactive suggestion");
+    res.status(500).json({ error: "Failed to fetch proactive suggestion" });
+  }
+});
+
+// ─── POST /api/kinfolk/transcribe ────────────────────────────────────────────
+router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
+  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
+    return void res.status(503).json({ error: "AI service unavailable" });
+  }
+  const { audio, format = "m4a" } = req.body as { audio?: string; format?: string };
+  if (!audio) return void res.status(400).json({ error: "audio is required" });
+  try {
+    const buffer = Buffer.from(audio, "base64");
+    const blob = new Blob([buffer], { type: `audio/${format}` });
+    const file = new File([blob], `voice.${format}`, { type: `audio/${format}` });
+    const transcription = await openai.audio.transcriptions.create({ file, model: "whisper-1" });
+    res.json({ text: transcription.text });
+  } catch (err) {
+    req.log.error({ err }, "Transcription failed");
+    res.status(500).json({ error: "Transcription failed" });
   }
 });
 

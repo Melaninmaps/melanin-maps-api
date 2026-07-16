@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Marker, type Region } from "react-native-maps";
+import MapView, { Circle, Marker, type Region } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryPill } from "@/components/CategoryPill";
 import { CATEGORIES } from "@/constants/data";
@@ -22,6 +22,7 @@ import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity } from "@/hooks/useSafetyProximity";
 
 const GOLD = "#CA922B";
+const CULTURAL_COLOR = "#7C3AED";
 
 const DEFAULT_REGION: Region = {
   latitude: 37.09,
@@ -29,6 +30,34 @@ const DEFAULT_REGION: Region = {
   latitudeDelta: 30,
   longitudeDelta: 30,
 };
+
+interface HeatmapPoint {
+  city: string;
+  state: string;
+  lat: number;
+  lng: number;
+  avgScore: number;
+  surveyCount: number;
+  tier: "safe" | "moderate" | "alert";
+}
+
+interface CulturalSite {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  city: string;
+  state: string;
+  latitude: string;
+  longitude: string;
+  era: string | null;
+  significance: string | null;
+}
+
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
 
 export function BusinessMapView(_props: { latitude?: number | null; longitude?: number | null; name?: string }) {
   const colors = useColors();
@@ -42,6 +71,12 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [scannerAlertIdx, setScannerAlertIdx] = useState(0);
   const [warningIdx, setWarningIdx] = useState(0);
+
+  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showCulturalSites, setShowCulturalSites] = useState(false);
+  const [heatmapPoints, setHeatmapPoints] = useState<HeatmapPoint[]>([]);
+  const [culturalSites, setCulturalSites] = useState<CulturalSite[]>([]);
+  const [selectedCulturalSite, setSelectedCulturalSite] = useState<CulturalSite | null>(null);
 
   const { businesses } = useBusinesses();
   const { alerts: activityAlerts, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts();
@@ -92,6 +127,38 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
     })();
   }, []);
 
+  useEffect(() => {
+    if (showHeatmap && heatmapPoints.length === 0) {
+      void (async () => {
+        try {
+          const base = getApiBase();
+          if (!base) return;
+          const res = await fetch(`${base}/api/safety/heatmap`);
+          if (res.ok) {
+            const data = await res.json() as { points: HeatmapPoint[] };
+            setHeatmapPoints(data.points ?? []);
+          }
+        } catch {}
+      })();
+    }
+  }, [showHeatmap]);
+
+  useEffect(() => {
+    if (showCulturalSites && culturalSites.length === 0) {
+      void (async () => {
+        try {
+          const base = getApiBase();
+          if (!base) return;
+          const res = await fetch(`${base}/api/cultural-sites`);
+          if (res.ok) {
+            const data = await res.json() as { sites: CulturalSite[] };
+            setCulturalSites(data.sites ?? []);
+          }
+        } catch {}
+      })();
+    }
+  }, [showCulturalSites]);
+
   const recenter = async () => {
     try {
       const loc = await Location.getCurrentPositionAsync({
@@ -109,7 +176,7 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
     } catch { }
   };
 
-  const cardVisible = selectedBusiness !== null;
+  const anyCardVisible = selectedBusiness !== null || selectedCulturalSite !== null;
 
   return (
     <View style={s.container}>
@@ -119,16 +186,56 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
         initialRegion={DEFAULT_REGION}
         showsUserLocation={locationGranted}
         showsMyLocationButton={false}
-        onPress={() => setSelectedBusiness(null)}
+        onPress={() => { setSelectedBusiness(null); setSelectedCulturalSite(null); }}
       >
         {mapped.map((biz) => (
           <Marker
             key={biz.id}
             coordinate={{ latitude: biz.latitude, longitude: biz.longitude }}
             pinColor={GOLD}
-            onPress={() => setSelectedBusiness(biz)}
+            onPress={() => { setSelectedBusiness(biz); setSelectedCulturalSite(null); }}
           />
         ))}
+
+        {showHeatmap && heatmapPoints.map((p) => {
+          const fillColor = p.avgScore >= 70
+            ? "rgba(34,197,94,0.18)"
+            : p.avgScore >= 50
+            ? "rgba(251,191,36,0.18)"
+            : "rgba(239,68,68,0.18)";
+          const strokeColor = p.avgScore >= 70
+            ? "rgba(34,197,94,0.60)"
+            : p.avgScore >= 50
+            ? "rgba(251,191,36,0.60)"
+            : "rgba(239,68,68,0.60)";
+          return (
+            <Circle
+              key={`heat-${p.city}`}
+              center={{ latitude: p.lat, longitude: p.lng }}
+              radius={9000}
+              fillColor={fillColor}
+              strokeColor={strokeColor}
+              strokeWidth={1.5}
+            />
+          );
+        })}
+
+        {showCulturalSites && culturalSites.map((site) => {
+          const lat = parseFloat(site.latitude);
+          const lng = parseFloat(site.longitude);
+          if (isNaN(lat) || isNaN(lng)) return null;
+          return (
+            <Marker
+              key={site.id}
+              coordinate={{ latitude: lat, longitude: lng }}
+              onPress={() => { setSelectedCulturalSite(site); setSelectedBusiness(null); }}
+            >
+              <View style={s.culturalMarker}>
+                <Feather name="book-open" size={10} color="#fff" />
+              </View>
+            </Marker>
+          );
+        })}
       </MapView>
 
       {/* ── Top overlay: safety alerts + category filter ── */}
@@ -244,7 +351,7 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
 
         {/* Category filter pills */}
         <ScrollView
-        keyboardDismissMode="on-drag"
+          keyboardDismissMode="on-drag"
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={s.catRow}
@@ -258,6 +365,26 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
             />
           ))}
         </ScrollView>
+
+        {/* Map layer toggles */}
+        <View style={s.layerRow}>
+          <TouchableOpacity
+            style={[s.layerBtn, showHeatmap && { backgroundColor: "#059669", borderColor: "transparent" }]}
+            onPress={() => setShowHeatmap((v) => !v)}
+            activeOpacity={0.85}
+          >
+            <Feather name="thermometer" size={12} color={showHeatmap ? "#fff" : GOLD} />
+            <Text style={[s.layerBtnTxt, { color: showHeatmap ? "#fff" : GOLD }]}>Safety Heat</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[s.layerBtn, showCulturalSites && { backgroundColor: CULTURAL_COLOR, borderColor: "transparent" }]}
+            onPress={() => setShowCulturalSites((v) => !v)}
+            activeOpacity={0.85}
+          >
+            <Feather name="book-open" size={12} color={showCulturalSites ? "#fff" : GOLD} />
+            <Text style={[s.layerBtnTxt, { color: showCulturalSites ? "#fff" : GOLD }]}>Cultural Sites</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* ── Locating spinner (centered, non-blocking) ── */}
@@ -279,7 +406,7 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
             s.fab,
             {
               backgroundColor: colors.background,
-              bottom: cardVisible ? 210 : insets.bottom + 24,
+              bottom: anyCardVisible ? 210 : insets.bottom + 24,
             },
           ]}
           onPress={() => void recenter()}
@@ -289,8 +416,42 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
         </TouchableOpacity>
       )}
 
+      {/* ── Cultural site bottom card ── */}
+      {selectedCulturalSite && (
+        <View
+          style={[
+            s.card,
+            {
+              backgroundColor: colors.card,
+              borderColor: CULTURAL_COLOR + "40",
+              paddingBottom: insets.bottom + 12,
+            },
+          ]}
+        >
+          <View style={s.cardHandle} />
+          <TouchableOpacity style={s.cardClose} onPress={() => setSelectedCulturalSite(null)}>
+            <Feather name="x" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+          <View style={[s.culturalCatPill, { backgroundColor: CULTURAL_COLOR + "18" }]}>
+            <Text style={[s.culturalCatTxt, { color: CULTURAL_COLOR }]}>{selectedCulturalSite.category}</Text>
+          </View>
+          <Text style={[s.cardName, { color: colors.foreground }]} numberOfLines={2}>
+            {selectedCulturalSite.name}
+          </Text>
+          <Text style={[s.cardSub, { color: colors.mutedForeground }]}>
+            {selectedCulturalSite.city}, {selectedCulturalSite.state}
+            {selectedCulturalSite.era ? ` · ${selectedCulturalSite.era}` : ""}
+          </Text>
+          {selectedCulturalSite.significance && (
+            <Text style={[s.culturalSig, { color: colors.foreground }]} numberOfLines={3}>
+              {selectedCulturalSite.significance}
+            </Text>
+          )}
+        </View>
+      )}
+
       {/* ── Selected business bottom card ── */}
-      {cardVisible && selectedBusiness && (
+      {!selectedCulturalSite && selectedBusiness && (
         <View
           style={[
             s.card,
@@ -400,6 +561,24 @@ const s = StyleSheet.create({
   },
   navTxt: { fontFamily: "Inter_500Medium", fontSize: 11 },
   catRow: { paddingHorizontal: 12, paddingVertical: 4, gap: 8 },
+  layerRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingBottom: 6,
+  },
+  layerBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "rgba(0,0,0,0.52)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(202,146,43,0.35)",
+  },
+  layerBtnTxt: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
 
   locatingWrap: { flex: 1, justifyContent: "center", alignItems: "center" },
   locatingPill: {
@@ -426,6 +605,22 @@ const s = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 4,
     elevation: 5,
+  },
+
+  culturalMarker: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: CULTURAL_COLOR,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
   },
 
   card: {
@@ -470,4 +665,13 @@ const s = StyleSheet.create({
   verifiedTxt: { fontFamily: "Inter_600SemiBold", fontSize: 11, color: "#2D7A4F" },
   cardBtn: { borderRadius: 10, paddingVertical: 13, alignItems: "center" },
   cardBtnTxt: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#fff" },
+  culturalCatPill: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginBottom: 6,
+  },
+  culturalCatTxt: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  culturalSig: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, marginBottom: 4 },
 });

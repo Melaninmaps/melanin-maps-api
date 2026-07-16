@@ -23,7 +23,10 @@ export default function EventDetailScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { event, isLoading } = useEventById(id ?? "");
-  const { isRsvped, rsvpCount, toggle } = useEventRsvp(id ?? "");
+  const { isRsvped, rsvpCount, toggle } = useEventRsvp(id ?? "", {
+    eventTitle: event?.title,
+    eventDate: event?.date,
+  });
 
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 

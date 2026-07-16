@@ -78,6 +78,9 @@ import marketplaceFeesRouter from "./marketplace-fees";
 import trustRouter from "./trust";
 import journeysRouter from "./journeys";
 import entityConnectionsRouter from "./entity-connections";
+import passportRouter from "./passport";
+import safetyHeatmapRouter from "./safety-heatmap";
+import culturalSitesRouter from "./cultural-sites";
 import signalsRouter from "./signals";
 import smartSearchRouter from "./smart-search";
 import notificationsHubRouter from "./notifications-hub";
@@ -269,6 +272,10 @@ router.use(showLoveRouter);
 router.use(membershipFamilyRouter);
 router.use(legalRouter);
 router.use(businessMembershipInfoRouter);
+
+router.use(passportRouter);
+router.use(safetyHeatmapRouter);
+router.use(culturalSitesRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");
