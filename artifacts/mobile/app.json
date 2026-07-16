@@ -89,7 +89,7 @@
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE"
       ],
-      "versionCode": 54
+      "versionCode": 55
     },
     "web": {
       "favicon": "./assets/images/icon.png"

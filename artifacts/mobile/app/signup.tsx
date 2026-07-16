@@ -92,15 +92,22 @@ export default function SignupScreen() {
     setError("");
     setLoading(true);
     try {
+      // iOS 26+ requires the client to pre-hash the nonce with SHA-256
+      // before passing it to signInAsync. The server receives rawNonce and
+      // independently verifies SHA-256(rawNonce) === payload.nonce.
       const rawNonce = Array.from(
         await Crypto.getRandomBytesAsync(32)
       ).map(b => b.toString(16).padStart(2, "0")).join("");
+      const hashedNonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        rawNonce,
+      );
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
-        nonce: rawNonce,
+        nonce: hashedNonce,
       });
       if (!credential.identityToken) throw new Error("No identity token from Apple");
       const base = getApiBaseUrl();
