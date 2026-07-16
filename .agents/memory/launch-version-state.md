@@ -15,18 +15,21 @@ description: Current app store submission state — Android and iOS build versio
 
 ## Android
 - **versionCode 54, version 1.1.5 — not yet submitted**
-- Android Metro bundler error reported but NOT REPRODUCED LOCALLY — every file passes Babel transforms
-- Build 53 was the first Android attempt after many feature additions; error origin unknown
-- Need to see lines 1-18 of the EAS Android build log to diagnose the actual error
+- **ROOT CAUSE FOUND AND FIXED (July 16, 2026):**
+  - A stray `app.json` existed at the workspace root with `projectId: 94a42921`, making EAS use the wrong EAS project (`workspace`, not `mobile`) and infer `sdkVersion: "54.0.0"`
+  - Root `package.json` also had `expo: ~54.0.27` which brought in `@expo/metro-config@54` and `@react-native/codegen@0.81.5`
+  - SDK 54 codegen tried to parse `react-native@0.86.0`'s `VirtualViewExperimentalNativeComponent.js` which uses a newer event API (`onModeChange`) the old codegen doesn't understand → crash
+  - **Fixed:** deleted `/home/runner/workspace/app.json`, removed `expo: ~54.0.27` from root `package.json`
 - Build command: `eas build --platform android --profile production`
 - Submit command: `eas submit --platform android --profile production`
 - eas.json production android has `credentialsSource: "local"` — do not change this
 
-## Build commands (user runs from their own terminal, inside artifacts/mobile/)
+## CRITICAL: Build commands MUST be run from artifacts/mobile/
 - iOS: `cd artifacts/mobile && eas build --platform ios --profile production`
 - iOS submit: `cd artifacts/mobile && eas submit --platform ios --profile production`
 - Android: `cd artifacts/mobile && eas build --platform android --profile production`
 - Android submit: `cd artifacts/mobile && eas submit --platform android --profile production`
+- Running from workspace root picks up root package.json and wrong project config → BROKEN
 
 ## Railway production fixes applied July 14, 2026
 - RESEND_API_KEY: was wrong key — replaced with correct Production key
