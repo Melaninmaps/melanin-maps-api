@@ -7,6 +7,12 @@
     },
     "android": {
       "package": "com.melaninmaps.app"
+    },
+    "ios": {
+      "bundleIdentifier": "com.melaninmaps.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     }
   }
 }
