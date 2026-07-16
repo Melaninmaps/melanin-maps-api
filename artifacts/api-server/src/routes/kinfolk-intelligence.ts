@@ -43,6 +43,7 @@ router.post("/kinfolk/log-search", async (req: Request, res: Response) => {
 // ─── Algorithmic Twin Recommendations ────────────────────────────────────────
 // GET /api/kinfolk/twin-recommendations
 // Collaborative filtering: find users with similar saves → surface their saves
+// TODO: PRE-LAUNCH TIER GATE — add getUserTier check; collaborative filtering intelligence should be Navigator+ only
 router.get("/kinfolk/twin-recommendations", async (req: Request, res: Response) => {
   if (!authed(req, res)) return;
   const userId = uid(req);
@@ -245,6 +246,7 @@ router.get("/kinfolk/community-trends", async (req: Request, res: Response) => {
 
 // ─── Business Market Insights ─────────────────────────────────────────────────
 // GET /api/businesses/:id/market-insights
+// TODO: PRE-LAUNCH TIER GATE — add getUserTier check; business market intelligence (trending searches, save comparisons, audience match) should be Navigator+ only
 router.get("/businesses/:id/market-insights", async (req: Request, res: Response) => {
   if (!authed(req, res)) return;
   const businessId = req.params.id as string;
