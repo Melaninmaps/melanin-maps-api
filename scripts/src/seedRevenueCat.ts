@@ -62,7 +62,7 @@ const TIERS: TierConfig[] = [
     offeringDisplayName: "Navigator Tier",
     isCurrent: true,
     monthly: {
-      identifier: "mwm_navigator_monthly",
+      identifier: "mwm_nav_monthly",
       displayName: "Navigator Monthly",
       priceUsdMicros: 7990000,
       priceEurMicros: 7490000,

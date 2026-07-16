@@ -5,7 +5,7 @@ const router = Router();
 
 // Maps RevenueCat product identifiers to our internal membership tier keys
 const PRODUCT_TIER_MAP: Record<string, string> = {
-  mwm_navigator_monthly: "navigator",
+  mwm_nav_monthly: "navigator",
   mwm_navigator_annual: "navigator",
   mwm_trailblazer_monthly: "trailblazer",
   mwm_trailblazer_annual: "trailblazer",
