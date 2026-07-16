@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.melaninmaps.app",
-      "buildNumber": "66",
+      "buildNumber": "67",
       "associatedDomains": [
         "applinks:mappingwithmelanin.com"
       ],
@@ -131,6 +131,12 @@
         }
       ],
       "expo-web-browser",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Mapping With Melanin uses your microphone so you can send voice messages to Kinfolk AI."
+        }
+      ],
       [
         "expo-location",
         {
