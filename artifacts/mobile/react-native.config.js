@@ -1,21 +1,18 @@
 /**
  * react-native.config.js
  *
- * CRITICAL: The `podspecPath` override for react-native-maps is required.
+ * Points autolinking to the correct podspec file for react-native-maps.
  *
  * react-native-maps@1.27.x ships react-native-maps.podspec with:
- *   s.name = "react-native-maps"
+ *   s.name = "react-native-google-maps"   ← set by upstream, we patch this in
+ *                                            plugins/withRnMapsPodfileFix.js
  *
- * But React Native autolinking generates:
- *   pod 'react-native-google-maps', :path => '...node_modules/react-native-maps'
- *
- * CocoaPods then fails: "No podspec found for 'react-native-google-maps'".
- *
- * By explicitly setting podspecPath here, autolinking reads react-native-maps.podspec
- * (s.name = "react-native-maps") and generates:
+ * withRnMapsPodfileFix.js patches s.name → "react-native-maps" at prebuild time,
+ * so link_native_modules! generates:
  *   pod 'react-native-maps', :path => '...node_modules/react-native-maps'
- * which CocoaPods CAN find. This is the source-of-truth fix — the Podfile never
- * gets the wrong name in the first place.
+ * and CocoaPods finds react-native-maps.podspec by filename — SUCCESS.
+ *
+ * This podspecPath override ensures the codegen step also reads the right file.
  */
 module.exports = {
   dependencies: {

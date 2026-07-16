@@ -1,17 +1,24 @@
 /**
- * Expo config plugin — belt-and-suspenders fix for the react-native-maps pod name mismatch.
+ * Expo config plugin — fix for the react-native-maps pod name mismatch.
  *
- * The DEFINITIVE fix is react-native.config.js (podspecPath override) which prevents
- * autolinking from ever generating the wrong pod name. This plugin is a secondary
- * safeguard that runs during `expo prebuild` and corrects the Podfile if needed.
+ * ROOT CAUSE:
+ *   react-native-maps@1.27.x ships `react-native-maps.podspec` but inside
+ *   that file: s.name = "react-native-google-maps"
  *
- * react-native-maps@1.27.x ships with s.name = "react-native-maps" in its podspec,
- * but Expo's autolinking may generate either:
- *   pod 'react-native-google-maps', :path => '...'   ← single quotes
- *   pod "react-native-google-maps", :path => '...'   ← double quotes
+ *   `link_native_modules!` reads the podspec and generates:
+ *     pod 'react-native-google-maps', :path => '...react-native-maps'
  *
- * CocoaPods fails: "No podspec found for 'react-native-google-maps'".
- * This plugin rewrites both variants to the correct pod name.
+ *   CocoaPods then looks for `react-native-google-maps.podspec` in the directory —
+ *   finds only `react-native-maps.podspec` — FAILS.
+ *
+ * FIX:
+ *   Patch the podspec's s.name from "react-native-google-maps" to "react-native-maps"
+ *   BEFORE pod install runs. This makes link_native_modules! generate:
+ *     pod 'react-native-maps', :path => '...react-native-maps'
+ *   and CocoaPods finds react-native-maps.podspec by filename — SUCCESS.
+ *
+ * TIMING: withDangerousMod for "ios" runs during `expo prebuild`, after
+ * pnpm install but before `pod install` — exactly what we need.
  */
 const { withDangerousMod } = require("@expo/config-plugins");
 const fs = require("fs");
@@ -21,39 +28,35 @@ module.exports = function withRnMapsPodfileFix(config) {
   return withDangerousMod(config, [
     "ios",
     (config) => {
-      const podfilePath = path.join(
-        config.modRequest.platformProjectRoot,
-        "Podfile"
+      const projectRoot = config.modRequest.projectRoot;
+      const podspecPath = path.join(
+        projectRoot,
+        "node_modules",
+        "react-native-maps",
+        "react-native-maps.podspec"
       );
 
-      if (!fs.existsSync(podfilePath)) {
-        console.warn("[withRnMapsPodfileFix] Podfile not found — skipping.");
+      if (!fs.existsSync(podspecPath)) {
+        console.warn("[withRnMapsPodfileFix] react-native-maps.podspec not found — skipping.");
         return config;
       }
 
-      let podfile = fs.readFileSync(podfilePath, "utf8");
+      let podspec = fs.readFileSync(podspecPath, "utf8");
 
-      // Check for both single-quoted and double-quoted variants
-      const hasSingleQuote = podfile.includes("pod 'react-native-google-maps'");
-      const hasDoubleQuote = podfile.includes('pod "react-native-google-maps"');
+      const wrongNameDouble = 's.name = "react-native-google-maps"';
+      const wrongNameSingle = "s.name = 'react-native-google-maps'";
 
-      if (!hasSingleQuote && !hasDoubleQuote) {
-        console.log(
-          "[withRnMapsPodfileFix] Podfile already uses 'react-native-maps' — no change needed."
-        );
-        return config;
+      if (podspec.includes(wrongNameDouble)) {
+        podspec = podspec.replace(wrongNameDouble, 's.name = "react-native-maps"');
+        fs.writeFileSync(podspecPath, podspec, "utf8");
+        console.log("[withRnMapsPodfileFix] Patched react-native-maps.podspec: s.name 'react-native-google-maps' → 'react-native-maps'");
+      } else if (podspec.includes(wrongNameSingle)) {
+        podspec = podspec.replace(wrongNameSingle, "s.name = 'react-native-maps'");
+        fs.writeFileSync(podspecPath, podspec, "utf8");
+        console.log("[withRnMapsPodfileFix] Patched react-native-maps.podspec: s.name 'react-native-google-maps' → 'react-native-maps'");
+      } else {
+        console.log("[withRnMapsPodfileFix] react-native-maps.podspec s.name already correct — no change needed.");
       }
-
-      // Replace both single-quoted and double-quoted variants
-      podfile = podfile.replace(
-        /pod ['"]react-native-google-maps['"]/g,
-        "pod 'react-native-maps'"
-      );
-
-      fs.writeFileSync(podfilePath, podfile, "utf8");
-      console.log(
-        "[withRnMapsPodfileFix] Patched Podfile: 'react-native-google-maps' -> 'react-native-maps'"
-      );
 
       return config;
     },
