@@ -6,14 +6,18 @@ description: Current app store submission state — Android and iOS build versio
 # Launch Version State (as of July 16, 2026)
 
 ## iOS
-- **Current buildNumber in app.json: 53, version 1.1.5**
-- Builds 40–52 all FAILED at pod install (react-native-google-maps name mismatch)
-- **Fix applied (build 53+): `plugins/withRnMapsPodfileFix.js` config plugin** — patches the Podfile during expo prebuild so `pod 'react-native-google-maps'` → `pod 'react-native-maps'`
-- The old `patch-rnmaps-podspec.js` eas-build-post-install approach was removed (pnpm CAS hardlinks resisted writes)
+- **Current buildNumber in app.json: 54, version 1.1.5**
+- eas.json has `"autoIncrement": true` — EAS will auto-increment BEFORE building, so next build will be 55
+- Builds 40–53 all FAILED at pod install (react-native-google-maps name mismatch)
+- **Definitive fix applied: `react-native.config.js` podspecPath override** — fixes autolinking at source so Podfile NEVER gets the wrong pod name
+- Belt-and-suspenders: `plugins/withRnMapsPodfileFix.js` also patches the Podfile if needed (handles both single and double quotes)
 - App Store Connect App ID: 6783773366, Apple Team: Y46Y4A5MMZ, Bundle ID: com.melaninmaps.app
 
 ## Android
-- **versionCode 53, version 1.1.5 — not yet submitted**
+- **versionCode 54, version 1.1.5 — not yet submitted**
+- Android Metro bundler error reported but NOT REPRODUCED LOCALLY — every file passes Babel transforms
+- Build 53 was the first Android attempt after many feature additions; error origin unknown
+- Need to see lines 1-18 of the EAS Android build log to diagnose the actual error
 - Build command: `eas build --platform android --profile production`
 - Submit command: `eas submit --platform android --profile production`
 - eas.json production android has `credentialsSource: "local"` — do not change this

@@ -1,15 +1,17 @@
 /**
- * Expo config plugin — fixes the react-native-maps pod name mismatch.
+ * Expo config plugin — belt-and-suspenders fix for the react-native-maps pod name mismatch.
+ *
+ * The DEFINITIVE fix is react-native.config.js (podspecPath override) which prevents
+ * autolinking from ever generating the wrong pod name. This plugin is a secondary
+ * safeguard that runs during `expo prebuild` and corrects the Podfile if needed.
  *
  * react-native-maps@1.27.x ships with s.name = "react-native-maps" in its podspec,
- * but Expo's autolinking generates:
- *   pod 'react-native-google-maps', :path => '...node_modules/react-native-maps'
+ * but Expo's autolinking may generate either:
+ *   pod 'react-native-google-maps', :path => '...'   ← single quotes
+ *   pod "react-native-google-maps", :path => '...'   ← double quotes
  *
- * CocoaPods then fails: "No podspec found for 'react-native-google-maps'".
- *
- * This plugin runs during `expo prebuild` (via withDangerousMod) — AFTER the
- * Podfile is generated but BEFORE pod install — and rewrites the pod name in the
- * Podfile to match the actual podspec name.
+ * CocoaPods fails: "No podspec found for 'react-native-google-maps'".
+ * This plugin rewrites both variants to the correct pod name.
  */
 const { withDangerousMod } = require("@expo/config-plugins");
 const fs = require("fs");
@@ -31,17 +33,21 @@ module.exports = function withRnMapsPodfileFix(config) {
 
       let podfile = fs.readFileSync(podfilePath, "utf8");
 
-      if (!podfile.includes("react-native-google-maps")) {
+      // Check for both single-quoted and double-quoted variants
+      const hasSingleQuote = podfile.includes("pod 'react-native-google-maps'");
+      const hasDoubleQuote = podfile.includes('pod "react-native-google-maps"');
+
+      if (!hasSingleQuote && !hasDoubleQuote) {
         console.log(
           "[withRnMapsPodfileFix] Podfile already uses 'react-native-maps' — no change needed."
         );
         return config;
       }
 
-      // Replace pod name so it matches the actual podspec s.name
+      // Replace both single-quoted and double-quoted variants
       podfile = podfile.replace(
-        /pod 'react-native-google-maps',/g,
-        "pod 'react-native-maps',"
+        /pod ['"]react-native-google-maps['"]/g,
+        "pod 'react-native-maps'"
       );
 
       fs.writeFileSync(podfilePath, podfile, "utf8");
