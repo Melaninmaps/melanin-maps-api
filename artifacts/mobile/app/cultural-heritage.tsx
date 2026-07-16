@@ -24,6 +24,40 @@ function getApiBase(): string {
   return "";
 }
 
+function trackExternalClick(params: {
+  institutionName: string;
+  institutionType: string;
+  institutionUrl: string;
+  referenceType: string;
+  referenceId?: string;
+  source: string;
+  city?: string;
+  state?: string;
+}) {
+  fetch(`${getApiBase()}/api/external-clicks`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...params, isSafetyRelated: false }),
+  }).catch(() => {});
+}
+
+function heritageInstitutionType(heritageCategory: string | null | undefined): string {
+  if (heritageCategory === "HBCU") return "university";
+  if (heritageCategory === "Cultural Neighborhood") return "cultural_org";
+  if (heritageCategory === "Religious Heritage") return "cultural_org";
+  if (
+    heritageCategory === "African American Heritage" ||
+    heritageCategory === "Civil Rights" ||
+    heritageCategory === "Native American Heritage" ||
+    heritageCategory === "Hispanic & Latino Heritage" ||
+    heritageCategory === "LGBTQ+ History" ||
+    heritageCategory === "Women's History" ||
+    heritageCategory === "Immigrant Heritage" ||
+    heritageCategory === "Freedom Trail"
+  ) return "heritage_site";
+  return "museum";
+}
+
 type CulturalSite = {
   id: string;
   name: string;
@@ -216,6 +250,16 @@ export default function CulturalHeritagePage() {
               style={[styles.websiteBtn, { borderColor: colors.border }]}
               onPress={(e) => {
                 e.stopPropagation?.();
+                trackExternalClick({
+                  institutionName: item.name,
+                  institutionType: heritageInstitutionType(item.heritageCategory),
+                  institutionUrl: item.externalUrl!,
+                  referenceType: "cultural_heritage_visit",
+                  referenceId: item.id,
+                  source: "cultural_heritage",
+                  city: item.city,
+                  state: item.state,
+                });
                 void Linking.openURL(item.externalUrl!);
               }}
             >
@@ -756,7 +800,19 @@ function DetailModal({
                     <TouchableOpacity
                       key={link.id}
                       style={[dStyles.supportCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                      onPress={() => void Linking.openURL(link.url)}
+                      onPress={() => {
+                        trackExternalClick({
+                          institutionName: link.title,
+                          institutionType: (link.category === "scholarship" || link.category === "alumni_fund") ? "university" : "nonprofit",
+                          institutionUrl: link.url,
+                          referenceType: "support_link",
+                          referenceId: site.id,
+                          source: "cultural_heritage",
+                          city: site.city,
+                          state: site.state,
+                        });
+                        void Linking.openURL(link.url);
+                      }}
                       activeOpacity={0.75}
                     >
                       <View style={dStyles.supportCardTop}>
@@ -818,7 +874,19 @@ function DetailModal({
         {site.externalUrl ? (
           <TouchableOpacity
             style={[dStyles.websiteBtn, { backgroundColor: meta.color }]}
-            onPress={() => void Linking.openURL(site.externalUrl!)}
+            onPress={() => {
+              trackExternalClick({
+                institutionName: site.name,
+                institutionType: heritageInstitutionType(site.heritageCategory),
+                institutionUrl: site.externalUrl!,
+                referenceType: "cultural_heritage_visit",
+                referenceId: site.id,
+                source: "cultural_heritage",
+                city: site.city,
+                state: site.state,
+              });
+              void Linking.openURL(site.externalUrl!);
+            }}
             activeOpacity={0.85}
           >
             <Feather name="external-link" size={16} color="#fff" />

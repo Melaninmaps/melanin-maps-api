@@ -3,17 +3,17 @@ name: Launch version state
 description: Current app store submission state — Android and iOS build versions and track status. Update this every build.
 ---
 
-# Launch Version State (as of July 15, 2026)
+# Launch Version State (as of July 16, 2026)
 
 ## iOS
-- **buildNumber 38 — built July 15 2026, pending eas submit to TestFlight**
-- v1.1.4, EAS auto-incremented 36→37→38 across two back-to-back build runs
-- Build 38 includes: email login timeout fix (30s), password reset improvements, full pre-submission audit
+- **Next build: auto-incremented by EAS from 40 — will be 41+**
+- v1.1.5 (bumped from 1.1.4 — includes Cultural Heritage Explorer, Living Heritage Places, External Click Tracking)
 - **autoIncrement: true in eas.json — EAS queries Apple automatically before each build. No manual tracking needed.**
 - App Store Connect App ID: 6783773366, Apple Team: Y46Y4A5MMZ, Bundle ID: com.melaninmaps.app
 
 ## Android
-- **versionCode 50 — not yet built for v1.1.4, build in progress July 15 2026**
+- **Next build: auto-incremented by EAS from 51 — will be 52+**
+- v1.1.5
 - Submit command: `eas submit --platform android --profile production`
 - Google Play service account key: `./google-service-account.json` (must exist in artifacts/mobile)
 - Track: internal
@@ -33,8 +33,7 @@ description: Current app store submission state — Android and iOS build versio
 - DATABASE_URL: was hardcoded public proxy URL — replaced with ${{ Postgres.DATABASE_URL }} (internal network)
 - Both fixes confirmed working: registration returns 201, emails will now send
 
-## Railway redeployment (July 15, 2026)
-- v1.1.3 dist pushed to Melaninmaps/melanin-maps-api GitHub repo and deployed via GraphQL mutation
-- /api/vibes/list confirmed live on Railway production
-- GitHub push requires PAT (password auth disabled); Railway CLI broken — use GraphQL only
-- GraphQL mutation: serviceInstanceDeploy(serviceId, environmentId, latestCommit: true)
+## Railway redeployment pattern
+- Push dist to Melaninmaps/melanin-maps-api GitHub repo (requires PAT — password auth disabled)
+- Trigger via Railway GraphQL: serviceInstanceDeploy(serviceId, environmentId, latestCommit: true)
+- Service: a77b49bb-e448-4be8-9d02-de7a3b43136b, Environment: 2292b38f-3d0d-4cad-92a4-ad36cabda629

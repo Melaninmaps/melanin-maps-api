@@ -81,6 +81,7 @@ import entityConnectionsRouter from "./entity-connections";
 import passportRouter from "./passport";
 import safetyHeatmapRouter from "./safety-heatmap";
 import culturalSitesRouter from "./cultural-sites";
+import externalClicksRouter from "./external-clicks";
 import signalsRouter from "./signals";
 import smartSearchRouter from "./smart-search";
 import notificationsHubRouter from "./notifications-hub";
@@ -276,6 +277,7 @@ router.use(businessMembershipInfoRouter);
 router.use(passportRouter);
 router.use(safetyHeatmapRouter);
 router.use(culturalSitesRouter);
+router.use(externalClicksRouter);
 
 router.get("/download/mobile-build.zip", (req, res) => {
   const filePath = path.join(process.cwd(), "mobile-build.zip");

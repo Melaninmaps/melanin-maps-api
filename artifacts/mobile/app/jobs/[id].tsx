@@ -69,6 +69,23 @@ export default function JobDetailScreen() {
 
   const handleApply = () => {
     if (job?.url) {
+      const isIndeed = job.url.includes("indeed.com");
+      const isLinkedIn = job.url.includes("linkedin.com");
+      const isZipRecruiter = job.url.includes("ziprecruiter.com");
+      const isJobBoard = isIndeed || isLinkedIn || isZipRecruiter;
+      fetch(`${getApiBase()}/api/external-clicks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          institutionName: isIndeed ? "Indeed" : isLinkedIn ? "LinkedIn" : isZipRecruiter ? "ZipRecruiter" : (job.company ?? "Employer"),
+          institutionType: isJobBoard ? "job_board" : "employer",
+          institutionUrl: job.url,
+          referenceType: "job_apply",
+          referenceId: id,
+          source: "jobs",
+          isSafetyRelated: false,
+        }),
+      }).catch(() => {});
       Linking.openURL(job.url).catch(() => {
         Alert.alert("Could not open link", "Copy the company name and search for the listing online.");
       });
