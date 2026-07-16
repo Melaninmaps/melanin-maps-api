@@ -829,7 +829,21 @@ export function AIChatWidget() {
                       <TouchableOpacity
                         key={opt.level}
                         style={[styles.aaveRow, { borderBottomColor: colors.border, opacity: isLocked ? 0.55 : 1 }]}
-                        onPress={() => { if (!isLocked && !aaveSaving) void saveAaveLevel(opt.level); }}
+                        onPress={() => {
+                          if (isLocked || aaveSaving) return;
+                          if (opt.level === 3) {
+                            Alert.alert(
+                              "Full AAVE Voice",
+                              'Level 3 includes casual profanity — words like "dead ass", "that\'s the shit", "on God". It\'s cookout-level casual, not explicit.\n\nEnable it?',
+                              [
+                                { text: "Cancel", style: "cancel" },
+                                { text: "Enable", onPress: () => void saveAaveLevel(3) },
+                              ]
+                            );
+                          } else {
+                            void saveAaveLevel(opt.level);
+                          }
+                        }}
                         disabled={isLocked || aaveSaving}
                       >
                         <View style={[styles.voiceRadio, { borderColor: colors.primary }]}>
