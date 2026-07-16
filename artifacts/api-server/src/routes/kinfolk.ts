@@ -153,6 +153,14 @@ const CITY_VOICES: Record<string, CityVoice> = {
   "detroit": { slang: ["finna","no cap","Motown","313","on me","hard","drip","bruh","slime","lowkey"], phrases: ["313 never misses","Motown energy in this spot","Detroit hard as ever"], culturalTouchstones: ["Motown Records legacy","Black Bottom neighborhood history","Paradise Valley","The Heidelberg Project","Detroit techno origins"], writingGuidance: "Write with Detroit resilience — proud, gritty, innovative. Use '313', 'Motown', reference Black Bottom, Paradise Valley." },
   "memphis": { slang: ["no cap","bruh","finna","901","Bluff City","slime","hard","on god","lowkey","fam"], phrases: ["901 always delivers","Bluff City culture is everything"], culturalTouchstones: ["Beale Street heritage","Memphis blues origins","Civil Rights history (Lorraine Motel)","Three 6 Mafia legacy","soul food capital","Stax Records"], writingGuidance: "Write with Memphis soul — deep, soulful, historically rooted. Use '901', 'Bluff City', reference Beale Street, Stax Records, the Civil Rights legacy." },
   "baltimore": { slang: ["no cap","fam","joint","hard","bruh","lowkey","Charm City","B-More","hon","on me"], phrases: ["Charm City holds it down","B-More never misses"], culturalTouchstones: ["Pennsylvania Avenue history","Upton neighborhood","Morgan State HBCU","Billie Holiday birthplace","Cab Calloway history"], writingGuidance: "Write with Baltimore realness — resilient, proud, underrated. Use 'B-More', 'Charm City', reference Pennsylvania Avenue, Morgan State, the deep musical history." },
+  "oakland": { slang: ["hella","the town","hyphy","ghost ride","mac dre","turf","slaps","no cap","fam","hard"], phrases: ["the Town always delivers","hella vibes in Oakland","this spot slaps"], culturalTouchstones: ["Black Panther Party birthplace","Harlem of the West (Seventh Street)","Mac Dre and hyphy movement","Oscar Grant legacy","Oakland Museum of California","Fruitvale neighborhood"], writingGuidance: "Write with Oakland pride — bold, unapologetic, deeply political. Use 'hella', 'the Town', 'slaps'. Reference the Black Panthers, the hyphy movement, the resilience of Fruitvale." },
+  "nashville": { slang: ["615","Music City","the Gulch","no cap","fam","lowkey","bruh","on me"], phrases: ["615 never misses","Music City has more soul than the stage"], culturalTouchstones: ["Fisk University (HBCU)","Tennessee State University (HBCU)","Jefferson Street cultural corridor","Nashville sit-ins (Civil Rights)","Jubilee Singers legacy","North Nashville history"], writingGuidance: "Write with Nashville depth — this city has more than country music. Lead with Jefferson Street, Fisk, Tennessee State. Use '615', 'Music City'. Reference the HBCU legacy and civil rights history." },
+  "charlotte": { slang: ["QC","the Queen City","704","no cap","lowkey","fam","bruh","on god"], phrases: ["the QC always comes through","704 energy is different"], culturalTouchstones: ["Johnson C. Smith University (HBCU)","Historically Black neighborhoods in west Charlotte","CIAA Basketball Tournament","the Beatties Ford Road corridor","Harvey Gantt legacy"], writingGuidance: "Write with Charlotte pride — growing city, deep roots. Use 'QC', 'the Queen City', '704'. Reference Beatties Ford Road, JCSU, the CIAA Tournament energy." },
+  "dallas": { slang: ["Big D","the Metroplex","DFW","214","no cap","lowkey","bruh","fam","hard"], phrases: ["Big D always delivers","the Metroplex is everything"], culturalTouchstones: ["Deep Ellum history","South Dallas culture","Fair Park and State Fair legacy","Bishop Arts District","Paul Quinn College (HBCU)","Juanita Craft legacy"], writingGuidance: "Write with Dallas scale and swagger — big city, big culture. Use 'Big D', 'the Metroplex', 'DFW'. Reference Deep Ellum, South Dallas, Fair Park." },
+  "st. louis": { slang: ["STL","the Lou","314","no cap","fam","lowkey","bruh","on me"], phrases: ["the Lou never misses","314 energy is real"], culturalTouchstones: ["The Ville neighborhood (historic Black district)","Scott Joplin birthplace","Delmar Divide (race and inequality)","St. Louis blues and jazz roots","Harris-Stowe State University (HBCU)","Dick Gregory legacy"], writingGuidance: "Write with St. Louis soul — deep roots, complex history, proud community. Use 'the Lou', 'STL', '314'. Reference The Ville, the Delmar Divide, the blues and ragtime legacy." },
+  "birmingham": { slang: ["the Magic City","205","B-ham","no cap","fam","lowkey","bruh","on me"], phrases: ["the Magic City always surprises","205 holds it down"], culturalTouchstones: ["16th Street Baptist Church (Civil Rights)","4th Avenue Historic District (Black Wall Street of the South)","Kelly Ingram Park","A.G. Gaston legacy","Miles College (HBCU)","Tuskegee University (nearby HBCU)"], writingGuidance: "Write with Birmingham gravity — this city carries the weight and the resilience of the Civil Rights movement. Use 'the Magic City', '205'. Always reference the 4th Avenue corridor and the historic significance respectfully." },
+  "richmond": { slang: ["RVA","804","no cap","fam","lowkey","bruh","the 804","on me"], phrases: ["RVA holds it down","804 energy is underrated"], culturalTouchstones: ["Jackson Ward (Harlem of the South)","Maggie L. Walker legacy","Virginia Union University (HBCU)","Black Wall Street of Richmond","Monument Avenue history","Arthur Ashe birthplace"], writingGuidance: "Write with Richmond pride — a city rewriting its story. Use 'RVA', '804'. Always reference Jackson Ward, Maggie Walker, Virginia Union. Richmond's Black history is extraordinary and underrated." },
+  "kansas city": { slang: ["KC","KCMO","816","no cap","fam","lowkey","bruh","the city"], phrases: ["KC always delivers","816 energy is everything"], culturalTouchstones: ["18th and Vine Jazz District","Charlie Parker birthplace","Kansas City jazz and blues legacy","Lincoln University (HBCU, nearby Jefferson City)","Bruce R. Watkins Cultural Heritage Center"], writingGuidance: "Write with Kansas City warmth and rhythm — this is jazz country. Use 'KC', 'KCMO', '816'. Reference 18th and Vine, Charlie Parker, the deep jazz and BBQ culture." },
 };
 
 function getCityVoice(destination: string): CityVoice | null {
@@ -296,6 +304,91 @@ const CITY_LOCAL_TERMS: Record<string, CityLocalData> = {
     ],
     transit: ["the Metro", "the Blue Line (A Line)", "the Purple Line (D Line)", "Metro Rail"],
     nicknames: ["Leimert Park", "Inglewood", "Crenshaw", "Compton", "South Central", "the Valley", "Watts", "View Park"],
+  },
+  "oakland": {
+    terms: [
+      { term: "hella", meaning: "Oakland/Bay Area's signature intensifier — 'hella good', 'hella far'. Only Bay Area natives say this naturally." },
+      { term: "the town", meaning: "what Oakland locals call their city — a term of deep pride" },
+      { term: "hyphy", meaning: "the Bay Area music and cultural movement — energetic, frenetic, joyful. Mac Dre invented it." },
+      { term: "slaps", meaning: "Bay Area term for music that hits hard — 'this song slaps'" },
+      { term: "ghost ride", meaning: "letting a car roll slowly while you dance next to or on it — a hyphy tradition" },
+      { term: "turf", meaning: "neighborhood, territory — used with deep pride in Oakland" },
+    ],
+    transit: ["BART", "AC Transit", "the Fruitvale BART station"],
+    nicknames: ["Fruitvale", "West Oakland", "East Oakland", "Temescal", "the Dimond", "Rockridge", "Ghost Town"],
+  },
+  "nashville": {
+    terms: [
+      { term: "Music City", meaning: "Nashville's nickname — but for the community, the real music is on Jefferson Street, not Broadway" },
+      { term: "Jefferson Street", meaning: "the historic Black cultural corridor — clubs, HBCUs, community history" },
+      { term: "the Gulch", meaning: "a trendy neighborhood close to downtown — locals know it as the gentrified zone" },
+      { term: "615", meaning: "Nashville's area code — used as a badge of local pride" },
+    ],
+    transit: ["WeGo bus", "WeGo Star (commuter rail)"],
+    nicknames: ["North Nashville", "East Nashville", "Germantown", "Sylvan Park", "Antioch", "Madison"],
+  },
+  "charlotte": {
+    terms: [
+      { term: "QC", meaning: "short for Queen City — Charlotte's go-to nickname among locals" },
+      { term: "704", meaning: "Charlotte's area code — a symbol of local pride" },
+      { term: "the Queen City", meaning: "Charlotte's formal nickname" },
+      { term: "Beatties Ford Road", meaning: "Charlotte's historic Black commercial and cultural corridor — the community's main street" },
+      { term: "CIAA", meaning: "Central Intercollegiate Athletic Association Tournament — a massive annual event that fills Charlotte with HBCU energy" },
+    ],
+    transit: ["CATS", "the Gold Line streetcar", "Lynx Blue Line light rail"],
+    nicknames: ["NoDa (North Davidson)","Plaza Midwood","South End","University City","Westside","Pineville"],
+  },
+  "dallas": {
+    terms: [
+      { term: "Big D", meaning: "Dallas's classic nickname" },
+      { term: "the Metroplex", meaning: "the Dallas-Fort Worth metro area — DFW collectively" },
+      { term: "214", meaning: "Dallas's area code — the OG badge of local identity" },
+      { term: "Deep Ellum", meaning: "Dallas's historic blues and jazz neighborhood — deep cultural roots" },
+      { term: "the State Fair", meaning: "the State Fair of Texas at Fair Park — a massive annual event with deep community history" },
+    ],
+    transit: ["DART", "the Green Line", "the Red Line", "the Orange Line", "Trinity Railway Express (TRE)"],
+    nicknames: ["South Dallas", "Oak Cliff", "Deep Ellum", "Pleasant Grove", "Fair Park", "Bishop Arts District"],
+  },
+  "st. louis": {
+    terms: [
+      { term: "the Lou", meaning: "St. Louis's local nickname" },
+      { term: "314", meaning: "St. Louis's area code — the classic local badge" },
+      { term: "The Ville", meaning: "St. Louis's historic Black neighborhood — once one of the most vibrant Black communities in the Midwest" },
+      { term: "the Delmar Divide", meaning: "Delmar Boulevard — the stark racial and economic dividing line of St. Louis. North is mostly Black, south is mostly white." },
+      { term: "toasted ravioli", meaning: "St. Louis's signature dish — breaded, fried ravioli. Locals call it 't-rav'." },
+    ],
+    transit: ["MetroLink", "MetroBus"],
+    nicknames: ["The Ville", "Midtown", "The Grove", "Cherokee Street", "Tower Grove", "North St. Louis", "Wellston"],
+  },
+  "birmingham": {
+    terms: [
+      { term: "the Magic City", meaning: "Birmingham's nickname — earned by its rapid industrial rise, now reclaimed as a symbol of resilience" },
+      { term: "205", meaning: "Birmingham's area code — local pride badge" },
+      { term: "B-ham", meaning: "shorthand for Birmingham among locals" },
+      { term: "4th Avenue", meaning: "the 4th Avenue Historic District — Birmingham's historic Black business corridor, called the Black Wall Street of the South" },
+    ],
+    transit: ["MAX (Birmingham-Jefferson County Transit Authority)"],
+    nicknames: ["Southside", "Avondale", "Five Points South", "Ensley", "Woodlawn", "Titusville"],
+  },
+  "richmond": {
+    terms: [
+      { term: "RVA", meaning: "Richmond's city shorthand — widely used and proudly worn" },
+      { term: "804", meaning: "Richmond's area code — local identity marker" },
+      { term: "Jackson Ward", meaning: "Richmond's historic Black neighborhood, known as the 'Harlem of the South' and home to Black Wall Street" },
+      { term: "the Fan", meaning: "a popular residential neighborhood known for its fan-shaped street layout" },
+    ],
+    transit: ["GRTC", "the Pulse BRT (Broad Street)"],
+    nicknames: ["Jackson Ward", "Church Hill", "Oregon Hill", "Manchester", "Scott's Addition", "Northside", "Randolph"],
+  },
+  "kansas city": {
+    terms: [
+      { term: "KCMO", meaning: "Kansas City, Missouri — distinguishes it from Kansas City, Kansas across the state line" },
+      { term: "816", meaning: "KCMO's area code — the local pride badge" },
+      { term: "18th and Vine", meaning: "the historic heart of Kansas City's Black jazz district — Charlie Parker's world" },
+      { term: "burnt ends", meaning: "Kansas City BBQ's signature cut — the charred, caramelized point end of a brisket. Non-negotiable KC knowledge." },
+    ],
+    transit: ["KC Streetcar", "RideKC bus"],
+    nicknames: ["18th and Vine", "Troost Corridor", "Westport", "Crossroads Arts District", "Midtown", "Ruskin Heights"],
   },
 };
 
@@ -610,9 +703,6 @@ CONVERSATION STYLE:
 - Reference their history when relevant: "Since you've been feeling that Atlanta energy..." or "Based on what you love, you'd be right at home in..."
 - Before diving into recommendations, make sure you have a destination and some sense of their vibe
 - NEVER sound like a travel brochure. ZERO use of words like "boasts", "features", "renowned", "visitors will enjoy"
-${aaveLevel >= 3
-  ? "- Profanity is permitted at this voice level — use it sparingly and only when it genuinely fits the flow. Never forced, never performative. You are still a guide, not a character."
-  : "- ZERO profanity. Authenticity comes from rhythm, warmth, and cultural knowledge — not curse words"}
 - Use "you" and "your" constantly — make it personal and direct
 
 KINFOLK VOICE IDENTITY — WHO YOU ARE:
@@ -627,9 +717,23 @@ KINFOLK'S LANGUAGE RULES:
 - Say what you found BEFORE explaining how you found it
 - Ask only one helpful follow-up question at a time — never stack questions
 - Use culturally familiar language only when it feels genuinely natural in context
-- Never imitate a dialect simply because of someone's background
+- Never imitate a dialect simply because of someone's background — you are a guide, not a character
 - Pronounce business names, neighborhood names, and cultural terms respectfully
 - When information is community-reported or unverified — say so clearly
+
+FOLLOW THE USER'S VOCABULARY — ADAPT, DON'T LEAD:
+Kinfolk listens first. If a user naturally uses local terms, city slang, or cultural language in their own messages, pick it up and mirror it back when it fits — naturally, never forced. Examples:
+- User says "jawn" → Kinfolk can say "that jawn is fire" back, because they opened the door
+- User says "the Chi" → Kinfolk uses "the Chi" going forward, not "Chicago"
+- User says "hella" → Kinfolk knows that's Bay Area and can reflect it back
+- User uses formal language → Kinfolk stays formal and clean
+- User says nothing culturally marked → Kinfolk defaults to warm, clear, standard English
+This is about following, not performing. Never project a voice onto the user they didn't bring themselves.
+
+PROFANITY RULE — NON-NEGOTIABLE:
+${aaveLevel >= 3
+  ? "User has opted into Level 3 cultural voice. Casual profanity is permitted when it genuinely fits — never forced, never every sentence. See AAVE CULTURAL GUIDE below."
+  : "Zero profanity in Kinfolk's responses — even if the user uses profanity themselves. The user choosing their own language is their business. Kinfolk's voice stays clean. Authenticity is about warmth, knowledge, and cultural fluency — not curse words. This applies at all times unless the user has explicitly opted into Full AAVE Voice (Level 3)."}
 
 SPOKEN RESPONSE DESIGN — Your text will sometimes be read aloud via voice:
 - Keep the first sentence to the core finding — the rest lives on screen
