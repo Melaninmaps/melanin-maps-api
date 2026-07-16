@@ -119,6 +119,16 @@ interface DeliveryPrefs {
   includeSavedBusinesses: boolean;
 }
 
+interface CulturalSiteSnippet {
+  id: string;
+  name: string;
+  heritageCategory: string;
+  city: string;
+  state: string;
+  significance: string | null;
+  yearEstablished: number | null;
+}
+
 const SAMPLE_EXPERTS: Expert[] = [
   { id: "e1", displayName: "Dr. Aisha Matthews", specialty: "Internal Medicine", badge: "Verified Physician", bio: "Board-certified internist with 15 years of experience in preventive care.", followCount: 842, articleCount: 12 },
   { id: "e2", displayName: "James L. Carter, Esq.", specialty: "Civil Rights & Employment Law", badge: "Verified Attorney", bio: "Specializing in employment discrimination and civil rights litigation.", followCount: 614, articleCount: 8 },
@@ -138,6 +148,20 @@ const SCOPE_MODES = [
   { id: "global", label: "Global", emoji: "🌍" },
   { id: "all", label: "All", emoji: "∞" },
 ];
+
+const HERITAGE_COLORS: Record<string, string> = {
+  "HBCU":                     "#7C3AED",
+  "Civil Rights":              "#DC2626",
+  "African American Heritage": "#CA922B",
+  "Native American Heritage":  "#065F46",
+  "Hispanic & Latino Heritage":"#B45309",
+  "LGBTQ+ History":            "#9D174D",
+  "Women's History":           "#7E22CE",
+  "Cultural Neighborhood":     "#1D4ED8",
+  "Freedom Trail":             "#92400E",
+  "Religious Heritage":        "#4B5563",
+  "Immigrant Heritage":        "#0F766E",
+};
 
 type Tab = "library" | "browse" | "happeningNow";
 
@@ -189,6 +213,8 @@ export default function LibraryScreen() {
   const [similarTopics, setSimilarTopics] = useState<Topic[]>([]);
   const [showSimilarSheet, setShowSimilarSheet] = useState(false);
   const [pendingTopicName, setPendingTopicName] = useState("");
+  const [featuredSites, setFeaturedSites] = useState<CulturalSiteSnippet[]>([]);
+  const [sitesLoading, setSitesLoading] = useState(true);
   const [pinModal, setPinModal] = useState<{
     visible: boolean;
     itemName: string;
@@ -196,6 +222,21 @@ export default function LibraryScreen() {
     isPinning: boolean;
     onConfirm: () => Promise<void>;
   }>({ visible: false, itemName: "", category: "", isPinning: true, onConfirm: async () => {} });
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const base = getApiBase();
+        if (!base) { setSitesLoading(false); return; }
+        const res = await fetch(`${base}/api/cultural-sites`);
+        if (res.ok) {
+          const data = await res.json() as { sites: CulturalSiteSnippet[] };
+          setFeaturedSites((data.sites ?? []).slice(0, 16));
+        }
+      } catch {}
+      finally { setSitesLoading(false); }
+    })();
+  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -805,6 +846,62 @@ export default function LibraryScreen() {
                     })}
                   </View>
                 )}
+
+                {/* Heritage Sites */}
+                <View style={[styles.section, { paddingHorizontal: 0 }]}>
+                  <View style={[styles.sectionRow, { paddingHorizontal: 20 }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Cultural Heritage Sites</Text>
+                    <TouchableOpacity onPress={() => router.push("/cultural-heritage" as never)} style={styles.seeAllBtn}>
+                      <Text style={[styles.seeAllTxt, { color: "#7C3AED" }]}>See All</Text>
+                      <Feather name="chevron-right" size={13} color="#7C3AED" />
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={[styles.deliverySub, { color: colors.mutedForeground, paddingHorizontal: 20, marginBottom: 10 }]}>
+                    HBCUs, civil rights landmarks, Native heritage sites, and cultural districts across America.
+                  </Text>
+                  {sitesLoading ? (
+                    <ActivityIndicator size="small" color="#7C3AED" style={{ marginVertical: 16 }} />
+                  ) : (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.heritageSitesRow}
+                    >
+                      {featuredSites.map((site) => {
+                        const catColor = HERITAGE_COLORS[site.heritageCategory] ?? "#6B7280";
+                        return (
+                          <TouchableOpacity
+                            key={site.id}
+                            style={[styles.heritageSiteCard, { backgroundColor: colors.card, borderColor: catColor + "30" }]}
+                            onPress={() => router.push("/cultural-heritage" as never)}
+                            activeOpacity={0.8}
+                          >
+                            <View style={[styles.heritageCatDot, { backgroundColor: catColor }]} />
+                            <Text style={[styles.heritageSiteName, { color: colors.foreground }]} numberOfLines={2}>
+                              {site.name}
+                            </Text>
+                            <Text style={[styles.heritageSiteCity, { color: colors.mutedForeground }]} numberOfLines={1}>
+                              {site.city}, {site.state}
+                            </Text>
+                            <View style={[styles.heritageCatPill, { backgroundColor: catColor + "18" }]}>
+                              <Text style={[styles.heritageCatTxt, { color: catColor }]} numberOfLines={1}>
+                                {site.heritageCategory}
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })}
+                      <TouchableOpacity
+                        style={[styles.heritageViewAll, { backgroundColor: "#7C3AED18", borderColor: "#7C3AED30" }]}
+                        onPress={() => router.push("/cultural-heritage" as never)}
+                        activeOpacity={0.8}
+                      >
+                        <Feather name="book-open" size={22} color="#7C3AED" />
+                        <Text style={[styles.heritageViewAllTxt, { color: "#7C3AED" }]}>View All{"\n"}Sites</Text>
+                      </TouchableOpacity>
+                    </ScrollView>
+                  )}
+                </View>
 
                 {/* Explore Community Resources */}
                 <View style={[styles.section, { paddingHorizontal: 20 }]}>
@@ -1569,4 +1666,22 @@ const styles = StyleSheet.create({
   catPickerChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1 },
   modalCancelBtn: { paddingVertical: 13, paddingHorizontal: 18, borderRadius: 12, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   modalSubmitBtn: { paddingVertical: 13, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  seeAllBtn: { flexDirection: "row", alignItems: "center", gap: 2, marginLeft: "auto" },
+  seeAllTxt: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  heritageSitesRow: { paddingHorizontal: 20, paddingBottom: 4, gap: 10 },
+  heritageSiteCard: {
+    width: 148, borderRadius: 14, borderWidth: 1,
+    padding: 12, gap: 6, flexShrink: 0,
+  },
+  heritageCatDot: { width: 8, height: 8, borderRadius: 4, marginBottom: 2 },
+  heritageSiteName: { fontSize: 13, fontFamily: "Inter_700Bold", lineHeight: 18 },
+  heritageSiteCity: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  heritageCatPill: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, alignSelf: "flex-start", marginTop: 2 },
+  heritageCatTxt: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
+  heritageViewAll: {
+    width: 100, borderRadius: 14, borderWidth: 1,
+    alignItems: "center", justifyContent: "center",
+    padding: 12, gap: 6, flexShrink: 0,
+  },
+  heritageViewAllTxt: { fontSize: 12, fontFamily: "Inter_700Bold", textAlign: "center", lineHeight: 16 },
 });

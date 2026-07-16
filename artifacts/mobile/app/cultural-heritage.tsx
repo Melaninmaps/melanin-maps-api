@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -129,11 +129,12 @@ export default function CulturalHeritagePage() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const params = useLocalSearchParams<{ initialCategory?: string }>();
 
   const [sites, setSites] = useState<CulturalSite[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState("");
-  const [selectedHeritage, setSelectedHeritage] = useState("");
+  const [selectedHeritage, setSelectedHeritage] = useState(params.initialCategory ?? "");
   const [selectedSite, setSelectedSite] = useState<CulturalSite | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
