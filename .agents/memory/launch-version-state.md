@@ -6,8 +6,8 @@ description: Current app store submission state — Android and iOS build versio
 # Launch Version State (as of July 16, 2026)
 
 ## iOS
-- **Current buildNumber in app.json: 54, version 1.1.5**
-- eas.json has `"autoIncrement": true` — EAS will auto-increment BEFORE building, so next build will be 55
+- **Current buildNumber in app.json: 66, version 1.1.5**
+- eas.json has `"autoIncrement": true` — EAS will auto-increment BEFORE building, so next build will be 67
 - Builds 40–53 all FAILED at pod install (react-native-google-maps name mismatch)
 - **Definitive fix applied: `react-native.config.js` podspecPath override** — fixes autolinking at source so Podfile NEVER gets the wrong pod name
 - Belt-and-suspenders: `plugins/withRnMapsPodfileFix.js` also patches the Podfile if needed (handles both single and double quotes)
