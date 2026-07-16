@@ -1,11 +1,11 @@
 import { Feather } from "@expo/vector-icons";
-import { Audio } from "expo-av";
 import * as FileSystem from "expo-file-system";
 import * as Haptics from "expo-haptics";
 import { usePathname, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   FlatList,
   KeyboardAvoidingView,
@@ -161,7 +161,7 @@ export function AIChatWidget() {
   const [typing, setTyping] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isRecording, setIsRecording] = useState(false);
-  const recordingRef = useRef<Audio.Recording | null>(null);
+  const recordingRef = useRef<null>(null);
   const listRef = useRef<FlatList>(null);
   const pulse = useRef(new Animated.Value(1)).current;
   const fabTranslateY = useRef(new Animated.Value(0)).current;
@@ -239,44 +239,18 @@ export function AIChatWidget() {
     })
   ).current;
 
-  const startVoice = async () => {
+  const startVoice = () => {
     if (Platform.OS === "web") return;
-    try {
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== "granted") return;
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-      recordingRef.current = recording;
-      setIsRecording(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch { setIsRecording(false); }
+    Alert.alert(
+      "Voice Input Coming Soon",
+      "Voice messages will be available in an upcoming update.",
+      [{ text: "OK" }]
+    );
   };
 
-  const stopVoice = async () => {
-    const rec = recordingRef.current;
-    if (!rec) return;
+  const stopVoice = () => {
     setIsRecording(false);
     recordingRef.current = null;
-    try {
-      await rec.stopAndUnloadAsync();
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
-      const uri = rec.getURI();
-      if (uri) {
-        const base = getApiBase();
-        const token = await getToken();
-        const ext = uri.split(".").pop() ?? "m4a";
-        const fileContent = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-        const r = await fetch(`${base}/api/kinfolk/transcribe`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-          body: JSON.stringify({ audio: fileContent, format: ext }),
-        });
-        if (r.ok) {
-          const { text } = await r.json() as { text?: string };
-          if (text) setInput(text);
-        }
-      }
-    } catch { /* non-critical */ }
   };
 
   if (suppressed) return null;
