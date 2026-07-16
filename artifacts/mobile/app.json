@@ -163,7 +163,8 @@
           }
         }
       ],
-      "./plugins/withChromebookSupport"
+      "./plugins/withChromebookSupport",
+      "./plugins/withAudioFrameworks"
     ],
     "experiments": {
       "typedRoutes": true
