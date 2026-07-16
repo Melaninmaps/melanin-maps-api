@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.melaninmaps.app",
-      "buildNumber": "62",
+      "buildNumber": "63",
       "associatedDomains": [
         "applinks:mappingwithmelanin.com"
       ],
@@ -96,6 +96,7 @@
     },
     "plugins": [
       "./plugins/withRnMapsPodfileFix",
+      "./plugins/withExpoAvFix",
       "./plugins/withAndroidCrashLogger",
       [
         "expo-splash-screen",
