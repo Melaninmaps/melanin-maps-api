@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.26.1",
   "scripts": {
     "eas-build-pre-install": "node -e \"const{execSync:e}=require('child_process');const log=s=>process.stdout.write(s+'\\n');try{log('pnpm before: '+e('pnpm --version').toString().trim());e('npm install -g pnpm@10.26.1',{stdio:'inherit'});log('pnpm after: '+e('pnpm --version').toString().trim())}catch(err){log('hook error: '+err.message)}\"",
-    "eas-build-post-install": "node artifacts/mobile/scripts/patch-expo-entry.js",
+    "eas-build-post-install": "node artifacts/mobile/scripts/patch-expo-entry.js && node artifacts/mobile/scripts/create-rn-maps-podspec.js",
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; if [ \"${EAS_BUILD}\" = \"1\" ] || [ \"${CI}\" = \"true\" ] || [ \"${CI}\" = \"1\" ]; then exit 0; fi; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
