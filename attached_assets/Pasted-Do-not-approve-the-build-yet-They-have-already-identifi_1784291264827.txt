@@ -1,0 +1,59 @@
+Do **not** approve the build yet.
+
+They have already identified the most important clue:
+
+> The production APK is calling `https://www.mappingwithmelanin.com`
+
+Before spending another build, Replit should test the **exact same POST request** against that exact URL—not the Railway URL.
+
+Send this:
+
+> Before creating a diagnostic build, please run the exact production request against:
+>
+> `https://www.mappingwithmelanin.com/api/auth/login-email`
+>
+> Use the same HTTP method, headers, and JSON body the Android app sends. Report:
+>
+> * HTTP status
+> * response headers
+> * complete response body with credentials redacted
+> * whether the request reaches Railway logs
+>
+> Then run the identical request against:
+>
+> `https://api-server-production-a991.up.railway.app/api/auth/login-email`
+>
+> Compare the two results.
+>
+> If the Mapping with Melanin domain returns non-2xx while Railway returns 200, the problem is already identified: the APK is using the wrong API base URL or the web domain lacks the required `/api` proxy. A diagnostic build that only displays the status code will confirm what we already know but will not fix it.
+>
+> Clearly state whether the correct fix is:
+>
+> 1. configure `mappingwithmelanin.com/api/*` to proxy to Railway, or
+> 2. change the mobile production API base URL to the Railway API/custom API domain.
+>
+> Also state whether option 2 requires a new mobile build.
+
+If both exact POST requests return 200, then approve one diagnostic internal build—but improve the proposed change slightly. It should show the status and safe server message:
+
+```ts
+const message =
+  typeof data?.error === "string"
+    ? data.error
+    : `Login failed (HTTP ${res.status}).`;
+
+return { error: message };
+```
+
+And log only:
+
+```ts
+console.error("Login failed", {
+  status: res.status,
+  responseKeys: data && typeof data === "object" ? Object.keys(data) : [],
+});
+```
+
+No password, email, or token values.
+
+My strongest concern is that Replit just proved the APK is baked with the website domain, while the working authentication endpoint is on Railway. Test that exact mismatch first.
