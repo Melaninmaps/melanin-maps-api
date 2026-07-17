@@ -74,6 +74,11 @@ The declarations:
 ## Part II — Brand and Storytelling
 
 9. Storytelling Standards (complete approved standards — all 17)
+
+*Governing principle to be added during Phase One drafting:*
+> "Every presentation begins in a specific emotional state and ends in a specific emotional state. That arc is not accidental. It is a design decision."
+
+The Experience Deck begins in Uncertainty and ends in Peace. That is not a description of slides — it is the philosophy of how Mapping With Melanin™ communicates: with intention, with arc, and with respect for the audience's journey.
 10. Visual Identity (color system, hex codes, typography, logo usage, spacing, shading, custom outlined gold icon system, photography standards, motion rules, accessibility)
 11. Voice Guide (To be completed after launch — founder, KinfolkAI™, onboarding, email, push notification, support, community moderation, volunteer, Cultural Ambassador, business communication, investor communication voices)
 12. The Friend Test ("Would I say this exactly this way if I were sitting across from a friend? If no, rewrite it.")
