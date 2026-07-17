@@ -1,0 +1,150 @@
+This is important. **Expo Doctor is catching four real project-health problems before the native build even begins.** I would stop new iOS builds until Replit fixes these and gets **20/20 checks passed**, or explains in writing why a specific warning is safe to ignore.
+
+The current failure is not an Apple review problem. `expo-doctor` is intentionally ending with a nonzero code because the project configuration and dependencies are inconsistent. Expo recommends running Doctor before native builds specifically to catch issues like these. ([Expo Documentation][1])
+
+## What Replit needs to fix
+
+### 1. Invalid `app.json` fields
+
+Doctor says these fields are not valid where they currently appear:
+
+```text
+newArchEnabled
+privacyPolicyUrl
+splash
+android.googleMapsApiKey
+android.splash
+```
+
+This does **not necessarily mean you must permanently lose your splash screen, privacy-policy URL, Google Maps key, or architecture setting**. It means they are being declared in a format or location that Expo SDK 57’s current schema does not accept.
+
+This is especially relevant because custom native behavior should generally be applied through valid Expo app configuration or config plugins during Prebuild—not by leaving unsupported fields in `app.json`. ([Expo Documentation][2])
+
+Replit should:
+
+* inspect whether the root of `app.json` is structured correctly under `"expo"`,
+* compare every field against the SDK 57 app-config schema,
+* migrate unsupported native settings into valid config plugins,
+* and rerun `npx expo config --type public` to verify the resolved configuration.
+
+### 2. Remove direct `@expo/config-plugins`
+
+The project directly installs:
+
+```text
+@expo/config-plugins
+```
+
+Expo Doctor says this should not be a direct dependency. Replit should remove it and update any custom plugin code to import from:
+
+```javascript
+expo/config-plugins
+```
+
+This is particularly significant because the Google Maps Podfile problem appears to involve custom config-plugin behavior. A plugin using an unsupported direct package may be part of the instability.
+
+### 3. Install the missing `expo-asset` dependency
+
+Doctor explicitly reports:
+
+```text
+Missing peer dependency: expo-asset
+Required by: expo-audio
+```
+
+The prescribed fix is:
+
+```bash
+npx expo install expo-asset
+```
+
+Native peer dependencies need to be installed directly because an app may work in Expo Go yet crash or fail in an actual standalone build when one is missing. Expo’s package guidance uses `npx expo install` so the dependency version matches the active SDK. ([Expo Documentation][3])
+
+### 4. Resolve the duplicate React versions
+
+This may be the most serious dependency issue:
+
+```text
+react@19.2.3  — inside the mobile project
+react@19.1.0  — in the parent workspace
+```
+
+A native app should not resolve two React copies. That can cause unpredictable bundling, hooks errors, native module resolution problems, and build inconsistencies.
+
+The paths suggest your mobile app is inside a larger pnpm workspace or monorepo:
+
+```text
+node_modules/react
+../../node_modules/react
+```
+
+Replit needs to align the entire workspace on one Expo-compatible React version and regenerate the lockfile. Expo’s monorepo documentation specifically recommends using dependency resolutions when necessary to force one compatible React version across a workspace. ([Expo Documentation][4])
+
+## Send Replit this exact response
+
+> Expo Doctor is now failing 4 of 20 checks. Please do not start another EAS iOS build until these are corrected and Doctor passes.
+>
+> Please:
+>
+> 1. Correct the SDK 57 app-config schema errors for:
+>
+>    * `newArchEnabled`
+>    * `privacyPolicyUrl`
+>    * root `splash`
+>    * `android.googleMapsApiKey`
+>    * `android.splash`
+>
+>    Do not simply delete functionality without explaining where each setting is being moved. Use valid SDK 57 fields or config plugins as appropriate.
+>
+> 2. Remove the direct dependency on `@expo/config-plugins` and update custom plugin imports to use:
+>
+>    ```javascript
+>    expo/config-plugins
+>    ```
+>
+> 3. Install the missing peer dependency:
+>
+>    ```bash
+>    npx expo install expo-asset
+>    ```
+>
+> 4. Resolve the duplicate React installation:
+>
+>    ```text
+>    react@19.2.3 in the mobile project
+>    react@19.1.0 in the parent workspace
+>    ```
+>
+>    Align the monorepo/workspace to one Expo SDK 57-compatible React version, then perform a clean pnpm install and regenerate the lockfile.
+>
+> 5. Run:
+>
+>    ```bash
+>    npx expo-doctor --verbose
+>    npx expo config --type public
+>    npx expo prebuild --clean --platform ios
+>    ```
+>
+> Please provide the full outputs. Do not submit another EAS build unless Expo Doctor passes all checks and the clean prebuild succeeds.
+
+## My assessment
+
+This confirms your concern was justified. The iOS map Podfile error was not the only weakness. The project currently has:
+
+* invalid SDK configuration,
+* unsupported config-plugin dependency usage,
+* a missing native peer dependency,
+* and duplicate React versions.
+
+Android may still build despite these problems because Android and iOS use different native dependency systems, and some errors only surface in CocoaPods or an iOS standalone binary. That does not mean the project is healthy.
+
+The next milestone should no longer be “another build attempt.” It should be:
+
+> **Expo Doctor: 20/20 checks passed.**
+
+Only after that would I authorize another iOS build.
+
+[1]: https://docs.expo.dev/build-reference/troubleshooting/?utm_source=chatgpt.com "Troubleshoot build errors and crashes"
+[2]: https://docs.expo.dev/config-plugins/introduction/?utm_source=chatgpt.com "Introduction to config plugins"
+[3]: https://docs.expo.dev/versions/latest/sdk/audio/?utm_source=chatgpt.com "Audio (expo-audio)"
+[4]: https://docs.expo.dev/guides/monorepos/?utm_source=chatgpt.com "Work with monorepos"

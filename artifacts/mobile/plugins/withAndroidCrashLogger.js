@@ -1,4 +1,4 @@
-const { withMainApplication } = require("@expo/config-plugins");
+const { withMainApplication } = require("expo/config-plugins");
 
 module.exports = function withAndroidCrashLogger(config) {
   return withMainApplication(config, (config) => {

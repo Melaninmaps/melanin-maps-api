@@ -13,7 +13,7 @@
  *   MediaPlayer to the ExpoAudio pod target's OTHER_LDFLAGS. CocoaPods only
  *   allows one post_install block; we inject into Expo's generated one.
  */
-const { withDangerousMod } = require("@expo/config-plugins");
+const { withDangerousMod } = require("expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
 

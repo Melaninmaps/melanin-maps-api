@@ -7,13 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "mappingwithmelanin",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "privacyPolicyUrl": "https://www.mappingwithmelanin.com/privacy",
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#C4622D"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.melaninmaps.app",
@@ -65,16 +58,6 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "monochromeImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#C4622D"
-      },
-      "splash": {
-        "image": "./assets/images/splash.png",
-        "resizeMode": "cover",
-        "backgroundColor": "#C4622D",
-        "mdpi": "./assets/images/splash.png",
-        "hdpi": "./assets/images/splash.png",
-        "xhdpi": "./assets/images/splash.png",
-        "xxhdpi": "./assets/images/splash.png",
-        "xxxhdpi": "./assets/images/splash.png"
       },
       "permissions": [
         "android.permission.ACCESS_FINE_LOCATION",

@@ -14,7 +14,7 @@
  *   The stub runs after `pod install` populates Pods/Headers/ but before Xcode
  *   compiles — the only safe window to place the missing header.
  */
-const { withDangerousMod } = require("@expo/config-plugins");
+const { withDangerousMod } = require("expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
 
