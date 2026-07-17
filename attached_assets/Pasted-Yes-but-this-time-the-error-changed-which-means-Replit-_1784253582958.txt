@@ -1,0 +1,57 @@
+Yes, but this time the error changed—which means Replit did make a change. They just changed it to another incorrect CocoaPods reference.
+
+The new failure is:
+
+```text
+[!] The name of the given podspec `react-native-maps`
+doesn't match the expected one `react-native-google-maps`
+```
+
+The build is now finding `react-native-maps`, but the iOS Podfile or generated configuration is still asking CocoaPods to treat it as the old pod named `react-native-google-maps`. Your log shows `react-native-maps` is now autolinking correctly before CocoaPods reaches that conflicting manual reference. 
+
+For newer versions of `react-native-maps`, the old configuration:
+
+```ruby
+pod 'react-native-google-maps', :path => rn_maps_path
+```
+
+was replaced by:
+
+```ruby
+pod 'react-native-maps/Google', :path => rn_maps_path
+```
+
+That exact migration is documented in the library’s issue tracker for versions after 1.23.0. ([GitHub][1])
+
+Send Replit this:
+
+> The new build still fails, but the error has changed:
+>
+> ```text
+> [!] The name of the given podspec `react-native-maps` doesn't match the expected one `react-native-google-maps`
+> ```
+>
+> `react-native-maps` is now being found and autolinked successfully, but the generated iOS Podfile/configuration is still referencing the legacy pod name `react-native-google-maps`.
+>
+> For react-native-maps 1.27.2, please locate and remove or update any line equivalent to:
+>
+> ```ruby
+> pod 'react-native-google-maps', :path => rn_maps_path
+> ```
+>
+> The current Google Maps subspec should be:
+>
+> ```ruby
+> pod 'react-native-maps/Google', :path => rn_maps_path
+> ```
+>
+> Please also check custom Expo config plugins, Podfile modification scripts, patches, and generated native files for the legacy string `react-native-google-maps`. Do a repository-wide search for that exact term.
+>
+> After correcting it, regenerate the iOS project cleanly and rebuild without reusing the previous generated Podfile.
+
+The important point: **they should search the entire project for `react-native-google-maps`.** It is probably being inserted by a custom config plugin or Podfile modification script during `expo prebuild`, so simply editing the generated Podfile may not permanently fix it.
+
+Also, the HTTP 404 messages for precompiled modules are not the cause; Expo correctly falls back to building those modules from source. The actual failure is the pod-name mismatch at the end. Expo currently recommends `react-native-maps` 1.27.2 for this SDK line. ([docs.expo.dev][2])
+
+[1]: https://github.com/react-native-maps/react-native-maps/issues/5710?utm_source=chatgpt.com "[Solved] No podspec found for `react-native-google-maps"
+[2]: https://docs.expo.dev/versions/latest/sdk/map-view/?utm_source=chatgpt.com "react-native-maps"
