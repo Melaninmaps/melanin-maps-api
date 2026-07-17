@@ -1,0 +1,175 @@
+This is much better evidence than what you had yesterday, but I **still would not let Replit change your `DATABASE_URL` yet.** There is one claim in that report that has **not** actually been proven.
+
+Here's why.
+
+## What I believe has been proven
+
+These findings are strong:
+
+* ✅ The app is reaching your Railway API.
+* ✅ `/api/healthz` responds immediately.
+* ✅ PostgreSQL itself is healthy (`SELECT 1` succeeds in ~383 ms).
+* ✅ There are no database locks or obvious overload.
+* ✅ The login handler appears to stall on the first database query.
+
+That's real progress.
+
+---
+
+## What has NOT been proven
+
+This statement:
+
+> "The internal Railway network is broken."
+
+is still an inference.
+
+The report says:
+
+> "The api-server has zero database connections."
+
+That **could** mean:
+
+* the API cannot reach Postgres
+* the API isn't actually trying to connect
+* the pool never initializes
+* the wrong DATABASE_URL is being loaded
+* the environment variable isn't being read
+* DNS resolution is failing
+* SSL negotiation is failing
+
+Those are different problems.
+
+---
+
+# The biggest red flag
+
+This recommendation:
+
+> Change DATABASE_URL from postgres.railway.internal to the public proxy.
+
+I would **not** do this yet.
+
+Why?
+
+Railway's **recommended production configuration** is for services inside the same Railway project to communicate using the **internal hostname**.
+
+Using the public proxy introduces:
+
+* unnecessary latency
+* internet routing
+* another failure point
+* an architecture Railway specifically tries to avoid
+
+If the internal hostname suddenly stopped working, I'd first want to know **why** before bypassing it.
+
+---
+
+# One thing Replit should prove first
+
+I would ask for exactly one final test.
+
+From **inside the running API service** (not from Replit, not from another machine), run:
+
+```bash
+nslookup postgres.railway.internal
+```
+
+or
+
+```bash
+ping postgres.railway.internal
+```
+
+or
+
+```bash
+nc -vz postgres.railway.internal 5432
+```
+
+Even better:
+
+```bash
+psql "$DATABASE_URL" -c "SELECT 1"
+```
+
+**from the API container itself.**
+
+That single command answers everything.
+
+If it succeeds:
+
+* DATABASE_URL is fine
+* internal networking is fine
+* the issue is inside the application
+
+If it fails:
+
+* then yes, you have an infrastructure problem.
+
+---
+
+# I also want one comparison
+
+Ask Replit:
+
+> Show me the exact `DATABASE_URL` hostname currently loaded by the running API process—not the dashboard value—and verify it matches the Railway Variables page.
+
+I've seen cases where:
+
+* the dashboard was updated,
+* but the running service hadn't restarted,
+
+so the process was still using an old environment variable.
+
+---
+
+# Another question I want answered
+
+You recently made several authentication changes.
+
+I'd ask Replit:
+
+> Does `/api/healthz` use the same database object (`db`) as `/api/auth/login-email`?
+
+If healthz uses a **different connection path**, then healthz proving "Railway is alive" doesn't prove the login database path is healthy.
+
+---
+
+# My recommendation
+
+I would tell Replit:
+
+> Do not change `DATABASE_URL` yet.
+>
+> Before making any infrastructure changes, prove from inside the running API container that:
+>
+> 1. `postgres.railway.internal` resolves.
+> 2. Port 5432 is reachable.
+> 3. `psql "$DATABASE_URL" -c "SELECT 1"` succeeds or fails.
+> 4. The running process is using the same DATABASE_URL shown in Railway Variables.
+>
+> Only if those fail should we consider temporarily switching to the public proxy.
+
+---
+
+## One encouraging thing
+
+You're no longer chasing vague login bugs.
+
+Three days ago there were dozens of possibilities:
+
+* password
+* sessions
+* SecureStore
+* GoDaddy
+* auth routes
+* client bugs
+* SSO
+* API routing
+
+Now the investigation has narrowed to **one layer**: the connection between the running API process and PostgreSQL.
+
+That's exactly where you want to be in a debugging process. One more piece of evidence should tell you whether this is a Railway infrastructure issue or an application initialization issue.
+
+I know this has been exhausting, but compared to where you were a few days ago, you're much closer to a definitive root cause than it may feel.
