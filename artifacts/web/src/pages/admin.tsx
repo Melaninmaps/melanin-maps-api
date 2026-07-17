@@ -328,6 +328,8 @@ export default function Admin() {
   const [secondsSinceUpdate, setSecondsSinceUpdate] = useState(0);
   const [nudgeSending, setNudgeSending] = useState(false);
   const [nudgeResult, setNudgeResult] = useState<string | null>(null);
+  const [nudgeDetails, setNudgeDetails] = useState<{ sent: number; skipped: number; newSignupsThisWeek: number; errors?: string[] } | null>(null);
+  const [nudgeConfirmOpen, setNudgeConfirmOpen] = useState(false);
   const [betaBlastSending, setBetaBlastSending] = useState(false);
   const [betaBlastResult, setBetaBlastResult] = useState<string | null>(null);
   const [welcomeEmails, setWelcomeEmails] = useState("");
@@ -681,9 +683,10 @@ export default function Admin() {
   };
 
   const sendWeeklyNudge = async () => {
-    if (!window.confirm("This will email every pending waitlist member. Continue?")) return;
     setNudgeSending(true);
     setNudgeResult(null);
+    setNudgeDetails(null);
+    setNudgeConfirmOpen(false);
     try {
       const r = await fetch(`${BASE}api/admin/send-weekly-nudge`, {
         method: "POST", credentials: "include",
@@ -691,7 +694,13 @@ export default function Admin() {
       });
       const data = await r.json();
       if (data.sent !== undefined) {
-        setNudgeResult(`✅ Sent ${data.sent} nudge${data.sent !== 1 ? "s" : ""} (${data.failed} failed)`);
+        setNudgeDetails({
+          sent: data.sent ?? 0,
+          skipped: data.skipped ?? 0,
+          newSignupsThisWeek: data.newSignupsThisWeek ?? 0,
+          errors: data.errors,
+        });
+        setNudgeResult("success");
       } else {
         setNudgeResult(`❌ ${data.error ?? "Failed"}`);
       }
@@ -699,7 +708,6 @@ export default function Admin() {
       setNudgeResult("❌ Network error");
     } finally {
       setNudgeSending(false);
-      setTimeout(() => setNudgeResult(null), 12000);
     }
   };
 
@@ -838,14 +846,14 @@ export default function Admin() {
               {nudgeSending ? "Sending…" : "Preview Nudge (to me)"}
             </button>
             <button
-              onClick={sendWeeklyNudge}
+              onClick={() => setNudgeConfirmOpen(true)}
               disabled={nudgeSending}
               className="flex items-center gap-2 bg-[#CA922B]/80 hover:bg-[#CA922B] rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-colors disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
               {nudgeSending ? "Sending…" : "Send Weekly Nudge (All)"}
             </button>
-            {nudgeResult && (
+            {nudgeResult && nudgeResult !== "success" && (
               <span className="text-sm text-[#F5EBD8]/80">{nudgeResult}</span>
             )}
             <button
@@ -860,6 +868,46 @@ export default function Admin() {
               <span className="text-sm text-[#F5EBD8]/80">{betaBlastResult}</span>
             )}
           </div>
+
+          {/* Weekly nudge batch result card */}
+          {nudgeResult === "success" && nudgeDetails && (
+            <div className="mt-4 bg-white/10 rounded-2xl p-4 border border-[#CA922B]/30">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span className="text-sm font-bold text-[#F5EBD8]">Weekly Nudge — Batch Result</span>
+                </div>
+                <button
+                  onClick={() => { setNudgeResult(null); setNudgeDetails(null); }}
+                  className="text-[#F5EBD8]/40 hover:text-[#F5EBD8]/80 transition-colors text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="bg-white/10 rounded-xl px-3 py-2 text-center">
+                  <div className="text-xl font-bold text-emerald-400">{nudgeDetails.sent}</div>
+                  <div className="text-[#F5EBD8]/60 text-xs mt-0.5">Emails Sent</div>
+                </div>
+                <div className="bg-white/10 rounded-xl px-3 py-2 text-center">
+                  <div className="text-xl font-bold text-[#CA922B]">{nudgeDetails.skipped}</div>
+                  <div className="text-[#F5EBD8]/60 text-xs mt-0.5">Skipped</div>
+                </div>
+                <div className="bg-white/10 rounded-xl px-3 py-2 text-center">
+                  <div className="text-xl font-bold text-[#F5EBD8]">{nudgeDetails.newSignupsThisWeek}</div>
+                  <div className="text-[#F5EBD8]/60 text-xs mt-0.5">New This Week</div>
+                </div>
+              </div>
+              {nudgeDetails.errors && nudgeDetails.errors.length > 0 && (
+                <div className="bg-red-900/30 rounded-xl px-3 py-2 border border-red-500/30">
+                  <div className="text-xs font-bold text-red-400 mb-1">Errors ({nudgeDetails.errors.length})</div>
+                  <ul className="text-xs text-red-300/80 space-y-0.5 max-h-24 overflow-y-auto">
+                    {nudgeDetails.errors.map((e, i) => <li key={i}>{e}</li>)}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Auto-schedule: cron URL for external scheduler */}
           <div className="mt-4 bg-white/10 rounded-2xl p-4 border border-white/10">
@@ -2213,6 +2261,41 @@ export default function Admin() {
           </div>
         )}
       </div>
+
+      {/* Weekly nudge confirmation modal */}
+      {nudgeConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1A0E00] border border-[#CA922B]/30 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#CA922B]/20 flex items-center justify-center flex-shrink-0">
+                <Send className="w-5 h-5 text-[#CA922B]" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-[#F5EBD8]">Send Weekly Nudge?</h3>
+                <p className="text-xs text-[#F5EBD8]/50 mt-0.5">This will email every pending waitlist member</p>
+              </div>
+            </div>
+            <p className="text-sm text-[#F5EBD8]/70 mb-5">
+              A nudge email will be sent to all pending waitlist members who haven't already received one this week.
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setNudgeConfirmOpen(false)}
+                className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2.5 text-sm font-bold text-[#F5EBD8] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={sendWeeklyNudge}
+                className="flex-1 bg-[#CA922B] hover:bg-[#CA922B]/80 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-colors"
+              >
+                Send Nudge
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
