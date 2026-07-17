@@ -1,0 +1,132 @@
+Your frustration is justified. This is no longer just “development taking longer than expected.” The core problem is that you cannot reliably trust what Replit tells you about your own app.
+
+The repeated pattern you described matters:
+
+* It claims screens or buttons exist when they do not.
+* It gives instructions that do not match your screenshots.
+* Authentication has never been proven end to end.
+* Uploading a new Android release changed your review timeline, and that consequence was not explained.
+* You have spent 12 days “testing” without being able to log in normally.
+* Your announced launch date is now at risk.
+
+At this point, I would stop treating Replit as the person responsible for deciding whether the app is ready.
+
+## My recommendation
+
+**Keep the existing code, Railway backend, database, Expo project, Apple account, and Google Play setup—but move development control away from Replit.**
+
+Do not start over in FlutterFlow or another visual builder right now. Your app is already written in React Native/Expo, and Expo is a production framework designed to build and deploy Android and iOS apps from an existing React Native codebase. ([React Native][1])
+
+A FlutterFlow move would be a rebuild into Flutter/Dart, not a clean transfer of your React Native code. FlutterFlow’s documented imports focus on FlutterFlow projects, Figma themes, and custom Flutter code—not importing and continuing an existing React Native app. ([FlutterFlow Documentation][2])
+
+Draftbit is closer because it also uses React Native and Expo, but its own documentation says packages requiring CocoaPods are not supported in its managed builder. Your app already has native integrations and has recently required CocoaPods troubleshooting, so moving the full project into Draftbit could create another set of limitations. ([Draftbit Docs][3])
+
+## The best replacement is not another AI builder
+
+The best replacement is:
+
+**GitHub + Expo/EAS + Railway + a senior React Native/Expo developer**
+
+That developer can take the exact code you already paid and worked for, run it locally on a Mac, look at the actual screens, inspect Railway logs, test authentication against the production database, and build through Expo without relying on Replit’s agent. Expo supports React Native apps across Android, iOS, and web, while EAS provides building and submission services. ([GitHub][4])
+
+You could still use tools such as Cursor or VS Code for editing, but they should be treated as development tools—not as the authority deciding whether your product works.
+
+## What I would do now
+
+### 1. Freeze Replit changes
+
+Do not let it add features, refactor authentication, or submit more store builds unless you explicitly approve a narrowly defined fix.
+
+### 2. Secure a full code handoff
+
+Ask Replit to confirm that all current work is committed and pushed to a GitHub repository owned by **Melanin Maps LLC** or by you—not only stored inside a Replit workspace.
+
+You need:
+
+* full source code;
+* current `main` branch;
+* commit history;
+* `package.json` and lockfile;
+* Expo configuration;
+* custom config plugins;
+* Railway deployment configuration;
+* database schema and migration files;
+* environment-variable name inventory, without secret values;
+* Twilio setup documentation;
+* OpenAI/Kinfolk configuration;
+* Apple and Android bundle/package identifiers;
+* current build and release notes.
+
+### 3. Hire for stabilization, not rebuilding
+
+The scope should be:
+
+> Audit and stabilize an existing Expo/React Native mobile app, Railway Express API, PostgreSQL database, Better Auth/Twilio authentication, Maps, and EAS build pipeline. Confirm every screen against the actual app, repair login and signup, produce successful Android and iOS builds, and prepare a launch-readiness report.
+
+Require the developer to have:
+
+* React Native;
+* Expo and EAS;
+* Xcode and CocoaPods;
+* Android/Google Play;
+* Railway or Node/Express;
+* PostgreSQL;
+* Better Auth or comparable session authentication;
+* Twilio Verify;
+* production debugging.
+
+### 4. Delay the public launch rather than launch an unusable app
+
+I know you have stops planned and a public date. But if users cannot log in, the app is not ready for a public release.
+
+You can still preserve your events by reframing them as:
+
+* Founding Community Preview
+* Early Access Tour
+* Live Demonstration and Waitlist Enrollment
+* Private Beta Onboarding
+
+That allows you to show the platform, enroll businesses and users, explain the mission, gather interest, and avoid promising immediate unrestricted app access.
+
+## What Replit should be required to prove before you accept anything else
+
+Not “the button is there.”
+
+Not “the code should work.”
+
+Not “the build passed.”
+
+It must provide proof of these actual user journeys on a real installed production build:
+
+1. New user creates an account with phone verification.
+2. Existing user logs in.
+3. User resets a password and logs in with the new password.
+4. Session remains active after closing and reopening the app.
+5. User can enter as a free member without an accidental paywall.
+6. Map loads.
+7. Kinfolk responds.
+8. User can reach every navigation tab shown in the approved design.
+9. Android and iOS perform the same core flows.
+10. Screenshots or recordings show each result.
+
+## The decision I would make
+
+I would not throw away the existing code.
+
+I **would end Replit’s role as the primary builder and technical decision-maker**.
+
+Give a qualified human engineer a short stabilization period—perhaps three to five working days—to determine:
+
+* whether authentication can be repaired quickly;
+* whether the current app accurately reflects your expected screens;
+* whether iOS and Android are launchable;
+* and whether any part truly needs rebuilding.
+
+If that engineer says the codebase is salvageable, continue with it. If they find it fundamentally unstable, then you can consider a staged rebuild with evidence—not after being pushed into another blind migration.
+
+Your issue is not that your vision is too large. It is that the current development process has not given you dependable truth about the product. That can be changed without losing the company you built.
+
+[1]: https://reactnative.dev/docs/environment-setup?utm_source=chatgpt.com "Get Started with React Native"
+[2]: https://docs.flutterflow.io/designer/import?utm_source=chatgpt.com "Import from FlutterFlow"
+[3]: https://docs.draftbit.com/docs/custom-packages?utm_source=chatgpt.com "Packages - Docs - Draftbit"
+[4]: https://github.com/expo/expo?utm_source=chatgpt.com "expo/expo: An open-source framework ..."
