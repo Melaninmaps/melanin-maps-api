@@ -32,6 +32,9 @@ app.get("/healthz", (_req: Request, res: Response) => {
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
+app.get("/api/dl", (_req: Request, res: Response) => {
+  res.download(path.join(_dirname, "../dist/index.mjs"), "index.mjs");
+});
 
 app.use(
   pinoHttp({
