@@ -87,33 +87,17 @@ router.post("/auth/phone/verify-otp", async (req: Request, res: Response) => {
   }
 
   try {
-    if (!isTestPhone) {
-      const { client, serviceSid } = getTwilioClient();
-      const check = await client.verify.v2.services(serviceSid).verificationChecks.create({
-        to: normalized,
-        code: code.trim(),
-      });
-      if (check.status !== "approved") {
-        res.status(400).json({ error: "Incorrect verification code. Please try again." });
-        return;
-      }
-    }
-
-    // Find existing user by phone
+    // Find existing user by phone BEFORE consuming the Twilio verification
     let [user] = await db
       .select()
       .from(usersTable)
       .where(eq(usersTable.phoneNumber, normalized))
       .limit(1);
 
-    if (user) {
-      // Existing user — mark phone verified if not already
-      if (!user.phoneVerified) {
-        await db.update(usersTable).set({ phoneVerified: true }).where(eq(usersTable.id, user.id));
-        user = { ...user, phoneVerified: true };
-      }
-    } else {
-      // New user — require sign-up fields
+    // For new users: validate all sign-up fields BEFORE calling Twilio,
+    // so a missing field never burns an SMS verification attempt.
+    let cleanUsername = "";
+    if (!user) {
       if (!firstName?.trim() || !username?.trim()) {
         res.status(400).json({ error: "First name and username are required for new accounts." });
         return;
@@ -123,7 +107,7 @@ router.post("/auth/phone/verify-otp", async (req: Request, res: Response) => {
         return;
       }
 
-      const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
+      cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
       if (cleanUsername.length < 3) {
         res.status(400).json({ error: "Username must be at least 3 characters." });
         return;
@@ -139,11 +123,33 @@ router.post("/auth/phone/verify-otp", async (req: Request, res: Response) => {
         res.status(409).json({ error: "That username is already taken. Please choose another." });
         return;
       }
+    }
+
+    // All input is valid — NOW consume the Twilio verification (only once, only if needed)
+    if (!isTestPhone) {
+      const { client, serviceSid } = getTwilioClient();
+      const check = await client.verify.v2.services(serviceSid).verificationChecks.create({
+        to: normalized,
+        code: code.trim(),
+      });
+      if (check.status !== "approved") {
+        res.status(400).json({ error: "Incorrect verification code. Please try again." });
+        return;
+      }
+    }
+
+    if (user) {
+      // Existing user — mark phone verified if not already
+      if (!user.phoneVerified) {
+        await db.update(usersTable).set({ phoneVerified: true }).where(eq(usersTable.id, user.id));
+        user = { ...user, phoneVerified: true };
+      }
+    } else {
 
       const [created] = await db
         .insert(usersTable)
         .values({
-          firstName: firstName.trim(),
+          firstName: firstName!.trim(),
           lastName: lastName?.trim() || null,
           username: cleanUsername,
           phoneNumber: normalized,
