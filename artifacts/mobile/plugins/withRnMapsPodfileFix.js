@@ -1,46 +1,36 @@
 /**
  * withRnMapsPodfileFix.js
  *
- * Fixes the CocoaPods pod-name mismatch that crashes iOS builds when
- * googleMapsApiKey is set in app.json.
+ * Removes the invalid `pod 'react-native-google-maps'` entry that Expo's built-in
+ * maps config plugin injects when googleMapsApiKey is set in app.json.
  *
- * ROOT CAUSE (as of react-native-maps 1.27.2):
- *   react-native-maps.podspec declares s.name = "react-native-maps" (NOT "react-native-google-maps").
- *   Expo's built-in maps config plugin (triggered by ios.config.googleMapsApiKey in app.json)
- *   still uses the OLD pod name and injects into the Podfile:
- *
+ * ROOT CAUSE:
+ *   Expo's maps plugin (triggered by ios.config.googleMapsApiKey) adds to the Podfile:
  *     pod 'react-native-google-maps', :path => '../../../node_modules/react-native-maps'
- *
- *   CocoaPods finds the podspec, sees s.name = "react-native-maps", and rejects it:
+ *   But react-native-maps 1.27.2's podspec declares s.name = "react-native-maps" (not
+ *   "react-native-google-maps"), so CocoaPods rejects it:
  *     [!] The name of the given podspec `react-native-maps` doesn't match
  *         the expected one `react-native-google-maps`
  *
+ *   Simultaneously, RN CLI autolinking ALSO adds:
+ *     pod 'react-native-maps', :path => '...'
+ *   which is the correct entry.
+ *
  * FIX:
- *   During expo prebuild (after Expo has written the Podfile), find every occurrence of
- *     pod 'react-native-google-maps'
- *   and replace with
- *     pod 'react-native-maps/Google'
- *
- *   The `/Google` subspec is defined in react-native-maps.podspec and includes:
- *     - ios/AirGoogleMaps/** source files
- *     - dependency 'GoogleMaps', '9.4.0'
- *     - dependency 'Google-Maps-iOS-Utils', '6.1.0'
- *
- *   CocoaPods then merges:
- *     pod 'react-native-maps'         (from RN CLI autolinking — Maps subspec)
- *     pod 'react-native-maps/Google'  (from this fix — Google subspec)
- *   → single `react-native-maps` target, both subspecs, one set of AIR* symbols.
- *   No duplicate symbols. No name mismatch. Build passes.
+ *   Remove the `pod 'react-native-google-maps'` line entirely.
+ *   The RN CLI's `pod 'react-native-maps'` stays and is sufficient.
+ *   The app uses PROVIDER_DEFAULT (Apple Maps) on iOS — no Google Maps SDK needed.
  *
  * BUILD HISTORY:
- *   73: JS Podfile text removal → use_react_native! generates pod lines at runtime
+ *   73: JS Podfile text removal → can't remove use_react_native! runtime lines
  *   74-76: Ruby podspec shim → CocoaPods version conflicts / rejection
- *   77: EXCLUDED_SOURCE_FILE_NAMES → flag is in xcconfig, not Xcode project
- *   78: xcconfig surgery with wrong (unquoted) regex → 0 patched
- *   79: platforms:{ios:null} in react-native.config.js → broke pod install itself
- *   80: podspec copy in eas-build-post-install → copied to wrong location
- *   81: podspec copy moved into plugin → copy has s.name="react-native-maps" mismatch
- *   82: replace 'react-native-google-maps' → 'react-native-maps/Google' in Podfile text (this)
+ *   77: EXCLUDED_SOURCE_FILE_NAMES → flag in xcconfig, not Xcode project, no-op
+ *   78: xcconfig surgery, unquoted regex → 0 patched
+ *   79: platforms:{ios:null} → broke use_react_native! during pod install
+ *   80: podspec copy in eas-build-post-install → wrong location
+ *   81: podspec copy in plugin → s.name mismatch (copy still said "react-native-maps")
+ *   82: replaced with react-native-maps/Google → GoogleMaps 9.4.0 dep unresolvable in EAS
+ *   83: remove the invalid pod line entirely (this build)
  */
 const { withDangerousMod } = require("@expo/config-plugins");
 const fs = require("fs");
@@ -64,37 +54,30 @@ module.exports = function withRnMapsPodfileFix(config) {
 
       if (!podfile.includes("react-native-google-maps")) {
         console.log(
-          "[withRnMapsPodfileFix] No 'react-native-google-maps' reference found in Podfile — nothing to fix."
+          "[withRnMapsPodfileFix] No 'react-native-google-maps' in Podfile — nothing to remove."
         );
         return config;
       }
 
-      // Replace the old pod name with the correct subspec name.
-      // Handles both single and double quote variants.
-      const before = podfile;
-      podfile = podfile
-        .replace(/pod 'react-native-google-maps'/g, "pod 'react-native-maps/Google'")
-        .replace(/pod "react-native-google-maps"/g, 'pod "react-native-maps/Google"');
+      // Log every matching line for diagnosis before removing
+      const lines = podfile.split("\n");
+      lines.forEach((line, i) => {
+        if (line.includes("react-native-google-maps")) {
+          console.log(`[withRnMapsPodfileFix] Removing line ${i + 1}: ${line.trim()}`);
+        }
+      });
 
-      if (podfile === before) {
-        console.warn(
-          "[withRnMapsPodfileFix] 'react-native-google-maps' found but replacement had no effect — check Podfile format."
-        );
-        // Log context lines for debugging
-        const lines = before.split("\n");
-        lines.forEach((line, i) => {
-          if (line.includes("react-native-google-maps")) {
-            console.log(`[withRnMapsPodfileFix] Line ${i + 1}: ${line}`);
-          }
-        });
-        return config;
-      }
+      // Remove any line that references react-native-google-maps
+      // (handles both single and double quotes, any :path variant)
+      const cleaned = lines
+        .filter((line) => !line.includes("react-native-google-maps"))
+        .join("\n");
 
-      fs.writeFileSync(podfilePath, podfile, "utf8");
+      fs.writeFileSync(podfilePath, cleaned, "utf8");
 
-      const count = (before.match(/react-native-google-maps/g) || []).length;
+      const removed = lines.length - cleaned.split("\n").length;
       console.log(
-        `[withRnMapsPodfileFix] Replaced ${count} occurrence(s) of 'react-native-google-maps' → 'react-native-maps/Google' in Podfile.`
+        `[withRnMapsPodfileFix] Removed ${removed} line(s) containing 'react-native-google-maps'. Pod install will use RN CLI's 'react-native-maps' entry only.`
       );
 
       return config;
