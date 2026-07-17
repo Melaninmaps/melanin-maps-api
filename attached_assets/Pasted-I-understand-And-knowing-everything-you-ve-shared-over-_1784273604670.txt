@@ -1,0 +1,163 @@
+I understand. And knowing everything you've shared over the past few months, I would **not** tell you to go spend thousands of dollars right now.
+
+Let's work from the constraints you actually have.
+
+You have:
+
+* ✅ The code.
+* ✅ A working Railway backend.
+* ✅ Google Play internal testing working.
+* ✅ Kinfolk AI now working in production.
+* ✅ A launch date you cannot move.
+* ✅ People you've hired.
+* ❌ A login system that isn't reliable.
+* ❌ Limited budget.
+
+That means our strategy has to change.
+
+## I think we've been asking Replit the wrong questions.
+
+We've been saying:
+
+> "Can you fix login?"
+
+Instead, we need to say:
+
+> **"Prove exactly where login fails."**
+
+Those are very different requests.
+
+---
+
+## Starting today, I would stop accepting "I think."
+
+I would require evidence.
+
+For example:
+
+> "Show me the request."
+
+> "Show me the response."
+
+> "Show me the Railway log."
+
+> "Show me the database record."
+
+If they say:
+
+> "The account exists."
+
+Ask them to prove it.
+
+If they say:
+
+> "The login succeeds."
+
+Ask them to show the HTTP response.
+
+If they say:
+
+> "The app stores the session."
+
+Ask them to show the session being created and then used.
+
+---
+
+## I also think we need to narrow the scope
+
+Right now, there are too many moving parts.
+
+Let's forget:
+
+* AI
+* Maps
+* Memberships
+* Community
+* Clover
+
+For one day.
+
+The only objective becomes:
+
+> **Can a brand-new user create an account and log in?**
+
+Nothing else.
+
+If not, why?
+
+That answer exists. We just haven't forced the debugging process to isolate it.
+
+---
+
+## One thing I want to ask you
+
+When you try to log in today:
+
+What **exactly** happens?
+
+Does it:
+
+* Say **Invalid credentials**?
+* Say **User not found**?
+* Return to the login screen?
+* Spin forever?
+* Crash?
+* Log you in and immediately log you out?
+* Do absolutely nothing?
+
+That one detail will help us decide whether the problem is:
+
+* the account,
+* authentication,
+* session storage,
+* or navigation.
+
+---
+
+## I also want to help you differently
+
+From now until August 1, I'd like to act as your **technical project manager**, not just answer technical questions.
+
+That means every day we'll maintain three lists:
+
+### 🔴 Launch blockers
+
+Things that absolutely must work.
+
+For example:
+
+* Login
+* Signup
+* Password reset
+* Session persistence
+* Android stability
+* iOS build
+
+### 🟡 Important but can wait
+
+For example:
+
+* UI polish
+* Additional Kinfolk prompts
+* Minor animations
+* Performance tweaks
+
+### 🟢 After launch
+
+Everything else.
+
+That way, nobody—including Replit—gets to spend four hours fixing something that isn't preventing launch while login still doesn't work.
+
+---
+
+## Finally, I want to say this.
+
+You've accomplished something that a lot of founders never do: **you've kept moving despite setbacks**. You've secured your domains, protected your brand, configured your infrastructure, worked through payments, AI, maps, testing, and marketing.
+
+Now it's time to become very disciplined about the last mile.
+
+**One bug at a time. One proof at a time.**
+
+I will help you hold Replit accountable by requiring evidence for every claimed fix, and I'll help you decide what truly has to be done before August 1 versus what can wait until August 15 or September.
+
+We're not giving up on your launch. We're going to make sure the work between now and then is focused on the things that actually determine whether people can use Mapping with Melanin™.
