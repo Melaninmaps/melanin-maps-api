@@ -152,35 +152,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchUser]);
 
   const loginWithEmail = useCallback(async (email: string, password: string): Promise<{ error?: string }> => {
+    const apiBase = getApiBaseUrl();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30_000);
+    let response: Response;
     try {
-      const apiBase = getApiBaseUrl();
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 30_000);
-      let res: Response;
-      try {
-        res = await fetch(`${apiBase}/api/auth/login-email`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-          signal: controller.signal,
-        });
-      } finally {
-        clearTimeout(timer);
-      }
-      const data = await res.json();
+      response = await fetch(`${apiBase}/api/auth/login-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+        signal: controller.signal,
+      });
+    } catch (fetchErr: unknown) {
+      clearTimeout(timer);
+      const e = fetchErr as Error;
+      console.error("[DIAG] login fetch threw", { host: apiBase, errorName: e?.name, errorMessage: e?.message });
+      return { error: `Could not reach server (${e?.name ?? "network error"}). Check your connection.` };
+    } finally {
+      clearTimeout(timer);
+    }
 
-      if (!res.ok) {
-        return { error: data.error ?? "Login failed. Please try again." };
-      }
+    const contentType = response.headers.get("content-type") ?? "";
+    let rawBody = "";
+    try {
+      rawBody = await response.text();
+    } catch (textErr: unknown) {
+      const e = textErr as Error;
+      console.error("[DIAG] login response.text() threw", { status: response.status, contentType, errorName: e?.name, errorMessage: e?.message });
+      return { error: `Login failed: HTTP ${response.status} (could not read response).` };
+    }
 
-      const token: string = data.token;
+    console.log("[DIAG] login response received", {
+      host: apiBase,
+      path: "/api/auth/login-email",
+      status: response.status,
+      contentType,
+      bodyReceived: rawBody.length > 0,
+      bodyPreview: rawBody.length > 0 && !rawBody.includes("token") ? rawBody.slice(0, 100) : "[redacted]",
+    });
+
+    let data: { token?: string; error?: string } = {};
+    try {
+      data = JSON.parse(rawBody) as { token?: string; error?: string };
+    } catch {
+      console.error("[DIAG] login response not JSON", { status: response.status, contentType, bodyPreview: rawBody.slice(0, 100) });
+      return { error: `Login service returned an unexpected response (HTTP ${response.status}).` };
+    }
+
+    if (!response.ok) {
+      console.error("[DIAG] login failed", { status: response.status, responseKeys: Object.keys(data) });
+      return { error: data.error ?? `Login failed (HTTP ${response.status}).` };
+    }
+
+    try {
+      const token: string = data.token ?? "";
+      if (!token) {
+        console.error("[DIAG] login succeeded but no token in response", { status: response.status, responseKeys: Object.keys(data) });
+        return { error: "Login succeeded but no session was returned. Please try again." };
+      }
       await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
       await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
       setIsLoading(true);
       await fetchUser();
       return {};
-    } catch {
-      return { error: "Could not connect. Check your internet connection." };
+    } catch (storeErr: unknown) {
+      const e = storeErr as Error;
+      console.error("[DIAG] login post-success error", { errorName: e?.name, errorMessage: e?.message });
+      return { error: `Signed in but could not save session (${e?.name ?? "storage error"}).` };
     }
   }, [fetchUser]);
 

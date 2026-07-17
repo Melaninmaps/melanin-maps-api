@@ -69,19 +69,49 @@ export default function ResetPasswordScreen() {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLoading(true);
     try {
-      const res = await fetch(`${getApiBaseUrl()}/api/auth/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code, newPassword: newPw }),
-      });
-      const data = await res.json() as { success?: boolean; error?: string };
-      if (!res.ok || !data.success) {
-        setError(data.error ?? "Reset failed. The link may have expired — please request a new one.");
+      const base = getApiBaseUrl();
+      let response: Response;
+      try {
+        response = await fetch(`${base}/api/auth/reset-password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, code, newPassword: newPw }),
+        });
+      } catch (fetchErr: unknown) {
+        const e = fetchErr as Error;
+        console.error("[DIAG] reset-screen fetch threw", { host: base, errorName: e?.name, errorMessage: e?.message });
+        setError(`Could not reach server (${e?.name ?? "network error"}). Check your connection.`);
+        return;
+      }
+      const contentType = response.headers.get("content-type") ?? "";
+      let rawBody = "";
+      try {
+        rawBody = await response.text();
+      } catch (textErr: unknown) {
+        const e = textErr as Error;
+        console.error("[DIAG] reset-screen response.text() threw", { status: response.status, contentType, errorName: e?.name, errorMessage: e?.message });
+        setError(`Reset failed: HTTP ${response.status} (could not read response).`);
+        return;
+      }
+      const safePreview = rawBody.length > 0 && !rawBody.toLowerCase().includes("password") && !rawBody.includes("token") ? rawBody.slice(0, 100) : "[redacted]";
+      console.log("[DIAG] reset-screen response", { host: base, status: response.status, contentType, bodyReceived: rawBody.length > 0, bodyPreview: safePreview });
+      let data: { success?: boolean; error?: string } = {};
+      try {
+        data = JSON.parse(rawBody) as { success?: boolean; error?: string };
+      } catch {
+        console.error("[DIAG] reset-screen response not JSON", { status: response.status, contentType, bodyPreview: rawBody.slice(0, 100) });
+        setError(`Reset service returned an unexpected response (HTTP ${response.status}).`);
+        return;
+      }
+      if (!response.ok || !data.success) {
+        setError(data.error ?? `Reset failed (HTTP ${response.status}).`);
         return;
       }
       setDone(true);
-    } catch {
-      setError("Could not connect. Please check your internet connection.");
+    } catch (err: unknown) {
+      const e = err as Error;
+      console.error("[DIAG] reset-screen unhandled error", { errorName: e?.name, errorMessage: e?.message });
+      setError(`Unexpected error: ${e?.name ?? "unknown"}.`);
     } finally {
       setLoading(false);
     }
