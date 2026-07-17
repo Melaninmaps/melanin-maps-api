@@ -1,0 +1,661 @@
+MAPPING WITH MELANIN™ — INTELLECTUAL PROPERTY INVENTORY
+Prepared for review by IP/trademark attorney
+Date: July 17, 2026
+NOTE: This document is an owner-prepared inventory. It is NOT legal advice. 
+Present this to a licensed IP attorney to file formal protections.
+
+════════════════════════════════════════════════════════════════════════
+SECTION 1: TRADEMARK CANDIDATES
+(Names, phrases, and marks that identify the brand and its unique offerings)
+════════════════════════════════════════════════════════════════════════
+
+1.1 PRIMARY BRAND MARKS
+────────────────────────
+Mark: MAPPING WITH MELANIN™
+Class: Online platform services / mobile application / community discovery
+Why trademark: This is the primary brand name. It is distinctive, non-generic, 
+and directly identifies the business. It combines a navigational concept 
+("Mapping") with a cultural identity marker ("Melanin") in a novel way not 
+used by any competitor. The phrase has been publicly used in commerce via 
+social media announcements, app store listings, and tour marketing.
+
+Mark: MWM (as a stylized abbreviation)
+Class: Same as above
+Why trademark: The abbreviation MWM is used throughout the product interface, 
+marketing materials, and community communications as a shorthand brand 
+identifier.
+
+1.2 AI PRODUCT MARKS
+──────────────────────
+Mark: KINFOLKAITM
+Class: Artificial intelligence software / conversational AI assistant / 
+travel planning AI
+Why trademark: KinfolkAI is the platform's proprietary AI travel and 
+community companion. The name combines "Kinfolk" (a culturally resonant term 
+meaning family/community, deeply embedded in African American vernacular) with 
+"AI" to create a distinctive product name. No other AI product uses this name. 
+It has been publicly marketed as a feature of the platform.
+
+Why it is especially strong for trademark:
+- It is not descriptive (you cannot look up "kinfolkAI" in a dictionary)
+- It has cultural specificity that creates strong brand association
+- It has been used in commerce (app store listing, social media, user-facing UI)
+- It identifies a specific, unique AI product, not a category of software
+
+Mark: KINFOLK CIRCLES™
+Class: Social/travel planning software feature
+Why trademark: Kinfolk Circles is the platform's collaborative travel and 
+place-sharing group feature. The name is distinctive and has been shipped 
+as a named feature in the product.
+
+Mark: KINFOLK VOICE™ (or KINFOLKAI VOICE™)
+Class: Text-to-speech AI feature / audio AI product
+Why trademark: The voice feature of KinfolkAI — where the AI speaks responses 
+aloud — is a named, tiered product feature. "KinfolkAI Voice" is the 
+user-facing name for this capability. It is unique in the community/travel 
+app space.
+
+1.3 FEATURE AND PROGRAM NAMES
+──────────────────────────────
+The following named features and programs are trademark candidates as 
+product names used in commerce:
+
+- COMMUNITY REFERENCE™ — curated directory of places submitted by the community
+- SAFE SPACES™ — curated directory of verified inclusive/welcoming locations
+- NAVIGATOR (membership tier name)
+- TRAILBLAZER (membership tier name)
+- FOUNDING MEMBER (membership program name)
+- MOVE ALERTS™ — notification system for neighborhood safety changes
+- BUZZ ALERTS™ — community-powered positive location activity alerts
+- HERITAGE TRAIL™ / HERITAGE SITES (cultural landmark mapping feature)
+- KINFOLK CIRCLES™ — collaborative group travel planning
+- LIFE JOURNEY™ — personal milestone and travel journal system
+- OPPORTUNITY CENTER™ — jobs, mentorship, and community resources hub
+- WELLNESS TRACKER (if marketed as a named product)
+- FINANCIAL HUB (if marketed as a named product)
+
+════════════════════════════════════════════════════════════════════════
+SECTION 2: COPYRIGHT CANDIDATES
+(Original creative works fixed in a tangible medium — automatically protected 
+on creation but registration strengthens enforcement)
+════════════════════════════════════════════════════════════════════════
+
+2.1 SOFTWARE CODE
+──────────────────
+The entire source code of the Mapping With Melanin platform — including but 
+not limited to:
+
+a) Mobile application code (React Native / Expo)
+   - All screen components (login, discover, map, profile, community, 
+     safety hub, onboarding, business profiles, etc.)
+   - All custom hooks (useBusinesses, useFavorites, useAuth, useColors, 
+     useKinfolkAI, useFamilyPlan, etc.)
+   - Navigation architecture and routing logic
+   - Custom animation sequences (points toast, onboarding transitions)
+   - KinfolkAI conversation interface components
+
+b) API server code (Node.js / Express)
+   - All route handlers across auth, businesses, safety, KinfolkAI, 
+     community, wellness, financial, marketplace, referral, admin, 
+     DocuSign, and membership modules
+   - Session management system
+   - Mobile authentication proxy (OIDC → custom token bridge)
+   - KinfolkAI prompt engineering system (buildSystemPrompt function and 
+     all prompt templates — see Section 2.4)
+
+c) Database schema
+   - Original table designs, column choices, and relationship architecture 
+     across all tables
+
+d) Web application code (React / Vite)
+   - All web pages and components
+   - Membership gate system
+   - Map implementation
+
+2.2 USER INTERFACE AND VISUAL DESIGN
+──────────────────────────────────────
+All original visual designs in the platform are protected as pictorial/graphic 
+works, including:
+
+- Color system and palette (gold #CA922B as primary brand color, dark/light 
+  mode token system)
+- Typography hierarchy and custom styling
+- Business card layout and design
+- Safety survey UI design
+- Onboarding screen sequence and visual flow
+- KinfolkAI chat interface design (bubble layout, voice button treatment)
+- Map overlay visual design (custom category pin designs, safety heatmap 
+  color treatment)
+- Community post card layout
+- Profile screen layout
+- Bottom navigation tab design
+- Kinfolk Circles group card design
+- Audience Guidance rating badge design
+- Business verification badge design
+- Community Reference badge design (teal badge)
+- Compliment chip UI design
+- Points toast animation design
+
+2.3 WRITTEN CONTENT
+────────────────────
+All original written content created for the platform:
+
+- KinfolkAI system prompt and personality description (CRITICAL — see 2.4)
+- All onboarding copy and screen text
+- Safety survey questions and category labels
+- All in-app help and tooltip text
+- All email templates (welcome, trial reminder, win-back, expiry)
+- Membership tier descriptions and feature copy
+- Slide deck content (Investor Deck, Business Deck, Community Deck, 
+  Foundation Book)
+- All marketing copy used in social media announcements
+- Community Guidance rating system tier descriptions
+- All seeded topic library content (70+ topics)
+- Heritage site descriptions and cultural context copy
+- All notification templates (move alerts, buzz alerts, safety alerts)
+- Business verification criteria and scoring rubric
+
+2.4 KINFOLKAI SYSTEM PROMPT AND PERSONALITY (CRITICAL)
+────────────────────────────────────────────────────────
+This is one of the most valuable copyrightable assets on the platform.
+
+The KinfolkAI system prompt is a multi-thousand-word original creative and 
+technical work that defines:
+
+- The AI's voice, personality, and cultural tone
+- Rules for how the AI engages with users from the melanated diaspora
+- Tier-specific depth rules (free / Navigator / Trailblazer)
+- Integration logic with user preferences, lifestyle data, life journeys, 
+  and saved places
+- Safety-aware communication guidelines
+- Cultural sensitivity parameters
+- Business recommendation weighting logic
+- Travel planning conversation flow
+
+This document is original authorship — it is not a generic AI prompt. It 
+reflects significant creative and technical investment and is a core trade 
+secret as well as a copyrightable work.
+
+RECOMMENDATION: Register this prompt as a Literary Work with the U.S. 
+Copyright Office. Do not publish it publicly in any filing — register it 
+with the "secure test" or confidential trade secret option.
+
+2.5 SLIDE DECKS AND PRESENTATIONS
+────────────────────────────────────
+All three slide decks are original creative works:
+
+- Mapping With Melanin — Foundation Book (Investor Deck)
+- Mapping With Melanin — Business Deck  
+- Mapping With Melanin — Community Deck
+
+Each deck includes original visual design, original written content, original 
+data presentation, and original brand storytelling. These are copyrightable 
+as compilations and as individual graphic/literary works.
+
+════════════════════════════════════════════════════════════════════════
+SECTION 3: TRADE SECRETS
+(Proprietary methods, systems, and data that give competitive advantage 
+and are kept confidential)
+════════════════════════════════════════════════════════════════════════
+
+3.1 THE KINFOLKAI PROMPT ENGINEERING SYSTEM
+─────────────────────────────────────────────
+The specific architecture of how KinfolkAI constructs its system prompt 
+at runtime — combining user preferences, lifestyle data, life journeys, 
+saved places, membership tier, and cultural context into a single coherent 
+personality — is a trade secret. No competitor has replicated this specific 
+approach for a community/travel AI aimed at the melanated diaspora.
+
+Components:
+- buildSystemPrompt() function logic and structure
+- Tier-differentiation rules (what free vs. paid users get from the AI)
+- Lifestyle category integration (how 9 lifestyle dimensions shape AI responses)
+- Life Journey injection (how personal milestones change travel recommendations)
+- Kinfolk Circles context injection (how group preferences are factored in)
+- Safety-aware recommendation logic (cross-referencing survey data with 
+  place suggestions)
+
+3.2 BUSINESS CONFIDENCE SCORING SYSTEM
+──────────────────────────────────────
+The algorithm used to assign confidence scores to Black-owned business 
+listings — factoring in verification status, community reports, owner 
+claims, and data source quality — is a trade secret. The specific weighting 
+formula is proprietary.
+
+3.3 SAFETY SURVEY AGGREGATION METHOD
+────────────────────────────────────
+The method by which neighborhood safety survey responses are aggregated, 
+weighted, and converted into neighborhood safety ratings and map overlay 
+data is a trade secret. This includes:
+- Question weighting
+- Time-decay logic (recent surveys weighted higher)
+- Category breakdown (comfort walking, being followed, police treatment, 
+  business welcome, demographics)
+- Threshold rules for triggering move alerts and buzz alerts
+
+3.4 COMMUNITY REFERENCE SUBMISSION LOGIC
+─────────────────────────────────────────
+The system by which community members add places as "Community Reference" 
+entries — distinct from claimed business listings — including the rules 
+for validation, categorization, and display is proprietary.
+
+3.5 AI USAGE TIER POOL SYSTEM
+──────────────────────────────
+The specific architecture for the family plan AI usage pool — how credits 
+are shared across family members, how tier limits are enforced per member, 
+and how the pool refills — is a proprietary system design.
+
+════════════════════════════════════════════════════════════════════════
+SECTION 4: UNIQUE TECHNOLOGICAL IMPLEMENTATIONS
+(How standard technologies are used in novel, specific ways that may 
+support patent or trade secret protection)
+════════════════════════════════════════════════════════════════════════
+
+4.1 GOOGLE MAPS — CUSTOM LAYERED IMPLEMENTATION
+─────────────────────────────────────────────────
+The platform uses the Google Maps JavaScript API and React Native Maps 
+in a specific, original way:
+
+a) Multi-layer map system
+   Three simultaneous data layers are rendered on a single map:
+   - Black-owned business pins (11 category-specific custom pin icons)
+   - Cultural heritage sites (separate icon treatment, "Cultural" badge)
+   - Community safety overlay (heatmap-style color layer derived from 
+     survey data)
+   
+   The simultaneous rendering of business discovery, cultural heritage, 
+   and community safety data on a single navigable map is a novel 
+   combination not found in any competing product.
+
+b) Category-specific pin design system
+   Each of 11 business categories has a distinct custom-designed map pin 
+   with unique iconography. This visual system is both an original design 
+   work (copyright) and a user experience innovation.
+
+c) Safety heatmap derived from community survey data
+   The safety overlay is not sourced from a third-party crime data API. 
+   It is generated entirely from community-submitted safety surveys — 
+   meaning the data source itself is community-owned. This is a 
+   fundamentally different approach from competitors (NeighborhoodScout, 
+   SpotCrime) which use government crime data.
+
+d) Split-pane business discovery interface
+   The web map view uses a split-pane design: business cards with search 
+   and filter on the left, Google Map with synchronized pins on the right. 
+   Clicking a card pans the map; clicking a pin opens the card. This 
+   synchronized dual-pane interaction is an original UI design.
+
+e) Heritage site deep-link system
+   Tapping a cultural heritage site pin navigates to a full cultural 
+   heritage detail screen with historical context, photos, and community 
+   notes — not just a name and address. This transforms Google Maps from 
+   a navigation tool into a cultural education tool.
+
+4.2 MOBILE AUTHENTICATION ARCHITECTURE
+────────────────────────────────────────
+The platform uses a custom-built authentication proxy that bridges 
+OpenID Connect (OIDC) with a native mobile app — without using a 
+third-party auth SDK. The specific flow:
+
+  Mobile app → /mobile-auth/init → OIDC provider → /callback → 
+  /mobile-auth/done → custom scheme deep link → SecureStore token
+
+This architecture — particularly the server-side OIDC proxy that converts 
+the session into a Bearer token for mobile use — is an original engineering 
+design. It was built specifically to work with Replit's identity system 
+in a React Native context where custom URI schemes are restricted.
+
+4.3 COMMUNITY GUIDANCE RATING SYSTEM
+──────────────────────────────────────
+The platform's 4-tier content rating system (Everyone / Teen / Young Adult / 
+Adult) applied simultaneously to:
+- Community posts
+- Events
+- Knowledge library articles
+
+...combined with a family settings system that allows parents/guardians to 
+set household-level content filters — is an original implementation. No 
+competing community/travel app applies this type of rating system across 
+all content types simultaneously.
+
+4.4 KINFOLKAI VOICE WITH TIER-BASED CHARACTER LIMITS
+──────────────────────────────────────────────────────
+The voice feature architecture — where text-to-speech output length is 
+governed by membership tier (Free: 500 chars, Navigator: 1500 chars, 
+Trailblazer: 3000 chars), tracked server-side in a dedicated voice_usage 
+table — is a novel approach to tiered AI voice access. This is distinct 
+from simply limiting API calls; it limits the richness of the spoken 
+response based on subscription level.
+
+4.5 LIFESTYLE-DRIVEN AI PERSONALIZATION PIPELINE
+──────────────────────────────────────────────────
+The onboarding flow collects user data across 9 lifestyle dimensions:
+  Food preferences → Entertainment → Wellness → Shopping → Arts → 
+  Nightlife → Family activities → Sports → Professional services
+
+This data feeds directly into the KinfolkAI system prompt at runtime, 
+creating a personalized AI companion whose recommendations are shaped 
+by who the user actually is — not generic travel preferences. The 
+pipeline from onboarding questionnaire → structured database storage → 
+runtime AI prompt injection is an original system design.
+
+4.6 LIFE JOURNEY + AI INTEGRATION
+───────────────────────────────────
+The Life Journey system — where users record personal milestones 
+(graduation, new job, new city, relationship milestones) — feeds into 
+KinfolkAI's context, allowing the AI to make recommendations that are 
+sensitive to where the user is in their life. This life-stage-aware AI 
+travel companion is a novel concept in the travel/community app space.
+
+════════════════════════════════════════════════════════════════════════
+SECTION 5: ORIGINAL CONTENT AND DATA ASSETS
+════════════════════════════════════════════════════════════════════════
+
+5.1 BUSINESS DIRECTORY DATA
+────────────────────────────
+The compiled directory of Black-owned businesses — including names, 
+descriptions, categories, confidence scores, verification status, and 
+geographic data — is a copyrightable compilation. The selection, 
+arrangement, and enhancement of this data (adding confidence scores, 
+category tags, safety context, owner verification) constitutes original 
+authorship beyond mere factual listing.
+
+5.2 HERITAGE SITES DATABASE
+─────────────────────────────
+The curated database of cultural heritage sites — including the selection 
+of which sites to include, the descriptive copy, cultural context, and 
+geographic mapping — is an original copyrightable compilation.
+
+5.3 TOPIC LIBRARY (70+ TOPICS)
+────────────────────────────────
+The curated library of 70+ knowledge topics selected, written, and 
+categorized for the melanated diaspora audience is an original editorial 
+work. The selection criteria, category structure, and written summaries 
+are original creative and editorial choices.
+
+5.4 MENTORSHIP AND RESOURCE DIRECTORY
+───────────────────────────────────────
+The curated financial resources (10 resources), mentorship profiles, 
+and opportunity listings — including the criteria for selection and the 
+original descriptive content — are original compilations.
+
+════════════════════════════════════════════════════════════════════════
+SECTION 6: WHY KINFOLKAITM VOICE IS ESPECIALLY STRONG FOR TRADEMARK
+════════════════════════════════════════════════════════════════════════
+
+An attorney should prioritize the KinfolkAI Voice trademark for these reasons:
+
+1. DISTINCTIVENESS
+   "KinfolkAI Voice" is an arbitrary mark — "Kinfolk" has no inherent 
+   connection to AI or voice technology. Arbitrary marks receive the 
+   strongest trademark protection.
+
+2. CULTURAL SPECIFICITY CREATES SECONDARY MEANING
+   "Kinfolk" carries specific meaning within Black/African American culture 
+   (family, community, people who look like you). Using it as an AI product 
+   name creates immediate cultural resonance and secondary meaning within 
+   the target market — this is a trademark strength factor.
+
+3. COMMERCIAL USE IN INTERSTATE COMMERCE
+   The app has been submitted to the Apple App Store and Google Play Store — 
+   both constitute use in interstate commerce, which is required for federal 
+   trademark registration.
+
+4. NO KNOWN CONFLICTING MARKS
+   As of the date of this document, no other product in the AI, voice 
+   assistant, or travel technology space uses the mark "KinfolkAI" or 
+   "Kinfolk Voice."
+
+5. UNIQUE PRODUCT IDENTITY
+   KinfolkAI Voice is a specific, named, tiered product feature — not 
+   merely a description of functionality. It can be marketed separately 
+   from the platform brand (Mapping With Melanin) and could be licensed 
+   to third parties in the future.
+
+════════════════════════════════════════════════════════════════════════
+SECTION 7: PRIORITY ACTIONS FOR IP ATTORNEY
+════════════════════════════════════════════════════════════════════════
+
+IN ORDER OF URGENCY:
+
+1. TRADEMARK — File MAPPING WITH MELANIN™ (standard character mark)
+   - International Class 42: Software as a service / online platform
+   - International Class 41: Online community / cultural content services
+   - International Class 43: Travel planning services
+   Status: Use-in-commerce (app store submissions constitute commercial use)
+
+2. TRADEMARK — File KINFOLKAI™
+   - International Class 42: Artificial intelligence software
+   - International Class 41: AI-powered information and travel services
+   Status: Use-in-commerce
+
+3. TRADEMARK — File KINFOLKAI VOICE™ or KINFOLK VOICE™
+   - International Class 42: AI voice / text-to-speech software services
+   Status: Use-in-commerce
+
+4. COPYRIGHT REGISTRATION — KinfolkAI System Prompt
+   - Register as Literary Work
+   - Use "secure test" / trade secret option — do NOT make public
+   - This is the most valuable single piece of IP on the platform
+
+5. COPYRIGHT REGISTRATION — Mobile Application Source Code
+   - Register as Computer Program / Source Code
+   - Can register as a collection (entire codebase as one registration)
+
+6. COPYRIGHT REGISTRATION — Slide Decks (3 decks)
+   - Register as Visual Art / Compilation works
+
+7. TRADE SECRET PROTECTION — Document all confidential systems
+   - Ensure NDA is in place with any contractors, employees, or investors 
+     who have seen the KinfolkAI prompt or business logic
+   - Add trade secret designation headers to confidential source files
+
+8. TRADEMARK — File KINFOLK CIRCLES™
+9. TRADEMARK — File COMMUNITY REFERENCE™
+10. TRADEMARK — File SAFE SPACES™ (check for conflicts — this phrase 
+    is used in other contexts; attorney should assess registrability)
+
+════════════════════════════════════════════════════════════════════════
+SECTION 8: COMPETITIVE DIFFERENTIATION SUMMARY
+(What makes this platform unlike anything on the market)
+════════════════════════════════════════════════════════════════════════
+
+No single competitor combines all of the following:
+
+✦ Community-powered safety data (not government crime statistics)
+✦ Black-owned business directory with confidence scoring
+✦ Cultural heritage site mapping integrated into navigation
+✦ AI travel companion personalized by cultural identity and lifestyle
+✦ Tiered voice AI with cultural resonance
+✦ Collaborative group travel planning (Kinfolk Circles)
+✦ Life-stage-aware AI recommendations (Life Journey)
+✦ Family content filtering for community content
+✦ Community-submitted Reference Places (not just claimed businesses)
+✦ Neighborhood move alert notifications from community data
+✦ Integrated wellness, financial, and opportunity resources
+✦ Audience guidance ratings across all community content types
+✦ Mentorship marketplace connecting professionals within the community
+
+The combination of these features — purpose-built for the melanated 
+diaspora — is the platform's core IP moat. No competitor has assembled 
+this specific constellation of features for this specific audience.
+
+════════════════════════════════════════════════════════════════════════
+SECTION 9: ADDITIONAL TRADEMARK AND IP CANDIDATES
+(Features identified in full platform audit)
+════════════════════════════════════════════════════════════════════════
+
+9.1 ADDITIONAL TRADEMARK CANDIDATES
+──────────────────────────────────────
+
+Mark: MELANIN PASSPORT™
+Class: Mobile software / cultural recognition program
+Why trademark: The Melanin Passport is a gamified cultural impact summary — 
+a "Wrapped"-style year-in-review showing the user's check-ins, community 
+contributions, cultural site visits, and platform activity. The name is 
+distinctive, culturally resonant, and has no direct competitor equivalent. 
+It combines "Melanin" (cultural identity) with "Passport" (travel, identity 
+document, international movement) in a novel and powerful way. This is one 
+of the strongest trademark candidates on the platform.
+
+Mark: PASS THE PLATE™
+Class: Digital payment / tipping / support feature for local businesses
+Why trademark: Pass The Plate is the platform's in-app digital tipping 
+and "show love" feature for local businesses. The phrase is rooted in 
+African American cultural tradition (passing a collection plate, sharing 
+food). As a product name for a mobile commerce feature, it is original, 
+culturally distinctive, and has no competitor equivalent. Strong trademark 
+candidate.
+
+Mark: OFFICER WATCH™
+Class: Public safety information service / law enforcement accountability tool
+Why trademark: Officer Watch is the platform's feature for tracking law 
+enforcement officers flagged by the community for misconduct, including 
+monitoring department transfers. This is a critical public safety tool 
+and a highly distinctive named feature with no direct competitor. The 
+name is original and non-generic in this context.
+
+Mark: VIBE SEARCH™ or VIBE-BASED SEARCH™
+Class: Search software / AI-powered discovery
+Why trademark: The platform's ability to search by "vibe" (e.g., "Sunday 
+Brunch with House Music," "safe spot for solo late-night study") rather 
+than just business category is a named, distinctive feature. "Vibe Search" 
+as a product name is original and trademarkable.
+
+Mark: HIDDEN GEMS™ (map filter category)
+Class: Location discovery / travel software feature
+Why trademark: The "Hidden Gems" filter on the map — surfacing lesser-known, 
+community-verified locations — is a named product feature. The phrase in 
+this specific application context is trademarkable as a product feature name.
+
+Mark: COMMUNITY CONFIDENCE SCORE™
+Class: Rating / verification system for business listings
+Why trademark: The Community Confidence Score — a 0-100 rating on every 
+business and location derived from safety surveys and community verification 
+— is a named, proprietary scoring system. As a product name for this 
+specific rating methodology, it is trademarkable.
+
+Mark: TWIN RECOMMENDATIONS™ or KINFOLK TWINS™
+Class: AI recommendation software
+Why trademark: The Algorithmic Twin Recommendations feature — which 
+identifies users with highly similar saving patterns to surface 
+community-curated favorites — is a distinctive named feature. If marketed 
+as "Kinfolk Twins" it has additional brand strength.
+
+Mark: KNOWLEDGE HUB™ (if used as a named product feature)
+Class: Community knowledge / wiki software
+Why trademark: The Knowledge Hub system — community-driven topic wikis 
+with expert contributors and trusted source links — may be trademarkable 
+as a product name if it is marketed as a distinct named feature.
+
+9.2 ADDITIONAL COPYRIGHT ASSETS
+──────────────────────────────────
+
+Officer Watch database and methodology
+- The selection criteria for which officers are included, the categories 
+  of conduct tracked, and the written descriptions of incident types are 
+  original editorial and creative choices protected by copyright.
+
+Melanin Passport visual design and algorithm
+- The visual layout, iconography, and statistical methodology used to 
+  generate each user's Melanin Passport summary is an original creative work.
+
+Vibe Search query taxonomy
+- The specific list of "vibe" categories, their definitions, and the 
+  mapping between vibe descriptions and business attributes is an original 
+  creative and editorial work.
+
+Knowledge Hub topic content
+- All written articles, expert-contributed content, trusted source 
+  selections, and editorial curation choices in the Knowledge Hub are 
+  original works.
+
+Safety survey question design
+- The specific wording, sequence, and categories of all safety surveys 
+  (business visit surveys, neighborhood surveys, post-visit check-ins) 
+  are original creative and research works.
+
+9.3 ADDITIONAL UNIQUE TECHNOLOGICAL IMPLEMENTATIONS
+──────────────────────────────────────────────────────
+
+SAFETY CHECK-IN SYSTEM
+The platform's safety check-in feature — where users can notify their 
+Family Circle of their safety status on a schedule or on demand — is an 
+original application of location-awareness to community safety for the 
+melanated diaspora. The specific notification logic, timing rules, and 
+family circle alert design are original implementations.
+
+REVIEW INTEGRITY SCORING
+The system for detecting and weighting out fake, biased, or low-quality 
+reviews on business listings — distinct from star ratings — is an 
+original methodology. The criteria used to assign integrity scores to 
+reviews are proprietary.
+
+OFFICER DEPARTMENT TRANSFER TRACKING
+The specific implementation of tracking law enforcement officer transfers 
+between departments — connecting an officer's conduct history to their 
+current assignment — is a novel data architecture with no direct equivalent 
+in any other consumer application.
+
+FAMILY CIRCLE SHARED SAFETY ARCHITECTURE
+The Family Circle system — which shares safety alerts, real-time location, 
+and AI access pools across a defined group of trusted contacts — is an 
+original architecture. The combination of AI sharing + safety alert sharing 
++ location sharing within a single family group object is a novel design.
+
+CURATOR MODE IN KINFOLK CIRCLES
+The AI Curator Mode within Kinfolk Circles — where KinfolkAI can generate 
+group recommendations using three distinct methods (majority votes, random 
+selection, or by-member preference weighting) — is an original AI group 
+decision system. The three-mode architecture and the specific algorithms 
+for each mode are proprietary.
+
+════════════════════════════════════════════════════════════════════════
+SECTION 10: SUMMARY CHART — PRIORITY FILINGS
+════════════════════════════════════════════════════════════════════════
+
+TRADEMARK FILINGS (in priority order):
+──────────────────────────────────────
+Priority  Mark                          Classes
+1         MAPPING WITH MELANIN™         41, 42, 43
+2         KINFOLKAI™                    42, 41
+3         MELANIN PASSPORT™             41, 42
+4         KINFOLKAI VOICE™              42
+5         PASS THE PLATE™               36, 42
+6         OFFICER WATCH™                45, 42
+7         KINFOLK CIRCLES™              41, 42, 43
+8         VIBE SEARCH™                  42
+9         COMMUNITY CONFIDENCE SCORE™   42
+10        COMMUNITY REFERENCE™          41, 42
+11        LIFE JOURNEY™                 41, 42, 43
+12        SAFE SPACES™                  41 (check for conflicts first)
+13        MOVE ALERTS™                  42, 45
+14        HIDDEN GEMS™                  42, 43
+15        OPPORTUNITY CENTER™           41, 42
+
+COPYRIGHT REGISTRATIONS (in priority order):
+─────────────────────────────────────────────
+Priority  Work                          Type
+1         KinfolkAI System Prompt       Literary Work (CONFIDENTIAL)
+2         Mobile App Source Code        Computer Program
+3         API Server Source Code        Computer Program
+4         Investor/Biz/Community Decks  Visual Art / Compilation
+5         Business Directory            Compilation
+6         Heritage Sites Database       Compilation
+7         Topic Library (70+ topics)    Literary Work / Compilation
+8         All in-app written copy       Literary Work
+9         All UI visual designs         Visual Art
+10        Officer Watch database        Compilation / Literary Work
+
+════════════════════════════════════════════════════════════════════════
+END OF DOCUMENT
+Present this inventory to a licensed IP attorney to initiate filings.
+For copyright registration: copyright.gov
+For trademark registration: USPTO.gov (teas.uspto.gov for online filing)
+International Class reference: wipo.int/nice/en/
+
+IMPORTANT: This document was prepared by the platform owner and is 
+intended solely as an intake document for an IP attorney. It does not 
+constitute legal advice. An attorney must conduct a clearance search 
+before filing any trademark application.
+════════════════════════════════════════════════════════════════════════

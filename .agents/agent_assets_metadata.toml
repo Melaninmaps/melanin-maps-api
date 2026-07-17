@@ -749,3 +749,9 @@ id = "hcUgG80sgTSMK67kVGoMw"
 uri = "file://mapping_melanin_complaint.zip"
 type = "unspecified"
 title = "Complaint Files — Click to Download"
+
+[[outputs]]
+id = "Xns5bkp5VlrRdHItisGIX"
+uri = "file://mapping_melanin_ip_inventory.zip"
+type = "unspecified"
+title = "Mapping With Melanin — IP Inventory (Download)"
