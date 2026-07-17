@@ -15,8 +15,8 @@ catalog:
   '@types/react': ^19.2.0
   '@types/react-dom': ^19.2.0
   '@vitejs/plugin-react': ^5.0.4
-  react: 19.1.0
-  react-dom: 19.1.0
+  react: 19.2.3
+  react-dom: 19.2.3
   tailwindcss: ^4.1.14
   tsx: ^4.21.0
   vite: ^7.3.2
@@ -30,7 +30,6 @@ onlyBuiltDependencies:
   - unrs-resolver
 
 overrides:
-  react: 19.2.3
   '@esbuild-kit/esm-loader': npm:tsx@^4.21.0
   '@expo/ngrok-bin>@expo/ngrok-bin-darwin-arm64': '-'
   '@expo/ngrok-bin>@expo/ngrok-bin-darwin-x64': '-'
