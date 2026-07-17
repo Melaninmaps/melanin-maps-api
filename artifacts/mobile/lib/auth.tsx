@@ -32,9 +32,9 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   sessionExpired: boolean;
   login: () => Promise<void>;
-  loginWithEmail: (email: string, password: string) => Promise<{ error?: string }>;
+  loginWithEmail: (email: string, password: string) => Promise<{ error?: string; authenticated?: boolean }>;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -45,7 +45,7 @@ const AuthContext = createContext<AuthContextValue>({
   login: async () => {},
   loginWithEmail: async () => ({}),
   logout: async () => {},
-  refreshUser: async () => {},
+  refreshUser: async () => false,
 });
 
 export function getApiBaseUrl(): string {
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [sessionExpired, setSessionExpired] = useState(false);
 
-  const fetchUser = useCallback(async () => {
+  const fetchUser = useCallback(async (): Promise<boolean> => {
     let token: string | null = null;
     try {
       token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
@@ -71,12 +71,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const e = secureErr as Error;
       console.error("[DIAG] fetchUser: SecureStore.getItemAsync threw", { errorName: e?.name, errorMessage: e?.message });
       setIsLoading(false);
-      return;
+      return false;
     }
     if (!token) {
       setUser(null);
       setIsLoading(false);
-      return;
+      return false;
     }
 
     const apiBase = getApiBaseUrl();
@@ -97,14 +97,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.user) {
           setUser(data.user as User);
           setSessionExpired(false);
+          setIsLoading(false);
+          return true;
         } else {
           // Server explicitly says this token is invalid — safe to sign out.
           await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
           setUser(null);
           setSessionExpired(true);
+          setIsLoading(false);
+          return false;
         }
-        setIsLoading(false);
-        return;
       } catch {
         clearTimeout(timer);
         // Network-level failure or timeout — don't assume the user is signed
@@ -122,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // state (if any) rather than forcing a sign-out — the token is still
     // valid, we just couldn't reach the server.
     setIsLoading(false);
+    return false;
   }, []);
 
   useEffect(() => {
@@ -228,6 +231,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: `Signed in but could not save your session (storage step 1: ${e?.name ?? "unknown"}). Please try again.` };
     }
 
+    // Step 1 verify — read the token back immediately to confirm it was retained
+    try {
+      const verified = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+      if (!verified) {
+        console.error("[DIAG] login step 1 verify: token not retained after save (read-back null)");
+        return { error: "Session token was not retained after saving. Please try again." };
+      }
+      console.log("[DIAG] login step 1 verify: read-back confirmed OK");
+    } catch (verifyErr: unknown) {
+      const e = verifyErr as Error;
+      console.error("[DIAG] login step 1 verify: read-back threw", { errorName: e?.name, errorMessage: e?.message });
+      return { error: "Session saved but could not be verified. Please try again." };
+    }
+
     // Step 2 — set fresh-login flag (non-critical, failure is allowed)
     try {
       await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
@@ -238,15 +255,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Step 3 — load the user profile
     setIsLoading(true);
+    let profileLoaded = false;
     try {
-      await fetchUser();
+      profileLoaded = await fetchUser();
+      if (!profileLoaded) {
+        console.warn("[DIAG] login step 3: fetchUser returned false (profile not loaded — network issue or invalid session)");
+      }
     } catch (step3Err: unknown) {
       const e = step3Err as Error;
       console.error("[DIAG] login step 3 FAILED: fetchUser threw unexpectedly", { errorName: e?.name, errorMessage: e?.message, stack: e?.stack?.slice(0, 500) });
-      // Session token IS saved. Don't block login — fetchUser will retry on next navigation.
     }
 
-    return {};
+    return { authenticated: profileLoaded };
   }, [fetchUser]);
 
   const logout = useCallback(async () => {

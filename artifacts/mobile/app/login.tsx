@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   ActivityIndicator,
   Keyboard,
@@ -33,7 +33,7 @@ export default function LoginScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { login, loginWithEmail, refreshUser } = useAuth();
+  const { login, loginWithEmail, refreshUser, isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [emailMode, setEmailMode] = useState(true);
   const [emailVal, setEmailVal] = useState("");
@@ -44,6 +44,28 @@ export default function LoginScreen() {
   const [error, setError] = useState("");
   const [biometricLabel, setBiometricLabel] = useState<string | null>(null);
   const [biometricLoading, setBiometricLoading] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+
+  // Track the latest isAuthenticated value inside async callbacks without stale closures
+  const isAuthRef = useRef(isAuthenticated);
+  useEffect(() => { isAuthRef.current = isAuthenticated; }, [isAuthenticated]);
+
+  // Auto-restore: if a stored session token exists when the login screen mounts
+  // (e.g. after AuthGate redirected here due to a transient network failure),
+  // silently attempt to reload the user profile and skip the login form.
+  useEffect(() => {
+    if ((Platform.OS as string) === "web") return;
+    if (isAuthenticated || authLoading) return;
+    let cancelled = false;
+    void (async () => {
+      const stored = await SecureStore.getItemAsync("auth_session_token").catch(() => null);
+      if (!stored || cancelled) return;
+      const loaded = await refreshUser();
+      if (!cancelled && loaded) router.replace("/(tabs)");
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -150,9 +172,22 @@ export default function LoginScreen() {
     }
   };
 
+  const handleRetryConnect = async () => {
+    setConnecting(false);
+    setLoading(true);
+    const loaded = await refreshUser();
+    setLoading(false);
+    if (loaded) {
+      router.replace("/(tabs)");
+    } else {
+      setConnecting(true);
+    }
+  };
+
   const handleEmailSignIn = async () => {
     Keyboard.dismiss();
     setError("");
+    setConnecting(false);
     if (!emailVal.trim()) { setError("Please enter your email address."); return; }
     if (!passwordVal) { setError("Please enter your password."); return; }
     if ((Platform.OS as string) !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -161,12 +196,19 @@ export default function LoginScreen() {
       const result = await loginWithEmail(emailVal.trim(), passwordVal);
       if (result.error) {
         setError(result.error);
-      } else {
+        setLoading(false);
+      } else if (result.authenticated) {
+        // Token saved, verified, and profile loaded — navigate to app
+        // (leave loading spinner active during navigation transition)
         router.replace("/(tabs)");
+      } else {
+        // Token saved and verified but profile not loaded (network issue).
+        // Keep user on login screen with a retry option.
+        setLoading(false);
+        setConnecting(true);
       }
     } catch {
       setError("Something went wrong. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
@@ -216,6 +258,22 @@ export default function LoginScreen() {
               {biometricLoading ? "Verifying…" : `Sign in with ${biometricLabel}`}
             </Text>
           </TouchableOpacity>
+        )}
+
+        {connecting && (
+          <View style={[styles.connectingBox, { backgroundColor: "#FFF7ED", borderColor: "#F59E0B40" }]}>
+            <Feather name="wifi-off" size={14} color="#B45309" style={{ marginTop: 1 }} />
+            <View style={{ flex: 1, gap: 8 }}>
+              <Text style={[styles.errorTxt, { color: "#B45309" }]}>
+                Signed in but could not reach the server. Check your connection.
+              </Text>
+              <TouchableOpacity activeOpacity={0.85} onPress={handleRetryConnect} disabled={loading}>
+                <Text style={[styles.errorAppleTxt, { color: "#92400E" }]}>
+                  {loading ? "Connecting…" : "Tap to retry →"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         )}
 
         {!!error && (
@@ -385,6 +443,7 @@ const styles = StyleSheet.create({
   },
   biometricTxt: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   errorBox: { flexDirection: "row", alignItems: "flex-start", gap: 8, padding: 12, borderRadius: 10, marginBottom: 16 },
+  connectingBox: { flexDirection: "row", alignItems: "flex-start", gap: 8, padding: 12, borderRadius: 10, borderWidth: 1, marginBottom: 16 },
   errorTxt: { color: "#DC2626", fontSize: 13, fontFamily: "Inter_400Regular" },
   errorAppleBtn: { flexDirection: "row", alignItems: "center", gap: 4 },
   errorAppleTxt: { color: "#DC2626", fontSize: 12, fontFamily: "Inter_600SemiBold", textDecorationLine: "underline" },
