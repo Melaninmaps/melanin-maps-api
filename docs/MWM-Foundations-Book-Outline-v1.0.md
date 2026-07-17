@@ -1,4 +1,4 @@
-# Mapping With Melanin™ Foundations Book
+# The Mapping With Melanin™ Living Foundations Book
 ## Proposed Structure v1.0
 
 **Status:** Review Mode — Planning Only
@@ -313,11 +313,19 @@ Over time this becomes an invaluable historical record and onboarding tool for f
 
 **65. Lessons Learned Log** — A permanent section capturing institutional knowledge from the journey. Categories include: Apple review lessons, Google Play review lessons, Railway deployment lessons, DNS configuration lessons, Google Maps configuration lessons, trademark process lessons, community rollout lessons, investor presentation lessons, tour planning lessons. Each entry answers: What happened? What did we learn? What will we do differently next time? This prevents the company from rediscovering hard-won knowledge as the team grows.
 
+**66. Glossary & Terminology** — A permanent glossary defining every protected term used by the company, preventing language drift as the team and community grow. Each entry includes: Official Term, Definition, Approved Usage, Examples, Terms That Should Not Be Substituted, Trademark Requirements (where applicable), Date Approved.
+
+Initial terms to define: Mapping With Melanin™, Melanin Maps LLC, KinfolkAI™, Cultural Ambassador, Founding Community Member, Welcome Home Tour, Community Intelligence, Safety Check-In, Trust Score, Belonging, Community Verification, Experience Deck, Foundations Book, Creative Operating System (Creative OS), Storytelling Standards.
+
+**67. Annual Reflection & Milestones** — A living record of the company's journey over time, transforming the Foundations Book into both an operational guide and a historical archive. Permanent milestones to record: Company formation, trademark filings, copyright registrations, first prototype, first tester, first Founding Community Member, first business onboarded, first Cultural Ambassador, first city launched, first Welcome Home Tour stop, first partnership, first press feature, first investment, first million users (future), and community impact milestones.
+
+Each year adds: major accomplishments, challenges overcome, lessons learned, community impact, goals for the coming year, and a personal reflection from the founder.
+
 ---
 
 ## Current Total Structure
 
-**9 Parts · 65 Sections**
+**9 Parts · 67 Sections**
 
 ---
 
