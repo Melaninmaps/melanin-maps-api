@@ -1,0 +1,331 @@
+# COPY / PASTE TO REPLIT
+
+---
+
+# Foundations Book — Part IX Decisions
+
+**Status: Review Mode**
+
+The five confirmation questions are now decided as follows.
+
+---
+
+## 1. Add Part IX to the Foundations Book
+
+**Approved: Yes.**
+
+Add:
+
+# Part IX — Approved Presentation & Asset Registry
+
+This section is necessary because Mapping With Melanin™ now has multiple decks, repeated brand messages, reusable slides, protected language, custom visual assets, and audience-specific variations.
+
+Without a formal registry, we risk:
+
+* inconsistent messaging;
+* duplicate or outdated slides;
+* different versions circulating;
+* accidental edits to protected language;
+* one deck being updated while others are forgotten;
+* trademark formatting inconsistencies;
+* visual drift across presentations.
+
+Part IX should become the governance system for every approved presentation asset.
+
+---
+
+## 2. Track All Approved Decks and Slides With Unique IDs
+
+**Approved: Yes.**
+
+The registry should track every approved deck and every approved slide.
+
+Use unique IDs such as:
+
+```text
+MWM-EXP-S01-V1
+MWM-INV-S05-V2
+MWM-BIZ-S09-V1
+MWM-COM-S03-V3
+```
+
+The ID system should identify:
+
+* deck;
+* slide number;
+* version.
+
+Every approved slide record should include:
+
+* exact approved copy;
+* visual treatment;
+* audience;
+* emotional objective;
+* source file;
+* current deck usage;
+* approval date;
+* approval status;
+* protected or reusable status;
+* related speaker notes;
+* legal or factual review requirements.
+
+Draft or unapproved slides should be clearly marked and should not be treated as part of the approved registry.
+
+---
+
+## 3. Make Controlled Propagation a Permanent Standard
+
+**Approved: Yes.**
+
+Controlled propagation should become permanent.
+
+When a master slide, approved message, design token, icon, or reusable component changes, Replit must:
+
+1. audit every related deck and file;
+2. identify affected slides and variations;
+3. explain the impact;
+4. distinguish exact copies from audience-specific adaptations;
+5. identify decks that should not change;
+6. present an Impact Report;
+7. ask whether to update:
+
+   * all affected decks;
+   * selected decks;
+   * or only the current deck;
+8. wait for explicit authorization;
+9. implement only the approved scope;
+10. verify every changed deck;
+11. update the registry and changelog.
+
+No automatic cross-deck changes should occur.
+
+Positive feedback about a master change does not authorize propagation.
+
+The explicit cross-deck implementation phrase remains:
+
+> **Please implement this approved master-slide update across every registered deck that uses it.**
+
+Without that authorization, update only the specifically named deck.
+
+---
+
+## 4. Preserve Archived Slide Versions
+
+**Approved: Yes.**
+
+Previous approved versions must remain accessible and should never be permanently overwritten.
+
+Each archived version should retain:
+
+* slide ID;
+* version number;
+* date approved;
+* date replaced;
+* reason for the change;
+* approved copy;
+* visual preview;
+* source file or component;
+* decks where it appeared;
+* person who approved it;
+* legal or factual status where relevant.
+
+Archived versions should be clearly labeled:
+
+* Current
+* Superseded
+* Archived
+* Draft
+* Rejected
+
+Only the current approved version should be used in active presentations unless an older version is explicitly restored.
+
+This archive is especially important for:
+
+* legal history;
+* trademark-sensitive wording;
+* investor communications;
+* documentary history;
+* brand evolution;
+* determining what was publicly presented at a specific point in time.
+
+---
+
+## 5. Include Internal Metadata in Every Deck File
+
+**Approved: Yes, with one condition.**
+
+Internal metadata should be included in every deck file, but it should not appear visibly to the audience unless intentionally included.
+
+The metadata should live in one or more of the following:
+
+* hidden slide;
+* notes section;
+* internal appendix;
+* file metadata;
+* deck manifest;
+* source-code configuration;
+* internal-only footer layer that is excluded from exports.
+
+Each deck should record:
+
+```text
+Foundations Book Version:
+Storytelling Standards Version:
+Color System Version:
+Typography System Version:
+Iconography Version:
+Slide Registry Version:
+Deck Version:
+Last Synchronized:
+Approval Status:
+Owner:
+Confidentiality:
+```
+
+Example:
+
+```text
+Foundations Book: v1.0
+Storytelling Standards: v1.0
+Color System: v1.1
+Typography System: v1.0
+Slide Registry: v1.0
+Deck: Experience Deck v1.3
+Last synchronized: July 2026
+Approval status: Approved
+Owner: Founder
+Classification: Internal Master / Public Presentation
+```
+
+This metadata is for governance and version control.
+
+It should not clutter the visible presentation or appear in public exports unless explicitly requested.
+
+---
+
+# Additional Required Rule — Exact vs. Adapted Slides
+
+The registry must distinguish between:
+
+## Exact Master Slide
+
+The slide matches the approved master copy and design.
+
+## Audience Adaptation
+
+The slide is based on the master but intentionally adjusted for a specific audience.
+
+## Related Concept
+
+The slide covers the same idea but is not governed as a direct copy.
+
+This distinction is necessary so controlled propagation does not accidentally overwrite appropriate audience-specific storytelling.
+
+---
+
+# Additional Required Rule — Propagation Applies Beyond Slides
+
+The audit and propagation system should also cover:
+
+* approved copy;
+* mission and vision language;
+* founder biography;
+* product descriptions;
+* KinfolkAI™ descriptions;
+* Cultural Ambassador terminology;
+* Founding Community terminology;
+* trademark formatting;
+* custom gold outline icons;
+* colors;
+* typography;
+* screenshots;
+* photography;
+* speaker notes;
+* legal and factual claims;
+* Zoom messaging;
+* email language;
+* tour materials;
+* documentary messaging.
+
+A change to a protected brand message should trigger an audit of every place where that message appears.
+
+It should never trigger an automatic edit.
+
+---
+
+# Approved Structural Update
+
+The Foundations Book may now be revised from:
+
+```text
+8 Parts / 50 Sections
+```
+
+to:
+
+```text
+9 Parts / 63 Sections
+```
+
+Add:
+
+# Part IX — Approved Presentation & Asset Registry
+
+51. Master Deck Registry
+52. Approved Slide Registry
+53. Reusable Slide Library
+54. Protected Brand Slides
+55. Slide Usage Map
+56. Controlled Propagation Rule
+57. Cross-Deck Update Command
+58. Slide Change Impact Report
+59. Versioning and Change History
+60. Approved Copy Library
+61. Speaker Notes and Spoken Variations
+62. Visual Asset Registry
+63. Presentation Source-of-Truth Rule
+
+---
+
+# Implementation Authorization
+
+This message approves the **structure and governance decisions only**.
+
+It does not yet authorize building the full Foundations Book, registries, slide library, or automated cross-deck system.
+
+You may update the written planning document:
+
+```text
+docs/MWM-Foundations-Book-Outline-v1.0.md
+```
+
+to reflect the approved Part IX structure and these five confirmed decisions.
+
+Do not:
+
+* create the complete registry;
+* assign IDs to all existing slides yet;
+* modify any deck;
+* propagate any slide changes;
+* alter approved copy;
+* build automation;
+* generate new assets;
+* archive or move existing files.
+
+After updating the outline, provide:
+
+1. the exact sections added;
+2. the file changed;
+3. confirmation that no deck or production asset changed;
+4. the updated part and section count;
+5. any questions that must be resolved before Part IX implementation begins.
+
+---
+
+# Current Status
+
+The **Foundations Book outline update** is authorized only to document the approved Part IX structure.
+
+The full Foundations Book remains in Review Mode.
+
+The Experience Deck remains a separate workstream and requires separate explicit implementation authorization.

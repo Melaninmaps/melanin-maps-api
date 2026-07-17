@@ -200,14 +200,76 @@ The Foundations Book ends with two permanent sections:
 
 ---
 
+## Part IX — Approved Presentation & Asset Registry
+
+**Approved: July 2026**
+
+This section is the governance system for every approved presentation asset across Mapping With Melanin™. Without it, the platform risks inconsistent messaging, duplicate or outdated slides, visual drift, accidental edits to protected language, and trademark formatting inconsistencies.
+
+### Five Confirmed Governance Decisions
+
+**Decision 1 — Part IX is approved.** The registry governs all approved presentation assets.
+
+**Decision 2 — All approved decks and slides are tracked with unique IDs.** Format: `MWM-[DECK]-S[NUMBER]-V[VERSION]` (e.g. MWM-EXP-S01-V1, MWM-INV-S05-V2). Draft or unapproved slides are clearly marked and excluded from the approved registry.
+
+**Decision 3 — Controlled propagation is a permanent standard.** When a master slide, approved message, design token, icon, or reusable component changes: audit → identify → explain → distinguish exact from adapted → identify exclusions → produce Impact Report → ask scope question → wait for explicit authorization → implement only approved scope → verify every changed deck → update registry and changelog. No automatic cross-deck changes. Positive feedback does not authorize propagation. The explicit authorization phrase is: "Please implement this approved master-slide update across every registered deck that uses it."
+
+**Decision 4 — Archived slide versions are preserved permanently.** Previous approved versions are never overwritten. Each archived version retains: slide ID, version number, date approved, date replaced, reason for change, approved copy, visual preview, source file, decks where it appeared, approving person, and legal/factual status. Versions are labeled: Current / Superseded / Archived / Draft / Rejected.
+
+**Decision 5 — Internal metadata is included in every deck file, invisible to audiences.** Metadata lives in a hidden slide, notes section, internal appendix, file metadata, deck manifest, or source-code configuration — excluded from public exports. Each deck records: Foundations Book Version, Storytelling Standards Version, Color System Version, Typography System Version, Iconography Version, Slide Registry Version, Deck Version, Last Synchronized, Approval Status, Owner, Confidentiality.
+
+### Additional Approved Rules
+
+**Exact vs. Adapted Slides** — The registry must distinguish: (1) Exact Master Slide — matches approved master copy and design exactly; (2) Audience Adaptation — based on the master but intentionally adjusted for a specific audience; (3) Related Concept — covers the same idea but not governed as a direct copy. This prevents controlled propagation from accidentally overwriting appropriate audience-specific storytelling.
+
+**Propagation Applies Beyond Slides** — The audit and propagation system covers: approved copy, mission and vision language, founder biography, product descriptions, KinfolkAI™ descriptions, Cultural Ambassador terminology, Founding Community terminology, trademark formatting, custom gold outline icons, colors, typography, screenshots, photography, speaker notes, legal and factual claims, Zoom messaging, email language, tour materials, and documentary messaging. A change to a protected brand message triggers an audit of every place where that message appears. It never triggers an automatic edit.
+
+### Sections 51–63
+
+**51. Master Deck Registry** — Complete record of every deck: name, purpose, primary audience, owner, current version, date approved, approval status, confidentiality level, source file location, exported file location, last reviewed date, related Foundations Book sections, status (active / archived / under revision). Recommended deck categories: Experience Deck, Investor Deck, Business Deck, Community Deck, Cultural Ambassador Deck, Volunteer Deck, Founding Community Deck, Zoom Presentation, Welcome Home Tour Deck, Partnership Deck, Media and Press Deck, Team Training Deck, Features Demonstration Deck, Product Roadmap Deck, Documentary and Music Submission Deck.
+
+**52. Approved Slide Registry** — Every approved slide receives a unique ID (MWM-[DECK]-S[NUMBER]-V[VERSION]). Each record includes: exact approved copy, visual treatment, audience, emotional objective, colors, typography, icons, imagery, animation/motion guidance, speaker notes, date approved, approved by, current version, source component or file, exported preview image, reusable status, audience-specific status, protected brand language flag, legal or factual review requirement.
+
+**53. Reusable Slide Library** — Slides approved for use across multiple presentations: Mission, Vision, Why We Exist, Core Brand Message, Trust Score, KinfolkAI™ introduction, Community philosophy, Safety philosophy, Business storytelling, Cultural Ambassadors, Why We Win, Why Now, The Movement, "You belong here.", "Welcome home." Each has a master approved version, permitted audience variations, approved alternate copy, visual rules, and notes on what may and may not be changed.
+
+**54. Protected Brand Slides** — Designated slides where: copy cannot be rewritten without approval; structure cannot be changed without approval; colors and typography must follow the approved system; no alternate version may be introduced silently; all proposed changes must be presented separately with rationale. Includes: Core Brand Message, Mission, Vision, Our Responsibility, Our Role, Why We Win, closing sequence, KinfolkAI™ identity slides, legal or factual claims, trademark-sensitive language.
+
+**55. Slide Usage Map** — A matrix showing where every reusable slide appears across every deck. Enables immediate visibility into which presentations are affected when a shared slide changes.
+
+**56. Controlled Propagation Rule** — The permanent 11-step process: (1) Identify all affected decks. (2) Produce an Impact Report. (3) Show affected decks, slide numbers, change type, exact-vs-adapted status, and layout/storytelling risk. (4) Propose the updates. (5) Wait for explicit authorization. (6) Apply only the approved updates. (7) Verify every affected deck. (8) Update the registry and changelog. No automatic cross-deck edits without approval.
+
+**57. Cross-Deck Update Command** — The explicit authorization phrase: "Please implement this approved master-slide update across every registered deck that uses it." When given, Replit updates the master slide, updates every approved linked instance, preserves audience-specific variations, preserves slide order and deck-specific pacing unless explicitly changed, verifies every affected deck, and reports all files and slides changed. Without this phrase: only the named deck is updated.
+
+**58. Slide Change Impact Report** — Before any approved slide changes across multiple decks, provide: Proposed Master Change (current approved copy/design, proposed copy/design, reason, expected improvement), Affected Decks (deck name, slide number, exact or adapted instance, required adjustment, risk level), Excluded Decks (list with reasons), and explicit Approval Required gate.
+
+**59. Versioning and Change History** — Every approved slide change records: previous version, new version, date, reason, decks updated, decks intentionally not updated, approved by, files changed, and an archived preview of the previous version. History is never overwritten.
+
+**60. Approved Copy Library** — Registry of approved reusable language: headlines, taglines, mission language, product descriptions, KinfolkAI™ descriptions, safety language, business messaging, Cultural Ambassador language, founder biography, closing language, Zoom invitation language, tester and Founding Community language. Each entry records: exact wording, approved audiences, current usage, paraphrase permissions, protection status, trademark formatting, date approved.
+
+**61. Speaker Notes and Spoken Variations** — The registry distinguishes: words displayed on the slide, speaker notes, optional conversational variations, audience-specific explanations, content that must be spoken exactly, content that may be delivered naturally. Presentations must sound authentic and conversational — not memorized.
+
+**62. Visual Asset Registry** — Catalog of approved logos, custom gold outline icons, custom emoji-style SVGs, photography, app screenshots, maps, diagrams, textures, background treatments, color gradients, animations, documentary stills, tour photographs, and community-submitted images. Each asset records: ID, file location, owner/creator, approval status, legal consent status, usage rights, approved contexts, expiration date, attribution requirements, decks where used.
+
+**63. Presentation Source-of-Truth Rule** — The Foundations Book and its registries govern all approved presentation content. Individual decks identify the Foundations Book version, Storytelling Standards version, Color System version, Typography System version, Slide Registry version, and date last synchronized. Individual decks are not isolated copies with undocumented changes.
+
+---
+
+## Current Total Structure
+
+**9 Parts · 63 Sections**
+
+---
+
 ## Next Steps (Pending Approval)
 
-Before any work begins, approve:
+Before any work begins on the Foundations Book itself, approve:
 1. The purpose
 2. The document structure
 3. Which sections belong in v1.0
 4. Which sections are future placeholders
 5. Which content is internal versus public
 6. The design and versioning system
+
+Part IX governance decisions are confirmed. Part IX implementation (building the registry, assigning IDs, creating the slide library) requires separate explicit authorization.
 
 *Last updated: July 2026*
