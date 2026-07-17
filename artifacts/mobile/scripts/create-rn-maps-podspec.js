@@ -1,100 +1,105 @@
 /**
  * create-rn-maps-podspec.js
  *
- * Copies react-native-maps.podspec → react-native-google-maps.podspec inside
- * the react-native-maps package in the pnpm virtual store.
+ * Early attempt (eas-build-post-install, after pnpm install) to create
+ * react-native-google-maps.podspec so CocoaPods can resolve:
+ *   pod 'react-native-google-maps', :path => '../node_modules/react-native-maps'
  *
- * WHY THIS IS NEEDED:
- *   react-native-maps@1.27.2's podspec declares s.name = "react-native-google-maps"
- *   (the package intends to be used as the google-maps pod). Expo's autolinking
- *   reads s.name and generates:  pod 'react-native-google-maps', :path => '...'
- *   RN CLI reads the filename and generates:  pod 'react-native-maps', :path => '...'
- *   Both pods resolve to the same source files → 339 duplicate AIR* symbols → linker crash.
+ * WHY: react-native-maps ships only react-native-maps.podspec. Expo autolinking
+ * reads s.name = "react-native-google-maps" from it and emits the pod entry above.
+ * CocoaPods then looks for react-native-google-maps.podspec in that :path dir
+ * and fails with "No podspec found for `react-native-google-maps`".
  *
- *   Fix step 1 (this script): ensure react-native-google-maps.podspec exists so
- *   CocoaPods resolves `pod 'react-native-google-maps'` to the explicit podspec
- *   (not a filename-mismatch fallback).
+ * PRIMARY FIX: withRnMapsPodfileFix.js config plugin writes the podspec during
+ * expo prebuild (step 5), which is the authoritative moment. This script is an
+ * early belt-and-suspenders attempt at step 2 (eas-build-post-install).
+ * It is intentionally non-fatal — the plugin handles it if this script misses.
  *
- *   Fix step 2 (react-native.config.js): platforms.ios: null tells RN CLI to skip
- *   iOS autolinking for react-native-maps → no `pod 'react-native-maps'` is added.
- *
- *   Result: one pod, one set of AIR* symbols, no duplicates.
- *
- * pnpm can hold MULTIPLE physical copies of the package (different peer-dep hash
- * suffixes). We walk the whole .pnpm store and patch every copy, same pattern as
- * patch-expo-entry.js.
- *
- * Run via eas-build-post-install after pnpm install completes, before pod install.
+ * STRATEGY: try both the direct node_modules symlink path (what CocoaPods reads)
+ * AND the pnpm virtual store paths.
  */
 const fs = require("fs");
 const path = require("path");
 
-const projectRoot = path.resolve(__dirname, "..");
-const workspaceRoot = path.resolve(projectRoot, "../..");
+const projectRoot = path.resolve(__dirname, "..");         // artifacts/mobile
+const workspaceRoot = path.resolve(projectRoot, "../.."); // monorepo root
 
-const SRC_PODSPEC = "react-native-maps.podspec";
-const DST_PODSPEC = "react-native-google-maps.podspec";
+const SRC = "react-native-maps.podspec";
+const DST = "react-native-google-maps.podspec";
 
-function findRnMapsDirs(pnpmStoreDir) {
-  const results = [];
+let patchedCount = 0;
+
+// ── Strategy 1: direct node_modules path (what CocoaPods actually resolves) ──
+const directPaths = [
+  path.join(workspaceRoot, "node_modules", "react-native-maps"),
+  path.join(projectRoot, "node_modules", "react-native-maps"),
+];
+
+for (const dir of directPaths) {
+  const src = path.join(dir, SRC);
+  const dst = path.join(dir, DST);
+  if (!fs.existsSync(src)) {
+    console.log(`[create-rn-maps-podspec] not found: ${src}`);
+    continue;
+  }
+  if (fs.existsSync(dst)) {
+    console.log(`[create-rn-maps-podspec] already present: ${dst}`);
+    patchedCount++;
+    continue;
+  }
+  try {
+    fs.copyFileSync(src, dst);
+    console.log(`[create-rn-maps-podspec] created: ${dst}`);
+    patchedCount++;
+  } catch (e) {
+    console.warn(`[create-rn-maps-podspec] could not write ${dst}: ${e.message}`);
+  }
+}
+
+// ── Strategy 2: pnpm virtual store (.pnpm/react-native-maps@*) ───────────────
+function patchStoreDir(storeDir) {
   let entries;
   try {
-    entries = fs.readdirSync(pnpmStoreDir, { withFileTypes: true });
-  } catch (e) {
-    return results;
+    entries = fs.readdirSync(storeDir, { withFileTypes: true });
+  } catch {
+    return;
   }
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
     if (!entry.name.startsWith("react-native-maps@")) continue;
-    const pkgDir = path.join(pnpmStoreDir, entry.name, "node_modules", "react-native-maps");
-    if (fs.existsSync(path.join(pkgDir, SRC_PODSPEC))) {
-      results.push(pkgDir);
+    const pkgDir = path.join(storeDir, entry.name, "node_modules", "react-native-maps");
+    const src = path.join(pkgDir, SRC);
+    const dst = path.join(pkgDir, DST);
+    if (!fs.existsSync(src)) continue;
+    if (fs.existsSync(dst)) {
+      console.log(`[create-rn-maps-podspec] store already present: ${dst}`);
+      patchedCount++;
+      continue;
+    }
+    try {
+      fs.copyFileSync(src, dst);
+      console.log(`[create-rn-maps-podspec] store created: ${dst}`);
+      patchedCount++;
+    } catch (e) {
+      console.warn(`[create-rn-maps-podspec] store write failed: ${e.message}`);
     }
   }
-  return results;
 }
 
-function copyPodspec(pkgDir) {
-  const src = path.join(pkgDir, SRC_PODSPEC);
-  const dst = path.join(pkgDir, DST_PODSPEC);
-
-  if (fs.existsSync(dst)) {
-    console.log("[create-rn-maps-podspec] Already present:", dst);
-    return;
-  }
-
-  fs.copyFileSync(src, dst);
-  console.log("[create-rn-maps-podspec] Created:", dst);
-}
-
-const pnpmStoreDirs = [
+const storeDirs = [
   path.join(workspaceRoot, "node_modules", ".pnpm"),
   path.join(projectRoot, "node_modules", ".pnpm"),
 ];
+for (const s of storeDirs) patchStoreDir(s);
 
-const seen = new Set();
-let patchedCount = 0;
-
-for (const storeDir of pnpmStoreDirs) {
-  for (const pkgDir of findRnMapsDirs(storeDir)) {
-    const real = fs.realpathSync(pkgDir);
-    if (seen.has(real)) continue;
-    seen.add(real);
-    copyPodspec(pkgDir);
-    patchedCount++;
-  }
-}
-
+// ── Result ────────────────────────────────────────────────────────────────────
 if (patchedCount === 0) {
-  console.error(
-    "[create-rn-maps-podspec] No react-native-maps directories found in .pnpm store."
+  console.warn(
+    "[create-rn-maps-podspec] WARNING: no react-native-maps dirs found — withRnMapsPodfileFix plugin will handle this during prebuild."
   );
-  console.error(
-    "[create-rn-maps-podspec] Searched:", pnpmStoreDirs.join(", ")
-  );
-  process.exit(1);
 } else {
-  console.log(
-    `[create-rn-maps-podspec] Processed ${patchedCount} physical copy(ies) of react-native-maps`
-  );
+  console.log(`[create-rn-maps-podspec] ${patchedCount} location(s) patched.`);
 }
+
+// Non-fatal: the config plugin is the authoritative fix.
+process.exit(0);
