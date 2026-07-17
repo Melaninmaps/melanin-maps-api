@@ -1,0 +1,58 @@
+I would **not authorize another paid EAS build yet** based only on “the patch should fix it.”
+
+The response is honest, and the proposed pnpm patch is technically plausible. pnpm patches are applied during dependency installation and can persist in the repository, including in EAS builds. ([pnpm][1]) But after 36 failures, the standard should now be **proof before another build**, not another reasonable theory.
+
+There is also evidence this exact `react-native-maps` 1.27.2 / iOS Google Maps podspec problem has affected other developers recently, so this is not simply you or your project being uniquely broken. ([GitHub][2])
+
+## My recommendation
+
+Tell Replit to implement the patch, but **do not start the EAS build immediately**.
+
+Ask them to first provide:
+
+1. The exact patch file contents.
+2. Confirmation that the patch is referenced in `pnpm-lock.yaml` or `package.json` under pnpm’s patched dependencies.
+3. The generated iOS Podfile after Expo prebuild.
+4. Proof that the generated Podfile contains **no** reference to:
+
+```text
+react-native-google-maps
+```
+
+5. Proof that it contains the intended current integration, or that Google Maps is deliberately removed from iOS for this build.
+
+The reason is simple: a patch can work, but it can also patch the wrong compiled file, fail to apply because of an exact-version mismatch, or remove one insertion point while another script adds the line back.
+
+## Send this response
+
+> Please implement the pnpm patch, but do not start another EAS build yet.
+>
+> Before using another build from my quota, please provide:
+>
+> 1. The exact patch file created.
+> 2. The package and exact version the patch targets.
+> 3. Confirmation that pnpm applies the patch successfully during a clean install.
+> 4. The relevant section of the generated iOS Podfile after running a clean Expo prebuild.
+> 5. Repository-wide search results confirming there are no remaining references to `react-native-google-maps`.
+>
+> I need confirmation that the patch changes the generated native configuration before we use another EAS build. After approximately 36 failures, I do not want EAS to remain the first place the fix is tested.
+>
+> Also confirm whether the safest launch fallback is to remove Google Maps from iOS temporarily and use Apple Maps on iOS while retaining Google Maps on Android.
+
+## My preferred fallback
+
+At this point, I would strongly favor:
+
+* **Google Maps on Android**
+* **Apple Maps on iOS for launch**
+* Remove the Google Maps iOS native pod customization entirely
+
+`react-native-maps` supports Apple Maps on iOS, and Expo documents Apple Maps as a supported iOS option. ([Expo Documentation][3]) This would not mean losing your map feature. It would mean using the native Apple map provider on iPhones until the Google Maps integration can be fixed and tested separately.
+
+That is less elegant than having identical map providers, but it is much better than letting one integration block your entire launch.
+
+My honest choice would be: **implement the patch for review, but authorize the next build only if the generated Podfile is visibly correct. Otherwise, switch iOS to Apple Maps and move forward.**
+
+[1]: https://pnpm.io/cli/patch?utm_source=chatgpt.com "pnpm patch <pkg>"
+[2]: https://github.com/react-native-maps/react-native-maps/issues/5915?utm_source=chatgpt.com "CocoaPods fails with “No podspec found for react-native- ..."
+[3]: https://docs.expo.dev/versions/latest/sdk/map-view/?utm_source=chatgpt.com "react-native-maps"

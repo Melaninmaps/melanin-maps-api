@@ -1,0 +1,24 @@
+diff --git a/app.plugin.js b/app.plugin.js
+index 3c7d11b615668c8c768e5554d55a937e116e4b8a..9a6c19b3d8bfcaf5344f0cd89df8a40732b62876 100644
+--- a/app.plugin.js
++++ b/app.plugin.js
+@@ -1 +1,18 @@
+-module.exports = require('./plugin/build');
++// pnpm patch — no-op Expo config plugin for react-native-maps.
++//
++// WHY: Expo's autolinking automatically runs this app.plugin.js during
++// expo prebuild. The plugin's withMapsIOS function injects:
++//   pod 'react-native-google-maps', path: ...
++// into the Podfile via @generated begin react-native-maps block.
++// The npm package does NOT ship react-native-google-maps.podspec, so
++// CocoaPods fails with "No podspec found" or "name mismatch" errors.
++//
++// This app uses PROVIDER_DEFAULT (Apple Maps) on iOS — no Google Maps
++// SDK is needed. RN CLI autolinking handles pod 'react-native-maps'
++// correctly via react-native-maps.podspec without any Expo plugin help.
++//
++// Making this plugin a no-op removes the bad pod declaration entirely.
++
++module.exports = function withMaps(config) {
++  return config;
++};
