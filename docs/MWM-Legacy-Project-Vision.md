@@ -1,9 +1,57 @@
-# The Mapping With Melanin™ Legacy Project
-## Vision Document v1.0
+# The Mapping With Melanin™ Legacy Manifest
+## Master Vision Document v1.0
+
+*A manifest is a declaration of purpose and direction — more enduring than a vision document, and better matched to what this institution is building.*
 
 **Status:** Review Mode — Planning Only
 **Authority:** Product Owner (Teianna)
 **Classification:** Internal — Confidential
+
+---
+
+## The Mapping With Melanin™ Knowledge System
+
+Everything the company creates lives within a five-level hierarchy. Each level has a distinct purpose. Each level answers a different question.
+
+### Level 1 — Vision (The "Why")
+**The Legacy Manifest** (this document)
+The dream. The institution. The 25-year vision. The documentaries. The city books. The Living Archive. The music. The cultural preservation.
+This document almost never changes.
+> **What are we ultimately trying to build?**
+
+### Level 2 — Constitution (The "How")
+**The Living Foundations Book**
+How we think. How we build. How we communicate. Our standards, principles, governance, and decision-making.
+This changes slowly.
+> **How does this company think?**
+
+### Level 3 — Operations
+**Creative OS, Collaboration Standards, Storytelling Standards, Color System, Typography System, Voice Guide, Deck Registry, Copy Library, Decision Log, Lessons Learned**
+The systems that support the Constitution.
+These evolve regularly.
+> **How does this company operate?**
+
+### Level 4 — Living History
+**The Living Archive**
+Every year. Every tour. Every city. Every interview. Every photograph. Every documentary. Every milestone. Every founding business. Every founding community member. Every lesson.
+This never ends.
+> **What actually happened?**
+
+### Level 5 — Products
+**App, Website, KinfolkAI™, Community, Business Platform, Future Products**
+Everything users actually interact with.
+> **What products does the company build?**
+
+---
+
+## The Standard That Governs Everything
+
+Before any decision — creative, technical, strategic — ask:
+
+> **"Will this still feel true twenty years from now?"**
+
+If yes: proceed with confidence.
+If uncertain: examine the decision more carefully before committing.
 
 ---
 
@@ -191,6 +239,26 @@ The Mapping With Melanin™ Legacy Collection — twenty years from now — will
 
 ---
 
-*The Mapping With Melanin™ Legacy Project — Vision Document v1.0*
+---
+
+## Letters to the Future — Reserved Section
+
+*To be added when the company has been in operation for some time.*
+
+Each year, the founder writes one letter — not to investors, not to customers, but to the future.
+
+Imagine opening the 2036 Legacy Collection and reading:
+
+> **Letter from the Founder — July 2036**
+
+What surprised us. What challenged us. What gave us hope. Who inspired us. What we learned. What we still believe.
+
+Those letters become priceless — not just for the company, but for anyone trying to understand its journey.
+
+*This section is reserved. It does not begin until the founder is ready to write the first letter.*
+
+---
+
+*The Mapping With Melanin™ Legacy Manifest — Master Vision Document v1.0*
 *Last updated: July 2026*
 *One chapter at a time.*

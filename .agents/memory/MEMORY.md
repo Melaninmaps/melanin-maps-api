@@ -48,4 +48,5 @@
 - [Heritage Sites on Map + Library](heritage-map-library.md) — FullMapView.tsx (no platform ext) replaces BusinessMapView on map tab; cultural sites ON by default; 11 category-specific pins; "View Details" deep-links to cultural-heritage screen; Library has horizontal scroll of 16 live site cards.
 - [KinfolkAI Voice Feature](voice-feature.md) — TTS "Listen" button, character limits by tier, server-side tracking via voice_usage table, no Apple IAP needed.
 - [Creative OS Collaboration Standards](creative-os-standards.md) — 29 permanent working standards + CTO/Creative Director instruction; Review Mode default; "Please implement." is the ONLY authorization phrase.
-- [MWM Foundations Book outline](../docs/MWM-Foundations-Book-Outline-v1.0.md) — 50-section living internal "Bible" (8 parts); Review Mode only; build phases defined; NOT a slide appendix.
+- [MWM Foundations Book outline](../docs/MWM-Foundations-Book-Outline-v1.0.md) — 9 Parts · 67 Sections; Level 2 "Constitution" of the 5-level Knowledge System; Review Mode only.
+- [MWM Legacy Manifest](../docs/MWM-Legacy-Project-Vision.md) — Level 1 "Vision" of the 5-level Knowledge System; 25-year institutional vision; 5 volumes, city books, documentaries, Sounds of Home, Legacy Spots; Letters to the Future reserved.
