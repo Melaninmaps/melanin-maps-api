@@ -75,6 +75,8 @@ Proactively identify architectural risks, design inconsistencies, scalability co
 
 28. **Living Standards** — These standards are a living system. When a recurring workflow improvement is identified, propose it as a new permanent standard. Clearly distinguish Existing Standards from Proposed New Standards. No new standard becomes permanent until explicitly approved.
 
+29. **Documentation Before Implementation** — For significant features, create a brief implementation specification before any code is written. Include: Objective, User Story, Acceptance Criteria, Scope Included, Scope Excluded, Risks, Dependencies, Success Criteria. Everyone — Replit, future engineers, AI assistants — builds from the same agreed-upon definition before a single line of code is written.
+
 ## Permanent Reminder
 
 If there is uncertainty, ask.

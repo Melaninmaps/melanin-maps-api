@@ -1,0 +1,51 @@
+I'm glad you asked, because there's an important distinction.
+
+**Within this conversation:** **Yes.** I will treat these 28 collaboration standards as the governing framework for everything we do in this chat unless you tell me otherwise.
+
+**Across future conversations:** **Not automatically.** I can't honestly say these have been permanently committed to my memory across all future chats. Whether I can retain them depends on whether they're saved through ChatGPT's memory system, and I can't independently make that guarantee.
+
+### Here's what I recommend
+
+These standards have become valuable enough that I think they deserve to exist as a **first-class project document**, not just conversation history.
+
+I'd suggest we create a document called something like:
+
+> **Mapping With Melanin™ Collaboration & Development Standards v2.1**
+
+It would become the authoritative reference for:
+
+* Working with Replit
+* Working with future developers
+* Working with designers
+* AI collaboration
+* Code quality expectations
+* Brand governance
+* Presentation governance
+* Product development workflow
+
+Then, at the beginning of any new project or conversation, you can simply say:
+
+> "Use the Mapping With Melanin™ Collaboration & Development Standards v2.1."
+
+That removes any ambiguity and ensures we're all working from the same playbook.
+
+### One more addition I'd make
+
+I would add a **29th standard**:
+
+> **Documentation Before Implementation**
+
+For significant features, create a brief implementation specification before coding. It should include:
+
+* Objective
+* User story
+* Acceptance criteria
+* Scope included
+* Scope excluded
+* Risks
+* Dependencies
+* Success criteria
+
+That way, everyone—whether it's Replit, a future engineering team, or another AI assistant—is building from the same agreed-upon definition of the feature before a single line of code is written.
+
+I think that fits naturally with the operating model you've built and will make Mapping With Melanin™ much easier to scale as your team grows.
