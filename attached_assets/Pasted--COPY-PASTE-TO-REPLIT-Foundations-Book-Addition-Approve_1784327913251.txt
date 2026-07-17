@@ -1,0 +1,518 @@
+# COPY / PASTE TO REPLIT
+
+---
+
+# Foundations Book Addition — Approved Slide & Deck Registry
+
+**Status: Review Mode. Nothing should be implemented yet.**
+
+Yes, the Foundations Book should catalog every **approved slide, deck, and reusable message** across Mapping With Melanin™.
+
+However, this should not become an uncontrolled system that automatically rewrites every presentation whenever one slide changes.
+
+The correct model is:
+
+> **One approved source of truth, with controlled propagation into individual decks.**
+
+The Foundations Book should document what is approved, where it is used, and whether an update should be applied elsewhere. Replit should propose affected updates first and wait for explicit authorization before modifying other decks.
+
+---
+
+# Add a Ninth Part to the Foundations Book
+
+## Part IX — Approved Presentation & Asset Registry
+
+This section becomes the authoritative catalog of every approved presentation asset used across Mapping With Melanin™.
+
+---
+
+## 51. Master Deck Registry
+
+Maintain a complete record of every deck, including:
+
+* Deck name
+* Purpose
+* Primary audience
+* Owner
+* Current version
+* Date approved
+* Approval status
+* Confidentiality level
+* Source file location
+* Exported file location
+* Last reviewed date
+* Related Foundations Book sections
+* Whether the deck is active, archived, or under revision
+
+### Recommended deck categories
+
+* Experience Deck
+* Investor Deck
+* Business Deck
+* Community Deck
+* Cultural Ambassador Deck
+* Volunteer Deck
+* Founding Community Deck
+* Zoom Presentation
+* Welcome Home Tour Deck
+* Partnership Deck
+* Media and Press Deck
+* Team Training Deck
+* Features Demonstration Deck
+* Product Roadmap Deck
+* Documentary and Music Submission Deck
+
+---
+
+## 52. Approved Slide Registry
+
+Every approved slide should receive a unique internal identifier.
+
+Recommended format:
+
+```text
+MWM-[DECK]-S[NUMBER]-V[VERSION]
+```
+
+Examples:
+
+```text
+MWM-EXP-S01-V1
+MWM-EXP-S05-V2
+MWM-INV-S08-V1
+MWM-BIZ-S12-V3
+```
+
+For each approved slide, record:
+
+* Slide ID
+* Slide title
+* Approved copy
+* Approved visual
+* Decks where it appears
+* Audience
+* Purpose
+* Emotional objective
+* Approved colors
+* Typography treatment
+* Approved icons
+* Approved imagery
+* Animation or motion guidance
+* Speaker notes
+* Date approved
+* Approved by
+* Current version
+* Source component or file
+* Exported preview image
+* Whether it is reusable
+* Whether it is audience-specific
+* Whether it contains protected brand language
+* Whether legal or factual review is required
+
+---
+
+## 53. Reusable Slide Library
+
+Identify slides that may be reused across multiple presentations.
+
+Examples:
+
+* Mission
+* Vision
+* Why We Exist
+* Core Brand Message
+* Trust Score
+* KinfolkAI™ introduction
+* Community philosophy
+* Safety philosophy
+* Business storytelling
+* Cultural Ambassadors
+* Why We Win
+* Why Now
+* The Movement
+* “You belong here.”
+* “Welcome home.”
+
+Reusable slides should have:
+
+* a master approved version;
+* permitted audience variations;
+* approved alternate copy;
+* visual rules;
+* notes explaining what may and may not be changed.
+
+---
+
+## 54. Protected Brand Slides
+
+Certain slides should be designated as **protected**.
+
+Protected slides may include:
+
+* Core Brand Message
+* Mission
+* Vision
+* Our Responsibility
+* Our Role
+* Why We Win
+* Closing sequence
+* KinfolkAI™ identity slides
+* Legal or factual claims
+* Trademark-sensitive language
+
+Protected means:
+
+* copy cannot be rewritten without approval;
+* structure cannot be changed without approval;
+* colors and typography must follow the approved system;
+* no alternate version may be introduced silently;
+* all proposed changes must be presented separately with rationale.
+
+---
+
+## 55. Slide Usage Map
+
+Maintain a matrix showing where every reusable slide appears.
+
+Example:
+
+| Slide                 | Experience | Investor | Business | Community |     Zoom | Tour |
+| --------------------- | ---------: | -------: | -------: | --------: | -------: | ---: |
+| Core Brand Message    |        Yes |      Yes |      Yes |       Yes |      Yes |  Yes |
+| Trust Score           |        Yes |      Yes |      Yes |       Yes | Optional |  Yes |
+| KinfolkAI™ Reveal     |        Yes |      Yes | Optional |       Yes |      Yes |  Yes |
+| Business People First |        Yes | Optional |      Yes |  Optional |      Yes |  Yes |
+| Closing Sequence      |        Yes |  Adapted |  Adapted |       Yes |      Yes |  Yes |
+
+This allows us to see which presentations may be affected when a shared slide changes.
+
+---
+
+## 56. Controlled Propagation Rule
+
+When an approved master slide changes, Replit must:
+
+1. Identify every deck containing that slide or a related variation.
+2. Produce an **Impact Report**.
+3. Show:
+
+   * which decks are affected;
+   * which slide numbers are affected;
+   * whether the change is copy, visual, factual, legal, or structural;
+   * whether the target deck uses the exact master or an audience-specific variation;
+   * any risk of breaking layout or storytelling flow.
+4. Propose the updates.
+5. Wait for explicit authorization.
+6. Apply only the approved updates.
+7. Verify every affected deck after implementation.
+8. Update the registry and changelog.
+
+No automatic cross-deck edits should occur without approval.
+
+---
+
+## 57. Cross-Deck Update Command
+
+When I explicitly authorize a change across presentations, the implementation request should specify:
+
+```text
+Please implement this approved master-slide update across every registered deck that uses it.
+```
+
+That authorization means Replit should:
+
+* update the master slide;
+* update every approved linked instance;
+* preserve audience-specific variations;
+* preserve slide order unless explicitly changed;
+* preserve deck-specific pacing;
+* verify every affected deck;
+* report all files and slides changed.
+
+Without that explicit authorization, Replit should update only the named deck or file.
+
+---
+
+## 58. Slide Change Impact Report
+
+Before any approved slide is changed across multiple decks, provide:
+
+### Proposed Master Change
+
+* Current approved copy or design
+* Proposed copy or design
+* Reason
+* Expected improvement
+
+### Affected Decks
+
+* Deck name
+* Slide number
+* Exact or adapted instance
+* Required adjustment
+* Risk level
+
+### Excluded Decks
+
+List decks that contain a similar slide but should not be changed, with the reason.
+
+### Approval Required
+
+No propagation occurs until explicitly authorized.
+
+---
+
+## 59. Versioning and Change History
+
+Every approved slide change should record:
+
+* Previous version
+* New version
+* Date
+* Reason
+* Decks updated
+* Decks intentionally not updated
+* Approved by
+* Files changed
+* Archived preview of the previous version
+
+Example:
+
+| Slide ID    | Previous | New | Date | Reason                                | Decks Updated              | Approved By |
+| ----------- | -------- | --- | ---- | ------------------------------------- | -------------------------- | ----------- |
+| MWM-EXP-S05 | V1       | V2  | TBD  | Warmer palette and improved hierarchy | Experience, Investor, Zoom | Founder     |
+
+Never overwrite history without retaining the previous approved version.
+
+---
+
+## 60. Approved Copy Library
+
+Maintain a separate registry of approved reusable language, including:
+
+* headlines;
+* taglines;
+* mission language;
+* product descriptions;
+* KinfolkAI™ descriptions;
+* safety language;
+* business messaging;
+* Cultural Ambassador language;
+* founder biography;
+* closing language;
+* Zoom invitation language;
+* tester and Founding Community language.
+
+Each approved message should record:
+
+* exact wording;
+* approved audiences;
+* where it is currently used;
+* whether it may be shortened;
+* whether it may be paraphrased;
+* whether it is protected;
+* trademark formatting;
+* date approved.
+
+---
+
+## 61. Speaker Notes and Spoken Variations
+
+The registry should distinguish between:
+
+* words displayed on the slide;
+* speaker notes;
+* optional conversational variations;
+* audience-specific explanations;
+* content that must be spoken exactly;
+* content that may be delivered naturally.
+
+This is important because Mapping With Melanin™ presentations should sound authentic and conversational—not memorized.
+
+---
+
+## 62. Visual Asset Registry
+
+Catalog approved:
+
+* logos;
+* custom gold outline icons;
+* custom emoji-style SVGs;
+* photography;
+* app screenshots;
+* maps;
+* diagrams;
+* textures;
+* background treatments;
+* color gradients;
+* approved animations;
+* documentary stills;
+* tour photographs;
+* community-submitted images.
+
+For every asset, record:
+
+* asset ID;
+* file location;
+* owner or creator;
+* approval status;
+* legal consent status;
+* usage rights;
+* approved contexts;
+* expiration date if applicable;
+* attribution requirements;
+* decks where used.
+
+---
+
+## 63. Presentation Source-of-Truth Rule
+
+The Foundations Book and its registries become the source of truth for approved presentation content.
+
+Individual decks should not become isolated copies with undocumented changes.
+
+Every deck should identify:
+
+* the Foundations Book version it follows;
+* the Storytelling Standards version;
+* the Color System version;
+* the Typography System version;
+* the slide registry version;
+* the date last synchronized.
+
+Example footer or metadata:
+
+```text
+MWM Foundations v1.0
+Storytelling Standards v1.0
+Presentation Registry v1.0
+Last synchronized: TBD
+```
+
+This metadata may remain internal rather than visible to audiences.
+
+---
+
+# Important Implementation Principle
+
+The Foundations Book should catalog and govern every approved slide, but it should **not contain every full slide visually within the main written narrative**.
+
+That would make the book too large and difficult to maintain.
+
+Recommended approach:
+
+### Main Foundations Book
+
+Contains:
+
+* the standards;
+* the registry tables;
+* selected signature slides;
+* links or references to approved deck files;
+* visual examples;
+* protected brand messages.
+
+### Presentation Appendix or Digital Slide Library
+
+Contains:
+
+* full approved slide thumbnails;
+* deck-by-deck indexes;
+* component previews;
+* source links;
+* archived versions.
+
+This gives us a complete record without making the main Foundations Book unreadable.
+
+---
+
+# Recommended Additions to the Existing Outline
+
+Add the following to the current Foundations Book proposal:
+
+```text
+Part IX — Approved Presentation & Asset Registry
+
+51. Master Deck Registry
+52. Approved Slide Registry
+53. Reusable Slide Library
+54. Protected Brand Slides
+55. Slide Usage Map
+56. Controlled Propagation Rule
+57. Cross-Deck Update Command
+58. Slide Change Impact Report
+59. Versioning and Change History
+60. Approved Copy Library
+61. Speaker Notes and Spoken Variations
+62. Visual Asset Registry
+63. Presentation Source-of-Truth Rule
+```
+
+Update the total structure from:
+
+```text
+8 Parts · 50 Sections
+```
+
+to:
+
+```text
+9 Parts · 63 Sections
+```
+
+---
+
+# Required Replit Behavior Once This Is Implemented
+
+When any slide or approved message is changed, Replit should automatically perform an **audit**, not an automatic edit.
+
+The audit should identify:
+
+* every related deck;
+* every affected slide;
+* every related copy block;
+* every audience-specific variation;
+* every component or file that may require review.
+
+Then Replit must ask:
+
+> Do you want me to apply this approved change across all affected decks, only selected decks, or only the current deck?
+
+No cross-deck edits occur until I answer.
+
+---
+
+# Recommendation
+
+Yes, build this registry into the Foundations Book.
+
+It will prevent:
+
+* inconsistent messaging;
+* old slides continuing to circulate;
+* visual drift;
+* accidental rewrites;
+* trademark inconsistencies;
+* duplicate versions;
+* different audiences receiving conflicting information;
+* Replit updating one deck but forgetting the others.
+
+It will also make future updates much easier because every approved slide, phrase, visual, and deck will have a documented place in the system.
+
+---
+
+# Current Status
+
+Review Mode.
+
+Do not modify `docs/MWM-Foundations-Book-Outline-v1.0.md` yet.
+
+Please first confirm:
+
+1. whether you agree with creating Part IX;
+2. whether the registry should track all approved decks and slides;
+3. whether the controlled propagation rule should become permanent;
+4. whether archived slide versions should remain accessible;
+5. whether internal slide metadata should be included in every deck file.
+
+Only after I explicitly approve this addition should the Foundations Book outline be revised.
