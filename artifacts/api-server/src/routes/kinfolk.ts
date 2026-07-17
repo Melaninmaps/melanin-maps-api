@@ -1183,6 +1183,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     return;
   }
 
+  if (message.length > 2000) {
+    res.status(400).json({ error: "Message is too long. Please keep it under 2,000 characters." });
+    return;
+  }
+
   try {
     // ── Enforce free-tier monthly query limit ─────────────────────────────────
     let queriesUsedThisCall: number | null = null;
@@ -1515,12 +1520,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     ];
 
     // Call AI — response_format json_object guarantees valid JSON every response
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      max_completion_tokens: 8192,
-      messages: aiMessages,
-      response_format: { type: "json_object" },
-    });
+    const completion = await openai.chat.completions.create(
+      {
+        model: "gpt-4o",
+        max_completion_tokens: 1000,
+        messages: aiMessages,
+        response_format: { type: "json_object" },
+      },
+      { signal: AbortSignal.timeout(25000) },
+    );
 
     // Track AI pool usage for paid tiers after successful generation
     if (aiPoolCircleId) {
@@ -1622,8 +1630,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }),
     });
   } catch (err) {
+    const isTimeout = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
     req.log.error({ err }, "KinfolkAI chat failed");
-    res.status(500).json({ error: "Failed to generate response" });
+    res.status(isTimeout ? 504 : 500).json({
+      error: isTimeout
+        ? "Kinfolk took too long to respond. Please try again in a moment."
+        : "Failed to generate response",
+    });
   }
 });
 
