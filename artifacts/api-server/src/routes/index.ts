@@ -137,10 +137,12 @@ import showLoveRouter from "./show-love";
 import membershipFamilyRouter from "./membership-family";
 import legalRouter from "./legal";
 import businessMembershipInfoRouter from "./business-membership-info";
+import dbProbeRouter from "./db-probe";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(dbProbeRouter);
 router.use(authRouter);
 router.use(phoneAuthRouter);
 router.use(businessesRouter);
