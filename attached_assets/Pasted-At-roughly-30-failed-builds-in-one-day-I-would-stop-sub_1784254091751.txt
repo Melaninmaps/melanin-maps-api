@@ -1,0 +1,86 @@
+At roughly **30 failed builds in one day**, I would stop submitting new cloud builds for now. Repeated EAS retries are no longer debugging—they are only confirming that the generated iOS configuration remains wrong.
+
+The latest commit message says Replit changed the Podfile to use `react-native-maps/Google`, but because the build still fails during **Install pods**, either:
+
+1. the fix is still generating an invalid Podfile,
+2. another config plugin or script is rewriting it during prebuild, or
+3. the committed `ios` folder and the Expo-generated configuration are conflicting.
+
+Expo’s build process regenerates native iOS files during **Prebuild** when the project uses Continuous Native Generation, so manually fixing a generated Podfile can be overwritten unless the true source—the app configuration or config plugin—is fixed. ([Expo Documentation][1])
+
+## What I recommend now
+
+### 1. Stop all new EAS builds
+
+Do not let Replit submit another build until they have reproduced a successful `pod install` or local iOS build first.
+
+A seven-second pod failure means this is failing immediately and predictably. There is no reason to spend another cloud build testing the same configuration.
+
+### 2. Require a clean local reproduction
+
+Send Replit this exact message:
+
+> Please stop submitting additional EAS iOS builds until this is reproduced and fixed locally. We have had approximately 30 failed builds today.
+>
+> Before starting another cloud build, please:
+>
+> 1. Search the entire repository for:
+>
+>    * `react-native-google-maps`
+>    * `react-native-maps/Google`
+>    * `rn_maps_path`
+>    * any custom Podfile modification or map config plugin
+> 2. Confirm whether the repository contains a committed `ios` directory.
+> 3. Run a completely clean native generation:
+>
+> ```bash
+> rm -rf ios
+> npx expo prebuild --clean --platform ios
+> ```
+>
+> 4. Inspect the newly generated `ios/Podfile` and confirm there is only one valid map integration and no legacy `react-native-google-maps` reference.
+> 5. Run:
+>
+> ```bash
+> cd ios
+> pod install --repo-update
+> ```
+>
+> 6. Then run a local iOS compile or local EAS build.
+>
+> Do not submit another EAS cloud build until `pod install` succeeds locally. Please send me the complete final error if the clean local build still fails.
+
+Expo specifically recommends using `npx expo prebuild --clean` to delete and regenerate native directories when troubleshooting generated native configuration. ([Expo Documentation][2])
+
+### 3. Give them a fallback that gets you unstuck
+
+Your Android app uses Google Maps by default, but **iOS can use Apple Maps through `react-native-maps` without adding the Google Maps native pod**. Expo’s documentation confirms that `react-native-maps` supports Apple Maps or Google Maps on iOS. ([Expo Documentation][3])
+
+So my practical fallback would be:
+
+> For this Apple submission, use Apple Maps on iOS and keep Google Maps on Android. Remove the iOS Google Maps provider and Google Maps CocoaPod integration completely. Once the iOS build is approved and stable, Google Maps can be reintroduced on a separate branch and tested locally before another production build.
+
+That would likely mean:
+
+* iOS: default `MapView` using Apple Maps
+* Android: `PROVIDER_GOOGLE`
+* no `react-native-maps/Google` pod on iOS
+* no Google Maps iOS API key required for this build
+
+This is the approach I would choose **tonight** if the goal is to get a successful Apple build rather than insist both platforms use the exact same native map provider immediately.
+
+## My candid assessment
+
+Replit appears to be making one change, launching a cloud build, reading the next error, and repeating. That is why the errors shift slightly without reaching a stable build. They need to stop treating EAS as the debugger and validate the generated iOS project locally first.
+
+I would give them two choices:
+
+**Preferred:** repair Google Maps iOS locally and prove `pod install` succeeds before another EAS build.
+
+**Fastest:** temporarily switch iOS to Apple Maps, remove the Google iOS pod configuration, and submit a stable build.
+
+Android succeeding does not prove the map setup is correct for iOS; Android uses Gradle and Google Maps natively, while iOS is failing specifically in CocoaPods.
+
+[1]: https://docs.expo.dev/workflow/continuous-native-generation/?utm_source=chatgpt.com "Continuous Native Generation (CNG)"
+[2]: https://docs.expo.dev/guides/adopting-prebuild/?utm_source=chatgpt.com "Adopt Prebuild"
+[3]: https://docs.expo.dev/versions/latest/sdk/map-view/?utm_source=chatgpt.com "react-native-maps"
