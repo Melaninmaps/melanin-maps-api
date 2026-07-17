@@ -65,6 +65,10 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    proxy: {
+      "/biz-deck": { target: "http://localhost:19816", changeOrigin: true },
+      "/community-deck": { target: "http://localhost:24675", changeOrigin: true },
+    },
   },
   preview: {
     port,

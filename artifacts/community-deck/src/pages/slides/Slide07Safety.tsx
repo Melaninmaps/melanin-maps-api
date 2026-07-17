@@ -25,7 +25,7 @@ export default function Slide07Safety() {
             { title: "Officer Watch",       body: "Real-time community reports on encounters", hi: true },
             { title: "Community Alerts",    body: "Hyper-local warnings from your network", hi: false },
             { title: "Emergency Resources", body: "Vetted resources available wherever you are", hi: true },
-            { title: "Travel Confidence",   body: "Go anywhere knowing your community has your back", hi: false },
+            { title: "Travel Confidence",   body: "Community-powered awareness so you can travel with informed confidence", hi: false },
           ].map(({ title, body, hi }) => (
             <div key={title} className="flex flex-col justify-start py-[2.2vh] px-[2vw]"
               style={{ background: hi ? "rgba(202,146,43,0.1)" : "rgba(202,146,43,0.05)", border: `1px solid ${hi ? "rgba(202,146,43,0.3)" : "rgba(202,146,43,0.18)"}` }}>

@@ -755,3 +755,9 @@ id = "Xns5bkp5VlrRdHItisGIX"
 uri = "file://mapping_melanin_ip_inventory.zip"
 type = "unspecified"
 title = "Mapping With Melanin — IP Inventory — Click to Download ZIP"
+
+[[outputs]]
+id = "tWPQ2aoqg6PyZrxTYioTy"
+uri = "file://.local/outputs/Mapping-With-Melanin---Community-Deck.pdf"
+type = "pdf"
+title = "Mapping With Melanin — Community Deck (PDF)"
