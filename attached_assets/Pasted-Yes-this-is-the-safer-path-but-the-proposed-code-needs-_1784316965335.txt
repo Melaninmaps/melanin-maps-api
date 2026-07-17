@@ -1,0 +1,125 @@
+Yes—this is the safer path, but the proposed code needs a few corrections before it is ready.
+
+Using `static-server.mjs` avoids rebuilding `dist/index.mjs`, so the existing production API bundle can remain byte-for-byte unchanged. A TCP probe from the same Railway container can answer the immediate question:
+
+> Can this container resolve and open a connection to the database host and port?
+
+It will **not** prove that PostgreSQL authentication succeeds or that `SELECT 1` works. But it cleanly distinguishes a broken Railway internal-network path from an application/database-pool issue.
+
+Send Replit this:
+
+> Authorized to prepare an exact before-and-after diff for `static-server.mjs` only. Do not push or deploy yet.
+>
+> Please correct the proposed implementation before presenting it:
+>
+> 1. `static-server.mjs` is ESM, so do not use `require("net")`. Use:
+>
+> ```js
+> import net from "node:net";
+> ```
+>
+> 2. Parse `DATABASE_URL` with `new URL()` rather than a regular expression. The regex may fail with encoded credentials, query parameters, IPv6, or URLs without an explicit port.
+>
+> 3. Do not return the actual database hostname or port in the response. Return only:
+>
+>    * `connected`
+>    * `elapsedMs`
+>    * `hostCategory`
+>    * sanitized error code/name
+>
+> 4. Ensure the socket can produce only one response. Prevent `timeout`, `error`, and `connect` handlers from attempting to respond more than once.
+>
+> 5. Use `.once()` handlers and clean up/destroy the socket after completion.
+>
+> 6. Keep the endpoint protected by `DB_PROBE_KEY`.
+>
+> 7. Confirm this route is registered before the existing `/api/*` proxy so it is handled by `static-server.mjs` rather than forwarded to `dist/index.mjs`.
+>
+> 8. Provide:
+>
+>    * exact before-and-after diff;
+>    * original and updated SHA-256 for `static-server.mjs`;
+>    * file-size change;
+>    * confirmation that `dist/index.mjs` is unchanged;
+>    * confirmation that no other file changed.
+>
+> Stop after presenting the diff. Do not push or deploy.
+
+A safer shape would look like this:
+
+```js
+import net from "node:net";
+
+// Temporary diagnostic route — remove immediately after one controlled test.
+app.get("/api/db-probe", (req, res) => {
+  const probeKey = process.env.DB_PROBE_KEY;
+
+  if (!probeKey || req.headers["x-probe-key"] !== probeKey) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  let databaseUrl;
+
+  try {
+    databaseUrl = new URL(process.env.DATABASE_URL ?? "");
+  } catch {
+    return res.json({
+      connected: false,
+      elapsedMs: 0,
+      hostCategory: "unknown",
+      error: { code: "INVALID_DATABASE_URL" },
+    });
+  }
+
+  const host = databaseUrl.hostname;
+  const port = Number(databaseUrl.port || 5432);
+  const hostCategory = host.endsWith(".internal")
+    ? "internal"
+    : "public-proxy";
+
+  const startedAt = Date.now();
+  const socket = net.createConnection({ host, port });
+
+  let finished = false;
+
+  const finish = (payload) => {
+    if (finished) return;
+    finished = true;
+    socket.destroy();
+
+    if (!res.headersSent) {
+      res.json({
+        ...payload,
+        elapsedMs: Date.now() - startedAt,
+        hostCategory,
+      });
+    }
+  };
+
+  socket.setTimeout(3000);
+
+  socket.once("connect", () => {
+    finish({ connected: true });
+  });
+
+  socket.once("timeout", () => {
+    finish({
+      connected: false,
+      error: { code: "ETIMEDOUT" },
+    });
+  });
+
+  socket.once("error", (error) => {
+    finish({
+      connected: false,
+      error: {
+        code: typeof error.code === "string" ? error.code : "SOCKET_ERROR",
+      },
+    });
+  });
+});
+```
+
+One more important point: if the TCP probe succeeds, we must **not** conclude the database is fully working. It would prove only that DNS and port connectivity work. The next investigation would then focus on PostgreSQL authentication, SSL negotiation, or the application pool.
+
+For now, authorize preparation and inspection of the one-file diff only.
