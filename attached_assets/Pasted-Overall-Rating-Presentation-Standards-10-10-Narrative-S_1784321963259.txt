@@ -1,0 +1,123 @@
+Overall Rating
+Presentation Standards: 10/10
+Narrative Structure: 10/10
+Brand Voice: 10/10
+Emotional Arc: 9.9/10
+Mission Alignment: 10/10
+Overall:
+9.95 / 10
+The remaining changes are subtle, but I think they're important.
+1. Add "What We Never Do"
+This is something we've talked about for months, and I think it deserves to be part of the design standards—not just this deck.
+I'd add an eleventh section.
+11. What We Never Do
+Mapping With Melanin™ never communicates through:
+Fear
+Shame
+Division
+Corporate jargon
+Artificial urgency
+Overpromising
+Manipulative marketing
+Instead, we communicate through:
+Hope
+Trust
+Authenticity
+Curiosity
+Belonging
+Confidence
+Community
+This protects the brand voice long after this deck is finished.
+2. Add "Audience First"
+Every deck should adapt slightly depending on who is in the room.
+For example:
+Investor
+↓
+Focus on market, vision, scalability.
+Business
+↓
+Focus on customers, storytelling, discovery.
+Community
+↓
+Focus on belonging, safety, connection.
+Volunteer
+↓
+Focus on mission.
+Influencer
+↓
+Focus on impact.
+The heart stays identical.
+Only the emphasis changes.
+I'd make this part of the Presentation Standards.
+3. One sentence I would remove
+This one.
+For the first time, you have a place where your story is the product.
+I know what you're trying to communicate...
+...but I don't actually believe that's the best expression.
+Businesses aren't the product.
+Stories aren't products.
+I'd rewrite it as:
+For the first time, your story becomes part of how your community discovers you.
+Or
+For the first time, your story is as discoverable as your business.
+That feels more authentic to your philosophy.
+4. "The Movement"
+I love this slide.
+I would just add one line at the end.
+Because belonging shouldn't depend on luck.
+That sentence ties directly back to Slide 3.
+That's called a bookend.
+Great speeches begin and end with the same emotional idea.
+5. Closing
+I'd change one word.
+Instead of
+One trusted recommendation.
+I'd say
+One trusted connection.
+Because...
+Connection becomes
+Recommendations.
+Businesses.
+Friendships.
+Mentorships.
+Communities.
+Connection is the root.
+6. One thing I think is missing completely
+This isn't a slide.
+It's a principle.
+Every deck should answer these five questions.
+Before implementation, ask:
+Why does this exist?
+Why now?
+Why us?
+Why should anyone care?
+What should they feel when this ends?
+If every presentation answers those five questions...
+...it will never feel generic.
+7. I would rename one section
+Instead of
+Presentation Design Standards
+I'd call it
+Mapping With Melanin™ Storytelling Standards
+Why?
+Because this isn't really about typography.
+It's about how your company communicates.
+Storytelling is the larger umbrella.
+8. One final addition
+This one is for us.
+I'd add this at the very end of the standards.
+The "Friend Test"
+Before approving any slide, ask:
+Would I say this exactly this way if I were sitting across from a friend over coffee?
+If the answer is no...
+Rewrite it.
+I think this one sentence will keep every Zoom, keynote, roadshow, volunteer training, investor pitch, and onboarding session aligned with the authentic voice you've said you want.
+One More Standing Instruction for Replit
+I'd actually make this permanent. Since you asked me to include the "do not build" reminder in every exchange, I would add this to the end of every message we send to Replit:
+Implementation Status
+Review Mode
+This response is for discussion, critique, refinement, and planning only.
+Do not implement, modify, build, generate, deploy, commit, or replace any production assets based on this response.
+Implementation begins only after I explicitly write:
+"Please implement."
+If there is any uncertainty, assume approval has not been given and ask for clarification before taking action.
