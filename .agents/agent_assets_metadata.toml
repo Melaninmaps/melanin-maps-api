@@ -761,3 +761,9 @@ id = "tWPQ2aoqg6PyZrxTYioTy"
 uri = "file://.local/outputs/Mapping-With-Melanin---Community-Deck.pdf"
 type = "pdf"
 title = "Mapping With Melanin — Community Deck (PDF)"
+
+[[outputs]]
+id = "asgb3q6qGR48SyBpnWOOg"
+uri = "file://.local/outputs/Mapping-With-Melanin---Experience-Deck.pdf"
+type = "pdf"
+title = "Mapping With Melanin — Experience Deck (PDF)"
