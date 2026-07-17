@@ -4,6 +4,7 @@ import { request as httpRequest } from "http";
 import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
+import net from "node:net";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || "8080");
@@ -62,6 +63,79 @@ app.get("/__debug", (req, res) => {
     webStaticContents: WEB_STATIC ? (() => { try { return fs.readdirSync(WEB_STATIC); } catch { return "error"; } })() : "not set",
   };
   res.json(info);
+});
+
+// Temporary diagnostic route — remove immediately after one controlled test.
+app.get("/api/db-probe", (req, res) => {
+  if (process.env.DB_PROBE_ENABLED !== "true") {
+    return res.status(404).end();
+  }
+
+  const probeKey = process.env.DB_PROBE_KEY;
+
+  if (!probeKey || req.headers["x-probe-key"] !== probeKey) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  let databaseUrl;
+
+  try {
+    databaseUrl = new URL(process.env.DATABASE_URL ?? "");
+  } catch {
+    return res.json({
+      connected: false,
+      elapsedMs: 0,
+      hostCategory: "unknown",
+      error: { code: "INVALID_DATABASE_URL" },
+    });
+  }
+
+  const host = databaseUrl.hostname;
+  const port = Number(databaseUrl.port || 5432);
+  const hostCategory = host.endsWith(".internal")
+    ? "internal"
+    : "public-proxy";
+
+  const startedAt = Date.now();
+  const socket = net.createConnection({ host, port });
+
+  let finished = false;
+
+  const finish = (payload) => {
+    if (finished) return;
+    finished = true;
+    socket.destroy();
+
+    if (!res.headersSent) {
+      res.json({
+        ...payload,
+        elapsedMs: Date.now() - startedAt,
+        hostCategory,
+      });
+    }
+  };
+
+  socket.setTimeout(3000);
+
+  socket.once("connect", () => {
+    finish({ connected: true });
+  });
+
+  socket.once("timeout", () => {
+    finish({
+      connected: false,
+      error: { code: "ETIMEDOUT" },
+    });
+  });
+
+  socket.once("error", (error) => {
+    finish({
+      connected: false,
+      error: {
+        code: typeof error.code === "string" ? error.code : "SOCKET_ERROR",
+      },
+    });
+  });
 });
 
 // Proxy all /api/* to the Express API
