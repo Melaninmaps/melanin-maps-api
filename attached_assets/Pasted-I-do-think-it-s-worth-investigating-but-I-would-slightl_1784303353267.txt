@@ -1,0 +1,51 @@
+I do think it's worth investigating, but I would **slightly change what Replit checks first** based on everything you've uncovered over the last two days.
+
+One thing in their message gives me pause:
+
+> "The GoDaddy CNAME issue..."
+
+Earlier, they themselves produced evidence that **both**:
+
+* `https://www.mappingwithmelanin.com/...`
+* the Railway URL
+
+were reaching the same Railway server and returning the expected responses. If that evidence was accurate, then **GoDaddy should no longer be the leading suspect**. I wouldn't let them start by undoing domain configuration unless they can show new evidence that the routing has changed.
+
+Instead, I'd ask them to investigate in this order:
+
+> Go ahead, but please do not change any code or configuration yet.
+>
+> Before making any changes, please answer these questions with evidence:
+>
+> 1. **What exact API base URL is baked into the APK I just installed?** (Print the exact string.)
+> 2. **What Git commit hash was this APK built from?** I want to confirm it includes the latest diagnostic changes.
+> 3. **From the running APK, what is the exact request URL for both Login and Forgot Password?**
+> 4. **For one failed request, provide:**
+>
+>    * the HTTP status (if one was received),
+>    * the Content-Type,
+>    * whether `fetch()` threw before a response was received,
+>    * or whether JSON parsing failed after a response arrived.
+> 5. **If `fetch()` threw, what is the actual exception name and message?** (For example: `TypeError`, SSL error, DNS resolution failure, timeout, etc.)
+> 6. **Please confirm the Railway API is reachable from an external client at the exact endpoint the APK is calling.**
+>
+> Please don't modify code, Railway variables, DNS, or GoDaddy settings until you've answered these questions.
+
+### Why I want them to do it this way
+
+Right now you have conflicting evidence:
+
+* Earlier tests suggested the production endpoints were reachable.
+* The diagnostic APK now reports it cannot reach the server.
+* The diagnostic messaging still isn't telling us *why*.
+
+Those facts point to something we still haven't isolated. The next step isn't to change infrastructure—it's to identify **exactly where the request is failing**.
+
+Once they come back with those answers, we'll have a much clearer picture of whether the issue is:
+
+* an incorrect API URL in the build,
+* a network/SSL problem,
+* an Android-specific issue,
+* or something else entirely.
+
+That approach minimizes the risk of making unnecessary changes while you're so close to launch.
