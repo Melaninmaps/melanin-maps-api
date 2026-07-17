@@ -1,0 +1,36 @@
+Yes—but **do not send Replit the Railway Postgres connection string in chat**.
+
+That connection string is a database secret. Replit should inspect the production database through the Railway service’s existing environment variables or Railway’s database console, not ask you to copy and paste the credential.
+
+Also, their latest conclusion still needs one correction: proving that a request with intentionally wrong credentials returns `401` does not prove your installed app is receiving the same response with your real credentials. It only proves the routing works.
+
+Send Replit this:
+
+> Please use the existing Railway database connection already configured for the API Server. Do not ask me to paste or reveal the Postgres connection string.
+>
+> Before changing code or creating another build, inspect the production authentication records for my account and report only non-sensitive results:
+>
+> 1. Does `tlindsay428@yahoo.com` exist in the production `users` table?
+> 2. Does the corresponding credential/account record exist in the authentication table?
+> 3. Which login provider/type is associated with the account: email/password, phone, OIDC, or guest?
+> 4. Is a password hash present?
+> 5. Was the account originally created through the former free/guest flow rather than email/password?
+> 6. Does password reset update the same credential record used by `/api/auth/login-email`?
+> 7. After setting a temporary password directly through the supported auth flow, does the exact production login endpoint return HTTP 200?
+>
+> Do not display the password hash, database URL, tokens, or secret values.
+
+The likely issue is not necessarily that the user row is missing. There can be a `users` profile row without a valid email/password credential record. That would fit your history: you previously entered through a free or guest flow, but normal login never worked.
+
+Their next proof should be:
+
+```text
+User profile exists: yes
+Email/password auth record exists: yes/no
+Password reset updates that record: yes/no
+Production login with a newly reset password: 200/401
+```
+
+If they can make the production endpoint return `200` using a newly reset password but your installed app still fails, then—and only then—the client diagnostic build becomes justified.
+
+Also, because your password was posted earlier, make sure the final password used for testing is completely new and not shared in any chat.
