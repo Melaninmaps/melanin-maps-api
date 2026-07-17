@@ -241,6 +241,22 @@ The Mapping With Melanin™ Legacy Collection — twenty years from now — will
 
 ---
 
+## To the Next Steward — Reserved Section
+
+*Not to be written now. Not next year. Not for a very long time.*
+
+One empty section, reserved from the beginning.
+
+Someday — whether thirty years from now or longer — someone else will lead Mapping With Melanin™. If this is done right, they will not inherit just a company. They will inherit a set of values, a way of thinking, and a responsibility to the community.
+
+This section is that promise made visible.
+
+Institutions that last generations are not built around a single person. They are built so the mission can continue when that person eventually passes the torch.
+
+*This section remains empty until the founder is ready to write it. Its presence in the document is itself the commitment.*
+
+---
+
 ## Letters to the Future — Reserved Section
 
 *To be added when the company has been in operation for some time.*

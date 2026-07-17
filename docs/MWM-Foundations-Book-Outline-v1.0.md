@@ -329,6 +329,16 @@ Each year adds: major accomplishments, challenges overcome, lessons learned, com
 
 ---
 
+## A Promise — Permanent Governing Principle
+
+> **We will never become so focused on growth that we stop listening.**
+
+The Welcome Home Tour is listening first. Not arriving with answers. Arriving with questions. That philosophy is rare. Protecting it ensures the platform continues to earn trust rather than assume it deserves it.
+
+This promise belongs in the Foundations Book permanently — not as a policy, but as a reminder of why everything else exists.
+
+---
+
 ## Next Steps (Pending Approval)
 
 Before any work begins on the Foundations Book itself, approve:
