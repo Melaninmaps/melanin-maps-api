@@ -9,7 +9,7 @@ export default function SlideInv35MarketOpportunity() {
           Building at the intersection<br />of six massive markets.
         </div>
         <div className="font-body" style={{ fontSize: "1.1vw", color: "#7B5408", marginTop: "0.7vw", maxWidth: "72vw" }}>
-          Unlike point solutions that serve one market, Mapping with Melanin™ connects all six into a single ecosystem.
+          Unlike point solutions that serve one market, Mapping With Melanin™ connects all six into a single ecosystem.
         </div>
         <div className="font-body" style={{ fontSize: "1.0vw", color: "#5C3A1A", marginTop: "0.4vw", maxWidth: "72vw", opacity: 0.85 }}>
           Serving millions of travelers, relocators, community members, creators, and minority-owned businesses through one connected platform.

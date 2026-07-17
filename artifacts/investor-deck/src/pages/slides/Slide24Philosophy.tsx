@@ -50,7 +50,7 @@ export default function Slide24Philosophy() {
 
       <div className="absolute left-0 right-0 text-center px-[10vw]" style={{ top: "37.1vw" }}>
         <div className="font-display" style={{ fontSize: "2vw", fontWeight: 700, color: "#A6720F" }}>
-          Mapping with Melanin&trade; connects them.
+          Mapping With Melanin&trade; connects them.
         </div>
         <div className="font-body mt-[1.1vw]" style={{ fontSize: "1.25vw", color: "#3A1F0E", fontWeight: 500, lineHeight: 1.5 }}>
           We don&rsquo;t just connect businesses to customers. We connect stories &mdash; Jasmine&rsquo;s, Marcus&rsquo;s, the neighborhood&rsquo;s, the city&rsquo;s.

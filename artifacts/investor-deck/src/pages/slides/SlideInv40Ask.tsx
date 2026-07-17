@@ -10,7 +10,7 @@ export default function SlideInv40Ask() {
           Raising <span style={{ color: "#CA922B" }}>$750K</span> to Launch,<br />Scale, and Prove the Model.
         </div>
         <div className="font-body" style={{ fontSize: "1.15vw", color: "#A87A40", marginTop: "0.8vw" }}>
-          This investment funds our first three-city rollout and positions Mapping with Melanin™ for Series A growth.
+          This investment funds our first three-city rollout and positions Mapping With Melanin™ for Series A growth.
         </div>
       </div>
 

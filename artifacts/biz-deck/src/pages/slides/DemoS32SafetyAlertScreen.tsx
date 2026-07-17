@@ -21,7 +21,7 @@ export default function DemoS32SafetyAlertScreen() {
           ICE activity near Howard. Police checkpoint on 14th. A Caribbean Carnival blocking Georgia Ave. A town hall with free food at Reeves. All in the last 35 minutes. All from the community. None from the police blotter.
         </div>
         <div className="inv-rule mt-[2vw] mb-[0.9vw]" style={{ width: "5vw" }} />
-        <div className="font-display" style={{ fontSize: "1.85vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>Information that keeps you safe and connected.</div>
+        <div className="font-display" style={{ fontSize: "1.85vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>Community insight that helps you make informed decisions.</div>
       </div>
 
       <div className="absolute flex items-center" style={{ right: "6vw", top: "5%", bottom: "5%" }}>

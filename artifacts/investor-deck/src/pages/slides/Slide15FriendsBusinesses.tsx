@@ -22,7 +22,7 @@ export default function Slide14FriendsBusinesses() {
           Then they help someone else find theirs.
         </div>
         <div className="font-display mt-[0.9vw]" style={{ fontSize: "1.3vw", fontWeight: 700, color: "#1C0E06", fontStyle: "italic" }}>
-          That is Mapping with Melanin&trade;.
+          That is Mapping With Melanin&trade;.
         </div>
       </div>
 

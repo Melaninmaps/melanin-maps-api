@@ -58,7 +58,7 @@ export default function BizSlide09FoundingBenefits() {
           <div className="font-body" style={{ fontSize: "0.75vw", color: "#CA922B", fontWeight: 700, letterSpacing: "0.12em", marginBottom: "0.5vw" }}>MARKETPLACE</div>
           <div className="font-display" style={{ fontSize: "1.4vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2, marginBottom: "0.7vw" }}>Marketplace Early Access</div>
           <div className="font-body" style={{ fontSize: "0.9vw", color: "#7B5408", lineHeight: 1.65 }}>
-            First access to the Mapping with Melanin™ marketplace when it launches — the direct commerce layer connecting community members to the businesses they already trust.
+            First access to the Mapping With Melanin™ marketplace when it launches — the direct commerce layer connecting community members to the businesses they already trust.
           </div>
         </div>
       </div>

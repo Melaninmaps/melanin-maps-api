@@ -8,7 +8,7 @@ export default function BizSlide06HowBusinessesGrow() {
         <div className="font-body" style={{ fontSize: "1.2vw", color: "#CA922B", letterSpacing: "0.16em", fontWeight: 700, marginBottom: "0.5vw" }}>YOUR GROWTH TOOLKIT</div>
         <div className="font-display" style={{ fontSize: "3.4vw", fontWeight: 800, color: "#1C0E06", lineHeight: 1.08 }}>
           How businesses grow<br />
-          <span style={{ color: "#CA922B" }}>on Mapping with Melanin™.</span>
+          <span style={{ color: "#CA922B" }}>on Mapping With Melanin™.</span>
         </div>
       </div>
 
@@ -63,7 +63,7 @@ export default function BizSlide06HowBusinessesGrow() {
           </svg>
           <div className="font-body" style={{ fontSize: "0.75vw", color: "#CA922B", fontWeight: 700, letterSpacing: "0.1em", marginBottom: "0.4vw" }}>EVENTS</div>
           <div className="font-display" style={{ fontSize: "1.1vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2, marginBottom: "0.8vw" }}>Host &amp; Promote Events</div>
-          <div className="font-body" style={{ fontSize: "0.82vw", color: "#7B5408", lineHeight: 1.6 }}>Create events that appear in community feeds and the Mapping with Melanin™ events calendar. Drive foot traffic directly.</div>
+          <div className="font-body" style={{ fontSize: "0.82vw", color: "#7B5408", lineHeight: 1.6 }}>Create events that appear in community feeds and the Mapping With Melanin™ events calendar. Drive foot traffic directly.</div>
           <div style={{ marginTop: "1vw", paddingTop: "0.8vw", borderTop: "1px solid rgba(58,31,14,0.06)" }}>
             <div className="font-body" style={{ fontSize: "0.72vw", color: "#A87A40" }}>Event creation · Community feed · RSVPs · Recurring events</div>
           </div>

@@ -40,7 +40,7 @@ export default function Slide11MeetJasmine() {
         </div>
 
         <div className="font-display mt-[2vw]" style={{ fontSize: "2vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>
-          Then she opens Mapping with Melanin&trade;.
+          Then she opens Mapping With Melanin&trade;.
         </div>
       </div>
     </div>

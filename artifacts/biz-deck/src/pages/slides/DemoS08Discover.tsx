@@ -58,7 +58,7 @@ export default function DemoS08Discover() {
             {/* Active search bar */}
             <div style={{ background: "rgba(202,146,43,0.1)", borderRadius: "0.8vw", padding: "0.55vw 0.8vw", border: "1px solid rgba(202,146,43,0.45)", display: "flex", alignItems: "center", gap: "0.4vw" }}>
               <svg width="0.65vw" height="0.65vw" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <span style={{ color: "#CA922B", fontSize: "0.55vw", fontWeight: 600 }}>brunch DC Black-owned</span>
+              <span style={{ color: "#CA922B", fontSize: "0.55vw", fontWeight: 600 }}>brunch DC minority-owned</span>
             </div>
 
             {/* Filter row */}

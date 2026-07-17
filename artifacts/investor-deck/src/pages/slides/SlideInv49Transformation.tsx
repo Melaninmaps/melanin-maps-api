@@ -22,12 +22,12 @@ export default function SlideInv49Transformation() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "0 3vw", marginBottom: "1.8vw", paddingBottom: "1vw", borderBottom: "1px solid rgba(202,146,43,0.2)" }}>
           <div style={{ textAlign: "right" }}>
             <div className="font-body" style={{ fontSize: "0.75vw", color: "#5C3A1A", fontWeight: 700, letterSpacing: "0.12em" }}>BEFORE</div>
-            <div className="font-body" style={{ fontSize: "0.78vw", color: "#4A2E12", fontWeight: 600, marginTop: "0.2vw" }}>Mapping with Melanin™</div>
+            <div className="font-body" style={{ fontSize: "0.78vw", color: "#4A2E12", fontWeight: 600, marginTop: "0.2vw" }}>Mapping With Melanin™</div>
           </div>
           <div style={{ width: "1.5vw" }} />
           <div style={{ textAlign: "left" }}>
             <div className="font-body" style={{ fontSize: "0.75vw", color: "#CA922B", fontWeight: 700, letterSpacing: "0.12em" }}>AFTER</div>
-            <div className="font-body" style={{ fontSize: "0.78vw", color: "#A87A40", fontWeight: 600, marginTop: "0.2vw" }}>Mapping with Melanin™</div>
+            <div className="font-body" style={{ fontSize: "0.78vw", color: "#A87A40", fontWeight: 600, marginTop: "0.2vw" }}>Mapping With Melanin™</div>
           </div>
         </div>
 

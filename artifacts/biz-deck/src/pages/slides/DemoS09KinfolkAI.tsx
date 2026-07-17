@@ -97,7 +97,7 @@ export default function DemoS09KinfolkAI() {
           <div style={{ flex: 1, padding: "0.7vw 0.8vw", display: "flex", flexDirection: "column", gap: "0.55vw" }}>
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <div style={{ background: "rgba(202,146,43,0.2)", borderRadius: "0.8vw 0.8vw 0.1vw 0.8vw", padding: "0.45vw 0.6vw", border: "1px solid rgba(202,146,43,0.3)" }}>
-                <span style={{ color: "#FAF6EF", fontSize: "0.52vw" }}>Plan a girls weekend in Atlanta. Black-owned everything.</span>
+                <span style={{ color: "#FAF6EF", fontSize: "0.52vw" }}>Plan a girls weekend in Atlanta. Minority-owned everything.</span>
               </div>
             </div>
             <div style={{ display: "flex", gap: "0.35vw", alignItems: "flex-start" }}>
@@ -105,7 +105,7 @@ export default function DemoS09KinfolkAI() {
                 <span style={{ color: "#CA922B", fontSize: "0.45vw", fontWeight: 800 }}>K</span>
               </div>
               <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: "0.8vw 0.8vw 0.8vw 0.1vw", padding: "0.5vw 0.6vw", border: "1px solid rgba(255,255,255,0.08)" }}>
-                <span style={{ color: "#D9C4A3", fontSize: "0.5vw", lineHeight: 1.5 }}>ATL weekend itinerary — all Black-owned, community verified:</span>
+                <span style={{ color: "#D9C4A3", fontSize: "0.5vw", lineHeight: 1.5 }}>ATL weekend itinerary — all minority-owned, community verified:</span>
               </div>
             </div>
             {[

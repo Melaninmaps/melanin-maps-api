@@ -84,7 +84,7 @@ export default function DemoS09BizProfile() {
             {/* About */}
             <div>
               <div style={{ color: "#CA922B", fontSize: "0.48vw", fontWeight: 700, marginBottom: "0.3vw" }}>ABOUT</div>
-              <div style={{ color: "#A87A40", fontSize: "0.5vw", lineHeight: 1.55 }}>A Black-owned restaurant celebrating Southern heritage and innovation. Community gathering space with weekly live music and brunch specials.</div>
+              <div style={{ color: "#A87A40", fontSize: "0.5vw", lineHeight: 1.55 }}>A minority-owned restaurant celebrating Southern heritage and innovation. Community gathering space with weekly live music and brunch specials.</div>
             </div>
 
             {/* Compliment chips */}

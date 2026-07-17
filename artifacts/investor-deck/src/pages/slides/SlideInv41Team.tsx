@@ -21,7 +21,7 @@ export default function SlideInv41Team() {
         <div className="font-body" style={{ fontSize: "0.9vw", color: "#CA922B", letterSpacing: "0.2em", fontWeight: 700, marginTop: "0.35vw" }}>FOUNDER &amp; CEO</div>
         <div style={{ width: "3vw", height: "2px", background: "#CA922B", marginTop: "0.9vw", marginBottom: "1.2vw" }} />
         <div className="font-body" style={{ fontSize: "1.05vw", color: "#D9C4A3", lineHeight: 1.8 }}>
-          Founder, product visionary, and execution lead. Teianna Lindsay created Mapping with Melanin™ after experiencing firsthand the challenges of confidently relocating, traveling, and discovering trusted businesses and communities. Drawing on years of project management and product leadership, she has led strategy, partnerships, product development, and execution from concept to a live multi-platform beta.
+          Founder, product visionary, and execution lead. Teianna Lindsay created Mapping With Melanin™ after experiencing firsthand the challenges of confidently discovering trusted businesses, navigating new places, and finding community belonging. Drawing on years of project management and product leadership, she has led strategy, partnerships, product development, and execution from concept to a live multi-platform beta.
         </div>
         <div className="font-body" style={{ fontSize: "0.82vw", color: "#CA922B", letterSpacing: "0.18em", fontWeight: 700, marginTop: "1.5vw" }}>
           MISSION-DRIVEN &nbsp;·&nbsp; EXECUTION-FOCUSED &nbsp;·&nbsp; COMMUNITY-OBSESSED
@@ -31,9 +31,9 @@ export default function SlideInv41Team() {
         <div style={{ borderLeft: "2px solid rgba(202,146,43,0.3)", paddingLeft: "1vw", marginTop: "2vw" }}>
           <div className="font-body" style={{ fontSize: "0.78vw", color: "#CA922B", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "0.55vw" }}>COMMUNITY MOMENTUM</div>
           <div className="font-body" style={{ fontSize: "0.88vw", color: "#7B5408", marginBottom: "0.35vw" }}>Founding Businesses</div>
-          <div className="font-body" style={{ fontSize: "0.88vw", color: "#7B5408", marginBottom: "0.35vw" }}>Community Ambassadors</div>
+          <div className="font-body" style={{ fontSize: "0.88vw", color: "#7B5408", marginBottom: "0.35vw" }}>Cultural Ambassadors</div>
           <div className="font-body" style={{ fontSize: "0.88vw", color: "#7B5408", marginBottom: "0.35vw" }}>Beta Testers</div>
-          <div className="font-body" style={{ fontSize: "0.88vw", color: "#7B5408" }}>Creator Partners</div>
+          <div className="font-body" style={{ fontSize: "0.88vw", color: "#7B5408" }}>Cultural Ambassador Partners</div>
         </div>
       </div>
 

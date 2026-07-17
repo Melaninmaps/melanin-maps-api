@@ -73,7 +73,7 @@ export default function SlideInv34ProductEcosystem() {
         </g>
       </svg>
 
-      {/* ── CENTER HUB: Mapping with Melanin™ ──────────────────────── */}
+      {/* ── CENTER HUB: Mapping With Melanin™ ──────────────────────── */}
       <div
         className="absolute"
         style={{
@@ -98,7 +98,7 @@ export default function SlideInv34ProductEcosystem() {
           THE PLATFORM
         </div>
         <div className="font-display" style={{ fontSize: "2.5vw", fontWeight: 700, color: "#FAF6EF", lineHeight: 1.1 }}>
-          Mapping with Melanin™
+          Mapping With Melanin™
         </div>
         <div className="font-display" style={{ fontSize: "1.2vw", color: "#CA922B", marginTop: "0.5vw" }}>
           Community Intelligence Ecosystem
@@ -206,10 +206,10 @@ export default function SlideInv34ProductEcosystem() {
             <polyline points="19 5 21 7 19 9" />
           </svg>
           <div style={{ marginTop: "0.35vw" }}>
-            <div className="font-display" style={{ fontSize: "1.3vw", fontWeight: 700, color: "#FAF6EF" }}>Relocation</div>
-            <div className="font-body" style={{ fontSize: "0.8vw", color: "#CA922B", letterSpacing: "0.13em", fontWeight: 700, marginTop: "0.1vw" }}>EXPANDS LIFETIME VALUE</div>
+            <div className="font-display" style={{ fontSize: "1.3vw", fontWeight: 700, color: "#FAF6EF" }}>Life Journeys</div>
+            <div className="font-body" style={{ fontSize: "0.8vw", color: "#CA922B", letterSpacing: "0.13em", fontWeight: 700, marginTop: "0.1vw" }}>CONNECTS YOUR MILESTONES</div>
             <div className="font-body" style={{ fontSize: "0.87vw", color: "#A87A40", marginTop: "0.2vw", lineHeight: 1.4 }}>
-              Move with confidence before the boxes arrive.
+              Map your biggest moments to community, businesses, and belonging.
             </div>
           </div>
         </div>

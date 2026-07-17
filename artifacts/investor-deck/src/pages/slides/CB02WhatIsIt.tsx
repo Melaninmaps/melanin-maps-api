@@ -15,7 +15,7 @@ export default function CB02WhatIsIt() {
         </h1>
         <div style={{ width: "5vw", height: "3px", background: "#CA922B", marginBottom: "2.2vw" }} />
         <p className="font-body" style={{ fontSize: "1.2vw", color: "#C4935A", lineHeight: 1.75, fontWeight: 300 }}>
-          Mapping with Melanin&trade; brings together the people, businesses, local knowledge, and trusted recommendations that help someone feel connected&mdash;whether they&rsquo;re exploring a new city or deepening roots where they already live.
+          Mapping With Melanin&trade; brings together the people, businesses, local knowledge, and trusted recommendations that help someone feel connected&mdash;whether they&rsquo;re exploring a new city or deepening roots where they already live.
         </p>
       </div>
 

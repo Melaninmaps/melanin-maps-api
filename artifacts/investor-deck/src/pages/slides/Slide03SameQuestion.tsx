@@ -7,7 +7,7 @@ export default function Slide03SameQuestion() {
           That&rsquo;s why
         </div>
         <div className="font-display leading-tight mt-[0.56vw]" style={{ fontSize: "6.4vw", fontWeight: 700, color: "#A6720F" }}>
-          Mapping with Melanin&trade; exists.
+          Mapping With Melanin&trade; exists.
         </div>
         <div className="font-body mt-[2.3vw]" style={{ fontSize: "2vw", fontWeight: 400, color: "#7B5408" }}>
           Helping people find community while helping communities grow.

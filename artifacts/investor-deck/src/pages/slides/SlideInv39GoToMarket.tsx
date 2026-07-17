@@ -122,9 +122,9 @@ export default function SlideInv39GoToMarket() {
         </div>
 
         <div style={{ marginBottom: "1.8vw" }}>
-          <div className="font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#1C0E06" }}>Creator &amp; Ambassador Network</div>
+          <div className="font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#1C0E06" }}>Cultural Ambassador Network</div>
           <div className="font-body" style={{ fontSize: "1.05vw", color: "#7B5408", marginTop: "0.4vw", lineHeight: 1.5 }}>
-            Local creators and ambassadors seed culture content and drive organic discovery.
+            Trusted voices introduce communities, businesses, and experiences through authentic local perspective.
           </div>
         </div>
 

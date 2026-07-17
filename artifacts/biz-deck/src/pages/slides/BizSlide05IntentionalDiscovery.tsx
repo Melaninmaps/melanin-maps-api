@@ -16,7 +16,7 @@ export default function BizSlide05IntentionalDiscovery() {
         </div>
 
         <div className="font-body" style={{ fontSize: "1.1vw", color: "#5C3A1A", lineHeight: 1.7, marginBottom: "2.5vw" }}>
-          When someone finds your business on Mapping with Melanin™, they weren't served an ad. They came looking for a business exactly like yours — because someone in their community told them you were trustworthy.
+          When someone finds your business on Mapping With Melanin™, they weren't served an ad. They came looking for a business exactly like yours — because someone in their community told them you were trustworthy.
         </div>
 
         <div style={{ background: "#FFFFFF", borderRadius: "1vw", padding: "1.6vw", border: "1px solid rgba(58,31,14,0.1)", marginBottom: "1.8vw" }}>
@@ -27,7 +27,7 @@ export default function BizSlide05IntentionalDiscovery() {
               <div className="font-body" style={{ fontSize: "0.82vw", color: "#7B5408", lineHeight: 1.5 }}>Pay to interrupt people who didn't ask</div>
             </div>
             <div>
-              <div className="font-body" style={{ fontSize: "0.82vw", color: "#CA922B", fontWeight: 600, marginBottom: "0.3vw" }}>Mapping with Melanin™</div>
+              <div className="font-body" style={{ fontSize: "0.82vw", color: "#CA922B", fontWeight: 600, marginBottom: "0.3vw" }}>Mapping With Melanin™</div>
               <div className="font-body" style={{ fontSize: "0.82vw", color: "#1C0E06", lineHeight: 1.5 }}>Get found by people who are already looking</div>
             </div>
             <div>
@@ -59,7 +59,7 @@ export default function BizSlide05IntentionalDiscovery() {
         <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
           {[
             { step: "01", title: "They have a need", body: "Looking for a trusted restaurant for a family dinner this weekend", color: "#1C0E06" },
-            { step: "02", title: "They open the app", body: "Searching for soul food in their neighborhood on Mapping with Melanin™", color: "#3D2417" },
+            { step: "02", title: "They open the app", body: "Searching for soul food in their neighborhood on Mapping With Melanin™", color: "#3D2417" },
             { step: "03", title: "They find you", body: "Your verified profile appears with community reviews and a 4.9 trust score", color: "#CA922B" },
             { step: "04", title: "They trust you", body: "214 community members recommended you — that's more convincing than any ad", color: "#3D2417" },
             { step: "05", title: "They become regulars", body: "They save your business, write a review, and tell three friends", color: "#1C0E06" },

@@ -9,7 +9,7 @@ const Phone = ({ children }: { children: React.ReactNode }) => (
 
 const msgs = [
   { from: "ai", text: "Hey Zara — I'm KinfolkAI. I'm not a generic assistant. I know DC, I know our community, and I know what matters to you. Let's get started." },
-  { from: "user", text: "I'm looking for a great brunch spot near Shaw — somewhere Black-owned with a vibe." },
+  { from: "user", text: "I'm looking for a great brunch spot near Shaw — somewhere minority-owned with a vibe." },
   { from: "ai", text: "Perfect. Copper & Oak Bistro on U Street is your top match — 97 Trust Score, outdoor patio, known for their jerk eggs benedict. Saved for you. Want directions?" },
 ];
 

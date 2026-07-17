@@ -19,7 +19,7 @@ export default function BizSlide04YourCustomers() {
           <span style={{ color: "#CA922B" }}>already looking for you.</span>
         </div>
         <div className="font-body" style={{ fontSize: "1.15vw", color: "#D9C4A3", lineHeight: 1.7, marginBottom: "1vw" }}>
-          Every day, people open Mapping with Melanin™ looking for trusted businesses recommended by their community. They're not scrolling through ads. They're looking for businesses they can feel confident supporting.
+          Every day, people open Mapping With Melanin™ looking for trusted businesses recommended by their community. They're not scrolling through ads. They're looking for businesses they can feel confident supporting.
         </div>
 
         <div className="font-body" style={{ fontSize: "1.05vw", color: "#CA922B", fontStyle: "italic", lineHeight: 1.5, marginBottom: "1.8vw" }}>
@@ -47,7 +47,7 @@ export default function BizSlide04YourCustomers() {
         <div className="relative flex-shrink-0" style={{ width: "19vw", height: "min(40.85vw, 70vh)", borderRadius: "2.09vw", border: "0.475vw solid #1C0E06", background: "#1C0E06", boxShadow: "0 0.4vw 1.2vw rgba(0,0,0,0.45)", overflow: "hidden" }}>
           <div className="absolute inset-0 flex flex-col" style={{ background: "#FAF6EF" }}>
             <div className="flex items-center justify-between px-[1.2vw] py-[0.7vw]" style={{ background: "#1C0E06", flexShrink: 0 }}>
-              <span className="font-display" style={{ fontSize: "0.72vw", color: "#F5EBD8", fontWeight: 700 }}>Mapping with Melanin™</span>
+              <span className="font-display" style={{ fontSize: "0.72vw", color: "#F5EBD8", fontWeight: 700 }}>Mapping With Melanin™</span>
               <div style={{ display: "flex", gap: "0.3vw", alignItems: "center" }}>
                 <div style={{ width: "0.5vw", height: "0.5vw", borderRadius: "50%", background: "#CA922B" }} />
                 <span style={{ fontSize: "0.6vw", color: "#CA922B" }}>●●●</span>

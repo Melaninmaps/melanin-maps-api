@@ -80,7 +80,7 @@ export default function DemoS07HomeActive() {
             {/* Trending card */}
             <div style={{ background: "linear-gradient(135deg, rgba(202,146,43,0.2), rgba(202,146,43,0.08))", borderRadius: "0.8vw", padding: "0.7vw", border: "1px solid rgba(202,146,43,0.4)" }}>
               <div style={{ color: "#CA922B", fontSize: "0.45vw", fontWeight: 700, letterSpacing: "0.1em" }}>TRENDING NEAR YOU · SHAW / U STREET</div>
-              <div style={{ color: "#FAF6EF", fontSize: "0.72vw", fontWeight: 800, marginTop: "0.2vw" }}>Black-owned brunch spots</div>
+              <div style={{ color: "#FAF6EF", fontSize: "0.72vw", fontWeight: 800, marginTop: "0.2vw" }}>Minority-owned brunch spots</div>
               <div style={{ color: "#A87A40", fontSize: "0.45vw", marginTop: "0.1vw" }}>14 spots · Updated 1 hour ago</div>
             </div>
 

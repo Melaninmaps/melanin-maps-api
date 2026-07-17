@@ -40,7 +40,7 @@ export default function CB03WhoIsItFor() {
         <div style={{ height: "1px", background: "rgba(202,146,43,0.3)", marginBottom: "1.4vw" }} />
         <p className="font-body" style={{ fontSize: "1.15vw", fontWeight: 400, color: "#3A1F0E", lineHeight: 1.6 }}>
           Whether you&rsquo;re staying close to home or starting somewhere new,<br />
-          <strong style={{ color: "#1C0E06" }}>Mapping with Melanin&trade;</strong> helps you discover businesses,<br />
+          <strong style={{ color: "#1C0E06" }}>Mapping With Melanin&trade;</strong> helps you discover businesses,<br />
           communities, and experiences that make every place feel more like home.
         </p>
       </div>

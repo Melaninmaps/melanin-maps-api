@@ -117,7 +117,7 @@ export default function SlideInv44WhatWeDoForYou() {
                     <span className="font-body" style={{ fontSize: "0.6vw", color: "#1C0E06", fontWeight: 700 }}>Jasmine W.</span>
                     <span style={{ fontSize: "0.58vw", color: "#CA922B" }}>★★★★★</span>
                   </div>
-                  <div className="font-body" style={{ fontSize: "0.58vw", color: "#7B5408", lineHeight: 1.4 }}>"Found this through Mapping with Melanin. Now it's my regular spot."</div>
+                  <div className="font-body" style={{ fontSize: "0.58vw", color: "#7B5408", lineHeight: 1.4 }}>"Found this through Mapping With Melanin. Now it's my regular spot."</div>
                 </div>
               </div>
             </div>
