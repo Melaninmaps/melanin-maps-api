@@ -206,17 +206,61 @@ The Foundations Book ends with two permanent sections:
 
 This section is the governance system for every approved presentation asset across Mapping With Melanin™. Without it, the platform risks inconsistent messaging, duplicate or outdated slides, visual drift, accidental edits to protected language, and trademark formatting inconsistencies.
 
-### Five Confirmed Governance Decisions
+### Seven Confirmed Implementation Decisions
 
 **Decision 1 — Part IX is approved.** The registry governs all approved presentation assets.
 
-**Decision 2 — All approved decks and slides are tracked with unique IDs.** Format: `MWM-[DECK]-S[NUMBER]-V[VERSION]` (e.g. MWM-EXP-S01-V1, MWM-INV-S05-V2). Draft or unapproved slides are clearly marked and excluded from the approved registry.
+**Decision 2 — Register every deck that exists today, including placeholders for future decks.**
 
-**Decision 3 — Controlled propagation is a permanent standard.** When a master slide, approved message, design token, icon, or reusable component changes: audit → identify → explain → distinguish exact from adapted → identify exclusions → produce Impact Report → ask scope question → wait for explicit authorization → implement only approved scope → verify every changed deck → update registry and changelog. No automatic cross-deck changes. Positive feedback does not authorize propagation. The explicit authorization phrase is: "Please implement this approved master-slide update across every registered deck that uses it."
+Initial Registry v1.0:
 
-**Decision 4 — Archived slide versions are preserved permanently.** Previous approved versions are never overwritten. Each archived version retains: slide ID, version number, date approved, date replaced, reason for change, approved copy, visual preview, source file, decks where it appeared, approving person, and legal/factual status. Versions are labeled: Current / Superseded / Archived / Draft / Rejected.
+*Core Brand (Active)*
+- Experience Deck
+- Investor Deck
+- Business Deck
+- Community Deck
 
-**Decision 5 — Internal metadata is included in every deck file, invisible to audiences.** Metadata lives in a hidden slide, notes section, internal appendix, file metadata, deck manifest, or source-code configuration — excluded from public exports. Each deck records: Foundations Book Version, Storytelling Standards Version, Color System Version, Typography System Version, Iconography Version, Slide Registry Version, Deck Version, Last Synchronized, Approval Status, Owner, Confidentiality.
+*Current Operations (Active)*
+- Zoom Presentation
+- Founding Community Presentation
+- Welcome Home Tour Deck
+- Team Presentation
+- Features Deck
+
+*Future (Placeholder — reserve now)*
+- Cultural Ambassador Deck
+- Volunteer Deck
+- Partnership Deck
+- Documentary Deck
+- Press / Media Deck
+- Onboarding Deck
+- Product Roadmap Deck
+- Internal Training Deck
+
+Good systems anticipate growth instead of reacting to it.
+
+**Decision 3 — The slide archive lives in a dedicated `/docs/Registry/` folder structure, separate from the Foundations Book.**
+
+```text
+/docs
+    /Foundations
+    /Registry
+        DeckRegistry
+        SlideRegistry
+        CopyLibrary
+        AssetRegistry
+        Archives
+```
+
+The Foundations Book explains the system. The Registry stores the system. The Foundations Book references the registries but does not become the registry itself.
+
+**Decision 4 — Metadata lives in a central registry, not in hidden slide notes or comments.** The deck is the interface. The registry is the database. Slide notes and file metadata are fragile; the registry is the single source of truth. Every approved slide has a corresponding registry entry.
+
+**Decision 5 — IDs are assigned to every approved slide that exists today.** Do not wait for new work. One consistent system from the beginning. Future slides continue the numbering convention.
+
+**Decision 6 — All archived slide versions are preserved permanently.** Previous approved versions are never overwritten. Each archived version retains: slide ID, version number, date approved, date replaced, reason for change, approved copy, visual preview, source file, decks where it appeared, approving person, and legal/factual status. Versions are labeled: Current / Superseded / Archived / Draft / Rejected. The archive is especially important for legal history, trademark-sensitive wording, investor communications, documentary history, brand evolution, and determining what was publicly presented at a specific point in time.
+
+**Decision 7 — The Approved Copy Library is both markdown and structured data, built in stages.** Phase One: Markdown — human readable, version controlled, easy to review, easy to approve, easy to diff. Phase Two: Generate a structured data representation from the approved markdown, usable by website, app, AI, search, documentation, localization, and automation. The markdown remains the canonical editable version. The structured data becomes the machine-readable version. The database is never the only editable source.
 
 ### Additional Approved Rules
 
@@ -252,11 +296,28 @@ This section is the governance system for every approved presentation asset acro
 
 **63. Presentation Source-of-Truth Rule** — The Foundations Book and its registries govern all approved presentation content. Individual decks identify the Foundations Book version, Storytelling Standards version, Color System version, Typography System version, Slide Registry version, and date last synchronized. Individual decks are not isolated copies with undocumented changes.
 
+**64. Decision Log** — A permanent record of every major architectural, branding, product, legal, and storytelling decision. Every entry includes: Decision ID, Date, Decision, Reasoning, Alternatives Considered, Tradeoffs, Approved By, Related Documents, Related Decks, Related Features, Status, Whether the Decision Is Still Current. Format example:
+
+```
+DEC-0021
+Decision: Rename beta testers to Founding Community Members.
+Reason: Better reflects the mission and emotional experience.
+Alternatives: Beta Tester / Early Access User / Founding Explorer
+Approved: Founder
+Status: Active
+Related Documents: Foundations Book
+Related Decks: Community / Business / Zoom / Experience
+```
+
+Over time this becomes an invaluable historical record and onboarding tool for future team members — explaining not just what was decided, but why.
+
+**65. Lessons Learned Log** — A permanent section capturing institutional knowledge from the journey. Categories include: Apple review lessons, Google Play review lessons, Railway deployment lessons, DNS configuration lessons, Google Maps configuration lessons, trademark process lessons, community rollout lessons, investor presentation lessons, tour planning lessons. Each entry answers: What happened? What did we learn? What will we do differently next time? This prevents the company from rediscovering hard-won knowledge as the team grows.
+
 ---
 
 ## Current Total Structure
 
-**9 Parts · 63 Sections**
+**9 Parts · 65 Sections**
 
 ---
 

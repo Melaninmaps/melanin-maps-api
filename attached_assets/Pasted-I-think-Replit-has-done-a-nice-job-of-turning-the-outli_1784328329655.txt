@@ -1,0 +1,316 @@
+I think Replit has done a nice job of turning the outline into a governed system. My answers would be a little different, though, because I'm thinking about where Mapping With Melanin™ will be **five years from now**, not just today.
+
+Here's what I'd send.
+
+---
+
+# COPY / PASTE TO REPLIT
+
+---
+
+# Foundations Book — Part IX Implementation Decisions
+
+**Status: Review Mode**
+
+Thank you. The outline update looks correct, and I appreciate that no production assets or presentations were modified.
+
+Below are my decisions to the five remaining questions.
+
+---
+
+# 1. Which Decks Should Be Registered First?
+
+**Decision: Register every deck that exists today.**
+
+This registry should begin with all active presentations, even if some are still under development.
+
+### Initial Registry (v1.0)
+
+Core Brand
+
+* Experience Deck
+* Investor Deck
+* Business Deck
+* Community Deck
+
+Current Operations
+
+* Zoom Presentation
+* Founding Community Presentation
+* Welcome Home Tour Deck
+* Team Presentation
+* Features Deck
+
+Future (Create Placeholders)
+
+* Cultural Ambassador Deck
+* Volunteer Deck
+* Partnership Deck
+* Documentary Deck
+* Press / Media Deck
+* Onboarding Deck
+* Product Roadmap Deck
+* Internal Training Deck
+
+Even if some of these do not yet exist, reserve their place now.
+
+Good systems anticipate growth instead of reacting to it.
+
+---
+
+# 2. Where Should the Slide Archive Live?
+
+**Decision: Separate Registry Folder**
+
+Do **not** embed the archive inside the Foundations Book.
+
+Instead create a dedicated documentation structure.
+
+Example:
+
+```text
+/docs
+    /Foundations
+    /Registry
+        DeckRegistry
+        SlideRegistry
+        CopyLibrary
+        AssetRegistry
+        Archives
+```
+
+The Foundations Book should reference these registries.
+
+It should not become the registry itself.
+
+The Foundations Book explains the system.
+
+The Registry stores the system.
+
+---
+
+# 3. Where Should Metadata Live?
+
+**Decision: Central Registry**
+
+Metadata should not depend on hidden PowerPoint notes, Figma comments, or slide metadata.
+
+Those are fragile.
+
+Instead:
+
+Every approved slide should have a corresponding registry entry.
+
+Think of it like source code.
+
+The deck is the interface.
+
+The registry is the database.
+
+The registry becomes the single source of truth.
+
+---
+
+# 4. Should Existing Slides Receive IDs?
+
+**Decision: Yes.**
+
+Assign IDs to every approved slide that exists today.
+
+Do not wait for new work.
+
+Otherwise we create two systems:
+
+Old slides.
+
+New slides.
+
+That becomes confusing very quickly.
+
+The registry should begin with a complete inventory.
+
+Future slides simply continue the numbering convention.
+
+---
+
+# 5. Should the Copy Library Be Markdown or Database?
+
+**Decision: Both — but in stages.**
+
+### Phase One
+
+Markdown.
+
+Human readable.
+
+Version controlled.
+
+Easy to review.
+
+Easy to approve.
+
+Easy to diff.
+
+### Phase Two
+
+Generate a structured data representation from the approved markdown.
+
+That structured version can later support:
+
+* website
+* app
+* AI
+* search
+* documentation
+* localization
+* automation
+
+The markdown remains the canonical editable version.
+
+The structured data becomes the machine-readable version.
+
+Never make the database the only editable source.
+
+---
+
+# Additional Recommendation
+
+I would like one additional registry.
+
+---
+
+# 64. Decision Log
+
+One of the biggest challenges in long projects is remembering:
+
+> "Why did we decide this?"
+
+Create a Decision Log.
+
+Every major architectural, branding, product, legal, and storytelling decision should receive an entry.
+
+Each record should include:
+
+* Decision ID
+* Date
+* Decision
+* Reasoning
+* Alternatives considered
+* Tradeoffs
+* Approved by
+* Related documents
+* Related decks
+* Related features
+* Status
+* Whether the decision is still current
+
+Example:
+
+```text
+DEC-0021
+
+Decision:
+
+Rename beta testers to Founding Community Members.
+
+Reason:
+
+Better reflects the mission and emotional experience.
+
+Alternatives:
+
+Beta Tester
+Early Access User
+Founding Explorer
+
+Approved:
+
+Founder
+
+Status:
+
+Active
+
+Related Documents:
+
+Foundations Book
+
+Related Decks:
+
+Community
+Business
+Zoom
+Experience
+```
+
+Over time, this becomes an invaluable historical record. It will also help onboard future team members and explain *why* choices were made.
+
+---
+
+# 65. Lessons Learned Log
+
+I would also like a permanent section capturing lessons learned from the journey.
+
+Examples:
+
+* Apple review lessons
+* Google Play review lessons
+* Railway deployment lessons
+* DNS configuration lessons
+* Google Maps configuration lessons
+* Trademark process lessons
+* Community rollout lessons
+* Investor presentation lessons
+* Tour planning lessons
+
+These are things we've learned the hard way and shouldn't have to rediscover.
+
+Each lesson should answer:
+
+* What happened?
+* What did we learn?
+* What will we do differently next time?
+
+This becomes institutional knowledge for Mapping With Melanin™.
+
+---
+
+# Recommendation
+
+I recommend expanding the registry from:
+
+**9 Parts · 63 Sections**
+
+to:
+
+**9 Parts · 65 Sections**
+
+by adding:
+
+**64. Decision Log**
+
+**65. Lessons Learned Log**
+
+I believe these two sections will become some of the most valuable parts of the Foundations Book over the life of the company.
+
+---
+
+# Current Status
+
+Still in Review Mode.
+
+No registries should be built.
+
+No IDs assigned.
+
+No archive generated.
+
+No metadata embedded.
+
+No decks modified.
+
+No automation created.
+
+No production assets changed.
+
+The next step remains approval of the registry architecture before implementation begins.
