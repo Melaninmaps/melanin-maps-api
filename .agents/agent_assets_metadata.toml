@@ -743,3 +743,9 @@ id = "fjMZ9mH4OI8OJkX-mhPkv"
 uri = "file://complaint_summary.txt"
 type = "text"
 title = "Complaint Summary — Email-ready (1 page)"
+
+[[outputs]]
+id = "hcUgG80sgTSMK67kVGoMw"
+uri = "file://mapping_melanin_complaint.zip"
+type = "unspecified"
+title = "Complaint Files — Click to Download"
