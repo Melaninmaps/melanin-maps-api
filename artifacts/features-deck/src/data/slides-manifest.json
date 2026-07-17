@@ -1,1 +1,170 @@
-[]
+[
+  {
+    "id": "fd-01",
+    "position": 1,
+    "filepath": "./pages/slides/FD01Opening.tsx",
+    "title": "Opening",
+    "description": "Never wonder if you'll feel welcome again.",
+    "speakerNotes": "Open with presence. Let the headline breathe. Do not rush past it."
+  },
+  {
+    "id": "fd-02",
+    "position": 2,
+    "filepath": "./pages/slides/FD02MeetZara.tsx",
+    "title": "This Could Be Anyone",
+    "description": "Introducing Zara — or whoever is listening.",
+    "speakerNotes": "Pause after 'This could be anyone.' Let the audience place themselves in the story."
+  },
+  {
+    "id": "fd-03",
+    "position": 3,
+    "filepath": "./pages/slides/FD03TheJourney.tsx",
+    "title": "The Origin",
+    "description": "Every journey begins with a question. Ours was simple.",
+    "speakerNotes": "Read each line slowly. Let the logo appear in silence."
+  },
+  {
+    "id": "fd-04",
+    "position": 4,
+    "filepath": "./pages/slides/FD04Questions.tsx",
+    "title": "The Questions",
+    "description": "The three questions every traveler, newcomer, and community member asks.",
+    "speakerNotes": "These are the audience's own words. Read them as if asking yourself."
+  },
+  {
+    "id": "fd-05",
+    "position": 5,
+    "filepath": "./pages/slides/FD05TrustScore.tsx",
+    "title": "Trust Score",
+    "description": "Core brand message: We know what your community experienced.",
+    "speakerNotes": "This is the central philosophical distinction. Do not rush it."
+  },
+  {
+    "id": "fd-06",
+    "position": 6,
+    "filepath": "./pages/slides/FD06Discover.tsx",
+    "title": "Discover",
+    "description": "Before: uncertainty. After: confidence. She found certainty.",
+    "speakerNotes": "The category chips at the bottom show breadth without overwhelming."
+  },
+  {
+    "id": "fd-07",
+    "position": 7,
+    "filepath": "./pages/slides/FD07SafetyMap.tsx",
+    "title": "Safety Map",
+    "description": "Peace of mind begins before you leave home.",
+    "speakerNotes": "A pause slide. Let the compass icon and the headline do the work."
+  },
+  {
+    "id": "fd-08",
+    "position": 8,
+    "filepath": "./pages/slides/FD08SafetyCheckin.tsx",
+    "title": "Safety Check-In",
+    "description": "She doesn't travel alone. Even when she's the only one in the room.",
+    "speakerNotes": "Walk through each step of the check-in sequence slowly. The silence at the end is intentional."
+  },
+  {
+    "id": "fd-09",
+    "position": 9,
+    "filepath": "./pages/slides/FD09Community.tsx",
+    "title": "Community",
+    "description": "Community isn't built through followers. It's built through shared experiences.",
+    "speakerNotes": "Build to the final line. It should land with quiet weight."
+  },
+  {
+    "id": "fd-10",
+    "position": 10,
+    "filepath": "./pages/slides/FD10Belonging.tsx",
+    "title": "Belonging",
+    "description": "It happens when you stop being a newcomer and start being known.",
+    "speakerNotes": "Three beats: the problem, the path, the destination."
+  },
+  {
+    "id": "fd-11",
+    "position": 11,
+    "filepath": "./pages/slides/FD11KinfolkTeaser.tsx",
+    "title": "KinfolkAI Teaser",
+    "description": "You've found the city. Now meet someone who knows it.",
+    "speakerNotes": "Pure black slide. Intentional dramatic pause. Let the silence work."
+  },
+  {
+    "id": "fd-12",
+    "position": 12,
+    "filepath": "./pages/slides/FD12KinfolkReveal.tsx",
+    "title": "KinfolkAI Reveal",
+    "description": "Not an assistant. A cultural guide.",
+    "speakerNotes": "Two lines. That is enough. Do not explain further — let the next slide demonstrate."
+  },
+  {
+    "id": "fd-13",
+    "position": 13,
+    "filepath": "./pages/slides/FD13KinfolkConvo.tsx",
+    "title": "KinfolkAI Conversation",
+    "description": "Placeholder — conversation written by the founder.",
+    "speakerNotes": "Replace this slide with a real KinfolkAI exchange before presenting."
+  },
+  {
+    "id": "fd-14",
+    "position": 14,
+    "filepath": "./pages/slides/FD14BusinessPeople.tsx",
+    "title": "Business: People First",
+    "description": "People connect with people before they connect with products.",
+    "speakerNotes": "The shift from consumer to business owner. Acknowledge the room if there are business owners present."
+  },
+  {
+    "id": "fd-15",
+    "position": 15,
+    "filepath": "./pages/slides/FD15BeforeAfter.tsx",
+    "title": "The Transformation",
+    "description": "The before and after of discovery for business owners.",
+    "speakerNotes": "Let the contrast speak. Read across — left then right — for each row."
+  },
+  {
+    "id": "fd-16",
+    "position": 16,
+    "filepath": "./pages/slides/FD16WhyWeWin.tsx",
+    "title": "Why We Win",
+    "description": "We ask technology to earn the trust of communities. That's the difference.",
+    "speakerNotes": "The middle line should land with full weight. Pause before 'That's the difference.'"
+  },
+  {
+    "id": "fd-17",
+    "position": 17,
+    "filepath": "./pages/slides/FD17WhyNow.tsx",
+    "title": "Why Now?",
+    "description": "Six reasons the moment has arrived.",
+    "speakerNotes": "Each contrast should feel like a tension you're about to resolve. The final line is the answer."
+  },
+  {
+    "id": "fd-18",
+    "position": 18,
+    "filepath": "./pages/slides/FD18Movement.tsx",
+    "title": "The Movement",
+    "description": "Because belonging should never depend on luck.",
+    "speakerNotes": "Read 'Imagine a world where...' slowly. Each line that follows is a promise."
+  },
+  {
+    "id": "fd-19",
+    "position": 19,
+    "filepath": "./pages/slides/FD19Declaration.tsx",
+    "title": "The Declaration",
+    "description": "We aren't just mapping places. We're mapping belonging.",
+    "speakerNotes": "Warm cream slide. Rich brown typography. 'belonging' in gold. Let it sit before advancing."
+  },
+  {
+    "id": "fd-20",
+    "position": 20,
+    "filepath": "./pages/slides/FD20Affirmation.tsx",
+    "title": "The Affirmation",
+    "description": "You belong here.",
+    "speakerNotes": "Two to three seconds of silence after this lands. Then advance."
+  },
+  {
+    "id": "fd-21",
+    "position": 21,
+    "filepath": "./pages/slides/FD21Welcome.tsx",
+    "title": "The Welcome",
+    "description": "Welcome home.",
+    "speakerNotes": "The final emotional note. Or — end on slide 20 and say 'Welcome home.' aloud. Either works."
+  }
+]
