@@ -64,7 +64,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [sessionExpired, setSessionExpired] = useState(false);
 
   const fetchUser = useCallback(async () => {
-    const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+    let token: string | null = null;
+    try {
+      token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+    } catch (secureErr: unknown) {
+      const e = secureErr as Error;
+      console.error("[DIAG] fetchUser: SecureStore.getItemAsync threw", { errorName: e?.name, errorMessage: e?.message });
+      setIsLoading(false);
+      return;
+    }
     if (!token) {
       setUser(null);
       setIsLoading(false);
@@ -204,22 +212,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: data.error ?? `Login failed (HTTP ${response.status}).` };
     }
 
-    try {
-      const token: string = data.token ?? "";
-      if (!token) {
-        console.error("[DIAG] login succeeded but no token in response", { status: response.status, responseKeys: Object.keys(data) });
-        return { error: "Login succeeded but no session was returned. Please try again." };
-      }
-      await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
-      await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
-      setIsLoading(true);
-      await fetchUser();
-      return {};
-    } catch (storeErr: unknown) {
-      const e = storeErr as Error;
-      console.error("[DIAG] login post-success error", { errorName: e?.name, errorMessage: e?.message });
-      return { error: `Signed in but could not save session (${e?.name ?? "storage error"}).` };
+    const token: string = data.token ?? "";
+    if (!token) {
+      console.error("[DIAG] login step 0: no token in response", { status: response.status, responseKeys: Object.keys(data) });
+      return { error: "Login succeeded but no session was returned. Please try again." };
     }
+
+    // Step 1 — persist session token
+    try {
+      await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
+      console.log("[DIAG] login step 1: token saved OK", { tokenLen: token.length });
+    } catch (step1Err: unknown) {
+      const e = step1Err as Error;
+      console.error("[DIAG] login step 1 FAILED: SecureStore.setItemAsync(token)", { tokenLen: token.length, errorName: e?.name, errorMessage: e?.message, stack: e?.stack?.slice(0, 500) });
+      return { error: `Signed in but could not save your session (storage step 1: ${e?.name ?? "unknown"}). Please try again.` };
+    }
+
+    // Step 2 — set fresh-login flag (non-critical, failure is allowed)
+    try {
+      await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
+    } catch (step2Err: unknown) {
+      const e = step2Err as Error;
+      console.error("[DIAG] login step 2: fresh_login flag failed (non-critical)", { errorName: e?.name, errorMessage: e?.message });
+    }
+
+    // Step 3 — load the user profile
+    setIsLoading(true);
+    try {
+      await fetchUser();
+    } catch (step3Err: unknown) {
+      const e = step3Err as Error;
+      console.error("[DIAG] login step 3 FAILED: fetchUser threw unexpectedly", { errorName: e?.name, errorMessage: e?.message, stack: e?.stack?.slice(0, 500) });
+      // Session token IS saved. Don't block login — fetchUser will retry on next navigation.
+    }
+
+    return {};
   }, [fetchUser]);
 
   const logout = useCallback(async () => {
