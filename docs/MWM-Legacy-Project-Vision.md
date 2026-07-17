@@ -1,7 +1,7 @@
-# The Mapping With Melanin™ Legacy Manifest
+# The Mapping With Melanin™ Legacy Collection
 ## Master Vision Document v1.0
 
-*A manifest is a declaration of purpose and direction — more enduring than a vision document, and better matched to what this institution is building.*
+*The Legacy Collection is the institutional home for everything Mapping With Melanin™ creates, preserves, and passes forward — from the founding standards to the living history to the stories that will outlast the technology.*
 
 **Status:** Review Mode — Planning Only
 **Authority:** Product Owner (Teianna)
@@ -14,7 +14,7 @@
 Everything the company creates lives within a five-level hierarchy. Each level has a distinct purpose. Each level answers a different question.
 
 ### Level 1 — Vision (The "Why")
-**The Legacy Manifest** (this document)
+**The Legacy Collection** (this document)
 The dream. The institution. The 25-year vision. The documentaries. The city books. The Living Archive. The music. The cultural preservation.
 This document almost never changes.
 > **What are we ultimately trying to build?**
@@ -259,6 +259,6 @@ Those letters become priceless — not just for the company, but for anyone tryi
 
 ---
 
-*The Mapping With Melanin™ Legacy Manifest — Master Vision Document v1.0*
+*The Mapping With Melanin™ Legacy Collection — Master Vision Document v1.0*
 *Last updated: July 2026*
 *One chapter at a time.*
