@@ -1,98 +1,106 @@
 [
   {
-    "id": "cb-slide-01-cover",
+    "id": "slide-01-welcome-home",
     "position": 1,
     "filepath": "src/pages/slides/CB01Cover.tsx",
-    "title": "Become a Community Builder",
-    "description": "Opening cover",
+    "title": "Welcome Home.",
+    "description": "Opening cover — A Belonging Platform",
     "speakerNotes": ""
   },
   {
-    "id": "cb-slide-02-what-is-it",
+    "id": "slide-02-more-than-directions",
     "position": 2,
-    "filepath": "src/pages/slides/CB02WhatIsIt.tsx",
-    "title": "What Is It?",
-    "description": "One platform. Every part of belonging.",
+    "filepath": "src/pages/slides/SlideMoreThanDirections.tsx",
+    "title": "More Than Directions",
+    "description": "Most maps tell you how to get somewhere. We help you understand what it feels like.",
     "speakerNotes": ""
   },
   {
-    "id": "cb-slide-01b-why-builders-matter",
+    "id": "slide-03-one-platform",
     "position": 3,
-    "filepath": "src/pages/slides/CB01bWhyBuildersMatter.tsx",
-    "title": "Why Community Builders Matter",
-    "description": "Every movement begins with one conversation",
+    "filepath": "src/pages/slides/CB02WhatIsIt.tsx",
+    "title": "One Platform. Every Part of Belonging.",
+    "description": "People → Connection → Community → Belonging cascade",
     "speakerNotes": ""
   },
   {
-    "id": "cb-slide-03-who-is-it-for",
+    "id": "slide-04-every-journey-counts",
     "position": 4,
-    "filepath": "src/pages/slides/CB03WhoIsItFor.tsx",
-    "title": "Who Is It For?",
-    "description": "Six situations with phone mockup",
+    "filepath": "src/pages/slides/SlideEveryJourneyCounts.tsx",
+    "title": "Every Journey Counts",
+    "description": "Not only for vacations — the full range of belonging moments",
     "speakerNotes": ""
   },
   {
-    "id": "cb-slide-04-how-it-works",
+    "id": "slide-05-changed-language",
     "position": 5,
-    "filepath": "src/pages/slides/CB04HowItWorks.tsx",
-    "title": "How Does It Work?",
-    "description": "Discover → Connect → Support → Recommend → Strengthen flywheel",
-    "speakerNotes": ""
-  },
-  {
-    "id": "cb-slide-05-what-makes-it-different",
-    "position": 6,
     "filepath": "src/pages/slides/CB05WhatMakesItDifferent.tsx",
-    "title": "What Makes It Different?",
-    "description": "NOT vs INSTEAD two-column contrast",
+    "title": "We Changed the Language.",
+    "description": "Instead of / Say contrast — six feature reframes",
     "speakerNotes": ""
   },
   {
-    "id": "cb-slide-06-why-businesses-love-it",
+    "id": "slide-06-before-you-arrive",
+    "position": 6,
+    "filepath": "src/pages/slides/SlideBeforeYouArrive.tsx",
+    "title": "Before You Even Arrive",
+    "description": "KinfolkAI pre-arrival travel intelligence with app screenshot",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-07-meet-kinfolk",
     "position": 7,
-    "filepath": "src/pages/slides/CB06WhyBusinessesLoveIt.tsx",
-    "title": "Why Businesses Love It",
-    "description": "We send customers to THEIR website/booking/social + phone",
-    "speakerNotes": ""
-  },
-  {
-    "id": "cb-slide-07-why-community-members-love-it",
-    "position": 8,
-    "filepath": "src/pages/slides/CB07WhyCommunityMembersLoveIt.tsx",
-    "title": "Why Community Members Love It",
-    "description": "Six emotional benefit cards",
-    "speakerNotes": ""
-  },
-  {
-    "id": "cb-slide-08-meet-kinfolkai",
-    "position": 9,
     "filepath": "src/pages/slides/CB08MeetKinfolkAI.tsx",
-    "title": "Meet KinfolkAI™",
-    "description": "Learns / Suggests / Protects / Connects / Grows",
+    "title": "Meet Kinfolk.",
+    "description": "Most AI tells you what exists. Kinfolk helps you understand what belongs.",
     "speakerNotes": ""
   },
   {
-    "id": "cb-slide-09-network-effect",
+    "id": "slide-08-confidence-layer",
+    "position": 8,
+    "filepath": "src/pages/slides/SlideConfidenceLayer.tsx",
+    "title": "Know Before You Go",
+    "description": "The Confidence Layer — community safety intelligence with map screenshot",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-09-see-a-city",
+    "position": 9,
+    "filepath": "src/pages/slides/SlideSeeACity.tsx",
+    "title": "See a City Through Your Community",
+    "description": "Three-layer map — business pins, confidence layer, heritage sites",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-10-living-history",
     "position": 10,
-    "filepath": "src/pages/slides/CB09WhatHappensWhenMoreJoin.tsx",
-    "title": "What Happens When More People Join?",
-    "description": "Everyday community flywheel cascade",
+    "filepath": "src/pages/slides/SlideLivingHistory.tsx",
+    "title": "Walk Through Living History",
+    "description": "Cultural heritage sites — not landmarks, but stories and movements",
     "speakerNotes": ""
   },
   {
-    "id": "cb-slide-10-how-can-you-help",
+    "id": "slide-11-businesses-have-stories",
     "position": 11,
-    "filepath": "src/pages/slides/CB10HowCanYouHelp.tsx",
-    "title": "How Can You Help?",
-    "description": "Seven ambassador action cards",
+    "filepath": "src/pages/slides/SlideBusinessesHaveStories.tsx",
+    "title": "Businesses Have Stories",
+    "description": "Every business has a reason it exists — owner story, confidence score, verification",
     "speakerNotes": ""
   },
   {
-    "id": "cb-slide-11-closing",
+    "id": "slide-12-find-your-people",
     "position": 12,
+    "filepath": "src/pages/slides/SlideFindYourPeople.tsx",
+    "title": "Find Your People",
+    "description": "Community isn't something you stumble into — Circles, feed, Safe Spaces, events",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-13-closing",
+    "position": 13,
     "filepath": "src/pages/slides/CB11Closing.tsx",
-    "title": "Closing — Welcome",
-    "description": "Full-screen closing quote",
+    "title": "Welcome Home.",
+    "description": "Home isn't always where you were born. Sometimes it's where you finally feel understood.",
     "speakerNotes": ""
   }
 ]
