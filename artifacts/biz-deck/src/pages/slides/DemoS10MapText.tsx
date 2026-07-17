@@ -3,7 +3,7 @@ export default function DemoS10MapText() {
     { head: "Safety overlay from community data", body: "Neighborhood color-coding is sourced entirely from diaspora member surveys — not crime statistics, police data, or algorithms that encode historical bias." },
     { head: "Business pins by Trust Score", body: "Gold pins (90+), amber (75–89), muted (below 75). The map communicates quality before a user taps a single result." },
     { head: "Bottom-sheet profile on tap", body: "Tapping any pin slides up a business card without leaving the map. One more tap opens the full profile. No navigation stack needed for quick decisions." },
-    { head: "Radius and filter controls", body: "Search radius from 0.5 to 25 miles. Category and Trust Score filters inherited from the Discover tab — the map and list view stay in sync." },
+    { head: "Cultural Heritage Layer — on by default", body: "HBCUs, Civil Rights landmarks, African American historical sites, art institutions, and 7 more categories appear on every map by default — not tucked behind a setting. Radius from 0.5 to 25 miles. Category and Trust Score filters sync with the Discover tab." },
   ];
 
   return (
