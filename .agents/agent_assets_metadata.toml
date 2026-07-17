@@ -731,3 +731,9 @@ id = "Rwbw8Z2rAJe9_XXNmToFE"
 uri = "file://.local/outputs/Mapping-With-Melanin---Business-Deck.pdf"
 type = "pdf"
 title = "Mapping With Melanin — Business Deck (PDF)"
+
+[[outputs]]
+id = "O-7_iCCScVQzcFZJxrxa4"
+uri = "file://complaint_log.txt"
+type = "text"
+title = "Mapping With Melanin — Full Session Log (Complaint Record)"
