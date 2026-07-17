@@ -1,0 +1,23 @@
+Yes—this is ready to move into production, with one last precaution: **create a dedicated OpenAI project key for Kinfolk and set a conservative project budget/usage limit before adding it to Railway.** OpenAI supports project-specific keys and project-level usage tracking, which makes it easier to isolate Kinfolk’s costs and rotate the key later if needed. ([OpenAI Help Center][1])
+
+Then proceed in this order:
+
+1. In the OpenAI API platform, create or select a project named something like **Kinfolk AI – Production**.
+2. Create a new secret key for that project.
+3. Add only these variables to the Railway **API Server** service:
+
+   * `AI_INTEGRATIONS_OPENAI_API_KEY`
+   * `AI_INTEGRATIONS_OPENAI_BASE_URL` = `https://api.openai.com/v1`
+4. Do not place the key in Replit chat, the mobile app, source code, screenshots, or the web frontend. OpenAI recommends keeping keys server-side and rotating them if exposure is suspected. ([OpenAI Help Center][2])
+5. Let Railway redeploy.
+6. Run one controlled Kinfolk test.
+7. Check the OpenAI usage dashboard immediately afterward to confirm the request is appearing under the correct project.
+
+I’m comfortable with the technical safeguards Replit described: server-side validation, 2,000-character input limit, 25-second timeout, no automatic retries, monthly usage caps, and no client exposure.
+
+The only wording I would keep cautious is “no duplicate charges possible.” `maxRetries: 0` prevents the OpenAI client from automatically retrying, but users can still manually tap Send again. That is a small concern, not a reason to delay production.
+
+After the test succeeds, Kinfolk can be considered restored without another Apple, Android, or Railway code build.
+
+[1]: https://help.openai.com/en/articles/9186755-managing-your-work-in-the-api-platform-with-projects?utm_source=chatgpt.com "Managing projects in the API platform"
+[2]: https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety?utm_source=chatgpt.com "Best Practices for API Key Safety"
