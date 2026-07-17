@@ -272,6 +272,19 @@ export default function LoginScreen() {
                   {loading ? "Connecting…" : "Tap to retry →"}
                 </Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                disabled={loading}
+                onPress={async () => {
+                  await SecureStore.deleteItemAsync("auth_session_token").catch(() => {});
+                  setConnecting(false);
+                  setError("");
+                }}
+              >
+                <Text style={[styles.errorAppleTxt, { color: "#B45309", textDecorationLine: "none", opacity: 0.7 }]}>
+                  Clear stored session and sign in fresh
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
