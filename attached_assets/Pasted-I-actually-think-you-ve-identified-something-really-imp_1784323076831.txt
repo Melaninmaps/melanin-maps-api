@@ -1,0 +1,332 @@
+I actually think you've identified something really important.
+
+The recent decks have become **emotionally stronger**, but visually they're drifting toward a modern black startup aesthetic. That's not Mapping With Melanin™.
+
+Your brand has always felt more like:
+
+* warm café lighting,
+* rich walnut wood,
+* leather-bound journals,
+* candlelight,
+* hospitality,
+* heritage,
+* conversation,
+* and coming home.
+
+That's the feeling people should get before they even read a word.
+
+I would absolutely add a section to your standards called:
+
+---
+
+# 17. Visual Identity & Emotional Design
+
+Every presentation should immediately feel like **Mapping With Melanin™** before a single word is read.
+
+## Color Hierarchy
+
+Our visual identity is built on warmth, richness, and belonging.
+
+### Primary Backgrounds
+
+* Warm Espresso Brown
+* Deep Walnut
+* Rich Cocoa
+* Soft Cream
+
+Black should be used **sparingly** and only for moments of intentional emotional impact (such as the KinfolkAI™ reveal or dramatic pauses). It should never become the dominant visual language of the presentation.
+
+Our audience should feel warmth—not darkness.
+
+---
+
+## Accent Colors
+
+Gold represents trust, excellence, celebration, and discovery.
+
+Use gold intentionally to draw attention to:
+
+* Key words
+* Important statistics
+* Calls to reflection
+* Section transitions
+* Brand moments
+
+Avoid using gold as decoration alone.
+
+Every use of gold should communicate importance.
+
+---
+
+## Typography Hierarchy
+
+Typography should guide emotion.
+
+### Level 1
+
+Large headline
+
+One emotional thought.
+
+Nothing competing with it.
+
+---
+
+### Level 2
+
+Supporting thought
+
+Conversational.
+
+Readable from the back of the room.
+
+---
+
+### Level 3
+
+Context only.
+
+Never paragraphs unless absolutely necessary.
+
+If the audience is reading instead of listening, there is too much text.
+
+---
+
+## Word Emphasis
+
+Never bold entire paragraphs.
+
+Instead, emphasize only the emotional word.
+
+Example:
+
+> Technology enables the **experience.**
+
+> Community creates it.
+
+or
+
+> We aren't mapping **places.**
+
+> We're mapping **belonging.**
+
+That single highlighted word should naturally draw the audience's eye.
+
+---
+
+## Shading & Contrast
+
+Create visual hierarchy through subtle contrast—not excessive effects.
+
+Use:
+
+* slightly lighter warm browns for supporting content,
+* cream for readability,
+* muted gold for emphasis,
+* soft shadows only when they improve legibility.
+
+Avoid:
+
+* harsh black backgrounds,
+* high-contrast neon,
+* heavy gradients,
+* overly dramatic drop shadows.
+
+Everything should feel refined and timeless.
+
+---
+
+## Custom Mapping With Melanin™ Icons
+
+Whenever a visual marker is needed, use our custom outlined gold icon set.
+
+These icons are part of our visual language and should replace generic bullets whenever appropriate.
+
+Examples include:
+
+* outlined gold location pin
+* outlined gold heart
+* outlined gold compass
+* outlined gold handshake
+* outlined gold community circle
+* outlined gold business storefront
+* outlined gold shield
+* outlined gold passport
+* outlined gold suitcase
+* outlined gold conversation bubble
+
+Standard bullets should only be used when custom icons would reduce clarity.
+
+---
+
+## Lists
+
+Lists should never feel like documents.
+
+They should feel like conversations.
+
+Prefer:
+
+✓ icon
+
+or
+
+outlined gold icon
+
+instead of
+
+• bullet
+
+Keep spacing generous.
+
+Never create dense blocks of bullets.
+
+---
+
+## Section Dividers
+
+Each major act should have its own emotional transition.
+
+Instead of simply changing slides...
+
+Allow the audience to pause.
+
+Think:
+
+warm fade
+
+↓
+
+single sentence
+
+↓
+
+breath
+
+↓
+
+next chapter
+
+The deck should feel like chapters in a story—not slides in a presentation.
+
+---
+
+## Texture
+
+Subtle texture is encouraged.
+
+Think:
+
+* handmade paper
+* soft linen
+* leather
+* wood grain
+* warm lighting
+
+Never obvious.
+
+Never distracting.
+
+Just enough to feel human.
+
+---
+
+## The Emotional Palette
+
+Every slide should answer this question:
+
+**How should this slide feel?**
+
+Examples:
+
+Opening → hopeful
+
+Trust → reassuring
+
+Safety → protected
+
+Community → welcomed
+
+KinfolkAI™ → curious
+
+Business → empowered
+
+Mission → inspired
+
+Closing → home
+
+Design should reinforce emotion—not simply decorate information.
+
+---
+
+## One thing I would change about the ending
+
+I actually think the fade sequence can be even more cinematic.
+
+Instead of this:
+
+> We aren't just mapping places.
+>
+> We're mapping belonging.
+
+then everything disappears...
+
+I'd do this:
+
+**Warm cream background.**
+
+**Rich brown typography.**
+
+Large:
+
+> **We aren't just mapping places.**
+
+Gold pause line appears.
+
+Then
+
+> **We're mapping belonging.**
+
+Everything slowly fades except **belonging**.
+
+That single word remains for about one second.
+
+Fade.
+
+New slide.
+
+Warm espresso background.
+
+Cream text.
+
+Large:
+
+> **You belong here.**
+
+Pause.
+
+Fade.
+
+Final slide.
+
+Very dark espresso—not black.
+
+Tiny gold line.
+
+Cream text.
+
+> **Welcome home.**
+
+Nothing else.
+
+No logo.
+
+No music swell.
+
+No animation.
+
+Just silence.
+
+---
+
+I think that ending feels unmistakably like **Mapping With Melanin™**. It reflects the warmth you've always envisioned: not sleek and futuristic, but inviting, grounded, and deeply human. If someone walked away remembering only that emotional progression—from **belonging** to **You belong here** to **Welcome home**—they'd leave with the essence of your brand.
