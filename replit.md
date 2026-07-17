@@ -54,6 +54,7 @@ Community discovery, travel, and business platform celebrating Black culture —
 - Slide decks: if the user sends emojis in a message, translate them to gold outlined SVG line-art icons (fill:none, stroke:#CA922B, rounded caps) — never use literal emoji characters in any slide
 - Slide decks: do not auto-export/download a PDF after every edit — only export when the user explicitly asks for a download
 - Release naming: every build communicated to testers must include a human name + platform version + build number. Format: "Everyone should now be testing **[Release Name]** (iOS Build [N] / Android Version [V] Build [N])." Use a progression like: Founding Beta 1, Founding Beta 2, Community Beta 1, Launch Candidate 1, etc.
+- Creative approval gate: ALL presentation, branding, copy, and design discussions are brainstorming only until the user explicitly says "Please implement" or "Please build this." Do not create, modify, or replace any slides, copy, layouts, or visual design without that explicit trigger phrase.
 
 ## Gotchas
 
