@@ -100,6 +100,13 @@ export default function Slide05Mission() {
           </div>
         ))}
       </div>
+
+      {/* Closing statement */}
+      <div className="absolute left-[6vw] right-[6vw] text-center" style={{ top: "37vw" }}>
+        <div className="font-display" style={{ fontSize: "1.55vw", fontWeight: 700, color: "#A6720F", fontStyle: "italic" }}>
+          From the first discovery to the deepest roots &mdash; every step, together.
+        </div>
+      </div>
     </div>
   );
 }

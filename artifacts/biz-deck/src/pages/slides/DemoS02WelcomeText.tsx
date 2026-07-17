@@ -33,6 +33,13 @@ export default function DemoS02WelcomeText() {
         </div>
       </div>
 
+      {/* Closing statement */}
+      <div className="absolute left-[8vw] right-[8vw] text-center" style={{ bottom: "8vw" }}>
+        <div className="font-display" style={{ fontSize: "1.35vw", fontWeight: 700, color: "#CA922B", fontStyle: "italic" }}>
+          How you welcome someone says everything about who you built this for.
+        </div>
+      </div>
+
       {/* Slide number */}
       <div style={{ position: "absolute", bottom: "3.5vh", right: "4vw", color: "rgba(202,146,43,0.3)", fontSize: "0.65vw", fontWeight: 700, letterSpacing: "0.12em" }}>02 / 36</div>
     </div>

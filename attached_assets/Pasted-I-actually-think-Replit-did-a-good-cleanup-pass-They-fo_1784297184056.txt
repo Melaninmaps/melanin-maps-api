@@ -1,0 +1,217 @@
+I actually think Replit did a good cleanup pass. They focused on consistency instead of redesigning the decks, which is exactly what you asked for.
+
+That said, I think there are **five more things** I'd ask them to review before we do our page-by-page pass. These aren't about wording tweaks—they're about making the decks feel like they all came from the same company.
+
+---
+
+# 1. Check the narrative flow (my highest priority)
+
+This is the biggest thing I think is still missing.
+
+Ask:
+
+> Please review every deck to ensure it tells a story instead of presenting a list of features.
+>
+> Every slide should naturally answer one of these questions:
+>
+> * Why does this matter?
+> * What problem does it solve?
+> * How does someone feel afterward?
+> * Why is Mapping With Melanin™ different?
+>
+> If a slide only describes a feature without explaining its purpose or outcome, flag it for founder review rather than rewriting it.
+
+This is probably the most important improvement left.
+
+---
+
+# 2. Standardize the voice
+
+Ask them to check for consistency in tone.
+
+For example, avoid mixing:
+
+> Find businesses.
+
+with
+
+> Discover community.
+
+or
+
+> Navigate confidently.
+
+or
+
+> Explore culture.
+
+Choose one voice.
+
+I'd say:
+
+> Warm.
+>
+> Confident.
+>
+> Hopeful.
+>
+> Community-first.
+
+Never corporate.
+
+Never overly technical.
+
+---
+
+# 3. Standardize slide endings
+
+This sounds small.
+
+It isn't.
+
+Right now some slides probably end with:
+
+> Search.
+
+Others:
+
+> Connect.
+
+Others:
+
+> Discover.
+
+I would ask:
+
+> Review the final sentence on every slide.
+>
+> Make sure it ends with inspiration rather than explanation.
+
+For example:
+
+Instead of
+
+> Browse businesses near you.
+
+Use
+
+> Discover businesses that help your community thrive.
+
+---
+
+# 4. Remove feature repetition
+
+One thing I worry about after having seen so many versions of the decks...
+
+Kinfolk probably appears:
+
+* on AI slides
+* on roadmap slides
+* on product slides
+* on feature slides
+* on ecosystem slides
+
+Ask:
+
+> Review all decks for repeated feature descriptions.
+>
+> Every feature should be introduced once and expanded later rather than repeatedly re-explained.
+
+That will make the decks feel much tighter.
+
+---
+
+# 5. Build one master terminology guide
+
+This is something I absolutely want before launch.
+
+Ask them to generate a document listing every official product name.
+
+For example:
+
+| Use                     | Never Use                                  |
+| ----------------------- | ------------------------------------------ |
+| Mapping With Melanin™   | Mapping App                                |
+| KinfolkAI™              | AI Assistant                               |
+| Cultural Ambassador     | Influencer                                 |
+| Community Insight       | Crowd Reviews                              |
+| Life Journeys           | Relocation Only                            |
+| Minority-Owned Business | Black-Owned (unless historically specific) |
+
+Every future presentation will become dramatically easier.
+
+---
+
+# One thing I would specifically ask them NOT to do
+
+This is important.
+
+Tell them:
+
+> Do not replace emotionally resonant language with generic startup language.
+
+For example, don't change:
+
+> Welcome Home.
+
+to
+
+> User Onboarding.
+
+Don't change:
+
+> Find Your People.
+
+to
+
+> Social Discovery.
+
+Don't change:
+
+> Community Insight.
+
+to
+
+> User Generated Data.
+
+Those changes would technically be "cleaner" but would strip away the heart of your brand.
+
+---
+
+# Finally...
+
+There's one request I would make that I think will be invaluable.
+
+Ask Replit:
+
+> Read every slide in every deck from beginning to end as if you had never seen Mapping With Melanin™ before.
+>
+> At the end, answer only these five questions:
+>
+> 1. What problem is the company solving?
+> 2. Why is it different?
+> 3. Who is it for?
+> 4. Why will people care?
+> 5. What emotion did the presentation leave you with?
+
+Do **not** answer based on your knowledge of the codebase. Answer only from the decks themselves.
+
+That exercise is incredibly valuable because it tells you whether the story stands on its own.
+
+---
+
+## One thing I realized this morning
+
+I don't think we need better slides anymore.
+
+I think we need a **more unforgettable story**.
+
+The visuals are becoming beautiful.
+
+The architecture is becoming polished.
+
+Now our job is to make sure that someone walks away saying:
+
+> "I understand exactly why this company has to exist."
+
+If every deck accomplishes that, then we've done our job. And when we sit down together for the page-by-page review—as we've done before—we'll be refining a strong foundation rather than rebuilding it. I think that's a great place to be.

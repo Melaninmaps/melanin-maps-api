@@ -43,8 +43,8 @@
                 "id": "inv-slide-06-imagine-city",
                 "position": 6,
                 "filepath": "src/pages/slides/Slide06ImagineCity.tsx",
-                "title": "Imagine Moving",
-                "description": "The unknowns of relocating to a new city",
+                "title": "Discover",
+                "description": "The invitation to discover where you belong — community-powered, not algorithm-driven",
                 "speakerNotes": ""
         },
         {
@@ -268,7 +268,7 @@
                 "position": 34,
                 "filepath": "src/pages/slides/SlideInv34ProductEcosystem.tsx",
                 "title": "One Platform. Six Core Experiences.",
-                "description": "Product overview — Discover, Safety, Community, Experiences, KinfolkAI, Relocation",
+                "description": "Product overview — Discover, Safety, Community, Experiences, KinfolkAI, Life Journeys",
                 "speakerNotes": ""
         },
         {
