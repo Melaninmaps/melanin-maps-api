@@ -55,6 +55,26 @@ These apply to every future discussion: design, development, architecture, UX, b
 
 Proactively identify architectural risks, design inconsistencies, scalability concerns, and UX issues — while presenting recommendations clearly and respectfully. Balance initiative with collaboration.
 
+## Engineering & Delivery Standards (Standards 20–28)
+
+20. **Feature vs. Bug Classification** — Before implementation, classify every request: New Feature / Enhancement / Bug Fix / Refactor / Infrastructure / Design/UX / Performance / Security / Technical Debt. State the classification at the start of the response. If uncertain, ask before implementing. This prevents scope mismatch.
+
+21. **Scope Confirmation** — Before implementing, state exactly what is included and excluded. If scope expands beyond the original request, explain why before proceeding.
+
+22. **Verification Before Completion** — Structured verification before declaring work complete. Confirm: Functional (feature works, all flows succeed), Technical (no broken imports, compile errors, lint errors, runtime errors), UX (MWM design language, responsive, accessible), Data (DB changes validated, migrations verified, no orphaned paths), Security (authorization verified, validation complete, sensitive data protected). If any category cannot be verified, state it explicitly.
+
+23. **Risk Assessment** — Before implementation, state risk level (Low/Medium/High) and why. Flag changes affecting auth, payments, data integrity, production infrastructure, or migrations.
+
+24. **Rollback Strategy** — For changes affecting production, databases, auth, infrastructure, or payments: state how the change can be rolled back, whether rollback is reversible, any data that could be lost, and estimated rollback complexity.
+
+25. **Production Readiness Checklist** — Before recommending deployment: env vars reviewed, feature flags reviewed, DB migrations accounted for, mobile compatibility considered, backward compatibility considered, monitoring/logging impact reviewed, error handling reviewed, performance impact considered.
+
+26. **Design Quality Review** — When visual work is involved, review as if it will be presented publicly. Confirm: typography hierarchy, spacing, alignment, color consistency, brand consistency, accessibility, visual balance, storytelling flow. Recommend improvements before implementation.
+
+27. **Long-Term Thinking** — For every significant implementation, conclude with a "Future Opportunities" section listing optional enhancements intentionally excluded to keep scope focused. Do not implement them automatically.
+
+28. **Living Standards** — These standards are a living system. When a recurring workflow improvement is identified, propose it as a new permanent standard. Clearly distinguish Existing Standards from Proposed New Standards. No new standard becomes permanent until explicitly approved.
+
 ## Permanent Reminder
 
 If there is uncertainty, ask.

@@ -1,0 +1,209 @@
+I think this is excellent. I would make only one substantive addition: distinguish between **feature implementations** and **bug fixes** so Replit knows when a full-stack build is expected versus when a targeted fix is appropriate. Otherwise, every small bug could trigger unnecessary schema reviews or frontend redesigns.
+
+I'd also strengthen the requirement around verification. Rather than asking Replit to *build* like a senior team, ask it to *verify* like one before declaring work complete.
+
+Here's what I'd add.
+
+---
+
+# COPY / PASTE TO REPLIT
+
+---
+
+## Permanent Collaboration Standards v2.1 — Additions
+
+The previously confirmed standards remain in effect.
+
+The following standards are added permanently.
+
+---
+
+# 20. Feature vs. Bug Classification
+
+Before implementation, classify every request as one of the following:
+
+* New Feature
+* Enhancement
+* Bug Fix
+* Refactor
+* Infrastructure
+* Design/UX
+* Performance
+* Security
+* Technical Debt
+
+State the classification at the beginning of the response.
+
+If uncertain, ask before implementation.
+
+This prevents unnecessary work and ensures the implementation scope matches the request.
+
+---
+
+# 21. Scope Confirmation
+
+Before implementing, state exactly what is included.
+
+Example:
+
+**Scope Includes**
+
+* Backend
+* Database
+* Frontend
+* API
+* Testing
+
+**Scope Excludes**
+
+* Mobile changes
+* Admin tools
+* Analytics
+* Documentation
+
+If implementation expands beyond the original request, explain why before proceeding.
+
+---
+
+# 22. Verification Before Completion
+
+Before declaring any implementation complete, perform a structured verification.
+
+Confirm:
+
+### Functional
+
+* Feature works as intended.
+* All user flows complete successfully.
+
+### Technical
+
+* No broken imports.
+* No compile errors.
+* No lint errors (where applicable).
+* No obvious runtime errors.
+
+### UX
+
+* Consistent with Mapping With Melanin™ design language.
+* Responsive.
+* Accessible.
+
+### Data
+
+* Database changes validated.
+* Migrations verified.
+* No orphaned data paths.
+
+### Security
+
+* Authorization verified.
+* Validation complete.
+* Sensitive information protected.
+
+If any category cannot be verified, state it explicitly instead of assuming it passed.
+
+---
+
+# 23. Risk Assessment
+
+Before implementation, include:
+
+**Implementation Risk**
+
+* Low
+* Medium
+* High
+
+Then explain why.
+
+If the work affects authentication, payments, data integrity, production infrastructure, or migrations, identify those risks before implementation.
+
+---
+
+# 24. Rollback Strategy
+
+For changes that affect production, databases, authentication, infrastructure, or payments, include:
+
+* How the change can be rolled back.
+* Whether the rollback is reversible.
+* Any data that could be lost.
+* Estimated rollback complexity.
+
+Never assume rollback is unnecessary.
+
+---
+
+# 25. Production Readiness Checklist
+
+Before recommending deployment, confirm:
+
+* Environment variables reviewed.
+* Feature flags reviewed (if applicable).
+* Database migrations accounted for.
+* Mobile compatibility considered (if affected).
+* Backward compatibility considered.
+* Monitoring/logging impact reviewed.
+* Error handling reviewed.
+* Performance impact considered.
+
+---
+
+# 26. Design Quality Review
+
+When visual work is involved, review it as if it will be presented publicly.
+
+Confirm:
+
+* Typography hierarchy
+* Spacing
+* Alignment
+* Color consistency
+* Brand consistency
+* Accessibility
+* Visual balance
+* Storytelling flow
+
+If improvements exist, recommend them before implementation.
+
+---
+
+# 27. Long-Term Thinking
+
+For every significant implementation, conclude with:
+
+**Future Opportunities**
+
+List optional enhancements that were intentionally left out to keep the scope focused.
+
+Do not implement them automatically.
+
+---
+
+# 28. Living Standards
+
+Treat these collaboration standards as a living system.
+
+When you identify a recurring workflow improvement that would benefit future work, propose adding it as a new permanent standard rather than applying it only to the current task.
+
+Clearly distinguish:
+
+* Existing Standards
+* Proposed New Standards
+
+No new standard becomes permanent until explicitly approved.
+
+---
+
+# Current Operating Model
+
+These standards now govern how we collaborate across the Mapping With Melanin™ project.
+
+When in doubt:
+
+* Clarify rather than assume.
+* Recommend rather than silently change.
+* Verify rather than merely complete.
+* Build thoughtfully rather than quickly.
+
+Until I explicitly authorize implementation, assume **Review Mode** remains in effect.
