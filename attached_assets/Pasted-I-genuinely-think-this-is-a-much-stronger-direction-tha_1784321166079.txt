@@ -1,0 +1,327 @@
+I genuinely think this is a much stronger direction than the original deck.
+
+There are only a few things I'd adjust before Replit starts writing.
+
+---
+
+# 1. Don't start with the app.
+
+I actually wouldn't even mention Mapping With Melanin until slide 3.
+
+I'd do:
+
+### Slide 1
+
+**Never wonder if you'll feel welcome again.**
+
+Small text:
+
+> Finding the right place shouldn't require taking unnecessary risks.
+
+Nothing else.
+
+No phone.
+
+No interface.
+
+Just emotion.
+
+---
+
+### Slide 2
+
+Meet Zara.
+
+Photo.
+
+Three lines.
+
+> Moving to Atlanta.
+
+> Doesn't know anyone.
+
+> Wants to belong.
+
+Everyone immediately understands the problem.
+
+---
+
+### Slide 3
+
+Now reveal:
+
+**This is why Mapping With Melanin exists.**
+
+Now people are emotionally invested before they've seen a single feature.
+
+---
+
+# 2. The Question slide should ask multiple questions
+
+Instead of
+
+> Where should I eat?
+
+I'd use:
+
+> Will I feel welcome?
+
+> Is this neighborhood safe?
+
+> Can I trust these reviews?
+
+> Are there people like me nearby?
+
+Those four questions summarize your entire company.
+
+---
+
+# 3. Trust Score should become your first "wow"
+
+I would make this one almost entirely visual.
+
+Imagine:
+
+## Other Platforms
+
+★★★★★
+
+Based on
+
+Ads
+
+Clicks
+
+Popularity
+
+Algorithms
+
+---
+
+## Mapping With Melanin
+
+★★★★★
+
+Based on
+
+Community
+
+Safety
+
+Verification
+
+Experience
+
+Belonging
+
+That comparison takes about three seconds to understand.
+
+---
+
+# 4. Safety Map needs to feel different
+
+Instead of explaining the overlay...
+
+Say
+
+> The safest route isn't always the shortest one.
+
+That sentence is memorable.
+
+---
+
+# 5. Safety Check-In
+
+This might become the strongest slide.
+
+I'd literally animate it.
+
+Zara leaves.
+
+↓
+
+Starts check-in.
+
+↓
+
+Her sister receives notification.
+
+↓
+
+Timer expires.
+
+↓
+
+Someone already knows where she is.
+
+You barely need any text.
+
+---
+
+# 6. Community
+
+This should not look social.
+
+This is where almost every competitor fails.
+
+Don't compare yourself to Facebook.
+
+Instead say
+
+> Community isn't measured by followers.
+
+It's measured by knowing someone has your back.
+
+That sentence explains your philosophy.
+
+---
+
+# 7. KinfolkAI
+
+I LOVE the black slide.
+
+I'd actually make it even more dramatic.
+
+Black background.
+
+Tiny text.
+
+> You've found the city.
+
+Pause.
+
+Then
+
+Huge text.
+
+**Now meet someone who knows it.**
+
+Next slide
+
+KinfolkAI.
+
+---
+
+# 8. Business section
+
+I would avoid saying
+
+"Your Story"
+
+Instead
+
+> People don't just buy what you sell.
+
+They buy why you started.
+
+That is much stronger emotionally.
+
+---
+
+# 9. Business Before / After
+
+Instead of features.
+
+Show transformation.
+
+WITHOUT
+
+• Just another listing
+
+• Fighting algorithms
+
+• Paying for attention
+
+• Anonymous reviews
+
+WITH
+
+• Known by your community
+
+• Trust built over time
+
+• Authentic introductions
+
+• Customers who understand your mission
+
+---
+
+# 10. The Movement
+
+This should feel bigger than an app.
+
+I'd write
+
+> Imagine a world where...
+
+every neighborhood is easier to navigate.
+
+every business has a chance to be discovered.
+
+every newcomer can find community.
+
+every traveler feels like they belong.
+
+---
+
+# 11. Closing
+
+This is the only thing I'd change significantly.
+
+Instead of
+
+> Every recommendation...
+
+I'd finish with something like:
+
+> We aren't mapping cities.
+
+> We're mapping belonging.
+
+Then below it.
+
+Small.
+
+> One trusted recommendation.
+
+> One safer neighborhood.
+
+> One local business.
+
+> One friendship.
+
+> At a time.
+
+That is the kind of closing people remember.
+
+---
+
+## One addition I think would elevate the deck
+
+I'd add a slide that isn't about features at all.
+
+Right before the closing.
+
+**Why Now?**
+
+Just four statements:
+
+* Communities are more connected online than ever—but loneliness is rising.
+* Travel is growing—but trust is declining.
+* Minority-owned businesses are easier to support—but harder to discover.
+* People don't need another app. They need a trusted guide.
+
+That slide tells investors, partners, and community members that you're responding to a cultural moment, not just building software.
+
+---
+
+Overall, I think this new structure is a substantial improvement because it follows a narrative arc:
+
+1. **Emotion** ("Will I belong?")
+2. **Problem** (Zara's story)
+3. **Solution** (Mapping With Melanin)
+4. **Proof** (Trust, Safety, Community, KinfolkAI)
+5. **Impact** (Businesses and neighborhoods)
+6. **Mission** (The movement)
+
+That's the arc of a memorable presentation. People may forget individual features, but they'll remember how the story made them feel.
