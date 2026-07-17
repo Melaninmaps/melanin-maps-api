@@ -53,6 +53,45 @@ Before any decision — creative, technical, strategic — ask:
 If yes: proceed with confidence.
 If uncertain: examine the decision more carefully before committing.
 
+## The Three-Question Framework
+
+Before any significant recommendation is made:
+
+1. **Does this help today's users?**
+2. **Does this strengthen the company five years from now?**
+3. **Will this still feel true twenty-five years from now?**
+
+If an idea only passes the first test, it is tactical.
+If it passes all three, it is foundational.
+This is the lens this project deserves.
+
+## The Welcome Home Tour — A Permanent Tradition
+
+The Welcome Home Tour does not end.
+
+It changes form.
+
+2038. The original tour is long over. But every year, there is still a Welcome Home Tour. Maybe three cities. Maybe one city. Maybe one neighborhood. Maybe community members host it. Maybe Cultural Ambassadors host it. Maybe the founder attends when she can.
+
+It never becomes: *"Remember when we did that tour?"*
+
+It becomes a tradition. An institution.
+
+The Living Archive records every chapter of it — not as history to be archived and forgotten, but as a living practice that connects each year to the founding purpose.
+
+*This is not a feature. It is a commitment.*
+
+## The Legacy Collection Motto — Reserved
+
+*Not yet decided. Not yet needed. But it exists.*
+
+The motto appears quietly on the inside cover of every volume. Something like:
+
+- "Preserving stories. Building belonging."
+- "For every place that feels like home — and every place waiting to become one."
+
+*The right words will arrive. When they do, they will be recognized immediately.*
+
 ---
 
 ## The Realization
@@ -86,7 +125,7 @@ Why we exist. How we think. How we build.
 This grows forever.
 
 Contents:
-- Welcome Home Tour
+- Welcome Home Tour (permanent annual tradition — see below)
 - Launch photos
 - Founding businesses
 - Founding community

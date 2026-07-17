@@ -56,11 +56,18 @@ The complete Foundations Book does NOT automatically appear in every presentatio
 6. Our Role
 7. What Success Looks Like
 8. Core Brand Messages (protected)
+
+The three philosophical pillars:
    - "Most platforms know what you clicked. We know what your community experienced."
    - "Technology enables the experience. Community creates it."
+   - "Belonging isn't a feature. It's the reason the features exist."
+
+The declarations:
    - "We aren't just mapping places. We're mapping belonging."
    - "You belong here."
    - "Welcome home."
+
+*Note: A future foundational document — The Mapping With Melanin™ Principles — will define the operating principles of the company. These are distinct from Mission, Vision, and Values. They answer: how do we make decisions when no rule covers the situation? Examples: "We earn trust before asking for growth." / "Technology should amplify humanity — not replace it." / "We measure success by the strength of communities, not just the size of our audience." / "Every city deserves to be understood through the people who call it home." This document is planned but not yet authorized.*
 
 ---
 
