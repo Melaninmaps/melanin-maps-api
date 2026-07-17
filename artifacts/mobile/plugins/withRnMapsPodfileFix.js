@@ -3,107 +3,102 @@
  *
  * ROOT CAUSE:
  *   Two autolinking macros run during `pod install`:
- *     1. use_react_native!  → reads react-native-maps.podspec → pod 'react-native-maps'
- *     2. use_expo_modules!  → reads package config        → pod 'react-native-google-maps'
+ *     1. use_react_native!  → pod 'react-native-maps'         (via RN CLI autolinking)
+ *     2. use_expo_modules!  → pod 'react-native-google-maps'  (via Expo autolinking)
  *
- *   Both pods point to the same source directory and compile the same AIR* .m files
+ *   Both pods point to the same source directory → same AIR* .m files compiled twice
  *   → 339 duplicate symbol errors → linker crash.
  *
- * FIX (shim pattern — build 74+):
- *   During `pod install`, BEFORE CocoaPods resolves pods, this Ruby block:
+ * FIX (post_install + EXCLUDED_SOURCE_FILE_NAMES — build 76+):
  *
- *     1. Creates react-native-google-maps.podspec — copy of the real podspec, with
- *        s.name changed to "react-native-google-maps". This is the REAL implementation.
+ *   Part 1 (runs before pod resolution — top of Podfile):
+ *     Create react-native-google-maps.podspec so Expo's pod entry resolves.
+ *     Do NOT touch react-native-maps.podspec — CocoaPods must validate it normally.
  *
- *     2. OVERWRITES react-native-maps.podspec with a thin SHIM that has:
- *        - s.name = "react-native-maps"  (so use_react_native! finds it)
- *        - NO source_files               (compiles nothing → zero AIR* symbols)
- *        - s.dependency 'react-native-google-maps'  (pulls in the real impl)
+ *   Part 2 (post_install hook — runs after Xcode project is generated):
+ *     Set EXCLUDED_SOURCE_FILE_NAMES = '*' on the react-native-maps Xcode target.
+ *     This tells the compiler to skip all source files in that target.
+ *     Result: libreact-native-maps.a is built but empty (zero object files).
+ *             react-native-google-maps compiles all AIR* symbols exactly once.
+ *             Linker sees: empty react-native-maps lib + full react-native-google-maps lib
+ *             → no duplicates → linker passes.
  *
- *   Result:
- *     - pod 'react-native-maps'         → shim pod, 0 source files compiled
- *     - pod 'react-native-google-maps'  → real impl, compiles AIR* once
- *     → no duplicates → linker passes
- *
- * BUILD HISTORY:
- *   67-70: linker crash — podspecPath override caused both pods.
- *   71:    dependencies:{} in react-native.config.js; both pods still appeared. Crash.
- *   72:    platforms:{ios:null} disabled BOTH autolinkers → pod install failure.
- *   73:    JS text-removal of pod line; use_react_native! is a macro, line never exists
- *          as literal text → removal was no-op → pods still installed → linker crash.
- *   74+:   Ruby shim at pod-install time — this build.
+ * WHAT DIDN'T WORK (build history):
+ *   67-70: podspecPath override in react-native.config.js → both pods still added.
+ *   71:    dependencies:{} empty override → both pods still added by macro expansion.
+ *   72:    platforms:{ios:null} → disabled BOTH autolinkers → pod not found → pod install fail.
+ *   73:    JS text removal of pod 'react-native-maps' line → macros generate at runtime, no literal line → no-op. Both pods linked, linker crash.
+ *   74:    Ruby shim + s.dependency 'react-native-google-maps' → version conflict with cached Podfile.lock.
+ *   75:    Ruby shim without dependency → s.source_files=[] invalid, pod install fail (CocoaPods rejects empty pod).
+ *   76+:   post_install + EXCLUDED_SOURCE_FILE_NAMES (this build).
  */
 const { withDangerousMod } = require("@expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
 
-const MARKER = "[rn-maps-shim-v1]";
+const MARKER = "[rn-maps-post-v2]";
 
 // Ruby block injected at the TOP of the Podfile.
-// Runs synchronously when CocoaPods evaluates the Podfile (before pod resolution).
-const RUBY_SHIM = `
-# ${MARKER} — react-native-maps shim fix (runs during pod install, before pod resolution)
+// Part 1 runs synchronously during Podfile evaluation (before pod resolution).
+// Part 2 runs after pod install generates the Xcode project.
+const RUBY_FIX = `
+# ${MARKER} — react-native-maps duplicate symbol fix
+
+# ── Part 1: Create react-native-google-maps.podspec (before pod resolution) ─
 require 'fileutils'
 begin
-  _rn_maps_pnpm = File.expand_path(
+  _pnpm_root = File.expand_path(
     File.join('..', '..', '..', 'node_modules', '.pnpm'),
     File.dirname(File.expand_path(__FILE__))
   )
-  puts "[rn-maps-shim] Scanning pnpm store: #{_rn_maps_pnpm}"
-  _dirs = Dir.glob(File.join(_rn_maps_pnpm, 'react-native-maps@*', 'node_modules', 'react-native-maps'))
-  puts "[rn-maps-shim] Found #{_dirs.length} react-native-maps dir(s)"
+  puts "[rn-maps-fix] Scanning: #{_pnpm_root}"
+  _dirs = Dir.glob(File.join(_pnpm_root, 'react-native-maps@*', 'node_modules', 'react-native-maps'))
+  puts "[rn-maps-fix] Found #{_dirs.length} react-native-maps dir(s)"
   _dirs.each do |maps_dir|
     src = File.join(maps_dir, 'react-native-maps.podspec')
     dst = File.join(maps_dir, 'react-native-google-maps.podspec')
     unless File.exist?(src)
-      puts "[rn-maps-shim] Source not found: #{src}"
+      puts "[rn-maps-fix] Podspec not found: #{src}"
       next
     end
-    orig = File.read(src)
-
-    # ── Step 1: create react-native-google-maps.podspec (real implementation) ──
-    google_content = orig
+    content = File.read(src)
+    # Replace s.name preserving all whitespace variants
+    google = content
       .gsub('s.name                 = "react-native-maps"', 's.name                 = "react-native-google-maps"')
-      .gsub('s.name = "react-native-maps"',                  's.name = "react-native-google-maps"')
-      .gsub("s.name = 'react-native-maps'",                  "s.name = 'react-native-google-maps'")
-    unless google_content.include?('react-native-google-maps')
-      google_content = google_content.sub(/s\\.name\\s*=\\s*["'][^"']*["']/, 's.name = "react-native-google-maps"')
+      .gsub('s.name = "react-native-maps"', 's.name = "react-native-google-maps"')
+      .gsub("s.name = 'react-native-maps'", "s.name = 'react-native-google-maps'")
+    unless google.include?('react-native-google-maps')
+      google = google.sub(/s\\.name\\s*=\\s*["'][^"']*["']/, 's.name = "react-native-google-maps"')
     end
-    File.write(dst, google_content)
-    puts "[rn-maps-shim] Wrote react-native-google-maps.podspec"
-
-    # ── Step 2: overwrite react-native-maps.podspec with a no-source shim ────
-    version_match = orig.match(/s\\.version\\s*=\\s*["']([^"']+)["']/)
-    version = version_match ? version_match[1] : '1.0.0'
-    platform_match = orig.match(/s\\.platform\\s*=\\s*:ios,\\s*["']([^"']+)["']/)
-    ios_min = platform_match ? platform_match[1] : '15.0'
-    homepage_match = orig.match(/s\\.homepage\\s*=\\s*["']([^"']+)["']/)
-    homepage = homepage_match ? homepage_match[1] : 'https://github.com/react-native-maps/react-native-maps'
-    shim = <<~SHIM
-      # react-native-maps.podspec — SHIM (generated by withRnMapsPodfileFix.js)
-      # No source files compiled. The real implementation is in react-native-google-maps,
-      # which Expo autolinking already adds to the Podfile via use_expo_modules!.
-      # We do NOT declare s.dependency 'react-native-google-maps' here because that
-      # would trigger CocoaPods version resolution against a cached Podfile.lock.
-      Pod::Spec.new do |s|
-        s.name             = 'react-native-maps'
-        s.version          = '#{version}'
-        s.summary          = 'Shim — zero source files, no duplicate AIR* symbols'
-        s.description      = 'Zero-source shim to prevent duplicate symbol linker errors.'
-        s.homepage         = '#{homepage}'
-        s.license          = { :type => 'MIT' }
-        s.author           = { 'Shim' => 'shim@placeholder.com' }
-        s.platform         = :ios, '#{ios_min}'
-        s.source           = { :path => '.' }
-        s.source_files     = []
-      end
-    SHIM
-    File.write(src, shim)
-    puts "[rn-maps-shim] Overwrote react-native-maps.podspec with shim (version=#{version})"
+    File.write(dst, google)
+    puts "[rn-maps-fix] Wrote react-native-google-maps.podspec at #{maps_dir}"
+    # react-native-maps.podspec is LEFT UNTOUCHED — CocoaPods must validate it normally
   end
 rescue => e
-  puts "[rn-maps-shim] ERROR: #{e.class}: #{e.message}"
-  puts e.backtrace.first(5).join("\\n")
+  puts "[rn-maps-fix] ERROR (Part 1): #{e.class}: #{e.message}"
+  puts e.backtrace.first(3).join("\\n")
+end
+
+# ── Part 2: post_install — exclude all react-native-maps source from compilation ──
+# EXCLUDED_SOURCE_FILE_NAMES='*' tells Xcode to compile zero files from the target.
+# libreact-native-maps.a ends up empty; react-native-google-maps compiles AIR* once.
+post_install do |installer|
+  begin
+    fixed = false
+    installer.pods_project.targets.each do |target|
+      next unless target.name == 'react-native-maps'
+      target.build_configurations.each do |config|
+        config.build_settings['EXCLUDED_SOURCE_FILE_NAMES'] = '*'
+      end
+      puts "[rn-maps-fix] react-native-maps target: EXCLUDED_SOURCE_FILE_NAMES=* (zero AIR* symbols compiled)"
+      fixed = true
+    end
+    puts "[rn-maps-fix] Warning: react-native-maps target not found in Pods project" unless fixed
+    installer.pods_project.save
+  rescue => e
+    puts "[rn-maps-fix] ERROR (Part 2 post_install): #{e.class}: #{e.message}"
+    puts e.backtrace.first(3).join("\\n")
+  end
 end
 
 `;
@@ -124,19 +119,18 @@ module.exports = function withRnMapsPodfileFix(config) {
 
       let podfile = fs.readFileSync(podfilePath, "utf8");
 
-      // Strip any old version of our marker block.
-      const oldMarkers = [
-        "[rn-maps-fix",
-        "[rn-maps-shim",
-      ];
-      for (const m of oldMarkers) {
-        if (podfile.includes(m) && !podfile.includes(MARKER)) {
-          // Remove old block: from the comment line through the closing `end\n\n`
+      // Strip any previous version of our block by marker prefix.
+      const OLD_PREFIXES = ["[rn-maps-fix", "[rn-maps-shim", "[rn-maps-post"];
+      for (const prefix of OLD_PREFIXES) {
+        if (podfile.includes(prefix) && !podfile.includes(MARKER)) {
+          // Remove everything from the comment line through the closing blank line
+          // that follows the last `end` of our block.
+          const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
           podfile = podfile.replace(
-            new RegExp(`# \\[${m.slice(1).replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&")}[\\s\\S]*?^end\\n\\n`, "m"),
+            new RegExp(`# \\[${escaped.slice(2)}[^\\]]*\\][\\s\\S]*?\\bend\\n(?=\\n)`, "m"),
             ""
           );
-          console.log(`[withRnMapsPodfileFix] Stripped old ${m} block.`);
+          console.log(`[withRnMapsPodfileFix] Stripped old ${prefix} block.`);
         }
       }
 
@@ -145,9 +139,9 @@ module.exports = function withRnMapsPodfileFix(config) {
           `[withRnMapsPodfileFix] ${MARKER} already present — skipping injection.`
         );
       } else {
-        podfile = RUBY_SHIM + podfile;
+        podfile = RUBY_FIX + podfile;
         console.log(
-          `[withRnMapsPodfileFix] Injected ${MARKER} Ruby shim block into Podfile.`
+          `[withRnMapsPodfileFix] Injected ${MARKER} into Podfile.`
         );
       }
 
