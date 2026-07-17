@@ -736,10 +736,10 @@ title = "Mapping With Melanin — Business Deck (PDF)"
 id = "O-7_iCCScVQzcFZJxrxa4"
 uri = "file://complaint_log.txt"
 type = "text"
-title = "Mapping With Melanin — Full Session Log (Complaint Record)"
+title = "Full Session Log — 4,013 messages (attach to complaint)"
 
 [[outputs]]
 id = "fjMZ9mH4OI8OJkX-mhPkv"
 uri = "file://complaint_summary.txt"
 type = "text"
-title = "Complaint Summary — Ready to Copy/Paste into Email"
+title = "Complaint Summary — Email-ready (1 page)"
