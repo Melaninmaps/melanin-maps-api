@@ -1,0 +1,45 @@
+This is finally a **coherent, evidence-based diagnosis**, but I would not yet accept “credential mismatch” as fully resolved because you already told us the **Forgot Password flow has not worked**.
+
+The database findings establish that:
+
+* your production user exists;
+* the account has a bcrypt password hash;
+* it is an email/password account;
+* the website domain routes correctly to Railway;
+* no mobile build is needed merely to correct the stored password.
+
+The next test should be a controlled password-reset test—not another build.
+
+Send Replit:
+
+> Please test the production password-reset flow end to end before asking me to use it again.
+>
+> 1. Trigger a password reset for my account through the same production endpoint the app uses.
+> 2. Confirm the reset token/code is created and delivered.
+> 3. Complete the reset through the supported authentication flow.
+> 4. Confirm the password hash in production changes, without displaying the hash.
+> 5. Immediately test `/api/auth/login-email` with the new password and confirm HTTP 200.
+> 6. Confirm a session token and database session record are created.
+> 7. Then I will try the same new password in the installed Android app.
+>
+> Do not manually edit the bcrypt hash in the database and do not ask me to share the new password in chat.
+
+### What the results will mean
+
+* **Production endpoint returns 200, and the app logs in:** authentication is fixed with no new build.
+* **Reset says successful, but the hash does not change:** password-reset backend bug.
+* **Hash changes, but production login still returns 401:** login and reset are using incompatible hashing or different credential records.
+* **Production login returns 200, but the Android app still says login failed:** then the client-side diagnostic build is justified.
+
+### About `profile setup complete: false`
+
+That could become the next issue after login. It may send you into onboarding rather than the main app, but it should not cause the current `401`. Once login succeeds, confirm whether the intended behavior is:
+
+```text
+profile incomplete → onboarding
+profile complete → main tabs
+```
+
+One security concern: Replit accessed the Railway database through its public proxy. That may be necessary for debugging, but make sure the database is password protected, the Railway token is tightly scoped, and no connection URL or database credential was printed into logs or chat.
+
+For now, the next move is **prove password reset changes the production credential and produces a 200 login response**. No app build yet.
