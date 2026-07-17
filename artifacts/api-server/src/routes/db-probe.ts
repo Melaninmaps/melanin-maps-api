@@ -3,10 +3,9 @@ import { pool } from "@workspace/db";
 
 const router: IRouter = Router();
 
-const PROBE_KEY = "mwm-probe-2026-diag";
-
 router.get("/db-probe", async (req: Request, res: Response) => {
-  if (req.headers["x-probe-key"] !== PROBE_KEY) {
+  const probeKey = process.env.DB_PROBE_KEY;
+  if (!probeKey || req.headers["x-probe-key"] !== probeKey) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
