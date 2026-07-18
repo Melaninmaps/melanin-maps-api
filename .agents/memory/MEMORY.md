@@ -50,3 +50,4 @@
 - [Creative OS Collaboration Standards](creative-os-standards.md) — 29 permanent working standards + CTO/Creative Director instruction; Review Mode default; "Please implement." is the ONLY authorization phrase.
 - [MWM Foundations Book outline](../docs/MWM-Foundations-Book-Outline-v1.0.md) — 9 Parts · 67 Sections; Level 2 "Constitution" of the 5-level Knowledge System; Review Mode only.
 - [MWM Legacy Collection](../docs/MWM-Legacy-Project-Vision.md) — Level 1 "Vision" of the 5-level Knowledge System; 25-year institutional vision; 5 volumes, city books, documentaries, Sounds of Home, Legacy Spots; Letters to the Future reserved.
+- [Trust Engine Testing Strategy](trust-engine-testing-strategy.md) — 4-phase test plan; demo businesses teach values without exposing formulas; "Visible Outcomes Invisible Logic" principle; what stays proprietary forever. Not built — return when Railway stable.
