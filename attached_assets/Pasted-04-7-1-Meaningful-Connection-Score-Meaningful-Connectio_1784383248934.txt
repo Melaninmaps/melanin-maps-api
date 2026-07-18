@@ -1,0 +1,102 @@
+04.7.1 Meaningful Connection Score
+Meaningful Connection Score =
+  Repeat Interaction Quality
++ Relationship Depth
++ Connection Accessibility
++ Cross-Network Bridge Value
++ Continuation Rate
+- Superficiality Penalty
+04.7.2 Positive indicators
+users return to engage with the same people;
+introductions lead to later interaction;
+mentorship relationships form;
+community members refer one another;
+businesses collaborate;
+members form Kinfolk Circles;
+relationships continue outside a single event;
+newcomers report meeting useful or supportive contacts;
+users identify people they can call on;
+local and diaspora relationships are sustained.
+04.7.3 Superficiality indicators
+large attendance with no repeat engagement;
+engagement driven only by giveaways;
+high follower counts but low relationship continuity;
+one-directional broadcasting;
+repeated participation without reciprocal recognition;
+staged networking with no follow-through;
+high interaction volume from coordinated or automated accounts.
+04.8 Dimension Three — Reciprocity
+Reciprocity measures whether community benefit moves in more than one direction.
+It evaluates whether people, businesses, organizations, and institutions both receive and contribute.
+04.8.1 Reciprocity Score
+Reciprocity Score =
+  Contribution Rate
++ Benefit Distribution
++ Mutual Support
++ Resource Circulation
++ Response to Community Need
+- Extraction Penalty
+04.8.2 Reciprocity evidence
+Positive evidence includes:
+referrals given and received;
+community members helping one another;
+businesses supporting local initiatives;
+paid opportunities returned to the community;
+useful information shared;
+mentorship offered;
+resources contributed;
+volunteer support;
+community concerns acknowledged;
+revenue circulating through local businesses;
+Cultural Ambassadors directing attention to community benefit;
+institutions creating pathways rather than one-time appearances.
+04.8.3 Extraction indicators
+gathering community data without returning value;
+cultural promotion without compensation or recognition;
+businesses benefiting from community identity without community investment;
+repeated requests for labor without reciprocity;
+influencer activity that extracts visibility but does not create access;
+institutions using community stories without consent;
+paid partnerships hidden from the community;
+resources consistently flowing outward without measurable return;
+predatory pricing during community need;
+using crisis conditions for promotion.
+04.9 Dimension Four — Community Support
+Community Support measures whether useful help is available when people need it.
+Support may be emotional, informational, practical, economic, educational, safety-related, professional, or institutional.
+04.9.1 Community Support Score
+Community Support Score =
+  Resource Availability
++ Responsiveness
++ Practical Usefulness
++ Reliability
++ Reach to Underserved Members
+- Support Failure Penalties
+04.9.2 Support categories
+food and basic needs;
+housing;
+employment;
+education;
+business development;
+transportation;
+childcare;
+elder support;
+legal assistance;
+safety information;
+emergency support;
+healthcare navigation;
+mentorship;
+relocation assistance;
+social and emotional connection;
+cultural continuity.
+04.9.3 Positive indicators
+verified resources available;
+community questions receive useful responses;
+urgent needs are routed appropriately;
+businesses share opportunities;
+users report receiving actionable help;
+resource eligibility is clear;
+assistance reaches people with fewer connections;
+community organizations collaborate;
+information remains current;
+support is not conditioned on public praise.

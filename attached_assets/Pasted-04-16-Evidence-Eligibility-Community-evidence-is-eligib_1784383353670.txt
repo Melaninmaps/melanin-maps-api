@@ -1,0 +1,109 @@
+04.16 Evidence Eligibility
+Community evidence is eligible only when:
+it relates to the evaluated object;
+it falls within the relevant timeframe;
+its source relationship is known or appropriately classified;
+conflicts of interest are disclosed where applicable;
+duplicate activity is removed;
+coordinated manipulation is screened;
+private evidence is used only as permitted;
+the evidence is specific enough to interpret;
+the evidence is not based solely on popularity;
+the evidence does not rely on prohibited identity inference.
+04.17 Evidence Relationship Types
+Every evidence item must identify the contributor’s relationship to the evaluated object.
+Relationship	Example
+Direct participant	Attended event, used resource
+Customer	Purchased from business
+Resident	Lives in neighborhood
+Visitor	Visited location
+Employee	Works or worked for entity
+Business owner	Owns evaluated or related business
+Organizer	Organized event or initiative
+Partner	Formal collaborator
+Volunteer	Contributed time
+Recipient	Received support or opportunity
+Observer	Witnessed but did not directly participate
+Institution representative	Represents organization
+Cultural Ambassador	Promoted or interpreted experience
+Platform moderator	Reviewed evidence
+Unknown	Relationship cannot be established
+Unknown relationships reduce confidence.
+Interested-party relationships do not automatically disqualify evidence but require conflict-of-interest adjustment.
+04.18 Community Signal Dictionary
+Each community signal must be defined in the Belonging Signals™ Dictionary.
+Launch-state signal groups include:
+welcoming signals;
+connection signals;
+reciprocity signals;
+support signals;
+voice signals;
+continuity signals;
+stewardship signals;
+exclusion signals;
+extraction signals;
+manipulation signals;
+crisis-response signals;
+growth signals;
+institutional signals;
+intergenerational signals.
+Every signal definition must include:
+signal ID;
+name;
+description;
+eligible sources;
+polarity;
+maximum contribution;
+decay schedule;
+verification requirement;
+conflict-of-interest rule;
+applicable entity types;
+context restrictions;
+anti-gaming treatment;
+public explanation eligibility.
+04.19 Positive Community Indicators
+Positive signals may increase one or more dimension scores.
+Examples include:
+newcomers welcomed;
+questions answered;
+referrals completed;
+people return voluntarily;
+businesses support one another;
+local hiring occurs;
+Cultural Ambassadors create measurable opportunity;
+mentorship relationships continue;
+resource needs are met;
+community concerns lead to change;
+historical knowledge is preserved;
+community members become leaders;
+events recur;
+institutions collaborate;
+support reaches people outside dominant social circles;
+conflicts are repaired;
+businesses respond constructively;
+community members recommend one another;
+economic value circulates locally;
+people report feeling known rather than merely marketed to.
+04.20 Community Risk Indicators
+Risk indicators may reduce dimension scores or trigger review.
+Examples include:
+repeated gatekeeping;
+exclusion of newcomers;
+insider-only access;
+harassment or retaliation;
+extraction without return;
+misleading community claims;
+performative partnerships;
+abandoned commitments;
+suppression of criticism;
+coordination to manipulate scores;
+concentrated benefits;
+cultural exploitation;
+community displacement;
+inaccessible resources;
+public-facing diversity without internal influence;
+unpaid labor expectations;
+inconsistent treatment;
+false urgency;
+resource hoarding;
+reputation management replacing accountability.
