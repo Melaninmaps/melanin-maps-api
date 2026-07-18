@@ -39,8 +39,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/assets/index-QbesnESn.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-nO3dgEuG.css">
+
+    <!-- Error capture: report any JS crash to /__client-error so we can see it in Railway logs -->
+    <script>
+      function _reportErr(msg, src, line, col, err) {
+        var payload = JSON.stringify({ msg: String(msg), src: String(src), line: line, col: col, stack: err && err.stack ? err.stack : '' });
+        try { navigator.sendBeacon('/__client-error', payload); } catch(e) {}
+      }
+      window.onerror = function(msg, src, line, col, err) { _reportErr(msg, src, line, col, err); };
+      window.addEventListener('unhandledrejection', function(e) {
+        var err = e.reason;
+        _reportErr('UnhandledRejection: ' + (err && err.message ? err.message : String(err)), location.href, 0, 0, err);
+      });
+    </script>
+    <script type="module" crossorigin src="/assets/index-BJPcFf3M.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BbCVoOVK.css">
   </head>
   <body>
     <div id="root"></div>
