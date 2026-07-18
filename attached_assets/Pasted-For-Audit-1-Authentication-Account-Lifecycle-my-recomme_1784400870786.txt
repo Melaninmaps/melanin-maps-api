@@ -1,0 +1,347 @@
+For **Audit 1: Authentication & Account Lifecycle**, my recommendation is to treat authentication as a complete member journey—not just “can someone log in?”
+
+Replit’s inventory shows that the platform already has substantial authentication infrastructure: email/password registration and login, password reset, phone OTP, Apple Sign-In, Replit OIDC, mobile proxy login, profile setup, session tokens, and age-gating support.   The mobile app also has dedicated login, signup, phone verification, password-reset, authentication-completion, and pending-approval screens. 
+
+That is a strong foundation. But these are my product and launch recommendations.
+
+# My recommended Day 1 authentication model
+
+## 1. Make native email and password the primary universal login
+
+The production website and mobile apps should all support:
+
+* email registration;
+* email login;
+* password reset;
+* logout;
+* session restoration;
+* account recovery.
+
+This should be the dependable baseline because it does not rely on Replit OIDC.
+
+Apple Sign-In and phone OTP can remain additional options, but no supporter should need them to access the platform.
+
+## 2. Remove Replit OIDC from the public production experience
+
+Replit OIDC may remain available internally for development if needed, but it should not appear as the primary public login method.
+
+The reason is architectural, not cosmetic: it ties production access to the development environment and already caused the current website login failure.
+
+My preferred structure:
+
+```text
+Production web:
+Email + password
+Forgot password
+Create account
+Apple Sign-In later if fully validated
+
+Mobile:
+Email + password
+Apple Sign-In
+Phone OTP
+Forgot password
+```
+
+## 3. Require email verification
+
+I recommend that new users be able to create an account immediately but have limited privileges until their email is verified.
+
+Before email verification, they may:
+
+* browse;
+* search;
+* save limited preferences;
+* complete onboarding.
+
+They should not yet be able to:
+
+* publish posts;
+* send messages;
+* submit safety reports as verified firsthand evidence;
+* create businesses;
+* initiate marketplace transactions;
+* nominate Hidden Gems;
+* post reviews that influence trust scores.
+
+This helps reduce fraud, duplicate accounts, harassment, and manipulation.
+
+## 4. Keep the two-day posting restriction—but make it explicit
+
+You previously wanted new members to have a two-day posting restriction while still being able to explore the platform.
+
+I still support that.
+
+The account experience should clearly say:
+
+> Welcome to Mapping With Melanin™. You can begin exploring immediately. To help protect the community, some posting and messaging features become available after your account has been established for 48 hours and your email has been verified.
+
+This should not feel like punishment or a mysterious malfunction.
+
+## 5. Define account states clearly
+
+We should not rely on one generic “active” state.
+
+I recommend these internal states:
+
+```text
+Registered
+Email Verification Pending
+Onboarding Incomplete
+Active – Limited
+Active – Full
+Verification Review Pending
+Suspended
+Appeal Pending
+Deactivated by Member
+Deletion Scheduled
+Deleted
+```
+
+Each state needs clear rules about what the member can see and do.
+
+## 6. Add a complete account-security area
+
+Every user should have a simple **Account & Security** page containing:
+
+* email address;
+* verified/unverified status;
+* phone number;
+* change password;
+* linked Apple account;
+* linked phone login;
+* sign out;
+* sign out of all devices;
+* download my information;
+* deactivate account;
+* permanently delete account.
+
+The inventory shows extensive privacy settings and user-management routes, but the existence of a complete member-controlled deletion and export workflow is not yet proven.  
+
+## 7. Separate deactivation from deletion
+
+These should not mean the same thing.
+
+### Deactivate
+
+* profile becomes hidden;
+* notifications stop;
+* content may remain where necessary;
+* member can return later.
+
+### Delete permanently
+
+* requires password or identity confirmation;
+* clearly explains what is deleted and what must legally remain;
+* enters a short cancellation window;
+* revokes all sessions;
+* removes or anonymizes personal data;
+* preserves legally required transaction, moderation, or safety records under restricted access.
+
+## 8. Do not allow silent duplicate accounts
+
+A major Day 1 risk is the same person registering through:
+
+* email;
+* phone;
+* Apple;
+* OIDC.
+
+The platform needs account-linking rules.
+
+Example:
+
+> An account already exists with this email. Sign in using your original method, then link Apple or your phone from Account & Security.
+
+We should not automatically merge accounts without confirmation.
+
+## 9. Add strong password protections
+
+My recommendation:
+
+* minimum 10 characters;
+* permit passphrases;
+* require reasonable complexity without excessive rules;
+* show password strength;
+* block known compromised passwords;
+* rate-limit repeated login attempts;
+* temporary cooldown after repeated failures;
+* do not reveal whether an email address exists during password recovery.
+
+The forgot-password response should always say:
+
+> If an account exists for that email, we’ll send reset instructions.
+
+## 10. Strengthen reset-code handling
+
+The six-digit reset flow should include:
+
+* 10–15 minute expiration;
+* one-time use;
+* limited attempts;
+* resend cooldown;
+* invalidation when a new code is issued;
+* no code in logs;
+* no plaintext storage if avoidable;
+* session revocation after password reset.
+
+## 11. Sessions should be manageable by users
+
+The current inventory describes seven-day sessions and Bearer-token behavior, but no refresh behavior was noted in the earlier diagnosis.
+
+For Day 1, I recommend:
+
+* seven-day session is acceptable;
+* users are clearly signed out when expired;
+* logout invalidates the server-side session;
+* password reset invalidates all active sessions;
+* users can choose “Sign out of all devices”;
+* administrators can invalidate sessions when an account is compromised.
+
+A later phase can add an “active devices” list.
+
+## 12. Age and family behavior must be fully decided
+
+The inventory shows DOB collection, age gating, family plans, family-safe modes, and parental settings.  
+
+Before launch we need definitive rules for:
+
+* minimum independent-account age;
+* whether minors can create their own login;
+* how parents invite or manage children;
+* what data children may share;
+* whether minors may use direct messaging;
+* marketplace restrictions;
+* location-sharing restrictions;
+* safety-report visibility;
+* deletion and parental-control rights.
+
+My safest Day 1 recommendation is:
+
+> Independent accounts are for adults. Minor access occurs only through a parent-managed family profile until the complete youth-safety architecture has been reviewed.
+
+That is safer than launching partially designed child accounts.
+
+## 13. Record consent properly
+
+The platform should record:
+
+* Terms version;
+* Privacy Policy version;
+* Community Guidelines version;
+* timestamp;
+* account ID;
+* method of acceptance;
+* parental consent where applicable.
+
+A generic checkbox without version history is insufficient for a platform with community, safety, AI, marketplace, location, and child-related features.
+
+## 14. Suspension and appeals must be visible
+
+If an account is suspended, the member should receive:
+
+* the category of reason;
+* what access remains;
+* duration if temporary;
+* appeal option;
+* expected review process;
+* emergency contact method when applicable.
+
+Avoid vague screens such as:
+
+> Your account is unavailable.
+
+That creates fear and support burden.
+
+## 15. Add audit logging for sensitive changes
+
+At minimum, record:
+
+* login success and failure;
+* password reset request and completion;
+* email or phone change;
+* authentication method linked or removed;
+* password change;
+* session revocation;
+* account suspension;
+* admin changes;
+* account deletion request.
+
+Do not store passwords, codes, or secret tokens in these logs.
+
+# My preliminary priority classification
+
+## P0 — launch blockers
+
+These must work before supporters receive full access:
+
+* production email registration;
+* production email login;
+* password reset;
+* logout;
+* session restoration;
+* protected routes;
+* correct authorization for admin routes;
+* server-side logout invalidation;
+* brute-force and rate-limit protection;
+* no broken Replit OIDC dependency;
+* clear duplicate-account handling;
+* secure reset-code behavior;
+* correct live deployment of the new authentication bundle.
+
+## P1 — full Day 1 experience
+
+These are part of the experience you said you want:
+
+* email verification;
+* clear account states;
+* two-day posting restriction;
+* change password;
+* delete/deactivate account;
+* sign out all devices;
+* consent-version records;
+* clear suspension and appeals;
+* complete mobile/web consistency;
+* fully defined adult/minor rules;
+* strong user-facing error and recovery messages.
+
+## P2 — shortly after launch
+
+* active-device list;
+* advanced compromised-session detection;
+* account merging with human support;
+* passkeys;
+* optional multi-factor authentication;
+* downloadable account-data package if not ready on Day 1.
+
+# My recommendation for the live login experience
+
+The public screen should be simple:
+
+```text
+Welcome Home
+
+Sign In
+Email
+Password
+Forgot password?
+Continue
+
+Create Account
+
+Optional:
+Continue with Apple
+Continue with Phone
+```
+
+No Replit branding. No confusing developer login route. No unnecessary choices before the user understands the platform.
+
+# The key product decision
+
+I recommend we define **Authentication Complete** as this:
+
+> A person can create an account, verify ownership of their contact information, complete onboarding, return later on the same or another device, recover lost access, understand restrictions, control their sessions, and leave the platform safely—without staff intervention or a broken screen.
+
+That is the standard I will use when reviewing Replit’s Audit 1 report.
+
+Send Replit the read-only authentication audit prompt now. Once it responds, bring the full report here and I will compare its actual findings against these recommendations before we approve Section 1.
