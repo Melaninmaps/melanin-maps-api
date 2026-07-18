@@ -1,6 +1,6 @@
 kind = "slides"
 previewPath = "/features-deck/"
-title = "Mapping With Melanin — Platform Features"
+title = "Mapping With Melanin™ — Legacy Collection"
 version = "1.0.0"
 id = "artifacts/features-deck"
 router = "path"
