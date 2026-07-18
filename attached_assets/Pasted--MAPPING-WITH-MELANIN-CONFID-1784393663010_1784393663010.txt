@@ -1,0 +1,635 @@
+═══════════════════════════════════════════════════════════════════════
+MAPPING WITH MELANIN™
+CONFIDENTIAL ALGORITHM SPECIFICATION
+All content confidential — Review Mode only — Not for distribution
+═══════════════════════════════════════════════════════════════════════
+
+# 13. OPPORTUNITY ENGINE™
+
+## Future-State Production Specification v1.0
+
+**Classification:** Opportunity Discovery, Matching, and Future Potential Intelligence Engine
+**Status:** Review Mode — designed as the launch-state model
+**Confidentiality:** Highest restriction; opportunity matching algorithms, prediction models, prioritization logic, eligibility calculations, opportunity weighting, recommendation methodologies, and optimization rules are confidential trade secrets and are not publicly disclosed.
+
+---
+
+# 13.1 Purpose
+
+The Opportunity Engine™ identifies meaningful opportunities that align with a member's context, goals, needs, values, capabilities, location, and stage of life.
+
+Unlike traditional recommendation systems that optimize engagement, the Opportunity Engine™ optimizes human advancement.
+
+It determines:
+
+1. which opportunities are most relevant;
+2. which opportunities are realistically attainable;
+3. which opportunities produce the greatest long-term benefit;
+4. which opportunities increase belonging;
+5. which opportunities strengthen communities;
+6. which opportunities reduce barriers;
+7. which opportunities create measurable upward mobility;
+8. which opportunities should be surfaced immediately;
+9. which opportunities should wait until conditions improve;
+10. which opportunities are most likely to improve a person's life trajectory.
+
+The governing question is:
+
+> **Given everything we know, which opportunity is most likely to create meaningful positive change for this member while strengthening the broader community?**
+
+---
+
+# 13.2 Foundational Principle
+
+People do not lack potential.
+
+People often lack visibility into opportunities.
+
+The Opportunity Engine™ exists to reduce that gap.
+
+Its responsibility is not simply to recommend opportunities.
+
+Its responsibility is to recognize opportunity before the individual even knows to search for it.
+
+Opportunity is treated as something that can be discovered, unlocked, shared, expanded, and multiplied.
+
+---
+
+# 13.3 Definition of Opportunity
+
+An opportunity is any circumstance that has the potential to improve an individual's, business's, or community's future.
+
+Examples include:
+
+* employment;
+* internships;
+* scholarships;
+* grants;
+* mentorship;
+* business partnerships;
+* speaking engagements;
+* networking;
+* housing;
+* relocation;
+* educational programs;
+* volunteer leadership;
+* procurement opportunities;
+* cultural events;
+* community initiatives;
+* funding;
+* certifications;
+* government resources;
+* healthcare access;
+* entrepreneurship.
+
+---
+
+# 13.4 Opportunity Objects
+
+The Engine evaluates:
+
+| Object                    | Examples              |
+| ------------------------- | --------------------- |
+| Individual Opportunity    | Job, mentorship       |
+| Business Opportunity      | Supplier relationship |
+| Community Opportunity     | Local initiative      |
+| Educational Opportunity   | Scholarship           |
+| Cultural Opportunity      | Heritage program      |
+| Leadership Opportunity    | Board appointment     |
+| Economic Opportunity      | Grant, investment     |
+| Housing Opportunity       | Relocation resource   |
+| Partnership Opportunity   | Collaboration         |
+| Institutional Opportunity | Fellowship            |
+
+---
+
+# 13.5 Core Evaluation Dimensions
+
+The Opportunity Engine™ returns a normalized score from **0–100**.
+
+| Dimension            |   Weight |
+| -------------------- | -------: |
+| Relevance            |      18% |
+| Readiness            |      15% |
+| Community Benefit    |      14% |
+| Long-Term Potential  |      13% |
+| Accessibility        |      12% |
+| Belonging Alignment  |      10% |
+| Growth Potential     |       8% |
+| Trust & Verification |       6% |
+| Timing               |       4% |
+| **Total**            | **100%** |
+
+---
+
+# 13.6 Dimension One — Relevance
+
+Measures how closely an opportunity aligns with:
+
+* stated goals;
+* current interests;
+* life stage;
+* professional aspirations;
+* cultural preferences;
+* community priorities;
+* travel intent;
+* relocation plans.
+
+Formula:
+
+```text id="opp13a"
+Relevance =
+Intent Alignment
+× Context Alignment
+× Need Alignment
+× Goal Alignment
+```
+
+High relevance without readiness may delay recommendation rather than suppress it.
+
+---
+
+# 13.7 Dimension Two — Readiness
+
+Measures whether the member is currently prepared.
+
+Examples:
+
+* qualifications;
+* experience;
+* required documentation;
+* certifications;
+* financial readiness;
+* geographic availability;
+* time commitment.
+
+The Engine never assumes readiness based solely on demographics.
+
+---
+
+# 13.8 Dimension Three — Community Benefit
+
+Measures whether accepting the opportunity benefits both the individual and the broader community.
+
+Examples:
+
+* local hiring;
+* mentorship;
+* entrepreneurship;
+* cultural preservation;
+* volunteer leadership;
+* educational advancement.
+
+The strongest opportunities improve both individual outcomes and collective outcomes.
+
+---
+
+# 13.9 Dimension Four — Long-Term Potential
+
+Evaluates:
+
+* career progression;
+* leadership potential;
+* educational advancement;
+* financial stability;
+* entrepreneurship;
+* community influence.
+
+Temporary gain receives less value than sustainable advancement.
+
+---
+
+# 13.10 Dimension Five — Accessibility
+
+Measures barriers including:
+
+* financial cost;
+* transportation;
+* language;
+* disability access;
+* digital access;
+* childcare;
+* documentation requirements;
+* scheduling.
+
+Lower barriers increase Opportunity Score.
+
+---
+
+# 13.11 Dimension Six — Belonging Alignment
+
+Measures whether the opportunity supports:
+
+* inclusion;
+* community connection;
+* cultural respect;
+* mentorship;
+* psychological safety;
+* authentic participation.
+
+Belonging Alignment incorporates outputs from:
+
+* Context Engine™
+* Community Engine™
+* Safety Intelligence Engine™
+
+---
+
+# 13.12 Dimension Seven — Growth Potential
+
+Growth includes:
+
+* new skills;
+* leadership;
+* entrepreneurship;
+* confidence;
+* professional advancement;
+* network expansion;
+* community participation.
+
+Growth is evaluated over years—not weeks.
+
+---
+
+# 13.13 Dimension Eight — Trust & Verification
+
+Measures:
+
+* source credibility;
+* institutional legitimacy;
+* verification status;
+* transparency;
+* historical reliability.
+
+Verified opportunities receive higher confidence.
+
+---
+
+# 13.14 Dimension Nine — Timing
+
+The same opportunity may be excellent—
+
+—but at the wrong time.
+
+Timing evaluates:
+
+* current workload;
+* seasonality;
+* application deadlines;
+* relocation stage;
+* educational calendar;
+* family commitments;
+* community events.
+
+The Engine may delay rather than discard an opportunity.
+
+---
+
+# 13.15 Opportunity Formula
+
+```text id="opp13b"
+Opportunity Score =
+(Relevance × .18)
++(Readiness × .15)
++(Community Benefit × .14)
++(Long-Term Potential × .13)
++(Accessibility × .12)
++(Belonging Alignment × .10)
++(Growth Potential × .08)
++(Trust & Verification × .06)
++(Timing × .04)
+```
+
+Normalized to **0–100**.
+
+---
+
+# 13.16 Opportunity Confidence
+
+Confidence evaluates:
+
+* verification;
+* evidence quality;
+* source diversity;
+* member profile completeness;
+* historical success;
+* recommendation certainty.
+
+Confidence Labels:
+
+|  Score | Label    |
+| -----: | -------- |
+| 90–100 | Verified |
+|  80–89 | High     |
+|  65–79 | Moderate |
+|  45–64 | Emerging |
+|  20–44 | Low      |
+|   0–19 | Unknown  |
+
+---
+
+# 13.17 Opportunity Categories
+
+Examples include:
+
+* Career Opportunity;
+* Business Opportunity;
+* Educational Opportunity;
+* Funding Opportunity;
+* Leadership Opportunity;
+* Volunteer Opportunity;
+* Community Opportunity;
+* Cultural Opportunity;
+* Travel Opportunity;
+* Relocation Opportunity;
+* Wellness Opportunity;
+* Procurement Opportunity.
+
+An opportunity may belong to multiple categories.
+
+---
+
+# 13.18 Opportunity Prioritization
+
+Priority increases when:
+
+* deadlines are approaching;
+* community impact is high;
+* barriers are low;
+* member readiness is high;
+* trust is verified;
+* long-term benefit is significant.
+
+The Engine may recommend urgency without creating unnecessary pressure.
+
+---
+
+# 13.19 Opportunity Lifecycle
+
+Every opportunity progresses through:
+
+1. Discovery
+2. Verification
+3. Eligibility Assessment
+4. Recommendation
+5. Member Action
+6. Outcome Tracking
+7. Ripple Analysis
+8. Echo Analysis
+9. Community Return Measurement
+10. Legacy Preservation (if applicable)
+
+---
+
+# 13.20 Opportunity Multipliers
+
+Positive multipliers include:
+
+* verified mentorship;
+* local ownership;
+* underserved community benefit;
+* intergenerational potential;
+* institutional partnership;
+* leadership development;
+* measurable Ripple;
+* measurable Echo.
+
+---
+
+# 13.21 Opportunity Constraints
+
+Constraints include:
+
+* insufficient qualifications;
+* expired opportunity;
+* limited capacity;
+* safety concerns;
+* governance restrictions;
+* legal limitations.
+
+Constraints explain recommendation behavior internally but are not punitive.
+
+---
+
+# 13.22 Opportunity Equity
+
+The Engine continuously evaluates whether opportunities are:
+
+* discoverable;
+* accessible;
+* fairly distributed;
+* visible to newcomers;
+* inclusive of historically underserved communities.
+
+Opportunity equity is monitored without introducing preferential scoring based solely on identity.
+
+---
+
+# 13.23 Anti-Gaming Rules
+
+Manipulation includes:
+
+* fake job postings;
+* fraudulent scholarships;
+* misleading grants;
+* artificial scarcity;
+* false deadlines;
+* fabricated partnerships;
+* duplicate listings.
+
+Manipulation reduces confidence before affecting Opportunity Score.
+
+---
+
+# 13.24 Public Explanation Rules
+
+Approved:
+
+* "This opportunity aligns with your current goals."
+* "This recommendation matches your interests and readiness."
+* "This opportunity may strengthen both your growth and your community."
+
+Prohibited:
+
+* "You were guaranteed to succeed."
+* "This is the perfect opportunity."
+* "The algorithm knows your future."
+
+---
+
+# 13.25 Internal Output Contract
+
+The Engine returns:
+
+* Opportunity Score;
+* Opportunity Confidence;
+* Opportunity Category;
+* Readiness Score;
+* Accessibility Score;
+* Community Benefit Score;
+* Recommendation Priority;
+* Timing Classification;
+* Human Review Flag.
+
+---
+
+# 13.26 Required Database Structures
+
+Minimum production tables include:
+
+* opportunities
+* opportunity_matches
+* opportunity_scores
+* opportunity_categories
+* opportunity_requirements
+* opportunity_outcomes
+* opportunity_constraints
+* opportunity_versions
+* opportunity_audit
+
+---
+
+# 13.27 Human Review Requirements
+
+Human review is required when:
+
+* extraordinary opportunities are recommended;
+* legal eligibility is uncertain;
+* conflicting evidence exists;
+* fraud is suspected;
+* institutional verification fails;
+* governance thresholds require review.
+
+---
+
+# 13.28 Constitutional Rules
+
+The Opportunity Engine™ must:
+
+* expand opportunity rather than restrict it;
+* reward readiness without discouraging aspiration;
+* remain transparent;
+* avoid unnecessary bias;
+* encourage growth;
+* preserve fairness;
+* remain fully auditable.
+
+---
+
+# 13.29 Institution Test
+
+Every opportunity rule must answer:
+
+> **Would this recommendation process still represent responsible opportunity matching twenty-five years from now?**
+
+---
+
+# 13.30 Generational Test
+
+Every opportunity rule must answer:
+
+> **Will future generations inherit broader access to opportunity because this Engine helped remove barriers rather than reinforce them?**
+
+---
+
+# 13.31 Launch Readiness
+
+Launch requires:
+
+* scoring validated;
+* recommendation engine operational;
+* verification complete;
+* confidence calculations operational;
+* audit logging complete;
+* Governance approval.
+
+---
+
+# 13.32 Validation Scenarios
+
+Example scenarios include:
+
+1. Student matched with scholarship.
+2. Entrepreneur matched with grant.
+3. Business connected to local supplier.
+4. Mentor matched with first-generation college student.
+5. Family relocating receives neighborhood resources.
+6. Veteran receives employment recommendation.
+7. Community member discovers volunteer leadership opportunity.
+8. Fraudulent internship detected.
+9. Deadline-sensitive fellowship prioritized.
+10. KinfolkAI™ recommends overlooked local opportunity.
+
+---
+
+# 13.33 Version Control
+
+Every update requires:
+
+* versioning;
+* validation;
+* Governance approval;
+* rollback plan;
+* Decision Ledger entry.
+
+---
+
+# 13.34 Future Expansion
+
+Future versions may include:
+
+* predictive opportunity forecasting;
+* AI-guided career pathways;
+* entrepreneurial ecosystem mapping;
+* community workforce forecasting;
+* grant success probability;
+* educational progression modeling;
+* opportunity gap analytics.
+
+---
+
+# 13.35 Final Governing Rule
+
+The Opportunity Engine™ exists because meaningful opportunity changes lives—but only when people can discover it, access it, trust it, and act upon it.
+
+Its purpose is not simply to recommend jobs, scholarships, businesses, events, or programs.
+
+Its purpose is to ensure that people are connected with opportunities that help them grow while simultaneously strengthening their families, neighborhoods, institutions, businesses, and communities.
+
+Every recommendation should increase possibility.
+
+Every recommendation should reduce unnecessary barriers.
+
+Every recommendation should create pathways toward belonging, resilience, leadership, and lasting prosperity.
+
+Its final governing rule is:
+
+> **Connect every person with the opportunities most likely to strengthen their future while expanding possibility, equity, resilience, and belonging for the communities they help build.**
+
+═══════════════════════════════════════════════════════════════════════
+END OF SECTION 13
+OPPORTUNITY ENGINE™ — FUTURE-STATE PRODUCTION SPECIFICATION v1.0
+CONFIDENTIAL — TRADE SECRET — NOT FOR DISTRIBUTION
+═══════════════════════════════════════════════════════════════════════
+
+```text
+COMPLETE
+01. Trust Engine™
+02. Belonging Intelligence Framework™
+03. Context Engine™
+04. Community Engine™
+05. Discovery Engine™
+06. Safety Intelligence Engine™
+07. Cultural Influence Engine™
+08. Community Catalyst Model™
+09. Community Health Index™
+10. Community Ripple™
+11. Community Echo™
+12. Community Return on Impact™
+13. Opportunity Engine™
+
+NEXT
+14. Hidden Gem Model™
+```
+
+One thing has become clear as we've progressed through these specifications: the first thirteen engines now form what could be considered the platform's **Decision Intelligence Layer**. At this point, the architecture has enough defined structure to evaluate trust, context, safety, community dynamics, cultural influence, opportunity, and long-term impact in a cohesive way. The **Hidden Gem Model™** is where the system begins surfacing value that conventional ranking algorithms would likely overlook, making it one of the engines most closely aligned with your vision of helping people discover places, people, and opportunities that deserve recognition rather than simply those with the most visibility.
