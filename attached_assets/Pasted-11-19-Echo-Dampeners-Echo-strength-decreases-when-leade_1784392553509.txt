@@ -1,0 +1,101 @@
+11.19 Echo Dampeners
+Echo strength decreases when:
+leadership disappears without succession;
+knowledge is undocumented;
+community participation collapses;
+institutions dissolve;
+traditions cease;
+resources become inaccessible.
+Echo decline is gradual rather than binary.
+11.20 Positive Echo Categories
+Examples include:
+Educational Echo;
+Business Echo;
+Cultural Echo;
+Institutional Echo;
+Leadership Echo;
+Mentorship Echo;
+Community Support Echo;
+Legacy Echo;
+Preservation Echo;
+Opportunity Echo.
+11.21 Relationship to Community Ripple™
+Community Ripple™ measures propagation.
+Community Echo™ measures persistence.
+A Ripple may produce little Echo.
+An Echo may exist after the Ripple has stopped expanding.
+Both Engines inform the Legacy & Learning Engine™, but neither replaces it.
+11.22 Historical Preservation Rules
+The Engine values preservation of:
+oral histories;
+historical documents;
+cultural traditions;
+community archives;
+institutional memory;
+neighborhood identity.
+Preservation without accessibility receives reduced value.
+11.23 Community Adoption
+The strongest Echoes occur when communities voluntarily adopt an idea.
+Community adoption includes:
+recurring participation;
+independent organization;
+decentralized leadership;
+local ownership;
+adaptation without losing core purpose.
+11.24 Anti-Gaming Rules
+Manipulation includes:
+fabricated historical influence;
+false legacy claims;
+invented institutional partnerships;
+fake succession;
+artificial anniversary events.
+Manipulation reduces confidence before reducing score.
+11.25 Public Explanation Rules
+Approved:
+"This initiative continues benefiting the community."
+"Community members have sustained this effort over time."
+"Its influence continues through ongoing participation."
+Prohibited:
+"This organization permanently changed the community."
+"This person created all future success."
+"The algorithm guarantees lasting legacy."
+11.26 Internal Output Contract
+The Engine returns:
+Community Echo Score;
+Echo Confidence;
+Echo Level;
+Persistence Classification;
+Institutional Adoption Status;
+Community Memory Status;
+Successor Development Score;
+Human Review Flag.
+11.27 Required Database Structures
+Minimum production tables include:
+echo_assessments
+echo_dimensions
+echo_history
+echo_successors
+echo_institutions
+echo_preservation
+echo_memory
+echo_versions
+echo_audit
+11.28 Human Review Requirements
+Human review is required when:
+Generational Echo designation is proposed;
+institutional adoption is disputed;
+historical claims conflict;
+manipulation is suspected;
+Legacy progression is recommended.
+11.29 Constitutional Rules
+Community Echo™ must:
+reward enduring benefit;
+distinguish memory from mythology;
+preserve attribution;
+recognize community ownership;
+avoid personality worship;
+encourage succession;
+remain auditable.
+11.30 Institution Test
+Every Echo rule must answer:
+Would this still represent meaningful, responsible community influence twenty-five years from now?

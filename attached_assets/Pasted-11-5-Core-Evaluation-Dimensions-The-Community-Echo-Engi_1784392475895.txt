@@ -1,0 +1,75 @@
+11.5 Core Evaluation Dimensions
+The Community Echo™ Engine returns a normalized score from 0–100.
+Dimension	Weight
+Persistence of Impact	20%
+Institutional Adoption	16%
+Community Memory	14%
+Relationship Continuity	13%
+Knowledge Preservation	11%
+Successor Development	10%
+Cultural Integration	9%
+Long-Term Benefit	7%
+Total	100%
+11.6 Dimension One — Persistence of Impact
+Measures whether measurable outcomes continue after the originating action has concluded.
+Examples include:
+recurring mentorship;
+ongoing scholarship recipients;
+continued business success;
+recurring volunteerism;
+repeat educational use.
+Formula:
+Persistence Score =
+Continuing Outcomes
+× Outcome Quality
+× Duration
+× Independence from Original Actor
+11.7 Dimension Two — Institutional Adoption
+Measures whether an idea becomes part of an institution.
+Examples:
+university curriculum;
+annual conference;
+city initiative;
+nonprofit program;
+recurring community partnership.
+Institutional adoption dramatically increases Echo potential because institutions often outlive individuals.
+11.8 Dimension Three — Community Memory
+Community Memory measures whether a contribution becomes part of the community's shared understanding.
+Examples include:
+stories retold;
+traditions maintained;
+historical markers;
+annual remembrance;
+oral histories;
+community references;
+local identity.
+Memory is measured through continued recognition—not nostalgia.
+11.9 Dimension Four — Relationship Continuity
+Measures whether relationships formed through an originating action continue independently.
+Examples:
+mentor-mentee relationships;
+business partnerships;
+alumni networks;
+Kinfolk Circles;
+community collaborations.
+Relationships that continue without direct management receive higher scores.
+11.10 Dimension Five — Knowledge Preservation
+Measures preservation of useful knowledge.
+Examples:
+archived educational material;
+oral histories;
+local guides;
+research;
+best practices;
+historical records.
+Knowledge that continues informing future decisions receives greater value.
+11.11 Dimension Six — Successor Development
+Healthy communities create successors.
+Measures:
+leadership succession;
+mentor succession;
+new organizers;
+business ownership continuity;
+institutional continuity;
+volunteer leadership.
+Communities dependent upon a single person receive lower scores.
