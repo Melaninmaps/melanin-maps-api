@@ -776,7 +776,8 @@ function BookmarkIcon(props: any) {
 }
 
 function SavedPlaceCard({ id }: { id: string }) {
-  const { data: biz, isLoading } = useGetBusiness(id, { query: { queryKey: ["getBusiness", id], enabled: !!id } });
+  const { data: bizData, isLoading } = useGetBusiness(id, { query: { queryKey: ["getBusiness", id], enabled: !!id } });
+  const biz = bizData?.business;
 
   if (isLoading) return <Skeleton className="h-20 w-full rounded-2xl" />;
   if (!biz) return null;

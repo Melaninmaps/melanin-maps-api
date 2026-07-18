@@ -245,7 +245,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Business'
+                $ref: '#/components/schemas/BusinessEnvelope'
         '404':
           description: Not found
 
@@ -266,9 +266,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Review'
+                $ref: '#/components/schemas/ReviewsEnvelope'
     post:
       tags: [reviews]
       operationId: createReview
@@ -824,6 +822,24 @@ components:
         createdAt:
           type: [string, 'null']
           format: date-time
+
+    BusinessEnvelope:
+      type: object
+      required: [business]
+      properties:
+        business:
+          oneOf:
+            - $ref: '#/components/schemas/Business'
+            - type: 'null'
+
+    ReviewsEnvelope:
+      type: object
+      required: [reviews]
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/Review'
 
     BusinessListResponse:
       type: object

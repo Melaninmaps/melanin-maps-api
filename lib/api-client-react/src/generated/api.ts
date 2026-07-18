@@ -24,6 +24,7 @@ import type {
   AuthUserEnvelope,
   BeginBrowserLoginParams,
   Business,
+  BusinessEnvelope,
   BusinessInput,
   BusinessListResponse,
   CommunityPost,
@@ -51,6 +52,7 @@ import type {
   OpenaiMessageInput,
   Review,
   ReviewInput,
+  ReviewsEnvelope,
   SavePlaceInput,
   SavedPlacesResponse,
   Survey,
@@ -780,9 +782,9 @@ export const getGetBusinessUrl = (id: string,) => {
 /**
  * @summary Get a single business by ID
  */
-export const getBusiness = async (id: string, options?: RequestInit): Promise<Business> => {
+export const getBusiness = async (id: string, options?: RequestInit): Promise<BusinessEnvelope> => {
 
-  return customFetch<Business>(getGetBusinessUrl(id),
+  return customFetch<BusinessEnvelope>(getGetBusinessUrl(id),
   {
     ...options,
     method: 'GET'
@@ -864,9 +866,9 @@ export const getListReviewsUrl = (params: ListReviewsParams,) => {
 /**
  * @summary List reviews for a business
  */
-export const listReviews = async (params: ListReviewsParams, options?: RequestInit): Promise<Review[]> => {
+export const listReviews = async (params: ListReviewsParams, options?: RequestInit): Promise<ReviewsEnvelope> => {
 
-  return customFetch<Review[]>(getListReviewsUrl(params),
+  return customFetch<ReviewsEnvelope>(getListReviewsUrl(params),
   {
     ...options,
     method: 'GET'

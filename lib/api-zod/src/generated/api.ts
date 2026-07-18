@@ -163,6 +163,7 @@ export const GetBusinessParams = zod.object({
 })
 
 export const GetBusinessResponse = zod.object({
+  "business": zod.union([zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "category": zod.string(),
@@ -184,6 +185,7 @@ export const GetBusinessResponse = zod.object({
   "reviewCount": zod.number().nullish(),
   "averageRating": zod.number().nullish(),
   "createdAt": zod.coerce.date().nullish()
+}),zod.null()])
 })
 
 
@@ -194,21 +196,22 @@ export const ListReviewsQueryParams = zod.object({
   "businessId": zod.coerce.string()
 })
 
-export const listReviewsResponseRatingMax = 5;
+export const listReviewsResponseReviewsItemRatingMax = 5;
 
 
 
-export const ListReviewsResponseItem = zod.object({
+export const ListReviewsResponse = zod.object({
+  "reviews": zod.array(zod.object({
   "id": zod.string(),
   "businessId": zod.string(),
   "userId": zod.string().nullish(),
   "authorName": zod.string().nullish(),
-  "rating": zod.number().min(1).max(listReviewsResponseRatingMax),
+  "rating": zod.number().min(1).max(listReviewsResponseReviewsItemRatingMax),
   "text": zod.string().nullish(),
   "wouldReturnAlone": zod.boolean().nullish(),
   "createdAt": zod.coerce.date().nullish()
+}))
 })
-export const ListReviewsResponse = zod.array(ListReviewsResponseItem)
 
 
 /**

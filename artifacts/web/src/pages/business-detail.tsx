@@ -115,11 +115,9 @@ export default function BusinessDetail() {
 
   const { data: auth } = useGetCurrentAuthUser();
   const { data: businessData, isLoading: isLoadingBusiness } = useGetBusiness(id, { query: { queryKey: ['getBusiness', id], enabled: !!id } });
-  const business = (businessData && typeof businessData === 'object' && 'business' in businessData)
-    ? (businessData as unknown as { business: typeof businessData }).business
-    : businessData;
+  const business = businessData?.business;
   const { data: reviewsData, isLoading: isLoadingReviews } = useListReviews({ businessId: id });
-  const reviews = Array.isArray(reviewsData) ? reviewsData : (reviewsData as unknown as { reviews: typeof reviewsData })?.reviews ?? [];
+  const reviews = reviewsData?.reviews ?? [];
   const { data: savedPlaces } = useListSavedPlaces({ query: { queryKey: ['listSavedPlaces'], enabled: !!auth?.user } });
 
   const savePlace = useSavePlace();

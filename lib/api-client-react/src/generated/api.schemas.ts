@@ -93,23 +93,8 @@ export interface Business {
   createdAt?: string | null;
 }
 
-export interface BusinessListResponse {
-  businesses: Business[];
-  total: number;
-}
-
-export interface BusinessInput {
-  name: string;
-  category: string;
-  subcategory?: string;
-  description?: string;
-  address?: string;
-  city: string;
-  state: string;
-  phone?: string;
-  website?: string;
-  tags?: string[];
-  priceRange?: string;
+export interface BusinessEnvelope {
+  business: Business | null;
 }
 
 export interface Review {
@@ -130,6 +115,29 @@ export interface Review {
   wouldReturnAlone?: boolean | null;
   /** @nullable */
   createdAt?: string | null;
+}
+
+export interface ReviewsEnvelope {
+  reviews: Review[];
+}
+
+export interface BusinessListResponse {
+  businesses: Business[];
+  total: number;
+}
+
+export interface BusinessInput {
+  name: string;
+  category: string;
+  subcategory?: string;
+  description?: string;
+  address?: string;
+  city: string;
+  state: string;
+  phone?: string;
+  website?: string;
+  tags?: string[];
+  priceRange?: string;
 }
 
 export interface ReviewInput {
