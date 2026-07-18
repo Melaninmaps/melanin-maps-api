@@ -1,0 +1,1972 @@
+Thank you. Yes—**03. Context Engine™ (Engine Zero)** is exactly where we left off. We will complete this first, then move directly to **04. Community Engine™** without changing the structure, tone, or production-level detail established in the Belonging Intelligence Framework™.
+
+═══════════════════════════════════════════════════════════════════════
+MAPPING WITH MELANIN™
+CONFIDENTIAL ALGORITHM SPECIFICATION
+All content confidential — Review Mode only — Not for distribution
+═══════════════════════════════════════════════════════════════════════
+
+# 03. CONTEXT ENGINE™
+
+## Future-State Production Specification v1.0
+
+**Classification:** Foundational Context-Resolution Engine
+**Status:** Review Mode — designed as the launch-state model
+**Confidentiality:** Highest restriction; context-detection signals, resolution logic, priority rules, confidence calculations, and engine-routing instructions are confidential trade secrets and are not publicly disclosed
+
+---
+
+## 03.1 Purpose
+
+The Context Engine™ determines the circumstances under which a Mapping With Melanin™ decision is being requested.
+
+It is designated **Engine Zero** because no other intelligence engine may be interpreted correctly until the relevant context has been identified.
+
+The same business, neighborhood, event, resource, opportunity, Cultural Ambassador, or community experience may be appropriate in one context and inappropriate in another.
+
+For example:
+
+* a restaurant may be suitable for a daytime family gathering but not for a solo traveler late at night;
+* a neighborhood may be appropriate for a short visit but not yet sufficiently supported for relocation;
+* an emerging business may be discoverable but not eligible for active promotion;
+* an event may be culturally relevant but unsuitable for a user’s accessibility requirements;
+* a resource may be geographically relevant but unavailable to the user because of eligibility restrictions;
+* a Cultural Ambassador may be appropriate for local storytelling but not for a safety-sensitive recommendation;
+* an urgent safety request must not be processed using ordinary discovery weights.
+
+The Context Engine™ determines:
+
+1. what the user is trying to accomplish;
+2. who or what the request concerns;
+3. where the request applies;
+4. when the request applies;
+5. what conditions materially affect the decision;
+6. which context profile governs the request;
+7. whether multiple contexts must be evaluated;
+8. which engines must participate;
+9. which engine should lead;
+10. which minimum thresholds and override rules apply;
+11. how confident the platform is that it has interpreted the request correctly;
+12. whether clarification or human review is required.
+
+The Engine’s governing question is:
+
+> **What is happening, for whom, under what conditions, and which decision framework must govern the platform’s response?**
+
+---
+
+# 03.2 Foundational Principle
+
+Context is not a demographic assumption.
+
+The Context Engine™ must not infer a person’s identity, vulnerability, intentions, family status, disability, income, cultural affiliation, or safety needs solely from appearance, location, browsing history, name, device, or generalized population data.
+
+Context must be established through one or more of the following:
+
+1. explicit user statements;
+2. active user selections;
+3. current request language;
+4. authorized profile preferences;
+5. session behavior directly related to the request;
+6. verified location and time conditions;
+7. known entity characteristics;
+8. applicable safety or governance conditions;
+9. system events requiring a mandatory context;
+10. cautious inference supported by multiple independent signals.
+
+The Context Engine™ may infer operational circumstances.
+
+It may not convert those circumstances into unsupported conclusions about the person.
+
+For example:
+
+```text
+Allowed:
+The user requested directions at 11:45 PM and selected “traveling alone.”
+Apply the Solo Traveler + Night Safety context.
+
+Not allowed:
+The user is a woman in an unfamiliar neighborhood.
+Assume she is traveling alone and afraid.
+
+Allowed:
+The user selected wheelchair accessibility as a required preference.
+Apply the Accessibility Required modifier.
+
+Not allowed:
+The user viewed an accessible venue.
+Assume the user has a disability.
+```
+
+---
+
+# 03.3 Definition of Context
+
+For Mapping With Melanin™, **context** is the structured description of the circumstances that materially change how evidence must be interpreted or how a decision must be made.
+
+A context is composed of six layers:
+
+```text
+Intent
++ Subject
++ Person or Audience
++ Place
++ Time
++ Conditions
+= Resolved Context
+```
+
+## 03.3.1 Intent
+
+What the user or system is trying to accomplish.
+
+Examples:
+
+* search;
+* explore;
+* compare;
+* visit;
+* purchase;
+* attend;
+* connect;
+* relocate;
+* evaluate safety;
+* report an incident;
+* claim a business;
+* verify an entity;
+* recommend;
+* promote;
+* recognize;
+* request emergency assistance;
+* find a community resource;
+* evaluate a partnership;
+* assess an opportunity.
+
+## 03.3.2 Subject
+
+The entity or issue being evaluated.
+
+Examples:
+
+* business;
+* event;
+* neighborhood;
+* city;
+* resource;
+* employer;
+* Cultural Ambassador;
+* community member;
+* organization;
+* opportunity;
+* safety report;
+* historical site;
+* educational institution;
+* travel experience;
+* community post;
+* marketplace listing.
+
+## 03.3.3 Person or Audience
+
+The person, group, or audience for whom the decision is being made.
+
+Examples:
+
+* individual user;
+* family;
+* travel group;
+* local resident;
+* visitor;
+* relocating household;
+* business owner;
+* Cultural Ambassador;
+* parent-managed minor;
+* community organization;
+* platform administrator;
+* emergency responder;
+* general public.
+
+## 03.3.4 Place
+
+The geographic scope relevant to the decision.
+
+Examples:
+
+* current coordinates;
+* destination coordinates;
+* neighborhood;
+* city;
+* metropolitan area;
+* state;
+* country;
+* route corridor;
+* remote or online;
+* unknown location.
+
+## 03.3.5 Time
+
+The timeframe in which the decision applies.
+
+Examples:
+
+* now;
+* later today;
+* daytime;
+* nighttime;
+* specific date and time;
+* recurring schedule;
+* travel period;
+* relocation horizon;
+* historical period;
+* emergency window;
+* unknown timeframe.
+
+## 03.3.6 Conditions
+
+Any factor that materially changes eligibility, safety, relevance, access, or interpretation.
+
+Examples:
+
+* traveling alone;
+* traveling with children;
+* accessibility required;
+* urgent safety concern;
+* limited transportation;
+* budget constraint;
+* business networking objective;
+* cultural heritage objective;
+* verified melanated diaspora ownership required;
+* open-now requirement;
+* age restriction;
+* service eligibility;
+* weather disruption;
+* incident alert;
+* low evidence confidence;
+* privacy-sensitive request.
+
+---
+
+# 03.4 Context Taxonomy
+
+Every request must be assigned:
+
+1. one **primary context**;
+2. zero or more **secondary contexts**;
+3. zero or more **context modifiers**;
+4. one **decision mode**;
+5. one **urgency level**.
+
+---
+
+## 03.4.1 Primary Contexts
+
+The launch-state Context Engine™ supports the following primary contexts.
+
+| Code                  | Primary context                    | Governing purpose                                                                                            |
+| --------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `CTX-GENERAL`         | General Exploration                | Broad discovery without a specialized objective                                                              |
+| `CTX-LOCAL`           | Local Community                    | Finding support, connection, services, or experiences near home                                              |
+| `CTX-SOLO`            | Solo Traveler                      | Evaluating options for a person traveling or visiting alone                                                  |
+| `CTX-SOLO-NIGHT`      | Solo Traveler at Night             | Safety-sensitive solo travel during nighttime conditions                                                     |
+| `CTX-FAMILY`          | Family                             | Evaluating suitability for adults traveling or participating with children or dependents                     |
+| `CTX-RELOCATION`      | Relocation                         | Evaluating long-term suitability of a city, neighborhood, employer, resource network, or community           |
+| `CTX-BUSINESS`        | Local Business Support             | Discovering, evaluating, or supporting a business                                                            |
+| `CTX-MELANATED-OWNED` | Melanated Diaspora-Owned Discovery | Identifying or prioritizing verified or appropriately represented melanated diaspora-owned entities          |
+| `CTX-AMBASSADOR`      | Cultural Ambassador                | Evaluating cultural storytelling, reach, alignment, authenticity, and community influence                    |
+| `CTX-NETWORKING`      | Business Networking                | Identifying relationships, events, collaborators, mentors, or commercial opportunities                       |
+| `CTX-HERITAGE`        | Cultural Heritage                  | Identifying culturally or historically significant places, institutions, stories, and experiences            |
+| `CTX-RESOURCE`        | Community Resource                 | Locating support such as food, housing, education, employment, healthcare access, grants, or legal resources |
+| `CTX-OPPORTUNITY`     | Opportunity                        | Evaluating jobs, grants, scholarships, partnerships, programs, contracts, or economic opportunities          |
+| `CTX-SAFETY`          | Safety Evaluation                  | Assessing a business, neighborhood, employer, event, route, or reported incident                             |
+| `CTX-REPORT`          | Incident Reporting                 | Receiving, evaluating, validating, and routing a community-submitted concern                                 |
+| `CTX-EMERGENCY`       | Emergency                          | Responding to an immediate threat, urgent safety need, or emergency assistance request                       |
+| `CTX-GOVERNANCE`      | Governance Review                  | Moderation, appeal, escalation, constitutional review, or administrative intervention                        |
+| `CTX-RECOGNITION`     | Community Recognition              | Determining eligibility for milestones, badges, Hidden Gem status, or other recognition                      |
+| `CTX-PLATFORM`        | Platform Operations                | Internal system decisions, quality checks, fraud detection, or algorithmic maintenance                       |
+
+---
+
+## 03.4.2 Secondary Contexts
+
+Secondary contexts represent additional valid purposes that materially affect the result but do not control the entire decision.
+
+Examples:
+
+```text
+Primary: Relocation
+Secondary: Family
+Secondary: Community Resource
+Modifier: Accessibility Required
+Modifier: Limited Transportation
+```
+
+```text
+Primary: Cultural Heritage
+Secondary: Local Community
+Secondary: Melanated Diaspora-Owned Discovery
+Modifier: Open Now
+```
+
+```text
+Primary: Business Networking
+Secondary: Cultural Ambassador
+Modifier: Verified Entities Preferred
+```
+
+A request may have no more than **three active secondary contexts** without entering clarification or complex-context review.
+
+---
+
+## 03.4.3 Context Modifiers
+
+Modifiers refine a context without replacing it.
+
+The launch-state modifier categories are:
+
+### Person modifiers
+
+* traveling alone;
+* traveling with children;
+* traveling with elders;
+* parent-managed minor;
+* group travel;
+* first-time visitor;
+* local resident;
+* business owner;
+* Cultural Ambassador;
+* verified community organization.
+
+### Accessibility modifiers
+
+* wheelchair accessibility required;
+* mobility accommodation required;
+* hearing accommodation requested;
+* visual accommodation requested;
+* sensory accommodation requested;
+* language accommodation requested;
+* service animal accommodation required.
+
+### Time modifiers
+
+* open now;
+* daytime;
+* evening;
+* nighttime;
+* late night;
+* specific arrival time;
+* recurring availability;
+* urgent deadline.
+
+### Transportation modifiers
+
+* walking;
+* public transportation;
+* private vehicle;
+* rideshare;
+* limited transportation;
+* route safety required;
+* parking required.
+
+### Economic modifiers
+
+* free;
+* low cost;
+* specified budget;
+* premium experience;
+* financial assistance required;
+* grant or scholarship eligibility required.
+
+### Trust modifiers
+
+* verified only;
+* community-confirmed preferred;
+* first-party source required;
+* official source required;
+* emerging entities allowed;
+* anonymous evidence present;
+* disputed information present.
+
+### Safety modifiers
+
+* recent incident;
+* active alert;
+* discrimination concern;
+* harassment concern;
+* route concern;
+* neighborhood concern;
+* employer concern;
+* emergency condition.
+
+### Cultural modifiers
+
+* melanated diaspora-owned required;
+* culturally significant;
+* HBCU-related;
+* historical landmark;
+* community-specific experience;
+* locally rooted;
+* diaspora connection;
+* language or cultural familiarity requested.
+
+---
+
+# 03.5 Decision Modes
+
+Context and decision mode are separate.
+
+The same context may produce different results depending on what the platform is being asked to do.
+
+| Decision mode | Meaning                                                                                   |
+| ------------- | ----------------------------------------------------------------------------------------- |
+| `SEARCH`      | Return relevant matching results                                                          |
+| `INFORM`      | Provide factual or educational information                                                |
+| `COMPARE`     | Compare two or more entities or options                                                   |
+| `RECOMMEND`   | Identify options suitable for a stated context                                            |
+| `PROMOTE`     | Actively elevate, feature, sponsor, or amplify an entity                                  |
+| `RECOGNIZE`   | Award or display a badge, milestone, status, or distinction                               |
+| `ALERT`       | Warn users about a credible concern                                                       |
+| `ROUTE`       | Direct a request, report, or person to the correct destination                            |
+| `VERIFY`      | Determine whether an entity, claim, report, or credential meets verification requirements |
+| `MODERATE`    | Evaluate platform content or conduct                                                      |
+| `ESCALATE`    | Send a decision for human, legal, safety, or governance review                            |
+| `LEARN`       | Record an outcome for future system improvement without changing a public result          |
+
+A `SEARCH` result does not automatically qualify for `RECOMMEND`.
+
+A `RECOMMEND` result does not automatically qualify for `PROMOTE`.
+
+A `PROMOTE` result does not automatically qualify for permanent `RECOGNIZE` status.
+
+---
+
+# 03.6 Urgency Levels
+
+Each request receives an urgency classification.
+
+| Level | Name           | Meaning                                          | Maximum automated delay |
+| ----: | -------------- | ------------------------------------------------ | ----------------------: |
+|     0 | Routine        | No immediate deadline or risk                    |     Standard processing |
+|     1 | Time-sensitive | Availability, event, travel, or deadline matters |              60 seconds |
+|     2 | Priority       | Material opportunity or safety concern           |              15 seconds |
+|     3 | Urgent         | Credible near-term harm or severe disruption     |               5 seconds |
+|     4 | Emergency      | Immediate threat or emergency assistance request |       Immediate routing |
+
+Urgency does not prove that a claim is true.
+
+It determines how quickly the platform must respond and which safeguards must activate.
+
+---
+
+# 03.7 Context Evidence Sources
+
+The Context Engine™ may use the following evidence sources.
+
+## Tier 1 — Explicit evidence
+
+Highest priority:
+
+1. direct user statement;
+2. active user-selected filter;
+3. selected task or workflow;
+4. verified form field;
+5. current emergency action;
+6. administrator-selected review category.
+
+## Tier 2 — Authorized profile evidence
+
+Used only when relevant and permitted:
+
+1. saved travel preferences;
+2. accessibility preferences;
+3. family-plan configuration;
+4. selected cultural interests;
+5. saved safety preferences;
+6. preferred transportation mode;
+7. saved budget settings;
+8. business or Cultural Ambassador role.
+
+## Tier 3 — Current-session evidence
+
+May supplement but not override explicit input:
+
+1. search terms;
+2. currently viewed category;
+3. selected map region;
+4. destination;
+5. route request;
+6. time of request;
+7. recently applied filters;
+8. sequence of related actions.
+
+## Tier 4 — Environmental evidence
+
+Used cautiously:
+
+1. verified local time;
+2. business operating hours;
+3. route conditions;
+4. active platform safety alert;
+5. weather-related disruption;
+6. event schedule;
+7. public emergency notice;
+8. geographic service availability.
+
+## Tier 5 — Inferred evidence
+
+Lowest priority and never sufficient alone for sensitive contexts:
+
+1. likely intent inferred from multiple session actions;
+2. probable trip stage;
+3. likely comparison objective;
+4. probable geographic scope;
+5. likely need for clarification.
+
+Inferred context may not independently activate:
+
+* emergency status;
+* child status;
+* disability status;
+* protected identity;
+* financial hardship;
+* discrimination victim status;
+* family status;
+* criminal suspicion;
+* immigration status;
+* medical condition.
+
+---
+
+# 03.8 Context Detection Sequence
+
+Every consequential request passes through the following sequence:
+
+```text
+1. Receive Request
+2. Identify Decision Mode
+3. Extract Explicit Intent
+4. Identify Subject Entity
+5. Identify Person or Audience
+6. Resolve Geographic Scope
+7. Resolve Timeframe
+8. Apply Explicit Conditions
+9. Retrieve Authorized Preferences
+10. Evaluate Current-Session Signals
+11. Check Mandatory Safety or Governance Contexts
+12. Generate Candidate Contexts
+13. Score Candidate Contexts
+14. Resolve Primary Context
+15. Assign Secondary Contexts
+16. Apply Modifiers
+17. Calculate Context Confidence
+18. Determine Engine Participation
+19. Determine Engine Leadership
+20. Apply Threshold Profile
+21. Request Clarification or Continue
+22. Write Context Audit Record
+```
+
+No final BIF score may be calculated until Steps 1–20 are complete.
+
+Emergency routing may begin before the full sequence is complete when delay could create harm.
+
+---
+
+# 03.9 Candidate Context Scoring
+
+Each possible context receives a **Context Applicability Score** from 0 to 100.
+
+## 03.9.1 Formula
+
+```text
+Context Applicability Score =
+    Explicit Intent Match
+  + Workflow Match
+  + Subject Match
+  + Audience Match
+  + Place and Time Match
+  + Modifier Match
+  + Session Continuity Match
+  + Mandatory Rule Adjustment
+  - Contradiction Penalty
+```
+
+The score is normalized to 0–100.
+
+## 03.9.2 Baseline component weights
+
+| Component                    | Maximum points |
+| ---------------------------- | -------------: |
+| Explicit Intent Match        |             25 |
+| Workflow Match               |             15 |
+| Subject Match                |             10 |
+| Audience Match               |             10 |
+| Place and Time Match         |             10 |
+| Modifier Match               |             10 |
+| Session Continuity Match     |             10 |
+| Mandatory Rule Adjustment    |             10 |
+| **Maximum before penalties** |        **100** |
+
+Contradiction penalties are applied after the positive components.
+
+---
+
+## 03.9.3 Explicit Intent Match
+
+| Evidence                                         | Points |
+| ------------------------------------------------ | -----: |
+| User explicitly selects named context            |     25 |
+| User directly states purpose in natural language |     22 |
+| User enters through a context-specific workflow  |     18 |
+| Intent strongly implied by current request       |     12 |
+| Intent weakly inferred                           |      5 |
+| No usable intent evidence                        |      0 |
+
+---
+
+## 03.9.4 Workflow Match
+
+| Workflow condition                                | Points |
+| ------------------------------------------------- | -----: |
+| Request originated inside dedicated workflow      |     15 |
+| Request originated through specialized filter set |     12 |
+| Request originated from related entity page       |      8 |
+| General search with contextual language           |      5 |
+| No workflow signal                                |      0 |
+
+Examples:
+
+* opening “Know Before You Move” strongly supports `CTX-RELOCATION`;
+* selecting “Report a Safety Concern” strongly supports `CTX-REPORT`;
+* opening “Resources Near Me” supports `CTX-RESOURCE`;
+* selecting “Find Melanated-Owned Businesses” supports `CTX-MELANATED-OWNED`.
+
+---
+
+## 03.9.5 Contradiction Penalties
+
+| Contradiction                                     | Penalty |
+| ------------------------------------------------- | ------: |
+| Explicit user rejection of context                |    −100 |
+| Context conflicts with selected workflow          |     −30 |
+| Context conflicts with subject type               |     −20 |
+| Context conflicts with verified time or location  |     −15 |
+| Context depends only on prohibited inference      |     −50 |
+| Context conflicts with another explicit condition |     −20 |
+| Context is unsupported by current evidence        |     −10 |
+
+A score may not fall below zero.
+
+---
+
+# 03.10 Context Confidence
+
+The Context Engine™ returns a Context Confidence Score from 0 to 100 and a confidence label.
+
+## 03.10.1 Formula
+
+```text
+Context Confidence Score =
+(
+  Signal Strength
+  × Signal Agreement
+  × Evidence Independence
+  × Context Specificity
+)
+× 100
+```
+
+Each component ranges from `0.00` to `1.00`.
+
+---
+
+## 03.10.2 Signal Strength
+
+| Strength                                             | Factor |
+| ---------------------------------------------------- | -----: |
+| Direct explicit selection                            |   1.00 |
+| Direct natural-language statement                    |   0.95 |
+| Dedicated workflow                                   |   0.90 |
+| Authorized profile preference plus current relevance |   0.80 |
+| Multiple current-session signals                     |   0.70 |
+| Single inferred signal                               |   0.40 |
+| No usable signal                                     |   0.00 |
+
+## 03.10.3 Signal Agreement
+
+| Agreement                  | Factor |
+| -------------------------- | -----: |
+| All material signals agree |   1.00 |
+| Minor ambiguity            |   0.90 |
+| One meaningful conflict    |   0.75 |
+| Multiple conflicts         |   0.50 |
+| Direct contradiction       |   0.00 |
+
+## 03.10.4 Evidence Independence
+
+| Independence                               | Factor |
+| ------------------------------------------ | -----: |
+| Three or more independent evidence sources |   1.00 |
+| Two independent sources                    |   0.90 |
+| One direct source                          |   0.80 |
+| Multiple signals from the same action      |   0.60 |
+| Pure inference                             |   0.35 |
+| No evidence                                |   0.00 |
+
+## 03.10.5 Context Specificity
+
+| Specificity                                          | Factor |
+| ---------------------------------------------------- | -----: |
+| Intent, person, place, time, and conditions resolved |   1.00 |
+| One noncritical field missing                        |   0.90 |
+| Two noncritical fields missing                       |   0.75 |
+| One critical field missing                           |   0.55 |
+| Multiple critical fields missing                     |   0.30 |
+| Context cannot be meaningfully resolved              |   0.00 |
+
+---
+
+## 03.10.6 Context confidence labels
+
+|  Score | Confidence |
+| -----: | ---------- |
+| 90–100 | Verified   |
+|  80–89 | High       |
+|  65–79 | Moderate   |
+|  45–64 | Emerging   |
+|  20–44 | Low        |
+|   0–19 | Unknown    |
+
+---
+
+# 03.11 Context Resolution Thresholds
+
+| Applicability score | Resolution result                            |
+| ------------------: | -------------------------------------------- |
+|              85–100 | Strong primary-context candidate             |
+|               70–84 | Eligible primary or strong secondary context |
+|               55–69 | Eligible secondary context                   |
+|               40–54 | Modifier or clarification candidate          |
+|               20–39 | Weak supporting context only                 |
+|                0–19 | Disregard                                    |
+
+A primary context ordinarily requires:
+
+```text
+Applicability Score ≥ 70
+and
+Context Confidence ≥ 65
+```
+
+Exception:
+
+Mandatory safety, emergency, or governance contexts may be activated by rule even when confidence is incomplete.
+
+---
+
+# 03.12 Primary Context Selection
+
+The primary context is the context that most directly governs:
+
+1. which engines lead;
+2. which weights apply;
+3. which thresholds apply;
+4. what explanation is appropriate;
+5. what risks must be considered;
+6. whether the platform may proceed automatically.
+
+The highest Applicability Score does not always become the primary context.
+
+The Engine must also consider:
+
+* mandatory context precedence;
+* decision mode;
+* urgency;
+* explicit user intent;
+* safety implications;
+* governance restrictions;
+* material consequences of being wrong.
+
+---
+
+## 03.12.1 Primary-context precedence
+
+When two contexts have comparable scores, use the following precedence order:
+
+```text
+Emergency
+    ↓
+Incident Reporting
+    ↓
+Safety Evaluation
+    ↓
+Governance Review
+    ↓
+Relocation
+    ↓
+Family
+    ↓
+Solo Traveler at Night
+    ↓
+Solo Traveler
+    ↓
+Community Resource
+    ↓
+Opportunity
+    ↓
+Business Networking
+    ↓
+Cultural Ambassador
+    ↓
+Cultural Heritage
+    ↓
+Melanated Diaspora-Owned Discovery
+    ↓
+Local Business Support
+    ↓
+Local Community
+    ↓
+General Exploration
+```
+
+This is a risk-sensitive precedence order.
+
+It does not imply that emergency or safety contexts are more valuable. It means errors in those contexts may create greater harm.
+
+---
+
+# 03.13 Secondary Context Assignment
+
+A candidate context becomes secondary when:
+
+```text
+Applicability Score ≥ 55
+and
+it materially changes engine weights, thresholds, eligibility, or explanation
+and
+it does not conflict with the primary context
+```
+
+Secondary contexts may:
+
+* increase an engine’s influence;
+* introduce a minimum threshold;
+* add a modifier;
+* require additional evidence;
+* restrict promotion;
+* alter ranking;
+* require clarification;
+* change the public explanation.
+
+Secondary contexts may not:
+
+* override an emergency rule;
+* remove a safety minimum;
+* bypass governance;
+* reduce an explicit user requirement;
+* convert low confidence into verified confidence.
+
+---
+
+# 03.14 Context Conflict Resolution
+
+Context conflict exists when two valid context candidates would produce materially different decisions.
+
+Examples:
+
+* the user requests a “Hidden Gem” while also requiring extensive verified evidence;
+* a venue is highly culturally significant but has unresolved safety reports;
+* a user asks for an immediate recommendation but the relocation context requires deeper evidence;
+* the user requests a family-friendly option while current event restrictions exclude minors;
+* a business is relevant for discovery but ineligible for promotion.
+
+The Context Engine™ applies the following conflict rules.
+
+## Rule 1 — Explicit intent controls ordinary inference
+
+A direct user statement overrides inferred session intent unless a mandatory safety or governance rule applies.
+
+## Rule 2 — Safety-sensitive context controls convenience context
+
+Safety, emergency, and incident-reporting contexts take precedence over general exploration, discovery, promotion, and convenience.
+
+## Rule 3 — Higher-consequence context controls lower-consequence context
+
+Relocation requires more durable evidence than a temporary visit.
+
+Promotion requires stronger evidence than search.
+
+Recognition requires more sustained evidence than a single recommendation.
+
+## Rule 4 — Specific context controls general context
+
+`Solo Traveler at Night` controls `Solo Traveler`.
+
+`Relocation with Family` controls `General Relocation`.
+
+`Verified Melanated Diaspora-Owned Business` controls `General Local Business`.
+
+## Rule 5 — Restrictive explicit requirements remain active
+
+An explicit requirement such as wheelchair accessibility, open now, verified ownership, or child suitability may not be silently removed to increase result volume.
+
+## Rule 6 — Unknown does not equal negative
+
+Missing context evidence does not prove that an option is unsuitable.
+
+It may reduce recommendation eligibility or trigger clarification.
+
+## Rule 7 — Multiple high-consequence contexts require compound evaluation
+
+When two high-consequence contexts apply, the Engine may create a compound context rather than forcing one into a secondary role.
+
+Example:
+
+```text
+CTX-RELOCATION-FAMILY
+CTX-SOLO-NIGHT-SAFETY
+CTX-RESOURCE-URGENT
+CTX-AMBASSADOR-PARTNERSHIP
+```
+
+## Rule 8 — Unresolvable conflict requires clarification or review
+
+The platform must not invent a preference merely to complete a decision.
+
+---
+
+# 03.15 Compound Contexts
+
+A compound context may be created when:
+
+1. two or more contexts score at least 75;
+2. each materially changes the decision;
+3. neither can safely be treated as secondary;
+4. an approved compound profile exists;
+5. Context Confidence is at least Moderate.
+
+Launch-state approved compound contexts include:
+
+| Compound context          | Required components                       |
+| ------------------------- | ----------------------------------------- |
+| Solo Night Safety         | Solo Traveler + Nighttime + Safety        |
+| Family Relocation         | Family + Relocation                       |
+| Accessible Travel         | Travel + Accessibility Required           |
+| Local Cultural Discovery  | Local Community + Cultural Heritage       |
+| Cultural Business Support | Local Business + Melanated Diaspora-Owned |
+| Ambassador Partnership    | Cultural Ambassador + Business Networking |
+| Urgent Community Resource | Community Resource + Priority/Urgent      |
+| Heritage Travel           | Travel + Cultural Heritage                |
+| Business Opportunity      | Local Business + Opportunity              |
+| Safety-Sensitive Event    | Event + Safety Evaluation                 |
+
+Unapproved compound contexts must be processed through existing contexts or sent for review.
+
+---
+
+# 03.16 Context Clarification Rules
+
+The platform must request clarification when:
+
+1. no context reaches an Applicability Score of 70;
+2. the top two contexts are within 8 points and would materially change the result;
+3. Context Confidence is below 45 for a consequential recommendation;
+4. a required person, place, time, or condition is missing;
+5. an explicit user statement conflicts with an active filter;
+6. a safety-sensitive request is ambiguous;
+7. an accessibility requirement appears relevant but is not confirmed;
+8. a recommendation could create substantial financial, legal, relocation, or safety consequences;
+9. a user’s request could reasonably refer to multiple geographic locations;
+10. the system would otherwise rely on a prohibited inference.
+
+Clarification should be limited to the smallest question necessary.
+
+Examples:
+
+```text
+Are you looking for a place to visit, or are you considering moving there?
+```
+
+```text
+Should I prioritize places suitable for children?
+```
+
+```text
+Are you looking for options that are open now or later tonight?
+```
+
+```text
+Do you want only verified melanated diaspora-owned businesses, or should I
+also include community-recommended businesses awaiting verification?
+```
+
+---
+
+# 03.17 Missing Context Handling
+
+When context is incomplete, the Engine must not fabricate missing values.
+
+It may use one of four responses.
+
+## Response A — Proceed cautiously
+
+Allowed when missing information is unlikely to materially change the result.
+
+## Response B — Provide multiple pathways
+
+Used when two interpretations are both reasonable.
+
+Example:
+
+```text
+For visiting:
+[results]
+
+For relocation:
+[results requiring deeper evidence]
+```
+
+## Response C — Ask one clarification question
+
+Used when a single missing fact controls the decision.
+
+## Response D — Hold or escalate
+
+Required when proceeding could create material safety, legal, governance, or reputational harm.
+
+---
+
+# 03.18 Dynamic Context Transitions
+
+Context may change during a session.
+
+Examples:
+
+```text
+General Exploration
+→ Local Business Support
+→ Directions
+→ Solo Traveler at Night
+→ Safety Evaluation
+```
+
+```text
+Local Community
+→ Opportunity
+→ Business Networking
+→ Cultural Ambassador Partnership
+```
+
+```text
+Discovery
+→ Relocation
+→ Family Relocation
+→ Community Resource Evaluation
+```
+
+The Context Engine™ must evaluate transitions whenever:
+
+1. the user changes intent;
+2. a new location is selected;
+3. time conditions materially change;
+4. a safety alert activates;
+5. a user adds or removes a filter;
+6. the subject entity changes;
+7. the decision mode changes;
+8. new evidence changes the risk level;
+9. the user moves from information to action;
+10. the user requests promotion, recognition, or verification.
+
+---
+
+## 03.18.1 Transition preservation rule
+
+The Engine may preserve relevant prior context but must not carry forward obsolete context.
+
+Example:
+
+* accessibility requirements may remain active throughout a travel-planning session;
+* a nighttime modifier must expire when the evaluated time changes to daytime;
+* an emergency context must end only after the emergency workflow is closed or safely transferred;
+* a relocation context should not automatically apply to an unrelated local restaurant search.
+
+---
+
+# 03.19 Context Expiration
+
+Each context has an expiration rule.
+
+| Context type           | Default expiration                                      |
+| ---------------------- | ------------------------------------------------------- |
+| General exploration    | End of session                                          |
+| Local community        | End of session or location change                       |
+| Solo traveler          | End of trip-planning session                            |
+| Solo traveler at night | Evaluated time changes outside nighttime window         |
+| Family                 | End of session unless saved preference is authorized    |
+| Relocation             | 30 days or explicit project closure                     |
+| Business support       | End of task                                             |
+| Cultural Ambassador    | End of evaluation workflow                              |
+| Networking             | End of task or event                                    |
+| Cultural heritage      | End of task                                             |
+| Community resource     | End of task; urgent resources expire sooner             |
+| Opportunity            | Opportunity deadline or end of task                     |
+| Safety evaluation      | Evidence-change event or 24 hours for active conditions |
+| Incident report        | Case closure                                            |
+| Emergency              | Emergency closure or transfer                           |
+| Governance review      | Final decision or reopened case                         |
+| Recognition            | Recognition review completion                           |
+| Platform operations    | System-defined                                          |
+
+Expiration does not delete the audit record.
+
+It ends the context’s active influence.
+
+---
+
+# 03.20 Time Context Rules
+
+Time materially affects:
+
+* business availability;
+* event eligibility;
+* route safety;
+* neighborhood conditions;
+* resource availability;
+* emergency response;
+* evidence freshness;
+* recommendation confidence.
+
+## 03.20.1 Operational time bands
+
+| Time band     | Local time       |
+| ------------- | ---------------- |
+| Early morning | 5:00 AM–7:59 AM  |
+| Morning       | 8:00 AM–11:59 AM |
+| Afternoon     | 12:00 PM–4:59 PM |
+| Evening       | 5:00 PM–8:59 PM  |
+| Night         | 9:00 PM–11:59 PM |
+| Late night    | 12:00 AM–4:59 AM |
+
+These are baseline bands.
+
+Local conditions, cultural norms, business schedules, transit availability, and verified safety evidence may adjust interpretation.
+
+Nighttime alone does not prove danger.
+
+It activates additional evaluation requirements.
+
+---
+
+# 03.21 Geographic Context Rules
+
+The Context Engine™ must distinguish:
+
+1. user location;
+2. searched location;
+3. destination;
+4. entity location;
+5. route;
+6. service area;
+7. jurisdiction;
+8. online or remote availability.
+
+The platform must not assume that the user is physically located in the searched area.
+
+Geographic confidence is categorized as:
+
+| Geographic confidence | Meaning                                    |
+| --------------------- | ------------------------------------------ |
+| Verified              | Device or user-confirmed current location  |
+| High                  | Explicitly selected destination            |
+| Moderate              | Search query clearly identifies area       |
+| Emerging              | Location inferred from viewed content      |
+| Low                   | Generalized or ambiguous geographic signal |
+| Unknown               | No reliable location                       |
+
+Precise location must be handled according to privacy and permission requirements.
+
+---
+
+# 03.22 Engine Selection Rules
+
+The Context Engine™ determines which engines must participate.
+
+## 03.22.1 Always active
+
+For consequential recommendations:
+
+* Trust Engine™;
+* Safety Intelligence Engine™;
+* Stewardship Engine™;
+* Governance Engine™ oversight;
+* BIF orchestration.
+
+## 03.22.2 Context-specific activation
+
+| Context                   | Required participating engines                                               |
+| ------------------------- | ---------------------------------------------------------------------------- |
+| General Exploration       | Discovery, Trust, Safety                                                     |
+| Local Community           | Community, Discovery, Trust, Safety                                          |
+| Solo Traveler             | Safety, Discovery, Trust, Community                                          |
+| Solo Traveler at Night    | Safety leads; Trust, Discovery, Community                                    |
+| Family                    | Safety, Community, Discovery, Trust                                          |
+| Relocation                | Community Health Index, Safety, Trust, Community, Opportunity, City Maturity |
+| Local Business Support    | Discovery, Trust, Community, Business Maturity                               |
+| Melanated-Owned Discovery | Trust, Discovery, Community, Stewardship                                     |
+| Cultural Ambassador       | Cultural Influence, Trust, Community, Stewardship                            |
+| Business Networking       | Opportunity, Trust, Community, Cultural Influence                            |
+| Cultural Heritage         | Legacy & Learning, Trust, Community, Discovery                               |
+| Community Resource        | Opportunity, Trust, Safety, Community                                        |
+| Opportunity               | Opportunity, Trust, Community, Safety                                        |
+| Safety Evaluation         | Safety leads; Trust and Community support                                    |
+| Incident Reporting        | Safety leads; Trust, Governance, Community support                           |
+| Emergency                 | Safety leads; Governance routing; ordinary ranking suspended                 |
+| Governance Review         | Governance leads; relevant evidence engines support                          |
+| Community Recognition     | Recognition, Trust, Community, Stewardship                                   |
+| Platform Operations       | Evolution, Governance, Trust, anti-gaming systems                            |
+
+---
+
+# 03.23 Engine Leadership Rules
+
+Engine participation is not the same as engine leadership.
+
+The lead engine:
+
+1. frames the decision;
+2. receives the highest permissible influence;
+3. determines required minimum evidence;
+4. identifies mandatory disqualifiers;
+5. supplies the primary explanation category.
+
+Baseline leadership assignments:
+
+| Context                   | Lead engine                             |
+| ------------------------- | --------------------------------------- |
+| General Exploration       | Discovery Engine™                       |
+| Local Community           | Community Engine™                       |
+| Solo Traveler             | Safety Intelligence Engine™             |
+| Solo Traveler at Night    | Safety Intelligence Engine™             |
+| Family                    | Safety Intelligence Engine™             |
+| Relocation                | Community Health Index™                 |
+| Local Business Support    | Discovery Engine™                       |
+| Melanated-Owned Discovery | Trust Engine™                           |
+| Cultural Ambassador       | Cultural Influence Engine™              |
+| Business Networking       | Opportunity Engine™                     |
+| Cultural Heritage         | Legacy & Learning Engine™               |
+| Community Resource        | Opportunity Engine™                     |
+| Opportunity               | Opportunity Engine™                     |
+| Safety Evaluation         | Safety Intelligence Engine™             |
+| Incident Reporting        | Safety Intelligence Engine™             |
+| Emergency                 | Safety Intelligence Engine™             |
+| Governance Review         | Governance Engine™                      |
+| Community Recognition     | Community Recognition System™           |
+| Platform Operations       | Evolution Engine™ or Governance Engine™ |
+
+These baseline assignments may be modified only through approved Engine Orchestration Rules.
+
+---
+
+# 03.24 Weight Profile Selection
+
+After resolving context, the Context Engine™ selects the approved BIF weight profile.
+
+Launch-state profiles already defined in the BIF include:
+
+1. Baseline;
+2. Solo Traveler;
+3. Solo Woman at Night;
+4. Family;
+5. Relocation;
+6. Local Business;
+7. Melanated-Owned;
+8. Cultural Ambassador;
+9. Business Networking;
+10. Cultural Heritage;
+11. Emergency.
+
+Where the name of an existing BIF profile uses language narrower than the Context Engine’s inclusive operational context, the existing internal profile may remain until the Weight Register is formally revised.
+
+No production system may invent weights dynamically without:
+
+* an approved profile;
+* Decision Ledger entry;
+* version number;
+* governance approval;
+* testing record.
+
+---
+
+# 03.25 Context-Specific Minimums
+
+The Context Engine™ may activate stricter minimum requirements.
+
+| Context                         | Minimum rule                                                       |
+| ------------------------------- | ------------------------------------------------------------------ |
+| General search                  | Normal search eligibility                                          |
+| Recommendation                  | BIF recommendation threshold                                       |
+| Promotion                       | BIF promotion threshold                                            |
+| Solo traveler                   | Safety minimum required                                            |
+| Solo traveler at night          | Elevated safety minimum and current evidence                       |
+| Family                          | Child suitability must not be unknown when materially relevant     |
+| Relocation                      | Long-term evidence and Community Health evaluation required        |
+| Accessibility required          | Required accommodation must be confirmed or clearly marked unknown |
+| Verified ownership required     | Ownership verification threshold must be met                       |
+| Cultural Ambassador partnership | Trust, authenticity, and disclosure requirements                   |
+| Emergency                       | Ordinary scoring may be bypassed for immediate routing             |
+| Governance review               | Automated public action may be held                                |
+
+---
+
+# 03.26 Safety Context Activation
+
+A safety context becomes mandatory when any of the following occur:
+
+1. the user explicitly requests safety information;
+2. the user submits or views a relevant incident report;
+3. an active Critical or High-Risk safety override exists;
+4. the user requests travel or directions under safety-sensitive conditions;
+5. a report alleges violence, harassment, discrimination, stalking, threats, or dangerous conditions;
+6. a minor’s safety is implicated;
+7. the platform detects an urgent emergency action;
+8. a route or location is subject to a verified public emergency;
+9. a recommendation could expose the user to a known material risk;
+10. Governance requires safety review.
+
+Safety context activation must not publicly characterize an entity as unsafe unless the Safety Intelligence Engine™ authorizes the language.
+
+---
+
+# 03.27 Emergency Context Rules
+
+When `CTX-EMERGENCY` is active:
+
+1. ordinary discovery ranking is suspended;
+2. promotional status is irrelevant;
+3. paid placement receives zero influence;
+4. emergency routing takes priority;
+5. the system must avoid unnecessary questions;
+6. the platform must clearly state its limitations;
+7. relevant emergency resources may be surfaced;
+8. location may be requested only when necessary and permitted;
+9. the event must be logged;
+10. post-event review may be required.
+
+The Context Engine™ does not determine whether an emergency claim is legally proven.
+
+It determines that the request must be handled as potentially urgent until safely resolved.
+
+---
+
+# 03.28 Context Privacy Rules
+
+The Context Engine™ must follow data-minimization principles.
+
+It may use only the context information necessary for the decision.
+
+It must not:
+
+* permanently store temporary sensitive context by default;
+* expose private modifiers in public explanations;
+* reveal one user’s context to another user;
+* infer protected identity for advertising or promotion;
+* use precise location without permission;
+* convert safety concerns into marketing segments;
+* retain emergency context longer than operationally necessary;
+* use parent-managed minor context outside authorized workflows;
+* expose internal confidence or risk classifications where doing so could cause harm;
+* allow paid entities to access private contextual signals.
+
+---
+
+# 03.29 Anti-Manipulation Rules
+
+The Context Engine™ must detect attempts to manipulate context for ranking or eligibility advantages.
+
+Potential manipulation signals include:
+
+1. repeatedly changing context filters to force promotion eligibility;
+2. falsely invoking emergency workflows;
+3. automated context cycling;
+4. mass-generated location requests;
+5. attempts to classify paid promotion as organic discovery;
+6. business owners impersonating users to create favorable contexts;
+7. coordinated use of identical context language;
+8. false accessibility claims used to target or exclude users;
+9. attempts to bypass ownership verification;
+10. deliberate misclassification of an incident report.
+
+Responses may include:
+
+* confidence reduction;
+* request throttling;
+* reauthentication;
+* evidence review;
+* promotion hold;
+* context lock;
+* human moderation;
+* governance escalation.
+
+---
+
+# 03.30 Cold-Start Context Rules
+
+The Context Engine™ must operate when little or no personal history exists.
+
+For a new user:
+
+1. rely primarily on the current request;
+2. avoid assumptions based on generalized demographics;
+3. offer explicit context filters;
+4. use baseline weights when context remains general;
+5. request clarification only when materially necessary;
+6. clearly label unknown suitability;
+7. do not penalize the user for having no history;
+8. do not silently import context from unrelated sessions.
+
+For a new entity:
+
+1. context may still be resolved;
+2. entity confidence may remain low;
+3. search may be allowed;
+4. recommendation or promotion may require stronger evidence;
+5. unknown information must remain unknown.
+
+---
+
+# 03.31 Public Explanation Rules
+
+Public explanations may describe the user-visible reason for a result without revealing internal weights, thresholds, confidence calculations, or proprietary context-resolution logic.
+
+## Approved examples
+
+* “Recommended because it matches your selected family and accessibility preferences.”
+* “Shown for your relocation search because community, safety, and resource information is available.”
+* “This result is listed, but there is not yet enough verified information for a strong recommendation.”
+* “Safety information affected this recommendation.”
+* “This business matches your request for verified melanated diaspora-owned options.”
+* “We need one more detail before making a recommendation.”
+
+## Prohibited examples
+
+* “The Context Engine assigned a score of 82.”
+* “Safety received 35% of the final weight.”
+* “Your behavior indicates that you are vulnerable.”
+* “We inferred your race, gender, disability, or income.”
+* “This result was suppressed because of a confidential algorithm.”
+* “The business failed an undisclosed cultural test.”
+
+---
+
+# 03.32 Internal Output Contract
+
+The Context Engine™ returns the following object to the Belonging Intelligence Framework™.
+
+```json
+{
+  "context_resolution_id": "ctxres_0000000001",
+  "request_id": "req_0000000001",
+  "resolved_at": "ISO-8601 timestamp",
+  "engine_version": "03.1.0",
+  "decision_mode": "RECOMMEND",
+  "urgency_level": 1,
+  "primary_context": {
+    "code": "CTX-RELOCATION",
+    "applicability_score": 92,
+    "confidence_score": 88,
+    "confidence_label": "High",
+    "resolution_method": "explicit_intent_plus_workflow"
+  },
+  "secondary_contexts": [
+    {
+      "code": "CTX-FAMILY",
+      "applicability_score": 78,
+      "confidence_score": 82,
+      "confidence_label": "High"
+    }
+  ],
+  "modifiers": [
+    "ACCESSIBILITY_REQUIRED",
+    "LIMITED_TRANSPORTATION"
+  ],
+  "intent": {
+    "type": "evaluate_relocation",
+    "confidence": 0.95
+  },
+  "subject": {
+    "entity_type": "neighborhood",
+    "entity_id": "neighborhood_0001"
+  },
+  "audience": {
+    "type": "family_household",
+    "source": "explicit_user_selection"
+  },
+  "place": {
+    "scope_type": "neighborhood",
+    "location_id": "location_0001",
+    "confidence": "High"
+  },
+  "time": {
+    "type": "future_horizon",
+    "value": "within_12_months",
+    "confidence": "Moderate"
+  },
+  "required_engines": [
+    "TRUST",
+    "SAFETY",
+    "COMMUNITY",
+    "COMMUNITY_HEALTH_INDEX",
+    "OPPORTUNITY",
+    "CITY_MATURITY",
+    "STEWARDSHIP"
+  ],
+  "lead_engine": "COMMUNITY_HEALTH_INDEX",
+  "weight_profile": "RELOCATION_FAMILY",
+  "minimum_threshold_profile": "RELOCATION_HIGH_CONSEQUENCE",
+  "mandatory_overrides": [],
+  "clarification_required": false,
+  "human_review_required": false,
+  "context_expiration": "ISO-8601 timestamp",
+  "audit_record_id": "audit_0000000001"
+}
+```
+
+---
+
+# 03.33 Required Database Structures
+
+The production Context Engine™ requires, at minimum:
+
+1. `context_definitions`
+2. `context_versions`
+3. `context_signal_definitions`
+4. `context_modifier_definitions`
+5. `context_compound_profiles`
+6. `context_priority_rules`
+7. `context_transition_rules`
+8. `context_expiration_rules`
+9. `context_engine_routes`
+10. `context_threshold_profiles`
+11. `context_resolution_records`
+12. `context_signal_records`
+13. `context_conflict_records`
+14. `context_clarification_records`
+15. `context_override_records`
+16. `context_audit_records`
+
+These may be incorporated into the 20-table BIF database architecture or implemented as related production tables.
+
+---
+
+# 03.34 Audit Record Requirements
+
+Every consequential context resolution must record:
+
+1. context resolution ID;
+2. request ID;
+3. user or system actor reference;
+4. timestamp;
+5. engine version;
+6. decision mode;
+7. urgency level;
+8. candidate contexts considered;
+9. applicability score for each candidate;
+10. evidence sources used;
+11. prohibited signals excluded;
+12. selected primary context;
+13. selected secondary contexts;
+14. modifiers applied;
+15. confidence calculation;
+16. conflicts detected;
+17. conflict rule applied;
+18. clarification requested;
+19. mandatory override applied;
+20. selected engine set;
+21. selected lead engine;
+22. selected weight profile;
+23. selected threshold profile;
+24. context expiration;
+25. human-review status;
+26. final BIF decision reference.
+
+Sensitive context must be minimized or tokenized where possible.
+
+---
+
+# 03.35 Human Review Requirements
+
+Human review is required when:
+
+1. a prohibited inference may have influenced the context;
+2. emergency context appears to be repeatedly abused;
+3. context determines a significant moderation or governance action;
+4. a high-impact decision has Low or Unknown confidence;
+5. conflicting contexts cannot be resolved;
+6. the user appeals a context-dependent decision;
+7. context affects legal, safety, or protected-access concerns;
+8. an entity alleges discriminatory context treatment;
+9. a new context is being tested;
+10. the Engine Orchestration Rules do not contain an approved pathway.
+
+---
+
+# 03.36 Constitutional Rules
+
+The Context Engine™ must comply with the Mapping With Melanin™ governing Constitution.
+
+It must:
+
+1. preserve human dignity;
+2. avoid unsupported identity assumptions;
+3. protect safety without presenting fear as certainty;
+4. preserve access to search when recommendation evidence is insufficient, unless a valid override applies;
+5. distinguish absence of evidence from evidence of absence;
+6. give community experience meaningful but not absolute influence;
+7. protect private context;
+8. prevent paid influence from determining context;
+9. permit appeal and correction;
+10. maintain explainability without revealing trade secrets;
+11. preserve historical and cultural truth;
+12. avoid penalizing emerging communities solely for having less data;
+13. support belonging without creating exclusion through hidden assumptions;
+14. prioritize the Institution Test and Generational Test in future changes.
+
+---
+
+# 03.37 Institution Test Application
+
+Before a new context, modifier, inference rule, or priority rule is approved, the Governance Engine™ must ask:
+
+> **Would we be willing to explain and defend this context rule as a permanent institutional practice 25 years from now?**
+
+A rule fails the Institution Test when it:
+
+* depends on stereotypes;
+* cannot be consistently explained;
+* creates hidden discrimination;
+* gives commercial interests improper control;
+* encourages surveillance;
+* cannot be audited;
+* becomes harmful when scaled;
+* sacrifices dignity for convenience;
+* has no correction or appeal pathway.
+
+---
+
+# 03.38 Generational Test Application
+
+The Context Engine™ must also ask:
+
+> **Would this context methodology remain worthy of stewardship if inherited by future generations who did not create it?**
+
+A rule fails the Generational Test when:
+
+* it requires founders’ personal judgment to remain safe;
+* it cannot operate transparently under new leadership;
+* it encodes temporary bias as permanent truth;
+* it prevents future communities from correcting the framework;
+* it extracts contextual data without durable benefit;
+* it creates power that cannot be governed responsibly.
+
+---
+
+# 03.39 Launch Readiness Requirements
+
+The Context Engine™ is launch-ready only when:
+
+1. all launch-state primary contexts are implemented;
+2. all active modifiers are defined;
+3. candidate context scoring is tested;
+4. context confidence calculations are validated;
+5. primary and secondary resolution rules are implemented;
+6. conflict rules are tested;
+7. clarification workflows are available;
+8. safety and emergency activation rules are functioning;
+9. engine-selection mappings are approved;
+10. lead-engine mappings are approved;
+11. BIF weight profiles are correctly connected;
+12. context expiration is implemented;
+13. context transitions are logged;
+14. prohibited inference tests pass;
+15. privacy controls are implemented;
+16. anti-manipulation controls are tested;
+17. public explanation templates are approved;
+18. the output contract is validated;
+19. audit records are complete;
+20. human-review routing is operational;
+21. the Governance Engine™ has approved version 1.0;
+22. rollback procedures exist.
+
+---
+
+# 03.40 Validation Scenarios
+
+The Engine must pass at least the following launch-state tests.
+
+## Scenario 1 — General local search
+
+```text
+Request:
+“Coffee shops near me.”
+
+Expected:
+Primary Context: Local Community or General Exploration
+Decision Mode: Search
+No unsupported identity assumptions
+```
+
+## Scenario 2 — Verified ownership requirement
+
+```text
+Request:
+“Show me verified Black-owned coffee shops near me.”
+
+Expected:
+Primary Context: Melanated Diaspora-Owned Discovery
+Secondary Context: Local Business Support
+Trust Engine required
+Ownership verification threshold active
+```
+
+## Scenario 3 — Solo nighttime travel
+
+```text
+Request:
+“I’m traveling alone. What is open near my hotel after 11 PM?”
+
+Expected:
+Compound Context: Solo Night Safety
+Safety Intelligence Engine leads
+Open-now and nighttime modifiers active
+Current evidence required
+```
+
+## Scenario 4 — Family relocation
+
+```text
+Request:
+“We may move to Philadelphia with two children next year.”
+
+Expected:
+Compound Context: Family Relocation
+Community Health Index leads
+Long-term evidence requirements active
+Resources, safety, schools, transportation, and community signals considered
+```
+
+## Scenario 5 — Cultural heritage
+
+```text
+Request:
+“Find important Black historical landmarks in this city.”
+
+Expected:
+Primary Context: Cultural Heritage
+Secondary Context: Local Community
+Legacy & Learning Engine leads
+Verified historical evidence required
+```
+
+## Scenario 6 — Community resource
+
+```text
+Request:
+“I need a food bank open today.”
+
+Expected:
+Primary Context: Community Resource
+Urgency: Time-sensitive
+Opportunity Engine leads
+Availability and eligibility verified where possible
+```
+
+## Scenario 7 — Ambiguous request
+
+```text
+Request:
+“Is this a good neighborhood?”
+
+Expected:
+Clarification:
+“For visiting, staying temporarily, or relocating?”
+No premature conclusion
+```
+
+## Scenario 8 — Safety report
+
+```text
+Request:
+User submits an allegation involving harassment.
+
+Expected:
+Primary Context: Incident Reporting
+Safety Intelligence Engine leads
+Governance and Trust support
+Public warning not automatically issued
+```
+
+## Scenario 9 — Emergency
+
+```text
+Request:
+“I am in immediate danger.”
+
+Expected:
+Emergency context activated
+Ordinary ranking suspended
+Immediate emergency-routing response
+Minimal questioning
+Audit record created
+```
+
+## Scenario 10 — Accessibility
+
+```text
+Request:
+“Only show places with confirmed wheelchair access.”
+
+Expected:
+Accessibility Required modifier
+Unknown accessibility does not satisfy requirement
+No inference about the user’s medical condition
+```
+
+## Scenario 11 — Promotion request
+
+```text
+Request:
+Business asks to be featured.
+
+Expected:
+Decision Mode: Promote
+Local Business context
+Promotion thresholds active
+Payment cannot replace eligibility
+```
+
+## Scenario 12 — Context transition
+
+```text
+Initial:
+“Restaurants in New Orleans.”
+
+Later:
+“I’ll be walking there alone after midnight.”
+
+Expected:
+Transition from General Discovery
+to Solo Night Safety
+Recalculate engine weights and recommendation eligibility
+```
+
+---
+
+# 03.41 Failure Conditions
+
+The Context Engine™ must fail safely.
+
+If the Engine is unavailable:
+
+1. emergency routing remains available;
+2. no personalized high-consequence recommendation may be made;
+3. baseline search may continue where safe;
+4. results must not be presented as contextually recommended;
+5. promotion decisions must be held;
+6. recognition decisions must be held;
+7. the failure must be logged;
+8. the BIF must receive a context-unavailable status.
+
+Fallback output:
+
+```json
+{
+  "context_status": "UNAVAILABLE",
+  "decision_mode": "SEARCH_ONLY",
+  "personalized_recommendation_allowed": false,
+  "promotion_allowed": false,
+  "human_review_required": true
+}
+```
+
+---
+
+# 03.42 Versioning and Change Control
+
+Every change to the Context Engine™ requires:
+
+1. version number;
+2. documented purpose;
+3. affected context definitions;
+4. affected modifiers;
+5. affected scoring components;
+6. affected engine routes;
+7. affected weight profiles;
+8. test results;
+9. bias and harm review;
+10. privacy review;
+11. Institution Test result;
+12. Generational Test result;
+13. Governance approval;
+14. rollback plan;
+15. Decision Ledger entry.
+
+Historical decisions must remain reproducible using the version active when the decision was made.
+
+---
+
+# 03.43 Future Expansion
+
+Future versions may support:
+
+* trip-stage context;
+* multi-city travel context;
+* diaspora-specific cultural context;
+* parent-managed youth context;
+* elder-care context;
+* group-consensus context;
+* live event context;
+* disaster recovery context;
+* cross-border resource eligibility;
+* language and communication context;
+* community rebuilding context;
+* institutional partnership context;
+* education pathway context;
+* entrepreneurship stage context;
+* life-transition context;
+* historical research context;
+* neighborhood change context;
+* long-term stewardship context.
+
+No future context may be activated in production until its scoring, privacy, governance, audit, and explanation rules are approved.
+
+---
+
+# 03.44 Final Governing Rule
+
+The Context Engine™ exists to prevent the platform from giving a technically correct answer to the wrong human question.
+
+It must never treat context as a shortcut for identity.
+
+It must never use personalization as permission to stereotype.
+
+It must never allow convenience, popularity, or payment to override a context that materially affects safety, dignity, access, trust, or belonging.
+
+Its final governing rule is:
+
+> **Understand the circumstances before evaluating the evidence, and understand the person’s stated need before deciding what the platform should do.**
+
+═══════════════════════════════════════════════════════════════════════
+END OF SECTION 03
+CONTEXT ENGINE™ — FUTURE-STATE PRODUCTION SPECIFICATION v1.0
+CONFIDENTIAL — TRADE SECRET — NOT FOR DISTRIBUTION
+═══════════════════════════════════════════════════════════════════════
+
+**Status update**
+
+```text
+COMPLETE
+01. Trust Engine™
+02. Belonging Intelligence Framework™
+03. Context Engine™ (Engine Zero)
+
+NEXT
+04. Community Engine™
+```

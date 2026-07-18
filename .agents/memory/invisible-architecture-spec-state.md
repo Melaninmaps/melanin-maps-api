@@ -26,7 +26,7 @@ ALL specifications must match Section 02 exactly:
 | # | Document | Status |
 |---|---|---|
 | 02 | Belonging Intelligence Framework™ | ✅ COMPLETE (26 sections, full JSON output contract, 20 DB tables, launch checklist) |
-| 03 | Context Engine™ (Engine Zero) | ⬜ NEXT — outline defined, resume here |
+| 03 | Context Engine™ (Engine Zero) | ✅ COMPLETE (44 sections, full JSON output contract, 16 DB tables, 22 launch requirements, 12 validation scenarios) |
 | 04 | Community Engine™ | ⬜ pending |
 | 05 | Discovery Engine™ | ⬜ pending |
 | 06 | Safety Intelligence Engine™ | ⬜ pending |
@@ -55,41 +55,39 @@ ALL specifications must match Section 02 exactly:
 ## Confirmed Sequence
   ✅ 01. Trust Engine™ — complete
   ✅ 02. Belonging Intelligence Framework™ — complete
-  🔄 03. Context Engine™ — NEXT (resume here)
-  ⬜ 04. Community Engine™ — outline locked below
+  ✅ 03. Context Engine™ — complete
+  🔄 04. Community Engine™ — NEXT (resume here, outline locked below)
   ⬜ 05–27 — pending
 
 ---
 
-## Section 03 Outline (exact resume point)
-
-```
-# 03. CONTEXT ENGINE™
-
-## Future-State Production Specification v1.0
-
-Classification: Context Classification & Engine Weighting System
-Status: Review Mode
-Confidentiality: High — context logic and weight adjustment rules are not public
-
-03.1  Purpose
-03.2  Foundational Principle
-03.3  Definition of Context
-03.4  Context Categories
-03.5  Context Resolution Sequence
-03.6  Context Confidence
-03.7  Context Selection Logic
-03.8  Primary vs Secondary Context
-03.9  Context Priority Matrix
-03.10 Dynamic Context Transitions
-03.11 Context Conflict Resolution
-03.12 Missing Context Handling
-03.13 Context Weight Assignment
-03.14 Context Output Contract
-03.15 Audit Requirements
-03.16 Constitutional Rules
-03.17 Future Expansion
-```
+## Section 03 — COMPLETE
+44 sections (03.1–03.44). Key reference data:
+- 19 primary contexts (CTX-GENERAL through CTX-PLATFORM)
+- 22-step detection sequence
+- Context Applicability Score: 8 components, max 100 pts
+  (Explicit Intent 25 / Workflow 15 / Subject 10 / Audience 10 /
+   Place+Time 10 / Modifier 10 / Session 10 / Mandatory 10)
+- Context Confidence Formula: Signal Strength × Signal Agreement ×
+  Evidence Independence × Context Specificity × 100
+- 5 evidence tiers (Explicit → Authorized Profile → Session → Environmental → Inferred)
+- 10 approved compound contexts (Solo Night Safety, Family Relocation, etc.)
+- 12 decision modes (SEARCH/INFORM/COMPARE/RECOMMEND/PROMOTE/RECOGNIZE/
+  ALERT/ROUTE/VERIFY/MODERATE/ESCALATE/LEARN)
+- 5 urgency levels (0=Routine → 4=Emergency)
+- 6 confidence labels: Verified 90–100 / High 80–89 / Moderate 65–79 /
+  Emerging 45–64 / Low 20–44 / Unknown 0–19
+- Resolution thresholds: Primary context requires Applicability ≥70 + Confidence ≥65
+- Precedence order: Emergency → Report → Safety → Governance → Relocation →
+  Family → Solo Night → Solo → Resource → Opportunity → Networking →
+  Ambassador → Heritage → Melanated-Owned → Local Business → Local → General
+- 16 required DB tables
+- 26-field audit record
+- 22 launch readiness requirements
+- 12 validation scenarios
+- Full JSON output contract defined
+- Failure fallback contract defined
+- Institution Test + Generational Test governance gates
 
 ## Section 04 Outline (ready after 03 is complete)
 
