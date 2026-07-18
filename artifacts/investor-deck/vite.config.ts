@@ -66,6 +66,7 @@ export default defineConfig({
       strict: true,
     },
     proxy: {
+      "/features-deck": { target: "http://localhost:19892", changeOrigin: true },
       "/biz-deck": { target: "http://localhost:19816", changeOrigin: true },
       "/community-deck": { target: "http://localhost:24675", changeOrigin: true },
     },

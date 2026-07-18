@@ -767,3 +767,9 @@ id = "asgb3q6qGR48SyBpnWOOg"
 uri = "file://.local/outputs/Mapping-With-Melanin---Experience-Deck.pdf"
 type = "pdf"
 title = "Mapping With Melanin — Experience Deck (PDF)"
+
+[[outputs]]
+id = "KFdQ6ibjc8TegYVAbdmyl"
+uri = "file://.local/outputs/MWM-Legacy-Collection.pdf"
+type = "pdf"
+title = "Mapping With Melanin™ — Legacy Collection (PDF)"
