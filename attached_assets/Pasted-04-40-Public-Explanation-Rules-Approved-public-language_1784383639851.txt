@@ -1,0 +1,207 @@
+04.40 Public Explanation Rules
+Approved public language includes:
+“Community members report strong connection and repeat participation.”
+“This business shows consistent community support and local engagement.”
+“There is promising community activity, but more evidence is needed.”
+“This resource is accessible and has helped community members successfully.”
+“Community experiences are mixed.”
+“This organization has demonstrated long-term community stewardship.”
+“This result is visible in search but does not yet have enough community evidence for a strong recommendation.”
+Prohibited public language includes:
+“The Community Engine scored this neighborhood 62.”
+“This business lost 18 points for weak reciprocity.”
+“The algorithm believes this community is unhealthy.”
+“People like you usually belong here.”
+“This community is low value.”
+“We secretly reduced this entity’s visibility.”
+“The platform determined that these people do not support one another.”
+04.41 Internal Output Contract
+{
+  "community_assessment_id": "comm_0000000001",
+  "request_id": "req_0000000001",
+  "entity": {
+    "entity_type": "business",
+    "entity_id": "business_0000000001"
+  },
+  "engine_version": "04.1.0",
+  "context_profile": "LOCAL_BUSINESS",
+  "raw_community_score": 76,
+  "confidence_score": 82,
+  "confidence_label": "High",
+  "adjusted_community_score": 68.4,
+  "dimensions": {
+    "welcoming_access": {
+      "score": 82,
+      "confidence": "High"
+    },
+    "meaningful_connection": {
+      "score": 76,
+      "confidence": "Moderate"
+    },
+    "reciprocity": {
+      "score": 71,
+      "confidence": "High"
+    },
+    "community_support": {
+      "score": 79,
+      "confidence": "High"
+    },
+    "voice_and_influence": {
+      "score": 68,
+      "confidence": "Moderate"
+    },
+    "continuity_and_return": {
+      "score": 74,
+      "confidence": "High"
+    },
+    "stewardship_and_shared_benefit": {
+      "score": 81,
+      "confidence": "High"
+    }
+  },
+  "evidence_summary": {
+    "qualified_items": 34,
+    "distinct_categories": 6,
+    "representation_factor": 0.90,
+    "independence_factor": 0.88,
+    "recency_factor": 0.92
+  },
+  "positive_signals": [
+    "REPEAT_PARTICIPATION",
+    "LOCAL_REFERRALS",
+    "COMMUNITY_SUPPORT",
+    "RESPONSIVE_FEEDBACK"
+  ],
+  "risk_signals": [
+    "LIMITED_NEWCOMER_EVIDENCE"
+  ],
+  "score_caps": [],
+  "penalties": [],
+  "intervention_level": 1,
+  "recognition_eligible": true,
+  "promotion_eligible_from_community_engine": true,
+  "human_review_required": false,
+  "public_explanation_code": "STRONG_COMMUNITY_CONNECTION",
+  "audit_record_id": "audit_0000000001"
+}
+04.42 Required Database Structures
+The production Community Engine™ requires, at minimum:
+community_assessments
+community_dimension_scores
+community_evidence_items
+community_signal_records
+community_relationship_types
+community_participation_records
+community_referral_records
+community_support_outcomes
+community_connection_records
+community_reciprocity_records
+community_voice_records
+community_continuity_records
+community_stewardship_records
+community_risk_records
+community_interventions
+community_recognition_candidates
+community_conflict_records
+community_score_versions
+community_audit_records
+community_public_explanations
+These may be implemented within or alongside the BIF database architecture.
+04.43 Audit Record Requirements
+Every consequential Community Engine™ decision must record:
+assessment ID;
+request ID;
+entity type and ID;
+context;
+engine version;
+evaluation period;
+evidence items considered;
+evidence items excluded;
+exclusion reasons;
+contributor relationship types;
+conflicts of interest;
+evidence quality values;
+decay applied;
+dimension scores;
+dimension confidences;
+weight profile;
+raw score;
+confidence-adjusted score;
+positive signals;
+risk signals;
+penalties;
+score caps;
+conflict-resolution rules;
+intervention level;
+recognition eligibility;
+promotion eligibility contribution;
+human-review status;
+public explanation code;
+BIF decision reference;
+final outcome.
+04.44 Human Review Requirements
+Human review is required when:
+verified exclusion allegations exist;
+retaliation is reported;
+severe extraction is alleged;
+conflicting evidence could materially affect promotion or recognition;
+a community score changes by more than 20 points in 30 days;
+manipulation is suspected;
+a paid partner receives an unusually high score;
+a low-confidence score would materially affect an entity;
+evidence involves minors or sensitive community harm;
+a community appeals the result;
+the Engine proposes a Governance-level intervention;
+public explanation could create reputational harm;
+a score cap would block recognition or promotion;
+a new evidence type is used;
+the Institution Test or Generational Test is implicated.
+04.45 Constitutional Rules
+The Community Engine™ must:
+distinguish visibility from value;
+distinguish participation from belonging;
+distinguish popularity from trust;
+distinguish community presence from reciprocity;
+protect newcomers and long-term members;
+preserve disagreement where experiences differ;
+avoid treating communities as monolithic;
+recognize emerging communities without fabricating confidence;
+prevent payment from determining Community Score;
+prevent follower count from dominating community evaluation;
+preserve community voice and correction pathways;
+protect community stories and data;
+recognize contribution without requiring public performance;
+avoid penalizing communities for limited platform representation;
+value long-term stewardship;
+support community growth without forcing conformity;
+permit appeal;
+maintain full auditability;
+comply with the Institution Test;
+comply with the Generational Test.
+04.46 Institution Test Application
+Before approving a Community Engine™ rule, Mapping With Melanin™ must ask:
+Would we defend this rule as a responsible way to evaluate community 25 years from now?
+A rule fails the Institution Test when it:
+mistakes activity for belonging;
+rewards extraction;
+privileges insiders;
+cannot distinguish marketing from lived experience;
+suppresses disagreement;
+centralizes power without appeal;
+treats communities as data products;
+disadvantages emerging communities;
+gives commercial partners hidden influence;
+cannot be explained with dignity;
+would become harmful at scale.
+04.47 Generational Test Application
+The Engine must ask:
+Would future generations inherit a system that helps them strengthen community, or one that quietly defines community for them?
+A rule fails the Generational Test when it:
+freezes current cultural assumptions;
+prevents future correction;
+concentrates community authority permanently;
+extracts stories without stewardship;
+rewards short-term visibility over continuity;
+cannot survive leadership change;
+depends on founder intuition rather than documented governance;
+leaves no pathway for future communities to redefine their own needs.

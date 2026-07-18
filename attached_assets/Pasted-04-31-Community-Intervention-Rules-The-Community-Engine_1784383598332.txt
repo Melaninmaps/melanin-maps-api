@@ -1,0 +1,124 @@
+04.31 Community Intervention Rules
+The Community Engine™ may recommend intervention when a community pattern is materially weak or at risk.
+Interventions are not punishments.
+They identify what may strengthen access, trust, participation, or continuity.
+04.31.1 Intervention levels
+Level	Name	Meaning
+0	No intervention	Normal operation
+1	Informational	Offer best practices or missing information
+2	Developmental	Recommend specific community-building action
+3	Priority	Material weakness affecting recommendation or recognition
+4	Governance	Serious exclusion, extraction, retaliation, or systemic concern
+5	Safety-linked	Safety or urgent harm issue routed to appropriate engine
+04.31.2 Example interventions
+improve accessibility information;
+create newcomer guidance;
+establish a feedback process;
+add community referral pathways;
+disclose partnership compensation;
+create follow-up after events;
+confirm resource availability;
+improve dispute response;
+add local hiring or mentorship pathways;
+preserve community history;
+create community-benefit reporting;
+submit issue for Governance review.
+The public platform must not expose confidential intervention status unless approved.
+04.32 Community Growth Recognition
+The Community Engine™ may identify meaningful growth.
+Growth must reflect improvement in evidence, not merely increased platform activity.
+Examples:
+improved newcomer access;
+increased completed referrals;
+stronger return participation;
+better issue resolution;
+broader community representation;
+sustained resource availability;
+increased mentorship;
+verified economic circulation;
+improved community voice;
+repaired trust after accountability.
+Growth may qualify an entity for:
+Community Milestones™;
+Hidden Gem review;
+Community Recognition;
+Living Legacy™ progression;
+Community Catalyst evaluation;
+increased recommendation eligibility.
+No recognition is automatic solely because a score increased.
+04.33 Relationship to Community Health Index™
+The Community Engine™ evaluates the quality of community relationships and lived participation.
+The Community Health Index™ evaluates broader structural community conditions.
+The distinction is:
+Community Engine™:
+How well are people connecting, supporting, influencing, and returning?
+
+Community Health Index™:
+How healthy, resilient, resourced, and sustainable is the broader
+community environment?
+The two engines may share evidence but must not duplicate final calculations.
+04.34 Relationship to Community Catalyst Model™
+The Community Engine™ identifies community conditions and activity.
+The Community Catalyst Model™ evaluates whether an action, person, business, event, or institution produces measurable positive movement.
+Example:
+Community Engine:
+The event created meaningful connection and repeat engagement.
+
+Community Catalyst Model:
+The event led to three new business partnerships, two mentorship
+relationships, and a recurring community program.
+04.35 Relationship to Community Ripple™ and Community Echo™
+The Community Engine™ evaluates current community quality.
+Community Ripple™ tracks downstream impact chains.
+Community Echo™ tracks repeated or recurring influence over time.
+Example:
+Community Engine:
+A resource was useful and accessible.
+
+Community Ripple:
+The recipient used the resource, gained employment, and later referred
+three others.
+
+Community Echo:
+The resource continues to be recommended and produce successful outcomes
+across multiple cycles.
+04.36 Relationship to Trust Engine™
+Trust and community are separate.
+A community may be active but not trustworthy.
+An entity may be trustworthy but have limited community reach.
+The Trust Engine™ evaluates evidence reliability, integrity, consistency, accountability, and verification.
+The Community Engine™ evaluates access, connection, reciprocity, support, voice, continuity, and shared benefit.
+Neither may replace the other.
+04.37 Relationship to Safety Intelligence Engine™
+The Community Engine™ may detect safety-relevant signals but does not independently declare an entity unsafe.
+Safety-relevant community signals must be routed to the Safety Intelligence Engine™.
+Examples:
+retaliation;
+harassment;
+discriminatory exclusion;
+unsafe event conditions;
+predatory support;
+community fear;
+repeated unresolved incidents.
+A safety override may cap or suspend Community-based recommendation eligibility.
+04.38 Relationship to Discovery Engine™
+The Discovery Engine™ determines whether an entity should be found and where it ranks for relevance.
+The Community Engine™ provides evidence of:
+community value;
+local connection;
+reciprocity;
+support;
+newcomer suitability;
+continuity;
+stewardship.
+A high Community Score may improve discovery relevance.
+It does not automatically authorize promotion.
+04.39 Relationship to Cultural Influence Engine™
+The Cultural Influence Engine™ measures the quality and impact of cultural influence.
+The Community Engine™ measures whether that influence contributes to connection, reciprocity, support, voice, continuity, or shared benefit.
+An influential person may have:
+high Cultural Influence;
+low Reciprocity;
+low Stewardship;
+moderate Community Score.
+That distinction must remain visible internally.
