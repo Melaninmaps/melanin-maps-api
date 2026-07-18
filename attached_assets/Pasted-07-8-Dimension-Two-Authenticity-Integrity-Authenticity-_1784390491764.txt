@@ -1,0 +1,110 @@
+07.8 Dimension Two — Authenticity & Integrity
+Authenticity & Integrity measures consistency between what an entity publicly represents and how it actually behaves.
+It evaluates:
+truthful self-presentation;
+disclosure of financial relationships;
+consistency across time;
+accuracy of endorsements;
+willingness to acknowledge limitations;
+treatment of community members;
+response to correction;
+avoidance of fabricated engagement;
+avoidance of false cultural authority;
+consistency between public values and private conduct.
+07.8.1 Authenticity Formula
+Authenticity & Integrity Score =
+  Representation Accuracy
++ Behavioral Consistency
++ Disclosure Quality
++ Correction Responsibility
++ Relationship Integrity
+- Deception Penalties
+07.8.2 Deception indicators
+undisclosed sponsorship;
+paid endorsement presented as organic;
+fabricated community relationship;
+purchased followers or engagement;
+false claims of ownership;
+misleading partnership claims;
+altered testimonials;
+staged community support;
+impersonation;
+using another person’s work without credit;
+claiming outcomes that did not occur;
+deleting disclosure after campaign completion.
+07.9 Dimension Three — Community Connection
+Community Connection measures whether influence is built through real relationships rather than distant observation or audience extraction.
+It may evaluate:
+repeat community engagement;
+participation in local events;
+community referrals;
+collaboration;
+responsiveness;
+mentorship;
+relationship continuity;
+accessibility to community members;
+engagement outside paid campaigns;
+local trust;
+connection across generations;
+connection across diaspora communities.
+07.9.1 Community Connection Formula
+Community Connection Score =
+  Relationship Depth
++ Repeat Participation
++ Community Accessibility
++ Collaborative Activity
++ Cross-Network Bridge Value
+- Distance and Extraction Penalties
+A large audience with little reciprocal community interaction may receive a low Community Connection Score.
+07.10 Dimension Four — Resonance & Meaning
+Resonance & Meaning measures whether the influence creates understanding, identification, emotional relevance, reflection, cultural recognition, or a stronger sense of belonging.
+It may consider:
+qualitative responses;
+meaningful saves;
+thoughtful comments;
+personal testimony;
+community discussion;
+educational use;
+emotional identification;
+memory preservation;
+repeat sharing with context;
+audience reflection;
+strengthened cultural pride;
+increased curiosity or understanding.
+07.10.1 Resonance Formula
+Resonance & Meaning Score =
+  Depth of Response
++ Relevance to Community Experience
++ Educational or Emotional Value
++ Repeat Meaningful Engagement
++ Narrative Persistence
+- Superficial Engagement Penalty
+Reaction volume alone does not establish resonance.
+07.11 Dimension Five — Action & Conversion
+Action & Conversion measures whether influence leads to meaningful behavior or outcomes.
+Actions may include:
+visiting a business;
+attending an event;
+applying for an opportunity;
+donating;
+volunteering;
+saving a resource;
+joining a Kinfolk Circle;
+contacting an institution;
+learning more;
+sharing verified information;
+booking a service;
+referring another person;
+participating in community initiatives;
+supporting a creator;
+preserving a story;
+changing a decision based on useful information.
+07.11.1 Action Formula
+Action & Conversion Score =
+  Qualified Actions
+× Action Quality
+× Attribution Confidence
+× Outcome Relevance
+× Completion Factor
+Normalized to 0–100.
+Clicks and views may support measurement but do not independently qualify as meaningful action.

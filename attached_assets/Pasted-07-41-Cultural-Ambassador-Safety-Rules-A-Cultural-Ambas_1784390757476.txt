@@ -1,0 +1,155 @@
+07.41 Cultural Ambassador Safety Rules
+A Cultural Ambassador may be held from partnership or promotion when:
+active serious safety concern exists;
+harassment or exploitation is alleged credibly;
+minors are placed at risk;
+meetup practices are unsafe;
+sponsorship conceals a safety issue;
+false travel or location guidance could create harm;
+emergency information is misrepresented;
+retaliation occurs.
+Safety Intelligence Engine™ outputs control safety treatment.
+07.42 Community Protection Rules
+The Engine must protect communities from:
+cultural extraction;
+false representation;
+nonconsensual storytelling;
+decontextualized trauma;
+monetization without return;
+erasure of local contributors;
+displacement-producing promotion;
+exploitative tourism;
+appropriation;
+misleading “authenticity” claims;
+harmful exposure of sensitive places;
+commodification of sacred or private practices.
+07.43 Sensitive Cultural Knowledge
+Certain cultural knowledge may be:
+sacred;
+private;
+community-controlled;
+location-sensitive;
+vulnerable to exploitation;
+inappropriate for mass promotion.
+The Engine must support restrictions such as:
+limited visibility;
+no geotagging;
+no commercial use;
+community permission required;
+educational context only;
+no AI summarization;
+no public reproduction;
+archival protection.
+07.44 Platform Promotion Treatment
+A high Cultural Influence Score does not guarantee promotion.
+Promotion requires:
+BIF approval;
+Trust threshold;
+Safety threshold;
+community evidence;
+current disclosure;
+no active hold;
+context relevance;
+promotion-policy compliance.
+Paid promotion may occur only among already eligible entities.
+07.45 Community Recognition Treatment
+The Cultural Influence Engine™ may nominate an entity for:
+Cultural Ambassador status;
+Community Milestone™;
+Community Recognition;
+Hidden Gem review;
+Living Legacy™ progression;
+Legacy Ambassador review;
+Cultural Stewardship recognition.
+Final recognition is determined by the Community Recognition System™ and Governance.
+07.46 Public Explanation Rules
+Approved examples:
+“Recognized for sustained cultural storytelling and community support.”
+“This Cultural Ambassador has helped community members discover local businesses and resources.”
+“Promising cultural influence with limited evidence so far.”
+“Strong community connection and responsible attribution contributed to this recognition.”
+“This partnership is sponsored and clearly disclosed.”
+“Community experiences are mixed.”
+“This creator has demonstrated long-term cultural stewardship.”
+“Follower count was not the primary basis for this result.”
+Prohibited examples:
+“The algorithm decided this person is authentically Black.”
+“This creator is culturally superior.”
+“They ranked higher because of their race.”
+“They have more followers, so they are more influential.”
+“The platform secretly reduced this person’s visibility.”
+“This person failed a confidential culture test.”
+“Everyone in the community agrees.”
+“This Cultural Ambassador represents all Black people.”
+07.47 Internal Output Contract
+{
+  "cultural_influence_assessment_id": "culture_0000000001",
+  "request_id": "req_0000000001",
+  "engine_version": "07.1.0",
+  "evaluated_at": "ISO-8601 timestamp",
+  "entity": {
+    "entity_type": "cultural_ambassador",
+    "entity_id": "ambassador_0000000001"
+  },
+  "context_profile": "CULTURAL_AMBASSADOR_PARTNERSHIP",
+  "scores": {
+    "cultural_grounding": 91,
+    "authenticity_integrity": 84,
+    "community_connection": 88,
+    "resonance_meaning": 82,
+    "action_conversion": 76,
+    "reciprocity_shared_benefit": 89,
+    "stewardship_attribution": 93,
+    "continuity_reliability": 79,
+    "reach_accessibility": 58,
+    "raw_cultural_influence_score": 84.26,
+    "rounded_cultural_influence_score": 84
+  },
+  "confidence": {
+    "score": 86,
+    "label": "High"
+  },
+  "reach_summary": {
+    "follower_count": 18500,
+    "follower_count_total_score_contribution": 0.4,
+    "relevant_audience_factor": 0.82,
+    "artificial_reach_penalty": 0
+  },
+  "outcomes": {
+    "verified_direct_actions": 218,
+    "strongly_attributable_actions": 406,
+    "contributory_actions": 732,
+    "business_referrals": 94,
+    "event_attendance_attributed": 61,
+    "opportunity_applications": 18,
+    "mentorship_connections": 6
+  },
+  "commercial_disclosures": {
+    "status": "CURRENT",
+    "active_paid_partnerships": 3,
+    "undisclosed_relationship_flags": 0
+  },
+  "community_evidence": {
+    "qualified_items": 42,
+    "independent_sources": 19,
+    "community_representation_factor": 0.88
+  },
+  "positive_signals": [
+    "STRONG_CULTURAL_GROUNDING",
+    "VERIFIED_BUSINESS_SUPPORT",
+    "RESPONSIBLE_ATTRIBUTION",
+    "SUSTAINED_COMMUNITY_CONNECTION"
+  ],
+  "risk_signals": [
+    "LIMITED_ACCESSIBILITY_FORMATS"
+  ],
+  "penalties": [],
+  "score_caps": [],
+  "ambassador_tier_candidate": "ESTABLISHED_AMBASSADOR",
+  "partnership_eligible_from_cultural_engine": true,
+  "promotion_eligible_from_cultural_engine": true,
+  "recognition_candidate": true,
+  "human_review_required": false,
+  "public_explanation_code": "SUSTAINED_CULTURAL_STEWARDSHIP_AND_COMMUNITY_IMPACT",
+  "audit_record_id": "audit_0000000001"
+}

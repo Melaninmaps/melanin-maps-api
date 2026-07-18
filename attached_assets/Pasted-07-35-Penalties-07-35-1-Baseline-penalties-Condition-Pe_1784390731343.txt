@@ -1,0 +1,99 @@
+07.35 Penalties
+07.35.1 Baseline penalties
+Condition	Penalty
+Undisclosed paid relationship	−10 to −30
+False cultural authority	−15 to −40
+Cultural misrepresentation	−10 to −35
+Creator or community work used without attribution	−15 to −40
+Fabricated impact outcome	−20 to −50
+Purchased engagement	−10 to −30
+Community extraction without return	−15 to −40
+Retaliation against criticism	−20 to −45
+False partnership claim	−15 to −35
+Repeated refusal to correct material error	−10 to −30
+Severe concerns may trigger Trust or Governance action rather than only a score penalty.
+07.36 Corrective Action
+An entity may improve current Cultural Influence treatment through verified corrective action.
+Examples:
+adding appropriate attribution;
+correcting historical inaccuracies;
+compensating contributors;
+disclosing sponsorship;
+removing fabricated engagement;
+apologizing and repairing harm;
+changing partnership practice;
+obtaining consent;
+creating community benefit;
+establishing transparent review;
+restoring removed credit.
+Corrective action must not erase the original record.
+07.37 Conflict Resolution Rules
+Rule 1 — Cultural grounding over superficial reach
+Strong cultural grounding may outweigh limited audience size.
+Rule 2 — Integrity over visibility
+High visibility may not compensate for deception.
+Rule 3 — Community outcome over engagement volume
+Verified benefit outweighs large numbers of passive reactions.
+Rule 4 — Reciprocity over extraction
+Influence that repeatedly extracts without returning value must be limited.
+Rule 5 — Lived connection over marketing claims
+Verified community relationship ordinarily outweighs self-description.
+Rule 6 — Accurate correction may reduce current concern
+A meaningful correction may improve treatment without deleting history.
+Rule 7 — Different communities may evaluate influence differently
+The Engine may preserve materially different experiences.
+Rule 8 — Cultural disagreement does not automatically equal harm
+Good-faith disagreement must not be treated as manipulation or misconduct.
+Rule 9 — Commercial success does not establish cultural authenticity
+Revenue and fame remain separate from cultural grounding.
+Rule 10 — Safety and Governance controls remain superior
+Cultural influence may never override a valid safety or governance restriction.
+07.38 Cultural Diversity and Non-Monolithic Treatment
+The Engine must not treat:
+Black culture;
+African cultures;
+Caribbean cultures;
+Afro-Latin cultures;
+Indigenous cultures;
+Asian diaspora cultures;
+Middle Eastern or North African cultures;
+mixed or multiracial communities;
+regional communities;
+generational groups;
+as internally uniform.
+Cultural influence must be evaluated at the most relevant level of specificity supported by evidence.
+07.39 Anti-Gaming Signals
+Potential manipulation includes:
+purchased followers;
+purchased views;
+engagement pods;
+coordinated comments;
+copied testimonials;
+fabricated impact claims;
+hidden sponsorship;
+false community affiliation;
+fake business referrals;
+false event attendance;
+duplicate nominee campaigns;
+artificial link traffic;
+self-created “independent” reviews;
+undisclosed employee promotion;
+manipulated attribution;
+false historical claims;
+impersonation;
+repeated content recycling presented as new impact;
+audience-location spoofing;
+coordinated suppression of criticism.
+07.40 Anti-Gaming Responses
+Level	Response
+1	Monitor
+2	Discount suspect signal
+3	Reduce confidence
+4	Freeze score change
+5	Require disclosure or verification
+6	Hold partnership
+7	Hold promotion or recognition
+8	Human investigation
+9	Governance escalation
+10	Removal or disqualification
+A single unusual engagement pattern must not automatically establish fraud.

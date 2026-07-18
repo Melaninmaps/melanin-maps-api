@@ -1,0 +1,102 @@
+07.30.2 Match Formula
+Ambassador–Business Match Score =
+  (Cultural Alignment × 0.20)
++ (Audience Relevance × 0.12)
++ (Community Alignment × 0.18)
++ (Values and Trust Compatibility × 0.18)
++ (Purpose Fit × 0.12)
++ (Reciprocity Potential × 0.10)
++ (Geographic Fit × 0.05)
++ (Operational Readiness × 0.05)
+A high match score does not authorize partnership without both parties’ consent.
+07.31 “Show Love” Nomination Logic
+Community members may nominate a Cultural Ambassador, business, institution, or creator through a “Show Love” pathway.
+A nomination may:
+enter recognition review;
+increase evidence collection priority;
+identify overlooked influence;
+support Hidden Gem or Community Recognition review;
+create a partnership candidate.
+A nomination may not:
+directly increase a score;
+establish verification;
+guarantee promotion;
+bypass Trust or Safety review;
+create public status without evidence.
+Coordinated nominations are screened for manipulation.
+07.32 Community Impact Attribution
+When an Ambassador directs attention to a business, event, resource, or institution, the Engine may track:
+impressions;
+profile visits;
+website visits;
+social visits;
+saves;
+shares;
+bookings;
+purchases;
+event attendance;
+applications;
+referrals;
+repeat support;
+business-reported outcomes;
+community-reported outcomes;
+downstream opportunity.
+Tracking must minimize personal data.
+07.33 Cultural Influence Decay
+Different signals decay at different rates.
+07.33.1 Rapid-decay signals
+Examples:
+trending engagement;
+viral attention;
+current campaign activity;
+event-specific visibility.
+0–7 days:       100%
+8–30 days:       75%
+31–90 days:      45%
+91–180 days:     20%
+Over 180 days:   10%
+07.33.2 Moderate-decay signals
+Examples:
+business support outcomes;
+repeat community participation;
+partnership performance;
+educational usefulness.
+0–90 days:      100%
+91–180 days:     90%
+181–365 days:    75%
+1–2 years:       55%
+2–3 years:       35%
+Over 3 years:    20%
+07.33.3 Slow-decay signals
+Examples:
+cultural grounding;
+institutional trust;
+long-term stewardship;
+preserved history;
+sustained mentorship.
+0–1 year:       100%
+1–3 years:       95%
+3–5 years:       85%
+5–10 years:      75%
+Over 10 years:   65%
+07.33.4 Persistent evidence
+Certain evidence remains historically relevant:
+major cultural works;
+institution building;
+verified exploitation;
+significant correction;
+preserved archives;
+Legacy milestones;
+formal accountability findings.
+Persistent evidence may lose current ranking influence but remains in the Legacy & Learning Engine™.
+07.34 Cultural Influence Score Caps
+Condition	Maximum score
+No direct community evidence	64
+Only self-reported impact	59
+No disclosure record for commercial activity	54
+No reciprocity evidence	69
+No attribution practice	69
+Significant unresolved authenticity concern	49
+Active cultural exploitation review	39
+Verified fraudulent cultural claims	19
+Governance block	0 for partnership or promotion

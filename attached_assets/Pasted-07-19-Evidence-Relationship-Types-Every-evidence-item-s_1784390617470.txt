@@ -1,0 +1,69 @@
+07.19 Evidence Relationship Types
+Every evidence item should identify the source relationship.
+Relationship	Example
+Community member	Person affected by the work
+Business partner	Business featured or supported
+Institution partner	Museum, HBCU, archive
+Audience member	Viewer, reader, participant
+Event participant	Attendee
+Collaborator	Co-creator or project partner
+Employee or contractor	Worked directly with entity
+Cultural subject	Person or group represented
+Sponsor	Financial partner
+Independent evaluator	Reviewer or researcher
+Platform record	Verified system outcome
+Self-reported	Submitted by evaluated entity
+Anonymous	Source not publicly identified
+Unknown	Relationship cannot be determined
+Self-reported impact requires corroboration before it may strongly influence partnership or recognition eligibility.
+07.20 Outcome Attribution
+The Engine must distinguish correlation from attributable influence.
+An outcome may be classified as:
+Attribution level	Meaning	Factor
+Verified direct	Tracked action clearly linked	1.00
+Strongly attributable	Multiple supporting indicators	0.90
+Probable	Reasonable link with limitations	0.75
+Contributory	Influence likely helped among other causes	0.60
+Possible	Weak relationship	0.35
+Unknown	No reliable attribution	0.00
+Examples of stronger attribution:
+trackable referral;
+campaign code;
+direct user confirmation;
+business analytics;
+application source;
+event-registration source;
+verified link click followed by completion;
+repeated business confirmation.
+Attribution systems must respect privacy and data minimization.
+07.21 Qualified Action Values
+Not all actions have equal cultural or community value.
+Action	Baseline value range
+View or impression	1–3
+Meaningful completion of video/article	3–6
+Save or follow for future use	4–8
+Contextual share	5–10
+Visit to business profile or website	6–12
+Verified business visit or purchase	10–20
+Event attendance	10–20
+Resource use	12–25
+Opportunity application	12–25
+Mentorship connection	20–35
+Paid collaboration created	20–40
+Community program formed	30–50
+Sustained institutional partnership	40–60
+Demonstrated multi-stage community outcome	50–100
+These values are internal baselines and require Weight Register approval.
+07.22 Commercial Influence Rules
+Commercial activity is permitted.
+Commercial activity is not automatically extraction.
+The Engine distinguishes:
+disclosed sponsorship;
+affiliate relationship;
+paid partnership;
+commission;
+platform promotion;
+gifted product or service;
+unpaid community support;
+editorial selection;
+personal recommendation.
