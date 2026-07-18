@@ -1,0 +1,113 @@
+06.15 Dimension Two — Cultural & Discrimination Safety
+Cultural & Discrimination Safety evaluates whether people may encounter unequal treatment, exclusion, hostility, stereotyping, cultural disrespect, discriminatory enforcement, or degrading treatment.
+It may include:
+racial discrimination;
+ethnic discrimination;
+nationality-based hostility;
+religious intolerance;
+microaggressions;
+selective service denial;
+discriminatory dress-code enforcement;
+cultural mockery;
+hostility toward dialect or language;
+exclusion from participation;
+biased complaint handling;
+unequal pricing or access;
+tokenization;
+retaliation after reporting discrimination.
+06.15.1 Cultural Concern Formula
+Cultural Concern =
+  Reported Harm Severity
+× Evidence Credibility
+× Pattern Strength
+× Context Relevance
+× Institutional Response Factor
+× Recency
+06.15.2 Institutional Response Factor
+The way an entity responds may materially change current concern.
+Response	Concern multiplier
+Immediate accountability and verified correction	0.55
+Meaningful response with monitoring	0.70
+Partial or unclear response	0.90
+No response	1.00
+Dismissal or retaliation	1.20
+Concealment or repeated denial despite evidence	1.35
+The multiplier affects current concern but does not erase historical evidence.
+06.16 Dimension Three — Identity-Related Safety
+Identity-Related Safety evaluates whether a person’s stated or visible identity may materially affect how they are treated in the evaluated context.
+The Engine may only use:
+explicitly stated identity-related concern;
+user-selected safety preference;
+verified pattern relevant to the context;
+current request language;
+documented entity behavior;
+approved profile preferences.
+The Engine must not infer sensitive identity from:
+name;
+photograph;
+neighborhood;
+contact list;
+browsing behavior;
+voice;
+clothing;
+device;
+social graph.
+Identity-related dimensions may include:
+race;
+ethnicity;
+nationality;
+religion;
+gender;
+sexual orientation;
+gender expression;
+disability;
+visible cultural expression;
+language;
+immigration-related vulnerability where explicitly relevant and lawfully handled.
+A user’s identity must never be converted into an advertising segment.
+06.17 Dimension Four — Environmental Safety
+Environmental Safety evaluates temporary and durable hazards associated with natural, built, or operational conditions.
+It may include:
+extreme heat;
+extreme cold;
+flooding;
+storms;
+wildfire;
+air quality;
+smoke;
+poor ventilation;
+construction;
+road closure;
+power outage;
+unsafe water;
+crowding;
+structural instability;
+hazardous materials;
+disaster conditions.
+06.17.1 Environmental Concern Formula
+Environmental Concern =
+  Hazard Severity
+× Geographic Relevance
+× Time Relevance
+× Exposure Probability
+× Source Confidence
+× Duration Factor
+Official emergency sources may activate mandatory overrides.
+06.18 Dimension Five — Health & Emergency Access
+Health & Emergency Access evaluates whether a person can obtain appropriate help when a health or emergency need arises.
+It may include:
+hospital proximity;
+urgent-care access;
+pharmacy access;
+emergency response;
+AED availability;
+first-aid readiness;
+emergency exits;
+event medical planning;
+language access;
+disability-aware response;
+transportation to care;
+crisis-resource availability.
+This dimension may operate as:
+a concern dimension when access is inadequate; and
+a protective-capacity dimension when reliable help is available.

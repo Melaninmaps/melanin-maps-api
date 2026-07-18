@@ -1,0 +1,115 @@
+06.31.3 Pattern evidence
+Examples:
+repeated discrimination;
+recurring event failures;
+sustained harassment pattern;
+chronic accessibility failure.
+Pattern active:       100%
+6 months inactive:     85%
+1 year inactive:       65%
+2 years inactive:      45%
+3–5 years inactive:    25%
+Over 5 years:          Historical relevance only
+06.31.4 Severe verified harm
+Verified severe incidents may remain persistent historical evidence.
+Their current recommendation influence may decay, but they remain available to:
+Governance Engine™;
+Legacy & Learning Engine™;
+Decision Ledger™;
+appeals and accountability review;
+pattern detection.
+06.32 Corrective Action and Recovery
+An entity may reduce current concern through verified corrective action.
+Corrective evidence may include:
+policy change;
+staff removal or discipline;
+accessibility repair;
+improved emergency procedures;
+independent review;
+community accountability;
+restitution;
+documented training;
+leadership change;
+sustained incident-free operation;
+public correction;
+verified complaint resolution.
+Corrective action does not delete the original event.
+It may reduce current concern when:
+the response directly addresses the issue;
+implementation is verified;
+sufficient time has passed to observe results;
+no retaliation occurred;
+affected community experience supports improvement.
+06.33 Pattern Detection
+A pattern may be established when:
+multiple independent reports describe materially similar conduct;
+reports occur across separate time periods;
+reports involve more than one affected person;
+contextual or institutional evidence supports the pattern;
+anti-manipulation checks pass;
+similarity is not solely copied language.
+06.33.1 Baseline pattern thresholds
+Pattern status	Minimum evidence
+Emerging pattern	2 qualified independent reports
+Meaningful pattern	3 qualified independent reports
+Established pattern	5 qualified reports across at least 2 time periods
+Severe verified pattern	One authoritative finding or multiple strongly verified reports
+These thresholds guide review.
+They do not replace judgment for severe immediate harm.
+06.34 Single-Report Rule
+A single report may:
+enter the monitoring system;
+affect confidence;
+trigger private review;
+initiate follow-up;
+activate emergency routing;
+temporarily hold promotion;
+trigger a narrowly tailored safety precaution.
+A single unverified report ordinarily may not:
+publicly label an entity unsafe;
+permanently suppress search visibility;
+establish a broad pattern;
+produce a permanent recognition penalty;
+be disclosed as verified fact.
+Exceptions apply for official emergency notices, verified severe incidents, or immediate threats.
+06.35 Safety Override Levels
+The Safety Intelligence Engine™ supports three BIF override levels.
+Level 1 — Critical Override
+Activated when:
+immediate danger exists;
+official emergency alert applies;
+verified severe threat is active;
+critical infrastructure failure creates immediate risk;
+a credible emergency request is received.
+Effects may include:
+ordinary ranking suspended;
+recommendation blocked;
+emergency routing activated;
+alert issued;
+human review initiated;
+audit priority increased.
+Level 2 — High-Risk Override
+Activated when:
+strong evidence supports significant concern;
+multiple serious reports corroborate;
+a meaningful active pattern exists;
+protective capacity is inadequate;
+recommendation could expose users to material harm.
+Effects may include:
+recommendation blocked or restricted;
+search result labeled cautiously;
+promotion suspended;
+human review required;
+targeted alert considered.
+Level 3 — Non-Override Concern
+Activated when:
+concern is meaningful but not sufficiently established for a full override;
+evidence is emerging;
+issue is context-specific;
+protective capacity materially reduces risk.
+Effects may include:
+ranking adjustment;
+explanation qualifier;
+additional information request;
+monitoring;
+context-specific caution.

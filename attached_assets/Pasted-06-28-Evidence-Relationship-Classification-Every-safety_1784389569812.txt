@@ -1,0 +1,87 @@
+06.28 Evidence Relationship Classification
+Every safety report must identify, where possible, the source relationship.
+Relationship	Example
+Direct subject	Person who experienced the event
+Direct witness	Person who observed the event
+Accompanying party	Person present with affected individual
+Employee	Current or former worker
+Customer or visitor	Person interacting with entity
+Resident	Person living in evaluated area
+Organizer	Event or activity organizer
+Business owner	Owner or authorized representative
+Official source	Government or emergency authority
+Partner organization	Approved safety or community partner
+Secondary reporter	Person relaying another’s account
+Anonymous	Identity not known to platform
+Unknown	Relationship cannot be established
+A report is not automatically unreliable because it is anonymous.
+Its confidence treatment must reflect the evidence that can be verified.
+06.29 Report Intake Requirements
+Every safety report should collect only the information necessary to evaluate and route it.
+Launch-state fields may include:
+evaluated entity;
+location;
+date;
+approximate time;
+report category;
+reporter relationship;
+firsthand or witnessed status;
+severity;
+whether immediate danger exists;
+whether emergency services are needed;
+whether discrimination was involved;
+whether children or dependents were affected;
+optional description;
+corroborating material;
+permission for follow-up;
+anonymity preference;
+public-sharing permission;
+moderation status.
+The platform must not require a person in immediate danger to complete a long form before receiving emergency guidance.
+06.30 Evidence Quality Application
+Every safety evidence item receives the BIF Evidence Quality Score.
+Additional safety-specific factors may include:
+event specificity;
+location precision;
+time precision;
+directness;
+corroboration;
+supporting material;
+reporter relationship;
+conflict of interest;
+history of reliable reporting;
+evidence consistency;
+material-fact verification.
+The Safety Intelligence Engine™ must preserve both:
+the original evidence; and
+the transformed scoring value.
+06.31 Evidence Decay
+Safety information must decay according to its type.
+Decay reduces present influence.
+It does not erase history.
+06.31.1 Immediate operational conditions
+Examples:
+live threat;
+weather warning;
+road closure;
+active event disruption;
+current crowd condition;
+unavailable emergency exit.
+Active period:        100%
+1–6 hours after:       75%
+6–24 hours after:      45%
+1–3 days after:        20%
+After confirmed end:    0–10%
+06.31.2 Recent incident evidence
+Examples:
+harassment;
+theft;
+discrimination;
+unsafe business condition;
+event incident.
+0–30 days:       100%
+31–90 days:       85%
+91–180 days:      65%
+181–365 days:     45%
+1–2 years:        25%
+Over 2 years:     10%

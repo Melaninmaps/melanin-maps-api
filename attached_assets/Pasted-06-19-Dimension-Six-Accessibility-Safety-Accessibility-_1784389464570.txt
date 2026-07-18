@@ -1,0 +1,97 @@
+06.19 Dimension Six — Accessibility Safety
+Accessibility Safety evaluates whether the physical, digital, operational, and communication environment can be used without creating preventable danger or exclusion.
+It may include:
+wheelchair access;
+step-free entrance;
+accessible restroom;
+elevator availability;
+safe pathway width;
+seating;
+service-animal access;
+visual accommodations;
+hearing accommodations;
+sensory accommodations;
+communication access;
+accessible transportation;
+emergency evacuation support;
+accurate accessibility disclosures.
+Unknown accessibility does not satisfy an explicit accessibility requirement.
+Misrepresentation of accessibility is treated more seriously than missing information.
+06.20 Dimension Seven — Family & Dependent Safety
+Family & Dependent Safety evaluates whether conditions are suitable for children, elders, dependents, caregivers, or parent-managed minors when that context is explicitly active.
+It may include:
+age restrictions;
+child-appropriate environment;
+secure entry and exit;
+crowding;
+caregiver access;
+restroom availability;
+emergency procedures;
+seating;
+transportation;
+environmental exposure;
+event supervision;
+verified family suitability;
+accessibility for dependents.
+The Engine must not assume that every family has the same needs.
+06.21 Dimension Eight — Digital & Transaction Safety
+Digital & Transaction Safety evaluates risks connected to online interaction, marketplaces, bookings, communication, payment, identity, and meetups.
+It may include:
+scams;
+fraudulent listings;
+impersonation;
+account takeover;
+payment fraud;
+phishing;
+fake business profiles;
+identity misuse;
+unsafe meetup requests;
+off-platform payment pressure;
+manipulated reviews;
+fake opportunities;
+predatory housing listings;
+malicious links;
+repeated cancellation patterns;
+concealed commercial relationships.
+06.21.1 Digital Concern Formula
+Digital Concern =
+  Fraud Signal Strength
+× Identity Confidence Gap
+× Transaction Exposure
+× Pattern Corroboration
+× User Harm Potential
+× Immediacy
+06.22 Standard Concern Score Formula
+The baseline Concern Score is:
+Concern Score =
+  (Physical Safety × 0.22)
++ (Cultural & Discrimination Safety × 0.18)
++ (Identity-Related Safety × 0.12)
++ (Environmental Safety × 0.12)
++ (Health & Emergency Access Concern × 0.10)
++ (Accessibility Safety Concern × 0.10)
++ (Family & Dependent Safety Concern × 0.08)
++ (Digital & Transaction Safety Concern × 0.08)
+Only applicable dimensions are included.
+When one or more dimensions are NOT_APPLICABLE, the remaining weights are proportionally normalized unless an approved context profile provides a different rule.
+06.23 Context-Specific Concern Profiles
+06.23.1 Solo Traveler
+Dimension	Weight
+Physical Safety	28%
+Cultural & Discrimination Safety	18%
+Identity-Related Safety	12%
+Environmental Safety	10%
+Health & Emergency Access	10%
+Accessibility Safety	8%
+Family Safety	2%
+Digital Safety	12%
+06.23.2 Solo Traveler at Night
+Dimension	Weight
+Physical Safety	35%
+Cultural & Discrimination Safety	17%
+Identity-Related Safety	10%
+Environmental Safety	8%
+Health & Emergency Access	10%
+Accessibility Safety	7%
+Family Safety	1%
+Digital Safety	12%

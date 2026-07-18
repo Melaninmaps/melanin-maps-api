@@ -1,0 +1,131 @@
+═══════════════════════════════════════════════════════════════════════
+MAPPING WITH MELANIN™
+CONFIDENTIAL ALGORITHM SPECIFICATION
+All content confidential — Review Mode only — Not for distribution
+═══════════════════════════════════════════════════════════════════════
+06. SAFETY INTELLIGENCE ENGINE™
+Future-State Production Specification v1.0
+Continuation — Batch 2
+06.9 Standard Safety Output Model
+The Safety Intelligence Engine™ must never return a single unlabeled “safety score.”
+Every consequential assessment returns at least four separate values:
+Concern Score — the estimated level of current concern;
+Protective Capacity Score — the strength of available safeguards and support;
+Confidence Score — the reliability of the assessment;
+Immediacy Level — how quickly the condition may require attention.
+The four values must remain independent.
+Example:
+Concern Score:             72
+Protective Capacity Score: 81
+Confidence Score:          88
+Immediacy Level:           1 — Time-sensitive
+This means:
+Meaningful concern exists, but strong protections and reliable support are also present.
+A high concern score does not automatically mean “avoid.”
+A high protective capacity score does not erase a serious risk.
+A high confidence score does not make a moderate concern severe.
+06.10 Concern Score
+The Concern Score measures the estimated level of adverse safety conditions associated with the evaluated object and context.
+It is normalized from 0 to 100.
+Score	Internal classification	General interpretation
+90–100	Critical	Severe, immediate, or highly credible concern
+75–89	High	Significant concern requiring strong caution
+60–74	Elevated	Meaningful concern affecting recommendation
+40–59	Moderate	Mixed or situational concern
+20–39	Limited	Some concern, but not strongly established
+1–19	Minimal	Little current evidence of concern
+0	No usable concern signal	No eligible concern evidence identified
+A score of zero does not mean safety is guaranteed.
+It means the Engine does not currently have eligible evidence supporting a concern.
+06.11 Protective Capacity Score
+The Protective Capacity Score measures the availability, reliability, and accessibility of safeguards that may reduce harm or improve response.
+It may evaluate:
+staff responsiveness;
+emergency exits;
+security procedures;
+public transportation availability;
+nearby healthcare;
+community support;
+accessibility accommodations;
+verified incident response;
+lighting;
+emergency communication;
+organizer preparation;
+route alternatives;
+trusted contact availability;
+complaint-resolution pathways;
+institutional accountability.
+06.11.1 Protective Capacity Formula
+Protective Capacity Score =
+  Prevention Capacity
++ Response Capacity
++ Access to Assistance
++ Accountability Capacity
++ Recovery Capacity
+- Protection Failure Penalties
+The result is normalized to 0–100.
+06.12 Immediacy Levels
+Every concern receives an Immediacy Level.
+Level	Name	Meaning
+0	Historical or informational	Relevant but not currently active
+1	Time-sensitive	May affect a current or upcoming decision
+2	Priority	Material risk may arise soon
+3	Urgent	Credible near-term threat or rapidly worsening condition
+4	Emergency	Immediate danger or emergency assistance request
+Immediacy is not the same as severity.
+A severe historical event may have low immediacy.
+A moderate weather condition may have high immediacy.
+06.13 Core Safety Dimensions
+The launch-state Safety Intelligence Engine™ evaluates eight dimensions.
+Dimension	Baseline concern weight
+Physical Safety	22%
+Cultural & Discrimination Safety	18%
+Identity-Related Safety	12%
+Environmental Safety	12%
+Health & Emergency Access	10%
+Accessibility Safety	10%
+Family & Dependent Safety	8%
+Digital & Transaction Safety	8%
+Total	100%
+The Context Engine™ may change these weights.
+A dimension that is not relevant must be marked NOT_APPLICABLE, not assigned an artificial zero.
+06.14 Dimension One — Physical Safety
+Physical Safety evaluates the likelihood or presence of bodily harm, dangerous conditions, harassment, violence, theft, unsafe infrastructure, or physical obstruction.
+It may include:
+violence;
+threats;
+assault;
+theft;
+robbery;
+stalking;
+harassment;
+unsafe traffic;
+poor lighting;
+blocked exits;
+overcrowding;
+structural hazards;
+unsafe transportation;
+weapons-related incidents;
+inadequate emergency access;
+dangerous environmental conditions.
+06.14.1 Physical Concern Formula
+Physical Concern =
+  Incident Severity
+× Credibility
+× Context Relevance
+× Recency
+× Exposure Likelihood
+× Immediacy
+Normalized to 0–100.
+06.14.2 Physical severity factors
+Condition	Severity factor
+Immediate threat to life	1.00
+Serious bodily harm	0.95
+Credible threat or stalking	0.85
+Physical harassment or intimidation	0.75
+Theft or significant property threat	0.60
+Hazardous physical condition	0.55
+Minor physical concern	0.30
+Unclear or non-specific concern	0.15
+Severity is only one component.
+A severe but unverified allegation must not automatically produce a Critical public classification.
