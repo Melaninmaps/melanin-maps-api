@@ -1,0 +1,162 @@
+05.39 Business Discovery
+Business Discovery may consider:
+exact service match;
+location;
+operating status;
+verified ownership;
+trust;
+safety;
+community value;
+accessibility;
+price;
+hours;
+booking availability;
+website or social link;
+customer experience;
+local rootedness;
+Hidden Gem potential.
+The Engine must not become a passive directory.
+It must also not imply that every searchable business has been independently endorsed.
+05.40 Non-Minority-Owned Business Rules
+A non-minority-owned business may appear in discovery when:
+community members add or review it;
+it is relevant to the user’s request;
+no exclusive ownership filter is active;
+it satisfies search eligibility;
+it has no active safety or governance block.
+Such a business:
+may be searchable;
+may receive safety or community information;
+may be recommended when contextually appropriate;
+must not be falsely labeled;
+must not receive melanated diaspora-owned promotional privileges;
+must not be invited through minority-owned business recruitment workflows unless policy changes;
+may be subject to different promotion rules.
+The Engine must preserve truthful ownership representation.
+05.41 Verified Ownership Discovery
+When verified ownership is explicitly required:
+only candidates meeting the approved verification threshold may satisfy the hard filter;
+pending verification candidates may appear separately if the user permits;
+self-identification alone must not be presented as verified ownership;
+community-submitted ownership claims require appropriate labeling;
+expired verification may reduce confidence;
+disputes trigger hold or review;
+paid status has no effect.
+05.42 “Someone Is Searching for You” Logic
+When users repeatedly search for an identifiable business not in the platform:
+the Engine may create a non-public missing-entity candidate;
+duplicate and spelling resolution must occur;
+search volume must reach an approved threshold;
+the business may be notified that community members are searching for it;
+individual user identities must not be disclosed;
+the business may claim, decline, or ignore;
+no listing may be falsely represented as owner-created;
+notification frequency must be limited;
+safety-sensitive searches must not trigger marketing communication;
+business contact use must comply with applicable rules.
+05.43 Cold-Start Discovery
+05.43.1 New user
+For a new user:
+rely on explicit query and context;
+avoid demographic assumptions;
+use baseline diversity;
+offer understandable filters;
+do not require prior behavior;
+allow exploration;
+clearly label emerging evidence;
+avoid excessive personalization.
+05.43.2 New entity
+For a new entity:
+confirm basic identity;
+allow search where appropriate;
+apply low-confidence treatment;
+avoid immediate top ranking;
+permit Hidden Gem review only with sufficient external or community evidence;
+do not penalize absence of platform history;
+monitor manipulation risk.
+05.43.3 New city or low-data market
+The Engine may use:
+verified official data;
+trusted partner data;
+local institutions;
+community submissions;
+historical records;
+public resources;
+cautious proximity logic.
+Low data reduces confidence, not presumed quality.
+05.44 Discovery Evidence Decay
+05.44.1 Rapid-decay evidence
+Examples:
+open status;
+event availability;
+opportunity deadline;
+resource capacity;
+live route condition.
+Current:          100%
+1–7 days old:      80%
+8–30 days old:     50%
+31–90 days old:    20%
+Over 90 days:       0–10%
+05.44.2 Moderate-decay evidence
+Examples:
+service availability;
+business attributes;
+accessibility information;
+community activity;
+pricing.
+0–90 days:        100%
+91–180 days:       85%
+181–365 days:      65%
+1–2 years:         40%
+Over 2 years:      20%
+05.44.3 Slow-decay evidence
+Examples:
+historical significance;
+long-term ownership;
+institutional role;
+enduring cultural relevance.
+0–1 year:         100%
+1–3 years:         95%
+3–5 years:         90%
+5–10 years:        80%
+Over 10 years:     Context-dependent
+05.45 Conflict Resolution
+Rule 1 — Exact requirement over general quality
+An exact eligible match ranks above a broadly strong but nonmatching result.
+Rule 2 — Safety over relevance
+A highly relevant result may be restricted or excluded by safety rules.
+Rule 3 — Current availability over historical popularity
+A currently available resource may outrank a more famous unavailable one.
+Rule 4 — Verified evidence over marketing claims
+Self-description may not outweigh verified contrary evidence.
+Rule 5 — User requirement over platform preference
+The Engine must not replace the user’s stated objective with what the platform believes is more beneficial.
+Rule 6 — Diversity does not override hard constraints
+Result variety is applied only among eligible candidates.
+Rule 7 — Low evidence reduces confidence, not necessarily relevance
+A new candidate may be highly relevant but cautiously presented.
+Rule 8 — Paid placement does not alter organic score
+Sponsored status is processed separately.
+Rule 9 — Community value does not erase poor intent match
+A beloved business may still be irrelevant to the user’s request.
+Rule 10 — Popularity does not erase underrepresentation concerns
+The Engine may intentionally preserve qualified emerging alternatives.
+05.46 Duplicate Resolution
+Duplicate candidates may arise from:
+spelling variants;
+multiple submissions;
+former and current names;
+branch locations;
+owner and community records;
+partner data;
+business claims;
+historical entities.
+The Engine must distinguish:
+true duplicate;
+branch location;
+rebrand;
+successor entity;
+historical record;
+unrelated similar name.
+Duplicate consolidation requires provenance preservation.
+No community evidence may be silently lost.

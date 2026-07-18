@@ -1,0 +1,147 @@
+05.10.1 Query component priority
+Explicit requirement
+    ↓
+Explicit exclusion
+    ↓
+Named entity
+    ↓
+Primary intent
+    ↓
+Safety or accessibility requirement
+    ↓
+Location and time
+    ↓
+Category
+    ↓
+Preference
+    ↓
+Exploration signal
+The Engine may not reinterpret a hard requirement as a soft preference merely to increase result volume.
+05.11 Hard Filters and Soft Preferences
+05.11.1 Hard filters
+A candidate failing a hard filter is excluded or clearly separated.
+Examples:
+verified ownership required;
+wheelchair accessibility required;
+open now;
+within specified distance;
+event on specified date;
+resource eligibility requirement;
+no minors permitted;
+online-only;
+price ceiling;
+verified provider only;
+active opportunity deadline;
+safety block.
+05.11.2 Soft preferences
+Soft preferences influence ranking but do not automatically exclude.
+Examples:
+locally rooted;
+quiet atmosphere;
+small business;
+community favorite;
+new or emerging;
+family-friendly preferred;
+Black historical significance;
+public transit convenient;
+low-cost preferred;
+locally sourced;
+women-led preferred where lawfully and appropriately supported;
+Cultural Ambassador recommended.
+The user must be told when results include options outside a soft preference because exact matches are limited.
+05.12 Discovery Scoring Dimensions
+Every eligible candidate receives a normalized Discovery Score from 0 to 100.
+The baseline dimensions are:
+Dimension	Baseline weight
+Intent Relevance	22%
+Context Fit	18%
+Geographic Fit	12%
+Temporal Fit	8%
+Evidence Sufficiency	10%
+Community Value	10%
+Cultural Relevance	8%
+Opportunity or Utility Value	7%
+Exploration Value	5%
+Total	100%
+The BIF may adjust these weights by context.
+05.13 Dimension One — Intent Relevance
+Intent Relevance measures how directly the candidate satisfies the user’s stated objective.
+05.13.1 Formula
+Intent Relevance Score =
+  Entity-Type Match
++ Category Match
++ Attribute Match
++ Actionability
++ Query Specificity Match
+- Intent Conflict Penalty
+Normalized to 0–100.
+05.13.2 Intent match levels
+Match level	Score range
+Exact	90–100
+Strong	80–89
+Direct	70–79
+Related	55–69
+Exploratory	40–54
+Weak	20–39
+Irrelevant	0–19
+05.13.3 Examples
+Query:
+“Black-owned pediatric dentist in Philadelphia.”
+
+Exact:
+Verified melanated diaspora-owned pediatric dentist in Philadelphia.
+
+Strong:
+Verified melanated diaspora-owned family dentist serving children.
+
+Related:
+Minority-owned general dentist in Philadelphia.
+
+Weak:
+General healthcare provider.
+
+Irrelevant:
+Restaurant or unrelated business.
+05.14 Dimension Two — Context Fit
+Context Fit measures suitability for the resolved primary and secondary contexts.
+It incorporates:
+user purpose;
+audience;
+travel conditions;
+family status when explicitly provided;
+relocation intent;
+accessibility requirements;
+business networking purpose;
+cultural heritage purpose;
+safety-sensitive conditions;
+community-resource need.
+05.14.1 Formula
+Context Fit Score =
+  Primary Context Match
++ Secondary Context Match
++ Modifier Satisfaction
++ Decision-Mode Suitability
+- Context Conflict Penalty
+05.15 Dimension Three — Geographic Fit
+Geographic Fit measures the candidate’s practical relationship to the relevant location.
+It may evaluate:
+physical distance;
+route deviation;
+neighborhood match;
+city match;
+service area;
+virtual availability;
+transportation accessibility;
+jurisdictional eligibility;
+destination relevance;
+local rootedness where relevant.
+05.15.1 Geographic score bands
+Condition	Baseline score
+Exact requested location	95–100
+Within preferred radius	85–94
+Nearby and practical	70–84
+Same city but outside preferred area	55–69
+Regionally relevant	40–54
+Remote but available online	Context-dependent
+Geographically incompatible	0
+Distance must not dominate when the user’s purpose is cultural heritage, relocation research, online resources, or route planning.

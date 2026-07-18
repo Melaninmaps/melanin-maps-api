@@ -1,0 +1,123 @@
+05.34.3 Underexposure Score
+Underexposure may consider:
+low impression share;
+low follower count relative to outcomes;
+low advertising activity;
+low search position;
+limited mainstream coverage;
+low review volume with strong repeat behavior;
+strong local recognition not reflected online;
+new platform entry with older community presence;
+geographic underrepresentation.
+Underexposure must not be confused with lack of quality.
+05.35 Community Need Score
+Community Need measures whether surfacing the candidate may help address an identified gap.
+It may evaluate:
+service scarcity;
+resource shortage;
+geographic gap;
+cultural-access gap;
+transportation gap;
+affordability gap;
+representation gap;
+opportunity gap;
+time-sensitive need;
+underserved search demand.
+05.35.1 Formula
+Community Need Score =
+  Demand Intensity
+× Scarcity
+× Relevance
+× Accessibility Potential
+× Evidence Confidence
+Normalized to 0–100.
+05.35.2 Demand Intensity
+Demand may be established through:
+repeated unsuccessful searches;
+waitlist interest;
+saved topic activity;
+community requests;
+resource inquiries;
+route demand;
+relocation questions;
+verified community surveys;
+unmet opportunity searches.
+Demand must be aggregated and privacy-protected.
+05.35.3 Scarcity factor
+Availability within relevant area	Scarcity factor
+No known eligible option	1.00
+One eligible option	0.90
+Two to three	0.75
+Four to six	0.55
+Seven to ten	0.35
+More than ten	0.20
+Scarcity may be category-, context-, price-, access-, or ownership-specific.
+05.36 Opportunity Discovery
+Opportunity Discovery applies to:
+employment;
+contracts;
+grants;
+scholarships;
+mentorship;
+business partnerships;
+vendor opportunities;
+housing leads;
+educational programs;
+fellowships;
+community leadership roles;
+internships;
+volunteer opportunities.
+Opportunity candidates require:
+source identification;
+deadline;
+eligibility criteria;
+location or remote status;
+compensation or benefit disclosure where applicable;
+application method;
+current availability;
+fraud screening;
+conflict disclosure;
+expiration handling.
+Expired opportunities must not remain ranked as active.
+05.37 Resource Discovery
+Resource Discovery prioritizes practical accessibility over popularity.
+Required considerations:
+verified availability;
+eligibility clarity;
+hours;
+location;
+transportation;
+language access;
+cost;
+documentation requirements;
+urgency;
+capacity;
+application process;
+privacy burden;
+current contact information.
+A resource with high reputation but unavailable capacity may rank below a less-known resource that can currently help.
+05.38 Cultural Heritage Discovery
+Cultural Heritage Discovery may surface:
+HBCUs;
+museums;
+landmarks;
+archives;
+neighborhoods;
+memorials;
+historic businesses;
+cultural institutions;
+festivals;
+oral histories;
+historical routes;
+community traditions;
+educational resources.
+Ranking may prioritize:
+verified historical significance;
+community stewardship;
+cultural relevance;
+preservation quality;
+accessibility;
+educational value;
+local connection;
+current availability.
+Popularity has limited influence.

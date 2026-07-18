@@ -1,0 +1,369 @@
+═══════════════════════════════════════════════════════════════════════
+
+MAPPING WITH MELANIN™ — DEPLOYMENT READINESS REPORT
+
+Authentication Fix — Remaining Questions
+
+═══════════════════════════════════════════════════════════════════════
+
+
+
+─────────────────────────────────────────────────────────────────────
+
+Q1. Does pnpm run build complete successfully for production?
+
+─────────────────────────────────────────────────────────────────────
+
+
+
+YES — both builds completed successfully in this session.
+
+
+
+  Web frontend (Vite):
+
+    Command:  pnpm --filter @workspace/web run build
+
+    Result:   Exit 0 — 2,518 modules transformed, 16.7s
+
+    Output:   dist/public/index-BJPcFf3M.js (1,746 kB)
+
+              dist/public/index-BbCVoOVK.css (193 kB)
+
+    Warnings: One dynamic/static import overlap (webAuth.ts) —
+
+              advisory only, does not affect output or runtime.
+
+    Errors:   None that block build.
+
+
+
+  API server (esbuild via build.mjs):
+
+    Command:  pnpm --filter @workspace/api-server run build
+
+    Result:   Exit 0 — 7.1s
+
+    Output:   dist/index.mjs + web-static copied to dist/public/
+
+    Errors:   None.
+
+
+
+  The 3 pre-existing TypeScript type errors (business-detail.tsx,
+
+  profile.tsx line 784) are type-checking errors only. Neither Vite
+
+  nor esbuild enforces types during build. They do not appear in
+
+  the build output and do not prevent deployment.
+
+
+
+─────────────────────────────────────────────────────────────────────
+
+Q2. Can the updated frontend be deployed to Railway without any
+
+    additional code changes?
+
+─────────────────────────────────────────────────────────────────────
+
+
+
+YES — no further code changes are required.
+
+
+
+  The deployment blocker is operational, not code-related.
+
+
+
+  Railway deploys from GitHub repo Melaninmaps/melanin-maps-api
+
+  (branch: main). The built files are prepared in this workspace:
+
+
+
+    artifacts/api-server/web-static/   ← new bundle (BJPcFf3M)
+
+    artifacts/api-server/dist/         ← api server + dist/public/
+
+
+
+  To deploy, these directories must be pushed to the GitHub repo.
+
+  This requires GitHub push access that does not exist in this
+
+  Replit environment. No Railway CLI is installed. No additional
+
+  code changes are needed — only the push action.
+
+
+
+  One dependency to note: Railway's configured start command is
+
+  "node static-server.mjs". That file lives in the GitHub repo
+
+  but not in this workspace. A railway up from Replit without it
+
+  would fail at startup. The standard GitHub push → auto-deploy
+
+  path does not have this problem since the file already exists
+
+  in that repo.
+
+
+
+─────────────────────────────────────────────────────────────────────
+
+Q3. After deployment, will Railway automatically begin serving
+
+    the new bundle (index-BJPcFf3M.js) instead of index-DxlnSxJr.js?
+
+─────────────────────────────────────────────────────────────────────
+
+
+
+YES — automatically and completely.
+
+
+
+  The HTML entry point (index.html) references the bundle by its
+
+  hashed filename. When Railway deploys the new image, the new
+
+  index.html will reference index-BJPcFf3M.js. Any browser that
+
+  fetches the page after deployment will receive the new bundle.
+
+
+
+  Users with the old page already loaded in their browser will
+
+  continue running the old bundle until they refresh. There is
+
+  no partial state — it is a full replacement at the next page
+
+  load. No cache headers or CDN invalidation steps are required
+
+  for the Railway setup as currently configured.
+
+
+
+─────────────────────────────────────────────────────────────────────
+
+Q4. Confirm whether any additional files outside the approved
+
+    authentication changes would be included in the deployment.
+
+─────────────────────────────────────────────────────────────────────
+
+
+
+The GitHub repo receives only the api-server directory contents.
+
+The web source files (login.tsx, main.tsx, etc.) live only in the
+
+Replit workspace and are not pushed to that repo. What the repo
+
+receives is the compiled output:
+
+
+
+  CHANGED (built output — auth changes compiled in):
+
+    web-static/assets/index-BJPcFf3M.js    ← new bundle
+
+    web-static/assets/index-BbCVoOVK.css   ← new CSS
+
+    web-static/index.html                   ← updated asset refs
+
+    dist/public/*                           ← mirrors web-static
+
+
+
+  UNCHANGED:
+
+    All backend route files (auth.ts, app.ts, etc.)
+
+    All database schema files
+
+    All other api-server source files
+
+    static-server.mjs (exists in GitHub repo, untouched)
+
+    Dockerfile
+
+    All other artifacts
+
+
+
+  No database tables, DNS records, Railway env vars (beyond
+
+  REPLIT_DOMAINS already set), or unrelated config were changed.
+
+
+
+─────────────────────────────────────────────────────────────────────
+
+Q5. Confirm authentication token behavior.
+
+─────────────────────────────────────────────────────────────────────
+
+
+
+  EXPIRATION
+
+    SESSION_TTL = 7 days from creation.
+
+    Stored as an expire timestamp in the sessions table.
+
+
+
+  VALIDATION
+
+    Server-side on every authenticated request.
+
+    Reads session row → checks expire timestamp → deletes and
+
+    rejects if expired. No client-side trust of any kind.
+
+
+
+  LOGOUT INVALIDATION
+
+    POST /api/mobile-auth/logout reads the Bearer token from the
+
+    Authorization header, then calls deleteSession(sid) which
+
+    issues a DELETE against the sessions table row. The token is
+
+    permanently invalid from that moment. The same endpoint is
+
+    used by the web app's clearWebToken() function.
+
+
+
+  REFRESH BEHAVIOR
+
+    None. There is no token refresh or sliding expiration.
+
+    Sessions that are used within the 7-day window do NOT have
+
+    their expiry extended automatically. A user inactive for
+
+    7 days will need to sign in again. This behavior is
+
+    inherited from the existing mobile session design and was
+
+    not changed.
+
+
+
+─────────────────────────────────────────────────────────────────────
+
+Q6. Is localStorage used only as a session token store, or are
+
+    any sensitive credentials stored there?
+
+─────────────────────────────────────────────────────────────────────
+
+
+
+ONLY the session token is stored. Key: "web_auth_token".
+
+
+
+  The value is a randomly-generated session ID (opaque string,
+
+  not a JWT, contains no user data, no password, no PII).
+
+  It is a server-side session reference only — meaningless
+
+  without a live matching row in the sessions table.
+
+
+
+  No passwords, reset codes, email addresses, personal data,
+
+  API keys, or other credentials are written to localStorage
+
+  by any of the new authentication code.
+
+
+
+  Known security characteristic: localStorage is accessible
+
+  to any JavaScript running on the same origin, making it
+
+  less resistant to XSS than an HttpOnly cookie. This is an
+
+  accepted tradeoff given that the native login routes return
+
+  a JSON body token (not a Set-Cookie header), and the backend
+
+  was not modified. The same tradeoff exists in the current
+
+  mobile implementation using SecureStore.
+
+
+
+─────────────────────────────────────────────────────────────────────
+
+Q7. Is this authentication fix ready for production deployment?
+
+─────────────────────────────────────────────────────────────────────
+
+
+
+YES — the code is production-ready. The deployment step requires
+
+your action (GitHub push).
+
+
+
+  CODE READINESS:
+
+  ✅ Both builds pass (exit 0, no blocking errors)
+
+  ✅ New bundle built and staged in web-static/
+
+  ✅ Sign In and Create Account forms implemented correctly
+
+  ✅ Token stored in localStorage, sent as Bearer on all API calls
+
+  ✅ setAuthTokenGetter wired in main.tsx at startup
+
+  ✅ clearWebToken() deletes server session + clears localStorage
+
+  ✅ Forgot password flow routes to existing reset-password page
+
+  ✅ Profile logout fixed (no longer calls broken /api/logout)
+
+  ✅ REPLIT_DOMAINS set on Railway (CORS fix already live)
+
+  ✅ No backend, DB, DNS, or unrelated files changed
+
+
+
+  DEPLOYMENT ACTION REQUIRED (from you):
+
+    Push web-static/ and dist/ from this workspace into the
+
+    Melaninmaps/melanin-maps-api GitHub repo (branch: main).
+
+    Railway will auto-deploy on the new commit.
+
+
+
+  KNOWN LIMITATION TO NOTE AFTER DEPLOYMENT:
+
+    Sessions do not auto-refresh. A user who does not visit for
+
+    7 days will be signed out on next visit. This matches the
+
+    existing mobile session behavior.
+
+
+
+═══════════════════════════════════════════════════════════════════════

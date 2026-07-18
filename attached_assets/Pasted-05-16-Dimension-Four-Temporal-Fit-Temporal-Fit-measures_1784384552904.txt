@@ -1,0 +1,97 @@
+05.16 Dimension Four — Temporal Fit
+Temporal Fit measures whether the candidate is relevant and available when needed.
+It evaluates:
+open-now status;
+event date and time;
+application deadline;
+service hours;
+seasonal availability;
+appointment timing;
+active versus expired opportunity;
+evidence freshness;
+travel dates;
+long-term relevance.
+05.16.1 Temporal scoring rules
+Condition	Score
+Confirmed available at required time	100
+Highly likely available	85
+Availability partially confirmed	65
+Time information outdated	40
+Availability unknown	25
+Confirmed unavailable	0
+For relocation, heritage, or historical discovery, operational hours may receive lower weight than long-term relevance.
+05.17 Dimension Five — Evidence Sufficiency
+Evidence Sufficiency measures whether the Engine has enough reliable information to rank the candidate responsibly.
+It uses the BIF Evidence Quality Score and considers:
+source reliability;
+verification;
+corroboration;
+recency;
+specificity;
+independence;
+conflicts of interest;
+volume;
+consistency.
+05.17.1 Evidence Sufficiency formula
+Evidence Sufficiency Score =
+  BIF Evidence Quality Score
+× Evidence Coverage Factor
+× Entity Identity Confidence
+Normalized to 0–100.
+A high relevance candidate with low evidence may remain visible but receive limited recommendation status.
+05.18 Dimension Six — Community Value
+Community Value measures how the candidate contributes to connection, reciprocity, support, access, voice, continuity, or shared benefit.
+The Discovery Engine™ does not calculate the underlying Community Score.
+It receives an approved output from the Community Engine™.
+05.18.1 Community Value input
+Community Value Score =
+  Community Engine Adjusted Score
+× Context Relevance Factor
+Community Value may improve ranking but may not override:
+safety blocks;
+hard filters;
+verification requirements;
+explicit user exclusions;
+governance holds.
+05.19 Dimension Seven — Cultural Relevance
+Cultural Relevance measures how meaningfully the candidate relates to the user’s expressed cultural, historical, community, or diaspora objective.
+It may consider:
+verified ownership;
+historical significance;
+culturally relevant service;
+local cultural roots;
+diaspora connection;
+language familiarity;
+community storytelling;
+cultural programming;
+creator attribution;
+tradition preservation;
+community recognition.
+The Discovery Engine™ receives cultural evidence from:
+Cultural Influence Engine™;
+Legacy & Learning Engine™;
+Trust Engine™;
+Community Engine™;
+verified entity records.
+Cultural relevance must not be inferred solely from imagery, names, neighborhood demographics, or marketing language.
+05.20 Dimension Eight — Opportunity or Utility Value
+This dimension measures the practical usefulness of the candidate.
+Examples:
+solves the requested need;
+provides access to a resource;
+creates economic opportunity;
+supports travel;
+meets eligibility requirements;
+provides a verified service;
+reduces effort or uncertainty;
+offers meaningful connection;
+fits budget or transportation limits;
+can be acted upon now.
+05.20.1 Formula
+Utility Value Score =
+  Need Satisfaction
++ Actionability
++ Availability
++ Outcome Potential
++ Friction Reduction
+- Practical Barrier Penalty
