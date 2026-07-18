@@ -1,0 +1,84 @@
+09.23 Community Resilience
+Resilience measures:
+adaptability;
+redundancy;
+mutual support;
+emergency response;
+institutional flexibility;
+social cohesion.
+Communities able to recover quickly score higher.
+09.24 Intervention Priority
+Communities may receive internal intervention priority based upon:
+rapid decline;
+severe inequity;
+opportunity collapse;
+resource failure;
+leadership instability;
+institutional distrust.
+Intervention priority does not become a public ranking.
+09.25 Community Improvement Recognition
+Communities demonstrating meaningful improvement may qualify for:
+Recovery Recognition;
+Community Momentum acknowledgment;
+Community Catalyst prioritization;
+additional Opportunity recommendations.
+Recognition is based on improvement rather than perfection.
+09.26 Anti-Gaming Rules
+Manipulation includes:
+fabricated participation;
+fake business growth;
+manipulated surveys;
+coordinated voting;
+artificial engagement;
+false institutional reporting.
+Manipulation primarily reduces confidence.
+09.27 Public Explanation Rules
+Approved:
+"Community participation has increased."
+"Opportunity access has improved."
+"Recovery efforts are showing measurable progress."
+Prohibited:
+"This city is unsafe."
+"This neighborhood is failing."
+"People should avoid this community."
+"The algorithm has declared this community unhealthy."
+09.28 Internal Output Contract
+The Index returns:
+Community Health Score;
+Health Confidence;
+Health State;
+Momentum Classification;
+Dimension Scores;
+Intervention Priority;
+Improvement Status;
+Human Review Flag.
+09.29 Required Database Structures
+Minimum production tables include:
+community_health_assessments
+community_health_dimensions
+community_health_trends
+community_health_resources
+community_health_participation
+community_health_opportunities
+community_health_resilience
+community_health_leadership
+community_health_versions
+community_health_audit
+09.30 Human Review Requirements
+Human review is required when:
+rapid deterioration occurs;
+evidence conflicts;
+intervention recommendations are significant;
+manipulation is suspected;
+Governance thresholds are exceeded;
+institutional disputes arise.
+09.31 Constitutional Rules
+The Community Health Index™ must:
+reward improvement;
+preserve dignity;
+avoid stigmatization;
+recognize recovery;
+separate historical hardship from current progress;
+remain evidence-based;
+remain auditable;
+support intervention—not judgment.

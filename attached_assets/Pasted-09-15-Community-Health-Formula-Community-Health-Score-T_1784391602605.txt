@@ -1,0 +1,94 @@
+09.15 Community Health Formula
+Community Health Score =
+(Trust Stability × .18)
++(Opportunity Distribution × .16)
++(Community Participation × .15)
++(Resource Accessibility × .13)
++(Relationship Strength × .12)
++(Cultural Vitality × .10)
++(Resilience & Recovery × .08)
++(Leadership & Stewardship × .05)
++(Future Readiness × .03)
+Normalized to 0–100.
+09.16 Community Health Confidence
+Confidence considers:
+evidence quality;
+evidence diversity;
+historical consistency;
+source independence;
+geographic coverage;
+recency.
+Confidence labels:
+Score	Label
+90–100	Verified
+80–89	High
+65–79	Moderate
+45–64	Emerging
+20–44	Low
+0–19	Unknown
+09.17 Community Health States
+Communities may be classified internally as:
+Score	Internal State
+90–100	Thriving
+80–89	Healthy
+70–79	Stable
+60–69	Developing
+45–59	Vulnerable
+25–44	Fragile
+0–24	Critical
+These labels are internal only and are not shown publicly without Governance approval.
+09.18 Positive Indicators
+Positive indicators include:
+increasing trust;
+recurring volunteerism;
+growing mentorship;
+improving business survival;
+educational success;
+expanding opportunity;
+collaborative leadership;
+healthy civic participation;
+improving cultural preservation;
+successful recovery.
+09.19 Community Stress Indicators
+Stress indicators include:
+declining participation;
+institutional distrust;
+persistent resource shortages;
+neighborhood isolation;
+increasing business turnover;
+declining volunteerism;
+leadership burnout;
+repeated unresolved conflict;
+opportunity concentration;
+worsening inequity.
+Stress indicators lower confidence before drastically lowering scores.
+09.20 Health Momentum
+The Index tracks direction.
+Communities may be:
+Rapidly Improving;
+Improving;
+Stable;
+Uncertain;
+Declining;
+Rapidly Declining.
+Momentum influences intervention recommendations but does not replace the Community Health Score.
+09.21 Community Recovery Recognition
+Recovery may increase scores when evidence demonstrates:
+measurable improvement;
+community-led initiatives;
+institutional collaboration;
+improved trust;
+sustained participation;
+successful intervention.
+Historical hardship is preserved but does not permanently suppress current health.
+09.22 Resource Equity
+The Index evaluates whether resources reach:
+newcomers;
+historically underserved groups;
+elders;
+families;
+youth;
+persons with disabilities;
+entrepreneurs;
+students.
+Availability without accessibility receives limited credit.
