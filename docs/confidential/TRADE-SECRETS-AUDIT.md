@@ -2674,12 +2674,175 @@ All tables listed below are confidential and proprietary.
 | City Maturity Model™ | city_profiles, city_maturity_scores, city_strengths, city_growth_priorities, city_resources, city_versions, city_history, city_audit |
 | Community Readiness Model™ | community_readiness_profiles, readiness_scores, readiness_dimensions, readiness_forecasts, readiness_versions, readiness_growth_plans, readiness_history, readiness_audit |
 | Constitutional Intelligence Layer™ | constitutional_reasoning, constitutional_priorities, constitutional_conflicts, constitutional_precedents, constitutional_versions, constitutional_amendments, constitutional_memory, constitutional_audit |
+| Decision Ledger™ & Institutional Memory Framework | decision_ledger, constitutional_precedent, institutional_memory, amendment_history, governance_decisions, decision_relationships, precedent_versions, decision_audit |
 
 ---
 
 ---
 
-*END OF AUDIT DOCUMENT — SECTIONS 01 THROUGH 24*
+# 25. DECISION LEDGER™ & INSTITUTIONAL MEMORY FRAMEWORK
+
+**Classification:** Institutional Decision Preservation, Constitutional Memory, Organizational Knowledge, and Explainable Intelligence Framework
+**Status:** Foundational Constitutional Infrastructure
+**Confidentiality:** Highest restriction
+
+## 25-A. Core Decision Dimensions & Weights (Institutional Confidence Score)
+
+| Dimension | Weight |
+|-----------|-------:|
+| Constitutional Reasoning | 22% |
+| Evidence Quality | 18% |
+| Governance Integrity | 15% |
+| Transparency | 13% |
+| Institutional Learning | 11% |
+| Long-Term Impact | 9% |
+| Community Protection | 7% |
+| Future Reusability | 5% |
+| **Total** | **100%** |
+
+## 25-B. Institutional Confidence Score Formula
+
+```
+Institutional Confidence =
+  (Constitutional Reasoning × .22)
++ (Evidence Quality × .18)
++ (Governance Integrity × .15)
++ (Transparency × .13)
++ (Institutional Learning × .11)
++ (Long-Term Impact × .09)
++ (Community Protection × .07)
++ (Future Reusability × .05)
+
+Normalized to 0–100.
+```
+
+## 25-C. Decision Lifecycle (11 Stages — Internal)
+
+```
+Stage 1:  Observation
+Stage 2:  Evidence Collection
+Stage 3:  Engine Collaboration
+Stage 4:  Governance Review
+Stage 5:  Constitutional Review
+Stage 6:  Decision
+Stage 7:  Documentation
+Stage 8:  Outcome Evaluation
+Stage 9:  Institutional Learning
+Stage 10: Decision Ledger™
+```
+
+**Critical rule: "The ledger is completed AFTER outcomes are understood — not merely after decisions are made."**
+
+## 25-D. Living Precedent™ — 4-Type Taxonomy (Proprietary)
+
+| Type | Description |
+|------|-------------|
+| Active Precedent™ | Currently governing |
+| Historical Precedent™ | Superseded but preserved |
+| Superseded Precedent™ | Replaced by newer interpretation |
+| Constitutional Exception™ | One-time non-repeatable ruling |
+
+**Rule: "History remains preserved even when precedent changes."**
+
+## 25-E. Ten Institutional Memory Categories
+
+1. Constitutional Memory
+2. Governance Memory
+3. Community Memory
+4. Safety Memory
+5. Opportunity Memory
+6. Cultural Memory
+7. Partnership Memory
+8. Evolution Memory
+9. Learning Memory
+10. Exception Memory
+
+**Rule: Different memories follow different retention policies.**
+
+## 25-F. Required Decision Record Fields (12 fields per entry)
+
+Decision ID / Date / Context / Engines consulted / Constitutional principles / Evidence summary / Confidence / Human reviewers / Outcome / Appeal status / Lessons learned / Future recommendations
+
+## 25-G. Ledger Objects (10 types)
+
+Governance Decision / Safety Override / Hidden Gem™ Promotion / Recognition Decision / Constitutional Amendment / Partnership Approval / Algorithm Update / Human Appeal / Platform Rollout / Institutional Exception
+
+## 25-H. Amendment History Rules
+
+- Every constitutional amendment records: original wording / proposed wording / reason for change / supporting evidence / Governance approval / effective date / historical notes
+- **Critical rule: "Nothing is overwritten. Everything is versioned."**
+
+## 25-I. Primary Upstream Sources (6)
+
+1. Governance Engine™
+2. Stewardship Engine™
+3. Evolution Engine™
+4. Constitutional Intelligence Layer™
+5. Legacy & Learning Engine™
+6. KinfolkAI™ orchestration logs
+
+## 25-J. Governing Calculation Rules
+- Governing question: "If future generations asked why this decision was made, would they fully understand both the reasoning and the principles behind it?"
+- **Constitutional principle: "History without explanation becomes mystery. Explanation without history becomes opinion." (25.2)**
+- **Critical rule (immutability): "Institutional memory is immutable. Corrections create new records. They NEVER erase history." (25.22)**
+- "Not every decision becomes precedent." (25.13) — Future Reusability is the lowest-weighted dimension intentionally.
+- The Ledger is completed AFTER outcomes are understood — not merely after decisions are made (25.15)
+- **Institutional autobiography concept (proposed in session): Preserves not just WHAT happened but WHY — "If we made this decision again today, would we do anything differently?" — "fifty years from now, a future steward could trace a constitutional principle back to its original intent." Status: Review Mode.**
+- **Final governing rule: "Preserve every consequential decision with enough clarity, context, integrity, and constitutional reasoning that future generations inherit wisdom rather than simply records."**
+
+---
+
+---
+
+## PROPRIETARY DATABASE TABLES SUMMARY
+
+All tables listed below are confidential and proprietary.
+
+| Engine | Tables |
+|--------|--------|
+| Trust Engine™ | trust_assessments, trust_dimensions, trust_history, trust_flags, trust_versions, trust_audit |
+| BIF™ | bif_assessments, bif_dimensions, bif_history, bif_versions, bif_audit |
+| Context Engine™ | context_profiles, context_signals, context_history, context_versions, context_audit |
+| Community Engine™ | community_assessments, community_dimensions, community_activity, community_versions, community_audit |
+| Discovery Engine™ | discovery_scores, discovery_results, discovery_history, discovery_versions, discovery_audit |
+| Safety Intelligence Engine™ | safety_assessments, safety_incidents, safety_patterns, safety_resources, safety_history, safety_versions, safety_audit |
+| Cultural Influence Engine™ | cultural_assessments, cultural_dimensions, cultural_history, cultural_versions, cultural_audit |
+| Community Catalyst Model™ | catalyst_assessments, catalyst_dimensions, catalyst_actions, catalyst_versions, catalyst_audit |
+| Community Health Index™ | health_assessments, health_dimensions, health_history, health_versions, health_audit |
+| Community Ripple™ | ripple_assessments, ripple_nodes, ripple_edges, ripple_paths, ripple_events, ripple_attribution, ripple_confidence, ripple_versions, ripple_audit |
+| Community Echo™ | echo_assessments, echo_dimensions, echo_history, echo_successors, echo_institutions, echo_preservation, echo_memory, echo_versions, echo_audit |
+| CROI™ | croi_assessments, croi_dimensions, croi_investments, croi_outcomes, croi_benefits, croi_capacity, croi_ripple_links, croi_versions, croi_audit |
+| Opportunity Engine™ | opportunities, opportunity_matches, opportunity_scores, opportunity_categories, opportunity_requirements, opportunity_outcomes, opportunity_constraints, opportunity_versions, opportunity_audit |
+| Hidden Gem Model™ | hidden_gem_assessments, hidden_gem_nominations, hidden_gem_categories, hidden_gem_visibility, hidden_gem_preservation, hidden_gem_graduation, hidden_gem_versions, hidden_gem_audit |
+| Community Recognition System™ | recognition_profiles, recognition_categories, recognition_progression, recognition_history, recognition_nominations, recognition_retirement, recognition_versions, recognition_audit |
+| Legacy & Learning Engine™ | legacy_records, learning_events, institutional_memory, cultural_memory, knowledge_versions, historical_sources, legacy_relationships, legacy_audit |
+| Stewardship Engine™ | stewardship_assessments, stewardship_reviews, stewardship_actions, stewardship_preservation, stewardship_history, stewardship_versions, stewardship_governance, stewardship_audit |
+| Governance Engine™ | governance_reviews, governance_precedents, governance_policies, constitutional_rules, governance_appeals, governance_decisions, governance_versions, governance_audit |
+| Evolution Engine™ | evolution_proposals, evolution_reviews, evolution_history, evolution_versions, evolution_learning, evolution_metrics, evolution_rollbacks, evolution_audit |
+| KinfolkAI™ Architecture | kinfolk_sessions, kinfolk_context, conversation_history, engine_activations, orchestration_logs, recommendation_history, conversation_versions, kinfolk_audit |
+| Business Maturity Model™ | business_maturity_profiles, business_growth_plans, business_maturity_scores, business_resource_recommendations, business_partnership_readiness, business_maturity_versions, business_maturity_history, business_maturity_audit |
+| City Maturity Model™ | city_profiles, city_maturity_scores, city_strengths, city_growth_priorities, city_resources, city_versions, city_history, city_audit |
+| Community Readiness Model™ | community_readiness_profiles, readiness_scores, readiness_dimensions, readiness_forecasts, readiness_versions, readiness_growth_plans, readiness_history, readiness_audit |
+| Constitutional Intelligence Layer™ | constitutional_reasoning, constitutional_priorities, constitutional_conflicts, constitutional_precedents, constitutional_versions, constitutional_amendments, constitutional_memory, constitutional_audit |
+| Decision Ledger™ & Institutional Memory Framework | decision_ledger, constitutional_precedent, institutional_memory, amendment_history, governance_decisions, decision_relationships, precedent_versions, decision_audit |
+
+---
+
+---
+
+*END OF AUDIT DOCUMENT — SECTIONS 01 THROUGH 25*
+*Document continues as additional sections are received.*
+
+---
+
+**CONFIDENTIALITY NOTICE (REPEATED)**
+This document is the exclusive property of Mapping With Melanin™.
+It contains proprietary trade secret information protected under applicable trade secret law.
+Reproduction, distribution, disclosure, or use of the contents without explicit written
+authorization from the platform owner is strictly prohibited.
+For attorney use only unless otherwise authorized by the platform owner.
+
+---
 *Document continues as additional sections are received.*
 
 ---
