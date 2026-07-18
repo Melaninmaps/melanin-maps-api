@@ -1,0 +1,203 @@
+06.60 Validation Scenarios
+Scenario 1 — Single unverified business report
+Evidence:
+One anonymous report alleges discriminatory treatment.
+No corroborating evidence.
+No immediate danger.
+Business has no prior pattern.
+
+Expected:
+Report accepted.
+Monitoring initiated.
+Low confidence.
+No categorical public label.
+Promotion may receive temporary review depending on severity.
+Search remains available.
+Reporter identity protected.
+Scenario 2 — Multiple corroborated discrimination reports
+Evidence:
+Three independent firsthand reports.
+Two separate time periods.
+Material facts substantially agree.
+Management dismissed complaints.
+
+Expected:
+Meaningful pattern established.
+Cultural & Discrimination Concern elevated.
+Institutional Response multiplier increases concern.
+Promotion held.
+Recommendation state CAUTION or RESTRICTED.
+Human review required.
+Scenario 3 — Severe verified immediate threat
+Evidence:
+Verified immediate threat.
+Current location known with permission.
+Immediacy Level 4.
+
+Expected:
+Critical Override.
+Ordinary ranking suspended.
+Emergency routing activated.
+Minimal questioning.
+Targeted alert considered.
+Immediate audit record.
+Scenario 4 — Historical severe event with verified reform
+Evidence:
+Severe incident occurred three years ago.
+Leadership changed.
+Independent review completed.
+Corrective action verified.
+No repeat reports.
+
+Expected:
+Historical evidence preserved.
+Current concern reduced.
+Protective Capacity increased.
+Public explanation may note historical nature and verified corrective action.
+No deletion of original record.
+Scenario 5 — Nighttime solo travel
+Request:
+User is walking alone after midnight.
+
+Evidence:
+Current route lighting limited.
+Transit service reduced.
+No active incident alert.
+Nearby alternative route available.
+
+Expected:
+Solo Traveler at Night profile.
+Physical and Digital/Transaction weights elevated.
+Route-specific caution.
+Alternative route surfaced.
+No claim that the area is categorically unsafe.
+Scenario 6 — Official weather emergency
+Evidence:
+Official flash-flood warning.
+Affected geography matches user route.
+Warning currently active.
+
+Expected:
+Mandatory safety context.
+Environmental concern elevated.
+Official Emergency or Route Alert.
+Normal ranking may be suspended.
+Alert automatically expires or updates with official notice.
+Scenario 7 — Accessibility misrepresentation
+Request:
+Confirmed wheelchair access required.
+
+Evidence:
+Business claims accessible entrance.
+Multiple verified reports show stairs and no alternative entry.
+
+Expected:
+Accessibility requirement fails.
+Accessibility concern elevated.
+Misrepresentation penalty.
+Recommendation restricted.
+Promotion held pending correction.
+Scenario 8 — Marketplace scam pattern
+Evidence:
+Four independent users report off-platform payment pressure.
+Listing identity cannot be verified.
+Transaction attempts share a repeated pattern.
+
+Expected:
+Digital concern elevated.
+Meaningful fraud pattern.
+Listing held or blocked.
+Affected users may receive targeted fraud alert.
+Human review required.
+Scenario 9 — Coordinated false-report campaign
+Evidence:
+Twenty reports submitted rapidly.
+Identical wording.
+Shared network indicators.
+No corroborating firsthand evidence.
+
+Expected:
+Reports not treated as twenty independent sources.
+Source Independence reduced.
+Public score frozen.
+Manipulation review opened.
+No immediate punitive public label.
+Scenario 10 — Popular business with active safety hold
+Evidence:
+High ratings and large following.
+Credible severe report under active review.
+Paid promotion scheduled.
+
+Expected:
+Popularity has no protective effect.
+Payment cannot remove hold.
+Promotion suspended.
+Search treatment determined separately.
+Scenario 11 — Community silence
+Evidence:
+No safety reports.
+Low platform participation.
+Limited verified information.
+
+Expected:
+Concern Score may be low or unavailable.
+Confidence remains Low or Unknown.
+No “safe” claim.
+Unknown is not converted into positive evidence.
+Scenario 12 — High concern, low confidence
+Evidence:
+One severe but unverified report.
+Limited details.
+No corroboration yet.
+
+Expected:
+High potential concern.
+Low confidence.
+Private urgent review.
+Narrow precautionary measures permitted.
+No broad categorical public alert without additional basis.
+Scenario 13 — Moderate concern, high confidence
+Evidence:
+Consistent verified reports of poor nighttime lighting.
+No reports of violence.
+Condition remains current.
+
+Expected:
+Moderate Physical Concern.
+High confidence.
+Actionable nighttime caution.
+No exaggerated danger language.
+Scenario 14 — Reporter retaliation
+Evidence:
+Employee reports safety issue.
+Employer threatens termination after report.
+
+Expected:
+Retaliation signal.
+Reporter protections activated.
+Governance review.
+Voice and Trust implications routed to relevant engines.
+Entity response access carefully timed.
+Scenario 15 — Family event concern
+Evidence:
+Family event is crowded.
+Exits are partially blocked.
+No current injury.
+Organizer is responding.
+
+Expected:
+Family profile.
+Physical concern elevated.
+Protective Capacity evaluated.
+Event Alert or advisory considered.
+Correction may reduce concern after verification.
+Scenario 16 — Engine unavailable
+Condition:
+Safety Engine outage during active official alert.
+
+Expected:
+Official-alert fallback remains active.
+Emergency routing remains accessible.
+No personalized safety assurance.
+Promotion held.
+Failure logged.

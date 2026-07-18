@@ -1,0 +1,115 @@
+06.56 Constitutional Rules
+The Safety Intelligence Engine™ must:
+never promise safety;
+never treat safety as binary;
+distinguish concern from confidence;
+distinguish risk from protective capacity;
+distinguish historical evidence from current conditions;
+distinguish allegation from verified finding;
+distinguish low evidence from low concern;
+distinguish no reports from proof of safety;
+preserve context;
+protect reporter privacy;
+preserve accused-entity fairness;
+prevent retaliation;
+protect minors and dependents;
+avoid unsupported identity inference;
+avoid predictive-policing logic;
+avoid racialized or culturally biased geographic labeling;
+prevent payment from influencing safety outcomes;
+preserve search access where appropriate without concealing accountability;
+apply stricter standards to promotion than search;
+permit corrective action without deleting history;
+preserve materially different lived experiences;
+communicate uncertainty;
+support appeal and correction;
+maintain complete auditability;
+preserve emergency access during system failure;
+comply with the Institution Test;
+comply with the Generational Test.
+06.57 Institution Test Application
+Before a safety rule, evidence source, alert threshold, risk category, or intervention pathway is approved, Mapping With Melanin™ must ask:
+Would we defend this as a responsible institutional safety practice 25 years from now?
+A rule fails the Institution Test when it:
+treats race, identity, or neighborhood demographics as danger;
+resembles predictive policing;
+converts popularity or silence into safety;
+cannot distinguish allegation from finding;
+exposes reporters;
+prevents correction;
+permanently punishes without review;
+hides serious concerns for commercial reasons;
+allows payment to reduce restrictions;
+amplifies isolated weak evidence as certainty;
+suppresses lived experience merely because it is uncomfortable;
+cannot be audited;
+cannot be explained without revealing bias;
+produces greater harm when scaled;
+lacks an appeal pathway;
+stores sensitive data without necessity;
+creates fear without actionable benefit;
+creates false reassurance.
+06.58 Generational Test Application
+The Safety Intelligence Engine™ must also ask:
+Would future generations inherit a safety system that protects their dignity and agency, or one that watches, labels, and limits them?
+A rule fails the Generational Test when it:
+normalizes surveillance;
+preserves current bias as permanent risk logic;
+cannot be governed under future leadership;
+depends on founder judgment rather than documented rules;
+categorizes communities permanently by historical harm;
+prevents future evidence from demonstrating repair;
+exposes sensitive identity information;
+cannot be corrected by affected communities;
+uses community reports for unrelated commercial purposes;
+expands beyond its original protective purpose;
+creates authority without accountability;
+cannot preserve safety during leadership or technology change.
+06.59 Launch Readiness Requirements
+The Safety Intelligence Engine™ is launch-ready only when:
+all launch-state safety objects are implemented;
+all eight dimensions are defined;
+dimension applicability rules are operational;
+baseline concern weights are approved;
+context-specific profiles are approved;
+Concern Score calculations are validated;
+Protective Capacity calculations are validated;
+Safety Confidence calculations are validated;
+Immediacy Levels are implemented;
+report-intake workflows are available;
+emergency-intake shortcuts are operational;
+anonymous reporting protections are implemented;
+reporter permissions are enforced;
+evidence-source relationships are recorded;
+Evidence Quality scoring is integrated;
+decay schedules are implemented;
+corroboration calculations are validated;
+source independence checks are operational;
+pattern thresholds are tested;
+the Single-Report Rule is enforced;
+corrective-action handling is operational;
+Critical, High-Risk, and Non-Override levels are implemented;
+override effects are integrated with the BIF;
+search treatment is separated from recommendation treatment;
+promotion holds are enforced;
+alert eligibility is operational;
+alert targeting is privacy-protected;
+alert expiration is automatic;
+official alert ingestion is validated;
+public language templates are approved;
+anti-manipulation detection is operational;
+reporter-protection workflows are tested;
+accused-entity response pathways are operational;
+appeal handling is available;
+human-review routing is operational;
+emergency failure fallback is tested;
+partial-engine failure behavior is tested;
+all audit fields are recorded;
+historical decisions are reproducible;
+privacy and security review is complete;
+bias and harm review is complete;
+the Institution Test is passed;
+the Generational Test is passed;
+Governance approves version 1.0;
+rollback procedures exist;
+Decision Ledger entry is complete.

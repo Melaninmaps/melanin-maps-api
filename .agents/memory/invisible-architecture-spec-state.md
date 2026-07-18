@@ -25,12 +25,13 @@ ALL specifications must match Section 02 exactly:
 
 | # | Document | Status |
 |---|---|---|
+| 01 | Trust Engine™ | ✅ COMPLETE |
 | 02 | Belonging Intelligence Framework™ | ✅ COMPLETE (26 sections, full JSON output contract, 20 DB tables, launch checklist) |
 | 03 | Context Engine™ (Engine Zero) | ✅ COMPLETE (44 sections, full JSON output contract, 16 DB tables, 22 launch requirements, 12 validation scenarios) |
-| 04 | Community Engine™ | ⬜ pending |
-| 05 | Discovery Engine™ | ⬜ pending |
-| 06 | Safety Intelligence Engine™ | ⬜ pending |
-| 07 | Cultural Influence Engine™ | ⬜ pending |
+| 04 | Community Engine™ | ✅ COMPLETE |
+| 05 | Discovery Engine™ | ✅ COMPLETE |
+| 06 | Safety Intelligence Engine™ | ✅ COMPLETE (63 sections, 28 DB tables, 16 validation scenarios) |
+| 07 | Cultural Influence Engine™ | 🔄 NEXT |
 | 08 | Community Catalyst Model™ | ⬜ pending |
 | 09 | Community Health Index™ | ⬜ pending |
 | 10 | Community Ripple™ | ⬜ pending |
@@ -56,8 +57,107 @@ ALL specifications must match Section 02 exactly:
   ✅ 01. Trust Engine™ — complete
   ✅ 02. Belonging Intelligence Framework™ — complete
   ✅ 03. Context Engine™ — complete
-  🔄 04. Community Engine™ — NEXT (resume here, outline locked below)
-  ⬜ 05–27 — pending
+  ✅ 04. Community Engine™ — complete
+  ✅ 05. Discovery Engine™ — complete
+  ✅ 06. Safety Intelligence Engine™ — complete
+  🔄 07. Cultural Influence Engine™ — NEXT
+
+---
+
+## Section 06 — COMPLETE
+63 sections (06.1–06.63). Key reference data:
+
+### Architecture
+- 4 required output values per assessment: Concern Score / Protective Capacity Score / Confidence Score / Immediacy Level
+- Governing question: "Given everything we know right now, what is the safest recommendation we can responsibly make without creating unnecessary fear or unnecessary confidence?"
+- NOT: crime predictor, neighborhood ranking, policing tool
+
+### Safety Objects (8 classes)
+Person / Business / Neighborhood / Event / Travel Route / Institution / City
+
+### Safety Dimensions (8, with baseline weights)
+Physical 22% / Cultural & Discrimination 18% / Identity 12% / Environmental 12% /
+Health & Emergency 10% / Accessibility 10% / Family 8% / Digital & Transaction 8%
+Non-applicable dimensions = NOT_APPLICABLE (never artificial zero)
+
+### Evidence Hierarchy (4 tiers)
+Tier 1: Verified firsthand, verified businesses/users, official emergency alerts
+Tier 2: Multiple independent community reports, historical consistency, partner orgs
+Tier 3: Single verified observation, trusted public datasets, moderated submissions
+Tier 4: Unverified submissions, anonymous reports, emerging patterns
+Rule: Tier 4 may influence monitoring only — never independently determines recommendation
+
+### Scoring
+- Concern Score (0–100): 7-level classification table
+- Protective Capacity Score: Prevention + Response + Access + Accountability + Recovery − Penalties
+- Safety Confidence Score: Evidence Quality × Volume × Source Independence × Corroboration × Context Specificity × Recency × Geographic Precision
+- Immediacy Levels 0–4: Historical / Time-sensitive / Priority / Urgent / Emergency
+- Confidence labels: Verified 90–100 / High 80–89 / Moderate 65–79 / Emerging 45–64 / Low 20–44 / Unknown 0–19
+
+### Context-Specific Concern Profiles (6, all require Weight Register approval)
+Solo Traveler / Solo Traveler at Night / Family / Relocation / Business Visit / Marketplace or Meetup
+
+### Evidence Rules
+- Volume factor: 8-row table (0+ items → 30+ items, 0.00 → 1.00)
+- Source Independence factor: 7-row table (coordinated = 0.15)
+- Corroboration: identical language = coordination signal, not corroboration
+- Decay: 4 categories (Immediate operational / Recent incident / Pattern / Severe verified)
+- Severe verified harm: persistent historical evidence, never deleted
+
+### Override Levels (3)
+Level 1 — Critical Override (immediate danger)
+Level 2 — High-Risk Override (strong evidence)
+Level 3 — Non-Override Concern (emerging/context-specific)
+Override activation matrix: concern × confidence guidance table
+
+### Recommendation States (6)
+NORMAL / INFORMED / CAUTION / RESTRICTED / HOLD / BLOCKED
+Search visibility determined separately from recommendation state.
+
+### Alert System
+- 9 alert types: Emergency / Local Safety / Route / Event / Business Safety Notice / Resource / Digital Fraud / Informational Advisory / Update or Resolution
+- 8 eligibility conditions required before alert may issue
+- Every alert requires: activation time / expiration / evidence source / review owner / update status / resolution pathway
+- Approved language examples (5) + prohibited examples (6)
+
+### Anti-Manipulation
+- 20 manipulation signal types
+- 10-level response ladder (Monitor → Removal/legal/emergency)
+- Rule: legitimate reporters must not be classified as manipulators because report is unpopular
+
+### Fairness
+- Reporter Protection Rules (10 obligations)
+- Accused-Entity Fairness Rules (10 obligations)
+- Both are simultaneous obligations
+
+### Constitutional Rules (27 rules)
+Includes: never promise safety / never treat as binary / distinguish concern from confidence / avoid predictive-policing logic / avoid racialized geographic labeling / prevent payment from influencing safety outcomes
+
+### Institutional Tests
+- Institution Test: "Would we defend this as a responsible institutional safety practice 25 years from now?" — 18 failure conditions
+- Generational Test: "Would future generations inherit a safety system that protects their dignity and agency?" — 12 failure conditions
+
+### DB Tables Required (28)
+safety_assessments, safety_dimension_scores, safety_evidence_items,
+safety_report_intakes, safety_report_relationships, safety_report_permissions,
+safety_source_records, safety_corroboration_records, safety_pattern_records,
+safety_pattern_members, safety_protective_capacity_records,
+safety_corrective_action_records, safety_override_records,
+safety_alert_records, safety_alert_audiences, safety_alert_updates,
+safety_recommendation_treatments, safety_search_treatments,
+safety_promotion_holds, safety_manipulation_signals,
+safety_manipulation_responses, safety_reporter_protection_records,
+safety_entity_response_records, safety_appeal_records,
+safety_human_review_records, safety_public_explanations,
+safety_engine_versions, safety_audit_records
+
+### Launch Readiness: 48 requirements
+### Validation Scenarios: 16
+### Full JSON output contract defined (06.51)
+### Emergency failure fallback contract defined (06.55)
+### Final Governing Rule (06.63):
+"Protect people through evidence, context, honest uncertainty, and actionable support—
+never through stereotypes, false guarantees, concealed harm, or fear presented as intelligence."
 
 ---
 
@@ -88,50 +188,6 @@ ALL specifications must match Section 02 exactly:
 - Full JSON output contract defined
 - Failure fallback contract defined
 - Institution Test + Generational Test governance gates
-
-## Section 04 Outline (ready after 03 is complete)
-
-```
-# 04. COMMUNITY ENGINE™
-
-## Future-State Production Specification v1.0
-
-Classification: Core Intelligence Engine
-Status: Review Mode — designed as the launch-state model
-Confidentiality: Highest restriction; scoring methodology,
-decision logic, and weighting formulas are confidential trade
-secrets and are not publicly disclosed.
-
-04.1  Purpose
-04.2  Foundational Principle
-04.3  Definition of Community
-04.4  Core Evaluation Dimensions
-04.5  Evidence Categories
-04.6  Community Signal Collection
-04.7  Community Confidence Assessment
-04.8  Community Scoring Methodology
-04.9  Positive Community Indicators
-04.10 Community Risk Indicators
-04.11 Community Growth Recognition
-04.12 Community Intervention Rules
-04.13 Community Context Adjustments
-04.14 Engine Interactions
-04.15 Output Contract
-04.16 Audit Requirements
-04.17 Constitutional Rules
-04.18 Learning & Evolution
-04.19 Future Expansion
-```
-
-Key content to incorporate from prior sessions:
-- 7 core questions with initial weights: Welcoming 18% / Connected 18% /
-  Helping Itself 15% / Business Participation 15% / Cultural Ambassadors 15% /
-  Trust Increasing 10% / Preserving Itself 9%
-- Scores communities, not people — internal use only
-- Community Health expressed as identity words (Thriving/Strong/Growing/Emerging)
-- Community Momentum™ as directional modifier (↑↓→ trend)
-- Input from Trust Engine, Safety Engine, Cultural Influence Engine
-- Output feeds Community Health Index, KinfolkAI, Legacy Engine, city planning
 
 ---
 
@@ -173,8 +229,8 @@ Must be consistent across all engine specs:
 ## What NOT to do at session start
 - Do NOT re-explain the whole architecture history
 - Do NOT ask what's missing — the spec order above is the plan
-- DO resume at 03 immediately when user is ready
-- DO maintain exact formatting of Section 02
+- DO resume at 07 immediately when user is ready
+- DO maintain exact formatting of prior sections
 
 ## Trade Secret Protocol
 All content in this spec series is confidential.
