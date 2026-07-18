@@ -99,13 +99,19 @@ ALL specifications must match Section 02 exactly:
       10-Book structure: I. The Calling / II. The Constitution / III. Philosophy of Belonging / IV. Constitutional Intelligence / V. Stewardship / VI. Community / VII. Innovation / VIII. Legacy / IX. The Future / X. The Covenant
       Format vision: published constitutional volume — formal preamble, numbered articles, margin notes, constitutional quotations, historical notes, founder commentary, stewardship essays, illustrations, timeless design
       Key instruction: NOT a copy of 34 specs — "This is how we think" not "This is how this database table works"
-      CONTENT RECEIVED SO FAR:
-        Preamble — complete (received). Opens: "Technology has transformed how people communicate..." Key line: "People are. Communities are. Belonging is. Opportunity is. Trust is. Everything else exists in service to those ideals."
-        Book I Ch.1 "Before There Was Software" — complete (received). Founding question: "What if no one ever had to wonder whether they would be welcomed before deciding where to go?" Key line: "Technology became the vehicle. Community remained the destination."
-        Book I Ch.2 "The Belief" — complete (received). Core belief: "Communities become stronger when people are better connected to opportunity, culture, knowledge, and one another." Institution test question: "Did this help someone leave stronger than they arrived?"
-        Book I "To Those Who Will One Day Lead" — RECEIVED AND COMPLETE. Written entirely by the founder (Teianna Lindsay) in her own voice. Signed "— Teianna Lindsay, Founder, Mapping With Melanin™". Title rationale: "It isn't speaking to the past. It's speaking directly to the future." Key lines: "I hope people still feel welcomed." / "Will this leave the communities we serve stronger than they were before?" / "Our purpose is to help communities become so connected, so informed, and so empowered that they increasingly strengthen themselves." / "Every recommendation reaches a real person. Every business represents someone's dream. Every community carries a history. Every act of trust is a gift." / "Leave it wiser than you found it." NOT titled "Founder's Letter" — title is permanently "To Those Who Will One Day Lead."
-        Dedication — received: "Dedicated to every person who has ever wondered where they would be welcomed — and to every community willing to answer, 'You belong here.'"
-      PENDING: Books II–X content; remaining Book I chapters
+      BOOK I — THE CALLING — FULLY COMPLETE ✅
+        Epigraph: "Every institution begins with a question. Ours began with a promise."
+        Dedication — expanded version received (ends: "May this institution always remember who it exists to serve.")
+        Opening Reflection — "There are many kinds of maps..." / "Mapping With Melanin™ exists to help people build that map [they carry inside them]."
+        Ch.1 "Before There Was Software" — expanded. Founding question: "What if people never had to wonder: 'Will I be welcomed there?'" / Constitutional Reflection sidebar: "Communities are not built when people arrive. Communities are built when people decide to return."
+        Ch.2 "The World We Inherited" — received. Questions tech rarely asks: "Where will I feel comfortable? Where do I belong?" / Questions for Future Stewards sidebar (5 questions, ends: "If the answer is no... Keep designing.")
+        Ch.3 "Belonging Is Infrastructure" — received. "Belonging is not a feeling separate from infrastructure. It IS infrastructure." / Steward's Journal sidebar: "The Constitution does not ask: 'Did the app grow?' It asks: 'Did the community grow stronger?'"
+        Ch.4 "The Promise" — received. 5 "We will never..." commitments. "This promise is not a feature. It is the foundation upon which every feature is built."
+        Closing Reflection — "If future generations can still read this chapter and recognize the same purpose... this institution will have remained faithful to its calling."
+        Book I closing quote: "Technology should help people find places. Communities help people find home. The Invisible Architecture™ exists so the first always strengthens the second."
+        "To Those Who Will One Day Lead" — COMPLETE (founder's own voice, signed Teianna Lindsay)
+        Design vision confirmed: elegant typography, chapter-opening artwork, timeless layout; no database tables/formulas in Book I — answers only "Why should this institution exist?"
+      PENDING: Books II–X content
   🔄 Implementation Audit — pending ("Please implement.")
 
 ---
