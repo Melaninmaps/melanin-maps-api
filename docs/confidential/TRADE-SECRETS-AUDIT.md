@@ -3457,15 +3457,102 @@ All tables listed below are confidential and proprietary.
 | Constitutional Measurement Layer™ | constitutional_measurements, mission_metrics, community_outcomes, opportunity_outcomes, belonging_metrics, institutional_growth, measurement_history, constitutional_dashboard |
 | Constitutional Digital Twin™ & Future Simulation Engine | simulation_runs, scenario_library, future_assumptions, simulation_outcomes, constitutional_forecasts, scenario_versions, simulation_history, simulation_audit |
 | Constitutional Resilience & Continuity Framework™ | continuity_plans, resilience_assessments, leadership_succession, crisis_decisions, continuity_history, recovery_actions, resilience_audit, constitutional_continuity |
+| Constitutional Adaptive Learning Framework™ | learning_candidates, institutional_learning, learning_reviews, governance_learning, learning_distribution, adaptive_versions, learning_audit, learning_history |
 
-**TOTAL PROPRIETARY TABLES: ~228**
+**TOTAL PROPRIETARY TABLES: ~236**
 
 ---
 
 ---
 
-*END OF AUDIT DOCUMENT — SECTIONS 01 THROUGH 30*
-*30 CONSTITUTIONAL SPECIFICATIONS — COMPLETE*
+# 31. CONSTITUTIONAL ADAPTIVE LEARNING FRAMEWORK™
+
+**Classification:** Responsible Learning, Constitutional Adaptation, Human Feedback Intelligence, and Continuous Improvement Architecture
+**Status:** Constitutional Learning Layer
+**Confidentiality:** Highest restriction
+
+## 31-A. Core Evaluation Dimensions & Weights (Learning Readiness Score)
+
+| Dimension | Weight |
+|-----------|-------:|
+| Constitutional Alignment | 22% |
+| Evidence Quality | 18% |
+| Community Benefit | 16% |
+| Learning Confidence | 13% |
+| Long-Term Value | 11% |
+| Cross-Engine Applicability | 9% |
+| Governance Validation | 6% |
+| Adaptation Readiness | 5% |
+| **Total** | **100%** |
+
+## 31-B. Constitutional Learning Formula (Learning Readiness Score)
+
+```
+Learning Readiness =
+  (Constitutional Alignment × .22)
++ (Evidence Quality × .18)
++ (Community Benefit × .16)
++ (Learning Confidence × .13)
++ (Long-Term Value × .11)
++ (Cross-Engine Applicability × .09)
++ (Governance Validation × .06)
++ (Adaptation Readiness × .05)
+
+Normalized to 0–100.
+```
+
+## 31-C. Eleven-Stage Learning Lifecycle
+
+```
+Stage 1:  Observation
+Stage 2:  Evidence
+Stage 3:  Human Review
+Stage 4:  Governance
+Stage 5:  Constitutional Validation
+Stage 6:  Pilot Learning
+Stage 7:  Measured Outcome
+Stage 8:  Institutional Learning
+Stage 9:  Decision Ledger™
+Stage 10: Cross-Engine Distribution
+```
+
+**Critical rule: "Learning is a constitutional process — not an automatic software update."**
+
+## 31-D. Ten Learning Sources
+
+Community Feedback / Verified Outcomes / Human Review / Decision Ledger™ / KinfolkAI™ / Businesses / Community Leaders / Safety Reviews / Research Partners / Constitutional Amendments
+
+## 31-E. Anti-Manipulation Rejections (5 types)
+
+Coordinated campaigns / Popularity alone / Commercial incentives / Political pressure / Short-term engagement spikes
+
+**Critical rule: "Learning must reflect constitutional value — not temporary influence."**
+
+## 31-F. Cross-Engine Distribution Targets (6)
+
+Trust Engine™ / Community Engine™ / Opportunity Engine™ / Safety Engine™ / Hidden Gem™ / KinfolkAI™
+
+**Rule: "Knowledge should strengthen the entire ecosystem."**
+
+## 31-G. Governing Calculation Rules
+- Governing question: "How can the platform become more helpful tomorrow while remaining just as faithful to its Constitution as it is today?"
+- **Constitutional principle: "Learning is not improvement unless it strengthens the mission. A platform that learns everything eventually loses its identity. A constitutional platform learns selectively." (31.2)**
+- **Critical rule: "Learning is earned — not automatic." (31.3)**
+- "Single observations rarely become institutional learning." (31.7)
+- "Temporary trends rarely become institutional knowledge." (31.10)
+- "Some learning is intentionally delayed." (31.13) — Adaptation Readiness dimension explicitly permits deliberate delay.
+- Prohibited public language: "The AI taught itself." / "Everything users do automatically changes the algorithm."
+- "Human stewardship remains essential." (31.18)
+- Institution Test: "Will this make the institution WISER without making it LESS FAITHFUL to its Constitution?" (31.23)
+- **Final governing rule: "Learn continuously, adapt responsibly, preserve faithfully, and ensure that every improvement leaves the Constitution stronger, the communities better served, and future generations wiser than those who came before."**
+- **Final arc confirmed (Sections 32–34): 32. Constitutional Ecosystem Framework™ (external collaboration while protecting principles); 33. Founder's Intent Preservation Framework™ (vision survives future leadership/tech); 34. Invisible Architecture™ Master Constitution (single governing document tying all specs). Then: Constitutional Manual + Implementation Audit.**
+
+---
+
+---
+
+*END OF AUDIT DOCUMENT — SECTIONS 01 THROUGH 31*
+*31 CONSTITUTIONAL SPECIFICATIONS — COMPLETE*
 
 ---
 
