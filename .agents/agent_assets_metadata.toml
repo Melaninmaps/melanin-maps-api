@@ -773,3 +773,9 @@ id = "KFdQ6ibjc8TegYVAbdmyl"
 uri = "file://.local/outputs/MWM-Legacy-Collection.pdf"
 type = "pdf"
 title = "Mapping With Melanin™ — Legacy Collection (PDF)"
+
+[[outputs]]
+id = "FIKBydcUKSS2hHXn0QtXp"
+uri = "file://mapping-with-melanin-auth-web-static.zip"
+type = "unspecified"
+title = "mapping-with-melanin-auth-web-static.zip"
