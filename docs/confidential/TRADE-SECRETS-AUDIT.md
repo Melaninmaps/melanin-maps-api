@@ -1903,12 +1903,195 @@ All tables listed below are confidential and proprietary.
 | Stewardship Engine™ | stewardship_assessments, stewardship_reviews, stewardship_actions, stewardship_preservation, stewardship_history, stewardship_versions, stewardship_governance, stewardship_audit |
 | Governance Engine™ | governance_reviews, governance_precedents, governance_policies, constitutional_rules, governance_appeals, governance_decisions, governance_versions, governance_audit |
 | Evolution Engine™ | evolution_proposals, evolution_reviews, evolution_history, evolution_versions, evolution_learning, evolution_metrics, evolution_rollbacks, evolution_audit |
+| KinfolkAI™ Architecture | kinfolk_sessions, kinfolk_context, conversation_history, engine_activations, orchestration_logs, recommendation_history, conversation_versions, kinfolk_audit |
 
 ---
 
 ---
 
-*END OF AUDIT DOCUMENT — SECTIONS 01 THROUGH 19*
+# 20. KINFOLKAI™ ARCHITECTURE
+
+**Classification:** Constitutional AI Orchestration, Contextual Intelligence, and Conversational Decision Architecture
+**Confidentiality:** Highest restriction
+
+## 20-A. Core Interaction Dimensions & Weights
+
+| Dimension | Weight |
+|-----------|-------:|
+| Context Understanding | 20% |
+| Constitutional Alignment | 18% |
+| Recommendation Quality | 16% |
+| Explanation Clarity | 13% |
+| Trust Preservation | 11% |
+| Personalization | 9% |
+| Educational Value | 8% |
+| Conversation Continuity | 5% |
+| **Total** | **100%** |
+
+## 20-B. KinfolkAI™ Orchestration Score Formula
+
+```
+KinfolkAI Orchestration Score =
+  (Context Understanding × .20)
++ (Constitutional Alignment × .18)
++ (Recommendation Quality × .16)
++ (Explanation Clarity × .13)
++ (Trust Preservation × .11)
++ (Personalization × .09)
++ (Educational Value × .08)
++ (Conversation Continuity × .05)
+
+Normalized to 0–100.
+```
+
+## 20-C. Architectural Position (Flow — Internal)
+
+```
+Member
+↓
+Conversation
+↓
+Intent Detection
+↓
+Context Engine™
+↓
+Belonging Intelligence Framework™
+↓
+Relevant Intelligence Engines
+↓
+Governance & Stewardship
+↓
+Decision Synthesis
+↓
+KinfolkAI™
+↓
+Member Response
+```
+
+**Critical rule: KinfolkAI™ never bypasses the Belonging Intelligence Framework™.**
+
+## 20-D. Constitutional Role (What KinfolkAI™ IS — and IS NOT)
+
+KinfolkAI™ is NOT:
+- A chatbot
+- A search engine
+- An assistant that independently makes decisions
+
+KinfolkAI™ IS:
+- Interpreter
+- Synthesizer
+- Guide
+- Educator
+- Explainer
+- Conversational interface
+
+**Critical rule: KinfolkAI™ has no independent authority. Every meaningful recommendation originates from one or more specialized engines.**
+
+## 20-E. Engine Orchestration Examples (Internal)
+
+**Relocation Query activates:**
+Context / Opportunity / Community / Safety / Discovery / Hidden Gem / Legacy & Learning
+
+**Business Discovery activates:**
+Discovery / Trust / Hidden Gem / Community Recognition / CROI™
+
+**Safety Question activates:**
+Safety / Trust / Governance / Community / Context
+
+**Rule: Only relevant engines participate.**
+
+## 20-F. Twelve Conversation Types
+
+1. Exploration
+2. Planning
+3. Education
+4. Relocation
+5. Travel
+6. Community Discovery
+7. Mentorship
+8. Business Support
+9. Safety Guidance
+10. Opportunity Discovery
+11. Emergency Assistance
+12. Cultural Learning
+
+**Rule: Each conversation type activates different orchestration rules.**
+
+## 20-G. KinfolkAI™ Personality (Codified)
+
+**Must be:** Welcoming / Respectful / Culturally aware / Curious / Educational / Optimistic / Calm / Transparent
+
+**Must never be:** Arrogant / Manipulative / Sensational / Dismissive / Performative
+
+## 20-H. Confidence Communication Examples (Approved Phrases)
+
+- "Verified information…"
+- "Available evidence suggests…"
+- "Community members consistently report…"
+- "Current information is limited…"
+
+**Rule: KinfolkAI™ never pretends certainty.**
+
+## 20-I. Governing Calculation Rules
+- Governing question: "How can the platform help this person make a better decision while remaining faithful to the Constitution, preserving trust, and strengthening belonging?"
+- **Constitutional principle: Trust is the product — not conversation, not judgment (20.2)**
+- **Critical rule: KinfolkAI™ never invents recommendations** — every recommendation originates from engines (20.9)
+- "Every response should leave the member more informed — not more dependent." (20.2)
+- No conversational convenience overrides constitutional principles (20.8)
+- Personalization never becomes profiling (20.12)
+- Constitutional safeguards remain active throughout EVERY conversation (20.22)
+- **Prohibited public responses: "I decided…" / "I know everything about you." / "Trust me." / "The AI always knows best."**
+- **Final governing rule: "Serve every member as a trusted guide — never as the final authority."**
+- **Architectural role: The member-facing expression of all 19 prior engines. "Everything before Section 20 described how the platform thinks. Section 20 describes how the platform speaks."**
+
+---
+
+---
+
+## PROPRIETARY DATABASE TABLES SUMMARY
+
+All tables listed below are confidential and proprietary.
+
+| Engine | Tables |
+|--------|--------|
+| Trust Engine™ | trust_assessments, trust_dimensions, trust_history, trust_flags, trust_versions, trust_audit |
+| BIF™ | bif_assessments, bif_dimensions, bif_history, bif_versions, bif_audit |
+| Context Engine™ | context_profiles, context_signals, context_history, context_versions, context_audit |
+| Community Engine™ | community_assessments, community_dimensions, community_activity, community_versions, community_audit |
+| Discovery Engine™ | discovery_scores, discovery_results, discovery_history, discovery_versions, discovery_audit |
+| Safety Intelligence Engine™ | safety_assessments, safety_incidents, safety_patterns, safety_resources, safety_history, safety_versions, safety_audit |
+| Cultural Influence Engine™ | cultural_assessments, cultural_dimensions, cultural_history, cultural_versions, cultural_audit |
+| Community Catalyst Model™ | catalyst_assessments, catalyst_dimensions, catalyst_actions, catalyst_versions, catalyst_audit |
+| Community Health Index™ | health_assessments, health_dimensions, health_history, health_versions, health_audit |
+| Community Ripple™ | ripple_assessments, ripple_nodes, ripple_edges, ripple_paths, ripple_events, ripple_attribution, ripple_confidence, ripple_versions, ripple_audit |
+| Community Echo™ | echo_assessments, echo_dimensions, echo_history, echo_successors, echo_institutions, echo_preservation, echo_memory, echo_versions, echo_audit |
+| CROI™ | croi_assessments, croi_dimensions, croi_investments, croi_outcomes, croi_benefits, croi_capacity, croi_ripple_links, croi_versions, croi_audit |
+| Opportunity Engine™ | opportunities, opportunity_matches, opportunity_scores, opportunity_categories, opportunity_requirements, opportunity_outcomes, opportunity_constraints, opportunity_versions, opportunity_audit |
+| Hidden Gem Model™ | hidden_gem_assessments, hidden_gem_nominations, hidden_gem_categories, hidden_gem_visibility, hidden_gem_preservation, hidden_gem_graduation, hidden_gem_versions, hidden_gem_audit |
+| Community Recognition System™ | recognition_profiles, recognition_categories, recognition_progression, recognition_history, recognition_nominations, recognition_retirement, recognition_versions, recognition_audit |
+| Legacy & Learning Engine™ | legacy_records, learning_events, institutional_memory, cultural_memory, knowledge_versions, historical_sources, legacy_relationships, legacy_audit |
+| Stewardship Engine™ | stewardship_assessments, stewardship_reviews, stewardship_actions, stewardship_preservation, stewardship_history, stewardship_versions, stewardship_governance, stewardship_audit |
+| Governance Engine™ | governance_reviews, governance_precedents, governance_policies, constitutional_rules, governance_appeals, governance_decisions, governance_versions, governance_audit |
+| Evolution Engine™ | evolution_proposals, evolution_reviews, evolution_history, evolution_versions, evolution_learning, evolution_metrics, evolution_rollbacks, evolution_audit |
+| KinfolkAI™ Architecture | kinfolk_sessions, kinfolk_context, conversation_history, engine_activations, orchestration_logs, recommendation_history, conversation_versions, kinfolk_audit |
+
+---
+
+---
+
+*END OF AUDIT DOCUMENT — SECTIONS 01 THROUGH 20*
+*Document continues as additional sections are received.*
+
+---
+
+**CONFIDENTIALITY NOTICE (REPEATED)**
+This document is the exclusive property of Mapping With Melanin™.
+It contains proprietary trade secret information protected under applicable trade secret law.
+Reproduction, distribution, disclosure, or use of the contents without explicit written
+authorization from the platform owner is strictly prohibited.
+For attorney use only unless otherwise authorized by the platform owner.
+
+---
 *Document continues as additional sections are received.*
 
 ---
