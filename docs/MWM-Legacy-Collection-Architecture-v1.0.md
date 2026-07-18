@@ -1,7 +1,7 @@
 # Mapping With Melanin™
 ## Legacy Collection Architecture — v1.0
 
-**Status:** PROPOSAL ONLY. No files renamed. No content moved. No implementation. This is the conceptual alignment document.
+**Status:** CONCEPTUAL ARCHITECTURE LOCKED — Pending implementation authorization. No files renamed. No content moved. No builds.
 **Last updated:** July 18, 2026
 
 ---
@@ -18,20 +18,23 @@ The Constitution lives inside it. So does everything else.
 Mapping With Melanin™ Legacy Collection
 │
 ├── Volume I   — The Constitution
+│              The enduring principles that govern Mapping With Melanin™.
 ├── Volume II  — Presentation System
 ├── Volume III — Living Archive
 ├── Volume IV  — Community Atlas
-└── Volume V   — Legacy Editions
+├── Volume V   — Legacy Editions
+└── Volume VI  — Research & Insights  [RESERVED — not now]
 ```
 
 ---
 
-## The Five Volumes
+## The Six Volumes
 
 ### Volume I — The Constitution
+*The enduring principles that govern Mapping With Melanin™.*
 *(replaces working title "Foundations Book")*
 
-The living constitution of the company. Not presentation-specific. Not audience-specific.
+The living constitution of the company. Not presentation-specific. Not audience-specific. Not policies alone — philosophy.
 
 Contains:
 - Mission
@@ -47,15 +50,32 @@ Contains:
 - The Generational Test
 - Design Principles
 - Community Trust Engine Framework (when ready)
+- **What We Preserve** (future — see below)
+
+**The three-sentence statement** (future placement TBD within Volume I):
+> We build products that people use.
+> We preserve stories that people remember.
+> We build institutions that people inherit.
+
+**What We Preserve** (future section — not today):
+A declaration of what future leaders promise never to compromise:
+- Trust over growth
+- Community over engagement
+- Authenticity over virality
+- Belonging over popularity
+- Listening over broadcasting
+- Stewardship over ownership
+
+This is different from values. It is what the institution refuses to lose.
 
 ---
 
 ### Volume II — Presentation System
 
-All decks are chapters. All slides are pages. Each page has an identifier, version history, approval status, and audience metadata.
+All decks are chapters. All slides are canonical pages. Each canonical page has an identifier, version history, approval status, and audience metadata.
 
 **Current chapters:**
-- Experience Chapter (Pages 01–21)
+- Experience Chapter (Canonical Pages 01–21)
 - Investor Chapter
 - Business Chapter
 - Community Chapter
@@ -105,6 +125,21 @@ The formal published expressions created from the broader Legacy Collection:
 
 ---
 
+### Volume VI — Research & Insights
+**RESERVED — not built now. Space held for future institutional knowledge.**
+
+- Community research
+- Survey findings
+- Annual reports
+- Travel trends
+- Belonging studies
+- Safety studies
+- Economic impact
+- Academic partnerships
+- White papers
+
+---
+
 ## The Two Registries
 
 ### Chapter Registry
@@ -113,7 +148,7 @@ Tracks complete presentation chapters within Volume II.
 
 | Chapter | Status |
 |---------|--------|
-| Experience Chapter | Active — Pages 01–21 |
+| Experience Chapter | Active — Canonical Pages 01–21 |
 | Investor Chapter | Active |
 | Business Chapter | Active |
 | Community Chapter | Active |
@@ -124,21 +159,23 @@ Tracks complete presentation chapters within Volume II.
 
 ---
 
-### Page Registry
+### Page Registry (Canonical Pages)
 
-Tracks every approved reusable page across all chapters.
+Every page in the registry is a **Canonical Page** — the master approved version from which all adaptations derive.
 
-**Page identifier format:**
+The term "Canonical Page" (not just "page") reinforces the propagation model: this is the source. Everything else is derived from it.
+
+**Canonical Page identifier format:**
 ```
 MWM-[CHAPTER]-P[##]-V[#]
 
 Examples:
-MWM-EXP-P01-V1    Experience Chapter, Page 01, Version 1
-MWM-INV-P05-V2    Investor Chapter, Page 05, Version 2
-MWM-BIZ-P09-V1    Business Chapter, Page 09, Version 1
+MWM-EXP-P01-V1    Experience Chapter, Canonical Page 01, Version 1
+MWM-INV-P05-V2    Investor Chapter, Canonical Page 05, Version 2
+MWM-BIZ-P09-V1    Business Chapter, Canonical Page 09, Version 1
 ```
 
-A page entry records:
+A canonical page entry records:
 - Page identifier
 - Source chapter
 - Current version
@@ -146,11 +183,12 @@ A page entry records:
 - Confidentiality level
 - Audiences it has been adapted for
 - Chapters it appears in
+- Shared components it references
 - Last modified date
 - Owner
-- Dependencies (e.g., references Mission chapter from Constitution)
+- Dependencies (e.g., references Mission from the Constitution)
 
-A page may appear:
+A canonical page may appear:
 - exactly as approved
 - as an audience adaptation
 - as a related concept
@@ -161,20 +199,22 @@ A page may appear:
 - in onboarding
 - in a future documentary
 
-The medium changes. The page doesn't.
+The medium changes. The canonical page doesn't.
 
 ---
 
 ## The Legacy Collection Index & Manifest
 
-The front door to the entire knowledge system.
+**Purpose:**
+> The Legacy Collection Index exists so that every idea, decision, story, presentation, asset, and principle has one authoritative place to live, one history to preserve, and one path to be discovered.
 
 The Legacy Collection is the library. The Index is the catalog.
 
 A top-level navigation document that identifies:
 - All volumes
 - Chapters within each volume
-- Page registries
+- Canonical page registries
+- Shared component registries
 - Current versions
 - Approval status
 - Confidentiality level
@@ -191,25 +231,71 @@ docs/MWM-Legacy-Collection-Index.md
 
 ---
 
+## Propagation — Four Categories
+
+When a source element changes, the propagation system identifies every chapter that references it and prompts for controlled cross-chapter updates.
+
+### 1. Mission & Vision (from Volume I — The Constitution)
+When rewritten, every chapter that references them is identified.
+
+### 2. Canonical Pages
+When a canonical page is updated, all curated editions and chapters that include it are identified.
+
+### 3. Presentations (Full Chapters)
+When a chapter is updated, all curated editions derived from it are identified.
+
+### 4. Shared Components
+When a design component changes, every canonical page that references it is identified.
+
+Shared components include:
+- Gold outline icon set
+- Typography (DM Sans · Inter · Cormorant Garamond)
+- Color tokens (#CA922B, #1C0E06, #FAF6EF, etc.)
+- Gradient system
+- Animation standards
+- Illustrations
+- Logo and wordmark
+- KinfolkAI™ avatar
+- Badges and trust signals
+- Button and UI element styles
+
+Components are not pages. This distinction matters — components live at a level below pages and above assets.
+
+---
+
 ## Three Content Types Within the Presentation System
 
 ### Full Chapter
-A complete approved presentation created for one audience. All pages in sequence. Full narrative arc.
+A complete approved presentation for one audience. All canonical pages in sequence. Full narrative arc.
 
 ### Curated Chapter Edition
-A shorter presentation assembled from approved pages across multiple chapters, shaped for a specific audience or context.
+A shorter presentation assembled from approved canonical pages across multiple chapters, shaped for a specific audience or context.
 
 Example: A Zoom presentation may pull:
-- An opening page from the Experience Chapter
-- A mission page from the Constitution
-- A business page from the Business Chapter
-- A Founding Community page
+- An opening canonical page from the Experience Chapter
+- A mission canonical page from the Constitution
+- A business canonical page from the Business Chapter
+- A Founding Community canonical page
 - The approved three-page closing sequence
 
-### Individual Approved Page
-A single reusable page inserted into another chapter while retaining its source page ID, version history, and approval status.
+### Individual Approved Canonical Page
+A single reusable canonical page inserted into another chapter while retaining its source page ID, version history, and approval status.
 
-Pages can be curated into different audience journeys without losing governance.
+Canonical pages can be curated into different audience journeys without losing governance.
+
+---
+
+## The Experience Chapter — New Standard for Review
+
+The Experience Chapter is not a presentation to be perfected. It is the first public chapter of the Mapping With Melanin™ Legacy Collection.
+
+The review question has changed:
+
+> ~~Does this slide look good?~~
+
+> **Does this canonical page deserve to become part of the permanent Legacy Collection?**
+
+That is a higher bar. It governs every visual refinement decision from this point forward.
 
 ---
 
@@ -231,8 +317,6 @@ When ready, the migration map will include for each file:
 ```
 Current:   docs/MWM-Foundations-Book-Outline-v1.0.md
 Proposed:  docs/MWM-Constitution-Outline-v1.0.md
-           or:
-           docs/Legacy-Collection/Volume-I-Constitution/MWM-Constitution-Outline-v1.0.md
 ```
 
 No action taken until separately approved.
@@ -241,13 +325,11 @@ No action taken until separately approved.
 
 ## Experience Chapter — Visual Refinement Process
 
-The current visual critique applies specifically to the Experience Chapter. Its approved design decisions may later become global standards — but changes do not automatically propagate.
-
 **Correct process:**
 
 1. Refine the Experience Chapter
 2. Approve its visual system
-3. Identify which visual decisions qualify as global standards
+3. Identify which visual decisions qualify as global Shared Component standards
 4. Propose those additions to the Constitution and Creative OS
 5. Audit other presentation chapters
 6. Wait for cross-chapter authorization
@@ -264,15 +346,29 @@ No silent cross-chapter changes.
 | Bible | Legacy Collection |
 | Foundations Book | The Constitution |
 | Deck | Presentation Chapter |
-| Slide | Page |
+| Slide | Canonical Page |
 | Slide Registry | Page Registry |
 | Deck Registry | Chapter Registry |
-| Reusable slide | Reusable approved page |
+| Reusable slide | Reusable canonical page |
 | Master deck | Master presentation chapter |
-| Copying slides | Curating approved pages |
+| Copying slides | Curating canonical pages |
 | Updating all decks | Controlled cross-chapter propagation |
+| Design assets | Shared Components |
 
-*"Deck" and "slide" may be used conversationally when working with standard presentation software. Formal records use "chapter" and "page."*
+*"Deck" and "slide" may be used conversationally when working with standard presentation software. Formal records use "chapter" and "canonical page."*
+
+---
+
+## Confirmed Roadmap
+
+| Status | Item |
+|--------|------|
+| ✅ Complete | Legacy architecture |
+| ✅ Complete | Constitution architecture |
+| ✅ Complete | Presentation architecture |
+| ⏳ Waiting | Railway |
+| 🎯 Next | Experience Chapter visual refinements |
+| After | Zoom experience · Sound bites · Speaker guide · Community Trust Engine · Launch readiness |
 
 ---
 
@@ -281,24 +377,25 @@ No silent cross-chapter changes.
 ```
 Mapping With Melanin™ Legacy Collection
     ↓
-Volumes
+Volumes  (I–VI)
     ↓
 Chapters
     ↓
-Pages
+Canonical Pages
     ↓
-Reusable Components and Assets
+Shared Components and Assets
 ```
 
 With:
-- A Legacy Collection Index & Manifest
+- A Legacy Collection Index & Manifest (with purpose statement)
 - A Chapter Registry
-- A Page Registry
-- Controlled propagation
+- A Page Registry (canonical pages)
+- A Shared Components Registry
+- Controlled cross-category propagation
 - Full version history
 - Audience-specific adaptations
 - No silent cross-chapter changes
 
 ---
 
-*This is a proposal document only. No files have been renamed, moved, or modified. No content has been rewritten. The architecture awaits authorization before implementation begins.*
+*Conceptual architecture locked. No files have been renamed, moved, or modified. No content has been rewritten. Implementation requires separate authorization.*
