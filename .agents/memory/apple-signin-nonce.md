@@ -16,3 +16,13 @@ Do NOT pre-hash it before passing to Apple.
 3. Server: compute `SHA256(rawNonce)` and compare to `payload.nonce` from the Apple JWT ✅
 
 No pre-hashing on the client side at all. The `expo-crypto` `digestStringAsync` call is not needed.
+
+## Deployment status (as of July 18, 2026)
+
+**Source fix is IN the Replit workspace** — `artifacts/mobile/app/login.tsx` line 126: `nonce: rawNonce` (was `nonce: hashedNonce`). Dead `hashedNonce` computation and incorrect comment also removed.
+
+**Not yet deployed to production.** This fix only takes effect after:
+1. A new EAS build is created from the current workspace (iOS + Android)
+2. The build is submitted to TestFlight / Play Store and distributed to testers/users
+
+Do NOT describe Apple Sign-In as fixed in production until a new mobile build containing this `login.tsx` is built and distributed.
