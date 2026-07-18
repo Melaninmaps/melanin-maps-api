@@ -40,7 +40,7 @@ ALL specifications must match Section 02 exactly:
 | 13 | Opportunity Engine™ | ✅ COMPLETE (35 sections, 9 DB tables, 10 validation scenarios — first predictive engine, 10-stage lifecycle, 9 evaluation dimensions) |
 | 14 | Hidden Gem Model™ | ✅ COMPLETE (37 sections, 8 DB tables, 10 validation scenarios — 7-stage lifecycle, Protected Hidden Gem™ designation, graduation = success, scarcity by design) |
 | 15 | Community Recognition System™ | ✅ COMPLETE (37 sections, 8 DB tables, 10 validation scenarios — 8-stage progression, Living Legacy™ designation, recognition ≠ hierarchy) |
-| 16 | Legacy & Learning Engine™ | ⬜ pending |
+| 16 | Legacy & Learning Engine™ | ✅ COMPLETE (37 sections, 8 DB tables, 10 validation scenarios — 4 memory types, 7-stage learning loop, 6-stage knowledge lifecycle, inputs from 9 upstream engines) |
 | 17 | Stewardship Engine™ | ⬜ pending |
 | 18 | Governance Engine™ | ⬜ pending |
 | 19 | Evolution Engine™ | ⬜ pending |
@@ -69,7 +69,8 @@ ALL specifications must match Section 02 exactly:
   ✅ 13. Opportunity Engine™ — complete (first predictive engine — 10-stage lifecycle, 9 dimensions, KinfolkAI™ integration noted in validation)
   ✅ 14. Hidden Gem Model™ — complete (7-stage lifecycle, Protected Hidden Gem™ designation, scarcity by design, contextual badge variants proposed)
   ✅ 15. Community Recognition System™ — complete (8-stage progression, Living Legacy™ designation, recognition ≠ hierarchy, "living story" display proposed)
-  🔄 16. Legacy & Learning Engine™ — NEXT
+  ✅ 16. Legacy & Learning Engine™ — complete (4 memory types, 7-stage learning loop, 6-stage knowledge lifecycle, receives from 9 upstream engines, outputs to all future recommendations)
+  🔄 17. Stewardship Engine™ — NEXT (begins Governance Layer — constitutional cornerstone alongside Trust + BIF™)
 
 ---
 

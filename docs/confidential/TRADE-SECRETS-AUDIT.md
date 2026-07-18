@@ -1291,12 +1291,165 @@ All tables listed below are confidential and proprietary.
 | Opportunity Engine™ | opportunities, opportunity_matches, opportunity_scores, opportunity_categories, opportunity_requirements, opportunity_outcomes, opportunity_constraints, opportunity_versions, opportunity_audit |
 | Hidden Gem Model™ | hidden_gem_assessments, hidden_gem_nominations, hidden_gem_categories, hidden_gem_visibility, hidden_gem_preservation, hidden_gem_graduation, hidden_gem_versions, hidden_gem_audit |
 | Community Recognition System™ | recognition_profiles, recognition_categories, recognition_progression, recognition_history, recognition_nominations, recognition_retirement, recognition_versions, recognition_audit |
+| Legacy & Learning Engine™ | legacy_records, learning_events, institutional_memory, cultural_memory, knowledge_versions, historical_sources, legacy_relationships, legacy_audit |
 
 ---
 
 ---
 
-*END OF AUDIT DOCUMENT — SECTIONS 01 THROUGH 15*
+# 16. LEGACY & LEARNING ENGINE™
+
+**Classification:** Institutional Memory, Knowledge Preservation, Adaptive Learning, and Generational Continuity Intelligence Engine
+**Confidentiality:** Highest restriction
+
+## 16-A. Core Evaluation Dimensions & Weights
+
+| Dimension | Weight |
+|-----------|-------:|
+| Knowledge Value | 20% |
+| Long-Term Relevance | 17% |
+| Transferability | 15% |
+| Historical Reliability | 13% |
+| Community Adoption | 11% |
+| Educational Benefit | 10% |
+| Cultural Preservation | 8% |
+| Generational Continuity | 6% |
+| **Total** | **100%** |
+
+## 16-B. Legacy Score Formula
+
+```
+Legacy Score =
+  (Knowledge Value × .20)
++ (Long-Term Relevance × .17)
++ (Transferability × .15)
++ (Historical Reliability × .13)
++ (Community Adoption × .11)
++ (Educational Benefit × .10)
++ (Cultural Preservation × .08)
++ (Generational Continuity × .06)
+
+Normalized to 0–100.
+```
+
+## 16-C. Learning Loop (7 Stages — Internal)
+
+```
+Stage 1: Experience
+Stage 2: Verification
+Stage 3: Community Learning
+Stage 4: Knowledge Preservation
+Stage 5: Recommendation Updates
+Stage 6: Institutional Memory
+Stage 7: Future Decision Improvement
+```
+
+**Rule: Learning occurs continuously — not through scheduled updates.**
+
+## 16-D. Knowledge Lifecycle (6 Stages — Internal)
+
+```
+Stage 1: Observed
+Stage 2: Verified
+Stage 3: Community Accepted
+Stage 4: Institutional Knowledge
+Stage 5: Legacy Knowledge
+Stage 6: Generational Knowledge
+```
+
+**Rule: Not every observation becomes legacy.**
+
+## 16-E. Memory Type Classifications (4 Types)
+
+| Memory Type | Purpose |
+|-------------|---------|
+| Operational Memory | Platform decisions and procedures |
+| Community Memory | Shared experiences and traditions |
+| Cultural Memory | Heritage, identity, and history |
+| Institutional Memory | Long-term governance and organizational knowledge |
+
+**Rule: Each memory type follows independent retention rules.**
+
+## 16-F. Learning Confidence Labels
+
+| Score Range | Label |
+|-------------|-------|
+| 90–100 | Verified |
+| 80–89 | High |
+| 65–79 | Moderate |
+| 45–64 | Emerging |
+| 20–44 | Low |
+| 0–19 | Unknown |
+
+## 16-G. Upstream Engine Inputs (9 Sources)
+
+The Legacy & Learning Engine™ receives inputs from:
+1. Trust Engine™
+2. Context Engine™
+3. Community Engine™
+4. Discovery Engine™
+5. Safety Intelligence Engine™
+6. Community Ripple™
+7. Community Echo™
+8. Community Return on Impact™
+9. Opportunity Engine™
+
+**Rule: Its output informs EVERY future recommendation across the platform.**
+
+## 16-H. Knowledge Preservation Priority Order
+
+Highest preservation priority:
+1. Community safety lessons
+2. Cultural heritage
+3. Successful mentorship models
+4. Leadership succession
+5. Historical milestones
+6. Community resilience
+7. Governance precedents
+
+## 16-I. Governing Calculation Rules
+- Governing question: "What knowledge should be preserved so future communities consistently make better decisions than previous ones?"
+- Distinction from conventional ML: this engine optimizes WISDOM, not prediction
+- Legacy is never measured by age alone — it is measured by continued usefulness
+- Temporary trends receive lower Long-Term Relevance weighting
+- **Critical rule: History may be UPDATED — but never ERASED**
+- **Critical rule: Learning never bypasses Governance**
+- The engine must NEVER learn from: manipulated data, coordinated fraud, discriminatory practices, unverifiable rumors, temporary popularity, or isolated anomalies
+- Legacy confidence decreases when evidence becomes obsolete or better evidence emerges — historical records remain archived even after expiration
+- Historical integrity receives the highest protection in Anti-Manipulation Rules
+
+---
+
+---
+
+## PROPRIETARY DATABASE TABLES SUMMARY
+
+All tables listed below are confidential and proprietary.
+
+| Engine | Tables |
+|--------|--------|
+| Trust Engine™ | trust_assessments, trust_dimensions, trust_history, trust_flags, trust_versions, trust_audit |
+| BIF™ | bif_assessments, bif_dimensions, bif_history, bif_versions, bif_audit |
+| Context Engine™ | context_profiles, context_signals, context_history, context_versions, context_audit |
+| Community Engine™ | community_assessments, community_dimensions, community_activity, community_versions, community_audit |
+| Discovery Engine™ | discovery_scores, discovery_results, discovery_history, discovery_versions, discovery_audit |
+| Safety Intelligence Engine™ | safety_assessments, safety_incidents, safety_patterns, safety_resources, safety_history, safety_versions, safety_audit |
+| Cultural Influence Engine™ | cultural_assessments, cultural_dimensions, cultural_history, cultural_versions, cultural_audit |
+| Community Catalyst Model™ | catalyst_assessments, catalyst_dimensions, catalyst_actions, catalyst_versions, catalyst_audit |
+| Community Health Index™ | health_assessments, health_dimensions, health_history, health_versions, health_audit |
+| Community Ripple™ | ripple_assessments, ripple_nodes, ripple_edges, ripple_paths, ripple_events, ripple_attribution, ripple_confidence, ripple_versions, ripple_audit |
+| Community Echo™ | echo_assessments, echo_dimensions, echo_history, echo_successors, echo_institutions, echo_preservation, echo_memory, echo_versions, echo_audit |
+| CROI™ | croi_assessments, croi_dimensions, croi_investments, croi_outcomes, croi_benefits, croi_capacity, croi_ripple_links, croi_versions, croi_audit |
+| Opportunity Engine™ | opportunities, opportunity_matches, opportunity_scores, opportunity_categories, opportunity_requirements, opportunity_outcomes, opportunity_constraints, opportunity_versions, opportunity_audit |
+| Hidden Gem Model™ | hidden_gem_assessments, hidden_gem_nominations, hidden_gem_categories, hidden_gem_visibility, hidden_gem_preservation, hidden_gem_graduation, hidden_gem_versions, hidden_gem_audit |
+| Community Recognition System™ | recognition_profiles, recognition_categories, recognition_progression, recognition_history, recognition_nominations, recognition_retirement, recognition_versions, recognition_audit |
+| Legacy & Learning Engine™ | legacy_records, learning_events, institutional_memory, cultural_memory, knowledge_versions, historical_sources, legacy_relationships, legacy_audit |
+
+---
+
+---
+
+*END OF AUDIT DOCUMENT — SECTIONS 01 THROUGH 16*
 *Document continues as additional sections are received.*
 
 ---
