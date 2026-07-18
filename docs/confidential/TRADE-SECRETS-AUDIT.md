@@ -1581,12 +1581,185 @@ All tables listed below are confidential and proprietary.
 | Community Recognition System™ | recognition_profiles, recognition_categories, recognition_progression, recognition_history, recognition_nominations, recognition_retirement, recognition_versions, recognition_audit |
 | Legacy & Learning Engine™ | legacy_records, learning_events, institutional_memory, cultural_memory, knowledge_versions, historical_sources, legacy_relationships, legacy_audit |
 | Stewardship Engine™ | stewardship_assessments, stewardship_reviews, stewardship_actions, stewardship_preservation, stewardship_history, stewardship_versions, stewardship_governance, stewardship_audit |
+| Governance Engine™ | governance_reviews, governance_precedents, governance_policies, constitutional_rules, governance_appeals, governance_decisions, governance_versions, governance_audit |
 
 ---
 
 ---
 
-*END OF AUDIT DOCUMENT — SECTIONS 01 THROUGH 17*
+# 18. GOVERNANCE ENGINE™
+
+**Classification:** Constitutional Governance, Decision Oversight, Policy Integrity, and Institutional Accountability Intelligence Engine
+**Confidentiality:** Highest restriction
+
+## 18-A. Core Evaluation Dimensions & Weights
+
+| Dimension | Weight |
+|-----------|-------:|
+| Constitutional Alignment | 24% |
+| Community Protection | 18% |
+| Policy Compliance | 16% |
+| Transparency | 12% |
+| Accountability | 10% |
+| Human Oversight | 8% |
+| Institutional Consistency | 7% |
+| Long-Term Integrity | 5% |
+| **Total** | **100%** |
+
+## 18-B. Governance Score Formula
+
+```
+Governance Score =
+  (Constitutional Alignment × .24)
++ (Community Protection × .18)
++ (Policy Compliance × .16)
++ (Transparency × .12)
++ (Accountability × .10)
++ (Human Oversight × .08)
++ (Institutional Consistency × .07)
++ (Long-Term Integrity × .05)
+
+Normalized to 0–100.
+```
+
+## 18-C. Governance Confidence Labels
+
+| Score Range | Label |
+|-------------|-------|
+| 90–100 | Verified |
+| 80–89 | High |
+| 65–79 | Moderate |
+| 45–64 | Emerging |
+| 20–44 | Low |
+| 0–19 | Unknown |
+
+## 18-D. Governance Authority Hierarchy (8 Levels — Internal)
+
+```
+Level 1: Platform Constitution          (highest authority)
+Level 2: Foundational Principles
+Level 3: Governance Engine™
+Level 4: Stewardship Engine™
+Level 5: Belonging Intelligence Framework™
+Level 6: Specialized Engines
+Level 7: Recommendations
+Level 8: User Interface                 (lowest authority)
+```
+
+**Critical rule: No recommendation may override constitutional principles.**
+
+## 18-E. Authority Levels for Decisions (5 Levels)
+
+| Level | Authority Type |
+|-------|---------------|
+| Level 1 | Fully automated |
+| Level 2 | Automated with audit |
+| Level 3 | Human confirmation |
+| Level 4 | Governance review |
+| Level 5 | Constitutional review |
+
+**Rule: Authority level increases with consequence.**
+
+## 18-F. Governance Override Scope
+
+Governance may override:
+- Recommendation ranking
+- Promotion
+- Recognition
+- Hidden Gem designation
+- Opportunity recommendation
+- Safety recommendation
+- Community recognition
+- Platform rollout
+
+**Rule: All overrides must be documented.**
+
+## 18-G. Automatic Escalation Triggers (5 conditions)
+
+Automatic escalation occurs when:
+1. Constitutional conflicts exist
+2. Multiple engines disagree
+3. Evidence confidence is insufficient
+4. Public trust may be affected
+5. Legal implications arise
+
+## 18-H. Human Review Mandatory Conditions (5 conditions)
+
+1. Constitutional principles conflict
+2. Policy precedent is absent
+3. Appeals involve permanent consequences
+4. Governance override is recommended
+5. Constitutional amendments are proposed
+
+## 18-I. Decision Ledger™
+
+Every major Governance decision becomes eligible for the Decision Ledger™.
+
+Precedent includes:
+- Constitutional interpretation
+- Policy clarification
+- Governance rationale
+- Future guidance
+
+**Rule: Precedent promotes institutional consistency.**
+
+## 18-J. Governing Calculation Rules
+- Governing question: "Does this decision remain faithful to the Constitution, the community, and the long-term mission of Mapping With Melanin™ regardless of convenience, popularity, or financial benefit?"
+- **Constitutional principle: The Constitution — not algorithms — is the highest authority (18.2)**
+- **Critical rule: Anonymous authority is prohibited** — every consequential decision must identify responsible engine, governing policy, evidence source, review pathway, and audit record (18.10)
+- Policies remain SUBORDINATE to constitutional principles (18.8)
+- Community protection outweighs operational efficiency (18.7)
+- Convenience never outweighs integrity (18.13)
+- **Governance is not management — Governance protects the platform from itself (18.3)**
+- The engine is politically and commercially independent (18.27)
+- Automation remains delegated authority — Human governance remains ultimate authority (18.11)
+
+---
+
+---
+
+## PROPRIETARY DATABASE TABLES SUMMARY
+
+All tables listed below are confidential and proprietary.
+
+| Engine | Tables |
+|--------|--------|
+| Trust Engine™ | trust_assessments, trust_dimensions, trust_history, trust_flags, trust_versions, trust_audit |
+| BIF™ | bif_assessments, bif_dimensions, bif_history, bif_versions, bif_audit |
+| Context Engine™ | context_profiles, context_signals, context_history, context_versions, context_audit |
+| Community Engine™ | community_assessments, community_dimensions, community_activity, community_versions, community_audit |
+| Discovery Engine™ | discovery_scores, discovery_results, discovery_history, discovery_versions, discovery_audit |
+| Safety Intelligence Engine™ | safety_assessments, safety_incidents, safety_patterns, safety_resources, safety_history, safety_versions, safety_audit |
+| Cultural Influence Engine™ | cultural_assessments, cultural_dimensions, cultural_history, cultural_versions, cultural_audit |
+| Community Catalyst Model™ | catalyst_assessments, catalyst_dimensions, catalyst_actions, catalyst_versions, catalyst_audit |
+| Community Health Index™ | health_assessments, health_dimensions, health_history, health_versions, health_audit |
+| Community Ripple™ | ripple_assessments, ripple_nodes, ripple_edges, ripple_paths, ripple_events, ripple_attribution, ripple_confidence, ripple_versions, ripple_audit |
+| Community Echo™ | echo_assessments, echo_dimensions, echo_history, echo_successors, echo_institutions, echo_preservation, echo_memory, echo_versions, echo_audit |
+| CROI™ | croi_assessments, croi_dimensions, croi_investments, croi_outcomes, croi_benefits, croi_capacity, croi_ripple_links, croi_versions, croi_audit |
+| Opportunity Engine™ | opportunities, opportunity_matches, opportunity_scores, opportunity_categories, opportunity_requirements, opportunity_outcomes, opportunity_constraints, opportunity_versions, opportunity_audit |
+| Hidden Gem Model™ | hidden_gem_assessments, hidden_gem_nominations, hidden_gem_categories, hidden_gem_visibility, hidden_gem_preservation, hidden_gem_graduation, hidden_gem_versions, hidden_gem_audit |
+| Community Recognition System™ | recognition_profiles, recognition_categories, recognition_progression, recognition_history, recognition_nominations, recognition_retirement, recognition_versions, recognition_audit |
+| Legacy & Learning Engine™ | legacy_records, learning_events, institutional_memory, cultural_memory, knowledge_versions, historical_sources, legacy_relationships, legacy_audit |
+| Stewardship Engine™ | stewardship_assessments, stewardship_reviews, stewardship_actions, stewardship_preservation, stewardship_history, stewardship_versions, stewardship_governance, stewardship_audit |
+| Governance Engine™ | governance_reviews, governance_precedents, governance_policies, constitutional_rules, governance_appeals, governance_decisions, governance_versions, governance_audit |
+
+---
+
+---
+
+*END OF AUDIT DOCUMENT — SECTIONS 01 THROUGH 18*
+*Document continues as additional sections are received.*
+
+---
+
+**CONFIDENTIALITY NOTICE (REPEATED)**
+This document is the exclusive property of Mapping With Melanin™.
+It contains proprietary trade secret information protected under applicable trade secret law.
+Reproduction, distribution, disclosure, or use of the contents without explicit written
+authorization from the platform owner is strictly prohibited.
+For attorney use only unless otherwise authorized by the platform owner.
+
+---
 *Document continues as additional sections are received.*
 
 ---
