@@ -1,0 +1,758 @@
+# AUDIT 5 — COMMUNITY, KINFOLK CIRCLES, CONNECTIONS, MESSAGING & SOCIAL SYSTEMS
+
+This audit should answer:
+
+> **Can members form meaningful, safe, reciprocal relationships without the platform becoming another noisy, manipulative, or unsafe social network?**
+
+Send Replit the following:
+
+```text
+═══════════════════════════════════════════════════════════════════════
+MAPPING WITH MELANIN™
+AUDIT 5 — COMMUNITY, KINFOLK CIRCLES, CONNECTIONS,
+MESSAGING & SOCIAL SYSTEMS
+READ-ONLY EVIDENCE REVIEW — DO NOT CHANGE ANYTHING
+═══════════════════════════════════════════════════════════════════════
+
+AUDIT EXPECTATION — READ BEFORE BEGINNING
+
+This audit is not asking whether feeds, posts, groups, circles,
+connections, messages, hashtags, requests, or social screens merely
+exist.
+
+A community capability should be marked COMPLETE only when real members
+can safely complete the entire workflow from beginning to end, with:
+
+- working frontend behavior;
+- working backend behavior;
+- correct database persistence;
+- appropriate moderation and abuse protections;
+- clear privacy and visibility rules;
+- usable blocking, reporting, muting, and recovery controls;
+- safe messaging and meetup behavior;
+- accessible states;
+- no fake, hardcoded, disconnected, or demo-only interactions;
+- no feature that creates a relationship promise the platform cannot
+  support;
+- evidence supporting every conclusion.
+
+The purpose of Mapping With Melanin™ is not simply to increase social
+activity. It is to strengthen meaningful connection, reciprocity,
+belonging, opportunity, trust, and community continuity.
+
+ABSOLUTE INSTRUCTION
+
+Do not edit code.
+Do not fix defects.
+Do not create files.
+Do not commit or push.
+Do not deploy.
+Do not change environment variables.
+Do not run migrations.
+Do not seed data.
+Do not send messages, broadcasts, emails, or push notifications to
+real users.
+Do not create test groups, circles, posts, or connections in production.
+Do not alter moderation queues or user relationships.
+
+This is evidence collection only.
+
+───────────────────────────────────────────────────────────────────────
+A. COMPLETE COMMUNITY INVENTORY
+───────────────────────────────────────────────────────────────────────
+
+Audit every relevant capability, including at minimum:
+
+1. Community feed
+2. Post creation
+3. Post editing
+4. Post deletion
+5. Post visibility
+6. Post audience controls
+7. Comments
+8. Replies
+9. Reactions
+10. Likes or helpful votes
+11. Hashtags
+12. Hashtag following
+13. Trending hashtags
+14. Location-based feeds
+15. Topic feeds
+16. Community alerts
+17. Community help requests
+18. Community appreciations
+19. Community challenges
+20. Community spaces
+21. Safe spaces
+22. Community lists
+23. Community references
+24. Stories
+25. Broadcasts
+26. Connections
+27. Follow requests
+28. Accept/decline connection requests
+29. Followers/following
+30. Friend suggestions
+31. Contact matching
+32. Direct messages
+33. Conversation threads
+34. Read receipts
+35. Blocking
+36. Muting
+37. Reporting users
+38. Reporting posts
+39. Reporting messages
+40. Group creation
+41. Group membership
+42. Group invitations
+43. Group moderation
+44. Kinfolk Circles
+45. Circle creation
+46. Circle membership limit
+47. Invite-only rules
+48. Circle saved places
+49. Circle planning
+50. Circle date coordination
+51. Circle nudges
+52. Family circles
+53. Meetup verification
+54. Live location or meetup safety support
+55. Creator profiles
+56. Community verified members
+57. Community Recognition
+58. Community Builder status
+59. Community impact logging
+60. Points or rewards for social participation
+61. New-user posting restriction
+62. Private account behavior
+63. Suspended account behavior
+64. Deleted account content behavior
+65. Minor/family account behavior
+66. Notification behavior for social activity
+67. Searchability of members, groups, and circles
+68. Content retention and deletion
+69. Spam prevention
+70. Anti-harassment protections
+
+Identify any other social or community capability not listed.
+
+───────────────────────────────────────────────────────────────────────
+B. EVIDENCE REQUIRED FOR EVERY CAPABILITY
+───────────────────────────────────────────────────────────────────────
+
+For each capability provide:
+
+- Status:
+  COMPLETE / PARTIAL / PLACEHOLDER / BROKEN /
+  NOT IMPLEMENTED / UNKNOWN
+
+- Status separately for:
+  Replit workspace,
+  GitHub main,
+  Railway production,
+  web,
+  iOS,
+  Android.
+
+- Exact frontend file paths and component names.
+
+- Exact backend route, HTTP method, file, and handler.
+
+- Exact database tables and relevant columns.
+
+- Authentication and authorization requirements.
+
+- Expected member journey.
+
+- Success, loading, empty, blocked, rejected, expired, deleted,
+  suspended, offline, and error states.
+
+- Whether implementation is:
+  real,
+  mocked,
+  hardcoded,
+  demo-only,
+  seeded,
+  disconnected,
+  or dependent on missing configuration.
+
+- Evidence supporting every conclusion.
+
+───────────────────────────────────────────────────────────────────────
+C. COMMUNITY FEED AND POSTING
+───────────────────────────────────────────────────────────────────────
+
+Audit:
+
+- who may post;
+- whether email verification is required;
+- whether the planned 48-hour posting restriction exists;
+- whether posting restrictions are enforced server-side;
+- supported post types;
+- text limits;
+- media limits;
+- video limits;
+- external links;
+- link previews;
+- location tagging;
+- business tagging;
+- event tagging;
+- hashtags;
+- editing;
+- deletion;
+- audience selection;
+- draft support;
+- scheduled posts;
+- duplicate posting;
+- spam rate limits;
+- profanity or harmful-content filters;
+- misinformation controls;
+- accessibility text for media;
+- image metadata stripping;
+- post ownership validation;
+- whether deleted or suspended users’ posts remain visible;
+- whether hidden/private profiles can still appear through posts.
+
+Determine whether posting works as a complete public feature or only as
+a technical route.
+
+───────────────────────────────────────────────────────────────────────
+D. CONNECTIONS, FOLLOWS, AND DISCOVERY
+───────────────────────────────────────────────────────────────────────
+
+Audit:
+
+- follow versus connection semantics;
+- whether connections require mutual acceptance;
+- whether private profiles are protected;
+- whether blocked members appear in suggestions;
+- whether contact matching respects privacy;
+- whether users can opt out of discovery;
+- whether follower and connection counts are accurate;
+- whether duplicate requests are prevented;
+- whether canceled requests remain visible;
+- whether removed connections lose access immediately;
+- whether hidden/deactivated/suspended users remain searchable;
+- whether recommendations are based on real data or hardcoded logic;
+- whether connection suggestions may expose sensitive identity,
+  location, or contact data;
+- whether users understand why someone was recommended.
+
+Identify whether the platform has too many overlapping social models:
+follow, connection, group, circle, space, community, and contact match.
+
+───────────────────────────────────────────────────────────────────────
+E. DIRECT MESSAGING AND CONVERSATIONS
+───────────────────────────────────────────────────────────────────────
+
+Audit:
+
+- who may message whom;
+- whether allowDm is enforced server-side;
+- whether private users can be messaged;
+- whether a connection is required;
+- message length limits;
+- media and attachment support;
+- link handling;
+- read receipts;
+- message editing;
+- message deletion;
+- conversation deletion;
+- blocking;
+- muting;
+- reporting;
+- spam throttling;
+- repeated unwanted-message protection;
+- harassment detection;
+- account suspension effects;
+- minor protections;
+- message encryption claims;
+- server-side retention;
+- admin access;
+- legal-request handling;
+- whether deleted messages are truly deleted or only hidden;
+- whether notification previews expose sensitive content;
+- whether messages are searchable;
+- whether KinfolkAI can access private messages;
+- whether business owners can message saved customers;
+- whether broadcast messaging is consent-based.
+
+Determine whether the platform currently provides private messaging or
+only stored text transmission with limited safety controls.
+
+───────────────────────────────────────────────────────────────────────
+F. KINFOLK CIRCLES
+───────────────────────────────────────────────────────────────────────
+
+Audit the intended Circle model against the implementation:
+
+- maximum membership;
+- invite-only behavior;
+- creator authority;
+- member removal;
+- member departure;
+- invitation expiration;
+- duplicate invitations;
+- saved places;
+- trip planning;
+- date coordination;
+- group messaging;
+- voting;
+- suggestions-only sharing;
+- weekly turns or contribution rhythm;
+- mood or vibe planning;
+- privacy;
+- discoverability;
+- moderation;
+- reporting;
+- blocking;
+- Circle deletion;
+- ownership transfer;
+- inactive Circle archiving;
+- notifications;
+- content retention after departure;
+- whether one person can create unlimited Circles;
+- whether Circle members can add strangers;
+- whether minors may participate;
+- whether exact trip or meetup locations are exposed;
+- whether Circle activity affects recommendations or trust.
+
+State clearly whether the implemented Circle experience matches the
+founder’s intended small, private, trust-centered group model.
+
+───────────────────────────────────────────────────────────────────────
+G. GROUPS, SPACES, AND COMMUNITY STRUCTURE
+───────────────────────────────────────────────────────────────────────
+
+Audit:
+
+- difference between Groups, Circles, Community Spaces, Safe Spaces,
+  and Community Lists;
+- whether members understand those differences;
+- creation rights;
+- membership approval;
+- moderation roles;
+- admin roles;
+- ownership transfer;
+- public/private visibility;
+- content rules;
+- location exposure;
+- group discovery;
+- inactivity;
+- deletion;
+- appeals;
+- member removal;
+- banned-member re-entry;
+- reporting;
+- spam controls;
+- whether one person can create unlimited groups;
+- whether groups can be monetized;
+- whether organizations or businesses can administer groups.
+
+Identify overlapping concepts, duplicated functionality, and
+inconsistent data models.
+
+───────────────────────────────────────────────────────────────────────
+H. COMMUNITY REQUESTS, APPRECIATION, AND RECIPROCITY
+───────────────────────────────────────────────────────────────────────
+
+Audit:
+
+- help request creation;
+- categories;
+- urgency;
+- expiration;
+- fulfillment;
+- closure;
+- privacy;
+- location;
+- financial solicitation;
+- scams;
+- emergency requests;
+- medical requests;
+- housing requests;
+- job requests;
+- responses;
+- moderation;
+- reporting;
+- whether requests can expose vulnerable people;
+- appreciation sending;
+- appreciation abuse;
+- recognition inflation;
+- points or rewards;
+- whether activity measures meaningful reciprocity or simple volume.
+
+Determine whether the platform can distinguish a real community need
+from spam, fraud, manipulation, or unsafe solicitation.
+
+───────────────────────────────────────────────────────────────────────
+I. MEETUP VERIFICATION AND REAL-WORLD SAFETY
+───────────────────────────────────────────────────────────────────────
+
+Audit:
+
+- meetup creation;
+- mutual confirmation;
+- date/time/location verification;
+- trusted-contact notification;
+- overdue alerts;
+- cancellation;
+- no-show handling;
+- blocking after an unsafe encounter;
+- reporting;
+- exact location retention;
+- location expiration;
+- whether both parties must consent;
+- whether one party can alter details after confirmation;
+- whether minors may participate;
+- whether the feature implies safety guarantees;
+- whether KinfolkAI can arrange or recommend private meetups;
+- whether emergency escalation exists;
+- whether a completed meetup record remains permanently tied to both
+  users.
+
+A meetup verification record should create accountability, not a false
+promise that the platform guarantees personal safety.
+
+───────────────────────────────────────────────────────────────────────
+J. CONTENT MODERATION AND ABUSE
+───────────────────────────────────────────────────────────────────────
+
+Audit:
+
+- user reporting;
+- post reporting;
+- message reporting;
+- group reporting;
+- Circle reporting;
+- business-linked post reporting;
+- queue routing;
+- evidence preservation;
+- human review;
+- resolution categories;
+- appeals;
+- repeat-offender tracking;
+- temporary restrictions;
+- account suspension;
+- shadow banning;
+- content removal;
+- emergency escalation;
+- threats;
+- stalking;
+- doxxing;
+- hate speech;
+- targeted harassment;
+- impersonation;
+- scams;
+- sexual exploitation;
+- child-safety concerns;
+- self-harm or crisis content;
+- misinformation;
+- coordinated manipulation;
+- reporter anonymity;
+- accused-member fairness;
+- audit logging.
+
+Determine whether every community surface has a report pathway and
+whether moderation decisions are actually enforceable.
+
+───────────────────────────────────────────────────────────────────────
+K. PRIVACY AND VISIBILITY
+───────────────────────────────────────────────────────────────────────
+
+Audit:
+
+- public/private profiles;
+- post audience;
+- group visibility;
+- Circle visibility;
+- location visibility;
+- activity status;
+- follower lists;
+- connection lists;
+- review visibility;
+- story visibility;
+- block behavior;
+- mute behavior;
+- search exclusion;
+- contact discovery;
+- notification previews;
+- deleted-user identity;
+- anonymous content;
+- reporter identity;
+- admin access;
+- business access;
+- KinfolkAI access;
+- data export;
+- account deletion impact.
+
+Identify every place where a private, blocked, deleted, suspended, or
+anonymous member can still be exposed.
+
+───────────────────────────────────────────────────────────────────────
+L. ACCESSIBILITY
+───────────────────────────────────────────────────────────────────────
+
+Audit:
+
+- screen-reader labels;
+- keyboard navigation;
+- focus order;
+- color-only indicators;
+- captions for video;
+- alt text for images;
+- text scaling;
+- touch targets;
+- reduced motion;
+- haptic controls;
+- accessible error messages;
+- accessible moderation/report forms;
+- accessible group and message navigation;
+- audio content alternatives;
+- plain-language explanations;
+- translation readiness;
+- notification accessibility.
+
+A member must be able to participate in community without relying on
+vision, hearing, dexterity, or advanced technical literacy.
+
+───────────────────────────────────────────────────────────────────────
+M. LEGAL AND ETHICAL REVIEW
+───────────────────────────────────────────────────────────────────────
+
+Identify:
+
+- defamation risk;
+- harassment liability;
+- privacy failures;
+- contact discovery without consent;
+- unsafe meetup implications;
+- illegal marketplace or solicitation through community tools;
+- minors interacting with adults;
+- location exposure;
+- anonymous-report disclosures;
+- retention of private communications;
+- moderation inconsistency;
+- discriminatory group exclusion;
+- paid influence over community visibility;
+- unlabelled sponsored content;
+- misleading “verified community” claims;
+- false safety guarantees;
+- emergency requests that the platform cannot responsibly fulfill.
+
+Classify each content item as:
+
+- member-provided;
+- business-provided;
+- community-reported;
+- platform-generated;
+- AI-generated;
+- moderator-approved;
+- verified fact.
+
+These categories must not be presented as equivalent.
+
+───────────────────────────────────────────────────────────────────────
+N. COMMUNITY PROMISE AUDIT™
+───────────────────────────────────────────────────────────────────────
+
+For each promise, answer:
+
+1. What is promised?
+2. Can the platform fulfill it today?
+3. What evidence supports the answer?
+4. What is missing?
+5. Is the promise overstated?
+6. Could failure create harm?
+
+At minimum review:
+
+- “Find your community.”
+- “Connect deeper.”
+- “Build meaningful relationships.”
+- “Join trusted Kinfolk Circles.”
+- “Ask for help and receive support.”
+- “Share safely.”
+- “Meet people with accountability.”
+- “Be seen and heard.”
+- “Your privacy is respected.”
+- “Community participation strengthens opportunity.”
+- “Community Recognition reflects meaningful contribution.”
+- “No outside ads or attention-selling.”
+
+───────────────────────────────────────────────────────────────────────
+O. MISSING PRODUCT DECISIONS
+───────────────────────────────────────────────────────────────────────
+
+Record unresolved decisions, including:
+
+- What is the difference between following and connecting?
+- Must DMs require mutual connection?
+- Can strangers message business owners?
+- How many Circles may one member create?
+- Is the Circle membership cap permanently 8?
+- Can a Circle creator transfer ownership?
+- How long do invitations remain valid?
+- What happens to content when a Circle closes?
+- Can members create public groups?
+- Who moderates community groups?
+- Can businesses sponsor or administer spaces?
+- Should contact matching be opt-in for both discoverer and discovered?
+- What is the posting limit for new and established members?
+- What is the video limit by tier?
+- Can members post job, housing, financial, legal, or medical requests?
+- Which requests require special disclosures or moderation?
+- Can users delete all private messages?
+- How long are messages retained?
+- Can administrators read messages?
+- What does “anonymous” mean?
+- How are blocked users handled in shared groups or Circles?
+- Can minors message adults?
+- What constitutes Community Recognition?
+- Can recognition be removed?
+- Are points awarded for volume or verified value?
+- How is coordinated engagement manipulation detected?
+- Which community data may KinfolkAI access?
+
+Do not decide these questions. Record them.
+
+───────────────────────────────────────────────────────────────────────
+P. DEVELOPER COMMENTARY
+───────────────────────────────────────────────────────────────────────
+
+End with:
+
+“If you were preparing this community system for a public launch,
+what would YOU improve? Not code. Not architecture. Just observations.”
+
+Address:
+
+- highest-risk hidden issue;
+- most misleading community promise;
+- largest moderation gap;
+- most confusing overlapping feature;
+- likely spam or harassment vector;
+- privacy concern;
+- child-safety concern;
+- accessibility concern;
+- scaling issue;
+- difference between the product’s social promise and actual behavior.
+
+───────────────────────────────────────────────────────────────────────
+Q. CONSTITUTIONAL COMMENTARY
+───────────────────────────────────────────────────────────────────────
+
+Include this founder commentary exactly:
+
+“Community is not measured by how much people post.
+
+It is measured by whether people become meaningfully connected,
+supported, visible, useful, and able to belong.
+
+Mapping With Melanin™ must never confuse activity with relationship,
+attention with care, or popularity with contribution.
+
+A community feature should help people find one another, build trust,
+share knowledge, circulate opportunity, and return with purpose.
+
+Members must be able to participate without surrendering their privacy,
+safety, dignity, or control.
+
+Private spaces must remain private.
+
+Requests for help must not become opportunities for exploitation.
+
+Recognition must reflect meaningful contribution rather than volume,
+status, influence, or coordinated engagement.
+
+The platform succeeds when relationships continue beyond the screen,
+communities become stronger, and people leave better supported than
+when they arrived.”
+
+───────────────────────────────────────────────────────────────────────
+R. THE HUMAN TEST
+───────────────────────────────────────────────────────────────────────
+
+Answer separately for:
+
+- a college student trying to make friends in a new city;
+- a retiree seeking a culturally familiar community;
+- a parent considering whether their young adult child can use the app;
+- a business owner responding to community messages;
+- a member requesting urgent housing or food assistance;
+- a traveler joining a private Kinfolk Circle;
+- a person being harassed by another member;
+- a community organizer managing a group.
+
+Would each person understand:
+
+- who can see them;
+- who can contact them;
+- how to protect themselves;
+- how to ask for help;
+- how to report harm;
+- what the platform will and will not do;
+- what happens next?
+
+───────────────────────────────────────────────────────────────────────
+S. REQUIRED REPORT FORMAT
+───────────────────────────────────────────────────────────────────────
+
+Return the report in this order:
+
+1. Executive Summary
+2. Community Capability Inventory
+3. Web / iOS / Android Comparison
+4. Feed and Posting Findings
+5. Connections and Discovery Findings
+6. Messaging Findings
+7. Kinfolk Circles Findings
+8. Groups, Spaces, and Community Structure
+9. Requests, Appreciation, and Reciprocity
+10. Meetup Verification and Safety
+11. Moderation and Abuse
+12. Privacy and Visibility
+13. Accessibility
+14. Legal and Ethical Findings
+15. Community Promise Audit™
+16. Missing Product Decisions
+17. Future Opportunities / Innovation Register™
+18. Priority Matrix:
+    P0 — must resolve before launch
+    P1 — required for full Day 1 experience
+    P2 — shortly after launch
+    P3 — longer-term
+19. Developer Commentary
+20. Constitutional Commentary
+21. Approved Feature Blueprint™
+22. Human Test
+23. Scorecard and Final Status
+24. Evidence Appendix
+
+The final scorecard must include:
+
+- Engineering Score /100
+- Production Readiness
+- Constitutional Alignment
+- Privacy Readiness
+- Moderation Readiness
+- Safety Readiness
+- Accessibility Readiness
+- Web Status
+- iOS Status
+- Android Status
+- P0 Count
+- P1 Count
+- Overall Designation
+
+End with this exact statement:
+
+“READ-ONLY AUDIT 5 COMPLETE. NO CODE, DATA, CONFIGURATION,
+DEPLOYMENT, MESSAGES, MODERATION RECORDS, OR USER RELATIONSHIPS
+WERE CHANGED.”
+═══════════════════════════════════════════════════════════════════════
+```
+
+One addition to keep in mind: Replit’s inventory shows that the platform has community posts, connections, follows, groups, Circles, messages, community spaces, requests, appreciations, hashtags, alerts, and impact systems. That breadth makes this audit less about whether features exist and more about whether they form one understandable, safe community model. 
+
+Send the full report back before we open Audit 6.
