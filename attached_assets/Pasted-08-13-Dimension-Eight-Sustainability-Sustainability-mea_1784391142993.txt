@@ -1,0 +1,140 @@
+08.13 Dimension Eight — Sustainability
+Sustainability measures whether positive outcomes continue without constant intervention.
+Indicators include:
+recurring funding;
+repeat participation;
+institutional support;
+volunteer continuity;
+leadership succession;
+documented processes.
+08.14 Dimension Nine — Replicability
+Replicability measures whether success can responsibly occur elsewhere.
+The Model evaluates:
+documented process;
+adaptability;
+cost;
+accessibility;
+cultural flexibility;
+required expertise.
+Not every catalyst should be replicated.
+Some remain intentionally local.
+08.15 Community Catalyst Formula
+Catalyst Score =
+(Opportunity Creation × .18)
++(Community Activation × .16)
++(Participation Growth × .15)
++(Relationship Multiplication × .12)
++(Resource Circulation × .11)
++(Community Momentum × .10)
++(Collaboration Quality × .08)
++(Sustainability × .06)
++(Replicability × .04)
+Normalized to 0–100.
+08.16 Catalyst Confidence
+Every Catalyst Score includes a Confidence Score.
+Confidence evaluates:
+evidence quality;
+outcome verification;
+source independence;
+community diversity;
+duration of observation;
+attribution confidence.
+Labels:
+Score	Confidence
+90–100	Verified
+80–89	High
+65–79	Moderate
+45–64	Emerging
+20–44	Low
+0–19	Unknown
+08.17 Catalyst Types
+The Model recognizes multiple catalyst categories.
+Examples include:
+Opportunity Catalyst;
+Economic Catalyst;
+Educational Catalyst;
+Cultural Catalyst;
+Community Builder;
+Safety Catalyst;
+Connection Catalyst;
+Resource Catalyst;
+Legacy Catalyst;
+Innovation Catalyst;
+Institutional Catalyst;
+Volunteer Catalyst.
+An entity may belong to multiple categories simultaneously.
+08.18 Positive Multipliers
+Positive multipliers may apply for:
+serving historically underserved communities;
+creating opportunities repeatedly;
+measurable downstream impact;
+intergenerational benefit;
+cross-community collaboration;
+high reciprocity;
+long-term consistency;
+institutional partnerships;
+verified mentorship outcomes.
+08.19 Catalyst Penalties
+Penalties may apply for:
+performative participation;
+opportunity hoarding;
+exclusionary practices;
+extractive partnerships;
+abandoned initiatives;
+repeated unfulfilled commitments;
+fabricated impact claims;
+manipulated participation numbers;
+repeated cancellation without explanation.
+08.20 Momentum Decay
+Momentum naturally decreases over time.
+Rapid-decay examples:
+one-time viral events;
+temporary campaigns.
+Slow-decay examples:
+mentorship;
+institutions;
+recurring annual programs;
+long-term community organizations.
+Historical impact remains visible within the Legacy & Learning Engine™.
+08.21 Business Catalyst Recognition
+Businesses may qualify as Community Catalysts when they consistently:
+hire locally;
+mentor entrepreneurs;
+host events;
+collaborate with nonprofits;
+support schools;
+provide scholarships;
+sponsor meaningful community activity;
+create safe gathering spaces;
+elevate other businesses.
+Revenue alone does not qualify a business as a Community Catalyst.
+08.22 Individual Catalyst Recognition
+Individuals may qualify through:
+mentorship;
+volunteerism;
+organizing;
+connecting people;
+preserving culture;
+solving problems;
+sharing resources;
+supporting newcomers.
+Follower count has minimal influence.
+08.23 Organizational Catalyst Recognition
+Organizations are evaluated by:
+measurable outcomes;
+community trust;
+collaboration;
+transparency;
+continuity;
+opportunity generation.
+08.24 Anti-Gaming Rules
+Manipulation includes:
+fake attendance;
+fake volunteer hours;
+fabricated referrals;
+duplicate participation;
+purchased engagement;
+coordinated nominations;
+falsified outcomes;
+misleading grant claims.
+Manipulation reduces confidence before reducing scores.
