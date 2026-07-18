@@ -1,0 +1,2145 @@
+═══════════════════════════════════════════════════════════════════════
+MAPPING WITH MELANIN™
+CONFIDENTIAL ALGORITHM SPECIFICATION
+All content confidential — Review Mode only — Not for distribution
+═══════════════════════════════════════════════════════════════════════
+
+# 04. COMMUNITY ENGINE™
+
+## Future-State Production Specification v1.0
+
+**Classification:** Core Community Intelligence Engine
+**Status:** Review Mode — designed as the launch-state model
+**Confidentiality:** Highest restriction; community scoring methodology, evidence weights, reciprocity calculations, intervention thresholds, and recognition logic are confidential trade secrets and are not publicly disclosed
+
+---
+
+## 04.1 Purpose
+
+The Community Engine™ evaluates the strength, quality, accessibility, reciprocity, and lived experience of community surrounding a person, business, neighborhood, city, organization, event, opportunity, or resource.
+
+It determines whether community is merely present, meaningfully connected, actively supportive, structurally accessible, or capable of sustaining belonging over time.
+
+The Community Engine™ does not measure popularity.
+
+It does not treat activity volume, follower count, review quantity, population size, or online engagement as proof of community health.
+
+It evaluates whether people can:
+
+1. find one another;
+2. enter without unnecessary barriers;
+3. participate with dignity;
+4. contribute meaningfully;
+5. receive support;
+6. build trusted relationships;
+7. access opportunities;
+8. return and remain connected;
+9. influence what affects them;
+10. help others do the same.
+
+The Engine’s governing question is:
+
+> **Does this environment help people become meaningfully connected, supported, visible, useful, and able to belong—not only present?**
+
+---
+
+# 04.2 Foundational Principle
+
+Community is not defined solely by proximity.
+
+People may live near one another without connection.
+
+They may gather without trust.
+
+They may participate without influence.
+
+They may be welcomed once without being supported over time.
+
+They may consume from a community without contributing to it.
+
+They may be highly visible while the people most affected remain unheard.
+
+The Community Engine™ therefore distinguishes among:
+
+```text
+Presence
+Participation
+Connection
+Reciprocity
+Support
+Influence
+Continuity
+Belonging
+```
+
+These are related but not interchangeable.
+
+A high number of people present does not establish belonging.
+
+A high number of posts does not establish connection.
+
+A large number of transactions does not establish reciprocity.
+
+A visible cultural identity does not establish authentic community stewardship.
+
+---
+
+# 04.3 Definition of Community
+
+For Mapping With Melanin™, **community** is a network of people, institutions, businesses, places, resources, relationships, histories, and opportunities connected by one or more shared conditions and capable of producing mutual support, recognition, access, continuity, or collective benefit.
+
+Community may be:
+
+* geographic;
+* cultural;
+* relational;
+* professional;
+* educational;
+* historical;
+* interest-based;
+* identity-informed;
+* purpose-based;
+* temporary;
+* digital;
+* intergenerational;
+* diaspora-connected;
+* institution-centered;
+* crisis-responsive.
+
+The Community Engine™ must not assume that all members of a shared identity experience community in the same way.
+
+---
+
+# 04.4 Community Evaluation Objects
+
+The Engine may evaluate community at the following levels.
+
+| Object        | Example                                             |
+| ------------- | --------------------------------------------------- |
+| Person        | Community member, Cultural Ambassador, organizer    |
+| Business      | Restaurant, retailer, service provider              |
+| Event         | Festival, workshop, networking gathering            |
+| Organization  | Nonprofit, association, cultural institution        |
+| Neighborhood  | Local geographic community                          |
+| City          | Metropolitan or municipal community environment     |
+| Resource      | Food bank, scholarship program, legal clinic        |
+| Opportunity   | Job, grant, mentorship, contract                    |
+| Institution   | HBCU, museum, foundation, historic organization     |
+| Digital space | Kinfolk Circle, community discussion, online group  |
+| Network       | Business collective, alumni group, diaspora network |
+| Platform area | Local feed, topic community, resource channel       |
+
+The scoring interpretation changes by object type.
+
+A business is not expected to perform the same community role as a city.
+
+An event is not expected to provide the same continuity as an institution.
+
+---
+
+# 04.5 Core Evaluation Dimensions
+
+The Community Engine™ returns a normalized score from **0 to 100** based on seven dimensions.
+
+| Dimension                    | Baseline weight |
+| ---------------------------- | --------------: |
+| Welcoming Access             |             15% |
+| Meaningful Connection        |             17% |
+| Reciprocity                  |             17% |
+| Community Support            |             16% |
+| Voice & Influence            |             13% |
+| Continuity & Return          |             12% |
+| Stewardship & Shared Benefit |             10% |
+| **Total**                    |        **100%** |
+
+These are baseline weights.
+
+The Context Engine™ and approved Weight Registers may adjust them by context.
+
+---
+
+# 04.6 Dimension One — Welcoming Access
+
+Welcoming Access measures whether people can discover, enter, understand, and participate without avoidable exclusion.
+
+It evaluates:
+
+1. discoverability;
+2. clarity of entry;
+3. affordability;
+4. accessibility;
+5. language access;
+6. cultural familiarity;
+7. newcomer treatment;
+8. family suitability;
+9. digital access;
+10. transportation access;
+11. transparent eligibility;
+12. absence of unnecessary gatekeeping.
+
+## 04.6.1 Welcoming Access Score
+
+```text
+Welcoming Access Score =
+  Discovery Access
++ Entry Clarity
++ Practical Accessibility
++ Cultural Accessibility
++ Newcomer Experience
+- Exclusion Penalties
+```
+
+The result is normalized to 0–100.
+
+## 04.6.2 Welcoming Access subweights
+
+| Component               | Weight |
+| ----------------------- | -----: |
+| Discovery Access        |    15% |
+| Entry Clarity           |    15% |
+| Practical Accessibility |    25% |
+| Cultural Accessibility  |    20% |
+| Newcomer Experience     |    25% |
+
+## 04.6.3 Positive indicators
+
+* clear public information;
+* transparent hours and requirements;
+* confirmed physical accessibility;
+* welcoming first-time participation;
+* multiple entry pathways;
+* affordable or free options;
+* community members willing to assist newcomers;
+* no requirement for insider relationships;
+* culturally respectful communication;
+* visible explanation of norms;
+* family or caregiver accommodations;
+* responsive contact methods.
+
+## 04.6.4 Exclusion indicators
+
+* hidden eligibility requirements;
+* repeated reports of gatekeeping;
+* inaccessible location without disclosure;
+* discriminatory entry behavior;
+* unclear pricing;
+* insider-only access;
+* hostile treatment of newcomers;
+* public welcome language inconsistent with lived experience;
+* unnecessary documentation requirements;
+* selective enforcement of rules;
+* exploitative membership barriers.
+
+---
+
+# 04.7 Dimension Two — Meaningful Connection
+
+Meaningful Connection measures whether people form useful, trusted, or enduring relationships rather than merely occupying the same space.
+
+It evaluates:
+
+1. repeated interaction;
+2. relationship depth;
+3. mutual recognition;
+4. ease of finding aligned people;
+5. small-group connection;
+6. mentorship;
+7. friendship formation;
+8. business collaboration;
+9. information exchange;
+10. connection across generations;
+11. connection across neighborhoods or diaspora communities;
+12. continued contact after first interaction.
+
+## 04.7.1 Meaningful Connection Score
+
+```text
+Meaningful Connection Score =
+  Repeat Interaction Quality
++ Relationship Depth
++ Connection Accessibility
++ Cross-Network Bridge Value
++ Continuation Rate
+- Superficiality Penalty
+```
+
+## 04.7.2 Positive indicators
+
+* users return to engage with the same people;
+* introductions lead to later interaction;
+* mentorship relationships form;
+* community members refer one another;
+* businesses collaborate;
+* members form Kinfolk Circles;
+* relationships continue outside a single event;
+* newcomers report meeting useful or supportive contacts;
+* users identify people they can call on;
+* local and diaspora relationships are sustained.
+
+## 04.7.3 Superficiality indicators
+
+* large attendance with no repeat engagement;
+* engagement driven only by giveaways;
+* high follower counts but low relationship continuity;
+* one-directional broadcasting;
+* repeated participation without reciprocal recognition;
+* staged networking with no follow-through;
+* high interaction volume from coordinated or automated accounts.
+
+---
+
+# 04.8 Dimension Three — Reciprocity
+
+Reciprocity measures whether community benefit moves in more than one direction.
+
+It evaluates whether people, businesses, organizations, and institutions both receive and contribute.
+
+## 04.8.1 Reciprocity Score
+
+```text
+Reciprocity Score =
+  Contribution Rate
++ Benefit Distribution
++ Mutual Support
++ Resource Circulation
++ Response to Community Need
+- Extraction Penalty
+```
+
+## 04.8.2 Reciprocity evidence
+
+Positive evidence includes:
+
+* referrals given and received;
+* community members helping one another;
+* businesses supporting local initiatives;
+* paid opportunities returned to the community;
+* useful information shared;
+* mentorship offered;
+* resources contributed;
+* volunteer support;
+* community concerns acknowledged;
+* revenue circulating through local businesses;
+* Cultural Ambassadors directing attention to community benefit;
+* institutions creating pathways rather than one-time appearances.
+
+## 04.8.3 Extraction indicators
+
+* gathering community data without returning value;
+* cultural promotion without compensation or recognition;
+* businesses benefiting from community identity without community investment;
+* repeated requests for labor without reciprocity;
+* influencer activity that extracts visibility but does not create access;
+* institutions using community stories without consent;
+* paid partnerships hidden from the community;
+* resources consistently flowing outward without measurable return;
+* predatory pricing during community need;
+* using crisis conditions for promotion.
+
+---
+
+# 04.9 Dimension Four — Community Support
+
+Community Support measures whether useful help is available when people need it.
+
+Support may be emotional, informational, practical, economic, educational, safety-related, professional, or institutional.
+
+## 04.9.1 Community Support Score
+
+```text
+Community Support Score =
+  Resource Availability
++ Responsiveness
++ Practical Usefulness
++ Reliability
++ Reach to Underserved Members
+- Support Failure Penalties
+```
+
+## 04.9.2 Support categories
+
+* food and basic needs;
+* housing;
+* employment;
+* education;
+* business development;
+* transportation;
+* childcare;
+* elder support;
+* legal assistance;
+* safety information;
+* emergency support;
+* healthcare navigation;
+* mentorship;
+* relocation assistance;
+* social and emotional connection;
+* cultural continuity.
+
+## 04.9.3 Positive indicators
+
+* verified resources available;
+* community questions receive useful responses;
+* urgent needs are routed appropriately;
+* businesses share opportunities;
+* users report receiving actionable help;
+* resource eligibility is clear;
+* assistance reaches people with fewer connections;
+* community organizations collaborate;
+* information remains current;
+* support is not conditioned on public praise.
+
+## 04.9.4 Support failure indicators
+
+* outdated or false resources;
+* repeated unanswered requests;
+* performative offers;
+* referral loops with no actual assistance;
+* assistance available only to insiders;
+* public promises without operational capacity;
+* exploitative support conditions;
+* excessive data collection before aid;
+* emergency needs treated as promotional opportunities.
+
+---
+
+# 04.10 Dimension Five — Voice & Influence
+
+Voice & Influence measures whether people can meaningfully shape what affects them.
+
+It evaluates:
+
+1. ability to speak;
+2. likelihood of being heard;
+3. responsiveness to feedback;
+4. participation in decisions;
+5. correction pathways;
+6. representation;
+7. transparency;
+8. recognition of lived experience;
+9. protection from retaliation;
+10. influence over community priorities.
+
+## 04.10.1 Voice & Influence Score
+
+```text
+Voice & Influence Score =
+  Expression Access
++ Decision Participation
++ Responsiveness
++ Correction Power
++ Representation Quality
+- Silencing Penalties
+```
+
+## 04.10.2 Positive indicators
+
+* community feedback leads to visible action;
+* users can dispute inaccurate information;
+* businesses respond respectfully to concerns;
+* local members influence recommendations;
+* decisions are explained;
+* community members participate in governance;
+* historically overlooked voices are included;
+* anonymity is available when necessary;
+* disagreement does not automatically produce exclusion;
+* appeals are reviewed.
+
+## 04.10.3 Silencing indicators
+
+* retaliation for criticism;
+* deleting legitimate concerns without review;
+* requiring public identity for sensitive reports;
+* allowing popularity to override evidence;
+* treating business-owner preference as more important than community safety;
+* excluding affected people from decision-making;
+* presenting consultation without actual influence;
+* suppressing negative evidence for payment or partnership reasons.
+
+---
+
+# 04.11 Dimension Six — Continuity & Return
+
+Continuity & Return measures whether people remain connected over time and whether community value survives beyond a single transaction, event, post, visit, or campaign.
+
+## 04.11.1 Continuity & Return Score
+
+```text
+Continuity & Return Score =
+  Return Participation
++ Relationship Persistence
++ Institutional Continuity
++ Knowledge Retention
++ Multi-Stage Engagement
+- Abandonment Penalty
+```
+
+## 04.11.2 Positive indicators
+
+* people return voluntarily;
+* relationships continue;
+* businesses retain community trust;
+* events become recurring institutions;
+* knowledge is preserved;
+* community members advance from participant to contributor;
+* resources remain available;
+* alumni or former residents stay connected;
+* users return to help others;
+* community history is recorded;
+* partnerships survive leadership transitions.
+
+## 04.11.3 Abandonment indicators
+
+* one-time extraction;
+* temporary campaigns with no follow-through;
+* community spaces disappearing without notice;
+* organizations leaving after funding ends;
+* users repeatedly required to restart relationships;
+* unresolved commitments;
+* disappearing resources;
+* platform recognition based only on temporary activity.
+
+---
+
+# 04.12 Dimension Seven — Stewardship & Shared Benefit
+
+Stewardship & Shared Benefit measures whether community assets, trust, stories, opportunities, and resources are handled responsibly.
+
+It evaluates whether benefits are durable, distributed, and protected for future participants.
+
+## 04.12.1 Stewardship Score
+
+```text
+Stewardship & Shared Benefit Score =
+  Responsible Resource Use
++ Community Benefit Distribution
++ Cultural Respect
++ Long-Term Accountability
++ Future Capacity Building
+- Stewardship Violations
+```
+
+## 04.12.2 Positive indicators
+
+* community stories are used with consent;
+* creators and contributors receive recognition;
+* economic benefit reaches community members;
+* institutions invest in future capacity;
+* local knowledge is preserved;
+* leadership succession exists;
+* data use is transparent;
+* partnerships include community protections;
+* short-term success strengthens long-term access;
+* youth and future generations are considered.
+
+## 04.12.3 Stewardship violations
+
+* unauthorized use of community stories;
+* displacement caused by promotion without safeguards;
+* cultural exploitation;
+* undisclosed commercial influence;
+* misuse of community data;
+* removal of community control;
+* short-term profit that weakens long-term access;
+* failure to preserve important records;
+* exclusion of future stewards;
+* abandonment after visibility or funding is obtained.
+
+---
+
+# 04.13 Standard Community Score Formula
+
+The baseline Community Score is:
+
+```text
+Community Score =
+  (Welcoming Access × 0.15)
++ (Meaningful Connection × 0.17)
++ (Reciprocity × 0.17)
++ (Community Support × 0.16)
++ (Voice & Influence × 0.13)
++ (Continuity & Return × 0.12)
++ (Stewardship & Shared Benefit × 0.10)
+```
+
+Example:
+
+```text
+Welcoming Access:              82 × 0.15 = 12.30
+Meaningful Connection:         76 × 0.17 = 12.92
+Reciprocity:                   71 × 0.17 = 12.07
+Community Support:             79 × 0.16 = 12.64
+Voice & Influence:             68 × 0.13 =  8.84
+Continuity & Return:           74 × 0.12 =  8.88
+Stewardship & Shared Benefit:  81 × 0.10 =  8.10
+
+Raw Community Score = 75.75
+Rounded Community Score = 76
+```
+
+The raw score must then be confidence-adjusted under the BIF.
+
+---
+
+# 04.14 Community Confidence
+
+The Community Engine™ returns both:
+
+* a Community Score;
+* a Community Confidence level.
+
+## 04.14.1 Community Confidence Formula
+
+```text
+Community Confidence =
+  Evidence Quality
+× Evidence Volume
+× Evidence Diversity
+× Community Representation
+× Recency
+× Independence
+```
+
+The result is normalized to the BIF confidence scale.
+
+## 04.14.2 Evidence Volume Factor
+
+| Qualified evidence items | Factor |
+| -----------------------: | -----: |
+|                      50+ |   1.00 |
+|                    30–49 |   0.92 |
+|                    15–29 |   0.82 |
+|                     8–14 |   0.70 |
+|                      4–7 |   0.55 |
+|                      2–3 |   0.40 |
+|                        1 |   0.25 |
+|                        0 |   0.00 |
+
+Evidence items must be qualified and non-duplicative.
+
+## 04.14.3 Evidence Diversity Factor
+
+| Distinct evidence categories | Factor |
+| ---------------------------: | -----: |
+|                    7 or more |   1.00 |
+|                            6 |   0.92 |
+|                            5 |   0.84 |
+|                            4 |   0.72 |
+|                            3 |   0.58 |
+|                            2 |   0.42 |
+|                            1 |   0.25 |
+|                            0 |   0.00 |
+
+## 04.14.4 Community Representation Factor
+
+This factor measures whether evidence reflects more than one narrow subgroup or highly coordinated source.
+
+| Representation                          | Factor |
+| --------------------------------------- | -----: |
+| Broad, relevant, balanced participation |   1.00 |
+| Strong representation with minor gaps   |   0.90 |
+| Moderate representation                 |   0.75 |
+| Narrow representation                   |   0.55 |
+| Highly concentrated representation      |   0.35 |
+| Unknown                                 |   0.20 |
+| No relevant community evidence          |   0.00 |
+
+Representation must not be calculated through protected-identity profiling.
+
+It may use relevant participation roles, geography, relationship to the entity, visit type, time, and independent evidence sources.
+
+---
+
+# 04.15 Evidence Categories
+
+The Community Engine™ may accept the following evidence categories.
+
+## Category A — Lived Experience
+
+* community surveys;
+* verified visits;
+* return participation;
+* event attendance;
+* resource use;
+* business interactions;
+* neighborhood experience;
+* community support outcomes;
+* relocation experience;
+* relationship continuity.
+
+## Category B — Behavioral Evidence
+
+* repeat participation;
+* referrals;
+* saved entities;
+* voluntary return;
+* follow-up connection;
+* resource sharing;
+* mentorship activity;
+* collaborative actions;
+* contribution behavior;
+* issue resolution.
+
+## Category C — Institutional Evidence
+
+* formal programs;
+* recurring events;
+* resource infrastructure;
+* community partnerships;
+* public commitments;
+* funding continuity;
+* governance structures;
+* published impact reports;
+* local institution participation;
+* verified community services.
+
+## Category D — Economic Circulation
+
+* local purchasing;
+* community referrals;
+* supplier relationships;
+* paid opportunities;
+* local hiring;
+* business collaboration;
+* marketplace activity;
+* grants or scholarships;
+* community investment;
+* repeat customer support.
+
+## Category E — Cultural Evidence
+
+* preservation of community history;
+* culturally relevant programming;
+* local storytelling;
+* intergenerational knowledge;
+* diaspora connection;
+* community recognition;
+* heritage-site participation;
+* cultural education;
+* creator attribution;
+* respectful representation.
+
+## Category F — Support Evidence
+
+* assistance requests;
+* fulfilled resource referrals;
+* response times;
+* crisis support;
+* mentorship;
+* job referrals;
+* housing leads;
+* community problem-solving;
+* verified resource availability;
+* mutual aid.
+
+## Category G — Governance Evidence
+
+* community feedback;
+* appeals;
+* corrections;
+* dispute outcomes;
+* policy participation;
+* moderation fairness;
+* responsiveness;
+* public accountability;
+* stakeholder involvement;
+* evidence of retaliation or suppression.
+
+---
+
+# 04.16 Evidence Eligibility
+
+Community evidence is eligible only when:
+
+1. it relates to the evaluated object;
+2. it falls within the relevant timeframe;
+3. its source relationship is known or appropriately classified;
+4. conflicts of interest are disclosed where applicable;
+5. duplicate activity is removed;
+6. coordinated manipulation is screened;
+7. private evidence is used only as permitted;
+8. the evidence is specific enough to interpret;
+9. the evidence is not based solely on popularity;
+10. the evidence does not rely on prohibited identity inference.
+
+---
+
+# 04.17 Evidence Relationship Types
+
+Every evidence item must identify the contributor’s relationship to the evaluated object.
+
+| Relationship               | Example                                    |
+| -------------------------- | ------------------------------------------ |
+| Direct participant         | Attended event, used resource              |
+| Customer                   | Purchased from business                    |
+| Resident                   | Lives in neighborhood                      |
+| Visitor                    | Visited location                           |
+| Employee                   | Works or worked for entity                 |
+| Business owner             | Owns evaluated or related business         |
+| Organizer                  | Organized event or initiative              |
+| Partner                    | Formal collaborator                        |
+| Volunteer                  | Contributed time                           |
+| Recipient                  | Received support or opportunity            |
+| Observer                   | Witnessed but did not directly participate |
+| Institution representative | Represents organization                    |
+| Cultural Ambassador        | Promoted or interpreted experience         |
+| Platform moderator         | Reviewed evidence                          |
+| Unknown                    | Relationship cannot be established         |
+
+Unknown relationships reduce confidence.
+
+Interested-party relationships do not automatically disqualify evidence but require conflict-of-interest adjustment.
+
+---
+
+# 04.18 Community Signal Dictionary
+
+Each community signal must be defined in the Belonging Signals™ Dictionary.
+
+Launch-state signal groups include:
+
+1. welcoming signals;
+2. connection signals;
+3. reciprocity signals;
+4. support signals;
+5. voice signals;
+6. continuity signals;
+7. stewardship signals;
+8. exclusion signals;
+9. extraction signals;
+10. manipulation signals;
+11. crisis-response signals;
+12. growth signals;
+13. institutional signals;
+14. intergenerational signals.
+
+Every signal definition must include:
+
+* signal ID;
+* name;
+* description;
+* eligible sources;
+* polarity;
+* maximum contribution;
+* decay schedule;
+* verification requirement;
+* conflict-of-interest rule;
+* applicable entity types;
+* context restrictions;
+* anti-gaming treatment;
+* public explanation eligibility.
+
+---
+
+# 04.19 Positive Community Indicators
+
+Positive signals may increase one or more dimension scores.
+
+Examples include:
+
+* newcomers welcomed;
+* questions answered;
+* referrals completed;
+* people return voluntarily;
+* businesses support one another;
+* local hiring occurs;
+* Cultural Ambassadors create measurable opportunity;
+* mentorship relationships continue;
+* resource needs are met;
+* community concerns lead to change;
+* historical knowledge is preserved;
+* community members become leaders;
+* events recur;
+* institutions collaborate;
+* support reaches people outside dominant social circles;
+* conflicts are repaired;
+* businesses respond constructively;
+* community members recommend one another;
+* economic value circulates locally;
+* people report feeling known rather than merely marketed to.
+
+---
+
+# 04.20 Community Risk Indicators
+
+Risk indicators may reduce dimension scores or trigger review.
+
+Examples include:
+
+* repeated gatekeeping;
+* exclusion of newcomers;
+* insider-only access;
+* harassment or retaliation;
+* extraction without return;
+* misleading community claims;
+* performative partnerships;
+* abandoned commitments;
+* suppression of criticism;
+* coordination to manipulate scores;
+* concentrated benefits;
+* cultural exploitation;
+* community displacement;
+* inaccessible resources;
+* public-facing diversity without internal influence;
+* unpaid labor expectations;
+* inconsistent treatment;
+* false urgency;
+* resource hoarding;
+* reputation management replacing accountability.
+
+---
+
+# 04.21 Exclusion Penalties
+
+The following baseline penalties may apply.
+
+| Condition                                                 | Baseline penalty |
+| --------------------------------------------------------- | ---------------: |
+| Verified discriminatory exclusion                         |       −30 to −60 |
+| Repeated newcomer gatekeeping                             |       −10 to −25 |
+| Accessibility misrepresentation                           |       −15 to −35 |
+| Hidden eligibility barriers                               |       −10 to −20 |
+| Retaliation for legitimate feedback                       |       −20 to −40 |
+| Community participation restricted for commercial reasons |       −10 to −25 |
+| Insider-only benefit pattern                              |       −10 to −30 |
+| Public inclusion claims contradicted by verified evidence |       −15 to −35 |
+
+Penalties may affect one dimension or the total Community Score.
+
+Critical safety issues are routed to the Safety Intelligence Engine™ and may trigger an override rather than a standard penalty.
+
+---
+
+# 04.22 Extraction Penalties
+
+| Condition                                           | Baseline penalty |
+| --------------------------------------------------- | ---------------: |
+| Cultural use without consent or attribution         |       −15 to −35 |
+| Repeated unpaid community labor                     |       −10 to −30 |
+| Hidden commercial use of community data             |       −25 to −50 |
+| Crisis profiteering                                 |       −25 to −60 |
+| Community visibility without shared benefit         |       −10 to −25 |
+| Partnership benefits concentrated outside community |       −10 to −30 |
+| Misleading philanthropic claims                     |       −15 to −40 |
+| Community story used after permission withdrawn     |       −25 to −50 |
+
+A severe extraction finding may also reduce Trust, Stewardship, Cultural Influence, or Promotion eligibility.
+
+---
+
+# 04.23 Community Score Floors and Caps
+
+Certain conditions limit the maximum score.
+
+## 04.23.1 Baseline caps
+
+| Condition                           | Maximum Community Score |
+| ----------------------------------- | ----------------------: |
+| No direct community evidence        |                      59 |
+| Only one evidence category          |                      54 |
+| No reciprocity evidence             |                      69 |
+| No voice or correction pathway      |                      74 |
+| No continuity evidence              |                      79 |
+| Active unresolved exclusion concern |                      64 |
+| Verified retaliation                |                      49 |
+| Severe extraction finding           |                      39 |
+| Active governance hold              |         0 for promotion |
+
+## 04.23.2 Score floors
+
+No positive activity creates a mandatory score floor.
+
+The Engine must remain capable of recognizing serious community harm despite high participation or visibility.
+
+---
+
+# 04.24 Context-Specific Weight Profiles
+
+## 04.24.1 Local Community
+
+| Dimension                    | Weight |
+| ---------------------------- | -----: |
+| Welcoming Access             |    15% |
+| Meaningful Connection        |    20% |
+| Reciprocity                  |    18% |
+| Community Support            |    18% |
+| Voice & Influence            |    12% |
+| Continuity & Return          |    10% |
+| Stewardship & Shared Benefit |     7% |
+
+## 04.24.2 Relocation
+
+| Dimension                    | Weight |
+| ---------------------------- | -----: |
+| Welcoming Access             |    13% |
+| Meaningful Connection        |    15% |
+| Reciprocity                  |    13% |
+| Community Support            |    20% |
+| Voice & Influence            |    12% |
+| Continuity & Return          |    17% |
+| Stewardship & Shared Benefit |    10% |
+
+## 04.24.3 Local Business
+
+| Dimension                    | Weight |
+| ---------------------------- | -----: |
+| Welcoming Access             |    18% |
+| Meaningful Connection        |    13% |
+| Reciprocity                  |    22% |
+| Community Support            |    15% |
+| Voice & Influence            |    10% |
+| Continuity & Return          |    12% |
+| Stewardship & Shared Benefit |    10% |
+
+## 04.24.4 Cultural Ambassador
+
+| Dimension                    | Weight |
+| ---------------------------- | -----: |
+| Welcoming Access             |     8% |
+| Meaningful Connection        |    18% |
+| Reciprocity                  |    20% |
+| Community Support            |    12% |
+| Voice & Influence            |    17% |
+| Continuity & Return          |    10% |
+| Stewardship & Shared Benefit |    15% |
+
+## 04.24.5 Community Resource
+
+| Dimension                    | Weight |
+| ---------------------------- | -----: |
+| Welcoming Access             |    22% |
+| Meaningful Connection        |     8% |
+| Reciprocity                  |    10% |
+| Community Support            |    30% |
+| Voice & Influence            |    10% |
+| Continuity & Return          |    12% |
+| Stewardship & Shared Benefit |     8% |
+
+## 04.24.6 Cultural Heritage
+
+| Dimension                    | Weight |
+| ---------------------------- | -----: |
+| Welcoming Access             |    10% |
+| Meaningful Connection        |    14% |
+| Reciprocity                  |    12% |
+| Community Support            |     8% |
+| Voice & Influence            |    12% |
+| Continuity & Return          |    20% |
+| Stewardship & Shared Benefit |    24% |
+
+These profiles require Weight Register approval before production use.
+
+---
+
+# 04.25 Entity-Type Interpretation Rules
+
+## 04.25.1 Businesses
+
+Businesses are evaluated on:
+
+* accessibility;
+* customer welcome;
+* local reciprocity;
+* community support;
+* responsiveness;
+* repeat relationships;
+* employment and opportunity;
+* cultural respect;
+* community contribution.
+
+Businesses are not required to act as charities.
+
+Their score reflects whether their community relationship is responsible and mutually beneficial.
+
+## 04.25.2 Neighborhoods
+
+Neighborhoods are evaluated on:
+
+* access;
+* social connection;
+* resource availability;
+* local institutions;
+* community voice;
+* continuity;
+* resident participation;
+* newcomer integration;
+* economic circulation;
+* safety and trust interactions.
+
+## 04.25.3 Events
+
+Events are evaluated on:
+
+* entry access;
+* participant connection;
+* inclusion;
+* community benefit;
+* follow-up pathways;
+* creator recognition;
+* recurring value;
+* safety and accessibility.
+
+A one-time event cannot receive full continuity credit without verified follow-through.
+
+## 04.25.4 Cultural Ambassadors
+
+Cultural Ambassadors are evaluated on:
+
+* authentic connection;
+* community reciprocity;
+* opportunity creation;
+* responsible influence;
+* disclosure;
+* continuity;
+* stewardship;
+* treatment of community stories.
+
+Follower count alone may contribute no more than 10% to related influence calculations and does not directly establish Community Score.
+
+## 04.25.5 Resources
+
+Resources are evaluated on:
+
+* discoverability;
+* eligibility clarity;
+* accessibility;
+* reliability;
+* successful use;
+* responsiveness;
+* reach;
+* continuity;
+* non-exploitative operation.
+
+## 04.25.6 Cities
+
+Cities are evaluated through aggregated community evidence and coordinated with:
+
+* Community Health Index™;
+* City Maturity Model™;
+* Safety Intelligence Engine™;
+* Opportunity Engine™;
+* Discovery Engine™;
+* Trust Engine™.
+
+The Community Engine™ must not treat a city as culturally unified.
+
+---
+
+# 04.26 Cold-Start Rules
+
+## 04.26.1 New entity
+
+For a new entity with limited evidence:
+
+1. calculate provisional dimension scores only where evidence exists;
+2. mark unsupported dimensions as Unknown;
+3. do not substitute platform averages for entity evidence;
+4. permit search eligibility where otherwise allowed;
+5. restrict strong recommendation or promotion;
+6. show emerging status where appropriate;
+7. invite community evidence without pressuring positive reviews;
+8. apply anti-gaming monitoring.
+
+## 04.26.2 New community or underrepresented area
+
+The Engine must not punish a community for having less platform data.
+
+It may use:
+
+* verified institutional evidence;
+* public resource data;
+* local organization information;
+* official event history;
+* business and community submissions;
+* historical evidence;
+* cautious regional context.
+
+Low data produces lower confidence, not automatic low community quality.
+
+---
+
+# 04.27 Community Evidence Decay
+
+Different evidence types decay at different rates.
+
+## 04.27.1 Rapid-decay evidence
+
+Examples:
+
+* current response time;
+* active resource availability;
+* event participation;
+* temporary access issue;
+* active conflict.
+
+Suggested decay:
+
+```text
+0–30 days:     100%
+31–90 days:     75%
+91–180 days:    50%
+181–365 days:   25%
+Over 365 days:  10%
+```
+
+## 04.27.2 Moderate-decay evidence
+
+Examples:
+
+* business community participation;
+* repeated support;
+* local collaboration;
+* mentorship activity;
+* accessibility practices.
+
+```text
+0–90 days:      100%
+91–180 days:     90%
+181–365 days:    75%
+1–2 years:       55%
+2–3 years:       35%
+Over 3 years:    20%
+```
+
+## 04.27.3 Slow-decay evidence
+
+Examples:
+
+* institutional continuity;
+* historical stewardship;
+* long-term community investment;
+* sustained local presence.
+
+```text
+0–1 year:       100%
+1–3 years:       90%
+3–5 years:       80%
+5–10 years:      70%
+Over 10 years:   60%
+```
+
+## 04.27.4 Persistent evidence
+
+Certain verified findings remain historically relevant:
+
+* major community milestones;
+* verified severe extraction;
+* formal accountability outcomes;
+* institutional founding;
+* long-term stewardship commitments;
+* documented historical significance.
+
+Persistent evidence may lose current operational influence but remains in the Legacy & Learning Engine™.
+
+---
+
+# 04.28 Conflict Resolution
+
+Community evidence may conflict.
+
+Examples:
+
+* newcomers report welcome while long-term residents report exclusion;
+* an event creates strong connection but provides no continuity;
+* a business supports community organizations but ignores customer concerns;
+* high participation coexists with low voice;
+* an institution preserves history but restricts practical access.
+
+The Engine applies these rules.
+
+## Rule 1 — Dimension-specific conflict
+
+Conflicting evidence must first be assigned to the correct dimension rather than averaged indiscriminately.
+
+## Rule 2 — Direct experience outweighs marketing claims
+
+Verified lived experience ordinarily outweighs self-description.
+
+## Rule 3 — Repeated independent evidence outweighs isolated reports
+
+Volume alone is insufficient; independence and evidence quality must also be considered.
+
+## Rule 4 — Harm is not canceled by popularity
+
+High attendance, sales, or follower count may not erase verified exclusion, retaliation, or extraction.
+
+## Rule 5 — Positive impact in one dimension does not erase failure in another
+
+Strong cultural stewardship does not automatically correct poor accessibility.
+
+Strong support does not automatically establish voice.
+
+## Rule 6 — Community disagreement may be genuine
+
+The Engine must preserve materially different experiences when evidence supports them.
+
+## Rule 7 — Recent operational evidence may control current recommendations
+
+Long-term reputation does not override current verified conditions.
+
+## Rule 8 — Serious unresolved conflict lowers confidence
+
+When conflicts cannot be resolved, the system must communicate uncertainty rather than force consensus.
+
+---
+
+# 04.29 Community Segmentation Restrictions
+
+The Engine may distinguish relevant experience groups only when necessary to understand material differences.
+
+Permitted examples:
+
+* residents versus visitors;
+* customers versus employees;
+* newcomers versus long-term participants;
+* direct recipients versus observers;
+* first-time attendees versus repeat attendees;
+* business owners versus customers;
+* event participants versus organizers;
+* daytime versus nighttime visitors.
+
+The Engine may not create hidden community segments based on inferred protected identity, socioeconomic profiling, political belief, or other sensitive attributes.
+
+---
+
+# 04.30 Anti-Gaming Rules
+
+Potential manipulation signals include:
+
+1. coordinated positive submissions;
+2. reciprocal rating rings;
+3. mass account creation;
+4. copied community narratives;
+5. event attendance inflation;
+6. fabricated referrals;
+7. self-reported community impact without corroboration;
+8. business employees posing as unrelated community members;
+9. Cultural Ambassadors concealing paid relationships;
+10. repeated support claims with no completed outcome;
+11. artificial return behavior;
+12. duplicate resource submissions;
+13. suppressing negative community evidence;
+14. incentive programs requiring positive ratings;
+15. geographic spoofing;
+16. rapid score changes unsupported by real events.
+
+Responses may include:
+
+* evidence discount;
+* confidence reduction;
+* temporary score freeze;
+* verification request;
+* promotion hold;
+* contributor weighting reduction;
+* network investigation;
+* human review;
+* Governance escalation.
+
+---
+
+# 04.31 Community Intervention Rules
+
+The Community Engine™ may recommend intervention when a community pattern is materially weak or at risk.
+
+Interventions are not punishments.
+
+They identify what may strengthen access, trust, participation, or continuity.
+
+## 04.31.1 Intervention levels
+
+| Level | Name            | Meaning                                                         |
+| ----: | --------------- | --------------------------------------------------------------- |
+|     0 | No intervention | Normal operation                                                |
+|     1 | Informational   | Offer best practices or missing information                     |
+|     2 | Developmental   | Recommend specific community-building action                    |
+|     3 | Priority        | Material weakness affecting recommendation or recognition       |
+|     4 | Governance      | Serious exclusion, extraction, retaliation, or systemic concern |
+|     5 | Safety-linked   | Safety or urgent harm issue routed to appropriate engine        |
+
+## 04.31.2 Example interventions
+
+* improve accessibility information;
+* create newcomer guidance;
+* establish a feedback process;
+* add community referral pathways;
+* disclose partnership compensation;
+* create follow-up after events;
+* confirm resource availability;
+* improve dispute response;
+* add local hiring or mentorship pathways;
+* preserve community history;
+* create community-benefit reporting;
+* submit issue for Governance review.
+
+The public platform must not expose confidential intervention status unless approved.
+
+---
+
+# 04.32 Community Growth Recognition
+
+The Community Engine™ may identify meaningful growth.
+
+Growth must reflect improvement in evidence, not merely increased platform activity.
+
+Examples:
+
+* improved newcomer access;
+* increased completed referrals;
+* stronger return participation;
+* better issue resolution;
+* broader community representation;
+* sustained resource availability;
+* increased mentorship;
+* verified economic circulation;
+* improved community voice;
+* repaired trust after accountability.
+
+Growth may qualify an entity for:
+
+* Community Milestones™;
+* Hidden Gem review;
+* Community Recognition;
+* Living Legacy™ progression;
+* Community Catalyst evaluation;
+* increased recommendation eligibility.
+
+No recognition is automatic solely because a score increased.
+
+---
+
+# 04.33 Relationship to Community Health Index™
+
+The Community Engine™ evaluates the quality of community relationships and lived participation.
+
+The Community Health Index™ evaluates broader structural community conditions.
+
+The distinction is:
+
+```text
+Community Engine™:
+How well are people connecting, supporting, influencing, and returning?
+
+Community Health Index™:
+How healthy, resilient, resourced, and sustainable is the broader
+community environment?
+```
+
+The two engines may share evidence but must not duplicate final calculations.
+
+---
+
+# 04.34 Relationship to Community Catalyst Model™
+
+The Community Engine™ identifies community conditions and activity.
+
+The Community Catalyst Model™ evaluates whether an action, person, business, event, or institution produces measurable positive movement.
+
+Example:
+
+```text
+Community Engine:
+The event created meaningful connection and repeat engagement.
+
+Community Catalyst Model:
+The event led to three new business partnerships, two mentorship
+relationships, and a recurring community program.
+```
+
+---
+
+# 04.35 Relationship to Community Ripple™ and Community Echo™
+
+The Community Engine™ evaluates current community quality.
+
+Community Ripple™ tracks downstream impact chains.
+
+Community Echo™ tracks repeated or recurring influence over time.
+
+Example:
+
+```text
+Community Engine:
+A resource was useful and accessible.
+
+Community Ripple:
+The recipient used the resource, gained employment, and later referred
+three others.
+
+Community Echo:
+The resource continues to be recommended and produce successful outcomes
+across multiple cycles.
+```
+
+---
+
+# 04.36 Relationship to Trust Engine™
+
+Trust and community are separate.
+
+A community may be active but not trustworthy.
+
+An entity may be trustworthy but have limited community reach.
+
+The Trust Engine™ evaluates evidence reliability, integrity, consistency, accountability, and verification.
+
+The Community Engine™ evaluates access, connection, reciprocity, support, voice, continuity, and shared benefit.
+
+Neither may replace the other.
+
+---
+
+# 04.37 Relationship to Safety Intelligence Engine™
+
+The Community Engine™ may detect safety-relevant signals but does not independently declare an entity unsafe.
+
+Safety-relevant community signals must be routed to the Safety Intelligence Engine™.
+
+Examples:
+
+* retaliation;
+* harassment;
+* discriminatory exclusion;
+* unsafe event conditions;
+* predatory support;
+* community fear;
+* repeated unresolved incidents.
+
+A safety override may cap or suspend Community-based recommendation eligibility.
+
+---
+
+# 04.38 Relationship to Discovery Engine™
+
+The Discovery Engine™ determines whether an entity should be found and where it ranks for relevance.
+
+The Community Engine™ provides evidence of:
+
+* community value;
+* local connection;
+* reciprocity;
+* support;
+* newcomer suitability;
+* continuity;
+* stewardship.
+
+A high Community Score may improve discovery relevance.
+
+It does not automatically authorize promotion.
+
+---
+
+# 04.39 Relationship to Cultural Influence Engine™
+
+The Cultural Influence Engine™ measures the quality and impact of cultural influence.
+
+The Community Engine™ measures whether that influence contributes to connection, reciprocity, support, voice, continuity, or shared benefit.
+
+An influential person may have:
+
+* high Cultural Influence;
+* low Reciprocity;
+* low Stewardship;
+* moderate Community Score.
+
+That distinction must remain visible internally.
+
+---
+
+# 04.40 Public Explanation Rules
+
+Approved public language includes:
+
+* “Community members report strong connection and repeat participation.”
+* “This business shows consistent community support and local engagement.”
+* “There is promising community activity, but more evidence is needed.”
+* “This resource is accessible and has helped community members successfully.”
+* “Community experiences are mixed.”
+* “This organization has demonstrated long-term community stewardship.”
+* “This result is visible in search but does not yet have enough community evidence for a strong recommendation.”
+
+Prohibited public language includes:
+
+* “The Community Engine scored this neighborhood 62.”
+* “This business lost 18 points for weak reciprocity.”
+* “The algorithm believes this community is unhealthy.”
+* “People like you usually belong here.”
+* “This community is low value.”
+* “We secretly reduced this entity’s visibility.”
+* “The platform determined that these people do not support one another.”
+
+---
+
+# 04.41 Internal Output Contract
+
+```json
+{
+  "community_assessment_id": "comm_0000000001",
+  "request_id": "req_0000000001",
+  "entity": {
+    "entity_type": "business",
+    "entity_id": "business_0000000001"
+  },
+  "engine_version": "04.1.0",
+  "context_profile": "LOCAL_BUSINESS",
+  "raw_community_score": 76,
+  "confidence_score": 82,
+  "confidence_label": "High",
+  "adjusted_community_score": 68.4,
+  "dimensions": {
+    "welcoming_access": {
+      "score": 82,
+      "confidence": "High"
+    },
+    "meaningful_connection": {
+      "score": 76,
+      "confidence": "Moderate"
+    },
+    "reciprocity": {
+      "score": 71,
+      "confidence": "High"
+    },
+    "community_support": {
+      "score": 79,
+      "confidence": "High"
+    },
+    "voice_and_influence": {
+      "score": 68,
+      "confidence": "Moderate"
+    },
+    "continuity_and_return": {
+      "score": 74,
+      "confidence": "High"
+    },
+    "stewardship_and_shared_benefit": {
+      "score": 81,
+      "confidence": "High"
+    }
+  },
+  "evidence_summary": {
+    "qualified_items": 34,
+    "distinct_categories": 6,
+    "representation_factor": 0.90,
+    "independence_factor": 0.88,
+    "recency_factor": 0.92
+  },
+  "positive_signals": [
+    "REPEAT_PARTICIPATION",
+    "LOCAL_REFERRALS",
+    "COMMUNITY_SUPPORT",
+    "RESPONSIVE_FEEDBACK"
+  ],
+  "risk_signals": [
+    "LIMITED_NEWCOMER_EVIDENCE"
+  ],
+  "score_caps": [],
+  "penalties": [],
+  "intervention_level": 1,
+  "recognition_eligible": true,
+  "promotion_eligible_from_community_engine": true,
+  "human_review_required": false,
+  "public_explanation_code": "STRONG_COMMUNITY_CONNECTION",
+  "audit_record_id": "audit_0000000001"
+}
+```
+
+---
+
+# 04.42 Required Database Structures
+
+The production Community Engine™ requires, at minimum:
+
+1. `community_assessments`
+2. `community_dimension_scores`
+3. `community_evidence_items`
+4. `community_signal_records`
+5. `community_relationship_types`
+6. `community_participation_records`
+7. `community_referral_records`
+8. `community_support_outcomes`
+9. `community_connection_records`
+10. `community_reciprocity_records`
+11. `community_voice_records`
+12. `community_continuity_records`
+13. `community_stewardship_records`
+14. `community_risk_records`
+15. `community_interventions`
+16. `community_recognition_candidates`
+17. `community_conflict_records`
+18. `community_score_versions`
+19. `community_audit_records`
+20. `community_public_explanations`
+
+These may be implemented within or alongside the BIF database architecture.
+
+---
+
+# 04.43 Audit Record Requirements
+
+Every consequential Community Engine™ decision must record:
+
+1. assessment ID;
+2. request ID;
+3. entity type and ID;
+4. context;
+5. engine version;
+6. evaluation period;
+7. evidence items considered;
+8. evidence items excluded;
+9. exclusion reasons;
+10. contributor relationship types;
+11. conflicts of interest;
+12. evidence quality values;
+13. decay applied;
+14. dimension scores;
+15. dimension confidences;
+16. weight profile;
+17. raw score;
+18. confidence-adjusted score;
+19. positive signals;
+20. risk signals;
+21. penalties;
+22. score caps;
+23. conflict-resolution rules;
+24. intervention level;
+25. recognition eligibility;
+26. promotion eligibility contribution;
+27. human-review status;
+28. public explanation code;
+29. BIF decision reference;
+30. final outcome.
+
+---
+
+# 04.44 Human Review Requirements
+
+Human review is required when:
+
+1. verified exclusion allegations exist;
+2. retaliation is reported;
+3. severe extraction is alleged;
+4. conflicting evidence could materially affect promotion or recognition;
+5. a community score changes by more than 20 points in 30 days;
+6. manipulation is suspected;
+7. a paid partner receives an unusually high score;
+8. a low-confidence score would materially affect an entity;
+9. evidence involves minors or sensitive community harm;
+10. a community appeals the result;
+11. the Engine proposes a Governance-level intervention;
+12. public explanation could create reputational harm;
+13. a score cap would block recognition or promotion;
+14. a new evidence type is used;
+15. the Institution Test or Generational Test is implicated.
+
+---
+
+# 04.45 Constitutional Rules
+
+The Community Engine™ must:
+
+1. distinguish visibility from value;
+2. distinguish participation from belonging;
+3. distinguish popularity from trust;
+4. distinguish community presence from reciprocity;
+5. protect newcomers and long-term members;
+6. preserve disagreement where experiences differ;
+7. avoid treating communities as monolithic;
+8. recognize emerging communities without fabricating confidence;
+9. prevent payment from determining Community Score;
+10. prevent follower count from dominating community evaluation;
+11. preserve community voice and correction pathways;
+12. protect community stories and data;
+13. recognize contribution without requiring public performance;
+14. avoid penalizing communities for limited platform representation;
+15. value long-term stewardship;
+16. support community growth without forcing conformity;
+17. permit appeal;
+18. maintain full auditability;
+19. comply with the Institution Test;
+20. comply with the Generational Test.
+
+---
+
+# 04.46 Institution Test Application
+
+Before approving a Community Engine™ rule, Mapping With Melanin™ must ask:
+
+> **Would we defend this rule as a responsible way to evaluate community 25 years from now?**
+
+A rule fails the Institution Test when it:
+
+* mistakes activity for belonging;
+* rewards extraction;
+* privileges insiders;
+* cannot distinguish marketing from lived experience;
+* suppresses disagreement;
+* centralizes power without appeal;
+* treats communities as data products;
+* disadvantages emerging communities;
+* gives commercial partners hidden influence;
+* cannot be explained with dignity;
+* would become harmful at scale.
+
+---
+
+# 04.47 Generational Test Application
+
+The Engine must ask:
+
+> **Would future generations inherit a system that helps them strengthen community, or one that quietly defines community for them?**
+
+A rule fails the Generational Test when it:
+
+* freezes current cultural assumptions;
+* prevents future correction;
+* concentrates community authority permanently;
+* extracts stories without stewardship;
+* rewards short-term visibility over continuity;
+* cannot survive leadership change;
+* depends on founder intuition rather than documented governance;
+* leaves no pathway for future communities to redefine their own needs.
+
+---
+
+# 04.48 Launch Readiness Requirements
+
+The Community Engine™ is launch-ready only when:
+
+1. all seven dimensions are implemented;
+2. dimension formulas are validated;
+3. baseline and context-specific weights are approved;
+4. evidence categories are operational;
+5. relationship types are implemented;
+6. evidence decay is functioning;
+7. confidence calculations are validated;
+8. score caps and penalties are tested;
+9. cold-start behavior is verified;
+10. entity-type rules are implemented;
+11. anti-gaming controls are operational;
+12. intervention logic is tested;
+13. recognition handoff is implemented;
+14. Trust Engine integration is complete;
+15. Safety Intelligence integration is complete;
+16. Discovery integration is complete;
+17. Community Health Index integration is defined;
+18. public explanation templates are approved;
+19. audit records are complete;
+20. human-review routing is operational;
+21. score reproducibility is verified;
+22. rollback procedures exist;
+23. Governance approves version 1.0;
+24. Decision Ledger entry is complete.
+
+---
+
+# 04.49 Validation Scenarios
+
+## Scenario 1 — Active but superficial event
+
+```text
+Evidence:
+High attendance
+High social activity
+Low repeat engagement
+No follow-up
+No completed referrals
+
+Expected:
+Strong presence
+Moderate Welcoming Access
+Low Continuity
+Low Meaningful Connection
+Community Score limited
+```
+
+## Scenario 2 — Small but deeply connected business
+
+```text
+Evidence:
+Limited review volume
+Strong repeat customers
+Local referrals
+Community support
+Responsive owner
+Long-term local presence
+
+Expected:
+Moderate confidence
+Strong Reciprocity
+Strong Connection
+Strong Continuity
+Potential Hidden Gem review
+```
+
+## Scenario 3 — Popular Cultural Ambassador with low reciprocity
+
+```text
+Evidence:
+Large following
+High views
+Few community outcomes
+Undisclosed paid promotion
+Limited return benefit
+
+Expected:
+Follower count does not dominate
+Low Reciprocity
+Stewardship concern
+Promotion review required
+```
+
+## Scenario 4 — New neighborhood with limited platform data
+
+```text
+Evidence:
+Few user reports
+Verified institutions
+Active local organizations
+Current resources
+Limited lived-experience evidence
+
+Expected:
+Emerging confidence
+No automatic low score
+Search allowed
+Strong recommendation limited
+```
+
+## Scenario 5 — Resource that is difficult to access
+
+```text
+Evidence:
+Useful service
+Strong outcomes for recipients
+Unclear eligibility
+Limited transportation access
+Poor response time
+
+Expected:
+High Support usefulness
+Reduced Welcoming Access
+Intervention recommendation
+```
+
+## Scenario 6 — Business with community support and retaliation concern
+
+```text
+Evidence:
+Local sponsorship
+High repeat participation
+Verified retaliation against criticism
+
+Expected:
+Strong positive evidence does not erase retaliation
+Voice & Influence reduced
+Score cap applied
+Human review required
+```
+
+## Scenario 7 — Community disagreement
+
+```text
+Evidence:
+Visitors report strong welcome
+Long-term residents report exclusion from decisions
+
+Expected:
+Distinct experiences preserved
+Welcoming Access and Voice scored separately
+Confidence adjusted
+No false consensus
+```
+
+## Scenario 8 — Successful mentorship chain
+
+```text
+Evidence:
+Mentor relationship formed
+Recipient gains opportunity
+Recipient later mentors another person
+
+Expected:
+Connection, Reciprocity, Support, and Continuity increase
+Community Ripple handoff created
+```
+
+## Scenario 9 — Paid featured business
+
+```text
+Evidence:
+Business purchases promotion
+Limited community evidence
+
+Expected:
+Payment has zero direct Community Score effect
+Promotion eligibility remains evidence-based
+```
+
+## Scenario 10 — Community resource crisis response
+
+```text
+Evidence:
+Resource responds quickly during urgent need
+Eligibility is clear
+Multiple verified successful outcomes
+Support reaches non-insiders
+
+Expected:
+High Support
+High Welcoming Access
+High Reciprocity
+Priority recognition candidate
+```
+
+## Scenario 11 — One-time cultural activation
+
+```text
+Evidence:
+Strong cultural event
+High attendance
+No local partnership
+No creator attribution
+No follow-up
+
+Expected:
+Cultural relevance may be high
+Community Continuity and Stewardship remain low
+No Living Legacy qualification
+```
+
+## Scenario 12 — Manipulated rating network
+
+```text
+Evidence:
+Multiple new accounts
+Identical language
+Same device or network pattern
+Rapid score increase
+
+Expected:
+Evidence discounted
+Score frozen
+Human review
+Anti-gaming record created
+```
+
+---
+
+# 04.50 Failure Conditions
+
+If the Community Engine™ is unavailable:
+
+1. no Community Score may be fabricated;
+2. search may continue where otherwise safe;
+3. community-based recommendation boosts are disabled;
+4. community-based promotion eligibility is held;
+5. recognition decisions are held;
+6. the BIF receives `COMMUNITY_ENGINE_UNAVAILABLE`;
+7. the failure is logged;
+8. public language must not imply community validation.
+
+Fallback output:
+
+```json
+{
+  "community_engine_status": "UNAVAILABLE",
+  "community_score": null,
+  "community_confidence": "Unknown",
+  "community_based_recommendation_boost": false,
+  "community_based_promotion_allowed": false,
+  "community_recognition_allowed": false,
+  "human_review_required": true
+}
+```
+
+---
+
+# 04.51 Versioning and Change Control
+
+Every change requires:
+
+1. version number;
+2. documented purpose;
+3. affected dimensions;
+4. affected signals;
+5. affected weights;
+6. affected penalties;
+7. affected caps;
+8. evidence-source changes;
+9. decay changes;
+10. anti-gaming review;
+11. bias and harm review;
+12. privacy review;
+13. public-explanation review;
+14. Institution Test result;
+15. Generational Test result;
+16. test results;
+17. Governance approval;
+18. rollback plan;
+19. Decision Ledger entry.
+
+Historical decisions must remain reproducible using the active version at the time of decision.
+
+---
+
+# 04.52 Future Expansion
+
+Future versions may include:
+
+* community resilience scoring;
+* community repair pathways;
+* intergenerational participation;
+* youth stewardship;
+* diaspora bridge strength;
+* neighborhood displacement risk;
+* community ownership patterns;
+* institutional succession;
+* community-led governance maturity;
+* mutual-aid effectiveness;
+* local economic circulation depth;
+* community information reliability;
+* belonging pathway progression;
+* community capacity during crisis;
+* cross-city community connection;
+* long-term return migration;
+* shared cultural memory;
+* digital-to-local connection quality;
+* collective opportunity creation;
+* community-defined success measures.
+
+No expansion may enter production without approved definitions, evidence rules, privacy safeguards, validation scenarios, and governance review.
+
+---
+
+# 04.53 Final Governing Rule
+
+The Community Engine™ exists to ensure that Mapping With Melanin™ does not mistake being seen for being supported, being present for belonging, or being popular for being valuable to community.
+
+It must recognize communities that are small but strong.
+
+It must identify environments that are visible but extractive.
+
+It must preserve the difference between one-time participation and durable relationship.
+
+It must value the people who connect, support, teach, refer, protect, preserve, and return—even when their contribution is not publicly celebrated.
+
+Its final governing rule is:
+
+> **Community is strongest when people can enter with dignity, connect with meaning, contribute without exploitation, receive support, influence what affects them, and leave something stronger for those who come next.**
+
+═══════════════════════════════════════════════════════════════════════
+END OF SECTION 04
+COMMUNITY ENGINE™ — FUTURE-STATE PRODUCTION SPECIFICATION v1.0
+CONFIDENTIAL — TRADE SECRET — NOT FOR DISTRIBUTION
+═══════════════════════════════════════════════════════════════════════
+
+**Status update**
+
+```text
+COMPLETE
+01. Trust Engine™
+02. Belonging Intelligence Framework™
+03. Context Engine™
+04. Community Engine™
+
+NEXT
+05. Discovery Engine™
+```
