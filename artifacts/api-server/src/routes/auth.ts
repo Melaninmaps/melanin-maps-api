@@ -35,6 +35,21 @@ import { sendWelcomeEmail, sendPasswordResetEmail } from "../lib/email";
 
 const OIDC_COOKIE_TTL = 10 * 60 * 1000;
 
+// ─── Temporary diagnostic helpers — remove after auth investigation ───────────
+function maskEmail(raw: string): string {
+  const at = raw.indexOf("@");
+  if (at < 0) return "***";
+  const local = raw.slice(0, at);
+  const domain = raw.slice(at + 1);
+  const maskedLocal = local.length > 2 ? `${local.slice(0, 2)}***` : "***";
+  const maskedDomain = domain.length > 4 ? `${domain.slice(0, 4)}***` : `${domain.slice(0, 2)}***`;
+  return `${maskedLocal}@${maskedDomain}`;
+}
+function genReqId(): string {
+  return crypto.randomBytes(6).toString("hex");
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const router: IRouter = Router();
 
 function getOrigin(req: Request): string {
@@ -438,6 +453,15 @@ router.get("/auth/check-username", async (req: Request, res: Response) => {
 
 // ─── POST /auth/register ──────────────────────────────────────────────────────
 router.post("/auth/register", async (req: Request, res: Response) => {
+  const reqId = genReqId();
+  const t0 = Date.now();
+  const diagBase = {
+    reqId,
+    ts: new Date(t0).toISOString(),
+    origin: (req.headers["origin"] as string | undefined) ?? req.headers["host"] ?? "unknown",
+    ua: typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"].slice(0, 150) : "unknown",
+  };
+
   const { firstName, lastName, email, password, username, dateOfBirth, agreeToTerms } =
     req.body as {
       firstName?: string;
@@ -490,6 +514,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
 
   try {
     const cleanEmail = email.trim().toLowerCase();
+    const emailMasked = maskEmail(cleanEmail);
 
     // Run email, username checks and password hash in parallel — no sequential waiting
     const [existingEmail, existingUsername, passwordHash] = await Promise.all([
@@ -499,6 +524,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
     ]);
 
     if (existingEmail) {
+      req.log.info({ ...diagBase, event: "AUTH_REGISTER_DUPLICATE_EMAIL", emailMasked, status: 409, durationMs: Date.now() - t0 }, "auth diagnostic");
       res.status(409).json({ error: "An account with this exact email address already exists. Try signing in instead, or use a different email." });
       return;
     }
@@ -524,6 +550,8 @@ router.post("/auth/register", async (req: Request, res: Response) => {
       })
       .returning();
 
+    req.log.info({ ...diagBase, event: "AUTH_REGISTER_USER_CREATED", emailMasked, status: 201, durationMs: Date.now() - t0 }, "auth diagnostic");
+
     sendWelcomeEmail(user.email!, user.firstName).catch(() => {});
 
     const sessionData: SessionData = {
@@ -540,18 +568,39 @@ router.post("/auth/register", async (req: Request, res: Response) => {
     };
     const sid = await createSession(sessionData);
 
+    // Track whether the HTTP response actually reaches the client
+    let responseFinished = false;
+    res.on("finish", () => {
+      responseFinished = true;
+      req.log.info({ ...diagBase, event: "AUTH_REGISTER_RESPONSE_SENT", emailMasked, status: 201, durationMs: Date.now() - t0 }, "auth diagnostic");
+    });
+    res.on("close", () => {
+      if (!responseFinished) {
+        req.log.warn({ ...diagBase, event: "AUTH_REGISTER_RESPONSE_ABORTED_OR_FAILED", emailMasked, durationMs: Date.now() - t0 }, "auth diagnostic");
+      }
+    });
+
     res.status(201).json({
       token: sid,
       user: { id: user.id, firstName: user.firstName, username: user.username },
     });
   } catch (err) {
-    req.log.error({ err }, "POST /api/auth/register error");
+    req.log.error({ ...diagBase, err, event: "AUTH_REGISTER_ERROR", durationMs: Date.now() - t0 }, "POST /api/auth/register error");
     res.status(500).json({ error: "Registration failed. Please try again." });
   }
 });
 
 // ─── POST /auth/login-email ───────────────────────────────────────────────────
 router.post("/auth/login-email", async (req: Request, res: Response) => {
+  const reqId = genReqId();
+  const t0 = Date.now();
+  const diagBase = {
+    reqId,
+    ts: new Date(t0).toISOString(),
+    origin: (req.headers["origin"] as string | undefined) ?? req.headers["host"] ?? "unknown",
+    ua: typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"].slice(0, 150) : "unknown",
+  };
+
   const { email, password } = req.body as { email?: string; password?: string };
 
   if (!email?.trim() || !password) {
@@ -559,24 +608,30 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
     return;
   }
 
+  const cleanEmail = email.trim().toLowerCase();
+  const emailMasked = maskEmail(cleanEmail);
+
   try {
     const [user] = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.email, email.trim().toLowerCase()))
+      .where(eq(usersTable.email, cleanEmail))
       .limit(1);
 
     if (!user) {
+      req.log.warn({ ...diagBase, event: "AUTH_LOGIN_USER_NOT_FOUND", emailMasked, hasPasswordHash: false, status: 401, durationMs: Date.now() - t0 }, "auth diagnostic");
       res.status(401).json({ error: "Invalid email or password." });
       return;
     }
     if (!user.passwordHash) {
+      req.log.warn({ ...diagBase, event: "AUTH_LOGIN_NO_PASSWORD_HASH", emailMasked, hasPasswordHash: false, status: 401, durationMs: Date.now() - t0 }, "auth diagnostic");
       res.status(401).json({ error: "This account was created with Apple or social sign-in and doesn't have a password yet. Use 'Forgot password?' to set one, or sign in with Apple." });
       return;
     }
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
+      req.log.warn({ ...diagBase, event: "AUTH_LOGIN_PASSWORD_MISMATCH", emailMasked, hasPasswordHash: true, status: 401, durationMs: Date.now() - t0 }, "auth diagnostic");
       res.status(401).json({ error: "Invalid email or password." });
       return;
     }
@@ -594,9 +649,10 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
       access_token: "",
     };
     const sid = await createSession(sessionData);
+    req.log.info({ ...diagBase, event: "AUTH_LOGIN_SUCCESS", emailMasked, hasPasswordHash: true, status: 200, durationMs: Date.now() - t0 }, "auth diagnostic");
     res.json({ token: sid });
   } catch (err) {
-    req.log.error({ err }, "POST /api/auth/login-email error");
+    req.log.error({ ...diagBase, err, event: "AUTH_LOGIN_ERROR", emailMasked, durationMs: Date.now() - t0 }, "POST /api/auth/login-email error");
     res.status(500).json({ error: "Login failed. Please try again." });
   }
 });
