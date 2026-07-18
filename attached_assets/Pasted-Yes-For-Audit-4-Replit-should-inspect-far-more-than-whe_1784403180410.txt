@@ -1,0 +1,656 @@
+Yes. For Audit 4, Replit should inspect far more than whether a map loads.
+
+The platform already has Google Maps key delivery, directions, saved locations, location sharing, cultural sites, safety heatmap data, community boundaries, nearby warnings, business coordinates, travel planning, relocation analysis, and multiple mobile map screens.  
+
+The audit standard should be:
+
+> **Can a member confidently discover, understand, navigate, and protect their location without being misled, overtracked, or placed at risk?**
+
+Send Replit the following.
+
+```text
+═══════════════════════════════════════════════════════════════════════
+MAPPING WITH MELANIN™
+AUDIT 4 — MAPS, LOCATION & GEOGRAPHIC INTELLIGENCE
+READ-ONLY EVIDENCE REVIEW — DO NOT CHANGE ANYTHING
+═══════════════════════════════════════════════════════════════════════
+
+AUDIT EXPECTATION — READ BEFORE BEGINNING
+
+This audit is not asking whether a Google Map, marker, coordinate,
+route, screen, endpoint, or database field merely exists.
+
+A map capability should be marked COMPLETE only when a real member can
+successfully use the entire workflow across the applicable platform,
+with:
+
+- accurate geographic data;
+- correct frontend rendering;
+- working API behavior;
+- correct database persistence;
+- clear permission and privacy explanations;
+- appropriate failure and recovery states;
+- accessible alternatives;
+- no misleading location, route, safety, or distance information;
+- no hidden background tracking;
+- no development-only dependency;
+- evidence supporting every conclusion.
+
+The map is not simply a visual interface.
+
+It is a decision-support system used for discovery, travel, relocation,
+community context, accessibility, and safety. Incorrect location data
+may cause inconvenience, financial loss, privacy harm, or physical risk.
+
+ABSOLUTE INSTRUCTION
+
+Do not edit code.
+Do not fix defects.
+Do not create files.
+Do not commit or push.
+Do not deploy.
+Do not change Google Cloud settings.
+Do not change API keys or restrictions.
+Do not change Railway environment variables.
+Do not modify DNS.
+Do not run migrations.
+Do not write to production databases.
+Do not create Google Maps charges beyond minimal safe inspection.
+Do not send notifications.
+Do not create test safety alerts in production.
+
+This is evidence collection only.
+
+───────────────────────────────────────────────────────────────────────
+A. COMPLETE GEOGRAPHIC INVENTORY
+───────────────────────────────────────────────────────────────────────
+
+Audit every relevant map, location, geographic, route, boundary, and
+proximity capability, including at minimum:
+
+1. Web map
+2. iOS map
+3. Android map
+4. Business markers
+5. Business-card map/sidebar synchronization
+6. Business coordinates
+7. Geocoding
+8. Reverse geocoding
+9. Address validation
+10. Directions
+11. Walking routes
+12. Driving routes
+13. Transit routes
+14. Rideshare links or handoff
+15. Nearby search
+16. Current-location search
+17. Home-city search
+18. Destination search
+19. Saved locations
+20. Shared locations
+21. Live location sharing
+22. Community boundaries
+23. Neighborhood boundaries
+24. City boundaries
+25. Cultural and heritage sites
+26. Safety heatmap
+27. Safety overlays
+28. Proximity warnings
+29. Officer Watch map data
+30. Community alerts by location
+31. Events by location
+32. Jobs or opportunities Near Me
+33. Hidden Gems by geography
+34. Relocation city and neighborhood data
+35. Travel itinerary mapping
+36. Community reference listings with incomplete coordinates
+37. Map fallback behavior
+38. Offline or poor-network behavior
+39. API-key failure behavior
+40. Permission-denied behavior
+
+Identify any other geographic capability not listed here.
+
+───────────────────────────────────────────────────────────────────────
+B. EVIDENCE REQUIRED FOR EVERY CAPABILITY
+───────────────────────────────────────────────────────────────────────
+
+For every item provide:
+
+- Status:
+  COMPLETE / PARTIAL / PLACEHOLDER / BROKEN /
+  NOT IMPLEMENTED / UNKNOWN
+
+- Status separately for:
+  Replit workspace,
+  GitHub main,
+  Railway production,
+  web,
+  iOS,
+  Android.
+
+- Exact frontend file paths and relevant components/functions.
+
+- Exact backend route, method, file, and handler.
+
+- Exact database tables and geographic fields used.
+
+- Exact third-party services used.
+
+- Environment-variable NAMES only.
+  Never reveal secret values.
+
+- Expected user journey.
+
+- Loading, empty, error, permission-denied, API-failure,
+  no-results, invalid-address, and offline states.
+
+- Whether the feature is:
+  real,
+  mocked,
+  hardcoded,
+  seeded,
+  demo-only,
+  dependent on missing configuration,
+  or using stale/static data.
+
+- Evidence supporting every conclusion.
+
+───────────────────────────────────────────────────────────────────────
+C. GOOGLE MAPS CONFIGURATION REVIEW
+───────────────────────────────────────────────────────────────────────
+
+Inspect and report, without changing anything:
+
+1. Which Google Maps APIs are called by the code:
+   - Maps JavaScript API
+   - Maps SDK for Android
+   - Maps SDK for iOS
+   - Directions API
+   - Geocoding API
+   - Places API
+   - Routes API
+   - Distance Matrix API
+   - Maps Embed API
+   - Static Maps API
+   - any others
+
+2. Which keys are used by:
+   - production website;
+   - API server;
+   - iOS;
+   - Android;
+   - development previews.
+
+3. Whether keys are separated correctly by platform and purpose.
+
+4. Whether HTTP-referrer restrictions match the production domains.
+
+5. Whether Android package-name and SHA-1 restrictions match the
+   production EAS signing identity.
+
+6. Whether iOS bundle restrictions match the production bundle ID.
+
+7. Whether server-side keys are IP-restricted where practical.
+
+8. Whether API restrictions permit only required APIs.
+
+9. Whether any key is exposed unnecessarily to the client.
+
+10. Whether the /maps/js-key route creates avoidable exposure.
+
+11. Whether current configuration can create excessive billing risk.
+
+12. Whether usage quotas, alerts, or caps are documented in code or
+    configuration.
+
+13. Which findings are proven from code and which require later review
+    in Google Cloud Console.
+
+Do not reveal any API-key value.
+
+───────────────────────────────────────────────────────────────────────
+D. COORDINATE AND ADDRESS INTEGRITY
+───────────────────────────────────────────────────────────────────────
+
+Inspect:
+
+- source of every business latitude and longitude;
+- whether coordinates are validated;
+- whether 0,0 coordinates are permitted;
+- whether null coordinates are permitted;
+- whether malformed strings are permitted;
+- whether address and coordinates may conflict;
+- whether geocoding occurs at creation, approval, claim, or edit;
+- whether geocoding failure blocks publication;
+- whether business owners can correct map placement;
+- whether community members can suggest a correction;
+- whether admin correction tools exist;
+- whether duplicate businesses are detected by address/proximity;
+- whether PO boxes, home-based businesses, mobile businesses,
+  service-area businesses, and pop-ups are handled intentionally;
+- whether closed or moved businesses retain old map markers;
+- whether multi-location businesses are modeled correctly;
+- whether apartment/unit data is hidden where appropriate.
+
+Specifically identify every pathway that can create an active business
+with missing, invalid, placeholder, or 0,0 coordinates.
+
+───────────────────────────────────────────────────────────────────────
+E. LOCATION PRIVACY AND CONSENT
+───────────────────────────────────────────────────────────────────────
+
+Audit:
+
+1. When location permission is requested.
+2. Whether an in-product explanation appears before the system dialog.
+3. Whether location access is foreground-only or background.
+4. Whether precise location is required.
+5. Whether approximate location works.
+6. Whether the platform stores GPS coordinates.
+7. Whether search coordinates are logged.
+8. Whether KinfolkAI receives precise coordinates.
+9. Whether businesses can see member location.
+10. Whether other members can see location.
+11. Whether location sharing has an expiration.
+12. Whether shared-location links can be revoked.
+13. Whether a blocked user can retain access to a location share.
+14. Whether minors can share location.
+15. Whether location history exists.
+16. Whether metadata or logs contradict the Privacy Policy.
+17. Whether exact home location can be inferred from homeCity,
+    check-ins, journeys, reviews, posts, EXIF data, or safety reports.
+18. Whether “hidden while traveling” or ghost-mode behavior exists.
+19. Whether users can use core discovery without granting location.
+20. Whether consent and settings are consistent across web, iOS,
+    and Android.
+
+Identify every privacy promise that the implementation cannot
+currently guarantee.
+
+───────────────────────────────────────────────────────────────────────
+F. DIRECTIONS AND ROUTE SAFETY
+───────────────────────────────────────────────────────────────────────
+
+Audit all routing capabilities and determine:
+
+- which travel modes are supported;
+- whether routes are live Google routes or static/mock routes;
+- whether route errors are handled;
+- whether route origin/destination are validated;
+- whether unsafe or impossible routes may be shown;
+- whether walking routes consider time of day;
+- whether wheelchair-accessible routing exists or is falsely implied;
+- whether public transit data is live and correctly sourced;
+- whether WMATA integration is operational or merely configured;
+- whether late-night routing is treated differently;
+- whether safety overlays affect route recommendations;
+- whether route suggestions clearly distinguish official directions
+  from community context;
+- whether KinfolkAI can recommend a route;
+- whether KinfolkAI is prohibited from guaranteeing route safety;
+- whether emergency services are ever routed through AI;
+- whether users are warned that conditions can change.
+
+Determine whether any route is described as “safe” without sufficient
+evidence or qualification.
+
+───────────────────────────────────────────────────────────────────────
+G. SAFETY OVERLAYS AND GEOGRAPHIC INTELLIGENCE
+───────────────────────────────────────────────────────────────────────
+
+Audit:
+
+- safety heatmap data source;
+- age and freshness of safety data;
+- confidence calculation;
+- number of reports required;
+- treatment of anonymous reports;
+- treatment of pending or rejected reports;
+- time-of-day context;
+- day/night differences;
+- event and crowd context;
+- weather context;
+- police and ICE reports;
+- business-level versus neighborhood-level signals;
+- whether one report can color an entire neighborhood;
+- decay and expiration behavior;
+- dispute and correction pathways;
+- manipulation resistance;
+- whether displayed boundaries align with actual source geography;
+- whether safety labels can reinforce bias or stigmatize communities;
+- whether the interface explains uncertainty;
+- whether the map exposes precise reporter locations;
+- whether sensitive incident locations are fuzzed or generalized.
+
+A safety map must never imply certainty or label an entire community
+as universally safe or unsafe.
+
+───────────────────────────────────────────────────────────────────────
+H. MAP DISCOVERY AND FILTERING
+───────────────────────────────────────────────────────────────────────
+
+Confirm whether members can accurately filter mapped results by:
+
+- name;
+- category;
+- ownership designation;
+- Hidden Gem;
+- verified status and verification level;
+- open now;
+- wheelchair access;
+- family friendly;
+- LGBTQ+ friendly;
+- cultural alignment;
+- neighborhood;
+- city;
+- distance;
+- safety context;
+- event;
+- travel style;
+- business status;
+- active versus pending listing.
+
+For each filter report:
+
+- whether it exists in the UI;
+- whether it exists in the API;
+- whether it is enforced by the database query;
+- whether results on the list and map remain synchronized;
+- whether inaccessible, pending, suspended, disputed, closed,
+  or invalid-coordinate businesses appear.
+
+───────────────────────────────────────────────────────────────────────
+I. USER EXPERIENCE REVIEW
+───────────────────────────────────────────────────────────────────────
+
+Inspect:
+
+- map-loading time;
+- marker clustering;
+- overlapping markers;
+- selected-marker behavior;
+- map/card synchronization;
+- zoom behavior;
+- recenter control;
+- current-location control;
+- compass and orientation behavior;
+- search-this-area behavior;
+- list/map switching;
+- empty states;
+- no-results states;
+- loading skeletons;
+- Google Maps failure fallback;
+- poor-network fallback;
+- whether map interaction loses filters;
+- whether opening a business and returning preserves map state;
+- whether users understand what each marker color or icon means;
+- whether paid placements are visibly labeled on the map;
+- whether safety layers can be turned off;
+- whether layers have legends and explanations.
+
+Specifically identify whether any marker, color, heatmap, score, or
+boundary is shown without a clear legend.
+
+───────────────────────────────────────────────────────────────────────
+J. ACCESSIBILITY REVIEW
+───────────────────────────────────────────────────────────────────────
+
+Audit:
+
+- screen-reader labels for markers and map controls;
+- accessible list alternative to the map;
+- keyboard navigation on web;
+- touch-target sizes;
+- color-only marker meaning;
+- map contrast;
+- zoom-text behavior;
+- reduced-motion handling;
+- route instructions for screen readers;
+- accessibility filters;
+- wheelchair-accessible route claims;
+- non-map alternatives for users unable to operate interactive maps;
+- whether important safety information is available in text form;
+- whether marker clusters are understandable to assistive technology.
+
+A map-only experience must not be the sole method of accessing
+important information.
+
+───────────────────────────────────────────────────────────────────────
+K. LEGAL, ETHICAL, AND CONTENT REVIEW
+───────────────────────────────────────────────────────────────────────
+
+Identify:
+
+- inaccurate safety guarantees;
+- misleading distance claims;
+- unverified business addresses;
+- defamatory geographic labels;
+- exact locations of sensitive incidents or people;
+- home-address exposure;
+- location sharing without appropriate consent;
+- lack of source attribution;
+- use of government or transit data without required notices;
+- Google Maps attribution compliance;
+- paid map placement without disclosure;
+- unsupported accessibility claims;
+- unsupported “safe space” claims;
+- unsupported “verified location” claims;
+- stale emergency information.
+
+For every claim shown to a member, identify whether it is:
+
+- verified fact;
+- business-provided information;
+- community-reported information;
+- official public data;
+- platform inference;
+- AI-generated summary.
+
+These categories must not be presented as equivalent.
+
+───────────────────────────────────────────────────────────────────────
+L. DATA LIFECYCLE AND GOVERNANCE
+───────────────────────────────────────────────────────────────────────
+
+Audit:
+
+- retention of search coordinates;
+- retention of shared locations;
+- retention of check-ins;
+- retention of safety locations;
+- deletion behavior;
+- archival behavior;
+- correction history;
+- source provenance;
+- admin access;
+- audit logging;
+- export behavior;
+- account deletion effects;
+- business closure or relocation effects;
+- Decision Ledger requirements for significant geographic corrections.
+
+Determine whether administrators can see or change location data and
+whether those actions are logged.
+
+───────────────────────────────────────────────────────────────────────
+M. BUSINESS PROMISE AUDIT™ — MAPS
+───────────────────────────────────────────────────────────────────────
+
+For every map-related promise made to members or businesses, answer:
+
+1. What exactly is promised?
+2. Can the platform fulfill it today?
+3. What evidence supports that conclusion?
+4. What is missing?
+5. Is the wording overstated?
+6. Could inaccurate delivery create safety, legal, privacy,
+   accessibility, or reputational harm?
+
+At minimum review these promises:
+
+- “Find businesses near you.”
+- “Discover safe and trusted places.”
+- “Get directions.”
+- “Explore neighborhood safety.”
+- “Find accessible businesses.”
+- “See businesses aligned with your community.”
+- “Share your location safely.”
+- “Receive nearby safety warnings.”
+- “Plan travel and relocation confidently.”
+
+───────────────────────────────────────────────────────────────────────
+N. REQUIRED PRODUCT DECISIONS
+───────────────────────────────────────────────────────────────────────
+
+Identify all unresolved decisions, including:
+
+- Should exact user location ever be stored?
+- Should approximate location be the default?
+- How long should location shares remain active?
+- Can businesses use residential addresses?
+- How are service-area businesses mapped?
+- What happens when coordinates are unknown?
+- What does “nearby” mean?
+- What does “safe” mean on a map?
+- Should safety overlays default on or off?
+- How should low-confidence safety data appear?
+- Can community members correct business locations?
+- Can owners hide exact locations?
+- How should closed, moved, seasonal, and mobile businesses appear?
+- Should promoted businesses receive different map markers?
+- How are paid markers disclosed?
+- Which accessibility claims require verification?
+- Can a user opt out of all geographic personalization?
+- How should historical incident data decay?
+- Who can see exact incident coordinates?
+- When does a geographic correction require human review?
+
+Do not decide these questions. Record them.
+
+───────────────────────────────────────────────────────────────────────
+O. DEVELOPER COMMENTARY
+───────────────────────────────────────────────────────────────────────
+
+End with:
+
+“If you were preparing this geographic system for a public launch,
+what would YOU improve? Not code. Not architecture. Just observations.”
+
+Address:
+
+- highest-risk hidden issue;
+- most fragile dependency;
+- most misleading member promise;
+- likely scaling problem;
+- privacy concern;
+- safety concern;
+- accessibility concern;
+- technical debt likely to create future bugs;
+- any difference between what the product appears to do and what the
+  code actually does.
+
+───────────────────────────────────────────────────────────────────────
+P. CONSTITUTIONAL COMMENTARY
+───────────────────────────────────────────────────────────────────────
+
+Include this founder commentary exactly:
+
+“Maps do more than show people where to go.
+
+They influence where people feel welcome, where businesses become
+visible, which communities receive attention, and which places are
+treated as worthy of trust.
+
+Mapping With Melanin™ must never use geography to create false
+confidence, unnecessary fear, cultural erasure, or invisible barriers.
+
+Location information should be requested only when it creates clear
+value, used only for the purpose explained, protected with care, and
+never treated as permission to track a member beyond what they chose.
+
+A route is not safe simply because it is available.
+
+A neighborhood is not unsafe because one person reported an incident.
+
+A business is not nearby if its coordinates are wrong.
+
+Geographic intelligence must preserve context, uncertainty, dignity,
+accessibility, and the right of communities to be represented
+accurately.”
+
+───────────────────────────────────────────────────────────────────────
+Q. THE HUMAN TEST
+───────────────────────────────────────────────────────────────────────
+
+Answer this question:
+
+“Imagine a solo traveler arriving after dark, a wheelchair user
+searching for an accessible restaurant, a parent planning a family
+outing, a business owner checking whether their storefront is mapped
+correctly, and a community member viewing a nearby safety warning.
+
+Would each person receive information that is accurate, understandable,
+privacy-respecting, accessible, and appropriately qualified?”
+
+Evaluate each person separately.
+
+───────────────────────────────────────────────────────────────────────
+R. REQUIRED REPORT FORMAT
+───────────────────────────────────────────────────────────────────────
+
+Return the report in this order:
+
+1. Executive Summary
+2. Geographic Capability Inventory
+3. Web / iOS / Android Comparison
+4. Google Maps Configuration Findings
+5. Coordinate and Address Integrity
+6. Location Privacy and Consent
+7. Directions and Route Safety
+8. Safety Overlays and Geographic Intelligence
+9. Discovery, Filters, and Map/List Synchronization
+10. User Experience Findings
+11. Accessibility Findings
+12. Legal and Ethical Findings
+13. Data Lifecycle and Governance
+14. Business Promise Audit™
+15. Missing Product Decisions
+16. Future Opportunities / Innovation Register™
+17. Priority Matrix:
+    P0 — must resolve before launch
+    P1 — required for full Day 1 experience
+    P2 — shortly after launch
+    P3 — longer-term
+18. Developer Commentary
+19. Constitutional Commentary
+20. Approved Feature Blueprint™
+21. Human Test
+22. Scorecard and Final Status
+23. Evidence Appendix
+
+The final scorecard must include:
+
+- Engineering Score /100
+- Production Readiness
+- Constitutional Alignment
+- Privacy Readiness
+- Safety Readiness
+- Accessibility Readiness
+- Web Status
+- iOS Status
+- Android Status
+- P0 Count
+- P1 Count
+- Overall designation
+
+End with this exact statement:
+
+“READ-ONLY AUDIT 4 COMPLETE. NO CODE, DATA, CONFIGURATION,
+DEPLOYMENT, API KEYS, DNS, OR ENVIRONMENT VALUES WERE CHANGED.”
+═══════════════════════════════════════════════════════════════════════
+```
+
+One note: Audit 4 should explicitly inspect all pathways that create businesses with invalid coordinates because Audit 3 already found community-nominated listings being created with latitude and longitude set to `0,0`.  That could cause listings to disappear, appear in the wrong region, corrupt distance calculations, and undermine nearby search.
+
+Once Replit returns Audit 4, send the entire report before moving to Audit 5.
