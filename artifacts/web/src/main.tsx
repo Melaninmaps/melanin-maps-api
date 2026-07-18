@@ -1,8 +1,12 @@
 import { createRoot } from "react-dom/client";
 import posthog from "posthog-js";
 import { Component, type ReactNode, type ErrorInfo } from "react";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 import App from "./App";
 import "./index.css";
+import { getWebToken } from "./lib/webAuth";
+
+setAuthTokenGetter(getWebToken);
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
 const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST as string | undefined ?? "https://us.i.posthog.com";

@@ -51,6 +51,7 @@ import DeleteAccount from "@/pages/delete-account";
 import BusinessResponse from "@/pages/business-response";
 import GlobalRecommendations from "@/pages/global-recommendations";
 import ResetPassword from "@/pages/reset-password";
+import ForgotPassword from "@/pages/forgot-password";
 import TrustAndSafety from "@/pages/trust-and-safety";
 import BusinessGrowthCenter from "@/pages/business-growth-center";
 
@@ -173,6 +174,7 @@ function Router() {
       {/* ── Auth pages ──────────────────────────────────────────────────────── */}
       <Route path="/login" component={Login} />
       <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/signup" component={Signup} />
       <Route path="/waitlist" component={Waitlist} />
       <Route path="/pending-approval" component={PendingApproval} />

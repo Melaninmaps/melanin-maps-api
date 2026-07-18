@@ -640,7 +640,11 @@ export default function Profile() {
     });
   };
 
-  const handleLogout = () => { window.location.href = "/api/logout"; };
+  const handleLogout = () => {
+    import("@/lib/webAuth").then(({ clearWebToken }) => clearWebToken());
+    queryClient.clear();
+    window.location.replace("/");
+  };
 
   const savedCount = savedPlaces?.businessIds?.length ?? 0;
   const isEarlyTester = (auth?.user as any)?.role === "tester";

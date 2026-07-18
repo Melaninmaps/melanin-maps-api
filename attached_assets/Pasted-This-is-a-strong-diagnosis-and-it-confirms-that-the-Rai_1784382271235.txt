@@ -1,0 +1,122 @@
+This is a strong diagnosis, and it confirms that the Railway/DNS work is now complete:
+
+* `api.melaninmaps.com` is reachable.
+* Its SSL certificate is valid.
+* The API is healthy.
+* The login failure is inside the application configuration, not Railway.
+
+We should fix the login now because the cause is known and the proposed change is narrow. There is no reason to continue waiting for DNS.
+
+## Do not add `REPL_ID`
+
+Trying to recreate the Replit OIDC environment inside Railway would not solve the complete problem. Even with `REPL_ID`, the callback domain would still be rejected. The production website should use the existing native email-and-password authentication system.
+
+## One adjustment to Replit’s recommendation
+
+For CORS, the important allowed origins are the domains where the **browser frontend is served**, not necessarily the API domain.
+
+I would use:
+
+```text
+REPLIT_DOMAINS=www.mappingwithmelanin.com,mappingwithmelanin.com
+```
+
+`api.melaninmaps.com` is the destination API hostname, not ordinarily the browser’s origin. It can be included if Replit confirms something is actually served from it, but it should not replace the two website domains.
+
+## Send Replit this implementation request
+
+```text
+Please implement the smallest production login fix identified in your
+read-only diagnosis.
+
+AUTHORIZED CHANGES
+
+1. Update the production web login page so it uses the existing native
+   authentication routes instead of navigating to the Replit-only
+   /api/login OIDC route:
+
+   POST /api/auth/login-email
+   POST /api/auth/register
+   POST /api/auth/forgot-password
+   POST /api/auth/reset-password
+
+2. Preserve the existing /api/login and /api/callback OIDC routes for
+   Replit development or any existing mobile-auth dependency. Do not
+   delete or rewrite them.
+
+3. Configure the Railway environment variable used by the existing CORS
+   code as:
+
+   REPLIT_DOMAINS=www.mappingwithmelanin.com,mappingwithmelanin.com
+
+   Before changing it, confirm that the code expects bare comma-separated
+   hostnames and automatically adds https://, as shown in your diagnosis.
+
+4. Do not modify:
+   - database schemas;
+   - password hashing;
+   - session storage;
+   - cookie security;
+   - unrelated environment variables;
+   - mobile authentication;
+   - DNS or Railway custom domains;
+   - the currently working SSL configuration.
+
+IMPLEMENTATION REQUIREMENTS
+
+- Use the native login route already present in the backend.
+- Show clear user-facing errors for invalid credentials, duplicate
+  registration, unavailable service, and validation failures.
+- Do not expose backend error details or sensitive information.
+- Preserve secure production cookies and existing session behavior.
+- Do not silently create an account when a user is attempting to log in.
+- Keep registration and login as separate user actions.
+- Do not deploy until you have reviewed the exact files changed and
+  confirmed the change is limited to this authentication workflow.
+
+AFTER IMPLEMENTATION, TEST:
+
+1. New-user registration.
+2. Existing-user email/password login.
+3. Incorrect-password handling.
+4. Duplicate-email registration handling.
+5. Session persistence after refreshing the page.
+6. Logout.
+7. Forgot-password request.
+8. Reset-password completion.
+9. Login using the new password.
+10. Browser console for CORS errors.
+11. Railway server logs for authentication errors.
+12. Both:
+    https://www.mappingwithmelanin.com
+    https://mappingwithmelanin.com
+
+Return:
+
+- every file changed;
+- every environment variable changed;
+- confirmation that no database migration was performed;
+- the test result for each item above;
+- the production deployment URL;
+- any remaining issue.
+
+Please begin the implementation and testing now.
+```
+
+## Recommended order now
+
+Let Replit implement and test this narrowly defined fix. While it works, we continue with the confidential algorithm specifications. We have completed:
+
+```text
+01. Trust Engine™
+02. Belonging Intelligence Framework™
+03. Context Engine™
+```
+
+The next specification is:
+
+```text
+04. Community Engine™
+```
+
+This login diagnosis is the outcome we needed: the infrastructure is working, the failure is isolated, and the repair path does not require redesigning the backend.
