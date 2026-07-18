@@ -1,9 +1,9 @@
 # Mapping With Melanin™
-## Legacy Collection — Master Review Document v1.0
+## Legacy Collection — Editorial Review v1.0
 
 **Status:** REVIEW MODE — No implementation until "Please implement." is stated.
 **Review Type:** Four-Perspective Merge (Founder + First-Time Audience + Creative Director + Community)
-**Scope:** Experience Chapter (Moments 01–21) + Global System Notes
+**Scope:** Experience Chapter (Pages 01–21 / Moments 01–21) + Global System Notes
 **Last Updated:** July 18, 2026
 
 ---
@@ -14,6 +14,30 @@
 > We are designing the paper the Legacy Collection is printed on — even if it is digital.
 
 Once the team thinks in terms of *paper, volumes, chapters, moments, and legacy*, every visual decision becomes coherent because it serves the same story.
+
+---
+
+## Editorial Design Philosophy
+
+Every visual decision should feel as though it belongs in a publication that people keep — not because it is beautiful, but because it is worth returning to.
+
+This philosophy governs everything: the website, the app, the presentations, the books, the documentaries, the onboarding experience, and the email design. It is not a style guide. It is a standard of intent.
+
+---
+
+## The One Lasting Belief — Experience Chapter
+
+**Resolved.**
+
+The tagline people remember: *"Welcome home."*
+
+The belief they carry away:
+
+> **Belonging is something we can intentionally build together.**
+
+*These are different.* The tagline is the surface. The belief is what endures.
+
+The Experience Chapter is complete only when that belief has been felt — not just seen.
 
 ---
 
@@ -50,6 +74,9 @@ Mapping With Melanin™ optimizes for dignity.
 
 ## The Architecture Hierarchy
 
+Two distinct layers — both preserved, neither replaced.
+
+### Publishing Layer
 ```
 Legacy Collection
        ↓
@@ -57,46 +84,55 @@ Legacy Collection
        ↓
    Chapter
        ↓
-   Moment
+    Page
        ↓
   Component
 ```
 
-**Example trace:**
+### Storytelling Layer
 ```
-Legacy Collection
-  → Experience Volume
-    → Trust Chapter
-      → Trust Moment (Page 05)
-        → Headline
-        → Table
-        → Supporting Statement
-        → Phone Mockup
-        → Speaker Pause
+   Moment
+       ↓
+   Emotion
+       ↓
+   Purpose
 ```
 
-This gives complete traceability from the institution down to a single element.
+A Page contains a Moment. They are not the same thing. The same Moment may appear on different pages or across different media — coffee table books, documentaries, websites, printed editions. The distinction is what makes the Legacy Collection portable across formats.
+
+**Full example trace:**
+```
+Legacy Collection
+  → Volume II — Storytelling System
+    → Experience Chapter
+      → Page 05
+        → The Trust Moment
+          → Headline
+          → Table
+          → Supporting Statement
+          → Phone Mockup
+          → Speaker Pause
+```
+
+**Internal ID system (technical reference):** `MWM-EXP-P05-V1`
+**Storytelling name (permanent record):** *The Trust Moment*
+
+Other named Moments:
+- *The KinfolkAI™ Moment*
+- *The Welcome Home Moment*
+- *The Declaration Moment*
+- *The Why Now Moment*
 
 ---
 
-## Moments — Not Pages, Not Slides
+## Volume Naming
 
-The audience doesn't remember "Page 17."
+| Volume | Current Name | Updated Name |
+|--------|-------------|-------------|
+| Volume I | The Constitution | The Constitution |
+| Volume II | Presentation System | **Storytelling System** |
 
-They remember:
-- *The moment she introduced KinfolkAI.*
-- *The moment I realized this wasn't another travel app.*
-- *The Welcome Home moment.*
-
-**Internal ID system (technical reference only):**
-```
-MWM-EXP-M17-V1
-```
-
-**Legacy Collection name (the permanent record):**
-- The Trust Moment
-- The KinfolkAI Moment
-- The Welcome Home Moment
+Volume II is no longer only presentations. It contains every way Mapping With Melanin™ tells its story: Experience Chapter, Investor Chapter, Business Chapter, Zoom Chapter, documentary scripts, speaker guides, sound bites, social campaigns, video narratives.
 
 ---
 
@@ -153,16 +189,16 @@ Exactly what gets built — including **Why This Exists** for every recommendati
 
 ## Color as Emotional Language
 
-Colors are not aesthetic choices. Each has a job.
+Colors are not aesthetic choices. Each has a job — an emotion and a role.
 
-| Color | Emotion | Purpose |
-|-------|---------|---------|
-| **Deep Brown** `#2C170E` | Security, Trust, Beginning, Home | The foundation. Where the audience feels held. |
-| **Gold** `#D6AE55` | Hope, Discovery, Possibility | Used only for headlines, key emphasis, icons, dividers. |
-| **Cream / Parchment** `#E4D0AD` | Truth, Reflection, Declaration, Legacy | Whenever the audience enters cream, they subconsciously learn: *we are no longer explaining. We are declaring.* |
-| **Near Black** | Mystery, KinfolkAI™, Unknown becoming known | The transition into the unknown. Should feel intentional — entering a different room. |
+| Color | Emotion | Role | Purpose |
+|-------|---------|------|---------|
+| **Deep Brown** `#2C170E` | Security, Trust, Beginning, Home | Foundation | Where the audience feels held. The ground everything stands on. |
+| **Gold** `#D6AE55` | Hope, Discovery, Possibility | Discovery | Used only for headlines, key emphasis, icons, dividers. |
+| **Cream / Parchment** `#E4D0AD` | Truth, Reflection, Declaration, Legacy | Reflection | Whenever the audience enters cream, they subconsciously learn: *we are no longer explaining. We are declaring.* |
+| **Near Black** | Mystery, KinfolkAI™, Unknown becoming known | Transition | Entering a different room. Should feel chosen — not accidental. |
 
-The color itself becomes part of the storytelling. The audience learns to feel the shift before they read the words.
+Now every designer understands both the feeling and the purpose. The color itself becomes part of the storytelling. The audience learns to feel the shift before they read the words.
 
 ---
 
@@ -195,6 +231,7 @@ Target feeling: Dark Walnut → Old Book
 | Aged Cotton | `#E8DAC0` | Slight gold undertone. Feels expensive. |
 | Soft Sandstone | `#E6D4B6` | More warmth. Still elegant. |
 | **Antique Manuscript** | `#E4D0AD` | **Creative Director favorite.** Almost has history built into it. |
+| Museum Cotton | `#DDC9A3` | Slightly more mineral. A document lovingly preserved — not artificially aged. |
 
 **Additional variable to test:** Subtle paper grain texture at 1–2%. Not obviously visible. Nobody should consciously notice it. But if you zoom in — the cream doesn't feel digitally flat. Almost like handmade cotton paper.
 
@@ -600,11 +637,15 @@ This Moment should create peace. Not excitement. Not a call to action. Quiet bel
 | Session | Topic | Status |
 |---------|-------|--------|
 | Design | Page 17 (Why Now) — three layout explorations | Before any build |
-| Design | Five archival paper tones for Declaration Moment | Before any build |
+| Design | Declaration Moment — six paper tones side-by-side (incl. Museum Cotton) | Before any build |
 | Naming | Rating system (replacing stars with MWM™-owned belonging scale) | Dedicated session needed |
 | Writing | Cultural Ambassador page | Dedicated session needed |
-| Writing | One Lasting Belief — define for Experience Chapter | Before chapter approval |
+| Writing | ~~One Lasting Belief — Experience Chapter~~ | **RESOLVED** — "Belonging is something we can intentionally build together." |
 | Writing | Before/During/After/Later arc — document for Experience Chapter | Before chapter approval |
+| Constitution | Section 2 — The Daily Promise (Mission) | Next writing session |
+| Constitution | Section 3 — The Horizon (Vision) | Follows Section 2 |
+| Constitution | Sections 4–6 — Responsibility, Role, Compass | Follows Section 3 |
+| Constitution | Section 7 — Founder's Letter | Written last |
 
 ---
 
