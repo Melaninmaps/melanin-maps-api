@@ -1,0 +1,561 @@
+Excellent. Based on everything we've learned so far, Audit 7 should be one of the deepest audits because **KinfolkAI™ is not just another feature—it becomes the operating intelligence of the platform.** It will eventually touch nearly every system we've designed: Safety, Hidden Gems, Community Recognition, Opportunity Engine, Decision Ledger, Legacy Engine, Governance, and more.
+
+# AUDIT 7 — KINFOLKAI™, KNOWLEDGE LIBRARY & PERSONALIZATION ECOSYSTEM™
+
+## Governing Question™
+
+> **Can members trust KinfolkAI™ to provide accurate, appropriately qualified, culturally respectful, privacy-preserving, and transparent guidance while remaining aligned with Mapping With Melanin™'s constitutional principles?**
+
+KinfolkAI™ should never simply answer questions—it should help members make better-informed decisions while being honest about uncertainty.
+
+---
+
+# Primary Audit Domains
+
+### A. AI Architecture
+
+Review:
+
+* LLM provider(s)
+* Prompt construction
+* System prompts
+* Prompt injection protection
+* Model selection
+* Model fallback
+* Temperature settings
+* Context windows
+* Token management
+* Streaming responses
+* Conversation lifecycle
+* Cost controls
+* Rate limits
+* Error handling
+* Offline behavior
+
+---
+
+### B. Knowledge Sources
+
+Audit every information source.
+
+Separate:
+
+* Platform database
+* Business data
+* Community data
+* Safety Engine
+* Hidden Gems
+* Opportunity Engine
+* Library articles
+* Government resources
+* Official APIs
+* Third-party datasets
+* AI memory
+* Static prompts
+* External web sources (if any)
+
+For every source determine:
+
+* trusted
+* verified
+* inferred
+* AI generated
+* user generated
+* stale
+* cached
+
+---
+
+### C. Source Attribution
+
+Every AI statement should answer:
+
+Where did this information come from?
+
+Audit:
+
+* citations
+* evidence links
+* business data attribution
+* community attribution
+* official sources
+* uncertainty labeling
+
+---
+
+### D. Hallucination Prevention
+
+Inspect whether KinfolkAI may:
+
+* invent businesses
+* invent events
+* invent ownership
+* invent safety ratings
+* invent Opportunity Engine recommendations
+* invent routes
+* invent Hidden Gems
+* invent Community Recognition
+* invent officer information
+
+If any are possible:
+
+P0.
+
+---
+
+### E. Personalization Engine
+
+Audit:
+
+Uses:
+
+* interests
+* identity preferences
+* location
+* travel style
+* accessibility
+* saved topics
+* memberships
+* trust level
+* Community Journey™
+* Hidden Gems
+* Community Recognition
+* Opportunity Engine
+* Community Ripple
+* Community Echo
+
+Determine which are actually connected.
+
+---
+
+### F. AI Memory
+
+Audit:
+
+Conversation memory
+
+Session memory
+
+Long-term memory
+
+Cross-device memory
+
+Deletion
+
+Export
+
+Correction
+
+Retention
+
+Whether members control memory.
+
+---
+
+### G. Recommendation Engine
+
+Audit every recommendation.
+
+Restaurants
+
+Businesses
+
+Cities
+
+Neighborhoods
+
+Trips
+
+Routes
+
+Events
+
+People
+
+Circles
+
+Groups
+
+Resources
+
+Scholarships
+
+Jobs
+
+Grants
+
+Community Requests
+
+Volunteer opportunities
+
+---
+
+### H. Opportunity Engine Integration
+
+Determine whether AI can recommend:
+
+Jobs
+
+Business grants
+
+Scholarships
+
+Funding
+
+Housing
+
+Mentorship
+
+Resources
+
+Emergency assistance
+
+Minority programs
+
+Business opportunities
+
+---
+
+### I. Knowledge Library™
+
+Audit:
+
+Saved Topics
+
+Library articles
+
+Summaries
+
+Topic following
+
+Updates
+
+Verified sources
+
+Duplicate detection
+
+AI summarization
+
+Topic subscriptions
+
+---
+
+### J. Sensitive Domains
+
+Audit responses involving:
+
+Medical
+
+Legal
+
+Financial
+
+Mental health
+
+Housing
+
+Immigration
+
+Police
+
+ICE
+
+Safety
+
+Employment
+
+Discrimination
+
+Children
+
+Domestic violence
+
+Emergency situations
+
+Determine:
+
+Does KinfolkAI know when to stop?
+
+Does it recommend professional help?
+
+Does it overstate certainty?
+
+---
+
+### K. Prompt Security
+
+Audit:
+
+Prompt injection
+
+Jailbreaks
+
+Data leakage
+
+Hidden prompts
+
+Tool abuse
+
+Instruction override
+
+Role confusion
+
+Conversation poisoning
+
+---
+
+### L. Privacy
+
+Determine whether KinfolkAI can access:
+
+DMs
+
+Private Circles
+
+Private Groups
+
+Hidden businesses
+
+Blocked users
+
+Pending moderation
+
+Deleted content
+
+Reporter identities
+
+Decision Ledger
+
+Trust scores
+
+Safety evidence
+
+Moderation notes
+
+Personal location history
+
+The answer should be explicit—not assumed.
+
+---
+
+### M. Voice Architecture
+
+Audit:
+
+Voice modes
+
+Regional voices
+
+AAVE support
+
+Dialect switching
+
+Fallback voices
+
+Navigation voice
+
+Accessibility
+
+Profanity controls
+
+Child mode
+
+Voice licensing readiness
+
+---
+
+### N. KinfolkAI Constitutional Alignment™
+
+Determine whether responses consistently follow:
+
+Invisible Architecture™
+
+Constitutional Intelligence Layer™
+
+Decision Ledger™
+
+Governance Engine™
+
+Community Recognition™
+
+Hidden Gems™
+
+Safety Intelligence™
+
+Legacy Engine™
+
+Community Ripple™
+
+Community Echo™
+
+Community Return on Impact™
+
+Opportunity Engine™
+
+If not:
+
+Identify every disconnect.
+
+---
+
+### O. Human Test™
+
+Evaluate:
+
+A first-time traveler
+
+A new immigrant
+
+A solo Black traveler
+
+A business owner
+
+A parent
+
+A college student
+
+A disabled traveler
+
+An elder
+
+A journalist
+
+An administrator
+
+An investor
+
+Would each trust KinfolkAI?
+
+Would each understand uncertainty?
+
+Would each know what AI knows versus what it doesn't know?
+
+---
+
+### P. Failure Scenario Review™
+
+What happens if:
+
+The LLM is unavailable?
+
+The API quota is exhausted?
+
+The model hallucinates?
+
+Business data conflicts?
+
+Safety data conflicts?
+
+No data exists?
+
+A malicious prompt is entered?
+
+Official sources disappear?
+
+The internet is unavailable?
+
+The Library becomes stale?
+
+---
+
+### Q. Community Promise Audit™
+
+Evaluate promises such as:
+
+"KinfolkAI knows your community."
+
+"KinfolkAI helps you discover Hidden Gems."
+
+"KinfolkAI helps you travel confidently."
+
+"KinfolkAI personalizes your journey."
+
+"KinfolkAI protects your privacy."
+
+Can it actually do these today?
+
+---
+
+### R. Missing Founder Decisions
+
+Record, but do not answer:
+
+* What may KinfolkAI remember permanently?
+* Should AI personalize by trust level?
+* Can AI reference Decision Ledger history?
+* May AI recommend businesses under active investigation?
+* Can AI recommend unverified Hidden Gems?
+* May AI summarize moderation outcomes?
+* May AI infer cultural identity?
+* Should AI ever answer "Is this neighborhood safe?"
+* When should AI refuse?
+* When should AI escalate to humans?
+* Should AI cite every factual statement?
+* Should AI disclose uncertainty every time?
+
+---
+
+# Developer Commentary
+
+End with:
+
+> **"If you were preparing KinfolkAI™ for public launch, what would YOU improve? Not code. Not architecture. Just observations."**
+
+---
+
+# Constitutional Commentary
+
+Include this exactly:
+
+> **KinfolkAI™ exists to expand human judgment—not replace it.**
+>
+> It should help members discover opportunities, understand communities, navigate uncertainty, and make thoughtful decisions without pretending to possess perfect knowledge.
+>
+> The AI must distinguish facts from inferences, verified information from community observations, and confidence from speculation.
+>
+> Personalization should feel like hospitality rather than surveillance.
+>
+> Memory should serve the member—not the institution.
+>
+> Recommendations should increase opportunity without narrowing perspective.
+>
+> Every response should strengthen trust in the platform by being transparent about what is known, what is uncertain, and why.
+
+---
+
+# One additional audit unique to KinfolkAI™
+
+I want Replit to perform an **Institutional Wisdom Audit™**.
+
+Ask:
+
+* Does KinfolkAI merely answer questions?
+* Or does it reflect the values of Mapping With Melanin™?
+
+For example:
+
+If asked:
+
+> "Should I avoid this neighborhood?"
+
+A generic AI answers yes or no.
+
+KinfolkAI should answer something like:
+
+> "I can share what the community has observed, official information that's available, and the confidence we have in that information. Conditions vary by time, circumstance, and personal experience, so consider these signals alongside your own judgment."
+
+That difference is what transforms an AI assistant into an institutional guide.
+
+---
+
+I also want one new permanent metric beginning with Audit 7:
+
+## **Institutional Maturity Score™**
+
+Separate from engineering.
+
+Scored out of **100**.
+
+It measures whether the platform behaves like the trusted institution you're building—not just whether the code works.
+
+Engineering can improve quickly. Institutional maturity is earned more slowly. Tracking both will help us understand not just *what* has been been built, but *how responsibly* it has been built.
