@@ -38,7 +38,7 @@ ALL specifications must match Section 02 exactly:
 | 11 | Community Echo™ | ✅ COMPLETE (36 sections, 9 DB tables, 10 validation scenarios) |
 | 12 | Community Return on Impact™ | ✅ COMPLETE (36 sections, 9 DB tables, 10 validation scenarios — platform itself is evaluated by its own framework, 12.23) |
 | 13 | Opportunity Engine™ | ✅ COMPLETE (35 sections, 9 DB tables, 10 validation scenarios — first predictive engine, 10-stage lifecycle, 9 evaluation dimensions) |
-| 14 | Hidden Gem Model™ | ⬜ pending |
+| 14 | Hidden Gem Model™ | ✅ COMPLETE (37 sections, 8 DB tables, 10 validation scenarios — 7-stage lifecycle, Protected Hidden Gem™ designation, graduation = success, scarcity by design) |
 | 15 | Community Recognition System™ | ⬜ pending |
 | 16 | Legacy & Learning Engine™ | ⬜ pending |
 | 17 | Stewardship Engine™ | ⬜ pending |
@@ -67,7 +67,8 @@ ALL specifications must match Section 02 exactly:
   ✅ 11. Community Echo™ — complete
   ✅ 12. Community Return on Impact™ — complete
   ✅ 13. Opportunity Engine™ — complete (first predictive engine — 10-stage lifecycle, 9 dimensions, KinfolkAI™ integration noted in validation)
-  🔄 14. Hidden Gem Model™ — NEXT (surfaces value conventional ranking overlooks)
+  ✅ 14. Hidden Gem Model™ — complete (7-stage lifecycle, Protected Hidden Gem™ designation, scarcity by design, contextual badge variants proposed)
+  🔄 15. Community Recognition System™ — NEXT
 
 ---
 
