@@ -729,7 +729,7 @@ export default function Profile() {
                 <BookmarkIcon className="text-[#CA922B] w-5 h-5" /> Saved Places
               </h3>
               <div className="bg-white rounded-3xl p-6 border border-[#3A1F0E]/5 shadow-sm min-h-[180px]">
-                {(!savedPlaces || savedPlaces.businessIds.length === 0) ? (
+                {(!savedPlaces?.businessIds?.length) ? (
                   <div className="flex flex-col items-center justify-center text-[#3A1F0E]/40 py-10">
                     <Map size={36} className="mb-3 opacity-40" />
                     <p className="text-sm font-serif text-center">No saved places yet.</p>
