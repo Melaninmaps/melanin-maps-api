@@ -2496,12 +2496,202 @@ All tables listed below are confidential and proprietary.
 | Business Maturity Model™ | business_maturity_profiles, business_growth_plans, business_maturity_scores, business_resource_recommendations, business_partnership_readiness, business_maturity_versions, business_maturity_history, business_maturity_audit |
 | City Maturity Model™ | city_profiles, city_maturity_scores, city_strengths, city_growth_priorities, city_resources, city_versions, city_history, city_audit |
 | Community Readiness Model™ | community_readiness_profiles, readiness_scores, readiness_dimensions, readiness_forecasts, readiness_versions, readiness_growth_plans, readiness_history, readiness_audit |
+| Constitutional Intelligence Layer™ | constitutional_reasoning, constitutional_priorities, constitutional_conflicts, constitutional_precedents, constitutional_versions, constitutional_amendments, constitutional_memory, constitutional_audit |
 
 ---
 
 ---
 
-*END OF AUDIT DOCUMENT — SECTIONS 01 THROUGH 23*
+# 24. CONSTITUTIONAL INTELLIGENCE LAYER™
+
+**Classification:** Constitutional Intelligence, Cross-Engine Arbitration, Platform Reasoning, and Institutional Integrity Architecture
+**Status:** Foundational Architecture Layer — Automatically Emerged During Invisible Architecture™ Development
+**Confidentiality:** Highest restriction
+
+## 24-A. Core Constitutional Dimensions & Weights
+
+| Dimension | Weight |
+|-----------|-------:|
+| Constitutional Fidelity | 22% |
+| Cross-Engine Consistency | 18% |
+| Institutional Integrity | 15% |
+| Community Protection | 13% |
+| Stewardship Alignment | 11% |
+| Governance Compliance | 9% |
+| Long-Term Continuity | 7% |
+| Evolution Readiness | 5% |
+| **Total** | **100%** |
+
+## 24-B. Constitutional Integrity Score Formula
+
+```
+Constitutional Integrity Score =
+  (Constitutional Fidelity × .22)
++ (Cross-Engine Consistency × .18)
++ (Institutional Integrity × .15)
++ (Community Protection × .13)
++ (Stewardship Alignment × .11)
++ (Governance Compliance × .09)
++ (Long-Term Continuity × .07)
++ (Evolution Readiness × .05)
+
+Normalized to 0–100.
+```
+
+## 24-C. Full Architecture Stack (Definitive — Internal)
+
+```
+Platform Constitution
+↓
+Constitutional Intelligence Layer™     ← THIS SPEC
+↓
+Belonging Intelligence Framework™
+↓
+Governance Engine™
+↓
+Stewardship Engine™
+↓
+Evolution Engine™
+↓
+Specialized Intelligence Engines
+↓
+KinfolkAI™
+↓
+Platform Features
+↓
+Member Experience
+```
+
+**Critical rule: "The Constitution never communicates directly with software. The Constitutional Intelligence Layer™ interprets it."**
+
+## 24-D. Constitutional Priority Order (10 Levels — Conflict Resolution)
+
+| Priority | Principle |
+|----------|-----------|
+| 1 | Human Safety |
+| 2 | Constitutional Principles |
+| 3 | Community Trust |
+| 4 | Human Dignity |
+| 5 | Stewardship |
+| 6 | Belonging |
+| 7 | Verified Evidence |
+| 8 | Opportunity |
+| 9 | Personalization |
+| 10 | Optimization |
+
+**Critical rule: Optimization is intentionally last.**
+
+## 24-E. Constitutional Arbitration Process
+
+When engines disagree → Opportunity Engine™ / Safety Engine™ / Hidden Gem™ / Trust™ / Community™ / Governance™ / Stewardship™ → Constitutional Intelligence Layer™ → Final Constitutional Recommendation.
+
+**Critical rule: "The Layer NEVER averages scores. It evaluates constitutional priority."**
+
+## 24-F. What the Layer IS and IS NOT
+
+**IS NOT:** Another engine
+**IS:** The constitutional operating system of the Invisible Architecture™
+
+**Three-way relationship clarification (critical — internal):**
+- KinfolkAI™ **speaks**. Constitutional Intelligence Layer™ **thinks**.
+- Governance **interprets policy**. CIL™ **interprets principles**.
+- Evolution **proposes change**. CIL™ **determines whether change remains faithful**.
+
+## 24-G. Constitutional Memory Sources
+
+Continuously references:
+- Decision Ledger™
+- Governance precedents
+- Legacy & Learning Engine™
+- Constitutional amendments
+- Institutional history
+
+**Rule: "History informs — but never imprisons — future reasoning."**
+
+## 24-H. Constitutional Constraints (Absolute Prohibitions)
+
+The Layer prohibits:
+- Optimization without purpose
+- Growth without stewardship
+- Automation without accountability
+- Personalization without privacy
+- Innovation without governance
+- Intelligence without explanation
+
+## 24-I. Constitutional Questions (8 — Asked Before Any Major Decision)
+
+1. Is it constitutional?
+2. Does it strengthen belonging?
+3. Does it preserve trust?
+4. Does it protect dignity?
+5. Does it improve opportunity?
+6. Does it strengthen institutions?
+7. Will future generations thank us?
+8. Would we proudly explain this publicly?
+
+**Rule: All answers must remain consistent.**
+
+## 24-J. Governing Calculation Rules
+- Governing question: "If every engine reached a different conclusion, what decision would remain most faithful to the Constitution of Mapping With Melanin™?"
+- **Constitutional principle: "Intelligence without principles becomes optimization. Optimization without purpose becomes exploitation." (24.2)**
+- **Critical architectural insight: If KinfolkAI™ is powered by a completely different AI model ten years from now, the platform's identity does NOT change — because the Constitution, not the AI model, is the source of truth (24, closing note)**
+- "The Constitution remains immune to incentives." (24.24)
+- Prohibited: "The Constitution made this decision." / "The platform cannot explain." / "The algorithm refused."
+- Institution Test: 50-year horizon (not 25 — the only spec with this extended horizon)
+- **Final governing rule: "Ensure that every act of intelligence remains an act of constitutional integrity, preserving trust, strengthening belonging, protecting dignity, and guiding every future generation with principles that remain stronger than the technology that carries them."**
+
+---
+
+---
+
+## PROPRIETARY DATABASE TABLES SUMMARY
+
+All tables listed below are confidential and proprietary.
+
+| Engine | Tables |
+|--------|--------|
+| Trust Engine™ | trust_assessments, trust_dimensions, trust_history, trust_flags, trust_versions, trust_audit |
+| BIF™ | bif_assessments, bif_dimensions, bif_history, bif_versions, bif_audit |
+| Context Engine™ | context_profiles, context_signals, context_history, context_versions, context_audit |
+| Community Engine™ | community_assessments, community_dimensions, community_activity, community_versions, community_audit |
+| Discovery Engine™ | discovery_scores, discovery_results, discovery_history, discovery_versions, discovery_audit |
+| Safety Intelligence Engine™ | safety_assessments, safety_incidents, safety_patterns, safety_resources, safety_history, safety_versions, safety_audit |
+| Cultural Influence Engine™ | cultural_assessments, cultural_dimensions, cultural_history, cultural_versions, cultural_audit |
+| Community Catalyst Model™ | catalyst_assessments, catalyst_dimensions, catalyst_actions, catalyst_versions, catalyst_audit |
+| Community Health Index™ | health_assessments, health_dimensions, health_history, health_versions, health_audit |
+| Community Ripple™ | ripple_assessments, ripple_nodes, ripple_edges, ripple_paths, ripple_events, ripple_attribution, ripple_confidence, ripple_versions, ripple_audit |
+| Community Echo™ | echo_assessments, echo_dimensions, echo_history, echo_successors, echo_institutions, echo_preservation, echo_memory, echo_versions, echo_audit |
+| CROI™ | croi_assessments, croi_dimensions, croi_investments, croi_outcomes, croi_benefits, croi_capacity, croi_ripple_links, croi_versions, croi_audit |
+| Opportunity Engine™ | opportunities, opportunity_matches, opportunity_scores, opportunity_categories, opportunity_requirements, opportunity_outcomes, opportunity_constraints, opportunity_versions, opportunity_audit |
+| Hidden Gem Model™ | hidden_gem_assessments, hidden_gem_nominations, hidden_gem_categories, hidden_gem_visibility, hidden_gem_preservation, hidden_gem_graduation, hidden_gem_versions, hidden_gem_audit |
+| Community Recognition System™ | recognition_profiles, recognition_categories, recognition_progression, recognition_history, recognition_nominations, recognition_retirement, recognition_versions, recognition_audit |
+| Legacy & Learning Engine™ | legacy_records, learning_events, institutional_memory, cultural_memory, knowledge_versions, historical_sources, legacy_relationships, legacy_audit |
+| Stewardship Engine™ | stewardship_assessments, stewardship_reviews, stewardship_actions, stewardship_preservation, stewardship_history, stewardship_versions, stewardship_governance, stewardship_audit |
+| Governance Engine™ | governance_reviews, governance_precedents, governance_policies, constitutional_rules, governance_appeals, governance_decisions, governance_versions, governance_audit |
+| Evolution Engine™ | evolution_proposals, evolution_reviews, evolution_history, evolution_versions, evolution_learning, evolution_metrics, evolution_rollbacks, evolution_audit |
+| KinfolkAI™ Architecture | kinfolk_sessions, kinfolk_context, conversation_history, engine_activations, orchestration_logs, recommendation_history, conversation_versions, kinfolk_audit |
+| Business Maturity Model™ | business_maturity_profiles, business_growth_plans, business_maturity_scores, business_resource_recommendations, business_partnership_readiness, business_maturity_versions, business_maturity_history, business_maturity_audit |
+| City Maturity Model™ | city_profiles, city_maturity_scores, city_strengths, city_growth_priorities, city_resources, city_versions, city_history, city_audit |
+| Community Readiness Model™ | community_readiness_profiles, readiness_scores, readiness_dimensions, readiness_forecasts, readiness_versions, readiness_growth_plans, readiness_history, readiness_audit |
+| Constitutional Intelligence Layer™ | constitutional_reasoning, constitutional_priorities, constitutional_conflicts, constitutional_precedents, constitutional_versions, constitutional_amendments, constitutional_memory, constitutional_audit |
+
+---
+
+---
+
+*END OF AUDIT DOCUMENT — SECTIONS 01 THROUGH 24*
+*Document continues as additional sections are received.*
+
+---
+
+**CONFIDENTIALITY NOTICE (REPEATED)**
+This document is the exclusive property of Mapping With Melanin™.
+It contains proprietary trade secret information protected under applicable trade secret law.
+Reproduction, distribution, disclosure, or use of the contents without explicit written
+authorization from the platform owner is strictly prohibited.
+For attorney use only unless otherwise authorized by the platform owner.
+
+---
 *Document continues as additional sections are received.*
 
 ---
