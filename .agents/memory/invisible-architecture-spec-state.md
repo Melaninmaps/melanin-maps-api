@@ -52,6 +52,15 @@ ALL specifications must match Section 02 exactly:
 | 26 | Context Library™ | ⬜ pending (30 contexts) |
 | 27 | Weight Registers (9 registers) | ⬜ built alongside implementation |
 
+## Confirmed Sequence
+  ✅ 01. Trust Engine™ — complete
+  ✅ 02. Belonging Intelligence Framework™ — complete
+  🔄 03. Context Engine™ — NEXT (resume here)
+  ⬜ 04. Community Engine™ — outline locked below
+  ⬜ 05–27 — pending
+
+---
+
 ## Section 03 Outline (exact resume point)
 
 ```
@@ -81,6 +90,52 @@ Confidentiality: High — context logic and weight adjustment rules are not publ
 03.16 Constitutional Rules
 03.17 Future Expansion
 ```
+
+## Section 04 Outline (ready after 03 is complete)
+
+```
+# 04. COMMUNITY ENGINE™
+
+## Future-State Production Specification v1.0
+
+Classification: Core Intelligence Engine
+Status: Review Mode — designed as the launch-state model
+Confidentiality: Highest restriction; scoring methodology,
+decision logic, and weighting formulas are confidential trade
+secrets and are not publicly disclosed.
+
+04.1  Purpose
+04.2  Foundational Principle
+04.3  Definition of Community
+04.4  Core Evaluation Dimensions
+04.5  Evidence Categories
+04.6  Community Signal Collection
+04.7  Community Confidence Assessment
+04.8  Community Scoring Methodology
+04.9  Positive Community Indicators
+04.10 Community Risk Indicators
+04.11 Community Growth Recognition
+04.12 Community Intervention Rules
+04.13 Community Context Adjustments
+04.14 Engine Interactions
+04.15 Output Contract
+04.16 Audit Requirements
+04.17 Constitutional Rules
+04.18 Learning & Evolution
+04.19 Future Expansion
+```
+
+Key content to incorporate from prior sessions:
+- 7 core questions with initial weights: Welcoming 18% / Connected 18% /
+  Helping Itself 15% / Business Participation 15% / Cultural Ambassadors 15% /
+  Trust Increasing 10% / Preserving Itself 9%
+- Scores communities, not people — internal use only
+- Community Health expressed as identity words (Thriving/Strong/Growing/Emerging)
+- Community Momentum™ as directional modifier (↑↓→ trend)
+- Input from Trust Engine, Safety Engine, Cultural Influence Engine
+- Output feeds Community Health Index, KinfolkAI, Legacy Engine, city planning
+
+---
 
 ## Key Numbers Already Established (from BIF Spec)
 Must be consistent across all engine specs:
