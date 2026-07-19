@@ -14,7 +14,7 @@ export default function CB06WhyBusinessesLoveIt() {
 
       {/* Left */}
       <div className="absolute flex flex-col justify-center" style={{ left: "7vw", top: "8%", bottom: "8%", maxWidth: "38vw" }}>
-        <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "1.6vw" }}>WHY BUSINESSES LOVE IT</div>
+        <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "1.6vw" }}>WHY BUSINESSES LOVE IT</div>
         <h1 className="font-display" style={{ fontSize: "4.2vw", fontWeight: 800, color: "#1C0E06", lineHeight: 1.05, marginBottom: "2vw" }}>
           Businesses own<br />the relationship.
         </h1>

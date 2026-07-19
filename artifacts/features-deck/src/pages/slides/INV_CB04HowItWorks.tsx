@@ -14,7 +14,7 @@ export default function CB04HowItWorks() {
       <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>04</div>
 
       <div className="absolute left-0 right-0 text-center" style={{ top: "7vw" }}>
-        <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "0.8vw" }}>HOW DOES IT WORK?</div>
+        <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "0.8vw" }}>HOW DOES IT WORK?</div>
         <h1 className="font-display" style={{ fontSize: "4.2vw", fontWeight: 800, color: "#FAF6EF", lineHeight: 1.1 }}>
           One beautiful cycle.
         </h1>

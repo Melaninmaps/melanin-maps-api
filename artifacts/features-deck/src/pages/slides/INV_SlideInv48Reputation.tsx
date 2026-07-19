@@ -13,7 +13,7 @@ export default function SlideInv48Reputation() {
       <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 50% 40%, rgba(202,146,43,0.07), transparent 60%)" }} />
 
       {/* Section label */}
-      <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.2em", fontWeight: 700, marginBottom: "1.2vw", position: "relative", zIndex: 10 }}>
+      <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.2em", fontWeight: 700, marginBottom: "1.2vw", position: "relative", zIndex: 10 }}>
         YOUR COMPETITIVE ADVANTAGE
       </div>
 

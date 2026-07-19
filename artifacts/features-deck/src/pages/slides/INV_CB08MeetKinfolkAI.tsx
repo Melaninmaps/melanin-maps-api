@@ -15,7 +15,7 @@ export default function CB08MeetKinfolkAI() {
 
       {/* Left */}
       <div className="absolute flex flex-col justify-center" style={{ left: "7vw", top: "10%", bottom: "10%", width: "38vw" }}>
-        <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "1.6vw" }}>MEET</div>
+        <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "1.6vw" }}>MEET</div>
         <h1 className="font-display" style={{ fontSize: "5.2vw", fontWeight: 800, color: "#FAF6EF", lineHeight: 1.0, marginBottom: "1.8vw" }}>
           KinfolkAI&trade;
         </h1>

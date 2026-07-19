@@ -15,7 +15,7 @@ export default function CB01bWhyBuildersMatter() {
 
       {/* Left */}
       <div className="absolute flex flex-col justify-center" style={{ left: "7vw", top: "6%", bottom: "6%", width: "43vw" }}>
-        <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "1.3vw" }}>WHY COMMUNITY BUILDERS MATTER</div>
+        <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "1.3vw" }}>WHY COMMUNITY BUILDERS MATTER</div>
 
         <div className="font-quote" style={{ fontSize: "2vw", fontStyle: "italic", color: "#FAF6EF", lineHeight: 1.35, marginBottom: "1.1vw" }}>
           Every movement begins with one conversation.

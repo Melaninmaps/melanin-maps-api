@@ -6,7 +6,7 @@ export default function DIV01ExperienceChapter() {
     >
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: "linear-gradient(90deg,transparent,#CA922B,transparent)" }} />
 
-      <div className="absolute left-[6vw] top-[4.5vw] font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.35em", fontWeight: 600 }}>
+      <div className="absolute left-[6vw] top-[4.5vw] font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.35em", fontWeight: 600 }}>
         MAPPING WITH MELANIN&trade; &mdash; LEGACY COLLECTION
       </div>
 

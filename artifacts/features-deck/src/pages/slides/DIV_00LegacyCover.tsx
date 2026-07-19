@@ -11,7 +11,7 @@ export default function DIV00LegacyCover() {
         style={{ background: "radial-gradient(ellipse at 68% 60%, rgba(202,146,43,0.06) 0%, transparent 55%)" }}
       />
 
-      <div className="absolute left-[6vw] top-[4.5vw] font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.35em", fontWeight: 600 }}>
+      <div className="absolute left-[6vw] top-[4.5vw] font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.35em", fontWeight: 600 }}>
         MAPPING WITH MELANIN&trade;
       </div>
 

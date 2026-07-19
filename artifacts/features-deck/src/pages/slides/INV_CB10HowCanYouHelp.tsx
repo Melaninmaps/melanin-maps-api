@@ -28,7 +28,7 @@ export default function CB10HowCanYouHelp() {
       <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>10</div>
 
       <div className="absolute left-0 right-0 text-center" style={{ top: "6vw" }}>
-        <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "0.7vw" }}>YOUR ROLE AS A COMMUNITY BUILDER</div>
+        <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "0.7vw" }}>YOUR ROLE AS A COMMUNITY BUILDER</div>
         <h1 className="font-display" style={{ fontSize: "4vw", fontWeight: 800, color: "#FAF6EF", lineHeight: 1.05, marginBottom: "0.5vw" }}>
           How can you help?
         </h1>

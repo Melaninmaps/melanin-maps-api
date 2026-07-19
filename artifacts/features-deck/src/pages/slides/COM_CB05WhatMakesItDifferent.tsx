@@ -18,7 +18,7 @@ export default function CB05WhatMakesItDifferent() {
 
       {/* Header */}
       <div className="absolute left-[7vw]" style={{ top: "5.5vw" }}>
-        <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "0.7vw" }}>
+        <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "0.7vw" }}>
           WHAT MAKES IT DIFFERENT
         </div>
         <h1 className="font-display" style={{ fontSize: "3.8vw", fontWeight: 800, color: "#FAF6EF", lineHeight: 1.1 }}>

@@ -19,7 +19,7 @@ export default function SlideLivingHistory() {
 
       {/* Content — centered */}
       <div className="absolute left-[7vw] flex flex-col justify-center" style={{ top: "8%", bottom: "8%", width: "55vw" }}>
-        <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "2vw" }}>
+        <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "2vw" }}>
           CULTURAL HERITAGE
         </div>
 

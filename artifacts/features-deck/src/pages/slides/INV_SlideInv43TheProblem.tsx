@@ -27,7 +27,7 @@ export default function SlideInv43TheProblem() {
             <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             <line x1="8" y1="11" x2="14" y2="11" strokeDasharray="1.5 1.5" opacity="0.5" />
           </svg>
-          <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.14em", fontWeight: 700, marginBottom: "0.6vw" }}>THE VISIBILITY GAP</div>
+          <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.14em", fontWeight: 700, marginBottom: "0.6vw" }}>THE VISIBILITY GAP</div>
           <div className="font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2, marginBottom: "1vw" }}>
             Invisible to your own community
           </div>
@@ -48,7 +48,7 @@ export default function SlideInv43TheProblem() {
             <line x1="6" y1="14" x2="10" y2="14" />
             <line x1="14" y1="14" x2="16" y2="14" />
           </svg>
-          <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.14em", fontWeight: 700, marginBottom: "0.6vw" }}>THE TRUST GAP</div>
+          <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.14em", fontWeight: 700, marginBottom: "0.6vw" }}>THE TRUST GAP</div>
           <div className="font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2, marginBottom: "1vw" }}>
             Trust can't be purchased.
           </div>
@@ -69,7 +69,7 @@ export default function SlideInv43TheProblem() {
             <line x1="12" y1="12" x2="12" y2="16" />
             <line x1="10" y1="14" x2="14" y2="14" />
           </svg>
-          <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.14em", fontWeight: 700, marginBottom: "0.6vw" }}>THE TOOLS GAP</div>
+          <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.14em", fontWeight: 700, marginBottom: "0.6vw" }}>THE TOOLS GAP</div>
           <div className="font-display" style={{ fontSize: "1.5vw", fontWeight: 700, color: "#1C0E06", lineHeight: 1.2, marginBottom: "1vw" }}>
             Built for everyone. Perfect for no one.
           </div>

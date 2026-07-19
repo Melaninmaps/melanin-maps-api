@@ -49,7 +49,7 @@ export default function SlideInv36BusinessModel() {
         {/* ── Col 1: Consumers ── */}
         <div style={{ paddingRight: "1.8vw", borderRight: "1px solid rgba(58,31,14,0.12)" }}>
           <div style={{ background: "#1C0E06", borderRadius: "0.4vw", padding: "0.55vw 1vw", display: "inline-block", marginBottom: "0.7vw" }}>
-            <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.15em", fontWeight: 700 }}>CONSUMERS</div>
+            <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.15em", fontWeight: 700 }}>CONSUMERS</div>
           </div>
           <div className="font-display" style={{ fontSize: "1vw", color: "#CA922B", marginBottom: "0.6vw", paddingLeft: "0.2vw" }}>↓</div>
           <div className="font-body" style={{ fontSize: "0.82vw", color: "#CA922B", fontWeight: 700, letterSpacing: "0.1em", marginBottom: "0.2vw" }}>RECURRING SUBSCRIPTION REVENUE</div>
@@ -79,7 +79,7 @@ export default function SlideInv36BusinessModel() {
         {/* ── Col 2: Businesses ── */}
         <div style={{ paddingLeft: "1.8vw", paddingRight: "1.8vw", borderRight: "1px solid rgba(58,31,14,0.12)" }}>
           <div style={{ background: "#1C0E06", borderRadius: "0.4vw", padding: "0.55vw 1vw", display: "inline-block", marginBottom: "0.7vw" }}>
-            <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.15em", fontWeight: 700 }}>BUSINESSES</div>
+            <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.15em", fontWeight: 700 }}>BUSINESSES</div>
           </div>
           <div className="font-display" style={{ fontSize: "1vw", color: "#CA922B", marginBottom: "0.6vw", paddingLeft: "0.2vw" }}>↓</div>
           <div className="font-body" style={{ fontSize: "0.82vw", color: "#CA922B", fontWeight: 700, letterSpacing: "0.1em", marginBottom: "0.2vw" }}>SAAS REVENUE</div>
@@ -109,7 +109,7 @@ export default function SlideInv36BusinessModel() {
         {/* ── Col 3: Cities & Organizations ── */}
         <div style={{ paddingLeft: "1.8vw", paddingRight: "1.8vw", borderRight: "1px solid rgba(58,31,14,0.12)" }}>
           <div style={{ background: "#1C0E06", borderRadius: "0.4vw", padding: "0.55vw 1vw", display: "inline-block", marginBottom: "0.7vw" }}>
-            <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.15em", fontWeight: 700 }}>CITIES &amp; ORGS</div>
+            <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.15em", fontWeight: 700 }}>CITIES &amp; ORGS</div>
           </div>
           <div className="font-display" style={{ fontSize: "1vw", color: "#CA922B", marginBottom: "0.6vw", paddingLeft: "0.2vw" }}>↓</div>
           <div className="font-body" style={{ fontSize: "0.82vw", color: "#CA922B", fontWeight: 700, letterSpacing: "0.1em", marginBottom: "0.2vw" }}>GOVERNMENT &amp; INSTITUTIONAL REVENUE</div>
@@ -139,7 +139,7 @@ export default function SlideInv36BusinessModel() {
         {/* ── Col 4: Enterprise ── */}
         <div style={{ paddingLeft: "1.8vw" }}>
           <div style={{ background: "#1C0E06", borderRadius: "0.4vw", padding: "0.55vw 1vw", display: "inline-block", marginBottom: "0.7vw" }}>
-            <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.15em", fontWeight: 700 }}>ENTERPRISE</div>
+            <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.15em", fontWeight: 700 }}>ENTERPRISE</div>
           </div>
           <div className="font-display" style={{ fontSize: "1vw", color: "#CA922B", marginBottom: "0.6vw", paddingLeft: "0.2vw" }}>↓</div>
           <div className="font-body" style={{ fontSize: "0.82vw", color: "#CA922B", fontWeight: 700, letterSpacing: "0.1em", marginBottom: "0.2vw" }}>ENTERPRISE CONTRACTS</div>

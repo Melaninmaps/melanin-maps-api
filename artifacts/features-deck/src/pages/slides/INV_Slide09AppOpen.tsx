@@ -3,8 +3,6 @@ const base = import.meta.env.BASE_URL;
 export default function Slide09AppOpen() {
   return (
     <div className="relative w-screen h-screen overflow-hidden" style={{ background: "#FAF6EF" }}>
-      <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>09</div>
-
       <div className="absolute left-[6vw] flex flex-col justify-center" style={{ top: "8%", bottom: "8%", maxWidth: "34vw" }}>
         <h1 className="font-display leading-tight" style={{ fontSize: "5.6vw", fontWeight: 700, color: "#1C0E06" }}>
           Travel.
@@ -13,7 +11,7 @@ export default function Slide09AppOpen() {
           Confidence is the best travel companion.
         </div>
         <div className="font-body mt-[1.4vw]" style={{ fontSize: "1.4vw", color: "#7B5408", fontWeight: 400, lineHeight: 1.5, textWrap: "balance" }}>
-          Discover safer neighborhoods, trusted businesses, and community insight before you arrive&mdash;so every trip begins with confidence, not uncertainty.
+          Discover places where our community thrives, trusted businesses, and community insight before you arrive&mdash;so every trip begins with confidence, not uncertainty.
         </div>
         <div className="inv-rule mt-[2vw] mb-[0.9vw]" style={{ width: "5vw" }} />
         <div className="font-display" style={{ fontSize: "1.5vw", color: "#A6720F", fontWeight: 700, fontStyle: "italic" }}>

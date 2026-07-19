@@ -18,7 +18,7 @@ export default function CB03WhoIsItFor() {
 
       {/* Left */}
       <div className="absolute flex flex-col justify-center" style={{ left: "7vw", top: "8%", bottom: "8%", width: "42vw" }}>
-        <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "1.6vw" }}>WHO IS IT FOR?</div>
+        <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "1.6vw" }}>WHO IS IT FOR?</div>
         <h1 className="font-display" style={{ fontSize: "4.2vw", fontWeight: 800, color: "#1C0E06", lineHeight: 1.1, marginBottom: "2.4vw" }}>
           Wherever life takes you,<br />
           <span style={{ color: "#CA922B" }}>find your community first.</span>

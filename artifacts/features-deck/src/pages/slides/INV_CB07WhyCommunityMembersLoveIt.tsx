@@ -15,7 +15,7 @@ export default function CB07WhyCommunityMembersLoveIt() {
       <div className="absolute bottom-[1.7vw] right-[5vw] font-display" style={{ fontSize: "2vw", color: "#CA922B", fontWeight: 700, opacity: 0.35 }}>07</div>
 
       <div className="absolute left-[7vw]" style={{ top: "6.5vw" }}>
-        <div className="font-body" style={{ fontSize: "0.85vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "0.7vw" }}>WHY COMMUNITY MEMBERS LOVE IT</div>
+        <div className="font-body" style={{ fontSize: "0.95vw", color: "#CA922B", letterSpacing: "0.28em", fontWeight: 700, marginBottom: "0.7vw" }}>WHY COMMUNITY MEMBERS LOVE IT</div>
         <h1 className="font-display" style={{ fontSize: "4.4vw", fontWeight: 800, color: "#FAF6EF", lineHeight: 1.05 }}>
           It&rsquo;s not a feature.<br /><span style={{ color: "#CA922B" }}>It&rsquo;s a feeling.</span>
         </h1>
