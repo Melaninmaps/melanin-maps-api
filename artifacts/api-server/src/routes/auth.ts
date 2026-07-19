@@ -637,7 +637,10 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
       const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
       req.log.warn({ ...diagBase, event: "AUTH_LOGIN_LOCKED", emailMasked, lockedUntilIso: user.lockedUntil.toISOString(), minutesLeft, status: 423, durationMs: Date.now() - t0 }, "auth diagnostic");
       void logAuthEvent(user.id, "AUTH_LOCKED_ATTEMPT", req.ip ?? null, diagBase.ua);
-      res.status(423).json({ error: `Too many failed attempts. Try again in ${minutesLeft} minute${minutesLeft !== 1 ? "s" : ""}.` });
+      res.status(423).json({
+        error: `Too many failed attempts. Your account is locked for ${minutesLeft} more minute${minutesLeft !== 1 ? "s" : ""}. Use "Forgot password?" to unlock immediately.`,
+        locked_until: user.lockedUntil!.toISOString(),
+      });
       return;
     }
 
@@ -787,7 +790,7 @@ router.post("/auth/reset-password", async (req: Request, res: Response) => {
     const passwordHash = await bcrypt.hash(newPassword, 8);
     await db
       .update(usersTable)
-      .set({ passwordHash, emailVerificationToken: null, emailVerificationExpires: null })
+      .set({ passwordHash, emailVerificationToken: null, emailVerificationExpires: null, failedLoginAttempts: 0, lockedUntil: null })
       .where(eq(usersTable.id, user.id));
 
     res.json({ success: true });
@@ -891,6 +894,9 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
       res.status(403).json({ error: "Your account is pending approval." });
       return;
     }
+
+    // Clear any lockout state on successful Apple Sign-In
+    await db.update(usersTable).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq(usersTable.id, user.id));
 
     const sessionData: SessionData = {
       user: {

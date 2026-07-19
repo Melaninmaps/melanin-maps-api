@@ -168,6 +168,9 @@ router.post("/auth/phone/verify-otp", async (req: Request, res: Response) => {
       return;
     }
 
+    // Clear any lockout state on successful phone verification
+    await db.update(usersTable).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq(usersTable.id, user.id));
+
     const sessionData: SessionData = {
       user: {
         id: user.id,
@@ -271,6 +274,9 @@ router.post("/auth/phone/link-to-existing", async (req: Request, res: Response) 
       .update(usersTable)
       .set({ phoneNumber: normalized, phoneVerified: true })
       .where(eq(usersTable.id, user.id));
+
+    // Clear any lockout state on successful phone link
+    await db.update(usersTable).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq(usersTable.id, user.id));
 
     // 6. Return session
     const sessionData: SessionData = {

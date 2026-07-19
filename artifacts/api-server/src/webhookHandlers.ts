@@ -135,19 +135,32 @@ export class WebhookHandlers {
 
     try {
       const event = JSON.parse(payload.toString()) as { id?: string; type: string; data: { object: Record<string, unknown> } };
+
+      // Idempotency check: read first — do NOT mark as processed until handler succeeds.
+      // Inserting before the handler means a handler failure permanently discards the event.
       if (event.id) {
-        const idempResult = await pool.query(
-          `INSERT INTO stripe_processed_events (stripe_event_id, processed_at) VALUES ($1, NOW()) ON CONFLICT (stripe_event_id) DO NOTHING`,
+        const existingResult = await pool.query(
+          `SELECT 1 FROM stripe_processed_events WHERE stripe_event_id = $1`,
           [event.id]
         );
-        if ((idempResult.rowCount as number) === 0) {
+        if ((existingResult.rowCount as number) > 0) {
           logger.info({ eventId: event.id, eventType: event.type }, "Stripe webhook event already processed — skipping");
           return;
         }
       }
+
+      // Run handler first — mark processed only after handler succeeds.
+      // If handler throws, the event remains retryable by Stripe.
       await handleCustomEvent(event);
+
+      if (event.id) {
+        await pool.query(
+          `INSERT INTO stripe_processed_events (stripe_event_id, processed_at) VALUES ($1, NOW()) ON CONFLICT (stripe_event_id) DO NOTHING`,
+          [event.id]
+        );
+      }
     } catch (err) {
-      logger.warn({ err }, "Custom webhook event handling failed (sync already succeeded)");
+      logger.warn({ err }, "Custom webhook event handling failed — event remains retryable");
     }
   }
 }

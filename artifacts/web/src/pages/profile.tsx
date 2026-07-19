@@ -646,6 +646,29 @@ export default function Profile() {
     window.location.replace("/");
   };
 
+  const [signOutAllLoading, setSignOutAllLoading] = useState(false);
+  const handleSignOutAll = async () => {
+    if (!window.confirm("Sign out all devices?\n\nThis will immediately invalidate every active session across all your devices, including this one. You will need to sign in again everywhere.")) return;
+    setSignOutAllLoading(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const res = await fetch(`${base}/api/auth/logout-all`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (res.ok) {
+        handleLogout();
+      } else {
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        alert(data.error ?? "Could not sign out all devices. Please try again.");
+      }
+    } catch {
+      alert("Could not connect. Please check your connection and try again.");
+    } finally {
+      setSignOutAllLoading(false);
+    }
+  };
+
   const savedCount = savedPlaces?.businessIds?.length ?? 0;
   const isEarlyTester = (auth?.user as any)?.role === "tester";
 
@@ -667,9 +690,21 @@ export default function Profile() {
         {/* Top bar */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl md:text-5xl font-serif font-bold text-white tracking-tight">Your Profile</h1>
-          <Button variant="outline" onClick={handleLogout} className="rounded-full bg-white/10 text-white border-white/20 hover:bg-white hover:text-[#2B1507] backdrop-blur h-10">
-            <LogOut className="mr-2 h-4 w-4" /> Sign Out
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleSignOutAll}
+              disabled={signOutAllLoading}
+              title="Sign out of every device and session"
+              className="rounded-full bg-white/10 text-white border-white/20 hover:bg-red-600 hover:text-white hover:border-red-600 backdrop-blur h-10 text-xs"
+            >
+              <Shield className="mr-1.5 h-3.5 w-3.5" />
+              {signOutAllLoading ? "Signing out…" : "All Devices"}
+            </Button>
+            <Button variant="outline" onClick={handleLogout} className="rounded-full bg-white/10 text-white border-white/20 hover:bg-white hover:text-[#2B1507] backdrop-blur h-10">
+              <LogOut className="mr-2 h-4 w-4" /> Sign Out
+            </Button>
+          </div>
         </div>
 
         {/* Stats row */}

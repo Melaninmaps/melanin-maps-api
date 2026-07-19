@@ -1556,6 +1556,54 @@ export default function ProfileScreen() {
       )}
 
       {isAuthenticated && (
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={[styles.signOutAllBtn, { borderColor: "#DC262640", backgroundColor: "#DC262608" }]}
+          onPress={() => {
+            Alert.alert(
+              "Sign Out All Devices",
+              "This will immediately invalidate every active session across all your devices, including this one. You will need to sign in again everywhere.",
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Sign Out All",
+                  style: "destructive",
+                  onPress: async () => {
+                    try {
+                      const token = await SecureStore.getItemAsync("auth_session_token");
+                      if (!token) { logout(); return; }
+                      const apiBase = process.env.EXPO_PUBLIC_DOMAIN
+                        ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
+                        : "";
+                      const res = await fetch(`${apiBase}/api/auth/logout-all`, {
+                        method: "POST",
+                        headers: { Authorization: `Bearer ${token}` },
+                      });
+                      if (res.ok) {
+                        await SecureStore.deleteItemAsync("auth_session_token").catch(() => {});
+                        logout();
+                      } else {
+                        Alert.alert("Error", "Could not sign out all devices. Please try again.");
+                      }
+                    } catch {
+                      Alert.alert("Error", "Could not connect. Please check your connection and try again.");
+                    }
+                  },
+                },
+              ]
+            );
+          }}
+        >
+          <Feather name="shield-off" size={16} color="#DC2626" />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.signOutAllText, { color: "#DC2626" }]}>Sign Out All Devices</Text>
+            <Text style={[styles.signOutAllSub, { color: "#DC262680" }]}>Ends every active session everywhere</Text>
+          </View>
+          <Feather name="chevron-right" size={14} color="#DC262660" />
+        </TouchableOpacity>
+      )}
+
+      {isAuthenticated && (
         <TouchableOpacity activeOpacity={0.85}
           style={[styles.signOutBtn, { borderColor: colors.destructive + "40" }]}
           onPress={logout}
@@ -2082,6 +2130,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_400Regular",
     marginTop: 2,
+  },
+  signOutAllBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginHorizontal: 20,
+    marginBottom: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  signOutAllText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+  },
+  signOutAllSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    marginTop: 1,
   },
   signOutBtn: {
     flexDirection: "row",

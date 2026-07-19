@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import crypto from "crypto";
+import { pool } from "@workspace/db";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM = "Mapping With Melanin™ <hello@mappingwithmelanin.com>";
@@ -9,6 +10,18 @@ const COMPANY_ADDRESS = process.env.COMPANY_MAILING_ADDRESS ?? "Melanin Maps LLC
 
 export function generateUnsubscribeToken(email: string): string {
   return crypto.createHmac("sha256", UNSUBSCRIBE_SECRET).update(email.toLowerCase().trim()).digest("hex");
+}
+
+async function checkMarketingOptOut(email: string): Promise<boolean> {
+  try {
+    const result = await pool.query(
+      "SELECT marketing_opt_out FROM users WHERE lower(email) = lower($1) LIMIT 1",
+      [email]
+    );
+    return result.rows[0]?.marketing_opt_out === true;
+  } catch {
+    return true;
+  }
 }
 
 function canSpamFooterHtml(toEmail: string): string {
@@ -267,6 +280,7 @@ export async function sendReferralNudge(
   newSignupsThisWeek: number,
 ) {
   if (!resend) return;
+  if (await checkMarketingOptOut(to)) return;
   const referralLink = `https://mappingwithmelanin.com/?ref=${referralCode}`;
   const name = firstName || "there";
   await sendEmail({
@@ -515,6 +529,7 @@ export async function sendTrialEndingSoon(
   daysLeft: number,
 ) {
   if (!resend) return;
+  if (await checkMarketingOptOut(to)) return;
   const name = firstName ?? "there";
   const planLabel = PLAN_LABELS[planType] ?? "Premium";
   const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
@@ -584,6 +599,7 @@ export async function sendTrialExpired(
   planType: string,
 ) {
   if (!resend) return;
+  if (await checkMarketingOptOut(to)) return;
   const name = firstName ?? "there";
   const planLabel = PLAN_LABELS[planType] ?? "Premium";
   const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
@@ -657,6 +673,7 @@ export async function sendTrialEnding1Day(
   trialEndsAt: Date,
 ) {
   if (!resend) return;
+  if (await checkMarketingOptOut(to)) return;
   const name = firstName ?? "there";
   const planLabel = PLAN_LABELS[planType] ?? "Premium";
   const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
@@ -716,6 +733,7 @@ export async function sendMissionWinBack(
   planType: string,
 ) {
   if (!resend) return;
+  if (await checkMarketingOptOut(to)) return;
   const name = firstName ?? "there";
   const planLabel = PLAN_LABELS[planType] ?? "Premium";
   const renewalPrice = PLAN_PRICES[planType] ?? "$9.99/month";
@@ -905,6 +923,7 @@ export async function sendWeeklyDigest(
   weekLabel: string,
 ) {
   if (!resend) return;
+  if (await checkMarketingOptOut(to)) return;
   const name = firstName ?? "there";
 
   const bizCards = businesses.slice(0, 6).map(b => `
@@ -2227,6 +2246,7 @@ export async function sendBetaAnnouncementBlast(
   betaSignupUrl: string,
 ) {
   if (!resend) return;
+  if (await checkMarketingOptOut(to)) return;
   const name = firstName || "there";
   await sendEmail({
     from: FROM,
