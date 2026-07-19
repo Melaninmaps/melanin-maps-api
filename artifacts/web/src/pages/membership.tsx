@@ -141,6 +141,8 @@ export default function Membership() {
   const [spotsRemaining, setSpotsRemaining] = useState<number>(500);
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [checkoutSuccess, setCheckoutSuccess] = useState<string | null>(null);
+  const [checkoutCancelled, setCheckoutCancelled] = useState(false);
   const [, navigate] = useLocation();
 
   useEffect(() => {
@@ -153,6 +155,15 @@ export default function Membership() {
       .then((r) => r.json())
       .then((data) => setSpotsRemaining(data.spotsRemaining ?? 500))
       .catch(() => {});
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("subscribed") === "1") {
+      setCheckoutSuccess(params.get("plan") ?? "navigator");
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (params.get("checkout_cancelled") === "1") {
+      setCheckoutCancelled(true);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
   }, []);
 
   const isTester = currentUser?.approved === true && currentUser?.role === "tester";
@@ -210,6 +221,29 @@ export default function Membership() {
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
+      {checkoutSuccess && (
+        <div className="bg-[#2B6B3A] text-white px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Check className="w-5 h-5 text-[#6EE7A0] flex-shrink-0" />
+            <span className="text-sm font-medium">
+              Welcome to{" "}
+              <strong className="capitalize">
+                {checkoutSuccess === "trailblazer" ? "Trailblazer" : "Navigator"}
+              </strong>
+              ! Your membership is now active. Reload the page to see your updated access.
+            </span>
+          </div>
+          <button onClick={() => setCheckoutSuccess(null)} className="ml-4 text-white/70 hover:text-white text-lg leading-none">&times;</button>
+        </div>
+      )}
+      {checkoutCancelled && (
+        <div className="bg-[#7C3009]/90 text-white px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-sm">Your checkout was cancelled — no charge was made. You can upgrade whenever you're ready.</span>
+          </div>
+          <button onClick={() => setCheckoutCancelled(false)} className="ml-4 text-white/70 hover:text-white text-lg leading-none">&times;</button>
+        </div>
+      )}
       {/* Tester Welcome Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-2xl bg-[#FAF6EF] border border-[#CA922B]/30 rounded-3xl p-0 overflow-hidden">
