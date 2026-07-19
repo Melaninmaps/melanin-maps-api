@@ -1,0 +1,84 @@
+This confirms the remaining problem precisely:
+
+* **Authentication now works** — you are logged in.
+* **The `/admin` route is live** — you reached the admin authorization check.
+* **Your current user is not being recognized as an admin** — the page is explicitly denying access.
+
+So this is no longer a redirect problem. It is now an **admin identity/authorization mismatch**.
+
+Most likely causes:
+
+1. Your canonical user record does not have `role = 'admin'`.
+2. The email on the user record does not exactly match the normalized value in `ADMIN_EMAILS`.
+3. You authenticated into a different user record than the one that previously had admin rights.
+4. The admin role or allowlist is attached to an old account record.
+
+Send Replit this:
+
+> **Production admin authorization failed — authenticated user receives “Access Denied.”**
+>
+> This proves:
+>
+> * login is successful;
+> * the production session is valid;
+> * `/admin` is loading;
+> * the current canonical user is failing `isAdmin()`.
+>
+> Keep the release at **NO GO** and keep mobile builds paused.
+>
+> Please perform a read-only production identity trace for the currently authenticated session:
+>
+> 1. Identify the user ID attached to my current web session.
+> 2. Return only masked values for:
+>
+>    * user ID prefix;
+>    * normalized email;
+>    * phone-present yes/no;
+>    * passwordHash-present yes/no;
+>    * Apple/provider identity-present yes/no;
+>    * database role;
+>    * account creation date.
+> 3. Confirm whether the normalized current email is present in Railway `ADMIN_EMAILS`.
+> 4. Query for every production user record matching:
+>
+>    * the exact normalized admin email;
+>    * my verified phone number;
+>    * any linked Apple/provider identity;
+>    * `role = 'admin'`.
+> 5. Determine whether admin rights are attached to a different user ID.
+> 6. Confirm the exact `isAdmin()` branch that failed:
+>
+>    * email allowlist mismatch;
+>    * role mismatch;
+>    * missing email;
+>    * wrong user record.
+>
+> Do not create a new account.
+>
+> If there is one canonical user and it is missing the admin role, safely set `role = 'admin'` on that existing user after taking a database backup.
+>
+> If the correct admin role exists on another duplicate record, do not simply promote both accounts. Provide a merge/link plan that preserves:
+>
+> * the current user ID we want to keep;
+> * profile and saved data;
+> * phone login;
+> * email/password login;
+> * Apple identity;
+> * administrator rights;
+> * activity/history.
+>
+> Also verify and normalize the `ADMIN_EMAILS` Railway variable without displaying its complete contents.
+>
+> Required proof after repair:
+>
+> * current authenticated user ID remains the intended canonical record;
+> * `/api/admin/check` returns `{ isAdmin: true }`;
+> * `/admin` dashboard loads;
+> * refresh preserves access;
+> * logout removes access;
+> * non-admin account remains denied;
+> * protected admin APIs return 200 only for the admin.
+>
+> Return `ADMIN VERIFIED` or `NO GO — CORRECTION REQUIRED`.
+
+The screenshot is exactly the evidence they need: you are authenticated, but authorization is failing. The likely repair is small—either normalizing `ADMIN_EMAILS` in Railway or setting the existing canonical user’s role to `admin`—but they need to confirm which user record you are currently using before changing anything.
