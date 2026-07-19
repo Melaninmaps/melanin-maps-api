@@ -1174,4 +1174,65 @@ router.get("/admin/check", (req: Request, res: Response) => {
   });
 });
 
+// ── Admin: waitlist community update blast ────────────────────────────────────
+// Accessible via isAdmin session OR CRON_SECRET Bearer token (ops fallback).
+// Body: { dryRun?: boolean }
+// dryRun:true (default) returns count without sending any email.
+router.post("/admin/send-waitlist-update", async (req: Request, res: Response) => {
+  const cronSecret = process.env.CRON_SECRET;
+  const authHeader = req.headers["authorization"] ?? "";
+  const hasCronAuth = cronSecret && authHeader === `Bearer ${cronSecret}`;
+  if (!isAdmin(req) && !hasCronAuth) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const { dryRun = true } = req.body as { dryRun?: boolean };
+
+  try {
+    const { sendWaitlistUpdateEmail } = await import("../lib/email");
+
+    const all = await db
+      .select({ id: waitlistTable.id, email: waitlistTable.email, firstName: waitlistTable.firstName })
+      .from(waitlistTable)
+      .where(isNotNull(waitlistTable.email))
+      .orderBy(waitlistTable.createdAt);
+
+    if (dryRun) {
+      res.json({
+        dryRun: true,
+        wouldSendTo: all.length,
+        message: `Dry run: would send to ${all.length} waitlist addresses. Call with dryRun:false to send.`,
+      });
+      return;
+    }
+
+    let sent = 0;
+    let failed = 0;
+    for (let i = 0; i < all.length; i++) {
+      const entry = all[i];
+      if (!entry.email) { failed++; continue; }
+      try {
+        await sendWaitlistUpdateEmail(entry.email, entry.firstName ?? "there");
+        sent++;
+      } catch {
+        failed++;
+      }
+      if (i % 10 === 9) await new Promise(r => setTimeout(r, 600));
+    }
+
+    req.log.info({ sent, failed }, "Waitlist update blast complete");
+    res.json({
+      dryRun: false,
+      sent,
+      failed,
+      total: all.length,
+      message: `Update blast complete — ${sent} sent, ${failed} failed.`,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to send waitlist update blast");
+    res.status(500).json({ error: "Failed to send waitlist update blast" });
+  }
+});
+
 export default router;

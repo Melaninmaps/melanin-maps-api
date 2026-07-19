@@ -2698,3 +2698,88 @@ export async function sendWaitlistInvitation(
     `,
   });
 }
+
+export async function sendWaitlistUpdateEmail(to: string, firstName: string) {
+  if (!resend) return;
+  if (await checkMarketingOptOut(to)) return;
+  const name = firstName || "there";
+  await sendEmail({
+    from: FROM,
+    to,
+    replyTo: "hello@mappingwithmelanin.com",
+    subject: "An Update from Mapping with Melanin™ 🗺️",
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
+
+        <div style="background:#2B1507;border-radius:12px;padding:24px;text-align:center;margin-bottom:28px">
+          <p style="color:#CA922B;font-size:12px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:2px">A Note From Our Team</p>
+          <p style="color:#fff;font-size:22px;font-weight:900;margin:0;letter-spacing:-0.3px">We wanted to share a quick update.</p>
+        </div>
+
+        <p style="color:#2B1507;font-size:16px;line-height:1.6;margin:0 0 16px">Hi ${name},</p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          We wanted to share a quick update with you because <strong>you've been with us from the beginning.</strong>
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 16px">
+          Mapping with Melanin™ is currently in our <strong>active testing phase.</strong> Every day we're working
+          with our founding testers to refine the experience, improve performance, and make sure everything works
+          the way it should before opening the doors to our community.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          We're taking the time to get this right because our mission has always been bigger than launching an app —
+          we're building a trusted platform where people can <strong>discover community, support minority-owned
+          businesses, travel with greater confidence, and create meaningful connections</strong> wherever life takes them.
+        </p>
+
+        <div style="background:#F5EBD8;border-radius:12px;padding:24px;margin-bottom:28px">
+          <p style="color:#2B1507;font-size:15px;font-weight:700;margin:0 0 12px">
+            Live Zoom Welcome Sessions — Coming Soon
+          </p>
+          <p style="color:#3A1F0E;font-size:15px;line-height:1.6;margin:0 0 12px">
+            Over the next few weeks, we'll begin hosting a series of live Zoom Welcome Sessions for our waitlist
+            community. During these sessions, we'll share:
+          </p>
+          <ul style="color:#3A1F0E;font-size:15px;line-height:1.9;margin:0;padding-left:20px">
+            <li>Our vision for Mapping with Melanin™</li>
+            <li>What makes the platform different</li>
+            <li>What to expect at launch</li>
+            <li>How founding members will help shape the future of our community</li>
+            <li>Opportunities to ask questions and meet other early supporters</li>
+          </ul>
+        </div>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
+          We'll be sending more information soon, including dates and registration details.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 8px">
+          Thank you for believing in what we're building and for your patience throughout this journey. Your support
+          has meant more than you know, and we can't wait to welcome you into the community.
+        </p>
+
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">We're getting closer every day.</p>
+
+        <p style="color:#2B1507;font-size:17px;font-weight:700;margin:0 0 4px">Welcome Home.</p>
+        <p style="color:#3A1F0E;font-size:15px;margin:0 0 28px">The Mapping with Melanin™ Team</p>
+
+        <div style="background:#2B1507;border-radius:12px;padding:20px 24px;margin-bottom:28px">
+          <p style="color:#CA922B;font-size:13px;font-weight:700;margin:0 0 6px">P.S.</p>
+          <p style="color:#F5EBD8;font-size:14px;line-height:1.7;margin:0">
+            Keep an eye on your inbox over the next few weeks — you'll be among the first to receive invitations to
+            our Welcome Sessions, early updates, and important launch announcements.
+          </p>
+        </div>
+
+        <p style="color:#2B1507;font-size:15px;font-weight:700;font-style:italic;margin:16px 0 4px">Map Your Life. Connect Deeper.™</p>
+        <p style="color:#3A1F0E;font-size:14px;margin:0 0 4px">The Mapping With Melanin™ Team</p>
+        <p style="color:#3A1F0E;font-size:13px;opacity:0.5;margin:0">Melanin Maps LLC · <a href="https://mappingwithmelanin.com" style="color:#CA922B">mappingwithmelanin.com</a></p>
+
+        ${canSpamFooterHtml(to)}
+      </div>
+    `,
+  });
+}
