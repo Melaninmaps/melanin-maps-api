@@ -1,10 +1,10 @@
 # Mapping With Melanin™ — Launch Readiness Dashboard
 
-**Version:** 0.2  
+**Version:** 0.3  
 **Date:** July 19, 2026  
 **Update rule:** Updated after every implemented and verified wave. This is the daily engineering source of truth.  
 **Authorization phrase:** "Please implement." — required per wave before any coding begins.  
-**Change from v0.1:** Wave order revised (founding-member experience first; Welcome Home moved to position 5; CRON_SECRET deprioritized). Tester readiness changed from % to X/20. "Risk if delayed" column added.
+**Change from v0.2:** EAS Build 1 now includes Wave 1-A (auth hardening shipped alongside Apple nonce fix and Welcome Home for one coherent tester install). Verification status updated to 4-stage flow requiring founder sign-off before any wave is marked complete.
 
 ---
 
@@ -46,7 +46,7 @@
 | 12 | **3-E** | Decision Ledger + admin MFA + single auth | ⬜ Ready | 2 days | No | Yes | Admin actions leave no institutional record; no MFA on highest-privilege accounts | 5 |
 | 13 | **4-B** | Business discovery polish | ⬜ Ready | 1.5 days | **Yes** | Partial | Businesses with failed geocoding may publish at (0,0) in Gulf of Guinea | 2 |
 
-**Status key:** ⬜ Ready (awaiting "Please implement.") · 🔵 In progress · ✅ Implemented · 🟢 Verified
+**Status key:** ⬜ Ready (awaiting "Please implement.") · 🔵 In progress · 🟡 Implemented — Awaiting Founder Verification · 🟢 Verified by Founder
 
 ---
 
@@ -88,7 +88,7 @@ Wave 1-A ──── no dependencies (start immediately)
 Wave 1-B ──── no dependencies; EAS build after code change
 Wave 1-C ──── no dependencies (parallel with 1-A, 1-B)
 Wave 2-A ──── no dependencies
-Wave 4-A ──── depends on 1-A stable; EAS build (can batch with 1-B into one build if timed right)
+Wave 4-A ──── depends on 1-A stable; EAS build — batch with 1-A + 1-B into single Build 1
 Wave 2-B ──── no dependencies
 Wave 2-C ──── system prompt changes require human review before deploy
 Wave 3-A ──── no dependencies; verify CRON_SECRET set in Railway first
@@ -105,8 +105,8 @@ Wave 4-B ──── batch EAS build with 4-A if 4-B follows closely
 
 | Build | Waves Included | When | Release Name |
 |---|---|---|---|
-| **Build 1 (urgent)** | Wave 1-B (Apple nonce) + 4-A if ready | After Wave 1-B approved and coded | **Community Beta 2** |
-| **Build 2 (batch)** | Wave 4-B | After Waves 1–3 stable and verified | **Community Beta 3** |
+| **Build 1** | Waves 1-A + 1-B + 4-A | After all three approved and coded — one coherent tester install | **Community Beta 2** |
+| **Build 2** | Wave 4-B | After Waves 1–3 stable and founder-verified | **Community Beta 3** |
 
 Current build: iOS 1.1.5 buildNumber 84 / Android versionCode 60
 
