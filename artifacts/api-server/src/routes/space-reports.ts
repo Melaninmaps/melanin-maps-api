@@ -3,6 +3,7 @@ import { db, spaceReportsTable } from "@workspace/db";
 import { desc, eq, sql } from "drizzle-orm";
 import { reportLimiter } from "../middleware/rateLimiter";
 import { requireTrust } from "../middleware/requireTrust";
+import { isAdmin } from "../lib/adminAuth";
 
 const router: IRouter = Router();
 
@@ -90,10 +91,7 @@ router.get("/space-reports/warnings", async (req: Request, res: Response): Promi
 });
 
 router.get("/admin/space-reports", async (req: any, res: Response): Promise<void> => {
-  const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
-  if (!req.user?.email || !ADMIN_EMAILS.includes(req.user.email.trim().toLowerCase())) {
-    res.status(403).json({ error: "Forbidden" }); return;
-  }
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
   try {
     const reports = await db.select().from(spaceReportsTable).orderBy(desc(spaceReportsTable.createdAt)).limit(300);
     res.json({ reports });
@@ -104,10 +102,7 @@ router.get("/admin/space-reports", async (req: any, res: Response): Promise<void
 });
 
 router.patch("/admin/space-reports/:id", async (req: any, res: Response): Promise<void> => {
-  const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
-  if (!req.user?.email || !ADMIN_EMAILS.includes(req.user.email.trim().toLowerCase())) {
-    res.status(403).json({ error: "Forbidden" }); return;
-  }
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
   const { status } = req.body as { status?: string };
   const allowed = ["pending", "reviewed", "dismissed", "actioned"];
   if (!status || !allowed.includes(status)) { res.status(400).json({ error: "Invalid status" }); return; }

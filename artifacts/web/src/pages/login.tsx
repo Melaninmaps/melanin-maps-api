@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Eye, EyeOff, AlertCircle, CheckCircle, UserPlus, LogIn } from "lucide-react";
 import { setWebToken } from "@/lib/webAuth";
+import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -31,6 +32,17 @@ export default function Login() {
   const [tab, setTab] = useState<Tab>("signin");
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
+  const { data: authData, isLoading: authLoading } = useGetCurrentAuthUser();
+
+  // If the user is already authenticated, skip the login screen entirely and
+  // go straight to their intended destination (or home).  This handles the case
+  // where an admin manually visits /login?returnTo=/admin while already signed in.
+  useEffect(() => {
+    if (!authLoading && authData?.user) {
+      const params = new URLSearchParams(window.location.search);
+      navigate(safeReturnTo(params.get("returnTo")), { replace: true });
+    }
+  }, [authLoading, authData?.user, navigate]);
 
   const [signinEmail, setSigninEmail] = useState("");
   const [signinPassword, setSigninPassword] = useState("");

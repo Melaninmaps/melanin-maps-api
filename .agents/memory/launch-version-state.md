@@ -77,18 +77,33 @@ user enumeration protection, circles/saved-places auth gates.
 NOTE: Playwright uses 127.0.0.1:80 baseURL — tests pass locally; Replit sandbox blocks port 80
 from within Playwright process (ECONNREFUSED). Pre-existing suite-wide constraint, not a test bug.
 
-## RELEASE GATE: STILL NO GO — final gate before build trigger
+## ADMIN ACCESS BLOCKER FIX STATUS (July 19, 2026)
+- Centralized `isAdmin()` into artifacts/api-server/src/lib/adminAuth.ts
+  - Dual-check: email allowlist (ADMIN_EMAILS env) OR role === "admin" DB column
+  - Normalized Set<string> for O(1) lookup; both sides trim+toLowerCase
+  - All 7 route files import from this shared helper (no more inline ADMIN_EMAILS parse)
+  - /api/admin/check in waitlist.ts documented as intentional capability-probe (always HTTP 200)
+- login.tsx: already-authenticated guard added (useGetCurrentAuthUser + useEffect → navigate to returnTo)
+  - Handles case: admin visits /login?returnTo=/admin while already signed in → immediate redirect
+- admin.tsx: already appends ?returnTo=/admin to login redirect (done in prior session)
+- Bootstrap endpoint: uses direct process.env.ADMIN_EMAILS check (config check, not auth check)
+- Both api-server and web typechecks pass clean after all changes
+
+## RELEASE GATE: STILL NO GO
 1. ✅ Password-reset full production trace — PASSED
 2. ✅ Server fixes deployed (throttle + email FRONTEND_URL)
 3. ✅ Regression tests written
-4. ⏳ New mobile build (iOS 88 / Android 63) with fixes 3-5 above — READY TO TRIGGER
-5. ⏳ Founder retest passes all checklist items on new build
-6. ⏳ Store submission
+4. ✅ Admin access blocker resolved (in repo — needs Railway redeploy)
+5. ⏳ Railway redeploy of api-server (RAILWAY_TOKEN expired; use Railway dashboard → Redeploy)
+6. ⏳ Admin access confirmed on production
+7. ⏳ New mobile build (iOS 90 / Android 64) with all mobile P0 fixes
+8. ⏳ Founder retest passes all checklist items on new build
+9. ⏳ Store submission
 
 ## BUILD TRIGGER — when founder authorizes
-iOS 88: `cd artifacts/mobile && eas build --platform ios --profile production`
-Android 63: `cd artifacts/mobile && eas build --platform android --profile production`
+iOS 90: `cd artifacts/mobile && eas build --platform ios --profile production`
+Android 64: `cd artifacts/mobile && eas build --platform android --profile production`
 Run both commands simultaneously from artifacts/mobile/ directory.
 
-## DO NOT SUBMIT iOS 87 / Android 62
-These builds have the P0 defect. Next submission: iOS 88 / Android 63.
+## DO NOT SUBMIT iOS 87-89 / Android 62-63
+These builds have unresolved defects. Next clean submission: iOS 90 / Android 64.

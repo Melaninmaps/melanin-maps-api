@@ -4,19 +4,9 @@ import { and, asc, count, desc, eq, gte, ilike, isNotNull, lt, sql } from "drizz
 import { waitlistLimiter } from "../middleware/rateLimiter";
 import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite, sendFriendInvitation, sendBusinessWaitlistInvitation, sendReferralMilestoneUpdate, sendReferralNudge, sendAppLaunchBlast, sendBetaAnnouncementBlast, sendWaitlistInvitation } from "../lib/email";
 import { runWeeklyNudge } from "../lib/nudgeScheduler";
+import { isAdmin } from "../lib/adminAuth";
 
 const router: IRouter = Router();
-
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
-  .split(",")
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
-
-function isAdmin(req: Request): boolean {
-  const user = (req as any).user;
-  if (!user?.email) return false;
-  return ADMIN_EMAILS.includes(user.email.trim().toLowerCase());
-}
 
 // ── Public: join waitlist ────────────────────────────────────────────────────
 
@@ -1171,8 +1161,12 @@ router.post("/waitlist/social-refer", waitlistLimiter, async (req: Request, res:
   res.json({ success: true, copyMessage });
 });
 
-// ── Admin: check admin status + config ───────────────────────────────────────
-
+// ── Admin: capability probe ──────────────────────────────────────────────────
+// Intentional design: this endpoint always returns HTTP 200 with { isAdmin: true/false }
+// for all callers — authenticated or not. It is a capability-probe, not a gated
+// resource. The client uses the result to decide whether to render admin UI.
+// Protected admin endpoints (POST, PATCH, GET /admin/*) enforce authorization
+// with explicit 401/403 responses independently of this check.
 router.get("/admin/check", (req: Request, res: Response) => {
   res.json({
     isAdmin: isAdmin(req),

@@ -2,20 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, businessInvitesTable, businessesTable, usersTable, knowledgeTopicsTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable } from "@workspace/db";
 import { eq, desc, sql, count } from "drizzle-orm";
 import { sendBusinessOutreach } from "../lib/email";
-
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
-  .split(",")
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
-
-function isAdmin(req: Request): boolean {
-  const user = (req as any).user;
-  if (!user?.email) return false;
-  // Normalize both sides before comparison — prevents case/whitespace mismatches
-  const userEmail = user.email.trim().toLowerCase();
-  if (ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(userEmail)) return true;
-  return user.role === "admin";
-}
+import { isAdmin } from "../lib/adminAuth";
 
 const router: IRouter = Router();
 
@@ -245,8 +232,8 @@ router.post("/admin/bootstrap", async (req: Request, res: Response) => {
     return;
   }
 
-  // Blocked if ADMIN_EMAILS is already configured
-  if (ADMIN_EMAILS.length > 0) {
+  // Blocked if ADMIN_EMAILS is already configured (configuration check, not an auth check)
+  if ((process.env.ADMIN_EMAILS ?? "").split(",").some((e) => e.trim().length > 0)) {
     res.status(403).json({
       error: "Admin access is managed via the ADMIN_EMAILS environment variable. Add your email there instead.",
     });

@@ -9,10 +9,7 @@ const VALID_DISPUTE_TYPES = ["not_received", "not_as_described", "fraud", "defec
 type DisputeType = typeof VALID_DISPUTE_TYPES[number];
 const VALID_STATUSES = ["open", "investigating", "resolved", "rejected"] as const;
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
-function isAdmin(req: Request) {
-  return !!req.user?.email && ADMIN_EMAILS.includes(req.user.email.trim().toLowerCase());
-}
+import { isAdmin } from "../lib/adminAuth";
 
 router.post("/disputes", async (req: Request, res: Response) => {
   try {

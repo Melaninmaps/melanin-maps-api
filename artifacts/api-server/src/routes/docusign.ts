@@ -12,8 +12,7 @@ import {
 
 const router: IRouter = Router();
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
-function isAdmin(req: Request) { return !!(req.user as any)?.email && ADMIN_EMAILS.includes(((req.user as any).email as string).trim().toLowerCase()); }
+import { isAdmin } from "../lib/adminAuth";
 
 function baseUrl(): string {
   const domain = process.env.REPLIT_DOMAINS?.split(",")[0];
