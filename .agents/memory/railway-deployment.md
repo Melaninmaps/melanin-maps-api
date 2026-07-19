@@ -34,6 +34,22 @@ description: API server live at www.mappingwithmelanin.com via Railway; key IDs,
 - `https://www.mappingwithmelanin.com/api/healthz` → `{"status":"ok"}`
 - SSL cert: Let's Encrypt via Railway, verified and valid
 
+## Stripe env var fix (critical for Railway)
+- `stripeClient.ts` originally read ONLY from Replit Connectors (`REPLIT_CONNECTORS_HOSTNAME`), which doesn't exist in Railway
+- Fix: check `process.env.STRIPE_SECRET_KEY` first; fall back to Replit Connectors if not set
+- Also reads `process.env.STRIPE_WEBHOOK_SECRET` as the env-var path for the webhook secret
+- Railway env vars `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are now correctly consumed
+
+## Railway smoke suite status (pre-fix deployment)
+- PASS: healthz, businesses, stripe/webhook (no-sig→400, invalid-sig→400), register, auth/user, community/posts, kinfolk/preferences, login-email
+- FAIL (Stripe key not read): stripe/products (500), membership/plan (500)
+- FAIL (Cloudflare WAF blocks POST to /api/revenuecat/webhook): revenuecat/webhook (404 HTML)
+- NOTE: RC webhook 404 is acceptable — REVENUECAT_WEBHOOK_AUTH_KEY intentionally omitted for Community Beta 2; Cloudflare WAF blocks /api/revenuecat/webhook POSTs
+
+## membership/plan defensive fix
+- family_add_on_seats query wrapped in try/catch; logs warning and defaults to 0 on failure
+- Prevents a missing/mismatched table in Railway DB from bringing down the whole plan endpoint
+
 ## Domain verification gotcha
 - `verified: false` blocks Railway edge routing even if cert is valid and CNAME is propagated
 - TXT record `_railway-verify.www` is ALSO required — GoDaddy host value is `_railway-verify.www` (not the full FQDN)

@@ -74,12 +74,17 @@ router.get("/membership/plan", async (req: Request, res: Response): Promise<void
       : { rows: [] };
 
     // Add-on seats purchased
-    const addOnRow = await pool.query(
-      `SELECT COALESCE(SUM(seat_count), 0)::int AS total
-       FROM family_add_on_seats WHERE owner_id = $1 AND status = 'active'`,
-      [userId]
-    );
-    const addOnSeats = (addOnRow.rows[0]?.total as number) ?? 0;
+    let addOnSeats = 0;
+    try {
+      const addOnRow = await pool.query(
+        `SELECT COALESCE(SUM(seat_count), 0)::int AS total
+         FROM family_add_on_seats WHERE owner_id = $1 AND status = 'active'`,
+        [userId]
+      );
+      addOnSeats = (addOnRow.rows[0]?.total as number) ?? 0;
+    } catch (addOnErr) {
+      req.log.warn({ addOnErr }, "GET /membership/plan: family_add_on_seats query failed — defaulting to 0");
+    }
 
     const totalFamilyCapacity = limits.familySeatsIncluded + addOnSeats;
 
