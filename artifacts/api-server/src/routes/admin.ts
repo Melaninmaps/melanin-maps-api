@@ -804,7 +804,7 @@ router.get("/admin/businesses/export-csv", async (req: Request, res: Response) =
 router.delete("/admin/users/:id", async (req: Request, res: Response) => {
   if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
   try {
-    const [deleted] = await db.delete(usersTable).where(eq(usersTable.id, req.params.id)).returning({ id: usersTable.id, email: usersTable.email });
+    const [deleted] = await db.delete(usersTable).where(eq(usersTable.id, String(req.params.id))).returning({ id: usersTable.id, email: usersTable.email });
     if (!deleted) { res.status(404).json({ error: "User not found" }); return; }
     req.log.info({ deletedUserId: deleted.id }, "Admin deleted user");
     res.json({ deleted: true, id: deleted.id, email: deleted.email });

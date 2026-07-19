@@ -32,17 +32,17 @@
 
 | # | Wave | Name | Status | ETA | EAS? | Blocks Launch | Risk if Delayed | P0s |
 |---|---|---|---|---|---|---|---|---|
-| 1 | **1-A** | Auth hardening (lockout, revocation, log) | ⬜ Ready | 1 day | No | Yes | Members cannot recover from credential attacks; no account lockout | 4 |
+| 1 | **1-A** | Auth hardening (lockout, revocation, log) | 🟡 Implemented — Awaiting Founder Verification | July 19, 2026 | No | Yes | Members cannot recover from credential attacks; no account lockout | 4 |
 | 2 | **1-B** | Apple Sign-In nonce fix | 🟡 Awaiting Founder Verification | 1 day + build | **Yes** | Yes | All iOS 26+ testers silently blocked from Apple Sign-In | 1 |
 | 3 | **1-C** | Blocking enforcement (all surfaces) | ⬜ Ready | 1.5 days | No | Yes | Blocked users visible in feed; harassment and privacy violations live | 6 |
 | 4 | **2-A** | Safety alert unique confirmation | ⬜ Ready | 0.5 day | No | Yes | Single user can inflate safety confirmation counts without limit | 3 |
 | 5 | **4-A** | Welcome Home Experience™ + onboarding | ⬜ Ready | 2 days | **Yes** | No | Founding members' first post-install experience lacks identity or personalization | 0 (P1s) |
 | 6 | **2-B** | Quiet hours enforcement | ⬜ Ready | 0.5 day | No | Yes | Members receive promotions and digests overnight (10 PM–8 AM) | 1 |
 | 7 | **2-C** | KinfolkAI constitutional safety layer | ⬜ Ready | 1 day | No | Partial | Member in distress receives no Compassion Protocol — AI has no crisis response | 5 |
-| 8 | **3-A** | CRON_SECRET fail-closed | ⬜ Ready | 10 min | No | Yes | All cron endpoints publicly accessible without any authentication | 1 |
-| 9 | **3-B** | CAN-SPAM compliance | ⬜ Ready | 0.5 day | No | Yes | Every outgoing email is a legal compliance violation; unsubscribe legally required | 2 |
-| 10 | **3-C** | Stripe webhook idempotency | ⬜ Ready | 0.5 day | No | Yes | Stripe retries create double-credits; failed webhooks leave entitlements wrong | 1 |
-| 11 | **3-D** | RevenueCat server-side verification | ⬜ Ready | 1 day | No | Yes | Premium features accessible without payment via direct API call | 1 |
+| 8 | **3-A** | CRON_SECRET fail-closed | 🟡 Implemented — Awaiting Founder Verification | July 19, 2026 | No | Yes | All cron endpoints publicly accessible without any authentication | 1 |
+| 9 | **3-B** | CAN-SPAM compliance | 🟡 Implemented — Awaiting Founder Verification | July 19, 2026 | No | Yes | Every outgoing email is a legal compliance violation; unsubscribe legally required | 2 |
+| 10 | **3-C** | Stripe webhook idempotency | 🟡 Implemented — Awaiting Founder Verification | July 19, 2026 | No | Yes | Stripe retries create double-credits; failed webhooks leave entitlements wrong | 1 |
+| 11 | **3-D** | RevenueCat server-side verification | 🟡 Implemented — Awaiting Founder Verification | July 19, 2026 | No | Yes | Premium features accessible without payment via direct API call | 1 |
 | 12 | **3-E** | Decision Ledger + admin MFA + single auth | ⬜ Ready | 2 days | No | Yes | Admin actions leave no institutional record; no MFA on highest-privilege accounts | 5 |
 | 13 | **4-B** | Business discovery polish | ⬜ Ready | 1.5 days | **Yes** | Partial | Businesses with failed geocoding may publish at (0,0) in Gulf of Guinea | 2 |
 

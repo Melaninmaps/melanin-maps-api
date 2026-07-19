@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, index, integer, jsonb, numeric, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, numeric, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const sessionsTable = pgTable(
@@ -79,9 +79,26 @@ export const usersTable = pgTable("users", {
   quietHoursEnabled: boolean("quiet_hours_enabled").notNull().default(true),
   quietHoursFrom: varchar("quiet_hours_from", { length: 10 }).notNull().default("10:00 PM"),
   quietHoursUntil: varchar("quiet_hours_until", { length: 10 }).notNull().default("8:00 AM"),
+  marketingOptOut: boolean("marketing_opt_out").notNull().default(false),
+  failedLoginAttempts: integer("failed_login_attempts").notNull().default(0),
+  lockedUntil: timestamp("locked_until", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 
 export type UpsertUser = typeof usersTable.$inferInsert;
 export type User = typeof usersTable.$inferSelect;
+
+export const authEventsTable = pgTable(
+  "auth_events",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    userId: varchar("user_id"),
+    event: varchar("event", { length: 60 }).notNull(),
+    ipAddress: varchar("ip_address", { length: 100 }),
+    userAgent: text("user_agent"),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("IDX_auth_events_user_id").on(t.userId), index("IDX_auth_events_created_at").on(t.createdAt)],
+);

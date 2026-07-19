@@ -41,12 +41,49 @@ router.post("/revenuecat/sync", async (req: Request, res: Response) => {
     return;
   }
 
+  const RC_API_KEY = process.env.REVENUECAT_API_KEY_V2 ?? process.env.REVENUECAT_API_KEY;
+  if (!RC_API_KEY) {
+    req.log.error({}, "RevenueCat API key not configured — sync blocked");
+    res.status(503).json({ error: "Purchase verification temporarily unavailable. Please try again." });
+    return;
+  }
+
+  try {
+    const rcRes = await fetch(
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(String(userId))}`,
+      { headers: { Authorization: `Bearer ${RC_API_KEY}`, "Content-Type": "application/json" } }
+    );
+    if (!rcRes.ok) {
+      req.log.error({ rcStatus: rcRes.status, userId, productIdentifier }, "RevenueCat API error — failing closed");
+      res.status(503).json({ error: "Purchase verification temporarily unavailable. Please try again." });
+      return;
+    }
+    const rcData = await rcRes.json() as {
+      subscriber?: { entitlements?: Record<string, { product_identifier?: string; expires_date?: string | null }> };
+    };
+    const entitlements = rcData.subscriber?.entitlements ?? {};
+    const now = new Date();
+    const verified = Object.values(entitlements).some(
+      (ent) => ent.product_identifier === productIdentifier &&
+        (ent.expires_date == null || new Date(ent.expires_date) > now)
+    );
+    if (!verified) {
+      req.log.warn({ userId, productIdentifier }, "RevenueCat verification failed — no active entitlement");
+      res.status(403).json({ error: "Purchase could not be verified. Please restore purchases or contact support." });
+      return;
+    }
+  } catch (rcErr) {
+    req.log.error({ rcErr, userId, productIdentifier }, "RevenueCat verification network error — failing closed");
+    res.status(503).json({ error: "Purchase verification temporarily unavailable. Please try again later." });
+    return;
+  }
+
   try {
     await pool.query(
       `UPDATE users SET member_type = $1, stripe_subscription_id = $2 WHERE id = $3`,
       [tier, `rc_${productIdentifier}`, userId]
     );
-    req.log.info({ userId, productIdentifier, tier }, "RevenueCat purchase synced to DB");
+    req.log.info({ userId, productIdentifier, tier }, "RevenueCat purchase synced to DB — server-verified");
     res.json({ ok: true, tier });
   } catch (err) {
     req.log.error({ err, userId, productIdentifier }, "Failed to sync RevenueCat purchase");

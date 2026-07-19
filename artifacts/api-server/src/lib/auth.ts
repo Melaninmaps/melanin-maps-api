@@ -1,7 +1,7 @@
 import * as client from "openid-client";
 import crypto from "crypto";
 import { type Request, type Response } from "express";
-import { db, sessionsTable } from "@workspace/db";
+import { db, pool, sessionsTable, authEventsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import type { AuthUser } from "@workspace/api-zod";
 
@@ -88,4 +88,32 @@ export function getSessionId(req: Request): string | undefined {
     return authHeader.slice(7);
   }
   return req.cookies?.[SESSION_COOKIE];
+}
+
+export async function deleteAllSessionsForUser(userId: string): Promise<number> {
+  const result = await pool.query(
+    `DELETE FROM sessions WHERE sess->'user'->>'id' = $1`,
+    [userId],
+  );
+  return (result.rowCount as number | null) ?? 0;
+}
+
+export async function logAuthEvent(
+  userId: string | null,
+  event: string,
+  ipAddress: string | null,
+  userAgent: string | null,
+  metadata?: Record<string, unknown>,
+): Promise<void> {
+  try {
+    await db.insert(authEventsTable).values({
+      userId,
+      event,
+      ipAddress,
+      userAgent: userAgent ?? null,
+      metadata: metadata ?? null,
+    });
+  } catch {
+    // non-fatal — pino logger already captured the event
+  }
 }

@@ -22,16 +22,19 @@ function isReservedUsername(username: string): boolean {
 import {
   clearSession,
   getOidcConfig,
+  getSession,
   getSessionId,
   createSession,
   deleteSession,
+  deleteAllSessionsForUser,
+  logAuthEvent,
   SESSION_COOKIE,
   SESSION_TTL,
   ISSUER_URL,
   type SessionData,
 } from "../lib/auth";
 import jwt from "jsonwebtoken";
-import { sendWelcomeEmail, sendPasswordResetEmail } from "../lib/email";
+import { sendWelcomeEmail, sendPasswordResetEmail, generateUnsubscribeToken } from "../lib/email";
 
 const OIDC_COOKIE_TTL = 10 * 60 * 1000;
 
@@ -629,12 +632,38 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
       return;
     }
 
+    // Account lockout check — must pass before attempting password verify
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
+      req.log.warn({ ...diagBase, event: "AUTH_LOGIN_LOCKED", emailMasked, lockedUntilIso: user.lockedUntil.toISOString(), minutesLeft, status: 423, durationMs: Date.now() - t0 }, "auth diagnostic");
+      void logAuthEvent(user.id, "AUTH_LOCKED_ATTEMPT", req.ip ?? null, diagBase.ua);
+      res.status(423).json({ error: `Too many failed attempts. Try again in ${minutesLeft} minute${minutesLeft !== 1 ? "s" : ""}.` });
+      return;
+    }
+
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
-      req.log.warn({ ...diagBase, event: "AUTH_LOGIN_PASSWORD_MISMATCH", emailMasked, hasPasswordHash: true, status: 401, durationMs: Date.now() - t0 }, "auth diagnostic");
+      const newCount = (user.failedLoginAttempts ?? 0) + 1;
+      let lockedUntil: Date | null = null;
+      if (newCount >= 20) {
+        lockedUntil = new Date(Date.now() + 60 * 60 * 1000);
+      } else if (newCount >= 10) {
+        lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+      }
+      await db.update(usersTable).set({
+        failedLoginAttempts: newCount,
+        ...(lockedUntil !== null ? { lockedUntil } : {}),
+      }).where(eq(usersTable.id, user.id));
+      const lockEvent = lockedUntil ? "AUTH_LOCKOUT_TRIGGERED" : "AUTH_LOGIN_FAILURE";
+      void logAuthEvent(user.id, lockEvent, req.ip ?? null, diagBase.ua, { failedAttempts: newCount });
+      req.log.warn({ ...diagBase, event: "AUTH_LOGIN_PASSWORD_MISMATCH", emailMasked, hasPasswordHash: true, failedAttempts: newCount, locked: !!lockedUntil, status: 401, durationMs: Date.now() - t0 }, "auth diagnostic");
       res.status(401).json({ error: "Invalid email or password." });
       return;
     }
+
+    // Successful authentication — reset lockout counters
+    await db.update(usersTable).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq(usersTable.id, user.id));
+    void logAuthEvent(user.id, "AUTH_LOGIN_SUCCESS", req.ip ?? null, diagBase.ua);
 
     const sessionData: SessionData = {
       user: {
@@ -654,6 +683,30 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ ...diagBase, err, event: "AUTH_LOGIN_ERROR", emailMasked, durationMs: Date.now() - t0 }, "POST /api/auth/login-email error");
     res.status(500).json({ error: "Login failed. Please try again." });
+  }
+});
+
+// ─── POST /auth/logout-all ────────────────────────────────────────────────────
+router.post("/auth/logout-all", async (req: Request, res: Response) => {
+  const sid = getSessionId(req);
+  if (!sid) {
+    res.status(401).json({ error: "Authentication required." });
+    return;
+  }
+  const session = await getSession(sid);
+  if (!session) {
+    res.status(401).json({ error: "Session not found or expired." });
+    return;
+  }
+  try {
+    const count = await deleteAllSessionsForUser(session.user.id);
+    const ua = typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"] : null;
+    void logAuthEvent(session.user.id, "LOGOUT_ALL", req.ip ?? null, ua, { sessionsRevoked: count });
+    req.log.info({ event: "AUTH_LOGOUT_ALL", userId: session.user.id, sessionsRevoked: count }, "auth diagnostic");
+    res.json({ success: true, sessionsRevoked: count });
+  } catch (err) {
+    req.log.error({ err }, "POST /api/auth/logout-all error");
+    res.status(500).json({ error: "Failed to revoke sessions. Please try again." });
   }
 });
 
@@ -896,6 +949,27 @@ router.patch("/auth/user/setup", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "PATCH /api/auth/user/setup error");
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/auth/unsubscribe", async (req: Request, res: Response) => {
+  const { email, token } = req.body as { email?: string; token?: string };
+  if (!email?.trim() || !token) {
+    res.status(400).json({ error: "email and token are required." });
+    return;
+  }
+  const normalizedEmail = email.trim().toLowerCase();
+  const expected = generateUnsubscribeToken(normalizedEmail);
+  if (token !== expected) {
+    res.status(400).json({ error: "Invalid or expired unsubscribe link." });
+    return;
+  }
+  try {
+    await db.update(usersTable).set({ marketingOptOut: true }).where(eq(usersTable.email, normalizedEmail));
+    res.json({ success: true, message: "You have been unsubscribed from marketing emails." });
+  } catch (err) {
+    req.log.error({ err }, "POST /api/auth/unsubscribe error");
+    res.status(500).json({ error: "Failed to process unsubscribe request." });
   }
 });
 

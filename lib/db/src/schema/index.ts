@@ -8,6 +8,7 @@ export * from "./knowledge";
 export * from "./businesses";
 export * from "./conversations";
 export * from "./messages";
+export * from "./stripe";
 export * from "./surveys";
 export * from "./saved-places";
 export * from "./reviews";

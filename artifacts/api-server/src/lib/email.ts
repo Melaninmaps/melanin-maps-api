@@ -1,13 +1,41 @@
 import { Resend } from "resend";
+import crypto from "crypto";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM = "Mapping With Melanin™ <hello@mappingwithmelanin.com>";
+
+const UNSUBSCRIBE_SECRET = process.env.SESSION_SECRET ?? "mwm-unsubscribe-fallback";
+const COMPANY_ADDRESS = process.env.COMPANY_MAILING_ADDRESS ?? "Melanin Maps LLC · Washington, DC";
+
+export function generateUnsubscribeToken(email: string): string {
+  return crypto.createHmac("sha256", UNSUBSCRIBE_SECRET).update(email.toLowerCase().trim()).digest("hex");
+}
+
+function canSpamFooterHtml(toEmail: string): string {
+  const token = generateUnsubscribeToken(toEmail);
+  const encoded = encodeURIComponent(toEmail.toLowerCase().trim());
+  const unsubUrl = `https://mappingwithmelanin.com/unsubscribe?email=${encoded}&token=${token}`;
+  return `<div style="border-top:1px solid rgba(0,0,0,0.1);margin-top:32px;padding-top:16px;text-align:center;font-family:sans-serif">` +
+    `<p style="font-size:11px;color:#888;margin:0 0 6px;line-height:1.5">${COMPANY_ADDRESS}</p>` +
+    `<p style="font-size:11px;color:#888;margin:0">` +
+    `<a href="${unsubUrl}" style="color:#CA922B;text-decoration:underline">Unsubscribe</a>` +
+    `&nbsp;&middot;&nbsp;` +
+    `<a href="https://mappingwithmelanin.com/privacy" style="color:#CA922B;text-decoration:underline">Privacy Policy</a>` +
+    `</p></div>`;
+}
 
 async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
   if (!resend) {
     throw new Error("RESEND_API_KEY is not configured — cannot send email");
   }
-  const { data, error } = await resend.emails.send(payload);
+  const finalPayload = { ...payload };
+  if (finalPayload.html) {
+    const toEmail = Array.isArray(finalPayload.to) ? finalPayload.to[0] : finalPayload.to;
+    if (typeof toEmail === "string" && toEmail) {
+      (finalPayload as Record<string, unknown>).html = String(finalPayload.html) + canSpamFooterHtml(toEmail);
+    }
+  }
+  const { data, error } = await resend.emails.send(finalPayload);
   if (error) {
     throw new Error(`Resend send failed: ${error.name} — ${error.message}`);
   }

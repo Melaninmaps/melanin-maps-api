@@ -41,7 +41,10 @@ const router: IRouter = Router();
 const CRON_SECRET = process.env.CRON_SECRET;
 
 function verifyCronSecret(req: any, res: any): boolean {
-  if (!CRON_SECRET) return true;
+  if (!CRON_SECRET) {
+    res.status(401).json({ error: "Cron secret not configured on this server." });
+    return false;
+  }
   const auth = req.headers["x-cron-secret"];
   if (auth !== CRON_SECRET) {
     res.status(401).json({ error: "Unauthorized" });

@@ -1,5 +1,5 @@
 import { getStripeSync } from "./stripeClient";
-import { db, usersTable, businessesTable, businessPromotionsTable } from "@workspace/db";
+import { db, usersTable, businessesTable, businessPromotionsTable, pool } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { sendTrialStarted, sendTrialEndingSoon, sendTrialExpired, sendMembershipCancelled } from "./lib/email";
 import { logger } from "./lib/logger";
@@ -134,7 +134,17 @@ export class WebhookHandlers {
     await sync.processWebhook(payload, signature);
 
     try {
-      const event = JSON.parse(payload.toString()) as { type: string; data: { object: Record<string, unknown> } };
+      const event = JSON.parse(payload.toString()) as { id?: string; type: string; data: { object: Record<string, unknown> } };
+      if (event.id) {
+        const idempResult = await pool.query(
+          `INSERT INTO stripe_processed_events (stripe_event_id, processed_at) VALUES ($1, NOW()) ON CONFLICT (stripe_event_id) DO NOTHING`,
+          [event.id]
+        );
+        if ((idempResult.rowCount as number) === 0) {
+          logger.info({ eventId: event.id, eventType: event.type }, "Stripe webhook event already processed — skipping");
+          return;
+        }
+      }
       await handleCustomEvent(event);
     } catch (err) {
       logger.warn({ err }, "Custom webhook event handling failed (sync already succeeded)");
