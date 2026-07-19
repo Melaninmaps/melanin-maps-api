@@ -10,6 +10,8 @@ description: Authoritative source for all 12 feature audits, 74 P0s, 113 P1s, 16
 - CSV register: `docs/audits/MWM-Audit-Register-v0.1.csv`
 - **Audit Crosswalk (live gap document):** `docs/audits/MWM-Audit-Crosswalk-v0.1.md` — must be updated after every implemented workstream
 - **Implementation Waves:** `docs/audits/MWM-Implementation-Waves-v0.1.md` — 4 waves, 13 sub-waves; awaiting founder approval before coding begins
+- **Launch Readiness Dashboard:** `docs/audits/MWM-Launch-Readiness-Dashboard-v0.2.md` — CURRENT VERSION; founding-member-first wave order; X/20 tester metric; "Risk if delayed" column
+- **Zoom Readiness Dashboard:** `docs/founder/MWM-Zoom-Readiness-Dashboard-v0.1.md` — founder-track parallel dashboard; Zoom July 21, 2026
 - Full individual audit reports for Audits 1–10: NOT YET in repo — must be added and reconciled per Section 10 of the register.
 
 ## Platform Verdict
