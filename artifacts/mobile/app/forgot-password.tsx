@@ -343,10 +343,10 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontFamily: "Inter_500Medium" },
   inputRow: {
     flexDirection: "row", alignItems: "center", borderWidth: 1,
-    borderRadius: 12, paddingHorizontal: 14, height: 52,
+    borderRadius: 12, paddingHorizontal: 14, height: 62,
   },
   icon: { marginRight: 10 },
-  input: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular" },
+  input: { flex: 1, fontSize: 17, fontFamily: "Inter_400Regular" },
   btn: { alignItems: "center", justifyContent: "center", paddingVertical: 17, borderRadius: 14, alignSelf: "stretch" },
   btnTxt: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
   backToLogin: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 24 },

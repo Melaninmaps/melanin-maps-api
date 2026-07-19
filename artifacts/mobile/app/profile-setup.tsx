@@ -48,6 +48,7 @@ export default function ProfileSetupScreen() {
   const [isBusinessOwner, setIsBusinessOwner] = useState(false);
   const [isContentCreator, setIsContentCreator] = useState(false);
   const [isCommunityOrganizer, setIsCommunityOrganizer] = useState(false);
+
   const [selectedInterests, setSelectedInterests] = useState<Set<string>>(new Set());
   const [allowDm, setAllowDm] = useState(true);
   const [showCity, setShowCity] = useState(true);
@@ -189,6 +190,26 @@ export default function ProfileSetupScreen() {
               Select all that apply. This helps us tailor your experience.
             </Text>
             <View style={styles.roleCards}>
+              {/* Community Member — always included, non-removable */}
+              <View
+                style={[
+                  styles.roleCard,
+                  { backgroundColor: c.primary + "12", borderColor: c.primary },
+                ]}
+              >
+                <View style={[styles.roleIconWrap, { backgroundColor: c.primary + "20" }]}>
+                  <Feather name="heart" size={22} color={c.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.roleLabel, { color: c.foreground }]}>Community Member</Text>
+                  <Text style={[styles.roleSub, { color: c.mutedForeground }]}>Discover businesses, travel safely, and connect with the diaspora</Text>
+                </View>
+                <View style={[styles.roleCheck, { backgroundColor: c.primary, borderColor: c.primary }]}>
+                  <Feather name="check" size={12} color="#fff" />
+                </View>
+              </View>
+
+              {/* Optional identity cards */}
               {[
                 {
                   key: "biz",
@@ -200,9 +221,9 @@ export default function ProfileSetupScreen() {
                 },
                 {
                   key: "creator",
-                  icon: "video",
-                  label: "Content Creator",
-                  sub: "Share reviews, videos, and travel content with the community",
+                  icon: "star",
+                  label: "Cultural Ambassador",
+                  sub: "Share reviews, stories, and travel content with the community",
                   val: isContentCreator,
                   set: setIsContentCreator,
                 },

@@ -793,7 +793,9 @@ router.post("/auth/reset-password", async (req: Request, res: Response) => {
       .set({ passwordHash, emailVerificationToken: null, emailVerificationExpires: null, failedLoginAttempts: 0, lockedUntil: null })
       .where(eq(usersTable.id, user.id));
 
-    res.json({ success: true });
+    // Diagnostic: confirm which DB instance handled this reset
+    const dbHost = (process.env.DATABASE_URL ?? "").replace(/:[^@]*@/, ":***@").slice(0, 80);
+    res.json({ success: true, _diag: { api: process.env.RAILWAY_ENVIRONMENT ?? process.env.NODE_ENV ?? "unknown", dbHost } });
   } catch (err) {
     req.log.error({ err }, "POST /api/auth/reset-password error");
     res.status(500).json({ error: "Something went wrong. Please try again." });
