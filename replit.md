@@ -48,6 +48,7 @@ Community discovery, travel, and business platform celebrating Black culture —
 
 ## User preferences
 
+- **Response format:** All substantive responses (plans, documents, dashboards, proposals) must be provided in a copyable text box (markdown code block) so they can be copied and shared directly with advisors.
 - Custom domain: **mappingwithmelanin.com**
 - EAS builds: user runs `eas build` from the Replit shell, always from inside `artifacts/mobile/` directory (e.g. `cd artifacts/mobile && eas build --platform ios --profile production`)
 - Multi-step tasks: give one step at a time and wait for the user to share a screenshot confirming completion before moving to the next step
