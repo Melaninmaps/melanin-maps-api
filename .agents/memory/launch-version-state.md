@@ -6,14 +6,16 @@ description: Current app store submission state — Android and iOS build versio
 # Launch Version State (as of July 17, 2026)
 
 ## iOS
-- **buildNumber 84, version 1.1.5** — submitted to App Store Connect, pending Apple review
-- eas.json has `"autoIncrement": true` — next build will be 85
+- **buildNumber 86, version 1.1.5** — Community Beta 2, internal TestFlight (July 19, 2026)
+- Build 84 was App Store Connect submission (pending review). Build 85 intermediate. Build 86 = CB2.
+- eas.json has `"autoIncrement": true` — next build will be 87
 - Builds 40–53 failed (react-native-google-maps pod name mismatch) — fixed via withRnMapsPodfileFix.js shim + pnpm patch
 - Build 83 rejected by Apple: Apple Sign-In nonce requirement on iPadOS 26 — fix submitted as build 84
 - App Store Connect App ID: 6783773366, Apple Team: Y46Y4A5MMZ, Bundle ID: com.melaninmaps.app
 
 ## Android
-- **versionCode 60, version 1.1.5** — submitted to Play Store internal testing, CONFIRMED NO CRASH on device (July 17, 2026)
+- **versionCode 61, version 1.1.5** — Community Beta 2, internal testing track (July 19, 2026)
+- versionCode 60 was Play Store internal testing build (July 17). EAS autoIncrement produced 61 for CB2.
 - Previous build 59 crashed immediately on launch — fixed by: installing expo-asset, deduplicating React to 19.2.3, removing invalid app.json fields, updating plugins to expo/config-plugins
 - eas.json production android has `credentialsSource: "local"` — do not change this
 
