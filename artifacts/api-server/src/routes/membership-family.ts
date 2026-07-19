@@ -75,8 +75,8 @@ router.get("/membership/plan", async (req: Request, res: Response): Promise<void
 
     // Add-on seats purchased
     const addOnRow = await pool.query(
-      `SELECT COALESCE(SUM(seats), 0)::int AS total
-       FROM family_add_on_seats WHERE user_id = $1 AND status = 'active'`,
+      `SELECT COALESCE(SUM(seat_count), 0)::int AS total
+       FROM family_add_on_seats WHERE owner_id = $1 AND status = 'active'`,
       [userId]
     );
     const addOnSeats = (addOnRow.rows[0]?.total as number) ?? 0;

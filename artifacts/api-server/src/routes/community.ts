@@ -293,7 +293,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
     const trimmedContent = ((req.body as { content?: string }).content ?? "").trim();
     if (trimmedContent) {
       const dup = await pool.query(
-        `SELECT id FROM community_posts WHERE user_id = $1 AND content = $2 AND created_at > NOW() - INTERVAL '30 seconds' LIMIT 1`,
+        `SELECT id FROM community_posts WHERE author_id = $1 AND content = $2 AND created_at > NOW() - INTERVAL '30 seconds' LIMIT 1`,
         [req.user.id, trimmedContent],
       );
       if (dup.rows.length > 0) {
