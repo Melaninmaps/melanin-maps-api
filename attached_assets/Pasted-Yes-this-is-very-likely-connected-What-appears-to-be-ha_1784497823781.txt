@@ -1,0 +1,68 @@
+Yes—this is very likely connected.
+
+What appears to be happening is that the system recognizes your email as belonging to an existing user record, but the authentication method you are using does not match the credentials attached to that record. For example:
+
+* Your admin user may originally have been created through phone login or another provider.
+* The same email is stored on that user record.
+* Email login sees the email exists, but there may be no usable password hash attached to that same user.
+* Creating a second account with the email is blocked because the email already exists.
+* Admin access is tied to the original user ID, so a new account would not preserve your history or permissions.
+
+Email forwarding does not cause the problem. You can keep using the same email address where your messages are forwarded. The solution is to **link email/password authentication to your existing user ID**, not create another user.
+
+Send Replit this:
+
+> I believe my administrator access and login issue are connected. My admin permissions are tied to my existing production user ID and email, but the system recognizes the email while not allowing me to authenticate with it.
+>
+> I do not want a second user account. I need all authentication methods consolidated onto the same existing user record so my admin permissions, profile, history and email notifications remain cohesive.
+>
+> Please investigate and implement a safe account-linking repair for my existing production user:
+>
+> 1. Identify the single canonical user record associated with my administrator email and current phone number.
+> 2. Confirm:
+>
+>    * user ID;
+>    * normalized email;
+>    * phone number;
+>    * current auth providers;
+>    * whether `password_hash` exists;
+>    * whether there are duplicate user records using my email, phone or Apple identity;
+>    * whether the user is recognized by `ADMIN_EMAILS`.
+> 3. Do not create a new user or change my canonical user ID.
+> 4. If the existing user has no password credential, provide a secure verified flow for me to set a password on that same user record:
+>
+>    * verify control of the existing email through a one-time code;
+>    * write the password hash to the existing user ID;
+>    * invalidate the reset code after use;
+>    * preserve all roles, admin permissions, sessions, saved items and profile data.
+> 5. Link phone, email/password and Apple Sign-In to the same user when ownership is verified.
+> 6. Prevent future duplicate accounts by checking normalized email, phone and provider identity before creating a user.
+> 7. Confirm email forwarding does not affect authentication; authentication should use the actual email address stored on the user record, regardless of where incoming messages are forwarded.
+> 8. For administrator authorization, use the canonical user ID as the strongest internal identifier, with normalized email in `ADMIN_EMAILS` as a configuration check—not as the only source of identity.
+> 9. Preserve the intended `/admin` destination through login and return me to `/admin` after successful authentication.
+>
+> Required production proof:
+>
+> * Existing canonical user ID remains unchanged.
+> * Password can be securely set on that record.
+> * Email login succeeds.
+> * Phone login still reaches the same user.
+> * No duplicate account is created.
+> * Admin API returns 200 for that user.
+> * `/admin` loads after login.
+> * Existing profile, saved data and permissions remain intact.
+>
+> Before changing production data, show me the proposed merge/link plan and take a database backup. Do not expose my full email, phone number, password hash or tokens in logs or responses.
+
+The ideal end state is:
+
+```text
+One user ID
+├── your existing email
+├── your verified phone number
+├── password credential
+├── Apple identity, if used
+└── administrator permissions
+```
+
+That gives you the cohesive experience you want without losing your original account or creating conflicting identities. The mobile builds should remain paused until Replit confirms whether this repair is server/database-only or also needs a client change.
