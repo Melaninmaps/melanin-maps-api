@@ -785,3 +785,9 @@ id = "psRZzPIXi6qWmf5eB8XxK"
 uri = "file://docs/confidential/TRADE-SECRETS-AUDIT.md"
 type = "text"
 title = "Mapping With Melanin™ — Invisible Architecture™ Trade Secret Audit"
+
+[[outputs]]
+id = "wfZOYIIlgJ5LZXTNXzLRK"
+uri = "file://docs/confidential/MWM-Trade-Secrets-Audit-CONFIDENTIAL.pdf"
+type = "pdf"
+title = "MWM Invisible Architecture™ — Trade Secret Audit (CONFIDENTIAL)"
