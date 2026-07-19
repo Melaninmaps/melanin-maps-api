@@ -1,0 +1,163 @@
+Overall, this is a **very good implementation report**. Replit is no longer just saying "it's fixed"—they're describing the architecture, database changes, deployment considerations, and what's left. That's exactly the discipline we wanted.
+
+I **would not ask them to start another wave yet**. Before moving on, I would ask them to **verify and deploy what has already been implemented**. A wave is not complete simply because the code compiles.
+
+Here is what I would send back:
+
+---
+
+This is an excellent implementation summary and we're making good progress. Before we begin another wave, I want to close the verification loop on the work that has already been completed.
+
+Please complete the following before moving to the next implementation wave.
+
+## 1. Deployment Readiness Review
+
+Confirm that every completed wave is now in one of these states:
+
+* ✅ Code implemented
+* ✅ Database migrations applied
+* ✅ Tests passing
+* ✅ Ready for Railway deployment
+
+If any item is not yet deployment-ready, identify it now.
+
+---
+
+## 2. Railway Environment Variables
+
+Before deployment, verify the complete list of required production variables.
+
+Specifically confirm:
+
+* CRON_SECRET
+* COMPANY_MAILING_ADDRESS
+* REVENUECAT_API_KEY_V2
+* Stripe webhook secret
+* Twilio credentials
+* Apple credentials
+* Google credentials
+* Email provider credentials
+
+I don't want to discover a missing environment variable after deployment.
+
+---
+
+## 3. Migration Verification
+
+Please confirm:
+
+* all migrations are idempotent;
+* migrations execute successfully against production;
+* existing production data is preserved;
+* rollback procedure exists if a migration fails.
+
+---
+
+## 4. Regression Testing
+
+Please rerun regression tests for:
+
+* email registration
+* email login
+* logout
+* logout-all
+* password reset
+* phone OTP
+* Stripe webhook
+* RevenueCat sync
+* cron authorization
+
+I want confirmation that none of the new work introduced regressions.
+
+---
+
+## 5. Founder Acceptance Matrix
+
+For every completed wave, create a verification checklist showing:
+
+* feature
+* automated test status
+* manual test required
+* founder verification required
+* production deployment required
+* mobile build required (yes/no)
+
+This becomes our acceptance record.
+
+---
+
+## 6. Railway Deployment Plan
+
+Before deployment, provide the exact deployment sequence.
+
+Example:
+
+1. Apply migrations
+2. Verify environment variables
+3. Deploy Railway
+4. Smoke test
+5. Verify logs
+6. Founder verification
+
+I want to eliminate unnecessary downtime.
+
+---
+
+## 7. Security Review
+
+Since authentication has changed, verify:
+
+* no endpoint now bypasses authentication
+* lockout cannot be abused for denial-of-service
+* logout-all cannot revoke another user's sessions
+* unsubscribe token cannot be forged
+* RevenueCat cannot be bypassed
+* Stripe retries cannot create duplicate records
+
+---
+
+## 8. Launch Dashboard
+
+Update the Launch Readiness Dashboard after deployment—not before.
+
+Status should remain:
+
+🟡 Implemented — Awaiting Founder Verification
+
+until:
+
+* Railway deployment succeeds
+* smoke tests pass
+* I complete founder verification
+
+Only then should a wave become:
+
+🟢 Verified
+
+---
+
+## 9. Recommendation Before the EAS Build
+
+I recommend we deploy these completed server-side waves to Railway first, verify them in production, and then freeze the authentication code before creating the next iOS build.
+
+That gives us a stable backend for the TestFlight build and avoids rebuilding the app because of additional server-side fixes.
+
+---
+
+### One additional request
+
+I would also ask Replit to generate a **Deployment Manifest** for this release. For each deployment, it should list:
+
+* files changed
+* database changes
+* environment variables required
+* migration order
+* rollback steps
+* smoke tests
+* founder verification steps
+
+This becomes an invaluable record for every production release and will make future deployments much more predictable.
+
+---
+
+I think this is the right place to pause implementation briefly. The work completed so far addresses meaningful launch blockers. Now we should make sure it is **deployed, verified, and stable** before layering on additional changes. That disciplined approach will get you to a faster, more reliable launch than trying to finish every remaining wave before validating what has already been built.
