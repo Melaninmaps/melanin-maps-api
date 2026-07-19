@@ -179,7 +179,7 @@ export default function BusinessDetail() {
     }
   }
 
-  const isSaved = savedPlaces?.businessIds.includes(id);
+  const isSaved = savedPlaces?.businessIds?.includes(id);
 
   const BASE_URL = import.meta.env.BASE_URL.replace(/\/$/, "");
   useEffect(() => {

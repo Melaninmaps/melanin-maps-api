@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
+import { getWebToken, syncTokenToCookie } from "@/lib/webAuth";
 import { Button } from "@/components/ui/button";
 import { Redirect } from "wouter";
 import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2, Flag, AlertTriangle, Trophy, CalendarDays, Globe } from "lucide-react";
@@ -345,7 +346,12 @@ export default function Admin() {
   const [globalRecUpdating, setGlobalRecUpdating] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${BASE}api/admin/check`, { credentials: "include" })
+    syncTokenToCookie();
+    const token = getWebToken();
+    fetch(`${BASE}api/admin/check`, {
+      credentials: "include",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
       .then((r) => r.json())
       .then((data) => {
         setIsAdmin(data.isAdmin ?? false);
