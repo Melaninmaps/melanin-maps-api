@@ -38,17 +38,32 @@ description: Current app store submission state — Android and iOS build versio
 ## Railway production
 - API: api-server-production-a991.up.railway.app / www.mappingwithmelanin.com/api
 - Service: a77b49bb-e448-4be8-9d02-de7a3b43136b, Environment: 2292b38f-3d0d-4cad-92a4-ad36cabda629
-- Current live deployment: 74b0a666-2b58-4599-bf2d-28f920be4172 (SUCCESS, July 19 08:03)
+- Latest deployed commit: ca61f65b (July 19, auth P0 fix — throttle + 401-only signout)
+- Previous: fca3d699 (July 19, rolling session logging)
 - Deploy method: Dockerfile copies pre-built dist/ — must build dist THEN push source to Railway
 - Railway CLI broken in Replit environment (token format incompatible with CLI auth)
-- Deploy via: GraphQL serviceInstanceDeploy after pushing new dist to linked GitHub repo OR `railway up` from founder's local machine in artifacts/api-server/
+- Deploy via: Git Data API (blob → tree → commit → patch ref) to Melaninmaps/melanin-maps-api
 
-## NO GO — pending server changes not yet on Railway
-- Rolling session logging (authMiddleware.ts) — built in dist but not yet deployed to Railway
-- Reason: Railway CLI auth broken; `serviceInstanceDeploy` triggered but uses old source
-- Founder must deploy by: pushing artifacts/api-server/ changes to Melaninmaps/melanin-maps-api OR running `railway up` from local machine
+## P0 FIX STATUS (July 19, 2026)
+### Server-side fixes — DEPLOYED (commit ca61f65b, Railway auto-deploys on push)
+1. authMiddleware.ts: renewalThrottle Map — session DB writes limited to once/hr per sid
+2. auth.tsx (mobile): fetchUser() now only signs out on HTTP 401 — NOT on 500/transient errors
+   - NOTE: This is in mobile code — changes are in the repo but require a new EAS build to ship
 
-## DO NOT SUBMIT BUILDS until:
-- Session-renewal proof passes against Railway production
-- Password-reset full production trace completed (status: INVESTIGATING)
-- Founder retest passes all checklist items
+### Mobile-only fixes — IN REPO, REQUIRE NEW BUILD (iOS 88 / Android 63)
+3. business/[id].tsx: openCircleSheet Alert.alert instead of router.push('/login') on !token
+4. auth.tsx: fetchUser 401-only signout (same file, mobile build required)
+
+## P0 ROOT CAUSE IDENTIFIED
+The circles button (Feather "users" icon in business screen top-right header) sits next to
+the save/heart button. openCircleSheet() at line 527 did router.push("/login") if
+SecureStore returned no token — instead of an alert. Additionally, fetchUser() signed
+users out on ANY non-user response (incl. 500 errors), not just 401.
+
+## RELEASE GATE: STILL NO GO — pending:
+1. New mobile build (iOS 88 / Android 63) with the circles-button + fetchUser fixes
+2. Password-reset full production trace (status: INVESTIGATING — not yet started)
+3. Founder retest passes all checklist items on the new build
+
+## DO NOT SUBMIT iOS 87 / Android 62
+These builds have the P0 defect. Next submission: iOS 88 / Android 63.

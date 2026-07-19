@@ -524,7 +524,12 @@ export default function BusinessDetailScreen() {
     try {
       const { getItemAsync } = await import("expo-secure-store");
       const token = await getItemAsync("auth_session_token");
-      if (!token) { setCircleSheetOpen(false); router.push("/login" as any); return; }
+      if (!token) {
+        setCircleSheetOpen(false);
+        setCirclesLoading(false);
+        Alert.alert("Sign in required", "Please sign in to save businesses to your circles.");
+        return;
+      }
       const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
       const res = await fetch(`${base}/api/circles`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json() as { circles: Array<{ id: number; name: string; city: string | null; state: string | null; memberCount: number }> };

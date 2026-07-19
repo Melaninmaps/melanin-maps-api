@@ -106,8 +106,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             Purchases.logIn(String((data.user as User).id)).catch(() => {});
           }
           return true;
-        } else {
-          // Server explicitly says this token is invalid — safe to sign out.
+        } else if (res.status === 401) {
+          // Server explicitly says this token is invalid (401) — safe to sign out.
           await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
           setUser(null);
           setSessionExpired(true);
@@ -115,6 +115,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (Platform.OS !== "web") {
             Purchases.logOut().catch(() => {});
           }
+          return false;
+        } else {
+          // Non-401 response with no user (e.g. 500 server error, transient failure).
+          // Do NOT erase the token or sign the user out — treat as a transient error
+          // and retry. A server hiccup must never cause an irreversible logout.
+          console.warn("[AUTH] /api/auth/user returned no user with status", res.status, "— keeping session, retrying");
+          if (attempt < maxAttempts) {
+            await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+            continue;
+          }
+          // All retries exhausted — keep existing user state.
+          setIsLoading(false);
           return false;
         }
       } catch {

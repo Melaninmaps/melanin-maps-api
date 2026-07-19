@@ -13,6 +13,11 @@ import {
   type SessionData,
 } from "../lib/auth";
 
+// In-memory throttle map: sid → timestamp of last successful session renewal.
+// Limits DB writes to at most once per hour per session, preventing write storms
+// when many concurrent requests arrive from the same session (e.g. app startup burst).
+const renewalThrottle = new Map<string, number>();
+
 declare global {
   namespace Express {
     interface User extends AuthUser {
@@ -107,30 +112,38 @@ export async function authMiddleware(
   req.user = refreshed.user;
 
   // Rolling sessions: extend the DB expiry on every authenticated request so
-  // active users are never silently logged out mid-session. Non-blocking —
-  // a transient DB failure must not block the response, but failures are
-  // logged with enough detail to detect persistent renewal breakdowns.
+  // active users are never silently logged out mid-session.
+  // Throttled to at most once per hour per session to prevent DB write storms
+  // on app-startup bursts (many concurrent requests from the same session).
   const sidPrefix = sid.slice(0, 8) + "…";
-  const newExpiry = new Date(Date.now() + SESSION_TTL).toISOString();
-  updateSession(sid, refreshed)
-    .then(() => {
-      req.log.info(
-        { event: "SESSION_RENEWED", sidPrefix, userId: refreshed.user.id, newExpiry },
-        "session expiry extended",
-      );
-    })
-    .catch((err: unknown) => {
-      req.log.warn(
-        {
-          event: "SESSION_RENEWAL_FAILED",
-          sidPrefix,
-          userId: refreshed.user.id,
-          err,
-          impact: "user will be logged out at original session expiry",
-        },
-        "session renewal failed",
-      );
-    });
+  const ONE_HOUR_MS = 60 * 60 * 1000;
+  const lastRenewed = renewalThrottle.get(sid);
+  const shouldRenew = !lastRenewed || Date.now() - lastRenewed > ONE_HOUR_MS;
+
+  if (shouldRenew) {
+    renewalThrottle.set(sid, Date.now());
+    const newExpiry = new Date(Date.now() + SESSION_TTL).toISOString();
+    updateSession(sid, refreshed)
+      .then(() => {
+        req.log.info(
+          { event: "SESSION_RENEWED", sidPrefix, userId: refreshed.user.id, newExpiry },
+          "session expiry extended",
+        );
+      })
+      .catch((err: unknown) => {
+        renewalThrottle.delete(sid); // allow retry on next request after a failure
+        req.log.warn(
+          {
+            event: "SESSION_RENEWAL_FAILED",
+            sidPrefix,
+            userId: refreshed.user.id,
+            err,
+            impact: "user will be logged out at original session expiry",
+          },
+          "session renewal failed",
+        );
+      });
+  }
 
   next();
 }
