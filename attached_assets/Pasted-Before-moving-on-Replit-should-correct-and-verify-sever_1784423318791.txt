@@ -1,0 +1,181 @@
+Before moving on, Replit should correct and verify several important points. The implementation may be right, but parts of the explanation and acceptance criteria are not yet reliable enough to begin the build blindly.
+
+## 1. Resolve the nonce explanation definitively
+
+Their latest implementation pattern appears internally consistent:
+
+* generate `rawNonce`;
+* send `SHA256(rawNonce)` to Apple;
+* send `rawNonce` to your server;
+* server hashes `rawNonce`;
+* compare that hash to the nonce claim in Apple’s token.
+
+Apple’s native API describes the nonce as a value passed to the identity provider that can be verified against the resulting identity token; Apple’s documentation does **not** say the native service automatically hashes the value supplied by the app. ([Apple Developer][1])
+
+That means Replit’s latest explanation is more credible than its earlier statement that Apple hashes whatever is supplied. However, ask Replit to document the final contract clearly and remove every contradictory comment or memory entry.
+
+Send:
+
+> Confirm the final nonce contract with one decoded test token from a nonproduction test account:
+>
+> * value passed to `signInAsync`;
+> * nonce claim returned in Apple’s identity token;
+> * value calculated by the server;
+> * successful equality comparison.
+>
+> Do not expose the actual nonce or token. Report only masked values or hashes and whether they matched.
+>
+> Remove all contradictory documentation stating either that Apple automatically hashes the nonce or that the raw nonce must be passed directly.
+
+## 2. Correct the “silent returning-user” acceptance criterion
+
+This statement is questionable:
+
+> Returning user — silent, no Apple sheet shown again.
+
+Apple states that obtaining a new identity token on the device requires user interaction. A returning user may see a quicker confirmation experience, but the test should not require a completely silent login with no Apple interface. ([Apple Developer][1])
+
+Replace that criterion with:
+
+> Returning Apple user can authenticate successfully; previously stored account information is reused appropriately, and the app does not depend on Apple returning the member’s name again.
+
+Apple only provides some user information, particularly name, on the first authorization, so the app must persist it then. ([Apple Developer][2])
+
+## 3. Confirm that “new user” can truly be tested
+
+Apple may treat your Apple account as an existing user even after deleting and reinstalling the app.
+
+Replit should explain how to test both paths:
+
+* a genuinely first-time Apple authorization;
+* a returning Apple-linked account.
+
+They may need to revoke Mapping With Melanin™ under the Apple Account’s **Sign in with Apple** settings before retesting the new-user path.
+
+## 4. Verify the build configuration before spending the build
+
+Replit should confirm—not assume:
+
+* `ios.usesAppleSignIn: true`;
+* the `expo-apple-authentication` plugin or equivalent native entitlement is configured;
+* the correct Apple Sign-In capability is active for the production bundle ID;
+* the production bundle ID matches App Store Connect;
+* `EXPO_PUBLIC_DOMAIN` is actually present in the production EAS environment;
+* Build 85 points to `https://www.mappingwithmelanin.com`;
+* the app does not contain a development or preview fallback URL.
+
+Expo’s configuration requires the Apple Sign-In capability in the app configuration/native entitlements. ([Expo Documentation][3])
+
+## 5. Verify whether EAS will actually submit automatically
+
+Their statement says EAS will automatically upload **if** submission is configured.
+
+That is not confirmation.
+
+Ask them to inspect `eas.json` and report:
+
+* whether this command only builds;
+* whether `--auto-submit` is required;
+* whether an App Store Connect submission profile exists;
+* whether credentials are available;
+* whether they will stop after EAS Build or proceed into TestFlight upload.
+
+The command they proposed:
+
+```bash
+eas build --platform ios --profile production
+```
+
+normally needs an explicit submission step unless automatic submission is configured or invoked. They should give you the exact command sequence before running it.
+
+## 6. Confirm build-number behavior
+
+Do not rely only on “autoIncrement is true.”
+
+Have Replit verify:
+
+* current App Store Connect build number;
+* current local/EAS build number;
+* next build will definitely be greater than every previously uploaded build;
+* Android is not being built accidentally if the immediate objective is iOS;
+* no versionCode change is needed unless an Android build is also being produced.
+
+For an iOS-only command, Android versionCode 61 is irrelevant right now.
+
+## 7. Do not mark the other mobile flows as “fully implemented”
+
+Use more precise language:
+
+* **Code reviewed**
+* **Not yet tested on the distributed binary**
+
+Email login, phone OTP, forgot password, and session persistence may look complete in source, but your current tester experience has already shown that code inspection is not enough.
+
+They should not say:
+
+> Fully implemented — human testing only.
+
+They should say:
+
+> Implementation present; device verification pending.
+
+## 8. Add the mobile reset-link/deep-link check
+
+The password reset test needs to verify more than receiving a code.
+
+Confirm:
+
+* whether the email contains a code, link, or both;
+* whether tapping the link on an iPhone opens the app or browser;
+* whether the app receives all required parameters;
+* whether expired, reused, and malformed codes are handled;
+* whether the new password invalidates the old password;
+* whether existing sessions are revoked according to the eventual Audit 1 implementation.
+
+## 9. Clarify the phone-account lifecycle
+
+Phone OTP testing should determine:
+
+* Does verifying a new number create an account?
+* Does verifying an existing number log into the same account?
+* Can one user accidentally create separate email and phone accounts?
+* Is there an account-linking workflow?
+* What happens when a phone number changes?
+* Is the hardcoded test number disabled in production?
+
+This matters because “OTP works” is not the same as “account identity remains coherent.”
+
+## 10. Include build-distribution readiness
+
+Before building, Replit should verify:
+
+* TestFlight compliance questions or export-compliance status;
+* beta app description and review information;
+* tester group configuration;
+* test credentials and review notes, where required;
+* whether external testers require a new beta review;
+* privacy-policy and support links still resolve;
+* no visible feature in the build leads directly to an unfinished or crashing flow.
+
+## Send Replit this final checkpoint
+
+> Before starting EAS Build 85, complete a pre-build readiness review and return PASS/FAIL for:
+>
+> 1. Final Apple nonce contract verified and contradictory documentation removed.
+> 2. Returning-user criterion corrected; do not require silent authentication.
+> 3. First-time and returning Apple test procedures documented.
+> 4. Apple capability, entitlement, plugin, bundle ID, and production API environment verified.
+> 5. Exact EAS build and submission commands confirmed from `eas.json`.
+> 6. Build number confirmed to be accepted by App Store Connect.
+> 7. Email, phone, reset, and persistence labeled “device verification pending,” not fully verified.
+> 8. Password-reset deep link/code behavior documented.
+> 9. Phone/email account-linking and duplicate-account behavior documented.
+> 10. TestFlight distribution, compliance, tester group, and review information confirmed.
+>
+> Do not broaden the code changes. If all ten pass, proceed immediately with the iOS build and upload. If any fail, correct only the item that would prevent authentication, TestFlight processing, or physical-device testing.
+
+Once Replit answers those ten items, we can approve the build immediately or identify the one remaining blocker without reopening the entire implementation plan.
+
+[1]: https://developer.apple.com/documentation/signinwithapple/verifying-a-user?utm_source=chatgpt.com "Verifying a user | Apple Developer Documentation"
+[2]: https://developer.apple.com/documentation/signinwithapple/authenticating-users-with-sign-in-with-apple?utm_source=chatgpt.com "Authenticating users with Sign in with Apple | Apple Developer Documentation"
+[3]: https://docs.expo.dev/versions/v56.0.0/sdk/apple-authentication/?utm_source=chatgpt.com "AppleAuthentication - Expo Documentation"

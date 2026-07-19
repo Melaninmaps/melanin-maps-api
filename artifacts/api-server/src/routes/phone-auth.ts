@@ -24,6 +24,7 @@ function normalizePhone(raw: string): string {
 
 const TEST_PHONE = "+15555550100";
 const TEST_OTP = "123456";
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 // POST /auth/phone/send-otp
 router.post("/auth/phone/send-otp", async (req: Request, res: Response) => {
@@ -39,7 +40,7 @@ router.post("/auth/phone/send-otp", async (req: Request, res: Response) => {
     return;
   }
 
-  if (normalized === TEST_PHONE) {
+  if (!IS_PRODUCTION && normalized === TEST_PHONE) {
     res.json({ success: true, phone: normalized });
     return;
   }
@@ -80,7 +81,7 @@ router.post("/auth/phone/verify-otp", async (req: Request, res: Response) => {
 
   const normalized = normalizePhone(phone.trim());
 
-  const isTestPhone = normalized === TEST_PHONE;
+  const isTestPhone = !IS_PRODUCTION && normalized === TEST_PHONE;
   if (isTestPhone && code.trim() !== TEST_OTP) {
     res.status(400).json({ error: "Incorrect verification code. Please try again." });
     return;
@@ -209,7 +210,7 @@ router.post("/auth/phone/link-to-existing", async (req: Request, res: Response) 
   }
 
   const normalized = normalizePhone(phone.trim());
-  const isTestPhone = normalized === TEST_PHONE;
+  const isTestPhone = !IS_PRODUCTION && normalized === TEST_PHONE;
 
   try {
     // 1. Verify OTP with Twilio (unless test phone)
