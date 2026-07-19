@@ -473,8 +473,8 @@ const styles = StyleSheet.create({
   emailForm: { gap: 14, marginBottom: 24 },
   fieldLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold", marginBottom: 6 },
   input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, fontFamily: "Inter_400Regular" },
-  pwRow: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, gap: 8 },
-  pwInput: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular", padding: 0 },
+  pwRow: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, minHeight: 52, gap: 8 },
+  pwInput: { flex: 1, fontSize: 17, fontFamily: "Inter_400Regular", padding: 0 },
   forgotRow: { alignItems: "flex-end", marginTop: 6 },
   forgotTxt: { fontSize: 13, fontFamily: "Inter_500Medium" },
   signInBtn: {

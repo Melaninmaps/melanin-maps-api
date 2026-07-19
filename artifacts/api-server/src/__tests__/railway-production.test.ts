@@ -206,7 +206,7 @@ describe("membership/plan — family_add_on_seats query failure is explicit, not
 
     expect(warnings).toHaveLength(1);
     const [logObj, logMsg] = warnings[0];
-    expect((logObj.addOnErr as Error).code).toBe("42P01");
+    expect((logObj.addOnErr as NodeJS.ErrnoException).code).toBe("42P01");
     expect((logObj.addOnErr as Error).message).toContain("family_add_on_seats");
     expect(logMsg).toContain("family_add_on_seats");
     expect(logMsg).toContain("defaulting to 0");

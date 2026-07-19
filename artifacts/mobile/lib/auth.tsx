@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
     } catch (secureErr: unknown) {
       const e = secureErr as Error;
-      console.error("[DIAG] fetchUser: SecureStore.getItemAsync threw", { errorName: e?.name, errorMessage: e?.message });
+      console.error("fetchUser: SecureStore.getItemAsync threw", { errorName: e?.name, errorMessage: e?.message });
       setIsLoading(false);
       return false;
     }
@@ -199,7 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (fetchErr: unknown) {
       clearTimeout(timer);
       const e = fetchErr as Error;
-      console.error("[DIAG] login fetch threw", { host: apiBase, errorName: e?.name, errorMessage: e?.message });
+      console.error("login fetch threw", { host: apiBase, errorName: e?.name, errorMessage: e?.message });
       return { error: `Could not reach server (${e?.name ?? "network error"}). Check your connection.` };
     } finally {
       clearTimeout(timer);
@@ -211,45 +211,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       rawBody = await response.text();
     } catch (textErr: unknown) {
       const e = textErr as Error;
-      console.error("[DIAG] login response.text() threw", { status: response.status, contentType, errorName: e?.name, errorMessage: e?.message });
+      console.error("login response.text() threw", { status: response.status, contentType, errorName: e?.name, errorMessage: e?.message });
       return { error: `Login failed: HTTP ${response.status} (could not read response).` };
     }
-
-    console.log("[DIAG] login response received", {
-      host: apiBase,
-      path: "/api/auth/login-email",
-      status: response.status,
-      contentType,
-      bodyReceived: rawBody.length > 0,
-      bodyPreview: rawBody.length > 0 && !rawBody.includes("token") ? rawBody.slice(0, 100) : "[redacted]",
-    });
 
     let data: { token?: string; error?: string } = {};
     try {
       data = JSON.parse(rawBody) as { token?: string; error?: string };
     } catch {
-      console.error("[DIAG] login response not JSON", { status: response.status, contentType, bodyPreview: rawBody.slice(0, 100) });
+      console.error("login response not JSON", { status: response.status, contentType, bodyPreview: rawBody.slice(0, 100) });
       return { error: `Login service returned an unexpected response (HTTP ${response.status}).` };
     }
 
     if (!response.ok) {
-      console.error("[DIAG] login failed", { status: response.status, responseKeys: Object.keys(data) });
+      console.error("login failed", { status: response.status, responseKeys: Object.keys(data) });
       return { error: data.error ?? `Login failed (HTTP ${response.status}).` };
     }
 
     const token: string = data.token ?? "";
     if (!token) {
-      console.error("[DIAG] login step 0: no token in response", { status: response.status, responseKeys: Object.keys(data) });
+      console.error("login step 0: no token in response", { status: response.status, responseKeys: Object.keys(data) });
       return { error: "Login succeeded but no session was returned. Please try again." };
     }
 
     // Step 1 — persist session token
     try {
       await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
-      console.log("[DIAG] login step 1: token saved OK", { tokenLen: token.length });
     } catch (step1Err: unknown) {
       const e = step1Err as Error;
-      console.error("[DIAG] login step 1 FAILED: SecureStore.setItemAsync(token)", { tokenLen: token.length, errorName: e?.name, errorMessage: e?.message, stack: e?.stack?.slice(0, 500) });
+      console.error("login step 1 FAILED: SecureStore.setItemAsync(token)", { tokenLen: token.length, errorName: e?.name, errorMessage: e?.message, stack: e?.stack?.slice(0, 500) });
       return { error: `Signed in but could not save your session (storage step 1: ${e?.name ?? "unknown"}). Please try again.` };
     }
 
@@ -257,13 +247,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const verified = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
       if (!verified) {
-        console.error("[DIAG] login step 1 verify: token not retained after save (read-back null)");
+        console.error("login step 1 verify: token not retained after save (read-back null)");
         return { error: "Session token was not retained after saving. Please try again." };
       }
-      console.log("[DIAG] login step 1 verify: read-back confirmed OK");
     } catch (verifyErr: unknown) {
       const e = verifyErr as Error;
-      console.error("[DIAG] login step 1 verify: read-back threw", { errorName: e?.name, errorMessage: e?.message });
+      console.error("login step 1 verify: read-back threw", { errorName: e?.name, errorMessage: e?.message });
       return { error: "Session saved but could not be verified. Please try again." };
     }
 
@@ -272,7 +261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
     } catch (step2Err: unknown) {
       const e = step2Err as Error;
-      console.error("[DIAG] login step 2: fresh_login flag failed (non-critical)", { errorName: e?.name, errorMessage: e?.message });
+      console.error("login step 2: fresh_login flag failed (non-critical)", { errorName: e?.name, errorMessage: e?.message });
     }
 
     // Step 3 — load the user profile
@@ -281,11 +270,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       profileLoaded = await fetchUser();
       if (!profileLoaded) {
-        console.warn("[DIAG] login step 3: fetchUser returned false (profile not loaded — network issue or invalid session)");
+        console.warn("login step 3: fetchUser returned false (profile not loaded — network issue or invalid session)");
       }
     } catch (step3Err: unknown) {
       const e = step3Err as Error;
-      console.error("[DIAG] login step 3 FAILED: fetchUser threw unexpectedly", { errorName: e?.name, errorMessage: e?.message, stack: e?.stack?.slice(0, 500) });
+      console.error("login step 3 FAILED: fetchUser threw unexpectedly", { errorName: e?.name, errorMessage: e?.message, stack: e?.stack?.slice(0, 500) });
     }
 
     return { authenticated: profileLoaded };
