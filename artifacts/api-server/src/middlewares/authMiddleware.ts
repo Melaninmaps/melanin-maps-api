@@ -9,6 +9,7 @@ import {
   getSessionId,
   getSession,
   updateSession,
+  SESSION_TTL,
   type SessionData,
 } from "../lib/auth";
 
@@ -106,9 +107,30 @@ export async function authMiddleware(
   req.user = refreshed.user;
 
   // Rolling sessions: extend the DB expiry on every authenticated request so
-  // active users are never silently logged out mid-session. Fire-and-forget —
-  // a transient DB failure here must not block the response.
-  updateSession(sid, refreshed).catch(() => {});
+  // active users are never silently logged out mid-session. Non-blocking —
+  // a transient DB failure must not block the response, but failures are
+  // logged with enough detail to detect persistent renewal breakdowns.
+  const sidPrefix = sid.slice(0, 8) + "…";
+  const newExpiry = new Date(Date.now() + SESSION_TTL).toISOString();
+  updateSession(sid, refreshed)
+    .then(() => {
+      req.log.info(
+        { event: "SESSION_RENEWED", sidPrefix, userId: refreshed.user.id, newExpiry },
+        "session expiry extended",
+      );
+    })
+    .catch((err: unknown) => {
+      req.log.warn(
+        {
+          event: "SESSION_RENEWAL_FAILED",
+          sidPrefix,
+          userId: refreshed.user.id,
+          err,
+          impact: "user will be logged out at original session expiry",
+        },
+        "session renewal failed",
+      );
+    });
 
   next();
 }
