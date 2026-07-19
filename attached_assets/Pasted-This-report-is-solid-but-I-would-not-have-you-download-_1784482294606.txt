@@ -1,0 +1,58 @@
+This report is solid, but I would **not have you download the workspace, clone GitHub, and manually copy a 19 MB build artifact** unless absolutely necessary. That introduces avoidable chances of copying the wrong folder or an incomplete build.
+
+Use the secure GitHub browser authorization flow we used previously so Replit can push the already-built `dist/` directly.
+
+Send Replit this:
+
+> Pre-push verification accepted.
+>
+> Rather than requiring me to download the Replit workspace and manually copy the deployment artifact, please use GitHub browser/device authorization from the Replit Shell:
+>
+> ```bash
+> gh auth login --web
+> ```
+>
+> I will complete the one-time browser approval. Do not request or store a personal access token.
+>
+> After authorization:
+>
+> 1. Clone or update `Melaninmaps/melanin-maps-api`.
+> 2. Copy only the verified rebuilt `dist/` into that deployment repository.
+> 3. Do not copy `web-static/`, because you confirmed it has not changed.
+> 4. Show me:
+>
+>    * `git status`
+>    * `git diff --stat`
+>    * confirmation that only the expected `dist/` files changed
+>    * confirmation that `SESSION_RENEWED` and `SESSION_RENEWAL_FAILED` are present
+> 5. Commit and push to `main`.
+> 6. Wait for Railway to deploy successfully.
+> 7. Report the new GitHub commit hash and Railway deployment ID.
+>
+> Do not begin a mobile build yet. After Railway succeeds, proceed immediately with:
+>
+> * the rolling-session before/after expiry proof;
+> * the complete password-reset production trace;
+> * production authentication smoke tests.
+>
+> Keep the release at `NO GO` until both authentication proofs pass.
+
+## Your next action
+
+In the **Replit Shell**, enter:
+
+```bash
+gh auth login --web
+```
+
+Choose:
+
+* **GitHub.com**
+* **HTTPS**
+* **Login with a web browser**
+
+Replit will display a short device code. Open the provided GitHub page, enter the code, and approve access. Then tell Replit:
+
+> **GitHub browser authorization complete. Proceed with the verified dist-only deployment.**
+
+This is safer and easier than transferring the build to your Mac manually. After Railway deploys, we will test the rolling session first, then repeat your password reset in the installed app while Replit watches the exact production logs.
