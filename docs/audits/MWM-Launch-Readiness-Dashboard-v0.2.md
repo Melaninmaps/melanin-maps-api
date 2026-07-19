@@ -33,7 +33,7 @@
 | # | Wave | Name | Status | ETA | EAS? | Blocks Launch | Risk if Delayed | P0s |
 |---|---|---|---|---|---|---|---|---|
 | 1 | **1-A** | Auth hardening (lockout, revocation, log) | ⬜ Ready | 1 day | No | Yes | Members cannot recover from credential attacks; no account lockout | 4 |
-| 2 | **1-B** | Apple Sign-In nonce fix | ⬜ Ready | 1 day + build | **Yes** | Yes | All iOS 26+ testers silently blocked from Apple Sign-In | 1 |
+| 2 | **1-B** | Apple Sign-In nonce fix | 🟡 Awaiting Founder Verification | 1 day + build | **Yes** | Yes | All iOS 26+ testers silently blocked from Apple Sign-In | 1 |
 | 3 | **1-C** | Blocking enforcement (all surfaces) | ⬜ Ready | 1.5 days | No | Yes | Blocked users visible in feed; harassment and privacy violations live | 6 |
 | 4 | **2-A** | Safety alert unique confirmation | ⬜ Ready | 0.5 day | No | Yes | Single user can inflate safety confirmation counts without limit | 3 |
 | 5 | **4-A** | Welcome Home Experience™ + onboarding | ⬜ Ready | 2 days | **Yes** | No | Founding members' first post-install experience lacks identity or personalization | 0 (P1s) |
@@ -118,10 +118,10 @@ Current build: iOS 1.1.5 buildNumber 84 / Android versionCode 60
 - All waves ⬜ Ready. Awaiting "Please implement." per wave.
 - Score: **3 / 20** founding member experiences verified
 
-### Day 1 — (fill in after implementation)
-- Waves completed:
-- Waves verified:
-- Score: — / 20
+### Day 1 — July 19, 2026 (continued)
+- Wave 1-B: 🟡 Implemented — login.tsx Apple nonce fix applied. EAS build required.
+- Score: **3 / 20** (no change until TestFlight build verified by founder)
+- Next: Run `eas build --platform ios --profile production` from inside artifacts/mobile/
 
 ---
 
