@@ -94,8 +94,8 @@ from within Playwright process (ECONNREFUSED). Pre-existing suite-wide constrain
 2. ✅ Server fixes deployed (throttle + email FRONTEND_URL)
 3. ✅ Regression tests written
 4. ✅ Admin access blocker resolved (in repo — needs Railway redeploy)
-5. ⏳ Railway redeploy of api-server (RAILWAY_TOKEN expired; use Railway dashboard → Redeploy)
-6. ⏳ Admin access confirmed on production
+5. ✅ Railway deployed commit 0d818181 (2026-07-19T22:24:43Z) — Railway deployment 2d5d4536 STATUS:SUCCESS
+6. ⏳ Admin access confirmed on production — founder must complete verification flow
 7. ⏳ New mobile build (iOS 90 / Android 64) with all mobile P0 fixes
 8. ⏳ Founder retest passes all checklist items on new build
 9. ⏳ Store submission
