@@ -1,0 +1,54 @@
+The proposed diff looks **reasonable and non-destructive**, but I would not approve the actual push until two conditions are met:
+
+1. The Railway backup is confirmed **Complete**.
+2. Replit runs Drizzle’s actual dry-run/explain command and shows the generated SQL.
+
+The manually prepared comparison is useful, but the safest evidence is the migration tool’s own output. Drizzle’s official documentation supports `push --explain --verbose` specifically to print planned SQL without applying it. Drizzle also warns about data-loss changes rather than guaranteeing that `push` is always additive, so the generated SQL should be reviewed before execution. ([Drizzle ORM][1])
+
+Send Replit this:
+
+> The proposed schema diff is accepted in principle.
+>
+> Do not apply it yet.
+>
+> First confirm the Railway Postgres backup shows **Complete**.
+>
+> Then run the exact Drizzle dry run against Railway using:
+>
+> ```bash
+> pnpm --filter @workspace/db exec drizzle-kit push --explain --verbose
+> ```
+>
+> Use the project’s actual configured command if the package script differs, but it must be an explain/dry-run operation that does not apply changes.
+>
+> Return the generated SQL and confirm:
+>
+> * 30 `CREATE TABLE` operations only;
+> * 23 additive `ADD COLUMN` operations only;
+> * no `DROP TABLE`;
+> * no `DROP COLUMN`;
+> * no rename;
+> * no destructive type conversion;
+> * no data deletion;
+> * no unexpected unique or foreign-key constraint that could fail on existing data;
+> * no operation affecting the 12 legacy tables.
+>
+> Also check whether any of the new foreign keys reference existing records or require indexes that were omitted from the summary.
+>
+> If the actual SQL matches the reviewed summary and the backup is complete, I approve the schema push.
+>
+> After applying it:
+>
+> 1. capture the complete output;
+> 2. query to confirm all 30 tables and 23 columns exist;
+> 3. rerun `GET /api/businesses`;
+> 4. verify existing user registration and login still work;
+> 5. stop immediately if any unexpected error appears.
+
+Once the dry-run SQL matches this report, the approval phrase should be:
+
+> **Schema diff approved. Backup is complete. Proceed with the push.**
+
+One note: creating 30 tables at once is a large synchronization, but because they are new and empty, that alone is not dangerous. The higher-risk areas are unexpected constraints, foreign keys, or defaults that the summary may not show. The explain output will reveal those before anything touches production.
+
+[1]: https://orm.drizzle.team/docs/drizzle-kit-push?utm_source=chatgpt.com "Drizzle ORM - `push`"
