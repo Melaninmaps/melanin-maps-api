@@ -9,6 +9,7 @@ description: Authoritative source for all 12 feature audits, 74 P0s, 113 P1s, 16
 - Full register: `docs/audits/MWM-Consolidated-Audit-Implementation-Register-v0.1.md`
 - CSV register: `docs/audits/MWM-Audit-Register-v0.1.csv`
 - **Audit Crosswalk (live gap document):** `docs/audits/MWM-Audit-Crosswalk-v0.1.md` — must be updated after every implemented workstream
+- **Implementation Waves:** `docs/audits/MWM-Implementation-Waves-v0.1.md` — 4 waves, 13 sub-waves; awaiting founder approval before coding begins
 - Full individual audit reports for Audits 1–10: NOT YET in repo — must be added and reconciled per Section 10 of the register.
 
 ## Platform Verdict
