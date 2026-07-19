@@ -104,5 +104,11 @@ export async function authMiddleware(
   }
 
   req.user = refreshed.user;
+
+  // Rolling sessions: extend the DB expiry on every authenticated request so
+  // active users are never silently logged out mid-session. Fire-and-forget —
+  // a transient DB failure here must not block the response.
+  updateSession(sid, refreshed).catch(() => {});
+
   next();
 }

@@ -1,0 +1,246 @@
+Replit found useful issues, but I would **not approve the proposed implementation as written yet**. Several points need correction before they continue.
+
+The biggest concern is the new `_diag.dbHost` response. **The production API should never return database-host information to the mobile app.** Even partially masked infrastructure details should remain in server logs.
+
+Send Replit this:
+
+---
+
+## Authentication Findings Accepted — Corrections Required Before Implementation
+
+The release remains:
+
+> **NO GO — CORRECTION REQUIRED**
+
+Please make the following corrections before continuing.
+
+### 1. Remove database details from the public API response
+
+Do not return this to the app:
+
+```json
+{
+  "_diag": {
+    "api": "production",
+    "dbHost": "..."
+  }
+}
+```
+
+Remove `_diag.dbHost` before deployment.
+
+Instead:
+
+* generate a safe request/correlation ID;
+* return only that request ID to the client;
+* log the environment, database identity, normalized email hash, endpoint, result and timestamp internally in Railway;
+* never log passwords, reset codes, tokens or complete email addresses.
+
+Example client response:
+
+```json
+{
+  "success": true,
+  "requestId": "..."
+}
+```
+
+Then we can match the request ID to Railway logs safely.
+
+### 2. Do not conclude “environment split” without evidence
+
+The failed password-reset test was performed in the installed mobile app, not intentionally through the Replit web preview.
+
+Therefore, “the reset probably updated the Replit database” is only a hypothesis.
+
+Trace the exact production journey:
+
+```text
+Installed mobile build
+→ production API URL
+→ forgot-password request
+→ reset-code verification
+→ new-password submission
+→ Railway Postgres update
+→ login with new password
+```
+
+For the next controlled test, record:
+
+* exact mobile build number;
+* resolved API base URL;
+* reset-request endpoint;
+* reset-completion endpoint;
+* HTTP status from each call;
+* sanitized request shape;
+* sanitized response;
+* Railway user-row update timestamp;
+* whether `password_hash` changed;
+* whether reset code/token was cleared;
+* login branch reached afterward:
+
+  * user not found;
+  * no password hash;
+  * password mismatch;
+  * success.
+
+Do not report a root cause until that trace proves it.
+
+### 3. Confirm the mobile app is calling the correct reset endpoint
+
+The error **“Invalid email or password”** sounds like the login route’s response.
+
+Please confirm that the final “Set New Password” button calls the password-reset completion endpoint—not `/login-email`.
+
+Also verify that:
+
+* the email is carried forward correctly;
+* the code is carried forward correctly;
+* the new password and confirmation fields are sent under the expected property names;
+* the app does not automatically attempt login with a stale or autofilled password after reset;
+* the UI displays the server’s actual reset error rather than a generic login error.
+
+The taller input fields are a useful UX improvement, but they do not resolve the authentication defect.
+
+### 4. Phone authentication: diagnose persistence before redesigning it
+
+The proposed trusted-device model is directionally approved:
+
+* SMS OTP on first verification;
+* no SMS for routine app reopening;
+* OTP on a new device, expired session or recovery;
+* secure server-side session revocation.
+
+However, the current system already claims to create a seven-day token in SecureStore. First determine why that token is not restoring the session.
+
+Trace:
+
+```text
+OTP success
+→ token returned
+→ SecureStore write succeeds
+→ app closes
+→ token read on launch
+→ Authorization header attached
+→ production session validation
+→ authenticated navigation
+```
+
+Fix the persistence bug before changing TTL or adding another credential type.
+
+A 30-day session may be acceptable, but require:
+
+* secure token storage;
+* server-side expiration;
+* rotating or renewable sessions;
+* logout;
+* sign out all devices;
+* revocation after password reset;
+* rate limiting;
+* new-device OTP verification.
+
+### 5. Do not treat a local PIN as account authentication
+
+A device PIN stored in SecureStore may be used to unlock an existing local session, but it cannot replace server authentication.
+
+If the app is deleted, the phone changes or SecureStore is cleared, the member must use:
+
+* OTP;
+* email/password, if linked;
+* Apple Sign-In;
+* or another server-verified recovery method.
+
+Please propose separately whether phone-created users should be allowed to **set an email and password after phone verification**. That may be the most practical way to reduce future SMS use while preserving secure recovery.
+
+Also confirm how phone and email identities will be linked without creating duplicate user records.
+
+### 6. Onboarding role structure
+
+The standard member should not feel as though “Community Member” is a special professional role.
+
+Preferred presentation:
+
+**You’re joining as a Community Member. Do any of these also describe you?**
+
+Optional selections:
+
+* Business Owner
+* Cultural Ambassador
+* Community Organizer
+
+That is clearer than presenting four equal cards and making one permanently selected.
+
+Please keep Community Organizer optional for now. It can remain a profile attribute, not an account type.
+
+Confirm that:
+
+* every new user receives the base community-member identity;
+* optional attributes save correctly;
+* “Cultural Ambassador” is shown in the UI while preserving the existing database field until a future safe migration;
+* no user is forced to select an optional role.
+
+### 7. Mandatory production tests
+
+Before another EAS build, run the following against Railway production.
+
+#### Email account
+
+* New registration
+* Logout
+* Login
+* Request reset code
+* Wrong code rejected
+* Correct code accepted
+* New password saved
+* Old password rejected
+* New password accepted
+* Reset code cannot be reused
+* Session persists after force-close
+* Password reset revokes prior sessions as intended
+
+#### Phone account
+
+* New phone registration
+* OTP verification
+* Force-close and reopen without another SMS
+* Logout and return
+* New-device behavior
+* Wrong and expired OTP
+* Resend throttling
+* Duplicate phone/email identity handling
+
+#### Onboarding
+
+* Base Community Member created
+* Each optional attribute independently selectable
+* Multiple attributes selectable
+* Selections persist after logout/login
+* No incorrect role is required
+
+### 8. Build and release impact
+
+Please confirm explicitly:
+
+* these changes require a new iOS build;
+* these changes require a new Android build;
+* the next build numbers;
+* no store submission occurs before founder retesting passes.
+
+Return:
+
+1. Proven root cause of password-reset failure
+2. Proven root cause of phone-session failure
+3. Exact files and endpoints changed
+4. Safe diagnostic logging approach
+5. Automated test results
+6. Production API test results
+7. New build requirements
+8. `READY FOR FOUNDER RETEST` or `NO GO`
+
+---
+
+### My assessment
+
+The role correction is straightforward. The phone-session model is sensible, but Replit must first determine why the existing SecureStore session is not persisting. The password-reset issue is still not diagnosed—the environment-split explanation is only a theory.
+
+Also, **do not submit either platform yet**. These are authentication changes inside the mobile client, so once corrected they will require new iOS and Android builds.

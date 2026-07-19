@@ -185,31 +185,11 @@ export default function ProfileSetupScreen() {
         {/* ─── STEP 2: Roles ─── */}
         {step === 2 && (
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: c.foreground }]}>What describes you?</Text>
+            <Text style={[styles.stepTitle, { color: c.foreground }]}>You're joining as a{"\n"}Community Member.</Text>
             <Text style={[styles.stepSub, { color: c.mutedForeground }]}>
-              Select all that apply. This helps us tailor your experience.
+              Do any of these also describe you? Select all that apply — or skip to continue.
             </Text>
             <View style={styles.roleCards}>
-              {/* Community Member — always included, non-removable */}
-              <View
-                style={[
-                  styles.roleCard,
-                  { backgroundColor: c.primary + "12", borderColor: c.primary },
-                ]}
-              >
-                <View style={[styles.roleIconWrap, { backgroundColor: c.primary + "20" }]}>
-                  <Feather name="heart" size={22} color={c.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.roleLabel, { color: c.foreground }]}>Community Member</Text>
-                  <Text style={[styles.roleSub, { color: c.mutedForeground }]}>Discover businesses, travel safely, and connect with the diaspora</Text>
-                </View>
-                <View style={[styles.roleCheck, { backgroundColor: c.primary, borderColor: c.primary }]}>
-                  <Feather name="check" size={12} color="#fff" />
-                </View>
-              </View>
-
-              {/* Optional identity cards */}
               {[
                 {
                   key: "biz",
