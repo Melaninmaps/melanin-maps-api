@@ -12,12 +12,10 @@
       "bundleIdentifier": "com.melaninmaps.app",
       "buildNumber": "86",
       "associatedDomains": [
-        "applinks:mappingwithmelanin.com",
         "applinks:mappingwithmelanin.com"
       ],
       "entitlements": {
         "com.apple.developer.applesignin": [
-          "Default",
           "Default"
         ]
       },
@@ -34,12 +32,6 @@
             "NSPrivacyAccessedAPITypeReasons": [
               "CA92.1"
             ]
-          },
-          {
-            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPITypeReasons": [
-              "CA92.1"
-            ]
           }
         ]
       }
@@ -47,20 +39,6 @@
     "android": {
       "package": "com.melaninmaps.app",
       "intentFilters": [
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [
-            {
-              "scheme": "https",
-              "host": "mappingwithmelanin.com"
-            }
-          ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
-        },
         {
           "action": "VIEW",
           "autoVerify": true,
