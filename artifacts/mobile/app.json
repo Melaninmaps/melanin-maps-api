@@ -71,7 +71,7 @@
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE"
       ],
-      "versionCode": 60
+      "versionCode": 61
     },
     "web": {
       "favicon": "./assets/images/icon.png"
