@@ -1,5 +1,4 @@
 import { Router, type IRouter } from "express";
-import path from "path";
 import healthRouter from "./health";
 import authRouter from "./auth";
 import phoneAuthRouter from "./phone-auth";
@@ -281,15 +280,5 @@ router.use(safetyHeatmapRouter);
 router.use(culturalSitesRouter);
 router.use(externalClicksRouter);
 
-router.get("/download/mobile-build.zip", (req, res) => {
-  const filePath = path.join(process.cwd(), "mobile-build.zip");
-  res.download(filePath, "mobile-build.zip");
-});
-
-router.get("/debug/crash-report", (req, res) => {
-  const d = (req.query.d as string) || "";
-  req.log.error({ crash: d }, "=== ANDROID_CRASH_REPORT ===");
-  res.sendStatus(200);
-});
 
 export default router;

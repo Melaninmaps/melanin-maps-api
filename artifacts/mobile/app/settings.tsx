@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -98,7 +99,7 @@ export default function SettingsScreen() {
         { id: "safetyinfo", icon: "shield", label: "Our Safety Philosophy", route: "/safety-info" },
         { id: "trust", icon: "shield", label: "Trust & Safety Center", sub: "Disclaimers and platform policies", route: "/trust-and-safety" },
         { id: "licenses", icon: "code", label: "Open Source Licenses", route: null, sub: "React Native, Expo, and more" },
-        { id: "version", icon: "info", label: "Version", value: "1.0.1", route: null },
+        { id: "version", icon: "info", label: "Version", value: Constants.expoConfig?.version ?? "1.1.5", route: null },
       ],
     },
   ];

@@ -4,6 +4,12 @@ import { CULTURAL_SITES_SEED } from "../data/cultural-sites-seed";
 
 const router: IRouter = Router();
 
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
+function isAdmin(req: Request): boolean {
+  const user = req.user as { email?: string } | undefined;
+  return !!(user?.email && ADMIN_EMAILS.includes(user.email));
+}
+
 // ── Seed helpers ──────────────────────────────────────────────────────────────
 
 async function ensureSeeded() {
@@ -305,6 +311,7 @@ router.get("/cultural-sites/:id/support-links", async (req: Request, res: Respon
 
 router.patch("/cultural-sites/stories/:storyId/moderate", async (req: Request, res: Response) => {
   try {
+    if (!isAdmin(req)) { res.status(403).json({ error: "Admin access required" }); return; }
     const { status, isAmbassador } = req.body as { status?: string; isAmbassador?: boolean };
     if (!["approved", "rejected", "pending"].includes(status ?? "")) {
       res.status(400).json({ error: "status must be approved, rejected, or pending" });
@@ -332,6 +339,7 @@ router.patch("/cultural-sites/stories/:storyId/moderate", async (req: Request, r
 
 router.get("/cultural-sites/stories/pending", async (req: Request, res: Response) => {
   try {
+    if (!isAdmin(req)) { res.status(403).json({ error: "Admin access required" }); return; }
     const result = await pool.query(
       `SELECT hs.id, hs.site_id AS "siteId", cs.name AS "siteName",
               hs.author_name AS "authorName", hs.relationship_type AS "relationshipType",

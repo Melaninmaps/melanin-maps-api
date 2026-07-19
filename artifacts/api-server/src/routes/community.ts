@@ -289,6 +289,19 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       return;
     }
 
+    // Prevent duplicate posts within 30 seconds (double-tap / network retry guard)
+    const trimmedContent = ((req.body as { content?: string }).content ?? "").trim();
+    if (trimmedContent) {
+      const dup = await pool.query(
+        `SELECT id FROM community_posts WHERE user_id = $1 AND content = $2 AND created_at > NOW() - INTERVAL '30 seconds' LIMIT 1`,
+        [req.user.id, trimmedContent],
+      );
+      if (dup.rows.length > 0) {
+        res.status(409).json({ error: "Duplicate post detected. Please wait a moment before posting again." });
+        return;
+      }
+    }
+
     const {
       content,
       category = "general",

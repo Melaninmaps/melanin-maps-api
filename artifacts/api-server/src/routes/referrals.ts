@@ -101,10 +101,21 @@ router.put("/referrals/my-code", async (req: any, res): Promise<void> => {
 });
 
 router.post("/referrals/track", async (req: any, res): Promise<void> => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   const { code } = req.body as { code?: string };
   if (!code) { res.status(400).json({ error: "code is required" }); return; }
 
   try {
+    const [currentUser] = await db
+      .select({ referredByCode: usersTable.referredByCode })
+      .from(usersTable)
+      .where(eq(usersTable.id, req.user.id))
+      .limit(1);
+    if (currentUser?.referredByCode) {
+      res.status(409).json({ error: "You have already applied a referral code." });
+      return;
+    }
+
     const [referrer] = await db
       .select()
       .from(usersTable)
