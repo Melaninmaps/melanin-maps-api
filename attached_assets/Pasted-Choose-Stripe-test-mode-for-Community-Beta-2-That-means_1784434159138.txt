@@ -1,0 +1,41 @@
+Choose **Stripe test mode** for Community Beta 2.
+
+That means:
+
+* `STRIPE_SECRET_KEY` must begin with `sk_test_`
+* the Stripe webhook endpoint must be created while Stripe is in **test mode**
+* `STRIPE_WEBHOOK_SECRET` must come from that same test-mode endpoint
+* testers use Stripe test cards, so nobody is charged real money
+
+You can switch to live mode only after purchases, cancellations, refunds, and entitlement updates are fully verified.
+
+One correction to Replit’s request: **do not paste the Railway Postgres proxy host and port into chat.** The host and port are less sensitive than the password, but there is no need to disclose any database connection detail here. Also, Replit cannot construct the connection merely from environment-variable names; it would still need the actual production database credentials.
+
+Send Replit this:
+
+> Community Beta 2 will use **Stripe test mode**. Both `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` must come from Stripe test mode. No real charges should occur during founder and beta testing.
+>
+> I will create the Railway Postgres backup first.
+>
+> I will not paste any portion of the production database connection string into chat. Please use a secure method to inspect the Railway schema:
+>
+> * Railway CLI while linked to the correct project and Postgres service;
+> * Railway’s built-in database shell/query interface;
+> * or a temporary command executed within the Railway environment where `DATABASE_URL` is already injected.
+>
+> Before any schema push, return the proposed diff showing:
+>
+> * tables to create;
+> * columns to add;
+> * indexes or constraints to add;
+> * confirmation that there are no drops, renames, destructive type changes, or data removals.
+>
+> Do not run the schema push until I confirm the backup is complete and approve the displayed diff.
+
+Your next action is just:
+
+**Railway → Postgres → Backups → Create backup**
+
+Wait until the status says **Complete**, then tell Replit:
+
+> Backup done. Stripe mode is test mode. Please inspect the schema securely and show me the proposed diff before applying anything.
