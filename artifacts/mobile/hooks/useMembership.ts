@@ -89,25 +89,17 @@ export function useMembership() {
   useEffect(() => { loadProducts(); }, [loadProducts]);
   useEffect(() => { if (productsLoaded) loadSubscription(); }, [productsLoaded, loadSubscription]);
 
-  const initiateCheckout = useCallback(async (planName: string, billing: "monthly" | "annual"): Promise<"ok" | "no_auth" | "no_product" | "error"> => {
+  const initiateCheckout = useCallback(async (priceId: string | null, planKey?: string | null): Promise<"ok" | "no_auth" | "no_price" | "error"> => {
+    if (!priceId) return "no_price";
+
     const token = await getToken();
     if (!token) return "no_auth";
 
     const apiBase = getApiBase();
     if (!apiBase) return "error";
 
-    const product = products.find((p) => p.name === planName);
-    if (!product) {
-      if (!productsLoaded) return "error";
-      return "no_product";
-    }
-
-    const interval = billing === "annual" ? "year" : "month";
-    const price = product.prices.find((p) => p.recurring?.interval === interval);
-    if (!price) return "no_product";
-
     setCheckoutLoading(true);
-    setCheckoutPlanId(planName);
+    setCheckoutPlanId(planKey ?? null);
     try {
       const res = await fetch(`${apiBase}/api/stripe/checkout`, {
         method: "POST",
@@ -115,7 +107,7 @@ export function useMembership() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ priceId: price.id }),
+        body: JSON.stringify({ priceId }),
       });
       if (res.ok) {
         const data = (await res.json()) as { url: string };
@@ -131,7 +123,7 @@ export function useMembership() {
       setCheckoutLoading(false);
       setCheckoutPlanId(null);
     }
-  }, [products, productsLoaded]);
+  }, []);
 
   const openPortal = useCallback(async (): Promise<void> => {
     const token = await getToken();

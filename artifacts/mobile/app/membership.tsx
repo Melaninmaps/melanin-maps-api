@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useMembership } from "@/hooks/useMembership";
 import { useSubscription } from "@/lib/revenuecat";
+import { getPriceId } from "@/constants/stripePricing";
 
 type Billing = "monthly" | "annual";
 type Audience = "consumer" | "business" | "creator";
@@ -426,7 +427,9 @@ export default function MembershipScreen() {
       return;
     }
 
-    const result = await initiateCheckout(plan.stripeKey ?? plan.name, billing);
+    const planKey = plan.stripeKey ?? plan.name;
+    const priceId = getPriceId(planKey, billing);
+    const result = await initiateCheckout(priceId, planKey);
 
     if (result === "no_auth") {
       Alert.alert(
@@ -437,7 +440,7 @@ export default function MembershipScreen() {
           { text: "Cancel", style: "cancel" },
         ],
       );
-    } else if (result === "no_product") {
+    } else if (result === "no_price") {
       Alert.alert(
         "Coming Soon",
         "This plan is being set up. Join the waitlist to be first to know when it's available!",
