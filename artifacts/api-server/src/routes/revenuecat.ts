@@ -103,15 +103,16 @@ router.post("/revenuecat/sync", async (req: Request, res: Response) => {
  */
 router.post("/revenuecat/webhook", async (req: Request, res: Response) => {
   const authKey = process.env.REVENUECAT_WEBHOOK_AUTH_KEY;
-  if (authKey) {
-    const incomingAuth = req.headers["authorization"] ?? "";
-    if (incomingAuth !== authKey) {
-      req.log.warn({}, "RevenueCat webhook: unauthorized request — auth header mismatch");
-      res.status(401).json({ error: "Unauthorized" });
-      return;
-    }
-  } else {
-    req.log.warn({}, "REVENUECAT_WEBHOOK_AUTH_KEY not set — webhook auth disabled (set it in production)");
+  if (!authKey) {
+    req.log.error({}, "REVENUECAT_WEBHOOK_AUTH_KEY not configured — rejecting webhook request to prevent unauthorized processing");
+    res.status(401).json({ error: "Webhook authentication not configured on this server" });
+    return;
+  }
+  const incomingAuth = req.headers["authorization"] ?? "";
+  if (incomingAuth !== authKey) {
+    req.log.warn({}, "RevenueCat webhook: unauthorized request — auth header mismatch");
+    res.status(401).json({ error: "Unauthorized" });
+    return;
   }
 
   const body = req.body as {
