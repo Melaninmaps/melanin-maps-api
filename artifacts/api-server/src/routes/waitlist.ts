@@ -1174,6 +1174,23 @@ router.get("/admin/check", (req: Request, res: Response) => {
   });
 });
 
+// ── TEMP: DB diagnostic — remove after investigation ─────────────────────────
+router.get("/admin/waitlist-db-check", async (req: Request, res: Response) => {
+  const cronSecret = process.env.CRON_SECRET;
+  const auth = req.headers["authorization"] ?? "";
+  if (!cronSecret || auth !== `Bearer ${cronSecret}`) { res.status(401).json({ error: "Unauthorized" }); return; }
+  try {
+    const waitlistCount = await pool.query(`SELECT COUNT(*) as total, COUNT(email) as with_email FROM waitlist_signups`);
+    const userCount = await pool.query(`SELECT COUNT(*) as total, COUNT(email) as with_email FROM users WHERE email IS NOT NULL AND email NOT LIKE '%@melanintest%' AND email NOT LIKE '%@mwm-test%' AND email NOT LIKE '%@melaninmaps.test%' AND email NOT LIKE '%@test-mwm%' AND email NOT LIKE '%@melanintest.dev%' AND email NOT LIKE '%@example.com%' AND email NOT LIKE '%@melanintest.internal%'`);
+    const waitlistSample = await pool.query(`SELECT id, email, first_name, status, beta_email_sent, created_at FROM waitlist_signups ORDER BY created_at DESC LIMIT 10`);
+    const userSample = await pool.query(`SELECT id, email, first_name, role, created_at FROM users WHERE email IS NOT NULL ORDER BY created_at ASC LIMIT 10`);
+    res.json({
+      waitlist: { ...waitlistCount.rows[0], sample: waitlistSample.rows },
+      users: { ...userCount.rows[0], sample: userSample.rows },
+    });
+  } catch (err: any) { res.status(500).json({ error: String(err.message) }); }
+});
+
 // ── Admin: waitlist community update blast ────────────────────────────────────
 // Accessible via isAdmin session OR CRON_SECRET Bearer token (ops fallback).
 // Body: { dryRun?: boolean }
