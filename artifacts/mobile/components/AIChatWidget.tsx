@@ -51,9 +51,9 @@ async function getToken(): Promise<string | null> {
   catch { return null; }
 }
 
-const GREETING = "Kinfolk's here. Let's map it out. Ask me about cities, Black-owned businesses, safety, events, or anything on your mind.";
+const GREETING = "Kinfolk's here. Let's explore what's possible.";
 
-const SIGNATURE_PHRASE = "Kinfolk's here. Let's map it out.";
+const SIGNATURE_PHRASE = "Kinfolk's here.";
 const VOICE_PREF_KEY = "@kinfolk_voice_pref";
 const SIGNATURE_DATE_KEY = "@kinfolk_sig_date";
 const AAVE_LEVEL_KEY = "@kinfolk_aave_level";
@@ -736,7 +736,7 @@ export function AIChatWidget() {
             </TouchableOpacity>
             <TextInput
               style={[styles.input, { backgroundColor: colors.card, borderColor: isRecording ? "#DC262640" : colors.border, color: colors.foreground }]}
-              placeholder={isRecording ? "Recording… tap mic to stop" : "Ask about cities, safety, places, or make a list…"}
+              placeholder={isRecording ? "Recording… tap mic to stop" : "Ask me anything…"}
               placeholderTextColor={isRecording ? "#DC2626" : colors.mutedForeground}
               value={input}
               onChangeText={setInput}

@@ -1,0 +1,56 @@
+Do **not** start iOS 88 / Android 63 yet.
+
+The circles-button and auth-token fixes need a new mobile build, but password reset is still unresolved. If password reset requires another mobile change, building now would force yet another pair of builds.
+
+Send Replit this:
+
+> The P0 root cause and fixes are accepted.
+>
+> Keep the release at **NO GO** and do not start iOS 88 / Android 63 yet.
+>
+> First complete the full password-reset production trace against Railway using the currently installed build:
+>
+> 1. Request a reset code from the mobile app.
+> 2. Confirm the email is delivered.
+> 3. Record the reset request’s HTTP status and request ID.
+> 4. Enter an incorrect code and confirm it is rejected.
+> 5. Enter the correct code and a manually typed new password with autofill disabled.
+> 6. Confirm `/api/auth/reset-password` returns success.
+> 7. Confirm the Railway user row’s `password_hash` changes and the reset token/code is invalidated.
+> 8. Confirm the old password fails.
+> 9. Confirm the new password succeeds.
+> 10. Confirm the reset code cannot be reused.
+> 11. Confirm Railway logs show the matching `AUTH_RESET_SUCCESS` and `AUTH_LOGIN_SUCCESS` events.
+>
+> Trace the exact mobile request payload and response. Do not assume the endpoint is correct merely from code inspection.
+>
+> If the defect is server-only, deploy the server correction and rerun the trace.
+>
+> If the mobile client needs a correction, include it in the same mobile release as:
+>
+> * circles-button alert;
+> * `fetchUser()` clearing auth only on explicit 401;
+> * role-selection updates;
+> * password-field sizing;
+> * any password-reset client fix.
+>
+> Only after the entire password-reset cycle passes should you:
+>
+> 1. verify the latest App Store Connect and Google Play build numbers;
+> 2. run local Expo export and Expo Doctor;
+> 3. create one final iOS and Android build;
+> 4. return `READY FOR FOUNDER RETEST`.
+>
+> Also add regression tests proving:
+>
+> * circles button never routes directly to login;
+> * save/favorite uses the authenticated request client;
+> * 500 responses do not erase SecureStore;
+> * explicit invalid-session 401 does erase the token;
+> * password reset succeeds end to end.
+
+One nuance: the “circles button was tapped instead of the heart” explains that particular redirect, but the new `fetchUser()` safeguard is still valuable because unrelated server errors should never destroy a valid session.
+
+The correct order now is:
+
+**Password-reset trace → final combined fixes → one mobile build pair → founder retest → store submission.**
