@@ -22,6 +22,7 @@ import {
   View,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
+import Purchases from "react-native-purchases";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BusinessCard } from "@/components/BusinessCard";
 import { useColors } from "@/hooks/useColors";
@@ -1581,6 +1582,9 @@ export default function ProfileScreen() {
                       });
                       if (res.ok) {
                         await SecureStore.deleteItemAsync("auth_session_token").catch(() => {});
+                        if (Platform.OS !== "web") {
+                          Purchases.logOut().catch(() => {});
+                        }
                         logout();
                       } else {
                         Alert.alert("Error", "Could not sign out all devices. Please try again.");
