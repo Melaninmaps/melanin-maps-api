@@ -5,7 +5,6 @@ module.exports = ({ config }) => ({
   ...config,
   plugins: [
     ...(config.plugins ?? []),
-    "react-native-purchases",
   ],
   // NOTE: ios.config.googleMapsApiKey is intentionally NOT set here.
   // The app uses PROVIDER_DEFAULT (Apple Maps) on iOS — no Google Maps SDK needed on iOS.
