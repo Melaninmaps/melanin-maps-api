@@ -1,0 +1,77 @@
+This is almost ready, but I would correct **two items before you save the variables and let Replit run the tests**.
+
+### 1. Stripe webhook endpoint mismatch
+
+Earlier, Replit confirmed the actual production Stripe route is:
+
+```text
+https://www.mappingwithmelanin.com/api/stripe/webhook
+```
+
+But this new checklist says:
+
+```text
+POST /api/webhooks/stripe
+```
+
+Those are different paths. Replit must test the route registered in the current code, not a guessed or older route.
+
+### 2. Stripe and RevenueCat should be tested as separate payment systems
+
+For web memberships:
+
+```text
+Web → Stripe → Stripe webhook → database membership tier
+```
+
+For iOS and Android:
+
+```text
+Mobile → Apple/Google purchase → RevenueCat → RevenueCat sync/webhook → database tier
+```
+
+A Stripe test purchase should not be expected to create a RevenueCat entitlement unless Replit intentionally built a bridge between them. The important result is that the user’s membership tier in your database changes correctly and remains correct after logout and login.
+
+Send Replit this:
+
+> The plan is approved with two corrections:
+>
+> 1. Use the confirmed Stripe webhook route:
+>
+> `POST /api/stripe/webhook`
+>
+> Do not use `/api/webhooks/stripe` unless you inspect the deployed code and prove that route also exists.
+>
+> 2. Test Stripe and RevenueCat as separate subscription pipelines.
+>
+> **Web/Stripe test**
+>
+> * Register a fresh web test account.
+> * Create a Stripe test checkout session.
+> * Complete payment with Stripe’s test card.
+> * Confirm the correct database membership tier is applied only after confirmed payment/webhook processing.
+> * Logout and log back in.
+> * Confirm the tier persists.
+> * Confirm paid web features unlock.
+> * Confirm cancellation and payment-failure behavior restore the correct tier.
+>
+> **Mobile/RevenueCat test**
+>
+> * Confirm RevenueCat server API access.
+> * Confirm fake or missing entitlement is denied.
+> * Test a real sandbox iOS/Android purchase later on the physical build.
+> * Confirm purchase, restore, expiration, and logout/login identity behavior.
+>
+> Also inspect and confirm that `GET /api/kinfolk/status` is the real deployed route before using it in the smoke suite.
+>
+> After the variables are saved and Railway redeploys, return:
+>
+> * deployed commit hash;
+> * deployment ID;
+> * exact Stripe and RevenueCat routes tested;
+> * full smoke-test results;
+> * Stripe test transaction result;
+> * production log result;
+> * `GO FOR FOUNDER DEVICE TESTING` or `NO GO — CORRECTION REQUIRED`.
+
+Once you add the six variables, tell Replit **“variables added”**. Then let the automatic Railway deployment finish before they run the tests.
