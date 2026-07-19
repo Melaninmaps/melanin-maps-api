@@ -17,7 +17,7 @@ const PRODUCT_TIER_MAP: Record<string, string> = {
 
 /**
  * POST /revenuecat/sync
- * Called by the iOS client after a successful RevenueCat purchase to persist
+ * Called by the mobile client after a successful RevenueCat purchase to persist
  * the user's new membership tier server-side. Uses stripeSubscriptionId field
  * (prefixed "rc_") to signal an active RevenueCat-managed subscription.
  */
@@ -89,6 +89,120 @@ router.post("/revenuecat/sync", async (req: Request, res: Response) => {
     req.log.error({ err, userId, productIdentifier }, "Failed to sync RevenueCat purchase");
     res.status(500).json({ error: "Failed to sync purchase" });
   }
+});
+
+/**
+ * POST /revenuecat/webhook
+ * Receives lifecycle events from RevenueCat (renewal, cancellation, expiration,
+ * refund). Authenticated via shared secret in Authorization header — must match
+ * REVENUECAT_WEBHOOK_AUTH_KEY configured in the RevenueCat dashboard.
+ *
+ * Register this URL in the RC dashboard:
+ *   https://<railway-domain>/api/revenuecat/webhook
+ * Authorization header value: <REVENUECAT_WEBHOOK_AUTH_KEY>
+ */
+router.post("/revenuecat/webhook", async (req: Request, res: Response) => {
+  const authKey = process.env.REVENUECAT_WEBHOOK_AUTH_KEY;
+  if (authKey) {
+    const incomingAuth = req.headers["authorization"] ?? "";
+    if (incomingAuth !== authKey) {
+      req.log.warn({}, "RevenueCat webhook: unauthorized request — auth header mismatch");
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+  } else {
+    req.log.warn({}, "REVENUECAT_WEBHOOK_AUTH_KEY not set — webhook auth disabled (set it in production)");
+  }
+
+  const body = req.body as {
+    event?: {
+      type?: string;
+      app_user_id?: string;
+      product_id?: string;
+      environment?: string;
+    };
+    api_version?: string;
+  };
+
+  const event = body?.event;
+  if (!event?.type || !event?.app_user_id) {
+    req.log.warn({ body }, "RevenueCat webhook: missing event type or app_user_id");
+    res.status(400).json({ error: "Missing event type or app_user_id" });
+    return;
+  }
+
+  const appUserId = event.app_user_id;
+  const productId = event.product_id ?? "";
+  const eventType = event.type;
+  const env = event.environment ?? "PRODUCTION";
+
+  req.log.info({ eventType, appUserId, productId, env }, "RevenueCat webhook received");
+
+  // Only process production events — ignore sandbox
+  if (env !== "PRODUCTION") {
+    req.log.info({ eventType, env }, "RevenueCat webhook: ignoring non-production event");
+    res.json({ ok: true, ignored: true });
+    return;
+  }
+
+  try {
+    switch (eventType) {
+      case "INITIAL_PURCHASE":
+      case "RENEWAL":
+      case "UNCANCELLATION": {
+        const tier = PRODUCT_TIER_MAP[productId];
+        if (!tier) {
+          req.log.warn({ productId, eventType }, "RevenueCat webhook: unknown product ID — skipping DB update");
+          break;
+        }
+        await pool.query(
+          `UPDATE users SET member_type = $1, stripe_subscription_id = $2 WHERE id = $3`,
+          [tier, `rc_${productId}`, appUserId]
+        );
+        req.log.info({ appUserId, productId, tier, eventType }, "RevenueCat webhook: entitlement granted/renewed");
+        break;
+      }
+
+      case "CANCELLATION": {
+        // Access remains until expiration — mark cancellation intent but keep tier active
+        req.log.info({ appUserId, productId, eventType }, "RevenueCat webhook: subscription cancelled — access remains until expiry");
+        break;
+      }
+
+      case "EXPIRATION":
+      case "REFUND":
+      case "BILLING_ISSUE": {
+        // Remove entitlement — access ends
+        await pool.query(
+          `UPDATE users SET member_type = NULL, stripe_subscription_id = NULL WHERE id = $1 AND stripe_subscription_id LIKE 'rc_%'`,
+          [appUserId]
+        );
+        req.log.info({ appUserId, productId, eventType }, "RevenueCat webhook: entitlement revoked");
+        break;
+      }
+
+      case "PRODUCT_CHANGE": {
+        const newTier = PRODUCT_TIER_MAP[productId];
+        if (newTier) {
+          await pool.query(
+            `UPDATE users SET member_type = $1, stripe_subscription_id = $2 WHERE id = $3`,
+            [newTier, `rc_${productId}`, appUserId]
+          );
+          req.log.info({ appUserId, productId, newTier }, "RevenueCat webhook: product changed");
+        }
+        break;
+      }
+
+      default:
+        req.log.info({ eventType, appUserId }, "RevenueCat webhook: unhandled event type — acknowledged");
+    }
+  } catch (err) {
+    req.log.error({ err, eventType, appUserId }, "RevenueCat webhook: DB update failed");
+    res.status(500).json({ error: "Webhook processing failed" });
+    return;
+  }
+
+  res.json({ ok: true });
 });
 
 export default router;

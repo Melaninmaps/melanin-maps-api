@@ -1,0 +1,89 @@
+Response to Replit
+Excellent work.
+The Android RevenueCat review, platform audit, and membership architecture documentation are much closer to the engineering standard we want. The new implementation report and discovery process are a significant improvement over earlier audits.
+Before we authorize the EAS build, I would like to close the remaining questions so Community Beta 2 becomes the foundation we continue building from.
+1. RevenueCat identity
+This is now my highest remaining concern.
+The report identifies that RevenueCat still uses anonymous identities and recommends Purchases.logIn(userId) after authentication.
+Please determine:
+Is this a launch blocker?
+Is this a small implementation that can safely be completed before Community Beta 2?
+Does leaving anonymous identities introduce confusion for testers using multiple devices or reinstalling the app?
+If this is a relatively small change with low regression risk, I would prefer implementing it now rather than carrying technical debt into beta.
+2. Webhook verification
+The report correctly notes that RevenueCat and Stripe webhooks still need verification.
+Please confirm:
+RevenueCat webhook endpoint
+Stripe webhook endpoint
+authentication
+signature verification
+retry behavior
+expected payloads
+production URLs
+I want these documented before deployment.
+3. Environment verification
+Do not assume any environment variable exists.
+Please produce a checklist showing:
+Exists in Replit
+Exists in Railway
+Exists in EAS
+Verified
+Missing
+Needed before deploy
+Unknown is acceptable.
+Assumed is not.
+4. Physical testing plan
+The implementation is complete.
+Verification is not.
+Please produce the complete founder verification script for:
+Web
+Chrome
+Safari
+Android
+Phone
+Tablet (if supported)
+iPhone
+Latest iOS
+Previous supported iOS version if available
+Every scenario should contain:
+Expected result
+Failure result
+Pass/Fail field
+This becomes our permanent release checklist.
+5. Playwright expansion
+Current Playwright coverage is still too small.
+Expand it to include:
+registration
+login
+logout
+logout all devices
+password reset
+blocked user behavior
+membership purchase
+failed purchase
+session persistence
+expired session
+profile loading
+business search
+community feed
+profile editing
+I want Playwright to become our first line of defense before founder testing.
+6. Cross-platform parity
+Please generate one matrix showing every launch feature with columns for:
+Web
+iOS
+Android
+Status values:
+Supported
+Partially Supported
+Deferred
+Not Applicable
+I want immediate visibility whenever one platform diverges from another.
+7. Release freeze
+Once the above items are complete, I want one final release candidate audit.
+The report should answer only four questions:
+Is Community Beta 2 safe to distribute?
+What is the remaining launch risk?
+What known limitations will testers experience?
+What would you change if given one additional week?
+That report becomes our go/no-go decision.

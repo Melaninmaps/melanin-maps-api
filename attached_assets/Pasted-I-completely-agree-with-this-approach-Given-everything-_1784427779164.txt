@@ -1,0 +1,219 @@
+I completely agree with this approach.
+
+Given everything we've uncovered over the last two days, **I would not expand the tester group until we have an exact inventory of what exists today**. That inventory becomes our contract with testers.
+
+Right now we have multiple sources saying things are:
+
+* implemented,
+* partially implemented,
+* verified,
+* awaiting verification,
+* or intentionally deferred.
+
+Those are not the same thing.
+
+## Before another tester is invited, I want Replit to produce one document:
+
+# Mapping With Melanin™ — Current Feature Inventory (Community Beta 2)
+
+For **every feature**, I want them to answer the following.
+
+| Feature | Exists | Web | iOS | Android | Tested | Founder Verified | Production Ready | Notes |
+| ------- | ------ | --- | --- | ------- | ------ | ---------------- | ---------------- | ----- |
+
+Every feature should have one of these statuses:
+
+* ✅ Complete
+* 🟡 Complete but awaiting verification
+* 🟠 Partial
+* 🔴 Missing
+* ⚪ Deferred intentionally
+
+---
+
+## I would organize it like this
+
+### Authentication
+
+* Email registration
+* Email login
+* Apple login
+* Phone login
+* Forgot password
+* Session persistence
+* Logout
+* Logout all devices
+* Account lockout
+
+---
+
+### User Experience
+
+* Onboarding
+* Welcome Home Experience™
+* User profile
+* Profile editing
+* Saved Places
+* Favorites
+
+---
+
+### Discovery
+
+* Search
+* Filters
+* Categories
+* Business profiles
+* Business claim
+* Maps
+* Directions
+* Safety overlay
+
+---
+
+### Community
+
+* Feed
+* Posts
+* Comments
+* Likes
+* Reporting
+* Blocking
+* Groups
+* Events
+
+---
+
+### KinfolkAI
+
+* Chat
+* Safety prompts
+* Community prompts
+* History
+* Delete conversation
+* Compassion Protocol
+
+---
+
+### Membership
+
+* Free plan
+* Consumer plans
+* Business plans
+* RevenueCat
+* Stripe
+* Restore purchases
+* Subscription management
+
+---
+
+### Safety
+
+* Safety Center
+* Safety Alerts
+* Neighborhood ratings
+* Business ratings
+* Employer ratings
+
+---
+
+### Business
+
+* Add business
+* Claim business
+* Edit business
+* Business dashboard
+* Reviews
+* Analytics
+
+---
+
+### Notifications
+
+* Push notifications
+* Email notifications
+* Quiet Hours
+* Digest emails
+
+---
+
+### Administration
+
+* Admin login
+* Moderation
+* User reports
+* Decision Ledger
+* Admin MFA
+
+---
+
+### Legal / Compliance
+
+* Privacy Policy
+* Terms
+* CAN-SPAM
+* RevenueCat verification
+* Stripe verification
+
+---
+
+## Then I want one additional column
+
+**What should testers test?**
+
+For example:
+
+| Feature         | Tester's Assignment                                 |
+| --------------- | --------------------------------------------------- |
+| Email Login     | Register, logout, login again                       |
+| Business Search | Search 5 businesses                                 |
+| Maps            | Open map, search nearby                             |
+| Community       | Create one post                                     |
+| Saved Places    | Save then remove a place                            |
+| Reviews         | Leave a review                                      |
+| Membership      | View plans (no purchase required unless designated) |
+
+That gives every tester a purpose instead of just telling them to "use the app."
+
+---
+
+## Then I want one final summary
+
+Something like:
+
+### Available Today
+
+* 34 fully functional features
+
+### Partially Available
+
+* 8
+
+### Intentionally Deferred
+
+* 6
+
+### Not Started
+
+* 4
+
+---
+
+## Why this matters
+
+This document becomes the foundation for everything else:
+
+* what you demo on tour
+* what you tell investors
+* what you tell businesses
+* what you tell founding members
+* what your Zoom presentation includes
+* what testers should and should not expect
+
+It also prevents a situation where a feature is described as "working" because the code exists, when in reality it hasn't been exercised on iPhone, Android, and web.
+
+I would make one additional request to Replit:
+
+> **For every feature marked "Complete," please state the evidence.** Was it confirmed by unit tests, Playwright, manual testing, physical iPhone testing, physical Android testing, or founder verification? Do not mark any feature as "Complete" based solely on code inspection.
+
+Once we have that inventory, we'll know exactly where Mapping With Melanin™ stands today, and we can decide whether it's ready for more testers or whether a few critical gaps should be closed first. That gives us a factual basis for the decision rather than relying on assumptions or optimistic status reports.

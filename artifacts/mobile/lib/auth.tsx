@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import * as WebBrowser from "expo-web-browser";
 import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
+import Purchases from "react-native-purchases";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -98,6 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(data.user as User);
           setSessionExpired(false);
           setIsLoading(false);
+          // Tie RC entitlements to this MWM account so they are portable
+          // across devices and reinstalls.
+          if (Platform.OS !== "web") {
+            Purchases.logIn(String((data.user as User).id)).catch(() => {});
+          }
           return true;
         } else {
           // Server explicitly says this token is invalid — safe to sign out.
@@ -105,6 +112,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(null);
           setSessionExpired(true);
           setIsLoading(false);
+          if (Platform.OS !== "web") {
+            Purchases.logOut().catch(() => {});
+          }
           return false;
         }
       } catch {
@@ -282,6 +292,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
     } finally {
       await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
+      if (Platform.OS !== "web") {
+        Purchases.logOut().catch(() => {});
+      }
       setUser(null);
       setSessionExpired(false);
     }
