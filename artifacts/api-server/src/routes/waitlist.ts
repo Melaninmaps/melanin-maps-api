@@ -9,13 +9,13 @@ const router: IRouter = Router();
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
   .split(",")
-  .map((e) => e.trim())
+  .map((e) => e.trim().toLowerCase())
   .filter(Boolean);
 
 function isAdmin(req: Request): boolean {
   const user = (req as any).user;
   if (!user?.email) return false;
-  return ADMIN_EMAILS.includes(user.email);
+  return ADMIN_EMAILS.includes(user.email.trim().toLowerCase());
 }
 
 // ── Public: join waitlist ────────────────────────────────────────────────────

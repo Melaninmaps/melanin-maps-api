@@ -90,8 +90,8 @@ router.get("/space-reports/warnings", async (req: Request, res: Response): Promi
 });
 
 router.get("/admin/space-reports", async (req: any, res: Response): Promise<void> => {
-  const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
-  if (!req.user?.email || !ADMIN_EMAILS.includes(req.user.email)) {
+  const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+  if (!req.user?.email || !ADMIN_EMAILS.includes(req.user.email.trim().toLowerCase())) {
     res.status(403).json({ error: "Forbidden" }); return;
   }
   try {
@@ -104,8 +104,8 @@ router.get("/admin/space-reports", async (req: any, res: Response): Promise<void
 });
 
 router.patch("/admin/space-reports/:id", async (req: any, res: Response): Promise<void> => {
-  const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
-  if (!req.user?.email || !ADMIN_EMAILS.includes(req.user.email)) {
+  const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+  if (!req.user?.email || !ADMIN_EMAILS.includes(req.user.email.trim().toLowerCase())) {
     res.status(403).json({ error: "Forbidden" }); return;
   }
   const { status } = req.body as { status?: string };

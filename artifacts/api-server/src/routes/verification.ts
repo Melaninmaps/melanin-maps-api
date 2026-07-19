@@ -8,8 +8,8 @@ import { createVerificationEnvelope } from "../lib/docusign";
 
 const router: IRouter = Router();
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
-function isAdmin(req: any) { return req.user?.email && ADMIN_EMAILS.includes(req.user.email); }
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+function isAdmin(req: any) { return req.user?.email && ADMIN_EMAILS.includes(req.user.email.trim().toLowerCase()); }
 
 const VALID_TYPES = ["restaurant", "retail", "salon", "health", "professional_services", "entertainment", "tech", "nonprofit", "other"];
 

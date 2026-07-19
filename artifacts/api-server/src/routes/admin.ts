@@ -5,14 +5,15 @@ import { sendBusinessOutreach } from "../lib/email";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
   .split(",")
-  .map((e) => e.trim())
+  .map((e) => e.trim().toLowerCase())
   .filter(Boolean);
 
 function isAdmin(req: Request): boolean {
   const user = (req as any).user;
   if (!user?.email) return false;
-  // Check email allowlist first, then fall back to DB role
-  if (ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(user.email)) return true;
+  // Normalize both sides before comparison — prevents case/whitespace mismatches
+  const userEmail = user.email.trim().toLowerCase();
+  if (ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(userEmail)) return true;
   return user.role === "admin";
 }
 

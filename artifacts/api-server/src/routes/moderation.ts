@@ -5,10 +5,10 @@ import { eq, desc } from "drizzle-orm";
 type ReportCategory = (typeof SAFETY_REPORT_CATEGORIES)[number];
 type ReportSeverity = (typeof SAFETY_REPORT_SEVERITIES)[number];
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
 function isAdmin(req: Request): boolean {
   const user = (req as any).user;
-  return !!(user?.email && ADMIN_EMAILS.includes(user.email));
+  return !!(user?.email && ADMIN_EMAILS.includes(user.email.trim().toLowerCase()));
 }
 
 const router: IRouter = Router();

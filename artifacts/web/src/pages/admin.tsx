@@ -719,7 +719,7 @@ export default function Admin() {
     );
   }
 
-  if (!auth?.user) return <Redirect to="/login" />;
+  if (!auth?.user) return <Redirect to="/login?returnTo=/admin" />;
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-[#FAF6EF] flex items-center justify-center p-4">

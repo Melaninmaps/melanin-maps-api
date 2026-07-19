@@ -6,6 +6,23 @@ import { setWebToken } from "@/lib/webAuth";
 
 const BASE = import.meta.env.BASE_URL;
 
+/**
+ * Validates a returnTo path so we never redirect to an external URL.
+ * Accepts only paths that start with a single "/" and contain no "://" or "//".
+ * Decodes the raw value first to catch encoded external redirects (%2F%2F, %3A, etc.).
+ */
+function safeReturnTo(raw: string | null): string {
+  if (!raw) return "/";
+  try {
+    const decoded = decodeURIComponent(raw);
+    if (!decoded.startsWith("/") || decoded.startsWith("//") || decoded.includes("://")) return "/";
+  } catch {
+    return "/";
+  }
+  if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("://")) return "/";
+  return raw;
+}
+
 type Tab = "signin" | "register";
 
 interface ApiError { error?: string }
@@ -35,7 +52,8 @@ export default function Login() {
   async function afterAuth(token: string) {
     setWebToken(token);
     await queryClient.invalidateQueries();
-    navigate("/");
+    const params = new URLSearchParams(window.location.search);
+    navigate(safeReturnTo(params.get("returnTo")));
   }
 
   async function handleSignin(e: React.FormEvent) {
