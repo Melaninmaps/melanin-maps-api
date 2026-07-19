@@ -727,12 +727,35 @@ export default function Admin() {
 
   if (!auth?.user) return <Redirect to="/login?returnTo=/admin" />;
   if (!isAdmin) {
+    const currentEmail = (auth?.user as any)?.email as string | null | undefined;
     return (
       <div className="min-h-screen bg-[#FAF6EF] flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="text-5xl mb-4">🚫</div>
+        <div className="text-center max-w-sm">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#CA3A2B" strokeWidth="2" strokeLinecap="round">
+              <circle cx="16" cy="16" r="14"/>
+              <line x1="10" y1="10" x2="22" y2="22"/>
+              <line x1="22" y1="10" x2="10" y2="22"/>
+            </svg>
+          </div>
           <h1 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-2">Access Denied</h1>
-          <p className="text-[#3A1F0E]/60">You don't have admin access to this page.</p>
+          <p className="text-[#3A1F0E]/60 mb-2">This account doesn't have admin access.</p>
+          {currentEmail ? (
+            <p className="text-sm text-[#3A1F0E]/40 mb-6">Signed in as <span className="font-medium">{currentEmail}</span></p>
+          ) : (
+            <p className="text-sm text-[#3A1F0E]/40 mb-6">Signed in via phone — admin requires an email account.</p>
+          )}
+          <button
+            onClick={() => {
+              import("@/lib/webAuth").then(({ clearWebToken }) => {
+                clearWebToken();
+                window.location.href = `${BASE}login?returnTo=/admin`;
+              });
+            }}
+            className="px-6 py-2 bg-[#CA922B] text-white rounded-full font-medium text-sm hover:bg-[#b07d24] transition-colors"
+          >
+            Sign Out &amp; Switch Account
+          </button>
         </div>
       </div>
     );
