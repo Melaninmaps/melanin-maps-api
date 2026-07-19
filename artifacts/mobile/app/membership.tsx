@@ -367,7 +367,7 @@ export default function MembershipScreen() {
 
     if (plan.id === "biz_free") { router.push("/list-business"); return; }
 
-    if (Platform.OS === "ios" && plan.rcOfferingId) {
+    if (Platform.OS !== "web" && plan.rcOfferingId) {
       if (rcLoading) {
         Alert.alert("Loading", "Store products are loading. Please try again in a moment.");
         return;
@@ -900,8 +900,12 @@ export default function MembershipScreen() {
                 ]}
                 onPress={() => {
                   if (subscribed) {
-                    if (Platform.OS === "ios" && plan.rcOfferingId) {
-                      void Linking.openURL("https://apps.apple.com/account/subscriptions");
+                    if (Platform.OS !== "web" && plan.rcOfferingId) {
+                      void Linking.openURL(
+                        Platform.OS === "android"
+                          ? "https://play.google.com/store/account/subscriptions"
+                          : "https://apps.apple.com/account/subscriptions"
+                      );
                     } else {
                       void openPortal();
                     }
