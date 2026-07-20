@@ -19,6 +19,23 @@ export const businessIdentityTable = pgTable("business_identity", {
   // Section 4: Who you serve (multiselect)
   audiencesServed: jsonb("audiences_served").$type<string[]>().notNull().default([]),
 
+  // Section 4b: Trust Profile — Audience & Age Suitability
+  // Values: all_ages | family_friendly | teens | adults_18plus | adults_21plus | unknown
+  audienceType: varchar("audience_type", { length: 30 }).notNull().default("unknown"),
+  // Reasons for age restriction (multi-select, populated when audienceType is adults_18plus or adults_21plus)
+  // Values: alcohol | cannabis | tobacco | adult_entertainment | gambling | late_night |
+  //         explicit_performances | safety_liability | legal_requirement | other
+  ageRestrictionReasons: jsonb("age_restriction_reasons").$type<string[]>().notNull().default([]),
+  // Environment descriptors (multi-select, owner-provided)
+  // Values: quiet | casual | family_oriented | professional | romantic | nightlife |
+  //         educational | cultural | outdoor | high_energy | luxury | budget_friendly
+  environmentTags: jsonb("environment_tags").$type<string[]>().notNull().default([]),
+  // Amenities (multi-select, owner-provided)
+  // Values: wifi | outdoor_seating | parking | kid_friendly_menu | vegan_options |
+  //         pet_friendly | live_music | gender_neutral_restrooms | wheelchair_accessible |
+  //         service_animals | sensory_friendly
+  amenityTags: jsonb("amenity_tags").$type<string[]>().notNull().default([]),
+
   // Section 5: Accessibility features
   accessibilityFeatures: jsonb("accessibility_features").$type<string[]>().notNull().default([]),
 

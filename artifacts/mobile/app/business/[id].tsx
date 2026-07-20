@@ -748,6 +748,87 @@ export default function BusinessDetailScreen() {
             </View>
           ) : null}
 
+          {/* Trust Profile — Profile Status notice + Audience badge */}
+          {(() => {
+            const profileStatus = (business as any).profileStatus as string | undefined;
+            const audienceType = (business as any).audienceType as string | undefined;
+            const environmentTags = (business as any).environmentTags as string[] | undefined;
+            const amenityTags = (business as any).amenityTags as string[] | undefined;
+
+            const audienceConfig: Record<string, { label: string; color: string; bg: string; icon: string }> = {
+              family_friendly: { label: "Family Friendly",  color: "#2D7A4F", bg: "#2D7A4F12", icon: "smile" },
+              all_ages:        { label: "All Ages",         color: "#2D7A4F", bg: "#2D7A4F12", icon: "users" },
+              teens:           { label: "Teens Welcome",    color: "#2563EB", bg: "#2563EB12", icon: "user" },
+              adults_18plus:   { label: "Adults 18+",       color: "#CA922B", bg: "#CA922B12", icon: "shield" },
+              adults_21plus:   { label: "Adults 21+",       color: "#DC2626", bg: "#DC262612", icon: "alert-circle" },
+            };
+            const audCfg = audienceType ? audienceConfig[audienceType] : null;
+
+            const ENV_LABELS: Record<string, string> = {
+              quiet: "Quiet", casual: "Casual", family_oriented: "Family-Oriented", professional: "Professional",
+              romantic: "Romantic", nightlife: "Nightlife", educational: "Educational", cultural: "Cultural",
+              outdoor: "Outdoor", high_energy: "High Energy", luxury: "Luxury", budget_friendly: "Budget-Friendly",
+            };
+            const AMENITY_LABELS: Record<string, string> = {
+              wifi: "Free WiFi", outdoor_seating: "Outdoor Seating", parking: "Parking",
+              kid_friendly_menu: "Kid-Friendly Menu", vegan_options: "Vegan Options", pet_friendly: "Pet Friendly",
+              live_music: "Live Music", gender_neutral_restrooms: "Gender-Neutral Restrooms",
+              wheelchair_accessible: "Wheelchair Accessible", service_animals: "Service Animals Welcome",
+              sensory_friendly: "Sensory-Friendly",
+            };
+
+            const hasTagData = audCfg || (environmentTags?.length ?? 0) > 0 || (amenityTags?.length ?? 0) > 0;
+            const isCommunityListed = !profileStatus || profileStatus === "community_listed";
+
+            return (
+              <View style={{ marginTop: 12, gap: 8 }}>
+                {/* Audience type badge */}
+                {audCfg && (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, backgroundColor: audCfg.bg, borderWidth: 1, borderColor: audCfg.color + "40" }}>
+                    <Feather name={audCfg.icon as "users"} size={12} color={audCfg.color} />
+                    <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: audCfg.color }}>{audCfg.label}</Text>
+                  </View>
+                )}
+
+                {/* Environment + Amenity tag strips */}
+                {(environmentTags?.length ?? 0) > 0 && (
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 5 }}>
+                    {(environmentTags ?? []).map(t => (
+                      <View key={t} style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.border }}>
+                        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground }}>{ENV_LABELS[t] ?? t}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+                {(amenityTags?.length ?? 0) > 0 && (
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 5 }}>
+                    {(amenityTags ?? []).map(t => (
+                      <View key={t} style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.border }}>
+                        <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground }}>{AMENITY_LABELS[t] ?? t}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {/* Profile status notice for community-listed businesses */}
+                {isCommunityListed && (
+                  <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8, backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginTop: hasTagData ? 2 : 0 }}>
+                    <Feather name="info" size={13} color={colors.mutedForeground} style={{ marginTop: 1 }} />
+                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, flex: 1, lineHeight: 16 }}>
+                      Community Listed — This business has not yet claimed its profile. Some information may be community-provided.
+                    </Text>
+                  </View>
+                )}
+                {profileStatus === "claimed" && (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start" }}>
+                    <Feather name="check-circle" size={11} color="#2D7A4F" />
+                    <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: "#2D7A4F" }}>Information confirmed by the owner</Text>
+                  </View>
+                )}
+              </View>
+            );
+          })()}
+
           {(business as any).introVideoUrl ? (
             <TouchableOpacity
               style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16, marginTop: 10, alignSelf: "flex-start" }}

@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { db, pool, businessesTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable, businessClickEventsTable, businessCaptionsTable, contentReportsTable, referenceLinkClicksTable } from "@workspace/db";
+import { db, pool, businessesTable, businessIdentityTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable, businessClickEventsTable, businessCaptionsTable, contentReportsTable, referenceLinkClicksTable } from "@workspace/db";
 import { eq, and, or, ilike, desc, sql, gt, count, inArray, ne } from "drizzle-orm";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
@@ -829,6 +829,19 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
       return;
     }
 
+    // Fetch Trust Profile identity fields (non-blocking)
+    const [identity] = await db
+      .select({
+        audienceType: businessIdentityTable.audienceType,
+        ageRestrictionReasons: businessIdentityTable.ageRestrictionReasons,
+        environmentTags: businessIdentityTable.environmentTags,
+        amenityTags: businessIdentityTable.amenityTags,
+      })
+      .from(businessIdentityTable)
+      .where(eq(businessIdentityTable.businessId, id))
+      .limit(1)
+      .catch(() => []);
+
     const userId = (req as any).user?.id as string | undefined;
     // Fire-and-forget: skip tracking if user has opted out
     void (async () => {
@@ -847,7 +860,15 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
         .catch(() => {});
     })();
 
-    res.json({ business });
+    res.json({
+      business: {
+        ...business,
+        audienceType: identity?.audienceType ?? "unknown",
+        ageRestrictionReasons: identity?.ageRestrictionReasons ?? [],
+        environmentTags: identity?.environmentTags ?? [],
+        amenityTags: identity?.amenityTags ?? [],
+      },
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch business");
     res.status(500).json({ error: "Failed to fetch business" });

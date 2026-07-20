@@ -4,6 +4,11 @@ import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
 
+const VALID_AUDIENCE_TYPES = ["all_ages", "family_friendly", "teens", "adults_18plus", "adults_21plus", "unknown"] as const;
+const VALID_AGE_RESTRICTION_REASONS = ["alcohol", "cannabis", "tobacco", "adult_entertainment", "gambling", "late_night", "explicit_performances", "safety_liability", "legal_requirement", "other"] as const;
+const VALID_ENVIRONMENT_TAGS = ["quiet", "casual", "family_oriented", "professional", "romantic", "nightlife", "educational", "cultural", "outdoor", "high_energy", "luxury", "budget_friendly"] as const;
+const VALID_AMENITY_TAGS = ["wifi", "outdoor_seating", "parking", "kid_friendly_menu", "vegan_options", "pet_friendly", "live_music", "gender_neutral_restrooms", "wheelchair_accessible", "service_animals", "sensory_friendly"] as const;
+
 type IdentityBody = {
   businessStory?: string;
   missionStatement?: string;
@@ -21,6 +26,10 @@ type IdentityBody = {
   currentHighlights?: string[];
   communityInitiatives?: string[];
   growthGoals?: string[];
+  audienceType?: string;
+  ageRestrictionReasons?: string[];
+  environmentTags?: string[];
+  amenityTags?: string[];
 };
 
 function strArr(val: unknown, max: number): string[] | undefined {
@@ -28,11 +37,19 @@ function strArr(val: unknown, max: number): string[] | undefined {
   return val.filter(v => typeof v === "string").slice(0, max) as string[];
 }
 
+function allowedStrArr(val: unknown, allowed: readonly string[]): string[] | undefined {
+  if (!Array.isArray(val)) return undefined;
+  return val.filter(v => typeof v === "string" && (allowed as string[]).includes(v)) as string[];
+}
+
 function sanitize(body: Record<string, unknown>): IdentityBody {
   const s = (k: string, maxLen = 2000): string | undefined => {
     const v = body[k];
     return typeof v === "string" ? v.slice(0, maxLen) : undefined;
   };
+  const rawAudienceType = body["audienceType"];
+  const audienceType = typeof rawAudienceType === "string" && (VALID_AUDIENCE_TYPES as readonly string[]).includes(rawAudienceType)
+    ? rawAudienceType : undefined;
   return {
     businessStory: s("businessStory", 2000),
     missionStatement: s("missionStatement", 500),
@@ -50,6 +67,10 @@ function sanitize(body: Record<string, unknown>): IdentityBody {
     currentHighlights: strArr(body["currentHighlights"], 5),
     communityInitiatives: strArr(body["communityInitiatives"], 10),
     growthGoals: strArr(body["growthGoals"], 10),
+    audienceType,
+    ageRestrictionReasons: allowedStrArr(body["ageRestrictionReasons"], VALID_AGE_RESTRICTION_REASONS),
+    environmentTags: allowedStrArr(body["environmentTags"], VALID_ENVIRONMENT_TAGS),
+    amenityTags: allowedStrArr(body["amenityTags"], VALID_AMENITY_TAGS),
   };
 }
 

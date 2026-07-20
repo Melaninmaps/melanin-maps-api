@@ -614,6 +614,10 @@ type BusinessCatalogEntry = {
   accessibilityFeatures?: string[] | null;
   communityInitiatives?: string[] | null;
   growthGoals?: string[] | null;
+  audienceType?: string | null;
+  environmentTags?: string[] | null;
+  amenityTags?: string[] | null;
+  profileStatus?: string | null;
 };
 
 type CrossCityMatch = {
@@ -1083,6 +1087,12 @@ ${businessCatalog.map(b => {
   if (b.ownershipBadges?.length) lines.push(`  Owned by: ${b.ownershipBadges.join(", ")}`);
   if (b.communityValues?.length) lines.push(`  Values: ${b.communityValues.join(", ")}`);
   if (b.audiencesServed?.length) lines.push(`  Great for: ${b.audiencesServed.join(", ")}`);
+  if (b.audienceType && b.audienceType !== "unknown") {
+    const audienceLabels: Record<string, string> = { all_ages: "All Ages", family_friendly: "Family Friendly", teens: "Teens Welcome", adults_18plus: "Adults 18+", adults_21plus: "Adults 21+" };
+    lines.push(`  Audience: ${audienceLabels[b.audienceType] ?? b.audienceType}`);
+  }
+  if (b.environmentTags?.length) lines.push(`  Environment: ${b.environmentTags.join(", ")}`);
+  if (b.amenityTags?.length) lines.push(`  Amenities: ${b.amenityTags.join(", ")}`);
   if (b.accessibilityFeatures?.length) lines.push(`  Accessible: ${b.accessibilityFeatures.join(", ")}`);
   if (b.communityInitiatives?.length) lines.push(`  Gives back: ${b.communityInitiatives.join(", ")}`);
   if (b.tags?.length) lines.push(`  Tags: ${b.tags.slice(0, 6).join(", ")}`);
@@ -1408,6 +1418,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             accessibilityFeatures: businessIdentityTable.accessibilityFeatures,
             communityInitiatives: businessIdentityTable.communityInitiatives,
             growthGoals: businessIdentityTable.growthGoals,
+            audienceType: businessIdentityTable.audienceType,
+            environmentTags: businessIdentityTable.environmentTags,
+            amenityTags: businessIdentityTable.amenityTags,
+            profileStatus: businessesTable.profileStatus,
           })
           .from(businessesTable)
           .leftJoin(businessIdentityTable, eq(businessIdentityTable.businessId, businessesTable.id))

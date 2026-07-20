@@ -303,6 +303,16 @@ export default function BusinessDashboardScreen() {
   const [targetAudienceInput, setTargetAudienceInput] = useState("");
   const [targetAudienceSaving, setTargetAudienceSaving] = useState(false);
 
+  // Trust Profile state
+  const [trustProfileExpanded, setTrustProfileExpanded] = useState(false);
+  const [trustAudienceType, setTrustAudienceType] = useState<string>("unknown");
+  const [trustAgeReasons, setTrustAgeReasons] = useState<string[]>([]);
+  const [trustEnvironmentTags, setTrustEnvironmentTags] = useState<string[]>([]);
+  const [trustAmenityTags, setTrustAmenityTags] = useState<string[]>([]);
+  const [trustProfileSaving, setTrustProfileSaving] = useState(false);
+  const [trustProfileResult, setTrustProfileResult] = useState<"success" | "error" | null>(null);
+  const [trustProfileLoaded, setTrustProfileLoaded] = useState(false);
+
   const { listings, connectStatus, loading: listingsLoading, startOnboarding, createListing, toggleActive, deleteListing } =
     useOwnerListings(business?.id ?? "");
   const [showNewListing, setShowNewListing] = useState(false);
@@ -321,6 +331,27 @@ export default function BusinessDashboardScreen() {
   React.useEffect(() => {
     if ((business as any)?.returnPolicy != null) setReturnPolicy((business as any).returnPolicy as string);
   }, [(business as any)?.returnPolicy]);
+
+  // Load Trust Profile identity data when business is available
+  React.useEffect(() => {
+    if (!business?.id || trustProfileLoaded) return;
+    void (async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const res = await fetch(`${getApiBase()}/api/businesses/mine/identity`, {
+          headers: { Authorization: `Bearer ${token ?? ""}` },
+        });
+        if (res.ok) {
+          const d = await res.json() as { identity: { audienceType?: string; ageRestrictionReasons?: string[]; environmentTags?: string[]; amenityTags?: string[] } };
+          if (d.identity.audienceType) setTrustAudienceType(d.identity.audienceType);
+          if (d.identity.ageRestrictionReasons) setTrustAgeReasons(d.identity.ageRestrictionReasons);
+          if (d.identity.environmentTags) setTrustEnvironmentTags(d.identity.environmentTags);
+          if (d.identity.amenityTags) setTrustAmenityTags(d.identity.amenityTags);
+          setTrustProfileLoaded(true);
+        }
+      } catch { /* non-fatal */ }
+    })();
+  }, [business?.id, trustProfileLoaded]);
 
   React.useEffect(() => {
     if (business?.sellerAgreementAcceptedAt) setSellerAgreementAccepted(true);
@@ -1011,6 +1042,237 @@ export default function BusinessDashboardScreen() {
                 </TouchableOpacity>
               </View>
             )}
+
+            {/* ── Trust Profile ────────────────────────────────────────── */}
+            {(() => {
+              const AUDIENCE_OPTIONS: { value: string; label: string; icon: string; desc: string }[] = [
+                { value: "all_ages",        label: "All Ages",         icon: "users",      desc: "Welcoming to everyone" },
+                { value: "family_friendly", label: "Family Friendly",  icon: "smile",      desc: "Great for kids & families" },
+                { value: "teens",           label: "Teens Welcome",    icon: "user",       desc: "Safe and welcoming for teens" },
+                { value: "adults_18plus",   label: "Adults 18+",       icon: "shield",     desc: "Age-restricted venue or service" },
+                { value: "adults_21plus",   label: "Adults 21+",       icon: "alert-circle", desc: "Must be 21+ to enter" },
+                { value: "unknown",         label: "Not sure yet",     icon: "help-circle", desc: "You can update this later" },
+              ];
+              const AGE_REASONS: { value: string; label: string }[] = [
+                { value: "alcohol",               label: "Alcohol served" },
+                { value: "cannabis",              label: "Cannabis products" },
+                { value: "tobacco",               label: "Tobacco products" },
+                { value: "adult_entertainment",   label: "Adult entertainment" },
+                { value: "gambling",              label: "Gambling" },
+                { value: "late_night",            label: "Late-night hours" },
+                { value: "explicit_performances", label: "Explicit performances" },
+                { value: "safety_liability",      label: "Safety or liability" },
+                { value: "legal_requirement",     label: "Legal requirement" },
+                { value: "other",                 label: "Other" },
+              ];
+              const ENV_TAGS: { value: string; label: string }[] = [
+                { value: "quiet",           label: "Quiet" },
+                { value: "casual",          label: "Casual" },
+                { value: "family_oriented", label: "Family-oriented" },
+                { value: "professional",    label: "Professional" },
+                { value: "romantic",        label: "Romantic" },
+                { value: "nightlife",       label: "Nightlife" },
+                { value: "educational",     label: "Educational" },
+                { value: "cultural",        label: "Cultural" },
+                { value: "outdoor",         label: "Outdoor" },
+                { value: "high_energy",     label: "High energy" },
+                { value: "luxury",          label: "Luxury" },
+                { value: "budget_friendly", label: "Budget-friendly" },
+              ];
+              const AMENITY_TAGS: { value: string; label: string }[] = [
+                { value: "wifi",                    label: "Free WiFi" },
+                { value: "outdoor_seating",         label: "Outdoor seating" },
+                { value: "parking",                 label: "Parking" },
+                { value: "kid_friendly_menu",       label: "Kid-friendly menu" },
+                { value: "vegan_options",           label: "Vegan options" },
+                { value: "pet_friendly",            label: "Pet friendly" },
+                { value: "live_music",              label: "Live music" },
+                { value: "gender_neutral_restrooms",label: "Gender-neutral restrooms" },
+                { value: "wheelchair_accessible",   label: "Wheelchair accessible" },
+                { value: "service_animals",         label: "Service animals welcome" },
+                { value: "sensory_friendly",        label: "Sensory-friendly space" },
+              ];
+              const needsAgeReasons = trustAudienceType === "adults_18plus" || trustAudienceType === "adults_21plus";
+              const currentAudience = AUDIENCE_OPTIONS.find(o => o.value === trustAudienceType);
+
+              const handleSave = async () => {
+                if (!business?.id) return;
+                setTrustProfileSaving(true);
+                setTrustProfileResult(null);
+                try {
+                  const token = await SecureStore.getItemAsync("auth_session_token");
+                  const res = await fetch(`${getApiBase()}/api/businesses/mine/identity`, {
+                    method: "PATCH",
+                    headers: { Authorization: `Bearer ${token ?? ""}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      audienceType: trustAudienceType,
+                      ageRestrictionReasons: needsAgeReasons ? trustAgeReasons : [],
+                      environmentTags: trustEnvironmentTags,
+                      amenityTags: trustAmenityTags,
+                    }),
+                  });
+                  setTrustProfileResult(res.ok ? "success" : "error");
+                  if (res.ok) setTrustProfileExpanded(false);
+                } catch { setTrustProfileResult("error"); }
+                finally { setTrustProfileSaving(false); }
+              };
+
+              return (
+                <>
+                  <TouchableOpacity
+                    style={[styles.promoteCard, { backgroundColor: colors.card, borderColor: trustProfileExpanded ? "#2D7A4F60" : colors.border }]}
+                    onPress={() => { if (Platform.OS !== "web") Haptics.selectionAsync(); setTrustProfileExpanded(v => !v); setTrustProfileResult(null); }}
+                    activeOpacity={0.85}
+                  >
+                    <View style={[styles.promoteIcon, { backgroundColor: "#2D7A4F15" }]}>
+                      <Feather name="shield" size={20} color="#2D7A4F" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.promoteTitle, { color: colors.foreground }]}>Trust Profile</Text>
+                      <Text style={[styles.promoteSub, { color: colors.mutedForeground }]}>
+                        {currentAudience && currentAudience.value !== "unknown"
+                          ? `${currentAudience.label} · ${trustEnvironmentTags.length + trustAmenityTags.length} tags set`
+                          : "Set audience type, environment, and amenities"}
+                      </Text>
+                    </View>
+                    <Feather name={trustProfileExpanded ? "chevron-up" : "chevron-down"} size={16} color="#2D7A4F" />
+                  </TouchableOpacity>
+
+                  {trustProfileExpanded && (
+                    <View style={[styles.addrForm, { backgroundColor: colors.card, borderColor: "#2D7A4F40", gap: 20 }]}>
+
+                      {/* Audience Type */}
+                      <View>
+                        <Text style={[styles.formLabel, { color: colors.foreground, marginTop: 0, marginBottom: 4, fontSize: 13 }]}>
+                          Who is this business for?
+                        </Text>
+                        <Text style={[styles.addrLabel, { color: colors.mutedForeground, marginBottom: 10 }]}>
+                          Select the audience type. This appears on your public profile.
+                        </Text>
+                        <View style={{ gap: 6 }}>
+                          {AUDIENCE_OPTIONS.map(opt => (
+                            <TouchableOpacity
+                              key={opt.value}
+                              onPress={() => { setTrustAudienceType(opt.value); if (!["adults_18plus","adults_21plus"].includes(opt.value)) setTrustAgeReasons([]); }}
+                              style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 9, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1.5, borderColor: trustAudienceType === opt.value ? "#2D7A4F" : colors.border, backgroundColor: trustAudienceType === opt.value ? "#2D7A4F10" : "transparent" }}
+                              activeOpacity={0.75}
+                            >
+                              <Feather name={opt.icon as "users"} size={15} color={trustAudienceType === opt.value ? "#2D7A4F" : colors.mutedForeground} />
+                              <View style={{ flex: 1 }}>
+                                <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: trustAudienceType === opt.value ? "#2D7A4F" : colors.foreground }}>{opt.label}</Text>
+                                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground }}>{opt.desc}</Text>
+                              </View>
+                              {trustAudienceType === opt.value && <Feather name="check" size={14} color="#2D7A4F" />}
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+
+                      {/* Age Restriction Reasons — only when 18+ or 21+ selected */}
+                      {needsAgeReasons && (
+                        <View>
+                          <Text style={[styles.formLabel, { color: colors.foreground, marginTop: 0, marginBottom: 4, fontSize: 13 }]}>
+                            Reason for age restriction <Text style={{ color: "#CA922B", fontFamily: "Inter_400Regular" }}>(optional)</Text>
+                          </Text>
+                          <Text style={[styles.addrLabel, { color: colors.mutedForeground, marginBottom: 10 }]}>
+                            Helps the community understand what to expect.
+                          </Text>
+                          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 7 }}>
+                            {AGE_REASONS.map(r => {
+                              const active = trustAgeReasons.includes(r.value);
+                              return (
+                                <TouchableOpacity
+                                  key={r.value}
+                                  onPress={() => setTrustAgeReasons(prev => active ? prev.filter(v => v !== r.value) : [...prev, r.value])}
+                                  style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1.5, borderColor: active ? "#CA922B" : colors.border, backgroundColor: active ? "#CA922B12" : "transparent" }}
+                                  activeOpacity={0.75}
+                                >
+                                  <Text style={{ fontFamily: active ? "Inter_600SemiBold" : "Inter_400Regular", fontSize: 12, color: active ? "#CA922B" : colors.mutedForeground }}>{r.label}</Text>
+                                </TouchableOpacity>
+                              );
+                            })}
+                          </View>
+                        </View>
+                      )}
+
+                      {/* Environment Tags */}
+                      <View>
+                        <Text style={[styles.formLabel, { color: colors.foreground, marginTop: 0, marginBottom: 4, fontSize: 13 }]}>
+                          Environment <Text style={{ color: "#CA922B", fontFamily: "Inter_400Regular" }}>(pick up to 4)</Text>
+                        </Text>
+                        <Text style={[styles.addrLabel, { color: colors.mutedForeground, marginBottom: 10 }]}>
+                          Describe the atmosphere and setting of your business.
+                        </Text>
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 7 }}>
+                          {ENV_TAGS.map(t => {
+                            const active = trustEnvironmentTags.includes(t.value);
+                            const atMax = trustEnvironmentTags.length >= 4 && !active;
+                            return (
+                              <TouchableOpacity
+                                key={t.value}
+                                onPress={() => { if (atMax) return; setTrustEnvironmentTags(prev => active ? prev.filter(v => v !== t.value) : [...prev, t.value]); }}
+                                style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary + "15" : "transparent", opacity: atMax ? 0.45 : 1 }}
+                                activeOpacity={0.75}
+                              >
+                                <Text style={{ fontFamily: active ? "Inter_600SemiBold" : "Inter_400Regular", fontSize: 12, color: active ? colors.primary : colors.mutedForeground }}>{t.label}</Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                      </View>
+
+                      {/* Amenity Tags */}
+                      <View>
+                        <Text style={[styles.formLabel, { color: colors.foreground, marginTop: 0, marginBottom: 4, fontSize: 13 }]}>
+                          Amenities <Text style={{ color: "#CA922B", fontFamily: "Inter_400Regular" }}>(select all that apply)</Text>
+                        </Text>
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 7 }}>
+                          {AMENITY_TAGS.map(t => {
+                            const active = trustAmenityTags.includes(t.value);
+                            return (
+                              <TouchableOpacity
+                                key={t.value}
+                                onPress={() => setTrustAmenityTags(prev => active ? prev.filter(v => v !== t.value) : [...prev, t.value])}
+                                style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary + "15" : "transparent" }}
+                                activeOpacity={0.75}
+                              >
+                                <Text style={{ fontFamily: active ? "Inter_600SemiBold" : "Inter_400Regular", fontSize: 12, color: active ? colors.primary : colors.mutedForeground }}>{t.label}</Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                      </View>
+
+                      {/* Save feedback */}
+                      {trustProfileResult === "success" && (
+                        <View style={[styles.addrAlert, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F40" }]}>
+                          <Feather name="check-circle" size={14} color="#2D7A4F" />
+                          <Text style={[styles.addrAlertText, { color: "#2D7A4F" }]}>Trust Profile saved. Changes are now visible on your listing.</Text>
+                        </View>
+                      )}
+                      {trustProfileResult === "error" && (
+                        <View style={[styles.addrAlert, { backgroundColor: "#DC262618", borderColor: "#DC262640" }]}>
+                          <Feather name="alert-circle" size={14} color="#DC2626" />
+                          <Text style={[styles.addrAlertText, { color: "#DC2626" }]}>Failed to save. Please try again.</Text>
+                        </View>
+                      )}
+
+                      <TouchableOpacity
+                        onPress={handleSave}
+                        disabled={trustProfileSaving}
+                        style={[styles.addrSaveBtn, { backgroundColor: "#2D7A4F", opacity: trustProfileSaving ? 0.6 : 1 }]}
+                        activeOpacity={0.85}
+                      >
+                        {trustProfileSaving
+                          ? <ActivityIndicator size="small" color="#FFF" />
+                          : <Text style={styles.addrSaveBtnText}>Save Trust Profile</Text>
+                        }
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </>
+              );
+            })()}
 
             {/* Growth tools teaser — directs to Grow tab */}
             <TouchableOpacity

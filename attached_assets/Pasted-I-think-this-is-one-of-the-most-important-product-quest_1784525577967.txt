@@ -1,0 +1,234 @@
+I think this is one of the most important product questions we've discussed, because it affects the integrity of your entire marketplace.
+
+My answer is **yes**—I think **every business** should eventually have these attributes, whether or not they've claimed their profile. But I would handle the source of that information differently depending on the business's status.
+
+## Three profile states
+
+Instead of thinking of "joined" versus "not joined," I'd define three states.
+
+### 1. Community Profile (Unclaimed)
+
+A community member adds a business.
+
+The community can safely provide objective information such as:
+
+* Business name
+* Address
+* Phone
+* Website (if known)
+* Category
+* Location on the map
+
+I would also allow:
+
+* Estimated audience:
+
+  * All Ages
+  * Family Friendly
+  * 18+
+  * 21+
+
+**But only if it's obvious.**
+
+For example:
+
+* A brewery → likely 21+
+* A playground → All Ages
+* A children's museum → Family Friendly
+
+If someone is unsure, they should be able to select:
+
+> **Unknown**
+
+The community should **not** be filling in detailed operational information that only the business would know.
+
+---
+
+### 2. Verified Business (Claimed)
+
+Once the owner claims the profile, they become the authoritative source for things like:
+
+* Audience
+* Age restrictions
+* Accessibility
+* Amenities
+* Environment
+* Hours
+* Services
+* Policies
+
+This is where they complete the Trust Profile.
+
+---
+
+### 3. Verified by Community
+
+There will be cases where a business never joins but the community consistently confirms the same facts over time.
+
+For example:
+
+* Family Friendly
+* Outdoor Seating
+* Wheelchair Accessible
+
+Rather than immediately trusting a single submission, I'd use a confidence model:
+
+* Community Verified (many consistent reports)
+* Business Verified (owner confirmed)
+
+Those are different, and users should be able to see which one they're looking at.
+
+---
+
+## I would not ask safety reporters
+
+If someone is reporting:
+
+* discrimination,
+* harassment,
+* an unsafe incident,
+* another safety concern,
+
+they're already doing something important.
+
+Don't ask them to complete audience classifications or business metadata at that point.
+
+Keep the safety flow focused.
+
+---
+
+## When should audience information be collected?
+
+I would collect it during:
+
+* business submissions,
+* business edits,
+* community business additions (limited fields),
+* owner profile completion.
+
+Not during reviews or safety reports.
+
+---
+
+# Your bigger question
+
+> **Do we show and promote businesses that have not joined?**
+
+This is where I think Mapping With Melanin™ becomes different.
+
+My recommendation is:
+
+## YES — show them.
+
+Otherwise users won't discover many great places.
+
+But...
+
+## NO — don't promote them the same way.
+
+I would create three visibility levels.
+
+### Level 1 — Community Listed
+
+Added by the community.
+
+Visible in search.
+
+Visible on the map.
+
+No promotional placement.
+
+No featured status.
+
+No analytics.
+
+No marketing emails beyond an invitation to claim.
+
+---
+
+### Level 2 — Claimed Business
+
+Owner joins.
+
+Now they can:
+
+* edit information,
+* respond to reviews,
+* add photos,
+* create events,
+* access analytics,
+* update hours.
+
+Still not automatically promoted.
+
+---
+
+### Level 3 — Participating Business
+
+Businesses that actively participate in the ecosystem.
+
+For example:
+
+* keep information current,
+* engage with the community,
+* meet verification requirements,
+* follow community standards,
+* perhaps subscribe to an eligible business tier.
+
+These become eligible for:
+
+* featured placement,
+* recommendation boosts,
+* campaign participation,
+* launch promotions.
+
+Notice the distinction:
+
+You're not charging businesses to exist.
+
+You're rewarding participation.
+
+That's a much healthier model.
+
+---
+
+## One additional safeguard
+
+Whenever a profile is community-created, I would display a small status such as:
+
+> **Community Listed — This business has not yet claimed its profile. Some information may be community-provided.**
+
+Once claimed:
+
+> **Business Verified — Information confirmed by the owner.**
+
+That gives users context without diminishing either type of listing.
+
+---
+
+## I think this belongs in your Trust Profile
+
+Eventually every business profile should have sections like:
+
+* **Profile Status**
+
+  * Community Listed
+  * Business Claimed
+  * Business Verified
+
+* **Audience**
+
+  * All Ages
+  * Family Friendly
+  * Teens Welcome
+  * Adults 18+
+  * Adults 21+
+  * Unknown
+
+* **Verification Source**
+
+  * Owner Confirmed
+  * Community Confirmed
+  * Pending Verification
+
+That aligns with something you've consistently emphasized throughout Mapping With Melanin™: **trust should be earned, explained, and transparent.** Users can still discover businesses that haven't joined, but they'll also understand how the information was obtained and how much confidence to place in it. I think that approach balances inclusivity, accuracy, and fairness very well.

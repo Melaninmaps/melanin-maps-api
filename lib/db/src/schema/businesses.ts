@@ -106,6 +106,14 @@ export const businessesTable = pgTable("businesses", {
     primaryState?: string;
     description?: string;
   }>(),
+  // ── Trust Profile — Profile Status ───────────────────────────────────────
+  // community_listed = added by community, not yet claimed by owner
+  // claimed          = owner has joined and can edit the profile
+  // participating    = actively participates; eligible for featured/promotion
+  profileStatus: varchar("profile_status", { length: 30 }).notNull().default("community_listed"),
+  // Community-provided audience type (limited options, set during submission or community edit)
+  // Values: all_ages | family_friendly | adults_18plus | adults_21plus | unknown
+  communityAudienceType: varchar("community_audience_type", { length: 30 }).notNull().default("unknown"),
   // ── Community Reference ──────────────────────────────────────────────────
   // Set when a verified community member submits an external org (employer,
   // mentor provider, etc.) as a community-sourced resource.
