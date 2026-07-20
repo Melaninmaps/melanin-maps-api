@@ -53,15 +53,6 @@ async function getToken(): Promise<string | null> {
 
 const GREETING = "Kinfolk's here. Let's map it out.";
 
-const STARTER_PROMPTS = [
-  "Help me understand a math problem",
-  "Help me complete a job application",
-  "Draft a professional email for me",
-  "Help me decide where to go next",
-  "Find a minority-owned business for me",
-  "What should I consider about safety in this area?",
-];
-
 const SIGNATURE_PHRASE = "Kinfolk's here.";
 const VOICE_PREF_KEY = "@kinfolk_voice_pref";
 const SIGNATURE_DATE_KEY = "@kinfolk_sig_date";
@@ -596,7 +587,7 @@ export function AIChatWidget() {
               </View>
               <View>
                 <Text style={[styles.modalTitle, { color: colors.foreground }]}>KinfolkAI™</Text>
-                <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>Ask me anything · Create lists & reminders</Text>
+                <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>Travel · Community · Business · Everyday life</Text>
               </View>
             </View>
             <View style={styles.headerActions}>
@@ -709,31 +700,6 @@ export function AIChatWidget() {
             ) : null}
           />
 
-          {/* Conversation starter chips — visible before first user message */}
-          {messages.length === 1 && !typing && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={[styles.chipsScroll, { borderTopColor: colors.border }]}
-              contentContainerStyle={styles.chipsRow}
-              keyboardDismissMode="on-drag"
-            >
-              {STARTER_PROMPTS.map((s, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={[styles.chip, { backgroundColor: colors.card, borderColor: colors.primary + "44" }]}
-                  onPress={() => {
-                    setInput(s);
-                    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.chipTxt, { color: colors.foreground }]}>{s}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-
           {/* Quick-reply suggestion chips */}
           {suggestions.length > 0 && !typing && (
             <ScrollView
@@ -760,6 +726,14 @@ export function AIChatWidget() {
             </ScrollView>
           )}
 
+          {messages.length === 1 && !typing && (
+            <View style={[styles.trustWrap, { borderTopColor: colors.border }]}>
+              <Text style={[styles.trustTxt, { color: colors.mutedForeground }]}>
+                Ask me anything. If I don't know, I'll tell you honestly—and we'll figure it out together.
+              </Text>
+            </View>
+          )}
+
           <View style={[styles.inputRow, { borderTopColor: colors.border, paddingBottom: bottomPad + 8, backgroundColor: colors.background }]}>
             <TouchableOpacity
               style={[styles.micBtn, { backgroundColor: isRecording ? "#DC2626" : colors.muted }]}
@@ -770,7 +744,7 @@ export function AIChatWidget() {
             </TouchableOpacity>
             <TextInput
               style={[styles.input, { backgroundColor: colors.card, borderColor: isRecording ? "#DC262640" : colors.border, color: colors.foreground }]}
-              placeholder={isRecording ? "Recording… tap mic to stop" : "Ask me anything…"}
+              placeholder={isRecording ? "Recording… tap mic to stop" : "What's on your mind today?"}
               placeholderTextColor={isRecording ? "#DC2626" : colors.mutedForeground}
               value={input}
               onChangeText={setInput}
@@ -980,6 +954,8 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   taskCreatedTxt: { fontSize: 12, fontFamily: "Inter_500Medium", flexShrink: 1 },
+  trustWrap: { borderTopWidth: 1, paddingHorizontal: 20, paddingVertical: 12 },
+  trustTxt: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, textAlign: "center", fontStyle: "italic" },
   chipsScroll: { borderTopWidth: 1, maxHeight: 56 },
   chipsRow: { paddingHorizontal: 16, paddingVertical: 8, gap: 8, alignItems: "center" },
   chip: {
