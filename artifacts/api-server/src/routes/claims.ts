@@ -97,6 +97,7 @@ router.patch("/admin/claims/:id", async (req: Request, res: Response) => {
         .set({
           verified: true,
           status: "active",
+          profileStatus: "owner_confirmed",
           ...(claim.userId ? { submittedById: claim.userId } : {}),
         })
         .where(eq(businessesTable.id, claim.businessId))

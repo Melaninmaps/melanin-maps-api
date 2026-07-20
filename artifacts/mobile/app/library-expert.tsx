@@ -280,7 +280,7 @@ export default function LibraryExpertScreen() {
               <TouchableOpacity
                 key={i}
                 style={[styles.promptCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                onPress={() => router.push({ pathname: "/(tabs)/travel", params: { kinfolkPrompt: prompt } } as never)}
+                onPress={() => router.push({ pathname: "/travel", params: { kinfolkPrompt: prompt } } as never)}
                 activeOpacity={0.75}
               >
                 <Text style={{ fontSize: 18, color: "#D1D5DB" }}>"</Text>

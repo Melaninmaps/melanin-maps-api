@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from "express";
+import { getUserTier } from "../middleware/requireMembership";
 import { db, pool } from "@workspace/db";
 import {
   savedPlacesTable,
@@ -43,9 +44,12 @@ router.post("/kinfolk/log-search", async (req: Request, res: Response) => {
 // ─── Algorithmic Twin Recommendations ────────────────────────────────────────
 // GET /api/kinfolk/twin-recommendations
 // Collaborative filtering: find users with similar saves → surface their saves
-// TODO: PRE-LAUNCH TIER GATE — add getUserTier check; collaborative filtering intelligence should be Navigator+ only
 router.get("/kinfolk/twin-recommendations", async (req: Request, res: Response) => {
   if (!authed(req, res)) return;
+  const twinTier = await getUserTier(String(req.user?.id ?? ""));
+  if (twinTier === "free") {
+    return void res.status(403).json({ error: "Navigator or Trailblazer membership required" });
+  }
   const userId = uid(req);
   try {
     // 1. Get current user's saved business IDs
@@ -246,9 +250,12 @@ router.get("/kinfolk/community-trends", async (req: Request, res: Response) => {
 
 // ─── Business Market Insights ─────────────────────────────────────────────────
 // GET /api/businesses/:id/market-insights
-// TODO: PRE-LAUNCH TIER GATE — add getUserTier check; business market intelligence (trending searches, save comparisons, audience match) should be Navigator+ only
 router.get("/businesses/:id/market-insights", async (req: Request, res: Response) => {
   if (!authed(req, res)) return;
+  const marketTier = await getUserTier(String(req.user?.id ?? ""));
+  if (marketTier === "free") {
+    return void res.status(403).json({ error: "Navigator or Trailblazer membership required" });
+  }
   const businessId = req.params.id as string;
   try {
     const [bizResult] = await db.select().from(businessesTable).where(eq(businessesTable.id, businessId));

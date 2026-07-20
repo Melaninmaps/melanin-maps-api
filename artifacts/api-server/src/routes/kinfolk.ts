@@ -1927,9 +1927,12 @@ Include exactly ${MAX_ITEMS} action items. Prioritize accessibility (ADA complia
 });
 
 // ─── POST /api/kinfolk/expansion-analysis ─────────────────────────────────────
-// TODO: PRE-LAUNCH TIER GATE — add requireMembership("trailblazer") check; currently any logged-in user can call this AI endpoint
 router.post("/kinfolk/expansion-analysis", async (req: Request, res: Response) => {
   if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
+  const expansionTier = await getUserTier(String(req.user!.id));
+  if (expansionTier === "free" || expansionTier === "navigator") {
+    return void res.status(403).json({ error: "Trailblazer membership required" });
+  }
   if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) return void res.status(503).json({ error: "AI service unavailable" });
 
   const { businessName, businessCategory, businessCity, avgRating, reviewCount, savesCount } = req.body as {
@@ -2050,8 +2053,8 @@ Include 2–4 city opportunities and 3–4 strategic insights. Focus on cities w
 // ─── POST /kinfolk/relocation ─────────────────────────────────────────────────
 // AI-powered relocation concierge — walks through phases, proactively recommends
 // minority-owned businesses at every step of a move
-// TODO: PRE-LAUNCH TIER GATE — add auth check + requireMembership("navigator") or ("trailblazer"); currently accessible with no auth at all
 router.post("/kinfolk/relocation", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
   const {
     messages = [],
     fromCity,
@@ -2339,9 +2342,12 @@ router.post("/kinfolk/sessions/:id/share", async (req: Request, res: Response) =
 
 // ─── View a shared trip (public) ───────────────────────────────────────────────
 // ─── GET /kinfolk/skip-feedback — owner views why community skipped their business ──
-// TODO: PRE-LAUNCH TIER GATE — add getUserTier check; this is competitive skip intelligence and should be Trailblazer-only
 router.get("/kinfolk/skip-feedback", async (req: Request, res: Response) => {
   if (!req.user?.id) return void res.status(401).json({ error: "Unauthorized" });
+  const skipTier = await getUserTier(String(req.user!.id));
+  if (skipTier === "free" || skipTier === "navigator") {
+    return void res.status(403).json({ error: "Trailblazer membership required" });
+  }
   try {
     const [ownerBiz] = await db
       .select({ id: businessesTable.id })

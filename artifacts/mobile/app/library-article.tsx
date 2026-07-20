@@ -301,7 +301,7 @@ export default function LibraryArticleScreen() {
         {!isLocked && (
           <TouchableOpacity
             style={[styles.kinfolkCta, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => router.push({ pathname: "/(tabs)/travel", params: { kinfolkPrompt: `Tell me more about: ${article.title}` } } as never)}
+            onPress={() => router.push({ pathname: "/travel", params: { kinfolkPrompt: `Tell me more about: ${article.title}` } } as never)}
             activeOpacity={0.8}
           >
             <Text style={{ fontSize: 20 }}>🤖</Text>
