@@ -17,7 +17,14 @@ function getPool(): pg.Pool {
     const url = process.env.DATABASE_URL;
     const noSsl = !url || url.includes("localhost") || url.includes("127.0.0.1") || url.includes(".internal");
     const ssl = noSsl ? false : { rejectUnauthorized: false };
-    _pool = new Pool({ connectionString: url, ssl });
+    _pool = new Pool({
+      connectionString: url,
+      ssl,
+      connectionTimeoutMillis: 10000,
+      idleTimeoutMillis: 300000,
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10000,
+    });
   }
   return _pool;
 }

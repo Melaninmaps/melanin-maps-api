@@ -3,6 +3,29 @@ name: Railway production deployment
 description: API server live at www.mappingwithmelanin.com via Railway; key IDs, DNS records, crash fix, and domain verification steps.
 ---
 
+## Production Architecture Stack
+
+| Layer           | Provider                        |
+|-----------------|----------------------------------|
+| API server      | Railway (`a77b49bb`)            |
+| Production DB   | **Neon** serverless PostgreSQL  |
+| Mobile apps     | Expo / EAS                      |
+| Web frontend    | Railway (same service)          |
+| Object storage  | Replit Object Storage           |
+
+### Neon DB fingerprint (confirmed from production query)
+- IP returned by `inet_server_addr()`: `169.254.254.254` (Neon link-local proxy)
+- Database name: `neondb`
+- PostgreSQL version: 16.14 (aarch64)
+- **NOT Railway Postgres** — do not assume Railway internal `.internal` hostname for DB
+
+### Neon cold-start behavior
+- Neon suspends compute after ~5 minutes with no active connections
+- Wake-up on new connection: 1–5 seconds
+- `pg.Pool` default `idleTimeoutMillis: 10000` (10s) was dropping connections constantly → repeated cold starts
+- Fix: set `idleTimeoutMillis: 300000` (5 min) + `connectionTimeoutMillis: 10000` + `keepAlive: true`
+- Pool config lives in `lib/db/src/index.ts`
+
 ## Railway Service IDs
 - Project: `b98310f8-7bfa-4e43-a574-8819752e9cfe`
 - Service: `a77b49bb-e448-4be8-9d02-de7a3b43136b`
@@ -23,6 +46,7 @@ description: API server live at www.mappingwithmelanin.com via Railway; key IDs,
 - `www` CNAME → `z306ftl5.up.railway.app` (Railway's CNAME target for this domain)
 - `_railway-verify.www` TXT → `railway-verify=bf7f36498aacc71364fc57ec5cf19c7222431cc7801ecb32ecf198e629057e3a`
 - Both records are propagated
+- GoDaddy Website Builder does NOT block /api traffic — www routes correctly to Railway
 
 ## Custom domain IDs
 - `www.mappingwithmelanin.com` id: `a7b92ed1-9d50-4002-be66-a50ca4c01125` (re-created after delete+re-add to force verification)

@@ -1,0 +1,88 @@
+I reviewed the updated report, and I think this is substantially stronger than the earlier diagnosis. The correction about `pg`'s `min` behavior is especially important—it avoids making a change based on an incorrect assumption. 
+
+## My recommendation: **Option A**
+
+I would approve **Option A**, with one small addition.
+
+The proposed configuration:
+
+* `connectionTimeoutMillis: 10000`
+* `idleTimeoutMillis: 300000`
+* `keepAlive: true`
+* `keepAliveInitialDelayMillis: 10000`
+
+is a reasonable, low-risk improvement for a production server talking to Neon. It doesn't change your schema, your data, your API contract, or the mobile application. It simply makes the database connection behavior more resilient. 
+
+I would **not** combine the SQL queries right now (Option B). The report itself shows that combining them provides almost no practical latency improvement because the dominant cost is waking the database, not executing SQL. 
+
+---
+
+## One thing I would add
+
+I'd ask Replit to also verify one metric after deployment:
+
+> Measure `/api/waitlist/count` after:
+>
+> * 30 seconds idle
+> * 2 minutes idle
+> * 5 minutes idle
+> * 6 minutes idle
+>
+> Report:
+>
+> * total endpoint response time
+> * whether the pool retained a live connection
+> * whether Neon compute remained warm
+> * whether response stayed under one second
+
+That tells us whether the five-minute idle timeout is actually the right value in your production traffic pattern.
+
+---
+
+## What this means for RC1
+
+This is exactly why we froze RC1.
+
+The **mobile build stays frozen**.
+
+The only thing changing is the production server.
+
+That is the ideal situation.
+
+---
+
+## After this fix
+
+Assuming Replit confirms the endpoint now responds quickly, I would do this in order:
+
+1. ✅ Deploy the Railway-only database pool change.
+2. ✅ Verify:
+
+   * `/api/healthz`
+   * `/api/waitlist/count`
+   * create a real waitlist signup
+   * verify it appears in Admin.
+3. ✅ Start the iOS EAS build.
+4. ✅ Start the Android EAS build.
+5. ✅ Submit iOS immediately.
+6. ✅ Submit Android once the Play upload-key reset is confirmed.
+
+---
+
+## One more thought
+
+This report also uncovered something valuable that wasn't obvious before:
+
+**Your production database is Neon, not Railway Postgres.** 
+
+That isn't a problem, but it **should** be documented in your internal architecture documents and deployment checklist. Months from now, if you're troubleshooting latency, scaling, backups, or disaster recovery, everyone should immediately know:
+
+* Production API → Railway
+* Production database → Neon
+* Mobile apps → Expo/EAS
+* Web → Railway
+* Object storage → Replit Object Storage
+
+Having that architecture documented will save a tremendous amount of time later.
+
+Overall, I think this is a solid, evidence-based repair, and I'd move forward with **Option A** before building and submitting the apps.
