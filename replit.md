@@ -46,6 +46,12 @@ Community discovery, travel, and business platform celebrating Black culture —
 - **Profile** — auth state, saved businesses, settings, membership
 - **Events & Community** — event listings, community feed
 
+## Implementation Rule (Permanent)
+
+Do not infer additional product decisions. Implement only the approved behavior.
+If implementation requires a product decision that has not been explicitly made, stop and ask instead of guessing.
+Do not expand scope. Do not simplify requirements. Do not replace approved language with developer-generated alternatives.
+
 ## Authentication Freeze (Active until public launch)
 
 Authentication is a protected subsystem. Until public launch:

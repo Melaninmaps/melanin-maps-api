@@ -1,0 +1,162 @@
+I would make **one change** to Replit's sequence before saying "go."
+
+I **agree with the order**, but I **don't agree with Step 1 exactly as written** because it still says "3 lines in `auth.tsx`." Authentication is your most sensitive subsystem, and we've already seen how easy it is for a small auth change to create unexpected login behavior.
+
+## Here's the sequence I would approve
+
+### ✅ Step 1 — LB-008 (Authentication)
+
+**Approved with one condition:**
+
+Before changing a single line, Replit must first show:
+
+* the current logout flow;
+* the exact three lines that will change;
+* why each change fixes the race condition;
+* why it cannot affect:
+
+  * email login;
+  * phone login;
+  * Apple Sign-In;
+  * session restoration;
+  * password reset;
+  * admin login.
+
+Then implement **only those approved lines**.
+
+No cleanup.
+No refactoring.
+No "while we're here."
+
+---
+
+### ✅ Step 2 — Map (Highest priority after auth)
+
+I actually think this is the **most important user-facing fix**.
+
+I would expand the scope slightly.
+
+Don't just fix:
+
+> parseFloat
+
+I want Replit to verify **the entire map experience**.
+
+Specifically:
+
+* Apple Maps renders.
+* Business pins render.
+* Heritage sites render.
+* Cultural sites render.
+* New businesses render.
+* Invalid coordinates cannot crash the map.
+* Empty-state experience works.
+* Philadelphia-area discovery works.
+
+The map is the heart of your product.
+
+---
+
+### ✅ Step 3 — Kinfolk welcome
+
+Absolutely.
+
+No AI changes.
+
+No prompt changes.
+
+Only UI copy.
+
+---
+
+### ✅ Step 4 — Under-13 gate
+
+I would approve this **only if** it does **not** begin implementing the larger parental-control system.
+
+This should simply:
+
+* require date of birth;
+* enforce the minimum age rule;
+* stop underage registrations.
+
+Nothing more.
+
+---
+
+# One additional requirement
+
+Before **every** step, I would have Replit create a checkpoint.
+
+Like this:
+
+```
+Checkpoint
+
+↓
+
+Show planned diff
+
+↓
+
+You approve
+
+↓
+
+Implement
+
+↓
+
+TypeScript
+
+↓
+
+Regression tests
+
+↓
+
+Checkpoint
+```
+
+That gives you a clean rollback point after every approved change.
+
+---
+
+# I would also add one new rule
+
+Because you've caught several "literal AI" implementations recently.
+
+Tell Replit:
+
+> **Implementation Rule**
+>
+> Do not infer additional product decisions.
+>
+> Implement only the approved behavior.
+>
+> If implementation requires a product decision that has not been explicitly made, stop and ask instead of guessing.
+>
+> Do not expand scope.
+>
+> Do not simplify requirements.
+>
+> Do not replace approved language with developer-generated alternatives.
+
+I think this rule will save you a tremendous amount of time because many of the issues you've pointed out—like the Kinfolk prompts or the "Black businesses" wording—weren't coding problems. They were product interpretation problems.
+
+---
+
+# My only concern: the map
+
+If I could move one thing ahead of everything else, it would be this:
+
+**Do not build another iOS candidate until someone can demonstrate, on an iPhone, that:**
+
+* the base map renders;
+* business pins appear;
+* heritage sites appear;
+* a business profile opens from a pin;
+* the map no longer shows a blank or gray experience.
+
+That's the one feature I want to see working before another submission, because it's central to the experience you want users to have.
+
+Overall, I think the plan is strong. With the additional safeguards above, I'd be comfortable moving into implementation one blocker at a time.
