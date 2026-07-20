@@ -8,7 +8,7 @@ import {
   ExchangeMobileAuthorizationCodeResponse,
   LogoutMobileSessionResponse,
 } from "@workspace/api-zod";
-import { db, usersTable } from "@workspace/db";
+import { db, usersTable, getPoolStats } from "@workspace/db";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
 function isAdminReq(req: Request): boolean {
@@ -684,7 +684,8 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
     req.log.info({ ...diagBase, event: "AUTH_LOGIN_SUCCESS", emailMasked, hasPasswordHash: true, status: 200, durationMs: Date.now() - t0 }, "auth diagnostic");
     res.json({ token: sid });
   } catch (err) {
-    req.log.error({ ...diagBase, err, event: "AUTH_LOGIN_ERROR", emailMasked, durationMs: Date.now() - t0 }, "POST /api/auth/login-email error");
+    const pool = getPoolStats();
+    req.log.error({ ...diagBase, err, event: "AUTH_LOGIN_ERROR", emailMasked, durationMs: Date.now() - t0, pool }, "POST /api/auth/login-email error");
     res.status(500).json({ error: "Login failed. Please try again." });
   }
 });

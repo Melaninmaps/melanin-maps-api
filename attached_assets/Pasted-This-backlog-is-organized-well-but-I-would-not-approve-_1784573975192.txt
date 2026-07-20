@@ -1,0 +1,134 @@
+This backlog is organized well, but I would **not approve LB-009 as only “max: 5 + two timeouts” yet**. That is directionally correct, but it is not enough by itself to prove the system is safe for 50–500 users.
+
+A few important points:
+
+* `pg` already defaults to a maximum pool size of 10. Setting `max: 5` lowers concurrency; that may be appropriate, but Replit should justify it against the actual production database limit, Railway instance count, and expected traffic rather than choosing it arbitrarily. ([Node Postgres][1])
+* `statement_timeout` and `query_timeout` are valid `pg` client options and would prevent individual statements or query calls from running forever. ([Node Postgres][2])
+* If production truly uses Neon, the normal application connection should generally use Neon’s pooled hostname containing `-pooler`; direct connections are better reserved for migrations and administrative work. ([Neon][3])
+
+## What I recommend now
+
+Approve LB-009 as a **small, staged server-resilience package**, not as one unverified change.
+
+### Batch 9A — Prevent indefinite hangs
+
+This should be implemented first:
+
+* finite connection timeout;
+* `statement_timeout`;
+* `query_timeout`;
+* explicit pool maximum;
+* structured logging when a timeout occurs;
+* guaranteed error response instead of an endless request.
+
+This is server-only and should not require another mobile build.
+
+### Batch 9B — Correct API behavior during DB trouble
+
+The server should return:
+
+```text
+503 Service temporarily unavailable
+```
+
+for database timeout or pool saturation—not `500`, and not “invalid email or password.”
+
+The mobile app should receive enough information to display:
+
+> We’re having trouble connecting right now. Your account is safe. Please try again shortly.
+
+### Batch 9C — Confirm the connection architecture
+
+Before changing the connection string:
+
+* prove whether the live production hostname is Railway Postgres or Neon;
+* if Neon, confirm whether it contains `-pooler`;
+* preserve a separate direct URL for migrations;
+* do not run migrations through a pooled transaction-mode URL unless the migration tooling explicitly supports it. Neon specifically recommends direct connections for migrations in most ORM workflows. ([Neon][3])
+
+### Batch 9D — Protect login
+
+Add:
+
+* account/IP rate limiting;
+* duplicate-login request suppression;
+* one request in flight per device;
+* bounded client timeout;
+* no automatic aggressive retry;
+* pool and endpoint monitoring.
+
+## Send Replit this
+
+> **Approve LB-009 for staged implementation, beginning with Batch 9A only.**
+>
+> Before implementation, revise the proposal to include:
+>
+> 1. The current production pool configuration and provider.
+>
+> 2. The live redacted database hostname and whether it is pooled.
+>
+> 3. The database’s actual connection limit.
+>
+> 4. The number of Railway API instances that may run concurrently.
+>
+> 5. A justified pool `max` value using:
+>
+>    `total possible app connections = pool max × API instance count`
+>
+> 6. Confirmation that `statement_timeout` and `query_timeout` are supported by the installed `pg` version.
+>
+> **Batch 9A approved scope:**
+>
+> * add finite `connectionTimeoutMillis`;
+> * add `statement_timeout`;
+> * add `query_timeout`;
+> * set an evidence-based pool `max`;
+> * preserve existing keep-alive and idle settings only if they remain appropriate;
+> * log connection acquisition time, query timeout, pool total/idle/waiting counts, and route name;
+> * ensure timeout errors release or destroy the affected client;
+> * return a controlled error rather than hanging indefinitely.
+>
+> Do not change the production database URL, add rate limiting, or modify mobile behavior in Batch 9A.
+>
+> After implementation, test:
+>
+> * 1, 5, 10, 25, and 50 concurrent database requests;
+> * 10 concurrent login requests;
+> * repeated login taps from one account;
+> * simulated slow query beyond the timeout;
+> * temporary DB unavailability;
+> * automatic recovery without restarting Railway.
+>
+> Acceptance criteria:
+>
+> * no request hangs longer than the approved deadline;
+> * no pool remains exhausted after requests complete;
+> * no manual Railway restart is required;
+> * normal requests recover after the database resumes;
+> * timeout errors are distinguishable from incorrect credentials;
+> * existing sessions and data remain intact.
+>
+> Return the test report before proposing Batch 9B.
+
+## Priority clarification
+
+I would classify LB-009 as:
+
+> **Must fix before expanding testing significantly**
+
+LB-008 is the mobile logout fix and needs Build 92/66 for device verification.
+
+LB-009 is server resilience and can be deployed independently before those builds. You do not need to wait for a mobile release to protect the database.
+
+Also, do not let the backlog grow indefinitely before verifying these two. I would pause lower-priority feature work long enough to complete:
+
+1. LB-009A server resilience.
+2. LB-008 final mobile build.
+3. Physical-device login/logout verification.
+4. Controlled beta load test.
+
+Then resume the design and language improvements.
+
+[1]: https://node-postgres.com/apis/pool?utm_source=chatgpt.com "node-postgres"
+[2]: https://node-postgres.com/apis/client?utm_source=chatgpt.com "node-postgres"
+[3]: https://neon.com/docs/connect/connection-pooling?a=ed8b82d5-b8a1-4d19-b424-004272ac70d4&utm_source=chatgpt.com "Connection pooling - Neon Docs"
