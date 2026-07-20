@@ -1,0 +1,88 @@
+These screenshots change the diagnosis:
+
+* `https://www.mappingwithmelanin.com/api/healthz` returns `{"status":"ok"}`.
+* The direct Railway health endpoint also returns `{"status":"ok"}`.
+* The direct Railway `/api/waitlist/count` endpoint hangs.
+
+So **GoDaddy is not blocking API traffic**. Do **not** disconnect the Website Builder or alter DNS based on the earlier report. The custom domain is reaching Railway successfully.
+
+The problem is now isolated to the **production waitlist-count route or one of its database queries**.
+
+Send Replit this:
+
+> **CORRECTION — PRODUCTION WAITLIST ENDPOINT DIAGNOSIS**
+>
+> New browser evidence disproves the GoDaddy-interception diagnosis:
+>
+> * `https://www.mappingwithmelanin.com/api/healthz` returns `{"status":"ok"}`.
+> * `https://api-server-production-a991.up.railway.app/api/healthz` returns `{"status":"ok"}`.
+> * `https://api-server-production-a991.up.railway.app/api/waitlist/count` hangs indefinitely.
+>
+> Therefore:
+>
+> * the `www` custom domain is routing correctly to Railway;
+> * Railway is alive;
+> * GoDaddy Website Builder is not preventing `/api` traffic;
+> * do not recommend disconnecting GoDaddy or changing DNS;
+> * the failure is specific to `/api/waitlist/count` or its production database operations.
+>
+> Perform a focused **read-only production diagnosis**. Do not modify code or data yet.
+>
+> 1. Read the complete `/waitlist/count` handler and identify every awaited operation.
+> 2. Confirm the exact production tables, joins, grouping, and ordering used.
+> 3. Add no instrumentation yet; first inspect existing Railway request and database logs for my browser requests around 10:28–10:30 AM ET.
+> 4. Determine whether the handler:
+>
+>    * starts and never completes;
+>    * waits for a database connection;
+>    * blocks on one particular query;
+>    * encounters a missing production table or column;
+>    * returns a response that is never flushed;
+>    * or enters an unintended retry/loop.
+> 5. Query the Railway production database read-only to confirm:
+>
+>    * `waitlist_signups` exists;
+>    * any city/category table used by the route exists;
+>    * the expected columns exist;
+>    * simple `COUNT(*)` queries complete;
+>    * grouped city queries complete.
+> 6. Test each database query from the route separately and report its execution time.
+> 7. Test the full route internally from the Railway service and report:
+>
+>    * HTTP status;
+>    * response time;
+>    * response body;
+>    * corresponding log entry.
+> 8. Confirm whether the handler’s `catch` can actually intercept failures from all awaited operations.
+> 9. Check for an unclosed database transaction, connection-pool exhaustion, lock, or query awaiting a connection indefinitely.
+> 10. Do not use development-database success as proof of production behavior.
+>
+> End with one confirmed diagnosis:
+>
+> * database connection/pool issue;
+> * missing production schema;
+> * slow or locked query;
+> * route implementation defect;
+> * production deployment mismatch;
+> * another confirmed cause.
+>
+> Then propose the smallest safe repair and its regression tests. Do not implement until I approve it.
+
+### Build decision
+
+Keep RC1 frozen. We do not need to reopen the broader audit.
+
+I would **pause submission**, but Replit may still begin the EAS builds while diagnosing this because:
+
+* the production API and domain are healthy;
+* the issue is isolated;
+* builds take time;
+* a server-side waitlist fix can usually be deployed without rebuilding the mobile apps.
+
+However, do not submit the builds for review until:
+
+```text
+https://www.mappingwithmelanin.com/api/waitlist/count
+```
+
+returns promptly, and a real production waitlist signup has been confirmed in the Admin Dashboard.
