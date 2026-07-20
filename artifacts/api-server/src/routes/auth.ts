@@ -628,7 +628,10 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
     }
     if (!user.passwordHash) {
       req.log.warn({ ...diagBase, event: "AUTH_LOGIN_NO_PASSWORD_HASH", emailMasked, hasPasswordHash: false, status: 401, durationMs: Date.now() - t0 }, "auth diagnostic");
-      res.status(401).json({ error: "This account was created with Apple or social sign-in and doesn't have a password yet. Use 'Forgot password?' to set one, or sign in with Apple." });
+      res.status(401).json({
+        error: "This account does not have an email password set up yet. Try the sign-in method you originally used, or choose Forgot Password to create one.",
+        error_code: "NO_PASSWORD",
+      });
       return;
     }
 

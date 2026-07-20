@@ -1,0 +1,120 @@
+Approve the work in this order:
+
+## 1. Approve LB-011 now
+
+This is the clearest and lowest-risk fix.
+
+> **Please implement LB-011.**
+>
+> Update the first tab’s user-facing label from the internal route name `index` to **Discovery** in both NativeTabs and the classic tab layout.
+>
+> Keep the route and filename unchanged.
+>
+> Confirm:
+>
+> * only `artifacts/mobile/app/(tabs)/_layout.tsx` changes;
+> * all bottom tabs display:
+>
+>   * Discovery
+>   * Map
+>   * Safety
+>   * Events
+>   * More
+> * no navigation behavior changes;
+> * both iOS and Android compile successfully.
+>
+> Do not build yet.
+
+## 2. Approve the LB-012 wording fix, but not account linking yet
+
+The inaccurate message should be corrected immediately. Account linking needs a proper design and verified ownership.
+
+> **Please implement only the safe first portion of LB-012.**
+>
+> Server-side:
+>
+> Replace the inaccurate message that says the account was created through Apple or social login with inclusive wording covering phone and passwordless signup:
+>
+> **“This account does not have an email password set up yet. Try the sign-in method you originally used, or choose Forgot Password to create one.”**
+>
+> Mobile:
+>
+> When the server returns the specific password-not-set signal, show:
+>
+> * **Continue with Phone**
+> * **Set Up Email Password**
+>
+> Do not merge accounts, alter user IDs, or automatically attach an email address in this batch.
+>
+> Confirm exact files changed and test phone-created, Apple-created, and email-created accounts.
+>
+> Do not build yet.
+
+I would make the message slightly more neutral than “Use Phone Login Instead,” because the account could have originated through Apple or another passwordless method.
+
+## 3. Finish LB-010A diagnosis before approving a repair
+
+Do not approve a speculative fix among three possible causes. Tell Replit to run the missing production checks now:
+
+> **Please complete the final read-only diagnosis for LB-010A.**
+>
+> 1. Check whether `community_alerts` exists in the live production database.
+> 2. Inspect the production request/log result for the failed `POST /api/community-alerts`.
+> 3. Confirm the exact response produced by `requireAuth` when the token is missing or expired.
+> 4. Report the HTTP status and raw response content type/body.
+>
+> Do not implement until one cause is confirmed.
+
+If the table is missing, that is likely a server-only schema repair. If the API returns HTML or an empty 401, both server response handling and mobile error handling may need adjustment.
+
+## 4. Finish LB-010B diagnosis before approving map code
+
+The white map is highly visible, but the current report only lists candidates. Ask Replit to inspect `DEFAULT_REGION` and add a safe diagnostic/error boundary in development first.
+
+> **Please complete LB-010B diagnosis before implementation.**
+>
+> Confirm:
+>
+> * the exact `DEFAULT_REGION` values at runtime;
+> * that every latitude, longitude, delta, and marker coordinate is finite and valid;
+> * whether the Map component throws during render;
+> * whether the container has measurable dimensions;
+> * whether the white screen occurs before or after business data loads;
+> * iOS runtime logs from a device or TestFlight diagnostic session.
+>
+> Return one confirmed root cause and smallest repair.
+>
+> Do not replace Apple Maps with Google Maps or add an iOS Google key without confirmed evidence.
+
+The map is a P0, but rushing the wrong map-provider change could break the build again.
+
+## 5. Require the LB-009A test report
+
+Since 9A is reportedly already deployed, it should be verified before more production traffic:
+
+> **Run and return the LB-009A resilience test report now.**
+>
+> Confirm:
+>
+> * slow queries terminate within the configured deadline;
+> * pool connections are released afterward;
+> * the service recovers without a Railway restart;
+> * normal database endpoints remain responsive;
+> * timeout errors are distinguishable from bad credentials.
+>
+> Do not begin 9B until 9A passes.
+
+## Best sequence today
+
+1. Implement LB-011.
+2. Implement the limited, safe LB-012 messaging/navigation portion.
+3. Complete LB-010A production diagnosis.
+4. Complete LB-010B runtime diagnosis.
+5. Verify LB-009A.
+6. Approve the confirmed repairs for 010A and 010B.
+7. Run one consolidated regression audit.
+8. Build iOS 92 and Android 66.
+9. Physically test login/logout, email/phone auth, Map, Report Intel, and navigation.
+10. Upload the corrected iOS build and prepare Android for your manual submission.
+
+Do not attempt physical verification of LB-008 until the new build exists; the installed build does not contain that fix.

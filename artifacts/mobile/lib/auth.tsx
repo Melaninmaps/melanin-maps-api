@@ -34,7 +34,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   sessionExpired: boolean;
   login: () => Promise<void>;
-  loginWithEmail: (email: string, password: string) => Promise<{ error?: string; authenticated?: boolean }>;
+  loginWithEmail: (email: string, password: string) => Promise<{ error?: string; authenticated?: boolean; errorCode?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<boolean>;
 }
@@ -184,7 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchUser]);
 
-  const loginWithEmail = useCallback(async (email: string, password: string): Promise<{ error?: string }> => {
+  const loginWithEmail = useCallback(async (email: string, password: string): Promise<{ error?: string; authenticated?: boolean; errorCode?: string }> => {
     const apiBase = getApiBaseUrl();
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 30_000);
@@ -224,8 +224,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (!response.ok) {
-      console.error("login failed", { status: response.status, responseKeys: Object.keys(data) });
-      return { error: data.error ?? `Login failed (HTTP ${response.status}).` };
+      const errorCode = (data as { error_code?: string }).error_code;
+      console.error("login failed", { status: response.status, responseKeys: Object.keys(data), errorCode });
+      return { error: data.error ?? `Login failed (HTTP ${response.status}).`, errorCode };
     }
 
     const token: string = data.token ?? "";

@@ -20,7 +20,7 @@ function NativeTabLayout() {
     <NativeTabs>
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: "safari", selected: "safari.fill" }} />
-        <Label>Discover</Label>
+        <Label>Discovery</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="map">
         <Icon sf={{ default: "map", selected: "map.fill" }} />
@@ -117,7 +117,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Discover",
+          title: "Discovery",
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="safari" tintColor={color} size={24} />

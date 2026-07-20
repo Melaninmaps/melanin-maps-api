@@ -42,6 +42,7 @@ export default function LoginScreen() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [noPasswordError, setNoPasswordError] = useState(false);
   const [biometricLabel, setBiometricLabel] = useState<string | null>(null);
   const [biometricLoading, setBiometricLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -192,6 +193,7 @@ export default function LoginScreen() {
     try {
       const result = await loginWithEmail(emailVal.trim(), passwordVal);
       if (result.error) {
+        setNoPasswordError(result.errorCode === "NO_PASSWORD");
         setError(result.error);
         setLoading(false);
       } else if (result.authenticated) {
@@ -291,23 +293,27 @@ export default function LoginScreen() {
             <Feather name="alert-circle" size={14} color="#DC2626" style={{ marginTop: 1 }} />
             <View style={{ flex: 1, gap: 8 }}>
               <Text style={styles.errorTxt}>{error}</Text>
-              {error.toLowerCase().includes("apple") && Platform.OS === "ios" && (
-                <TouchableOpacity
-                  activeOpacity={0.85}
-                  onPress={handleAppleSignIn}
-                  style={styles.errorAppleBtn}
-                >
-                  <Feather name="arrow-up" size={12} color="#DC2626" />
-                  <Text style={styles.errorAppleTxt}>Tap "Continue with Apple" above to sign in</Text>
-                </TouchableOpacity>
-              )}
-              {error.toLowerCase().includes("apple") && (
-                <TouchableOpacity
-                  activeOpacity={0.85}
-                  onPress={() => router.push("/forgot-password" as any)}
-                >
-                  <Text style={[styles.errorAppleTxt, { color: "#B91C1C" }]}>Or use Forgot Password to set an email password →</Text>
-                </TouchableOpacity>
+              {noPasswordError && (
+                <>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => {
+                      setEmailMode(false);
+                      setError("");
+                      setNoPasswordError(false);
+                    }}
+                    style={styles.errorAppleBtn}
+                  >
+                    <Feather name="smartphone" size={12} color="#DC2626" />
+                    <Text style={styles.errorAppleTxt}>Continue with Phone</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => router.push("/forgot-password" as any)}
+                  >
+                    <Text style={[styles.errorAppleTxt, { color: "#B91C1C" }]}>Set Up Email Password →</Text>
+                  </TouchableOpacity>
+                </>
               )}
             </View>
           </View>
