@@ -1,0 +1,56 @@
+Yes—after authentication is confirmed, this should be the **next immediate correction**.
+
+The current placeholder shown in the screenshot:
+
+> “Ask me anything about traveling while Black…”
+
+is too narrow. It makes KinfolkAI sound like only a travel chatbot, when the platform is also about community, safety, local discovery, relocation, businesses, resources, events, and connection.
+
+Your new standard welcome prompt should be:
+
+> **Kinfolk’s here. Let’s map it out.**
+
+That works because it is warm, culturally aligned, and broad enough for someone using the platform in their hometown, planning a trip, considering a move, seeking community, or looking for support.
+
+Send Replit this:
+
+> After authentication and admin authorization are confirmed, make this the next immediate change.
+>
+> On the KinfolkAI page, remove the current input placeholder:
+>
+> “Ask me anything about traveling while Black…”
+>
+> Replace the default new-user prompt with:
+>
+> **“Kinfolk’s here. Let’s map it out.”**
+>
+> This should be the standard prompt shown to a new user when KinfolkAI does not yet have enough trusted conversation or preference history to personalize the experience.
+>
+> As KinfolkAI learns the user through their conversations, saved preferences, interests, location choices, travel plans, relocation interests, community activity, and other authorized history, the prompt may become more relevant and personalized.
+>
+> Examples could eventually include:
+>
+> * “Ready to map out your weekend in Philly?”
+> * “Still thinking about Houston? Let’s compare neighborhoods.”
+> * “Let’s find something that matches your vibe today.”
+> * “Want to continue planning your New Orleans trip?”
+> * “Looking for community nearby? Let’s map it out.”
+>
+> Requirements:
+>
+> 1. The personalized prompt must be based only on information the user has actually provided or authorized the platform to use.
+> 2. It must never imply that KinfolkAI knows something it has not been told.
+> 3. It must not reveal sensitive personal history on a shared screen.
+> 4. The default prompt must return whenever there is insufficient reliable context.
+> 5. Personalization should affect the welcome prompt and suggested conversation starters, not weaken safety, privacy, or professional-advice disclaimers.
+> 6. Do not implement a complex learning or memory system during this change unless one already safely exists. First replace the visible default prompt and document how personalization currently works.
+>
+> Before changing any personalization logic, report:
+>
+> * whether prompts are currently static or generated dynamically;
+> * what user history KinfolkAI currently has access to;
+> * where that history is stored;
+> * whether the user can clear or disable personalized history;
+> * and whether any current prompt text is duplicated elsewhere in the web or mobile codebase.
+
+One wording note: use the apostrophe exactly as **“Kinfolk’s here.”** It means Kinfolk is here with the user. “Kinfolks here” would read more like multiple people are physically present.
