@@ -1,0 +1,179 @@
+I would approve moving to **LB-010B**, but I'd expand the scope exactly as we discussed so we don't end up fixing one symptom while missing the real experience.
+
+The `parseFloat` change is appropriate, but **do not let Replit consider LB-010B complete after only adding `parseFloat` and an `isNaN` filter.** That fixes one class of crash, not the entire map experience.
+
+I'd send this:
+
+---
+
+## Approved — Begin LB-010B Pre-Implementation Review
+
+Implement the coordinate validation only after completing a source audit of the entire map rendering pipeline.
+
+The objective is **not** "fix Marker coordinates."
+
+The objective is:
+
+> **The map is the centerpiece of Mapping With Melanin™ and must reliably communicate community.**
+
+Before changing code, audit and report the following:
+
+### 1. Native map rendering
+
+Confirm:
+
+* FullMapView mounts correctly.
+* Apple Maps renders on iOS.
+* MapView receives a valid initial region.
+* DEFAULT_REGION cannot be null, undefined, NaN, or out of bounds.
+* Any render exceptions are caught and reported.
+
+---
+
+### 2. Coordinate validation
+
+Implement:
+
+* parseFloat on every business latitude.
+* parseFloat on every business longitude.
+* Filter invalid values.
+* Filter coordinates outside valid Earth ranges.
+* Never allow one malformed business record to prevent the map from rendering.
+
+---
+
+### 3. Heritage & Cultural Sites
+
+Confirm these render independently of business markers.
+
+If businesses fail completely:
+
+* heritage sites should still appear;
+* historical landmarks should still appear;
+* community layers should still appear.
+
+The map should never look empty simply because businesses are sparse.
+
+---
+
+### 4. Default Community Experience
+
+This is a product requirement.
+
+When a new user opens the map they should immediately feel connected.
+
+Until enough community data exists nearby:
+
+Display:
+
+* nearby heritage sites;
+* historical landmarks;
+* cultural destinations;
+* curated community anchors;
+* featured businesses;
+* nearby safety information when available.
+
+The first experience should communicate:
+
+> "There is already a community here."
+
+—not—
+
+> "Nothing found."
+
+---
+
+### 5. Discovery Radius
+
+Confirm the map can intelligently expand.
+
+Example:
+
+If I'm near Philadelphia but outside city limits,
+
+I should still naturally see:
+
+* Philadelphia businesses;
+* Philadelphia heritage sites;
+* nearby communities.
+
+The map should prioritize relevance over municipal boundaries.
+
+---
+
+### 6. Empty-State Rules
+
+If no businesses exist:
+
+Do **not** show an empty map.
+
+Instead progressively display:
+
+1. heritage sites;
+2. cultural landmarks;
+3. featured businesses;
+4. suggested communities;
+5. invitation to help grow the community.
+
+---
+
+### 7. Performance
+
+Report:
+
+* number of businesses loaded;
+* number filtered as invalid;
+* number rendered;
+* render time;
+* first paint time;
+* clustering status (if implemented).
+
+---
+
+### 8. Device Verification Checklist
+
+Do not mark LB-010B complete until these pass on a physical iPhone:
+
+* base map renders;
+* map can pan and zoom;
+* business pins render;
+* heritage sites render;
+* tapping a pin opens the business profile;
+* malformed coordinates do not crash the map;
+* Philadelphia region populates appropriately;
+* no gray or white screen.
+
+---
+
+### Scope Protection
+
+Do **not**:
+
+* redesign the map;
+* change map providers;
+* add Google Maps for iOS;
+* change navigation;
+* modify authentication;
+* modify business search.
+
+Only implement the smallest safe repair required to satisfy the acceptance criteria.
+
+---
+
+## One additional thought
+
+I also want Replit to begin thinking about the **emotion** of the map, not just its correctness.
+
+You've said something that I think is fundamental:
+
+> *"The map should be intuitive showing me how big the community is and how intimate at the same time."*
+
+That's a product philosophy, not just a UI request. I would eventually build the map in layers:
+
+* **Layer 1:** "Welcome Home" (heritage sites, community anchors, featured places).
+* **Layer 2:** Living community (businesses, events, reports, circles, meetups).
+* **Layer 3:** Personal map (saved places, your circles, your routes, your favorites).
+
+That progression would make the map feel alive from day one, even before every city has hundreds of businesses.
+
+I think that's exactly the kind of experience that will distinguish Mapping With Melanin™ from a simple business directory.
