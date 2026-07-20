@@ -1,0 +1,75 @@
+The good news is significant: **the production waitlist is live and contains 60 entries**, including 20 from Philadelphia. This confirms people were being stored; the immediate issue is response time, not missing data.
+
+I would **not approve the proposed pool change exactly as written yet**. The diagnosis is plausible, but two claims need verification:
+
+* In `pg`, `min: 2` does not necessarily create two connections at startup. It generally prevents already-created connections from being removed below that number, so it may not eliminate the first cold connection.
+* The two 5-second query tests may include latency from the environment used to query Railway rather than proving the API service itself takes five seconds to acquire an internal database connection.
+
+The most important unanswered question is whether the Railway API is using Railway’s **internal Postgres hostname** or a public/proxy database URL. Using a public proxy from one Railway service to another could explain unnecessary latency.
+
+Send Replit this:
+
+> **WAITLIST DATABASE LATENCY — FINAL VERIFICATION BEFORE REPAIR**
+>
+> The production data result is encouraging: `waitlist_signups` contains 60 records and the queries return correct results.
+>
+> I approve investigating and repairing the latency, but I do not yet approve the proposed `min: 2` configuration as a confirmed solution.
+>
+> Before changing production, verify:
+>
+> 1. Show the hostname portion of the production `DATABASE_URL`, with credentials and database name redacted.
+> 2. Confirm whether the API service connects through:
+>
+>    * Railway’s internal Postgres hostname, or
+>    * a public/proxy Postgres hostname.
+> 3. If it uses a public proxy, determine whether switching the API service to Railway’s internal database URL is the smallest and correct repair.
+> 4. Confirm that the `Pool` is a true process-level singleton and is not recreated for each request, hot reload, route import, or server module.
+> 5. Confirm the installed `pg` version and the exact behavior of its `min` option. Do not state that `min: 2` eagerly opens two connections unless the installed version and implementation prove that.
+> 6. Confirm whether `keepAlive` and `keepAliveInitialDelayMillis` are supported by the installed version.
+> 7. Measure the actual full production endpoint response time—not only direct database-query time:
+>
+>    * first request after an idle period;
+>    * immediate second request;
+>    * third request.
+> 8. Report separate timing for:
+>
+>    * waiting to acquire a pool connection;
+>    * query 1 execution;
+>    * query 2 execution;
+>    * total request time.
+> 9. Confirm whether the two Drizzle calls acquire and release separate pool clients.
+> 10. Explain whether one combined SQL query would reduce network round trips safely, but do not implement that unless needed.
+>
+> Then recommend the smallest safe repair from these options:
+>
+> * correct the production database hostname;
+> * add connection timeout and TCP keep-alive settings;
+> * adjust pool idle settings;
+> * combine the count operations;
+> * or another evidence-based repair.
+>
+> Any repair must include:
+>
+> * a finite connection timeout;
+> * no indefinite request hangs;
+> * no unnecessary permanent database connections;
+> * no schema or data changes;
+> * endpoint response under one second when the database is healthy;
+> * graceful failure when the database is unavailable.
+>
+> Keep RC1 frozen. Implement the server repair on a separate server-only branch or commit. The mobile builds must still be generated from RC1 commit `3c20ce48`.
+>
+> Do not implement until you return this final verification and revised repair recommendation.
+
+## What we can do now
+
+You can start the iOS and Android builds **from RC1 commit `3c20ce48`** while Replit completes this server diagnosis. The database-pool file is not bundled into the mobile app, but we must be disciplined about source selection so the EAS builds are unquestionably generated from RC1.
+
+Do not submit either build for review until these two checks pass promptly:
+
+```text
+https://www.mappingwithmelanin.com/api/healthz
+https://www.mappingwithmelanin.com/api/waitlist/count
+```
+
+The first already passes. Once the second returns the production count promptly and a new signup is visible in Admin, the waitlist production check is complete.
