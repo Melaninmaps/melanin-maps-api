@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.melaninmaps.app",
-      "buildNumber": "89",
+      "buildNumber": "90",
       "associatedDomains": [
         "applinks:mappingwithmelanin.com"
       ],
@@ -87,7 +87,7 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
-      "versionCode": 63
+      "versionCode": 64
     },
     "web": {
       "favicon": "./assets/images/icon.png"
