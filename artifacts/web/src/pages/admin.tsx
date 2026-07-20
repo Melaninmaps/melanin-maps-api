@@ -843,6 +843,13 @@ export default function Admin() {
             <div>
               <h1 className="text-3xl font-serif font-bold mb-1">Admin Dashboard</h1>
               <p className="text-[#F5EBD8]/60 text-sm">Mapping with Melanin™ — Internal</p>
+              <a
+                href={BASE}
+                className="inline-flex items-center gap-1.5 mt-2 text-xs text-[#F5EBD8]/50 hover:text-[#CA922B] transition-colors"
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 1.5 2 6l5.5 4.5"/></svg>
+                View Community Site
+              </a>
             </div>
             <div className="flex gap-4 text-sm flex-wrap">
               <div className="bg-white/10 rounded-2xl px-4 py-3 text-center">

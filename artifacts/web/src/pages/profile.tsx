@@ -671,6 +671,7 @@ export default function Profile() {
 
   const savedCount = savedPlaces?.businessIds?.length ?? 0;
   const isEarlyTester = (auth?.user as any)?.role === "tester";
+  const isAdminUser = (auth?.user as any)?.role === "admin";
 
   const [kinfolkPoints, setKinfolkPoints] = useState<number | null>(null);
   useEffect(() => {
@@ -691,6 +692,17 @@ export default function Profile() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl md:text-5xl font-serif font-bold text-white tracking-tight">Your Profile</h1>
           <div className="flex items-center gap-2">
+            {isAdminUser && (
+              <Link href="/admin">
+                <Button
+                  variant="outline"
+                  className="rounded-full bg-[#CA922B]/20 text-[#CA922B] border-[#CA922B]/40 hover:bg-[#CA922B] hover:text-white hover:border-[#CA922B] backdrop-blur h-10 text-xs font-bold"
+                >
+                  <svg className="mr-1.5 h-3.5 w-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
+                  Switch to Admin Dashboard
+                </Button>
+              </Link>
+            )}
             <Button
               variant="outline"
               onClick={handleSignOutAll}
