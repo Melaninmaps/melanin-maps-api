@@ -1,0 +1,124 @@
+Replit responded to **both topics, but only partially**.
+
+For the hard-reset/tester-impact request, they did **not** complete the production audit. They only reported development-database counts and correctly warned that those numbers are not production. They still need to inspect Railway production safely and confirm whether any real tester profiles or activity would be affected. Asking you to look at dashboard counts does not fully answer which records would be deleted, orphaned, or preserved by a reset.
+
+For the waitlist request, they confirmed the existing table structure and that an import is possible. However, they shifted toward adding deletion and duplicate-removal features that you did not need to approve yet. We should keep the immediate work focused on safely consolidating the three lists into the production waitlist database.
+
+Send Replit this consolidated request:
+
+> Thank you. Your response addressed both subjects, but the production tester-impact audit remains incomplete because the counts provided were from the development database.
+>
+> Do not perform a hard reset, delete waitlist entries, merge user accounts, or build deletion controls at this time.
+>
+> ## Part 1 — Complete the production impact audit
+>
+> Perform a read-only audit against the Railway production database and report:
+>
+> 1. Total production users.
+> 2. Number of likely testers, using available account roles, notes, dates, or the tester list I provide.
+> 3. Number of users with completed profiles or onboarding.
+> 4. Counts of production records associated with users, including businesses, reviews, safety reports, posts, events, favorites, saved items, messages, memberships, referrals, uploaded media, and any other user-generated records.
+> 5. Whether any production user has multiple account records that appear to represent the same person.
+> 6. Exactly what a “hard reset” would delete, preserve, or orphan.
+> 7. Whether existing tester accounts can remain intact while we continue toward launch.
+>
+> Do not rely only on what is visible in the Admin Dashboard. Query the production database read-only and provide table-level evidence and counts. If production access is unavailable, state that clearly rather than substituting development data.
+>
+> ## Part 2 — Consolidate three provided lists into the production waitlist
+>
+> I will provide three source lists:
+>
+> 1. The recovered historical waitlist file.
+> 2. My external tester list.
+> 3. The additional list/download I referenced.
+>
+> The goal is to combine all valid entries into the Railway production `waitlist_signups` table so they are visible and manageable from the Admin Dashboard.
+>
+> Use **only information contained in the three lists**. Do not infer, manufacture, enrich, scrape, or guess names, cities, states, business-owner status, or any other missing information.
+>
+> Some records contain only an email address. Those records must still be imported. Leave unavailable fields null or blank so I can add names and other information later.
+>
+> ### Required import process
+>
+> **Phase A — Read-only analysis and dry run**
+>
+> Before writing anything:
+>
+> 1. Inspect all three files and report their columns, row counts, and formatting issues.
+> 2. Normalize email addresses for matching by trimming spaces and comparing them case-insensitively.
+> 3. Validate basic email formatting without deleting questionable records from the source report.
+> 4. Identify:
+>
+>    * duplicates within each list;
+>    * duplicates across the three lists;
+>    * emails already present in production `waitlist_signups`;
+>    * emails already present in the production `users` table.
+> 5. Produce a dry-run summary showing:
+>
+>    * total source rows;
+>    * unique valid emails;
+>    * duplicate rows consolidated;
+>    * existing waitlist records that would be updated or left unchanged;
+>    * registered users who also appear in the source lists;
+>    * new waitlist rows proposed for insertion;
+>    * records that cannot be imported and the exact reason.
+> 6. Show the proposed field-mapping from each source column to `waitlist_signups`.
+>
+> Do not insert, update, delete, or merge anything until I review and approve the dry-run report.
+>
+> **Phase B — Backup before import**
+>
+> After approval and immediately before writing:
+>
+> 1. Create a timestamped export of the complete production `waitlist_signups` table.
+> 2. Create a timestamped export of the cleaned, consolidated import dataset.
+> 3. Confirm where both backups are stored and how they can be restored.
+> 4. Do not store the only backup inside the same database being changed.
+>
+> **Phase C — Safe import**
+>
+> After separate approval:
+>
+> 1. Import into Railway production only—not the development database.
+> 2. Use normalized email as the deduplication key.
+> 3. Never overwrite existing nonblank production information with a blank field from an imported list.
+> 4. Where the same email appears in multiple lists, combine only the information explicitly supplied in those lists.
+> 5. Do not create a second waitlist row for an existing normalized email.
+> 6. Do not delete a waitlist record merely because the email also exists in `users`.
+> 7. Preserve registered users and their profiles unchanged.
+> 8. Add source provenance to `notes` or a dedicated import-source field, such as:
+>
+>    * recovered historical waitlist;
+>    * tester list;
+>    * additional imported list;
+>    * or multiple sources.
+> 9. Preserve original signup dates only when a reliable date is supplied. Otherwise use the import timestamp and clearly mark the record as imported.
+> 10. Leave all email-status flags false unless the source data proves an email was sent.
+>
+> **Phase D — Verification and ongoing backup**
+>
+> After import:
+>
+> 1. Recount the table and reconcile it against the approved dry run.
+> 2. Confirm the imported entries appear in the production Admin Dashboard.
+> 3. Export a timestamped post-import copy of the complete production waitlist.
+> 4. Report inserted, updated, unchanged, skipped, and failed counts.
+> 5. Provide a rollback procedure.
+>
+> Also propose an automated recurring backup process for the production waitlist, including frequency, storage destination, retention period, encryption/access controls, and a tested restore procedure. Do not enable the automation until I approve it.
+>
+> ## Not approved at this stage
+>
+> * No hard reset.
+> * No deletion button.
+> * No automatic deletion of waitlist members who have registered accounts.
+> * No account merging.
+> * No changes to tester profiles.
+> * No welcome, beta, or launch emails sent during import.
+> * No source-code changes until the production audit and import dry run are reviewed.
+>
+> Please acknowledge these limits and wait for the three lists.
+
+One important distinction: someone may legitimately belong in both `users` and `waitlist_signups`. For example, they may have joined the original waitlist and later become a tester. Replit should **flag that relationship**, not automatically delete either record.
+
+For the backup requirement, “always backed up” should mean scheduled, recoverable exports stored separately from Railway, with retention and an actual restore test—not merely another table inside the same production database.
