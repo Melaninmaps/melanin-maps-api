@@ -1235,4 +1235,135 @@ router.post("/admin/send-waitlist-update", async (req: Request, res: Response) =
   }
 });
 
+// ── Admin: pre-import backup to Object Storage ───────────────────────────────
+// POST /api/admin/waitlist/backup
+// Read-only against the database. Writes three files to Object Storage:
+//   backups/waitlist/<batchId>/waitlist-signups-export.csv
+//   backups/waitlist/<batchId>/import-dataset.csv
+//   backups/waitlist/<batchId>/manifest.json
+// Returns the manifest so the caller can verify the backup before approving import.
+
+router.post("/admin/waitlist/backup", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const { batchId, importDatasetCsv } = req.body as {
+    batchId?: string;
+    importDatasetCsv?: string;
+  };
+
+  if (!batchId || typeof batchId !== "string" || !/^[\w-]+$/.test(batchId)) {
+    res.status(400).json({ error: "batchId is required and must be alphanumeric/hyphens only" });
+    return;
+  }
+
+  try {
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (!bucketId) {
+      res.status(500).json({ error: "Object storage not configured (DEFAULT_OBJECT_STORAGE_BUCKET_ID missing)" });
+      return;
+    }
+
+    const { Storage } = await import("@google-cloud/storage");
+    const SIDECAR = "http://127.0.0.1:1106";
+
+    const storage = new Storage({
+      credentials: {
+        audience: "replit",
+        subject_token_type: "access_token",
+        token_url: `${SIDECAR}/token`,
+        type: "external_account",
+        credential_source: {
+          url: `${SIDECAR}/credential`,
+          format: { type: "json", subject_token_field_name: "access_token" },
+        },
+        universe_domain: "googleapis.com",
+      },
+      projectId: "",
+    });
+
+    const bucket = storage.bucket(bucketId);
+    const prefix = `backups/waitlist/${batchId}`;
+    const timestamp = new Date().toISOString();
+
+    // ── 1. Export current production waitlist as CSV ──────────────────────
+    const allRows = await db.select().from(waitlistTable).orderBy(asc(waitlistTable.createdAt));
+
+    const csvHeader = [
+      "id","email","first_name","last_name","city","state","is_business_owner",
+      "website_url","status","referral_code","referred_by","family_group_id",
+      "notes","city_nomination","welcome_email_sent","launch_email_sent",
+      "beta_email_sent","approved_at","last_nudge_sent_at","created_at","import_batch_id",
+    ];
+    const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const exportCsvRows = allRows.map(r => [
+      r.id, r.email, r.firstName, r.lastName, r.city, r.state,
+      r.isBusinessOwner, r.websiteUrl, r.status, r.referralCode,
+      r.referredBy, r.familyGroupId, r.notes, r.cityNomination,
+      r.welcomeEmailSent, r.launchEmailSent, r.betaEmailSent,
+      r.approvedAt?.toISOString() ?? "", r.lastNudgeSentAt?.toISOString() ?? "",
+      r.createdAt.toISOString(), r.importBatchId,
+    ].map(esc).join(","));
+    const exportCsvContent = [csvHeader.map(esc).join(","), ...exportCsvRows].join("\n");
+
+    // ── 2. Compute checksums ──────────────────────────────────────────────
+    const { createHash } = await import("crypto");
+    const exportChecksum = createHash("sha256").update(exportCsvContent).digest("hex");
+    const importChecksum = importDatasetCsv
+      ? createHash("sha256").update(importDatasetCsv).digest("hex")
+      : null;
+
+    // ── 3. Write export CSV ───────────────────────────────────────────────
+    const exportFile = bucket.file(`${prefix}/waitlist-signups-export.csv`);
+    await exportFile.save(exportCsvContent, {
+      contentType: "text/csv",
+      metadata: { cacheControl: "no-store", batchId, timestamp },
+    });
+
+    // ── 4. Write import dataset CSV (if provided) ─────────────────────────
+    let importFileWritten = false;
+    if (importDatasetCsv && typeof importDatasetCsv === "string") {
+      const importFile = bucket.file(`${prefix}/import-dataset.csv`);
+      await importFile.save(importDatasetCsv, {
+        contentType: "text/csv",
+        metadata: { cacheControl: "no-store", batchId, timestamp },
+      });
+      importFileWritten = true;
+    }
+
+    // ── 5. Write manifest ─────────────────────────────────────────────────
+    const manifest = {
+      batchId,
+      timestamp,
+      environment: process.env.NODE_ENV ?? "unknown",
+      exportRowCount: allRows.length,
+      exportChecksum,
+      importDatasetIncluded: importFileWritten,
+      importChecksum,
+      files: {
+        export: `${prefix}/waitlist-signups-export.csv`,
+        importDataset: importFileWritten ? `${prefix}/import-dataset.csv` : null,
+        manifest: `${prefix}/manifest.json`,
+      },
+      rollbackNote: `To roll back this import: DELETE FROM waitlist_signups WHERE import_batch_id = '${batchId}'; then restore updated rows from the reconciliation file.`,
+    };
+
+    const manifestFile = bucket.file(`${prefix}/manifest.json`);
+    await manifestFile.save(JSON.stringify(manifest, null, 2), {
+      contentType: "application/json",
+      metadata: { cacheControl: "no-store", batchId, timestamp },
+    });
+
+    req.log.info({ batchId, exportRowCount: allRows.length }, "Pre-import backup written to Object Storage");
+
+    res.json({
+      success: true,
+      manifest,
+      message: `Backup complete. ${allRows.length} current waitlist rows exported to Object Storage. Backup is NOT in git or Railway.`,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to write pre-import backup");
+    res.status(500).json({ error: "Backup failed — do not proceed with import until backup is confirmed" });
+  }
+});
+
 export default router;
