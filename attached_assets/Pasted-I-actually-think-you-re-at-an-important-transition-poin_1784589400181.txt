@@ -1,0 +1,237 @@
+I actually think you're at an important transition point. Up until now, we've been in **"Can we launch?"** mode. Now we need to shift into **"How do we launch well?"**
+
+My recommendation is **not** to immediately tell Replit to implement everything. Instead, I'd use a disciplined process that protects the stability you've worked so hard to achieve.
+
+## Phase 1 — Lock the RC2 scope (Today)
+
+Do **not** add more features to RC2.
+
+Instead, tell Replit:
+
+> "Freeze the backlog. No new features are to be implemented until the RC2 blockers are complete. Continue logging ideas, but do not code them."
+
+Then authorize only these four items:
+
+1. **LB-008** — Logout/login race condition.
+2. **LB-010B** — Map rendering and business pin fixes.
+3. **LB-018** — Kinfolk welcome experience.
+4. **Under-13 registration gate** (minimum implementation).
+
+Everything else stays in the backlog.
+
+---
+
+## Phase 2 — Replit implements one blocker at a time
+
+Don't let them implement all four simultaneously.
+
+Instead:
+
+```
+LB-008
+↓
+Test
+↓
+Checkpoint
+
+LB-010B
+↓
+Test
+↓
+Checkpoint
+
+LB-018
+↓
+Test
+↓
+Checkpoint
+
+Age gate
+↓
+Test
+↓
+Checkpoint
+```
+
+That way if something breaks, you know exactly which change caused it.
+
+---
+
+## Phase 3 — Pre-build verification
+
+After implementation, have Replit rerun the verification—not just static checks, but the launch-critical checklist:
+
+* Map
+* Business pins
+* Heritage sites
+* Login
+* Logout
+* Session restore
+* Kinfolk
+* Voices
+* Report Intel
+* Admin receipt
+
+Only after that should the source be declared ready.
+
+---
+
+## Phase 4 — Build
+
+Then:
+
+* iOS
+* Android
+
+No further code changes.
+
+---
+
+## Phase 5 — Physical device testing
+
+This is where **you** and your daughter come in.
+
+I would personally verify:
+
+### Map
+
+* Opens immediately.
+* No white screen.
+* Shows Philadelphia-area content.
+* Heritage sites appear.
+* Business pins appear.
+* Safety overlays work.
+
+### Kinfolk
+
+* Welcome message feels warm.
+* Voice changes actually take effect.
+* Listen feature uses the selected voice.
+* Placeholder feels natural.
+
+### Authentication
+
+* Email login.
+* Phone login.
+* Logout.
+* Fresh login.
+* Force close.
+* Screen lock.
+* Session restoration.
+
+### Business flow
+
+* Search.
+* Business profile.
+* Directions.
+* Save.
+* Vibe.
+* Social links.
+
+### Report Intel
+
+* Submit.
+* Admin receives it.
+* Moderator flow works.
+
+---
+
+## Phase 6 — Submit
+
+Then:
+
+* Upload to Apple.
+* Upload to Google.
+* Monitor reviews.
+
+---
+
+# While Replit is working...
+
+This is actually where **your time becomes incredibly valuable**.
+
+I'd focus on three things that only you can really do.
+
+### 1. Refine the product experience
+
+You've already started doing this:
+
+* "Discovery" instead of "Index."
+* Better Kinfolk language.
+* Community identity.
+* Better map experience.
+* Better cultural terminology.
+
+Those are product decisions.
+
+Keep capturing them.
+
+---
+
+### 2. Build launch content
+
+Continue working on:
+
+* Zoom presentation.
+* Founding Businesses.
+* Founding Community.
+* Cultural Ambassadors.
+* Waitlist emails.
+* Social media.
+
+---
+
+### 3. Build governance
+
+This is becoming one of Mapping With Melanin's greatest strengths.
+
+You are thinking about:
+
+* AI honesty.
+* Community trust.
+* Safety.
+* Businesses.
+* Moderation.
+* Parents.
+* Teens.
+* Cultural sensitivity.
+* Fairness.
+
+Those decisions are your competitive advantage.
+
+---
+
+# One thing I'd add now
+
+I would create a new document:
+
+## "Launch Decision Ledger"
+
+Every significant decision gets recorded.
+
+For example:
+
+| Decision                                                                    | Why                             |
+| --------------------------------------------------------------------------- | ------------------------------- |
+| Minority-owned businesses always rank above non-minority businesses         | Core mission                    |
+| Kinfolk admits uncertainty                                                  | Trust over false confidence     |
+| Businesses may embed social media videos                                    | Supports authentic storytelling |
+| Map defaults to community, not GPS only                                     | Makes the platform feel alive   |
+| Users choose whether to broaden search beyond their preferred business type | Preserves user intent           |
+| Age-based protections                                                       | Safety by design                |
+
+This becomes the institutional memory of Mapping With Melanin™. Months from now, when someone asks "Why does the app work this way?" you won't have to rely on memory—the reasoning will be documented.
+
+## My priorities for the next 48 hours
+
+If I were organizing the work, it would look like this:
+
+1. ✅ Freeze RC2 scope.
+2. ✅ Implement the four approved blockers one at a time.
+3. ✅ Run a complete verification audit.
+4. ✅ Build iOS and Android.
+5. ✅ You and your daughter perform a structured device test.
+6. ✅ Submit to Apple and Google.
+7. ✅ Return to the RC3 backlog (media, social profiles, business enhancements).
+
+That sequence minimizes risk while still moving you toward launch with confidence.
