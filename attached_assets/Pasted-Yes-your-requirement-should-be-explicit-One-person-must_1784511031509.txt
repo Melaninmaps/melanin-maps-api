@@ -1,0 +1,64 @@
+Yes—your requirement should be explicit:
+
+> **One person must have one canonical user ID across web, Android, and iOS.**
+
+The device or login method should not create a separate user. The same account should retain the same profile, membership, saved businesses, points, messages, reviews, admin role, and history everywhere.
+
+The duplicate phone-only account already proves this is **not fully guaranteed today**. The stale web bundle can be deployed now to fix the immediate admin issue, but that deployment does not by itself prove cross-platform identity consistency.
+
+Send Replit this before authorizing the rebuild:
+
+> The rebuild-and-deploy plan is approved in principle because the current source already contains the web bearer-token fix and no new source changes are proposed.
+>
+> Before proceeding, please acknowledge this mandatory authentication requirement:
+>
+> **Every user must have one canonical user ID across web, Android, and iOS. Logging in from another platform or using another supported authentication method must connect to the same account rather than creating a new user.**
+>
+> For example, when I log in with my existing account on:
+>
+> * the website,
+> * the Android app,
+> * and the iOS app,
+>
+> all three must resolve to the same canonical production user ID and the same account data.
+>
+> The existing duplicate phone-only account demonstrates that this is not yet guaranteed, so please keep these as two separate work items:
+>
+> ### Immediate approved work
+>
+> 1. Create a checkpoint.
+> 2. Rebuild the current source without modifying authentication code.
+> 3. Push the rebuilt production bundle.
+> 4. Allow Railway to deploy it.
+> 5. Verify the deployment completed successfully.
+> 6. Confirm my email login resolves to the admin account and `/admin` loads after a hard refresh.
+>
+> ### Required cross-platform authentication audit—read-only first
+>
+> After the web deployment is verified, document:
+>
+> 1. The unique identifier used by web, Android, and iOS when authenticating a user.
+> 2. Whether all three platforms authenticate against the same Railway API and production users table.
+> 3. How email/password, phone, Apple, Google, and any Replit/OIDC login are linked to an existing user.
+> 4. Which field is treated as the canonical account identity.
+> 5. Under what conditions the system currently creates a new user record.
+> 6. Whether signing in on Android or iOS with my existing credentials returns user ID `8770a412-...`.
+> 7. Whether Apple private-relay email, changed phone numbers, or different login methods can create duplicate accounts.
+> 8. How duplicate identities will eventually be safely linked without losing memberships, activity, submissions, saved data, roles, or history.
+>
+> Do not merge or delete the duplicate phone account during the deployment. Do not make cross-platform account-linking changes until the audit and data-preservation plan are reviewed.
+>
+> The required acceptance test is:
+>
+> * Log in on web and record the returned user ID.
+> * Log in on Android with the same account and confirm the identical user ID.
+> * Log in on iOS with the same account and confirm the identical user ID.
+> * Confirm all three display the same profile, role, membership, saved data, and account history.
+>
+> Please confirm this distinction, then proceed with the checkpoint, rebuild, deployment, and web-admin verification only.
+
+After Replit confirms that separation, you can say:
+
+> **Please implement the approved rebuild and deployment only.**
+
+One technical clarification: the same email is not always enough to guarantee the same account, especially with Apple private relay or phone authentication. The system should have a canonical internal user ID plus linked login identities. Each authentication method should attach to that user rather than independently creating another user record.
