@@ -1,0 +1,46 @@
+This is a solid diagnosis, and I would approve it.
+
+The root cause matches the real-device behavior: logout begins, navigation happens too early, the old token is still present, and the next login collides with an unfinished logout request.
+
+Send Replit:
+
+> **Please implement LB-008.**
+>
+> Apply only the four approved changes:
+>
+> 1. Await `logout()` before navigating away from Settings.
+> 2. Add an 8-second timeout/AbortController to the mobile logout request.
+> 3. Clear `@melanin_maps_fresh_login` during logout.
+> 4. Reset `isLoading` in the logout `finally` block.
+>
+> Also clear or invalidate the current-user/auth cache after logout so the login screen starts from a clean state, but do not modify unrelated authentication logic.
+>
+> Before implementation:
+>
+> * create a checkpoint;
+> * confirm the exact two source files;
+> * confirm no schema, API contract, database, membership, or Kinfolk changes are required.
+>
+> After implementation, test:
+>
+> 1. Login → logout → immediate login with the same account.
+> 2. Login → logout → immediate login with a different account.
+> 3. Logout while the API is delayed.
+> 4. Confirm the app never spins indefinitely.
+> 5. Confirm SecureStore contains no stale auth token or fresh-login flag after logout.
+> 6. Confirm valid session restoration still works after normal app close/reopen.
+> 7. Confirm behavior on both iOS and Android.
+>
+> Return:
+>
+> * exact diff;
+> * files changed;
+> * test results;
+> * confirmation that a new iOS and Android build is required;
+> * recommended next build numbers.
+>
+> Do not implement the “Keep me signed in” preference in this batch.
+
+One caution: the proposed fix mentions React Query/in-memory cache was not invalidated, but the listed four changes do not explicitly address that. I would include cache clearing in the approved repair because stale user state can recreate the same symptom even after the token is cleared.
+
+This is a true P0 for the final launch build. It is small, isolated, and worth fixing before your next iOS and Android builds.

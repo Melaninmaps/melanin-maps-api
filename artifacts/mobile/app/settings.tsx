@@ -109,7 +109,7 @@ export default function SettingsScreen() {
     { id: "delete", icon: "trash-2", label: "Delete Account", destructive: true, sub: "Permanently remove your account", route: null },
   ];
 
-  const handleRow = (row: Row) => {
+  const handleRow = async (row: Row) => {
     if (Platform.OS !== "web") Haptics.selectionAsync();
     if (row.id === "appearance") { toggleDark(); return; }
     if (row.id === "password") {
@@ -129,7 +129,7 @@ export default function SettingsScreen() {
       return;
     }
     if (row.id === "signout") {
-      logout();
+      await logout();
       router.replace("/login");
       return;
     }

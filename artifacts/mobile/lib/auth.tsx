@@ -281,23 +281,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchUser]);
 
   const logout = useCallback(async () => {
+    // Pre-clear in-memory state immediately so the login screen starts clean
+    // even if the server revocation request is slow.
+    setUser(null);
+    setSessionExpired(false);
+    setIsLoading(false);
     try {
       const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
       if (token) {
         const apiBase = getApiBaseUrl();
-        await fetch(`${apiBase}/api/mobile-auth/logout`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 8_000);
+        try {
+          await fetch(`${apiBase}/api/mobile-auth/logout`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timer);
+        }
       }
     } catch {
+      // Server revocation failed or timed out — local cleanup still runs below.
     } finally {
-      await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
+      await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY).catch(() => {});
+      await SecureStore.deleteItemAsync("@melanin_maps_fresh_login").catch(() => {});
       if (Platform.OS !== "web") {
         Purchases.logOut().catch(() => {});
       }
+      // Ensure state is clean regardless of any pre-clear timing edge cases.
       setUser(null);
       setSessionExpired(false);
+      setIsLoading(false);
     }
   }, []);
 
