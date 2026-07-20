@@ -1366,4 +1366,106 @@ router.post("/admin/waitlist/backup", async (req: Request, res: Response) => {
   }
 });
 
+// ── Production Audit ─────────────────────────────────────────────────────────
+// Returns counts and overlap data needed to plan a safe waitlist import.
+// Uses raw pool.query so it works even before the import_batch_id column
+// is pushed to production.
+const IMPORT_EMAILS = [
+  'j.gries@live.com','teianna.lindsay@prudential.com','sheilasegura@comcast.net',
+  'nydiahholly12@gmail.com','lgossett56@hotmail.com','jordanw117@icloud.com',
+  'independentjorfan@yahoo.com','shawnhillhomes@gmail.com','mckelvin.william@yahoo.com',
+  'reinaoba001@gmail.com','reinagail101@gmail.com','jthrashertricountyoic@gmail.com',
+  'jandirafernandes13@gmail.com','nevaehcooper966@gmail.com','starlynn031@gmail.com',
+  'darrylleatherbury@gmail.com','tlindsay428@aol.com','cydrich2@gmail.com',
+  'ninamartinez409@gmail.com','stc1jro@yahoo.com','daniellejlawson@gmail.com',
+  'meaparks@gmail.com','cicinaj2@gmail.com','trina.hairston@honeywellfcu.com',
+  'winternewman88@gmail.com','cardwellkayla219@gmail.com','trinalindsayhairston@gmail.com',
+  'dcaesar27@gmail.com','tlindsay428@gmail.com','kaylacardwell3@gmail.com',
+  'bigdot6017@gmail.com','hello@melaninmaps.app','test@example.com',
+  'kyleisha.m.fisher@gmail.com','melody.brown1988@gmail.com','owcforyouth@gmail.com',
+  'taleisha.fisher@gmail.com','taleisham.saunders@gmail.com',
+  'themontgomerymanagementgroup@gmail.com','gregorywilliam05@gmail.com',
+  'jordanwtester@gmail.com','joshuabierd99@gmail.com','kaylacardwelltester@gmail.com',
+  'kevinctester@gmail.com','kevkaytester@gmail.com','kyleisha.m.morton@gmail.com',
+  'teiannaltester@gmail.com','trinalindsaytester@gmail.com','lilanarich@gmail.com',
+  'fatimccoy@icloud.com','jordanwyatt117@icloud.com','jross215@gmail.com',
+  'kaylathomas20011@gmail.com','kansesdwilliams@gmail.com','tlindsay428@yahoo.com',
+];
+
+router.get("/admin/waitlist/audit", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  try {
+    const placeholders = IMPORT_EMAILS.map((_, i) => `$${i + 1}`).join(", ");
+
+    const [statusRes, usersRes, contentRes, waitlistOverlapRes, userOverlapRes] = await Promise.all([
+      // C — waitlist by status
+      pool.query<{ status: string; total: string }>(
+        `SELECT status, COUNT(*) AS total FROM waitlist_signups GROUP BY status ORDER BY total DESC`
+      ),
+      // D — users overview
+      pool.query<{
+        total_users: string; admins: string; testers: string;
+        regular_users: string; onboarded: string; has_profile_photo: string;
+      }>(
+        `SELECT
+          COUNT(*) AS total_users,
+          COUNT(*) FILTER (WHERE role = 'admin') AS admins,
+          COUNT(*) FILTER (WHERE role = 'tester') AS testers,
+          COUNT(*) FILTER (WHERE role = 'user') AS regular_users,
+          COUNT(*) FILTER (WHERE profile_setup_complete = true) AS onboarded,
+          COUNT(*) FILTER (WHERE profile_image_url IS NOT NULL AND profile_image_url != '') AS has_profile_photo
+        FROM users`
+      ),
+      // E — user-generated content
+      pool.query<{
+        safety_surveys: string; safety_reports: string; community_posts: string;
+        events: string; saved_places: string; reviews: string; messages: string;
+      }>(
+        `SELECT
+          (SELECT COUNT(*) FROM neighborhood_surveys) AS safety_surveys,
+          (SELECT COUNT(*) FROM safety_reports) AS safety_reports,
+          (SELECT COUNT(*) FROM community_posts) AS community_posts,
+          (SELECT COUNT(*) FROM events) AS events,
+          (SELECT COUNT(*) FROM saved_places) AS saved_places,
+          (SELECT COUNT(*) FROM reviews) AS reviews,
+          (SELECT COUNT(*) FROM messages) AS messages`
+      ),
+      // A — which import emails exist in waitlist_signups
+      pool.query<{ email: string; status: string; created_at: Date }>(
+        `SELECT email, status, created_at
+         FROM waitlist_signups
+         WHERE LOWER(TRIM(email)) IN (${placeholders})`,
+        IMPORT_EMAILS
+      ),
+      // B — which import emails exist in users
+      pool.query<{ email: string; role: string; created_at: Date }>(
+        `SELECT email, role, created_at
+         FROM users
+         WHERE LOWER(TRIM(email)) IN (${placeholders})`,
+        IMPORT_EMAILS
+      ),
+    ]);
+
+    res.json({
+      runAt: new Date().toISOString(),
+      importEmailCount: IMPORT_EMAILS.length,
+      waitlistByStatus: statusRes.rows,
+      usersOverview: usersRes.rows[0] ?? null,
+      contentCounts: contentRes.rows[0] ?? null,
+      waitlistOverlap: {
+        count: waitlistOverlapRes.rows.length,
+        rows: waitlistOverlapRes.rows,
+      },
+      userOverlap: {
+        count: userOverlapRes.rows.length,
+        rows: userOverlapRes.rows,
+      },
+    });
+  } catch (err) {
+    req.log.error({ err }, "Audit query failed");
+    res.status(500).json({ error: "Audit query failed", detail: String(err) });
+  }
+});
+
 export default router;

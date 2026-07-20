@@ -341,6 +341,17 @@ export default function Admin() {
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditData, setAuditData] = useState<{
+    runAt: string;
+    importEmailCount: number;
+    waitlistByStatus: { status: string; total: string }[];
+    usersOverview: { total_users: string; admins: string; testers: string; regular_users: string; onboarded: string; has_profile_photo: string } | null;
+    contentCounts: { safety_surveys: string; safety_reports: string; community_posts: string; events: string; saved_places: string; reviews: string; messages: string } | null;
+    waitlistOverlap: { count: number; rows: { email: string; status: string; created_at: string }[] };
+    userOverlap: { count: number; rows: { email: string; role: string; created_at: string }[] };
+  } | null>(null);
+  const [auditError, setAuditError] = useState<string | null>(null);
   const [pendingGlobalRecs, setPendingGlobalRecs] = useState<PendingGlobalRec[]>([]);
   const [globalRecsLoading, setGlobalRecsLoading] = useState(false);
   const [globalRecUpdating, setGlobalRecUpdating] = useState<string | null>(null);
@@ -1045,12 +1056,34 @@ export default function Admin() {
               <RefreshCw className="w-3.5 h-3.5" /> Refresh
             </button>
             {tab === "waitlist" && (
-              <button
-                onClick={exportCsv}
-                className="flex items-center gap-1.5 text-xs font-bold text-[#CA922B] hover:text-[#B38024] transition-colors py-1 px-3 rounded-lg border border-[#CA922B]/30 hover:bg-[#CA922B]/5"
-              >
-                <Download className="w-3.5 h-3.5" /> Export CSV
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={exportCsv}
+                  className="flex items-center gap-1.5 text-xs font-bold text-[#CA922B] hover:text-[#B38024] transition-colors py-1 px-3 rounded-lg border border-[#CA922B]/30 hover:bg-[#CA922B]/5"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export CSV
+                </button>
+                <button
+                  onClick={async () => {
+                    setAuditLoading(true);
+                    setAuditError(null);
+                    try {
+                      const r = await fetch(`${BASE}api/admin/waitlist/audit`, { credentials: "include" });
+                      if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error ?? `HTTP ${r.status}`); }
+                      setAuditData(await r.json());
+                    } catch (e) {
+                      setAuditError(String(e));
+                    } finally {
+                      setAuditLoading(false);
+                    }
+                  }}
+                  disabled={auditLoading}
+                  className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors py-1 px-3 rounded-lg border border-blue-400/40 hover:bg-blue-50 disabled:opacity-50"
+                >
+                  {auditLoading ? <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin" /> : <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
+                  {auditLoading ? "Running…" : "Run Import Audit"}
+                </button>
+              </div>
             )}
             {tab === "businesses" && (
               <a
@@ -1129,6 +1162,101 @@ export default function Admin() {
           </div>
         ) : tab === "waitlist" ? (
           <div className="space-y-6">
+
+            {/* ── Import Audit Results ──────────────────────────────────── */}
+            {auditError && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700">
+                <strong>Audit failed:</strong> {auditError}
+              </div>
+            )}
+            {auditData && (
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <h3 className="font-bold text-sm text-blue-800 uppercase tracking-wider">Production Import Audit</h3>
+                  </div>
+                  <span className="text-xs text-blue-500">{new Date(auditData.runAt).toLocaleString()}</span>
+                </div>
+
+                {/* Waitlist by status */}
+                <div>
+                  <div className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">Waitlist by Status</div>
+                  <div className="flex flex-wrap gap-2">
+                    {auditData.waitlistByStatus.map(r => (
+                      <span key={r.status} className="bg-white border border-blue-200 rounded-lg px-3 py-1 text-xs font-mono">
+                        <span className="font-bold text-blue-800">{r.total}</span> <span className="text-blue-500">{r.status}</span>
+                      </span>
+                    ))}
+                    {auditData.waitlistByStatus.length === 0 && <span className="text-xs text-blue-400 italic">No waitlist rows found</span>}
+                  </div>
+                </div>
+
+                {/* Overlap */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-1">
+                      Import Emails Already in Waitlist ({auditData.waitlistOverlap.count} of {auditData.importEmailCount})
+                    </div>
+                    {auditData.waitlistOverlap.rows.length === 0
+                      ? <p className="text-xs text-green-700 font-semibold">None — all 55 emails are new</p>
+                      : <div className="space-y-0.5 max-h-40 overflow-y-auto">
+                          {auditData.waitlistOverlap.rows.map(r => (
+                            <div key={r.email} className="text-xs font-mono bg-white border border-blue-100 rounded px-2 py-0.5 flex justify-between">
+                              <span className="text-blue-800 truncate">{r.email}</span>
+                              <span className="ml-2 text-blue-400 shrink-0">{r.status}</span>
+                            </div>
+                          ))}
+                        </div>
+                    }
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-1">
+                      Import Emails with Registered Accounts ({auditData.userOverlap.count} of {auditData.importEmailCount})
+                    </div>
+                    {auditData.userOverlap.rows.length === 0
+                      ? <p className="text-xs text-green-700 font-semibold">None — no accounts yet</p>
+                      : <div className="space-y-0.5 max-h-40 overflow-y-auto">
+                          {auditData.userOverlap.rows.map(r => (
+                            <div key={r.email} className="text-xs font-mono bg-white border border-blue-100 rounded px-2 py-0.5 flex justify-between">
+                              <span className="text-blue-800 truncate">{r.email}</span>
+                              <span className="ml-2 text-blue-400 shrink-0">{r.role}</span>
+                            </div>
+                          ))}
+                        </div>
+                    }
+                  </div>
+                </div>
+
+                {/* Users + Content */}
+                {auditData.usersOverview && (
+                  <div>
+                    <div className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">Production Accounts</div>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(auditData.usersOverview).map(([k, v]) => (
+                        <span key={k} className="bg-white border border-blue-200 rounded-lg px-3 py-1 text-xs font-mono">
+                          <span className="font-bold text-blue-800">{v}</span> <span className="text-blue-500">{k.replace(/_/g, " ")}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {auditData.contentCounts && (
+                  <div>
+                    <div className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">User-Generated Content</div>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(auditData.contentCounts).map(([k, v]) => (
+                        <span key={k} className="bg-white border border-blue-200 rounded-lg px-3 py-1 text-xs font-mono">
+                          <span className="font-bold text-blue-800">{v}</span> <span className="text-blue-500">{k.replace(/_/g, " ")}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-xs text-blue-500 italic">Share a screenshot of this panel — it gives everything needed to complete the import plan.</p>
+              </div>
+            )}
 
             {/* ── KPI Row ───────────────────────────────────────────────── */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
