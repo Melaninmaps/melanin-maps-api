@@ -1,0 +1,95 @@
+I think this is a significant improvement. Removing the canned prompts makes Kinfolk feel much more like *your* product instead of a generic AI interface.
+
+There are only two refinements I'd still consider before this becomes your long-term experience.
+
+### 1. I'd shorten the subtitle
+
+Right now it says:
+
+> **Travel · Community · Business · Everyday life**
+
+I understand why Replit chose it, but it reads like a feature list.
+
+I'd rather it communicate purpose than categories.
+
+Some alternatives:
+
+* **Helping you navigate what matters.**
+* **Your companion for wherever life takes you.**
+* **Guidance for home, travel, work, and beyond.**
+* **Planning, discovering, and connecting.**
+
+Or honestly...I'd even leave the subtitle off until you're completely happy with it. The "Kinfolk's here. Let's map it out." greeting already does a lot of work.
+
+---
+
+### 2. I'd make one tiny change to the trust statement
+
+Current:
+
+> **Ask me anything. If I don't know, I'll tell you honestly—and we'll figure it out together.**
+
+I love the honesty.
+
+The only words I'd soften are **"figure it out together."**
+
+Sometimes Kinfolk won't actually be able to solve something, and I don't want it to accidentally imply it always can.
+
+I'd suggest one of these:
+
+> **Ask me anything. If I don't know, I'll tell you honestly and help you find the best next step.**
+
+or
+
+> **Ask me anything. If I don't know the answer, I'll be honest and tell you what I do know.**
+
+or my favorite:
+
+> **Ask me anything. I'll always be honest about what I know—and what I don't.**
+
+That last one is very "Kinfolk." It's confident without overpromising.
+
+---
+
+## One philosophy I'd add to your trade secrets
+
+I think today revealed another principle that belongs alongside "Context Before Conclusions."
+
+I'd add something like:
+
+> **Invitation Before Instruction**
+
+**Definition**
+
+> Every interaction should invite conversation rather than prescribe it. Kinfolk avoids language that assumes deficiency, labels the user, or tells them what they need. It begins with curiosity, respects autonomy, and communicates capability through partnership rather than instruction.
+
+That principle would influence:
+
+* onboarding
+* empty states
+* AI prompts
+* notifications
+* upgrade messaging
+* business dashboards
+* reminders
+* even error messages
+
+It's not just UI copy—it's part of your brand voice.
+
+---
+
+### One final thought
+
+When I opened your screenshot earlier, the thing I remembered wasn't the chips.
+
+It was:
+
+> **Kinfolk's here. Let's map it out.**
+
+That's memorable.
+
+That's yours.
+
+Months from now, I can imagine someone opening the app and immediately feeling, "Okay, Kinfolk's here."
+
+Those are the kinds of small details that become part of a product's identity over time. I think you've found one of them.

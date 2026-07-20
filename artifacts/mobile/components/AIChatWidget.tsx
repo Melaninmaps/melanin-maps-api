@@ -587,7 +587,7 @@ export function AIChatWidget() {
               </View>
               <View>
                 <Text style={[styles.modalTitle, { color: colors.foreground }]}>KinfolkAI™</Text>
-                <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>Travel · Community · Business · Everyday life</Text>
+                <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>Helping you navigate what matters.</Text>
               </View>
             </View>
             <View style={styles.headerActions}>
@@ -729,7 +729,7 @@ export function AIChatWidget() {
           {messages.length === 1 && !typing && (
             <View style={[styles.trustWrap, { borderTopColor: colors.border }]}>
               <Text style={[styles.trustTxt, { color: colors.mutedForeground }]}>
-                Ask me anything. If I don't know, I'll tell you honestly—and we'll figure it out together.
+                Ask me anything. I'll always be honest about what I know—and what I don't.
               </Text>
             </View>
           )}
