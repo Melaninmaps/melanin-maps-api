@@ -1,0 +1,146 @@
+That new behavior narrows it down considerably.
+
+The app is successfully restoring a valid saved session after a full close, but **logout is not leaving the authentication state clean enough for a fresh login**. This is no longer primarily an app-resume problem.
+
+Most likely, logout is clearing only one credential while another remains, or the login screen is still using stale auth state after logout. For example:
+
+* secure-storage token cleared, but an auth cookie remains;
+* cookie cleared, but local token remains;
+* server session revoked, but the client still thinks the old session is active;
+* logout finishes, but cached user/auth queries are not reset;
+* login immediately races with an unfinished logout request.
+
+## About “auto open”
+
+You are right that users should control this.
+
+I would separate two choices:
+
+**Keep me signed in**
+Keeps the session available after closing and reopening the app.
+
+**Open directly to my account**
+Skips the welcome/sign-in screen when a valid saved session exists.
+
+A secure default would be:
+
+* “Keep me signed in” offered during login and clearly explained.
+* Default **off** on shared or public devices.
+* The user can change it later under **Settings → Privacy & Security**.
+* Even when enabled, sensitive areas such as payments, identity verification, or admin access can require Face ID, Touch ID, or the password again.
+
+This should not create a new user ID or separate account. It only controls session convenience.
+
+Send Replit this:
+
+> **P0 — LOGOUT CLEANUP, FRESH LOGIN FAILURE, AND USER-CONTROLLED SESSION RESTORATION**
+>
+> Real-device behavior has now clarified the issue:
+>
+> 1. The user was logged in.
+> 2. After the phone slept and the app reopened, the app initially showed a connection error.
+> 3. After force-closing and reopening the app, the valid account page restored correctly.
+> 4. The user then intentionally selected **Log Out**.
+> 5. The login screen appeared.
+> 6. A fresh email/password login spun for approximately one minute and returned:
+>    **“Could not reach server (Error). Check your connection.”**
+>
+> This confirms session restoration can work, but logout followed by fresh login is unreliable.
+>
+> ## Read-only diagnosis first
+>
+> Confirm:
+>
+> 1. Every credential store used by iOS and Android:
+>
+>    * SecureStore;
+>    * AsyncStorage;
+>    * cookies;
+>    * in-memory auth state;
+>    * React Query or other cached current-user data;
+>    * server-side session records.
+> 2. Exactly what the logout action clears or revokes.
+> 3. Whether mobile logout calls `/api/mobile-auth/logout`, `/api/auth/logout`, or both.
+> 4. Whether the logout request is awaited before navigation to the login screen.
+> 5. Whether auth/user queries are cancelled, cleared, and invalidated after logout.
+> 6. Whether an old bearer token or cookie is still sent with the next login request.
+> 7. Whether the next login request is blocked by an unfinished logout, stale header, stale cookie, or duplicate auth request.
+> 8. The exact endpoint, timeout, HTTP result, and response body for the failed login.
+> 9. Whether the error comes from a timeout, JSON parsing failure, 4xx, 5xx, DNS failure, or aborted request.
+> 10. Whether iOS and Android share the same logout and fresh-login behavior.
+>
+> ## Required logout behavior
+>
+> After an intentional logout:
+>
+> * await the server logout/revocation response;
+> * clear the correct local bearer token;
+> * clear any applicable cookies;
+> * clear cached user and membership data;
+> * reset in-memory auth state;
+> * cancel pending session-refresh or resume requests;
+> * navigate to a clean login state;
+> * allow immediate fresh login without restarting the app.
+>
+> A temporary logout-server failure must not leave conflicting credentials. Report the safest fallback behavior.
+>
+> ## User-controlled session preference
+>
+> Add this to the product proposal, but do not implement until the auth repair is approved:
+>
+> **Keep me signed in**
+>
+> * Presented as an explicit toggle during login.
+> * Also available under Settings → Privacy & Security.
+> * The user controls whether a valid session automatically restores after closing or reopening the app.
+> * Do not automatically enable it without the user’s choice.
+> * When disabled, closing or leaving the app should require sign-in again according to the approved security behavior.
+> * Admin, payment, identity-verification, and other sensitive actions may still require biometric or password re-authentication.
+>
+> Clearly distinguish:
+>
+> * keeping a session stored;
+> * automatically opening into the account;
+> * biometric protection for reopening.
+>
+> Do not create multiple accounts or user IDs for these preferences.
+>
+> ## Error-message requirements
+>
+> Replace the generic message only after identifying the actual failure:
+>
+> * Timeout or server trouble:
+>   **“We’re having trouble connecting right now. Please try again in a moment.”**
+> * Expired or invalid session:
+>   **“Your session has ended. Please sign in again.”**
+> * Incorrect credentials:
+>   **“The email or password you entered doesn’t match our records.”**
+> * Device truly offline:
+>   **“You appear to be offline. Reconnect and try again.”**
+>
+> ## Required tests
+>
+> 1. Login → logout → immediate login with same account.
+> 2. Login → logout → login with a different account.
+> 3. Logout while a session-refresh request is active.
+> 4. Logout during temporary server delay.
+> 5. Close and reopen with “Keep me signed in” enabled.
+> 6. Close and reopen with it disabled.
+> 7. Confirm valid sessions are not deleted because of timeout or 5xx.
+> 8. Confirm intentional logout fully revokes and clears the session.
+> 9. Confirm admin and regular-user accounts behave correctly.
+> 10. Confirm parity on iOS and Android.
+>
+> Return:
+>
+> * confirmed root cause;
+> * exact files and credential stores involved;
+> * whether logout currently leaves stale credentials;
+> * smallest safe repair;
+> * proposed session-preference behavior;
+> * regression risk;
+> * whether new iOS and Android builds are required.
+>
+> Do not implement until the diagnosis is reviewed.
+
+This should be marked **must fix before the final launch build**. Your currently distributed beta can still help uncover issues, but users must be able to log out and immediately log back in without force-closing the app.
