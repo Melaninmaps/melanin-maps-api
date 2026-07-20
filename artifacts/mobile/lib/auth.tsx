@@ -282,17 +282,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchUser]);
 
   const logout = useCallback(async () => {
-    // Pre-clear in-memory state immediately so the login screen starts clean
-    // even if the server revocation request is slow.
+    // Step 1: Read token while the authenticated screen is still mounted.
+    const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+
+    // Step 2: Delete both local keys before the login screen can mount.
+    // Auto-restore cannot find a token after this point.
+    await Promise.all([
+      SecureStore.deleteItemAsync(AUTH_TOKEN_KEY).catch(() => {}),
+      SecureStore.deleteItemAsync("@melanin_maps_fresh_login").catch(() => {}),
+    ]);
+
+    // Step 3: Reset in-memory state. Login screen mounts here.
+    // Token is already gone — auto-restore will find nothing.
     setUser(null);
     setSessionExpired(false);
     setIsLoading(false);
-    try {
-      const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
-      if (token) {
+
+    // Step 4: RevenueCat session cleanup (non-blocking).
+    if (Platform.OS !== "web") {
+      Purchases.logOut().catch(() => {});
+    }
+
+    // Step 5: Bounded server-side revocation. Uses the old token retained in
+    // memory — does not read or restore anything from SecureStore.
+    // 3-second deadline: responsive logout with a genuine revocation attempt.
+    // Failure does not restore the local token or block the return.
+    if (token) {
+      try {
         const apiBase = getApiBaseUrl();
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 8_000);
+        const timer = setTimeout(() => controller.abort(), 3_000);
         try {
           await fetch(`${apiBase}/api/mobile-auth/logout`, {
             method: "POST",
@@ -302,19 +321,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } finally {
           clearTimeout(timer);
         }
+      } catch {
+        // Revocation timed out or failed. Local logout is already complete.
+        // Old server session will expire naturally. Local token is not restored.
       }
-    } catch {
-      // Server revocation failed or timed out — local cleanup still runs below.
-    } finally {
-      await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY).catch(() => {});
-      await SecureStore.deleteItemAsync("@melanin_maps_fresh_login").catch(() => {});
-      if (Platform.OS !== "web") {
-        Purchases.logOut().catch(() => {});
-      }
-      // Ensure state is clean regardless of any pre-clear timing edge cases.
-      setUser(null);
-      setSessionExpired(false);
-      setIsLoading(false);
     }
   }, []);
 

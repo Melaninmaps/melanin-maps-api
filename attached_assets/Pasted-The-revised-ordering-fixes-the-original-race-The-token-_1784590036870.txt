@@ -1,0 +1,52 @@
+The revised ordering fixes the original race. The token is now removed **before** `setUser(null)` allows the login screen to mount, so auto-restore cannot immediately recover the old session.
+
+I would approve it with **one final adjustment**: do not make server revocation completely fire-and-forget.
+
+A background `fetch()` in a mobile app is not guaranteed to finish if the app is suspended or closed. That could leave the old server session active until it expires. It would not block the new login, but it weakens the meaning of “Log Out,” especially on a lost or shared device.
+
+Use this balance:
+
+1. Read the current token.
+2. Delete both local keys.
+3. Clear local user state so the login screen is clean.
+4. Attempt server revocation with a **short bounded wait**, such as 2–3 seconds.
+5. Never restore the local token if revocation fails.
+6. Return cleanly after the deadline.
+
+That keeps logout responsive while making a genuine effort to revoke the server session.
+
+Send Replit:
+
+> **LB-008 revised plan is approved with one final security adjustment.**
+>
+> The corrected local ordering is approved:
+>
+> 1. Read the current token while the authenticated screen remains mounted.
+> 2. Delete `AUTH_TOKEN_KEY` and `@melanin_maps_fresh_login`.
+> 3. Only then clear in-memory user state.
+> 4. Preserve all existing login, token, session, and account architecture.
+>
+> Do not leave server-side logout as an entirely fire-and-forget request. Mobile background requests are not guaranteed to complete if the app is suspended or closed.
+>
+> After local cleanup:
+>
+> * attempt `/api/mobile-auth/logout` using the old token retained in memory;
+> * wait for it only for a short, bounded period—approximately 2–3 seconds;
+> * abort after that deadline;
+> * never restore the deleted local token if revocation fails;
+> * allow logout to finish cleanly with no indefinite spinner;
+> * log the revocation failure without exposing the token.
+>
+> Confirm that the server revokes only the submitted old session token and cannot invalidate a new session created afterward.
+>
+> Show the final exact diff reflecting this bounded revocation behavior. If confirmed, implement only `logout()` in `artifacts/mobile/lib/auth.tsx`, run TypeScript, and report the checkpoint.
+>
+> No other authentication changes are approved.
+
+The plan is otherwise strong. The important safeguards are now:
+
+* login screen cannot mount while the old token remains;
+* fresh login can begin from a clean local state;
+* logout does not hang for eight seconds;
+* the server still gets a bounded opportunity to revoke the old session;
+* no broader authentication refactor occurs.
