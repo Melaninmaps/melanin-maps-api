@@ -1,0 +1,135 @@
+The structure is strong, but I would **not approve Phase B exactly as written**. Two parts need to be corrected before any production import.
+
+First, the current production backup should not rely on you copying query results into Replit and then storing personal email data inside the Replit workspace or Git history. Git is difficult to purge, and a repository is not the right permanent location for a database export containing user emails.
+
+Second, the proposed rollback condition is too broad:
+
+```sql
+created_at >= import_timestamp
+AND notes LIKE 'Sources: %'
+```
+
+That could accidentally delete a legitimate website signup created during the import window or another record with similar notes. Every imported record needs a unique, import-specific identifier.
+
+Send Replit this:
+
+> I approve the overall phased process, but I do not yet approve Phase B as currently written. Please revise the backup and rollback design before any production write.
+>
+> ## Required corrections
+>
+> ### 1. Do not commit user email data or production exports to Git
+>
+> Production waitlist exports and import files contain personally identifiable information. Do not place them in a public repository, normal source-control history, or any location accessible beyond authorized administrators.
+>
+> Confirm whether the Replit repository is private and who has access, but even if private, do not commit the CSV or SQL files to Git.
+>
+> Store backups in restricted object storage or another encrypted, access-controlled location separate from Railway production.
+>
+> ### 2. Create a real production backup
+>
+> Immediately before import, create:
+>
+> * a complete timestamped export of `waitlist_signups`;
+> * a complete timestamped export of the cleaned 55-record import dataset;
+> * a manifest containing row counts, timestamp, environment, and file checksums.
+>
+> Confirm the exact storage destination, access permissions, encryption, retention, and restore procedure.
+>
+> A Replit checkpoint by itself is not an adequate database backup.
+>
+> ### 3. Use a unique import batch ID
+>
+> Generate one unique identifier for this import, such as:
+>
+> ```text
+> recovered-waitlist-2026-07-20-001
+> ```
+>
+> Every row inserted or updated by this import must be traceable to that batch.
+>
+> Prefer a dedicated field such as:
+>
+> ```text
+> import_batch_id
+> ```
+>
+> If adding a column is not appropriate, place an exact structured marker in `notes`, but do not rely on a generic `LIKE 'Sources: %'` condition.
+>
+> ### 4. Make rollback exact
+>
+> Before import, create a reconciliation file containing:
+>
+> * normalized email;
+> * whether the record existed before import;
+> * the original values of every field that may be updated;
+> * the proposed action: insert, update, or unchanged;
+> * the import batch ID.
+>
+> Rollback must:
+>
+> * delete only rows newly inserted by this exact batch;
+> * restore prior values for records updated by this exact batch;
+> * leave all preexisting and newly created website signups untouched.
+>
+> Do not use only a timestamp range for deletion.
+>
+> ### 5. Prevent race conditions
+>
+> The live waitlist may continue receiving signups while the import runs. The import must use an atomic database transaction or equivalent safe process so a failure cannot leave a partially imported dataset.
+>
+> New website signups occurring during the import must not be overwritten, deleted, or mistaken for imported rows.
+>
+> ### 6. Preserve existing production data
+>
+> For matching normalized emails:
+>
+> * never overwrite a populated production field with a blank import field;
+> * never downgrade an existing status automatically;
+> * never change `welcome_email_sent`, `beta_email_sent`, or `launch_email_sent` from true to false;
+> * never replace an existing reliable `created_at` date;
+> * append source provenance without erasing existing notes;
+> * do not delete a waitlist record because the person is also a registered user.
+>
+> ### 7. Verify schema before running Queries D and E
+>
+> Confirm that every referenced production table and column exists before executing the audit queries. If any table or field name differs, provide the corrected read-only query rather than changing the schema.
+>
+> ### 8. Do not build waitlist controls yet
+>
+> The Launch Operations Center is approved as strategic direction only. Do not add delete buttons, release automation, bulk approval, city quotas, role changes, or email automation during this import.
+>
+> The immediate objective is:
+>
+> 1. complete the production read-only comparison;
+> 2. create secure backups;
+> 3. safely import the recovered and consolidated dataset;
+> 4. verify the Admin Waitlist tab;
+> 5. verify that a brand-new public waitlist signup is correctly stored and visible.
+>
+> Please return the revised Phase B plan before I approve production import.
+
+## What should happen after the import
+
+Before building the larger city-release system, Replit should test the existing waitlist process end to end:
+
+1. Submit a new test signup through the public website.
+2. Confirm it appears exactly once in Railway production.
+3. Confirm it appears in the Admin Waitlist tab.
+4. Confirm the submitted fields are accurate.
+5. Confirm no welcome email is sent unless that automation is intentionally enabled.
+6. Approve the test record and verify what approval actually changes.
+7. Deny or defer a separate test record and verify the behavior.
+8. Confirm ordinary admins cannot perform super-admin-only actions.
+9. Remove only the clearly identified test records after the test, with an audit record.
+
+I would also ask them to define what **Approve**, **Deny**, and **Waiting for City** mean before launch. “Denied” may be unnecessarily harsh for someone who is simply not in the first release wave. A safer initial structure is:
+
+* **Waiting**
+* **Selected for Wave**
+* **Invited**
+* **Registered**
+* **Waiting for City**
+* **Deferred**
+* **Declined/Invalid**
+
+For a city rollout such as “first 20 Atlanta community members and 5 Atlanta businesses,” begin with a **preview-and-confirm release tool**, not a fully automatic release. The system should show exactly which 25 records would be selected, why they qualify, and whether required fields are missing before you press a final confirmation. This protects you from accidentally selecting test accounts, duplicates, invalid addresses, or businesses that have not been verified.
