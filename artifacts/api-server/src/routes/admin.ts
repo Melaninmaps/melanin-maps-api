@@ -802,5 +802,156 @@ router.delete("/admin/users/:id", async (req: Request, res: Response) => {
   }
 });
 
+// ── Phase 1 Auth Probe: READ-ONLY canonical user investigation ───────────────
+// CRON_SECRET only. Returns every row that could be the founder. No writes.
+router.get("/admin/auth-probe", async (req: Request, res: Response) => {
+  const cronSecret = process.env.CRON_SECRET;
+  const auth = req.headers["authorization"] ?? "";
+  if (!cronSecret || auth !== `Bearer ${cronSecret}`) { res.status(401).json({ error: "Unauthorized" }); return; }
+  try {
+    const rows = await pool.query(`
+      SELECT
+        id,
+        LEFT(COALESCE(email,''), 3) || '***@' || SPLIT_PART(COALESCE(email,'(none)'), '@', 2) AS email_masked,
+        role,
+        CASE WHEN password_hash IS NOT NULL THEN 'SET' ELSE 'NULL' END AS password_hash,
+        CASE WHEN apple_id IS NOT NULL THEN 'SET' ELSE 'NULL' END AS apple_id,
+        CASE WHEN phone_number IS NOT NULL
+          THEN LEFT(phone_number, 4) || '***' || RIGHT(phone_number, 2)
+          ELSE 'NULL' END AS phone_number,
+        phone_verified,
+        email_verified,
+        first_name,
+        profile_setup_complete,
+        created_at
+      FROM users
+      ORDER BY created_at ASC
+    `);
+
+    // Auth events for each user
+    const events = await pool.query(`
+      SELECT user_id, event, created_at
+      FROM auth_events
+      ORDER BY created_at DESC
+      LIMIT 50
+    `);
+
+    // Active sessions
+    const sessions = await pool.query(`
+      SELECT user_id, LEFT(id, 8) || '...' AS session_id_prefix, created_at
+      FROM sessions
+      ORDER BY created_at DESC
+      LIMIT 20
+    `);
+
+    res.json({
+      users: rows.rows,
+      recentAuthEvents: events.rows,
+      activeSessions: sessions.rows,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: String(err.message) });
+  }
+});
+
+// ── Phase 2 Auth Repair: merge duplicate phone account into canonical ─────────
+// CRON_SECRET only. dryRun:true (default) shows what would happen, no writes.
+// dryRun:false executes: links phone to canonical account, deletes duplicate.
+router.post("/admin/auth-repair-merge", async (req: Request, res: Response) => {
+  const cronSecret = process.env.CRON_SECRET;
+  const auth = req.headers["authorization"] ?? "";
+  if (!cronSecret || auth !== `Bearer ${cronSecret}`) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const dryRun: boolean = req.body?.dryRun !== false;
+
+  try {
+    // Step 1: find all users, identify canonical (has email+admin) and duplicates (no email, phone-only)
+    const allUsers = await pool.query(`
+      SELECT id, email, role, phone_number, password_hash IS NOT NULL AS has_password,
+             apple_id IS NOT NULL AS has_apple, created_at
+      FROM users ORDER BY created_at ASC
+    `);
+
+    const canonical = allUsers.rows.find((u: any) => u.email && u.role === 'admin');
+    const phoneDuplicates = allUsers.rows.filter((u: any) => !u.email && u.phone_number);
+
+    if (!canonical) {
+      res.status(404).json({ error: "No admin account with email found." }); return;
+    }
+
+    const report: any = {
+      dryRun,
+      canonical: {
+        id: canonical.id,
+        email: canonical.email,
+        role: canonical.role,
+        hasPassword: canonical.has_password,
+        hasApple: canonical.has_apple,
+        phoneNumber: canonical.phone_number ? 'SET' : 'NULL',
+      },
+      duplicatesFound: phoneDuplicates.length,
+      actions: [] as string[],
+    };
+
+    for (const dup of phoneDuplicates) {
+      const phone = dup.phone_number;
+
+      // Check if canonical already has this phone
+      if (canonical.phone_number === phone) {
+        report.actions.push(`SKIP: canonical already has phone ${phone.slice(0,4)}***`);
+        continue;
+      }
+
+      // Check if canonical already has A phone (would conflict)
+      if (canonical.phone_number && canonical.phone_number !== phone) {
+        report.actions.push(`WARN: canonical already has a DIFFERENT phone. Manual review needed.`);
+        continue;
+      }
+
+      // Count sessions belonging to duplicate
+      const sessCount = await pool.query(
+        `SELECT COUNT(*) as n FROM sessions WHERE sess->'user'->>'id' = $1`,
+        [dup.id]
+      );
+
+      report.actions.push(
+        `MERGE: copy phone ${phone.slice(0,4)}*** from user ${dup.id.slice(0,8)} → canonical ${canonical.id.slice(0,8)}`
+      );
+      report.actions.push(
+        `DELETE: ${sessCount.rows[0].n} session(s) for duplicate user ${dup.id.slice(0,8)}`
+      );
+      report.actions.push(`DELETE: duplicate user ${dup.id.slice(0,8)} (no email, phone-only account)`);
+
+      if (!dryRun) {
+        // Link phone to canonical
+        await pool.query(
+          `UPDATE users SET phone_number = $1, phone_verified = true WHERE id = $2`,
+          [phone, canonical.id]
+        );
+        // Delete duplicate's sessions
+        await pool.query(`DELETE FROM sessions WHERE sess->'user'->>'id' = $1`, [dup.id]);
+        // Delete duplicate user
+        await pool.query(`DELETE FROM users WHERE id = $1`, [dup.id]);
+        report.actions.push(`DONE: merge complete for ${dup.id.slice(0,8)}`);
+      }
+    }
+
+    // Final state
+    const finalState = await pool.query(`
+      SELECT id, email, role,
+        CASE WHEN password_hash IS NOT NULL THEN 'SET' ELSE 'NULL' END AS password,
+        CASE WHEN apple_id IS NOT NULL THEN 'SET' ELSE 'NULL' END AS apple,
+        CASE WHEN phone_number IS NOT NULL THEN 'SET' ELSE 'NULL' END AS phone,
+        phone_verified, email_verified
+      FROM users WHERE email IS NOT NULL ORDER BY created_at ASC LIMIT 5
+    `);
+    report.finalState = finalState.rows;
+
+    res.json(report);
+  } catch (err: any) {
+    res.status(500).json({ error: String(err.message) });
+  }
+});
+
 export default router;
 
