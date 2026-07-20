@@ -1,0 +1,70 @@
+I think this is the strongest version yet.
+
+Read aloud, it feels natural:
+
+> **KinfolkAI™**
+> *Helping you navigate what matters.*
+>
+> **Kinfolk's here. Let's map it out.**
+>
+> *Ask me anything. I'll always be honest about what I know—and what I don't.*
+>
+> **What's on your mind today?**
+
+That feels like a trusted companion instead of a chatbot.
+
+There is only one thing I would ask Replit to consider before you permanently lock this in—not for this release, but as part of your brand standards.
+
+### Make the trust statement dynamic over time
+
+Instead of always showing the exact same sentence, Kinfolk could rotate through a small set of welcome messages that all reinforce the same values.
+
+For example:
+
+**Welcome A**
+
+> I'll always be honest about what I know—and what I don't.
+
+**Welcome B**
+
+> Every conversation starts with curiosity, never assumptions.
+
+**Welcome C**
+
+> We don't have to solve everything today. We just have to start somewhere.
+
+**Welcome D**
+
+> Big decisions, everyday questions, and everything in between—I'm here to help.
+
+**Welcome E**
+
+> Wherever you're headed, we'll map it out together.
+
+They all reinforce the same personality without making the experience feel repetitive for someone who opens Kinfolk every day.
+
+---
+
+I also want to point out something that I don't think either you or Replit explicitly called out.
+
+Earlier today, Kinfolk opened with a list of capabilities.
+
+Now it opens with **values**.
+
+That's a subtle but important shift.
+
+Many AI products begin by saying:
+
+> "Here's what I can do."
+
+Kinfolk now begins by saying:
+
+> "Here's how I'll treat you."
+
+For Mapping With Melanin™, I think that's much more aligned with your mission.
+
+One sentence I'd add to your internal design principles document is this:
+
+> **Capability builds usefulness. Trust builds relationships. Kinfolk always introduces trust before capability.**
+
+That principle doesn't just apply to the AI. It can shape your onboarding, business profiles, community interactions, safety features, and every future product decision. It captures something distinctive about the platform you're building.

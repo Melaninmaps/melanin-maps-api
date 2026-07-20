@@ -1,0 +1,174 @@
+Send Replit this exact message:
+
+> **COMMUNITY BETA 1 — KINFOLK WELCOME REVISION: TEST, REBUILD, AND SUBMIT**
+>
+> The Kinfolk welcome-screen wording has been intentionally revised because the starter prompts felt prescriptive and could alienate users. This is an approved user-experience correction for the beta.
+>
+> ## Approved changes
+>
+> Final opening experience:
+>
+> **KinfolkAI™**
+> **Helping you navigate what matters.**
+>
+> **Kinfolk’s here. Let’s map it out.**
+>
+> **Ask me anything. I’ll always be honest about what I know—and what I don’t.**
+>
+> Input placeholder:
+>
+> **What’s on your mind today?**
+>
+> The six static starter-prompt chips must be completely removed. Contextual follow-up suggestions generated after Kinfolk replies should remain unchanged.
+>
+> ---
+>
+> # PHASE 1 — READ-ONLY CHANGE AUDIT
+>
+> Before building, confirm:
+>
+> 1. The exact files changed for this revision.
+> 2. `STARTER_PROMPTS` and the initial starter-chip rendering are fully removed.
+> 3. The updated subtitle, trust statement, and placeholder appear exactly as approved.
+> 4. The trust statement disappears after the first user message as designed.
+> 5. No changes were made to:
+>
+>    * authentication;
+>    * sessions or tokens;
+>    * API routes;
+>    * Kinfolk system prompts or AI behavior;
+>    * memory;
+>    * membership tiers;
+>    * billing;
+>    * database schema;
+>    * navigation;
+>    * voice or AAVE settings.
+> 6. Both iOS and Android use the same revised component.
+> 7. Report the exact commit hash that will be used for both builds.
+>
+> Stop and report if any change exists outside the approved welcome UI.
+>
+> ---
+>
+> # PHASE 2 — PRE-BUILD TESTS
+>
+> Run all available static and automated checks:
+>
+> * TypeScript validation;
+> * Expo configuration validation;
+> * mobile route validation;
+> * API build/type check if affected by the shared build process;
+> * search confirming no static starter prompts remain;
+> * confirm no unresolved import or rendering errors;
+> * confirm the production API remains:
+>   `https://www.mappingwithmelanin.com`;
+> * confirm iOS and Android production configuration remains unchanged except for automatic build-number increments.
+>
+> Then perform a focused regression review confirming:
+>
+> * login and logout code is untouched;
+> * Kinfolk still sends messages successfully;
+> * microphone and send controls remain present;
+> * My Lists remains accessible;
+> * the welcome message remains visible;
+> * contextual follow-up chips still work after a reply;
+> * the screen does not have an awkward blank or overlapping area where the starter chips were removed;
+> * the trust statement is readable and does not overlap the keyboard or input on smaller devices.
+>
+> End the pre-build report with:
+>
+> **🟢 SAFE TO REBUILD**
+>
+> or
+>
+> **🔴 DO NOT BUILD**, with the reason.
+>
+> ---
+>
+> # PHASE 3 — NEW PRODUCTION BUILDS
+>
+> Only after all pre-build checks pass:
+>
+> 1. Build iOS using the production profile.
+> 2. Build Android using the production profile.
+> 3. Allow EAS to assign the next available numbers.
+>
+> Expected next numbers, subject to EAS confirmation:
+>
+> * iOS: Version 1.1.5, **Build 91**
+> * Android: Version 1.1.5, **Version Code 65**
+>
+> Do not reuse Build 90 or Version Code 64. Do not manually force a lower or duplicate build number.
+>
+> Report:
+>
+> * both EAS build IDs;
+> * source commit;
+> * assigned build numbers;
+> * build status;
+> * build links.
+>
+> ---
+>
+> # PHASE 4 — DEVICE SMOKE TEST BEFORE APPLE SUBMISSION
+>
+> Once iOS Build 91 finishes and appears in TestFlight, do not submit it to an external testing group until the following is visually confirmed on a physical iPhone:
+>
+> 1. Cold launch succeeds.
+> 2. Login succeeds.
+> 3. Open KinfolkAI.
+> 4. Confirm the screen displays exactly:
+>
+>    * “Helping you navigate what matters.”
+>    * “Kinfolk’s here. Let’s map it out.”
+>    * “Ask me anything. I’ll always be honest about what I know—and what I don’t.”
+>    * “What’s on your mind today?”
+> 5. Confirm no static prompt chips appear.
+> 6. Confirm no text is clipped, cut off, or hidden behind the keyboard.
+> 7. Send a general question and confirm Kinfolk replies.
+> 8. Confirm contextual follow-up suggestions may appear only after the reply.
+> 9. Open Map and confirm pins load.
+> 10. Open a business profile.
+> 11. Logout and log back in.
+>
+> I will provide the physical-device result if Replit cannot install the TestFlight build itself.
+>
+> ---
+>
+> # PHASE 5 — APPLE
+>
+> After I confirm the iPhone smoke test passes:
+>
+> * Upload the newest successful iOS build to App Store Connect using EAS Submit.
+> * Select the new build explicitly by build ID.
+> * Do not resubmit Build 90.
+> * Confirm Version 1.1.5 and the new build number before submission.
+> * Provide the EAS submission ID and processing status.
+>
+> This upload does not automatically place the build into an external TestFlight group or submit it for Beta App Review. Report the exact manual App Store Connect step remaining.
+>
+> ---
+>
+> # PHASE 6 — ANDROID
+>
+> Build Android but do not submit it.
+>
+> I will upload or submit the Android AAB manually because Google Play requires credentials/password access.
+>
+> Provide:
+>
+> * Android build ID;
+> * Version Code;
+> * AAB download/build link;
+> * confirmation that it uses the same approved Kinfolk revision;
+> * confirmation of the correct production API domain.
+>
+> ---
+>
+> # RELEASE FREEZE
+>
+> No additional wording, feature, prompt, style, dependency, authentication, database, or configuration changes are authorized after these builds begin.
+>
+> First perform Phase 1 and Phase 2 and return the report. Do not build until the report says **🟢 SAFE TO REBUILD**.
+
+Because the Kinfolk welcome UI changed after Build 90 was created, this does require a **new iOS build and a new Android build**. Build 90 can remain in App Store Connect, but Build 91 should become the build you test and use for the external beta. Android should similarly advance from Version Code 64 to 65.
