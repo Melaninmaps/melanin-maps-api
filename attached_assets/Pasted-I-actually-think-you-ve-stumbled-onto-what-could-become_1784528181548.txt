@@ -1,0 +1,229 @@
+I actually think you've stumbled onto what could become one of Mapping With Melanin™'s biggest differentiators.
+
+I'd elevate this from a "promotion rule" to a **Marketplace Fairness & Partnership Charter**, and I'd absolutely treat it as a trade secret because it's about *how* your platform balances mission, trust, user needs, and commercial partnerships.
+
+There are a few principles I would establish.
+
+---
+
+# Principle 1: Mission First
+
+I would write it exactly like this internally:
+
+> **Mapping With Melanin™ exists to maximize opportunities for minority-owned businesses while ensuring users can safely and confidently meet their needs wherever they are.**
+
+That sentence answers almost every future edge case.
+
+---
+
+# Principle 2: Promotion ≠ Availability
+
+This distinction is critical.
+
+A non-minority-owned business can be:
+
+* available,
+* discoverable,
+* recommended when necessary,
+
+without receiving the same promotional treatment as a verified minority-owned business.
+
+For example:
+
+**Searching in Atlanta**
+
+Minority-owned hotels exist.
+
+Result:
+
+* Minority-owned hotels appear first.
+* Partner hotels appear afterward if relevant.
+
+---
+
+**Searching in rural Arizona**
+
+No verified minority-owned hotels exist within the search area.
+
+Result:
+
+KinfolkAI might say:
+
+> "I couldn't find a verified minority-owned hotel within your preferred area. Here are highly rated alternatives that meet your accessibility, safety, and travel preferences."
+
+That's fulfilling the user's need without compromising your mission.
+
+---
+
+# Principle 3: Recommendations should happen in layers
+
+Instead of a single ranking score, think about a decision sequence.
+
+1. Is there a verified minority-owned option that meets the need?
+2. Is it trustworthy?
+3. Is it reasonably nearby?
+4. Does it satisfy the user's filters?
+5. If not, broaden the search.
+6. Then include trusted partners or other businesses.
+
+The weighting inside those layers can remain proprietary.
+
+---
+
+# Principle 4: National brands should never be treated as one business
+
+Your Hyatt example is perfect.
+
+Hyatt Scottsdale
+
+≠
+
+Hyatt Salt Lake City
+
+≠
+
+Hyatt Philadelphia
+
+Each location should have its own:
+
+* community ratings,
+* safety reports,
+* discrimination reports,
+* accessibility information,
+* owner responses,
+* local management engagement.
+
+Then the parent company can also have an enterprise profile.
+
+Think of it like this:
+
+```
+Hyatt (Enterprise)
+
+├── Hyatt Scottsdale
+├── Hyatt Phoenix
+├── Hyatt Salt Lake City
+├── Hyatt Denver
+└── Hyatt Philadelphia
+```
+
+KinfolkAI recommends the **location**, not just the brand.
+
+---
+
+# Principle 5: Enterprise accountability
+
+This is where you become different.
+
+Imagine Hyatt partners with Mapping With Melanin™.
+
+Corporate receives an enterprise dashboard showing trends across all participating properties.
+
+For example:
+
+```
+Overall Partnership Score
+
+Arizona:
+★★★★★
+
+Nevada:
+★★★★☆
+
+Utah:
+★★☆☆☆
+
+Illinois:
+★★★★★
+```
+
+The corporate team immediately sees where attention is needed.
+
+That's valuable to them because it helps them improve specific locations rather than treating every property the same.
+
+---
+
+# Principle 6: Partnership is earned
+
+I would avoid permanent partner status.
+
+Instead:
+
+Partners should continually meet standards.
+
+For example:
+
+* community trust;
+* responsiveness;
+* safety;
+* verified ownership information;
+* policy compliance;
+* unresolved serious issues.
+
+If they consistently fall below established standards, they can lose benefits such as featured placement or partnership status.
+
+That's not punitive—it's maintaining the integrity of the partnership.
+
+---
+
+# Principle 7: Recovery matters
+
+Businesses should have a path to improve.
+
+If a location has problems, the platform should encourage corrective action rather than simply punishing it.
+
+For example:
+
+> "This location has shown measurable improvement over the past six months following corrective actions."
+
+That's useful to users and fair to businesses.
+
+---
+
+# KinfolkAI
+
+Eventually KinfolkAI could explain recommendations naturally.
+
+Suppose someone asks:
+
+> "Where should I stay in Salt Lake City?"
+
+It might answer:
+
+> "There aren't currently any verified minority-owned hotels that match your search. Among other available options, this Hyatt location has consistently strong community safety feedback and accessibility ratings."
+
+Or:
+
+> "Although Hyatt is one of our partners, recent community reports for this specific location indicate unresolved concerns. Here are other nearby accommodations with stronger community feedback."
+
+Notice what happened.
+
+KinfolkAI isn't recommending or avoiding a business because it's a partner.
+
+It's using location-specific information.
+
+That builds trust.
+
+---
+
+# I think this becomes another trade secret
+
+Not the algorithm.
+
+The philosophy.
+
+I'd eventually document something like:
+
+## Marketplace Fairness Principle
+
+> Partnerships increase opportunity—they do not override community trust.
+
+And another:
+
+## Local Truth Principle
+
+> Enterprise relationships never supersede the lived experience of a specific location.
+
+Those two principles together are powerful. They tell future employees, partners, and investors exactly how Mapping With Melanin™ will balance mission, user trust, and commercial relationships.
+
+I wouldn't expose the exact scoring model publicly—that remains proprietary—but I **would** publish those principles. They signal to minority-owned businesses, enterprise partners, and users alike that your platform has a consistent, values-driven approach. I think that combination of transparency about principles and confidentiality about implementation is exactly the balance you're aiming for.

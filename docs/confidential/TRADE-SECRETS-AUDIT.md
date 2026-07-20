@@ -3867,92 +3867,161 @@ Reproduction, distribution, disclosure, or use of the contents without explicit 
 authorization from the platform owner is strictly prohibited.
 For attorney use only unless otherwise authorized by the platform owner.
 
----
-*Document continues as additional sections are received.*
 
 ---
 
-**CONFIDENTIALITY NOTICE (REPEATED)**
-This document is the exclusive property of Mapping With Melanin™.
-It contains proprietary trade secret information protected under applicable trade secret law.
-Reproduction, distribution, disclosure, or use of the contents without explicit written
-authorization from the platform owner is strictly prohibited.
-For attorney use only unless otherwise authorized by the platform owner.
-
----
-*Document continues as additional sections are received.*
-
 ---
 
-**CONFIDENTIALITY NOTICE (REPEATED)**
-This document is the exclusive property of Mapping With Melanin™.
-It contains proprietary trade secret information protected under applicable trade secret law.
-Reproduction, distribution, disclosure, or use of the contents without explicit written
-authorization from the platform owner is strictly prohibited.
-For attorney use only unless otherwise authorized by the platform owner.
+# MARKETPLACE FAIRNESS & PARTNERSHIP CHARTER™ — TRADE SECRET REGISTRY
 
----
-*Document continues as additional sections are received.*
+**Classification:** Confidential Trade Secret — Multiple Classifications
+**Date Added:** July 20, 2026
+**Governing Document:** `docs/confidential/MWM-Marketplace-Fairness-Partnership-Charter-v1.0.md`
+**Cross-Reference:** Invisible Architecture Spec #32 (Constitutional Ecosystem Framework™), Spec #05 (Discovery Engine™), Spec #20 (KinfolkAI™ Architecture)
 
 ---
 
-**CONFIDENTIALITY NOTICE (REPEATED)**
-This document is the exclusive property of Mapping With Melanin™.
-It contains proprietary trade secret information protected under applicable trade secret law.
-Reproduction, distribution, disclosure, or use of the contents without explicit written
-authorization from the platform owner is strictly prohibited.
-For attorney use only unless otherwise authorized by the platform owner.
+## TS-MF-001: The Marketplace Fairness Principle™
 
----
-*Document continues as additional sections are received.*
+**Classification:** Trade Secret — PUBLIC SUMMARY AUTHORIZED (implementation logic confidential)
+**Confidentiality Level:** Principle: publishable. Scoring logic, thresholds, and weights: highest restriction.
 
----
+### Public Summary (authorized for release)
 
-**CONFIDENTIALITY NOTICE (REPEATED)**
-This document is the exclusive property of Mapping With Melanin™.
-It contains proprietary trade secret information protected under applicable trade secret law.
-Reproduction, distribution, disclosure, or use of the contents without explicit written
-authorization from the platform owner is strictly prohibited.
-For attorney use only unless otherwise authorized by the platform owner.
+> **Partnerships increase opportunity — they do not override community trust.**
 
----
-*Document continues as additional sections are received.*
+### Protected Implementation Logic
 
----
+The mechanisms by which this principle is enforced — including:
+- How commercial relationships are weighted (or not weighted) against community trust signals
+- The scoring rules that prevent paid placement from overriding organic ranking
+- The moderation thresholds that trigger partnership review
+- The separation between promotional eligibility and discovery visibility
 
-**CONFIDENTIALITY NOTICE (REPEATED)**
-This document is the exclusive property of Mapping With Melanin™.
-It contains proprietary trade secret information protected under applicable trade secret law.
-Reproduction, distribution, disclosure, or use of the contents without explicit written
-authorization from the platform owner is strictly prohibited.
-For attorney use only unless otherwise authorized by the platform owner.
+All of the above are confidential trade secrets and may not be disclosed.
 
----
-*Document continues as additional sections are received.*
+### Operational Constraint
+
+Any enterprise partner agreement, promotional placement feature, or AI recommendation
+logic change must pass a Marketplace Fairness Principle™ review before deployment.
+The review authority is the platform founder.
 
 ---
 
-**CONFIDENTIALITY NOTICE (REPEATED)**
-This document is the exclusive property of Mapping With Melanin™.
-It contains proprietary trade secret information protected under applicable trade secret law.
-Reproduction, distribution, disclosure, or use of the contents without explicit written
-authorization from the platform owner is strictly prohibited.
-For attorney use only unless otherwise authorized by the platform owner.
+## TS-MF-002: The Local Truth Principle™
+
+**Classification:** Trade Secret — PUBLIC SUMMARY AUTHORIZED (implementation logic confidential)
+**Confidentiality Level:** Principle: publishable. Evidence rules, score isolation logic: highest restriction.
+
+### Public Summary (authorized for release)
+
+> **Enterprise relationships never supersede the lived experience of a specific location.**
+
+### Protected Implementation Logic
+
+The mechanisms by which this principle is enforced — including:
+- The data isolation architecture that scores each location independently
+- The rules preventing an enterprise account's reputation from diluting location-level signals
+- The weighting formulas that apply safety, trust, and community scores at the location level
+- The specific thresholds below which enterprise promotional placement is suspended for a location
+
+All of the above are confidential trade secrets and may not be disclosed.
 
 ---
-*Document continues as additional sections are received.*
+
+## TS-MF-003: Layered Recommendation Architecture™
+
+**Classification:** Trade Secret — FULLY CONFIDENTIAL
+**Confidentiality Level:** Highest restriction. No portion is authorized for public disclosure.
+
+### Description (non-disclosing)
+
+A proprietary 6-layer decision sequence governing how KinfolkAI™ and the Discovery Engine™
+order recommendations when both minority-owned and non-minority-owned options are present.
+The sequence ensures mission-first ordering without suppressing user-need fulfillment.
+
+### What Is Confidential
+
+```
+RESERVED. CONFIDENTIAL.
+```
+
+The layer definitions, the decision thresholds between layers,
+the filter relaxation sequence, the fallback logic, and the
+labeling rules for alternatives are proprietary trade secrets.
+They inform the build of Spec #05 (Discovery Engine™) and
+Spec #20 (KinfolkAI™ Architecture) but are not reproduced there.
+
+### What May Be Said Publicly
+
+The platform applies a mission-first ordering that prioritizes verified minority-owned
+options and presents alternatives clearly labeled when no minority-owned option is available.
+The specific mechanism is proprietary.
 
 ---
 
-**CONFIDENTIALITY NOTICE (REPEATED)**
-This document is the exclusive property of Mapping With Melanin™.
-It contains proprietary trade secret information protected under applicable trade secret law.
-Reproduction, distribution, disclosure, or use of the contents without explicit written
-authorization from the platform owner is strictly prohibited.
-For attorney use only unless otherwise authorized by the platform owner.
+## TS-MF-004: Enterprise Location Independence Model™
+
+**Classification:** Trade Secret — FULLY CONFIDENTIAL
+**Confidentiality Level:** Highest restriction. No scoring formula or threshold is authorized for public disclosure.
+
+### Description (non-disclosing)
+
+A proprietary data architecture and scoring model that evaluates each physical location
+of a national or enterprise brand as an independent entity with its own trust score,
+safety score, community ratings, and promotional eligibility — completely separated from
+the parent enterprise account's aggregate standing.
+
+### Architecture Summary (non-disclosing)
+
+```
+[Enterprise Account] — holds: agreement, dashboard, billing, appeals
+        |
+        ├── [Location] — holds: community score, safety score, trust score,
+        |                        promotional eligibility, review record
+        ├── [Location] — (same as above, independent)
+        └── [Location] — (same as above, independent)
+```
+
+### What Is Confidential
+
+```
+RESERVED. CONFIDENTIAL.
+```
+
+The specific score isolation rules, the minimum location-level score required
+before a location inherits any enterprise benefit, the enterprise accountability
+dashboard scoring methodology, and the consequence thresholds for enterprise
+account suspension are proprietary trade secrets.
+
+### Operational Rule
+
+KinfolkAI™ recommends the **location**, not the brand.
+A strong enterprise account score does not boost a weak location score.
+A weak enterprise account score does not suppress a strong location score.
+The implementation of this rule is proprietary.
 
 ---
-*Document continues as additional sections are received.*
+
+## TS-MF-ADDENDUM: Non-Minority Business Engagement Policy
+
+**Classification:** Operational Policy — Internal Use Only
+**Status:** Already enforced in code as of July 20, 2026
+
+### Summary
+
+Mapping With Melanin™ does not solicit non-minority-owned businesses.
+This policy is enforced at the code level (admin outreach route blocked when `blackOwned = false`).
+
+Non-minority-owned businesses may:
+- View MWM's website on their own initiative
+- Discover their referral traffic via their own web analytics (standard HTTP referrer)
+- Access their MWM listing analytics after self-initiated claim and admin approval
+- Contact MWM at info@mappingwithmelanin.com voluntarily
+- Inquire about Sponsored Enterprise Partnership on their own initiative
+
+No portion of this policy authorizes MWM to initiate contact with non-minority businesses
+through any channel, including email, push notification, SMS, or social media.
 
 ---
 

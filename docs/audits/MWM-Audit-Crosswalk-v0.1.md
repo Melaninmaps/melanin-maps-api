@@ -251,6 +251,29 @@ These are findings where nothing exists in the codebase and no other workstream 
 
 ---
 
+---
+
+## Domain 13 — Marketplace Fairness & Enterprise Partnership (New — July 20, 2026)
+
+> **Governing document:** `docs/confidential/MWM-Marketplace-Fairness-Partnership-Charter-v1.0.md`
+> **Trade secrets:** TS-MF-001 through TS-MF-004 registered in `docs/confidential/TRADE-SECRETS-AUDIT.md`
+> **Status:** Charter approved. No implementation authorized. "Please implement [section]." required.
+
+| Finding | Current Code State | Gap | WS | Status |
+|---|---|---|---|---|
+| Promotion ≠ Availability enforcement | `blackOwned` filter in search exists. Promotional placement (business_promotions) exists. | No enforcement that promotional placement cannot override trust-score-based ranking. A business_promotion could surface a low-trust non-minority business above a high-trust minority-owned one. | WS-04 | ⚠️ |
+| Layered recommendation sequence (TS-MF-003) | KinfolkAI system prompt recommends minority-owned businesses by default. | No formal 6-layer decision sequence implemented. No fallback-labeling logic ("here are alternatives") in the AI prompt. No automatic broadening of search radius before non-minority alternatives are offered. | WS-08 | ❌ |
+| Enterprise location independence (TS-MF-004) | Each business has its own record (no parent-child business hierarchy). | No enterprise account model. No parent company profile. No location-level score isolation from brand. A national brand cannot currently have an enterprise account. | WS-04 | ❌ |
+| Enterprise accountability dashboard | No enterprise dashboard exists. | No corporate aggregate view. No trend data across multiple locations under one enterprise. Required before any enterprise partnership is signed. | WS-04 | ❌ |
+| Partnership continuation standards | No partner status exists in the data model. | No partnership_status field. No consequence ladder. No mechanism to suspend promotional benefits without suspending the business entirely. | WS-04 | ❌ |
+| Recovery pathway documentation | No recovery pathway exists in the data model. | No corrective_action_status. No improvement tracking. No mechanism to surface "this location has shown measurable improvement" in the UI. | WS-04 | ❌ |
+| KinfolkAI alternative labeling | AI prompt does not include language for when no minority-owned option exists. | No approved alternative-labeling language in buildSystemPrompt. AI may recommend non-minority businesses without appropriate framing. | WS-08 | ❌ |
+| Non-minority outreach hard block | `admin.ts` blocks outreach when `blackOwned = false`. | ✅ Enforced. No gap. | — | ✅ |
+| Sponsored Enterprise Partner inquiry path | No inbound inquiry form exists. | No self-service enterprise partnership inquiry form. Must be built before any enterprise partnership is offered. | WS-04 | ❌ |
+| sendBusinessOutreach CAN-SPAM compliance | Email exists. No unsubscribe link. No physical address. | Both are CAN-SPAM violations. Must be resolved before any outreach email is sent at scale. (Already in P0 list — FD-12.5 requires CAN-SPAM compliance before launch.) | WS-14 | ❌ |
+
+---
+
 ## Document Maintenance Rule
 
 This document is updated **after every implemented workstream**, before that workstream is marked complete. The update must include:
