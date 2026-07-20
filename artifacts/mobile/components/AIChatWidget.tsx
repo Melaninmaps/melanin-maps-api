@@ -51,7 +51,7 @@ async function getToken(): Promise<string | null> {
   catch { return null; }
 }
 
-const GREETING = "Kinfolk's here. Let's explore what's possible.";
+const GREETING = "Kinfolk's here. Let's map it out.";
 
 const SIGNATURE_PHRASE = "Kinfolk's here.";
 const VOICE_PREF_KEY = "@kinfolk_voice_pref";
