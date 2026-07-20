@@ -24,70 +24,93 @@ const WEB_STATIC = fs.existsSync(dirnamePath)
 
 process.stderr.write(`Using web-static: ${WEB_STATIC}\n`);
 
-// ── Startup DB migration: ensure waitlist_signups table exists ────────────────
-async function runWaitlistMigration() {
-  const dbUrl = process.env.DATABASE_URL;
-  if (!dbUrl) {
-    process.stderr.write("DB_MIGRATION: DATABASE_URL not set, skipping\n");
-    return;
-  }
-  try {
-    let url;
-    try { url = new URL(dbUrl); } catch { process.stderr.write("DB_MIGRATION: invalid DATABASE_URL\n"); return; }
-    const noSsl = url.hostname.includes("localhost") || url.hostname.includes("127.0.0.1") || url.hostname.includes(".internal");
-    const ssl = noSsl ? false : { rejectUnauthorized: false };
-    const pool = new Pool({ connectionString: dbUrl, ssl, connectionTimeoutMillis: 10000 });
+// Build a pg Pool using the same SSL logic as the API server
+function buildPool() {
+  const dbUrl = process.env.DATABASE_URL ?? "";
+  let url;
+  try { url = new URL(dbUrl); } catch { return null; }
+  const noSsl = url.hostname.includes("localhost") || url.hostname.includes("127.0.0.1") || url.hostname.includes(".internal");
+  const ssl = noSsl ? false : { rejectUnauthorized: false };
+  return new Pool({ connectionString: dbUrl, ssl, connectionTimeoutMillis: 10000 });
+}
 
+// ── Startup DB migration ────────────────────────────────────────────────────
+async function runMigration() {
+  const pool = buildPool();
+  if (!pool) { process.stderr.write("DB_MIGRATION: no DATABASE_URL\n"); return; }
+  try {
+    // Create table if it doesn't exist at all
     await pool.query(`
       CREATE TABLE IF NOT EXISTS waitlist_signups (
         id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
         email VARCHAR(255) NOT NULL UNIQUE,
-        first_name VARCHAR(100),
-        last_name VARCHAR(100),
-        city VARCHAR(100),
-        state VARCHAR(50),
+        first_name VARCHAR(100), last_name VARCHAR(100),
+        city VARCHAR(100), state VARCHAR(50),
         is_business_owner BOOLEAN NOT NULL DEFAULT false,
         website_url VARCHAR(500),
         status VARCHAR(20) NOT NULL DEFAULT 'pending',
-        referral_code VARCHAR(20),
-        referred_by VARCHAR(20),
-        family_group_id VARCHAR(36),
-        notes TEXT,
+        referral_code VARCHAR(20), referred_by VARCHAR(20),
+        family_group_id VARCHAR(36), notes TEXT,
         city_nomination VARCHAR(150),
         welcome_email_sent BOOLEAN NOT NULL DEFAULT false,
         launch_email_sent BOOLEAN NOT NULL DEFAULT false,
         beta_email_sent BOOLEAN NOT NULL DEFAULT false,
-        approved_at TIMESTAMP,
-        last_nudge_sent_at TIMESTAMP,
+        approved_at TIMESTAMP, last_nudge_sent_at TIMESTAMP,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         import_batch_id VARCHAR(100)
       )
     `);
     process.stderr.write("DB_MIGRATION: waitlist_signups table ensured\n");
 
-    const seeds = [
-      `INSERT INTO waitlist_signups (id,email,first_name,last_name,city,state,is_business_owner,website_url,status,referral_code,referred_by,family_group_id,notes,city_nomination,welcome_email_sent,launch_email_sent,beta_email_sent,approved_at,last_nudge_sent_at,created_at,import_batch_id) VALUES ('2db6dd96-1629-436b-ab1e-8f9b2b2f69f3','test@example.com',NULL,NULL,NULL,NULL,false,NULL,'pending','TESTEXAM',NULL,NULL,NULL,NULL,true,false,false,NULL,NULL,'2026-06-19 00:46:35.92888',NULL) ON CONFLICT (id) DO NOTHING`,
-      `INSERT INTO waitlist_signups (id,email,first_name,last_name,city,state,is_business_owner,website_url,status,referral_code,referred_by,family_group_id,notes,city_nomination,welcome_email_sent,launch_email_sent,beta_email_sent,approved_at,last_nudge_sent_at,created_at,import_batch_id) VALUES ('f8e1cbdb-436e-42f1-9f85-870075579fef','hello@melaninmaps.app',NULL,NULL,NULL,NULL,false,NULL,'pending','HELLOMEL',NULL,NULL,NULL,NULL,true,false,false,NULL,NULL,'2026-06-19 00:47:18.150516',NULL) ON CONFLICT (id) DO NOTHING`,
-      `INSERT INTO waitlist_signups (id,email,first_name,last_name,city,state,is_business_owner,website_url,status,referral_code,referred_by,family_group_id,notes,city_nomination,welcome_email_sent,launch_email_sent,beta_email_sent,approved_at,last_nudge_sent_at,created_at,import_batch_id) VALUES ('a045ce9c-fa43-47f2-b00b-849599b1d661','demo@example.com','Jordan','Williams','Atlanta','GA',false,NULL,'pending','DEMOEXAM',NULL,NULL,NULL,NULL,true,false,false,NULL,NULL,'2026-06-27 03:28:28.35042',NULL) ON CONFLICT (id) DO NOTHING`,
-      `INSERT INTO waitlist_signups (id,email,first_name,last_name,city,state,is_business_owner,website_url,status,referral_code,referred_by,family_group_id,notes,city_nomination,welcome_email_sent,launch_email_sent,beta_email_sent,approved_at,last_nudge_sent_at,created_at,import_batch_id) VALUES ('10db70f8-4f18-4da6-b464-1ee1131185bf','regression_test_delete_me@example.com','RegressionTest','DeleteMe','Atlanta','GA',false,NULL,'pending','REGRESSI',NULL,NULL,NULL,NULL,false,false,false,NULL,NULL,'2026-07-20 13:12:28.523315',NULL) ON CONFLICT (id) DO NOTHING`,
+    // Backfill any columns that may be missing from older schema versions
+    const addCols = [
+      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS city_nomination VARCHAR(150)`,
+      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS welcome_email_sent BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS launch_email_sent BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS beta_email_sent BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP`,
+      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS last_nudge_sent_at TIMESTAMP`,
+      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS import_batch_id VARCHAR(100)`,
+      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS family_group_id VARCHAR(36)`,
     ];
-    for (const sql of seeds) { await pool.query(sql); }
-    process.stderr.write(`DB_MIGRATION: seeded ${seeds.length} waitlist rows\n`);
+    for (const sql of addCols) {
+      try { await pool.query(sql); } catch(e) { process.stderr.write(`DB_MIGRATION: col skip: ${e.message}\n`); }
+    }
+    process.stderr.write("DB_MIGRATION: columns backfilled\n");
+
+    // Seed rows from Neon (idempotent)
+    const seeds = [
+      `INSERT INTO waitlist_signups (id,email,status,referral_code,welcome_email_sent,created_at) VALUES ('2db6dd96-1629-436b-ab1e-8f9b2b2f69f3','test@example.com','pending','TESTEXAM',true,'2026-06-19 00:46:35') ON CONFLICT (id) DO NOTHING`,
+      `INSERT INTO waitlist_signups (id,email,status,referral_code,welcome_email_sent,created_at) VALUES ('f8e1cbdb-436e-42f1-9f85-870075579fef','hello@melaninmaps.app','pending','HELLOMEL',true,'2026-06-19 00:47:18') ON CONFLICT (id) DO NOTHING`,
+      `INSERT INTO waitlist_signups (id,email,first_name,last_name,city,state,status,referral_code,welcome_email_sent,created_at) VALUES ('a045ce9c-fa43-47f2-b00b-849599b1d661','demo@example.com','Jordan','Williams','Atlanta','GA','pending','DEMOEXAM',true,'2026-06-27 03:28:28') ON CONFLICT (id) DO NOTHING`,
+      `INSERT INTO waitlist_signups (id,email,first_name,last_name,city,state,status,referral_code,created_at) VALUES ('10db70f8-4f18-4da6-b464-1ee1131185bf','regression_test_delete_me@example.com','RegressionTest','DeleteMe','Atlanta','GA','pending','REGRESSI','2026-07-20 13:12:28') ON CONFLICT (id) DO NOTHING`,
+    ];
+    for (const sql of seeds) { try { await pool.query(sql); } catch(e) { /* ignore dups */ } }
+    process.stderr.write(`DB_MIGRATION: seeded rows\n`);
+
+    // Diagnostic: run the actual waitlist/count queries
+    try {
+      const r1 = await pool.query(`SELECT count(*) AS total FROM waitlist_signups`);
+      process.stderr.write(`DB_DIAG waitlist count: ${JSON.stringify(r1.rows[0])}\n`);
+    } catch(e) { process.stderr.write(`DB_DIAG count FAIL: ${e.message}\n`); }
+
+    try {
+      const r2 = await pool.query(`SELECT city, count(*) AS total FROM waitlist_signups WHERE city IS NOT NULL GROUP BY city ORDER BY count(*) DESC`);
+      process.stderr.write(`DB_DIAG city groups: ${JSON.stringify(r2.rows)}\n`);
+    } catch(e) { process.stderr.write(`DB_DIAG city FAIL: ${e.message}\n`); }
+
     await pool.end();
-  } catch (err) {
-    process.stderr.write(`DB_MIGRATION: ERROR ${err.message}\n`);
+  } catch(err) {
+    process.stderr.write(`DB_MIGRATION: FATAL ${err.message}\n`);
   }
 }
-runWaitlistMigration();
+runMigration();
 
 const api = spawn(process.execPath, ["dist/index.mjs"], {
   env: { ...process.env, PORT: String(API_PORT) },
   stdio: "inherit",
 });
-api.on("exit", (code) => {
-  process.stderr.write(`API server exited: ${code}\n`);
-  process.exit(code || 1);
-});
+api.on("exit", (code) => { process.stderr.write(`API server exited: ${code}\n`); process.exit(code || 1); });
 
 const clientErrors = [];
 const app = express();
@@ -97,51 +120,57 @@ app.post("/__client-error", (req, res) => {
   req.on("data", (chunk) => { body += chunk; });
   req.on("end", () => {
     const entry = { ts: new Date().toISOString(), ua: req.headers["user-agent"] || "", body };
-    clientErrors.unshift(entry);
-    if (clientErrors.length > 50) clientErrors.pop();
+    clientErrors.unshift(entry); if (clientErrors.length > 50) clientErrors.pop();
     process.stderr.write(`[CLIENT-ERROR] ${body.slice(0, 500)}\n`);
     res.status(204).end();
   });
 });
 
-app.get("/__errors", (req, res) => {
-  res.json({ count: clientErrors.length, errors: clientErrors });
-});
+app.get("/__errors", (req, res) => { res.json({ count: clientErrors.length, errors: clientErrors }); });
 
 app.get("/__debug", (req, res) => {
-  const info = {
-    cwd: process.cwd(),
-    __dirname,
-    WEB_STATIC,
+  res.json({ cwd: process.cwd(), __dirname, WEB_STATIC,
     cwdContents: (() => { try { return fs.readdirSync(process.cwd()); } catch { return "error"; } })(),
-    webStaticContents: WEB_STATIC ? (() => { try { return fs.readdirSync(WEB_STATIC); } catch { return "error"; } })() : "not set",
-  };
-  res.json(info);
+    webStaticContents: WEB_STATIC ? (() => { try { return fs.readdirSync(WEB_STATIC); } catch { return "error"; } })() : "not set" });
+});
+
+// Waitlist diagnostic — bypasses API server, queries DB directly
+app.get("/api/waitlist-diag", async (req, res) => {
+  if (req.headers["x-probe-key"] !== process.env.DB_PROBE_KEY) return res.status(401).end();
+  const pool = buildPool();
+  if (!pool) return res.json({ error: "no DATABASE_URL" });
+  try {
+    const r1 = await pool.query(`SELECT count(*) AS total FROM waitlist_signups`);
+    let r2rows = [];
+    try {
+      const r2 = await pool.query(`SELECT city, count(*) AS total FROM waitlist_signups WHERE city IS NOT NULL GROUP BY city ORDER BY count(*) DESC`);
+      r2rows = r2.rows;
+    } catch(e2) { r2rows = [{ error: e2.message }]; }
+    await pool.end();
+    res.json({ count: Number(r1.rows[0].total), cities: r2rows });
+  } catch(err) {
+    try { await pool.end(); } catch {}
+    res.json({ error: err.message, code: err.code });
+  }
 });
 
 app.get("/api/db-probe", (req, res) => {
   if (process.env.DB_PROBE_ENABLED !== "true") return res.status(404).end();
   const probeKey = process.env.DB_PROBE_KEY;
   if (!probeKey || req.headers["x-probe-key"] !== probeKey) return res.status(401).json({ error: "Unauthorized" });
-
   let databaseUrl;
   try { databaseUrl = new URL(process.env.DATABASE_URL ?? ""); }
   catch { return res.json({ connected: false, elapsedMs: 0, hostCategory: "unknown", error: { code: "INVALID_DATABASE_URL" } }); }
-
   const host = databaseUrl.hostname;
   const port = Number(databaseUrl.port || 5432);
   const hostCategory = host.endsWith(".internal") ? "internal" : "public-proxy";
   const startedAt = Date.now();
   const socket = net.createConnection({ host, port });
   let finished = false;
-
   const finish = (payload) => {
-    if (finished) return;
-    finished = true;
-    socket.destroy();
+    if (finished) return; finished = true; socket.destroy();
     if (!res.headersSent) res.json({ ...payload, elapsedMs: Date.now() - startedAt, hostCategory, host, port });
   };
-
   socket.setTimeout(3000);
   socket.once("connect", () => finish({ connected: true }));
   socket.once("timeout", () => finish({ connected: false, error: { code: "ETIMEDOUT" } }));
@@ -164,6 +193,4 @@ if (WEB_STATIC) {
   app.get("*", (req, res) => { res.status(503).send(`Web app not found. WEB_STATIC is null.`); });
 }
 
-app.listen(PORT, () => {
-  process.stderr.write(`Listening on port ${PORT} — API on ${API_PORT}\n`);
-});
+app.listen(PORT, () => { process.stderr.write(`Listening on port ${PORT} — API on ${API_PORT}\n`); });
