@@ -46,6 +46,17 @@ Community discovery, travel, and business platform celebrating Black culture —
 - **Profile** — auth state, saved businesses, settings, membership
 - **Events & Community** — event listings, community feed
 
+## Authentication Freeze (Active until public launch)
+
+Authentication is a protected subsystem. Until public launch:
+- **Do not** redesign or refactor authentication architecture
+- **Do not** change session handling, Better Auth config, token format, refresh logic, or login flow without explicit approval
+- **Do not** introduce new auth features unless a confirmed defect requires them
+- **Only** implement narrowly scoped surgical fixes for reproducible, diagnosed bugs
+- Every auth fix requires a regression plan covering: Email login, Phone login, Apple Sign-In, Logout, Session restore, Session expiration, Password reset, Multi-account switching
+
+Approved surgical fixes: logout race condition (LB-008), misleading error messages, request timeouts, reproducible diagnosed login bugs.
+
 ## User preferences
 
 - **Response format:** All substantive responses (plans, documents, dashboards, proposals) must be provided in a copyable text box (markdown code block) so they can be copied and shared directly with advisors.

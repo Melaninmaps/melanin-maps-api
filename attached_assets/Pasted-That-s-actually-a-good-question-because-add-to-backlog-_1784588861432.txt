@@ -1,0 +1,103 @@
+That's actually a good question, because "add to backlog" can sound like nothing is happening.
+
+In software development, the **backlog** is simply the prioritized list of work that has been approved as an idea but **not yet implemented**.
+
+So when Replit said:
+
+> "Logging the profile/Community Identity updates and advisor guidance to the backlog..."
+
+they mean:
+
+> "I'm recording these as approved future work so they aren't forgotten, but I am **not changing the code yet**."
+
+For example, in your case:
+
+**Backlog item**
+
+* Community Identity profile
+* Social media links for members
+* Cultural Ambassador badge
+* Mentor badge
+* Languages spoken
+* HBCU
+* Travel style
+* Visibility controls
+
+Status:
+
+* ✅ Idea captured
+* ❌ Not built yet
+
+---
+
+Then they said:
+
+> "...adding the Auth Freeze protocol to replit.md..."
+
+This is different.
+
+That means they're updating **their internal project instructions/documentation**, not your app.
+
+Think of `replit.md` as the "rules of engagement" for anyone (or any AI agent) working on your project.
+
+So adding an **Auth Freeze** section means future Replit sessions should read something like:
+
+> Authentication is frozen.
+> Do not redesign authentication.
+> Only implement approved bug fixes.
+> Any auth change requires explicit approval.
+
+That doesn't change your mobile app at all—it changes how Replit behaves going forward.
+
+---
+
+Finally, they said:
+
+> "...running the pre-build functional verification audit simultaneously."
+
+This means they're going to **inspect and test** the app before building.
+
+Again, **no code changes**.
+
+They're checking things like:
+
+* Does the map render?
+* Does Kinfolk speak?
+* Does login work?
+* Do businesses appear?
+* Do reports submit?
+* Do voices persist?
+
+---
+
+### In short
+
+They are doing **three different things**:
+
+1. **Backlog** → Remember it for later. No code.
+2. **replit.md** → Update project rules. No app changes.
+3. **Functional audit** → Test the current app. No code.
+
+Only when you later say:
+
+> **"Please implement LB-013"**
+
+(or whatever backlog item it is)
+
+does it move from:
+
+**Backlog → In Development → Tested → Built.**
+
+## One recommendation
+
+Given how close you are to launch, I would ask Replit to start using explicit statuses for every item so there's never any ambiguity:
+
+* 📝 **Backlog** — Idea recorded only.
+* 🔍 **Approved for Design** — Requirements being worked out.
+* ⚙️ **Approved for Implementation** — You have authorized coding.
+* 🧪 **In Testing** — Code written, being verified.
+* ✅ **Verified** — Passed testing.
+* 🚀 **Included in Next Build** — Will be in the next iOS/Android build.
+* 📦 **Released** — Live in production.
+
+That will make it much easier for you to see exactly where every feature stands and prevent anything from accidentally being implemented before you're ready.
