@@ -1,0 +1,130 @@
+Yes, that makes complete sense. KinfolkAI should understand that one human can have **multiple roles and contexts** without becoming multiple people.
+
+The core rule should be:
+
+> **One user identity, multiple context profiles, one connected memory system with clear boundaries.**
+
+A business owner may be:
+
+* a community member personally,
+* a business owner professionally,
+* an event organizer in another context,
+* and possibly an admin or Cultural Ambassador later.
+
+KinfolkAI should recognize the overlap, but it should not blur everything together.
+
+## How it should work
+
+For a personal/community context, KinfolkAI might say:
+
+> “You saved an outdoor event for Saturday. The forecast may affect it.”
+
+For that same person in business-owner context:
+
+> “Your business has a block party scheduled Saturday. Rain is expected in the afternoon. Would you like help drafting a weather update, reviewing an indoor backup plan, or notifying attendees?”
+
+For budgeting:
+
+* **Community member cadence:** household spending, bills, savings goals, transportation, childcare.
+* **Business-owner cadence:** revenue, event costs, inventory, payroll, vendor deposits, cash flow, taxes, and business reserves.
+
+The same underlying person may choose to let those contexts inform each other, but KinfolkAI should not automatically treat personal money and business money as interchangeable.
+
+The roadmap already establishes that KinfolkAI is tier-based across platforms and that existing enrichment uses preferences, Life Journey, events, safety, weather, and saved places.  What is missing is an explicit **role-and-context framework**.
+
+Add this to Replit’s launch-safe implementation instructions:
+
+> ## Role-, Profile-, and Tier-Aware KinfolkAI Behavior
+>
+> KinfolkAI must understand that one canonical user may hold multiple roles or profiles, including:
+>
+> * Community Member
+> * Business Owner
+> * Event Organizer
+> * Cultural Ambassador
+> * Admin or Staff
+>
+> These are not separate user identities. They are distinct contexts attached to the same canonical user ID.
+>
+> ### Required behavior
+>
+> 1. KinfolkAI must adapt its wording, suggestions, priorities, and follow-up cadence based on the user’s active context.
+>
+> 2. Personal/community context and business/professional context may inform one another only when relevant and permitted.
+>
+> 3. KinfolkAI must never merge personal and business finances, schedules, private notes, or goals without the user’s permission.
+>
+> 4. When context is ambiguous, KinfolkAI should ask:
+>
+>    “Are you asking about this for yourself or for your business?”
+>
+> 5. A business owner must still receive the normal community-member experience when using their personal profile.
+>
+> 6. The business context should consider business-specific information such as:
+>
+>    * business events;
+>    * hours;
+>    * promotions;
+>    * customer communications;
+>    * inventory or vendor needs;
+>    * business budgeting and cash flow;
+>    * business travel;
+>    * business safety and weather exposure.
+>
+> 7. The personal context should consider personal information such as:
+>
+>    * saved events;
+>    * household budget;
+>    * personal travel;
+>    * family needs;
+>    * accessibility and dietary preferences;
+>    * personal goals and Life Journey.
+>
+> 8. Cross-context alerts may be offered when useful, but should disclose the connection and allow the user to dismiss it.
+>
+> Example:
+>
+> * Personal context: “You have a community event saved Saturday, and rain is expected.”
+> * Business context: “Your business block party is scheduled Saturday, and rain is expected. Would you like help creating a backup plan or attendee message?”
+> * Cross-context conflict: “You saved a personal event at 2 PM, but your business calendar also shows a meeting then. Would you like to compare the details?”
+>
+> ### Tier behavior
+>
+> Preserve the existing tier-depth model. Role context and membership tier are separate:
+>
+> * Role determines **which context and responsibilities matter**.
+> * Tier determines **how much depth, proactive enrichment, and breadth of assistance is available**.
+>
+> A business owner on a lower tier should not receive premium-depth outputs merely because they own a business. A higher-tier community member should receive deeper personal assistance without being treated as a business owner.
+>
+> ### Launch-safe implementation boundary
+>
+> For tonight, implement only:
+>
+> * system-prompt awareness of active role/profile context;
+> * clarification when personal versus business intent is ambiguous;
+> * business-specific versus personal examples and response rules;
+> * preservation of existing tier-depth rules.
+>
+> Do not build tonight:
+>
+> * a new database schema;
+> * new calendar synchronization;
+> * autonomous cross-profile notifications;
+> * long-term role-specific memory storage;
+> * financial-account integrations;
+> * new permissions or authentication flows.
+>
+> Before implementation, confirm:
+>
+> 1. Where the active role/profile context currently comes from.
+> 2. Whether both iOS and Android already pass that context to KinfolkAI.
+> 3. Whether a user with both community and business roles can switch contexts today.
+> 4. Which exact files would change.
+> 5. That no authentication or user-ID logic will be modified.
+
+One subtle but important design rule: **role context should be visible to the user**. KinfolkAI should not silently guess whether it is speaking personally or professionally. A small selector such as:
+
+> Personal | Business
+
+would eventually make this clear. For tonight, the prompt-level clarification is enough, but the selector belongs on the near-term roadmap.
