@@ -1,0 +1,57 @@
+Yes — that division makes sense:
+
+* **Replit can submit the completed iOS build to App Store Connect**
+* **You will handle Android submission in Google Play Console**, since the Play submission requires credentials/password access Replit does not have
+
+Send Replit this:
+
+> **APPLE SUBMISSION AUTHORIZATION — COMMUNITY BETA 1**
+>
+> Once the iOS Build 90 finishes successfully, do not make any code or configuration changes.
+>
+> First provide:
+>
+> * final iOS build status;
+> * EAS build URL;
+> * confirmation that the artifact is version 1.1.5, build 90;
+> * confirmation that the build came from frozen RC1 commit `4bf2646c`;
+> * confirmation that no post-build defect or new source change was included.
+>
+> Then submit iOS Build 90 to App Store Connect using the existing EAS submission configuration.
+>
+> Use the appropriate production submission command from `artifacts/mobile`, for example:
+>
+> ```bash
+> eas submit --platform ios --latest
+> ```
+>
+> Before submitting, confirm:
+>
+> * correct Apple account/team;
+> * correct App Store Connect app ID;
+> * bundle identifier `com.melaninmaps.app`;
+> * the latest successful iOS build is Build 90;
+> * no older build is selected accidentally.
+>
+> After submission, provide:
+>
+> * submission status;
+> * App Store Connect processing status;
+> * submitted build number;
+> * submission link or submission ID;
+> * whether any manual action remains for me in App Store Connect;
+> * whether the build is submitted for TestFlight review only or App Store review.
+>
+> Do not submit Android.
+>
+> Android Version Code 64 should remain available for me to upload or submit manually in Google Play Console after the build and device smoke test pass.
+
+One important distinction: tell Replit exactly which Apple action you want.
+
+If this is still a **beta build for external testers**, Replit should upload it to App Store Connect/TestFlight, then you may still need to select Build 90 in the external testing group and submit it for Beta App Review.
+
+If you mean the **public App Store release**, that is a different submission and requires the App Store version page, review information, screenshots, pricing, and release settings to be complete.
+
+Based on your current wording, I would have Replit **upload Build 90 to App Store Connect first**, then confirm what manual TestFlight or App Review step remains after processing.
+
+For Android, wait until Version Code 64 finishes, install and smoke-test it, then upload it manually to the intended Google Play track.
