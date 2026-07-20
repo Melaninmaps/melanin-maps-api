@@ -1,0 +1,56 @@
+This is ready for the next step.
+
+## Do this now
+
+Tell Replit:
+
+> **Please push the Railway-only database pool fix to the `Melaninmaps/melanin-maps-api` GitHub repository on the `main` branch.**
+>
+> Confirm:
+>
+> * only `lib/db/src/index.ts` is included in the commit;
+> * RC1 commit `3c20ce48` remains the frozen mobile build baseline;
+> * no mobile, authentication, schema, prompt, or configuration files are included;
+> * Railway’s automatic deployment starts successfully;
+> * provide the new commit hash and deployment status;
+> * do not start the EAS mobile builds yet.
+
+Once Railway reports the deployment is live, run these browser checks:
+
+```text
+https://www.mappingwithmelanin.com/api/healthz
+```
+
+Then:
+
+```text
+https://www.mappingwithmelanin.com/api/waitlist/count
+```
+
+Refresh the waitlist count endpoint immediately a second time. The important result is:
+
+* first request may still be slower because the new Railway process and Neon connection are cold;
+* second request should be fast;
+* another request after 30 seconds and after 2 minutes should remain fast.
+
+You do **not** need to sit and wait six minutes before beginning the builds if the first, second, 30-second, and 2-minute tests pass. The six-minute test is useful operational information, but it is not a store-build gate.
+
+## Final production check
+
+After the endpoint is responsive, submit one test waitlist entry through the actual public form—not through a developer command—and confirm:
+
+1. the user sees a clear success response;
+2. the entry appears once in the production Admin Waitlist tab;
+3. no unintended welcome, beta, or launch email fires;
+4. the entry can be identified as a test record for later removal.
+
+Then the sequence is:
+
+1. Start the iOS production build from RC1.
+2. Start the Android production build from RC1.
+3. Visually verify the KinfolkAI greeting and starter chips on the builds.
+4. Smoke-test login, logout, map, waitlist, profile, and KinfolkAI.
+5. Submit iOS.
+6. Submit Android if Google’s upload-key reset is approved; otherwise hold the completed AAB.
+
+The key discipline is that **the Railway server fix and the mobile release candidate are now separate tracks**. The server can move forward without changing the frozen mobile source.
