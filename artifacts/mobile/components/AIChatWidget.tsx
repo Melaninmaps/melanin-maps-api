@@ -53,6 +53,15 @@ async function getToken(): Promise<string | null> {
 
 const GREETING = "Kinfolk's here. Let's map it out.";
 
+const STARTER_PROMPTS = [
+  "Help me understand a math problem",
+  "Help me complete a job application",
+  "Draft a professional email for me",
+  "Help me decide where to go next",
+  "Find a minority-owned business for me",
+  "What should I consider about safety in this area?",
+];
+
 const SIGNATURE_PHRASE = "Kinfolk's here.";
 const VOICE_PREF_KEY = "@kinfolk_voice_pref";
 const SIGNATURE_DATE_KEY = "@kinfolk_sig_date";
@@ -699,6 +708,31 @@ export function AIChatWidget() {
               </View>
             ) : null}
           />
+
+          {/* Conversation starter chips — visible before first user message */}
+          {messages.length === 1 && !typing && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={[styles.chipsScroll, { borderTopColor: colors.border }]}
+              contentContainerStyle={styles.chipsRow}
+              keyboardDismissMode="on-drag"
+            >
+              {STARTER_PROMPTS.map((s, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={[styles.chip, { backgroundColor: colors.card, borderColor: colors.primary + "44" }]}
+                  onPress={() => {
+                    setInput(s);
+                    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.chipTxt, { color: colors.foreground }]}>{s}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
 
           {/* Quick-reply suggestion chips */}
           {suggestions.length > 0 && !typing && (
