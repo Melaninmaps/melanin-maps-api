@@ -587,7 +587,7 @@ export function AIChatWidget() {
               </View>
               <View>
                 <Text style={[styles.modalTitle, { color: colors.foreground }]}>KinfolkAI™</Text>
-                <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>Helping you navigate what matters.</Text>
+                <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>Helping you navigate what matters most.</Text>
               </View>
             </View>
             <View style={styles.headerActions}>
