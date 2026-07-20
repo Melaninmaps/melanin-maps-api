@@ -1,0 +1,50 @@
+That means we should **pause the build for a moment**. A page that keeps loading without returning either JSON or an error is not a successful check.
+
+The earlier `api.` address definitely failed DNS. Now the `www` endpoint appears to be hanging rather than completing. We need Replit to determine whether:
+
+* the request reaches Railway but the waitlist database query hangs;
+* the route path is incorrect;
+* the deployed production bundle does not contain the expected route;
+* or the `www` domain is not currently forwarding API traffic correctly.
+
+Send Replit this:
+
+> **PRODUCTION API ROUTING CHECK — READ ONLY**
+>
+> The browser checks did not pass:
+>
+> 1. `https://api.mappingwithmelanin.com/api/waitlist/count` returns “Safari can’t find the server.”
+> 2. `https://www.mappingwithmelanin.com/api/waitlist/count` does not return JSON or an error; the page continues loading indefinitely.
+> 3. Do not make DNS, Railway, database, or code changes yet.
+>
+> Please perform a focused production diagnosis and report:
+>
+> 1. What is the single canonical production API hostname used by the deployed web, iOS, and Android clients?
+> 2. Is it:
+>
+>    * `https://www.mappingwithmelanin.com/api/...`
+>    * `https://api.mappingwithmelanin.com/api/...`
+>    * another Railway domain?
+> 3. Confirm the exact production route registered for the waitlist count endpoint.
+> 4. Confirm whether the request reaches Railway by checking production access logs.
+> 5. Check whether the request starts but hangs during a production database query.
+> 6. Test these endpoints directly from the Railway service environment:
+>
+>    * `GET /api/healthz`
+>    * `GET /api/waitlist/count`
+> 7. Report the HTTP status, response body, response time, and relevant log entry for each.
+> 8. Confirm whether the currently deployed Railway bundle includes the waitlist count route.
+> 9. Confirm the production database table queried by that route exists and is reachable.
+> 10. Do not substitute development-server results for production results.
+>
+> End with one diagnosis:
+>
+> * **Routing/DNS issue**
+> * **Deployment mismatch**
+> * **Database/query issue**
+> * **Endpoint path issue**
+> * **No issue found**
+>
+> Then provide the smallest safe repair, but do not implement it until I approve.
+
+For now, leave Replit on hold from building. This does **not** mean the entire app is broken; it means our required production waitlist verification has not passed yet. Once Replit identifies whether the problem is routing, deployment, or the database query, we can decide whether it must be repaired before the builds or whether it only affects waitlist launch activation.
