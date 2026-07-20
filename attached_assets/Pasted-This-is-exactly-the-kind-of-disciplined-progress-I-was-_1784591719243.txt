@@ -1,0 +1,254 @@
+This is exactly the kind of disciplined progress I was hoping to see.
+
+Here's where I think you stand now:
+
+### ✅ RC2 Blockers Status
+
+| Item                   | Status        | My Assessment                                                                |
+| ---------------------- | ------------- | ---------------------------------------------------------------------------- |
+| LB-008 Logout/Login    | ✅ Implemented | Good. Needs physical device verification only.                               |
+| LB-010B Map            | ✅ Implemented | Good. Needs iPhone verification and additional Philadelphia content seeding. |
+| LB-018 Kinfolk Welcome | ✅ Implemented | Good. Very low risk. Nice improvement.                                       |
+| Under-13 Gate          | ⏳ Not started | Last approved blocker before RC2 source freeze.                              |
+
+---
+
+## My recommendation
+
+I **would not stop here**.
+
+I would absolutely continue to the Under-13 gate because it is:
+
+* small
+* isolated
+* server-only
+* doesn't affect the mobile UI
+* closes an important policy gap before launch
+
+Then I'd stop making changes.
+
+---
+
+# After the Under-13 gate
+
+This is where I would change the process.
+
+Instead of continuing to build more features, I would tell Replit:
+
+> **RC2 Source Freeze**
+
+From that point forward:
+
+No new coding.
+
+No "while we're here."
+
+No polishing.
+
+No backlog implementation.
+
+Instead...
+
+---
+
+# Full Launch Verification
+
+This is where I want Replit to spend their time.
+
+Not coding.
+
+Testing.
+
+I want them to verify every major workflow before we cut another build.
+
+Something like:
+
+## Authentication
+
+* Email login
+* Phone login
+* Apple login
+* Logout
+* Session restore
+* Screen timeout
+* Force close
+* Password reset
+
+---
+
+## Maps
+
+* Apple Maps loads
+* Android Maps loads
+* Business pins
+* Heritage pins
+* Community reports
+* Report Intel
+* Tap business
+* Tap heritage
+* Philadelphia fallback
+* GPS permission denied
+* GPS permission allowed
+
+---
+
+## Kinfolk
+
+* Welcome copy
+* Voice selection
+* Voice playback
+* Listen
+* Context memory
+* Lists
+* Follow-up chips
+
+---
+
+## Businesses
+
+* Search
+* Save
+* Share
+* Call
+* Website
+* Social links
+* Videos
+* Photos
+
+---
+
+## Community
+
+* Posts
+* Groups
+* Reporting
+* Moderation
+
+---
+
+## Membership
+
+* Upgrade
+* Restore
+* RevenueCat
+
+---
+
+## Admin
+
+* Reports received
+* Business approval
+* Waitlist
+* Notifications
+
+---
+
+# Then...
+
+Only after that...
+
+I would have Replit produce one document.
+
+I would actually call it:
+
+> **RC2 Launch Certification**
+
+Not "Ready."
+
+Certified.
+
+Meaning:
+
+✔ Authentication verified
+
+✔ Maps verified
+
+✔ Businesses verified
+
+✔ Kinfolk verified
+
+✔ Admin verified
+
+✔ Notifications verified
+
+✔ Reports verified
+
+✔ Payments verified
+
+✔ Voice verified
+
+✔ Heritage verified
+
+✔ Community verified
+
+✔ Railway verified
+
+✔ TypeScript verified
+
+✔ Production verified
+
+✔ Device verified
+
+---
+
+## One thing I'd add
+
+I think we're now at the point where I'd like Replit to stop saying:
+
+> "TypeScript passed."
+
+and instead say:
+
+> **Evidence**
+
+For example:
+
+```
+Email Login
+PASS
+Evidence:
+Video
+Screenshot
+API Response
+
+Map
+PASS
+Evidence:
+iPhone 15
+Android Pixel
+Screenshot
+
+Kinfolk Voice
+PASS
+Evidence:
+Screen recording
+
+Business Pin
+PASS
+Evidence:
+Opened Jefferson Street BBQ
+```
+
+That's the level of confidence I want before launch.
+
+---
+
+## My biggest remaining concern
+
+It's no longer authentication.
+
+It's no longer Kinfolk.
+
+It's actually **content density**.
+
+When I picture a first-time user opening Mapping With Melanin™, I want them to immediately think:
+
+> **"There's a vibrant community here."**
+
+Not:
+
+> "There are a few pins."
+
+That's why I want to elevate MAP-001. Seeding more Philadelphia-area cultural sites, landmarks, and community anchors before launch will make the platform feel established from the first interaction.
+
+I think that investment in launch content will have a greater impact on early testers than adding another feature. It reinforces the vision you've shared from the beginning: helping people feel connected, informed, and welcomed wherever they are.
