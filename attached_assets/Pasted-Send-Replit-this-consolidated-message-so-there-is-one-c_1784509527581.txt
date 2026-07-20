@@ -1,0 +1,72 @@
+Send Replit this consolidated message so there is one clear set of instructions and no conflicting tests:
+
+> Two definitive findings have now confirmed the cause of the admin failure:
+>
+> * `https://www.mappingwithmelanin.com/api/healthz` → **200**
+> * `https://mappingwithmelanin.com/api/healthz` → **404**
+> * `GET /api/auth/user` → **200 on the www domain**
+>
+> ## Confirmed root cause
+>
+> The apex domain, `mappingwithmelanin.com`, is not connected to the Railway API.
+>
+> When I used:
+>
+> `mappingwithmelanin.com/admin`
+>
+> the page’s static files loaded, but the API requests returned 404:
+>
+> * `/api/admin/check` returned 404
+> * `/api/auth/user` returned 404
+> * `/api/auth/login-email` would also return 404
+>
+> The admin page then treated the failed admin check as `isAdmin: false` and displayed **Access Denied**. The apparent successful login on the apex domain did not prove that a new production session was created.
+>
+> The `www` and apex domains also have separate cookies and localStorage because the session cookie does not specify a shared domain. Authentication established on one host is therefore invisible to the other.
+>
+> ## Correct read-only confirmation test
+>
+> I will navigate specifically to:
+>
+> `https://www.mappingwithmelanin.com`
+>
+> and run these checks there:
+>
+> **Command 1 — identify the active session account**
+>
+> ```javascript
+> fetch('/api/auth/user', { credentials: 'include' })
+>   .then(r => r.json())
+>   .then(d => console.log(JSON.stringify(d.user, null, 2)))
+> ```
+>
+> **Command 2 — determine whether an email-login token exists without exposing it**
+>
+> ```javascript
+> console.log(
+>   'token:',
+>   localStorage.getItem('web_auth_token')
+>     ? '[TOKEN EXISTS]'
+>     : null
+> )
+> ```
+>
+> Do not ask me to test from the apex domain because its API currently returns 404.
+>
+> ## Required repair order
+>
+> Please remain read-only until I share the two console results. Then propose the smallest safe repair plan in this order:
+>
+> 1. Make one hostname canonical.
+> 2. Redirect the other hostname to it before the application loads.
+> 3. Ensure all login, logout, admin, and API requests use the canonical hostname.
+> 4. Eliminate the possibility of duplicate same-name `sid` cookies.
+> 5. Standardize web authentication so different endpoints cannot resolve different credentials or different user accounts.
+> 6. Preserve and inventory both existing user records before any merge, deletion, or reassignment.
+> 7. Confirm the admin account works on the canonical production hostname.
+>
+> Do not merge users, delete sessions, alter roles, modify DNS, or deploy authentication changes until the console results are reviewed and the proposed change plan is approved.
+>
+> Also report separately whether the apex-domain 404 is caused by Railway custom-domain configuration, DNS records, proxy/routing configuration, or the application’s host handling.
+
+One important point: the domain failure is now confirmed, but we still need the two `www` console results before concluding which account is active there. That keeps the confirmed routing problem separate from the duplicate-account problem.
