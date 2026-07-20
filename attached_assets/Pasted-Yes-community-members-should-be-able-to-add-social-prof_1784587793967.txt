@@ -1,0 +1,377 @@
+Yes—community members should be able to add social profiles, but it should be **optional, privacy-controlled, and different from the business experience**.
+
+A person may want to share their Instagram, TikTok, YouTube, LinkedIn, portfolio, blog, or business page so others can understand who they are or follow their work. But the platform should never pressure members to connect outside accounts, especially minors or people participating in sensitive groups.
+
+## Recommended media structure
+
+### Every member, including free users
+
+Every user should be able to:
+
+* upload one profile photo;
+* replace or remove it;
+* control who can see it;
+* report impersonation or misuse;
+* keep the default avatar if they prefer not to upload one.
+
+A profile photo should **never require a paid tier**.
+
+### Community-member profiles
+
+Optional social links:
+
+* Instagram
+* TikTok
+* YouTube
+* LinkedIn
+* personal website or portfolio
+* approved additional platform
+
+Recommended controls:
+
+* Show on my public profile
+* Show only to connections
+* Keep private
+* Open links externally with a warning
+* Allow messages from people who find me through my profile
+
+For adults, a limited number of social links can be included by tier. For minors, I would default social links to hidden and require the approved parental-control rules before allowing them publicly.
+
+Community members should also be able to link a social video to a post, but:
+
+* it should not autoplay;
+* it should show the original platform and creator;
+* the platform should validate the URL;
+* age/viewer-rating rules must apply;
+* users must be able to report it;
+* the app should not download or rehost copyrighted media without permission.
+
+### Businesses
+
+Businesses need a richer media system:
+
+* logo;
+* cover image;
+* profile gallery;
+* featured introduction video;
+* additional external social videos;
+* Instagram, TikTok, YouTube, Facebook, LinkedIn and website links;
+* optional booking, menu, storefront or ordering links.
+
+Owner-provided videos should be labeled:
+
+> **From the Business**
+
+Community-contributed videos should be labeled:
+
+> **Shared by the Community**
+
+Those should never be mixed together without attribution.
+
+### Suggested tier logic
+
+The exact limits can be adjusted after Replit audits existing membership tiers, but the structure could be:
+
+| Account                   |                               Images |              External videos |                Social links |
+| ------------------------- | -----------------------------------: | ---------------------------: | --------------------------: |
+| Community Free            |  Profile photo + limited post images |       Limited links in posts |                         1–2 |
+| Paid Community            |             More post/media capacity | More saved or featured media |                  More links |
+| Community-Listed Business |  Community images only until claimed |       Community-linked media | Official links not editable |
+| Claimed Basic Business    |           Logo, cover, small gallery |             1 featured video |               Core profiles |
+| Premium Business          |                       Larger gallery |     Multiple featured videos |             Full social set |
+| Highest Business Tier     | Expanded media, campaigns and events |         Larger video library |    Full links and analytics |
+
+The limits should apply to **storage and promotion benefits**, not basic dignity or identity. Profile photos should remain available to everyone.
+
+## Navigation recommendation
+
+The screenshot you shared is a classic slide-out drawer. It is cleaner than the crowded bottom bar, but I would use a **hybrid approach** rather than hiding everything.
+
+Keep only the most frequently needed destinations at the bottom:
+
+* Discovery
+* Map
+* Safety
+* Community
+
+Use a menu icon in the upper-left for:
+
+* Events
+* My Knowledge
+* Messages
+* Saved places
+* Membership
+* Business Dashboard
+* Profile
+* Notifications
+* Settings
+* Help
+* Log Out
+
+That gives iPhone users more screen space without making essential safety and discovery tools harder to reach. The drawer should match your own visual system; the reference image should guide the interaction, not be copied.
+
+## What must be resolved before the new build
+
+This cannot be treated as a wording-only release. The next candidate should not be built until these are repaired and tested:
+
+* logout → immediate login;
+* email login for phone-created users;
+* iOS white-screen map;
+* Report Intel submission;
+* database pool resilience;
+* internal tab labels;
+* image/video upload and social-link permissions;
+* new menu navigation.
+
+We cannot honestly **guarantee** them before testing, but we can require proof through a build gate.
+
+## Send Replit this exact request
+
+> # MWM NEXT RELEASE CANDIDATE — MEDIA, NAVIGATION AND AUTH STABILITY
+>
+> **Audit first. No implementation until the full impact report is approved.**
+>
+> We are no longer attempting the historical Replit database rollback. Do not change or roll back checkpoints for waitlist recovery.
+>
+> The next iOS and Android release must include the latest approved improvements, but no build may begin until all must-fix authentication, map, reporting and database-resilience items pass verification.
+>
+> ## PART 1 — MEMBER AND BUSINESS MEDIA AUDIT
+>
+> Review all existing media functionality across:
+>
+> * user profiles;
+> * community posts;
+> * business profiles;
+> * business dashboard;
+> * events;
+> * community groups;
+> * storage services;
+> * moderation;
+> * membership tiers;
+> * parental controls;
+> * viewer-rating rules.
+>
+> Confirm what already exists for:
+>
+> * profile photos;
+> * cover images;
+> * image galleries;
+> * direct video uploads;
+> * external social-video links;
+> * general social-profile links;
+> * URL previews;
+> * media reporting and removal.
+>
+> Do not duplicate existing infrastructure.
+>
+> ## PART 2 — REQUIRED PROFILE-PHOTO RULE
+>
+> Every registered user, regardless of tier or role, must be able to:
+>
+> * upload one profile picture;
+> * replace it;
+> * remove it;
+> * use a default avatar instead;
+> * control visibility according to existing privacy rules.
+>
+> Profile-photo access must never require a paid membership.
+>
+> Confirm storage, image validation, file-size limits, supported formats, image processing, deletion and broken-image fallback.
+>
+> ## PART 3 — COMMUNITY-MEMBER SOCIAL PROFILES
+>
+> Propose optional member-profile links for approved platforms:
+>
+> * Instagram;
+> * TikTok;
+> * YouTube;
+> * LinkedIn;
+> * website or portfolio;
+> * other allowlisted platforms.
+>
+> Required safeguards:
+>
+> * links are optional;
+> * member chooses Public, Connections Only or Private;
+> * no automatic importing of external contacts or posts;
+> * validate and normalize URLs;
+> * clearly indicate that links open an external service;
+> * provide report/block controls;
+> * do not expose private account information;
+> * respect under-18 and parental-control rules;
+> * default minor social links to hidden unless the approved parental model permits otherwise;
+> * never display private social links to businesses, advertisers or unrelated members.
+>
+> Recommend tier limits, but basic profile dignity and privacy must remain free.
+>
+> ## PART 4 — COMMUNITY VIDEO LINKS
+>
+> Community members may attach approved external social-video links to eligible posts.
+>
+> Requirements:
+>
+> * allowlisted domains only;
+> * no autoplay;
+> * preserve original platform and creator attribution;
+> * do not download or rehost copyrighted media by default;
+> * generate a safe preview where technically permitted;
+> * provide a plain-link fallback when previews fail;
+> * apply viewer-rating and parental-control filters to the video, caption, audio, description and linked destination;
+> * provide reporting and moderation;
+> * prevent duplicate posting and link spam;
+> * apply tier-based posting limits already approved for community media.
+>
+> ## PART 5 — BUSINESS MEDIA AND SOCIAL LINKS
+>
+> Claimed businesses should be able to manage:
+>
+> * logo;
+> * cover image;
+> * image gallery;
+> * featured introduction video;
+> * additional approved external social videos according to tier;
+> * website;
+> * Instagram;
+> * TikTok;
+> * YouTube;
+> * Facebook;
+> * LinkedIn;
+> * approved booking, menu, ordering or storefront links.
+>
+> Clearly distinguish:
+>
+> * **From the Business**
+> * **Shared by the Community**
+>
+> A business may manage only owner-provided media after ownership is verified. Community-contributed media remains attributed to its contributor and subject to moderation.
+>
+> Audit the existing business membership tiers and propose appropriate image, video and link limits without changing pricing in this phase.
+>
+> ## PART 6 — NAVIGATION REDESIGN
+>
+> Evaluate and propose a hybrid drawer-navigation design inspired by a standard mobile side menu, but using Mapping With Melanin’s own colors, typography, icons and components.
+>
+> Proposed persistent bottom destinations:
+>
+> * Discovery
+> * Map
+> * Safety
+> * Community
+>
+> Proposed side-menu destinations:
+>
+> * Events
+> * My Knowledge
+> * Messages
+> * Saved Places
+> * Membership
+> * Business Dashboard, when applicable
+> * Profile
+> * Notifications
+> * Settings
+> * Help
+> * Log Out
+>
+> Requirements:
+>
+> * eliminate internal labels such as `index` and `safety-hub`;
+> * preserve deep links and existing routes;
+> * do not hide urgent safety access;
+> * support one-handed use;
+> * support VoiceOver and TalkBack;
+> * test small and large iPhones and Android devices;
+> * ensure the drawer does not collide with KinfolkAI’s floating control;
+> * include the signed-in member’s avatar and name without exposing sensitive information;
+> * show role-specific destinations without creating separate user IDs or sessions.
+>
+> Return wireframe descriptions and migration risk before implementation.
+>
+> ## PART 7 — MUST-FIX RELEASE GATE
+>
+> The following must be confirmed repaired before the next build:
+>
+> * LB-008 logout cleanup and immediate fresh login;
+> * LB-009 database resilience and automatic recovery;
+> * LB-010A Report Intel submission;
+> * LB-010B iOS Map white screen;
+> * LB-011 user-facing navigation labels;
+> * LB-012 email/phone authentication clarity and account preservation.
+>
+> Confirm whether any newly discovered auth, map or production defects remain.
+>
+> ## PART 8 — IMPLEMENTATION BATCHES
+>
+> Propose small batches:
+>
+> 1. P0 stability: auth, database, map and reporting.
+> 2. Media foundations: profile photos, validation and storage.
+> 3. Social links and external-video linking.
+> 4. Business media and tier enforcement.
+> 5. Drawer/hybrid navigation.
+> 6. Final regression and build.
+>
+> Each batch must:
+>
+> * begin with a checkpoint;
+> * identify exact files and schema changes;
+> * avoid unrelated modifications;
+> * pass TypeScript and focused tests;
+> * produce a diff report;
+> * end with a checkpoint.
+>
+> Do not build after each batch.
+>
+> ## PART 9 — FINAL PRE-BUILD VERIFICATION
+>
+> Before authorizing the new EAS builds, provide a PASS/FAIL matrix for:
+>
+> * new account registration;
+> * email login;
+> * phone login;
+> * logout → immediate same-account login;
+> * logout → different-account login;
+> * saved-session restoration;
+> * iOS Map rendering;
+> * Android Map rendering;
+> * Report Intel submission and admin receipt;
+> * profile-photo upload/remove;
+> * community image posting;
+> * community external-video link;
+> * business logo/cover/gallery;
+> * business social links;
+> * business featured video;
+> * viewer-rating enforcement;
+> * minor-profile filtering;
+> * side drawer and all navigation destinations;
+> * KinfolkAI;
+> * business search;
+> * production API and database resilience.
+>
+> No new production build unless every launch-critical row passes.
+>
+> ## PART 10 — BUILD AND SUBMISSION
+>
+> After I separately approve the final report:
+>
+> * create the next available iOS production build;
+> * create the next available Android production build;
+> * report exact assigned build numbers and EAS links;
+> * do not reuse previous build numbers;
+> * upload the approved iOS build to App Store Connect after physical-device verification;
+> * do not submit Android; I will handle Google Play manually.
+>
+> First return the audit, architecture impact, proposed batches, and release risks. Do not implement yet.
+
+## My recommendation on timing
+
+This is now larger than a single quick patch. The safest route is:
+
+1. Repair P0 stability first.
+2. Implement media in contained batches.
+3. Implement the navigation drawer.
+4. Run one full regression.
+5. Cut one new final candidate for both stores.
+6. Test it physically.
+7. Submit immediately after it passes.
+
+That is faster than building repeatedly because it avoids discovering a new conflict after every store upload. The next build should be treated as the **corrected launch candidate**, not merely another temporary patch.
