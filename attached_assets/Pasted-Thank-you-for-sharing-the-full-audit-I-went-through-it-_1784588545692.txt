@@ -1,0 +1,288 @@
+Thank you for sharing the full audit. I went through it carefully, and there is a lot here that I think is solid. There are also a few places where I would change the direction before giving Replit approval.
+
+First, I would **not approve all six batches as written**. Some of them are excellent launch work, while others are significant architectural changes that increase the chance of introducing new bugs right before launch. 
+
+## My recommendation
+
+I'd split this into **three releases instead of one.**
+
+### Release Candidate 2 (Build 92/66)
+
+This should focus on **stability and trust.**
+
+Include:
+
+* ✅ LB-008 (logout/login stability)
+* ✅ LB-009 (database resilience)
+* ✅ LB-010A (Report Intel)
+* ✅ LB-010B (map rendering)
+* ✅ LB-011 (Discovery tab label)
+* ✅ LB-012 (email/phone login improvements)
+* ✅ Kinfolk welcome redesign
+* ✅ Discovery wording improvements
+* ✅ Community wording improvements
+* ✅ Map verification
+* ✅ Voice selection verification
+* ✅ Alert permission wording
+* ✅ Under-13 account block
+
+Everything in this build directly affects whether someone thinks:
+
+> "This app works."
+
+---
+
+## Release Candidate 3
+
+This becomes the **Media Update.**
+
+Everything involving:
+
+* profile photos
+* business galleries
+* owner videos
+* community videos
+* social links
+* tier limits
+
+belongs together.
+
+The audit correctly identifies many existing capabilities and the missing gaps. 
+
+---
+
+## Release Candidate 4
+
+Only after all of that...
+
+### Navigation Drawer
+
+This is the only recommendation I strongly disagree with including before launch.
+
+Ironically, the audit itself explains why.
+
+It says:
+
+* touches 40+ routes
+* changes deep links
+* changes back navigation
+* changes accessibility
+* changes routing
+
+and labels it **HIGH RISK**.  
+
+I agree.
+
+That is exactly why I would **not** do it immediately before launch.
+
+Your daughter is making a good UX observation. A drawer can absolutely create a cleaner experience, especially on iPhone where the tab bar compresses. But changing the primary navigation days before launch is the kind of change that often uncovers unexpected issues.
+
+I'd launch with a stable navigation system and make the drawer one of the first major post-launch enhancements.
+
+---
+
+# A few places I'd improve the audit
+
+### 1. Community member social profiles
+
+I actually **do** think members should have social profiles.
+
+But...
+
+Not just because everyone else does.
+
+For Mapping With Melanin™, they should exist because **relationships matter.**
+
+I'd structure them like this:
+
+Profile
+
+Instagram
+
+TikTok
+
+YouTube
+
+LinkedIn
+
+Website
+
+Creator Badge
+
+Business Badge
+
+Cultural Ambassador Badge
+
+Mentor Badge
+
+Verified Traveler Badge
+
+Community Organizer Badge
+
+Then give users visibility controls.
+
+Public
+
+Connections
+
+Only Me
+
+That's much more aligned with your vision than simply listing links.
+
+---
+
+### 2. Business media
+
+I would expand beyond:
+
+"From the Business"
+
+and
+
+"Shared by the Community."
+
+I'd use:
+
+📸 Owner Photos
+
+📷 Community Photos
+
+🎥 Featured Videos
+
+⭐ Customer Highlights
+
+That immediately tells people who contributed what.
+
+---
+
+### 3. The map
+
+This is the part I care about the most.
+
+Because this is what makes Mapping With Melanin different.
+
+The audit mostly treats it as:
+
+"render pins"
+
+I don't.
+
+I think the map is your product.
+
+Like you said earlier...
+
+When someone opens Philadelphia...
+
+they shouldn't see an empty map.
+
+They should immediately feel...
+
+> "There is a community here."
+
+That means:
+
+Historical sites
+
+Museums
+
+Neighborhoods
+
+Businesses
+
+Events
+
+Community reports
+
+Safety
+
+Saved places
+
+Routes
+
+Favorites
+
+Cultural landmarks
+
+should all make the map feel alive.
+
+---
+
+### 4. Community video
+
+I would also make one change.
+
+Instead of only allowing:
+
+YouTube
+
+Vimeo
+
+TikTok
+
+Instagram
+
+I'd architect it as:
+
+Supported Providers
+
+Then simply turn providers on over time.
+
+That makes adding another platform much easier later.
+
+---
+
+# One thing I would add to the backlog
+
+You mentioned something yesterday that I think is actually bigger than social links.
+
+I would create:
+
+## Community Identity
+
+instead of just "Profile."
+
+Examples:
+
+Languages Spoken
+
+Countries Connected To
+
+HBCU
+
+Fraternities/Sororities
+
+Military
+
+Parent
+
+Small Business Owner
+
+Artist
+
+Creator
+
+Educator
+
+Faith Community (optional)
+
+Volunteer Interests
+
+Causes You Support
+
+Travel Style
+
+That creates meaningful connections without reducing people to a single identity.
+
+---
+
+## Overall
+
+I think this audit is about **85–90%** of where I'd want it to be.
+
+The biggest change I'd make is **process**, not code:
+
+* **Build 92/66:** Stability, maps, login, Kinfolk, wording, under-13 gate.
+* **Next build:** Media, social profiles, business enhancements.
+* **Later release:** Navigation drawer and other architectural changes.
+
+That approach gets Mapping With Melanin™ into testers' hands sooner, with less risk, while still moving toward the richer experience you envision.
