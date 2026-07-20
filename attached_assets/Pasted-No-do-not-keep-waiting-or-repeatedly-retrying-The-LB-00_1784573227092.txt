@@ -1,0 +1,48 @@
+No—do **not** keep waiting or repeatedly retrying. The LB-008 fix exists only in source and is **not inside the build currently installed on your phone**, so it cannot repair the app you are using now.
+
+At this point, treat the current build as unable to complete a clean logout → login cycle.
+
+## Do this now
+
+1. Stop retrying for several minutes; repeated attempts could trigger the login-attempt lockout.
+2. In Safari, verify:
+   `https://www.mappingwithmelanin.com/api/healthz`
+3. Try logging into the **web version** at `www.mappingwithmelanin.com/login`.
+
+   * If web login works, your account/password and production server are fine; the installed mobile build is the problem.
+   * If web login also fails, stop and have Replit inspect the production auth logs and lockout state before changing anything.
+4. Do not reset your password unless the server specifically reports incorrect credentials or Replit confirms a lockout/password issue.
+
+Send Replit this immediately:
+
+> **P0 — CURRENT BUILD CANNOT LOG IN; LIVE PRODUCTION DIAGNOSIS REQUIRED**
+>
+> After intentionally logging out of the installed iOS build, I cannot log back in at all. Multiple attempts spin for roughly one minute and then return the connection error.
+>
+> LB-008 has been implemented only in source and is not present in the installed build, so do not assume it resolves the current failure.
+>
+> Perform a read-only production diagnosis now:
+>
+> 1. Find my most recent `/api/auth/login-email` requests in Railway logs.
+> 2. Report the HTTP status, response time, and exact server-side error for each attempt.
+> 3. Confirm whether the requests reached Railway.
+> 4. Confirm whether my account is currently locked by `failed_login_attempts` or `locked_until`.
+> 5. Confirm whether the email account still has a valid password hash and active status.
+> 6. Confirm whether session creation is succeeding or hanging after password verification.
+> 7. Check whether the login route is waiting on PostgreSQL, RevenueCat, email, or another downstream action.
+> 8. Confirm the exact production endpoint used by the installed iOS build.
+> 9. Test login for the same account server-side without exposing the password.
+> 10. Do not reset, unlock, modify, or delete the account until the cause is reported.
+>
+> End with one confirmed cause:
+>
+> * account lockout;
+> * incorrect credentials;
+> * request never reaches Railway;
+> * database/session creation timeout;
+> * stale mobile-build behavior;
+> * another confirmed cause.
+>
+> Then state whether I can safely regain access through the web now and whether a new mobile build is required.
+
+You do not need to wait an hour hoping it resolves itself. First test the web login once. That immediately separates an account/server problem from the known defect in the installed mobile build.
