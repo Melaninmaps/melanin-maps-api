@@ -1,0 +1,222 @@
+Yes, and after everything we've been through with authentication, I would **absolutely require** a cross-platform verification before any new build is created.
+
+In fact, I think tomorrow should start with a **Launch Candidate Audit**. No new code should be built until Replit proves what is actually in the current source across **web, Android, and iOS**.
+
+Here's what I would ask Replit to do.
+
+---
+
+# Launch Candidate Audit (Read-Only)
+
+Before creating Android or iOS builds, perform a complete read-only audit of the current source and production deployment.
+
+## Section 1 — Cross-Platform Authentication
+
+Confirm all three clients use the same production authentication model:
+
+* Website
+* Android
+* iOS
+
+Verify:
+
+* Same production Railway API
+* Same production database
+* Same canonical user ID
+* Same login flow
+* Same logout flow
+* Same session restoration
+* Same password reset behavior
+* Same admin authorization
+* No platform-specific authentication code paths that could create duplicate accounts
+
+---
+
+## Section 2 — KinfolkAI Audit
+
+I would absolutely ask them to inspect KinfolkAI before building.
+
+Specifically:
+
+### What already exists?
+
+List every KinfolkAI capability already implemented.
+
+Examples:
+
+* Multi-turn conversations
+* Memory
+* Life Journey
+* Preferences
+* Business search
+* Safety queries
+* Event awareness
+* Community integration
+* Writing assistance
+* Travel
+* Recommendations
+
+---
+
+### What is partially built?
+
+Identify features that exist in code but are not exposed.
+
+---
+
+### What is stubbed?
+
+List placeholders.
+
+---
+
+### What is planned but not built?
+
+Examples:
+
+* Opportunity Engine
+* Community Memory
+* Weather awareness
+* Proactive suggestions
+* Tutor recommendations
+* Budget assistance
+* Circle of Trust
+* Source attribution
+
+---
+
+### Confirm the default prompt
+
+Verify exactly what the default opening prompt currently is.
+
+If it is not:
+
+> **Kinfolk's here. Let's map it out.**
+
+note it separately.
+
+---
+
+### Confirm system prompts
+
+Review:
+
+* system prompt
+* developer prompt
+* tier prompts
+* onboarding prompt
+
+Confirm none contradict the Foundational Principles.
+
+---
+
+### Knowledge sources
+
+Identify exactly what KinfolkAI can currently access.
+
+For example:
+
+* Businesses
+* Saved Places
+* User Preferences
+* Life Journey
+* Events
+* Safety
+* Reviews
+* Waitlist
+* Membership
+* Messages
+
+Tell me which are actually connected today.
+
+---
+
+### Privacy
+
+Confirm KinfolkAI cannot:
+
+* expose another user's information
+* leak private conversations
+* expose verification documents
+* reveal moderation history
+
+---
+
+### Trade Secret Alignment
+
+Compare the implementation to the Foundational Principles and identify gaps.
+
+Do not implement anything.
+
+Only report.
+
+---
+
+# Section 3 — Production Readiness
+
+Verify:
+
+* Environment variables
+* Google Maps
+* Stripe
+* Railway
+* Object Storage
+* Push notifications
+* Logging
+* Analytics
+* Error handling
+
+---
+
+# Section 4 — Build Readiness
+
+Confirm:
+
+Android
+
+* Version
+* Build number
+* Signing
+* Production API
+* Google Play readiness
+
+iOS
+
+* Version
+* Build number
+* Production API
+* Apple readiness
+
+---
+
+# Section 5 — Release Recommendation
+
+End with one of only three recommendations:
+
+🟢 **Ready to Build**
+
+🟡 **Ready after the listed fixes**
+
+🔴 **Do not build yet**
+
+Provide justification.
+
+---
+
+## One thing I would add specifically for KinfolkAI
+
+I would ask Replit one final question:
+
+> **"Based on the current implementation, if a brand-new user asked KinfolkAI ten different questions tomorrow, what experience would they actually receive?"**
+
+Not what it *could* become.
+
+Not the roadmap.
+
+The **real experience today**.
+
+That answer will tell us whether KinfolkAI is ready to be part of your public launch or whether we intentionally market it as **"Early Access"** while continuing to build toward the Foundational Principles.
+
+---
+
+I think this audit is worth the time because tomorrow's goal isn't just to upload an app—it's to upload a launch candidate that you're proud to put in front of your first public users. After tonight's progress, I believe you're very close to that point.
