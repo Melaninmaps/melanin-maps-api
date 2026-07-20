@@ -24,10 +24,10 @@ import { useSafetyProximity } from "@/hooks/useSafetyProximity";
 const GOLD = "#CA922B";
 
 const DEFAULT_REGION: Region = {
-  latitude: 37.09,
-  longitude: -95.71,
-  latitudeDelta: 30,
-  longitudeDelta: 30,
+  latitude: 39.9526,
+  longitude: -75.1652,
+  latitudeDelta: 0.18,
+  longitudeDelta: 0.18,
 };
 
 interface HeatmapPoint {
@@ -119,6 +119,12 @@ export function FullMapView() {
     (b) =>
       b.latitude != null &&
       b.longitude != null &&
+      !isNaN(b.latitude) &&
+      !isNaN(b.longitude) &&
+      isFinite(b.latitude) &&
+      isFinite(b.longitude) &&
+      b.latitude >= -90 && b.latitude <= 90 &&
+      b.longitude >= -180 && b.longitude <= 180 &&
       (activeCategory === "All" || b.category === activeCategory),
   );
 
