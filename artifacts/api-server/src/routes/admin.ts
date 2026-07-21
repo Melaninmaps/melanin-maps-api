@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, getPoolStats, businessInvitesTable, businessesTable, usersTable, knowledgeTopicsTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable } from "@workspace/db";
 import { eq, desc, sql, count } from "drizzle-orm";
@@ -1050,11 +1051,12 @@ router.post("/admin/seed-multicultural", async (req: Request, res: Response) => 
       if (exists.rows.length > 0) { businessesSkipped++; continue; }
       await pool.query(
         `INSERT INTO businesses
-          (name, description, category, subcategory, address, city, state,
+          (id, name, description, category, subcategory, address, city, state,
            latitude, longitude, black_owned, ownership_designations,
            confidence_score, verified, price_range, business_status)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15)`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13,$14,$15,$16)`,
         [
+          randomUUID(),
           b.name, b.description, b.category, b.subcategory, b.address,
           b.city, b.state, b.latitude, b.longitude,
           b.black_owned, JSON.stringify(b.ownership_designations),
