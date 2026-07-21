@@ -1,0 +1,48 @@
+Yes. **Restart the Railway `api-server` now** to restore production service.
+
+The evidence gathering is complete enough for this degraded state:
+
+* all five pool connections are occupied,
+* database-backed requests are timing out at the configured 10-second connection wait,
+* login and core screens will continue failing,
+* and Railway does not provide the SQL interface needed to gather more useful evidence while leaving production down.
+
+Restart only the **`api-server`**, not Postgres.
+
+After the restart, tell Replit:
+
+> **Railway API restart completed. Restore service first, then prepare the smallest durable fix plan.**
+>
+> The current evidence supports sustained polling as a major contributor, but do not claim it is the sole root cause without request-level correlation.
+>
+> Please propose separate, narrow PRs:
+>
+> 1. **Stop map polling when the Map tab is not focused.**
+> 2. **Pause polling when the app is inactive or backgrounded.**
+> 3. **Prevent overlapping polling requests with an in-flight guard or AbortController.**
+> 4. **Ensure logout stops all unauthenticated map polling.**
+> 5. **Avoid mounting duplicate polling hooks inside `BusinessMapView`; reuse shared state or disable polling there.**
+> 6. **Audit and optimize `/api/reports/proximity-warnings`, including appropriate indexes and query plan evidence.**
+>
+> Do not combine mobile polling changes, database indexes, pool resizing and timeout changes in one PR.
+>
+> After restart, immediately confirm:
+>
+> * `/api/healthz` returns 200
+> * login works
+> * Businesses, Community, Events and Cultural Sites return 200
+> * `/api/pool-stats` returns `waitingCount: 0`
+>
+> Then observe pool stats while one tester:
+>
+> * opens Map,
+> * leaves Map,
+> * opens and closes a business,
+> * backgrounds the app,
+> * logs out.
+>
+> Record whether connections return to idle after each action.
+
+One correction: the report says two users polling every 30 seconds would create “sustained” checked-out connections. Fast requests every 30 seconds should still release connections between polls. The polling design is clearly unsafe and likely contributes, but the fact that connections remain checked out continuously still deserves route-level logging or database-state evidence. So restart now, then fix the obvious polling lifecycle problems while continuing to verify the server behavior.
+
+After clicking restart, wait until Railway shows **Restart successful** and **Active**.
