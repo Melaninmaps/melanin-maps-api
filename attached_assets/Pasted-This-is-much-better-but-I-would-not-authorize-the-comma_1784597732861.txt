@@ -1,0 +1,154 @@
+This is much better, but I would **not authorize the command exactly as written yet**.
+
+Two corrections are needed before the paid build:
+
+## 1. Do not use `--auto-submit`
+
+Their proposed iOS command is:
+
+```bash
+eas build --platform ios --profile production --auto-submit
+```
+
+That would automatically upload the build to App Store Connect after it finishes. You have not physically verified that the map works yet, so Apple submission should remain a separate action.
+
+Use:
+
+```bash
+eas build --platform ios --profile production
+```
+
+Then:
+
+1. Wait for Apple to process it.
+2. Install it through TestFlight.
+3. Confirm the map visibly works.
+4. Run the login/logout and Kinfolk checks.
+5. Only then upload or submit the approved build.
+
+## 2. The map repair must be committed first
+
+The report says:
+
+> `M artifacts/mobile/app/(tabs)/_layout.tsx`
+
+That means the repair is still a modified working-tree file, not yet safely captured in the final commit used for the build.
+
+“Only the map fix is staged” and “source tree is clean” are not the same thing. Before the build, Replit should:
+
+* commit the repair;
+* provide the new exact commit SHA;
+* confirm `git status --short` shows no modified source files;
+* confirm the build will use that new commit.
+
+Do not depend on an automatic checkpoint occurring later.
+
+## What this source change should accomplish
+
+The next correctly built mobile binary should use the classic tab layout on iOS. That should allow the MapView to receive normal dimensions instead of appearing as a white screen.
+
+Expected behavior after installation:
+
+* Bottom tabs remain; the sidebar is still deferred.
+* The Map tab should show visible Apple map tiles.
+* With location denied, it should open around Philadelphia.
+* Mother Bethel should appear as a cultural pin because it exists in production.
+* Valid business pins should appear.
+* Tapping a cultural pin should open its preview card.
+* “View Details” still goes to the broader category experience, not directly to the selected site.
+* The three missing Philadelphia heritage sites will not appear until their records are seeded.
+
+That is the honest build contract.
+
+## Send Replit this
+
+> **Source repair accepted, but build authorization is conditional on these final corrections.**
+>
+> ### 1. Commit the repair
+>
+> Commit only:
+>
+> `artifacts/mobile/app/(tabs)/_layout.tsx`
+>
+> Then report:
+>
+> * exact commit SHA;
+> * commit message;
+> * `git status --short`;
+> * confirmation that no modified source files remain;
+> * confirmation that `attached_assets/` is excluded from the mobile build and not committed as application source.
+>
+> ### 2. Do not auto-submit
+>
+> Replace:
+>
+> ```bash
+> eas build --platform ios --profile production --auto-submit
+> ```
+>
+> with:
+>
+> ```bash
+> eas build --platform ios --profile production
+> ```
+>
+> The iOS build must not be automatically submitted to App Store Connect for review. It must first be installed and physically tested through TestFlight.
+>
+> ### 3. Final build provenance check
+>
+> Immediately before running the build, return the actual outputs of:
+>
+> ```bash
+> cd /home/runner/workspace/artifacts/mobile
+> pwd
+> git rev-parse HEAD
+> git status --short
+> npx expo config --type public
+> eas project:info
+> ```
+>
+> Confirm:
+>
+> * directory: `/home/runner/workspace/artifacts/mobile`;
+> * EAS project ID: `0f873107-7787-46ab-9a04-685c2a6756b1`;
+> * app slug: `mobile`;
+> * bundle ID: `com.melaninmaps.app`;
+> * iOS build number: `92` or the next unused number if 92 is already occupied in the correct EAS project;
+> * Android version code: `66` or the next unused code;
+> * no unexpected EAS configure/relink prompt;
+> * the final commit includes the classic-tab map repair.
+>
+> ### 4. Exact expectation statement
+>
+> Confirm in plain language before building:
+>
+> * the next iOS build retains bottom navigation;
+> * the side drawer is not included;
+> * the iOS map is expected to render through `ClassicTabLayout`;
+> * Philadelphia is the fallback region when location is unavailable;
+> * Mother Bethel is expected as a cultural pin;
+> * business pins with valid coordinates are expected;
+> * the direct pin-to-individual cultural story enhancement is not included;
+> * missing Philadelphia heritage records are not included unless separately seeded.
+>
+> ### 5. Controlled build
+>
+> After returning all of the above, wait for my explicit authorization before running:
+>
+> ```bash
+> cd /home/runner/workspace/artifacts/mobile
+> eas build --platform ios --profile production
+> eas build --platform android --profile production
+> ```
+>
+> Do not submit either build automatically.
+>
+> End with:
+>
+> **🟢 COMMITTED, CLEAN, CORRECT MOBILE PROJECT — READY FOR BUILD AUTHORIZATION**
+>
+> or
+>
+> **🔴 STOP — BUILD CONDITIONS NOT MET**
+
+Once Replit provides the clean commit and provenance output, I would authorize the builds. The next decisive moment is not compilation—it is opening the resulting build on your iPhone and visibly seeing Philadelphia map tiles and story pins.
