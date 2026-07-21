@@ -1,0 +1,121 @@
+This is a good diagnostic plan, but **do not run it exactly as written yet**. A few corrections will make it safer and more reliable.
+
+## What Replit got right
+
+The pool-stats endpoint is appropriately narrow:
+
+* It does not query the database.
+* It can still respond while all database connections are occupied.
+* It exposes only total, idle and waiting connection counts.
+* It is protected by `CRON_SECRET`.
+* It is temporary and marked for removal.
+
+That endpoint should help us distinguish a slow query from a burst of simultaneous requests.
+
+## Corrections before deployment
+
+### 1. Do not push directly to `main`
+
+Replit should not run:
+
+```bash
+git push origin main
+```
+
+Your Railway repository is a compiled deployment repository, while the source changes are being made in the Replit workspace. Replit should follow the established process:
+
+1. Commit the source change.
+2. Rebuild the compiled API bundle.
+3. Confirm the generated bundle contains `/api/pool-stats`.
+4. Create a narrow PR against the Railway deployment repository.
+5. Let you review and merge it.
+6. Allow Railway to deploy automatically.
+
+This preserves the audit trail and prevents an unreviewed production change.
+
+### 2. Do not put your personal password in a curl command
+
+Do not run or paste this with your real account:
+
+```bash
+-d '{"email":"your@email.com","password":"yourpassword"}'
+```
+
+That can leave the password in shell history, logs, screenshots or command output.
+
+For this investigation, the login test can wait until the suspected database route is identified. When login is tested, Replit should either:
+
+* use a dedicated non-admin test account through a secure method, or
+* have you test login normally in the app while Replit watches pool counters.
+
+Never send Replit your password in chat.
+
+### 3. The deployment itself should provide the clean baseline
+
+Once the pool-stats PR is merged, Railway will start a new API process. That already creates a fresh pool.
+
+Therefore, the sequence should be:
+
+1. Railway deployment becomes Active.
+2. Immediately record `/api/pool-stats`.
+3. Begin controlled tests.
+
+Do not add another restart unless the newly deployed process is already exhausted before testing begins.
+
+### 4. Do not share raw SQL from `pg_stat_activity`
+
+The Railway query is useful, but `query_prefix` can contain email addresses, search terms or other user-provided values.
+
+It may be viewed privately in Railway for diagnosis, but Replit’s report to us should provide only:
+
+* query category,
+* table names,
+* duration,
+* state,
+* wait event,
+* likely route,
+* and a sanitized query signature.
+
+No literal values or personal information should be copied into chat.
+
+## Send Replit this approval
+
+> **POOL-STATS DIAGNOSTIC APPROVED WITH DEPLOYMENT AND SECURITY CORRECTIONS**
+>
+> The endpoint design is approved, but do not push directly to `main`.
+>
+> Please:
+>
+> 1. Commit the source changes.
+> 2. Rebuild the compiled API bundle.
+> 3. Confirm the compiled bundle contains the protected `/api/pool-stats` route.
+> 4. Create a narrow PR against the Railway deployment repository.
+> 5. Return the PR link, exact files changed and compiled diff summary before merge.
+>
+> Do not include any unrelated changes.
+>
+> After the PR is merged and Railway reports the deployment Active, treat that fresh deployment as the clean pool baseline. Do not restart again unless the new process is already exhausted.
+>
+> Run the controlled evidence sequence one route at a time:
+>
+> 1. Pool baseline
+> 2. `/api/businesses?limit=3`
+> 3. Pool stats immediately afterward
+> 4. Pool stats again after 15 seconds
+> 5. Repeat separately for Community, Events and Cultural Sites
+>
+> Stop immediately if `waitingCount` rises above zero or latency materially increases.
+>
+> Do not run the login curl with my personal credentials. Login will be tested through the mobile app using a test account after the database evidence is collected.
+>
+> When using Railway `pg_stat_activity`, do not copy raw SQL literals or personal data into the report. Return only sanitized query type, tables, duration, state, wait event and probable route.
+>
+> Do not increase the pool, add `statement_timeout`, create indexes or rewrite queries until the evidence identifies the actual saturation pattern.
+
+## What you need to do
+
+For now, **nothing in Railway**. Replit should prepare the deployment PR.
+
+After it is merged, Replit can run most of the pool tests. The only part you may need to perform is opening the Railway PostgreSQL Query screen at the moment the pool is exhausted, because Replit cannot directly access the production database. I can walk you through that screen when we reach that step.
+
+Also, the pool-stats work is separate from your map diagnostic. You should still test **Profile → Map Diagnostic — Beta** once the OTA has reached your phone.
