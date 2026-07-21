@@ -1,0 +1,152 @@
+You make it a **non-negotiable release requirement**, not another general request to “fix the map.”
+
+The goal should be stated as an observable outcome:
+
+> On an actual iPhone, opening the Map tab must show a visible map, Philadelphia-area cultural pins, and a tappable story experience.
+
+Send Replit this exact prompt:
+
+> # P0 MAP EXPERIENCE — REQUIRED BEFORE NEXT PAID BUILD
+>
+> The next iOS build is not approved until Mapping With Melanin™ demonstrates the intended map experience on an actual iPhone or an iOS development build using the same native configuration as production.
+>
+> The required outcome is not merely “MapView mounts” or “the code contains markers.”
+>
+> ## Required user experience
+>
+> When a user opens the Map tab:
+>
+> 1. The base map is visibly rendered—not white, gray, or blank.
+> 2. The map opens to Philadelphia when location is unavailable or denied.
+> 3. Philadelphia-area historical and cultural locations appear as visible pins.
+> 4. At minimum, Mother Bethel AME Church appears in the initial Philadelphia view.
+> 5. Additional launch-seeded Philadelphia locations should include:
+>
+>    * African American Museum in Philadelphia;
+>    * Marian Anderson Historical Residence;
+>    * Johnson House Historic Site.
+> 6. Each cultural pin must be tappable.
+> 7. Tapping a pin must show a preview containing:
+>
+>    * site name;
+>    * cultural or historical category;
+>    * year or era where available;
+>    * short significance statement;
+>    * city and state;
+>    * View Details action.
+> 8. View Details must open the selected site’s individual story—not merely a broad category list.
+> 9. The detail view should include, where verified:
+>
+>    * full description;
+>    * historical significance;
+>    * official website or source;
+>    * directions;
+>    * save and share;
+>    * related community stories, videos, or support links when available.
+> 10. Invalid business or cultural coordinates must be ignored safely and must never blank the map.
+>
+> ## Required diagnosis before implementation
+>
+> First determine why the current iOS build displays a white map.
+>
+> Prove:
+>
+> * whether the native `MapView` mounts;
+> * whether it has nonzero width and height;
+> * whether a minimal Apple Map renders with all hooks, markers, overlays, and API calls removed;
+> * whether the failure comes from native configuration, Expo/React Native Maps compatibility, tab layout, parent sizing, overlay coverage, runtime exception, or another confirmed cause;
+> * exact runtime or native logs;
+> * exact source commit and directory used by the current build.
+>
+> Do not make another speculative marker-only fix.
+>
+> ## Implementation order
+>
+> 1. Create a minimal iOS map screen using the production native configuration.
+> 2. Demonstrate that the base Apple map renders.
+> 3. Add the Philadelphia fallback region.
+> 4. Add one verified cultural pin: Mother Bethel AME Church.
+> 5. Demonstrate that the pin appears and opens its preview.
+> 6. Add the remaining cultural-site layer.
+> 7. Add business pins.
+> 8. Add safety and community overlays one layer at a time.
+> 9. Stop immediately when a layer causes failure and identify that layer.
+>
+> ## Storytelling requirement
+>
+> Cultural markers are not generic dots.
+>
+> They should communicate that each location has a story.
+>
+> Use structured verified fields:
+>
+> * name;
+> * category;
+> * established year or era;
+> * short significance;
+> * city/state;
+> * source;
+> * image where permitted;
+> * individual site ID.
+>
+> Do not invent missing history or cultural claims.
+>
+> ## Philadelphia content requirement
+>
+> Confirm and seed the following production records before the next build:
+>
+> * Mother Bethel AME Church;
+> * African American Museum in Philadelphia;
+> * Marian Anderson Historical Residence;
+> * Johnson House Historic Site.
+>
+> For each record, verify:
+>
+> * valid latitude and longitude;
+> * category;
+> * description;
+> * significance;
+> * official or reliable source;
+> * website;
+> * individual detail route.
+>
+> Content seeding must be idempotent and must not duplicate existing records.
+>
+> ## Proof required before another paid build
+>
+> Provide:
+>
+> 1. Screenshot or screen recording from an iPhone or matching iOS development build.
+> 2. Visible Apple map tiles.
+> 3. Visible Philadelphia cultural pins.
+> 4. Mother Bethel pin tapped.
+> 5. Preview card visible.
+> 6. View Details opening Mother Bethel’s individual story.
+> 7. Runtime logs showing no map errors.
+> 8. Exact Git commit.
+> 9. Exact build directory: `artifacts/mobile`.
+> 10. Exact EAS project ID and bundle identifier.
+> 11. Clean working tree.
+> 12. Exact diff of the map repair and content-seeding changes.
+>
+> ## Build gate
+>
+> Do not start Build 93 until all required proof is provided and I explicitly approve it.
+>
+> End with exactly:
+>
+> **🟢 VERIFIED ON IOS — MAP AND STORY PINS READY FOR CONTROLLED BUILD**
+>
+> or
+>
+> **🔴 NOT READY — DO NOT BUILD**
+>
+> Do not modify authentication, KinfolkAI, memberships, unrelated navigation, or other launch systems during this work.
+
+I would also add one product rule to the project documentation:
+
+> **The map must never be visually empty when verified cultural, historical, business, event, or community data exists for the displayed area.**
+
+That turns your expectation into a permanent engineering standard rather than a one-time fix.
+
+The next build should not happen until Replit shows you the map working with real Philadelphia story pins before you pay for another production build.

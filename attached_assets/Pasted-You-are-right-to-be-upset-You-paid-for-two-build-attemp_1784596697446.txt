@@ -1,0 +1,149 @@
+You are right to be upset. You paid for two build attempts, waited through processing, and the launch-critical map is still white. At this point, Replit should **not queue another paid build based on assumptions**.
+
+There are now only two realistic possibilities:
+
+1. Build 92 was created from the wrong project, directory, or commit; or
+2. Build 92 contains the coordinate changes, but those changes never addressed the actual white-screen/native map failure.
+
+Either way, the earlier “source ready” conclusion was premature.
+
+## Do not submit Build 92 to Apple
+
+Keep it in TestFlight only. Do not send it for Beta App Review or App Store review while the Map tab is white.
+
+The sidebar was intentionally deferred, so that absence is expected. The white map is not.
+
+## Send Replit this exact message
+
+> # P0 RELEASE STOP — BUILD 92 MAP IS STILL WHITE
+>
+> **No new build, submission, or code change until build provenance and the native iOS failure are proven.**
+>
+> I installed iOS Build 92 from TestFlight. The Map tab is still completely white.
+>
+> I have already paid for and waited through build attempts, including an earlier build that was created from the wrong workspace instead of the mobile project. Do not start another EAS build until you provide evidence that the correct mobile source, directory, commit, and native configuration will be used.
+>
+> ## 1. Build 92 provenance
+>
+> Report:
+>
+> * EAS Build ID;
+> * exact Git commit;
+> * project root used when the build command ran;
+> * exact working directory;
+> * `eas.json` path used;
+> * `app.json` path used;
+> * EAS project ID;
+> * iOS bundle identifier;
+> * generated archive version and build number.
+>
+> Confirm explicitly whether the command ran from:
+>
+> `artifacts/mobile`
+>
+> and not the repository root, workspace app, web project, or another artifact.
+>
+> Show evidence from the EAS build logs—not conclusions based only on current source.
+>
+> ## 2. Confirm what is actually inside Build 92
+>
+> Prove that the uploaded binary contains:
+>
+> * Philadelphia `DEFAULT_REGION`;
+> * finite/NaN/range coordinate filtering;
+> * LB-008 logout repair;
+> * LB-011 Discovery label;
+> * LB-018 Kinfolk subtitle.
+>
+> Compare the Build 92 source commit against the commits containing each fix. If the build predates any fix, state that clearly.
+>
+> ## 3. Diagnose the white base map separately from markers
+>
+> Coordinate validation affects pins. It does not explain a completely white native map.
+>
+> Diagnose the iOS base map before discussing business or heritage markers:
+>
+> * Does `FullMapView` mount?
+> * Does the native `MapView` mount?
+> * Is its measured width and height greater than zero?
+> * Is the Map tab wrapped in a parent with usable height?
+> * Is a React error causing the component tree to disappear?
+> * Are there iOS native logs from `react-native-maps`, MapKit, Expo Router, or the tab navigator?
+> * Does a minimal MapView with no hooks, markers, overlays, or API calls render Apple Maps?
+> * If the minimal map renders, add layers back one at a time until the failing layer is identified.
+> * If the minimal map remains white, inspect native configuration, package compatibility, SDK 57 compatibility, pod configuration, and the generated iOS project.
+> * Confirm whether any loading overlay, theme surface, absolute-positioned view, modal, or tab layer is covering the map.
+> * Confirm whether `MapView` is nested inside `unstable-native-tabs` in a way that produces a zero-height or failed native view on iOS.
+>
+> Do not claim that Apple Maps renders because `PROVIDER_DEFAULT` is present in source.
+>
+> ## 4. Required reproduction
+>
+> Reproduce the issue using the exact production iOS configuration.
+>
+> Provide:
+>
+> * device or simulator model;
+> * iOS version;
+> * screenshot;
+> * runtime logs;
+> * whether a minimal map renders;
+> * first confirmed failing component or configuration.
+>
+> Static source review is not sufficient.
+>
+> ## 5. Smallest safe repair
+>
+> Return:
+>
+> 1. Confirmed cause.
+> 2. Exact files/configuration involved.
+> 3. Exact proposed diff.
+> 4. Why the previous coordinate repair did not resolve the white screen.
+> 5. Whether the repair affects Android.
+> 6. How the next build will be proven before uploading.
+>
+> ## 6. No-cost-risk build gate
+>
+> Before another paid EAS production build:
+>
+> * run the mobile project from the correct `artifacts/mobile` directory;
+> * generate and inspect the resolved Expo configuration;
+> * verify the expected EAS project ID and bundle identifier;
+> * run TypeScript;
+> * run Expo Doctor;
+> * produce the native iOS project/configuration for inspection;
+> * demonstrate the map in an iOS development build or simulator using the same native configuration;
+> * show the exact command that will be executed from the exact directory;
+> * show the commit and clean working tree.
+>
+> Do not run the next production build until I explicitly approve the evidence.
+>
+> ## 7. Build accountability
+>
+> Record the earlier wrong-project build and this unsuccessful Build 92 attempt in the release incident log, including the cause, build IDs, and preventions.
+>
+> End with exactly one verdict:
+>
+> **🔴 NOT READY TO REBUILD**
+>
+> or
+>
+> **🟢 VERIFIED MAP REPAIR — READY FOR ONE CONTROLLED REBUILD**
+>
+> Do not alter authentication, KinfolkAI, database schema, navigation, or unrelated features during this diagnosis.
+
+## What proof you should require next
+
+Before paying for Build 93, Replit needs to show you:
+
+* the precise Build 92 commit and build directory;
+* a minimal native Apple map rendering in the same iOS configuration;
+* the specific component or configuration that made the full map white;
+* the exact repair;
+* the exact command beginning with `cd artifacts/mobile`;
+* a clean source diff containing only that map repair.
+
+Do not accept “the code looks correct,” “the component exists,” or “it should work.” You already received those assurances, and the physical phone disproved them.
+
+Also, do not let them combine the sidebar into this repair. The navigation drawer is a separate, high-risk feature. The next paid build should be focused on making the existing Map tab visibly render and verifying the authentication fixes—not introducing another architecture change.
