@@ -1,0 +1,141 @@
+The evidence is useful, but I would **not yet accept “concurrent startup burst” as proven**.
+
+The sequential tests proved something narrower:
+
+* each individual route is fast,
+* each releases its connection,
+* no single route alone causes exhaustion,
+* there is no obvious simple leak in those four handlers.
+
+That is good progress.
+
+However, with responses around **100–223 ms**, a five-connection pool should normally process 8–12 simultaneous requests in well under 10 seconds. The extra requests would briefly wait, then use connections as the first queries finish. A burst alone should not permanently exhaust the pool unless there is sustained traffic, another app instance, background polling, a database connection problem, or materially slower behavior under concurrency.
+
+## What could still explain it
+
+The next investigation should consider:
+
+* multiple Railway API replicas, each creating its own five-connection pool;
+* mobile hooks repeatedly polling or retrying rather than firing only once;
+* multiple app screens remaining mounted and fetching simultaneously;
+* background cron or monitoring requests;
+* connection establishment problems between Railway and the database;
+* the production connection string using an unpooled database endpoint;
+* traffic from testers, web visitors, or health checks;
+* queries becoming much slower only when several run concurrently.
+
+Neon recommends using its pooled connection endpoint for applications that may open many connections, and it now provides pooled-client and pooled-server connection graphs for diagnosing patterns. ([Neon][1])
+
+## Safest next evidence test
+
+Do not increase the pool yet. Run a controlled, low-risk concurrency test while observing pool counters.
+
+Send Replit this:
+
+> **CONCURRENCY EVIDENCE PASS — DO NOT APPLY A FIX YET**
+>
+> The sequential test confirms that no individual route leaks a connection, but it does not yet prove that an ordinary startup burst causes the recurring exhaustion.
+>
+> Before changing pool size or timeouts, perform a controlled concurrency test against the fresh production process.
+>
+> ### Preliminary configuration checks
+>
+> Confirm:
+>
+> 1. How many Railway API replicas or active instances are running.
+> 2. Whether each instance has its own `pg.Pool` with `max: 5`.
+> 3. Whether `DATABASE_URL` uses a Neon pooled hostname containing `-pooler`, or a direct Postgres endpoint.
+> 4. The database connection limit and current pooled-client/server connection graphs, if available.
+> 5. Every mobile polling and refetch interval for:
+>
+>    * businesses
+>    * cultural sites
+>    * alerts
+>    * safety proximity
+>    * Community
+>    * Events
+>    * session validation
+>
+> Report names and intervals only. Do not reveal the connection string.
+>
+> ### Controlled test
+>
+> Start with pool stats at:
+>
+> * `totalCount`
+> * `idleCount`
+> * `waitingCount`
+>
+> Then issue only **two simultaneous requests**:
+>
+> * `/api/businesses?limit=3`
+> * `/api/cultural-sites`
+>
+> Record:
+>
+> * individual latency;
+> * pool stats during execution;
+> * pool stats immediately afterward;
+> * pool stats after 15 seconds.
+>
+> If stable, repeat with four simultaneous requests:
+>
+> * Businesses
+> * Cultural Sites
+> * Community
+> * Events
+>
+> Stop immediately if:
+>
+> * `waitingCount > 0` for more than one second;
+> * any request exceeds three seconds;
+> * any request fails;
+> * or idle connections do not recover.
+>
+> Do not test more than four concurrent requests at this stage.
+>
+> ### Passive observation
+>
+> After the controlled test, leave the process running without synthetic requests and record pool stats every five minutes for 45 minutes.
+>
+> At the same time, record:
+>
+> * incoming request counts by route;
+> * API instance identity;
+> * whether polling continues when no tester is actively using the app;
+> * whether total or waiting connections rise during idle periods.
+>
+> ### Required decision report
+>
+> Return:
+>
+> 1. Railway replica count
+> 2. Pooled versus direct database hostname classification
+> 3. Mobile polling/refetch inventory
+> 4. Two-request result
+> 5. Four-request result
+> 6. Forty-five-minute passive observation
+> 7. Whether exhaustion is caused by:
+>
+>    * ordinary concurrency;
+>    * repeated client polling;
+>    * multiple server instances;
+>    * database connection establishment;
+>    * external traffic;
+>    * or still unknown
+>
+> Do not increase pool size, add statement timeouts, or rewrite queries until this pass is complete.
+
+## One important configuration check
+
+If Railway is using a direct Neon connection instead of the pooled `-pooler` endpoint, that may be contributing. Neon’s official guidance says the pooled endpoint is designed to let many client connections share a smaller set of actual PostgreSQL connections. ([Neon][1])
+
+That does not mean Replit should immediately replace `DATABASE_URL`. First it should report whether the current hostname is classified as pooled or direct and verify compatibility with your database code.
+
+## Current conclusion
+
+We have ruled out a simple route-level connection leak in the four tested endpoints.
+
+We have **not yet proven** that normal app concurrency alone explains a pool becoming unusable for 30 minutes. The next controlled concurrency and passive-monitoring pass should settle that without exposing testers or production to an aggressive load test.
+
+[1]: https://neon.com/docs/connect/connection-pooling?a=ed8b82d5-b8a1-4d19-b424-004272ac70d4&utm_source=chatgpt.com "Connection pooling - Neon Docs"
