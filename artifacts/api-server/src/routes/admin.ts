@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, pool, businessInvitesTable, businessesTable, usersTable, knowledgeTopicsTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable } from "@workspace/db";
+import { db, pool, getPoolStats, businessInvitesTable, businessesTable, usersTable, knowledgeTopicsTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable } from "@workspace/db";
 import { eq, desc, sql, count } from "drizzle-orm";
 import { sendBusinessOutreach } from "../lib/email";
 import { isAdmin } from "../lib/adminAuth";
@@ -951,6 +951,65 @@ router.post("/admin/auth-repair-merge", async (req: Request, res: Response) => {
   } catch (err: any) {
     res.status(500).json({ error: String(err.message) });
   }
+});
+
+// ── Production Health Monitor ───────────────────────────────────────────────
+// Returns live pool stats, DB health checks, and process uptime.
+// Powers the hourly health panel in the admin dashboard.
+router.get("/admin/health", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const checkedAt = new Date().toISOString();
+  const poolStats = getPoolStats();
+
+  let rawSql = false;
+  let drizzle = false;
+  let rawSqlMs: number | null = null;
+  let drizzleMs: number | null = null;
+
+  // Raw SQL check
+  try {
+    const t0 = Date.now();
+    await pool.query("SELECT 1");
+    rawSqlMs = Date.now() - t0;
+    rawSql = true;
+  } catch { /* falls through */ }
+
+  // Drizzle ORM check
+  try {
+    const t0 = Date.now();
+    await db.select({ id: businessesTable.id }).from(businessesTable).limit(1);
+    drizzleMs = Date.now() - t0;
+    drizzle = true;
+  } catch { /* falls through */ }
+
+  const allOk = rawSql && drizzle;
+  const status = !allOk ? "down" : poolStats.waiting > 2 ? "degraded" : "ok";
+
+  res.json({
+    status,
+    poolStats,
+    checks: { rawSql, drizzle, rawSqlMs, drizzleMs },
+    uptimeSeconds: Math.floor(process.uptime()),
+    checkedAt,
+    poolConfig: { max: 5, idleTimeoutMs: 30000, maxLifetimeS: 1800, connectionTimeoutMs: 10000 },
+    loadTestBaseline: {
+      concurrentRequests: 50,
+      successRate: "50/50",
+      maxMs: 1466,
+      testedAt: "2026-07-21",
+      note: "Community Beta 2 — baseline established"
+    },
+    escalationMatrix: [
+      { level: "GREEN",    condition: "waiting=0, all checks pass",           action: "No action needed" },
+      { level: "YELLOW",   condition: "waiting 1-2, all checks pass",         action: "Monitor — consider scaling if sustained >5 min" },
+      { level: "ORANGE",   condition: "waiting ≥3, OR one check slow >2s",    action: "Page on-call; reduce non-critical cron jobs" },
+      { level: "RED",      condition: "any check fails OR businesses 500s",   action: "Immediate Railway restart; run schema-check if persists" },
+      { level: "CRITICAL", condition: "all checks fail OR DB unreachable",    action: "Escalate to Railway support + notify community" },
+    ],
+  });
 });
 
 export default router;

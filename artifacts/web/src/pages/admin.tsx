@@ -3,7 +3,7 @@ import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { getWebToken, syncTokenToCookie } from "@/lib/webAuth";
 import { Button } from "@/components/ui/button";
 import { Redirect } from "wouter";
-import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2, Flag, AlertTriangle, Trophy, CalendarDays, Globe } from "lucide-react";
+import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2, Flag, AlertTriangle, Trophy, CalendarDays, Globe, Activity } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
@@ -157,7 +157,18 @@ type MetricsData = {
   daily: { date: string; count: number }[];
 };
 
-type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs";
+type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs" | "health";
+
+type HealthData = {
+  status: "ok" | "degraded" | "down";
+  poolStats: { total: number; idle: number; waiting: number };
+  checks: { rawSql: boolean; drizzle: boolean; rawSqlMs: number | null; drizzleMs: number | null };
+  uptimeSeconds: number;
+  checkedAt: string;
+  poolConfig: { max: number; idleTimeoutMs: number; maxLifetimeS: number; connectionTimeoutMs: number };
+  loadTestBaseline: { concurrentRequests: number; successRate: string; maxMs: number; testedAt: string; note: string };
+  escalationMatrix: { level: string; condition: string; action: string }[];
+};
 
 function statusBadge(status: string) {
   if (status === "approved")
@@ -338,6 +349,10 @@ export default function Admin() {
   const [welcomeResult, setWelcomeResult] = useState<string | null>(null);
   const [bizSearch, setBizSearch] = useState("");
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [health, setHealth] = useState<HealthData | null>(null);
+  const [healthLoading, setHealthLoading] = useState(false);
+  const [healthNextRefresh, setHealthNextRefresh] = useState<number | null>(null);
+  const [healthCountdown, setHealthCountdown] = useState<number | null>(null);
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -831,6 +846,40 @@ export default function Admin() {
     );
   });
 
+  const loadHealth = useCallback(async () => {
+    setHealthLoading(true);
+    try {
+      const token = getWebToken();
+      const r = await fetch(`${BASE}api/admin/health`, {
+        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (r.ok) {
+        const data = await r.json() as HealthData;
+        setHealth(data);
+        const next = Date.now() + 60 * 60 * 1000;
+        setHealthNextRefresh(next);
+      }
+    } catch { /* silent */ }
+    setHealthLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (!isAdmin || tab !== "health") return;
+    if (!health) void loadHealth();
+    const autoRefresh = setInterval(() => void loadHealth(), 60 * 60 * 1000);
+    return () => clearInterval(autoRefresh);
+  }, [tab, isAdmin, health, loadHealth]);
+
+  useEffect(() => {
+    if (!healthNextRefresh) return;
+    const tick = setInterval(() => {
+      const secs = Math.max(0, Math.round((healthNextRefresh - Date.now()) / 1000));
+      setHealthCountdown(secs);
+    }, 1000);
+    return () => clearInterval(tick);
+  }, [healthNextRefresh]);
+
   const tabs: { id: Tab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: "waitlist", label: "Waitlist", icon: <Mail className="w-4 h-4" />, badge: pendingWaitlistCount || undefined },
     { id: "leaderboard", label: "Referral Leaderboard", icon: <Trophy className="w-4 h-4" /> },
@@ -843,6 +892,7 @@ export default function Admin() {
     { id: "challenges", label: "Challenges", icon: <Award className="w-4 h-4" />, badge: challengeApps.filter(a => a.status === "pending").length || undefined },
     { id: "category-waitlist", label: "Category Waitlist", icon: <BarChart2 className="w-4 h-4" />, badge: categoryWaitlistEntries.length || undefined },
     { id: "global-recs", label: "Global Recs", icon: <Globe className="w-4 h-4" />, badge: pendingGlobalRecs.filter(r => r.status === "pending").length || undefined },
+    { id: "health", label: "Production Health", icon: <Activity className="w-4 h-4" /> },
   ];
 
   return (
@@ -2458,6 +2508,143 @@ export default function Admin() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {/* ── Production Health tab ─────────────────────────────────────────── */}
+      {tab === "health" && (
+        <div className="p-6 space-y-6">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 className="text-xl font-bold text-[#3A1F0E]">Production Health Monitor</h2>
+              <p className="text-[#3A1F0E]/60 text-sm mt-0.5">
+                Live DB pool stats, health checks, and escalation matrix. Auto-refreshes every hour.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              {healthCountdown !== null && (
+                <span className="text-xs text-[#3A1F0E]/40">
+                  Next refresh in {Math.floor(healthCountdown / 60)}m {healthCountdown % 60}s
+                </span>
+              )}
+              <Button size="sm" variant="outline" onClick={() => void loadHealth()} disabled={healthLoading} className="gap-2">
+                <RefreshCw className={`w-3.5 h-3.5 ${healthLoading ? "animate-spin" : ""}`} /> Check Now
+              </Button>
+            </div>
+          </div>
+
+          {healthLoading && !health && (
+            <div className="text-center py-12 text-[#3A1F0E]/40 text-sm">Running health checks…</div>
+          )}
+
+          {health && (
+            <>
+              <div className={`rounded-2xl border px-6 py-4 flex items-center gap-4 ${
+                health.status === "ok"       ? "bg-green-50 border-green-200" :
+                health.status === "degraded" ? "bg-amber-50 border-amber-200" :
+                                               "bg-red-50 border-red-200"
+              }`}>
+                <div className={`w-4 h-4 rounded-full shrink-0 ${
+                  health.status === "ok"       ? "bg-green-500" :
+                  health.status === "degraded" ? "bg-amber-500" :
+                                                 "bg-red-500"
+                }`} />
+                <div>
+                  <span className={`font-bold text-lg ${
+                    health.status === "ok"       ? "text-green-700" :
+                    health.status === "degraded" ? "text-amber-700" :
+                                                   "text-red-700"
+                  }`}>
+                    {health.status === "ok" ? "HEALTHY" : health.status === "degraded" ? "DEGRADED" : "DOWN"}
+                  </span>
+                  <span className="text-[#3A1F0E]/50 text-sm ml-3">
+                    Checked {new Date(health.checkedAt).toLocaleTimeString()} · Uptime {Math.floor(health.uptimeSeconds / 3600)}h {Math.floor((health.uptimeSeconds % 3600) / 60)}m
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-[#3A1F0E]/70 uppercase tracking-wider mb-3">Connection Pool</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                  {[
+                    { label: "Active",       value: health.poolStats.total,                       sub: `/ ${health.poolConfig.max} max` },
+                    { label: "Idle",         value: health.poolStats.idle,                        sub: "free connections" },
+                    { label: "Waiting",      value: health.poolStats.waiting,                     sub: health.poolStats.waiting > 2 ? "⚠ high" : "queued" },
+                    { label: "Idle Timeout", value: `${health.poolConfig.idleTimeoutMs / 1000}s`, sub: "recycle after" },
+                    { label: "Max Lifetime", value: `${health.poolConfig.maxLifetimeS / 60}m`,    sub: "hard recycle" },
+                  ].map((m) => (
+                    <div key={m.label} className="bg-white rounded-xl border border-[#E8D5B7] p-4">
+                      <div className={`text-2xl font-bold ${m.label === "Waiting" && health.poolStats.waiting > 2 ? "text-amber-600" : "text-[#CA922B]"}`}>{m.value}</div>
+                      <div className="text-xs font-semibold text-[#3A1F0E]/70 mt-0.5">{m.label}</div>
+                      <div className="text-xs text-[#3A1F0E]/40">{m.sub}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-[#3A1F0E]/70 uppercase tracking-wider mb-3">DB Health Checks</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { label: "Raw SQL (SELECT 1)",       ok: health.checks.rawSql,  ms: health.checks.rawSqlMs },
+                    { label: "Drizzle ORM (businesses)", ok: health.checks.drizzle, ms: health.checks.drizzleMs },
+                  ].map((c) => (
+                    <div key={c.label} className={`rounded-xl border p-4 flex items-center gap-3 ${c.ok ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+                      {c.ok ? <Check className="w-5 h-5 text-green-600 shrink-0" /> : <X className="w-5 h-5 text-red-600 shrink-0" />}
+                      <div>
+                        <div className="font-semibold text-[#3A1F0E] text-sm">{c.label}</div>
+                        <div className="text-xs text-[#3A1F0E]/50">{c.ok ? `${c.ms ?? "?"}ms` : "FAILED"}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-[#3A1F0E]/70 uppercase tracking-wider mb-3">Load Test Baseline</h3>
+                <div className="bg-white rounded-2xl border border-[#E8D5B7] p-5">
+                  <div className="flex flex-wrap gap-6 text-sm">
+                    <div><span className="text-[#3A1F0E]/50">Concurrent:</span> <span className="font-bold text-[#3A1F0E]">{health.loadTestBaseline.concurrentRequests}</span></div>
+                    <div><span className="text-[#3A1F0E]/50">Success rate:</span> <span className="font-bold text-green-700">{health.loadTestBaseline.successRate}</span></div>
+                    <div><span className="text-[#3A1F0E]/50">Max latency:</span> <span className="font-bold text-[#3A1F0E]">{health.loadTestBaseline.maxMs}ms</span></div>
+                    <div><span className="text-[#3A1F0E]/50">Tested:</span> <span className="font-bold text-[#3A1F0E]">{health.loadTestBaseline.testedAt}</span></div>
+                  </div>
+                  <p className="text-xs text-[#3A1F0E]/40 mt-2">{health.loadTestBaseline.note}</p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-[#3A1F0E]/70 uppercase tracking-wider mb-3">Escalation Matrix</h3>
+                <div className="bg-white rounded-2xl border border-[#E8D5B7] overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-[#FAF6EF] border-b border-[#E8D5B7]">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-bold text-[#3A1F0E]/70 w-24">Level</th>
+                        <th className="px-4 py-3 text-left font-bold text-[#3A1F0E]/70">Condition</th>
+                        <th className="px-4 py-3 text-left font-bold text-[#3A1F0E]/70">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#E8D5B7]/60">
+                      {health.escalationMatrix.map((row) => (
+                        <tr key={row.level} className="hover:bg-[#FAF6EF]/50">
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                              row.level === "GREEN"    ? "bg-green-100 text-green-700" :
+                              row.level === "YELLOW"   ? "bg-yellow-100 text-yellow-700" :
+                              row.level === "ORANGE"   ? "bg-orange-100 text-orange-700" :
+                              row.level === "RED"      ? "bg-red-100 text-red-700" :
+                                                         "bg-red-900 text-white"
+                            }`}>{row.level}</span>
+                          </td>
+                          <td className="px-4 py-3 text-[#3A1F0E]/70 text-xs">{row.condition}</td>
+                          <td className="px-4 py-3 text-[#3A1F0E] text-xs font-medium">{row.action}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

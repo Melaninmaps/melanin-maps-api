@@ -2592,9 +2592,9 @@ router.patch("/kinfolk/aave-level", async (req: Request, res: Response) => {
       .where(eq(usersTable.id, req.user.id))
       .limit(1);
     const tier = getTierFromMemberType(userRow?.memberType);
-    if (tier !== "navigator" && tier !== "trailblazer") {
+    if (tier !== "navigator" && tier !== "trailblazer" && tier !== "legacy_member") {
       return void res.status(403).json({
-        error: "Full AAVE voice (level 3) requires Navigator or Trailblazer membership.",
+        error: "Full AAVE voice (level 3) requires Navigator, Trailblazer, or Legacy membership.",
         code: "UPGRADE_REQUIRED",
       });
     }
