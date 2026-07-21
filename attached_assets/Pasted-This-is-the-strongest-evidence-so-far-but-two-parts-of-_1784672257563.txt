@@ -1,0 +1,160 @@
+This is the strongest evidence so far, but two parts of Replit’s interpretation need correction before approving a fix.
+
+## What the evidence now proves
+
+For roughly six minutes:
+
+* `totalCount` stayed at 3.
+* `idleCount` stayed at 0.
+* `waitingCount` stayed at 0.
+* Replit was not deliberately generating traffic.
+* The alert endpoint itself continued responding in roughly 100–130 ms.
+
+That means three application-pool connections appeared continuously checked out. This is not explained by the four normal routes previously tested.
+
+## Two technical corrections
+
+### The matching 30-second timers do not explain `idleCount: 0`
+
+A connection returned to the pool is counted as **idle**, even while it is waiting for `idleTimeoutMillis` to expire.
+
+Therefore:
+
+* `totalCount: 3`
+* `idleCount: 0`
+
+does not mean three connections are merely being kept warm between polls. It means, according to the Node pool, all three were checked out at the instant of every sample.
+
+So Replit’s “Scenario B” is not a sufficient explanation.
+
+### `statement_timeout` is not the correct fix for idle transactions
+
+If PostgreSQL shows `idle in transaction`, `statement_timeout` may not terminate that state because no statement is actively running.
+
+The relevant protection is usually:
+
+* fixing the missing commit/rollback first, and
+* potentially adding `idle_in_transaction_session_timeout` as a safeguard.
+
+No timeout should be selected until PostgreSQL reports the actual connection states.
+
+## The next step is now PostgreSQL evidence
+
+Do not restart Railway yet. The current degraded condition is the best opportunity to inspect what those three connections are doing.
+
+### In Railway
+
+1. Open the **Mapping With Melanin** Railway project.
+2. Click the **Postgres** service, not `api-server`.
+3. Look for **Data**, **Query**, **Database**, or **Connect**.
+4. Open the SQL query interface.
+5. Run this read-only query:
+
+```sql
+SELECT
+  pid,
+  application_name,
+  state,
+  wait_event_type,
+  wait_event,
+  EXTRACT(EPOCH FROM (
+    now() - COALESCE(query_start, state_change)
+  ))::int AS seconds_in_state,
+  LEFT(query, 100) AS query_signature
+FROM pg_stat_activity
+WHERE datname = current_database()
+  AND pid <> pg_backend_pid()
+ORDER BY seconds_in_state DESC NULLS LAST;
+```
+
+Do not share complete SQL containing email addresses, coordinates, IDs, or other literal values.
+
+We need only:
+
+* number of rows;
+* `state`;
+* `seconds_in_state`;
+* `wait_event_type`;
+* `wait_event`;
+* sanitized table or operation name;
+* `application_name`.
+
+Also run:
+
+```sql
+SELECT
+  state,
+  wait_event_type,
+  wait_event,
+  COUNT(*) AS connection_count
+FROM pg_stat_activity
+WHERE datname = current_database()
+  AND pid <> pg_backend_pid()
+GROUP BY state, wait_event_type, wait_event
+ORDER BY connection_count DESC;
+```
+
+## Check the two Railway settings
+
+### API replica count
+
+In `api-server`:
+
+1. Open **Settings**.
+2. Find **Replicas**, **Instances**, or **Scaling**.
+3. Report only the number.
+4. Do not change it.
+
+### Database connection type
+
+In `api-server`:
+
+1. Open **Variables**.
+2. Find `DATABASE_URL`.
+3. Do not copy or expose it.
+4. Inspect only the hostname.
+
+Report one of:
+
+* `Contains -pooler`
+* `Does not contain -pooler`
+* `Not a Neon hostname`
+
+## What each PostgreSQL result would mean
+
+| PostgreSQL result                   | Meaning                                                                               |
+| ----------------------------------- | ------------------------------------------------------------------------------------- |
+| `active`, several seconds or longer | Queries are genuinely running or blocked                                              |
+| `idle in transaction`               | A transaction is open and was never completed                                         |
+| `idle`                              | PostgreSQL considers connections free; investigate mismatch with Node pool stats      |
+| Waiting on `Lock`                   | One query is blocking others                                                          |
+| Waiting on client activity          | Server is waiting for the application/client                                          |
+| Only one or no production rows      | Pool stats may be coming from multiple processes or behaving differently than assumed |
+
+There is also an important possibility: the pool-stats request may be hitting one Railway instance while other requests hit another. Replica count and instance identity would clarify that.
+
+## Send Replit this now
+
+> **HOLD ALL FIXES — POSTGRES STATE REQUIRED**
+>
+> The six-minute observation confirms three Node pool connections appeared continuously checked out, but it does not establish whether they are running SQL, waiting on PostgreSQL, idle in a transaction, or associated with another process.
+>
+> Two corrections:
+>
+> 1. `idleTimeoutMillis` matching the polling interval does not explain `idleCount: 0`; returned connections would be counted as idle until expiration.
+> 2. If PostgreSQL reports `idle in transaction`, `statement_timeout` is not the primary fix. The transaction must be completed, with `idle_in_transaction_session_timeout` considered only as a safeguard.
+>
+> Do not restart, resize the pool, alter polling, or add timeouts yet.
+>
+> Await the Railway results for:
+>
+> * `pg_stat_activity`
+> * connection count grouped by state and wait event
+> * API replica count
+> * pooled versus direct database hostname
+>
+> Also confirm whether `/api/pool-stats` reports an API instance or deployment identifier. If not, propose adding a non-secret instance identifier so we can determine whether samples are reaching one or multiple Railway instances.
+>
+> Do not make that change until reviewed.
+
+Once those four results are available, we should be able to distinguish a real database query problem from an application checkout problem, multiple server instances, or background traffic.
