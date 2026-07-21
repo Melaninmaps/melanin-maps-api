@@ -151,25 +151,6 @@ app.get("/api/db-probe", (req, res) => {
 });
 
 
-// Schema introspection — probe-key protected, temporary diagnostic
-app.get("/api/schema-probe", async (req, res) => {
-  if (req.headers["x-probe-key"] !== process.env.DB_PROBE_KEY) return res.status(401).end();
-  const pool = buildPool();
-  if (!pool) return res.json({ error: "no DATABASE_URL" });
-  try {
-    const r = await pool.query(`
-      SELECT column_name, data_type, is_nullable
-      FROM information_schema.columns
-      WHERE table_name = 'businesses'
-      ORDER BY ordinal_position
-    `);
-    await pool.end();
-    res.json({ columns: r.rows.map(c => c.column_name) });
-  } catch(err) {
-    try { await pool.end(); } catch {}
-    res.json({ error: err.message });
-  }
-});
 app.use("/api", (req, res) => {
   const proxyReq = httpRequest(
     { hostname: "localhost", port: API_PORT, path: "/api" + req.url, method: req.method, headers: { ...req.headers, host: `localhost:${API_PORT}` } },
