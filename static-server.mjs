@@ -67,6 +67,17 @@ async function runMigration() {
     ];
     for (const sql of seeds) { try { await pool.query(sql); } catch(e) { /* ignore dups */ } }
     process.stderr.write(`DB_MIGRATION: seeded rows\n`);
+
+    // Add missing columns to businesses table (schema drift fix)
+    const businessCols = [
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS profile_status VARCHAR(30) NOT NULL DEFAULT 'community_listed'`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS community_audience_type VARCHAR(30) NOT NULL DEFAULT 'unknown'`,
+    ];
+    for (const sql of businessCols) {
+      try { await pool.query(sql); } catch(e) { process.stderr.write(`DB_MIGRATION: biz col skip: ${e.message}\n`); }
+    }
+    process.stderr.write("DB_MIGRATION: businesses columns ensured\n");
+
     await pool.end();
   } catch(err) { process.stderr.write(`DB_MIGRATION: FATAL ${err.message}\n`); }
 }
