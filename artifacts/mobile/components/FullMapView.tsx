@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Circle, Marker, type Region } from "react-native-maps";
+import MapView, { Circle, Marker, PROVIDER_DEFAULT, type Region } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryPill } from "@/components/CategoryPill";
 import { CATEGORIES } from "@/constants/data";
@@ -203,7 +203,8 @@ export function FullMapView() {
     <View style={s.container}>
       <MapView
         ref={mapRef}
-        style={StyleSheet.absoluteFillObject}
+        style={s.map}
+        provider={PROVIDER_DEFAULT}
         initialRegion={DEFAULT_REGION}
         showsUserLocation={locationGranted}
         showsMyLocationButton={false}
@@ -541,6 +542,7 @@ export function FullMapView() {
 
 const s = StyleSheet.create({
   container: { flex: 1 },
+  map: { flex: 1 },
 
   topOverlay: { position: "absolute", top: 0, left: 0, right: 0, gap: 6 },
 

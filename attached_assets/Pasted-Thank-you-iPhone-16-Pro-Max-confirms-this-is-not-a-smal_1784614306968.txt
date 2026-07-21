@@ -1,0 +1,115 @@
+Thank you. **iPhone 16 Pro Max** confirms this is not a small-screen sizing issue.
+
+The screenshot shows the whole Map screen layout has normal dimensions, but the native map layer itself is absent. Build 93 therefore **did not resolve the white-map problem**, even though the classic tabs are now active.
+
+Send Replit this:
+
+> # P0 BUILD 93 MAP FAILURE — IPHONE 16 PRO MAX
+>
+> Build 93 has been physically tested on an **iPhone 16 Pro Max**.
+>
+> Confirmed:
+>
+> * authentication works;
+> * the Map screen opens;
+> * category and heritage filters render;
+> * bottom tabs render;
+> * the content area has full width and height;
+> * the actual native map remains completely white;
+> * no tiles, location dot, attribution, or pins appear.
+>
+> Therefore, the previous conclusion that `unstable-native-tabs` alone caused the white map was incorrect or incomplete.
+>
+> **Do not submit Build 93 to App Review.**
+>
+> ## Required diagnostic sequence
+>
+> Do not make another speculative fix. Test the map progressively:
+>
+> 1. Confirm the exact Git commit and native configuration used by Build 93.
+>
+> 2. Confirm `react-native-maps` is included in the installed iOS binary and report its version.
+>
+> 3. Create a temporary diagnostic screen containing only:
+>
+>    ```tsx
+>    <View style={{ flex: 1 }}>
+>      <MapView
+>        style={{ flex: 1 }}
+>        initialRegion={{
+>          latitude: 39.9526,
+>          longitude: -75.1652,
+>          latitudeDelta: 0.18,
+>          longitudeDelta: 0.18,
+>        }}
+>        onMapReady={() => console.log("MAP_READY")}
+>        onMapLoaded={() => console.log("MAP_LOADED")}
+>      />
+>    </View>
+>    ```
+>
+> 4. Remove all markers, API fetches, overlays, filters, animated regions, location logic, absolute positioning, and custom map styling from that diagnostic screen.
+>
+> 5. Test this minimal screen using the exact production-matching iOS development configuration.
+>
+> 6. Record:
+>
+>    * `onLayout` width and height;
+>    * whether `onMapReady` fires;
+>    * whether `onMapLoaded` fires;
+>    * native iOS logs;
+>    * JavaScript errors;
+>    * whether Apple Maps attribution appears.
+>
+> 7. If the minimal map works, add the existing features back one layer at a time until the failure reappears.
+>
+> 8. If the minimal map does not work, inspect:
+>
+>    * Expo SDK and `react-native-maps` compatibility;
+>    * whether the correct native module was compiled;
+>    * app configuration and config plugins;
+>    * iOS deployment target;
+>    * New Architecture compatibility;
+>    * whether `MapView` is being imported from the expected package;
+>    * native build logs for map-related warnings.
+>
+> ## Important layout test
+>
+> Replace `StyleSheet.absoluteFillObject` with `style={{ flex: 1 }}` during the minimal test. The current screenshot proves the parent screen has space, but it does not prove the native map receives a usable frame.
+>
+> ## Required proof
+>
+> Before another paid build, provide a screen recording showing:
+>
+> * an iPhone 16 Pro Max simulator or physical iPhone;
+> * visible Apple Maps tiles;
+> * Philadelphia centered;
+> * Mother Bethel displayed as a pin;
+> * the pin tapped;
+> * the preview card opened.
+>
+> Clearly identify whether the recording is simulator or physical-device evidence.
+>
+> ## Protected scope
+>
+> Do not modify:
+>
+> * authentication;
+> * registration;
+> * sessions or tokens;
+> * database schema;
+> * memberships or payments;
+> * KinfolkAI;
+> * unrelated navigation.
+>
+> **Authentication impact: NONE.**
+>
+> End with either:
+>
+> **🟢 MAP VISIBLY VERIFIED — READY FOR CONTROLLED BUILD**
+>
+> or
+>
+> **🔴 MAP STILL UNVERIFIED — DO NOT BUILD**
+
+I would hold Build 93 in TestFlight for authentication testing, but **not submit it to App Review**. It will remain available while Replit diagnoses the map.
