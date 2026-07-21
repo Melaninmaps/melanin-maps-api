@@ -1,0 +1,69 @@
+START DEVICE-SIDE POLLING OBSERVATION
+Start the 10-second /api/pool-stats sampling loop now.
+Report each stage separately with:
+totalCount
+idleCount
+waitingCount
+timestamps
+relevant request routes observed
+whether connections return to idle
+Do not change code during the observation.
+I will perform these actions one at a time and tell you when each begins and ends:
+App freshly opened on Discovery
+Open Map and remain there for 90 seconds
+Switch back to Discovery and remain there for 90 seconds
+Open a business profile and remain there for 60 seconds
+Close the business profile and remain on Discovery for 60 seconds
+Background the app for 90 seconds
+Reopen the app
+Log out and remain on the login screen for 60 seconds
+Stop the test immediately if waitingCount rises above zero, any database-backed route fails, or login becomes unavailable.
+Then you perform those steps while Replit watches.
+Approval direction after the observation
+If the results match the code audit, I would combine the mobile lifecycle fixes into two carefully scoped PRs, not five tiny overlapping ones.
+Mobile PR 1 — Polling lifecycle and safety
+This can reasonably include:
+Poll only while the relevant screen is focused.
+Pause while the app is backgrounded.
+Require authentication where appropriate.
+Prevent overlapping requests.
+Cleanly restart polling when the app becomes active again.
+These changes all affect the same hook lifecycle and would otherwise repeatedly modify the same file. Combining them reduces merge conflicts and regression risk.
+Files likely involved:
+useActivityAlerts.ts
+useSafetyProximity.ts
+FullMapView.tsx
+Mobile PR 2 — Remove duplicate business-map polling
+This should separately remove the redundant polling from BusinessMapView.
+I would not require new shared context immediately unless the business screen truly needs live alert data. The smallest safe launch fix may simply be:
+remove continuous polling from the business-detail map,
+load needed nearby information once when the screen opens,
+and show a manual refresh if necessary.
+That is safer than introducing a new global state architecture immediately before launch.
+Server PR should remain separate
+The /api/reports/proximity-warnings work should stay separate because it changes server/database behavior.
+But I would not approve indexes blindly yet. The route timed out because it could not acquire a connection—not because its SQL took ten seconds after acquiring one.
+A short cache may still be valuable, but first Replit should report:
+how many safety reports and businesses currently exist,
+actual route duration when the pool is healthy,
+how often the route is called,
+and whether identical coordinate requests repeat frequently.
+At 124 ms after restart, the query is not currently slow enough to justify urgent indexing solely on latency. The bigger immediate win is reducing unnecessary repeated calls.
+One important distinction
+The restart did not prove the original July 21 deployment issue returned. It proved the exhausted application process could be cleared.
+The durable fix should focus first on:
+fewer polling instances,
+polling only when relevant,
+no polling after logout,
+no overlapping calls,
+no background polling,
+then evaluate whether pool size or server caching is still needed.
+Map diagnostic still matters
+The pool issue and the black map may be connected, but they are not identical.
+After the OTA has applied, still open:
+Profile → Map Diagnostic — Beta
+If that minimal screen displays Apple Maps correctly, we know the native map is sound and the production Map tab’s blank state is caused by its hooks, overlays, or loading logic.
+So your next two actions are:
+Tell Replit to start the device polling observation.
+Perform the steps above, including opening the Map Diagnostic screen when available.
+Do not submit either platform to Apple or Google yet. The app is restored, but the polling behavior still needs to be corrected and verified under real device use.
