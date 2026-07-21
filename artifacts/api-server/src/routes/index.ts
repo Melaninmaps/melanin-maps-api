@@ -138,12 +138,14 @@ import legalRouter from "./legal";
 import businessMembershipInfoRouter from "./business-membership-info";
 import dbProbeRouter from "./db-probe";
 import readyzRouter from "./readyz";
+import poolStatsRouter from "./pool-stats";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(dbProbeRouter);
 router.use(readyzRouter);
+router.use(poolStatsRouter);
 router.use(authRouter);
 router.use(phoneAuthRouter);
 router.use(businessesRouter);
