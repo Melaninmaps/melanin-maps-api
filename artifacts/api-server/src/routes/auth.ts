@@ -502,17 +502,33 @@ router.post("/auth/register", async (req: Request, res: Response) => {
     return;
   }
 
-  if (dateOfBirth) {
-    const dob = new Date(dateOfBirth);
-    if (isNaN(dob.getTime())) {
-      res.status(400).json({ error: "Invalid date of birth." });
-      return;
-    }
-    const ageYears = (Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-    if (ageYears < 13) {
-      res.status(400).json({ error: "You must be at least 13 years old to use this platform." });
-      return;
-    }
+  if (!dateOfBirth) {
+    res.status(400).json({ error: "Date of birth is required to create an account." });
+    return;
+  }
+  const dob = new Date(dateOfBirth);
+  if (isNaN(dob.getTime())) {
+    res.status(400).json({ error: "Invalid date of birth." });
+    return;
+  }
+  const now = new Date();
+  if (dob > now) {
+    res.status(400).json({ error: "Date of birth cannot be in the future." });
+    return;
+  }
+  // Calendar-based age — correct on the exact birthday, UTC-normalized to
+  // avoid timezone-induced day shifts near the 13-year threshold.
+  const y = dob.getUTCFullYear(), m = dob.getUTCMonth(), d = dob.getUTCDate();
+  const ty = now.getUTCFullYear(), tm = now.getUTCMonth(), td = now.getUTCDate();
+  let age = ty - y;
+  if (tm < m || (tm === m && td < d)) age--; // birthday not yet reached this year
+  if (age > 120) {
+    res.status(400).json({ error: "Invalid date of birth." });
+    return;
+  }
+  if (age < 13) {
+    res.status(400).json({ error: "You must be at least 13 years old to use this platform." });
+    return;
   }
 
   try {
