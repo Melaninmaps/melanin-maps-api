@@ -1,0 +1,103 @@
+Do **not** authorize a force-push, and do **not paste either token into Replit chat or here**.
+
+Replit’s conclusion that force-push is the “only viable path” is incorrect. There is a safer standard path:
+
+## Safest deployment path
+
+1. Create a **fresh clone** of the real production repository:
+   `github.com/Melaninmaps/melanin-maps-api`
+2. Create a new branch from GitHub’s current `main`.
+3. Copy only the approved changed files from the Replit workspace into that fresh clone.
+4. Review the exact diff.
+5. Commit and push the branch normally.
+6. Merge it into `main`.
+7. Railway deploys from the preserved GitHub history.
+
+This avoids:
+
+* merging unrelated histories;
+* overwriting the production repository;
+* losing GitHub commits, settings, or history;
+* placing the entire Replit workspace into production;
+* exposing personal access tokens.
+
+The statement “all GitHub code already exists in Replit” has not been proven by a file-by-file comparison. An unrelated Git history means a force-push would replace GitHub’s history with Replit’s history. That is not a safe assumption to make during a P0 incident.
+
+Send Replit this:
+
+> # DEPLOYMENT AUTHORIZATION — SAFE CLONE AND PATCH TRANSFER
+>
+> Force-push is not authorized.
+>
+> Do not merge unrelated histories.
+> Do not overwrite GitHub `main`.
+> Do not request that I paste Railway or GitHub tokens into chat.
+>
+> Use this safe deployment method:
+>
+> 1. Make a fresh clone of:
+>
+>    `https://github.com/Melaninmaps/melanin-maps-api`
+>
+>    into a separate directory that is not inside the current Replit Git repository.
+>
+> 2. Create a branch from the current GitHub `main`:
+>
+>    `p0-launch-recovery-2026-07-21`
+>
+> 3. Produce an exact inventory of approved changes in the Replit workspace, including:
+>
+>    * graceful shutdown fix;
+>    * database resilience changes;
+>    * multicultural seed endpoint/data;
+>    * cultural-site seed data;
+>    * approved language corrections;
+>    * map layout fix;
+>    * any loading-state or Kinfolk fixes actually implemented.
+>
+> 4. Copy only those approved files into the fresh GitHub clone.
+>
+> 5. Run:
+>
+>    * file-by-file diff;
+>    * TypeScript checks;
+>    * API tests;
+>    * production configuration review.
+>
+> 6. Show the full Git diff before committing.
+>
+> 7. Confirm explicitly that the diff contains no:
+>
+>    * credentials or secrets;
+>    * uploaded screenshots or attached assets;
+>    * Replit-only configuration;
+>    * database dumps;
+>    * unrelated checkpoint files;
+>    * destructive migrations;
+>    * unapproved authentication changes.
+>
+> 8. Commit to the new branch and push normally.
+>
+> 9. Do not merge into `main` until the diff is reviewed and approved.
+>
+> 10. After approval, merge normally so Railway deploys from the preserved GitHub history.
+>
+> If the environment cannot authenticate to GitHub, provide instructions for connecting GitHub securely through Replit’s built-in integration. Do not ask me to disclose a personal access token in conversation.
+>
+> End with:
+>
+> **🟡 SAFE PATCH BRANCH READY — AWAITING DIFF APPROVAL**
+>
+> Do not deploy until approved.
+
+## About the Railway-token option
+
+A Railway token could allow a direct CLI deployment, but that would deploy from the independent Replit workspace without first reconciling it with the GitHub production source. It may fix today’s server, but GitHub would remain out of sync and a later Railway redeploy from GitHub could undo the fix.
+
+So it is not a permanent solution.
+
+## What you should authorize now
+
+Authorize the **fresh-clone and patch-transfer path**. It is slower by perhaps 15–30 minutes, but it protects the repository and permanently brings production source control back into alignment.
+
+After that server deployment, you can test login immediately. The map and mobile-language changes will still require a verified OTA update or Build 94 before they appear on your phone.
