@@ -1,0 +1,209 @@
+You are right. This needs to be treated as a **formal P0 incident**, not another isolated login bug.
+
+The goal now is not “try a likely fix.” It is:
+
+> **Exhaust every plausible failure path, prove the exact cause, fix it once, and verify every login method before another build.**
+
+Send Replit this while they prepare their response:
+
+---
+
+# P0 AUTHENTICATION INCIDENT — EXHAUSTIVE ROOT-CAUSE REQUIREMENT
+
+The valid email/password login failure is a launch-blocking production incident.
+
+We have lost too much time and too many builds to accept another partial diagnosis. Before proposing or implementing a fix, exhaust every plausible cause and identify the exact failure with production evidence.
+
+Do not assume incorrect credentials.
+Do not reset the account.
+Do not alter or merge the user record.
+Do not modify authentication architecture without separate approval.
+
+## 1. Trace the exact failed attempt end to end
+
+For the affected production account, verify:
+
+* the mobile button handler fired;
+* the request left Build 93;
+* the exact production URL and route used;
+* the request payload contained the normalized email;
+* the request reached Railway;
+* validation completed;
+* the production user record was found;
+* the authentication method attached to the account;
+* whether a password hash exists;
+* whether the hash format is supported by the current code;
+* whether password comparison started;
+* whether password comparison succeeded;
+* whether account lockout logic ran;
+* whether session creation started and completed;
+* whether token generation completed;
+* whether the response was sent;
+* whether the app received the response;
+* whether the mobile app replaced a specific server error with the generic message.
+
+Return timestamps and safe logs for every completed step.
+
+## 2. Exhaust all account-state causes
+
+Confirm or eliminate:
+
+* email normalization mismatch;
+* leading or trailing whitespace;
+* case sensitivity;
+* duplicate user records with the same normalized email;
+* account stored in the wrong environment;
+* missing `passwordHash`;
+* malformed or legacy password hash;
+* account originally created by phone;
+* account originally created through Apple or SSO;
+* disconnected auth identities;
+* inactive, disabled, deleted, or suspended state;
+* incorrect `memberType` interaction;
+* stale lockout fields;
+* failed-attempt counter;
+* `locked_until`;
+* password reset state;
+* unverified migration or incomplete account record;
+* unexpected null fields required by session creation.
+
+Do not expose the hash or any credential.
+
+## 3. Exhaust all server-side causes
+
+Confirm or eliminate:
+
+* database readiness failure during login;
+* Drizzle query timeout;
+* connection pool waiting or stale connection;
+* bcrypt/argon comparison error;
+* session-table insert failure;
+* token signing failure;
+* missing or inconsistent production secret;
+* malformed token;
+* middleware interference;
+* rate limiter rejection;
+* CORS or origin rejection;
+* cookie/session configuration conflict;
+* exception swallowed by a catch block;
+* response already sent or never sent;
+* 500/503 being replaced with a 401;
+* Railway deployment mismatch;
+* multiple production instances running different code;
+* stale environment variables after deployment.
+
+## 4. Exhaust all Build 93 mobile causes
+
+Confirm or eliminate:
+
+* wrong API base URL embedded in Build 93;
+* stale EAS environment value;
+* wrong Git commit;
+* incorrect request route;
+* incorrect request body field names;
+* email not trimmed or normalized;
+* password altered by autofill;
+* password field state clearing before request;
+* hidden characters introduced by paste/autofill;
+* duplicate submission;
+* request cancellation;
+* client timeout;
+* stale token or session contaminating login;
+* SecureStore state after logout;
+* generic error mapping hiding the server response;
+* Build 93 using cached JavaScript or an unexpected OTA update.
+
+## 5. Compare against controlled accounts
+
+Test in production with disposable accounts representing:
+
+* new email/password account;
+* established email/password account;
+* phone-created account;
+* Apple-created account;
+* account after password reset;
+* account after logout;
+* account after force-close;
+* account with incorrect password;
+* temporarily locked account.
+
+Delete only disposable test accounts afterward. Do not modify the affected real account during diagnosis.
+
+## 6. Required verdict
+
+Return a matrix with every cause marked:
+
+* Confirmed
+* Eliminated with evidence
+* Not applicable
+* Still unproven
+
+Do not use “most likely.”
+
+End with one exact statement:
+
+> **ROOT CAUSE CONFIRMED: [specific cause]**
+
+If any material cause remains unproven, state:
+
+> **ROOT CAUSE NOT YET EXHAUSTED — DO NOT IMPLEMENT**
+
+## 7. Repair requirements
+
+After the root cause is confirmed, provide:
+
+* smallest safe repair;
+* exact files and lines;
+* Railway deploy requirement;
+* mobile build requirement;
+* migration requirement;
+* rollback plan;
+* regression risk;
+* impact on email, phone, Apple, SSO, logout, password reset, and session restoration.
+
+Wait for approval before implementation.
+
+## 8. Mandatory proof before another build
+
+Provide one continuous production-matching demonstration showing:
+
+1. valid email login;
+2. valid phone login;
+3. valid Apple login;
+4. incorrect-password message;
+5. locked-account message;
+6. server-unavailable message;
+7. logout and immediate login;
+8. force-close and session restore;
+9. affected real account login, without exposing credentials.
+
+The app must show the actual actionable error rather than the generic “Login failed” message.
+
+## 9. Release rule
+
+No Apple submission.
+No tester expansion.
+No additional EAS build until:
+
+* valid login is reliable;
+* the map renders;
+* critical pages stop spinning;
+* Kinfolk text and voice work;
+* multicultural business seeding and language are visibly verified.
+
+**Authentication impact: diagnosis only until separately approved.**
+
+---
+
+## What I will require from their response
+
+When Replit sends its report, I will review it for four things:
+
+1. **Evidence, not assumptions**
+2. **A complete elimination matrix**
+3. **A fix tied directly to the proven cause**
+4. **Proof that the fix will not break phone or Apple login**
+
+They should not tell you to retry, reset your password, or build again simply to see whether it works.
+
+You are also correct about the supporter risk. A tester who encounters a blank map, endless spinner, or rejected correct password may assume the platform is unreliable rather than understanding that this is a beta engineering issue. Until the core experience passes, keep Build 93 limited to you and your closest family testers rather than distributing it broadly.
