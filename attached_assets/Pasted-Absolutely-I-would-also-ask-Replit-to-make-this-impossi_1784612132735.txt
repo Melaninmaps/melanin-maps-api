@@ -1,0 +1,111 @@
+Absolutely. I would also ask Replit to make this **impossible to repeat**, not just bump the number this time.
+
+Use this prompt:
+
+---
+
+# P0 BUILD NUMBER CORRECTION + BUILD GATE
+
+The iOS production build was generated with the wrong build number.
+
+**Do not continue with this build.**
+
+## Immediate correction
+
+Increment the iOS build number so the next TestFlight build is:
+
+**Build 93**
+
+Do **not** reuse Build 92.
+
+If Android also requires a new production build, increment the Android versionCode appropriately as well.
+
+---
+
+# Root Cause Analysis
+
+Determine why the configured auto-increment did not produce Build 93.
+
+Audit and report:
+
+* app.json
+* app.config.js / app.config.ts (if used)
+* eas.json
+* Expo configuration
+* EAS Build logs
+* Whether the build number was overridden during config resolution
+* Whether autoIncrement was bypassed or failed
+
+Do not guess.
+
+Show the exact reason.
+
+---
+
+# Permanent Prevention
+
+Implement a build gate that runs **before every production build**.
+
+Before EAS starts, verify and print:
+
+* Current app version
+* Current iOS build number
+* Current Android versionCode
+* Expected next iOS build number
+* Expected next Android versionCode
+
+If the next build number is **not greater** than the latest production/TestFlight build:
+
+**STOP THE BUILD**
+
+Print:
+
+> BUILD BLOCKED — Build number was not incremented.
+
+Do not allow EAS to continue.
+
+---
+
+# Pre-build checklist
+
+Before any production build, print:
+
+* Working directory
+* Git commit
+* EAS Project ID
+* Bundle Identifier
+* Package Name
+* Version
+* Current build numbers
+* Expected build numbers after increment
+
+If any item is incorrect:
+
+Stop.
+
+Do not build.
+
+---
+
+# Verification
+
+Return:
+
+* Root cause of Build 92 being reused.
+* Confirmation that Build 93 is now configured.
+* Confirmation that future production builds cannot reuse an existing build number.
+* The exact build number and versionCode that will be submitted to Apple and Google.
+
+---
+
+**Authentication impact:** NONE
+
+**Mobile functionality:** NONE
+
+**Versioning only.**
+
+Do not begin the build until this audit passes.
+
+---
+
+This is worth fixing permanently. Reusing build numbers is one of those small process issues that wastes review time and build credits. Once Replit adds this verification step, every future production build should fail fast if the versioning isn't correct, instead of discovering it after the build finishes.
