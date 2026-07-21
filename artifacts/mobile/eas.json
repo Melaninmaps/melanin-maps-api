@@ -36,6 +36,7 @@
     },
     "production": {
       "channel": "production",
+      "environment": "production",
       "autoIncrement": false,
       "ios": {
         "credentialsSource": "local",
