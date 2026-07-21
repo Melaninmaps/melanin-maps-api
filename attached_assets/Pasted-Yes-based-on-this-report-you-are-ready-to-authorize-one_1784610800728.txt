@@ -1,0 +1,95 @@
+Yes — based on this report, you are ready to authorize **one controlled build**.
+
+Before Replit runs it, I would make two small corrections:
+
+1. `--no-auto-submit` is unnecessary. The normal command already builds without submitting:
+
+   ```bash
+   eas build --platform ios --profile production
+   ```
+2. Since auto-increment is on, Replit must report the **actual final build numbers** after EAS increments them. Do not assume they will remain iOS 92 / Android 66.
+
+Send Replit:
+
+> **Approved — begin the controlled Community Beta 2 builds.**
+>
+> Run only from:
+>
+> ```bash
+> cd /home/runner/workspace/artifacts/mobile
+> ```
+>
+> Before each build, confirm:
+>
+> * `pwd` is `/home/runner/workspace/artifacts/mobile`
+> * EAS project ID is `0f873107-7787-46ab-9a04-685c2a6756b1`
+> * bundle/package is `com.melaninmaps.app`
+> * version is `1.1.5`
+> * Git commit includes the iOS classic-tab map repair
+> * working tree has no uncommitted mobile-source changes
+> * no configure or relink prompt appears
+>
+> Build commands:
+>
+> ```bash
+> eas build --platform ios --profile production
+> eas build --platform android --profile production
+> ```
+>
+> Do not auto-submit either platform.
+>
+> After each build starts, return:
+>
+> * EAS Build ID
+> * exact Git commit
+> * final iOS build number or Android version code after auto-increment
+> * EAS project ID
+> * status
+> * direct build-log link
+>
+> After the builds finish, do not submit to Apple or Google. Wait for physical-device acceptance testing.
+>
+> **Authentication impact: NONE.**
+>
+> No additional code changes are authorized.
+
+## What this build should include
+
+* iOS white-map repair using the stable classic bottom-tab layout
+* Philadelphia fallback when location is denied
+* business and cultural pins
+* the four Philadelphia cultural records now in production
+* Howard University when navigating to Washington, D.C.
+* logout and immediate-login repair
+* required DOB and under-13 registration gate
+* Kinfolk’s approved welcome language
+* beta access to AAVE Voice Level 3 after the Railway deployment completes
+* existing Discovery, Community, Events, Library, Resources, Circles, Life Journeys, business profiles, memberships, and Report Intel
+
+## What remains deferred
+
+* sidebar navigation
+* direct cultural pin → exact individual story page
+* community connection requests
+* member invitation/referral experience
+* full contextual notification system
+* events/community layers on the map
+* complete business-media tier management UI
+* unified discovery
+* graduated parental controls
+
+## Your first acceptance test
+
+When the iOS build reaches TestFlight:
+
+1. Create a new account.
+2. Confirm registration succeeds.
+3. Open the Map immediately.
+4. Confirm the map is not white.
+5. Deny location and confirm Philadelphia appears.
+6. Confirm at least Mother Bethel and the newly seeded cultural locations appear.
+7. Tap one cultural pin and one business pin.
+8. Open Kinfolk and test the voice.
+9. Log out and immediately log back in.
+
+If the map is white, registration fails, login hangs, pins do not appear, or the tab says `index`, reject the build and do not submit it.
