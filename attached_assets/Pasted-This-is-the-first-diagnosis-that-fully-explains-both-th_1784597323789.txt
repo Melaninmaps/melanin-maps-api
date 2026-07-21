@@ -1,0 +1,94 @@
+This is the first diagnosis that fully explains both the **white iOS map** and why the previous coordinate repair did not solve it.
+
+The map issue is now separated correctly:
+
+* **LB-010B coordinate validation** was still a legitimate repair for bad pins.
+* **The white base map** is a different issue caused by the iOS 26 `unstable-native-tabs` path producing a zero-height native map container.
+* Authentication is explicitly untouched.
+* The next build must be run from the correct mobile project, not the workspace root.
+
+I would approve the implementation, with one important safeguard: **do not delete all NativeTabs code immediately unless Replit first confirms nothing else depends on it.** The safer launch patch is simply to force `ClassicTabLayout()` and leave the unused NativeTabs implementation in place for now. Cleanup can happen after launch.
+
+Send Replit:
+
+> **Approved — implement the P0 iOS map layout repair with the narrowest possible scope.**
+>
+> In:
+>
+> `artifacts/mobile/app/(tabs)/_layout.tsx`
+>
+> change only the exported layout selection so iOS uses:
+>
+> ```ts
+> export default function TabLayout() {
+>   return <ClassicTabLayout />;
+> }
+> ```
+>
+> For this release:
+>
+> * do not remove or refactor `NativeTabLayout`;
+> * do not remove the `unstable-native-tabs` import unless TypeScript or lint requires it;
+> * do not redesign the tab bar;
+> * do not add the side drawer;
+> * do not modify `FullMapView.tsx`;
+> * do not modify authentication, registration, sessions, tokens, KinfolkAI, memberships, payments, database schema, notifications, or unrelated routes.
+>
+> **Authentication impact: NONE.**
+>
+> After implementation, provide:
+>
+> 1. Exact diff.
+> 2. Exact files changed.
+> 3. TypeScript result.
+> 4. Expo Doctor result.
+> 5. Resolved Expo configuration showing:
+>
+>    * EAS project ID `0f873107-7787-46ab-9a04-685c2a6756b1`;
+>    * bundle identifier `com.melaninmaps.app`;
+>    * correct version/build values.
+> 6. Clean working-tree status.
+> 7. Exact Git commit.
+>
+> Before any paid build, show the exact controlled command sequence:
+>
+> ```bash
+> cd artifacts/mobile
+> pwd
+> eas project:info
+> eas build:configure
+> eas build --platform ios --profile production
+> ```
+>
+> Do not proceed if:
+>
+> * `pwd` is not the mobile directory;
+> * EAS shows the workspace project;
+> * the project ID is not the mobile project ID;
+> * EAS asks to configure or relink the project unexpectedly;
+> * the bundle identifier is not `com.melaninmaps.app`.
+>
+> If any prompt asks whether to configure a new project, stop and report it rather than answering yes.
+>
+> Before starting the paid build, return:
+>
+> **🟢 SOURCE FIXED — CORRECT MOBILE PROJECT VERIFIED — AWAITING BUILD AUTHORIZATION**
+>
+> Do not run the EAS build until I explicitly authorize it.
+
+## What the next controlled build should deliver
+
+Once this repair is inside the **correct mobile project**, your next iPhone build should be expected to show:
+
+* a visible Apple base map;
+* Philadelphia as the fallback when location is denied;
+* Mother Bethel AME Church as a cultural pin in the default view;
+* business pins with valid coordinates;
+* tappable cultural preview cards;
+* no crash or white screen from malformed business coordinates.
+
+The individual-site deep link and the three missing Philadelphia heritage records are separate items. They should improve the storytelling experience, but they do not explain the white map.
+
+One discrepancy should also be reconciled in the incident log: the report says Build 92 contains all four fixes even though it was built from the workspace project. That is possible if the root build bundled the same mobile source, but Replit should not use that as proof that the native mobile configuration was correct. The project association and native build context were still wrong.
+
+You have now reached the point where one controlled build is justified—but only after Replit shows the correct directory, project ID, bundle ID, commit, and clean source state before the build begins.
