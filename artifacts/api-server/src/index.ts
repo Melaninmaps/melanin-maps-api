@@ -91,7 +91,15 @@ const server = app.listen(port, (err) => {
 //
 // RAILWAY_DEPLOYMENT_DRAINING_SECONDS=60 gives up to 60 s for in-flight
 // requests to finish before the container is killed anyway.
+//
+// isShuttingDown guard + process.once ensure shutdown runs at most once
+// even if SIGTERM is somehow delivered more than once.
+let isShuttingDown = false;
+
 function gracefulShutdown(signal: string) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
   logger.info({ signal }, "Received shutdown signal — draining…");
 
   server.close(async () => {
@@ -113,5 +121,5 @@ function gracefulShutdown(signal: string) {
   }, 25_000).unref();
 }
 
-process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+process.once("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.once("SIGINT", () => gracefulShutdown("SIGINT"));
