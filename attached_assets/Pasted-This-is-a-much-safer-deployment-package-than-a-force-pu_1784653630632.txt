@@ -1,0 +1,121 @@
+This is a much safer deployment package than a force-push, but I would **not approve the patch solely from grep counts**. Because the GitHub repository stores only compiled artifacts, the source review is harder: 286 changed bundle lines can represent more behavior than the summary reveals.
+
+## My recommendation
+
+Use **Option 1: Replit’s GitHub OAuth integration** for today, provided it connects to the correct GitHub account and allows a normal push to the new branch.
+
+That is the best immediate route because it:
+
+* does not expose a token;
+* preserves GitHub history;
+* pushes the already prepared branch normally;
+* allows a pull request and review;
+* avoids installing a permanent write-enabled deploy key during an active incident.
+
+A deploy key is reasonable later, but I would not create permanent repository write access while you are rushing to restore production. Your normal GitHub integration can also support future controlled deployments.
+
+## One concern that must be resolved before approval
+
+Replit says the patch includes:
+
+* graceful shutdown;
+* multicultural seed endpoint.
+
+But the commit message also mentions “multicultural seed endpoint,” and the compiled diff has **267 added lines**. Before merging, Replit needs to prove that invoking the seed route is admin-protected and cannot be called by the public.
+
+The server deployment should not automatically seed data merely because the bundle is deployed unless that was explicitly approved.
+
+Send Replit this:
+
+> # CONDITIONAL APPROVAL — CONNECT GITHUB AND PREPARE PULL REQUEST
+>
+> Use **Option 1: Replit GitHub Integration**.
+>
+> Do not use a personal access token.
+> Do not generate a deploy key at this time.
+> Do not force-push.
+> Do not push directly to `main`.
+>
+> Connect Replit securely through:
+>
+> `Settings → Integrations → GitHub`
+>
+> Then push only the prepared branch:
+>
+> `p0-launch-recovery-2026-07-21`
+>
+> to:
+>
+> `Melaninmaps/melanin-maps-api`
+>
+> ## Before pushing, answer these final safety questions
+>
+> 1. Is `/api/admin/seed-multicultural` protected by the existing admin authentication middleware?
+> 2. Can a normal unauthenticated user call it?
+> 3. Does deployment automatically execute the seed, or must an authorized admin invoke it separately?
+> 4. Does the endpoint permit repeated execution without duplicates?
+> 5. Does it insert only the 12 approved demo businesses and five approved cultural locations?
+> 6. Does it modify, relabel, overwrite, or delete any existing business or cultural record?
+> 7. Does it expose internal errors, database information, or seed details to unauthorized callers?
+> 8. Is the graceful shutdown sequence:
+>
+>    * stop accepting connections;
+>    * close the HTTP server;
+>    * await `pool.end()`;
+>    * use a bounded fallback timer;
+>    * exit cleanly?
+> 9. Can the process receive SIGTERM more than once without throwing or attempting shutdown twice?
+> 10. Does the new bundle start successfully using the existing production `package.json` and Docker configuration?
+>
+> ## Required branch verification
+>
+> After pushing the branch, provide:
+>
+> * GitHub branch URL;
+> * commit SHA on GitHub;
+> * pull-request URL;
+> * GitHub comparison showing only:
+>
+>   * `dist/index.mjs`;
+>   * `dist/index.mjs.map`;
+> * confirmation that `main` is unchanged;
+> * confirmation that Railway has not deployed anything yet.
+>
+> Do not merge the pull request until these safety questions are answered and the GitHub diff is available for review.
+>
+> End with:
+>
+> **🟡 GITHUB PATCH PR READY — PRODUCTION UNCHANGED — AWAITING MERGE APPROVAL**
+
+## After the pull request is ready
+
+The correct sequence is:
+
+1. Review that the PR contains exactly two files.
+2. Confirm the seed endpoint is admin-only.
+3. Merge into `main`.
+4. Watch Railway deploy.
+5. Verify health, businesses, cultural sites and login.
+6. Run a disposable login/logout/session test.
+7. Run a controlled Railway redeployment and verify login again.
+8. Only then seed the approved multicultural data.
+9. Test your real account in Build 93.
+
+## Important: what this deployment will and will not fix
+
+This server patch can address:
+
+* production connection handling;
+* login stability across deployments;
+* availability of the approved seed endpoint.
+
+It will **not** put these onto your iPhone:
+
+* map layout repair;
+* 21 language corrections;
+* mobile loading-state changes;
+* voice/microphone changes.
+
+Those still require a verified OTA update or Build 94.
+
+So I approve connecting GitHub and creating the pull request—not merging yet. The final safety answers and GitHub PR diff should be the last check before production changes.
