@@ -1,0 +1,264 @@
+Yes—users should be able to **connect with existing community members** and **invite people who have not joined yet**. I would not make contact syncing the only path, and I would not upload anyone’s address book automatically.
+
+Because RC2 is currently frozen and ready for the next builds, this should be logged for RC3 rather than added to Build 92/66.  
+
+## Recommended experience
+
+### 1. Find people already on Mapping With Melanin™
+
+Give users a **Find Community** screen with:
+
+* Search by name or username
+* People from shared groups or Kinfolk Circles
+* Mutual connections
+* Shared interests
+* People in the same selected city or community
+* Cultural Ambassadors, mentors, creators, or business owners they follow
+
+Suggestions should explain why someone appears:
+
+> **3 mutual connections**
+
+> **Also follows Philadelphia events**
+
+> **Member of the Anime Circle**
+
+Avoid suggestions based on sensitive assumptions such as health conditions, religion, exact location, or private searches.
+
+### 2. Invite someone who is not registered
+
+The safest launch method is a personal referral link:
+
+> **Invite to Mapping With Melanin™**
+
+The member can share it through:
+
+* Text
+* Email
+* WhatsApp
+* Messenger
+* QR code
+* Copy link
+* The phone’s normal share menu
+
+This does not require Mapping With Melanin™ to collect or store the recipient’s contact information. The user chooses where and to whom the invitation is sent.
+
+The link should include the inviter’s referral code so the new member can be connected after registration, subject to both people’s privacy choices.
+
+### 3. Optional contacts feature
+
+Contacts can be offered later as an explicit option:
+
+> **Find people you already know**
+
+Before requesting permission, explain:
+
+> “We’ll use your contacts only to help identify people you may know or help you send invitations. We won’t message anyone without you choosing to send it.”
+
+Preferred approach:
+
+* User taps **Find from Contacts**
+* App asks permission in context
+* Matching happens on-device where practical
+* Do not retain the full address book
+* Do not send automatic invitations
+* Do not repeatedly ask after the user declines
+* Provide a way to disconnect and delete imported matching data
+
+For the initial release, I would use the system share sheet and referral links first. It is simpler, safer, and less likely to make people uncomfortable.
+
+## Connection model
+
+I recommend one clear mutual relationship:
+
+> **Connect**
+
+Flow:
+
+1. Member taps **Connect**
+2. Recipient receives a request
+3. Recipient accepts, declines, or blocks
+4. Only accepted connections receive connection-level profile access
+
+Businesses can be **Followed** or **Saved**, while people are **Connected**. That keeps the relationship types clear:
+
+* Connect with people
+* Follow groups, creators, and businesses
+* Save places and resources
+
+## Privacy and minor protections
+
+For adults:
+
+* Public profile discoverability: On/Off
+* Allow connection requests: Everyone / Mutuals / Nobody
+* Show in local suggestions: On/Off
+* Social links: Public / Connections / Private
+
+For users under 18:
+
+* Hidden from adult discovery suggestions by default
+* No exact-location matching
+* Restrict unsolicited adult connection requests
+* No public contact details
+* Social links private by default
+* Block invitations into adult-rated groups or events
+
+A user should also be able to remove a connection without notifying the other person, block them, and report harassment.
+
+## Send Replit this
+
+> # LB-019 — COMMUNITY CONNECTIONS AND INVITATIONS
+>
+> **Audit and proposal only. Add to RC3 backlog. Do not implement or modify RC2.**
+>
+> RC2 remains frozen for iOS Build 92 and Android Version Code 66. This request must not change authentication, registration, navigation, database schema, permissions, or the current release source.
+>
+> ## Objective
+>
+> Members should be able to:
+>
+> 1. Find and connect with existing Mapping With Melanin™ members.
+> 2. Receive thoughtful, privacy-safe community suggestions.
+> 3. Invite someone who is not yet registered.
+>
+> ## Required audit
+>
+> First inspect all existing functionality related to:
+>
+> * `find-friends.tsx`;
+> * contacts permissions;
+> * user search;
+> * referrals;
+> * invite links;
+> * referral codes;
+> * profiles;
+> * blocking and reporting;
+> * messages;
+> * groups and Kinfolk Circles;
+> * privacy settings;
+> * family and under-18 controls.
+>
+> Confirm what already exists, what is partially built, and what is missing. Do not duplicate existing systems.
+>
+> ## Proposed member experience
+>
+> Create or extend a **Find Community** experience with:
+>
+> * Search by display name or username.
+> * Mutual connections.
+> * Shared groups and circles.
+> * Shared non-sensitive interests.
+> * Selected city/community—not precise live location.
+> * Cultural Ambassadors, mentors, creators, and business owners where relevant.
+>
+> Each suggestion must explain why it is shown, such as:
+>
+> * “3 mutual connections”
+> * “Also follows Philadelphia events”
+> * “Member of the same Anime Circle”
+>
+> Do not generate suggestions from private searches, health topics, religion, precise location, safety reports, or other sensitive information.
+>
+> ## Relationship model
+>
+> Use:
+>
+> * **Connect** for mutual member relationships.
+> * **Follow** for businesses, creators, groups, and organizations.
+> * **Save** for places, events, and resources.
+>
+> A connection requires acceptance. Include:
+>
+> * request;
+> * accept;
+> * decline;
+> * cancel request;
+> * remove connection;
+> * block;
+> * report.
+>
+> ## Invite experience
+>
+> Members should be able to invite non-members through:
+>
+> * system share sheet;
+> * SMS;
+> * email;
+> * WhatsApp or other installed services;
+> * copyable referral link;
+> * QR code.
+>
+> The app must not send invitations automatically.
+>
+> The invitation link should preserve the inviter’s referral code and, after registration, offer the new user the choice to connect with the inviter.
+>
+> Do not expose the inviter’s private profile information in the invitation.
+>
+> ## Contacts option
+>
+> Treat address-book access as optional and secondary.
+>
+> Before requesting permission, display:
+>
+> “We’ll use your contacts only to help identify people you may know or help you send invitations. We won’t message anyone without you choosing to send it.”
+>
+> Requirements:
+>
+> * no contact permission at first launch;
+> * request only after the user selects **Find from Contacts**;
+> * do not upload or retain the complete address book by default;
+> * prefer on-device matching or privacy-preserving matching;
+> * no automatic texts or emails;
+> * no repeated pressure after decline;
+> * provide disconnect/delete controls;
+> * show a useful referral-link experience when permission is denied.
+>
+> ## Privacy controls
+>
+> Propose settings for:
+>
+> * profile discoverability;
+> * who may send connection requests;
+> * whether the member appears in local/community suggestions;
+> * connection-only profile fields;
+> * social-link visibility.
+>
+> ## Minor safeguards
+>
+> Cross-reference the existing date-of-birth and viewer-rating systems.
+>
+> Propose rules ensuring:
+>
+> * minors are not suggested broadly to unrelated adults;
+> * no precise-location matching for minors;
+> * unsolicited adult-to-minor requests are restricted;
+> * minors’ contact details and social links are private by default;
+> * adult-rated groups, events, businesses, and content remain unavailable.
+>
+> Do not implement the complete graduated parental-control system within this item.
+>
+> ## Deliverables
+>
+> Return:
+>
+> 1. Existing features and exact files/routes/tables.
+> 2. Gaps.
+> 3. Proposed connection data model.
+> 4. Referral and invitation flow.
+> 5. Contact-permission approach.
+> 6. Suggestion-ranking inputs and prohibited inputs.
+> 7. Privacy and minor protections.
+> 8. Moderation and blocking behavior.
+> 9. Schema/API/mobile impact.
+> 10. Small implementation batches and regression risk.
+>
+> End with a recommendation for:
+>
+> * **RC3**
+> * **Post-launch**
+> * or **Do not build**
+>
+> Do not implement until I explicitly approve a defined batch.
+
+My launch recommendation is: **release referral links and direct member search first; add optional contact matching only after its privacy behavior has been carefully tested.**

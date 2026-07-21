@@ -1,0 +1,381 @@
+I actually think this is one of the biggest opportunities to make Mapping With Melanin™ feel different.
+
+Most platforms notify people about **activity**.
+
+I think Mapping With Melanin™ should notify people about **community**.
+
+Instead of asking, "What happened?", every notification should answer:
+
+> **Why should I care?**
+
+---
+
+# COMMUNITY MEMBER MESSAGE FRAMEWORK
+
+I'd break them into six categories.
+
+---
+
+# 1. Welcome Home
+
+These are the first impressions.
+
+Examples:
+
+**Welcome**
+
+> Welcome Home, Teianna.
+>
+> We're glad you're here.
+
+---
+
+**First business saved**
+
+> Jefferson Street BBQ has been added to your favorites.
+>
+> You'll hear about updates, events, and community news if you choose.
+
+---
+
+**First community joined**
+
+> You've joined Philadelphia Creatives.
+>
+> Say hello whenever you're ready.
+
+---
+
+**First cultural site visited**
+
+> Mother Bethel AME Church is now part of your journey.
+>
+> Every place has a story.
+
+---
+
+# 2. Community
+
+These feel like your neighborhood talking.
+
+Instead of
+
+> Someone posted
+
+Use
+
+> Your community is talking.
+
+Examples
+
+> Five new conversations started in Philadelphia today.
+
+---
+
+> Your Anime Circle has new recommendations waiting.
+
+---
+
+> Three people answered your question.
+
+---
+
+> Someone thanked you for helping them.
+
+---
+
+> Your review helped another traveler today.
+
+---
+
+# 3. Business Discovery
+
+Not advertisements.
+
+Useful discoveries.
+
+> A new Black-owned bakery just opened three miles away.
+
+---
+
+> The café you saved has weekend jazz tonight.
+
+---
+
+> A business you visited has updated their hours.
+
+---
+
+> The owner of Jefferson Street BBQ replied to your review.
+
+---
+
+> A Cultural Ambassador featured this bookstore today.
+
+---
+
+# 4. Safety
+
+This is where your platform becomes invaluable.
+
+Tone should never be fear-based.
+
+Instead:
+
+> Stay informed.
+
+Examples
+
+> Community members reported increased activity in this area today.
+
+---
+
+> Your neighborhood safety score has changed.
+
+---
+
+> A trusted member updated this location.
+
+---
+
+> Before you head out, there's a new safety update nearby.
+
+---
+
+> Thanks for helping keep the community informed.
+
+---
+
+# 5. Kinfolk
+
+Not AI.
+
+Kinfolk.
+
+Examples
+
+> Ready to map something out?
+
+---
+
+> Need help finding something?
+
+---
+
+> I've learned a few new things since we last talked.
+
+---
+
+> I found something that may interest you.
+
+---
+
+> Want help planning today?
+
+---
+
+# 6. Connections
+
+My favorite category.
+
+Not:
+
+> Friend Request
+
+Instead
+
+> Someone would like to connect.
+
+Examples
+
+> Jasmine would like to connect with you.
+
+---
+
+> Marcus accepted your connection request.
+
+---
+
+> You have two new community introductions.
+
+---
+
+> Your mentor replied.
+
+---
+
+> Someone invited you into a Kinfolk Circle.
+
+---
+
+# BUSINESS MESSAGES
+
+Businesses should feel like they have a community manager.
+
+---
+
+## Growth
+
+> Congratulations!
+
+> Your business was viewed 126 times this week.
+
+---
+
+> Twelve new people saved your business.
+
+---
+
+> Your introduction video is getting attention.
+
+---
+
+> You're trending in Philadelphia.
+
+---
+
+## Customers
+
+> Someone left a review.
+
+---
+
+> A customer asked a question.
+
+---
+
+> Someone shared your business.
+
+---
+
+> Five people requested directions today.
+
+---
+
+## Community
+
+> A Cultural Ambassador featured your business.
+
+---
+
+> You're now part of three community collections.
+
+---
+
+> Your event has 27 RSVPs.
+
+---
+
+> Someone nominated you as a Hidden Gem.
+
+---
+
+## Verification
+
+> You're almost verified.
+
+---
+
+> One more document is needed.
+
+---
+
+> Congratulations!
+
+> Your business is now verified.
+
+---
+
+## Safety
+
+> Community members flagged inaccurate business hours.
+
+---
+
+> Your neighborhood safety score changed.
+
+---
+
+> Here's what customers are saying this week.
+
+---
+
+## Membership
+
+> You're approaching your monthly media limit.
+
+---
+
+> Upgrade to continue adding videos.
+
+---
+
+> Your membership renews in seven days.
+
+---
+
+# ONE THING I WOULD ADD
+
+I think you need a category you've never mentioned.
+
+## Gratitude
+
+Your platform is built around lifting communities.
+
+Celebrate that.
+
+Examples
+
+> Because of your review, 14 people discovered a new local business.
+
+---
+
+> Your safety update helped other members today.
+
+---
+
+> Thank you for supporting your community.
+
+---
+
+> Someone said your recommendation made their trip better.
+
+---
+
+Those messages create emotional connection.
+
+---
+
+# My favorite feature that doesn't exist yet
+
+I would eventually like to introduce:
+
+## Community Milestones
+
+Imagine opening the app and seeing:
+
+> 🎉 Together we've supported 100,000 minority-owned businesses.
+
+---
+
+> Your reviews have helped people discover 42 businesses.
+
+---
+
+> You've welcomed 18 new members.
+
+---
+
+> Your city has added 53 new businesses this month.
+
+---
+
+Those aren't vanity metrics—they reinforce that every member is helping build something larger than themselves.
+
+## One final design principle
+
+If we give this to Replit, I'd add one overarching rule:
+
+> **Every notification should make someone feel more informed, more connected, more appreciated, or more empowered. If it doesn't accomplish one of those four things, reconsider whether it should be sent at all.**
+
+I think that principle captures the spirit of Mapping With Melanin™ better than simply trying to maximize engagement. It encourages notifications that strengthen community rather than interrupt it.

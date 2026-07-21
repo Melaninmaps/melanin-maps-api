@@ -1,0 +1,242 @@
+Yes, it makes sense. The examples should teach Replit the **tone and decision rules**, not become a list of canned messages that Kinfolk repeats word-for-word.
+
+Kinfolk should generate messages from the actual event, relationship, user preferences, timing, and privacy settings. The spirit is:
+
+> Make people feel informed, connected, appreciated, or empowered—without sounding scripted, intrusive, or promotional.
+
+## Ask Replit to operationalize the message philosophy
+
+Send this:
+
+> # LB-020 — CONTEXTUAL COMMUNITY MESSAGING SYSTEM
+>
+> **Audit and design proposal only. Do not modify RC2.**
+>
+> The sample messages previously provided are illustrations of tone and purpose. They are **not approved literal templates** to be copied repeatedly into the app.
+>
+> Kinfolk and the notification system should use the underlying principles practically:
+>
+> * explain why the information matters;
+> * use real platform activity and accurate counts;
+> * recognize the relationship between the sender, recipient, business, and community;
+> * sound warm, natural, and culturally aware without becoming exaggerated or performative;
+> * avoid generic engagement bait;
+> * never invent activity, urgency, popularity, or community impact;
+> * never use demographic labels unless the user’s request or the verified identity of the business makes the distinction relevant;
+> * personalize quietly through context rather than repeatedly labeling the member;
+> * use concise language for push and SMS;
+> * use slightly fuller context inside the app;
+> * allow members and businesses to control message frequency and categories.
+>
+> ## Message-generation rule
+>
+> The system should not choose from a small fixed list of phrases alone. It should generate or assemble a message from structured fields:
+>
+> * event type;
+> * recipient type;
+> * relationship;
+> * verified facts;
+> * count or time period;
+> * location or followed community;
+> * privacy permission;
+> * appropriate call to action;
+> * delivery channel;
+> * notification frequency.
+>
+> Use approved reusable templates only for legally sensitive or operational messages such as consent, account security, verification, moderation, opt-out, and emergency notices.
+>
+> For community, discovery, gratitude, and business-performance messages, vary the wording while maintaining the approved voice.
+>
+> ## Required safeguards
+>
+> * No fabricated statistics or implied popularity.
+> * No “someone is looking for you” unless a genuine qualifying search or addition occurred.
+> * Do not identify the searching member to a business.
+> * Do not expose private profile details, searches, comments, or safety reports.
+> * Do not send repeated notifications for every search or profile view.
+> * Aggregate activity into weekly or biweekly summaries once the initial notice has been sent.
+> * Provide notification settings for Immediate, Weekly, Biweekly, and Off where appropriate.
+> * Keep safety, account-security, and moderation messages separate from promotional messaging.
+> * Apply quiet hours and user consent settings.
+>
+> Audit existing notifications, push, email, SMS, direct messages, referrals, business claims, search tracking, and Kinfolk proactive-message logic. Return what exists, gaps, proposed data events, delivery rules, message categories, and required admin controls.
+>
+> Do not implement until a defined batch is separately approved.
+
+## When someone is searching for or adds a business
+
+I agree with your cadence:
+
+1. One initial notice.
+2. No alert for every individual search.
+3. Weekly or biweekly aggregated updates.
+4. More detailed information only after the business claims and verifies its profile.
+
+### Initial business notice
+
+**SMS—only when the business has already consented to receive texts:**
+
+> Mapping With Melanin™ community activity has reached your business. Your profile was recently searched for or added by a community member. Claim it to confirm your information and see available insights: [secure link]. Reply STOP to opt out.
+
+A warmer version:
+
+> Your business is being discovered on Mapping With Melanin™. A community member recently searched for or added your business. Claim your profile to confirm the details and learn more: [secure link]. Reply STOP to opt out.
+
+Do **not** say:
+
+> “See who searched for you.”
+
+That suggests the business will receive private user identities, which it should not.
+
+### Initial email
+
+**Subject:** Your business is being discovered on Mapping With Melanin™
+
+> Hi [Business Name],
+>
+> Members of the Mapping With Melanin™ community are helping others discover businesses and places they value. Your business was recently searched for or added to the platform.
+>
+> You can claim your profile to confirm your business information, add your story and media, respond to community feedback, and choose which updates you receive.
+>
+> [Claim and verify your profile]
+>
+> We protect member privacy, so individual search identities and private activity are not shared.
+
+### Weekly summary for an unclaimed business
+
+> **Your weekly Mapping With Melanin™ activity**
+>
+> Your business appeared in community activity [X] times this week through searches, saves, profile visits, or recommendations.
+>
+> Claim your profile to confirm your information and access the details available to verified owners.
+>
+> [Claim profile]
+
+Only include metrics the platform actually captures.
+
+### Claimed-business summary
+
+> **Your community activity this week**
+>
+> [X] profile views
+> [X] saves
+> [X] requests for directions
+> [X] shares
+> [X] new community contributions
+>
+> Here are the actions most likely to help next: [accurate personalized action].
+
+Kinfolk can phrase the summary naturally, but every number and recommendation must come from actual data.
+
+## When a member enters someone’s phone number to invite them
+
+I would **not** let Mapping With Melanin™ silently text any number merely because a member typed it in.
+
+The safest flow is:
+
+1. Member enters the number.
+2. App shows the exact invitation.
+3. Member taps **Send Invitation**.
+4. Prefer opening the phone’s native Messages app with the text prefilled.
+5. The member sends it personally.
+
+That keeps the invitation person-to-person and avoids the platform collecting or repeatedly messaging a nonmember.
+
+Suggested prefilled text:
+
+> [First name] invited you to Mapping With Melanin™—a community-powered way to discover places, businesses, resources, and people wherever life takes you. Take a look: [personal referral link]
+
+More personal:
+
+> I thought you might enjoy Mapping With Melanin™. It helps you discover community, businesses, resources, events, and more at home or wherever you go. Here’s my invite: [link]
+
+For a platform-sent SMS, the recipient must have a proper consent path before recurring texts. Twilio’s compliance guidance notes that merely providing a phone number does not necessarily establish consent for recurring messages, and recurring programs need clear opt-in and opt-out handling. ([Twilio][1])
+
+Therefore:
+
+* one user-directed invitation;
+* no follow-up texts unless the recipient opts in;
+* include sender identity and platform identity;
+* never upload the inviter’s full contacts;
+* honor STOP immediately.
+
+## When someone sends an `@mention`
+
+This should feel intriguing but not expose the content on a lock screen.
+
+### Push notification
+
+> **Someone brought you into the conversation.**
+
+or:
+
+> **You were mentioned in a community conversation.**
+
+or slightly warmer:
+
+> **Your voice was invited into a conversation.**
+
+### In-app notification
+
+> **[Display Name] mentioned you in [Group or Post].**
+> “A short, age-appropriate preview…”
+> **View conversation**
+
+For private or sensitive groups:
+
+> **You have a new mention in a private conversation.**
+
+Do not show the post preview on the lock screen unless the user allows detailed previews.
+
+### When the mention is about a business
+
+> **[Member] mentioned [Business Name] in a community conversation.**
+
+The verified owner can open the business notification center, but private member details should remain protected according to the post’s visibility.
+
+## The correct message hierarchy
+
+Use different language by channel:
+
+**Push**
+
+> You were mentioned in a community conversation.
+
+**In-app**
+
+> Jordan mentioned you in Philadelphia Creatives.
+
+**Email digest**
+
+> You had 3 mentions and 2 replies this week.
+
+**SMS**
+Reserve this for explicitly enabled, important categories—not ordinary mentions by default.
+
+## Recommended frequency controls
+
+For members:
+
+* Connection requests: Immediate
+* Mentions and direct replies: Immediate or Digest
+* Community activity: Daily/Weekly/Off
+* Business and event discovery: Weekly/Off
+* Safety alerts: Separate controls
+* Kinfolk suggestions: Limited and optional
+
+For businesses:
+
+* Claim/security/verification: Immediate
+* New review requiring attention: Immediate or Daily
+* Searches/views/saves: Weekly or Biweekly
+* Community mentions: Daily or Weekly
+* Performance summary: Weekly or Monthly
+* Promotional opportunities: Optional
+
+The core rule should be:
+
+> **Immediate messages are for actions requiring attention. Aggregated messages are for activity worth understanding.**
+
+That preserves curiosity without becoming noisy or manipulative.
+
+[1]: https://www.twilio.com/docs/messaging/features/compliance-toolkit?utm_source=chatgpt.com "Compliance Toolkit for Programmable Messaging | Twilio"
