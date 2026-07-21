@@ -1,0 +1,80 @@
+Yes—you can upgrade or scale Railway. But for **15 testers using the app during a Zoom**, you probably do **not** need a major plan upgrade if the app is configured correctly.
+
+Railway can scale in two ways:
+
+* **More resources for one service**: more CPU and memory.
+* **More replicas**: multiple copies of the API server sharing traffic. Railway supports horizontal scaling and automatically distributes requests between replicas. ([Railway Docs][1])
+
+However, your screenshots showed very low CPU and memory use. That means the recent outage was not caused by insufficient processing power. Railway itself notes that upgrading raises resource limits but does not fix application, database, or networking problems. ([Railway Docs][2])
+
+## For a 15-person tester Zoom
+
+Fifteen testers should be a very manageable beta load once the pool-resilience issue is fixed. They will not all hit the database at the exact same millisecond, and most actions should complete quickly.
+
+My recommendation is:
+
+1. Deploy the database-resilience patch.
+2. Increase the API pool from 5 to **10 only after a controlled test confirms it is safe**.
+3. Keep **one API replica** initially.
+4. Run a simulated test with at least 15–25 simultaneous users.
+5. Confirm registration, login, Discovery, cultural sites, map data, and Kinfolk remain responsive.
+6. Only add a second API replica if the test shows queueing, slow responses, or high resource use.
+
+## Would upgrading help?
+
+It depends on your current plan.
+
+Railway’s current plans allow more resources and replicas as you move upward. Hobby supports up to six replicas, while Pro supports substantially more capacity. Railway charges based on actual resource use in addition to the plan’s included usage. ([Railway Docs][3])
+
+But I would not upgrade solely because 15 people may use the app together. First, check:
+
+* your current Railway plan;
+* API CPU and memory during a load test;
+* Postgres connection limits;
+* pool waiting count;
+* average endpoint response time.
+
+If those remain healthy, your current plan is enough.
+
+## Best practical setup for the Zoom
+
+Before scheduling the tester session, require Replit to run a **25-user beta load rehearsal**:
+
+> Simulate at least 25 concurrent users performing a realistic mixture of registration, login, session restore, business search, cultural-site retrieval, map-data loading, Kinfolk requests, saves, and community actions.
+>
+> Record:
+>
+> * successful request percentage;
+> * average and slowest response times;
+> * API CPU and memory;
+> * Postgres CPU and memory;
+> * pool total, idle, and waiting counts;
+> * database errors;
+> * requests returning 500, 503, or timing out.
+>
+> Test with the proposed pool-resilience configuration first.
+>
+> If all requests complete and pool waiting returns to zero, keep one API replica.
+>
+> If sustained queueing or resource pressure appears, recommend whether to:
+>
+> * increase the pool safely;
+> * increase service resource limits;
+> * add a second API replica;
+> * or upgrade the Railway plan.
+>
+> Do not modify authentication behavior or database schema.
+>
+> Return a plain-language verdict:
+>
+> **Ready for a 15-person live testing session**
+>
+> or
+>
+> **Not ready—specific capacity change required**
+
+For your actual Zoom, I would also ask testers to stagger account creation by a minute or two rather than having all 15 press **Create Account** at once. After the load test passes, even simultaneous activity should be manageable, but staggering onboarding reduces unnecessary risk during your first live session.
+
+[1]: https://docs.railway.com/deployments/scaling?utm_source=chatgpt.com "Scaling | Railway Docs"
+[2]: https://docs.railway.com/deployments/troubleshooting/slow-deployments?utm_source=chatgpt.com "Troubleshooting Slow Deployments and Applications | Railway Docs"
+[3]: https://docs.railway.com/pricing/plans?utm_source=chatgpt.com "Pricing Plans | Railway Docs"
