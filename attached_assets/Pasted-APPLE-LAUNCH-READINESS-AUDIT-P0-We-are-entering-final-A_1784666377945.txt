@@ -1,0 +1,272 @@
+APPLE LAUNCH READINESS AUDIT — P0
+We are entering final Apple launch readiness.
+Do not make assumptions and do not immediately begin fixing issues. Perform a comprehensive read-only audit first so we understand every remaining production issue before introducing additional changes.
+
+SECTION 1 — MAP (Highest Priority)
+The interactive map is the core experience of Mapping With Melanin™.
+Perform a complete production audit.
+
+Verify:
+
+Does the map initialize successfully?
+Are map tiles rendering?
+Are markers loading?
+Are business pins loading?
+Are cultural sites loading?
+Is user location loading?
+Does the map continue spinning?
+Does the map ever become interactive?
+Trace every request involved.
+Return:
+
+endpoint
+response
+response time
+any timeout
+any JavaScript exception
+any native iOS exception
+any Google Maps SDK error
+any API restriction failure
+any rendering failure
+Identify whether the failure is:
+database
+API
+authentication
+Google Maps configuration
+Railway
+mobile rendering
+Expo
+native iOS
+timeout
+client state
+cache
+Do not guess.
+SECTION 2 — SESSION STABILITY
+Verify:
+login
+logout
+logout all devices
+login again
+background
+foreground
+app restart
+session renewal
+expired session
+refresh token
+secure storage
+Confirm:
+No authenticated request silently fails while the UI appears logged in.
+
+SECTION 3 — BUSINESS DATA
+Verify:
+Discover
+
+Business Detail
+
+Favorites
+
+Search
+
+Business Notifications
+
+Confirm:
+
+Businesses always load.
+
+Businesses never disappear.
+
+Business detail always opens.
+
+No stale IDs.
+
+No missing IDs.
+
+No orphaned notifications.
+
+SECTION 4 — COMMUNITY
+Verify:
+Community Feed
+
+Posts
+
+Comments
+
+Likes
+
+Safety posts
+
+Loading
+
+Retry
+
+Empty state
+
+Timeout
+
+SECTION 5 — EVENTS
+Verify:
+Events
+
+Refresh
+
+Cache
+
+Live API
+
+RSVP
+
+Details
+
+SECTION 6 — KINFOLK AI
+Verify:
+AI endpoint
+
+Timeout
+
+Context
+
+Conversation
+
+Errors
+
+Retry
+
+Loading
+
+SECTION 7 — MAP PERFORMANCE
+Measure:
+Cold launch
+
+Warm launch
+
+Marker render
+
+Location acquisition
+
+Business overlay
+
+Cultural overlay
+
+Time until interactive
+
+Memory
+
+SECTION 8 — UI REVIEW
+Using the supplied screenshots audit:
+Safe Areas
+
+Spacing
+
+Bottom Tabs
+
+Navigation
+
+Horizontal Lists
+
+Buttons
+
+Floating AI Button
+
+Typography
+
+Accessibility
+
+Dynamic Type
+
+Dark Mode
+
+SECTION 9 — LANGUAGE REVIEW
+Confirm:
+Newest wording is present.
+
+Ownership badges are data-driven.
+
+No hard-coded "Black-Owned."
+
+Vibe framework supports category-specific descriptors.
+
+Professional services do not receive entertainment descriptors.
+
+Return any remaining copy inconsistencies.
+
+SECTION 10 — APPLE REVIEW
+Review the app exactly as an Apple reviewer would.
+Fresh install.
+
+Create account.
+
+Existing account.
+
+Review account.
+
+Browse.
+
+Map.
+
+Businesses.
+
+Community.
+
+Events.
+
+Kinfolk.
+
+Membership.
+
+Profile.
+
+Notifications.
+
+Logout.
+
+Login.
+
+Return:
+
+Anything likely to trigger an Apple rejection.
+
+SECTION 11 — FINAL DEFECT LIST
+Return every remaining issue.
+For each issue include:
+
+P0
+
+P1
+
+P2
+
+Root cause
+
+Risk
+
+Fix
+
+Regression risk
+
+Files affected
+
+Estimated effort
+
+Acceptance test
+
+SECTION 12 — RELEASE RECOMMENDATION
+Return one of only three recommendations:
+✅ READY FOR APPLE
+
+⚠ READY AFTER P0 ITEMS
+
+❌ NOT READY
+
+Explain why.
+
+My recommendation
+I also want Replit to answer one question that I don't think we've answered conclusively yet:
+If the map is still black after the Railway restart, what is the single next debugging step that will most quickly distinguish between a Google Maps configuration problem and an application rendering problem?
+That forces the investigation toward evidence instead of trying multiple fixes at once.
+One additional recommendation
+After this audit comes back, I would stop asking Replit to immediately fix things. Instead, we'll create a Launch Punch List and work through it in order:
+Fix one P0 item.
+Test it.
+Confirm no regressions.
+Move to the next.
+That approach minimizes the chance of introducing new issues just as you're approaching Apple submission. Given how much progress you've made, I think you're close—but the map is still the biggest unknown, and it's worth resolving methodically before you submit.

@@ -1,0 +1,437 @@
+We should include it as a **separate read-only architecture section inside the larger Apple launch audit**, while making clear that it is **not allowed to distract from the map and P0 stability work**.
+
+The map remains the highest priority. The vocabulary work should be audited now, but implemented in separate PRs after the critical production failures are understood.
+
+Send Replit this revised request:
+
+---
+
+# APPLE LAUNCH READINESS AUDIT — P0 + LANGUAGE ARCHITECTURE REVIEW
+
+Mapping With Melanin™
+Read-only audit first. Do not implement fixes until the findings and PR sequence are reviewed.
+
+## Priority order
+
+1. Map reliability
+2. Database and API stability
+3. Session continuity
+4. Businesses, Community, Events and KinfolkAI
+5. Layout and accessibility
+6. Language architecture and ownership accuracy
+
+The vocabulary work must not delay or obscure the map investigation.
+
+---
+
+# SECTION 1 — MAP: HIGHEST PRIORITY
+
+The interactive map is the platform’s primary experience.
+
+Audit the exact production path from mobile launch to rendered, interactive map.
+
+Confirm:
+
+* Which map library and provider the iOS app uses
+* Whether the map tiles initialize independently of business and cultural-site data
+* Whether business pins load
+* Whether cultural sites load
+* Whether user location loads
+* Whether location permission is requested and handled correctly
+* Whether the black screen is caused by rendering, data, configuration, timeout or key restrictions
+* Whether the spinner stops
+* Whether the map becomes interactive
+
+Trace and report:
+
+* Exact mobile component and file
+* Native configuration
+* API endpoints called
+* HTTP status and response time
+* JavaScript errors
+* Native iOS errors
+* Maps SDK or provider errors
+* API-key restriction errors
+* Timeout and retry behavior
+* What the user sees when one overlay fails
+
+Explicitly separate:
+
+1. Base map tile rendering
+2. Business-pin data
+3. Cultural-site data
+4. User location
+5. GeoSafe/reverse-geocoding
+
+A failure in business or cultural-site data must not leave the entire base map black indefinitely.
+
+Answer this directly:
+
+> If the map remains black after Railway recovery, what single diagnostic proves whether the failure is native map configuration or application/data rendering?
+
+Do not expose a server-side Maps key in the mobile bundle or through a public endpoint.
+
+---
+
+# SECTION 2 — PRODUCTION API AND DATABASE STABILITY
+
+Verify after the Railway restart:
+
+* `/api/healthz`
+* `/api/businesses?limit=3`
+* `/api/community/posts`
+* `/api/events`
+* `/api/cultural-sites`
+
+For each, report:
+
+* HTTP status
+* Response time
+* Whether live data returned
+* Pool wait time
+* Database errors
+* Connection count if available
+* Result immediately after restart
+* Result again after 30 minutes
+
+Determine whether pool exhaustion is actually resolved or merely temporarily cleared.
+
+---
+
+# SECTION 3 — SESSION CONTINUITY
+
+Verify:
+
+* Login
+* Logout
+* Sign out of all devices
+* Login again
+* App close and reopen
+* Background and foreground
+* Wi-Fi to cellular switch
+* Overnight session
+* Session renewal
+* SecureStore state
+* Protected API requests after renewal
+
+Confirm that the user cannot appear signed in while authenticated API requests are returning unauthorized or timing out.
+
+---
+
+# SECTION 4 — BUSINESS RELIABILITY
+
+Audit:
+
+* Discover list
+* Search
+* Business detail
+* Saved businesses
+* Notification deep links
+* Seeded business IDs
+* Ownership badges
+* Businesses disappearing after initial load
+
+Confirm:
+
+* Business data is live and production-backed
+* Business cards and detail routes use compatible IDs
+* Notifications do not reference stale or missing records
+* Loading, empty and error states are distinct
+* A failed refresh does not erase previously loaded businesses
+
+---
+
+# SECTION 5 — COMMUNITY, EVENTS AND KINFOLKAI
+
+For each feature, trace:
+
+* Exact endpoint
+* HTTP result
+* Response time
+* Authentication requirement
+* Cache/fallback behavior
+* Timeout
+* Retry
+* User-facing error
+
+Confirm KinfolkAI independently, without assuming failures are caused by unrelated screen data.
+
+---
+
+# SECTION 6 — LAYOUT AND ACCESSIBILITY
+
+Use the previously supplied iPhone screenshots.
+
+Audit:
+
+* Clipped bottom-navigation labels
+* Hidden or truncated horizontal categories
+* Safe-area spacing
+* Floating KinfolkAI button overlap
+* Text hidden behind navigation
+* Dynamic Type
+* Small-screen behavior
+* Dark-mode contrast
+* Loading and retry-state layout
+
+Return the exact screen, element and likely style source for every defect.
+
+---
+
+# SECTION 7 — LANGUAGE ARCHITECTURE AUDIT
+
+The intended language system has three separate layers. Do not collapse them into one generic Vibe list.
+
+## Layer 1 — Objective identity
+
+Purpose: who the business is.
+
+Source must be verified or self-identified business data, not community assumption.
+
+Examples:
+
+* Black-Owned
+* Latino-Owned
+* Indigenous-Owned
+* Asian-Owned
+* Women-Owned
+* LGBTQ+-Owned
+* Veteran-Owned
+* Melanated Diaspora Owned
+* Minority-Owned
+* Family-Owned
+* Verified
+
+Audit:
+
+* `businesses.ownershipDesignations`
+* Any old `isBlackOwned` or similar boolean
+* BusinessCard ownership rendering
+* Detail-page rendering
+* Seeded-business ownership data
+* Any hard-coded universal “Black-Owned” language
+
+Confirm the smallest safe fix so ownership badges are fully data-driven.
+
+No business may be assigned an identity not present in its record.
+
+## Layer 2 — Community recognition
+
+Purpose: what the business means to the community.
+
+Platform-native terms proposed:
+
+* Kinfolk Picks
+* Put Your People On
+* Welcome Home
+* Culture Keeper
+* Community Anchor
+* Worth the Journey
+* Heart of the Neighborhood
+* Soul Spot
+* Family Table
+* Legacy Business
+
+Cross-cultural community terms proposed:
+
+* Community Trusted
+* Hidden Gem
+* Community Staple
+* Neighborhood Favorite
+* Locally Loved
+* Feels Like Home
+* Generations Deep
+* Gives Back
+* Worth the Trip
+* Safe Space
+
+Audit:
+
+* `business_identity.communityValues`
+* `businesses.hiddenGemLabel`
+* Existing nomination, vote or endorsement structures
+* Whether Layer 2 is currently shown anywhere
+* Whether any existing vibe table could safely store this layer with a group/type field
+* Whether a dedicated community-tag table is cleaner
+
+Do not implement the database choice yet. Return the options, tradeoffs and migration risk.
+
+Also distinguish between:
+
+* A descriptive community tag
+* A platform-awarded distinction
+* A user action or CTA
+
+For example, “Put Your People On” may be better as an action than as a permanent business badge. Audit that distinction rather than assuming all terms belong in the same storage model.
+
+## Layer 3 — Experience
+
+Purpose: how a place feels or when someone might use it.
+
+Recommended consolidated groups:
+
+### Occasion
+
+* Date Night
+* Family Time
+* Solo Friendly
+* Celebration Spot
+* Group Hangout
+* Quiet Escape
+
+### Energy
+
+* Hood Classic
+* Bougie Treat
+* Late Night
+* Creative Scene
+* Good Energy
+* Block Party Energy
+
+### Purpose
+
+* Work & Study
+* Wellness
+* Adventure Ready
+* Self-Care
+* Shopping
+* Hair & Beauty
+
+### Food-specific
+
+* Soul Food
+* Come Hungry
+* Auntie Approved
+* Sunday Best
+* Comfort Food
+* Halal Options
+* Vegan Friendly
+* Caribbean Flavors
+* Latino Flavors
+* African Cuisine
+
+Audit the three current unsynchronized hard-coded lists and identify:
+
+* All current values
+* Naming inconsistencies
+* Duplicate meanings
+* Missing proposed terms
+* File paths
+* Database source
+* Which source should become authoritative
+
+Return a category-to-tag eligibility matrix.
+
+Examples:
+
+* A lawyer must not receive Date Night, Romantic, Late Night or food tags.
+* A restaurant may receive Occasion, Energy and Food-specific tags.
+* An accountant may receive community, trust and practical-service descriptors, but not nightlife tags.
+* A salon may receive Self-Care, Hair & Beauty, Celebration Spot and community-recognition tags.
+* A funeral home should receive dignity, trust, family and community descriptors—not playful experience language.
+
+Do not implement until the matrix is approved.
+
+---
+
+# SECTION 8 — LANGUAGE GOVERNANCE
+
+Recommend how terms should be controlled so the system remains culturally expressive without becoming inaccurate or stereotypical.
+
+Address:
+
+* Owner-applied terms
+* Community-applied terms
+* Platform-awarded terms
+* Verified facts
+* Voting thresholds
+* Removal and appeal
+* Moderation
+* Regional language
+* Cultural misuse
+* Whether “Safe Space” requires stronger evidence than ordinary tags
+* Whether “Auntie Approved” and similar expressive language should be limited by category or community context
+* Whether ownership terms require verification before display
+
+Return the proposed governance rules only. Do not implement.
+
+---
+
+# SECTION 9 — APPLE REVIEW PATH
+
+Test the production app exactly as Apple would:
+
+* Fresh install
+* Review account
+* Login
+* Map
+* Discover
+* Business detail
+* Community
+* Events
+* KinfolkAI
+* Membership
+* Profile
+* Notifications
+* Logout
+* Login again
+
+Identify anything that can produce:
+
+* Blank or black screen
+* Endless spinner
+* Broken deep link
+* Missing data
+* Misleading ownership claim
+* Inaccessible text
+* Feature that appears nonfunctional
+* Review account blockage
+
+---
+
+# SECTION 10 — REQUIRED OUTPUT
+
+Return:
+
+1. Confirmed root cause for each defect
+2. Evidence supporting the finding
+3. P0, P1 or P2 classification
+4. Exact proposed fix
+5. Files, routes and database objects affected
+6. Regression risk
+7. Whether the fix requires native build, OTA, server deploy, data correction or no deployment
+8. Acceptance test
+9. Recommended PR sequence
+10. Final recommendation:
+
+* READY FOR APPLE
+* READY AFTER P0 ITEMS
+* NOT READY
+
+Do not combine all changes into one PR.
+
+Recommended sequence should remain approximately:
+
+1. P0 map and backend stability
+2. P0 business and session reliability
+3. P1 ownership badge correction
+4. P1 layout correction
+5. Layer 3 single-source consolidation
+6. Layer 2 community-recognition architecture
+
+---
+
+## My assessment of the map right now
+
+We have **not fully addressed it yet**.
+
+We restarted Railway and identified a likely database-availability problem, but we still need post-restart evidence that:
+
+* the base map renders,
+* DB-backed overlays return,
+* the spinner stops,
+* and the map remains stable over time.
+
+We also still have an unresolved discrepancy around `/api/maps/js-key`. Until Replit identifies the exact iOS map implementation and proves whether tiles depend on that route, the map configuration is not considered complete.
+
+The vocabulary framework is valuable and should be preserved in this audit, but the map remains the release gate.
