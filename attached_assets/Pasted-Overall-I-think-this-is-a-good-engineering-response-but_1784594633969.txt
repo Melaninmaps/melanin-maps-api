@@ -1,0 +1,143 @@
+Overall, I think this is a **good engineering response**, but I would tighten it in a few places so you don't accidentally develop false confidence.
+
+## What I like
+
+If those tests were actually executed against the live production API, then this is excellent:
+
+* ✅ Registration tested
+* ✅ Login tested
+* ✅ Logout tested
+* ✅ Immediate login after logout tested
+* ✅ Different account tested
+* ✅ Test accounts cleaned up
+
+That's exactly the kind of verification I want before another mobile build.
+
+---
+
+## What I'd ask Replit to clarify
+
+### 1. Which environment?
+
+The report says:
+
+> **Production API: api.mappingwithmelanin.com**
+
+Earlier we've consistently been using:
+
+* **[https://www.mappingwithmelanin.com](https://www.mappingwithmelanin.com)**
+
+I'd simply ask:
+
+> **Please confirm whether `api.mappingwithmelanin.com` is the production API used by the mobile app or whether it proxies through `www.mappingwithmelanin.com`. Confirm they are pointing to the same production environment and database.**
+
+I don't want any ambiguity before a build.
+
+---
+
+### 2. How was logout tested?
+
+I would ask one additional question:
+
+> Did this verification test only the API endpoints, or was the mobile authentication flow exercised as well?
+
+Why?
+
+Because LB-008 fixed a **mobile session timing issue**, not just a server endpoint.
+
+The API can return `200 OK` while the app still mishandles SecureStore or navigation.
+
+---
+
+### 3. Ask for evidence
+
+Rather than:
+
+> "Confirmed working"
+
+I'd ask them to include something like:
+
+```
+Registration → 201
+Login → 200
+Logout → 200
+Second Login → 200
+Elapsed time: 0.7s
+```
+
+or
+
+```
+Login immediately after logout:
+0.83 seconds
+```
+
+Concrete evidence is always better than a conclusion.
+
+---
+
+## One sentence I would change
+
+Instead of:
+
+> "You are clear to create your Apple review test account..."
+
+I'd prefer:
+
+> "The backend authentication flow has passed engineering verification. The remaining validation is to confirm the same behavior on the RC2 mobile build running on a physical iPhone."
+
+That's a more precise statement.
+
+---
+
+# I would also ask Replit to add one more test
+
+This is the one Apple reviewers sometimes expose.
+
+```
+Login
+
+Lock the phone
+
+Wait 5 minutes
+
+Unlock
+
+Verify the session is still active
+
+Background the app
+
+Reopen
+
+Verify no unexpected logout
+
+Force close
+
+Reopen
+
+Verify session restoration
+
+Logout
+
+Immediately login again
+
+Pass
+```
+
+That tests the actual mobile lifecycle rather than only the authentication endpoints.
+
+---
+
+## My recommendation
+
+I would respond to Replit with something like:
+
+> Excellent. Please perform one final authentication certification before RC2:
+>
+> 1. Confirm the API tested is the exact production API used by the mobile app.
+> 2. Confirm the tests exercised the RC2 mobile authentication flow—not just backend endpoints.
+> 3. Record response times for registration, login, logout, and immediate re-login.
+> 4. On the RC2 build, verify session persistence after screen lock, backgrounding, force close, and app relaunch.
+> 5. If all checks pass, include those results in the RC2 Launch Certification report.
+
+If those additional checks pass, I would be comfortable creating your new Apple review account on your iPhone and using it to walk through the entire first-time user experience before submitting the build. That will give you confidence that both the backend **and** the actual app behave correctly.
