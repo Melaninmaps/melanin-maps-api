@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Location from "expo-location";
-import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useRouter, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -20,6 +20,7 @@ import { useBusinesses } from "@/hooks/useBusinesses";
 import { useColors } from "@/hooks/useColors";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity } from "@/hooks/useSafetyProximity";
+import { useAuth } from "@/lib/auth";
 
 const GOLD = "#CA922B";
 
@@ -118,9 +119,19 @@ export function FullMapView() {
   const [culturalSites, setCulturalSites] = useState<CulturalSite[]>([]);
   const [selectedCulturalSite, setSelectedCulturalSite] = useState<CulturalSite | null>(null);
 
+  const [isFocused, setIsFocused] = useState(false);
+  useFocusEffect(
+    useCallback(() => {
+      setIsFocused(true);
+      return () => setIsFocused(false);
+    }, [])
+  );
+  const { user } = useAuth();
+  const pollingEnabled = isFocused && user !== null;
+
   const { businesses } = useBusinesses();
-  const { alerts: activityAlerts, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts();
-  const { warnings, dismissWarning } = useSafetyProximity();
+  const { alerts: activityAlerts, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts({ enabled: pollingEnabled });
+  const { warnings, dismissWarning } = useSafetyProximity({ enabled: pollingEnabled });
   const { alert: geoAlert, dismissAlert: dismissGeoAlert } = useGeoSafeAlert();
 
   const mapped = businesses.filter(

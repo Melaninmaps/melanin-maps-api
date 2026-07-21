@@ -1,0 +1,140 @@
+Yes — this is enough evidence to approve the fix path.
+
+The device test confirmed the issue is real, repeatable, and caused by mobile polling lifecycle behavior:
+
+* polling continues after leaving the Map tab,
+* continues while the app is backgrounded,
+* continues after logout,
+* and duplicates when a business profile map opens.
+
+A single tester can push the 5-connection pool to its limit. Two testers could cause login, Community, Events, businesses, and map data to fail again.
+
+## Approve these three PRs
+
+### PR 1 — Mobile polling lifecycle fix
+
+This should include, in one focused PR:
+
+* poll only while the Map tab is focused,
+* pause when the app is backgrounded or inactive,
+* stop polling when the user logs out,
+* prevent overlapping polling cycles,
+* apply the same lifecycle protections to both:
+
+  * `useActivityAlerts`
+  * `useSafetyProximity`
+
+Acceptance criteria:
+
+* Open Map: polling starts.
+* Leave Map: polling stops.
+* Background app: polling stops.
+* Return to Map: polling resumes once.
+* Logout: polling stops completely.
+* No duplicate intervals.
+* `waitingCount` stays at zero.
+
+### PR 2 — Remove duplicate BusinessMapView polling
+
+The business detail map should not independently mount the same continuous polling hooks.
+
+Smallest safe launch fix:
+
+* remove recurring `useActivityAlerts` and `useSafetyProximity` polling from `BusinessMapView`,
+* load any necessary data once on screen open,
+* or use already available parent/shared data,
+* preserve cleanup behavior.
+
+Acceptance criteria:
+
+* Opening a business profile does not increase sustained pool usage.
+* Closing the profile returns to baseline.
+* Business map still displays correctly.
+* No loss of necessary safety or alert information.
+
+### PR 3 — Server protection for proximity warnings
+
+Keep this separate.
+
+Before adding indexes, use the proven immediate safeguards:
+
+* short-lived cache for identical or near-identical coordinate requests,
+* reject overlapping duplicate requests where practical,
+* preserve the current route response,
+* do not increase pool size yet.
+
+Indexes can follow after query-plan evidence is available.
+
+Acceptance criteria:
+
+* repeated requests for the same nearby coordinates use the cache,
+* route remains under 1 second while the pool is healthy,
+* no user-specific data leaks between cache entries,
+* cache expires promptly,
+* no change to response format.
+
+## Send Replit this
+
+> **IMPLEMENTATION APPROVED — THREE SEPARATE PRs**
+>
+> The device observation confirms the polling lifecycle is the production pool-exhaustion mechanism.
+>
+> Please prepare three separate PRs:
+>
+> ### PR 1 — Mobile polling lifecycle
+>
+> Update `useActivityAlerts`, `useSafetyProximity`, and `FullMapView` so polling:
+>
+> * runs only while the Map tab is focused,
+> * pauses when the app is inactive/backgrounded,
+> * stops when the user logs out,
+> * prevents overlapping polling cycles,
+> * resumes exactly once when the user returns.
+>
+> Preserve React hook ordering. Do not wrap hooks conditionally in ordinary try/catch blocks.
+>
+> ### PR 2 — BusinessMapView duplicate polling removal
+>
+> Remove continuous polling hooks from `BusinessMapView`.
+> Use a one-time fetch, parent data, or shared existing state if the screen still needs alert context.
+> Do not introduce a broad new state architecture unless necessary.
+>
+> ### PR 3 — Proximity route protection
+>
+> Add a short-TTL, coordinate-keyed cache to `/api/reports/proximity-warnings`.
+> Preserve response shape and authorization behavior.
+> Do not increase pool size or add indexes in this PR.
+>
+> For each PR, return:
+>
+> * exact files changed,
+> * diff summary,
+> * regression risks,
+> * whether delivery is OTA or server deploy,
+> * acceptance tests,
+> * rollback plan.
+>
+> Do not combine the three PRs.
+>
+> After PR 1 and PR 2 are published to Build 94, repeat the same device observation protocol. The expected result is:
+>
+> * Map open: brief database activity, then connections return idle,
+> * Discovery: no continued map polling,
+> * Business profile: no 5/5 pool spike,
+> * Background: no polling,
+> * Logout: no polling,
+> * waitingCount remains 0.
+
+## Release decision
+
+Still **not ready for Apple or Google yet**, but this is now a controlled fix rather than an unknown outage.
+
+After those fixes:
+
+1. repeat the device observation,
+2. test Map Diagnostic,
+3. test the real Map tab,
+4. verify login and core screens for at least 30–60 minutes,
+5. leave one tester signed in overnight.
+
+If those pass, you will be much closer to a true release candidate.

@@ -2,7 +2,7 @@ import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Platform } from "react-native";
+import { Platform, AppState } from "react-native";
 
 const DISMISSED_KEY = "@melanin_proximity_dismissed_";
 const COOLDOWN_MS = 30 * 60 * 1000;
@@ -48,16 +48,28 @@ function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number)
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export function useSafetyProximity() {
+export function useSafetyProximity({ enabled = true }: { enabled?: boolean } = {}) {
   const [warnings, setWarnings] = useState<ProximityWarning[]>([]);
   const [areaIncidents, setAreaIncidents] = useState<AreaIncident[]>([]);
   const [locationGranted, setLocationGranted] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [appActive, setAppActive] = useState(AppState.currentState === "active");
 
   const lastPollPos = useRef<{ lat: number; lng: number } | null>(null);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const locationSub = useRef<Location.LocationSubscription | null>(null);
   const dismissedRef = useRef<Set<string>>(new Set());
+
+  // Pause when app is backgrounded or inactive
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    const sub = AppState.addEventListener("change", (next) => {
+      setAppActive(next === "active");
+    });
+    return () => sub.remove();
+  }, []);
+
+  const shouldPoll = enabled && appActive;
 
   const fetchWarnings = useCallback(async (lat: number, lng: number) => {
     try {
@@ -102,6 +114,7 @@ export function useSafetyProximity() {
     });
   }, []);
 
+  // Subscription effect — starts only when shouldPoll is true, cleans up when it becomes false
   useEffect(() => {
     let cancelled = false;
 
@@ -124,6 +137,9 @@ export function useSafetyProximity() {
 
     async function start() {
       await loadDismissed();
+
+      // Stop here if polling was disabled or app went to background before we started
+      if (!shouldPoll || cancelled) return;
 
       if (Platform.OS === "web") {
         if (typeof window === "undefined" || !navigator.geolocation) return;
@@ -187,9 +203,10 @@ export function useSafetyProximity() {
     return () => {
       cancelled = true;
       locationSub.current?.remove();
+      locationSub.current = null;
       if (pollTimer.current) clearTimeout(pollTimer.current);
     };
-  }, [pollIfMoved]);
+  }, [shouldPoll, pollIfMoved]);
 
   return {
     warnings,

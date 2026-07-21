@@ -18,6 +18,20 @@ const SAFETY_RATING_THRESHOLD = 3;
 
 const SEVERITY_WEIGHTS: Record<string, number> = { low: 0.2, medium: 0.5, high: 1.0, critical: 2.0 };
 
+// Short-lived coordinate-keyed cache for proximity-warnings.
+// Rounds to 3 decimal places (~111 m) so nearby poll ticks share a cache entry.
+// Community safety data only — no user-specific fields in the cached payload.
+const PROXIMITY_CACHE_TTL_MS = 60_000;
+interface ProximityCacheEntry {
+  data: { warnings: unknown[]; areaIncidents: unknown[] };
+  expiresAt: number;
+}
+const proximityCache = new Map<string, ProximityCacheEntry>();
+
+function proximityCacheKey(lat: number, lng: number, radius: number): string {
+  return `${Math.round(lat * 1000) / 1000}:${Math.round(lng * 1000) / 1000}:${radius}`;
+}
+
 /**
  * Recomputes and saves a business's safetyRating.
  * countAllPending=true  → non-minority: every non-dismissed report counts immediately
@@ -386,6 +400,14 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
     return;
   }
 
+  // Return cached response for identical (or very nearby) coordinates within TTL
+  const cacheKey = proximityCacheKey(lat, lng, radius);
+  const cached = proximityCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    res.json(cached.data);
+    return;
+  }
+
   try {
     // Business-linked danger reports: join safety_reports → businesses for real coordinates.
     // Groups by business, only surfaces those with 3+ non-dismissed reports in the last 7 days.
@@ -470,7 +492,7 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
       distanceMeters: parseFloat(r.distance_meters),
     }));
 
-    res.json({
+    const responseData = {
       warnings,
       areaIncidents: areaIncidents.rows.map((r) => ({
         id: r.id,
@@ -480,7 +502,12 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
         severity: r.severity,
         reportCount: parseInt(r.report_count, 10),
       })),
-    });
+    };
+
+    // Cache the result — community data only, no user-specific fields
+    proximityCache.set(cacheKey, { data: responseData, expiresAt: Date.now() + PROXIMITY_CACHE_TTL_MS });
+
+    res.json(responseData);
   } catch (err) {
     req.log.error({ err }, "Failed to fetch proximity warnings");
     res.status(500).json({ error: "Failed to fetch proximity warnings" });

@@ -79,8 +79,8 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
   const [selectedCulturalSite, setSelectedCulturalSite] = useState<CulturalSite | null>(null);
 
   const { businesses } = useBusinesses();
-  const { alerts: activityAlerts, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts();
-  const { warnings, dismissWarning } = useSafetyProximity();
+  const { alerts: activityAlerts, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts({ enabled: false });
+  const { warnings, dismissWarning } = useSafetyProximity({ enabled: false });
   const { alert: geoAlert, dismissAlert: dismissGeoAlert } = useGeoSafeAlert();
 
   const mapped = businesses.filter(

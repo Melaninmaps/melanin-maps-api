@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
-import { Platform } from "react-native";
+import { Platform, AppState } from "react-native";
 
 export type AlertType = "police" | "ice" | "checkpoint" | "traffic" | "other";
 
@@ -41,11 +41,24 @@ async function getToken(): Promise<string | null> {
 const POLL_INTERVAL_MS = 30_000;
 const ALERT_RADIUS_KM = 16.09;
 
-export function useActivityAlerts() {
+export function useActivityAlerts({ enabled = true }: { enabled?: boolean } = {}) {
   const [alerts, setAlerts] = useState<ActivityAlert[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [appActive, setAppActive] = useState(AppState.currentState === "active");
   const locationRef = useRef<{ lat: number; lng: number } | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const inFlightRef = useRef(false);
+
+  // Pause when app is backgrounded or inactive
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    const sub = AppState.addEventListener("change", (next) => {
+      setAppActive(next === "active");
+    });
+    return () => sub.remove();
+  }, []);
+
+  const shouldPoll = enabled && appActive;
 
   const fetchNearby = useCallback(async () => {
     const loc = locationRef.current;
@@ -73,6 +86,7 @@ export function useActivityAlerts() {
     } catch { }
   }, []);
 
+  // Polling effect — starts only when shouldPoll is true, cleans up when it becomes false
   useEffect(() => {
     let cancelled = false;
 
@@ -86,22 +100,34 @@ export function useActivityAlerts() {
         await updateLocation(loc.coords.latitude, loc.coords.longitude);
         await fetchNearby();
 
+        if (cancelled) return;
         timerRef.current = setInterval(async () => {
+          // Prevent overlapping poll cycles
+          if (inFlightRef.current || cancelled) return;
+          inFlightRef.current = true;
           try {
             const fresh = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-            await updateLocation(fresh.coords.latitude, fresh.coords.longitude);
-            await fetchNearby();
+            if (!cancelled) {
+              await updateLocation(fresh.coords.latitude, fresh.coords.longitude);
+              await fetchNearby();
+            }
           } catch { }
+          finally { inFlightRef.current = false; }
         }, POLL_INTERVAL_MS);
       } catch { }
     }
 
-    void init();
+    if (shouldPoll) void init();
+
     return () => {
       cancelled = true;
-      if (timerRef.current) clearInterval(timerRef.current);
+      inFlightRef.current = false;
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
-  }, [fetchNearby, updateLocation]);
+  }, [shouldPoll, fetchNearby, updateLocation]);
 
   const reportAlert = useCallback(async (type: AlertType, description?: string): Promise<boolean> => {
     if (Platform.OS === "web") return false;
