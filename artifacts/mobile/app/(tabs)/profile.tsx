@@ -1515,6 +1515,29 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       )}
 
+      {/* Map Diagnostic — Beta · admin only · temporary · remove after map investigation */}
+      {isAdminUser && (
+        <TouchableOpacity
+          style={[styles.adminBanner, { backgroundColor: "#0F172A", borderColor: "#CA922B30", marginTop: 8 }]}
+          onPress={() => router.push("/map-diagnostic")}
+          activeOpacity={0.88}
+        >
+          <View style={styles.adminBannerLeft}>
+            <View style={[styles.adminIcon, { backgroundColor: "#CA922B20" }]}>
+              <Feather name="map" size={20} color="#CA922B" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.adminBannerTitle, { color: "#CA922B" }]}>Map Diagnostic — Beta</Text>
+              <Text style={styles.adminBannerSub}>Minimal map render test · no data, no overlays</Text>
+            </View>
+          </View>
+          <View style={[styles.adminCta, { backgroundColor: "#CA922B18", borderColor: "#CA922B40" }]}>
+            <Text style={[styles.adminCtaText, { color: "#CA922B" }]}>Open</Text>
+            <Feather name="arrow-right" size={13} color="#CA922B" />
+          </View>
+        </TouchableOpacity>
+      )}
+
       {isAuthenticated && biometricSupported && (
         <View style={[styles.biometricRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[styles.biometricIconWrap, { backgroundColor: colors.primary + "15" }]}>

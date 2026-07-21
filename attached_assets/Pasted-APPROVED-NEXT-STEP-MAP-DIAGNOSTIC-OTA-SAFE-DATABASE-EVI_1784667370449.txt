@@ -1,0 +1,53 @@
+APPROVED NEXT STEP — MAP DIAGNOSTIC OTA + SAFE DATABASE EVIDENCE
+The evidence report is accepted. The EXPO_PUBLIC_DOMAIN and cultural-site response-format findings are cleared. Do not make changes for either item.
+PR-A — Temporary map diagnostic navigation
+Prepare one narrow OTA-safe PR that adds a temporary entry in Settings or Profile:
+router.push('/map-diagnostic')
+Requirements:
+Label it clearly as “Map Diagnostic — Beta.”
+Show it only for an administrator account or behind an existing developer/debug condition if one already exists.
+Do not modify map-diagnostic.tsx.
+Do not modify FullMapView.
+Do not change map libraries, providers, keys, permissions or API endpoints.
+Do not include unrelated wording, layout or feature changes.
+Confirm it is JS-only and compatible with Build 94’s current runtime.
+Provide the exact PR diff before publishing the OTA.
+After the OTA is installed, I will test and report:
+whether Apple Maps tiles appear;
+whether the map responds to pan and zoom;
+MAP_LAYOUT;
+MAP_READY;
+MAP_LOADED;
+whether the production Map tab remains black during the same session.
+Do not create the production-map fix until this result is known.
+Database evidence — no uncontrolled load test
+Do not send five concurrent production requests against a five-connection pool.
+Instead, propose the smallest secure diagnostic method using the existing getPoolStats() export.
+The preferred option is a temporary CRON_SECRET-protected endpoint that returns only:
+totalCount
+idleCount
+waitingCount
+timestamp
+It must not return:
+connection strings
+SQL text
+credentials
+user data
+tokens
+Also determine whether Railway’s PostgreSQL dashboard or public proxy can expose pg_stat_activity safely.
+Return a controlled evidence plan that tests one route at a time and stops if pool waiting count rises.
+Do not create PR-B yet
+Do not implement generic try/catch around React hooks.
+After the diagnostic result, identify the exact failing hook, overlay or render state. Any fix must preserve React hook ordering. Prefer:
+internal asynchronous error handling inside each hook;
+safe default return values;
+optional child overlay components;
+an error boundary;
+nonblocking error UI.
+Return the PR-A link and database evidence plan only.
+Current decision
+Proceed with the diagnostic OTA, but do not treat it as a fix. The production app remains not ready for Apple until:
+the minimal map is tested,
+the full-map failure is identified,
+and the recurring pool exhaustion has a proven, durable fix.
+The language and ownership work can stay queued behind those two issues.
