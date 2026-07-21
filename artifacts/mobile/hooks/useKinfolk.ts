@@ -191,8 +191,8 @@ export function useKinfolk() {
         id: makeId(),
         role: "assistant",
         content: isTimeout
-          ? "KinfolkAI is taking longer than expected — check your connection and try again."
-          : "Something went sideways on my end. Give it another shot.",
+          ? "KinfolkAI didn't respond in time. Make sure you're connected, then tap Send to try your message again."
+          : "Something went sideways on my end. Tap Send to try again.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiMsg]);

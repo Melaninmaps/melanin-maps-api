@@ -397,7 +397,13 @@ function AiMessageBubble({
           <Text style={[aiStyles.bubbleText, { color: colors.text }]}>{msg.content}</Text>
           <TouchableOpacity
             style={aiStyles.speakBtn}
-            onPress={() => void Speech.speak(msg.content, { language: "en-US", rate: 0.95 })}
+            onPress={() => {
+              Speech.speak(msg.content, {
+                language: "en-US",
+                rate: 0.95,
+                onError: () => Alert.alert("Playback Unavailable", "Voice playback couldn't start. Make sure your device volume is on and try again."),
+              });
+            }}
             activeOpacity={0.7}
           >
             <Ionicons name="volume-medium-outline" size={14} color={colors.mutedForeground} />
@@ -1481,7 +1487,11 @@ export default function TravelScreen() {
     const last = messages[messages.length - 1];
     if (!last || last.role !== "assistant") return;
     void Speech.stop();
-    void Speech.speak(last.content, { language: "en-US", rate: 0.95 });
+    Speech.speak(last.content, {
+      language: "en-US",
+      rate: 0.95,
+      onError: () => {},
+    });
   }, [messages, isLoading, voiceOutput]);
 
   const handleSend = useCallback(async (text?: string) => {
