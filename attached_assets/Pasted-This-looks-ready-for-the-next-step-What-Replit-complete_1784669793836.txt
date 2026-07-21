@@ -1,0 +1,77 @@
+This looks ready for the next step.
+
+## What Replit completed correctly
+
+* Created a **separate deployment PR**, rather than pushing directly to `main`.
+* Updated only:
+
+  * `dist/index.mjs`
+  * `dist/index.mjs.map`
+* Confirmed the compiled bundle contains the new `/api/pool-stats` route.
+* Confirmed typechecking passed.
+* Left the PR open for review.
+* Kept the map diagnostic work separate from the server diagnostic.
+
+## You can merge PR #6
+
+Open:
+
+`https://github.com/Melaninmaps/melanin-maps-api/pull/6`
+
+Then:
+
+1. Confirm the branch says
+   `deploy/pool-stats-diagnostic → main`
+2. Confirm it shows only **2 files changed**.
+3. Click **Merge pull request**.
+4. Click **Confirm merge**.
+5. Wait for Railway to finish the automatic deployment.
+6. Do **not** restart Railway afterward unless Replit confirms the newly deployed process is already exhausted.
+
+## One security note
+
+Do not paste your actual `CRON_SECRET` into chat or screenshots.
+
+Replit should run the pool-stats request from its secure environment using the stored secret. You should not need to copy the secret manually.
+
+Send Replit this after the merge:
+
+> **PR #6 merged.**
+>
+> Wait until Railway reports the new deployment as Active.
+>
+> Then run the protected pool-stats baseline using the stored `CRON_SECRET`. Do not reveal the secret value.
+>
+> Return:
+>
+> * `totalCount`
+> * `idleCount`
+> * `waitingCount`
+> * timestamp
+> * Railway deployment status
+>
+> Then perform the controlled one-route-at-a-time sequence:
+>
+> 1. `/api/businesses?limit=3`
+> 2. pool stats immediately afterward
+> 3. pool stats again after 15 seconds
+> 4. repeat separately for Community, Events and Cultural Sites
+>
+> Stop immediately if `waitingCount` becomes greater than zero or route latency increases materially.
+>
+> Do not test login with my personal credentials.
+>
+> Do not change pool size, query timeout, indexes or SQL until the evidence identifies the saturation pattern.
+
+## Parallel map task
+
+Once the Map Diagnostic OTA reaches your phone:
+
+**Profile → Map Diagnostic — Beta**
+
+That test remains just as important. We need both answers:
+
+* Does the minimal Apple map render?
+* Which production request or query saturates the database pool?
+
+Those two results determine whether the next fix is an OTA, a server PR, or another native iOS build.
