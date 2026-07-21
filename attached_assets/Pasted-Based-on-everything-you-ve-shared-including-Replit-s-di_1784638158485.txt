@@ -1,0 +1,128 @@
+Based on everything you've shared—including Replit's diagnosis—I would respond in a way that both acknowledges the work they've done and raises the standard for what happens next.
+
+---
+
+Thank you for the thorough investigation. This is the level of diagnosis I have been asking for.
+
+If the root cause is indeed that the Railway production database schema has not remained synchronized with the current Drizzle schema, then I agree this explains why development testing succeeded while production continued to fail. 
+
+However, before implementation, I need several confirmations because this incident has cost multiple builds and a significant amount of testing time.
+
+## 1. Confirm this is the only remaining schema gap
+
+Do not assume only the `users` table is affected.
+
+Perform a complete production schema audit and compare every production table against the current Drizzle schema.
+
+Return:
+
+* every table that differs;
+* every missing column;
+* every missing index;
+* every missing constraint;
+* every missing table;
+* confirmation that businesses, cultural sites, events, memberships, notifications, KinfolkAI, sessions, reviews, circles, and every other production feature are included.
+
+I want one migration—not repeated emergency fixes.
+
+## 2. Verify the migration is additive only
+
+Confirm exactly what SQL will execute.
+
+I expect:
+
+* CREATE TABLE
+* ADD COLUMN
+* ADD INDEX
+
+I do **not** approve:
+
+* DROP TABLE
+* DROP COLUMN
+* destructive ALTER operations
+* data deletion
+* data rewrites
+
+Provide the migration summary before execution.
+
+## 3. Produce a post-migration verification checklist
+
+After the schema push, I want production verification—not development verification.
+
+Demonstrate all of the following against Railway production:
+
+* New account registration
+* Existing email login
+* Phone login
+* Apple Sign-In
+* Logout
+* Session restoration
+* Business discovery
+* Cultural sites
+* KinfolkAI
+* Notifications
+* Membership lookup
+* Circles
+* Reviews
+* Map data
+* Admin dashboard
+
+Every item should show PASS or FAIL.
+
+## 4. Fix the release process
+
+The report correctly identifies that production schema verification was missing from the release process. 
+
+I want this to become a permanent release gate.
+
+No future build should be considered ready until:
+
+* production schema matches Drizzle;
+* production database verification passes;
+* end-to-end production authentication succeeds;
+* a new user journey succeeds;
+* an existing user journey succeeds.
+
+This should become mandatory for every release.
+
+## 5. Multicultural platform audit remains required
+
+This authentication issue does **not** replace the previously requested audit.
+
+The platform language and seeded experience must reflect Mapping With Melanin™ as a platform serving minority communities, the global melanated diaspora, and other historically underrepresented communities—not default to "Black-owned" unless the user intentionally requests that experience.
+
+That work remains a release requirement.
+
+## 6. Video proof
+
+After implementation, provide one continuous recording demonstrating:
+
+* fresh production session;
+* registration;
+* login;
+* logout;
+* login again;
+* map loading;
+* businesses loading;
+* cultural sites loading;
+* multicultural seeded businesses visible;
+* KinfolkAI working;
+* production health monitor passing.
+
+Do not provide isolated clips.
+
+## 7. Build approval
+
+If—and only if—the schema audit is complete, the migration is additive, production verification passes, and the video confirms the user journey, I will authorize the next build.
+
+Otherwise, do not build.
+
+---
+
+One final request:
+
+This project is being built while I maintain a full-time career. Every unnecessary build, regression, or incomplete verification costs time that I cannot recover and delays getting this platform into the hands of the community it is intended to serve.
+
+Going forward, I need release recommendations to be based on verified production evidence rather than development assumptions. If something is unverified, say it is unverified. If there is uncertainty, identify it before recommending another build.
+
+That level of discipline will help us move faster with greater confidence.
