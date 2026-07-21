@@ -1,0 +1,86 @@
+You are right. **Do not treat this as user error.** You have already confirmed the password is correct, so the issue is the app or production login flow.
+
+What the screenshot proves is only that Build 93 reduced the real failure to a generic message. It does **not** prove “incorrect password.”
+
+At this point, Replit should investigate the exact failed attempt before touching authentication again.
+
+Send this:
+
+> # P0 — CORRECT PASSWORD REJECTED
+>
+> The password entered is confirmed correct. Do not classify this as incorrect credentials.
+>
+> Build 93 is rejecting a valid existing email/password login and replacing the real failure with:
+>
+> **“Login failed. Please try again.”**
+>
+> This is a release blocker.
+>
+> ## Required read-only diagnosis
+>
+> Trace the exact production login attempt for:
+>
+> `tlindsay428@yahoo.com`
+>
+> Do not request, display, reset, or log the password.
+>
+> Confirm:
+>
+> 1. The user record exists in the Railway production database.
+> 2. The exact authentication method attached to the account:
+>
+>    * email/password;
+>    * phone;
+>    * Apple;
+>    * SSO;
+>    * or multiple methods.
+> 3. Whether `passwordHash` exists and is validly formatted.
+> 4. Whether the account is locked or disabled.
+> 5. Current `failed_login_attempts` and `locked_until`.
+> 6. Whether the mobile request reaches `/api/auth/login-email`.
+> 7. Exact HTTP status and safe response body.
+> 8. Whether password comparison runs.
+> 9. Whether password comparison succeeds.
+> 10. Whether session creation succeeds.
+> 11. Whether the server returns a specific error that the mobile app replaces with the generic message.
+> 12. Whether Build 93 sends the email exactly as entered after normalization.
+>
+> ## Important
+>
+> Do not assume the password is wrong.
+> Do not reset the password.
+> Do not merge or alter the account.
+> Do not change authentication architecture.
+>
+> ## Likely failure categories to distinguish
+>
+> Return one confirmed cause:
+>
+> * valid password but no `passwordHash` on this account;
+> * valid password comparison succeeds but session creation fails;
+> * account lockout state is incorrect;
+> * mobile request payload differs from expected;
+> * email normalization mismatch;
+> * production database record differs from development;
+> * server returns an error but mobile hides it;
+> * another evidence-supported cause.
+>
+> ## Required repair proposal
+>
+> After confirming the cause, provide:
+>
+> * smallest safe fix;
+> * exact files involved;
+> * whether Railway deploy, mobile build, or both are required;
+> * regression risk;
+> * proof plan covering email, phone, Apple, logout, and session restore.
+>
+> **Authentication impact: diagnosis only until separately approved.**
+>
+> End with:
+>
+> **🔴 VALID CREDENTIAL LOGIN FAILURE CONFIRMED — ROOT CAUSE: [CAUSE]**
+>
+> Do not implement until approved.
+
+For now, do not keep retrying repeatedly because that could trigger the lockout counter. Use phone login only if you need access while Replit traces the email flow.
