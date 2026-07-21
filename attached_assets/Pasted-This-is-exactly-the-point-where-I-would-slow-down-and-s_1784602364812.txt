@@ -1,0 +1,141 @@
+This is exactly the point where I would slow down and separate **what we know** from **what we don't know**, because there are two different issues being discussed.
+
+## 1. Can I guarantee Build 93 will fix your login issue?
+
+No—I can't honestly guarantee that.
+
+What I *can* say is:
+
+* The **server-side authentication** has been modified and tested according to the reports you've shared.
+* The **logout race condition (LB-008)** was implemented and reported as passing API tests.
+* The **Under-13 registration enforcement** was deployed to Railway.
+
+Those changes improve the backend and logout flow, but they do **not** by themselves prove that **new account registration works on a physical iPhone**.
+
+Those are different scenarios.
+
+---
+
+## 2. Your attempted registration on Build 92 is actually new information
+
+You said:
+
+> "I attempted to create a new account using Build 92. It did not work."
+
+That is now the highest-priority issue.
+
+Until we know **why** it failed, we cannot confidently say the next build will fix it.
+
+Possible causes include:
+
+* a mobile UI validation problem;
+* the registration request never leaving the app;
+* the API rejecting the request;
+* an unexpected server error;
+* a production configuration issue;
+* a stale TestFlight build;
+* another unrelated bug.
+
+We don't have enough evidence yet to identify which one it is.
+
+---
+
+## 3. Authentication wasn't touched—but registration can still fail
+
+This often surprises people.
+
+Imagine authentication as several pieces:
+
+* registration;
+* email login;
+* phone login;
+* Apple Sign-In;
+* logout;
+* session restoration;
+* password reset.
+
+LB-008 changed the **logout/session timing**.
+
+It did **not** directly modify registration.
+
+So if registration is failing today, that failure could be completely unrelated to the logout fix.
+
+---
+
+## 4. Before another build, I would require a live diagnosis
+
+I would ask Replit to reproduce **your exact experience**, not just run API tests.
+
+Here's the prompt I'd send:
+
+> **P0 – Registration Failure Diagnosis**
+>
+> A physical user attempted to create a brand-new account on TestFlight Build 92 and registration failed.
+>
+> Before any new EAS build:
+>
+> 1. Reproduce the failure using the same production environment as TestFlight.
+> 2. Capture the exact request and response.
+> 3. Determine whether the failure occurs:
+>
+>    * before the API call;
+>    * during the API call;
+>    * after the API call.
+> 4. Inspect Railway production logs for that registration attempt.
+> 5. Confirm whether a user row was created.
+> 6. Confirm whether a Better Auth session was created.
+> 7. Confirm whether any validation rejected the request.
+> 8. Return:
+>
+>    * HTTP status;
+>    * response body;
+>    * server log;
+>    * root cause;
+>    * whether the fix requires:
+>
+>      * Railway deploy only,
+>      * mobile build,
+>      * or both.
+>
+> Do **not** answer from code inspection alone. Use the actual failed registration attempt.
+
+---
+
+## 5. I also want an Authentication Matrix
+
+Right now you've had several authentication issues over the last few days:
+
+* email login;
+* phone login differences;
+* logout race condition;
+* session renewal;
+* database pool exhaustion;
+* new registration failure.
+
+Instead of looking at them individually, I'd ask Replit for a single matrix like this:
+
+| Authentication Flow | Backend Verified | Mobile Verified | Physical Device Verified | Status             |
+| ------------------- | ---------------- | --------------- | ------------------------ | ------------------ |
+| New Registration    | ?                | ?               | ❌                        | Unknown            |
+| Email Login         | ✅                | ?               | ?                        | Needs confirmation |
+| Phone Login         | ?                | ?               | ?                        | Needs confirmation |
+| Apple Sign-In       | ?                | ?               | ?                        | Needs confirmation |
+| Logout              | ✅                | ?               | ?                        | Needs confirmation |
+| Session Restore     | ?                | ?               | ?                        | Needs confirmation |
+| Password Reset      | ?                | ?               | ?                        | Needs confirmation |
+
+That gives you a single source of truth instead of piecing together results from multiple reports.
+
+## My recommendation
+
+I would **not** approve another paid build until Replit explains **why your Build 92 registration failed**.
+
+If they can show:
+
+* the root cause;
+* the fix;
+* and why that fix is included in the next build,
+
+then you'll have a clear reason to expect different behavior. If they cannot explain the failure, then another build risks repeating the same disappointment.
+
+Given how much time and money you've invested, I think it's reasonable to expect that every new build is accompanied by a precise explanation of **what has changed**, **what problem it addresses**, and **why you should expect a different outcome than the previous build**.
