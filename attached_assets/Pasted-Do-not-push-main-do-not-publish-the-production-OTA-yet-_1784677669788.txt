@@ -1,0 +1,160 @@
+Do **not** push `main`, do not publish the production OTA yet, and do not treat the server cache as deployed.
+
+The report is honest and helpful, but the source state is still mixed:
+
+* all three logical changes are in one checkpoint commit,
+* `useSafetyProximity.ts` still has an uncommitted correction,
+* the mobile export has not completed successfully,
+* and Railway production does not yet contain the proximity cache.
+
+## What Replit should do next
+
+Send this:
+
+> **SOURCE STATE CLEANUP — DO NOT PUBLISH OR DEPLOY YET**
+>
+> The implementation is directionally approved, but the current source state is not release-ready.
+>
+> ### 1. Commit the outstanding guard correction
+>
+> Commit the `useSafetyProximity.ts` guard-order fix first.
+>
+> Return:
+>
+> * new commit hash,
+> * `git status`,
+> * confirmation that the working tree is clean.
+>
+> Do not publish while the working tree contains uncommitted changes.
+>
+> ### 2. Separate the deployment artifacts by file set
+>
+> The Replit checkpoint commit may contain all logical changes together, but the actual releases must remain separated:
+>
+> **Mobile OTA file set only**
+>
+> * `artifacts/mobile/hooks/useActivityAlerts.ts`
+> * `artifacts/mobile/hooks/useSafetyProximity.ts`
+> * `artifacts/mobile/components/FullMapView.tsx`
+> * `artifacts/mobile/components/BusinessMapView.tsx`
+>
+> **Server deployment file set only**
+>
+> * `artifacts/api-server/src/routes/reports.ts`
+> * rebuilt `dist/index.mjs`
+> * rebuilt `dist/index.mjs.map`
+>
+> Do not push the monorepo `main` branch to the compiled Railway repository.
+>
+> Use the same GitHub API deployment method previously used for PRs #1–#6:
+>
+> * create a deployment branch from `Melaninmaps/melanin-maps-api/main`;
+> * upload only the rebuilt `dist/index.mjs`;
+> * upload only the matching `dist/index.mjs.map`;
+> * create a narrow Railway deployment PR;
+> * return the PR link before merge.
+>
+> ### 3. Mobile validation
+>
+> Do not use production as the first bundling test.
+>
+> Run an EAS Update bundle against a non-production branch using the production environment:
+>
+> ```bash
+> cd artifacts/mobile
+> eas update \
+>   --branch pool-fix-validation \
+>   --environment production \
+>   --platform ios \
+>   --message "Validation: map polling lifecycle fix"
+> ```
+>
+> This command must complete successfully and return an update group ID.
+>
+> It must be created from the same clean commit intended for production.
+>
+> Do not link the validation branch to the production channel and do not repoint any existing channel.
+>
+> Return:
+>
+> * update group ID,
+> * runtime version,
+> * platform,
+> * Git commit,
+> * branch,
+> * confirmation that bundling completed successfully,
+> * any warnings or errors.
+>
+> ### 4. Production OTA only after validation
+>
+> After the validation update bundles successfully and the exact diff is reviewed, publish the same clean commit to Build 94 using:
+>
+> ```bash
+> eas update \
+>   --channel production \
+>   --environment production \
+>   --platform ios \
+>   --message "Fix map polling lifecycle and duplicate business-map polling"
+> ```
+>
+> Expo’s production command bundles the project before upload, so a successful update publication will also prove that the JavaScript bundle generated correctly. Do not publish production until the validation branch succeeds. ([Expo Documentation][1])
+>
+> ### 5. Server cache
+>
+> Do not say the proximity cache is live until:
+>
+> * the compiled deployment PR is merged,
+> * Railway reports the new deployment Active,
+> * the first request returns normally,
+> * a second identical request demonstrates the cache behavior,
+> * `/api/pool-stats` remains healthy.
+>
+> Return the clean-source commit, validation update result and Railway PR link only. Do not deploy or publish additional changes.
+
+## Why the validation branch is useful
+
+`eas update` generates the update bundle before uploading it. Publishing to an unlinked validation branch confirms that Expo can bundle the exact clean commit without sending it to Build 94 users. Production builds receive updates through their configured channel, so an unlinked branch will not affect your production TestFlight build. ([Expo Documentation][1])
+
+Do not use the suggested command with only:
+
+```bash
+eas update --branch staging
+```
+
+unless Replit first proves that `staging` is not linked to a tester-facing channel. A uniquely named branch such as `pool-fix-validation` is safer.
+
+## One more correction
+
+Replit should not tell you to:
+
+```bash
+git push origin main
+```
+
+That could mix mobile source, server source, the guard correction and unrelated checkpoint contents. Your Railway deployment repository accepts compiled artifacts, so it needs another narrow PR with only the two synchronized `dist` files.
+
+## After the OTA reaches your phone
+
+Repeat the same observation that exposed the problem:
+
+1. Freshly open on Discovery.
+2. Open Map for 90 seconds.
+3. Leave Map for 90 seconds.
+4. Open and close a business.
+5. Background the app.
+6. Reopen it.
+7. Log out.
+
+The required result is:
+
+* polling starts only while Map is focused,
+* leaving Map stops it,
+* business detail does not create another polling set,
+* backgrounding stops it,
+* logout stops it,
+* `waitingCount` stays at zero,
+* connections return to idle.
+
+Then test both **Map Diagnostic — Beta** and the regular Map screen.
+
+[1]: https://docs.expo.dev/eas-update/getting-started/?utm_source=chatgpt.com "Get started with EAS Update - Expo Documentation"
