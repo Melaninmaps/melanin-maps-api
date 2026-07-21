@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.melaninmaps.app",
-      "buildNumber": "92",
+      "buildNumber": "93",
       "associatedDomains": [
         "applinks:mappingwithmelanin.com"
       ],
