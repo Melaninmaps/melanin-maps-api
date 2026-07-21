@@ -136,10 +136,10 @@ export function useSafetyProximity({ enabled = true }: { enabled?: boolean } = {
     }
 
     async function start() {
-      await loadDismissed();
-
-      // Stop here if polling was disabled or app went to background before we started
+      // Guard first — skip AsyncStorage reads and all setup when disabled
       if (!shouldPoll || cancelled) return;
+
+      await loadDismissed();
 
       if (Platform.OS === "web") {
         if (typeof window === "undefined" || !navigator.geolocation) return;
