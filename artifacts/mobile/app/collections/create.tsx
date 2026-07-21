@@ -180,7 +180,7 @@ export default function CreateCollectionScreen() {
             {[
               "Moving to [City] — businesses, services & housing tips",
               "Managing Type 2 Diabetes — doctors, gyms, recipes",
-              "Black-owned restaurants in Atlanta",
+              "Community restaurants in Atlanta",
               "Philadelphia nightlife & events",
               "HBCUs & scholarships resources",
             ].map((tip) => (

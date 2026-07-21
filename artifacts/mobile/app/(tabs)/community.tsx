@@ -1082,7 +1082,7 @@ export default function CommunityScreen() {
             <View style={{ flex: 1 }}>
               <Text style={[styles.resSpacesTitle, { color: "#FFFFFF" }]}>AI Travel Planner</Text>
               <Text style={[styles.resSpacesSub, { color: "rgba(255,255,255,0.75)" }]}>
-                KinfolkAI builds your full itinerary — Black-owned hotels, restaurants, experiences &amp; safety context.
+                KinfolkAI builds your full itinerary — community-verified hotels, restaurants, experiences &amp; safety context.
               </Text>
             </View>
             <Feather name="chevron-right" size={18} color="rgba(255,255,255,0.6)" />
@@ -1436,7 +1436,7 @@ export default function CommunityScreen() {
                   <Feather name="zap" size={14} color="#fff" />
                 </View>
                 <Text style={{ color: colors.mutedForeground, fontSize: 13, flex: 1, lineHeight: 18 }}>
-                  Sorry about that experience. Here are some Black-owned businesses your community recommends nearby:
+                  Sorry about that experience. Here are some community-recommended businesses nearby:
                 </Text>
               </View>
               {kinfolkSuggestions.map((biz) => (

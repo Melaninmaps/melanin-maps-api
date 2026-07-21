@@ -110,7 +110,7 @@ export default function MelaninWrappedScreen() {
     const text = [
       `✨ My ${data.year} Melanin Wrapped ✨`,
       ``,
-      `🏪 ${data.checkInsCount} Black-owned businesses supported`,
+      `🏪 ${data.checkInsCount} community businesses supported`,
       `⭐ ${data.reviewsCount} reviews written`,
       `🌍 ${data.citiesCount} ${data.citiesCount === 1 ? "city" : "cities"} explored`,
       `🏅 ${data.pointsEarned.toLocaleString()} community points`,
@@ -151,7 +151,7 @@ export default function MelaninWrappedScreen() {
           <Text style={{ fontSize: 40, marginBottom: 16 }}>🌱</Text>
           <Text style={{ color: "#FFFFFF", fontSize: 18, fontWeight: "700", marginBottom: 8 }}>Nothing yet this year</Text>
           <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, textAlign: "center", paddingHorizontal: 40 }}>
-            Check in to Black-owned businesses, leave reviews, and save places to build your story.
+            Check in to community businesses, leave reviews, and save places to build your story.
           </Text>
           <TouchableOpacity style={[s.shareBtn, { backgroundColor: "#CA922B", marginTop: 28 }]} onPress={() => router.back()} activeOpacity={0.85}>
             <Text style={s.shareBtnTxt}>Start Exploring</Text>
@@ -237,7 +237,7 @@ export default function MelaninWrappedScreen() {
         {/* ─── Share CTA ─── */}
         <View style={s.ctaSection}>
           <Text style={s.ctaTitle}>Share your impact 🤎</Text>
-          <Text style={s.ctaSub}>Every check-in, review, and save helps Black-owned businesses thrive. Thank you for showing up.</Text>
+          <Text style={s.ctaSub}>Every check-in, review, and save helps community businesses thrive. Thank you for showing up.</Text>
           <TouchableOpacity style={[s.shareBtn, { backgroundColor: "#CA922B" }]} onPress={handleShare} activeOpacity={0.85}>
             <Feather name="share-2" size={16} color="#fff" />
             <Text style={s.shareBtnTxt}>Share My Wrapped</Text>

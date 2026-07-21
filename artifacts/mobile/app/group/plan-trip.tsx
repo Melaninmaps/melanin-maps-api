@@ -137,7 +137,7 @@ export default function PlanTripScreen() {
                 <Text style={[styles.heroSubtitle, { color: colors.mutedForeground }]}>
                   KinfolkAI will read all {numMembers} members' travel preferences and suggest{" "}
                   <Text style={{ fontFamily: "Inter_600SemiBold" }}>3 trip options</Text> tailored to your crew — with
-                  Black-owned spots, cultural landmarks, and safety ratings.
+                  community-verified spots, cultural landmarks, and safety ratings.
                 </Text>
               </View>
             </View>

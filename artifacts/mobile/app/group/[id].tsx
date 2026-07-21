@@ -696,7 +696,7 @@ export default function GroupDetailScreen() {
               { icon: "map" as const, text: "AI-powered group trip planning" },
               { icon: "users" as const, text: "Cross-check preferences with your crew" },
               { icon: "calendar" as const, text: "Get 3 personalized itinerary options" },
-              { icon: "shield" as const, text: "Safety-first Black-owned recommendations" },
+              { icon: "shield" as const, text: "Safety-first community recommendations" },
             ].map((item) => (
               <View key={item.text} style={[styles.featureRow, { borderColor: colors.border }]}>
                 <View style={[styles.featureIcon, { backgroundColor: catColor + "15" }]}>

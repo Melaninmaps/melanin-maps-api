@@ -202,11 +202,13 @@ export default function SafetyHubTab() {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
       const base = getApiBase();
+      const safetyCtrl = new AbortController();
+      const safetyTimeout = setTimeout(() => safetyCtrl.abort(), 8000);
       const [ciRes, lsRes, mvRes] = await Promise.all([
-        fetch(`${base}/api/safety/checkins`, { headers }),
-        fetch(`${base}/api/safety/location-shares`, { headers }),
-        fetch(`${base}/api/meetups`, { headers }),
-      ]);
+        fetch(`${base}/api/safety/checkins`, { headers, signal: safetyCtrl.signal }),
+        fetch(`${base}/api/safety/location-shares`, { headers, signal: safetyCtrl.signal }),
+        fetch(`${base}/api/meetups`, { headers, signal: safetyCtrl.signal }),
+      ]).finally(() => clearTimeout(safetyTimeout));
       if (ciRes.ok) { const d = await ciRes.json() as { checkins: SafetyCheckin[] }; setCheckins(d.checkins ?? []); }
       if (lsRes.ok) { const d = await lsRes.json() as { shares: LocationShare[] }; setShares(d.shares ?? []); }
       if (mvRes.ok) { const d = await mvRes.json() as { verifications: MeetupVerification[] }; setMeetups(d.verifications ?? []); }

@@ -1012,5 +1012,184 @@ router.get("/admin/health", async (req: Request, res: Response) => {
   });
 });
 
+// ── Multicultural seed (WS4 + WS5) ──────────────────────────────────────────
+// POST /admin/seed-multicultural
+// Auth: Authorization: Bearer CRON_SECRET
+// Idempotent: skips any business/site that already exists by name+city.
+router.post("/admin/seed-multicultural", async (req: Request, res: Response) => {
+  const cronSecret = process.env.CRON_SECRET;
+  const auth = req.headers["authorization"] ?? "";
+  if (!cronSecret || auth !== `Bearer ${cronSecret}`) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  try {
+    // ── 12 demo multicultural businesses ──────────────────────────────────
+    const DEMO_BUSINESSES = [
+      { name: "Kinfolk Kitchen", description: "[DEMO — Test Record] A beloved gathering spot serving Southern and West African–inspired comfort food. Family recipes, community events, and a warm welcome for everyone.", category: "Food", subcategory: "Restaurant", address: "1400 South St", city: "Philadelphia", state: "PA", latitude: "39.9416", longitude: "-75.1650", black_owned: true, ownership_designations: ["black-owned"], confidence_score: 75, price_range: "$$" },
+      { name: "Akosua's Cloth & Culture", description: "[DEMO — Test Record] Handcrafted West African textiles, kente cloth, and contemporary Afro-diasporic fashion. Celebrates the full breadth of the African diaspora.", category: "Retail", subcategory: "Fashion", address: "3210 Girard Ave", city: "Philadelphia", state: "PA", latitude: "39.9665", longitude: "-75.1730", black_owned: true, ownership_designations: ["black-owned", "african-diaspora-owned"], confidence_score: 75, price_range: "$$" },
+      { name: "Yard Style Caribbean Grill", description: "[DEMO — Test Record] Jerk chicken, oxtail, and roti made from family recipes brought from Kingston and Port of Spain. Authentic Caribbean flavors in the heart of the city.", category: "Food", subcategory: "Caribbean", address: "5523 Germantown Ave", city: "Philadelphia", state: "PA", latitude: "39.9980", longitude: "-75.1720", black_owned: true, ownership_designations: ["black-owned", "caribbean-owned"], confidence_score: 75, price_range: "$" },
+      { name: "Casa Hernández Panadería", description: "[DEMO — Test Record] Mexican and Puerto Rican baked goods, pan dulce, and fresh empanadas. A community anchor serving Philadelphia's Latino neighborhoods for over a decade.", category: "Food", subcategory: "Bakery", address: "2812 N 5th St", city: "Philadelphia", state: "PA", latitude: "39.9810", longitude: "-75.1350", black_owned: false, ownership_designations: ["hispanic-owned", "latino-owned"], confidence_score: 75, price_range: "$" },
+      { name: "Lenape Roots Wellness", description: "[DEMO — Test Record] Holistic wellness rooted in Indigenous traditions — herbal medicine, mindfulness practices, and educational programs honoring Lenape heritage and land stewardship.", category: "Health", subcategory: "Wellness", address: "1200 E Columbia Ave", city: "Philadelphia", state: "PA", latitude: "39.9740", longitude: "-75.1210", black_owned: false, ownership_designations: ["indigenous-owned", "native-american-owned"], confidence_score: 75, price_range: "$$" },
+      { name: "Samira's Moroccan Table", description: "[DEMO — Test Record] Slow-cooked tagines, fresh mint tea, and warm hospitality from a Casablanca native. A window into North African culinary heritage.", category: "Food", subcategory: "Restaurant", address: "734 S 9th St", city: "Philadelphia", state: "PA", latitude: "39.9352", longitude: "-75.1534", black_owned: false, ownership_designations: ["middle-eastern-owned", "north-african-owned", "immigrant-owned"], confidence_score: 75, price_range: "$$" },
+      { name: "New Arrival Market", description: "[DEMO — Test Record] A multicultural grocery and community hub stocking ingredients from over 30 countries. Founded by first-generation immigrants to serve the city's growing diaspora communities.", category: "Retail", subcategory: "Grocery", address: "1840 Point Breeze Ave", city: "Philadelphia", state: "PA", latitude: "39.9291", longitude: "-75.1720", black_owned: false, ownership_designations: ["immigrant-owned"], confidence_score: 75, price_range: "$" },
+      { name: "Her Collective Studio", description: "[DEMO — Test Record] A women-owned beauty and wellness studio specializing in natural hair care, skincare, and holistic self-care practices for all women.", category: "Beauty", subcategory: "Salon", address: "4512 Baltimore Ave", city: "Philadelphia", state: "PA", latitude: "39.9447", longitude: "-75.2045", black_owned: false, ownership_designations: ["women-owned"], confidence_score: 75, price_range: "$$" },
+      { name: "Prism Books & Community Space", description: "[DEMO — Test Record] An LGBTQ+-owned independent bookstore, event venue, and safe space celebrating queer literature, diverse voices, and community organizing.", category: "Retail", subcategory: "Bookstore", address: "704 S 4th St", city: "Philadelphia", state: "PA", latitude: "39.9418", longitude: "-75.1480", black_owned: false, ownership_designations: ["lgbtq-owned"], confidence_score: 75, price_range: "$$" },
+      { name: "Accessibility First Consulting", description: "[DEMO — Test Record] Disability-owned consulting firm specializing in ADA compliance, accessible design, and inclusive workplace strategy.", category: "Services", subcategory: "Consulting", address: "1500 Market St Ste 1200", city: "Philadelphia", state: "PA", latitude: "39.9530", longitude: "-75.1653", black_owned: false, ownership_designations: ["disability-owned"], confidence_score: 75, price_range: "$$$" },
+      { name: "Honor Grounds Coffee", description: "[DEMO — Test Record] Veteran-owned coffee shop and community meeting space. Single-origin roasts, military service honor wall, and a standing welcome for all who have served.", category: "Food", subcategory: "Café", address: "1910 Passyunk Ave", city: "Philadelphia", state: "PA", latitude: "39.9280", longitude: "-75.1720", black_owned: false, ownership_designations: ["veteran-owned"], confidence_score: 75, price_range: "$" },
+      { name: "The Gathering Place", description: "[DEMO — Test Record] A multicultural community restaurant and event space co-owned by Black, LGBTQ+, and women founders. Celebrates intersectional identity through food, art, and storytelling.", category: "Food", subcategory: "Restaurant", address: "2100 Fairmount Ave", city: "Philadelphia", state: "PA", latitude: "39.9635", longitude: "-75.1723", black_owned: true, ownership_designations: ["black-owned", "women-owned", "lgbtq-owned"], confidence_score: 75, price_range: "$$" },
+    ];
+
+    let businessesInserted = 0;
+    let businessesSkipped = 0;
+    for (const b of DEMO_BUSINESSES) {
+      const exists = await pool.query(
+        "SELECT id FROM businesses WHERE name = $1 AND city = $2 LIMIT 1",
+        [b.name, b.city]
+      );
+      if (exists.rows.length > 0) { businessesSkipped++; continue; }
+      await pool.query(
+        `INSERT INTO businesses
+          (name, description, category, subcategory, address, city, state,
+           latitude, longitude, black_owned, ownership_designations,
+           confidence_score, verified, price_range, business_status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15)`,
+        [
+          b.name, b.description, b.category, b.subcategory, b.address,
+          b.city, b.state, b.latitude, b.longitude,
+          b.black_owned, JSON.stringify(b.ownership_designations),
+          b.confidence_score, false, b.price_range, "community",
+        ]
+      );
+      businessesInserted++;
+    }
+
+    // ── 5 Philadelphia cultural sites ─────────────────────────────────────
+    const CULTURAL_SITES = [
+      {
+        name: "Independence Hall — Annual Reminder Protests",
+        description: "From 1965 to 1969, Frank Kameny and the Mattachine Society organized the Annual Reminder — peaceful annual pickets at Independence Hall demanding equal rights for LGBTQ+ Americans. These demonstrations predate the Stonewall uprising and are among the earliest organized LGBTQ+ civil rights protests in United States history.",
+        category: "Heritage",
+        heritage_category: "LGBTQ+ History",
+        subcategory: "Civil Rights Memorial",
+        ethnic_community: "LGBTQ+",
+        city: "Philadelphia", state: "PA",
+        address: "520 Chestnut St",
+        latitude: "39.9489", longitude: "-75.1500",
+        era: "1965–1969",
+        significance: "Site of the Annual Reminder protests, among the first organized LGBTQ+ civil rights demonstrations in United States history.",
+        external_url: "https://www.nps.gov/inde",
+        verified_source: "City of Philadelphia; National Park Service",
+        year_established: 1965,
+        admission_free: true, is_family_friendly: true, is_accessible: true,
+      },
+      {
+        name: "Penn Treaty Park — Lenape Treaty Site (Shackamaxon)",
+        description: "The traditional gathering place of the Lenape people at Shackamaxon, where William Penn's 1683 treaty with Chief Tamanend took place. The park stands on land the Lenape called home for thousands of years before European arrival. A living memorial to Indigenous sovereignty and the first peoples of the Delaware Valley.",
+        category: "Heritage",
+        heritage_category: "Native American Heritage",
+        subcategory: "Indigenous Sacred Site",
+        ethnic_community: "Lenape / Indigenous",
+        city: "Philadelphia", state: "PA",
+        address: "1301 N Delaware Ave",
+        latitude: "39.9729", longitude: "-75.1213",
+        era: "Pre-colonial — 1683",
+        significance: "Site of the 1683 treaty between William Penn and Lenape Chief Tamanend; ancestral Lenape gathering grounds at Shackamaxon.",
+        external_url: "https://penntreatyparkfriends.org",
+        verified_source: "Philadelphia Parks & Recreation; Penn Treaty Museum Society",
+        year_established: 1683,
+        admission_free: true, is_family_friendly: true, is_accessible: true,
+      },
+      {
+        name: "Norris Square Park — Puerto Rican Cultural Heart",
+        description: "The casitas and community gardens of Norris Square, built by Puerto Rican residents beginning in the 1970s, represent one of the most powerful examples of immigrant community reclamation of urban space in Philadelphia. Las Parcelas garden preserves Puerto Rican agricultural and cultural traditions in the heart of North Philadelphia.",
+        category: "Heritage",
+        heritage_category: "Hispanic & Latino Heritage",
+        subcategory: "Cultural Landmark",
+        ethnic_community: "Puerto Rican / Latino",
+        city: "Philadelphia", state: "PA",
+        address: "Norris St & N Howard St",
+        latitude: "39.9791", longitude: "-75.1370",
+        era: "1970s–present",
+        significance: "Puerto Rican casitas and Las Parcelas garden — community-built cultural spaces preserving Latino heritage in North Philadelphia.",
+        external_url: "https://www.nspca.net",
+        verified_source: "Philadelphia Horticultural Society; Penn Urban Studies documentation",
+        year_established: 1970,
+        admission_free: true, is_family_friendly: true, is_accessible: true,
+      },
+      {
+        name: "Pennsylvania Hall Site — Female Anti-Slavery Society",
+        description: "Pennsylvania Hall — built by abolitionists and opened in 1838 — was burned to the ground by a pro-slavery mob three days after its dedication while the Philadelphia Female Anti-Slavery Society held an antislavery convention inside. The Society, founded in 1833 by Black and white women together including Lucretia Mott and Sarah Mapps Douglass, was among the first interracial women's organizations in United States history. A historical marker stands at the site today.",
+        category: "Heritage",
+        heritage_category: "Women's History",
+        subcategory: "Abolitionist & Civil Rights Site",
+        ethnic_community: "Women / Interracial Abolitionist",
+        city: "Philadelphia", state: "PA",
+        address: "6th St & Haines St",
+        latitude: "39.9541", longitude: "-75.1577",
+        era: "1833–1838",
+        significance: "Site of Pennsylvania Hall and the Philadelphia Female Anti-Slavery Society — first interracial women's abolitionist organization in US history.",
+        external_url: "https://www.hsp.org",
+        verified_source: "Historical Society of Pennsylvania; Philadelphia Inquirer historical records",
+        year_established: 1833,
+        admission_free: true, is_family_friendly: true, is_accessible: false,
+      },
+      {
+        name: "9th Street Italian Market — Immigrant Heritage Corridor",
+        description: "America's oldest continuously operating open-air market, established by Southern Italian immigrants in the late 1800s. The corridor on South 9th Street has housed successive waves of immigrant communities — Italian, Vietnamese, Mexican, and others — making it one of Philadelphia's most enduring symbols of immigrant enterprise, cultural continuity, and community resilience.",
+        category: "Heritage",
+        heritage_category: "Immigrant Heritage",
+        subcategory: "Cultural Landmark",
+        ethnic_community: "Italian / Multi-Immigrant",
+        city: "Philadelphia", state: "PA",
+        address: "S 9th St & Washington Ave",
+        latitude: "39.9338", longitude: "-75.1536",
+        era: "Late 1800s–present",
+        significance: "America's oldest continuously operating open-air market — a living symbol of multi-generational immigrant enterprise and cultural continuity.",
+        external_url: "https://italianmarketphilly.org",
+        verified_source: "Philadelphia Historical Commission; italianmarketphilly.org",
+        year_established: 1884,
+        admission_free: true, is_family_friendly: true, is_accessible: true,
+      },
+    ];
+
+    let sitesInserted = 0;
+    let sitesSkipped = 0;
+    for (const s of CULTURAL_SITES) {
+      const exists = await pool.query(
+        "SELECT id FROM cultural_sites WHERE name = $1 AND city = $2 LIMIT 1",
+        [s.name, s.city]
+      );
+      if (exists.rows.length > 0) { sitesSkipped++; continue; }
+      await pool.query(
+        `INSERT INTO cultural_sites
+          (name, description, category, heritage_category, subcategory,
+           ethnic_community, city, state, address, latitude, longitude,
+           era, significance, external_url, is_verified, year_established,
+           admission_free, is_family_friendly, is_accessible, verified_source, country)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)`,
+        [
+          s.name, s.description, s.category, s.heritage_category, s.subcategory,
+          s.ethnic_community, s.city, s.state, s.address, s.latitude, s.longitude,
+          s.era, s.significance, s.external_url, true, s.year_established,
+          s.admission_free, s.is_family_friendly, s.is_accessible, s.verified_source,
+          "United States",
+        ]
+      );
+      sitesInserted++;
+    }
+
+    req.log.info({ businessesInserted, businessesSkipped, sitesInserted, sitesSkipped }, "Multicultural seed completed");
+    res.json({
+      ok: true,
+      businesses: { inserted: businessesInserted, skipped: businessesSkipped },
+      culturalSites: { inserted: sitesInserted, skipped: sitesSkipped },
+    });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/seed-multicultural error");
+    res.status(500).json({ error: "Seed failed" });
+  }
+});
+
 export default router;
 

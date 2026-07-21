@@ -59,7 +59,7 @@ const SETTINGS = [
   { icon: "award" as const, label: "Membership", sub: "Explore (Free) — upgrade anytime", route: "/membership" as const },
   { icon: "briefcase" as const, label: "Business Admin", sub: "Manage your listing, category & profile", route: "/business-owner" as const },
   { icon: "share-2" as const, label: "Referral Program", sub: "Invite friends, earn rewards", route: "/referral" as const },
-  { icon: "plus-circle" as const, label: "Nominate a Business", sub: "Know a great Black-owned spot? Add it to our community", route: "/nominate-business" as const },
+  { icon: "plus-circle" as const, label: "Nominate a Business", sub: "Know a great community spot? Add it to our community", route: "/nominate-business" as const },
   { icon: "users" as const, label: "Mentorship Network", sub: "Connect with mentors & peers", route: "/mentorship" as const },
   { icon: "tag" as const, label: "Affiliate Partner Discounts", sub: "Hotels, flights & travel perks", route: "/affiliate" as const },
   { icon: "credit-card" as const, label: "Billing & Invoices", sub: "Manage subscription & history", route: "/billing" as const },

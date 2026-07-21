@@ -121,6 +121,8 @@ export function useKinfolk() {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
+      const controller = new AbortController();
+      const chatTimeout = setTimeout(() => controller.abort(), 30000);
       const res = await fetch(`${apiBase}/api/kinfolk/chat`, {
         method: "POST",
         headers,
@@ -130,7 +132,8 @@ export function useKinfolk() {
           vibes: opts?.vibes ?? [],
           voiceMode: opts?.voiceMode ?? "community",
         }),
-      });
+        signal: controller.signal,
+      }).finally(() => clearTimeout(chatTimeout));
 
       if (res.ok) {
         const data = (await res.json()) as {
@@ -182,11 +185,14 @@ export function useKinfolk() {
         };
         setMessages((prev) => [...prev, aiMsg]);
       }
-    } catch {
+    } catch (err: unknown) {
+      const isTimeout = err instanceof Error && err.name === "AbortError";
       const aiMsg: ChatMessage = {
         id: makeId(),
         role: "assistant",
-        content: "Something went sideways on my end. Give it another shot.",
+        content: isTimeout
+          ? "KinfolkAI is taking longer than expected — check your connection and try again."
+          : "Something went sideways on my end. Give it another shot.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiMsg]);

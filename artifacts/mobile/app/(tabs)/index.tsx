@@ -488,11 +488,11 @@ export default function DiscoverScreen() {
                   </TouchableOpacity>
                 </View>
                 <Text style={[styles.noPrefsMatchSub, { color: colors.mutedForeground }]}>
-                  We couldn't find businesses matching your saved preferences in this view. Would you like to explore other Black-owned businesses?
+                  We couldn't find businesses matching your saved preferences in this view. Would you like to explore other community businesses?
                 </Text>
                 <View style={styles.noPrefsMatchBtns}>
-                  <TouchableOpacity style={[styles.noPrefsBtn, { backgroundColor: "#CA922B" }]} onPress={() => { setFilters((f) => ({ ...f, ownershipTypes: ["black-owned"] })); setPrefsBannerDismissed(true); }} activeOpacity={0.85}>
-                    <Text style={styles.noPrefsBtnTxt}>Show All Black-Owned</Text>
+                  <TouchableOpacity style={[styles.noPrefsBtn, { backgroundColor: "#CA922B" }]} onPress={() => { setFilters((f) => ({ ...f, ownershipTypes: [] })); setPrefsBannerDismissed(true); }} activeOpacity={0.85}>
+                    <Text style={styles.noPrefsBtnTxt}>Show All Businesses</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={[styles.noPrefsGhostBtn, { borderColor: colors.border }]} onPress={() => { setFilters((f) => ({ ...f, ownershipTypes: [] })); setPrefsBannerDismissed(true); }} activeOpacity={0.85}>
                     <Text style={[styles.noPrefsGhostTxt, { color: colors.mutedForeground }]}>Show Everything</Text>
@@ -511,10 +511,10 @@ export default function DiscoverScreen() {
                     <View style={[styles.minorityOptGold, { backgroundColor: "#CA922B" }]} />
                     <View style={{ flex: 1, padding: 14 }}>
                       <Text style={[styles.minorityOptTitle, { color: colors.foreground }]}>No {selectedLabel} businesses found yet</Text>
-                      <Text style={[styles.minorityOptBody, { color: colors.mutedForeground }]}>We're growing every day. Would you like to explore other Black-owned businesses in the meantime?</Text>
+                      <Text style={[styles.minorityOptBody, { color: colors.mutedForeground }]}>We're growing every day. Would you like to explore other community businesses in the meantime?</Text>
                       <TouchableOpacity style={[styles.minorityOptBtn, { backgroundColor: "#CA922B" }]} onPress={() => setMinorityExpanded(true)} activeOpacity={0.85}>
                         <Feather name="compass" size={14} color="#fff" />
-                        <Text style={styles.minorityOptBtnText}>Explore Other Black-Owned</Text>
+                        <Text style={styles.minorityOptBtnText}>Explore Community Businesses</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -526,12 +526,12 @@ export default function DiscoverScreen() {
                   <View>
                     <View style={[styles.expansionHeader, { borderBottomColor: "#CA922B44" }]}>
                       <Feather name="compass" size={15} color="#CA922B" />
-                      <Text style={[styles.expansionLabel, { color: "#CA922B" }]}>Other Black-Owned Businesses</Text>
+                      <Text style={[styles.expansionLabel, { color: "#CA922B" }]}>Other Community Businesses</Text>
                       <TouchableOpacity activeOpacity={0.85} onPress={() => setMinorityExpanded(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                         <Feather name="x" size={15} color={colors.mutedForeground} />
                       </TouchableOpacity>
                     </View>
-                    <Text style={[styles.expansionNote, { color: colors.mutedForeground }]}>Showing results from all Black-owned businesses — not filtered by your selected type</Text>
+                    <Text style={[styles.expansionNote, { color: colors.mutedForeground }]}>Showing results from all community businesses — not filtered by your selected type</Text>
                     {expansion.map((b) => (
                       <BusinessCard key={b.id} business={b} onPress={() => router.push({ pathname: "/business/[id]", params: { id: b.id } } as never)} isSaved={false} onToggleSave={() => {}} />
                     ))}
@@ -833,7 +833,7 @@ export default function DiscoverScreen() {
                 <View style={styles.travelBannerLeft}>
                   <Text style={styles.travelBannerEyebrow}>🚚 RELOCATION CONCIERGE</Text>
                   <Text style={styles.travelBannerTitle}>Plan Your Move</Text>
-                  <Text style={styles.travelBannerSub}>AI guides you step-by-step — realtor, movers, doctor, and more Black-owned businesses at every turn.</Text>
+                  <Text style={styles.travelBannerSub}>AI guides you step-by-step — realtor, movers, doctor, and community-verified businesses at every turn.</Text>
                 </View>
                 <View style={styles.travelBannerRight}>
                   <View style={[styles.travelBannerArrow, { backgroundColor: "#C9922B" }]}>
