@@ -1218,8 +1218,9 @@ router.post("/admin/seed-multicultural", async (req: Request, res: Response) => 
       culturalSites: { inserted: sitesInserted, skipped: sitesSkipped },
     });
   } catch (err) {
-    req.log.error({ err }, "POST /admin/seed-multicultural error");
-    res.status(500).json({ error: "Seed failed" });
+    const detail = err instanceof Error ? err.message : String(err);
+    req.log.error({ err, detail }, "POST /admin/seed-multicultural error");
+    res.status(500).json({ error: "Seed failed", detail });
   }
 });
 
