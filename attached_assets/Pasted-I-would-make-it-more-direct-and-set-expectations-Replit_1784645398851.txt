@@ -1,0 +1,125 @@
+I would make it more direct and set expectations. Replit has clearly done significant diagnostic work, but the outcome that matters is **a stable product**, not another diagnosis.
+
+Here's what I would send:
+
+---
+
+# P0 RELEASE BLOCKER — THIS MUST BE RESOLVED PERMANENTLY
+
+Thank you for the investigation and the level of detail provided. The evidence is appreciated, and I recognize the work that went into identifying what appears to be the production schema synchronization issue.  
+
+However, I need to be clear about my expectations moving forward.
+
+This project has been in active development for nearly two months with well over 90 builds. At this stage, I cannot continue spending time validating fixes that are later found to be incomplete.
+
+## 1. This must be corrected permanently.
+
+I am not looking for a temporary fix that works today and fails again after another deployment.
+
+I need confidence that:
+
+* the production database remains synchronized with the application schema;
+* future schema changes cannot silently bypass Railway production;
+* this class of failure cannot reach another TestFlight build;
+* the release process is permanently updated so production verification is mandatory before recommending any build.
+
+If automation or additional release gates are required to achieve this, implement them.
+
+## 2. Production—not development—is the source of truth.
+
+Going forward, a feature is **not** considered verified because it works in Replit or on a development database.
+
+It is only considered verified when it has been demonstrated against Railway production and on an installed mobile build.
+
+## 3. I still do NOT have visual proof.
+
+One of my requirements was a continuous walkthrough showing the complete user journey.
+
+I did **not** receive that.
+
+I need one uninterrupted recording demonstrating:
+
+* fresh install (or fresh session);
+* registration;
+* logout;
+* existing-user login;
+* session restoration;
+* map rendering;
+* businesses loading;
+* cultural sites loading;
+* KinfolkAI functioning;
+* profile loading;
+* end-to-end success without edits or skipped steps.
+
+This recording is now a permanent release requirement before any build is recommended.
+
+## 4. My production experience does not match the reported verification.
+
+This is critical.
+
+When I woke up, I was still logged in from my previous session.
+
+After logging out, I attempted to sign back in using the same account.
+
+The login failed.
+
+That means my real-world production experience did **not** match the reported verification.
+
+Before another build or release recommendation, reconcile this discrepancy.
+
+I need to understand:
+
+* why the reported verification succeeded;
+* why my production device failed immediately afterward;
+* whether the verification environment differed from production;
+* whether a deployment changed after testing;
+* or whether another factor explains the mismatch.
+
+Do not simply state that login works. Explain why my observed result differed.
+
+## 5. Release evidence must reflect the user experience.
+
+Going forward, release readiness is measured by the actual experience of a real user—not just successful API responses.
+
+A build is not ready until a person can:
+
+* create an account;
+* log in;
+* log out;
+* log back in;
+* load the map;
+* browse businesses;
+* browse cultural sites;
+* interact with KinfolkAI;
+* complete the core experience without blockers.
+
+## 6. Release blockers still outstanding
+
+These remain P0 items before broader testing:
+
+* Existing-user login reliability
+* Map rendering
+* Spinning/blank pages
+* Kinfolk voice functionality
+* Multicultural platform language audit
+* Multicultural and multiracial seeded businesses
+* Required end-to-end walkthrough video
+
+## 7. My expectation
+
+I understand software development involves unexpected issues.
+
+What I need now is confidence that we are improving the **process**, not only fixing individual bugs.
+
+Please ensure the solution addresses both:
+
+1. the immediate production issue; and
+2. the release process that allowed it to reach TestFlight.
+
+Once the implementation is complete, I expect the required walkthrough recording and the full production verification before another build is recommended.
+
+---
+
+I would add one final sentence because I think it's important for the team to hear:
+
+> **I value the work and persistence that has gone into this project. My urgency comes from protecting our community's trust. Every founder, tester, business, and waitlist member who tries the app should leave with confidence in the platform. That is the standard we are building toward.**

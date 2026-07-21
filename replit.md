@@ -90,12 +90,45 @@ Approved surgical fixes: logout race condition (LB-008), misleading error messag
 - Release naming: every build communicated to testers must include a human name + platform version + build number. Format: "Everyone should now be testing **[Release Name]** (iOS Build [N] / Android Version [V] Build [N])." Use a progression like: Founding Beta 1, Founding Beta 2, Community Beta 1, Launch Candidate 1, etc.
 - Creative approval gate: ALL presentation, branding, copy, and design discussions are brainstorming only until the user explicitly says "Please implement" or "Please build this." Do not create, modify, or replace any slides, copy, layouts, or visual design without that explicit trigger phrase.
 
+## Permanent Release Gates (Effective Immediately)
+
+A build is NOT ready to recommend until ALL of the following are confirmed against Railway production, not dev:
+
+### Before submitting to EAS
+1. `pnpm run typecheck` — zero errors
+2. POST `https://www.mappingwithmelanin.com/api/auth/login-email` with a real test account → HTTP 200 + token in < 2 seconds
+3. GET `https://www.mappingwithmelanin.com/api/businesses?limit=3` → HTTP 200 in < 2 seconds
+
+### After build installs on TestFlight / Play Console
+4. Registration flow: new account created and reaches home screen
+5. Logout → login cycle: logout, then re-login with same account → succeeds
+6. Map renders: no blank/grey/spinning state
+7. Businesses load: at least one card visible
+8. KinfolkAI responds: message sent → AI reply received
+
+### Before expanding beyond founder testing
+9. Multicultural language audit: no "Black-owned" as default generic language anywhere
+10. End-to-end screen recording: uninterrupted from fresh install → registration → login → map → businesses → KinfolkAI → profile
+
+### Production verification definition
+A feature is NOT verified by a dev DB or Replit environment result. Verification means HTTP 2xx confirmed against `https://www.mappingwithmelanin.com` with real data.
+
+## Connection Pool / Deployment Rule (Permanent)
+
+The API server has a graceful shutdown handler (SIGTERM → pool.end()) in `artifacts/api-server/src/index.ts`. This prevents connection pool exhaustion across Railway deployments.
+
+Root cause of the July 21 login outage: 7 rapid deployments in 46 minutes without graceful shutdown leaked all 5 pg pool connections. Every Drizzle write timed out at connectionTimeoutMillis (10s). SELECT still worked because connections were acquired before exhaustion. Fix: graceful shutdown + Railway restart clears leaked connections. The production DB schema was in full sync throughout — schema gap was never the issue.
+
+If login returns 500 in exactly ~10 seconds in future: trigger a Railway restart via the Railway API before investigating further. That clears any leaked pool.
+
 ## Gotchas
 
 - API server runs on port **8080** (not 5000) — `artifact.toml` maps it to the `/api` proxy path
 - `useNativeDriver` warnings on web are expected (native module not present in Expo web)
 - mockup-sandbox has a pre-existing TypeScript SVG ref type error — do not attempt to fix it
 - `pnpm run typecheck` builds libs first, then leaf packages — use this as the canonical check, not editor LSP state
+- Railway production DB: `postgres.railway.internal:5432/railway` (Railway Postgres, not Neon — memory file was stale)
+- Pool exhaustion pattern: if all DB write operations return 500 in ~10s but SELECT works, the pg pool is exhausted — restart Railway service via API, do not redeploy code first
 
 ## Pointers
 

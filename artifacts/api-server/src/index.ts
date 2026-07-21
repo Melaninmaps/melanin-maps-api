@@ -1,6 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { setDbLogger } from "@workspace/db";
+import { setDbLogger, pool } from "@workspace/db";
 import { getStripeSync } from "./stripeClient";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 
@@ -65,7 +65,7 @@ async function initStripe() {
   }
 })();
 
-app.listen(port, (err) => {
+const server = app.listen(port, (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
     process.exit(1);
@@ -77,3 +77,41 @@ app.listen(port, (err) => {
 
   startNudgeCronScheduler();
 });
+
+// ─── Graceful shutdown ────────────────────────────────────────────────────────
+// Railway sends SIGTERM before replacing a deployment. Without this handler,
+// in-flight connections are leaked and the next deployment inherits an
+// exhausted pool — causing every Drizzle write to timeout for ~10 seconds
+// until the new process finally drains.
+//
+// This handler:
+//   1. Stops accepting new connections immediately (server.close)
+//   2. Drains the pg connection pool (pool.end) — releases all sockets cleanly
+//   3. Exits with code 0 so Railway marks the deployment as cleanly replaced
+//
+// RAILWAY_DEPLOYMENT_DRAINING_SECONDS=60 gives up to 60 s for in-flight
+// requests to finish before the container is killed anyway.
+function gracefulShutdown(signal: string) {
+  logger.info({ signal }, "Received shutdown signal — draining…");
+
+  server.close(async () => {
+    logger.info("HTTP server closed. Draining DB pool…");
+    try {
+      await pool.end();
+      logger.info("DB pool drained. Exiting cleanly.");
+    } catch (err) {
+      logger.error({ err }, "Error draining DB pool during shutdown");
+    }
+    process.exit(0);
+  });
+
+  // Safety net: if server.close() takes > 25 s, force-exit so Railway's
+  // SIGKILL at 30 s doesn't catch us mid-drain.
+  setTimeout(() => {
+    logger.warn("Graceful shutdown timed out after 25 s — force exiting");
+    process.exit(1);
+  }, 25_000).unref();
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
