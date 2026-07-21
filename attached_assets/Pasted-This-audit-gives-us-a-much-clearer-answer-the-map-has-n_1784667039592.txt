@@ -1,0 +1,156 @@
+This audit gives us a much clearer answer: **the map has not been fixed yet, and the app is not ready for Apple.**
+
+The most important new finding is that the database failures returned about 30 minutes after the Railway restart, even though there were no new deployments. The health check remained fast, while every database-dependent route timed out again. That means restarting Railway only temporarily cleared the symptoms. 
+
+## What we now know about the map
+
+The mobile app uses `react-native-maps` with the default provider. On iOS, that means Apple Maps, so the base map should not require the Google Maps JavaScript key that was previously being discussed. 
+
+That corrects an important earlier assumption:
+
+* `/api/maps/js-key` is not what powers the iPhone’s base map.
+* Adding a Railway Google Maps key will not automatically fix the black mobile map.
+* The problem is more likely within the mobile map component, one of its attached hooks, or its rendering state.
+
+The audit also found an existing `/map-diagnostic` screen that renders only the raw Apple map, without markers, overlays, or API hooks. That is exactly the right next test:
+
+* If the diagnostic screen renders normally, the native map setup is good and one of the app hooks or overlays is breaking the full map.
+* If the diagnostic screen is also black, then it is a native configuration problem that may require another build. 
+
+## Two concerns in Replit’s proposed conclusions
+
+### 1. The pool problem is confirmed, but the exact cause is not
+
+Replit has good evidence that database connections are becoming unavailable. However, it has **not yet proven** that the cause is specifically “no statement timeout.”
+
+Its own report lists several possible causes:
+
+* a long-running query
+* an unfinished transaction
+* a cron or monitoring job
+* simultaneous slow queries
+* a route that repeatedly saturates the five-connection pool 
+
+Adding a statement timeout may protect the server from indefinitely slow queries, but it is not enough by itself unless Replit identifies:
+
+* which SQL query is holding connections,
+* which route triggered it,
+* how long the query ran,
+* and whether any cron job is repeatedly recreating the condition.
+
+We should not approve a server PR based only on the current hypothesis.
+
+### 2. There is a configuration inconsistency that must be resolved
+
+The audit says `FullMapView` reads `EXPO_PUBLIC_DOMAIN`, and it concludes that variable may be missing. 
+
+But in the earlier pre-build report, Replit said `EXPO_PUBLIC_DOMAIN` was already present in the production build environment. Those two statements conflict.
+
+Before adding anything, Replit must confirm the **resolved value used when Build 94 was actually bundled**, not merely what exists in the current file or Expo dashboard.
+
+## What to do next
+
+Do not approve PR-A, PR-B, or PR-C yet. First ask Replit to perform a narrow evidence-gathering pass.
+
+Send this:
+
+> **P0 EVIDENCE PASS — MAP DIAGNOSTIC + DATABASE ROOT CAUSE**
+>
+> The audit confirms the app is not ready, but several proposed fixes are still based on hypotheses. Do not create or merge any PR yet.
+>
+> ### 1. Prove the map failure source
+>
+> The existing `app/map-diagnostic.tsx` screen is the required next test.
+>
+> Provide the smallest temporary, beta-only method for me to open that existing screen from Build 94:
+>
+> * preferably a temporary entry in Settings or a hidden developer link;
+> * no map-library changes;
+> * no API-key changes;
+> * no replacement of the production map;
+> * no unrelated code.
+>
+> State whether exposing this screen can be delivered by OTA to Build 94.
+>
+> Once accessible, the acceptance test is:
+>
+> * Diagnostic map renders Apple Maps tiles and responds to gestures; or
+> * Diagnostic map remains black.
+>
+> This test must determine whether the defect is native configuration or the full map’s hooks/data layer.
+>
+> ### 2. Identify the exact database query holding the pool
+>
+> Do not assume the missing `statement_timeout` is the root cause.
+>
+> Before proposing a fix, collect evidence for:
+>
+> * active PostgreSQL sessions;
+> * query text or sanitized query signature;
+> * query duration;
+> * state (`active`, `idle`, or `idle in transaction`);
+> * route or cron job responsible, if traceable;
+> * number of waiting requests;
+> * pool total, idle and waiting counts;
+> * whether connections return after the slow query ends;
+> * whether a transaction remains open.
+>
+> Audit all cron jobs and `/api/db-probe` for repeated or overlapping database work.
+>
+> Add temporary secure server logging only if required, without exposing SQL values, credentials, tokens or personal data.
+>
+> ### 3. Resolve the environment contradiction
+>
+> Earlier reports stated `EXPO_PUBLIC_DOMAIN` was present in the Build 94 production environment. The current audit states it may be absent.
+>
+> Confirm from the actual Build 94 build job:
+>
+> * whether `EXPO_PUBLIC_DOMAIN` existed during bundling;
+> * variable name only in the report;
+> * the hostname category, but do not expose secrets;
+> * whether `FullMapView.getApiBase()` resolved to a nonempty URL;
+> * whether `EXPO_PUBLIC_API_URL` was also present;
+> * which variable should become the single mobile API-origin source.
+>
+> Do not add a duplicate variable until this contradiction is resolved.
+>
+> ### 4. Verify cultural-sites response shape
+>
+> Capture the sanitized JSON shape from:
+>
+> `GET /api/cultural-sites`
+>
+> Confirm whether it returns:
+>
+> * a plain array; or
+> * `{ "sites": [...] }`.
+>
+> Compare that exact shape with what `FullMapView.tsx` expects.
+>
+> ### 5. Return a decision report
+>
+> Return:
+>
+> 1. Map diagnostic implementation method
+> 2. Whether it requires OTA or native build
+> 3. Exact database query/route causing pool saturation, or state clearly that it remains unknown
+> 4. Proof supporting any proposed `statement_timeout` change
+> 5. Actual Build 94 environment resolution
+> 6. Cultural-sites response shape
+> 7. Revised smallest PR sequence
+>
+> Do not restart Railway again except once if required to collect the database evidence. Do not merge fixes until the evidence report is reviewed.
+
+## Current release decision
+
+The audit’s recommendation of **“Not Ready”** is correct. It identifies the black map, recurring database exhaustion, Community failure, and intermittent authentication-dependent behavior as direct Apple review risks. 
+
+The immediate order should now be:
+
+1. Prove whether the minimal Apple map renders.
+2. Identify the actual slow query, route, transaction, or cron process exhausting the database pool.
+3. Resolve the Build 94 environment-variable contradiction.
+4. Fix and verify those issues.
+5. Then return to ownership language, community tags, vibe architecture, and layout.
+
+The language architecture is valuable and well documented, but at this stage it should remain behind the map and database reliability work.
