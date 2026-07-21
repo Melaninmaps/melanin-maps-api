@@ -1153,6 +1153,38 @@ router.post("/admin/seed-multicultural", async (req: Request, res: Response) => 
       },
     ];
 
+    // Create cultural_sites table if it doesn't exist in this environment.
+    // Safe to run on every call — CREATE TABLE IF NOT EXISTS is idempotent.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS cultural_sites (
+        id          VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        name        VARCHAR(255) NOT NULL,
+        description TEXT NOT NULL,
+        category    VARCHAR(100) NOT NULL DEFAULT 'Heritage',
+        heritage_category  VARCHAR(100),
+        subcategory        VARCHAR(100),
+        ethnic_community   VARCHAR(100),
+        city        VARCHAR(100) NOT NULL,
+        state       VARCHAR(50)  NOT NULL,
+        address     VARCHAR(255),
+        latitude    NUMERIC(10,7) NOT NULL,
+        longitude   NUMERIC(10,7) NOT NULL,
+        era         VARCHAR(100),
+        significance TEXT,
+        image_url   VARCHAR(500),
+        external_url VARCHAR(500),
+        is_verified BOOLEAN NOT NULL DEFAULT TRUE,
+        year_established INTEGER,
+        is_accessible    BOOLEAN DEFAULT FALSE,
+        is_family_friendly BOOLEAN DEFAULT TRUE,
+        admission_free   BOOLEAN DEFAULT TRUE,
+        audio_guide      BOOLEAN DEFAULT FALSE,
+        verified_source  VARCHAR(255),
+        country     VARCHAR(100) DEFAULT 'United States',
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+
     let sitesInserted = 0;
     let sitesSkipped = 0;
     for (const s of CULTURAL_SITES) {
