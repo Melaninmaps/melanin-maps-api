@@ -121,10 +121,29 @@ app.get("/{*path}", (req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
-  const statusCode = (err as any)?.status ?? (err as any)?.statusCode ?? 500;
   const message = (err as any)?.message ?? "Internal server error";
+
+  // Pool connection timeout → 503 so clients get a bounded error rather than
+  // an indefinite spinner. This fires when connectionTimeoutMillis expires
+  // (pool is saturated) or when a route explicitly passes the error to next().
+  if (isPoolTimeoutError(err)) {
+    logger.warn({ url: req.url, method: req.method }, "db-pool connection timeout — 503");
+    res.status(503).json({ error: "Service temporarily unavailable. Please try again in a moment." });
+    return;
+  }
+
+  const statusCode = (err as any)?.status ?? (err as any)?.statusCode ?? 500;
   logger.error({ err, url: req.url, method: req.method }, "Unhandled error");
   res.status(statusCode).json({ error: message });
 });
+
+function isPoolTimeoutError(err: unknown): boolean {
+  const msg = ((err as Error)?.message ?? "").toLowerCase();
+  return (
+    msg.includes("timeout exceeded when trying to connect") ||
+    msg.includes("connection timeout") ||
+    msg.includes("acquire timeout")
+  );
+}
 
 export default app;

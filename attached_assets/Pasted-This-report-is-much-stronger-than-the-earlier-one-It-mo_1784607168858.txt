@@ -1,0 +1,181 @@
+This report is much stronger than the earlier one. It moves from theory to measurements, and there are several things I like.
+
+### What I think is well supported
+
+The production load test shows:
+
+* 30 concurrent requests completed successfully.
+* Authentication requests completed successfully.
+* The current pool of 5 connections handled the load without failures.
+* Response times stayed under about 1 second, with authentication averaging around 0.16–0.21 seconds. 
+
+That tells me something important:
+
+> **Your current system is capable of supporting your immediate beta.**
+
+It also confirms that **pool size is probably not your immediate bottleneck**. 
+
+---
+
+## I actually agree with their recommendation
+
+If this were my production system, I would **not** increase the pool to 10 today.
+
+I would leave:
+
+* pool max = 5
+* one Railway replica
+
+and implement the resilience improvements.
+
+Why?
+
+Because they now have evidence.
+
+Earlier everyone—including me—was reasoning from symptoms.
+
+Now they actually ran a concurrent production load.
+
+The data says:
+
+* max:5 worked
+* no failures
+* no saturation that requires more connections
+
+That's exactly how infrastructure decisions should be made.
+
+---
+
+## I especially like this addition
+
+```
+maxLifetimeSeconds = 1800
+```
+
+That is a very nice defensive improvement.
+
+Instead of allowing a database connection to potentially live forever, it gets recycled periodically.
+
+That reduces the chance of a long-lived stale connection remaining in the pool.
+
+I consider that a worthwhile hardening improvement. 
+
+---
+
+## I also like adding `/readyz`
+
+This is something many production systems have.
+
+Think of it this way:
+
+**healthz**
+
+> "Is the API process running?"
+
+**readyz**
+
+> "Can the API actually serve users?"
+
+Those are different questions.
+
+Having both is a professional improvement. 
+
+---
+
+## My favorite improvement
+
+This one.
+
+Instead of:
+
+spinner...
+
+spinner...
+
+spinner...
+
+spinner...
+
+Eventually timeout...
+
+Return:
+
+```
+503
+Service temporarily unavailable.
+Please try again in a moment.
+```
+
+That's dramatically better for your users.
+
+It doesn't solve every outage.
+
+But it turns a confusing experience into an understandable one.
+
+---
+
+# The one thing I would change
+
+I would ask Replit to prove one additional scenario before declaring victory.
+
+Their load test simulated concurrent requests.
+
+I also want to know the behavior after **a period of inactivity**, because the original investigation centered on stale or long-lived connections.
+
+I'd ask them to perform this exact sequence:
+
+1. Restart the API.
+2. Confirm everything works.
+3. Leave the application idle for at least **45 minutes**.
+4. Without restarting anything, immediately:
+
+   * register a user;
+   * log in;
+   * load businesses;
+   * load cultural sites;
+   * use KinfolkAI.
+5. Repeat the same checks after **2 hours** if practical.
+
+If those pass, then the recycling changes have much stronger evidence behind them.
+
+---
+
+# My recommendation
+
+I would approve this patch with one added verification requirement.
+
+Something like:
+
+> Approved with one additional validation.
+>
+> After deploying the resilience patch, perform both:
+>
+> * the concurrent load test (already completed); and
+> * an extended idle test of at least 45 minutes without restarting the API before exercising authentication and data-backed routes.
+>
+> If both succeed, declare the database resilience patch verified for beta.
+
+---
+
+## One more thing
+
+I also want to say something that's easy to overlook.
+
+You've been understandably frustrated by the number of builds and investigations. But this report contains the kind of operational thinking I'd expect before a public beta:
+
+* measuring concurrency instead of guessing,
+* calculating safe connection usage against PostgreSQL limits,
+* recognizing that adding replicas today would duplicate cron jobs and change rate limiting behavior,
+* recommending a single replica until those pieces are made multi-instance safe. 
+
+That kind of discipline will serve you well as your community grows.
+
+At this point, my priority would be:
+
+1. Finish this resilience patch.
+2. Verify the extended idle behavior.
+3. Confirm the map renders correctly on the new build.
+4. Confirm registration and login work on physical devices.
+5. Then send the new TestFlight build to your founding testers.
+
+That sequence gives you the highest confidence before your Zoom, where the focus can stay on **the mission and the experience** rather than troubleshooting.

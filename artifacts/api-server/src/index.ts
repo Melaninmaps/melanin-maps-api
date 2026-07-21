@@ -1,7 +1,12 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { setDbLogger } from "@workspace/db";
 import { getStripeSync } from "./stripeClient";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
+
+// Route pool events through the structured pino logger so they appear in
+// Railway's log stream in the same JSON format as request logs.
+setDbLogger(logger);
 
 const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);

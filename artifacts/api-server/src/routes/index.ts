@@ -137,11 +137,13 @@ import membershipFamilyRouter from "./membership-family";
 import legalRouter from "./legal";
 import businessMembershipInfoRouter from "./business-membership-info";
 import dbProbeRouter from "./db-probe";
+import readyzRouter from "./readyz";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(dbProbeRouter);
+router.use(readyzRouter);
 router.use(authRouter);
 router.use(phoneAuthRouter);
 router.use(businessesRouter);

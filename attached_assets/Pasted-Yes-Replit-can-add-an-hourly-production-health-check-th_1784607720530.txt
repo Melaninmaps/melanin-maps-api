@@ -1,0 +1,217 @@
+Yes. Replit can add an **hourly production health check** that records results and shows alerts directly in your admin dashboard.
+
+The safest design is:
+
+* a scheduled server job runs once per hour;
+* it checks the critical endpoints;
+* it stores each result;
+* your admin dashboard shows the latest status;
+* it creates an admin alert only when something fails or becomes slow;
+* it does not touch authentication or mobile code.
+
+Send Replit this:
+
+> # ADMIN PRODUCTION READINESS MONITOR
+>
+> Build a server-side production readiness monitor that runs once per hour and reports failures in the Mapping With Melanin™ admin dashboard.
+>
+> ## Scope
+>
+> This is a monitoring feature only.
+>
+> Do not modify:
+>
+> * authentication;
+> * login or registration;
+> * session handling;
+> * mobile source;
+> * memberships;
+> * payments;
+> * KinfolkAI;
+> * map rendering;
+> * existing user notifications.
+>
+> **Authentication impact: NONE**
+>
+> ## Endpoints to monitor
+>
+> Check:
+>
+> * `GET /api/healthz`
+> * `GET /api/readyz` when available
+> * `GET /api/businesses?limit=1`
+> * `GET /api/cultural-sites?limit=1`
+>
+> Use the production domain:
+>
+> `https://www.mappingwithmelanin.com`
+>
+> ## Schedule
+>
+> Run once every hour using the existing server scheduler.
+>
+> Do not run more frequently than once per hour.
+>
+> Ensure only one execution occurs if the API later uses multiple replicas. If the current scheduler is not multi-replica safe, document that and keep this monitor on one replica only until distributed locking is added.
+>
+> ## Status rules
+>
+> Mark each endpoint as:
+>
+> * **Healthy** — successful response in under 1.5 seconds
+> * **Slow** — successful response between 1.5 and 3 seconds
+> * **Critical** — timeout, non-success status, malformed response, or response over 3 seconds
+>
+> For `/api/readyz`, also capture:
+>
+> * raw PostgreSQL check;
+> * Drizzle check;
+> * pool total count;
+> * pool idle count;
+> * pool waiting count.
+>
+> ## Storage
+>
+> First audit whether an existing system-health or admin-alert table can be reused.
+>
+> If none exists, propose the smallest additive table for:
+>
+> * check time;
+> * endpoint;
+> * status;
+> * HTTP status;
+> * response time;
+> * error category;
+> * safe error summary;
+> * resolved time;
+> * consecutive failure count.
+>
+> Do not store secrets, full connection strings, tokens, passwords, or personal information.
+>
+> Keep detailed hourly history for 30 days, then retain daily summaries if practical.
+>
+> ## Admin dashboard
+>
+> Add a **Production Health** panel visible only to authorized admins.
+>
+> Show:
+>
+> * overall status: Healthy, Degraded, or Critical;
+> * last checked time;
+> * each monitored endpoint;
+> * response time;
+> * current result;
+> * consecutive failures;
+> * last successful check;
+> * current pool counts when available;
+> * recent incident history.
+>
+> Use clear status language:
+>
+> * green: operating normally;
+> * yellow: slow or partially degraded;
+> * red: user-impacting failure.
+>
+> Do not rely only on color. Include text and icons for accessibility.
+>
+> ## Admin alerts
+>
+> Create an in-dashboard alert when:
+>
+> * any critical endpoint fails;
+> * an endpoint exceeds 3 seconds;
+> * `/api/readyz` reports Drizzle failure;
+> * `pool.waitingCount > 2`;
+> * the same endpoint fails twice consecutively.
+>
+> The alert must state:
+>
+> * what failed;
+> * when it failed;
+> * response time or error;
+> * likely user impact;
+> * safest immediate action;
+> * whether it recovered.
+>
+> Do not create a new alert every hour for the same unresolved incident. Update the existing incident and increment the failure count.
+>
+> Mark the incident resolved automatically after two consecutive healthy checks.
+>
+> ## Optional email alert
+>
+> Audit whether admin email delivery is currently configured.
+>
+> If `RESEND_API_KEY` and admin recipients are available, propose an optional email alert for:
+>
+> * two consecutive critical failures;
+> * full readiness failure;
+> * recovery after an incident.
+>
+> Do not implement SMS alerts in this batch.
+>
+> ## Required failure categories
+>
+> Classify failures as:
+>
+> * DNS/domain failure;
+> * API process unavailable;
+> * readiness/database failure;
+> * raw PostgreSQL failure;
+> * Drizzle failure;
+> * timeout;
+> * slow response;
+> * unexpected HTTP response;
+> * malformed response;
+> * unknown.
+>
+> Do not label the root cause as confirmed unless the evidence supports it.
+>
+> ## Manual check
+>
+> Add an admin-only **Run Check Now** button.
+>
+> It should:
+>
+> * trigger the same readiness check;
+> * prevent repeated rapid clicks;
+> * show results without refreshing the page;
+> * never expose probe keys or internal credentials to the browser.
+>
+> The server must perform protected checks internally.
+>
+> ## Process
+>
+> Follow the normal approval workflow:
+>
+> 1. Read-only audit.
+> 2. Report what monitoring, scheduling, tables, and admin alert systems already exist.
+> 3. Show the exact proposed schema, routes, files, and dashboard changes.
+> 4. State Railway deployment and mobile-build requirements.
+> 5. State multi-replica risks.
+> 6. Wait for explicit approval.
+> 7. Implement in small checkpoints.
+> 8. Run targeted tests.
+>
+> ## Verification
+>
+> Demonstrate:
+>
+> * one healthy hourly check;
+> * one simulated slow result;
+> * one simulated failure;
+> * one dashboard alert;
+> * no duplicate incident alert;
+> * automatic recovery after two healthy checks;
+> * manual Run Check Now;
+> * no secrets exposed;
+> * no authentication files changed.
+>
+> Return a screen-recorded admin-dashboard demonstration before closing the task.
+>
+> End the audit with:
+>
+> **🔍 PRODUCTION MONITOR AUDIT COMPLETE — AWAITING IMPLEMENTATION APPROVAL**
+>
+> Do not implement until approved.
+
+One important distinction: this admin monitor is better than the reminder I created here because it runs **inside your own production system**, stores history, and shows the status where you already manage the platform. It should also be designed to avoid checking only `/healthz`, because that endpoint can be green even while the database-backed features are failing.
