@@ -97,6 +97,14 @@ export function FullMapView() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
 
+  // Gate MapView mount until the container has confirmed non-zero dimensions.
+  // On iOS, MKMapView initialises its tile layer from the frame at mount time.
+  // If it mounts with a 0×0 frame (before React Native's flex layout settles
+  // inside the tab navigator), tiles never load and the map stays white.
+  // The first onLayout call fires synchronously with the first real layout,
+  // so this adds no perceptible delay.
+  const [containerReady, setContainerReady] = useState(false);
+
   const [locationGranted, setLocationGranted] = useState(false);
   const [locating, setLocating] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
@@ -200,7 +208,13 @@ export function FullMapView() {
   const anyCardVisible = selectedBusiness !== null || selectedCulturalSite !== null;
 
   return (
-    <View style={s.container}>
+    <View
+      style={s.container}
+      onLayout={(e) => {
+        if (e.nativeEvent.layout.height > 0) setContainerReady(true);
+      }}
+    >
+      {containerReady && (
       <MapView
         ref={mapRef}
         style={s.map}
@@ -266,6 +280,7 @@ export function FullMapView() {
           );
         })}
       </MapView>
+      )}
 
       {/* ── Top overlay ── */}
       <View style={[s.topOverlay, { paddingTop: insets.top + 6 }]}>
@@ -541,8 +556,8 @@ export function FullMapView() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1 },
-  map: { flex: 1 },
+  container: { flex: 1, backgroundColor: "#1a1a1a" },
+  map: { ...StyleSheet.absoluteFillObject },
 
   topOverlay: { position: "absolute", top: 0, left: 0, right: 0, gap: 6 },
 
