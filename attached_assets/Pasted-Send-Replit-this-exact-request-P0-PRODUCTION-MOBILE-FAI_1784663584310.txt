@@ -1,0 +1,103 @@
+Send Replit this exact request
+P0 PRODUCTION MOBILE FAILURE AUDIT — BUILD 94 APPLE READINESS
+I successfully tested:
+sign in
+sign out
+sign back in
+Earlier today I selected “sign out of all devices,” which explains the invalidation of the earlier session. However, after signing back in successfully, multiple authenticated and public features still fail or degrade.
+Observed production failures
+Map opens to a black/blank screen and continues loading.
+Community returns “Couldn’t load posts.”
+KinfolkAI returns “I’m having trouble connecting right now.”
+Events shows “Showing cached events — tap to refresh.”
+Businesses that initially loaded later stop loading.
+A notification linking to a business opens “Business not found.”
+Pages and API data load extremely slowly.
+Sessions appear to time out or authenticated requests stop succeeding while the user remains inside the app.
+Bottom navigation labels, category tabs and other text are clipped or hidden.
+Expected updated wording is not visible in the installed build.
+Do not guess and do not broadly rewrite features. First perform a read-only trace using the exact production mobile requests.
+A. Confirm the tested binary
+Confirm Build 94 was generated from the intended source commit.
+Confirm it contains the expected wording changes.
+Confirm channel: production, environment: production, buildNumber 94 and the production API configuration were resolved during bundling.
+Identify the exact Git commit included in Build 94.
+B. Trace every failed production request
+For Map, Community, KinfolkAI, Events, business detail and notifications, report:
+exact endpoint called
+HTTP status
+response time
+timeout threshold
+whether an authorization cookie/header was included
+whether the response was 200, 401, 403, 404, 429 or 500
+sanitized error message
+whether the app used live data, cached data or fallback data
+Never display tokens, passwords, cookies or secret values.
+C. Session stability audit
+Confirm the new login created a valid production session.
+Trace session validation and renewal after login.
+Determine whether API failures are caused by a rejected session, missing credentials, cookie-domain mismatch, session expiration, API timeout or unrelated endpoint failures.
+Confirm whether every mobile fetch uses the same authenticated request helper and credentials configuration.
+Confirm that a user is not left visually signed in while protected API requests are returning 401.
+D. Data and routing audit
+Determine why businesses load and later disappear.
+Confirm whether seeded businesses use IDs compatible with the mobile business-detail route.
+Trace the notification that opens “Business not found” and identify whether it contains a stale, fake, missing or malformed business ID.
+Confirm Community, Events and business records are coming from Railway production—not development, mock or cached data.
+E. Map audit
+Identify whether the map failure is:
+missing or invalid client configuration
+API-key restriction failure
+location-permission failure
+map provider/rendering failure
+cultural-site overlay failure
+request timeout
+Capture the exact sanitized native and JavaScript error.
+Do not expose or move a server key into an EXPO_PUBLIC_* variable.
+F. KinfolkAI audit
+Identify the exact endpoint and HTTP response.
+Confirm whether the production AI service credentials are present server-side.
+Confirm the failure is not caused by an empty API origin, expired session, server timeout or rate limit.
+G. Performance audit
+Report production response times for:
+session validation
+business list
+business detail
+community feed
+events
+cultural sites
+KinfolkAI
+Identify any request exceeding 3 seconds and any screen exceeding 5 seconds before useful content appears.
+H. Layout audit
+Review the supplied iPhone screenshots and identify:
+clipped bottom-tab labels
+horizontally hidden category labels
+text overlapping floating KinfolkAI buttons
+content obscured by safe-area or bottom navigation
+insufficient responsive spacing
+Test on the same iPhone viewport shown in the screenshots and at standard Dynamic Type size.
+Required response
+Return:
+Root cause for each observed failure
+Whether it is client, API, database, configuration, session or data-related
+P0/P1/P2 severity
+Exact proposed fix
+Files and routes that would change
+Regression risk
+A small PR sequence rather than one broad PR
+Acceptance test for every fix
+Do not submit another build, publish an OTA update or change authentication until this audit is complete and reviewed.
+How I would prioritize the fixes
+P0 — Apple blockers
+Session remains valid and all authenticated requests work.
+Businesses consistently load and open.
+Community loads.
+Map renders or presents a functional fallback.
+No primary screen is stuck, blank or dependent only on stale cached content.
+Notification links do not lead to missing records.
+P1 — must fix before submission
+KinfolkAI works or is temporarily hidden/clearly marked unavailable.
+Updated wording is present.
+Tabs and labels are readable and not cut off.
+Load times are reasonable.
+Do not publish an OTA update to cover all of this at once. We need the audit to separate a possible shared API/session problem from independent screen bugs. Several failures happening at the same time may point to one common issue, such as authenticated requests losing credentials or the mobile app calling an incorrect production origin.
