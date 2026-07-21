@@ -1,0 +1,74 @@
+The report is strong, but it uncovered an important issue: **do not place a Google Geocoding web-service key directly in `EXPO_PUBLIC_GOOGLE_MAPS_KEY` for this REST request.**
+
+The proposed “iOS bundle ID restriction + Geocoding API” approach may not secure this request correctly. The code is calling Google’s **Geocoding web service** directly over HTTPS from JavaScript. Google’s guidance distinguishes web-service APIs from native Maps SDK calls, and web-service requests are generally protected with server-side restrictions such as IP addresses—not iOS bundle restrictions. A key embedded in the app bundle can also be extracted. ([Google for Developers][1])
+
+## Best decision for Build 94
+
+Proceed as follows:
+
+### Add now
+
+Add `EXPO_PUBLIC_API_URL` to the EAS production environment. That value is a public production origin and is appropriate for an `EXPO_PUBLIC_*` variable.
+
+Keep:
+
+```json
+"channel": "production",
+"environment": "production"
+```
+
+Expo confirms that explicitly using the production environment makes its variables available to the build. Later OTA commands should also specify:
+
+```bash
+eas update --environment production
+```
+
+so the update bundle uses the same production variables. ([Expo Documentation][2])
+
+### Do not add yet
+
+Do not add `EXPO_PUBLIC_GOOGLE_MAPS_KEY` using:
+
+* the Railway/Replit server key,
+* the Android native Maps key,
+* the website-referrer key, or
+* a new unrestricted Geocoding key.
+
+Instead, route reverse-geocoding through your protected production API. The mobile app should send latitude and longitude to your server, and your server should call Google Geocoding with the existing server-side key. This keeps the key out of the downloadable app bundle and allows proper server-side controls.
+
+## Does this block Build 94?
+
+It depends on whether GeoSafe must work in this beta:
+
+* If GeoSafe already behaved this way in Build 93 and is not a launch-critical testing requirement, you can proceed with Build 94 after adding `EXPO_PUBLIC_API_URL`. Record GeoSafe as a known degraded feature.
+* If testers must validate GeoSafe in Build 94, pause and implement the small server proxy first.
+
+I would lean toward **proceeding with Build 94 after adding only `EXPO_PUBLIC_API_URL`**, because the Maps gap is pre-existing and changing the network architecture immediately before this build introduces more risk than the OTA-channel change itself.
+
+Send Replit this:
+
+> **FINAL BUILD 94 DECISION — MINIMAL SAFE PATH**
+>
+> Do not place a Google Geocoding web-service key in `EXPO_PUBLIC_GOOGLE_MAPS_KEY`. The current GeoSafe code performs a direct REST request from the JavaScript bundle, where the key would be publicly extractable and iOS bundle restrictions may not protect a Geocoding web-service request correctly.
+>
+> Before Build 94:
+>
+> 1. Add only `EXPO_PUBLIC_API_URL` to the EAS project’s production environment.
+> 2. Preserve `"channel": "production"` and `"environment": "production"`.
+> 3. Do not add or expose any server-side Google Maps key as an `EXPO_PUBLIC_*` variable.
+> 4. Leave the pre-existing GeoSafe behavior unchanged for this build.
+> 5. Confirm Build 94 introduces no changes beyond:
+>
+>    * OTA production channel
+>    * production EAS environment selection
+>    * iOS build number 94
+>    * production API URL availability
+> 6. Record GeoSafe reverse-geocoding as a post-build hardening task: create a protected backend endpoint that accepts coordinates and performs the Google Geocoding request server-side.
+> 7. Then start one iOS production Build 94.
+>
+> After Build 94 installs through TestFlight, verify login, Discover, Community, Family Plan requests, maps, and one harmless OTA update published with `--environment production`.
+
+The core OTA configuration is trustworthy. There is no reason to generate Build 94 twice merely to confirm it; install and functionally test the single build before submitting it onward.
+
+[1]: https://developers.google.com/maps/api-security-best-practices?utm_source=chatgpt.com "Google Maps Platform security guidance"
+[2]: https://docs.expo.dev/eas/environment-variables/?utm_source=chatgpt.com "Environment variables in EAS"
