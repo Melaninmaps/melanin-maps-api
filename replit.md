@@ -68,6 +68,25 @@ Do not infer additional product decisions. Implement only the approved behavior.
 If implementation requires a product decision that has not been explicitly made, stop and ask instead of guessing.
 Do not expand scope. Do not simplify requirements. Do not replace approved language with developer-generated alternatives.
 
+## Product Intent Rule (Permanent)
+
+When implementing user-facing changes, do not optimize for literal wording changes. Optimize for the underlying product intent.
+
+Before approving any copy, UI, seed data, ranking, placeholder, prompt, notification, or onboarding text, ask:
+
+1. Does this represent the mission?
+2. Does this create the intended emotional experience?
+3. Would a first-time user understand what Mapping With Melanin™ stands for?
+4. Am I merely changing words, or am I improving the experience?
+5. Is this still unintentionally centering one community when the product is intended to welcome many?
+6. Would the founder likely say, "Yes — that's exactly what I meant," even if those weren't her exact words?
+
+If the answer to any of these is uncertain, stop and explain the tradeoffs instead of making the most literal interpretation.
+
+When a user gives direction, assume they are describing the desired user experience, not dictating the exact implementation. If there is a better implementation that achieves the same mission, explain it and recommend it — do not follow words literally at the expense of intent.
+
+The implementation should satisfy the **intent**, not merely the **sentence**.
+
 ## Authentication Freeze (Active until public launch)
 
 Authentication is a protected subsystem. Until public launch:

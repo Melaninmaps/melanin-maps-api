@@ -910,7 +910,7 @@ export default function DiscoverScreen() {
           <Feather name="star" size={16} color={colors.primary} style={{ marginRight: 10 }} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.nominateTitle, { color: colors.foreground }]}>Know a great local spot?</Text>
-            <Text style={[styles.nominateSub, { color: colors.mutedForeground }]}>Nominate any business — Black-owned or not</Text>
+            <Text style={[styles.nominateSub, { color: colors.mutedForeground }]}>Help your community discover businesses worth supporting.</Text>
           </View>
           <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
         </TouchableOpacity>
