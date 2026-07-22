@@ -75,13 +75,16 @@ export async function exchangeAuthCode(
     body: body.toString(),
   });
 
+  // Parse body safely — Apple or an intermediary may return empty/non-JSON on failure.
+  // resp.status is read from the Response object, so it is always preserved.
+  const data = await resp.json().catch(() => ({})) as { refresh_token?: string; error?: string };
+
   if (!resp.ok) {
-    throw new Error(`Apple token exchange failed: HTTP ${resp.status}`);
+    throw new Error(`Apple token exchange failed: HTTP ${resp.status} | appleError=${data.error ?? "unknown"}`);
   }
 
-  const data = (await resp.json()) as { refresh_token?: string; error?: string };
   if (!data.refresh_token) {
-    throw new Error("Apple token exchange: no refresh_token in response");
+    throw new Error(`Apple token exchange: no refresh_token | appleError=${data.error ?? "unknown"}`);
   }
 
   return { refreshToken: data.refresh_token };

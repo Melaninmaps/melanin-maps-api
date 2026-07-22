@@ -928,18 +928,35 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
         encryptedRefreshToken = encryptToken(refreshToken, process.env.APPLE_TOKEN_ENCRYPTION_KEY!);
         req.log.info({ event: "APPLE_TOKEN_EXCHANGED", isNewUser }, "Apple authorization code exchanged and encrypted");
       } catch (exchErr) {
-        // Distinguish network failures from Apple API rejections — never log token values
-        const isNetworkErr = !(exchErr instanceof Error &&
-          (exchErr.message.includes("HTTP") || exchErr.message.includes("refresh_token")));
+        // Distinguish network failures from Apple API rejections — never log token values.
+        // "appleError=" in the message means fetch() completed and Apple responded (even non-2xx).
+        // Its absence means fetch() itself threw before a response was received.
+        const msg = exchErr instanceof Error ? exchErr.message : "";
+        const isNetworkErr = !msg.includes("appleError=");
         const baseEvent = isNetworkErr
           ? "APPLE_TOKEN_EXCHANGE_NETWORK_ERROR"
           : "APPLE_TOKEN_EXCHANGE_APPLE_REJECTED";
+
+        // Extract Apple's sanitized error category — allowlisted so only known Apple error
+        // codes reach logs. Any unexpected value is recorded as "unknown".
+        const KNOWN_APPLE_ERRORS = new Set([
+          "invalid_client", "invalid_grant", "invalid_request",
+          "invalid_scope", "unauthorized_client", "unsupported_grant_type", "access_denied",
+        ]);
+        const httpMatch = msg.match(/HTTP (\d+)/);
+        const errMatch  = msg.match(/appleError=(\S+)/);
+        const appleHttpStatus = httpMatch ? parseInt(httpMatch[1], 10) : null;
+        const rawErrCode      = errMatch  ? errMatch[1]               : "unknown";
+        const appleErrorCode  = KNOWN_APPLE_ERRORS.has(rawErrCode) ? rawErrCode : "unknown";
+
         if (isNewUser) {
-          req.log.warn({ event: baseEvent }, "Apple token exchange failed — blocking new account creation");
+          req.log.warn({ event: baseEvent, appleHttpStatus, appleErrorCode },
+            "Apple token exchange failed — blocking new account creation");
           res.status(401).json({ error: "Apple authorization could not be verified. Please try Sign in with Apple again." });
           return;
         }
-        req.log.warn({ event: baseEvent }, "Apple token exchange failed for existing user — sign-in continues without token refresh");
+        req.log.warn({ event: baseEvent, appleHttpStatus, appleErrorCode },
+          "Apple token exchange failed for existing user — sign-in continues without token refresh");
       }
     } else if (isNewUser && !authorizationCode) {
       req.log.warn({ event: "APPLE_TOKEN_EXCHANGE_LEGACY_NO_CODE" }, "New Apple account without authorization code — old app build, blocking creation");
