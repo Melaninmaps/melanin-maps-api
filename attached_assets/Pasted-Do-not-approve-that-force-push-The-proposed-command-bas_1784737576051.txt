@@ -1,0 +1,101 @@
+Do **not** approve that force push.
+
+The proposed command:
+
+```bash
+git push github main --force
+```
+
+could overwrite the Railway deployment repository’s existing history and destroy code that is not present in the Replit branch. The fact that the histories diverged is exactly why force-pushing is unsafe—not proof that it is required.
+
+There is also a major contradiction in Replit’s explanation. Earlier work established that `Melaninmaps/melanin-maps-api` is the **compiled Railway deployment repository**, containing files such as:
+
+* `dist/index.mjs`
+* `dist/index.mjs.map`
+* `Dockerfile`
+* `nixpacks.toml`
+* `package.json`
+
+Previous Railway changes were deployed through narrow GitHub PRs updating the compiled bundle. That is very different from replacing the entire repository with the Replit monorepo.
+
+## The safe, fast solution
+
+Create a narrow deployment PR containing only the newly compiled API bundle:
+
+* `dist/index.mjs`
+* `dist/index.mjs.map`
+
+That preserves all GitHub history and deploys the legal routes without merging or force-pushing unrelated repositories.
+
+Send Replit this:
+
+> # DO NOT FORCE-PUSH — CREATE NARROW DEPLOYMENT PR
+>
+> I do not approve:
+>
+> ```bash
+> git push github main --force
+> ```
+>
+> Do not overwrite GitHub `main`, rewrite history, delete commits, or replace the Railway deployment repository with the Replit monorepo.
+>
+> The Railway repository has previously operated as a compiled deployment repository. Use the established safe deployment process.
+>
+> ## Required action
+>
+> 1. Build the current API server from Replit source.
+> 2. Confirm the compiled bundle contains:
+>
+>    * `/privacy`
+>    * `/privacy-policy`
+>    * `/terms`
+>    * `/support`
+>    * `/delete-account`
+> 3. Fetch the current GitHub `main` SHA.
+> 4. Create a new branch from the current GitHub `main`—not from Replit `main`.
+> 5. Update only:
+>
+>    * `dist/index.mjs`
+>    * `dist/index.mjs.map`
+> 6. Open a narrow pull request into GitHub `main`.
+> 7. Confirm no other files or history are altered.
+> 8. Return the PR link for review.
+>
+> Before opening the PR, confirm the bundle still contains the previously deployed:
+>
+> * graceful shutdown protection;
+> * seed fixes;
+> * pool-stats endpoint;
+> * proximity cache;
+> * authentication routes;
+> * billing and membership routes.
+>
+> Do not merge automatically.
+>
+> ## Required PR report
+>
+> Return:
+>
+> * base GitHub commit SHA;
+> * new branch name;
+> * exact two files changed;
+> * compiled-route verification;
+> * confirmation that the PR is one commit ahead and zero commits behind;
+> * PR link.
+>
+> The objective is to deploy the legal routes without altering GitHub history or replacing the deployment repository.
+
+## Why this is the right decision
+
+A narrow PR:
+
+* takes only a few additional minutes;
+* preserves the 70-commit GitHub history;
+* avoids losing previous production fixes;
+* gives you a visible diff;
+* lets Railway deploy normally after merge;
+* is immediately reversible.
+
+A force push could create a much larger outage and delay Apple submission far more than the legal-route issue already has.
+
+Once Replit creates that PR, verify it contains exactly the two compiled files, merge it, wait for Railway to deploy, and then test the four legal URLs.
