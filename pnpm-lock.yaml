@@ -144,6 +144,9 @@ importers:
 
   .:
     dependencies:
+      '@replit/connectors-sdk':
+        specifier: ^0.4.1
+        version: 0.4.1
       '@replit/revenuecat-sdk':
         specifier: ^4.2.0
         version: 4.2.0(typescript@5.9.3)
@@ -2669,6 +2672,9 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  '@replit/connectors-sdk@0.4.1':
+    resolution: {integrity: sha512-iw0uy95+Qul8MPc/bBo8hBfYk1wm6RpBZ9sHyCpcA9A9T4zcUT9deSQxdyMyI0w3sv3+5uGmdfq1TpFTMrjD1g==}
 
   '@replit/revenuecat-sdk@4.2.0':
     resolution: {integrity: sha512-6y1qm4Wn9vJHKy9h6XAUHj8fPbblN6vu+poHD8fPpoTiSk8fv4RevH/EfXLQLusBmWrRDQ4fkYCUoT5Pfe3Cyg==}
@@ -8940,6 +8946,8 @@ snapshots:
       react-native: 0.86.0(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.3)
     optionalDependencies:
       '@types/react': 19.2.14
+
+  '@replit/connectors-sdk@0.4.1': {}
 
   '@replit/revenuecat-sdk@4.2.0(typescript@5.9.3)':
     dependencies:

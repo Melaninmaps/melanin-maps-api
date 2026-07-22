@@ -1,0 +1,66 @@
+You have **two actions**, but do them one at a time.
+
+## 1. Run the EAS validation command
+
+In the Replit **Shell**, paste:
+
+```bash
+cd artifacts/mobile && eas update \
+  --branch pool-fix-validation \
+  --environment production \
+  --platform ios \
+  --message "Validation: map polling lifecycle fix" \
+  --non-interactive
+```
+
+Let it run until it finishes, even if Metro takes several minutes. Do not close Replit or start another build.
+
+A successful result should show:
+
+* Update group ID
+* Runtime version `1.1.5`
+* Platform `ios`
+* Branch `pool-fix-validation`
+* A message confirming the update was published
+
+This validation branch is not connected to Build 94’s production channel, so it should not reach your testers.
+
+## 2. Do not manually upload the large `dist` files
+
+I would also **not create a broad classic GitHub PAT with full `repo` access**.
+
+The safer preference is:
+
+1. Reconnect the GitHub integration in Replit, limited to `Melaninmaps/melanin-maps-api`; or
+2. Use a short-lived **fine-grained token** limited to that single repository.
+
+A fine-grained token would need only:
+
+* **Contents:** Read and write
+* **Pull requests:** Read and write
+* Repository access: only `Melaninmaps/melanin-maps-api`
+* A short expiration, such as one day
+
+Store it as a Replit secret, never paste it into chat, screenshots, source code, or the Shell command itself. Delete or revoke it after PR creation.
+
+Send Replit this now:
+
+> The working tree and committed guard fix are confirmed. I will run the EAS validation command directly in the Replit Shell and share the result.
+>
+> For the Railway PR, do not ask me to manually upload the compiled files and do not request a broad classic GitHub token.
+>
+> Please first determine whether the GitHub integration can be reconnected specifically to `Melaninmaps/melanin-maps-api`.
+>
+> If a token is required, I will provide a short-lived, fine-grained GitHub token through Replit Secrets with access limited to that repository and only:
+>
+> * Contents: read/write
+> * Pull requests: read/write
+>
+> Once access is available, create a narrow deployment PR containing only:
+>
+> * `dist/index.mjs`
+> * `dist/index.mjs.map`
+>
+> Do not push directly to `main`. Return the PR link before merge.
+
+The untracked `attached_assets/*.txt` file is not a blocker, provided Replit confirms it is excluded from both the OTA and deployment PR.
