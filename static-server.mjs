@@ -150,6 +150,18 @@ app.get("/api/db-probe", (req, res) => {
   socket.once("error", (error) => finish({ connected: false, error: { code: typeof error.code === "string" ? error.code : "SOCKET_ERROR" } }));
 });
 
+// Proxy legal/compliance pages directly to the Express API.
+// These paths are served by dist/index.mjs but are not under /api,
+// so they must be forwarded explicitly before the static-file handler.
+const LEGAL_PATHS = ["/privacy", "/privacy-policy", "/terms", "/delete-account", "/support"];
+app.get(LEGAL_PATHS, (req, res) => {
+  const proxyReq = httpRequest(
+    { hostname: "localhost", port: API_PORT, path: req.url, method: req.method, headers: { ...req.headers, host: `localhost:${API_PORT}` } },
+    (proxyRes) => { res.writeHead(proxyRes.statusCode, proxyRes.headers); proxyRes.pipe(res); }
+  );
+  proxyReq.on("error", () => res.status(502).end());
+  req.pipe(proxyReq);
+});
 
 app.use("/api", (req, res) => {
   const proxyReq = httpRequest(
