@@ -1,0 +1,101 @@
+This audit is credible and it resolves the contradiction.
+
+The key point is:
+
+**`HBCU — 0` was not caused by the last map UI change. It happened because the cultural-sites request failed while the database pool was exhausted, and the app silently gave up.**
+
+That explains why:
+
+* login failed,
+* businesses failed,
+* cultural sites failed,
+* but `/api/healthz` still worked.
+
+It also explains why the same UI could show **44** in one session and **0** in another without a code difference.
+
+## What this means now
+
+The rollback was not harmful, but it did not fix the real weakness:
+
+```ts
+if (res.ok) {
+  setCulturalSites(data.sites ?? []);
+}
+```
+
+When `res.ok` is false:
+
+* no error appears,
+* no retry occurs,
+* no cached data is kept,
+* the empty state looks like “there are zero HBCUs.”
+
+That is dangerous because a temporary backend outage becomes misleading content.
+
+## The next fix should be reliability, not another map redesign
+
+Before moving to verbiage or destination pages, I would approve one narrow resilience fix for the cultural-sites fetch.
+
+Send Replit this:
+
+> **APPROVED NEXT FIX — CULTURAL-SITES FETCH RESILIENCE**
+>
+> The audit confirms `HBCU — 0` was caused by a failed `/api/cultural-sites` request during pool exhaustion, not by the map UI diff.
+>
+> Prepare one narrow OTA-safe fix in `FullMapView.tsx`.
+>
+> Required behavior:
+>
+> 1. Add an explicit loading state.
+>
+> 2. Add an explicit error state.
+>
+> 3. Retry the cultural-sites request when:
+>
+>    * the user taps Retry,
+>    * the app returns to foreground,
+>    * the Map tab regains focus,
+>    * or a short controlled retry interval occurs.
+>
+> 4. Prevent overlapping retries.
+>
+> 5. Do not show `HBCU — 0` unless the API successfully returned zero HBCUs.
+>
+> 6. On request failure, show:
+>
+>    **“Cultural sites couldn’t load. Tap to retry.”**
+>
+> 7. Preserve the last successfully loaded cultural-site data if a refresh fails.
+>
+> 8. Do not clear markers or counts after a temporary backend error.
+>
+> 9. Do not change:
+>
+>    * category filtering
+>    * marker interaction
+>    * polling hooks
+>    * authentication
+>    * server routes
+>    * database records
+>
+> Acceptance tests:
+>
+> * API 200 with 44 HBCUs → `HBCU — 44`
+> * API 500 → retry message, not `HBCU — 0`
+> * API recovers → Retry restores the 44 records
+> * refresh failure after successful load → existing markers remain visible
+> * repeated taps do not create overlapping requests
+>
+> Return the exact diff and do not publish until the bundle succeeds.
+
+## After that
+
+Then the sequence should be:
+
+1. Confirm login remains stable.
+2. Confirm cultural-site retry behavior.
+3. Confirm marker taps.
+4. Remove the temporary MapKit badge.
+5. Then move to verbiage and destination-page design.
+
+And I agree with the broader product conclusion: the long-term cultural discovery experience should become a proper searchable destination experience, not just dozens of pins on a nationwide map. But first, the current map must stop turning temporary server failures into false “zero results” states.

@@ -119,6 +119,9 @@ export function FullMapView() {
   const [showCulturalSites, setShowCulturalSites] = useState(true);
   const [heatmapPoints, setHeatmapPoints] = useState<HeatmapPoint[]>([]);
   const [culturalSites, setCulturalSites] = useState<CulturalSite[]>([]);
+  const [culturalSitesLoading, setCulturalSitesLoading] = useState(false);
+  const [culturalSitesError, setCulturalSitesError] = useState(false);
+  const isFetchingCulturalSites = useRef(false);
   const [selectedCulturalSite, setSelectedCulturalSite] = useState<CulturalSite | null>(null);
   const [activeCulturalCategory, setActiveCulturalCategory] = useState("");
 
@@ -200,21 +203,55 @@ export function FullMapView() {
     }
   }, [showHeatmap]);
 
+  // ── Cultural-sites fetch (resilient) ────────────────────────────────────
+  // hasData = true  → refresh in background; keep existing markers on failure
+  // hasData = false → initial load; show error banner on failure, no retry storm
+  const fetchCulturalSites = useCallback(async (hasData: boolean) => {
+    if (isFetchingCulturalSites.current) return;
+    isFetchingCulturalSites.current = true;
+    if (!hasData) setCulturalSitesLoading(true);
+    try {
+      const base = getApiBase();
+      if (!base) return;
+      const res = await fetch(`${base}/api/cultural-sites`);
+      if (res.ok) {
+        const data = await res.json() as { sites: CulturalSite[] };
+        setCulturalSites(data.sites ?? []);
+        setCulturalSitesError(false);
+      } else {
+        // Preserve existing markers silently; only surface error when we have nothing
+        if (!hasData) setCulturalSitesError(true);
+      }
+    } catch {
+      if (!hasData) setCulturalSitesError(true);
+    } finally {
+      setCulturalSitesLoading(false);
+      isFetchingCulturalSites.current = false;
+    }
+  }, []);
+
+  // Initial load when Heritage Sites layer is first shown
   useEffect(() => {
     if (showCulturalSites && culturalSites.length === 0) {
-      void (async () => {
-        try {
-          const base = getApiBase();
-          if (!base) return;
-          const res = await fetch(`${base}/api/cultural-sites`);
-          if (res.ok) {
-            const data = await res.json() as { sites: CulturalSite[] };
-            setCulturalSites(data.sites ?? []);
-          }
-        } catch {}
-      })();
+      void fetchCulturalSites(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showCulturalSites]);
+
+  // Background refresh whenever the Map tab regains focus (silently keeps existing data on failure)
+  useEffect(() => {
+    if (isFocused && showCulturalSites) {
+      void fetchCulturalSites(culturalSites.length > 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFocused, showCulturalSites]);
+
+  // Auto-retry every 30 s while in error state (stops as soon as data loads)
+  useEffect(() => {
+    if (!culturalSitesError || !showCulturalSites) return;
+    const timer = setInterval(() => { void fetchCulturalSites(false); }, 30_000);
+    return () => clearInterval(timer);
+  }, [culturalSitesError, showCulturalSites, fetchCulturalSites]);
 
   const recenter = async () => {
     try {
@@ -461,6 +498,31 @@ export function FullMapView() {
         {/* Heritage category filter chips — tap to filter + zoom */}
         {showCulturalSites && (
           <>
+            {/* Loading state — initial fetch only */}
+            {culturalSitesLoading && culturalSites.length === 0 && (
+              <View style={s.sitesStatusRow}>
+                <ActivityIndicator size="small" color={GOLD} />
+                <Text style={s.sitesStatusTxt}>Loading heritage sites…</Text>
+              </View>
+            )}
+
+            {/* Error state — shown only when fetch failed and we have no data to display */}
+            {culturalSitesError && culturalSites.length === 0 && (
+              <TouchableOpacity
+                style={s.sitesErrorBanner}
+                onPress={() => void fetchCulturalSites(false)}
+                activeOpacity={0.8}
+              >
+                <Feather name="wifi-off" size={12} color="rgba(255,255,255,0.85)" />
+                <Text style={s.sitesErrorTxt}>
+                  {culturalSitesLoading ? "Retrying…" : "Cultural sites couldn't load. Tap to retry."}
+                </Text>
+                {culturalSitesLoading && (
+                  <ActivityIndicator size="small" color="rgba(255,255,255,0.7)" />
+                )}
+              </TouchableOpacity>
+            )}
+
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -745,4 +807,14 @@ const s = StyleSheet.create({
 
   verifiedPill:{ flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: "#DCFCE7", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
   verifiedTxt: { fontFamily: "Inter_600SemiBold", fontSize: 11, color: "#2D7A4F" },
+
+  sitesStatusRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 5 },
+  sitesStatusTxt: { fontFamily: "Inter_500Medium", fontSize: 12, color: "rgba(255,255,255,0.75)" },
+  sitesErrorBanner: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: "rgba(185,28,28,0.80)",
+    marginHorizontal: 12, borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 8,
+  },
+  sitesErrorTxt: { fontFamily: "Inter_500Medium", fontSize: 12, color: "#fff", flex: 1 },
 });
