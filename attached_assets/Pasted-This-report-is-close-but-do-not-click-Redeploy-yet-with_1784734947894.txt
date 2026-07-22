@@ -1,0 +1,67 @@
+This report is close, but **do not click Redeploy yet without one verification**.
+
+A Railway redeploy normally redeploys the existing compiled artifact. If the new privacy/support routes were only written in Replit source but were **not rebuilt and pushed into the Railway deployment repository**, redeploying will simply launch the same stale code and the URLs will remain 404.
+
+## Send Replit this first
+
+> **PRE-DEPLOY VERIFICATION — LEGAL ROUTES**
+>
+> Before I redeploy Railway, confirm the legal routes exist in the exact compiled artifact Railway will deploy—not only in the Replit source workspace.
+>
+> Please confirm:
+>
+> 1. The source routes exist for:
+>
+>    * `/privacy`
+>    * `/privacy-policy`
+>    * `/terms`
+>    * `/support`
+>    * `/delete-account`
+> 2. Rebuild `dist/index.mjs` and its matching source map.
+> 3. Confirm all five route strings exist in the compiled `dist/index.mjs`.
+> 4. Confirm whether those compiled files are already on `melanin-maps-api/main`.
+> 5. If not, create a narrow deployment PR containing only:
+>
+>    * `dist/index.mjs`
+>    * `dist/index.mjs.map`
+> 6. Return the PR link before merge.
+>
+> Do not ask me to redeploy the old Railway artifact.
+
+Once Replit proves the compiled production artifact contains the routes, merge that narrow PR and let Railway deploy automatically. A manual redeploy should not be necessary.
+
+## One important Apple correction
+
+Apple does require:
+
+* a working public privacy-policy URL for every iOS app;
+* a functional support URL with accurate contact information;
+* all links in the app to work. ([Apple Developer][1])
+
+But a `/delete-account` webpage by itself is **not enough**. Because the app supports account creation, users must be able to initiate deletion **inside the app**. A website may finish the deletion process only when the app links directly to that specific page. ([Apple Developer][2])
+
+So Replit must also confirm during your device walkthrough:
+
+> **Profile/Settings → Delete Account** is visible, functional, and deletes the entire account rather than merely logging out or deactivating it.
+
+## After deployment
+
+Verify these in Safari:
+
+* `https://www.mappingwithmelanin.com/privacy`
+* `https://www.mappingwithmelanin.com/terms`
+* `https://www.mappingwithmelanin.com/support`
+* `https://www.mappingwithmelanin.com/delete-account`
+
+They must load publicly without login and without 404, blank pages, placeholders, or developer wording. Broken links and incomplete content are common App Review completeness problems. ([Apple Developer][3])
+
+Then personally run the 19-step walkthrough on Build 94. The final two gates are:
+
+1. **All four public URLs work and in-app account deletion works.**
+2. **Your physical-device reviewer walkthrough passes.**
+
+If both pass, freeze everything and submit this exact candidate to Apple, then begin the Android testing timeline immediately.
+
+[1]: https://developer.apple.com/help/app-store-connect/reference/app-privacy/?utm_source=chatgpt.com "App privacy - App information - Reference - App Store Connect - Help - Apple Developer"
+[2]: https://developer.apple.com/support/offering-account-deletion-in-your-app?utm_source=chatgpt.com "Offering account deletion in your app - Support - Apple Developer"
+[3]: https://developer.apple.com/app-store/review/?utm_source=chatgpt.com "App Review - Distribute - Apple Developer"
