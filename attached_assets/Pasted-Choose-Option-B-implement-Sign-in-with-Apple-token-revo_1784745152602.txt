@@ -1,0 +1,114 @@
+Choose **Option B: implement Sign in with Apple token revocation before submission**.
+
+Because your goal is not merely to submit quickly—it is to submit quickly **without creating an avoidable rejection risk**. Apple explicitly says apps using Sign in with Apple should revoke the associated tokens when the user deletes an account. ([Apple Developer][1])
+
+Apple’s current technical guidance does provide a fallback when an app did not retain a refresh token, but that fallback still requires deleting the account data, directing the user to manually revoke access, and responding correctly to credential-revoked notifications. It is not simply “delete our database row and address revocation after launch.” ([Apple Developer][2])
+
+## Two corrections to Replit’s report
+
+First, this statement is too confident:
+
+> “Apple’s App Review functional test passes.”
+
+Replit cannot guarantee that. Apple may inspect or test the Sign in with Apple deletion path, and Apple’s published guidance specifically addresses token revocation.
+
+Second, this failure mode is not fully safe:
+
+> Sessions deleted, user deletion fails, mobile stays logged in.
+
+The app would appear signed in locally while its server session was already destroyed. The next request would return 401. That recreates the confusing signed-in/logged-out mismatch you have already spent a week trying to eliminate.
+
+The session deletion and user deletion should be performed in one database transaction wherever feasible:
+
+* both succeed; or
+* both roll back.
+
+## Fastest compliant approach
+
+Ask Replit to determine whether a **minimal compliant implementation** can be completed sooner than the estimated two to three days. It needs to use the authorization code supplied by Apple, exchange it server-side for tokens, store the required revocation token securely, and call Apple’s `/auth/revoke` endpoint during account deletion. Apple’s revocation endpoint accepts an access token or refresh token, along with the client ID and generated client secret. ([Apple Developer][3])
+
+Send Replit this:
+
+> # APPROVED — IMPLEMENT SIGN IN WITH APPLE REVOCATION
+>
+> I choose Option B because the objective is the fastest submission with the lowest avoidable rejection risk.
+>
+> Keep Launch Lock active. This is the only approved authentication change.
+>
+> ## Required implementation
+>
+> 1. During Sign in with Apple:
+>
+>    * securely transmit the authorization code to the server;
+>    * exchange it through Apple’s token endpoint;
+>    * securely retain the token needed for future revocation;
+>    * never place Apple private keys, client secrets or refresh tokens in the mobile bundle.
+>
+> 2. During account deletion:
+>
+>    * revoke the Apple authorization through Apple’s REST API when the account uses Sign in with Apple;
+>    * revoke all local sessions;
+>    * delete the user and associated personal data;
+>    * clear local credentials;
+>    * return success only after the required deletion operations complete.
+>
+> 3. Put local session revocation and user-record deletion in a database transaction so partial failure cannot leave the app locally signed in with an invalid server session.
+>
+> 4. If Apple revocation temporarily fails:
+>
+>    * do not falsely display full deletion success;
+>    * return an accurate status;
+>    * specify whether deletion can safely continue with a documented manual-revocation fallback consistent with Apple TN3194.
+>
+> ## Read-only pre-implementation report
+>
+> Before changing code, return:
+>
+> * whether the current iOS client already sends `authorizationCode`;
+> * exact server endpoint receiving it;
+> * required Apple credentials already available versus missing;
+> * whether an existing encrypted secret-storage method is available;
+> * smallest schema change;
+> * exact files to change;
+> * migration/deployment sequence;
+> * realistic completion time;
+> * rollback plan.
+>
+> Do not broaden this into an authentication refactor.
+>
+> ## Required acceptance tests
+>
+> ### Email/password account
+>
+> * create;
+> * log in;
+> * delete;
+> * old credentials fail;
+> * all sessions fail;
+> * same email can register again if that is the intended policy.
+>
+> ### Sign in with Apple account
+>
+> * create through Apple;
+> * delete in-app;
+> * Apple token revocation returns success;
+> * local user and sessions are deleted;
+> * app returns to unauthenticated state;
+> * subsequent Apple sign-in follows the intended new-account flow.
+>
+> Build number remains **95**. Do not queue Build 95 until both server flows are implemented and the server acceptance tests pass.
+
+## Release impact
+
+This adds a small delay, but it closes the final known Apple-compliance gap instead of gambling that the reviewer will not inspect it. Continue preparing everything else in parallel:
+
+* merge the corrected server deletion PR only when it includes the final transaction/revocation behavior;
+* keep Build 95 ready but unqueued until the server is complete;
+* finalize review credentials and notes;
+* prepare Android submission without changing Android features.
+
+This is the last place I would recommend taking a shortcut. The map pin can wait. Account deletion—especially with Sign in with Apple—should be correct when Apple reviews it.
+
+[1]: https://developer.apple.com/support/offering-account-deletion-in-your-app/?utm_source=chatgpt.com "Offering account deletion in your app - Support - Apple Developer"
+[2]: https://developer.apple.com/documentation/technotes/tn3194-handling-account-deletions-and-revoking-tokens-for-sign-in-with-apple?utm_source=chatgpt.com "TN3194: Handling account deletions and revoking tokens for Sign in with Apple | Apple Developer Documentation"
+[3]: https://developer.apple.com/documentation/signinwithapplerestapi/revoke-tokens?changes=l_1&utm_source=chatgpt.com "Token revocation | Apple Developer Documentation"
