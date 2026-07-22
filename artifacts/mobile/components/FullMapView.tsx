@@ -111,6 +111,9 @@ export function FullMapView() {
   const [culturalSites, setCulturalSites] = useState<CulturalSite[]>([]);
   const [selectedCulturalSite, setSelectedCulturalSite] = useState<CulturalSite | null>(null);
 
+  const [mapReady, setMapReady] = useState(false);
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+
   const [isFocused, setIsFocused] = useState(false);
   useFocusEffect(
     useCallback(() => {
@@ -211,7 +214,13 @@ export function FullMapView() {
   const anyCardVisible = selectedBusiness !== null || selectedCulturalSite !== null;
 
   return (
-    <View style={s.container}>
+    <View
+      style={s.container}
+      onLayout={(e) => {
+        const { width, height } = e.nativeEvent.layout;
+        setContainerSize({ w: Math.round(width), h: Math.round(height) });
+      }}
+    >
       <MapView
         ref={mapRef}
         style={s.map}
@@ -219,6 +228,14 @@ export function FullMapView() {
         initialRegion={DEFAULT_REGION}
         showsUserLocation={locationGranted}
         showsMyLocationButton={false}
+        onMapReady={() => setMapReady(true)}
+        pointsOfInterestFilter={[
+          "park", "nationalPark", "beach", "campground", "marina",
+          "hospital", "pharmacy", "police", "fireStation",
+          "museum", "theater", "library", "university", "school",
+          "publicTransport", "airport", "stadium", "zoo", "aquarium",
+          "postOffice", "restroom",
+        ]}
         onPress={() => { setSelectedBusiness(null); setSelectedCulturalSite(null); }}
       >
         {/* Business pins — gold */}
@@ -277,6 +294,11 @@ export function FullMapView() {
           );
         })}
       </MapView>
+
+      {/* ── MapKit diagnostic badge (temp) ── */}
+      <View style={{ position: "absolute", bottom: 90, left: 12, backgroundColor: mapReady ? "#16a34a" : "#dc2626", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, opacity: 0.85 }}>
+        <Text style={{ color: "#fff", fontSize: 11, fontWeight: "600" }}>{`${mapReady ? "MapKit ✓" : "MapKit init…"} · ${containerSize.w}×${containerSize.h}`}</Text>
+      </View>
 
       {/* ── Top overlay ── */}
       <View style={[s.topOverlay, { paddingTop: insets.top + 6 }]}>
