@@ -1,0 +1,123 @@
+This screenshot is actually **very helpful**. It tells us something important.
+
+The URL you opened is:
+
+> `https://www.mappingwithmelanin.com/api/businesses?...`
+
+and it is returning a **valid JSON response** with businesses like:
+
+* Jefferson Street BBQ
+* Soul Food & BBQ
+* Tremé Soul Kitchen
+* Blue Ice Cream
+* ...
+
+That means:
+
+* ✅ Your website is reaching the API.
+* ✅ The database is responding.
+* ✅ The businesses endpoint is working.
+* ✅ The PostgreSQL database is **not currently down**.
+
+So the earlier "pool exhausted" diagnosis is **not true at this moment**, because if the pool were exhausted this endpoint would be returning a 500 error instead of JSON.
+
+---
+
+### This changes where we should investigate.
+
+You have now observed **three different problems**:
+
+1. Login intermittently fails.
+2. Heritage/HBCU results disappeared after the latest OTA.
+3. Marker taps are inconsistent.
+
+Those are likely **separate issues**, not one giant backend failure.
+
+---
+
+## I would stop all OTAs right now.
+
+Instead of continuing to stack OTA after OTA, I would have Replit do a **read-only comparison** between:
+
+* the last version that worked (HBCU 44 + Alcorn card)
+* the current production OTA
+
+We need to know **exactly** what changed.
+
+---
+
+## This is the prompt I would send Replit
+
+> READ-ONLY AUDIT ONLY. DO NOT MODIFY CODE.
+>
+> We have confirmed the backend is serving `/api/businesses` successfully, so assume production PostgreSQL is currently healthy.
+>
+> Compare the current production OTA against the last known-good OTA (the build where:
+>
+> * HBCU showed 44 results,
+> * Alabama State, Alcorn State and Benedict College appeared,
+> * tapping a result opened the information card.)
+>
+> Determine exactly why the current OTA now shows:
+>
+> * HBCU — 0
+> * empty results panel
+> * missing heritage results
+> * inconsistent marker interaction.
+>
+> Specifically identify:
+>
+> 1. Every change made to FullMapView.
+> 2. Every change affecting culturalSites filtering.
+> 3. Every change affecting searchedResults.
+> 4. Every change affecting selectedCulturalSite.
+> 5. Every change affecting marker rendering.
+> 6. Every change affecting the results panel.
+> 7. Whether any variable can now evaluate to an empty array before rendering.
+> 8. Whether any useMemo, useEffect, or state dependency changed.
+>
+> Do NOT propose fixes.
+>
+> Produce a side-by-side diff explaining exactly why the working behavior regressed.
+
+---
+
+## I also want to step back for a moment.
+
+Looking at the screenshots you've shared today, I think we're beginning to solve the wrong problem.
+
+Originally your vision wasn't:
+
+> "Show 44 HBCU pins."
+
+It was:
+
+> **"Help someone discover Howard University, learn why it matters, and connect with that place."**
+
+Those are different experiences.
+
+From everything you've told me over the last several months, I think the finished experience should feel more like this:
+
+* Tap **HBCU**.
+* A searchable list opens with every HBCU.
+* Type **Howard**.
+* Howard appears immediately.
+* Tap **Howard University**.
+* The map flies to Howard.
+* Howard's pin animates.
+* An information card opens with:
+
+  * history,
+  * photos,
+  * significance,
+  * website,
+  * directions,
+  * nearby Black-owned businesses,
+  * nearby restaurants,
+  * nearby events,
+  * maybe even alumni stories later.
+* The user never has to hunt for a tiny purple dot on a nationwide map.
+
+That's a much stronger product than expecting users to locate one pin among dozens.
+
+I actually think you're very close to that experience—you've already built many of the underlying pieces. The current work should focus on restoring the last known-good behavior before adding new features, so you're building on a stable foundation rather than chasing regressions.
