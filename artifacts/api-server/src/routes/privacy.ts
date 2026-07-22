@@ -170,10 +170,145 @@ function buildHtml(): string {
 </html>`;
 }
 
+function pageShell(title: string, body: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${title} — Mapping With Melanin™</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #0a0a0a; color: #f5f0eb; line-height: 1.6; padding: 0 16px 64px; }
+    header { max-width: 720px; margin: 0 auto; padding: 48px 0 32px; border-bottom: 1px solid #2a2a2a; }
+    header h1 { font-size: 2rem; font-weight: 700; color: #CA922B; letter-spacing: -0.5px; margin-bottom: 8px; }
+    header p { color: #888; font-size: 0.875rem; }
+    main { max-width: 720px; margin: 0 auto; }
+    section { margin-top: 40px; padding-bottom: 32px; border-bottom: 1px solid #1e1e1e; }
+    section:last-child { border-bottom: none; }
+    h2 { font-size: 0.8rem; font-weight: 700; color: #CA922B; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.04em; }
+    p, li { color: #aaa; font-size: 0.875rem; margin-bottom: 8px; }
+    ul { padding-left: 1.25rem; }
+    li { margin-bottom: 6px; }
+    strong { color: #f5f0eb; }
+    footer { max-width: 720px; margin: 48px auto 0; color: #555; font-size: 0.8125rem; }
+    a { color: #CA922B; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .back { display: inline-block; margin: 32px 0 0; font-size: 0.8rem; color: #CA922B; }
+  </style>
+</head>
+<body>
+  <header><h1>${title}</h1><p>Mapping With Melanin™</p></header>
+  <main>${body}</main>
+  <footer><p>Questions? <a href="mailto:hello@mappingwithmelanin.com">hello@mappingwithmelanin.com</a></p></footer>
+</body>
+</html>`;
+}
+
 router.get("/privacy", (_req: Request, res: Response) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   res.send(buildHtml());
+});
+
+router.get("/privacy-policy", (_req: Request, res: Response) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.send(buildHtml());
+});
+
+router.get("/terms", (_req: Request, res: Response) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  const body = `
+    <section><p>Welcome to Mapping With Melanin™. By accessing or using our platform at <strong>mappingwithmelanin.com</strong> or our mobile application, you agree to be bound by these Terms of Service.</p></section>
+    <section><h2>1. Acceptance of Terms</h2><p>By creating an account or using any part of the Mapping With Melanin™ platform, you confirm that you are at least 13 years of age and agree to these Terms of Service and our <a href="/privacy">Privacy Policy</a>. If you use the platform on behalf of a business, you represent that you have authority to bind that business to these terms.</p></section>
+    <section><h2>2. Description of Service</h2><p>Mapping With Melanin™ is a community discovery, travel, and business platform. We provide tools for users to find minority-owned businesses, access community safety insights, and plan culturally informed travel.</p></section>
+    <section><h2>3. User Accounts</h2><ul><li>You are responsible for maintaining the security of your account credentials.</li><li>You agree to provide accurate, current, and complete information during registration.</li><li>You may not impersonate another person or create a false identity.</li><li>You are responsible for all activity that occurs under your account.</li><li>We reserve the right to suspend or terminate accounts that violate these terms.</li></ul></section>
+    <section><h2>4. Community Content &amp; Reviews</h2><p>When you submit reviews, safety reports, or community content, you agree that your content is truthful and based on genuine experiences. You grant us a non-exclusive, royalty-free license to use and aggregate your content as part of our community insights. You will not post hateful, harassing, discriminatory, or illegal content.</p></section>
+    <section><h2>5. Business Listings</h2><p>Business owners who list on our platform agree to provide accurate information and comply with all applicable laws. Listings claiming minority ownership are subject to community verification.</p></section>
+    <section><h2>6. Membership &amp; Payments</h2><ul><li>Paid memberships are billed on a recurring basis (monthly or annually).</li><li>You may cancel at any time. Cancellation takes effect at the end of the current billing period.</li><li>Refunds are not provided for partial billing periods. Contact <a href="mailto:hello@mappingwithmelanin.com">hello@mappingwithmelanin.com</a> for exceptional cases.</li><li>We reserve the right to change pricing with 30 days' advance notice.</li><li>Payment processing is handled by Stripe.</li></ul></section>
+    <section><h2>7. Prohibited Conduct</h2><ul><li>Do not use the platform for any unlawful purpose.</li><li>Do not attempt to gain unauthorized access to any part of the platform.</li><li>Do not interfere with or disrupt the platform or its servers.</li><li>Do not submit false, misleading, or fraudulent content.</li><li>Do not scrape, crawl, or data-mine the platform without written permission.</li></ul></section>
+    <section><h2>8. Intellectual Property</h2><p>All content, features, and functionality of Mapping With Melanin™ — including the name, logo, and platform design — are owned by Mapping With Melanin™ and protected by intellectual property laws. You may not reproduce or distribute any part of the platform without written permission.</p></section>
+    <section><h2>9. Disclaimer &amp; Limitation of Liability</h2><p>The platform is provided "as is" without warranties of any kind. Mapping With Melanin™ is not liable for any indirect, incidental, or consequential damages arising from your use of the platform. Community safety data is provided for informational purposes and does not constitute professional advice.</p></section>
+    <section><h2>10. Changes to Terms</h2><p>We may update these Terms of Service from time to time. We will notify you of material changes via email or in-app notification. Continued use of the platform after changes take effect constitutes your acceptance of the new terms.</p></section>
+    <section><h2>11. Contact</h2><p>Questions about these terms? Contact us at <a href="mailto:hello@mappingwithmelanin.com">hello@mappingwithmelanin.com</a> or visit <a href="https://www.mappingwithmelanin.com/contact">mappingwithmelanin.com/contact</a>.</p><p style="margin-top:8px;color:#666;font-size:0.8rem;">Last updated: June 21, 2026</p></section>
+  `;
+  res.send(pageShell("Terms of Service", body));
+});
+
+router.get("/delete-account", (_req: Request, res: Response) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  const body = `
+    <section>
+      <p>You have the right to delete your Mapping With Melanin™ account and all associated personal data at any time. We honor all deletion requests within <strong>30 days</strong>.</p>
+    </section>
+    <section>
+      <h2>Option 1 — Delete from within the app</h2>
+      <ul>
+        <li>Open the Mapping With Melanin™ app</li>
+        <li>Go to <strong>Profile</strong></li>
+        <li>Tap <strong>Settings</strong></li>
+        <li>Tap <strong>Privacy &amp; Safety</strong></li>
+        <li>Tap <strong>Delete Account</strong></li>
+        <li>Confirm deletion</li>
+      </ul>
+      <p style="margin-top:12px;">Your account and all personal data will be permanently deleted within 30 days. This action cannot be undone.</p>
+    </section>
+    <section>
+      <h2>Option 2 — Request deletion by email</h2>
+      <p>Send a deletion request from the email address associated with your account to <a href="mailto:hello@mappingwithmelanin.com?subject=Account%20Deletion%20Request">hello@mappingwithmelanin.com</a> with the subject line <strong>Account Deletion Request</strong>.</p>
+      <p style="margin-top:8px;">We will confirm receipt within 2 business days and complete deletion within 30 days.</p>
+    </section>
+    <section>
+      <h2>What gets deleted</h2>
+      <ul>
+        <li>Your account profile, name, and email address</li>
+        <li>Your saved places and favorites</li>
+        <li>Your community posts and reviews</li>
+        <li>Your KinfolkAI conversation history</li>
+        <li>Your membership and billing information (transaction records may be retained for legal compliance)</li>
+      </ul>
+      <p style="margin-top:8px;">Aggregated, anonymized community data (such as neighborhood safety scores) cannot be attributed to you and is not deleted.</p>
+    </section>
+    <section>
+      <h2>Questions</h2>
+      <p>Contact us at <a href="mailto:hello@mappingwithmelanin.com">hello@mappingwithmelanin.com</a></p>
+    </section>
+  `;
+  res.send(pageShell("Delete Your Account", body));
+});
+
+router.get("/support", (_req: Request, res: Response) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  const body = `
+    <section>
+      <p>We are here to help. Reach us through any of the channels below.</p>
+    </section>
+    <section>
+      <h2>Email Support</h2>
+      <p><a href="mailto:hello@mappingwithmelanin.com">hello@mappingwithmelanin.com</a></p>
+      <p style="margin-top:6px;">We respond to all support requests within 2 business days.</p>
+    </section>
+    <section>
+      <h2>Common Topics</h2>
+      <ul>
+        <li><strong>Account issues</strong> — login, password reset, account recovery</li>
+        <li><strong>Membership &amp; billing</strong> — subscription questions, cancellations, refund requests</li>
+        <li><strong>Business listings</strong> — adding, updating, or claiming a business</li>
+        <li><strong>Safety data</strong> — questions about neighborhood safety surveys</li>
+        <li><strong>Account deletion</strong> — see our <a href="/delete-account">account deletion page</a></li>
+        <li><strong>Privacy</strong> — data requests, opt-outs, see our <a href="/privacy">Privacy Policy</a></li>
+      </ul>
+    </section>
+    <section>
+      <h2>Report a Problem</h2>
+      <p>To report a technical issue or content concern, email <a href="mailto:hello@mappingwithmelanin.com?subject=Issue%20Report">hello@mappingwithmelanin.com</a> with a description of the problem and your device type (iOS / Android).</p>
+    </section>
+  `;
+  res.send(pageShell("Support", body));
 });
 
 export default router;
