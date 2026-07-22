@@ -363,11 +363,6 @@ export function FullMapView() {
         })}
       </MapView>
 
-      {/* ── MapKit diagnostic badge (temp) ── */}
-      <View style={{ position: "absolute", bottom: 90, left: 12, backgroundColor: mapReady ? "#16a34a" : "#dc2626", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, opacity: 0.85 }}>
-        <Text style={{ color: "#fff", fontSize: 11, fontWeight: "600" }}>{`${mapReady ? "MapKit ✓" : "MapKit init…"} · ${containerSize.w}×${containerSize.h}`}</Text>
-      </View>
-
       {/* ── Top overlay ── */}
       <View style={[s.topOverlay, { paddingTop: insets.top + 6 }]}>
 
