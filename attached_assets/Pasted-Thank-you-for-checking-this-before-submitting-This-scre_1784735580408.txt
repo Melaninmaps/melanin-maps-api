@@ -1,0 +1,102 @@
+Thank you for checking this before submitting. This screenshot is actually **very important**.
+
+The message:
+
+> **Cannot GET /privacy**
+
+means the route is **still not being served by the production server**.
+
+That means **do not submit to Apple yet.**
+
+There are only a few possibilities:
+
+1. **Railway has not deployed the latest commit.**
+2. **The wrong service was deployed.**
+3. **The production server isn't running the code Replit believes it is.**
+4. **The route isn't actually registered in the production application** despite existing in the source.
+
+The screenshot tells us only one fact:
+
+> **Production is still returning 404 for `/privacy`.**
+
+It does **not** tell us which of those four is true.
+
+---
+
+## I would send Replit this exact message
+
+> **STOP. Production is still returning `Cannot GET /privacy`.**
+>
+> Do not assume Railway deployed the new routes.
+>
+> I need a read-only production verification.
+>
+> Please answer these questions only:
+>
+> 1. What git commit is currently running on Railway production?
+> 2. Is it the same commit that contains `privacy.ts`?
+> 3. During startup, does the server actually register the privacy router?
+> 4. What file imports `privacy.ts`?
+> 5. Show where `app.use(...)` mounts the privacy router.
+> 6. Is the router mounted under `/`, `/api`, or another prefix?
+> 7. If mounted under `/api`, what are the correct public URLs?
+> 8. If mounted correctly, explain why `Cannot GET /privacy` is still returned.
+>
+> Do not modify code.
+> Do not redeploy.
+> Do not speculate.
+> Return only verified facts from the running production configuration.
+
+---
+
+## One thing jumped out at me
+
+Earlier, Replit said the routes were:
+
+* `/privacy`
+* `/terms`
+* `/support`
+
+But throughout your app, almost everything else is served under `/api/...`.
+
+It's possible (I can't confirm without the code) that the privacy router is mounted under something like:
+
+```
+app.use("/api", privacyRouter)
+```
+
+or
+
+```
+app.use("/api/legal", ...)
+```
+
+If that's true, then:
+
+```
+/privacy
+```
+
+would correctly return:
+
+> Cannot GET /privacy
+
+while
+
+```
+/api/privacy
+```
+
+would work.
+
+That is exactly why I want Replit to tell us **where the router is mounted**, not just that the file exists.
+
+---
+
+### The good news
+
+This is **not** another login issue or pool exhaustion issue. Those appear to be resolved.
+
+This is now a **routing/deployment** issue, which is much narrower and generally much easier to fix.
+
+Let's identify the exact cause before making another deployment.
