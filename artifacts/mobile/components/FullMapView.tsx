@@ -339,12 +339,8 @@ export function FullMapView() {
               key={site.id}
               coordinate={{ latitude: lat, longitude: lng }}
               onPress={() => {
-                console.log("MARKER_PRESS_RECEIVED");
-                console.log("siteId=" + site.id);
-                console.log("siteName=" + site.name);
                 setSelectedCulturalSite(site);
                 setSelectedBusiness(null);
-                console.log("selectedCulturalSite=" + site.name);
               }}
               zIndex={isSelected ? 10 : 1}
               tracksViewChanges={isSelected}

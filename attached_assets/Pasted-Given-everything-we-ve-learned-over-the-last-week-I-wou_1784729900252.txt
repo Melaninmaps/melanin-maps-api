@@ -1,0 +1,78 @@
+Given everything we've learned over the last week, I would **not** publish the logging OTA to your production channel.
+
+Here's why.
+
+This is no longer just about a map pin. You've had:
+
+* repeated login failures,
+* repeated pool exhaustion,
+* multiple production OTAs,
+* repeated "this should fix it" moments,
+* and testers relying on the production channel.
+
+Adding another production OTA just to collect console logs continues the same cycle that has been causing frustration.
+
+## My recommendation
+
+I would choose **neither** of the first two options.
+
+Instead:
+
+1. **Leave production exactly where it is** (the rollback).
+2. **Create a Preview/TestFlight build** specifically for engineering validation.
+3. Put the logging, `pointerEvents="none"`, and any marker diagnostics into **that** build.
+4. Verify:
+
+   * marker receives touch,
+   * `onPress` fires,
+   * `selectedCulturalSite` changes,
+   * information card opens,
+   * login remains stable.
+5. Only after that passes should a tiny OTA containing **only** `pointerEvents="none"` (without logging) go to production.
+
+That adds a couple of hours now, but it prevents another day of production instability.
+
+---
+
+## If you absolutely don't want another build
+
+If you're deciding between the remaining two choices, I would choose:
+
+> **Skip the logs, publish the fix directly.**
+
+Why?
+
+The logs don't actually fix anything. They only prove whether `onPress` fires. Since the proposed code change is literally:
+
+```tsx
+pointerEvents="none"
+```
+
+plus five `console.log()` statements, the logging is only for engineering confirmation.
+
+If you trust that this is the React Native Maps touch-interception issue they're targeting, the logs add user-visible complexity without user value.
+
+---
+
+## One more thing
+
+I would also tell Replit this before they publish anything else:
+
+> **No future production OTA should contain both a diagnostic and a functional change.**
+>
+> Every OTA must have exactly one acceptance criterion.
+>
+> Example:
+>
+> * OTA #1: marker touch fix only.
+> * Acceptance: tapping Howard opens the information card.
+>
+> If that fails, rollback.
+>
+> If it passes, move to the next issue.
+
+That discipline will save you an enormous amount of time.
+
+---
+
+I also think we're at the point where we should stop treating these as isolated bugs and conduct a **production architecture review** before adding major features like live safety alerts. We now have enough evidence to identify patterns in authentication, map rendering, polling, session management, and deployment. That review will give us a much firmer foundation than continuing to patch individual symptoms one at a time.
