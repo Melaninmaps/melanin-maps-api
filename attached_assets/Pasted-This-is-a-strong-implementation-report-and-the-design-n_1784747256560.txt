@@ -1,0 +1,114 @@
+This is a strong implementation report, and the design now aligns much more closely with Apple’s published process: transmit the authorization code to the server, exchange it for tokens, securely retain the refresh token, revoke it during deletion, and handle legacy accounts through manual revocation guidance. ([Apple Developer][1])
+
+However, **do not create Build 95 yet**. The production server and database must be completed and verified first.
+
+## Important checks before deployment
+
+### 1. Confirm which production database Railway actually uses
+
+The report suddenly refers to a **Neon production database**. Earlier, your production database was described as Railway PostgreSQL. Do not run any schema command until Replit proves the exact database host used by Railway’s current `DATABASE_URL`.
+
+Ask for a sanitized response showing only:
+
+* provider/hostname;
+* database name;
+* whether the `users` table exists there;
+* whether `apple_refresh_token` already exists.
+
+Do not allow them to expose the password or complete connection string.
+
+### 2. Prefer an automatic, idempotent production migration
+
+Rather than having you manually connect to Neon and type SQL, the Railway deployment should safely execute:
+
+```sql
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS apple_refresh_token TEXT;
+```
+
+This must happen **before the new server bundle begins accepting Apple sign-ins**. Otherwise, the new code could deploy while the column is missing, causing production failures.
+
+### 3. Verify the Apple revocation URL
+
+Apple’s Sign in with Apple endpoint is:
+
+```text
+https://appleid.apple.com/auth/revoke
+```
+
+Apple requires the request to include the correct `client_id`, client-secret JWT, token and token type hint. A successful revocation returns HTTP 200 with no required response body. ([Apple Developer][2])
+
+Have Replit confirm that `apple.ts` uses that exact endpoint—not Apple’s separate organizational-data-sharing endpoint.
+
+### 4. Existing-user fallback needs careful interpretation
+
+Allowing an existing Apple user to sign in when token exchange fails can be acceptable as a temporary legacy compatibility path, but the system must not confuse:
+
+* a truly legacy user who has no stored token; and
+* a current user whose exchange failed because production is misconfigured.
+
+At minimum, structured logs should distinguish:
+
+```text
+APPLE_TOKEN_EXCHANGE_LEGACY_NO_CODE
+APPLE_TOKEN_EXCHANGE_CONFIGURATION_ERROR
+APPLE_TOKEN_EXCHANGE_APPLE_REJECTED
+APPLE_TOKEN_EXCHANGE_NETWORK_ERROR
+```
+
+No authorization code, token or private-key data should be logged.
+
+### 5. Credential-state checking is appropriate
+
+Apple says a revoked credential should result in the user being signed out, and `notFound` means the Apple relationship no longer exists. Checking the stored Apple user ID when the app becomes active is therefore directionally correct. ([Apple Developer][3])
+
+Replit should also confirm that:
+
+* this check runs only for Apple users;
+* temporary Apple API errors do **not** automatically log the user out;
+* `transferred` is not treated as revoked;
+* SecureStore cleanup happens on manual logout, deletion and revoked status.
+
+## Safe order from here
+
+1. Add the four secrets to Replit and Railway.
+2. Verify Railway’s actual production database.
+3. Create a deployment PR containing:
+
+   * production migration;
+   * compiled server bundle;
+   * synchronized source map;
+   * no secrets.
+4. Merge and wait for Railway to become healthy.
+5. Confirm the new column exists in the production database.
+6. Test normal email/password login.
+7. Test a real Sign in with Apple account and verify token exchange succeeds.
+8. Delete that Apple account and verify `appleRevocationStatus: "revoked"`.
+9. Confirm the deleted account cannot regain access.
+10. Run the email/password deletion test.
+11. Only then queue Build 95.
+12. Install Build 95 from TestFlight and repeat the user-facing deletion test.
+
+You do **not** need another 24-hour login-persistence test afterward unless the authentication/session restoration code behaves differently. A quick kill-and-reopen test, manual logout test and background-resume test on Build 95 are sufficient before submission.
+
+Send this to Replit now:
+
+> **PRODUCTION DEPLOYMENT GATE — DO NOT BUILD iOS 95 YET**
+>
+> Before creating the deployment PR:
+>
+> 1. Prove which provider and hostname Railway’s production `DATABASE_URL` uses, without exposing credentials.
+> 2. Confirm whether `apple_refresh_token` exists in that exact production database.
+> 3. Add an idempotent production migration using:
+>    `ALTER TABLE users ADD COLUMN IF NOT EXISTS apple_refresh_token TEXT;`
+> 4. Confirm the new server cannot begin accepting Apple sign-ins before that migration completes.
+> 5. Confirm the revocation utility uses exactly:
+>    `https://appleid.apple.com/auth/revoke`
+> 6. Confirm temporary credential-state lookup errors do not log users out and `transferred` is not treated as revoked.
+> 7. Return the exact PR file list and deployment sequence before pushing.
+>
+> Build 95 remains blocked until production Apple sign-in, token storage, account deletion and revocation have passed end-to-end testing.
+
+[1]: https://developer.apple.com/documentation/technotes/tn3194-handling-account-deletions-and-revoking-tokens-for-sign-in-with-apple?changes=__5_6&language=objc&utm_source=chatgpt.com "TN3194: Handling account deletions and revoking tokens for Sign in with Apple | Apple Developer Documentation"
+[2]: https://developer.apple.com/documentation/signinwithapplerestapi/revoke-tokens?changes=l_1&utm_source=chatgpt.com "Token revocation | Apple Developer Documentation"
+[3]: https://developer.apple.com/documentation/authenticationservices/asauthorizationappleidprovider/credentialstate/notfound?changes=_9&utm_source=chatgpt.com "ASAuthorizationAppleIDProvider.CredentialState.notFound | Apple Developer Documentation"

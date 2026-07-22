@@ -927,24 +927,35 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
         const { refreshToken } = await exchangeAuthCode(authorizationCode, APPLE_CLIENT_ID, clientSecret);
         encryptedRefreshToken = encryptToken(refreshToken, process.env.APPLE_TOKEN_ENCRYPTION_KEY!);
         req.log.info({ event: "APPLE_TOKEN_EXCHANGED", isNewUser }, "Apple authorization code exchanged and encrypted");
-      } catch {
+      } catch (exchErr) {
+        // Distinguish network failures from Apple API rejections — never log token values
+        const isNetworkErr = !(exchErr instanceof Error &&
+          (exchErr.message.includes("HTTP") || exchErr.message.includes("refresh_token")));
+        const baseEvent = isNetworkErr
+          ? "APPLE_TOKEN_EXCHANGE_NETWORK_ERROR"
+          : "APPLE_TOKEN_EXCHANGE_APPLE_REJECTED";
         if (isNewUser) {
-          req.log.warn({ event: "APPLE_EXCHANGE_FAILED_NEW_USER" }, "Apple token exchange failed — blocking new account creation");
+          req.log.warn({ event: baseEvent }, "Apple token exchange failed — blocking new account creation");
           res.status(401).json({ error: "Apple authorization could not be verified. Please try Sign in with Apple again." });
           return;
         }
-        req.log.warn({ event: "APPLE_EXCHANGE_FAILED_EXISTING_USER" }, "Apple token exchange failed for existing user — sign-in continues without token refresh");
+        req.log.warn({ event: baseEvent }, "Apple token exchange failed for existing user — sign-in continues without token refresh");
       }
     } else if (isNewUser && !authorizationCode) {
-      req.log.warn({ event: "APPLE_CODE_MISSING_NEW_USER" }, "New Apple account without authorization code — blocking creation");
+      req.log.warn({ event: "APPLE_TOKEN_EXCHANGE_LEGACY_NO_CODE" }, "New Apple account without authorization code — old app build, blocking creation");
       res.status(400).json({ error: "Sign in with Apple requires an authorization code. Please try again." });
       return;
     } else if (isNewUser && !appleSecretsConfigured) {
-      req.log.error({ event: "APPLE_SECRETS_NOT_CONFIGURED" }, "Apple credentials not configured — cannot create new account");
+      req.log.error({ event: "APPLE_TOKEN_EXCHANGE_CONFIGURATION_ERROR" }, "Apple credentials not configured — cannot create new account");
       res.status(500).json({ error: "Apple Sign-In is temporarily unavailable. Please try again later." });
       return;
+    } else if (!authorizationCode) {
+      // Existing user, old app build — sign-in allowed, token not updated
+      req.log.info({ event: "APPLE_TOKEN_EXCHANGE_LEGACY_NO_CODE" }, "Existing user sign-in without authorization code — legacy app version");
+    } else {
+      // Existing user, secrets not configured — sign-in allowed, token not stored
+      req.log.warn({ event: "APPLE_TOKEN_EXCHANGE_CONFIGURATION_ERROR" }, "Apple credentials not configured — existing user sign-in continues without token storage");
     }
-    // Existing user with missing code or unconfigured secrets: legacy sign-in allowed
 
     if (!user) {
       const cleanFirst = firstName?.trim() || "Apple";
