@@ -1,0 +1,51 @@
+Stop for a moment—don’t keep clicking around.
+
+Since **Deploy Latest Commit is not working**, the next step is not another restart. We need to identify why Railway is not seeing commit `48ded0e8`.
+
+Please open Railway and go to:
+
+**api-server → Settings**
+
+Then look for the **Source / GitHub / Deployments** section and check these two things:
+
+1. **Connected repository**
+
+   * It should point to the repository that actually contains `artifacts/api-server/src/routes/privacy.ts`.
+
+2. **Connected branch**
+
+   * It should be the branch containing commit `48ded0e8`, usually `main`.
+
+Railway only deploys the latest commit from the branch currently connected to that service. If the service is connected to a different repository or branch, “Deploy Latest Commit” will keep deploying the wrong code. ([Railway Docs][1])
+
+## Send Replit this now
+
+> **DEPLOYMENT SOURCE MISMATCH — VERIFY BEFORE ANY MORE ACTION**
+>
+> “Deploy Latest Commit” is not producing the legal routes. Production still returns `Cannot GET /privacy`.
+>
+> Please verify:
+>
+> 1. Which GitHub repository Railway’s `api-server` service is connected to.
+> 2. Which branch Railway tracks.
+> 3. Whether commit `48ded0e8` exists in that exact repository and branch.
+> 4. Whether that commit was pushed to GitHub or exists only in the Replit workspace.
+> 5. Whether Railway deployment history shows the commit SHA being deployed.
+> 6. Whether any deployment is marked **Skipped**, **Waiting**, or requires **Approve**.
+>
+> Do not tell me to redeploy again until you prove Railway is connected to the repository and branch containing `48ded0e8`.
+>
+> Return:
+>
+> * connected repo
+> * connected branch
+> * latest GitHub commit SHA
+> * latest Railway deployment commit SHA
+> * whether they match
+> * exact corrective action
+
+A very likely issue is that the source change was committed in the Replit monorepo, while Railway is connected to a separate deployment repository. If so, Railway cannot deploy that commit until it is pushed into the repository Railway actually tracks.
+
+Show me a screenshot of **api-server → Settings → Source** and I’ll tell you exactly what to click next.
+
+[1]: https://docs.railway.com/deployments/github-autodeploys?utm_source=chatgpt.com "Controlling GitHub Autodeploys | Railway Docs"
