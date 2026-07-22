@@ -151,14 +151,26 @@ export default function SettingsScreen() {
                   method: "DELETE",
                   headers: token ? { Authorization: `Bearer ${token}` } : {},
                 });
+                const body = await res.json().catch(() => ({})) as { error?: string; deleted?: boolean; appleRevocationStatus?: string };
                 if (!res.ok) {
-                  const body = await res.json().catch(() => ({}));
-                  const message = (body as { error?: string }).error ?? `Server returned ${res.status}`;
+                  const message = body.error ?? `Server returned ${res.status}`;
                   Alert.alert("Deletion failed", `${message}\n\nYour account has not been deleted. Please try again.`);
                   return;
                 }
                 await logout();
                 router.replace("/onboarding");
+                const needsManualRevoke =
+                  body.appleRevocationStatus === "manual_revocation_required" ||
+                  body.appleRevocationStatus === "revocation_failed";
+                if (needsManualRevoke) {
+                  setTimeout(() => {
+                    Alert.alert(
+                      "Account Deleted",
+                      "Your Mapping With Melanin account has been removed. To fully disconnect your Apple ID, please go to:\n\nSettings → [Your Name] → Sign-In & Security → Apps & Websites → Mapping With Melanin → Stop Using Apple ID",
+                      [{ text: "Got it", style: "default" }],
+                    );
+                  }, 600);
+                }
               } catch {
                 Alert.alert("Deletion failed", "A network error occurred. Your account has not been deleted. Please try again.");
               }

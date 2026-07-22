@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import * as WebBrowser from "expo-web-browser";
 import * as SecureStore from "expo-secure-store";
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 import Purchases from "react-native-purchases";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -293,6 +293,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await Promise.all([
       SecureStore.deleteItemAsync(AUTH_TOKEN_KEY).catch(() => {}),
       SecureStore.deleteItemAsync("@melanin_maps_fresh_login").catch(() => {}),
+      SecureStore.deleteItemAsync("apple_user_id").catch(() => {}),
     ]);
 
     // Step 3: Reset in-memory state. Login screen mounts here.
@@ -330,6 +331,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    const subscription = AppState.addEventListener("change", async (nextState) => {
+      if (nextState !== "active") return;
+      const appleUserId = await SecureStore.getItemAsync("apple_user_id").catch(() => null);
+      if (!appleUserId) return;
+      try {
+        const AppleAuth = await import("expo-apple-authentication");
+        const credState = await AppleAuth.getCredentialStateAsync(appleUserId);
+        if (
+          credState === AppleAuth.AppleAuthenticationCredentialState.REVOKED ||
+          credState === AppleAuth.AppleAuthenticationCredentialState.NOT_FOUND
+        ) {
+          await SecureStore.deleteItemAsync("apple_user_id").catch(() => {});
+          await logout();
+        }
+      } catch {
+        // Credential state check unavailable — Apple services unreachable or unsupported platform
+      }
+    });
+    return () => subscription.remove();
+  }, [logout]);
 
   return (
     <AuthContext.Provider

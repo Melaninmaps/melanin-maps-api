@@ -34,6 +34,7 @@ import {
   type SessionData,
 } from "../lib/auth";
 import jwt from "jsonwebtoken";
+import { encryptToken, generateClientSecret, exchangeAuthCode } from "../lib/apple";
 import { sendWelcomeEmail, sendPasswordResetEmail, generateUnsubscribeToken } from "../lib/email";
 
 const OIDC_COOKIE_TTL = 10 * 60 * 1000;
@@ -871,8 +872,8 @@ async function verifyAppleToken(
 }
 
 router.post("/auth/apple", async (req: Request, res: Response) => {
-  const { identityToken, nonce, appleUserId, email, firstName, lastName } =
-    req.body as { identityToken?: string; nonce?: string; appleUserId?: string; email?: string; firstName?: string; lastName?: string };
+  const { identityToken, nonce, appleUserId, email, firstName, lastName, authorizationCode } =
+    req.body as { identityToken?: string; nonce?: string; appleUserId?: string; email?: string; firstName?: string; lastName?: string; authorizationCode?: string };
 
   if (!identityToken) { res.status(400).json({ error: "identityToken is required." }); return; }
 
@@ -900,6 +901,51 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
       }
     }
 
+    const isNewUser = !user;
+
+    // ── Authorization-code exchange (required for account-deletion revocation) ─
+    // Never log the code, access token, refresh token, or private-key content.
+    const APPLE_CLIENT_ID = "com.melaninmaps.app";
+    const appleSecretsConfigured = !!(
+      process.env.APPLE_TEAM_ID &&
+      process.env.APPLE_KEY_ID &&
+      process.env.APPLE_PRIVATE_KEY &&
+      process.env.APPLE_TOKEN_ENCRYPTION_KEY
+    );
+
+    let encryptedRefreshToken: string | null = null;
+
+    if (authorizationCode && appleSecretsConfigured) {
+      try {
+        const privateKey = process.env.APPLE_PRIVATE_KEY!.replace(/\\n/g, "\n");
+        const clientSecret = generateClientSecret(
+          process.env.APPLE_TEAM_ID!,
+          process.env.APPLE_KEY_ID!,
+          privateKey,
+          APPLE_CLIENT_ID,
+        );
+        const { refreshToken } = await exchangeAuthCode(authorizationCode, APPLE_CLIENT_ID, clientSecret);
+        encryptedRefreshToken = encryptToken(refreshToken, process.env.APPLE_TOKEN_ENCRYPTION_KEY!);
+        req.log.info({ event: "APPLE_TOKEN_EXCHANGED", isNewUser }, "Apple authorization code exchanged and encrypted");
+      } catch {
+        if (isNewUser) {
+          req.log.warn({ event: "APPLE_EXCHANGE_FAILED_NEW_USER" }, "Apple token exchange failed — blocking new account creation");
+          res.status(401).json({ error: "Apple authorization could not be verified. Please try Sign in with Apple again." });
+          return;
+        }
+        req.log.warn({ event: "APPLE_EXCHANGE_FAILED_EXISTING_USER" }, "Apple token exchange failed for existing user — sign-in continues without token refresh");
+      }
+    } else if (isNewUser && !authorizationCode) {
+      req.log.warn({ event: "APPLE_CODE_MISSING_NEW_USER" }, "New Apple account without authorization code — blocking creation");
+      res.status(400).json({ error: "Sign in with Apple requires an authorization code. Please try again." });
+      return;
+    } else if (isNewUser && !appleSecretsConfigured) {
+      req.log.error({ event: "APPLE_SECRETS_NOT_CONFIGURED" }, "Apple credentials not configured — cannot create new account");
+      res.status(500).json({ error: "Apple Sign-In is temporarily unavailable. Please try again later." });
+      return;
+    }
+    // Existing user with missing code or unconfigured secrets: legacy sign-in allowed
+
     if (!user) {
       const cleanFirst = firstName?.trim() || "Apple";
       const cleanLast = lastName?.trim() || "User";
@@ -916,9 +962,15 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
           appleId: sub,
           approved: true,
           agreeToTerms: true,
+          ...(encryptedRefreshToken ? { appleRefreshToken: encryptedRefreshToken } : {}),
         })
         .returning();
       user = created;
+    } else if (encryptedRefreshToken) {
+      await db
+        .update(usersTable)
+        .set({ appleRefreshToken: encryptedRefreshToken })
+        .where(eq(usersTable.id, user.id));
     }
 
     if (!user.approved) {

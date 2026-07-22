@@ -134,6 +134,7 @@ export default function LoginScreen() {
           identityToken: credential.identityToken,
           nonce: rawNonce,
           appleUserId: credential.user,
+          authorizationCode: credential.authorizationCode ?? undefined,
           email: credential.email ?? undefined,
           firstName: credential.fullName?.givenName ?? undefined,
           lastName: credential.fullName?.familyName ?? undefined,
@@ -145,6 +146,7 @@ export default function LoginScreen() {
         return;
       }
       await SecureStore.setItemAsync("auth_session_token", data.token);
+      await SecureStore.setItemAsync("apple_user_id", credential.user).catch(() => {});
       await refreshUser();
       router.replace(data.profileSetupComplete === false ? "/profile-setup" : "/(tabs)");
     } catch (err: unknown) {

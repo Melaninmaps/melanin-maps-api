@@ -1,10 +1,11 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { db, usersTable, profileTagsTable, reviewsTable, memberConnections, userFollowsTable } from "@workspace/db";
+import { db, pool, usersTable, profileTagsTable, reviewsTable, memberConnections, userFollowsTable } from "@workspace/db";
 import { eq, ilike, or, and, ne, desc, inArray, sql } from "drizzle-orm";
 import { objectStorageClient } from "../lib/objectStorage";
 import { deleteAllSessionsForUser } from "../lib/auth";
+import { decryptToken, generateClientSecret, revokeAppleToken } from "../lib/apple";
 
 const avatarUpload = multer({
   storage: multer.memoryStorage(),
@@ -459,20 +460,79 @@ router.delete("/users/me", async (req: Request, res: Response) => {
   }
   const userId = req.user.id;
   try {
-    // Revoke all sessions before deleting the row so that any
-    // in-flight requests with old tokens are rejected immediately.
-    await deleteAllSessionsForUser(userId);
-
-    const [deleted] = await db
-      .delete(usersTable)
+    const [userRecord] = await db
+      .select({ appleId: usersTable.appleId, appleRefreshToken: usersTable.appleRefreshToken })
+      .from(usersTable)
       .where(eq(usersTable.id, userId))
-      .returning({ id: usersTable.id });
-    if (!deleted) {
+      .limit(1);
+
+    if (!userRecord) {
       res.status(404).json({ error: "User not found" });
       return;
     }
-    req.log.info({ deletedUserId: deleted.id }, "User self-deleted account");
-    res.json({ deleted: true });
+
+    // ── Apple token revocation (non-blocking — before transaction per TN3194) ──
+    const APPLE_CLIENT_ID = "com.melaninmaps.app";
+    let appleRevocationStatus: string | undefined;
+
+    if (userRecord.appleId) {
+      if (userRecord.appleRefreshToken) {
+        const teamId = process.env.APPLE_TEAM_ID;
+        const keyId = process.env.APPLE_KEY_ID;
+        const rawKey = process.env.APPLE_PRIVATE_KEY;
+        const encKey = process.env.APPLE_TOKEN_ENCRYPTION_KEY;
+        if (teamId && keyId && rawKey && encKey) {
+          try {
+            const privateKey = rawKey.replace(/\\n/g, "\n");
+            const plainToken = decryptToken(userRecord.appleRefreshToken, encKey);
+            const clientSecret = generateClientSecret(teamId, keyId, privateKey, APPLE_CLIENT_ID);
+            await revokeAppleToken(plainToken, APPLE_CLIENT_ID, clientSecret);
+            appleRevocationStatus = "revoked";
+            req.log.info({ event: "APPLE_TOKEN_REVOKED", userId }, "Apple refresh token revoked");
+          } catch {
+            appleRevocationStatus = "revocation_failed";
+            req.log.error({ event: "APPLE_REVOCATION_FAILED", userId }, "Apple token revocation failed — proceeding with local deletion per TN3194");
+          }
+        } else {
+          appleRevocationStatus = "revocation_failed";
+          req.log.warn({ event: "APPLE_SECRETS_MISSING_AT_DELETION", userId }, "Apple credentials not configured — cannot revoke token");
+        }
+      } else {
+        appleRevocationStatus = "manual_revocation_required";
+        req.log.info({ event: "APPLE_LEGACY_USER_DELETION", userId }, "Legacy Apple user — no stored token, manual revocation required");
+      }
+    }
+
+    // ── Atomic transaction: sessions + user row ──────────────────────────────
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        `DELETE FROM sessions WHERE sess->'user'->>'id' = $1`,
+        [userId],
+      );
+      const result = await client.query<{ id: string }>(
+        `DELETE FROM users WHERE id = $1 RETURNING id`,
+        [userId],
+      );
+      if ((result.rowCount ?? 0) === 0) {
+        await client.query("ROLLBACK");
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+      await client.query("COMMIT");
+    } catch (txErr) {
+      await client.query("ROLLBACK");
+      throw txErr;
+    } finally {
+      client.release();
+    }
+
+    req.log.info({ userId, appleRevocationStatus }, "User self-deleted account");
+    const responseBody: Record<string, unknown> = { deleted: true };
+    if (appleRevocationStatus) responseBody.appleRevocationStatus = appleRevocationStatus;
+    res.json(responseBody);
+
   } catch (err) {
     req.log.error({ err }, "DELETE /api/users/me error");
     res.status(500).json({ error: "Failed to delete account" });

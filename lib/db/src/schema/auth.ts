@@ -65,6 +65,7 @@ export const usersTable = pgTable("users", {
   isCommunityOrganizer: boolean("is_community_organizer").notNull().default(false),
   profileSetupComplete: boolean("profile_setup_complete").notNull().default(false),
   appleId: varchar("apple_id").unique(),
+  appleRefreshToken: text("apple_refresh_token"),
   phoneNumber: varchar("phone_number", { length: 20 }).unique(),
   phoneVerified: boolean("phone_verified").notNull().default(false),
   notifEvents: boolean("notif_events").notNull().default(true),
