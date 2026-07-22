@@ -1,0 +1,48 @@
+This screenshot is actually very helpful.
+
+I **do not** see the **"Map Diagnostic — Beta"** card anywhere on your Admin Panel or Profile screen.
+
+That tells us something important:
+
+* ✅ Your login is working.
+* ✅ You're recognized as an admin (the red **Admin** badge is visible).
+* ❌ The OTA that was supposed to add the diagnostic entry is **not what is currently running on your device**, or the button was added in a different screen than expected.
+
+So we **can't perform the diagnostic test yet** because the entry simply isn't there.
+
+### Before we change any map code, let's verify one thing
+
+Please tell Replit:
+
+> The OTA appears incomplete. I am logged in as an admin, but there is **no "Map Diagnostic — Beta" entry** in the Profile/Admin area.
+>
+> Please verify:
+>
+> 1. The `/map-diagnostic` screen exists in the current production OTA.
+> 2. The navigation card is actually included in the published bundle.
+> 3. The condition that displays it (`isAdminUser`) evaluates to true on my account.
+> 4. Confirm the exact screen where the button should appear (Profile or Admin Panel).
+> 5. If it was omitted from the published OTA, do not modify the map further—publish only the missing diagnostic screen and navigation entry.
+
+### One more thing I'd like checked
+
+Since the map is **still black even after the polling fix**, I'd also have Replit verify whether the black screen is occurring **before** any business data loads.
+
+Specifically ask them:
+
+> Does `onMapReady` fire?
+>
+> Does the base Apple Map render before markers and overlays are added?
+>
+> If `onMapReady` never fires, the problem is the native map initialization.
+>
+> If `onMapReady` fires but the screen stays black after overlays are added, the issue is in `FullMapView` rendering.
+
+---
+
+At this point, I **would not approve another broad map rewrite**. We've already eliminated the database/pool issue. The next goal is to isolate whether the failure is:
+
+1. **MapKit/native initialization**, or
+2. **The FullMapView component after initialization.**
+
+The missing diagnostic screen means we don't yet have the evidence to distinguish those two, so getting that diagnostic onto your device is the next most valuable step.
