@@ -1,0 +1,70 @@
+Please implement **Stage 1 now** and keep **Stage 2 separate**.
+
+Stage 1 directly fixes the immediate usability problem: users need to find Howard by name rather than guessing which purple pin is Howard.
+
+Send Replit:
+
+> **APPROVED — STAGE 1 CULTURAL-SITE RESULTS PANEL**
+>
+> Implement the OTA-safe results panel in:
+>
+> `artifacts/mobile/components/FullMapView.tsx`
+>
+> Requirements:
+>
+> * When a cultural category such as **HBCU** is selected, show a collapsible results panel.
+> * Include a search field that filters the active category by:
+>
+>   * site name
+>   * city
+>   * state
+> * Show each result as:
+>
+>   * site name
+>   * city, state
+> * Tapping a result must:
+>
+>   * animate the map to that site,
+>   * set `selectedCulturalSite`,
+>   * open the existing information card.
+> * Confirm searching **Howard** returns Howard University.
+> * Confirm selecting Howard opens:
+>
+>   * Howard University
+>   * HBCU
+>   * Washington, DC
+>   * description
+>   * View Details
+>   * Directions
+> * Keep the map visible behind the panel.
+> * Make the panel collapsible so it does not permanently cover the map.
+> * Do not change:
+>
+>   * cultural-site records
+>   * POI filtering
+>   * polling
+>   * authentication
+>   * server routes
+>   * business markers
+>   * map provider
+>
+> Before publishing, return:
+>
+> * exact file changed,
+> * screenshot or layout description,
+> * confirmation that Howard is searchable,
+> * confirmation that the OTA bundles successfully,
+> * update group ID.
+
+For **Stage 2**, do not insert all proposed records yet. First have Replit prepare the missing-HBCU list for review, because this is authoritative data and we should verify it carefully before production insertion.
+
+Also, the claim that the complete federal HBCU list contains exactly 101 institutions should be verified against the current official source before seeding, since institutional status can change over time. Stage 2 should include:
+
+* exact missing institutions,
+* official names,
+* campus locations,
+* authoritative source,
+* duplicate check,
+* and whether branch campuses should be separate records.
+
+The immediate priority is Stage 1. Once Howard is searchable and selectable, the map will finally feel usable rather than just populated.

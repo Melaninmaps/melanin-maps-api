@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -117,6 +118,8 @@ export function FullMapView() {
   const [culturalSites, setCulturalSites] = useState<CulturalSite[]>([]);
   const [selectedCulturalSite, setSelectedCulturalSite] = useState<CulturalSite | null>(null);
   const [activeCulturalCategory, setActiveCulturalCategory] = useState("");
+  const [resultsSearchQuery, setResultsSearchQuery] = useState("");
+  const [resultsCollapsed, setResultsCollapsed] = useState(false);
 
   const [mapReady, setMapReady] = useState(false);
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
@@ -152,6 +155,17 @@ export function FullMapView() {
   const filteredCulturalSites = activeCulturalCategory
     ? culturalSites.filter((s) => s.heritageCategory === activeCulturalCategory)
     : culturalSites;
+
+  const searchedResults = resultsSearchQuery.trim()
+    ? filteredCulturalSites.filter((s) => {
+        const q = resultsSearchQuery.toLowerCase();
+        return (
+          s.name.toLowerCase().includes(q) ||
+          s.city.toLowerCase().includes(q) ||
+          s.state.toLowerCase().includes(q)
+        );
+      })
+    : filteredCulturalSites;
 
   const currentWarning = warnings[warningIdx] ?? null;
 
@@ -454,17 +468,101 @@ export function FullMapView() {
         {showCulturalSites && (
           <>
             {activeCulturalCategory !== "" && (
-              <View style={s.filterCountRow}>
-                <Text style={s.filterCountTxt}>
-                  {CATEGORY_STYLES[activeCulturalCategory]?.label ?? activeCulturalCategory} — {filteredCulturalSites.length}
-                </Text>
-                <TouchableOpacity
-                  style={s.filterClearBtn}
-                  onPress={() => { setActiveCulturalCategory(""); setSelectedCulturalSite(null); }}
-                >
-                  <Feather name="x" size={11} color="#fff" />
-                  <Text style={s.filterClearTxt}>All</Text>
-                </TouchableOpacity>
+              <View style={s.resultsPanel}>
+                {/* Header row */}
+                <View style={s.resultsPanelHeader}>
+                  <Text style={s.filterCountTxt}>
+                    {CATEGORY_STYLES[activeCulturalCategory]?.label ?? activeCulturalCategory} — {filteredCulturalSites.length}
+                  </Text>
+                  <View style={{ flexDirection: "row", gap: 6 }}>
+                    <TouchableOpacity
+                      style={s.filterClearBtn}
+                      onPress={() => setResultsCollapsed((v) => !v)}
+                    >
+                      <Feather name={resultsCollapsed ? "chevron-down" : "chevron-up"} size={11} color="#fff" />
+                      <Text style={s.filterClearTxt}>{resultsCollapsed ? "List" : "Hide"}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={s.filterClearBtn}
+                      onPress={() => {
+                        setActiveCulturalCategory("");
+                        setSelectedCulturalSite(null);
+                        setResultsSearchQuery("");
+                        setResultsCollapsed(false);
+                      }}
+                    >
+                      <Feather name="x" size={11} color="#fff" />
+                      <Text style={s.filterClearTxt}>All</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Expanded: search + scrollable list */}
+                {!resultsCollapsed && (
+                  <>
+                    <View style={s.resultsSearch}>
+                      <Feather name="search" size={13} color="rgba(255,255,255,0.55)" />
+                      <TextInput
+                        style={s.resultsSearchInput}
+                        placeholder={`Search ${CATEGORY_STYLES[activeCulturalCategory]?.label ?? activeCulturalCategory}s…`}
+                        placeholderTextColor="rgba(255,255,255,0.4)"
+                        value={resultsSearchQuery}
+                        onChangeText={setResultsSearchQuery}
+                        autoCapitalize="none"
+                        returnKeyType="search"
+                      />
+                      {resultsSearchQuery.length > 0 && (
+                        <TouchableOpacity onPress={() => setResultsSearchQuery("")}>
+                          <Feather name="x-circle" size={13} color="rgba(255,255,255,0.55)" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    <ScrollView
+                      style={s.resultsList}
+                      keyboardShouldPersistTaps="handled"
+                      showsVerticalScrollIndicator={false}
+                      nestedScrollEnabled
+                    >
+                      {searchedResults.length === 0 ? (
+                        <Text style={s.resultsEmpty}>No results for "{resultsSearchQuery}"</Text>
+                      ) : (
+                        searchedResults.map((site) => {
+                          const isRowSelected = selectedCulturalSite?.id === site.id;
+                          const cs = getCategoryStyle(site.heritageCategory);
+                          return (
+                            <TouchableOpacity
+                              key={site.id}
+                              style={[s.resultsRow, isRowSelected && s.resultsRowSelected]}
+                              activeOpacity={0.7}
+                              onPress={() => {
+                                const lat = parseFloat(site.latitude);
+                                const lng = parseFloat(site.longitude);
+                                if (!isNaN(lat) && !isNaN(lng)) {
+                                  mapRef.current?.animateToRegion(
+                                    { latitude: lat, longitude: lng, latitudeDelta: 0.04, longitudeDelta: 0.04 },
+                                    600,
+                                  );
+                                }
+                                setSelectedCulturalSite(site);
+                                setSelectedBusiness(null);
+                              }}
+                            >
+                              <Text
+                                style={[s.resultsRowName, isRowSelected && { color: cs.color }]}
+                                numberOfLines={1}
+                              >
+                                {site.name}
+                              </Text>
+                              <Text style={s.resultsRowSub} numberOfLines={1}>
+                                {site.city}, {site.state}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })
+                      )}
+                    </ScrollView>
+                  </>
+                )}
               </View>
             )}
             <ScrollView
@@ -483,6 +581,8 @@ export function FullMapView() {
                       const next = isActive ? "" : key;
                       setActiveCulturalCategory(next);
                       setSelectedCulturalSite(null);
+                      setResultsSearchQuery("");
+                      setResultsCollapsed(false);
                       if (next) {
                         const coords = culturalSites
                           .filter((site) => site.heritageCategory === next)
@@ -721,19 +821,44 @@ const s = StyleSheet.create({
     shadowOpacity: 0.45, shadowRadius: 4, elevation: 6,
   },
 
-  filterCountRow: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    marginHorizontal: 12, marginBottom: 2,
-    backgroundColor: "rgba(0,0,0,0.60)",
-    paddingHorizontal: 12, paddingVertical: 5,
-    borderRadius: 10,
-  },
   filterCountTxt: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#fff" },
   filterClearBtn: {
     flexDirection: "row", alignItems: "center", gap: 4,
     backgroundColor: "rgba(255,255,255,0.18)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10,
   },
   filterClearTxt: { fontFamily: "Inter_500Medium", fontSize: 11, color: "#fff" },
+
+  resultsPanel: {
+    marginHorizontal: 12, marginBottom: 2,
+    backgroundColor: "rgba(0,0,0,0.82)",
+    borderRadius: 12, overflow: "hidden",
+  },
+  resultsPanelHeader: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 12, paddingVertical: 7,
+  },
+  resultsSearch: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "rgba(255,255,255,0.12)",
+    paddingHorizontal: 12, paddingVertical: 8,
+  },
+  resultsSearchInput: {
+    flex: 1,
+    fontFamily: "Inter_400Regular", fontSize: 13, color: "#fff",
+    padding: 0,
+  },
+  resultsList: { maxHeight: 160 },
+  resultsRow: {
+    paddingHorizontal: 12, paddingVertical: 9,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "rgba(255,255,255,0.08)",
+  },
+  resultsRowSelected: { backgroundColor: "rgba(255,255,255,0.08)" },
+  resultsRowName: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" },
+  resultsRowSub:  { fontFamily: "Inter_400Regular", fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 1 },
+  resultsEmpty:   {
+    fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.5)",
+    paddingHorizontal: 12, paddingVertical: 12, textAlign: "center",
+  },
 
   cardBtnRow:  { flexDirection: "row", gap: 8, marginTop: 4 },
   cardBtnHalf: {
