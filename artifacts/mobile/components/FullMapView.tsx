@@ -446,7 +446,7 @@ export function FullMapView() {
 
       {/* Locating spinner */}
       {locating && (
-        <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
           <View style={s.locatingWrap}>
             <View style={s.locatingPill}>
               <ActivityIndicator size="small" color={GOLD} />
@@ -568,7 +568,7 @@ export function FullMapView() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#1a1a1a" },
-  map: { ...StyleSheet.absoluteFillObject },
+  map: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
 
   topOverlay: { position: "absolute", top: 0, left: 0, right: 0, gap: 6 },
 
