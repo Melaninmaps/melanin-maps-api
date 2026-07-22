@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useRouter, useFocusEffect } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Keyboard,
@@ -161,17 +161,16 @@ export function FullMapView() {
     ? culturalSites.filter((s) => s.heritageCategory === activeCulturalCategory)
     : culturalSites;
 
-  const searchedResults = (() => {
-    const raw = resultsSearchQuery.trim();
-    if (!raw) return filteredCulturalSites;
-    const q = raw.toLowerCase();
-    return filteredCulturalSites.filter(
-      (s) =>
-        s.name.trim().toLowerCase().includes(q) ||
-        s.city.trim().toLowerCase().includes(q) ||
-        s.state.trim().toLowerCase().includes(q),
-    );
-  })();
+  const searchedResults = useMemo(() => {
+    const query = resultsSearchQuery.trim().toLowerCase();
+    if (!query) return filteredCulturalSites;
+    return filteredCulturalSites.filter((site) => {
+      const name  = String(site.name  ?? "").trim().toLowerCase();
+      const city  = String(site.city  ?? "").trim().toLowerCase();
+      const state = String(site.state ?? "").trim().toLowerCase();
+      return name.includes(query) || city.includes(query) || state.includes(query);
+    });
+  }, [filteredCulturalSites, resultsSearchQuery]);
 
   const currentWarning = warnings[warningIdx] ?? null;
 
