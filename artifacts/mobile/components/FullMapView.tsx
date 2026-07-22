@@ -339,17 +339,27 @@ export function FullMapView() {
               key={site.id}
               coordinate={{ latitude: lat, longitude: lng }}
               onPress={() => {
+                console.log("MARKER_PRESS_RECEIVED");
+                console.log("siteId=" + site.id);
+                console.log("siteName=" + site.name);
                 setSelectedCulturalSite(site);
                 setSelectedBusiness(null);
+                console.log("selectedCulturalSite=" + site.name);
               }}
               zIndex={isSelected ? 10 : 1}
               tracksViewChanges={isSelected}
             >
-              <View style={[
-                s.culturalMarker,
-                { backgroundColor: cs.color },
-                isSelected && s.culturalMarkerSelected,
-              ]}>
+              {/* pointerEvents="none" lets the touch pass through to Marker's
+                  native handler. Without it the View absorbs the tap on iOS
+                  and onPress never fires. */}
+              <View
+                pointerEvents="none"
+                style={[
+                  s.culturalMarker,
+                  { backgroundColor: cs.color },
+                  isSelected && s.culturalMarkerSelected,
+                ]}
+              >
                 <Feather name="map-pin" size={isSelected ? 13 : 10} color="#fff" />
               </View>
             </Marker>
