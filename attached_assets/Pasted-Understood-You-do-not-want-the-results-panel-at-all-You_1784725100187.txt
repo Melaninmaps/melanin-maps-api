@@ -1,0 +1,58 @@
+Understood. You do **not** want the results panel at all.
+
+You want the simpler experience:
+
+* Tap **HBCU**
+* Purple HBCU pins appear
+* Tap any purple pin
+* The information card opens
+* From the card, choose **View Details** or **Directions**
+
+The newest version should be simplified back to that. The broken empty results panel is adding complexity you no longer want.
+
+Send Replit this:
+
+> **SIMPLIFY CULTURAL MAP — REMOVE RESULTS PANEL, KEEP INTERACTIVE PINS**
+>
+> The cultural results/search panel is no longer wanted.
+>
+> Please restore the simpler map interaction:
+>
+> 1. Remove the cultural-site search field.
+> 2. Remove the scrollable cultural results list.
+> 3. Remove the `HBCU — 0/44` results panel and its Hide/All controls.
+> 4. Keep the clickable category chips:
+>
+>    * HBCU
+>    * Civil Rights
+>    * Heritage
+>    * Native
+>    * Latino
+>    * LGBTQ+
+> 5. Tapping a category should show only that category’s pins and fit the map to those markers.
+> 6. Tapping any cultural-site pin must:
+>
+>    * select the site,
+>    * enlarge or highlight the selected pin,
+>    * center the map on it if needed,
+>    * open the existing bottom information card.
+> 7. The card must show:
+>
+>    * site name
+>    * category
+>    * city/state
+>    * description
+>    * View Details
+>    * Directions
+> 8. Tapping outside the card or using the close button should clear the selection.
+> 9. Preserve the existing cultural data, Apple POI filter, polling fixes, authentication, and business pins.
+>
+> Use the previous working version shown in the screenshot with the Alcorn State University information card as the interaction reference, but remove the large results/search panel above it.
+>
+> Acceptance test:
+>
+> `Map → HBCU → tap a purple pin → site information card opens → View Details works → back → tap another purple pin → that site’s information replaces the prior card → Directions works`
+>
+> Make this a single-file OTA fix in `FullMapView.tsx`. Do not change the API or database.
+
+I agree with this direction. Search can return later as a separate optional feature, but it should not block the primary map interaction. The pins themselves need to work first.
