@@ -25,7 +25,6 @@
       "distribution": "internal",
       "ios": {
         "simulator": false,
-        "credentialsSource": "local",
         "resourceClass": "m-medium"
       },
       "android": {
