@@ -4,6 +4,7 @@ import { useRouter, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -115,6 +116,7 @@ export function FullMapView() {
   const [heatmapPoints, setHeatmapPoints] = useState<HeatmapPoint[]>([]);
   const [culturalSites, setCulturalSites] = useState<CulturalSite[]>([]);
   const [selectedCulturalSite, setSelectedCulturalSite] = useState<CulturalSite | null>(null);
+  const [activeCulturalCategory, setActiveCulturalCategory] = useState("");
 
   const [mapReady, setMapReady] = useState(false);
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
@@ -146,6 +148,10 @@ export function FullMapView() {
       b.longitude >= -180 && b.longitude <= 180 &&
       (activeCategory === "All" || b.category === activeCategory),
   );
+
+  const filteredCulturalSites = activeCulturalCategory
+    ? culturalSites.filter((s) => s.heritageCategory === activeCulturalCategory)
+    : culturalSites;
 
   const currentWarning = warnings[warningIdx] ?? null;
 
@@ -280,20 +286,26 @@ export function FullMapView() {
           );
         })}
 
-        {/* Cultural heritage pins — category-specific colors + icons */}
-        {showCulturalSites && culturalSites.map((site) => {
+        {/* Cultural heritage pins — consistent shape, category color */}
+        {showCulturalSites && filteredCulturalSites.map((site) => {
           const lat = parseFloat(site.latitude);
           const lng = parseFloat(site.longitude);
           if (isNaN(lat) || isNaN(lng)) return null;
           const cs = getCategoryStyle(site.heritageCategory);
+          const isSelected = selectedCulturalSite?.id === site.id;
           return (
             <Marker
               key={site.id}
               coordinate={{ latitude: lat, longitude: lng }}
               onPress={() => { setSelectedCulturalSite(site); setSelectedBusiness(null); }}
+              zIndex={isSelected ? 10 : 1}
             >
-              <View style={[s.culturalMarker, { backgroundColor: cs.color }]}>
-                <Feather name={cs.icon} size={10} color="#fff" />
+              <View style={[
+                s.culturalMarker,
+                { backgroundColor: cs.color },
+                isSelected && s.culturalMarkerSelected,
+              ]}>
+                <Feather name="map-pin" size={isSelected ? 13 : 10} color="#fff" />
               </View>
             </Marker>
           );
@@ -438,21 +450,63 @@ export function FullMapView() {
           </TouchableOpacity>
         </View>
 
-        {/* Heritage pin legend — shown when cultural layer is active */}
+        {/* Heritage category filter chips — tap to filter + zoom */}
         {showCulturalSites && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s.legendRow}
-            pointerEvents="box-none"
-          >
-            {Object.entries(CATEGORY_STYLES).map(([key, cs]) => (
-              <View key={key} style={s.legendItem}>
-                <View style={[s.legendDot, { backgroundColor: cs.color }]} />
-                <Text style={s.legendTxt}>{cs.label}</Text>
+          <>
+            {activeCulturalCategory !== "" && (
+              <View style={s.filterCountRow}>
+                <Text style={s.filterCountTxt}>
+                  {CATEGORY_STYLES[activeCulturalCategory]?.label ?? activeCulturalCategory} — {filteredCulturalSites.length}
+                </Text>
+                <TouchableOpacity
+                  style={s.filterClearBtn}
+                  onPress={() => { setActiveCulturalCategory(""); setSelectedCulturalSite(null); }}
+                >
+                  <Feather name="x" size={11} color="#fff" />
+                  <Text style={s.filterClearTxt}>All</Text>
+                </TouchableOpacity>
               </View>
-            ))}
-          </ScrollView>
+            )}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.legendRow}
+            >
+              {Object.entries(CATEGORY_STYLES).map(([key, cs]) => {
+                const isActive = activeCulturalCategory === key;
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    activeOpacity={0.75}
+                    style={[s.legendItem, isActive && { backgroundColor: cs.color, borderColor: cs.color }]}
+                    onPress={() => {
+                      const next = isActive ? "" : key;
+                      setActiveCulturalCategory(next);
+                      setSelectedCulturalSite(null);
+                      if (next) {
+                        const coords = culturalSites
+                          .filter((site) => site.heritageCategory === next)
+                          .map((site) => ({
+                            latitude: parseFloat(site.latitude),
+                            longitude: parseFloat(site.longitude),
+                          }))
+                          .filter((c) => !isNaN(c.latitude) && !isNaN(c.longitude));
+                        if (coords.length > 0) {
+                          mapRef.current?.fitToCoordinates(coords, {
+                            edgePadding: { top: 140, right: 50, bottom: 260, left: 50 },
+                            animated: true,
+                          });
+                        }
+                      }
+                    }}
+                  >
+                    <View style={[s.legendDot, { backgroundColor: isActive ? "#fff" : cs.color }]} />
+                    <Text style={[s.legendTxt, isActive && { color: "#fff" }]}>{cs.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </>
         )}
       </View>
 
@@ -513,22 +567,38 @@ export function FullMapView() {
               </Text>
             )}
 
-            <TouchableOpacity
-              style={[s.cardBtn, { backgroundColor: cs.color }]}
-              activeOpacity={0.85}
-              onPress={() =>
-                router.push({
-                  pathname: "/cultural-heritage",
-                  params: {
-                    initialCategory: selectedCulturalSite.heritageCategory,
-                    siteId: selectedCulturalSite.id,
-                  },
-                })
-              }
-            >
-              <Feather name="book-open" size={14} color="#fff" />
-              <Text style={s.cardBtnTxt}>View Details</Text>
-            </TouchableOpacity>
+            <View style={s.cardBtnRow}>
+              <TouchableOpacity
+                style={[s.cardBtnHalf, { borderWidth: 1.5, borderColor: cs.color }]}
+                activeOpacity={0.85}
+                onPress={() => {
+                  const lat = parseFloat(selectedCulturalSite.latitude);
+                  const lng = parseFloat(selectedCulturalSite.longitude);
+                  void Linking.openURL(
+                    `maps://?ll=${lat},${lng}&q=${encodeURIComponent(selectedCulturalSite.name)}`
+                  );
+                }}
+              >
+                <Feather name="navigation" size={14} color={cs.color} />
+                <Text style={[s.cardBtnTxt, { color: cs.color }]}>Directions</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.cardBtnHalf, { backgroundColor: cs.color }]}
+                activeOpacity={0.85}
+                onPress={() =>
+                  router.push({
+                    pathname: "/cultural-heritage",
+                    params: {
+                      initialCategory: selectedCulturalSite.heritageCategory,
+                      siteId: selectedCulturalSite.id,
+                    },
+                  })
+                }
+              >
+                <Feather name="book-open" size={14} color="#fff" />
+                <Text style={s.cardBtnTxt}>View Details</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         );
       })()}
@@ -644,6 +714,31 @@ const s = StyleSheet.create({
     borderWidth: 2, borderColor: "#fff",
     shadowColor: "#000", shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.3, shadowRadius: 2, elevation: 3,
+  },
+  culturalMarkerSelected: {
+    width: 38, height: 38, borderRadius: 19,
+    borderWidth: 3,
+    shadowOpacity: 0.45, shadowRadius: 4, elevation: 6,
+  },
+
+  filterCountRow: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    marginHorizontal: 12, marginBottom: 2,
+    backgroundColor: "rgba(0,0,0,0.60)",
+    paddingHorizontal: 12, paddingVertical: 5,
+    borderRadius: 10,
+  },
+  filterCountTxt: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#fff" },
+  filterClearBtn: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    backgroundColor: "rgba(255,255,255,0.18)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10,
+  },
+  filterClearTxt: { fontFamily: "Inter_500Medium", fontSize: 11, color: "#fff" },
+
+  cardBtnRow:  { flexDirection: "row", gap: 8, marginTop: 4 },
+  cardBtnHalf: {
+    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 8, borderRadius: 12, paddingVertical: 12,
   },
 
   card: {
