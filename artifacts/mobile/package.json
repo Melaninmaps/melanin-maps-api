@@ -68,6 +68,7 @@
     "zod-validation-error": "^3.4.0"
   },
   "dependencies": {
+    "@babel/highlight": "7.25.9",
     "@expo-google-fonts/playfair-display": "^0.4.2",
     "@react-native-community/netinfo": "~12.0.1",
     "expo": "~57.0.6",
