@@ -1,0 +1,149 @@
+You’re right. The pins are technically present, but the map still does not communicate clearly.
+
+The purple head, star, heart, house, globe, and orange location symbols are not self-explanatory. A user should never have to guess what a marker means. More importantly, tapping **HBCU** should help you find Howard immediately—not just change a color chip while leaving you to scan the entire region.
+
+## What the map should do
+
+When you tap **HBCU**:
+
+1. Hide all non-HBCU cultural-site pins.
+2. Keep only HBCU markers visible.
+3. Automatically zoom and center to the HBCUs in the current area.
+4. Show a small result panel such as:
+
+   * **HBCUs nearby — 3**
+   * Howard University
+   * University of the District of Columbia
+   * Bowie State University
+5. Let you tap **Howard University** from either:
+
+   * its map marker, or
+   * the results list.
+6. Open a callout or detail card with:
+
+   * Howard University
+   * HBCU
+   * Washington, DC
+   * short historical description
+   * address
+   * directions
+   * website
+   * save/share
+   * **View Details**
+
+## The marker system needs clearer meaning
+
+I would simplify it.
+
+### Cultural-site markers
+
+Use the same landmark/book-style marker shape, but vary the color by cultural category:
+
+* Purple — HBCU
+* Red — Civil Rights
+* Gold — Heritage
+* Green — Native
+* Orange — Latino
+* Burgundy — LGBTQ+ history
+
+Do not use a purple person silhouette for an HBCU. That icon looks like a user profile or people marker, not a university.
+
+### Business markers
+
+Use one consistent business-pin shape, with ownership or category shown after tapping it—not many unexplained icon shapes scattered across the map.
+
+### Selected marker
+
+When a marker is selected:
+
+* enlarge it,
+* add a white outline,
+* show its name above or in a bottom card,
+* keep the selected location visible while the map recenters.
+
+## Send Replit this
+
+> **P0 MAP DISCOVERY AND MARKER CLARITY — HBCU / CULTURAL-SITE EXPERIENCE**
+>
+> Cultural-site records now appear on the map, but the current marker system is confusing and the category filters do not help users locate specific sites.
+>
+> Current problems:
+>
+> * Purple person/head markers do not communicate “HBCU.”
+> * Star, heart, house, globe and person icons have no visible legend or clear meaning.
+> * Tapping the HBCU chip does not make Howard University easy to find.
+> * Cultural markers have no visible names.
+> * Users cannot reliably tap Howard and read information about Howard.
+>
+> Do not add more decorative marker icons. First audit and simplify the interaction.
+>
+> ### Required HBCU filter behavior
+>
+> When the user taps **HBCU**:
+>
+> 1. Filter cultural sites to `category = HBCU`.
+> 2. Hide all other cultural-site categories.
+> 3. Automatically fit or recenter the map around matching HBCU markers.
+> 4. Show the number of matching results.
+> 5. Display a scrollable result list or bottom sheet containing the matching site names.
+> 6. Confirm Howard University is included and selectable.
+> 7. Tapping Howard in either the list or map must select its marker and open its information.
+>
+> ### Required cultural-site marker behavior
+>
+> Use one consistent cultural-landmark marker shape, with category color only:
+>
+> * HBCU — purple
+> * Civil Rights — red
+> * Heritage — gold
+> * Native — green
+> * Latino — orange
+> * LGBTQ+ history — burgundy
+>
+> Do not use the generic person/profile icon for HBCUs.
+>
+> Add a small visible legend or ensure the category chips themselves serve as the legend.
+>
+> ### Required tap behavior
+>
+> Tapping a cultural-site marker must show:
+>
+> * site name
+> * cultural category
+> * city and state
+> * short description
+> * View Details
+> * Directions
+>
+> Specifically confirm:
+>
+> * Howard University marker can be found through the HBCU filter.
+> * Tapping Howard displays its name and available historical information.
+>
+> ### Read-only audit first
+>
+> Return:
+>
+> 1. What each current marker icon represents.
+> 2. Which icons belong to businesses, users, cultural sites and safety data.
+> 3. Whether the HBCU chip currently filters data or only changes UI state.
+> 4. Whether Howard University exists in the cultural-site API response.
+> 5. Howard’s exact category value and coordinates.
+> 6. Whether a cultural-site detail route already exists.
+> 7. The smallest OTA-safe implementation plan.
+> 8. Exact files affected.
+>
+> Do not change polling, authentication, POI filtering, map provider or database records during this audit.
+
+## My design recommendation
+
+The category chips should behave like **search tools**, not just colored labels.
+
+For example:
+
+* Tap **HBCU** → only HBCUs appear, map recenters, list opens.
+* Tap **Civil Rights** → only civil-rights landmarks appear.
+* Tap **Heritage Sites** again → all cultural categories return.
+* Tap a location → a named card opens.
+
+That creates context and purpose. The current map shows that the data exists; the next step is making it understandable and navigable.
