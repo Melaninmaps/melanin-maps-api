@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { db, usersTable, profileTagsTable, reviewsTable, memberConnections, userFollowsTable } from "@workspace/db";
 import { eq, ilike, or, and, ne, desc, inArray, sql } from "drizzle-orm";
 import { objectStorageClient } from "../lib/objectStorage";
+import { deleteAllSessionsForUser } from "../lib/auth";
 
 const avatarUpload = multer({
   storage: multer.memoryStorage(),
@@ -456,10 +457,15 @@ router.delete("/users/me", async (req: Request, res: Response) => {
     res.status(401).json({ error: "Authentication required" });
     return;
   }
+  const userId = req.user.id;
   try {
+    // Revoke all sessions before deleting the row so that any
+    // in-flight requests with old tokens are rejected immediately.
+    await deleteAllSessionsForUser(userId);
+
     const [deleted] = await db
       .delete(usersTable)
-      .where(eq(usersTable.id, req.user.id))
+      .where(eq(usersTable.id, userId))
       .returning({ id: usersTable.id });
     if (!deleted) {
       res.status(404).json({ error: "User not found" });
@@ -590,20 +596,5 @@ router.put("/users/settings", async (req: Request, res: Response) => {
   }
 });
 
-// DELETE /users/me — permanently delete the authenticated user's account
-router.delete("/users/me", async (req: Request, res: Response) => {
-  if (!req.user?.id) {
-    res.status(401).json({ error: "Authentication required." });
-    return;
-  }
-  const userId = req.user.id;
-  try {
-    await db.delete(usersTable).where(eq(usersTable.id, userId));
-    res.json({ success: true });
-  } catch (err) {
-    req.log.error({ err }, "DELETE /api/users/me error");
-    res.status(500).json({ error: "Failed to delete account. Please try again." });
-  }
-});
 
 export default router;

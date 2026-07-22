@@ -147,14 +147,20 @@ export default function SettingsScreen() {
                 const SecureStore = await import("expo-secure-store");
                 const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
                 const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-                await fetch(`${apiBase}/api/users/me`, {
+                const res = await fetch(`${apiBase}/api/users/me`, {
                   method: "DELETE",
                   headers: token ? { Authorization: `Bearer ${token}` } : {},
                 });
-              } catch { /* best effort */ }
-              finally {
+                if (!res.ok) {
+                  const body = await res.json().catch(() => ({}));
+                  const message = (body as { error?: string }).error ?? `Server returned ${res.status}`;
+                  Alert.alert("Deletion failed", `${message}\n\nYour account has not been deleted. Please try again.`);
+                  return;
+                }
                 await logout();
                 router.replace("/onboarding");
+              } catch {
+                Alert.alert("Deletion failed", "A network error occurred. Your account has not been deleted. Please try again.");
               }
             },
           },

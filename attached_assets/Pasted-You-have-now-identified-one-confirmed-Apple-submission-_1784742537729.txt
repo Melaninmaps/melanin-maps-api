@@ -1,0 +1,135 @@
+You have now identified **one confirmed Apple submission blocker** and one likely non-blocking UX issue.
+
+## Confirmed blocker: account deletion is not working
+
+The app told you the account was deleted, but you could immediately sign back in using the same email and password. That means the deletion flow either:
+
+* only logged you out,
+* only showed a success message,
+* soft-deleted a profile but left the authentication account active,
+* or failed silently.
+
+Apple requires apps that permit account creation to let users initiate deletion inside the app, and the process must offer deletion of the entire account record and associated personal data—not merely deactivation or logout. ([Apple Developer][1])
+
+**Do not submit until this is corrected and proven with a temporary account.** This is much more likely to cause rejection than the vibes issue.
+
+## Vibes category
+
+The inability to select a vibes category should be recorded, but it does not automatically need to delay submission unless:
+
+* it blocks a major advertised feature;
+* it causes a blank or broken screen;
+* or Apple is specifically instructed to test it.
+
+Apple’s common review concerns include broken functionality and incomplete experiences, but a secondary filter that does not work is generally less serious than failed authentication or account deletion. ([Apple Developer][2])
+
+For this release candidate, I would either:
+
+1. confirm the vibes control is not needed in the reviewer path and document it as a post-approval fix, or
+2. hide/disable it cleanly if tapping it visibly appears broken.
+
+Do not build out the vocabulary system now.
+
+## Send Replit this
+
+> # P0 APPLE BLOCKER — DELETE ACCOUNT FALSE SUCCESS
+>
+> During the physical-device reviewer simulation, I created a temporary account and selected **Delete Account**.
+>
+> The app reported that the account was deleted, but I was immediately able to log back in using the same email address and password.
+>
+> This proves the account was not actually deleted.
+>
+> ## Launch Lock
+>
+> Do not work on:
+>
+> * map interactions;
+> * vibes vocabulary;
+> * cultural-site enhancements;
+> * design changes;
+> * new features;
+> * unrelated OTAs.
+>
+> The only approved task is to identify and correct the account-deletion failure.
+>
+> ## Read-only trace first
+>
+> Return verified evidence for:
+>
+> 1. The exact mobile action triggered by **Profile → Settings → Delete Account**.
+> 2. The exact API endpoint and HTTP method called.
+> 3. The request body and authentication mechanism, with secrets removed.
+> 4. The actual HTTP status and response body returned during deletion.
+> 5. Why the mobile app displayed success.
+> 6. Whether the endpoint deletes or updates records in:
+>
+>    * users;
+>    * accounts/auth identities;
+>    * sessions;
+>    * credentials/password records;
+>    * memberships/subscriptions;
+>    * user-generated posts, reviews and uploads;
+>    * saved places and preferences.
+> 7. Whether the current implementation only logs out, deactivates, anonymizes or soft-deletes.
+> 8. Whether active sessions are revoked.
+> 9. Whether Sign in with Apple tokens are revoked when applicable.
+> 10. Why the same email and password remained valid.
+>
+> ## Required behavior
+>
+> After confirmed account deletion:
+>
+> * the user is logged out;
+> * all sessions are revoked;
+> * the deleted credentials cannot authenticate;
+> * the app must not display success unless the server confirms deletion;
+> * associated personal data must be deleted or anonymized according to the published policy and legal-retention rules;
+> * any retained data must be documented;
+> * the same email may be reused only according to the intended product policy.
+>
+> ## Required error behavior
+>
+> If deletion fails:
+>
+> * do not log the user out as though deletion succeeded;
+> * do not show “Account deleted”;
+> * show a clear error and allow retry;
+> * preserve the account and session until success is confirmed.
+>
+> ## Acceptance test
+>
+> Use a new temporary account:
+>
+> 1. Create account.
+> 2. Log in.
+> 3. Force-close and reopen; confirm session remains.
+> 4. Delete account inside the app.
+> 5. Confirm automatic logout.
+> 6. Attempt login with the same password: it must fail because the former account no longer exists.
+> 7. Confirm the user/auth/session records are deleted or properly anonymized.
+> 8. Confirm whether a brand-new account may be created with that email.
+>
+> Return:
+>
+> * root cause;
+> * smallest fix;
+> * exact files changed;
+> * server and mobile delivery requirements;
+> * evidence from the completed acceptance test.
+>
+> Do not publish until the test passes.
+
+## Current reviewer-test status
+
+* Login and logout twice: **PASS**
+* Map renders: **PASS**
+* HBCU descriptions available: **PASS**
+* Legal pages: **PASS**
+* Vibes category selection: **known defect, assess as non-blocking**
+* Account deletion: **FAIL — submission blocker**
+
+This is frustrating, but the physical-device walkthrough did exactly what it was supposed to do: it caught a likely rejection before Apple did. Once deletion genuinely passes, we can finish the remaining reviewer steps and submit without reopening unrelated feature work.
+
+[1]: https://developer.apple.com/app-store/review/guidelines/?utm_source=chatgpt.com "App Review Guidelines - Apple Developer"
+[2]: https://developer.apple.com/app-store/review/?utm_source=chatgpt.com "App Review - Distribute - Apple Developer"
