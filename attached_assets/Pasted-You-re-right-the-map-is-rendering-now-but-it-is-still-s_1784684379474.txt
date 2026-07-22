@@ -1,0 +1,58 @@
+You’re right — the **map is rendering now**, but it is still showing the standard Apple basemap, including mainstream places such as Trader Joe’s. That is not the curated Mapping With Melanin™ experience you want.
+
+The important distinction is:
+
+* **Base map:** roads, neighborhoods, parks, and Apple’s default place labels
+* **Your platform layer:** only the businesses, heritage sites, safety data, and community locations you choose to feature
+
+Right now, Apple’s default points of interest are visible underneath your own layer.
+
+## What Replit needs to change
+
+Ask Replit to audit whether `react-native-maps` on iOS can disable Apple’s default points of interest in the current setup. The likely property is a map configuration such as disabling POIs, but they must verify the exact supported prop for your installed version before changing anything.
+
+Send this:
+
+> **MAP CONTENT CORRECTION — HIDE DEFAULT MAINSTREAM BUSINESSES**
+>
+> The map now renders, but it is showing Apple Maps’ default business and place labels, including businesses such as Trader Joe’s. This is not the intended Mapping With Melanin™ experience.
+>
+> The map should preserve:
+>
+> * roads
+> * neighborhood and city names
+> * parks
+> * transit and geographic context where useful
+>
+> But it should hide or suppress Apple’s default commercial points of interest so users primarily see:
+>
+> * Mapping With Melanin business pins
+> * cultural and heritage sites
+> * safety overlays
+> * community-recommended locations
+>
+> Please perform a read-only compatibility check first:
+>
+> 1. Confirm the exact `react-native-maps` version.
+> 2. Confirm the supported iOS property for disabling default Apple Maps points of interest.
+> 3. Confirm whether that property hides only commercial POIs or also removes useful landmarks, transit, parks, hospitals, and public services.
+> 4. Show the exact proposed `MapView` change.
+> 5. Confirm whether this is OTA-safe or requires a native build.
+> 6. Do not remove our own business or heritage markers.
+> 7. Do not switch map providers or introduce Google Maps on iOS.
+>
+> Return screenshots or a clear before/after behavior description before publishing.
+
+## My recommendation
+
+Hide **default commercial POIs**, but be careful not to erase all useful geographic context. You still want people to understand where they are.
+
+The ideal result is:
+
+* streets and neighborhoods remain,
+* Philadelphia remains recognizable,
+* parks and important civic landmarks remain where possible,
+* unrelated mainstream businesses disappear,
+* your curated businesses and cultural sites become the visible focus.
+
+This should likely be a small map configuration change, but Replit needs to verify the exact prop and what Apple Maps removes before publishing it.
