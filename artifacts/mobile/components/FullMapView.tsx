@@ -519,7 +519,10 @@ export function FullMapView() {
               onPress={() =>
                 router.push({
                   pathname: "/cultural-heritage",
-                  params: { initialCategory: selectedCulturalSite.heritageCategory },
+                  params: {
+                    initialCategory: selectedCulturalSite.heritageCategory,
+                    siteId: selectedCulturalSite.id,
+                  },
                 })
               }
             >

@@ -129,7 +129,7 @@ export default function CulturalHeritagePage() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const params = useLocalSearchParams<{ initialCategory?: string }>();
+  const params = useLocalSearchParams<{ initialCategory?: string; siteId?: string }>();
 
   const [sites, setSites] = useState<CulturalSite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -138,6 +138,7 @@ export default function CulturalHeritagePage() {
   const [selectedSite, setSelectedSite] = useState<CulturalSite | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
+  const autoOpenedRef = useRef(false);
 
   const debouncedSearch = useDebounce(searchInput, 350);
 
@@ -169,6 +170,17 @@ export default function CulturalHeritagePage() {
   useEffect(() => {
     void fetchSites(selectedHeritage, debouncedSearch);
   }, [selectedHeritage, debouncedSearch, fetchSites]);
+
+  useEffect(() => {
+    if (!loading && params.siteId && sites.length > 0 && !autoOpenedRef.current) {
+      const target = sites.find((s) => s.id === params.siteId);
+      if (target) {
+        autoOpenedRef.current = true;
+        setSelectedSite(target);
+        setModalVisible(true);
+      }
+    }
+  }, [loading, params.siteId, sites]);
 
   const openDetail = (site: CulturalSite) => {
     setSelectedSite(site);
