@@ -4,6 +4,7 @@ import { useRouter, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   Linking,
   ScrollView,
   StyleSheet,
@@ -25,6 +26,10 @@ import { useSafetyProximity } from "@/hooks/useSafetyProximity";
 import { useAuth } from "@/lib/auth";
 
 const GOLD = "#CA922B";
+// KinfolkAI restore tab lives at bottom: insets.bottom + 90 in the root layout.
+// FullMapView content area base is ~83px from raw screen bottom (tab bar).
+// Adding ~7px net = 90px clearance keeps cards and FAB above the widget.
+const KINFOLK_CLEAR = 90;
 
 const DEFAULT_REGION: Region = {
   latitude: 39.9526,
@@ -156,16 +161,17 @@ export function FullMapView() {
     ? culturalSites.filter((s) => s.heritageCategory === activeCulturalCategory)
     : culturalSites;
 
-  const searchedResults = resultsSearchQuery.trim()
-    ? filteredCulturalSites.filter((s) => {
-        const q = resultsSearchQuery.toLowerCase();
-        return (
-          s.name.toLowerCase().includes(q) ||
-          s.city.toLowerCase().includes(q) ||
-          s.state.toLowerCase().includes(q)
-        );
-      })
-    : filteredCulturalSites;
+  const searchedResults = (() => {
+    const raw = resultsSearchQuery.trim();
+    if (!raw) return filteredCulturalSites;
+    const q = raw.toLowerCase();
+    return filteredCulturalSites.filter(
+      (s) =>
+        s.name.trim().toLowerCase().includes(q) ||
+        s.city.trim().toLowerCase().includes(q) ||
+        s.state.trim().toLowerCase().includes(q),
+    );
+  })();
 
   const currentWarning = warnings[warningIdx] ?? null;
 
@@ -311,8 +317,13 @@ export function FullMapView() {
             <Marker
               key={site.id}
               coordinate={{ latitude: lat, longitude: lng }}
-              onPress={() => { setSelectedCulturalSite(site); setSelectedBusiness(null); }}
+              onPress={() => {
+                Keyboard.dismiss();
+                setSelectedCulturalSite(site);
+                setSelectedBusiness(null);
+              }}
               zIndex={isSelected ? 10 : 1}
+              tracksViewChanges={isSelected}
             >
               <View style={[
                 s.culturalMarker,
@@ -477,7 +488,10 @@ export function FullMapView() {
                   <View style={{ flexDirection: "row", gap: 6 }}>
                     <TouchableOpacity
                       style={s.filterClearBtn}
-                      onPress={() => setResultsCollapsed((v) => !v)}
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setResultsCollapsed((v) => !v);
+                      }}
                     >
                       <Feather name={resultsCollapsed ? "chevron-down" : "chevron-up"} size={11} color="#fff" />
                       <Text style={s.filterClearTxt}>{resultsCollapsed ? "List" : "Hide"}</Text>
@@ -485,6 +499,7 @@ export function FullMapView() {
                     <TouchableOpacity
                       style={s.filterClearBtn}
                       onPress={() => {
+                        Keyboard.dismiss();
                         setActiveCulturalCategory("");
                         setSelectedCulturalSite(null);
                         setResultsSearchQuery("");
@@ -519,9 +534,9 @@ export function FullMapView() {
                     </View>
                     <ScrollView
                       style={s.resultsList}
-                      keyboardShouldPersistTaps="handled"
+                      keyboardShouldPersistTaps="always"
+                      keyboardDismissMode="on-drag"
                       showsVerticalScrollIndicator={false}
-                      nestedScrollEnabled
                     >
                       {searchedResults.length === 0 ? (
                         <Text style={s.resultsEmpty}>No results for "{resultsSearchQuery}"</Text>
@@ -535,6 +550,7 @@ export function FullMapView() {
                               style={[s.resultsRow, isRowSelected && s.resultsRowSelected]}
                               activeOpacity={0.7}
                               onPress={() => {
+                                Keyboard.dismiss();
                                 const lat = parseFloat(site.latitude);
                                 const lng = parseFloat(site.longitude);
                                 if (!isNaN(lat) && !isNaN(lng)) {
@@ -625,7 +641,7 @@ export function FullMapView() {
       {/* Recenter FAB */}
       {locationGranted && (
         <TouchableOpacity
-          style={[s.fab, { backgroundColor: colors.background, bottom: anyCardVisible ? 210 : insets.bottom + 24 }]}
+          style={[s.fab, { backgroundColor: colors.background, bottom: anyCardVisible ? KINFOLK_CLEAR + 210 : insets.bottom + 24 }]}
           onPress={() => void recenter()}
           activeOpacity={0.85}
         >
@@ -637,7 +653,7 @@ export function FullMapView() {
       {selectedCulturalSite && (() => {
         const cs = getCategoryStyle(selectedCulturalSite.heritageCategory);
         return (
-          <View style={[s.card, { backgroundColor: colors.card, borderColor: cs.color + "40", paddingBottom: insets.bottom + 12 }]}>
+          <View style={[s.card, { backgroundColor: colors.card, borderColor: cs.color + "40", paddingBottom: insets.bottom + 12, bottom: KINFOLK_CLEAR }]}>
             <View style={s.cardHandle} />
             <TouchableOpacity style={s.cardClose} onPress={() => setSelectedCulturalSite(null)}>
               <Feather name="x" size={18} color={colors.mutedForeground} />
@@ -705,7 +721,7 @@ export function FullMapView() {
 
       {/* ── Business bottom card ── */}
       {!selectedCulturalSite && selectedBusiness && (
-        <View style={[s.card, { backgroundColor: colors.card, borderColor: colors.border, paddingBottom: insets.bottom + 12 }]}>
+        <View style={[s.card, { backgroundColor: colors.card, borderColor: colors.border, paddingBottom: insets.bottom + 12, bottom: KINFOLK_CLEAR }]}>
           <View style={s.cardHandle} />
           <TouchableOpacity style={s.cardClose} onPress={() => setSelectedBusiness(null)}>
             <Feather name="x" size={18} color={colors.mutedForeground} />
