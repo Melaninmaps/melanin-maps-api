@@ -1,0 +1,157 @@
+Yes — we absolutely can and should **prefill these categories**, especially HBCUs and major cultural landmarks.
+
+Your screenshots confirm the filter now works:
+
+* **HBCU** shows 44 records and purple pins.
+* **Heritage** shows 31 records and gold pins.
+* The map automatically zooms toward matching sites.
+
+The remaining problem is **data coverage and identification**. A purple pin by itself does not tell you whether it is Howard, Morgan State, Bowie State, or another institution.
+
+## What should be prefilled
+
+Start with authoritative, well-known places that are unlikely to be disputed:
+
+### HBCUs
+
+Prefill the full verified national HBCU list, including at minimum:
+
+* Howard University
+* Morgan State University
+* Bowie State University
+* Coppin State University
+* University of the District of Columbia
+* Lincoln University
+* Cheyney University
+* Hampton University
+* Norfolk State University
+* Virginia State University
+* Spelman College
+* Morehouse College
+* Clark Atlanta University
+* Florida A&M University
+* North Carolina A&T State University
+
+Howard already appears to exist in the data, but we need to confirm why it is not easy to locate or identify.
+
+### Other cultural categories
+
+We can also prefill:
+
+* Civil Rights landmarks
+* Black heritage museums
+* historic Black neighborhoods
+* Native cultural sites
+* Latino cultural landmarks
+* LGBTQ+ historical sites
+* Women’s history sites
+* immigrant heritage locations
+* freedom trails and Underground Railroad sites
+* historically significant churches
+* cultural arts institutions
+
+## What each prefilled record should contain
+
+Every site should include:
+
+* official name
+* category and subcategory
+* city and state
+* full address
+* latitude and longitude
+* short description
+* historical significance
+* official website
+* image or image reference
+* source used to verify the information
+* verification date
+* accessibility information when known
+
+The descriptions should be factual and sourced—not generated as unsupported history.
+
+## The map experience should also improve
+
+When you tap **HBCU**, the map should not just display purple pins. It should show a list such as:
+
+> **HBCUs — 44**
+> Howard University — Washington, DC
+> Morgan State University — Baltimore, MD
+> Bowie State University — Bowie, MD
+
+You should be able to tap **Howard University** from that list even if its marker is hidden behind another pin or outside the current viewport.
+
+Send Replit this:
+
+> **CULTURAL-SITE PREFILL + SEARCHABLE RESULTS AUDIT**
+>
+> The cultural-category filters now work, but the experience still depends on users visually guessing which marker represents which location.
+>
+> Please complete a read-only audit before adding data.
+>
+> ### Existing-data audit
+>
+> For each cultural category, return:
+>
+> * total production records
+> * records with valid coordinates
+> * records with descriptions
+> * records with official websites
+> * records with source attribution
+> * duplicate records
+> * records missing city/state
+>
+> Specifically confirm the complete production record for:
+>
+> * Howard University
+> * Morgan State University
+> * Bowie State University
+> * University of the District of Columbia
+>
+> Confirm why Howard University does not appear clearly when the HBCU filter is selected.
+>
+> ### Prefill plan
+>
+> Prepare a verified prefill plan for:
+>
+> * all federally or officially recognized HBCUs
+> * major Civil Rights landmarks
+> * Black heritage and cultural landmarks
+> * Native cultural sites
+> * Latino cultural landmarks
+> * LGBTQ+ historical sites
+> * Women’s history sites
+> * historic cultural neighborhoods
+>
+> Every proposed record must include:
+>
+> * name
+> * cultural category
+> * city/state
+> * address
+> * latitude/longitude
+> * concise factual description
+> * official website
+> * authoritative source
+> * verification date
+>
+> Do not insert records yet. Return the proposed counts and sources for review.
+>
+> ### Required map result list
+>
+> When a cultural filter such as HBCU is selected:
+>
+> 1. Continue showing filtered markers.
+> 2. Display a scrollable matching-site list or bottom sheet.
+> 3. Each row must show name, city and state.
+> 4. Tapping a row must center and select its marker.
+> 5. Tapping Howard University must open its information card.
+> 6. Add a text search within the filtered results so a user can type “Howard.”
+>
+> Do not change map polling, Apple POI filtering, authentication or business data.
+
+My recommendation is to do this in two stages:
+
+1. **Make the existing records searchable and identifiable.**
+2. **Then systematically prefill and verify the complete national cultural-site collection.**
+
+That way, Howard becomes usable immediately while we build the broader national data responsibly.
