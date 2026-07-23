@@ -11,6 +11,7 @@ import { logger } from "./lib/logger";
 import { authMiddleware } from "./middlewares/authMiddleware";
 import { WebhookHandlers } from "./webhookHandlers";
 import { generalLimiter } from "./middleware/rateLimiter";
+import { pool, getPoolStats } from "@workspace/db";
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const webPublicDir = path.join(_dirname, "public");
@@ -20,9 +21,11 @@ const app: Express = express();
 // Trust the proxy in front of us (Replit's reverse proxy sets X-Forwarded-For)
 app.set("trust proxy", 1);
 
-// Health check registered BEFORE all middleware so the startup probe
-// always gets an immediate 200 — nothing (auth, rate-limit, pino, etc.) can block it.
-// Multiple paths to cover different proxy/direct-port health check strategies.
+// Health/readiness endpoints registered BEFORE all middleware so startup
+// probes always get an immediate response — nothing (auth, rate-limit,
+// pino, etc.) can block them.
+
+// Process-only liveness: confirms the Node process is alive.
 app.get("/api/healthz", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
@@ -31,6 +34,27 @@ app.get("/healthz", (_req: Request, res: Response) => {
 });
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
+});
+
+// DB-aware readiness: confirms the pg pool can execute a query.
+// Used by Railway's deployment startup health check so traffic is only
+// routed to the new instance once the pool is functional.
+// Returns pool stats in every response for observability.
+// Returns HTTP 503 if the pool is exhausted or the DB is unreachable.
+app.get("/api/readyz", async (_req: Request, res: Response) => {
+  const stats = getPoolStats();
+  try {
+    await Promise.race([
+      pool.query("SELECT 1"),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("SELECT 1 timed out after 2000ms")), 2000),
+      ),
+    ]);
+    res.json({ status: "ok", db: "ok", pool: stats });
+  } catch (err: unknown) {
+    const detail = err instanceof Error ? err.message : "unknown error";
+    res.status(503).json({ status: "degraded", db: "error", pool: stats, detail });
+  }
 });
 app.get("/api/dl", (_req: Request, res: Response) => {
   res.download(path.join(_dirname, "../dist/index.mjs"), "index.mjs");
@@ -127,7 +151,7 @@ app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
   // an indefinite spinner. This fires when connectionTimeoutMillis expires
   // (pool is saturated) or when a route explicitly passes the error to next().
   if (isPoolTimeoutError(err)) {
-    logger.warn({ url: req.url, method: req.method }, "db-pool connection timeout — 503");
+    logger.warn({ url: req.url, method: req.method, pool: getPoolStats() }, "db-pool connection timeout — 503");
     res.status(503).json({ error: "Service temporarily unavailable. Please try again in a moment." });
     return;
   }

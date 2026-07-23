@@ -28,7 +28,7 @@ args = ["pnpm", "--filter", "@workspace/api-server", "run", "start"]
 NODE_ENV = "production"
 
 [services.production.health.startup]
-path = "/api/healthz"
+path = "/api/readyz"
 initialDelaySeconds = 10
 timeoutSeconds = 10
 periodSeconds = 10

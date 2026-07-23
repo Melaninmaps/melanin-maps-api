@@ -1,6 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { setDbLogger, pool } from "@workspace/db";
+import { setDbLogger, pool, getPoolStats } from "@workspace/db";
 import { getStripeSync } from "./stripeClient";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 
@@ -72,6 +72,7 @@ const server = app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+  logger.info({ pool: getPoolStats() }, "server ready — initial pool state");
 
   initStripe().catch((err) => logger.error({ err }, "Background Stripe init failed"));
 
@@ -100,21 +101,35 @@ function gracefulShutdown(signal: string) {
   if (isShuttingDown) return;
   isShuttingDown = true;
 
-  logger.info({ signal }, "Received shutdown signal — draining…");
+  // Log pool state at the moment shutdown fires — key diagnostic data
+  // if this deployment event later shows pool exhaustion in the next process.
+  logger.info({ signal, pool: getPoolStats() }, "Received shutdown signal — pool state at drain start");
 
+  // 1. Stop accepting new connections and wait for in-flight requests to finish.
   server.close(async () => {
     logger.info("HTTP server closed. Draining DB pool…");
     try {
       await pool.end();
-      logger.info("DB pool drained. Exiting cleanly.");
+      logger.info({ pool: getPoolStats() }, "DB pool drained. Exiting cleanly.");
     } catch (err) {
       logger.error({ err }, "Error draining DB pool during shutdown");
     }
     process.exit(0);
   });
 
-  // Safety net: if server.close() takes > 25 s, force-exit so Railway's
-  // SIGKILL at 30 s doesn't catch us mid-drain.
+  // 2. Immediately close idle keep-alive connections so the server.close()
+  // callback fires promptly. Does NOT affect active in-flight requests.
+  server.closeIdleConnections();
+
+  // 3. Last resort: at T=22s, close any remaining active connections so
+  // pool.end() has time to complete before the T=25s force-exit.
+  // Requests still open at this point have already had 22s to complete.
+  setTimeout(() => {
+    logger.warn({ pool: getPoolStats() }, "approaching force-exit deadline — closing remaining active connections");
+    server.closeAllConnections();
+  }, 22_000);
+
+  // 4. Absolute safety net — force-exit before Railway's SIGKILL at 30s.
   setTimeout(() => {
     logger.warn("Graceful shutdown timed out after 25 s — force exiting");
     process.exit(1);
