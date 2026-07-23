@@ -1,0 +1,46 @@
+Yes—Replit’s **Option 2 is acceptable as a temporary internal-testing step**, with strict limits.
+
+Google allows application restrictions to be omitted, but strongly recommends restricting production keys. An API restriction to **Maps SDK for Android only** still prevents that key from being used with unrelated Google APIs; however, without the package/SHA-1 restriction, another Android app could potentially use it for Maps SDK requests. ([Google for Developers][1])
+
+## Proceed this way
+
+Create the new key with:
+
+* **Name:** `Mapping With Melanin – Android Maps`
+* **API restriction:** `Maps SDK for Android` only
+* **Application restriction:** `None` temporarily
+
+Then click **Create**.
+
+Do not alter the existing website key.
+
+### Immediately afterward
+
+1. Copy the new key privately.
+2. Replace the EAS production environment variable:
+   `GOOGLE_MAPS_API_KEY`
+   with this new Android key.
+3. Do not put the new key into chat, screenshots, Replit messages, or source code.
+4. Have Replit update Version Code to 67 and build it.
+5. Upload VC67 only to **Internal Testing**.
+6. Confirm:
+
+   * the Android map loads;
+   * signup has no false internet error;
+   * existing login works;
+   * session persistence works.
+
+## Important release limit
+
+Do **not** promote VC67 to Closed Testing or Production while the Android key remains unrestricted by app certificate.
+
+Once the map is confirmed working, we will either:
+
+* locate the Play App Signing SHA-1 and add `com.melaninmaps.app` plus that fingerprint; or
+* extract the signing certificate from the Play-delivered APK using another reliable method.
+
+Google’s recommended final configuration for Maps SDK for Android is an Android application restriction using the package name and signing-certificate SHA-1, plus the Maps SDK for Android API restriction. ([Google for Developers][1])
+
+You can safely close the unfinished form and recreate it now with **Application restrictions: None** and **Maps SDK for Android only**.
+
+[1]: https://developers.google.com/maps/api-security-best-practices?utm_source=chatgpt.com "Google Maps Platform security guidance  |  Google for Developers"
