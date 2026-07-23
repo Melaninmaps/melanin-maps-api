@@ -3,7 +3,21 @@ name: Launch version state
 description: Current app store submission state — Android and iOS build versions and track status. Update this every build.
 ---
 
-# Launch Version State (as of July 20, 2026)
+# Launch Version State (as of July 22, 2026)
+
+## iOS Build 95 — SUBMITTED TO APPLE REVIEW
+- Version: 1.1.5, Build number: 95
+- Status: Saved for Apple review (submitted July 22, 2026)
+- Key changes in 95: Apple Sign-In working (APPLE_KEY_ID corrected from 2ZNB4XAZY7 → Z2NB4XAZY7 in Railway), TN3194 revocation stored, nonce enforced
+- RELEASE LOCK ACTIVE: do not merge, deploy, OTA update, or create a replacement iOS build until Apple approves
+
+## Android — versionCode 66 (NOT YET UPDATED TO MATCH iOS 95)
+- Version: 1.1.5, versionCode: 66
+- Status: Available to testers, NOT submitted to Play Store
+- Next Android build: versionCode 67 — build AFTER Apple approves Build 95 and post-review branch is merged
+- Android regression checklist must pass before building 67
+
+# Historical record (July 20, 2026)
 
 ## Community Beta 1 — IN PROGRESS ON EAS
 
