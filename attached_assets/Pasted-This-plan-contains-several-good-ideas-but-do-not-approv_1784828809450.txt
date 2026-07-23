@@ -1,0 +1,126 @@
+This plan contains several good ideas, but **do not approve it exactly as written**. A few technical claims are incorrect or unsafe.
+
+## What we should keep
+
+The following are worth implementing:
+
+* A database-aware `/api/readyz` endpoint.
+* Railway deployment health check pointed to `/api/readyz`.
+* Safe pool metrics: `totalCount`, `idleCount`, `waitingCount`.
+* Logging pool state during startup, shutdown, and connection-timeout errors.
+* Keeping the pool at `max: 5` for now.
+* No mobile changes and no Build 96 unless a mobile defect is found.
+
+Railway recommends a readiness endpoint for deployment health checks, and the check can prevent a new deployment from becoming active until it returns HTTP 200. ([Railway Docs][1])
+
+## What must be corrected
+
+### 1. Railway does not continuously monitor the health endpoint
+
+The plan says Railway can use `/api/readyz` as an ongoing liveness check and restart the service after repeated 503 responses. Railway’s official documentation says its health check is used **during deployment only** and is **not continuously monitored after the deployment becomes active**. ([Railway Docs][1])
+
+Therefore:
+
+* `/api/readyz` will help prevent an unhealthy new deployment from receiving traffic.
+* It will **not** automatically restart an already-active service if the pool later becomes unusable.
+
+Runtime monitoring requires an external monitor or carefully designed process recovery.
+
+### 2. The proposed Railway configuration format looks wrong
+
+Official Railway config-as-code uses a structure such as:
+
+```toml
+[deploy]
+healthcheckPath = "/api/readyz"
+healthcheckTimeout = 120
+```
+
+The proposed separate `[services.production.health.startup]` and `.liveness` sections are not shown in Railway’s current configuration reference. ([Railway Docs][2])
+
+Replit must inspect the actual Railway configuration used by this repository before changing it.
+
+### 3. Do not call `server.closeAllConnections()` before `server.close()`
+
+The plan recommends:
+
+```text
+server.closeAllConnections()
+server.close(...)
+```
+
+That is unsafe. `closeAllConnections()` terminates **active requests too**, not just idle keep-alive connections. Current Node documentation recommends first calling `server.close()`, and notes that modern Node versions already close idle connections as part of that process. When an additional cleanup call is used, it should follow `server.close()` to avoid race conditions. ([Node.js][3])
+
+The safer sequence is closer to:
+
+```ts
+server.close(async () => {
+  await pool.end();
+  process.exit(0);
+});
+
+server.closeIdleConnections?.();
+```
+
+Use `closeAllConnections()` only as a last resort shortly before the forced-shutdown deadline, not immediately.
+
+### 4. The claimed root cause is not yet proven
+
+A restart restoring service strongly confirms that the unhealthy state was inside the running backend process or its database connectivity. It does **not** prove that old Railway deployments permanently leaked one PostgreSQL connection each.
+
+When a process dies, its operating-system sockets are closed and PostgreSQL eventually reclaims those connections. The more defensible conclusion is:
+
+> The running process reached an unhealthy database-pool state that a restart cleared. The precise mechanism still requires instrumentation.
+
+We should fix detection and shutdown safety without overstating the cause.
+
+### 5. Do not intentionally trigger five rapid production deployments
+
+That proposed test recreates the exact dangerous condition believed to have caused the rejection. It risks taking production down again.
+
+Use:
+
+* one controlled deployment;
+* one controlled restart;
+* repeated health and authentication probes;
+* a moderate concurrency test;
+* shutdown-log confirmation.
+
+Do not conduct a five-deployment stress test against the live production service.
+
+## Send Replit this correction
+
+> **REVISE P0 STABILITY PLAN — DO NOT IMPLEMENT CURRENT VERSION**
+>
+> The plan is directionally useful, but revise it before implementation:
+>
+> 1. Do not describe pool exhaustion from leaked prior deployments as definitively proven. State only that the running backend reached an unhealthy DB/pool state that a restart cleared.
+> 2. Add `/api/readyz` with a shared-pool `SELECT 1` and sanitized pool metrics.
+> 3. Confirm the correct Railway config-as-code format from the actual repository and Railway’s current schema. Do not use unsupported separate startup/liveness sections.
+> 4. Note that Railway health checks gate new deployments only; they do not continuously restart an active deployment when `/api/readyz` later returns 503.
+> 5. Do not call `server.closeAllConnections()` before `server.close()`.
+> 6. Use:
+>
+>    * `server.close(...)` first;
+>    * `server.closeIdleConnections()` if needed;
+>    * `pool.end()` after HTTP draining;
+>    * `closeAllConnections()` only as a last-resort action immediately before the forced-exit deadline.
+> 7. Do not perform five rapid deployments against production.
+> 8. Propose a controlled validation:
+>
+>    * type-check and build;
+>    * one deployment;
+>    * verify `/api/readyz`;
+>    * verify bad login returns 401 quickly;
+>    * verify valid email login;
+>    * verify Apple Sign-In;
+>    * controlled concurrent auth probes;
+>    * one restart and confirmation that shutdown/drain logs completed.
+> 9. Recommend an external runtime monitor that checks `/api/readyz` because Railway’s deployment health check is not continuous.
+> 10. Return the revised exact diff and validation plan. Do not implement yet.
+
+We should move quickly, but the fix must not introduce active-request termination or rely on Railway behavior it does not provide.
+
+[1]: https://docs.railway.com/deployments/healthchecks?utm_source=chatgpt.com "Healthchecks | Railway Docs"
+[2]: https://docs.railway.com/config-as-code?utm_source=chatgpt.com "Using Config as Code | Railway Docs"
+[3]: https://nodejs.org/dist/latest/docs/api/http.html?utm_source=chatgpt.com "HTTP | Node.js v26.5.0 Documentation"
