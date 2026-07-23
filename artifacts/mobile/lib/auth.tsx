@@ -268,20 +268,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("login step 2: fresh_login flag failed (non-critical)", { errorName: e?.name, errorMessage: e?.message });
     }
 
-    // Step 3 — load the user profile
-    setIsLoading(true);
-    let profileLoaded = false;
-    try {
-      profileLoaded = await fetchUser();
-      if (!profileLoaded) {
-        console.warn("login step 3: fetchUser returned false (profile not loaded — network issue or invalid session)");
-      }
-    } catch (step3Err: unknown) {
-      const e = step3Err as Error;
-      console.error("login step 3 FAILED: fetchUser threw unexpectedly", { errorName: e?.name, errorMessage: e?.message, stack: e?.stack?.slice(0, 500) });
-    }
+    // Step 3 — token written and verified. Authentication is established.
+    // Fire profile load in the background; do not block navigation on it.
+    // If fetchUser fails transiently (pool exhaustion, slow DB), the user
+    // still navigates successfully. A later HTTP 401 from the server will
+    // still sign the user out correctly via fetchUser's 401 handler.
+    void fetchUser();
 
-    return { authenticated: profileLoaded };
+    return { authenticated: true };
   }, [fetchUser]);
 
   const logout = useCallback(async () => {

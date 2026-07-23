@@ -255,13 +255,19 @@ export default function SignupScreen() {
 
       await SecureStore.setItemAsync("auth_session_token", data.token);
       await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
-      await refreshUser();
-      router.replace("/profile-setup");
     } catch {
       setError("Could not connect. Please check your internet connection.");
+      return;
     } finally {
       setLoading(false);
     }
+
+    // Token written — authentication is established.
+    // Fire profile load in background; do not block navigation on it.
+    // Prevents concurrent router.replace calls from throwing on Android
+    // when fetchUser's setUser() triggers an auth-guard navigation.
+    void refreshUser();
+    router.replace("/profile-setup");
   };
 
   const c = colors;
