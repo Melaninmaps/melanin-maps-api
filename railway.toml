@@ -1,0 +1,3 @@
+[deploy]
+healthcheckPath = "/api/readyz"
+healthcheckTimeout = 30

@@ -144,7 +144,7 @@ const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(dbProbeRouter);
-router.use(readyzRouter);
+router.use("/internal", readyzRouter);
 router.use(poolStatsRouter);
 router.use(authRouter);
 router.use(phoneAuthRouter);

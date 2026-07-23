@@ -1,14 +1,15 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool, db, getPoolStats, businessesTable } from "@workspace/db";
 
-// ── /api/readyz ────────────────────────────────────────────────────────────
-// Protected database readiness check. Separate from /api/healthz (process
-// health) — this confirms the API can actually serve users: raw SQL works,
-// Drizzle works, and the pool is not backing up with waiting connections.
+// ── /api/internal/readyz ──────────────────────────────────────────────────
+// Protected deep-database readiness check for internal tooling and ops use.
+// Requires x-probe-key header (same pattern as /api/db-probe).
+//
+// The public, Railway-facing readiness endpoint is GET /api/readyz (top-level
+// in app.ts). This internal route performs additional Drizzle + waiting-count
+// checks for diagnostic purposes.
 //
 // Returns 200 when all checks pass, 503 when any check fails.
-// Protected by the same x-probe-key header as /api/db-probe so it is never
-// exposed on an unprotected public endpoint.
 
 const WAITING_COUNT_THRESHOLD = 3;
 
