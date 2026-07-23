@@ -1,0 +1,217 @@
+Yes. Based on Replit’s report, the authentication fix is implemented, but the Android map still requires a separate configuration correction before Version Code 67 is built.
+
+Send Replit this exact instruction:
+
+> **ANDROID VERSION CODE 67 — COMPLETE RELEASE PREPARATION**
+>
+> Workstream A authentication correction is approved as implemented.
+>
+> Do not create Version Code 67 yet.
+>
+> Complete the following items before requesting build authorization.
+>
+> ---
+>
+> ## 1. Preserve and validate the authentication fix
+>
+> Keep the implemented changes in:
+>
+> * `artifacts/mobile/app/signup.tsx`
+> * `artifacts/mobile/lib/auth.tsx`
+>
+> Before build authorization, confirm:
+>
+> * successful registration stores the token and navigates to `/profile-setup`;
+> * successful login stores and verifies the token and navigates to `/(tabs)`;
+> * profile loading runs independently and cannot trigger a false network error;
+> * incorrect password, duplicate email, server validation errors, genuine offline failure, account lockout, token-storage failure, and later session expiration remain correctly handled;
+> * no additional authentication code changes are introduced without approval.
+>
+> ---
+>
+> ## 2. Android white-map configuration — prepare exact correction
+>
+> The physical Android device running Version Code 66 displays a blank white map.
+>
+> The audit indicates the map component and layout are correct and the likely cause is Android Google Maps authorization or EAS key configuration.
+>
+> Do not alter `FullMapView.tsx` merely to hide the failure.
+>
+> Prepare the exact configuration checklist needed for me to complete manually:
+>
+> * Google Cloud project name and project ID associated with the Android key;
+> * exact Google Maps API key name, but do not display the secret key value;
+> * whether Maps SDK for Android is enabled;
+> * whether billing is active;
+> * Android application restriction:
+>
+>   * package name `com.melaninmaps.app`;
+>   * production certificate SHA-1 currently expected;
+> * whether the SHA-1 should come from:
+>
+>   * Google Play App Signing key certificate;
+>   * EAS upload certificate;
+>   * or both;
+> * whether Version Code 66 was installed through Google Play or directly, because the correct certificate may differ;
+> * whether the EAS Dashboard `GOOGLE_MAPS_API_KEY` secret matches the intended Android key;
+> * whether the duplicate plaintext key in `eas.json` should be removed before Version Code 67.
+>
+> Return a step-by-step founder-facing walkthrough for Google Cloud Console and Google Play Console.
+>
+> Do not change Google Cloud settings, keys, EAS secrets, or application restrictions without explicit approval.
+>
+> ---
+>
+> ## 3. Create the build-content report before Version Code 67
+>
+> Create:
+>
+> `.agents/memory/android-vc67-build-content.md`
+>
+> This report must become the authoritative inventory for Android Version Code 67.
+>
+> Include four sections:
+>
+> ### A. Changes confirmed for inclusion
+>
+> List every change that will be compiled into Version Code 67 compared with Version Code 66, including:
+>
+> * Android authentication false-failure correction;
+> * signup navigation correction;
+> * login navigation correction;
+> * all shared mobile changes made after Version Code 66;
+> * Android-specific configuration changes;
+> * dependency or SDK changes;
+> * API endpoint or environment-variable changes;
+> * map-key/configuration changes;
+> * any legal, privacy, deletion, or account-management changes;
+> * any layout, wording, or feature changes already implemented in source.
+>
+> For every item, include:
+>
+> * file;
+> * source commit or session;
+> * user-facing effect;
+> * Android-only or shared across iOS/Android;
+> * testing required;
+> * launch risk.
+>
+> ### B. Discussed but not implemented
+>
+> Clearly list items that have been discussed or saved in memory but will **not** be included in Version Code 67 unless separately authorized, including:
+>
+> * HBCU map card/tile redesign;
+> * language cleanup;
+> * broader layout redesign;
+> * UX story audit changes;
+> * Kinfolk AI refinements;
+> * Community Resources expansion;
+> * Cultural Ambassador changes;
+> * any other planned post-launch features.
+>
+> ### C. Platform impact
+>
+> Separate:
+>
+> * shared React Native changes that would also appear in the next iOS build;
+> * Android-only native/configuration changes;
+> * server-side changes that are already live and require no mobile rebuild;
+> * iOS-only changes not relevant to Version Code 67.
+>
+> ### D. Final build gate
+>
+> Version Code 67 may not be built until the report confirms:
+>
+> * authentication fix included;
+> * map authorization corrected;
+> * version code set to 67;
+> * API base URL correct;
+> * production signing credentials correct;
+> * no accidental HBCU, layout, language, or unrelated feature work included;
+> * mobile typecheck status documented;
+> * all known pre-existing type errors separately listed;
+> * build profile and distribution track confirmed.
+>
+> ---
+>
+> ## 4. Create the persistent launch backlog
+>
+> Create:
+>
+> `.agents/memory/launch-backlog.md`
+>
+> This must be a durable, prioritized backlog of work intentionally postponed so it is not lost.
+>
+> Organize it into:
+>
+> ### Launch-critical before public release
+>
+> * Android Version Code 67 authentication fix;
+> * Android white-map correction;
+> * Android regression testing;
+> * production monitoring for `/api/readyz`;
+> * App Store and Google Play release readiness;
+> * any unresolved legal-page or account-deletion checks.
+>
+> ### First post-launch update
+>
+> * contextual inclusive-language cleanup;
+> * HBCU flagship experience:
+>
+>   * compact horizontal card strip;
+>   * nearby and featured HBCUs;
+>   * school colors and imagery;
+>   * historic significance;
+>   * Explore Campus;
+>   * save and directions;
+> * layout and visual consistency improvements;
+> * improved loading, empty, and error states;
+> * onboarding/name-confirmation refinements.
+>
+> ### Growth and community roadmap
+>
+> * Kinfolk AI refinement;
+> * Cultural Ambassador experience;
+> * Community Resources;
+> * Founding Business onboarding;
+> * Community safety enhancements;
+> * business tools and analytics;
+> * nationwide rollout and Welcome Home Tour;
+> * investor and partnership preparation.
+>
+> For every backlog item include:
+>
+> * status: planned, audited, partially implemented, or blocked;
+> * priority;
+> * dependencies;
+> * platform impact;
+> * whether a new mobile build, server deployment, or configuration change is required;
+> * source memory or prior specification.
+>
+> Update `.agents/memory/MEMORY.md` with pointers to:
+>
+> * `android-vc67-build-content.md`;
+> * `launch-backlog.md`.
+>
+> Do not mark planned work as implemented.
+>
+> ---
+>
+> ## 5. Return one consolidated readiness report
+>
+> Return:
+>
+> 1. Authentication fix status.
+> 2. Android map configuration status.
+> 3. Exact founder actions required in Google Cloud and Google Play.
+> 4. Build-content report confirmation.
+> 5. Launch-backlog confirmation.
+> 6. Current Version Code 67 blockers.
+> 7. A final recommendation of either:
+>
+>    * `READY TO AUTHORIZE BUILD 67`, or
+>    * `NOT READY — BLOCKERS REMAIN`.
+>
+> Do not build, upload, submit, deploy, or promote Version Code 67 until I explicitly authorize it.
+
+One point needs careful confirmation before changing the SHA-1 restriction: because Version Code 66 was installed through Google Play Internal Testing, Google may re-sign the app with the **Play App Signing certificate**. In that case, the Android Maps key may need the Play App Signing SHA-1—not only the EAS upload-key SHA-1. Replit should identify which certificate signed the installed app before we edit Google Cloud.
