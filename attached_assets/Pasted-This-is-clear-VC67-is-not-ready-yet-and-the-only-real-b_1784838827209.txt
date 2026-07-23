@@ -1,0 +1,63 @@
+This is clear: **VC67 is not ready yet**, and the only real blocker you need to handle personally is the Android Maps configuration. The authentication fix and the two memory documents are already done.
+
+The next step is **not** to build. It is to confirm the correct Google Maps key restriction.
+
+## What you should do now
+
+In Google Play Console:
+
+1. Open **Setup → App integrity**.
+2. Find **App signing key certificate**.
+3. Copy the **SHA-1 fingerprint** from that section—not the Upload key certificate.
+
+Then in Google Cloud Console:
+
+1. Open the project that owns the Android Maps key.
+2. Go to **APIs & Services → Enabled APIs & services**.
+3. Confirm **Maps SDK for Android** is enabled.
+4. Go to **Billing** and confirm billing is active.
+5. Go to **APIs & Services → Credentials**.
+6. Open the Android Maps API key.
+7. Under **Application restrictions**, choose **Android apps**.
+8. Confirm or add:
+
+   * Package name: `com.melaninmaps.app`
+   * SHA-1: the **Play App Signing SHA-1**
+9. Under **API restrictions**, restrict it to **Maps SDK for Android**.
+10. Save.
+
+Do not remove any existing SHA-1 entries yet. Add the Play App Signing SHA-1 alongside them until VC67 is tested.
+
+## One correction before changing the EAS secret
+
+Do **not** delete and recreate the hidden EAS `GOOGLE_MAPS_API_KEY` secret until we confirm which Google Cloud key it should contain. The report admits the hidden value cannot currently be read, so deleting it prematurely could replace a valid key with the wrong one.
+
+First verify the Cloud key, package restriction, SHA-1, SDK, and billing. Then we decide whether the EAS secret must be replaced.
+
+## After you complete those checks
+
+Send Replit this:
+
+> **ANDROID MAP CONFIGURATION CHECK COMPLETE — PRE-BUILD VERIFICATION**
+>
+> I have completed the Google Cloud and Play Console checks.
+>
+> Report the following back to me before any build:
+>
+> 1. Maps SDK for Android: enabled/not enabled.
+> 2. Billing: active/not active.
+> 3. Android package restriction: `com.melaninmaps.app`.
+> 4. Play App Signing SHA-1: added/not added.
+> 5. API restriction: Maps SDK for Android.
+> 6. Whether the EAS Dashboard `GOOGLE_MAPS_API_KEY` still requires replacement.
+> 7. Whether the plaintext key should now be removed from `eas.json`.
+>
+> Do not update versionCode or build VC67 yet. Return a final pre-build recommendation only.
+
+Once that comes back clean, we authorize Replit to:
+
+* set versionCode to 67;
+* remove the plaintext key from `eas.json` if confirmed safe;
+* build VC67;
+* upload it to Internal Testing;
+* test login, signup, and the map before any wider rollout.
