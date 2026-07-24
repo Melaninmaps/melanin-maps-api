@@ -108,6 +108,8 @@ export function FullMapView() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
+  const mapReadyRef = useRef(false);
+  const pendingLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
 
   const [locationGranted, setLocationGranted] = useState(false);
   const [locating, setLocating] = useState(true);
@@ -181,10 +183,12 @@ export function FullMapView() {
             setTimeout(() => reject(new Error("location timeout")), 8_000)
           ),
         ]);
-        mapRef.current?.animateToRegion(
-          { latitude: loc.coords.latitude, longitude: loc.coords.longitude, latitudeDelta: 0.12, longitudeDelta: 0.12 },
-          800,
-        );
+        const acquired = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+        if (mapReadyRef.current) {
+          mapRef.current?.animateToRegion({ ...acquired, latitudeDelta: 0.12, longitudeDelta: 0.12 }, 800);
+        } else {
+          pendingLocationRef.current = acquired;
+        }
       } catch {
         // permission denied — stays at default US overview
       } finally {
@@ -249,11 +253,11 @@ export function FullMapView() {
 
   // Background refresh whenever the Map tab regains focus (silently keeps existing data on failure)
   useEffect(() => {
-    if (isFocused && showCulturalSites) {
+    if (isFocused && showCulturalSites && mapReady) {
       void fetchCulturalSites(culturalSites.length > 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused, showCulturalSites]);
+  }, [isFocused, showCulturalSites, mapReady]);
 
   // Auto-retry every 30 s while in error state (stops as soon as data loads)
   useEffect(() => {
@@ -289,7 +293,15 @@ export function FullMapView() {
         initialRegion={DEFAULT_REGION}
         showsUserLocation={locationGranted}
         showsMyLocationButton={false}
-        onMapReady={() => setMapReady(true)}
+        onMapReady={() => {
+          mapReadyRef.current = true;
+          setMapReady(true);
+          const pending = pendingLocationRef.current;
+          if (pending) {
+            pendingLocationRef.current = null;
+            mapRef.current?.animateToRegion({ ...pending, latitudeDelta: 0.12, longitudeDelta: 0.12 }, 800);
+          }
+        }}
         {...(Platform.OS === "ios" ? {
           pointsOfInterestFilter: [
             "park", "nationalPark", "beach", "campground", "marina",

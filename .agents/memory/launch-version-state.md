@@ -3,7 +3,23 @@ name: Launch version state
 description: Current app store submission state — Android and iOS build versions and track status. Update this every build.
 ---
 
-# Launch Version State (as of July 22, 2026)
+# Launch Version State (as of July 24, 2026)
+
+## Android VC70 — READY TO BUILD (not yet submitted)
+- Version: 1.1.5, versionCode: 70
+- iOS buildNumber: 96 (bumped in app.json; Android-only EAS build expected)
+- Key changes: mapReady guard fix — animateToRegion gated via mapReadyRef + pendingLocationRef flush; Effect B (cultural sites) gated on mapReady state
+- Test suite: 22/22 pass (2 files: auth-nav-guard, map-ready-guard)
+- Typecheck: zero new errors; pre-existing errors unchanged
+- Build command: cd artifacts/mobile && eas build --platform android --profile production
+
+## iOS Build 95 — SUBMITTED TO APPLE REVIEW
+- Version: 1.1.5, Build number: 95
+- Status: Saved for Apple review (submitted July 22, 2026)
+- Key changes in 95: Apple Sign-In working (APPLE_KEY_ID corrected), TN3194 revocation stored, nonce enforced
+- RELEASE LOCK ACTIVE: do not merge, deploy, OTA update, or create a replacement iOS build until Apple approves
+
+# Historical record (July 22, 2026)
 
 ## iOS Build 95 — SUBMITTED TO APPLE REVIEW
 - Version: 1.1.5, Build number: 95
