@@ -368,7 +368,7 @@ export function FullMapView() {
                   isSelected && s.culturalMarkerSelected,
                 ]}
               >
-                <Feather name="map-pin" size={isSelected ? 13 : 10} color="#fff" />
+                <Feather name={cs.icon} size={isSelected ? 13 : 10} color="#fff" />
               </View>
             </Marker>
           );
@@ -664,8 +664,8 @@ export function FullMapView() {
                   })
                 }
               >
-                <Feather name="book-open" size={14} color="#fff" />
-                <Text style={s.cardBtnTxt}>View Details</Text>
+                <Feather name={getCategoryStyle(selectedCulturalSite.heritageCategory).icon} size={14} color="#fff" />
+                <Text style={s.cardBtnTxt}>View Site</Text>
               </TouchableOpacity>
             </View>
           </View>
