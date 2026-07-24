@@ -1,0 +1,85 @@
+This report is useful, but it exposes one important problem:
+
+**The navigation instrumentation cannot be observed in VC68 because those `[NAV-DIAG]` logs were added after VC68 was built.** Waiting for them on the currently installed build will never clear Gate 2.
+
+To avoid another expensive build whose only purpose is collecting logs, I recommend this path:
+
+## 1. Capture the HBCU crash from VC68 now
+
+You do not need a new build for this.
+
+Use either:
+
+* Google Play Console → **Monitor and improve → Android vitals → Crashes and ANRs**, or
+* connect the Android phone to the Mac and capture `adb logcat` while reproducing the HBCU crash once.
+
+Do not repeatedly trigger the crash.
+
+## 2. Do not create a diagnostic-only Play build
+
+A diagnostic build would consume more time and another version code merely to prove a navigation sequence that the source already strongly supports.
+
+For the login flicker, choose the deterministic correction—not another timing workaround.
+
+### Use Option A2, not A1
+
+I recommend:
+
+```ts
+await refreshUser();
+router.replace("/(tabs)");
+```
+
+I do **not** recommend:
+
+```ts
+setTimeout(() => router.replace("/(tabs)"), 0);
+```
+
+A zero-delay timer is another timing-based workaround. It may work on one Android device and fail on another under different scheduling conditions.
+
+Awaiting the profile load means:
+
+* the token is already stored;
+* the user state is populated;
+* `isAuthenticated` is true;
+* the AuthGate cannot redirect back to Login;
+* only one final navigation occurs.
+
+The added delay of a few hundred milliseconds is preferable to a visible login-screen flash and repeated map mount/unmount cycles.
+
+## Send Replit this
+
+> **PRE-VC69 DECISION — AUTH FIX A2 AUTHORIZED**
+>
+> Do not create a diagnostic-only build.
+>
+> The `[NAV-DIAG]` instrumentation was added after VC68 and therefore cannot be observed in the currently installed VC68 binary. Do not wait for logs that VC68 cannot emit.
+>
+> Implement the deterministic authentication correction:
+>
+> * After successful email login and confirmed token storage, await `refreshUser()` before navigating.
+> * Navigate to `/(tabs)` only after the authenticated user state has loaded.
+> * Do not use `setTimeout(0)` or another timing-based navigation workaround.
+> * Prevent the login auto-restore effect from creating a second competing navigation during an explicit login attempt.
+> * Preserve correct handling for wrong passwords, expired sessions, logout, and genuine network failures.
+> * Remove all temporary `[NAV-DIAG]` logging before the release build.
+>
+> Do not build yet.
+>
+> For the HBCU crash:
+>
+> * Wait for the actual Android vitals or `adb logcat` stack before implementing the crash correction.
+> * Do not claim `fitToCoordinates` is confirmed until the stack supports it.
+>
+> Return:
+>
+> 1. Exact authentication diff.
+> 2. Confirmation that only one post-login navigation remains.
+> 3. Confirmation that temporary diagnostic logging was removed.
+> 4. Test results for login, logout, cold reopen, expired token, and slow profile response.
+> 5. Current status of the HBCU crash stack.
+>
+> Stop before building VC69.
+
+This avoids another speculative build while still moving the confirmed authentication issue forward. The only remaining evidence gate should be the actual HBCU native crash stack.

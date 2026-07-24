@@ -102,8 +102,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.user) {
           setUser(data.user as User);
           setSessionExpired(false);
-          // [NAV-DIAG] temporary diagnostic — remove before release
-          console.log(`[NAV-DIAG:${Date.now()}] fetchUser: success — setUser+setIsLoading(false) (attempt ${attempt})`);
           setIsLoading(false);
           // Tie RC entitlements to this MWM account so they are portable
           // across devices and reinstalls.
@@ -116,8 +114,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
           setUser(null);
           setSessionExpired(true);
-          // [NAV-DIAG] temporary diagnostic — remove before release
-          console.log(`[NAV-DIAG:${Date.now()}] fetchUser: 401 — setIsLoading(false), token cleared`);
           setIsLoading(false);
           if (Platform.OS !== "web") {
             Purchases.logOut().catch(() => {});
@@ -133,8 +129,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             continue;
           }
           // All retries exhausted — keep existing user state.
-          // [NAV-DIAG] temporary diagnostic — remove before release
-          console.log(`[NAV-DIAG:${Date.now()}] fetchUser: non-401 retries exhausted — setIsLoading(false)`);
           setIsLoading(false);
           return false;
         }
@@ -154,8 +148,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // All retries exhausted due to network errors. Keep the existing user
     // state (if any) rather than forcing a sign-out — the token is still
     // valid, we just couldn't reach the server.
-    // [NAV-DIAG] temporary diagnostic — remove before release
-    console.log(`[NAV-DIAG:${Date.now()}] fetchUser: network retries exhausted — setIsLoading(false)`);
     setIsLoading(false);
     return false;
   }, []);
@@ -277,22 +269,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // Step 3 — token written and verified. Authentication is established.
-    // Set isLoading=true BEFORE firing the background profile fetch.
-    // Without this, AuthGate sees { isLoading:false, user:null } in the
-    // window between loginWithEmail() returning and fetchUser() resolving,
-    // and immediately redirects to /login — causing the Login screen flash
-    // confirmed on physical Android VC67.
-    // fetchUser() always calls setIsLoading(false) on every exit path so
-    // the loading state resolves correctly regardless of fetch outcome.
-    // [NAV-DIAG] temporary diagnostic — remove before release
-    console.log(`[NAV-DIAG:${Date.now()}] loginWithEmail/step3: calling setIsLoading(true)`);
+    // Set isLoading=true so AuthGate sees a loading state and cannot
+    // redirect to /login while the caller (login.tsx) awaits refreshUser().
+    // The caller awaits the profile fetch directly and only navigates after
+    // isAuthenticated=true is in place, eliminating the three-way
+    // router.replace race that caused the confirmed VC67/VC68 login flash.
     setIsLoading(true);
-    console.log(`[NAV-DIAG:${Date.now()}] loginWithEmail/step3: setIsLoading(true) queued, firing void fetchUser()`);
-    void fetchUser();
-    console.log(`[NAV-DIAG:${Date.now()}] loginWithEmail/step3: returning {authenticated:true} — caller will now navigate`);
 
     return { authenticated: true };
-  }, [fetchUser]);
+  }, []);
 
   const logout = useCallback(async () => {
     // Step 1: Read token while the authenticated screen is still mounted.

@@ -226,27 +226,19 @@ function AuthGate() {
   const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    // [NAV-DIAG] temporary diagnostic — remove before release
-    console.log(`[NAV-DIAG:${Date.now()}] AuthGate/effect: isLoading=${String(isLoading)} isAuthenticated=${String(isAuthenticated)} pathname=${pathname}`);
     if (isLoading) {
-      console.log(`[NAV-DIAG:${Date.now()}] AuthGate/effect: isLoading=true → early return (guard active)`);
       return;
     }
     if (isAuthenticated) {
-      console.log(`[NAV-DIAG:${Date.now()}] AuthGate/effect: isAuthenticated=true → early return`);
       return;
     }
     // Allow auth-exempt paths through
     if (AUTH_EXEMPT.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
-      console.log(`[NAV-DIAG:${Date.now()}] AuthGate/effect: exempt path → early return`);
       return;
     }
     // Check onboarding: only enforce auth once the user has completed onboarding
-    console.log(`[NAV-DIAG:${Date.now()}] AuthGate/effect: unauthenticated on protected path — checking onboarding`);
     AsyncStorage.getItem("@mapping_with_melanin_onboarding_complete")
       .then((val) => {
-        // [NAV-DIAG] temporary diagnostic — remove before release
-        console.log(`[NAV-DIAG:${Date.now()}] AuthGate/onboarding-check: val=${String(val)} → ${val ? "REDIRECTING to /login" : "no redirect (onboarding not complete)"}`);
         if (val) {
           router.replace("/login");
         }
