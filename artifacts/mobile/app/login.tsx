@@ -56,13 +56,24 @@ export default function LoginScreen() {
   // silently attempt to reload the user profile and skip the login form.
   useEffect(() => {
     if ((Platform.OS as string) === "web") return;
-    if (isAuthenticated || authLoading) return;
+    // [NAV-DIAG] temporary diagnostic — remove before release
+    console.log(`[NAV-DIAG:${Date.now()}] login/auto-restore: MOUNT FIRED isAuthenticated=${String(isAuthenticated)} authLoading=${String(authLoading)}`);
+    if (isAuthenticated || authLoading) {
+      console.log(`[NAV-DIAG:${Date.now()}] login/auto-restore: early return (isAuthenticated=${String(isAuthenticated)} authLoading=${String(authLoading)})`);
+      return;
+    }
     let cancelled = false;
     void (async () => {
       const stored = await SecureStore.getItemAsync("auth_session_token").catch(() => null);
+      // [NAV-DIAG] temporary diagnostic — remove before release
+      console.log(`[NAV-DIAG:${Date.now()}] login/auto-restore: token in SecureStore=${String(!!stored)} cancelled=${String(cancelled)}`);
       if (!stored || cancelled) return;
       const loaded = await refreshUser();
-      if (!cancelled && loaded) router.replace("/(tabs)");
+      console.log(`[NAV-DIAG:${Date.now()}] login/auto-restore: refreshUser returned loaded=${String(loaded)} cancelled=${String(cancelled)}`);
+      if (!cancelled && loaded) {
+        console.log(`[NAV-DIAG:${Date.now()}] login/auto-restore: → router.replace("/(tabs)")`);
+        router.replace("/(tabs)");
+      }
     })();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -201,6 +212,8 @@ export default function LoginScreen() {
       } else if (result.authenticated) {
         // Token saved, verified, and profile loaded — navigate to app
         // (leave loading spinner active during navigation transition)
+        // [NAV-DIAG] temporary diagnostic — remove before release
+        console.log(`[NAV-DIAG:${Date.now()}] handleEmailSignIn: loginWithEmail returned authenticated=true → router.replace("/(tabs)")`);
         router.replace("/(tabs)");
       } else {
         // Token saved and verified but profile not loaded (network issue).
