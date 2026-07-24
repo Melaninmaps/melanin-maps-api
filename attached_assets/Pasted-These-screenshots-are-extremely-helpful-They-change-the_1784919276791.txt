@@ -1,0 +1,125 @@
+These screenshots are extremely helpful. They change the picture significantly.
+
+## What I can confirm from the logs
+
+### 1. Registration is **not** failing on the `INSERT`
+
+The log entry shows:
+
+* `POST /api/auth/register`
+* `err.type: DrizzleQueryError`
+* `Failed query: select "id" from "users" where "users"."email"...`
+
+That means the failure occurs during the **very first duplicate-email check**, before the code ever reaches:
+
+```ts
+INSERT INTO users ...
+```
+
+So the earlier conclusion that "the INSERT is failing" is **not supported by these logs**.
+
+---
+
+### 2. This isn't isolated to registration
+
+Your other screenshots show similar errors for:
+
+* `/api/auth/apple`
+* `/api/auth/user`
+* `/api/events/...`
+* `/api/knowledge/...`
+* `/api/search/...`
+
+All of them are throwing:
+
+```
+DrizzleQueryError
+Failed query...
+```
+
+That means **many different SELECT statements are failing**, not just registration.
+
+---
+
+### 3. The 10-second timing is the biggest clue
+
+Several entries show:
+
+```
+durationMs: 10008
+durationMs: 10011
+responseTime: 10000
+```
+
+A repeated **10-second** duration strongly suggests requests are hitting a timeout rather than PostgreSQL rejecting a query immediately.
+
+If this were:
+
+* a missing column,
+* an invalid SQL statement,
+* or a constraint violation,
+
+PostgreSQL would normally return the error almost instantly—not after approximately 10 seconds.
+
+---
+
+## What this points toward
+
+Right now, the evidence is more consistent with a **database connectivity or query execution problem** than with a schema mismatch.
+
+There are a few possibilities:
+
+1. **Database connections are timing out** before the query executes.
+2. **The database is overloaded or blocked**, causing queries to wait until they hit the server timeout.
+3. **A connection pool or database session issue** is preventing queries from obtaining a usable connection.
+
+I don't yet have enough evidence to say which of those is the root cause, but I also don't think we have enough evidence to conclude "increase the pool" is the correct fix.
+
+---
+
+## One thing I would ask Replit to check immediately
+
+The logs are truncating the most important part:
+
+```
+Failed query:
+select "id"
+from "users"
+where ...
+```
+
+We still **don't see the underlying PostgreSQL error**.
+
+Ask Replit to retrieve the complete error object—including the fields that are being cut off.
+
+For example:
+
+> Expand the full `DrizzleQueryError` and report:
+>
+> * `err.cause`
+> * `err.message`
+> * PostgreSQL error code (if any)
+> * SQLSTATE (if any)
+> * whether the failure is a timeout, connection acquisition timeout, cancelled query, or PostgreSQL execution error.
+>
+> Also report the complete stack trace without truncation.
+
+---
+
+## Regarding the map crashes
+
+At this point we have:
+
+* Login working after the Railway restart.
+* Registration failing with database query errors.
+* Android map crashing.
+* iOS map crashing.
+
+Because **both Android and iOS exhibit the map crash**, I would keep treating that as a separate issue from the registration failures. I would avoid making additional speculative map changes until we have either:
+
+* a native crash report,
+* or logs that identify the exact exception.
+
+---
+
+I think the next goal should be to get the **complete `DrizzleQueryError` cause** rather than changing database settings. Those details should tell us whether we're dealing with a timeout, a connection acquisition problem, or a PostgreSQL error, and that will determine the appropriate fix.
