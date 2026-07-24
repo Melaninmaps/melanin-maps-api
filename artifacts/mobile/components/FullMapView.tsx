@@ -118,6 +118,13 @@ export function FullMapView() {
   const [scannerAlertIdx, setScannerAlertIdx] = useState(0);
   const [warningIdx, setWarningIdx] = useState(0);
 
+  // ─── DIAGNOSTIC FLAG ─────────────────────────────────────────────────────
+  // Set to true to disable Heritage Site marker rendering entirely.
+  // Use this to isolate whether the Android/iOS map crash is caused by
+  // cultural marker rendering. If crash disappears → markers are the cause.
+  // Set back to false and remove this comment once crash evidence is confirmed.
+  const HERITAGE_SITES_DISABLED_FOR_CRASH_TEST = false;
+
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showCulturalSites, setShowCulturalSites] = useState(true);
   const [heatmapPoints, setHeatmapPoints] = useState<HeatmapPoint[]>([]);
@@ -352,7 +359,7 @@ export function FullMapView() {
         })}
 
         {/* Cultural heritage pins — consistent shape, category color */}
-        {showCulturalSites && filteredCulturalSites.map((site) => {
+        {showCulturalSites && !HERITAGE_SITES_DISABLED_FOR_CRASH_TEST && filteredCulturalSites.map((site) => {
           const lat = parseFloat(site.latitude);
           const lng = parseFloat(site.longitude);
           if (isNaN(lat) || isNaN(lng)) return null;
