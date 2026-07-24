@@ -30,6 +30,14 @@ const GOLD = "#CA922B";
 // Adding ~7px net = 90px clearance keeps cards and FAB above the widget.
 const KINFOLK_CLEAR = 90;
 
+// ─── FEATURE FLAG: Heritage Sites ────────────────────────────────────────────
+// false = completely hidden for the release candidate.
+// Real-device testing confirmed map crashes when Heritage Site markers render.
+// All data, routes, API endpoints, and DB records are preserved — this is a
+// display-only gate. Flip to true and rebuild to restore the feature once the
+// Fabric/react-native-maps crash root cause is confirmed fixed.
+const HERITAGE_SITES_ENABLED = false;
+
 const DEFAULT_REGION: Region = {
   latitude: 39.9526,
   longitude: -75.1652,
@@ -117,13 +125,6 @@ export function FullMapView() {
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [scannerAlertIdx, setScannerAlertIdx] = useState(0);
   const [warningIdx, setWarningIdx] = useState(0);
-
-  // ─── DIAGNOSTIC FLAG ─────────────────────────────────────────────────────
-  // Set to true to disable Heritage Site marker rendering entirely.
-  // Use this to isolate whether the Android/iOS map crash is caused by
-  // cultural marker rendering. If crash disappears → markers are the cause.
-  // Set back to false and remove this comment once crash evidence is confirmed.
-  const HERITAGE_SITES_DISABLED_FOR_CRASH_TEST = false;
 
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showCulturalSites, setShowCulturalSites] = useState(true);
@@ -224,6 +225,7 @@ export function FullMapView() {
   // hasData = true  → refresh in background; keep existing markers on failure
   // hasData = false → initial load; show error banner on failure, no retry storm
   const fetchCulturalSites = useCallback(async (hasData: boolean) => {
+    if (!HERITAGE_SITES_ENABLED) return;
     if (isFetchingCulturalSites.current) return;
     isFetchingCulturalSites.current = true;
     if (!hasData) setCulturalSitesLoading(true);
@@ -247,27 +249,27 @@ export function FullMapView() {
     }
   }, []);
 
-  // Initial load when Heritage Sites layer is first shown.
-  // Deferred until mapReady=true — adding Markers before onMapReady fires
-  // can cause a native race condition on Android (preventive correction;
-  // confirmed crash stack trace not yet available from Play Console).
+  // Heritage Sites load/refresh effects — all guarded by HERITAGE_SITES_ENABLED.
+  // fetchCulturalSites() also has its own early-return guard; these effect-level
+  // guards prevent any unnecessary setup/teardown while the feature is disabled.
   useEffect(() => {
+    if (!HERITAGE_SITES_ENABLED) return;
     if (showCulturalSites && culturalSites.length === 0 && mapReady) {
       void fetchCulturalSites(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showCulturalSites, mapReady]);
 
-  // Background refresh whenever the Map tab regains focus (silently keeps existing data on failure)
   useEffect(() => {
+    if (!HERITAGE_SITES_ENABLED) return;
     if (isFocused && showCulturalSites && mapReady) {
       void fetchCulturalSites(culturalSites.length > 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused, showCulturalSites, mapReady]);
 
-  // Auto-retry every 30 s while in error state (stops as soon as data loads)
   useEffect(() => {
+    if (!HERITAGE_SITES_ENABLED) return;
     if (!culturalSitesError || !showCulturalSites) return;
     const timer = setInterval(() => { void fetchCulturalSites(false); }, 30_000);
     return () => clearInterval(timer);
@@ -359,7 +361,7 @@ export function FullMapView() {
         })}
 
         {/* Cultural heritage pins — consistent shape, category color */}
-        {showCulturalSites && !HERITAGE_SITES_DISABLED_FOR_CRASH_TEST && filteredCulturalSites.map((site) => {
+        {HERITAGE_SITES_ENABLED && showCulturalSites && filteredCulturalSites.map((site) => {
           const lat = parseFloat(site.latitude);
           const lng = parseFloat(site.longitude);
           if (isNaN(lat) || isNaN(lng)) return null;
@@ -533,18 +535,11 @@ export function FullMapView() {
             <Feather name="thermometer" size={12} color={showHeatmap ? "#fff" : GOLD} />
             <Text style={[s.layerBtnTxt, { color: showHeatmap ? "#fff" : GOLD }]}>Safety Heat</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[s.layerBtn, showCulturalSites && { backgroundColor: "#7C3AED", borderColor: "transparent" }]}
-            onPress={() => setShowCulturalSites((v) => !v)}
-            activeOpacity={0.85}
-          >
-            <Feather name="book-open" size={12} color={showCulturalSites ? "#fff" : GOLD} />
-            <Text style={[s.layerBtnTxt, { color: showCulturalSites ? "#fff" : GOLD }]}>Heritage Sites</Text>
-          </TouchableOpacity>
+          {/* Heritage Sites layer button — hidden until crash root cause is fixed (HERITAGE_SITES_ENABLED) */}
         </View>
 
-        {/* Heritage category filter chips — tap to filter + zoom */}
-        {showCulturalSites && (
+        {/* Heritage category filter chips — hidden until HERITAGE_SITES_ENABLED */}
+        {HERITAGE_SITES_ENABLED && showCulturalSites && (
           <>
             {/* Loading state — initial fetch only */}
             {culturalSitesLoading && culturalSites.length === 0 && (
@@ -637,8 +632,8 @@ export function FullMapView() {
         </TouchableOpacity>
       )}
 
-      {/* ── Cultural site bottom card ── */}
-      {selectedCulturalSite && (() => {
+      {/* ── Cultural site bottom card — hidden until HERITAGE_SITES_ENABLED ── */}
+      {HERITAGE_SITES_ENABLED && selectedCulturalSite && (() => {
         const cs = getCategoryStyle(selectedCulturalSite.heritageCategory);
         return (
           <View style={[s.card, { backgroundColor: colors.card, borderColor: cs.color + "40", paddingBottom: insets.bottom + 12, bottom: KINFOLK_CLEAR }]}>

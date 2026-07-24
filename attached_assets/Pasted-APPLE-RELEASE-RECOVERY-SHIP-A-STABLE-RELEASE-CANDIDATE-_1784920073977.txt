@@ -1,0 +1,87 @@
+APPLE RELEASE RECOVERY — SHIP A STABLE RELEASE CANDIDATE
+
+The objective is now strictly:
+
+1. Pass Apple review.
+2. Eliminate user-facing crashes.
+3. Ensure registration and login work consistently.
+4. Produce an app that can be advertised immediately.
+
+Do not create VC72 as another diagnostic experiment.
+
+A. TEMPORARILY DISABLE HERITAGE SITES FOR THE RELEASE CANDIDATE
+
+Real-device testing already proved:
+- Heritage Sites OFF: map remains stable.
+- Heritage Sites ON: map interaction crashes.
+
+For the Apple/launch release candidate:
+
+1. Disable the Heritage Sites feature completely on BOTH iOS and Android.
+2. Hide or disable:
+   - Heritage Sites layer button
+   - HBCU and other heritage-category chips
+   - heritage markers
+   - heritage-site cards and related entry points from the map
+3. Do not merely suppress marker rendering while leaving visible controls that appear broken.
+4. Keep:
+   - map
+   - current location
+   - business markers
+   - business selection
+   - search and normal navigation
+5. Add a clear internal feature flag so Heritage Sites can be restored later.
+6. Do not delete the heritage data or permanent implementation.
+
+B. BACKEND RECOVERY
+
+1. Deploy the new logger serializer to Railway production and provide:
+   - deployment ID
+   - commit SHA
+   - confirmation that err.cause is visible in production logs
+
+2. Restart only the Railway API service after deployment to create a clean database pool.
+
+3. Immediately verify:
+   - GET /api/healthz = 200
+   - invalid login returns 401, not 500
+   - valid login succeeds
+   - new registration returns 201
+   - GET /api/auth/user succeeds
+   - GET /api/businesses succeeds
+
+4. Record the complete err.cause if any request fails.
+
+5. Do not increase the pool size without evidence.
+
+C. DEFENSIVE APP BEHAVIOR
+
+Audit the release-candidate startup and primary screens so an HTTP 500,
+timeout, missing user object, or malformed businesses response displays a
+recoverable error/retry state and NEVER terminates the app.
+
+This is release-critical because temporary backend failures must not cause
+an iOS or Android crash.
+
+D. RELEASE-CANDIDATE TEST GATE
+
+Before building, demonstrate:
+
+- new account registration succeeds
+- existing-user login succeeds
+- cold reopen restores the session
+- map opens and finds location
+- business pins can be tapped
+- map background can be tapped repeatedly
+- navigating away and back works
+- backend 500 responses produce an error message, not a crash
+- Heritage Sites controls are not visible
+- no unrelated feature work is included
+
+Return the exact diff and evidence report before building.
+
+Do not build until these checks pass.
+Do not submit until the installed release candidate passes on:
+- one iPhone
+- one iPad-sized simulator/device
+- one Android device
