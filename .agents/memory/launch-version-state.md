@@ -5,56 +5,25 @@ description: Current app store submission state — Android and iOS build versio
 
 # Launch Version State (as of July 24, 2026)
 
-## Android VC70 — READY TO BUILD (not yet submitted)
-- Version: 1.1.5, versionCode: 70
-- iOS buildNumber: 96 (bumped in app.json; Android-only EAS build expected)
-- Key changes: mapReady guard fix — animateToRegion gated via mapReadyRef + pendingLocationRef flush; Effect B (cultural sites) gated on mapReady state
-- Test suite: 22/22 pass (2 files: auth-nav-guard, map-ready-guard)
-- Typecheck: zero new errors; pre-existing errors unchanged
-- Build command: cd artifacts/mobile && eas build --platform android --profile production
+## iOS Build 96 — IN PROGRESS ON EAS
+- EAS Build ID: fa7ac51c-29ba-43d0-b440-b920ec6b290a
+- Build URL: https://expo.dev/accounts/tlindsay428/projects/mobile/builds/fa7ac51c-29ba-43d0-b440-b920ec6b290a
+- Version: 1.1.5, Build number: 96
+- Android versionCode: 71 (unchanged)
+- Profile: production, platform: ios, credentialsSource: local
+- Status: IN_PROGRESS (submitted July 24, 2026)
+- Key changes in 96:
+  - Heritage Sites fully disabled in FullMapView (HERITAGE_SITES_ENABLED = false)
+  - logger.ts err.cause serializer deployed to Railway (commit 3c9ad6af)
+  - All 6 production verification gates passed before build
+- Railway deployment: b25d498e (SUCCESS, commit 3c9ad6af7d10e19a235dd3314b85dc8ea32aae8d)
+- Build command used: cd artifacts/mobile && GIT_INDEX_FILE=/tmp/eas-git-index EAS_SKIP_AUTO_FINGERPRINT=1 eas build --platform ios --profile production --non-interactive
+- DO NOT SUBMIT until device smoke test passes (TestFlight install + cold launch verification)
 
-## iOS Build 95 — SUBMITTED TO APPLE REVIEW
-- Version: 1.1.5, Build number: 95
-- Status: Saved for Apple review (submitted July 22, 2026)
-- Key changes in 95: Apple Sign-In working (APPLE_KEY_ID corrected), TN3194 revocation stored, nonce enforced
-- RELEASE LOCK ACTIVE: do not merge, deploy, OTA update, or create a replacement iOS build until Apple approves
-
-# Historical record (July 22, 2026)
-
-## iOS Build 95 — SUBMITTED TO APPLE REVIEW
-- Version: 1.1.5, Build number: 95
-- Status: Saved for Apple review (submitted July 22, 2026)
-- Key changes in 95: Apple Sign-In working (APPLE_KEY_ID corrected from 2ZNB4XAZY7 → Z2NB4XAZY7 in Railway), TN3194 revocation stored, nonce enforced
-- RELEASE LOCK ACTIVE: do not merge, deploy, OTA update, or create a replacement iOS build until Apple approves
-
-## Android — versionCode 66 (NOT YET UPDATED TO MATCH iOS 95)
-- Version: 1.1.5, versionCode: 66
-- Status: Available to testers, NOT submitted to Play Store
-- Next Android build: versionCode 67 — build AFTER Apple approves Build 95 and post-review branch is merged
-- Android regression checklist must pass before building 67
-
-# Historical record (July 20, 2026)
-
-## Community Beta 1 — IN PROGRESS ON EAS
-
-### iOS Build 90
-- EAS Build ID: 697a5458-1184-48a0-a448-f356d93a6952
-- Status: in progress (started 7/20/2026 4:58 PM)
-- Logs: https://expo.dev/accounts/tlindsay428/projects/mobile/builds/697a5458-1184-48a0-a448-f356d93a6952
-- Version: 1.1.5, Build number: 90, SDK: 57.0.0
-- Commit: 4bf2646c7d1681e6f6160c05ce97f241fbd22b94
-- Profile: production, distribution: store
-- credentialsSource: local (credentials.json)
-- resourceClass: m-medium
-
-### Android Version Code 64
-- EAS Build ID: d10a6478-d2d6-4403-804d-4cde546aea9e
-- Status: in progress (started 7/20/2026 4:55 PM)
-- Logs: https://expo.dev/accounts/tlinksay428/projects/mobile/builds/d10a6478-d2d6-4403-804d-4cde546aea9e
-- Version: 1.1.5, Version code: 64, SDK: 57.0.0
-- Commit: 4bf2646c7d1681e6f6160c05ce97f241fbd22b94
-- Profile: production, buildType: app-bundle
-- credentialsSource: local (credentials.json)
+## Android versionCode 71 — CURRENT (not submitted to Play Store)
+- Version: 1.1.5, versionCode: 71
+- Status: Available to testers
+- Next Android build: versionCode 72 — when needed
 
 ## App Store identifiers
 - App Store Connect App ID: 6783773366
@@ -62,36 +31,15 @@ description: Current app store submission state — Android and iOS build versio
 - Bundle ID: com.melaninmaps.app (iOS + Android)
 - EAS submit appleId: tlindsay428@yahoo.com
 
-## autoIncrement note
-- autoIncrement was temporarily set to false to allow iOS build to queue without a git commit
-- Restored to true after iOS build was queued
-- app.json currently shows iOS buildNumber="90", Android versionCode=64
-- NEXT build: iOS must be ≥ 91, Android must be ≥ 65
-
-## Post-build defect (do NOT reopen this release for this)
-- business-owner/vibe-tags.tsx, family-plan.tsx, hooks/useFamilyPlan.ts
-  use EXPO_PUBLIC_API_URL which is not set in eas.json production env
-  → those 3 screens will have empty API base in production
-  → not a submission blocker; add EXPO_PUBLIC_API_URL=https://www.mappingwithmelanin.com
-    to eas.json production env in the NEXT release cycle
-
-## DO NOT SUBMIT until device smoke test passes
-Per Community Beta 1 checklist:
-  1. Install TestFlight build (iOS 90) on physical device
-  2. Cold launch → sign in → KinfolkAI → Map → business profile
-  3. Only submit after hands-on test passes
-
-## Railway production (July 20, 2026)
-- API: www.mappingwithmelanin.com → Railway (server: railway-hikari) ✅
-- GoDaddy CNAME resolved ✅
-- NODE_ENV=production confirmed ✅
-- 12/12 smoke tests PASS ✅
-- DB schema confirmed: stripe_processed_events, failed_login_attempts,
-  locked_until, marketing_opt_out, auth_events all present ✅
-
-## Build commands (for future reference)
-- iOS: cd artifacts/mobile && eas build --platform ios --profile production
-- Android: cd artifacts/mobile && eas build --platform android --profile production
+## Build commands
+- iOS: cd artifacts/mobile && GIT_INDEX_FILE=/tmp/eas-git-index EAS_SKIP_AUTO_FINGERPRINT=1 eas build --platform ios --profile production --non-interactive
+- Android: cd artifacts/mobile && GIT_INDEX_FILE=/tmp/eas-git-index EAS_SKIP_AUTO_FINGERPRINT=1 eas build --platform android --profile production --non-interactive
 - Submit iOS: cd artifacts/mobile && eas submit --platform ios --profile production
-- Submit Android: cd artifacts/mobile && eas submit --platform android --profile production
 - MUST run from artifacts/mobile/ — root picks wrong project config
+
+# Historical record
+
+## iOS Build 95 — SUBMITTED TO APPLE REVIEW (July 22, 2026)
+- Version: 1.1.5, Build number: 95
+- Status: Saved for Apple review (submitted July 22, 2026)
+- Key changes in 95: Apple Sign-In working (APPLE_KEY_ID corrected Z2NB4XAZY7), TN3194 revocation stored, nonce enforced
