@@ -397322,8 +397322,52 @@ init_drizzle_orm();
 // src/lib/logger.ts
 var import_pino = __toESM(require_pino(), 1);
 var isProduction = process.env.NODE_ENV === "production";
+function serializeCause(cause) {
+  if (!cause || typeof cause !== "object") return void 0;
+  const c3 = cause;
+  return {
+    type: cause?.constructor?.name,
+    message: c3.message,
+    stack: typeof c3.stack === "string" ? c3.stack.slice(0, 600) : void 0,
+    code: c3.code,
+    severity: c3.severity,
+    detail: c3.detail,
+    hint: c3.hint,
+    where: c3.where,
+    constraint: c3.constraint,
+    table: c3.table,
+    column: c3.column,
+    sqlState: c3.sqlState ?? c3.SQLSTATE,
+    errno: c3.errno,
+    syscall: c3.syscall,
+    address: c3.address,
+    port: c3.port
+  };
+}
 var logger = (0, import_pino.default)({
   level: process.env.LOG_LEVEL ?? "info",
+  serializers: {
+    err: (err) => {
+      if (!err || typeof err !== "object") return err;
+      const e3 = err;
+      return {
+        type: err?.constructor?.name ?? "Error",
+        message: e3.message,
+        stack: typeof e3.stack === "string" ? e3.stack.slice(0, 800) : void 0,
+        code: e3.code,
+        severity: e3.severity,
+        detail: e3.detail,
+        hint: e3.hint,
+        constraint: e3.constraint,
+        sqlState: e3.sqlState ?? e3.SQLSTATE,
+        errno: e3.errno,
+        syscall: e3.syscall,
+        address: e3.address,
+        port: e3.port,
+        cause: serializeCause(e3.cause)
+      };
+    }
+  },
   redact: [
     "req.headers.authorization",
     "req.headers.cookie",
