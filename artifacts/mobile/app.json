@@ -87,7 +87,7 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
-      "versionCode": 67
+      "versionCode": 68
     },
     "web": {
       "favicon": "./assets/images/icon.png"
