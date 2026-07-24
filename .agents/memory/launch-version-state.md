@@ -5,20 +5,18 @@ description: Current app store submission state — Android and iOS build versio
 
 # Launch Version State (as of July 24, 2026)
 
-## iOS Build 96 — IN PROGRESS ON EAS
+## iOS Build 96 — SUBMITTED TO APPLE (July 24, 2026)
 - EAS Build ID: fa7ac51c-29ba-43d0-b440-b920ec6b290a
+- Submission ID: c63f908d-cbaf-4d4b-9255-c1912b0d3b7b
 - Build URL: https://expo.dev/accounts/tlindsay428/projects/mobile/builds/fa7ac51c-29ba-43d0-b440-b920ec6b290a
 - Version: 1.1.5, Build number: 96
 - Android versionCode: 71 (unchanged)
-- Profile: production, platform: ios, credentialsSource: local
-- Status: IN_PROGRESS (submitted July 24, 2026)
+- Profile: production, ASC App ID: 6783773366
 - Key changes in 96:
   - Heritage Sites fully disabled in FullMapView (HERITAGE_SITES_ENABLED = false)
   - logger.ts err.cause serializer deployed to Railway (commit 3c9ad6af)
   - All 6 production verification gates passed before build
 - Railway deployment: b25d498e (SUCCESS, commit 3c9ad6af7d10e19a235dd3314b85dc8ea32aae8d)
-- Build command used: cd artifacts/mobile && GIT_INDEX_FILE=/tmp/eas-git-index EAS_SKIP_AUTO_FINGERPRINT=1 eas build --platform ios --profile production --non-interactive
-- DO NOT SUBMIT until device smoke test passes (TestFlight install + cold launch verification)
 
 ## Android versionCode 71 — CURRENT (not submitted to Play Store)
 - Version: 1.1.5, versionCode: 71
