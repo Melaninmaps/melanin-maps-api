@@ -1,0 +1,59 @@
+Yes—I remember, and your screenshot confirms it.
+
+From what I can see:
+
+* ✅ `EXPO_PUBLIC_API_URL` exists.
+* ✅ It's assigned to the **production** environment.
+* ✅ It begins with `https://www.mapping...`
+* And you've already verified earlier that it is the correct `https://www.mappingwithmelanin.com`.
+
+So I no longer think **H1 (wrong EXPO_PUBLIC_API_URL)** is the leading hypothesis. We should move on.
+
+## That changes what I think the problem is
+
+Based on everything you've shown me over the last two days, the stronger possibilities are now:
+
+1. **The login POST succeeds, but `/api/auth/user` immediately fails** (the report's H2/H3). 
+2. **The Railway backend isn't recognizing the freshly created session** when the app immediately requests the user profile.
+3. **Something changed in production that the mocked tests never exercised**, which is exactly what the report itself concludes. 
+
+## I need one critical piece of evidence
+
+When you tested Build 69, **what exactly happened?**
+
+Did you see:
+
+* **A.** "Invalid email/password"
+* **B.** "Could not reach server"
+* **C.** "Signed in but could not reach the server"
+* **D.** A spinner that eventually returns to login
+* **E.** It immediately returns to the login screen
+* **F.** Something else
+
+That answer will tell us where the failure is occurring.
+
+## I also want Replit to stop hypothesizing and prove it
+
+Send this:
+
+```text
+Stop ranking hypotheses.
+
+The production API URL has already been verified and is correct.
+
+I need evidence, not possibilities.
+
+Use the timestamp of my most recent failed Android VC69 login attempt and determine:
+
+1. Did POST /api/auth/login-email reach Railway?
+2. What HTTP status did it return?
+3. Was a session/token created?
+4. Did GET /api/auth/user occur immediately afterward?
+5. What HTTP status did it return?
+6. If it returned {user:null}, explain exactly why.
+7. If the POST never reached Railway, explain why the mobile app never sent it.
+
+Do not propose another code change until you identify the first failing request in the production login sequence with supporting logs.
+```
+
+At this point, I don't want another theory. I want the **first request in the production chain that fails**, backed by Railway logs. Once we know that, we'll know whether this is a backend session issue, a client issue, or something else entirely.
