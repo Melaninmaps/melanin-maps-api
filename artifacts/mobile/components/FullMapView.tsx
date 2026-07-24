@@ -307,6 +307,7 @@ export function FullMapView() {
             key={biz.id}
             coordinate={{ latitude: biz.latitude, longitude: biz.longitude }}
             onPress={() => { setSelectedBusiness(biz); setSelectedCulturalSite(null); }}
+            tracksViewChanges={false}
           >
             <View style={s.bizMarker}>
               <Feather name="briefcase" size={9} color="#fff" />
