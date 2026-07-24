@@ -367,21 +367,37 @@ export function FullMapView() {
                 setSelectedBusiness(null);
               }}
               zIndex={isSelected ? 10 : 1}
-              tracksViewChanges={isSelected}
+              tracksViewChanges={false}
             >
-              {/* pointerEvents="none" lets the touch pass through to Marker's
-                  native handler. Without it the View absorbs the tap on iOS
-                  and onPress never fires. */}
-              <View
-                pointerEvents="none"
-                style={[
-                  s.culturalMarker,
-                  { backgroundColor: cs.color },
-                  isSelected && s.culturalMarkerSelected,
-                ]}
-              >
-                <Feather name={cs.icon} size={isSelected ? 13 : 10} color="#fff" />
-              </View>
+              {/* Android isolation (VC71): plain colored circle — no Feather/Text
+                  child inside the Marker. On Android Fabric, rendering a View
+                  containing a Text node (Feather icon) via view.draw(canvas) in
+                  an unattached-Window context corrupts the Marker's native touch
+                  descriptor, crashing the map on first interaction. The plain
+                  circle eliminates font rendering from the bitmap-capture path.
+                  This is an isolation step; icon restoration is gated on
+                  crash-logger evidence from the VC71 build.
+
+                  iOS: current appearance preserved (Feather icon + selection
+                  size change). tracksViewChanges=false applies to both
+                  platforms — the selection card is the selection indicator. */}
+              {Platform.OS === "android" ? (
+                <View
+                  pointerEvents="none"
+                  style={[s.culturalMarker, { backgroundColor: cs.color }]}
+                />
+              ) : (
+                <View
+                  pointerEvents="none"
+                  style={[
+                    s.culturalMarker,
+                    { backgroundColor: cs.color },
+                    isSelected && s.culturalMarkerSelected,
+                  ]}
+                >
+                  <Feather name={cs.icon} size={isSelected ? 13 : 10} color="#fff" />
+                </View>
+              )}
             </Marker>
           );
         })}
