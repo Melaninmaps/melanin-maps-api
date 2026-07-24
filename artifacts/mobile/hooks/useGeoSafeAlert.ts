@@ -33,7 +33,12 @@ export function useGeoSafeAlert() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") return;
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const loc = await Promise.race([
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("location timeout")), 8_000)
+        ),
+      ]);
       const { latitude, longitude } = loc.coords;
 
       const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY;

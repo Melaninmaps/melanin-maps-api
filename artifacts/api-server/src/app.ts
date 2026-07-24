@@ -42,7 +42,19 @@ app.get("/health", (_req: Request, res: Response) => {
 // Returns pool stats in every response for observability.
 // Returns HTTP 503 if the pool is exhausted or the DB is unreachable.
 app.get("/api/readyz", async (_req: Request, res: Response) => {
-  const stats = getPoolStats();
+  const preStats = getPoolStats();
+  // Fast-fail: if all connections are checked out, return 503 immediately without
+  // queuing another pool.query. Probing under exhaustion worsens the waiting-queue
+  // depth and delays recovery for all other routes (including login).
+  if (preStats.idle === 0 && preStats.total > 0) {
+    res.status(503).json({
+      status: "degraded",
+      db: "pool_exhausted",
+      pool: preStats,
+      detail: `All ${preStats.total} connections in use (idle=0); not queuing probe.`,
+    });
+    return;
+  }
   try {
     await Promise.race([
       pool.query("SELECT 1"),
@@ -50,10 +62,10 @@ app.get("/api/readyz", async (_req: Request, res: Response) => {
         setTimeout(() => reject(new Error("SELECT 1 timed out after 2000ms")), 2000),
       ),
     ]);
-    res.json({ status: "ok", db: "ok", pool: stats });
+    res.json({ status: "ok", db: "ok", pool: getPoolStats() });
   } catch (err: unknown) {
     const detail = err instanceof Error ? err.message : "unknown error";
-    res.status(503).json({ status: "degraded", db: "error", pool: stats, detail });
+    res.status(503).json({ status: "degraded", db: "error", pool: getPoolStats(), detail });
   }
 });
 app.get("/api/dl", (_req: Request, res: Response) => {

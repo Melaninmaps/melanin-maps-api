@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -174,7 +175,12 @@ export function FullMapView() {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") { setLocating(false); return; }
         setLocationGranted(true);
-        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        const loc = await Promise.race([
+          Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("location timeout")), 8_000)
+          ),
+        ]);
         mapRef.current?.animateToRegion(
           { latitude: loc.coords.latitude, longitude: loc.coords.longitude, latitudeDelta: 0.12, longitudeDelta: 0.12 },
           800,
@@ -230,13 +236,16 @@ export function FullMapView() {
     }
   }, []);
 
-  // Initial load when Heritage Sites layer is first shown
+  // Initial load when Heritage Sites layer is first shown.
+  // Deferred until mapReady=true — adding Markers before onMapReady fires
+  // can cause a native race condition on Android (preventive correction;
+  // confirmed crash stack trace not yet available from Play Console).
   useEffect(() => {
-    if (showCulturalSites && culturalSites.length === 0) {
+    if (showCulturalSites && culturalSites.length === 0 && mapReady) {
       void fetchCulturalSites(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showCulturalSites]);
+  }, [showCulturalSites, mapReady]);
 
   // Background refresh whenever the Map tab regains focus (silently keeps existing data on failure)
   useEffect(() => {
@@ -281,13 +290,15 @@ export function FullMapView() {
         showsUserLocation={locationGranted}
         showsMyLocationButton={false}
         onMapReady={() => setMapReady(true)}
-        pointsOfInterestFilter={[
-          "park", "nationalPark", "beach", "campground", "marina",
-          "hospital", "pharmacy", "police", "fireStation",
-          "museum", "theater", "library", "university", "school",
-          "publicTransport", "airport", "stadium", "zoo", "aquarium",
-          "postOffice", "restroom",
-        ]}
+        {...(Platform.OS === "ios" ? {
+          pointsOfInterestFilter: [
+            "park", "nationalPark", "beach", "campground", "marina",
+            "hospital", "pharmacy", "police", "fireStation",
+            "museum", "theater", "library", "university", "school",
+            "publicTransport", "airport", "stadium", "zoo", "aquarium",
+            "postOffice", "restroom",
+          ],
+        } : {})}
         onPress={() => { setSelectedBusiness(null); setSelectedCulturalSite(null); }}
       >
         {/* Business pins — gold */}

@@ -95,7 +95,12 @@ export function useActivityAlerts({ enabled = true }: { enabled?: boolean } = {}
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted" || cancelled) return;
-        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        const loc = await Promise.race([
+          Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("location timeout")), 8_000)
+          ),
+        ]);
         if (cancelled) return;
         await updateLocation(loc.coords.latitude, loc.coords.longitude);
         await fetchNearby();
@@ -106,7 +111,12 @@ export function useActivityAlerts({ enabled = true }: { enabled?: boolean } = {}
           if (inFlightRef.current || cancelled) return;
           inFlightRef.current = true;
           try {
-            const fresh = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+            const fresh = await Promise.race([
+              Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+              new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error("location timeout")), 8_000)
+              ),
+            ]);
             if (!cancelled) {
               await updateLocation(fresh.coords.latitude, fresh.coords.longitude);
               await fetchNearby();
