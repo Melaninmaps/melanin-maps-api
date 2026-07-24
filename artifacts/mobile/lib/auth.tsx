@@ -269,10 +269,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // Step 3 — token written and verified. Authentication is established.
-    // Fire profile load in the background; do not block navigation on it.
-    // If fetchUser fails transiently (pool exhaustion, slow DB), the user
-    // still navigates successfully. A later HTTP 401 from the server will
-    // still sign the user out correctly via fetchUser's 401 handler.
+    // Set isLoading=true BEFORE firing the background profile fetch.
+    // Without this, AuthGate sees { isLoading:false, user:null } in the
+    // window between loginWithEmail() returning and fetchUser() resolving,
+    // and immediately redirects to /login — causing the Login screen flash
+    // confirmed on physical Android VC67.
+    // fetchUser() always calls setIsLoading(false) on every exit path so
+    // the loading state resolves correctly regardless of fetch outcome.
+    setIsLoading(true);
     void fetchUser();
 
     return { authenticated: true };

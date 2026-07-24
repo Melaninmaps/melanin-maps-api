@@ -4,6 +4,7 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
+    "test": "vitest run",
     "postinstall": "node scripts/setup-hermesc.js",
     "eas-build-pre-install": "node -e \"const{execSync:e}=require('child_process');const log=s=>process.stdout.write(s+'\\n');try{log('pnpm before: '+e('pnpm --version').toString().trim());e('npm install -g pnpm@10.26.1',{stdio:'inherit'});log('pnpm after: '+e('pnpm --version').toString().trim())}catch(err){log('hook error: '+err.message)}\"",
     "eas-build-post-install": "node scripts/patch-expo-entry.js && node scripts/patch-rnmaps-podspec.js",
@@ -19,6 +20,7 @@
     "build:record:android": "node scripts/pre-build-check.js --record android"
   },
   "devDependencies": {
+    "vitest": "^4.1.10",
     "@babel/core": "^7.25.2",
     "@expo-google-fonts/inter": "^0.4.0",
     "@expo/cli": "57.0.8",
