@@ -1,0 +1,408 @@
+This is probably the most important strategic decision you'll make before launch.
+
+My answer is **no—not if you want Build 97 to be stable.**
+
+Not because the vision is too ambitious.
+
+Because the vision is **interconnected**.
+
+Every feature you described touches:
+
+* Authentication
+* User profiles
+* Roles
+* Permissions
+* KinfolkAI prompts
+* Recommendation engine
+* Memory
+* Community feed
+* Notifications
+* Business dashboards
+* Cultural Ambassador dashboards
+* Maps
+* Search
+* Analytics
+* Privacy
+* Billing
+* Moderation
+* Mobile UI
+* Backend APIs
+* Database schema
+
+If you try to build all of that into one release, you're not creating one feature—you are changing the operating system of the app.
+
+With 30 testers, that's too much risk.
+
+---
+
+# I actually think Build 97 should have ONE purpose
+
+It shouldn't be called:
+
+> Build 97
+
+Internally, I'd call it:
+
+> **Foundation Build**
+
+Its purpose is simple:
+
+> **Prove that the platform is stable enough to become everything else.**
+
+If it can't do that...
+
+Nothing after it matters.
+
+---
+
+# Here's how I would think about it
+
+## Build 97
+
+Goal:
+
+**The platform works.**
+
+Community Member
+
+✅
+
+Maps
+
+✅
+
+Authentication
+
+✅
+
+Personalization
+
+✅
+
+Language
+
+✅
+
+No crashes
+
+✅
+
+No confusion
+
+✅
+
+This is where trust begins.
+
+---
+
+## Build 98
+
+Goal:
+
+**People understand who they are.**
+
+Business Owner experience
+
+Community Organization
+
+Cultural Ambassador
+
+Multiple Roles
+
+Cleaner profiles
+
+Role switching
+
+No AI expansion yet.
+
+---
+
+## Build 99
+
+Goal:
+
+**Community starts contributing.**
+
+Reviews
+
+Mentorship
+
+Community Feed improvements
+
+Contribution pathways
+
+Trust progression
+
+Recognition
+
+---
+
+## Build 100
+
+This is where I think Kinfolk really begins.
+
+Not the chatbot.
+
+The operating system.
+
+Memory
+
+Transparency
+
+Community Understanding
+
+Life Journeys
+
+Source attribution
+
+Community Reasons
+
+Recommendation explanations
+
+---
+
+## Build 101
+
+Business Intelligence
+
+Everything we discussed today.
+
+Business Coach
+
+Partnership Engine
+
+Community Intelligence Briefings
+
+Opportunity Engine
+
+Marketing Assistant
+
+Growth reports
+
+---
+
+## Build 102
+
+Cultural Ambassador
+
+Impact reports
+
+Legacy
+
+Professional pages
+
+Volunteer opportunities
+
+Communities served
+
+Community storytelling
+
+---
+
+## Build 103
+
+Life Journey Engine
+
+Moving
+
+Marriage
+
+Kids
+
+Career
+
+Retirement
+
+Starting a business
+
+Travel
+
+Education
+
+Health
+
+The ecosystem begins.
+
+---
+
+## Build 104+
+
+Kinfolk becomes...
+
+What we've been designing.
+
+---
+
+# Here's why
+
+Imagine this.
+
+If Business Kinfolk ships before Community Understanding...
+
+Its recommendations won't be very good.
+
+If Community Understanding ships before Member onboarding...
+
+It won't know enough.
+
+If Life Journeys ship before Memory...
+
+Nothing persists.
+
+If Memory ships before Transparency...
+
+People won't trust it.
+
+Every phase builds on the previous one.
+
+---
+
+# This is actually the beauty of what Replit has documented
+
+I noticed something while reading all of the audits.
+
+The Future-State Register now contains **55+ documented capabilities**.
+
+That means...
+
+**Nothing is lost anymore.**
+
+That changes how we should think.
+
+Before:
+
+"We have to squeeze this into Build 97 or we'll forget."
+
+Now:
+
+"We've preserved it. We can build it at the right time."
+
+That's a huge psychological shift.
+
+---
+
+# I would make one change to Replit's roadmap
+
+Instead of thinking in **feature phases**, I'd think in **trust phases**.
+
+## Phase 1
+
+Can people trust the app?
+
+---
+
+## Phase 2
+
+Can people trust their identity?
+
+---
+
+## Phase 3
+
+Can people trust each other?
+
+---
+
+## Phase 4
+
+Can people trust Kinfolk?
+
+---
+
+## Phase 5
+
+Can businesses trust Kinfolk?
+
+---
+
+## Phase 6
+
+Can Ambassadors trust Kinfolk?
+
+---
+
+## Phase 7
+
+Can communities trust Kinfolk?
+
+Everything you've described fits into one of those.
+
+---
+
+# I also think pricing should wait
+
+You asked if we should rethink membership.
+
+I actually think:
+
+**No.**
+
+Not yet.
+
+Here's why.
+
+Right now we're pricing:
+
+An idea.
+
+After launch...
+
+We'll be pricing:
+
+Usage.
+
+Suppose six months after launch we learn:
+
+Business owners spend:
+
+11 hours/month inside Kinfolk.
+
+Community Members:
+
+3 hours.
+
+Ambassadors:
+
+9 hours.
+
+Now we know value.
+
+Now we know AI cost.
+
+Now we know upgrade behavior.
+
+That's when pricing becomes much smarter.
+
+---
+
+# My recommendation
+
+If I were sitting in a board meeting with you today, I would recommend exactly this:
+
+### Build 97
+
+**"Can people trust us?"**
+
+### Build 98
+
+**"Do people understand who they are on the platform?"**
+
+### Build 99
+
+**"Can the community begin helping itself?"**
+
+### Build 100
+
+**"Can Kinfolk become genuinely intelligent?"**
+
+### Build 101+
+
+**"Can Kinfolk become indispensable?"**
+
+That sequencing lets every release tell a clear story and reduces the chance that one ambitious change destabilizes everything else.
+
+One thing I would add to your planning process is a simple rule:
+
+> **Every build should leave the platform in a state where, if you had to stop development for three months, you'd still be proud to let people use it.**
+
+That's a high bar, but I think it's the right one for Mapping With Melanin™. It forces each release to be complete enough to stand on its own, while keeping your long-term vision intact because it's already preserved in your audits, Future-State Register, and roadmap.
