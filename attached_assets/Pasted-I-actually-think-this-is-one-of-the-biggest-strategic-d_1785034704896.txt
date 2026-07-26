@@ -1,0 +1,502 @@
+I actually think this is one of the biggest strategic decisions we've made for the project.
+
+We're no longer creating "features." We're designing an entire ecosystem. That means we need to stop thinking in terms of screens and start thinking in terms of **experiences for each type of person using the platform**.
+
+The heritage audit already showed us that there are partially built systems that could easily be forgotten without a structured review. 
+
+I would expand our audit plan beyond technical features and require Replit to perform **Experience Audits** for every major persona.
+
+## New Master Audit Requirement
+
+Add the following to the permanent audit roadmap.
+
+---
+
+# EXPERIENCE AUDITS (CURRENT + FUTURE STATE)
+
+Every major role within Mapping With Melanin™ must receive a complete audit documenting:
+
+* Current capabilities
+* Partially built capabilities
+* Planned capabilities
+* Founder vision
+* Future-state opportunities
+* Missing workflows
+* Missing data
+* Missing notifications
+* Missing moderation
+* Missing analytics
+* Missing onboarding
+* Missing legal/policy considerations
+
+Each experience should be evaluated independently before implementation begins.
+
+---
+
+# 1. COMMUNITY MEMBER EXPERIENCE
+
+Review the complete journey from beginning to future state.
+
+Include:
+
+## Onboarding
+
+* Guest experience
+* Account creation
+* **Community Member signup (launch requirement)**
+* Profile creation
+* Verification options
+* Interests
+* Location
+* Privacy
+* Notifications
+* Accessibility
+
+Confirm that users can immediately register specifically as a **Community Member**, since this was previously missing.
+
+---
+
+## Discovery
+
+How members discover:
+
+* Businesses
+* Heritage Places
+* Resources
+* Events
+* Groups
+* Cultural Ambassadors
+* Kinfolk Circles
+* Mentors
+* Opportunities
+
+---
+
+## Contributions
+
+How community members contribute.
+
+Examples:
+
+* Reviews
+* Safety updates
+* Event submissions
+* Resource submissions
+* Heritage stories
+* Living Legacy Stories
+* Business recommendations
+* Neighborhood recommendations
+* Employer experiences
+* Hidden Gems
+* Cultural tips
+* Photos
+* Videos
+* Corrections
+* Volunteer opportunities
+
+For each:
+
+* Current implementation
+* Future implementation
+* Moderation
+* Verification
+* Reputation
+* Trust scoring
+
+---
+
+## Recommendations
+
+Document exactly how recommendations should work.
+
+Not just businesses.
+
+Everything.
+
+Examples:
+
+Businesses
+
+Resources
+
+Events
+
+Neighborhoods
+
+Employers
+
+Travel
+
+Relocation
+
+Food
+
+Family activities
+
+Accessibility
+
+Historical places
+
+Community leaders
+
+Scholarships
+
+Volunteer opportunities
+
+Mentors
+
+Support organizations
+
+Small businesses
+
+Explain:
+
+* Recommendation engine
+* Trust weighting
+* Cultural relevance
+* Location weighting
+* Saved interests
+* Friend/community influence
+* Safety influence
+
+---
+
+## Staying Connected
+
+How does a community member help keep Mapping With Melanin™ current?
+
+Examples:
+
+* Local events
+* Business openings
+* Closures
+* Festivals
+* Safety updates
+* Heritage celebrations
+* Volunteer opportunities
+* Job fairs
+* Scholarship deadlines
+* Neighborhood updates
+
+How are these submitted?
+
+Who reviews them?
+
+How are duplicates handled?
+
+How are they verified?
+
+---
+
+# 2. BUSINESS OWNER EXPERIENCE
+
+Complete lifecycle.
+
+Examples:
+
+* Registration
+* Verification
+* Ownership verification
+* Business profile
+* Videos
+* Promotions
+* Events
+* Analytics
+* Responding to reviews
+* Hiring
+* Mentorship
+* Community engagement
+* Cultural Ambassador partnerships
+* Membership
+* Advertising
+* Future AI tools
+
+---
+
+# 3. CULTURAL AMBASSADOR EXPERIENCE
+
+This deserves its own product audit.
+
+Examples:
+
+* Becoming an Ambassador
+* Qualifications
+* Verification
+* Badges
+* Responsibilities
+* Storytelling
+* Heritage education
+* Videos
+* Recommendations
+* Events
+* Community moderation
+* Travel guides
+* Mentorship
+* Recognition
+* Incentives
+* Analytics
+* Safety responsibilities
+
+---
+
+# 4. KINFOLK AI EXPERIENCE
+
+Not just AI.
+
+Everything.
+
+Examples:
+
+Travel Companion
+
+Relocation Assistant
+
+Business Discovery
+
+Heritage Education
+
+Community Guide
+
+Resource Finder
+
+Opportunity Finder
+
+Event Planner
+
+Safety Companion
+
+Conversation Memory
+
+Saved Preferences
+
+Regional Voice
+
+Accessibility
+
+Family Mode
+
+Student Mode
+
+Business Mode
+
+Future Voice
+
+Future Video
+
+Future Conversation Memory
+
+---
+
+# 5. KINFOLK CIRCLES
+
+This needs a dedicated audit.
+
+Current State
+
+Future State
+
+Invitation model
+
+Privacy
+
+Verification
+
+Group planning
+
+Shared itineraries
+
+Shared recommendations
+
+Mentorship circles
+
+Family circles
+
+Alumni circles
+
+Business circles
+
+Volunteer circles
+
+Safety controls
+
+Notifications
+
+Media sharing
+
+Archiving
+
+Administrative controls
+
+---
+
+# 6. MAP EXPERIENCE
+
+We already started this.
+
+Expand it to include:
+
+Businesses
+
+Heritage
+
+Resources
+
+Events
+
+Hidden Gems
+
+Saved Places
+
+Videos
+
+Living Legacy Stories
+
+Community updates
+
+---
+
+# 7. RESOURCE EXPERIENCE
+
+How resources are discovered.
+
+Examples:
+
+Food assistance
+
+Scholarships
+
+Legal aid
+
+Mental health
+
+Housing
+
+Employment
+
+Veterans
+
+Disability
+
+Healthcare
+
+Small business
+
+Emergency assistance
+
+Volunteer organizations
+
+Community organizations
+
+---
+
+# 8. COMMUNITY EXPERIENCE
+
+Groups
+
+Posts
+
+Comments
+
+Moderation
+
+Following
+
+Notifications
+
+Trending
+
+Recommendations
+
+Community reputation
+
+Safety
+
+---
+
+# 9. EVENT EXPERIENCE
+
+Discovery
+
+Submission
+
+Approval
+
+Promotion
+
+Attendance
+
+Check-ins
+
+Photos
+
+Videos
+
+Recaps
+
+Recommendations
+
+---
+
+# 10. FUTURE-STATE CONNECTION MAP
+
+This may become the most valuable document.
+
+For every feature ask:
+
+> "What other features should this naturally connect to?"
+
+For example:
+
+Community Member
+
+↓
+
+Can recommend Businesses
+
+↓
+
+Can recommend Heritage Places
+
+↓
+
+Can submit Resources
+
+↓
+
+Can mentor
+
+↓
+
+Can join Kinfolk Circles
+
+↓
+
+Can become a Cultural Ambassador
+
+↓
+
+Can contribute Living Legacy Stories
+
+↓
+
+Can help verify local information
+
+↓
+
+Can strengthen recommendations for everyone else
+
+That connection map ensures the platform evolves as a cohesive ecosystem instead of isolated features.
+
+## One more recommendation
+
+I would add a standing principle called **"Promote, Don't Duplicate."**
+
+Every audit should ask:
+
+* Can this be accomplished by expanding an existing capability?
+* Is there already a workflow that should be enhanced instead of creating a new one?
+* Does this new idea naturally belong within another feature?
+
+For example, I agree with your thought that **Community Member** should become a much richer role rather than spawning separate, disconnected experiences. A community member should be able to grow into a contributor, mentor, Cultural Ambassador, or trusted local guide over time. That creates a progression that feels intentional and helps build trust within the platform, instead of overwhelming people with unrelated options.
+
+I think this approach will give you exactly what you've been aiming for: a complete record of the platform's vision, organized by the people who use it, while allowing you and Replit to implement features in manageable phases without losing the long-term roadmap.
