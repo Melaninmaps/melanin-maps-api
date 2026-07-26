@@ -128,7 +128,7 @@ Each entry includes:
 
 | Audit ID | Area | Phase | Priority |
 |----------|------|-------|----------|
-| AUDIT-004 | Community Member Experience | 1 | High — launch requirement |
+| AUDIT-004 | Community Member Experience | 0 | COMPLETE — July 26, 2026 |
 | AUDIT-005 | Maps & Heritage — Wave 1 Architecture | 2 | High — pending Build 96 |
 | AUDIT-006 | Business Owner Experience | 1 | High |
 | AUDIT-007 | Cultural Ambassador Experience | 1 | High |
