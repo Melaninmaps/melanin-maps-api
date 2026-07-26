@@ -1,0 +1,105 @@
+Exactly. Kinfolk needs to understand proportion, scale, recency, and confidence—not merely count activity.
+Your example captures it perfectly:
+
+100 brunch searches among 500 relevant members = 20%
+100 brunch searches among 50,000 relevant members = 0.2%
+Those are the same number of searches, but they represent very different community signals. The first may indicate a meaningful unmet need. The second may be ordinary background activity.
+Kinfolk should evaluate the signal, not just the total
+A useful community insight should consider:
+Participation rate
+How large is the signal relative to the relevant population?
+“20% of active members in this area searched for brunch.”
+This is more meaningful than:
+“100 people searched for brunch.”
+Relevant population
+The denominator should match the question. Depending on the insight, that might be:
+Active members in the ZIP code
+Members searching within a defined radius
+Families with selected family interests
+Travelers planning visits to that city
+Members who engaged with restaurant content
+Businesses in the relevant category
+Verified contributors with recent local activity
+Kinfolk should not compare 100 brunch searches against every registered user nationally.
+Time period
+Kinfolk should distinguish:
+100 searches this week
+100 searches this year
+A sudden increase
+A steady pattern
+A seasonal pattern that occurs every summer
+For example:
+“Brunch interest increased from 8% to 18% of relevant local searches over the past four weeks.”
+That is stronger than simply reporting 100 searches.
+Baseline
+Kinfolk should ask:
+Is this unusual for this place, population, category, and time of year?
+Back-to-school searches may naturally increase in August. That can still create an opportunity, but Kinfolk should not describe a normal annual pattern as an unexplained surge.
+Evidence strength
+A large percentage from a tiny group may still be unstable:
+4 of 10 people = 40%, but weak evidence
+100 of 500 = 20%, stronger evidence
+5,000 of 50,000 = 10%, very strong evidence
+Kinfolk therefore needs both:
+Rate + sample size
+It should never display one without internally considering the other.
+Privacy threshold
+Kinfolk should not expose insights from groups so small that someone could infer individual behavior.
+For example, it should not tell a business:
+
+“Three members in your building searched for divorce attorneys.”
+Even when mathematically accurate, that would be invasive.
+Sensitive categories need higher aggregation thresholds or should not be used for proactive recommendations at all.
+
+The model should include five dimensions
+I would call this the Community Signal Strength Model:
+Prevalence — What share of the relevant population showed the signal?
+Volume — How many independent people or actions support it?
+Momentum — Is the signal growing, declining, or stable?
+Relevance — Does it meaningfully connect to this member, business, profession, or community?
+Confidence — Is the evidence sufficient, recent, representative, and privacy-safe?
+Kinfolk should only act proactively when the combined signal is meaningful.
+How Kinfolk should communicate it
+Business example
+Instead of:
+“100 people searched for brunch. You should offer brunch.”
+Kinfolk could say:
+“Brunch represented about 20% of restaurant-related searches from active members in your area during the past four weeks, up from 11% in the prior period. This may be worth exploring based on your current menu and business goals. Would you like to review likely costs, staffing, hours, and licensing considerations?”
+This is:
+Proportional
+Evidence-based
+Non-promissory
+Specific to the business
+An invitation, not an instruction
+Community-needs example
+Instead of:
+“People need welders here.”
+Kinfolk could say:
+“Local searches and verified job postings suggest sustained demand for welding services, while relatively few local providers are listed. This may indicate an opportunity, but more information is needed before treating it as a confirmed shortage.”
+Safety example
+Instead of:
+“There were 100 discrimination reports.”
+Kinfolk should consider:
+Population exposed
+Number of unique reporters
+Time period
+Duplicate or related events
+Visitor volume
+Reporting rate
+Corroboration
+Comparison with prior periods
+Whether awareness campaigns increased reporting
+An increase in reports might mean conditions worsened, or it could mean people became more aware of the reporting tool. Kinfolk must state that uncertainty.
+This should not become “collect everything”
+I strongly agree with your principle:
+Information should be collected because it can create a responsible benefit—not merely because it might be useful someday.
+Before collecting a data point, Replit should require four answers:
+What member or community benefit does this create?
+What decision could responsibly change because of it?
+Can the same result be achieved with less personal information?
+When should the information expire or stop affecting results?
+If the team cannot answer those questions, the platform probably should not collect it.
+Add this constitutional rule
+Kinfolk must interpret community information in proportion to the relevant population, time period, context, and strength of evidence. Raw totals alone must never be treated as community meaning.
+And a related rule:
+Kinfolk collects information only when there is a defined, privacy-respecting purpose that can produce a meaningful benefit for members, businesses, organizations, or communities.
