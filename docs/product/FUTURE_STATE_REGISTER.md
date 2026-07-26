@@ -73,6 +73,20 @@
 | FSR-039 | Recommendation Source Attribution in KinfolkAI Responses | KinfolkAI / Trust | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
 | FSR-040 | KinfolkAI Query Count Display (Free Tier Transparency) | KinfolkAI / UX | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
 | FSR-041 | Smart Promotion Engine Language Correction (Platform Language Rule) | KinfolkAI / Language | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
+| FSR-042 | KinfolkAI Memory — Edit, Delete, Clear, and Pause Controls | KinfolkAI / Privacy | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005B; requires FD-022 |
+| FSR-043 | Language Compliance — travel-planner.tsx isBlackOwned Badge | KinfolkAI / Language | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005B; requires FD-019 |
+| FSR-044 | Language Compliance — travel.tsx Life Chip Default Prompt | KinfolkAI / Language | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005B; requires FD-018 |
+| FSR-045 | Role-Aware KinfolkAI Entry Experience (Life Chips + Opening Greeting) | KinfolkAI / Role Experience | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005B; requires FD-020 |
+| FSR-046 | Onboarding Consent Statement for Personalization Data Collection | KinfolkAI / Privacy | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005B |
+| FSR-047 | Business Owner Role-Specific Follow-Up Questions in profile-setup.tsx | KinfolkAI / Onboarding | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005B |
+| FSR-048 | Multi-Role Account Experience Design | KinfolkAI / Role Experience | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005B; requires FD-020, FD-021 |
+| FSR-049 | KinfolkAI Proactivity Governance Model | KinfolkAI / UX | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005B; requires FD-024 |
+| FSR-050 | KinfolkAI Intuitiveness Model — Clarification and Context Thresholds | KinfolkAI / Experience | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005B |
+| FSR-051 | Conversation-to-Plan Conversion (Save Full Thread as Named Plan) | KinfolkAI / UX | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005B |
+| FSR-052 | Prompt Versioning and Governance System | KinfolkAI / Admin | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005B; requires FD-023 |
+| FSR-053 | Source-of-Truth Documentation Architecture (Prompt Doc + Changelog) | KinfolkAI / Admin | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005B |
+| FSR-054 | Safety Data and Family Mode Integration into Conversational AI | KinfolkAI / Safety | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005B |
+| FSR-055 | Anti-Addiction Metrics Standard | KinfolkAI / Governance | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005B; requires FD-024 |
 
 ---
 
@@ -88,4 +102,4 @@
 ---
 
 *Last updated: July 26, 2026*
-*Updated by: Replit Agent — Strategic advisor review: FSR-018 through FSR-026 added*
+*Updated by: Replit Agent — AUDIT-005B complete: FSR-042 through FSR-055 added*

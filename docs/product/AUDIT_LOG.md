@@ -195,9 +195,83 @@ Extension status of existing platform systems:
 - AUDIT-008 (previously queued as KinfolkAI Experience) is now COMPLETE as AUDIT-005
 
 **Next Action:**
-- Founder reviews Section 37 (Founder Decisions Required) and Section 38 (Proposed Implementation Waves) in `docs/product/kinfolk-ai/KINFOLK_AI_COS_AUDIT_AND_SPEC.md`
-- Founder provides direction on which FD-008 through FD-017 decisions to make
-- Founder indicates which wave(s) to authorize with "Please implement."
+- See AUDIT-005B below — completeness verification and mobile scope addendum completed same session
+
+---
+
+### AUDIT-005B — KinfolkAI COS Experience and Architecture Addendum
+**Phase:** 1 (Cross-Platform Read-Only Audit + Addendum) — COMPLETE
+**Date:** July 26, 2026
+**Predecessor:** AUDIT-005A (Technical Server-Side Capability Audit)
+
+**Purpose:**
+Completeness verification against all 22 original prompt sections and all 42 required deliverable
+headings. Extended scope to cover mobile screens, onboarding flow, memory UI, family mode, all
+connected platform routes, and data retention that AUDIT-005A could not cover.
+
+**Key Findings:**
+
+**CRITICAL — Two Separate Mobile KinfolkAI Interfaces:**
+- `travel.tsx` (1,903 lines) is the full conversational COS — multi-turn, memory-injected, rich cards, TTS
+- `travel-planner.tsx` (390 lines) is a separate structured form-based trip planner — no memory, no voice mode
+
+**Language Rule Violations Confirmed (2):**
+- `travel-planner.tsx` line 287: `isBlackOwned` badge rendered as generic "B•O" label — not preference-gated
+- `travel.tsx` line 71: "Find Businesses" life chip hardcodes "Help me find Black-owned businesses near me"
+  as prompt — applies demographic framing regardless of member's stated support preferences
+
+**Mobile Architecture Gaps (7, labeled GAP-M001 through GAP-M007):**
+- GAP-M001: kinfolk-memory.tsx is read-only — no edit, delete, clear, or pause controls
+- GAP-M002: travel-planner.tsx isBlackOwned badge (language violation)
+- GAP-M003: travel.tsx life chip default prompt (language violation)
+- GAP-M004: No role-aware KinfolkAI entry experience — all roles see identical interface
+- GAP-M005: Onboarding collects support preferences with no consent statement
+- GAP-M006: profile-setup.tsx role selection has no role-specific follow-up questions
+- GAP-M007: No multi-role account design exists anywhere in the platform
+
+**Confirmed Present (previously unreviewed):**
+- kinfolk-memory.tsx: memory viewer showing 13 fields — read-only
+- kinfolk-settings.tsx: 6 controls (4 voice, 2 behavior toggles)
+- Family circle: approveFriendRequests + messagingEnabled per-member controls
+- Safety routes: surveys.ts (POST aggregates safetyScore+communityScore; 6-month display expiry)
+- Events: personalized by relevanceScore from user prefs; tier-gated creation
+- Circles: AI itinerary generation via OpenAI from member vibes — confirmed working route
+- Cron jobs: safety-checkins overdue, knowledge-refresh, trial-reminders — no KinfolkAI data retention cron
+
+**Confirmed Not Present:**
+- Feature flag architecture: none
+- AI-specific analytics beyond pino logs: none
+- KinfolkAI data retention cron: none (conversations persist indefinitely)
+- Admin prompt controls UI: none
+- Dedicated Cultural Ambassador screen: none — role uses standard screens
+
+**Journeys Completed:** All 15 required user journeys now written in AUDIT-005B
+(Journeys 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 15 added; journeys 1, 2, 7, 8 existed in AUDIT-005A)
+
+**Sections now substantially complete (AUDIT-005A + AUDIT-005B combined):**
+Sections 2, 3, 5, 11, 12, 13, 16, 17, 18, 19, 20, 21, 22 and all 42 deliverable headings addressed
+
+**Pending Founder decisions:** FD-008 through FD-024 (17 decisions total)
+
+**14 new FSR entries proposed:** FSR-042 through FSR-055
+
+**Decisions Made:**
+- No code changes made — all findings require "Please implement." authorization
+- AUDIT-005A relabeled as Technical Server-Side Capability Audit
+- AUDIT-005B is the Experience and Architecture Addendum — now complete
+- Full audit series is complete; Founder review of all findings is the next action
+
+**Documents Updated:**
+- docs/product/kinfolk-ai/KINFOLK_AI_COS_AUDIT_005B.md (created)
+- docs/product/AUDIT_LOG.md (this file)
+- docs/product/FUTURE_STATE_REGISTER.md (FSR-042 through FSR-055 added)
+
+**Next Action:**
+- Founder reviews FD-008 through FD-024 (17 pending decisions) in:
+  - AUDIT-005A: `docs/product/kinfolk-ai/KINFOLK_AI_COS_AUDIT_AND_SPEC.md` Section 37
+  - AUDIT-005B: `docs/product/kinfolk-ai/KINFOLK_AI_COS_AUDIT_005B.md` FD-018 through FD-024
+- Founder indicates which findings to authorize with "Please implement."
+- AUDIT-005B confirms no implementation should begin before Founder review is complete
 
 ---
 

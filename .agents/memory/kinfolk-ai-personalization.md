@@ -1,7 +1,22 @@
 ---
 name: KinfolkAI personalization architecture
-description: Full KinfolkAI system architecture — models, routes, context injection, privacy controls, gaps, and audit findings (AUDIT-005, July 26 2026)
+description: Full KinfolkAI system architecture — models, routes, mobile screens, context injection, privacy controls, gaps, and audit findings (AUDIT-005A + AUDIT-005B, July 26 2026)
 ---
+
+## AUDIT-005B Mobile Findings (July 26, 2026)
+- TWO mobile interfaces: `travel.tsx` (1,903 lines, full conversational COS) + `travel-planner.tsx` (390 lines, form-based trip planner)
+- `travel.tsx` uses `useKinfolk` hook with ChatMessage type; multi-turn; TTS via expo-speech; KinfolkOnboarding; UpgradeModal
+- `travel-planner.tsx`: no memory injection, no voice mode; standalone form → structured itinerary JSON
+- `kinfolk-memory.tsx` (242 lines): read-only viewer of 13 memory fields; NO edit/delete/clear/pause controls
+- `kinfolk-settings.tsx` (449 lines): personalityMode (4), communicationStyle, emojiLevel, humorLevel, kinfolkMemoryEnabled, personalisedSuggestions
+- Language violations: travel-planner.tsx line 287 (`isBlackOwned` badge, not preference-gated); travel.tsx line 71 (life chip hardcodes "Find Black-owned businesses")
+- No role-aware KinfolkAI entry — Business Owner and Community Member see identical interface
+- onboarding/identity.tsx asks "Who Do You Want to Support?" (10 options) but NO consent statement
+- profile-setup.tsx: 4 steps (city, roles, interests, privacy) — no role-specific follow-up questions
+- family-circle.tsx: approveFriendRequests + messagingEnabled per member; no age-gating
+- Circles route: POST `/circles/:id/itinerary/generate` uses OpenAI from member vibes — confirmed
+- No feature flags, no KinfolkAI data retention cron (conversations persist indefinitely), no admin prompt UI
+- Total FSR: FSR-001 through FSR-055; Founder Decisions pending: FD-008 through FD-024 (17 decisions)
 
 ## Architecture
 - `artifacts/api-server/src/routes/kinfolk.ts` — 2,644 lines; single source of all KinfolkAI logic
