@@ -211,8 +211,67 @@ Before any feature ships, apply this test:
      defined relevant population, not as raw totals?
   9. Was every data point collected for a defined, beneficial purpose
      with an identified expiration?
+  10. Is visibility deliberate, granular, contextual, and reversible —
+      never required as the price of platform access?
+  11. Could any private activity become visible to someone else
+      without that member's explicit, item-level permission?
 
 If any answer is uncertain, stop and clarify — do not ship.
+
+---
+
+### 10 — Visibility as Choice
+
+> Kinfolk helps members express community belonging without requiring
+> disclosure of sensitive identity or activity. Visibility is chosen,
+> contextual, reversible, and never the price of participation.
+
+The platform must help people find safe and affirming places while
+recognizing that the world does not yet consistently protect people who
+are publicly identified with every community, event, belief, health
+condition, or life circumstance.
+
+This principle requires:
+  Three visibility tiers: Share by Default / Ask Me Each Time /
+    Always Private by Default
+  Sensitive categories begin under Always Private — the member chooses
+    the item and level of detail when and if they want to share
+  Changing a visibility setting must not retroactively publish past activity
+  Silence, account creation, event attendance, and prior unrelated sharing
+    choices are never consent for sensitive disclosure
+  No cross-role leakage: personal searches, saves, and anonymous reports
+    do not appear in a business dashboard or business profile
+  No location trail: public event participation must not allow
+    reconstruction of a member's movements
+
+Full standard: docs/vision/CROSS_ROLE_PROFILE_PRIVACY_STANDARD.md
+
+---
+
+### 11 — Private Activity as Personal Property
+
+> A member's private activity may improve their own experience, but it
+> must not become someone else's information without explicit permission.
+
+One account may hold multiple roles (Community Member, Business Owner,
+Cultural Ambassador, Mentor, and more). Each role has its own visibility
+boundary. Roles may share identity fields such as name or profile image
+only when the member has explicitly approved that relationship.
+
+Anonymous contributions — employer reports, safety reports, discrimination
+reports — must remain technically separated from the public profile at
+the database, analytics, logging, and recommendation layers. Technical
+separation is not a UI preference; it is an architectural requirement.
+
+This principle governs:
+  KinfolkAI personalization (use privately, do not surface publicly)
+  Kinfolk Circles (visible to Circle members only)
+  Business dashboards (co-managers cannot see owner's personal activity)
+  Admin access (defined scope, not unlimited)
+  Community signals (aggregated only, no individual attribution)
+  Anonymous contributions (permanently separated, even from impact reports)
+
+Full standard: docs/vision/CROSS_ROLE_PROFILE_PRIVACY_STANDARD.md
 
 ---
 

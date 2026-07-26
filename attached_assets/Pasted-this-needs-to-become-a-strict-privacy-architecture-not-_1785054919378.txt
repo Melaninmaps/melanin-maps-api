@@ -1,0 +1,164 @@
+this needs to become a strict privacy architecture, not just a friendly preference setting.
+The goal should be:
+Let people show how they participate in community without exposing sensitive identity, location, attendance, or behavior they did not deliberately choose to share.
+A Business Owner is also a Community Member, but their public business presence and private personal activity should not automatically merge.
+The correct model: one person, separate contexts
+One account can hold multiple roles:
+Community Member
+Business Owner
+Cultural Ambassador
+Community Organization representative
+Mentor
+Verified Community Member
+Verified Business Owner
+But each role should have its own visibility boundaries.
+Community Member profile
+May show, only when the member chooses:
+Interests
+Communities supported
+Reviews
+Recommendations
+Volunteer activity
+Charitable events
+Community contributions
+Mentorship availability
+Cities or neighborhoods they are comfortable publicly associating with
+Impact milestones
+Business profile
+May show:
+Business services
+Ownership designations
+Vibes
+Accessibility
+Events
+Charitable partnerships
+Community involvement
+Business-owner introduction
+Business goals
+Public business milestones
+Verified ownership status
+Private Kinfolk context
+May include:
+Searches
+Saves
+Event attendance
+Life Journeys
+Location history, if enabled
+LGBTQIA+ interests
+Faith interests
+Health-related interests
+Family context
+Relocation plans
+Private Circle activity
+This information should not become public profile content unless the member affirmatively chooses to share a specific item.
+Your LGBTQIA+ event example
+Kinfolk may know that a person searched for or attended LGBTQIA+ events because they deliberately used the platform.
+Kinfolk should not automatically display:
+Marcus attended three LGBTQIA+ events this month.
+That could disclose sexual orientation, allyship, relationships, or location patterns. None should be inferred or published.
+The correct interaction is:
+“You attended several community events this month. Would you like to share any of that activity on your profile?”
+Then show granular options:
+Share only the total number of community events
+Share a specific event
+Share the event category
+Share the organization supported
+Share a private impact milestone only to me
+Do not share
+Never ask me about sharing this type of activity
+For sensitive categories, the safest default is:
+Private unless explicitly shared.
+Silence, previous sharing, or accepting an event invitation should never count as public-sharing consent.
+Better public language
+Instead of automatically exposing the event type:
+Marcus supported 4 community events this month.
+If Marcus expressly selects a particular event:
+Marcus attended the Phoenix Pride Community Resource Fair.
+If Marcus wants to share charitable involvement but not attendance details:
+Marcus supported local LGBTQIA+ community organizations this month.
+The member controls the level of detail.
+Business owners as community members
+A business owner should be able to display both identities without having their private behavior attached to the business.
+For example:
+Business profile
+Johnson Family Bakery supports youth literacy programs and hosted two neighborhood food drives this year.
+Owner’s Community Member profile
+Marcus is a Community Member, mentor, and volunteer.
+Those can be linked only when Marcus chooses something such as:
+“Show me publicly as the owner of Johnson Family Bakery.”
+The system should not automatically reveal:
+Which events the owner attends personally
+Their private searches
+Their saved businesses
+Their Circle memberships
+Their family information
+Their political, religious, health, or identity interests
+Their precise whereabouts
+Anonymous reviews or safety reports
+Public community participation settings
+Every member should have a clear Community Activity Visibility area with controls such as:
+Share by default
+Public reviews
+Public business recommendations
+Public event posts
+Public volunteer opportunities I submit
+Ask me each time
+Event attendance
+Charitable participation
+Mentorship milestones
+Businesses I supported
+Community impact totals
+Relocation reflections
+Local-guide contributions
+Always private
+Search history
+Saves
+Private messages
+Kinfolk conversations
+Circle activity
+Anonymous employer or safety reports
+Precise location
+Child-related activity
+Verification documents
+Health, legal, financial, religious, or identity-sensitive activity
+Sensitive categories should begin under Always private, with the member able to intentionally share a specific activity later.
+Anonymous contributors
+Anonymous should remain anonymous permanently unless the person makes a separate, explicit decision to reveal themselves.
+Kinfolk may privately tell them:
+“Your anonymous workplace insight helped 18 Community Members understand this employer more clearly.”
+But it must not:
+Display the contribution on their profile
+Tell a business owner who submitted it
+Use their public profile to imply authorship
+Reveal enough timing or detail to identify them
+invite them publicly to mentor based on an anonymous report
+Kinfolk could privately ask:
+“Your workplace insight has helped others. Would you like to explore mentoring in your field? This would not reveal or connect you to your anonymous submission.”
+The systems must remain technically separated.
+Safety rules that should be non-negotiable
+No sensitive inference.
+Kinfolk does not infer sexuality, religion, health, immigration status, political views, disability, or family status from searches, attendance, names, photographs, or location.
+No automatic publication.
+Private behavior never becomes profile activity by default.
+Specific consent, not blanket consent.
+“Share my community activity” is too broad for sensitive activity. Members choose the item and level of detail.
+No retroactive exposure.
+Changing a visibility setting should not automatically publish past activity.
+No cross-role leakage.
+Personal searches and attendance do not appear in a business dashboard or business profile.
+No location trail.
+Public event participation should not allow someone to reconstruct a member’s movements.
+Minor protections.
+Children and teens should have stricter defaults, parent-managed controls where appropriate, and no public attendance history.
+Anonymous means technically separated.
+Anonymous reports should be excluded from public-profile attribution and ordinary recommendation explanations.
+Easy withdrawal.
+A member can remove shared activity later without deleting their account.
+Safety over growth.
+A recommendation, community connection, or engagement opportunity must be suppressed when disclosure could create meaningful risk.
+The deeper principle
+You are trying to create a world where people can be seen, supported, and connected without forcing them to expose themselves before the world is safe enough to hold that information responsibly.
+That should become a constitutional rule:
+Kinfolk helps members express community belonging without requiring disclosure of sensitive identity or activity. Visibility is chosen, contextual, reversible, and never the price of participation.
+And another:
+A member’s private activity may improve their own experience, but it must not become someone else’s information without explicit permission.
