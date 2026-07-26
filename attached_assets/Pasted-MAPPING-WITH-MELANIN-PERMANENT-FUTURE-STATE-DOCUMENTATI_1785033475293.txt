@@ -1,0 +1,233 @@
+MAPPING WITH MELANIN™ — PERMANENT FUTURE-STATE DOCUMENTATION REQUIREMENT
+
+IMPORTANT PROJECT-WIDE RULE
+
+From this point forward, every approved idea, proposed capability, founder suggestion, future-state feature, enhancement, policy consideration, workflow concept, or unresolved product decision must be documented and preserved—even when it is not being implemented now.
+
+The purpose of this requirement is to prevent valuable product decisions from being lost inside temporary chat conversations, coding sessions, audit responses, or implementation notes.
+
+This documentation requirement applies to the entire Mapping With Melanin™ platform, not only the Map feature.
+
+══════════════════════════════════════════════════════════════
+1. DO NOT DISCARD UNIMPLEMENTED IDEAS
+══════════════════════════════════════════════════════════════
+
+When a request contains both immediate work and future-state ideas:
+
+- Implement only the specifically approved immediate work.
+- Do not silently omit the future-state ideas.
+- Do not treat an unimplemented suggestion as rejected.
+- Do not remove it because it is outside the current scope.
+- Do not rely solely on Replit chat history to preserve it.
+- Record it in the permanent project documentation.
+
+If a suggestion is unclear, record it as requiring founder clarification rather than deleting or interpreting it without approval.
+
+══════════════════════════════════════════════════════════════
+2. CREATE OR CONFIRM A PERMANENT FUTURE-STATE REGISTER
+══════════════════════════════════════════════════════════════
+
+First, perform a read-only search to determine whether the project already contains an approved:
+
+- Future-state register
+- Product backlog
+- Founder decisions log
+- Feature registry
+- Roadmap document
+- Deferred-features file
+- Product requirements directory
+- Architecture decision record
+- Specification index
+
+If an approved permanent location already exists, identify it and explain how it is currently maintained.
+
+If no appropriate permanent location exists, propose—but do not create until approved—a clearly named project file or documentation structure such as:
+
+docs/product/FUTURE_STATE_REGISTER.md
+
+or an equivalent permanent, version-controlled location.
+
+Do not store this information only in temporary logs, task output, comments scattered across code, or chat responses.
+
+══════════════════════════════════════════════════════════════
+3. REQUIRED ENTRY FOR EVERY FUTURE SUGGESTION
+══════════════════════════════════════════════════════════════
+
+Every future-state suggestion must be stored as a separate identifiable entry containing:
+
+- Unique reference ID
+- Date recorded
+- Feature or concept name
+- Product area
+- Original founder intent
+- Full suggestion
+- User benefit
+- Community or cultural purpose
+- Current implementation status
+- Priority
+- Proposed phase
+- Dependencies
+- Related existing features
+- Relevant database tables or code areas, if known
+- Privacy considerations
+- Safety considerations
+- Moderation considerations
+- Accessibility considerations
+- Legal or policy considerations
+- Open questions
+- Founder decisions required
+- Source of the suggestion
+- Related prompts, audits, or specifications
+- Whether it has been approved for implementation
+- Whether it has been implemented
+- Date implemented, when applicable
+- Testing or acceptance requirements, when applicable
+
+Preserve the founder’s intent and terminology as closely as possible.
+
+Do not reduce a detailed idea to a vague one-line backlog item.
+
+══════════════════════════════════════════════════════════════
+4. STANDARD STATUS LABELS
+══════════════════════════════════════════════════════════════
+
+Use clear and consistent statuses such as:
+
+- PROPOSED
+- NEEDS FOUNDER CLARIFICATION
+- FOUNDER APPROVED
+- DEFERRED
+- PLANNED
+- PARTIALLY IMPLEMENTED
+- IMPLEMENTED
+- TESTING
+- BLOCKED
+- SUPERSEDED
+- REJECTED BY FOUNDER
+
+An idea must not be marked REJECTED, REMOVED, or SUPERSEDED unless the founder explicitly makes that decision.
+
+“Not being built now” means DEFERRED or PLANNED—not rejected.
+
+══════════════════════════════════════════════════════════════
+5. LINK FUTURE IDEAS TO CURRENT WORK
+══════════════════════════════════════════════════════════════
+
+When immediate implementation work touches a feature with future-state plans:
+
+- Link the current implementation to the relevant future-state entries.
+- Avoid architecture that unnecessarily blocks the documented future state.
+- Do not build the future capability without approval.
+- Identify any current decision that could make the future feature materially harder or more expensive.
+- Alert the founder before creating a known architectural conflict.
+
+The immediate feature should remain launch-focused while preserving a reasonable path for later expansion.
+
+══════════════════════════════════════════════════════════════
+6. UPDATE THE REGISTER AFTER EVERY RELEVANT REQUEST
+══════════════════════════════════════════════════════════════
+
+At the end of every audit, planning request, or approved implementation involving future-state suggestions, provide a section titled:
+
+FUTURE-STATE DOCUMENTATION UPDATE
+
+It must list:
+
+1. New suggestions identified
+2. Existing entries updated
+3. Duplicate or related ideas linked
+4. Items requiring founder clarification
+5. Items moved to a different status
+6. The permanent file or register where each item is stored
+7. Confirmation that no suggestion was discarded
+
+If no new future-state suggestions were identified, state that explicitly.
+
+══════════════════════════════════════════════════════════════
+7. PROTECT AGAINST ACCIDENTAL LOSS
+══════════════════════════════════════════════════════════════
+
+The permanent future-state register must:
+
+- Be version-controlled with the project
+- Remain separate from generated build files
+- Not be overwritten during deployment
+- Not depend on a temporary Replit chat
+- Not be deleted during code cleanup
+- Be included in documentation backups
+- Retain prior decisions and change history
+- Preserve superseded language for historical reference
+- Identify the newer approved direction rather than erasing the prior one
+
+Do not store secrets, credentials, API keys, personal identification documents, or private user data in this register.
+
+══════════════════════════════════════════════════════════════
+8. HANDLE DUPLICATES WITHOUT LOSING DETAIL
+══════════════════════════════════════════════════════════════
+
+When a new suggestion overlaps with an existing idea:
+
+- Do not delete either description automatically.
+- Link the entries.
+- Merge only when doing so preserves every meaningful requirement.
+- Record the original wording or source references.
+- Explain what was combined.
+- Identify any differences that still require a founder decision.
+
+Similar ideas may represent different use cases and must not be assumed to be duplicates without review.
+
+══════════════════════════════════════════════════════════════
+9. APPLY THIS RULE TO THE CURRENT HERITAGE MAP WORK
+══════════════════════════════════════════════════════════════
+
+For the current Heritage Places and Map work, permanently preserve all future-state concepts discussed, including:
+
+- Saved heritage places
+- Lists and trip collections
+- Official website links
+- Historical source links
+- Place-connected videos
+- Alumni reflections
+- Student and faculty stories
+- Elder oral histories
+- Cultural Ambassador features
+- Community memories
+- Present-day and archival comparisons
+- Homecoming and reunion videos
+- Real-time cultural events and updates
+- Alumni profiles and chapter connections
+- Member-to-alumni connections
+- Structured mentorship
+- Group mentorship
+- Privacy and verification controls
+- Living Legacy Stories
+- Community nominations
+- Written, video, audio, photographic, and archival contributions
+- Timelines
+- Contributor relationships
+- Consent and rights management
+- Moderation and correction workflows
+- Disputed-history handling
+- Preservation and restoration efforts
+- Calls for community stories and historical information
+
+These ideas must be documented even though they are not part of the immediate map repair.
+
+══════════════════════════════════════════════════════════════
+10. REQUIRED RESPONSE NOW
+══════════════════════════════════════════════════════════════
+
+Before making changes, respond with:
+
+1. Whether a permanent future-state register already exists
+2. Its exact file path or storage location
+3. Its current structure
+4. Whether it is version-controlled
+5. Any gaps in the current documentation process
+6. The recommended permanent structure if one does not exist
+7. A list of the future-state ideas from the current Heritage Map request that will be preserved
+8. Any terminology conflicts requiring founder approval
+9. Confirmation that no code or database changes were made
+10. Confirmation that future suggestions will not be treated as rejected merely because they are deferred
+
+Do not create, move, delete, or edit files until the proposed storage approach is reviewed and approved.
