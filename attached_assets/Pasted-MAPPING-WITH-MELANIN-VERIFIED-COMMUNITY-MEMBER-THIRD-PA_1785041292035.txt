@@ -1,0 +1,607 @@
+MAPPING WITH MELANIN™ — VERIFIED COMMUNITY MEMBER
+THIRD-PARTY VENDOR AND CONFIGURATION TRACE
+
+READ-ONLY AUDIT — NO IMPLEMENTATION
+
+Replit previously described a Community Member identity-verification
+process involving a third-party provider and an estimated cost of
+approximately $1.50 per verification.
+
+Because there is a direct cost for each verification, we previously agreed
+that:
+
+- Community Member is the free base membership identity.
+- Free Community Members do not need to submit a selfie or photo ID simply
+  to join or belong.
+- Eligible paid members may choose to become Verified Community Members.
+- Verification is an added trust designation, not a requirement for basic
+  community membership.
+- Verification does not automatically make someone a Cultural Ambassador.
+- Personal member verification and business-ownership verification are
+  separate workflows.
+
+I need you to determine whether the third-party verification system,
+vendor integration, keys, environment variables, routes, database fields,
+or UI previously built for this process still exist.
+
+Do not modify code, schemas, environment variables, provider accounts,
+membership tiers, prompts, production data, or verification settings.
+
+Do not expose full secret values in your response.
+
+══════════════════════════════════════════════════════════════
+1. TRACE THE PRIOR VERIFICATION REQUIREMENT
+══════════════════════════════════════════════════════════════
+
+Search the complete project and documentation for references to:
+
+- Verified Community Member
+- Verified Member
+- Community Member verification
+- Identity verification
+- Selfie verification
+- Selfie upload
+- Liveness verification
+- Face match
+- Photo ID
+- Government-issued ID
+- Document verification
+- Age verification
+- Trust Level 2
+- identityVerified
+- verificationStatus
+- verification provider
+- verification session
+- verification webhook
+- Navigator verification
+- Paid-member verification
+- $1.50
+- 1.50
+- Per-verification charge
+- Third-party identity provider
+- Know Your Customer or KYC
+- Persona
+- Stripe Identity
+- Veriff
+- Onfido
+- Entrust
+- Jumio
+- Socure
+- Alloy
+- Sumsub
+- ID.me
+- AWS Rekognition
+- Any other identity, selfie, liveness, or document-review service
+
+Search:
+
+- Code
+- Environment-variable references
+- Secret names
+- Replit deployment configuration
+- Railway variables referenced by code
+- Expo/EAS configuration
+- Mobile screens
+- Web screens
+- API routes
+- Database schemas
+- Webhook routes
+- Membership benefits
+- Admin screens
+- Audit files
+- Founder documentation
+- Agent memory
+- Future-State Register
+- Git history, if available
+- Package dependencies
+- SDK imports
+- Comments and unused files
+
+Do not rely only on the currently active code path. Search disabled,
+orphaned, partially implemented, and unused code as well.
+
+══════════════════════════════════════════════════════════════
+2. IDENTIFY THE THIRD-PARTY VENDOR
+══════════════════════════════════════════════════════════════
+
+Report:
+
+1. Whether a third-party verification vendor can be conclusively
+   identified.
+
+2. The vendor name.
+
+3. The specific vendor product being used or previously planned.
+
+4. Evidence supporting the identification, including:
+   - Package names
+   - SDK imports
+   - API hostnames
+   - Environment-variable names
+   - Route names
+   - Webhook signatures
+   - Documentation references
+   - Provider-specific status values
+
+5. Whether the quoted approximately $1.50 cost appears anywhere in the
+   codebase or documentation.
+
+6. Whether $1.50 represented:
+   - Selfie or liveness only
+   - Government-ID review
+   - Selfie-to-ID matching
+   - One complete verification
+   - A preliminary estimate
+   - A minimum charge
+   - An outdated quote
+   - An unverified assumption
+
+7. Whether pricing is currently known or must be confirmed from the
+   vendor account.
+
+Do not claim that current pricing is $1.50 unless the configured provider
+account or current provider documentation confirms it.
+
+══════════════════════════════════════════════════════════════
+3. KEYS AND CONFIGURATION AUDIT
+══════════════════════════════════════════════════════════════
+
+Identify every environment-variable or secret name that may relate to
+identity verification.
+
+Examples may include:
+
+- API key
+- Secret key
+- Publishable key
+- Template ID
+- Inquiry template ID
+- Workflow ID
+- Environment ID
+- Webhook secret
+- Signing secret
+- Account ID
+- App ID
+- Client ID
+- Client secret
+- Redirect URL
+- Callback URL
+- Success URL
+- Failure URL
+
+For each variable report only:
+
+- Variable name
+- Platform or environment where referenced
+- Whether code references it
+- Whether a value appears to be configured
+- Whether it is configured in development, staging, or production
+- Whether it is required
+- Whether it appears stale or unused
+- Files that reference it
+
+Never display the actual secret value.
+
+Explicitly check:
+
+- Replit Secrets
+- Replit deployment environment references
+- Railway variable references available to the code
+- Expo/EAS build profiles
+- app.config files
+- eas.json
+- server environment validation
+- web environment configuration
+- mobile public environment variables
+- CI or deployment files
+
+If direct access to a provider account or deployment-secret dashboard is
+not available, say so clearly. Do not infer that a key exists merely
+because code expects one.
+
+══════════════════════════════════════════════════════════════
+4. CURRENT IMPLEMENTATION TRACE
+══════════════════════════════════════════════════════════════
+
+Trace the complete intended verification journey:
+
+Paid Community Member
+→ chooses “Become a Verified Community Member”
+→ sees explanation
+→ confirms eligibility
+→ provides consent
+→ third-party verification session is created
+→ member submits selfie/liveness and/or photo ID
+→ provider reviews the submission
+→ provider sends status or webhook
+→ Mapping With Melanin™ stores a limited verification result
+→ member sees status
+→ verified designation appears when approved
+→ retry, appeal, expiration, and deletion are handled
+
+For each step classify it as:
+
+- FULLY BUILT AND CONNECTED
+- BUILT BUT NOT USER-VISIBLE
+- PARTIALLY BUILT
+- MOCKED
+- DISABLED
+- DISCONNECTED
+- DOCUMENTED ONLY
+- MISSING
+- UNKNOWN
+
+Identify exact:
+
+- Mobile screens
+- Web screens
+- API routes
+- Database tables and fields
+- Provider calls
+- Webhook handlers
+- Membership checks
+- Status mappings
+- Admin controls
+- Badge components
+- Notification logic
+- Error handling
+- Retry handling
+- Expiration handling
+- Deletion handling
+
+══════════════════════════════════════════════════════════════
+5. WHAT IS ACTUALLY BEING VERIFIED?
+══════════════════════════════════════════════════════════════
+
+Determine whether the intended workflow verifies:
+
+- A live human is present
+- Selfie liveness
+- Selfie compared with an ID photograph
+- Government-issued ID authenticity
+- Name
+- Date of birth
+- Age
+- Address
+- Identity uniqueness
+- Duplicate-account risk
+- Any other attribute
+
+Clearly distinguish:
+
+A. SELFIE OR LIVENESS CHECK
+
+Confirms that a live person completed the process, but may not confirm
+their legal identity.
+
+B. GOVERNMENT-ID VERIFICATION
+
+Checks an identity document and may validate name, age, or document
+authenticity.
+
+C. SELFIE-TO-ID MATCHING
+
+Compares the live person with the photograph on an identity document.
+
+D. COMMUNITY TRUST DESIGNATION
+
+The member-facing result displayed by Mapping With Melanin™.
+
+Do not describe a selfie-only process as full identity verification if it
+does not confirm identity.
+
+══════════════════════════════════════════════════════════════
+6. RECOMMEND THE APPROPRIATE VERIFICATION STANDARD
+══════════════════════════════════════════════════════════════
+
+After tracing what exists, recommend the most appropriate future-state
+process for Verified Community Members.
+
+Evaluate at least these options:
+
+OPTION A — Liveness/selfie only
+
+Potential benefit:
+Lower cost and friction.
+
+Limitation:
+May confirm a real person but not confirm legal identity.
+
+OPTION B — Government ID only
+
+Potential benefit:
+Document-based identity check.
+
+Limitation:
+May not confirm the submitting person matches the ID holder.
+
+OPTION C — Government ID plus selfie/liveness match
+
+Potential benefit:
+Stronger identity assurance.
+
+Limitation:
+Greater cost, friction, privacy sensitivity, and accessibility concerns.
+
+OPTION D — Tiered verification
+
+Example:
+- Standard verified status through liveness
+- Enhanced verification for sensitive activities through ID plus liveness
+
+Explain whether tiered verification would create unnecessary confusion or
+whether it would appropriately match verification strength to risk.
+
+Recommend based on actual platform needs, including:
+
+- Reviews
+- Community posts
+- Safety reports
+- Kinfolk Circles
+- Mentorship
+- Meetups
+- Cultural Ambassador applications
+- Parent or child-related participation
+- Marketplace activity
+- Business ownership claims
+- Community Organization management
+
+Do not recommend collecting government ID merely because a vendor
+supports it. The verification level must be proportional to the actual
+risk and benefit.
+
+══════════════════════════════════════════════════════════════
+7. PAID-MEMBER ELIGIBILITY
+══════════════════════════════════════════════════════════════
+
+Audit the current membership model and explain:
+
+- Which membership tier was intended to include member verification
+- Whether the code currently checks Navigator+ or another tier
+- Whether the benefit is advertised anywhere
+- Whether paid users currently see a verification action
+- Whether free users can access the provider route
+- Whether eligibility is enforced on the server, not only in the UI
+- Whether a member could accidentally trigger multiple paid verification
+  attempts
+- Whether retries create additional vendor charges
+- Whether the platform tracks cost per attempt
+- Whether the member must pay again after a failed or expired attempt
+- Whether the provider allows reusable verification results
+
+Recommend appropriate cost protections:
+
+- One included verification per eligible paid member
+- Server-side eligibility check
+- Idempotent session creation
+- Prevention of duplicate sessions
+- Clear retry policy
+- Admin-authorized additional attempts
+- Cost logging without exposing sensitive data
+- Fraud and abuse protections
+- Confirmation before any chargeable provider session is created
+
+Do not implement billing changes.
+
+══════════════════════════════════════════════════════════════
+8. PRIVACY, CONSENT, AND DATA MINIMIZATION
+══════════════════════════════════════════════════════════════
+
+Report what the vendor receives and what Mapping With Melanin™ stores.
+
+Recommend that Mapping With Melanin™ retain only what is necessary, such
+as:
+
+- Provider verification reference
+- Status
+- Verification method
+- Completion date
+- Expiration date, if applicable
+- Limited reason code when additional action is required
+
+Determine whether the platform currently stores:
+
+- Selfie images
+- ID images
+- ID numbers
+- Date of birth
+- Legal name
+- Address
+- Biometric templates
+- Provider response payloads
+- Rejection details
+
+Flag any sensitive data retained without a documented necessity,
+retention schedule, consent basis, access control, and deletion process.
+
+The member experience should explain:
+
+- What will be submitted
+- Which third party processes it
+- Why verification is requested
+- That verification is optional unless a specific high-trust feature
+  requires it
+- What Mapping With Melanin™ receives
+- What appears publicly
+- How long status data is kept
+- How deletion is requested
+- Whether the vendor retains data
+- What happens if verification fails
+- Whether an alternative process is available for accessibility reasons
+
+Do not expose provider credentials or member verification records.
+
+══════════════════════════════════════════════════════════════
+9. PROFILE AND BADGE EXPERIENCE
+══════════════════════════════════════════════════════════════
+
+Recommend how profiles should distinguish:
+
+- Community Member
+- Verified Community Member
+- Contributor
+- Trusted Contributor
+- Cultural Ambassador
+- Business Owner
+- Verified Business Owner
+- Community Organization
+- Verified Community Organization
+
+These are additive identities and designations.
+
+A verified identity badge should mean only what was actually verified.
+
+Do not imply that verification means:
+
+- The member is safe
+- Their statements are always accurate
+- Their reviews are more favorable
+- The platform endorses them
+- Their professional qualifications are confirmed
+- Their business ownership is confirmed
+- They are a Cultural Ambassador
+
+Recommend member-facing badge language and a brief explanation available
+when someone taps the badge.
+
+══════════════════════════════════════════════════════════════
+10. BUILD 97 DECISION
+══════════════════════════════════════════════════════════════
+
+Separate two decisions:
+
+DECISION A — COMMUNITY MEMBER SIGNUP
+
+Community Member must be available as the free base option in Build 97
+and the next Android build.
+
+This should not depend on completing third-party verification.
+
+DECISION B — VERIFIED COMMUNITY MEMBER
+
+Determine whether the paid verification workflow is sufficiently complete
+and safe to include in Build 97.
+
+It may be included only if:
+
+- The vendor is conclusively identified
+- Required keys are configured
+- Current pricing and charge triggers are understood
+- The end-to-end workflow is connected
+- Server-side tier eligibility works
+- Duplicate charge prevention works
+- Consent language is complete
+- Privacy and retention behavior is documented
+- Status and retry experiences work
+- Deletion and support processes exist
+- iOS and Android tests pass
+- Verification does not destabilize registration or authentication
+
+If those conditions are not met, recommend:
+
+- Include free Community Member signup in Build 97
+- Preserve Verified Community Member as documented future state
+- Do not display a nonfunctional verification button
+- Do not create chargeable provider sessions
+- Complete verification in a separate controlled wave
+
+══════════════════════════════════════════════════════════════
+11. DOCUMENTATION PRESERVATION
+══════════════════════════════════════════════════════════════
+
+Confirm that the following are permanently documented:
+
+- Community Member as the free base identity
+- Verified Community Member as an optional paid-tier trust designation
+- Third-party verification vendor
+- Approximate or confirmed cost
+- Verification method
+- Eligibility rules
+- Provider configuration
+- Required environment-variable names
+- Privacy model
+- Member-facing journey
+- Status model
+- Retry policy
+- Badge meaning
+- Build 97 inclusion or deferral decision
+
+Search the Future-State Register first to prevent duplication.
+
+Propose updates or new entries where needed, but do not overwrite prior
+founder intent.
+
+Preserve the history explaining why this system was built and why it may
+have become disconnected.
+
+══════════════════════════════════════════════════════════════
+12. REQUIRED RESPONSE
+══════════════════════════════════════════════════════════════
+
+Return:
+
+1. Executive Summary
+2. Prior Verification Requirement Found
+3. Vendor Identified or Not Identified
+4. Evidence Supporting Vendor Identification
+5. Prior $1.50 Quote Trace
+6. Current Pricing Status
+7. Environment Variables and Secret Names Found
+8. Configuration Status by Environment
+9. Packages and SDKs Found
+10. Verification API Routes
+11. Verification Webhooks
+12. Verification Database Fields
+13. Mobile Verification UI
+14. Web Verification UI
+15. Admin Verification UI
+16. Membership-Tier Enforcement
+17. Current End-to-End Workflow
+18. What the Current Process Actually Verifies
+19. What Is Fully Built
+20. What Is Partially Built
+21. What Is Disconnected
+22. What Is Missing
+23. Current Privacy and Retention Behavior
+24. Current Consent Experience
+25. Current Cost and Duplicate-Charge Risks
+26. Recommended Verification Standard
+27. Recommended Paid-Member Eligibility
+28. Recommended Badge Meaning
+29. Community Member Versus Verified Community Member
+30. Personal Verification Versus Business Verification
+31. Build 97 Recommendation
+32. Next Android Build Recommendation
+33. Exact Files, Routes, Tables, Packages, and Configurations Reviewed
+34. Documentation and Future-State Register Updates Required
+35. Founder Decisions Required
+36. Confirmation That No Changes Were Made
+
+Answer directly:
+
+A. Which third-party vendor, if any, was previously selected?
+
+B. Are any vendor keys, configuration identifiers, packages, routes, or
+   webhook secrets currently attached to the project?
+
+C. Is the vendor currently usable in production?
+
+D. Does the present workflow use selfie/liveness, government ID, or both?
+
+E. Does the approximately $1.50 cost remain accurate and what action
+   creates that charge?
+
+F. Can paid members currently complete verification from beginning to
+   end?
+
+G. What is the safest verification method for Mapping With Melanin™?
+
+H. Should Verified Community Member be included in Build 97, or should
+   only free Community Member signup be included now?
+
+Do not implement.
+Do not submit a build.
+Do not reveal secret values.
+Do not activate or test a chargeable vendor session.
+Do not change provider settings.
+Do not change membership tiers.
