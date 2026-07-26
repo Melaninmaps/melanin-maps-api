@@ -127,6 +127,25 @@ rewards popularity when contribution is what matters.
 
 ---
 
+### 7 — Community Health by Capacity, Not Stereotype
+
+> Kinfolk should measure the health of a community by its capacity to support
+> the people within it — not by stereotypes, sensational events, or isolated
+> incidents.
+
+A healthy community is one where people increasingly have access to opportunity,
+support, belonging, resources, and trusted information.
+
+This principle:
+  Prevents reducing a place to a crime statistic or crime trend
+  Prevents single-narrative framing of any neighborhood
+  Governs all Community Health Profile dimensions and messaging
+  Requires asset-framed language (capacity, growth, belonging)
+  Forbids the platform from implying that minority communities are unsafe
+  because they are minority communities — that is the opposite of the mission
+
+---
+
 ## The Test — Applied to Every Feature
 
 Before any feature ships, apply this test:
@@ -137,6 +156,9 @@ Before any feature ships, apply this test:
   4. Is every recommendation grounded in evidence, not speculation?
   5. Does it only use information the member chose to share?
   6. Does it recognize contribution, not popularity?
+  7. If it references a community or neighborhood — does it frame that
+     community by its capacity to support people, not by stereotypes,
+     incidents, or sensational framing?
 
 If any answer is uncertain, stop and clarify — do not ship.
 
@@ -153,6 +175,7 @@ This constitution applies to:
   Notifications — what triggers, what is suppressed
   Verification — what the badge means, how it is communicated
   Personalization — onboarding, memory, privacy mode
+  Community Health Profile — all five dimensions and progress messaging
   Safety surveys — anonymity, contributor recognition
   Reviews — weighting, trust level influence, response handling
   Moderation — what is surfaced, what is suppressed, why
