@@ -1,0 +1,96 @@
+But we need to make a critical distinction:
+Historical sundown-town designation is not the same as a claim that a community is presently unsafe or currently operates as a sundown town.
+The Tougaloo database itself says it is incomplete and contains places that are confirmed, probable, or still being researched. Therefore, Build 97 should never place one generic warning marker on every listed town without showing the historical status, confidence, source, and present-day context.
+What I recommend for Build 97
+Add a map layer named:
+Historical Sundown Towns
+Not:
+Dangerous Towns
+Unsafe Towns
+Current Sundown Towns
+Avoid This Area
+The layer can include:
+State filter
+Historical location marker
+Name of town, city, county, or suburb
+Historical designation status
+Community or population historically excluded, when documented
+Time period, when available
+Evidence or confidence category
+Brief historical explanation
+Source attribution
+“Historical designation—not a current safety rating”
+Link to the original research source
+Optional route-proximity notice only when a member intentionally enables it
+Recently reported discrimination
+This should be shown separately as:
+Recent Community-Reported Experiences
+It should not transform a historical designation into a present-day danger label.
+For example:
+Historical context
+This community has been identified in historical research as a former or possible sundown town.
+Recent community context
+Mapping With Melanin™ received three approved reports describing racial discrimination in this area during the past 12 months.
+Or:
+No recent Mapping With Melanin™ reports are available. This does not confirm the absence or presence of discrimination.
+That preserves the history without making an unsupported current claim.
+The map should use separate evidence layers
+Layer 1 — Historical record
+Possible statuses:
+Historically confirmed
+Probable or strongly documented
+Possible or under research
+Historical record disputed or incomplete
+Community has publicly acknowledged its history
+Community has documented reconciliation or corrective initiatives
+The scholarly geocoded dataset includes a confidence variable inherited from the historical registry, making it possible to avoid presenting every record with identical certainty.
+Layer 2 — Recent verified public information
+Examples:
+Official civil-rights findings
+Court decisions
+Government reports
+Verified public investigations
+Credible reported incidents
+Publicly documented policy changes
+Each item needs a date and source. It should expire from “recent” status after an approved period while remaining in historical records where appropriate.
+Layer 3 — Mapping With Melanin™ community reports
+Examples:
+Approved discrimination reports
+Member-reported experiences
+Day/night experience patterns
+Reports of discriminatory policing
+Business or lodging concerns
+Reports of community support
+These should be aggregated and anonymized. One report should never cause Kinfolk to label a town unsafe.
+Safety language
+Every detail card should include wording similar to:
+Historical context
+This location appears in historical research concerning sundown towns—communities that intentionally excluded Black people or other racial, ethnic, or religious groups through law, intimidation, custom, or violence. This designation describes documented history and is not, by itself, a statement about every current resident or a definitive assessment of present-day conditions.
+And:
+Current community information
+Recent reports reflect submitted or publicly documented experiences and may be incomplete. Use this information as one source when planning—not as a guarantee of safety or danger.
+Historically, sundown exclusions were not limited exclusively to Black Americans; some places excluded Chinese Americans, Jewish Americans, Mexican Americans, Native Americans, and other groups.
+Should this be in Build 97?
+Yes, but only as a carefully scoped historical layer.
+Build 97 can reasonably include:
+Historical Sundown Towns toggle
+State-based browsing
+Verified source attribution
+Historical/confidence status
+Map markers
+Basic detail card
+Clear disclaimer
+Connection to recent approved MWM reports when data exists
+Hide/show control
+Performance testing to ensure the additional markers do not crash the Map
+Build 97 should not attempt to include:
+An automated present-day danger score
+Live web scraping of allegations
+Unmoderated reports displayed immediately
+Predictive warnings based on demographics
+Automatic “avoid this town” directions
+A claim that every historically listed town remains a sundown town today
+Community Health weighting formulas
+Route avoidance without explicit user choice
+AI-generated allegations about communities
+This keeps the Build 97 addition educational and safety-conscious without turning it into a rushed present-day classification system.
