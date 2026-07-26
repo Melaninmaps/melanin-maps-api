@@ -1,0 +1,180 @@
+I completely agree, and I would actually formalize the launch priorities now so we don't keep jumping between areas. Based on everything we've learned—including the heritage audit—I think your launch-critical work should now be prioritized like this:
+
+## Phase 0 — Platform Language Audit (Immediate)
+
+Before adding more features, every piece of language across the platform should be intentional.
+
+This audit should review:
+
+* Every button
+* Every placeholder
+* Every empty state
+* Every loading message
+* Every error message
+* Every success message
+* Every notification
+* Every onboarding screen
+* Every tooltip
+* Every help article
+* Every AI response
+* Every business prompt
+* Every review prompt
+* Every form label
+* Every field description
+* Every membership description
+
+Specifically verify:
+
+* Placeholder business names are removed.
+* Demo businesses are removed.
+* Seed data is clearly separated from production data.
+* Consistent terminology is used everywhere (for example, "Cultural Ambassador," "Living Legacy Stories," "Heritage Sites," etc.).
+* The tone matches the Mapping With Melanin™ brand.
+* All user-facing language is inclusive, respectful, and clear.
+
+This isn't just copyediting—it directly affects trust.
+
+---
+
+## Phase 1 — Maps (Current Priority)
+
+The goal isn't simply to "make the map work."
+
+It's to establish the reusable architecture that every location-based feature will use later.
+
+That includes:
+
+* Heritage Places
+* Businesses
+* Events
+* Resources
+* Community recommendations
+* Future saved places
+
+---
+
+## Phase 2 — Expand Cultural Representation (Required Before Launch)
+
+I think this belongs alongside the map work because they're tightly connected.
+
+You have always described Mapping With Melanin™ as a platform that celebrates Black culture while welcoming everyone to learn, connect, and discover.
+
+That means the heritage experience should intentionally expand beyond a single community.
+
+Examples include:
+
+* African American Heritage
+* Native American Heritage
+* Hispanic & Latino Heritage
+* Asian American & Pacific Islander Heritage
+* Middle Eastern & North African Heritage (where appropriate and with community guidance)
+* Jewish Heritage
+* LGBTQ+ History
+* Disability History
+* Women's History
+* Immigrant Heritage
+* Cultural Districts
+* Freedom Trails
+* Additional community-defined heritage categories as the platform grows
+
+The goal is not to flatten these into one experience, but to let each community tell its own story while using a consistent, respectful framework.
+
+---
+
+## Phase 3 — Kinfolk AI Audit
+
+Only after the map foundation is stable.
+
+This audit should answer:
+
+* What already exists?
+* What is partially built?
+* What has only been discussed?
+* What should become reusable AI capabilities?
+* What founder decisions remain?
+
+Then we'll decide what Kinfolk AI becomes at launch versus later phases.
+
+---
+
+## Phase 4 — Feature Constitution
+
+I think this becomes the long-term "source of truth."
+
+Every major system gets one authoritative specification.
+
+Examples:
+
+* Maps
+* Heritage
+* Businesses
+* Kinfolk AI
+* Community
+* Resources
+* Safety
+* Library
+* Events
+* Messaging
+* Membership
+* Admin
+
+---
+
+## One addition I'd make
+
+I'd also add a permanent document called:
+
+> **Platform Vocabulary & Experience Guide**
+
+This would become the single source of truth for all user-facing language.
+
+It would include:
+
+* Approved terminology
+* Terms that should never be used
+* Placeholder replacement standards
+* Tone and voice guidelines
+* Inclusive language standards
+* Empty-state messaging
+* Success and error message standards
+* Business prompts
+* Community prompts
+* AI personality and response style
+* Consistent naming across web, iOS, Android, and admin
+
+Whenever Replit creates a new screen, it should check this guide before introducing new wording.
+
+---
+
+## Updated Priority Order
+
+1. **Platform Language & UX Audit**
+
+   * Remove placeholders
+   * Replace demo/business text
+   * Standardize terminology
+   * Audit every piece of user-facing copy
+
+2. **Maps & Heritage**
+
+   * Make the existing system fully functional
+   * Reuse architecture
+   * Complete heritage interactions
+
+3. **Cultural Expansion**
+
+   * Finalize additional heritage categories
+   * Ensure the taxonomy is scalable and respectful
+   * Expand cultural content using the same reusable framework
+
+4. **Kinfolk AI Audit**
+
+   * Read-only capability review
+   * Future-state documentation
+   * Architecture decisions
+
+5. **Feature Constitution**
+
+   * One authoritative specification per major platform area
+
+I think this sequence gives you the strongest path to launch. It focuses first on what every user will immediately see—language and maps—then stabilizes the foundation before moving into Kinfolk AI, which is a larger strategic system that will benefit from the same audit-first process you've now established for Maps.

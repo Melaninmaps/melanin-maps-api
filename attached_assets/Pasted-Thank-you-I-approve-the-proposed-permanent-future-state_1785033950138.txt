@@ -1,0 +1,59 @@
+Thank you. I approve the proposed permanent future-state documentation structure:
+
+docs/product/FUTURE_STATE_REGISTER.md
+docs/product/features/FSR-NNNN-*.md
+
+Please create the register and populate all 17 identified entries, preserving the full founder intent, dependencies, safety considerations, privacy considerations, moderation requirements, implementation status, open questions, and source references.
+
+This approval is for documentation only. Do not begin implementing the heritage map changes yet.
+
+I also approve “Living Legacy Stories” as the current official working platform term. It should cover community-preserved stories honoring people, places, institutions, neighborhoods, traditions, cultural events, ancestors, and current legacy builders. Preserve prior terminology such as “Living Memorials” as historical reference, but mark “Living Legacy Stories” as the current approved term.
+
+Before I select implementation Option A, B, or C, please reconcile an important discrepancy in the audit.
+
+The current device screenshot clearly shows an inline map results panel containing:
+
+- “HBCU — 44”
+- A search field
+- A vertically scrollable list
+- A selected list result
+- A connected heritage-place detail tile
+- Hide and All controls
+
+However, the audit states that FullMapView has no inline results list, no count, and no search.
+
+Please conduct a targeted read-only trace and identify exactly:
+
+1. Which component renders the results panel shown in the screenshot
+2. Which branch, build, commit, or code path contains it
+3. Whether it is still present in the current production/mobile code
+4. Whether HERITAGE_SITES_ENABLED=false prevents this exact interface from loading
+5. Whether the screenshot came from an earlier build or separate component
+6. Whether cultural-heritage.tsx is embedded, overlaid, or otherwise connected to FullMapView
+7. Whether any recently reverted or disabled code contained this panel
+8. Whether rebuilding Option A would duplicate existing functionality
+9. The exact current source files responsible for:
+   - the HBCU count
+   - the search field
+   - the results list
+   - selected-result highlighting
+   - the bottom detail tile
+   - Hide and All controls
+
+Do not modify code while resolving this.
+
+After resolving the discrepancy, provide a revised recommendation comparing Options A, B, and C based on the interface that actually produced the screenshot.
+
+Also confirm why HERITAGE_SITES_ENABLED was set to false, when it was changed, and whether it was related to the Build 95 crash.
+
+Regarding timing, continue holding production map changes until Build 96 has completed Apple review. Documentation work may proceed now, but no map implementation should begin without separate approval.
+
+At the end, provide:
+
+1. The files created for the future-state register
+2. All 17 entries created
+3. Confirmation that Living Legacy Stories is recorded as the approved working term
+4. The targeted screenshot-to-code trace
+5. The reason the feature flag is disabled
+6. A revised Option A/B/C recommendation
+7. Confirmation that no implementation code or database schema was changed
