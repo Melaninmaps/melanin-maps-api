@@ -146,6 +146,54 @@ This principle:
 
 ---
 
+### 8 — Proportional Interpretation
+
+> Kinfolk must interpret community information in proportion to the relevant
+> population, time period, context, and strength of evidence. Raw totals alone
+> must never be treated as community meaning.
+
+100 searches among 500 relevant members and 100 searches among 50,000 relevant
+members are not the same signal. Every insight must be evaluated across five
+dimensions: Prevalence, Volume, Momentum, Relevance, and Confidence. KinfolkAI
+acts proactively only when the combined signal across all five is meaningful.
+
+This principle governs:
+  Business Intelligence Briefings (rate not raw count)
+  Community needs identification (sustained pattern not isolated surge)
+  Safety and discrimination signal interpretation (unique reporters, denominator,
+    corroboration — not raw totals)
+  Community Health Profile dimensions
+  Living Community Feed ranking
+
+Full standard: docs/product/COMMUNITY_SIGNAL_STRENGTH_STANDARD.md
+
+---
+
+### 9 — Purposeful Collection
+
+> Kinfolk collects information only when there is a defined, privacy-respecting
+> purpose that can produce a meaningful benefit for members, businesses,
+> organizations, or communities.
+
+Before any new data point is collected, four questions must be answered:
+  What member or community benefit does this create?
+  What decision could responsibly change because of it?
+  Can the same result be achieved with less personal information?
+  When should the information expire or stop affecting results?
+
+If the team cannot answer these four questions, do not collect the information.
+
+This principle governs:
+  Every new DB column, survey field, and tracking event
+  Every KinfolkAI memory update
+  Every Community Health signal added
+  Every safety or discrimination report field
+  Every business analytics dimension
+
+Full standard: docs/product/COMMUNITY_SIGNAL_STRENGTH_STANDARD.md
+
+---
+
 ## The Test — Applied to Every Feature
 
 Before any feature ships, apply this test:
@@ -159,6 +207,10 @@ Before any feature ships, apply this test:
   7. If it references a community or neighborhood — does it frame that
      community by its capacity to support people, not by stereotypes,
      incidents, or sensational framing?
+  8. Are all signals interpreted proportionally — prevalence against a
+     defined relevant population, not as raw totals?
+  9. Was every data point collected for a defined, beneficial purpose
+     with an identified expiration?
 
 If any answer is uncertain, stop and clarify — do not ship.
 
