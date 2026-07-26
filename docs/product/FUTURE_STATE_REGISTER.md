@@ -49,6 +49,15 @@
 | FSR-015 | Freedom Trail Category in Map Chip Row | Heritage / Map | PARTIALLY BUILT | [FSR-015](features/FSR-015-freedom-trail-map-chip.md) |
 | FSR-016 | Reusable Map-Results Component | Platform / Architecture | PROPOSED | [FSR-016](features/FSR-016-reusable-map-results-component.md) |
 | FSR-017 | Platform Terminology: Living Legacy Stories | Platform / Language | FOUNDER APPROVED | [FSR-017](features/FSR-017-living-legacy-stories-terminology.md) |
+| FSR-018 | KinfolkAI as the Intelligence Layer of the Platform | KinfolkAI / Platform Architecture | NEEDS FOUNDER CLARIFICATION | [FSR-018](features/FSR-018-kinfolk-as-intelligence-layer.md) |
+| FSR-019 | Conversational Onboarding — Belonging, Values, Contribution, Goals | Onboarding / Community Member | NEEDS FOUNDER CLARIFICATION | [FSR-019](features/FSR-019-conversational-onboarding.md) |
+| FSR-020 | Life Stages — KinfolkAI Evolves Alongside the Member | KinfolkAI / Member Experience | NEEDS FOUNDER CLARIFICATION | [FSR-020](features/FSR-020-life-stages-progression.md) |
+| FSR-021 | Ecosystems Instead of Feeds | Platform Architecture / KinfolkAI | NEEDS FOUNDER CLARIFICATION | [FSR-021](features/FSR-021-ecosystems-vs-feeds.md) |
+| FSR-022 | Community Organizations as Platform Connectors | Platform / Community | NEEDS FOUNDER CLARIFICATION | [FSR-022](features/FSR-022-community-organizations-connectors.md) |
+| FSR-023 | Business Community Profile — Community Contribution Questions | Business Owner Experience | NEEDS FOUNDER CLARIFICATION | [FSR-023](features/FSR-023-business-community-profile.md) |
+| FSR-024 | KinfolkAI Stewardship — Proactive Opportunity Notices | KinfolkAI / Notifications | NEEDS FOUNDER CLARIFICATION | [FSR-024](features/FSR-024-kinfolk-stewardship-proactive.md) |
+| FSR-025 | Member Goals and Dreams — Where Are You Trying to Go? | Member Experience / KinfolkAI | NEEDS FOUNDER CLARIFICATION | [FSR-025](features/FSR-025-member-goals-dreams.md) |
+| FSR-026 | Cultural Ambassador Activation Questions | Cultural Ambassador / KinfolkAI | NEEDS FOUNDER CLARIFICATION | [FSR-026](features/FSR-026-cultural-ambassador-activation.md) |
 
 ---
 
@@ -64,4 +73,4 @@
 ---
 
 *Last updated: July 26, 2026*
-*Updated by: Replit Agent — Heritage Map Audit & Future-State Register creation*
+*Updated by: Replit Agent — Strategic advisor review: FSR-018 through FSR-026 added*
